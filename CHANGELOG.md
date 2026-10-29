@@ -9,7 +9,25 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Requires Blender 5.0 or newer (5.0 – 5.2).** 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
   there. Blender 5.0, 5.1 and 5.2 are supported as before; versions after 5.2 are added once they are tested.
 
+### Added
+- **Blender navigation gizmo instead of the ViewCube** (#209): the add-on preference Viewport Navigation (also on the
+  ViewCube page of Windows > Settings/Preferences > Preferences) switches the Maya views between the Maya ViewCube
+  (default) and Blender's navigation gizmo, at once in every open view; saved files keep the Maya view. Thanks to
+  @invader-zimm for the suggestion.
+- **Snapping in the curve tools** (#208): while the EP / CV Curve Tool or a circular arc tool places or drags a
+  point, hold X for the grid, C for the nearest curve or edge (drag to slide along it) or V for the nearest CV,
+  vertex or pivot, like Maya. Middle drag moves the last point; Ctrl+click inverts Blender's scene snapping for that
+  click. Thanks to @Oxiidus for the report.
+
 ### Fixed
+- **Maya operations in the Channel Box INPUTS** (#204): Edit Mesh > Bevel, Extrude and Mesh > Smooth (main menu,
+  hotbox and shelf) leave their node (polyBevel1, polyExtrudeFace1, polySmoothFace1 …) in INPUTS in object mode too,
+  and typing a new value there rebuilds the operation, as long as it is the latest kit operation and the mesh hasn't
+  been changed since. A blend shape shows as blendShape1 with a weight per target. The shelf Smooth button now runs
+  Mesh > Smooth. Thanks to @Fizkefaaz for the report.
+- **Marquee with Move / Rotate / Scale** (#205): a drag off the manipulator draws a marquee even when the tool's Drag
+  setting in a saved file is Tweak; nothing moves and the file isn't changed. Thanks to @Kevorama for the report, the
+  analysis and the test scenario.
 - **Maya menus and switching back on Blender 5.1** (#199, #198): when one part of Maya mode fails to start, the kit now
   takes back everything it had started and stays in plain Blender, and says why (console, a message and the add-on
   preferences) instead of leaving a Maya menu bar whose menus don't open. Switching back to Blender always removes the

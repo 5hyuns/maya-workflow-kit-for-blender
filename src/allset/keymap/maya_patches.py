@@ -684,7 +684,8 @@ def patch_materials(kd):
 # box / lasso item of the select tools (and their fallbacks under Move/Rotate/Scale): sets the
 # view's X-ray flag for the drag, then PASS_THROUGH to view3d.select_box / select_lasso.
 SELECT_DRAG_KEYMAPS = ("3D View Tool: Select Box", "3D View Tool: Select Box (fallback)",
-                       "3D View Tool: Select Lasso", "3D View Tool: Select Lasso (fallback)")
+                       "3D View Tool: Select Lasso", "3D View Tool: Select Lasso (fallback)",
+                       "3D View Tool: Tweak (fallback)")       # issue #205: the marquee copied there (below)
 
 
 def patch_select_through(kd):
@@ -695,6 +696,23 @@ def patch_select_through(kd):
                  shadows=(km,))   # in front of the select item on purpose (PASS_THROUGH)
 
 
+# Issue #205: Maya has no per-tool drag fallback — a drag off the Move / Rotate / Scale manipulator (or with any tool
+# that falls back to selection) is a marquee. Blender keeps the fallback per workspace and mode ("Drag" in the tool
+# header) and gives a tool the select group's current item, so a startup file or a session that had Tweak there
+# makes the drag move the selection. The Tweak fallback keymaps (empty in Blender's data) get the Select Box
+# fallback's marquee: add-on keymap items, gone with Maya mode, the workspace's fallback setting is never written.
+# A Lasso / Circle fallback keeps its own keymap; Maya's tweak mode is the ` hold (the Tweak tool's own keymap).
+# Runs before patch_selection so the Maya modifier rules, select-through and the UV shell box apply to the copies.
+TWEAK_FALLBACK_MARQUEE = (("3D View Tool: Tweak (fallback)", "3D View Tool: Select Box (fallback)"),
+                          ("Image Editor Tool: Uv, Tweak (fallback)", "Image Editor Tool: Uv, Select Box (fallback)"))
+
+
+def patch_tweak_fallback(kd):
+    for tweak, box in TWEAK_FALLBACK_MARQUEE:
+        for idname, event, props in list(kd.items(box)):
+            _add(kd, tweak, idname, dict(event), patch.props_dict(props), shadows=(tweak,))
+
+
 # Step 256 (#172): Maya UV Shell selection (operators/uv_shell_select.py) — a click picks the whole UV shell, a box /
 # lasso grows to shells; in front of the click / drag select items of the 3D View and the UV Editor, PASS_THROUGH
 # unless the UV Shell mask is on.
@@ -702,7 +720,8 @@ UV_SHELL_CLICK_KEYMAPS = ("3D View", "UV Editor")
 UV_SHELL_DRAG_KEYMAPS = SELECT_DRAG_KEYMAPS + ("Image Editor Tool: Uv, Select Box",
                                               "Image Editor Tool: Uv, Select Box (fallback)",
                                               "Image Editor Tool: Uv, Select Lasso",
-                                              "Image Editor Tool: Uv, Select Lasso (fallback)")
+                                              "Image Editor Tool: Uv, Select Lasso (fallback)",
+                                              "Image Editor Tool: Uv, Tweak (fallback)")
 
 
 def patch_uv_shell_select(kd):
@@ -1361,7 +1380,7 @@ def patch_blender_render(kd):
              {"animation": True, "use_viewport": True}, first=True)
 
 
-PATCHES = (patch_selection, patch_display, patch_group, patch_space,
+PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,

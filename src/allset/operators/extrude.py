@@ -656,7 +656,7 @@ class Record:
         self.topology = None        # (divisions, together) of ``moved``
         self.moved = []             # [(vertex index, P0, T, L, O, X, Y, SX, SY, SZ)]
         self.cap_faces = []         # face indices
-        self.states = []            # [(params, signature, selection signature)]
+        self.states = []            # [(params, signature, selection signature, whole-mesh coordinate hash)]
         self.live = False           # a drag is previewing values
         self.mesh_uid = None        # session_uid of the mesh it was made on
         self.dismissed = False      # Q/W/E/R picked a tool since: Maya shows that tool's manipulator (#80)
@@ -735,7 +735,7 @@ def _store(rec, bm, caps, moved, params):
     rec.cap_faces = [f.index for f in caps]
     cap_verts = sorted({v.index for f in caps for v in f.verts})
     rec.cap_verts = cap_verts
-    rec.states.append((dict(params), signature(bm, cap_verts), None))
+    rec.states.append((dict(params), signature(bm, cap_verts), None, coords_hash(bm)))
     del rec.states[:-64]
     rec.live = False
 
@@ -746,7 +746,7 @@ def _store_generic(rec, bm, tracked, params):
     rec.cap_verts = sorted({v.index for v in tracked if v.is_valid})
     rec.cap_faces = []
     rec.sel = selection_signature(bm)
-    rec.states.append((dict(params), signature(bm, rec.cap_verts), rec.sel))
+    rec.states.append((dict(params), signature(bm, rec.cap_verts), rec.sel, coords_hash(bm)))
     del rec.states[:-64]
     rec.live = False
 
@@ -814,7 +814,7 @@ def current(ob):
     if rec.live:
         return rec
     bm = bmesh.from_edit_mesh(ob.data)
-    for params, sig, sel in reversed(rec.states):
+    for params, sig, sel, *_full in reversed(rec.states):
         cap_verts = list(sig[2]) if sig else []
         if sig is not None and signature(bm, cap_verts) == sig:
             if rec.spec is not FACE:
@@ -829,14 +829,97 @@ def current(ob):
     return None
 
 
+def coords_hash(bm):
+    """Hash of every vertex position of ``bm`` (float32, the precision a Mesh stores)."""
+    import numpy as np
+    a = np.fromiter((c for v in bm.verts for c in v.co), dtype=np.float32, count=3 * len(bm.verts))
+    return hash(a.tobytes())
+
+
+def mesh_coords_hash(me):
+    import numpy as np
+    a = np.empty(3 * len(me.vertices), dtype=np.float32)
+    me.vertices.foreach_get("co", a)
+    return hash(a.tobytes())
+
+
+def mesh_signature(me, cap_verts):
+    """``signature`` read from an object-mode Mesh (same vertex order as the edit-mode BMesh it was written from)."""
+    verts = me.vertices
+    if any(i >= len(verts) for i in cap_verts):
+        return None
+    return (len(verts), len(me.polygons), tuple(cap_verts), tuple(_key(verts[i].co) for i in cap_verts))
+
+
+def mesh_state_ok(ob, rec):
+    """The object-mode mesh of ``ob`` equals a state the kit made for ``rec`` (the edit-mode rule of ``current``);
+    takes that state's values."""
+    me = ob.data
+    full = None
+    for params, sig, sel, *rest in reversed(rec.states):
+        if sig is None:
+            continue
+        cap_verts = list(sig[2])
+        if mesh_signature(me, cap_verts) != sig:
+            continue
+        if full is None:
+            full = mesh_coords_hash(me)
+        if rest and rest[0] != full:        # object mode checks every vertex (cheap there)
+            continue
+        if rec.spec is not FACE:
+            rec.params, rec.cap_verts, rec.sel = dict(params), cap_verts, sel
+        elif params != rec.params or cap_verts != getattr(rec, "cap_verts", None):
+            rec.params = dict(params)
+            rec.topology = None
+            rec.cap_verts = cap_verts
+            s = set(cap_verts)
+            rec.cap_faces = [p.index for p in me.polygons if all(v in s for v in p.vertices)]
+        return True
+    return False
+
+
 def object_record(ob):
-    """The record of ``ob`` in object mode for nodes that stay editable there (UV > Automatic, step 257), else None."""
+    """The record of ``ob`` in object mode, else None. Maya lists a mesh's history nodes in object mode too: a kit
+    node shows (and can be edited) there while the mesh is still the result the kit made (UV > Automatic checks its
+    UVs instead, step 257)."""
     if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH' or ob.mode == 'EDIT':   # a pose bone lead too
         return None
     rec = RECORDS.get(ob.name)
-    if rec is None or rec.pre is None or rec.mesh_uid != ob.data.session_uid or rec.spec.object_check is None:
+    if rec is None or rec.pre is None or rec.mesh_uid != ob.data.session_uid:
         return None
-    return rec if rec.spec.object_check(ob, rec) else None
+    check = rec.spec.object_check or mesh_state_ok
+    return rec if check(ob, rec) else None
+
+
+def run_from_object_mode(context, ob, rec, params, unit):
+    """Rebuild ``rec`` with ``params`` while in object mode: ``ob`` alone into edit mode, rerun, back to object mode
+    with the selection as it was (the caller's operator is the undo step)."""
+    view_layer = context.view_layer
+    sel = [o for o in context.selected_objects]
+    active_ob = view_layer.objects.active
+    for o in sel:
+        o.select_set(o == ob)
+    ob.select_set(True)
+    view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT')
+    try:
+        ok = run(ob, rec, params, unit)
+    finally:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        ob.select_set(ob in sel)
+        for o in sel:
+            o.select_set(True)
+        view_layer.objects.active = active_ob
+    return ok
+
+
+def edit_from_object_mode(context, edit_op, params_of):
+    """Body of a kit node's edit operator in object mode: True when the active object's node was rebuilt."""
+    ob = getattr(context, "active_object", None)
+    rec = object_record(ob)
+    if rec is None or rec.spec.edit_op != edit_op:
+        return False
+    return run_from_object_mode(context, ob, rec, params_of(rec.spec), units.maya_unit(context.scene))
 
 
 def _cap_faces(bm, cap_verts):
@@ -906,6 +989,31 @@ def kind_of(bm, select_mode):
 def record_new(context, ob, bm, spec, params, unit):
     """Run ``spec`` on the selection of ``ob`` (edit mode) as a new history node; the same node again when
     Adjust Last Operation re-runs it on the same mesh. Returns the record or None."""
+    rec = _record_bm(context, ob, bm, spec, params, unit)
+    if rec is not None:
+        bmesh.update_edit_mesh(ob.data)
+    return rec
+
+
+def record_object(context, ob, spec, params, unit):
+    """``record_new`` on an object-mode mesh: every component of it (Maya acts on the whole mesh for an object
+    selection). Returns the record or None."""
+    me = ob.data
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(me)
+        for el in (*bm.verts, *bm.edges, *bm.faces):
+            el.select = True
+        rec = _record_bm(context, ob, bm, spec, params, unit)
+        if rec is not None:
+            bm.to_mesh(me)
+            me.update()
+    finally:
+        bm.free()
+    return rec
+
+
+def _record_bm(context, ob, bm, spec, params, unit):
     old = RECORDS.get(ob.name)
     name = None
     if (old is not None and old.spec is spec and old.pre is not None and old.mesh_uid == ob.data.session_uid
@@ -923,7 +1031,6 @@ def record_new(context, ob, bm, spec, params, unit):
     rec.mesh_uid = ob.data.session_uid
     _store_generic(rec, bm, tracked, params)
     keep(context, ob, rec)
-    bmesh.update_edit_mesh(ob.data)
     return rec
 
 
@@ -1026,10 +1133,12 @@ class _ExtrudeEdit(_ExtrudeProps):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'EDIT_MESH'
+        return context.mode in {'EDIT_MESH', 'OBJECT'}     # Maya edits history nodes in object mode too (#204)
 
     def invoke(self, context, event):
         _ob, rec = active(context)
+        if rec is None:
+            rec = object_record(getattr(context, "active_object", None))
         if rec is None or rec.spec.edit_op != self._op:
             return {'CANCELLED'}
         for k, v in rec.params.items():
@@ -1039,6 +1148,11 @@ class _ExtrudeEdit(_ExtrudeProps):
 
     def execute(self, context):
         unit = units.maya_unit(context.scene)
+        if context.mode == 'OBJECT':
+            if edit_from_object_mode(context, self._op, lambda spec: _params(self, spec)):
+                return {'FINISHED'}
+            self.report({'WARNING'}, "No extrusion to change: " + NOTICE)
+            return {'CANCELLED'}
         done = 0
         for ob in context.objects_in_mode_unique_data:
             rec = RECORDS.get(ob.name)

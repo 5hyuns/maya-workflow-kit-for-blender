@@ -10,7 +10,8 @@ middle; axis triad origin 26 px from the left and bottom, 13 px lines, lower-cas
 A view gets these when Blender's navigation gizmo is off in it (``show_gizmo_navigate``; the Maya Workflow Kit
 template turns it and ``overlay.show_text`` off): the Maya furniture replaces Blender's. What is shown is
 global like Maya's HUD / ViewCube preferences (add-on preferences ``maya_viewcube``,
-``maya_camera_names``, ``maya_view_axis``).
+``maya_camera_names``, ``maya_view_axis``). ``view_navigation`` = 'BLENDER' (#209) shows Blender's navigation gizmo
+in those views instead of the ViewCube.
 
 The triad shows Blender's axes (Z up): Maya's Y-up cannot be had () and the
 letters have to match the Channel Box channels. The camera labels are Maya's camera names with Maya's
@@ -163,8 +164,104 @@ def _prefs():
 
 
 def maya_view(space):
-    return space is not None and space.type == 'VIEW_3D' and not space.show_gizmo_navigate \
-        and space.overlay.show_overlays
+    return space is not None and space.type == 'VIEW_3D' and space.overlay.show_overlays \
+        and (not space.show_gizmo_navigate or space.as_pointer() in _SHOWN)
+
+
+# --- Blender navigation gizmo instead of the ViewCube (#209) --------------------------------------------------------
+# Add-on preference ``view_navigation``: 'VIEWCUBE' (Maya, default) or 'BLENDER'. With 'BLENDER' the kit turns
+# Blender's navigation gizmo on in the Maya views (the views whose gizmo is off) and draws no ViewCube there; the
+# camera name / view axis stay. Display > Heads Up Display > ViewCube (``maya_viewcube``) shows or hides whichever
+# navigation widget is chosen (delegated). The kit gives every such view its flag back when the preference goes
+# back, Maya mode goes off or the add-on is disabled, and around every save, so a file always holds the Maya view.
+
+_SHOWN = set()        # pointers of the 3D View spaces whose navigation gizmo the kit turned on (this session)
+_APPLY_LATER = []
+_SAVING = []
+
+
+def cube_wanted(prefs):
+    """True when the kit draws its ViewCube (the HUD item is on and the Maya ViewCube is the chosen widget)."""
+    return bool(prefs.maya_viewcube) and getattr(prefs, "view_navigation", 'VIEWCUBE') == 'VIEWCUBE'
+
+
+def blender_gizmo_wanted(prefs):
+    return prefs is not None and bool(prefs.maya_viewcube) and prefs.view_navigation == 'BLENDER'
+
+
+def _spaces():
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    yield area, space
+
+
+def _hideable(space):
+    """A Maya view whose navigation gizmo the kit may turn on (not the Tool Box column)."""
+    from . import toolbox
+    return not space.show_gizmo_navigate and space.overlay.show_overlays and not toolbox.is_toolbox(space)
+
+
+def apply_navigation(want=None):
+    """Bring every 3D View in line with the preference (``want`` overrides it: False = give every flag back)."""
+    if want is None:
+        want = blender_gizmo_wanted(_prefs()) and not _SAVING
+    live = set()
+    for area, space in _spaces():
+        ptr = space.as_pointer()
+        live.add(ptr)
+        if want and ptr not in _SHOWN and _hideable(space):
+            space.show_gizmo_navigate = True
+            _SHOWN.add(ptr)
+            area.tag_redraw()
+        elif not want and ptr in _SHOWN:
+            if space.show_gizmo_navigate:
+                space.show_gizmo_navigate = False
+            _SHOWN.discard(ptr)
+            area.tag_redraw()
+    _SHOWN.intersection_update(live)      # closed areas: their pointers may be reused
+
+
+def _apply_tick():
+    _APPLY_LATER.clear()
+    if _handle:
+        apply_navigation()
+    return None
+
+
+def _apply_later():
+    """A new Maya view (appended workspace, duplicated area) seen while drawing: apply from a timer."""
+    if not _APPLY_LATER:
+        _APPLY_LATER.append(_apply_tick)
+        bpy.app.timers.register(_apply_tick, first_interval=0.0)
+
+
+@bpy.app.handlers.persistent
+def _save_pre(*_args):
+    _SAVING.append(True)
+    apply_navigation(False)
+
+
+@bpy.app.handlers.persistent
+def _save_post(*_args):
+    _SAVING.clear()
+    apply_navigation()
+
+
+@bpy.app.handlers.persistent
+def _load_pre(*_args):
+    _SHOWN.clear()                        # the old file's spaces go: never compare their pointers again
+
+
+@bpy.app.handlers.persistent
+def _load_post(*_args):
+    _SAVING.clear()
+    apply_navigation()
+
+
+_HANDLERS = (("save_pre", _save_pre), ("save_post", _save_post), ("load_pre", _load_pre),
+             ("load_post", _load_post))
 
 
 def _bounds(context):
@@ -273,6 +370,8 @@ def _draw_hud():
     if prefs is None:
         return
     _check_strip(context)
+    if not space.show_gizmo_navigate and blender_gizmo_wanted(prefs) and _hideable(space):
+        _apply_later()
     import gpu
     s = _scale()
     _cube, label, origin = layout(_bounds(context), s, 0.0)
@@ -447,7 +546,7 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
     def poll(cls, context):
         prefs = _prefs()
         space = context.space_data
-        return prefs is not None and prefs.maya_viewcube and maya_view(space) and space.show_gizmo \
+        return prefs is not None and cube_wanted(prefs) and maya_view(space) and space.show_gizmo \
             and context.region_data is not None
 
     def setup(self, context):
@@ -461,9 +560,29 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     _handle.append(bpy.types.SpaceView3D.draw_handler_add(_hud_callback, (), 'WINDOW', 'POST_PIXEL'))
+    for name, fn in _HANDLERS:
+        getattr(bpy.app.handlers, name).append(fn)
+    try:
+        apply_navigation()
+    except AttributeError:               # Blender start: restricted bpy.data while add-ons register
+        _apply_later()
 
 
 def unregister():
+    for name, fn in _HANDLERS:
+        handlers = getattr(bpy.app.handlers, name)
+        if fn in handlers:
+            handlers.remove(fn)
+    if _APPLY_LATER and bpy.app.timers.is_registered(_apply_tick):
+        bpy.app.timers.unregister(_apply_tick)
+    _APPLY_LATER.clear()
+    _SAVING.clear()
+    try:
+        apply_navigation(False)
+    except AttributeError:               # restricted bpy.data (quit): nothing of this session is saved any more
+        pass
+    finally:
+        _SHOWN.clear()
     _remove_handler()
     _show_strips()
     _ACTIVE["region"] = None

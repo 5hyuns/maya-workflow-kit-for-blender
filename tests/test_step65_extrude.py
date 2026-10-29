@@ -252,8 +252,10 @@ def test_channel_box_rows_edit_the_last_extrusion():
     assert _counts(ob) == (16, 14) and hist.divisions_text == "2"
     hist.thickness_text = "nonsense"
     assert hist.thickness_text == "0", "unreadable text changes nothing"
-    # the row lists only while the record is valid; another object as lead: none
+    # object mode: Maya keeps listing the node (#204) while the mesh is its result; another edit hides it
     bpy.ops.object.mode_set(mode='OBJECT')
+    assert in_view.cb_record(bpy.context, ob).name == "polyExtrudeFace1" and hist.divisions_text == "2"
+    ob.data.vertices[0].co.x += 0.25
     assert in_view.cb_record(bpy.context, ob) is None and hist.divisions_text == ""
 
 

@@ -63,7 +63,7 @@ BY_COMMAND = {
     "CombinePolygons": ("allset.combine", 'AUTOMERGE_ON'),
     "ExtractFace": (("mesh.separate", {"type": 'SELECTED'}), 'MOD_EXPLODE'),
     "MirrorPolygonGeometry": ("allset.mirror", 'MOD_MIRROR'),
-    "SmoothPolygon": (_mod('SUBSURF'), 'MOD_SUBSURF'),
+    "SmoothPolygon": (("item", "Mesh/Smooth"), 'MOD_SUBSURF'),     # the menu's polySmoothFace (#204)
     "ReducePolygon": (_mod('DECIMATE'), 'MOD_DECIM'),
     "PolyRemesh": (_mod('REMESH'), 'MOD_REMESH'),
     "PolyExtrude": (("v3d", "allset.extrude", {}), 'FACESEL'),     # polyExtrudeFace (step 65)
