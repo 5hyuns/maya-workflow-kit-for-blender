@@ -37,7 +37,11 @@ from bpy.app.handlers import persistent
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
-DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template
+DEPTH_BIAS = 1e-4          # Legacy limit; retained for dormant, X-ray and native Make Live wires.
+DEPTH_BIAS_PIXELS = 1.0    # At most one pixel of the bounds' projected depth change.
+DEPTH_BIAS_MAX_SPAN = 1 / 16
+DEPTH_BIAS_THIN_RATIO = 1 / 8
+DEPTH_BIAS_THIN_SPAN = 1 / 4
 LEAD = "#43ffa3"           # lead (last selected = Blender's active)
 OTHER = "#ffffff"          # other selected objects
 DORMANT = "#000460"        # unselected polymesh wire in wireframe shading
@@ -280,6 +284,67 @@ def live_wire_objects(context):
     return [o for o in live.objects(context.scene) if _shown(o, space)]
 
 
+def depth_bias(ob, depsgraph, projection, viewport):
+    """Conservative NDC offset from evaluated bounds and this view's pixel scale.
+
+    No positive floor is safe for an arbitrarily thin / distant object. An
+    unusable projection or bounds therefore returns zero rather than falling
+    back to the old fixed offset. Bounds are a heuristic, not an occlusion
+    guarantee for closely spaced surfaces or unrelated foreground objects.
+    """
+    import math
+    from mathutils import Vector
+    try:
+        width, height = viewport
+        if not all(math.isfinite(v) and v > 0 for v in (width, height)):
+            return 0.0
+        bounds = tuple(tuple(c) for c in ob.evaluated_get(depsgraph).bound_box)
+        if (len(bounds) != 8 or any(len(c) != 3 for c in bounds)
+                or not all(math.isfinite(v) for c in bounds for v in c)):
+            return 0.0
+        matrix = projection @ ob.matrix_world
+        xs, ys, depths = [], [], []
+        for corner in bounds:
+            clip = matrix @ Vector((*corner, 1.0))
+            if (not all(math.isfinite(v) for v in clip) or clip.w <= 1e-8
+                    or clip.z <= -clip.w or clip.z >= clip.w):
+                return 0.0  # Behind the eye, intersecting a clip plane, or unstable.
+            xs.append(clip.x / clip.w)
+            ys.append(clip.y / clip.w)
+            depths.append(clip.z / clip.w)
+        if not all(math.isfinite(v) for values in (xs, ys, depths) for v in values):
+            return 0.0
+        span = max(depths) - min(depths)
+        pixels = max(1.0, (max(xs) - min(xs)) * width * 0.5,
+                     (max(ys) - min(ys)) * height * 0.5)
+        if not math.isfinite(span) or not math.isfinite(pixels) or span <= 0.0:
+            return 0.0
+        bias = min(DEPTH_BIAS, span * DEPTH_BIAS_MAX_SPAN, span * DEPTH_BIAS_PIXELS / pixels)
+
+        # For a thin box viewed obliquely, its overall depth span includes the
+        # long sides. Cap against the projected separation along each thin axis.
+        sizes = [max(c[i] for c in bounds) - min(c[i] for c in bounds) for i in range(3)]
+        world = ob.matrix_world
+        lengths = [math.sqrt(sum((world[row][i] * sizes[i]) ** 2 for row in range(3))) for i in range(3)]
+        if not all(math.isfinite(v) for v in lengths):
+            return 0.0
+        longest = max(lengths)
+        for axis, length in enumerate(lengths):
+            if length <= 0.0 or length >= longest * DEPTH_BIAS_THIN_RATIO:
+                continue
+            other_axes = tuple(i for i in range(3) if i != axis)
+            separations = [abs(depths[i] - depths[j])
+                           for i in range(8) for j in range(i + 1, 8)
+                           if bounds[i][axis] != bounds[j][axis]
+                           and all(bounds[i][k] == bounds[j][k] for k in other_axes)]
+            if not separations:
+                return 0.0
+            bias = min(bias, min(separations) * DEPTH_BIAS_THIN_SPAN)
+        return bias
+    except (AttributeError, TypeError, ValueError, OverflowError, RuntimeError):
+        return 0.0
+
+
 def _draw():
     context = bpy.context
     space, rv3d = context.space_data, context.region_data
@@ -304,31 +369,37 @@ def _draw():
     # X-ray wireframe (Blender's default in wireframe shading) shows the hidden edges too, like Maya's wireframe
     xray = space.shading.type == 'WIREFRAME' and space.shading.show_xray_wireframe
     gpu.state.depth_test_set('NONE' if xray else 'LESS_EQUAL')
-    gpu.state.depth_mask_set(False)
-    sh.bind()
-    sh.uniform_float("bias", DEPTH_BIAS)
-    pm = rv3d.perspective_matrix
-    if dormant:
-        sh.uniform_float("color", dormant_color())
-        for ob in dormant:
+    try:
+        gpu.state.depth_mask_set(False)
+        sh.bind()
+        sh.uniform_float("bias", DEPTH_BIAS)
+        pm = rv3d.perspective_matrix
+        if dormant:
+            sh.uniform_float("color", dormant_color())
+            for ob in dormant:
+                batch = _batch(ob, depsgraph)
+                if batch is not None:
+                    sh.uniform_float("mvp", pm @ ob.matrix_world)
+                    batch.draw(sh)
+        for ob, is_lead in obs:
+            batch = _batch(ob, depsgraph)
+            if batch is None:
+                continue
+            region = context.region
+            bias = DEPTH_BIAS if xray else depth_bias(ob, depsgraph, pm, (region.width, region.height))
+            sh.uniform_float("bias", bias)
+            sh.uniform_float("mvp", pm @ ob.matrix_world)
+            sh.uniform_float("color", lead if is_lead else other)
+            batch.draw(sh)
+        sh.uniform_float("bias", DEPTH_BIAS)  # preserve 0.7 Make Live pass behavior
+        sh.uniform_float('color', _linear(live.COLOR))
+        for ob in live_obs:
             batch = _batch(ob, depsgraph)
             if batch is not None:
-                sh.uniform_float("mvp", pm @ ob.matrix_world)
+                sh.uniform_float('mvp', pm @ ob.matrix_world)
                 batch.draw(sh)
-    for ob, is_lead in obs:
-        batch = _batch(ob, depsgraph)
-        if batch is None:
-            continue
-        sh.uniform_float("mvp", pm @ ob.matrix_world)
-        sh.uniform_float("color", lead if is_lead else other)
-        batch.draw(sh)
-    sh.uniform_float('color', _linear(live.COLOR))
-    for ob in live_obs:
-        batch = _batch(ob, depsgraph)
-        if batch is not None:
-            sh.uniform_float('mvp', pm @ ob.matrix_world)
-            batch.draw(sh)
-    gpu.state.depth_test_set('NONE')
+    finally:
+        gpu.state.depth_test_set('NONE')
     _times.append(time.perf_counter() - t0)
     if len(_times) > 120:
         del _times[0]

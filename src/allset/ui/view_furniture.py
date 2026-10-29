@@ -25,7 +25,7 @@ from mathutils import Vector
 
 # --- Maya sizes and colours (step 46) -----------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view
-CUBE_INSET = (26.0, 27.0)      # from the right, from the top
+CUBE_INSET = (34.0, 24.0)      # leave room for the shared corner arcs and native panel chevron
 MAYA_VIEW_H = 612.0
 SMALL_EXP = 0.42               # 65 px in the 612 px view, 48 px in a four-view panel
 LABEL_BASELINE = 9.0
@@ -35,6 +35,9 @@ LABEL_RGB = (0.89, 0.89, 0.89)
 TRIAD_INSET = 26.0
 TRIAD_LEN = 13.0
 CUBE_ALPHA = (0.5, 1.0)        # resting, under the mouse
+CUBE_EYE = 3.5526315789473686  # 5% gentler perspective; independent of scene focal length
+# Ink cap heights in each equal-width atlas tile; common face-local letter size.
+CUBE_LABEL_CAP_HEIGHTS = {'FRONT': 61.0, 'BACK': 73.0, 'RIGHT': 67.0, 'LEFT': 83.0, 'TOP': 99.0, 'BOTTOM': 47.0}
 MAYA_PERSP_DIR = Vector((-28.0, 28.0, -21.0)).normalized()   # Maya persp looking direction, Blender axes
 
 # face -> (normal, text u axis, text v axis), Blender axes; names = view3d.view_axis types
@@ -47,6 +50,8 @@ FACES = {
     "LEFT": ((-1, 0, 0), (0, -1, 0), (0, 0, 1)),
 }
 FACE_NAMES = tuple(FACES)
+CONTROL_NAMES = ('HOME', 'ROLL_LEFT', 'ROLL_RIGHT', 'MENU')
+ORBIT_CONTROLS = ('ORBIT_UP', 'ORBIT_DOWN', 'ORBIT_LEFT', 'ORBIT_RIGHT')
 
 # Orthographic side views (key = the direction the view looks, Blender axes): Maya camera name + that direction
 # in Maya's Y-up axes, as Maya prints it ("top -Y", "front -Z", "side -X";
@@ -62,9 +67,18 @@ def _to_view(q, p):
     return q.inverted() @ Vector(p)
 
 
+def _project_cube_point(p, centre, k):
+    """Project a view-space cube point; return screen coordinates and its perspective weight."""
+    weight = CUBE_EYE - p.z
+    factor = (CUBE_EYE - .5) / weight
+    return (centre[0] + p.x * k * factor, centre[1] + p.y * k * factor), weight
+
+
 def _extent(q):
-    pts = [_to_view(q, (x, y, z)) for x in (-.5, .5) for y in (-.5, .5) for z in (-.5, .5)]
-    return max(max(p.x for p in pts) - min(p.x for p in pts), max(p.y for p in pts) - min(p.y for p in pts))
+    pts = [_project_cube_point(_to_view(q, (x, y, z)), (0, 0), 1)[0]
+           for x in (-.5, .5) for y in (-.5, .5) for z in (-.5, .5)]
+    return max(max(p[0] for p in pts) - min(p[0] for p in pts),
+               max(p[1] for p in pts) - min(p[1] for p in pts))
 
 
 def _maya_extent():
@@ -81,23 +95,36 @@ def cube_size(width, height, scale=1.0):
 
 
 def faces_2d(q, centre, size):
-    """Visible cube faces on screen, back to front: [(name, polygon, facing, u2d, v2d)]."""
+    """Visible cube faces, back to front: [(name, polygon, facing, u2d, v2d)]."""
     k = size * _PX_PER_UNIT
-    cx, cy = centre
     out = []
     for name, (n, u, v) in FACES.items():
         nv = _to_view(q, n)
-        if nv.z <= 1e-4:
+        # Eye is at (0, 0, CUBE_EYE); the face centre is .5 along its normal.
+        if nv.z * CUBE_EYE <= .5:
             continue
         nvec, uvec, vvec = Vector(n), Vector(u), Vector(v)
         poly = []
         for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-            p = _to_view(q, nvec * 0.5 + uvec * 0.5 * su + vvec * 0.5 * sv)
-            poly.append((cx + p.x * k, cy + p.y * k))
+            p = _to_view(q, nvec * .5 + uvec * .5 * su + vvec * .5 * sv)
+            poly.append(_project_cube_point(p, centre, k)[0])
         u2, v2 = _to_view(q, u), _to_view(q, v)
         out.append((name, poly, nv.z, (u2.x, u2.y), (v2.x, v2.y)))
     out.sort(key=lambda f: f[2])
     return out
+
+
+def _cube_rotation(rv3d):
+    """Use the visible camera orientation in Camera View and the usual viewport rotation elsewhere."""
+    if rv3d.view_perspective == 'CAMERA':
+        return rv3d.view_matrix.inverted().to_quaternion()
+    return rv3d.view_rotation
+
+
+def _face_aligned(rv3d):
+    """A roll is offered only when the visible view looks straight at a cube face."""
+    forward = _cube_rotation(rv3d) @ Vector((0.0, 0.0, 1.0))
+    return max(abs(forward.x), abs(forward.y), abs(forward.z)) >= 1.0 - 1e-5
 
 
 def point_in_poly(x, y, poly):
@@ -290,6 +317,200 @@ def _cube_here(context):
 # --- drawing --------------------------------------------------------------------------------
 
 _shader = []
+_label_gpu = {}
+
+
+def label_quad(q, name, centre, size):
+    """Face-plane label projected by the same finite eye as the visible face."""
+    n, u, v = (Vector(axis) for axis in FACES[name])
+    positions, weights = [], []
+    # Atlas words have equal widths; normalize their letter heights instead.
+    h = .34 * 61.0 / CUBE_LABEL_CAP_HEIGHTS[name]
+    for a, b in ((-h, -h), (h, -h), (h, h), (-h, h)):
+        p = _to_view(q, n * .5 + u * (a * 1.08) + v * (b * .94))
+        screen, weight = _project_cube_point(p, centre, size * _PX_PER_UNIT)
+        positions.append((screen[0], screen[1], 0.0))
+        weights.append(weight)
+    return positions, weights
+
+
+def _label_atlas_bytes():
+    """Slightly fuller strokes at the same relative weight for all six words."""
+    from . import viewcube_sdf
+    raw = bytearray(viewcube_sdf.atlas_bytes())
+    width, height = viewcube_sdf.ATLAS_SIZE
+    for name, (u0, v0, u1, v1) in viewcube_sdf.ATLAS_UV.items():
+        offset = round(16.0 * CUBE_LABEL_CAP_HEIGHTS[name] / 61.0)
+        table = bytes(min(255, value + offset) for value in range(256))
+        x0, x1 = round(u0 * width), round(u1 * width)
+        for y in range(round(v0 * height), round(v1 * height)):
+            start, end = y * width + x0, y * width + x1
+            raw[start:end] = raw[start:end].translate(table)
+    return bytes(raw)
+
+
+def _font_resources():
+    if _label_gpu:
+        return _label_gpu
+    import gpu
+    from array import array
+    from . import viewcube_sdf
+    interface = gpu.types.GPUStageInterfaceInfo('allset_cube_label_iface')
+    interface.smooth('VEC2', 'uv_interp')
+    info = gpu.types.GPUShaderCreateInfo()
+    info.vertex_in(0, 'VEC3', 'pos')
+    info.vertex_in(1, 'VEC2', 'uv')
+    info.vertex_in(2, 'FLOAT', 'clipW')
+    info.vertex_out(interface)
+    info.push_constant('MAT4', 'ModelViewProjectionMatrix')
+    info.push_constant('VEC4', 'color')
+    info.sampler(0, 'FLOAT_2D', 'sdfAtlas')
+    info.fragment_out(0, 'VEC4', 'fragColor')
+    info.vertex_source('''void main() {
+        gl_Position = (ModelViewProjectionMatrix * vec4(pos, 1.0)) * clipW;
+        uv_interp = uv;
+    }''')
+    info.fragment_source('''void main() {
+        float d = texture(sdfAtlas, uv_interp).r;
+        float width = max(fwidth(d), 1.0 / 255.0);
+        float alpha = smoothstep(0.5 - 0.5 * width, 0.5 + 0.5 * width, d);
+        if (alpha <= 0.001) { discard; }
+        fragColor = vec4(color.rgb, color.a * alpha);
+    }''')
+    shader = gpu.shader.create_from_info(info)
+    raw = _label_atlas_bytes()
+    texture = gpu.types.GPUTexture(viewcube_sdf.ATLAS_SIZE, format='R8',
+        data=gpu.types.Buffer('FLOAT', len(raw), array('f', (v / 255.0 for v in raw))))
+    texture.filter_mode(True)
+    _label_gpu.update(shader=shader, texture=texture)
+    return _label_gpu
+
+
+def _face_text(q, name, centre, size, alpha):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    from . import viewcube_sdf
+    resources = _font_resources()
+    positions, weights = label_quad(q, name, centre, size)
+    x0, y0, x1, y1 = viewcube_sdf.ATLAS_UV[name]
+    uv = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
+    indices = (0, 1, 2, 0, 2, 3)
+    sh = resources['shader']
+    batch = batch_for_shader(sh, 'TRIS', {
+        'pos': tuple(positions[i] for i in indices),
+        'uv': tuple(uv[i] for i in indices), 'clipW': tuple(weights[i] for i in indices)})
+    sh.bind()
+    sh.uniform_float('ModelViewProjectionMatrix', gpu.matrix.get_projection_matrix() @ gpu.matrix.get_model_view_matrix())
+    sh.uniform_float('color', (.16, .16, .16, min(1.0, alpha * 1.5)))
+    sh.uniform_sampler('sdfAtlas', resources['texture'])
+    gpu.state.blend_set('ALPHA')
+    batch.draw(sh)
+
+
+def _arc_arrow(centre, radius, start, end, length, half_width):
+    """Circular shaft with a separate, tangent-aligned triangular arrowhead."""
+    direction = 1 if end > start else -1
+    theta = math.radians(end)
+    tx, ty = -direction * math.sin(theta), direction * math.cos(theta)
+    x, y = centre
+    tip = (x + radius * math.cos(theta), y + radius * math.sin(theta))
+    base = (tip[0] - tx * length, tip[1] - ty * length)
+    head = (tip, (base[0] - ty * half_width, base[1] + tx * half_width),
+            (base[0] + ty * half_width, base[1] - tx * half_width))
+    # Stop inside the triangle's base; no round stroke cap crosses its point.
+    shaft_end = end - direction * math.degrees(length * .8 / radius)
+    steps = max(12, math.ceil(abs(shaft_end - start) / 4))
+    shaft = [(x + radius * math.cos(a), y + radius * math.sin(a))
+             for a in (math.radians(start + (shaft_end-start)*i/steps) for i in range(steps+1))]
+    return shaft, head
+
+
+def _roll_arrows(context, centre, size):
+    """Two separated arcs of one circle around the projected face's upper-right corner."""
+    faces = faces_2d(_cube_rotation(context.region_data), centre, size)
+    points = [p for face in faces for p in face[1]]
+    if not points:
+        return {}
+    x0, x1 = min(p[0] for p in points), max(p[0] for p in points)
+    y0, y1 = min(p[1] for p in points), max(p[1] for p in points)
+    radius = min(x1-x0, y1-y0) * .48
+    s = _scale()
+    length, width = min(4.5*s, radius*.22), min(2.6*s, radius*.13)
+    return {'ROLL_LEFT': _arc_arrow((x1,y1), radius, 55, 100, length, width),
+            'ROLL_RIGHT': _arc_arrow((x1,y1), radius, 32, -5, length, width)}
+
+
+def control_layout(context, centre, size):
+    """Corner controls and the four small arrows around an aligned face."""
+    s = _scale()
+    x, y = centre
+    radius = min(9 * s, size * .14)
+    controls = {'HOME': (x - size * .57, y + size * .72, radius),
+            'ROLL_LEFT': (x + size * .40, y + size * .78, radius),
+            'ROLL_RIGHT': (x + size * .54, y + size * .48, radius),
+            'MENU': (x + size * .67, y - size * .55, radius),
+            'ORBIT_UP': (x, y + size * .52, radius * .72),
+            'ORBIT_DOWN': (x, y - size * .52, radius * .72),
+            'ORBIT_LEFT': (x - size * .52, y, radius * .72),
+            'ORBIT_RIGHT': (x + size * .52, y, radius * .72)}
+    for name, (shaft, head) in _roll_arrows(context, centre, size).items():
+        vertices = [*shaft, *head]
+        left, right = min(p[0] for p in vertices), max(p[0] for p in vertices)
+        bottom, top = min(p[1] for p in vertices), max(p[1] for p in vertices)
+        controls[name] = ((left+right)/2, (bottom+top)/2, max(radius,(right-left)/2,(top-bottom)/2))
+    return controls
+
+
+def _control_at(centre, controls, location, face_aligned):
+    """Hit visible control targets or the narrow path leading from the cube to each target."""
+    eligible = [(name, data) for name, data in controls.items()
+                if not name.startswith(('ROLL', 'ORBIT')) or face_aligned]
+    px, py = location
+    # A control's own circular target wins over another control's approach path.
+    for name, (x, y, radius) in eligible:
+        if (px - x) ** 2 + (py - y) ** 2 <= radius ** 2:
+            return name
+    for name, (x, y, radius) in eligible:
+        dx, dy = x - centre[0], y - centre[1]
+        length_sq = dx * dx + dy * dy
+        if length_sq <= 1e-12:
+            continue
+        t = ((px - centre[0]) * dx + (py - centre[1]) * dy) / length_sq
+        if 0.0 <= t <= 1.0:
+            ex, ey = centre[0] + t * dx, centre[1] + t * dy
+            if (px - ex) ** 2 + (py - ey) ** 2 <= (radius * .45) ** 2:
+                return name
+    return None
+
+
+def _draw_controls(context, centre, size, hover):
+    arrows = _roll_arrows(context, centre, size)
+    for name, (x, y, radius) in control_layout(context, centre, size).items():
+        if name.startswith(('ROLL', 'ORBIT')) and not _face_aligned(context.region_data):
+            continue
+        colour = (.55, .78, .98, 1.0) if hover == name else (.82, .85, .88, .88)
+        r = radius * .55
+        if name == 'HOME':
+            points, head = _arc_arrow((x,y), r, 550, 225, r*.65, r*.29)
+            _lines(points, colour, 1.4 * _scale(), context.region)
+            _fill(head, colour)
+            continue
+        elif name == 'MENU':
+            points = [(x-r, y+r*.35), (x, y-r*.45), (x+r, y+r*.35)]
+        elif name.startswith('ORBIT'):
+            dx, dy = {'ORBIT_UP': (0, 1), 'ORBIT_DOWN': (0, -1),
+                      'ORBIT_LEFT': (-1, 0), 'ORBIT_RIGHT': (1, 0)}[name]
+            dx, dy = -dx, -dy  # The small triangles point toward the cube.
+            _fill([(x+dx*r, y+dy*r),
+                   (x-dx*r*.6-dy*r, y-dy*r*.6+dx*r),
+                   (x-dx*r*.6+dy*r, y-dy*r*.6-dx*r)], colour)
+            continue
+        else:
+            points, head = arrows[name]
+            _lines(points, colour, 1.8 * _scale(), context.region)
+            _fill(head, colour)
+            continue
+        _lines(points, colour, 1.5 * _scale(), context.region)
 
 
 def _sh():
@@ -306,6 +527,25 @@ def _fill(poly, colour):
     batch = batch_for_shader(sh, 'TRI_FAN', {"pos": poly})
     sh.uniform_float("color", colour)
     batch.draw(sh)
+
+
+def _fill_cube_face(poly, name, facing, alpha):
+    """World-up lighting: bright upper face, darker underside, smooth sides."""
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    shaders = _sh()
+    if len(shaders) == 2:
+        shaders.append(gpu.shader.from_builtin('SMOOTH_COLOR'))
+    normal, u, v = FACES[name]
+    colours = []
+    for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        height = .5 + .5 * (normal[2] + u[2] * su + v[2] * sv)
+        shade = (.77 + .22 * height) * (.92 + .08 * facing)
+        colours.append((shade, shade, shade, alpha))
+    shader = shaders[2]
+    batch = batch_for_shader(shader, 'TRI_FAN', {'pos': poly, 'color': colours})
+    shader.bind()
+    batch.draw(shader)
 
 
 def _lines(points, colour, width, region, loop=False):
@@ -343,21 +583,20 @@ def draw_cube(context, hover=None, alpha=0.5):
     s = _scale()
     size = cube_size(region.width, region.height, s)
     centre, _label, _triad = layout(_bounds(context), s, size)
-    faces = faces_2d(rv3d.view_rotation, centre, size)
-    for name, poly, facing, u2, _v2 in faces:
-        shade = 0.82 + 0.18 * facing
-        rgb = (0.55, 0.75, 0.95) if name == hover else (shade, shade, shade)
+    q = _cube_rotation(rv3d)
+    faces = faces_2d(q, centre, size)
+    for name, poly, facing, _u2, _v2 in faces:
         import gpu
-        gpu.state.blend_set('ALPHA')         # blf.draw of the previous face's label turns blending off
-        _fill(poly, (*rgb, alpha))
-        _lines(poly, (0.44, 0.44, 0.44, alpha), 1.5, region, loop=True)
-        if facing > 0.35:
-            cx = sum(p[0] for p in poly) / 4
-            cy = sum(p[1] for p in poly) / 4
-            ang = math.atan2(u2[1], u2[0])
-            if math.cos(ang) < 0:            # never upside down
-                ang += math.pi
-            _text(name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (0.3, 0.3, 0.3, alpha), ang)
+        gpu.state.blend_set('ALPHA')
+        if name == hover:
+            _fill(poly, (0.55, 0.75, 0.95, alpha))
+        else:
+            _fill_cube_face(poly, name, facing, alpha)
+        _lines(poly, (0.418, 0.418, 0.418, alpha), 1.95, region, loop=True)
+        if facing > 0.28:
+            _face_text(q, name, centre, size, alpha)
+    if hover is not None:
+        _draw_controls(context, centre, size, hover)
     return faces
 
 
@@ -493,6 +732,100 @@ def _remove_handler():
 
 # --- ViewCube gizmo -------------------------------------------------------------------------
 
+class ALLSET_OT_view_cube_control(bpy.types.Operator):
+    """Navigate the current viewport without moving the scene camera"""
+    bl_idname = 'allset.view_cube_control'
+    bl_label = 'ViewCube Navigation'
+    bl_options = {'INTERNAL'}
+
+    action: bpy.props.EnumProperty(items=[(name, name.replace('_', ' ').title(), '')
+                                         for name in CONTROL_NAMES])
+
+    @classmethod
+    def poll(cls, context):
+        return (context.area is not None and context.area.type == 'VIEW_3D'
+                and context.region is not None and context.region.type == 'WINDOW'
+                and context.region_data is not None)
+
+    def execute(self, context):
+        rv = context.region_data
+        if self.action == 'MENU':
+            bpy.ops.wm.call_menu('INVOKE_DEFAULT', name=ALLSET_MT_view_cube.__name__)
+            return {'FINISHED'}
+        if self.action == 'HOME':
+            previous = rv.view_perspective
+            if previous == 'CAMERA':
+                rv.view_perspective = 'PERSP'
+            try:
+                result = bpy.ops.allset.view_home('EXEC_DEFAULT', True) if bpy.ops.allset.view_home.poll() else {'CANCELLED'}
+            except RuntimeError:
+                result = {'CANCELLED'}
+            if result != {'FINISHED'} and previous == 'CAMERA':
+                rv.view_perspective = previous
+            return result
+        if self.action not in {'ROLL_LEFT', 'ROLL_RIGHT'} or not _face_aligned(rv):
+            return {'CANCELLED'}
+        if not bpy.ops.view3d.view_roll.poll():
+            return {'CANCELLED'}
+        previous = rv.view_perspective
+        if previous == 'CAMERA':
+            visible_rotation = _cube_rotation(rv)
+            previous_rotation = rv.view_rotation.copy()
+            rv.view_perspective = 'PERSP'
+            rv.view_rotation = visible_rotation
+        try:
+            result = bpy.ops.view3d.view_roll('EXEC_DEFAULT', True, type='ANGLE',
+                        angle=(1 if self.action == 'ROLL_LEFT' else -1) * math.pi / 2)
+        except RuntimeError:
+            result = {'CANCELLED'}
+        if result != {'FINISHED'} and previous == 'CAMERA':
+            rv.view_rotation = previous_rotation
+            rv.view_perspective = previous
+        context.area.tag_redraw()
+        return result
+
+    def invoke(self, context, event):
+        # Open the popup after release so the click that opened it cannot choose an item.
+        if self.action == 'MENU' and event.value == 'PRESS':
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
+        return self.execute(context)
+
+    def modal(self, context, event):
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            return self.execute(context)
+        if event.type in {'ESC', 'RIGHTMOUSE'}:
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
+class ALLSET_MT_view_cube(bpy.types.Menu):
+    bl_label = 'ViewCube'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator('allset.view_cube_control', text='Home View').action = 'HOME'
+        layout.operator('view3d.view_persportho', text='Perspective / Orthographic')
+        layout.separator()
+        for name in FACE_NAMES:
+            layout.operator('view3d.view_axis', text=name.title()).type = name
+
+
+def _ensure_cube_controls(gizmo):
+    if getattr(gizmo, '_view_controls_ready', False) == 2:
+        return
+    for i, name in enumerate(CONTROL_NAMES + ORBIT_CONTROLS, len(FACE_NAMES)):
+        if name in ORBIT_CONTROLS:
+            op = gizmo.target_set_operator('view3d.view_orbit', index=i)
+            op.type = name.replace('_', '')
+            op.angle = math.pi / 2
+        else:
+            op = gizmo.target_set_operator('allset.view_cube_control', index=i)
+            op.action = name
+    gizmo._view_controls_ready = 2
+
+
 class ALLSET_GT_view_cube(bpy.types.Gizmo):
     bl_idname = "ALLSET_GT_view_cube"
 
@@ -506,6 +839,7 @@ class ALLSET_GT_view_cube(bpy.types.Gizmo):
     def draw(self, context):
         if not _cube_here(context):
             return
+        _ensure_cube_controls(self)
         import gpu
         from mathutils import Matrix
         region = context.region
@@ -521,6 +855,7 @@ class ALLSET_GT_view_cube(bpy.types.Gizmo):
             gpu.state.blend_set('NONE')
 
     def test_select(self, context, location):
+        _ensure_cube_controls(self)
         space, region = context.space_data, context.region
         if space.region_quadviews and _ACTIVE["region"] != region.as_pointer():
             _ACTIVE["region"] = region.as_pointer()
@@ -528,11 +863,17 @@ class ALLSET_GT_view_cube(bpy.types.Gizmo):
         s = _scale()
         size = cube_size(region.width, region.height, s)
         centre, _l, _t = layout(_bounds(context), s, size)
-        name = hit_face(faces_2d(context.region_data.view_rotation, centre, size), *location)
+        faces = faces_2d(_cube_rotation(context.region_data), centre, size)
+        controls = control_layout(context, centre, size)
+        # Preserve every existing face target even where a control's radius overlaps it.
+        name = hit_face(faces, *location)
+        if name is None:
+            name = _control_at(centre, controls, location, _face_aligned(context.region_data))
         if name != self.hover:
             self.hover = name
             context.area.tag_redraw()
-        return FACE_NAMES.index(name) if name else -1
+        names = FACE_NAMES + CONTROL_NAMES + ORBIT_CONTROLS
+        return names.index(name) if name else -1
 
 
 class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
@@ -553,7 +894,7 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
         self.gizmos.new(ALLSET_GT_view_cube.bl_idname)
 
 
-classes = (ALLSET_GT_view_cube, ALLSET_GGT_view_cube)
+classes = (ALLSET_OT_view_cube_control, ALLSET_MT_view_cube, ALLSET_GT_view_cube, ALLSET_GGT_view_cube)
 
 
 def register():
@@ -589,3 +930,4 @@ def unregister():
     _shader.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    _label_gpu.clear()
