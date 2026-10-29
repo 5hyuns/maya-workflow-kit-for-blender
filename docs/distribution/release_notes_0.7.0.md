@@ -57,5 +57,9 @@ remember their size (#203), @swarnava05 reported the Graph Editor (#192), @Zhado
 Blender 5.1 (#198, #199), and @Weeliano the Outliner after a Shift+drag duplicate, with a video (#217). Please keep
 telling us what breaks or feels off in real work.
 
+Special thanks to [@ajitta](https://github.com/ajitta) for the wonderful Claude Code skills
+([superclaude](https://github.com/ajitta/superclaude) and [know-your-unknowns](https://github.com/ajitta/know-your-unknowns))
+that helped us plan, build and review this release. 🙏
+
 Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc. This extension is not affiliated with or
 endorsed by Autodesk, Inc.

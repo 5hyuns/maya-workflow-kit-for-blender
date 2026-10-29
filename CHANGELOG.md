@@ -90,6 +90,10 @@ Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#2
   "<name> is hidden: show it (Display > Show) first" and change nothing. Thanks to @youngmin2k for the component-mode
   fix and its tests (#196).
 - **Maya mode at Blender startup** (#207): a saved Maya mode now starts completely when Blender opens.
+- **Select > Similar with nothing selected** and other component commands Blender refuses now give Blender's message
+  instead of a Python error.
+- **Effects > Fire / Smoke with a fluid container selected**: the other selected meshes become the emitters instead of
+  the command failing inside Blender.
 - **Quad Draw behind many back faces** (#207): drawing keeps looking past stacked back faces to the first front face.
 - **Pivot editing keeps the selection**: starting or ending a pivot edit in edge or face mode no longer selects
   extra components.
