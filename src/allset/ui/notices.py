@@ -21,9 +21,6 @@ NOTICES = {
                         "closest-distance weights, then paint them (Skin > Paint Skin Weights).")
        for item in ("Interactive Bind Skin", "Interactive Bind Skin Tool")},
     # Windows > Settings/Preferences (step 120)
-    "Windows/Settings/Preferences/Marking Menu Editor": (
-        "Marking menus", "The marking menus are the kit's Maya layouts; Blender has no editor for them "
-        "(Preferences > Keymap edits which key opens which menu)."),
     "Windows/Settings/Preferences/Shelf Editor": (
         "Shelves", "The shelves are Maya's factory shelves; there is no shelf editor (right-click a Blender "
         "button > Add to Quick Favorites keeps your own commands)."),

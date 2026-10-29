@@ -20,7 +20,9 @@ the active keyconfig and every keymap preference stay as the user has them:
 
 A persistent timer follows the active keyconfig (the user picks another preset, a keyconfig preference rebuilds
 it, the preset loads after the add-on at startup) and re-applies; ``unregister`` restores everything. Small
-feature-owned overlays still go through ``add_item``.
+feature-owned overlays still go through ``add_item``; keys the user assigned in a kit editor that must win over the
+Maya key of the same event (step 273: a custom marking menu's hotkey, Maya: assigning a hotkey replaces the old one)
+go through ``set_overlay``.
 """
 
 import bpy
@@ -47,7 +49,11 @@ _state = {
     "modal_added": set(),        # pointers of Maya modal items added to that keyconfig
     "modal_made": [],            # (name, space, region) of modal keymaps created there (none in a GUI session)
     "addon_count": -1,           # add-on keyconfig item count _keep_first last saw (step 265)
+    "overlay_items": {},         # set_overlay owner -> pointers of its items (also in addon_items)
 }
+
+# set_overlay owner -> [(km name, space, idname, type, value, {modifiers}, {properties})], kept while Maya mode is off
+_overlays = {}
 
 
 def add_item(km_name, idname, type, value, space_type="EMPTY", region_type="WINDOW", **kwargs):
@@ -142,7 +148,64 @@ def _restore_addon():
                 kc.keymaps.remove(km)
     ptrs.clear()
     _state["addon_made"].clear()
+    _state["overlay_items"].clear()
     _state["addon_count"] = -1
+
+
+# --- overlays (step 273) ----------------------------------------------------------------------------------------
+
+def _add_overlay(owner):
+    """Add ``owner``'s items after the Maya items of their keymaps: the last add-on item is the first one Blender
+    runs (see the module doc), and ``_keep_first`` moves them with the kit's own (they count as kit items)."""
+    kc = bpy.context.window_manager.keyconfigs.addon
+    if kc is None:
+        return
+    made = _state["overlay_items"].setdefault(owner, set())
+    for km_name, space, idname, type, value, mods, props in _overlays.get(owner, ()):
+        if _find(kc, km_name, space, "WINDOW") is None:
+            _state["addon_made"].append((km_name, space, "WINDOW"))
+        km = kc.keymaps.new(km_name, space_type=space, region_type="WINDOW")
+        kmi = km.keymap_items.new(idname, type, value, **mods)
+        for k, v in props.items():
+            setattr(kmi.properties, k, v)
+        made.add(kmi.as_pointer())
+        _state["addon_items"].add(kmi.as_pointer())
+
+
+def _remove_overlay(owner):
+    ptrs = _state["overlay_items"].pop(owner, set())
+    kc = bpy.context.window_manager.keyconfigs.addon
+    if kc is None or not ptrs:
+        return
+    for km in kc.keymaps:
+        for kmi in [k for k in km.keymap_items if k.as_pointer() in ptrs]:
+            km.keymap_items.remove(kmi)
+    _state["addon_items"].difference_update(ptrs)
+
+
+def set_overlay(owner, items):
+    """Replace ``owner``'s keymap items: [(keymap name, space type, operator idname, event type, value, {ctrl / alt /
+    shift / oskey}, {operator properties})]. They are in the add-on keyconfig while the Maya keymap is (Maya mode),
+    in front of its items of the same keymap, and taken out with it; ``[]`` removes them for good."""
+    if _state["applied"]:
+        _remove_overlay(owner)
+    if items:
+        _overlays[owner] = list(items)
+    else:
+        _overlays.pop(owner, None)
+    if _state["applied"]:
+        _add_overlay(owner)
+        _state["addon_count"] = -1
+        bpy.context.window_manager.keyconfigs.update()
+
+
+def overlay_items(owner):
+    """The add-on KeyMapItems ``owner``'s overlay has now (looked up by pointer)."""
+    ptrs = _state["overlay_items"].get(owner, set())
+    kc = bpy.context.window_manager.keyconfigs.addon
+    if kc is None or not ptrs:
+        return []
+    return [k for km in kc.keymaps for k in km.keymap_items if k.as_pointer() in ptrs]
 
 
 # --- the active keyconfig (in memory only) --------------------------------------------------------------------
@@ -258,6 +321,10 @@ def _keep_first():
             new = km.keymap_items.new_from_item(old)
             ptrs.discard(old.as_pointer())
             ptrs.add(new.as_pointer())
+            for own in _state["overlay_items"].values():
+                if old.as_pointer() in own:
+                    own.discard(old.as_pointer())
+                    own.add(new.as_pointer())
             km.keymap_items.remove(old)
         moved += 1
     _state["addon_count"] = sum(len(km.keymap_items) for km in kc.keymaps)
@@ -286,6 +353,8 @@ def activate():
         return
     data = generate_data()
     _apply_addon(data)
+    for owner in _overlays:
+        _add_overlay(owner)
     _apply_active(data)
     _state["applied"] = True
     if not bpy.app.timers.is_registered(_watch):

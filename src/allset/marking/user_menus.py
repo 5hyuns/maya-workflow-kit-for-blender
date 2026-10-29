@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""User-edited marking menus: the data behind the Marking Menu Editor (step 273, ui/marking_menu_editor.py).
+"""User-edited marking menus: the data behind the Marking Menu Editor (step 273, marking/menu_editor.py).
 
 Maya's Marking Menu Editor (Windows > Settings/Preferences > Marking Menu Editor) edits the factory marking menus
 (Restore Default puts one back) and makes new ones that a hotkey opens: hold the key, press LMB, drag and release.
@@ -513,9 +513,10 @@ def _label_used(node, label):
     return any(e.get("label") == label for e in entries)
 
 
-def update_entry(name, path, **fields):
-    """Change some fields of the entry at ``path`` (a factory reference keeps its target). A new label keeps the
-    entry's option box (Maya: the option box belongs to the item, not to its name)."""
+def update_entry(name, path, /, **fields):
+    """Change some fields of the entry at ``path`` (a factory reference keeps its target; ``fields`` may hold a
+    ``path`` of its own: a menu item's). A new label keeps the entry's option box (Maya: the option box belongs to the
+    item, not to its name)."""
     node, step = _edit(name, path)
     if node is None:
         return False

@@ -109,6 +109,9 @@ def test_rename_keeps_option_box_and_kit_label_follows():
     i = next(i for i, e in enumerate(mm.RMB_MESH.items) if e != mm.DIVIDER and e[0] == "Select Similar")
     assert um.has_option("RMB_MESH", f"#{i}")
     assert um.update_entry("RMB_MESH", f"#{i}", label="Similar")
+    j = um.add_item("RMB_EMPTY", "", {"label": "Item", "type": "item", "path": "Edit/Undo"})
+    assert um.update_entry("RMB_EMPTY", j, path="Edit/Redo")          # an item's own "path" field
+    assert um.entry_at("RMB_EMPTY", j)["path"] == "Edit/Redo"
     um.apply()
     menu = mm.MENUS["RMB_MESH"]
     assert menu.items[i][0] == "Similar" and "Similar" in menu.options and "Select Similar" not in menu.options

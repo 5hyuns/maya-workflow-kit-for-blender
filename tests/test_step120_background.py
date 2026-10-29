@@ -92,8 +92,11 @@ def test_settings_preferences_menu():
                     "Panel Editor", "Plug-in Manager"]
     assert menu_map.MAP["Windows/Settings/Preferences/Color Settings"] == "allset.color_settings"
     assert "Windows/Settings/Preferences" not in menu_map.MAP       # a submenu now, not a leaf
-    for label in ("Marking Menu Editor", "Shelf Editor", "Panel Editor"):
+    for label in ("Shelf Editor", "Panel Editor"):
         assert f"Windows/Settings/Preferences/{label}" in notices.NOTICES
+    # step 273: a kit window now (marking/menu_editor.py)
+    assert menu_map.MAP["Windows/Settings/Preferences/Marking Menu Editor"] == "allset.marking_menu_editor"
+    assert "Windows/Settings/Preferences/Marking Menu Editor" not in notices.NOTICES
     paths = {p for p, _it in menu_sets.iter_items()} if hasattr(menu_sets, "iter_items") else set()
     if paths:
         assert "Windows/Settings/Preferences/Color Settings" in paths
