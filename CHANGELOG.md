@@ -5,6 +5,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Fixed
+- **Frame Selection (F)**: Object and mesh component modes keep Maya's framing shortcut ahead of another
+  addon's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
+
 ## [0.7.0] — 2026-10-29
 
 Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and
