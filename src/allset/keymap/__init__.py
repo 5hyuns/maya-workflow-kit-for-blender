@@ -225,11 +225,33 @@ def _event_sig(kmi):
     return (kmi.type, kmi.value, kmi.any, kmi.shift, kmi.ctrl, kmi.alt, kmi.oskey, kmi.key_modifier)
 
 
+# a press item runs before the click / drag / double click items of the same key
+_PRESS_FIRST = {'CLICK', 'CLICK_DRAG', 'DOUBLE_CLICK'}
+
+
+def _mod_overlap(a, b):
+    return a == b or a == -1 or b == -1
+
+
+def same_press(a, b):
+    """True when one key press could run both items: event signatures as tuples (``_event_sig``). ANY values and
+    modifiers, ``any`` and a press against a click / drag / double click of the same key count."""
+    type_a, value_a, any_a, *mods_a, keymod_a = a
+    type_b, value_b, any_b, *mods_b, keymod_b = b
+    if type_a != type_b or keymod_a != keymod_b:
+        return False
+    values = {value_a, value_b}
+    if not (value_a == value_b or 'ANY' in values or ('PRESS' in values and values & _PRESS_FIRST)):
+        return False
+    return any_a or any_b or all(_mod_overlap(x, y) for x, y in zip(mods_a, mods_b))
+
+
 def _keep_first():
     """Maya keys first in Maya mode (step 265, Issue #178): Blender merges the add-on keyconfig into the keymaps
     putting each add-on item at the head in turn, so an item another add-on adds later (a "Draw" add-on's D in Object
-    Mode) runs before the kit's same key and the Maya key never fires. When an active item of another add-on with the
-    same event sits after a kit item in an add-on keymap, the kit's items of that keymap move to its end (= first
+    Mode) runs before the kit's same key and the Maya key never fires. When an active item of another add-on that one
+    key press could also run (``same_press``: the same event, or ANY / a press against a click) sits after a kit item
+    in an add-on keymap, the kit's items of that keymap move to its end (= first
     again). Only runs when the add-on keyconfig's item count changed; Maya mode off removes the kit's items, so the
     other add-on's key works again. Returns the number of keymaps reordered."""
     kc = bpy.context.window_manager.keyconfigs.addon
@@ -243,12 +265,12 @@ def _keep_first():
     for km in kc.keymaps:
         if km.is_modal:
             continue
-        kit_at = {}
+        kit_sigs = []
         clash = False
-        for i, kmi in enumerate(km.keymap_items):
+        for kmi in km.keymap_items:
             if kmi.as_pointer() in ptrs:
-                kit_at.setdefault(_event_sig(kmi), i)
-            elif kmi.active and _event_sig(kmi) in kit_at:
+                kit_sigs.append(_event_sig(kmi))
+            elif kmi.active and any(same_press(_event_sig(kmi), sig) for sig in kit_sigs):
                 clash = True
                 break
         if not clash:
@@ -262,6 +284,12 @@ def _keep_first():
         moved += 1
     _state["addon_count"] = sum(len(km.keymap_items) for km in kc.keymaps)
     return moved
+
+
+def keep_first_now():
+    """``_keep_first`` without waiting for the add-on item count to change (a Maya switch, a file load)."""
+    _state["addon_count"] = -1
+    return _keep_first()
 
 
 def _watch():
@@ -288,6 +316,7 @@ def activate():
     _apply_addon(data)
     _apply_active(data)
     _state["applied"] = True
+    keep_first_now()
     if not bpy.app.timers.is_registered(_watch):
         bpy.app.timers.register(_watch, first_interval=0.0, persistent=True)
 

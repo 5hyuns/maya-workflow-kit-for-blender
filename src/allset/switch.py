@@ -436,11 +436,42 @@ def _report_failure(ex):
         pass
 
 
+def stop_playback():
+    """Stop animation playback in every window before a switch: the keymap and the timeline header change under
+    a running playback otherwise. Returns the number of windows stopped."""
+    stopped = 0
+    if bpy.app.background:
+        return 0
+    for window in _windows():
+        screen = window.screen
+        if screen is None or not screen.is_animation_playing:
+            continue
+        try:
+            with bpy.context.temp_override(window=window, screen=screen):
+                bpy.ops.screen.animation_cancel(restore_frame=False)
+            stopped += 1
+        except RuntimeError:
+            pass
+    return stopped
+
+
 def set_mode(on, layout=True):
     """Switch Maya mode on / off now (no restart). The open file's scenes are not touched; Blender's preferences
     are never written (step 130): switching off unregisters the Maya mode modules, which takes back everything
     they registered."""
     prefs = _prefs_addon()
+    stop_playback()
+    if on and prefs.maya_mode and _registered[0]:
+        # already on (a start with Maya mode saved on keeps the user's workspace): the Maya button puts the Maya
+        # keys back in place and opens the Maya layout
+        from . import keymap
+        keymap.activate()
+        keymap.keep_first_now()
+        if layout and not bpy.app.background:
+            for window in _windows()[:1]:
+                enter_layout(window)
+        _redraw()
+        return False
     if on == bool(prefs.maya_mode) and (on == _registered[0]):
         return False
     if on:
