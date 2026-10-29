@@ -42,15 +42,23 @@ def _layer_hidden(ob, scene):
     return coll is not None and not coll.allset_layer.visible
 
 
-def hidden_self(ob, scene):
-    """Maya: the node's own visibility off, or its display layer hidden (the node's drawOverride)."""
-    return ob.hide_viewport or _layer_hidden(ob, scene)
+def hidden_self(ob, scene, view_layer=None):
+    """Maya: the node's own visibility off, or its display layer hidden (the node's drawOverride). Blender's own hide
+    (the Outliner's Ctrl+H, ``hide_set``) counts too, unless this rule set it (``MARK``)."""
+    if ob.hide_viewport or _layer_hidden(ob, scene):
+        return True
+    if view_layer is None or MARK in ob:
+        return False
+    try:
+        return ob.hide_get(view_layer=view_layer)
+    except RuntimeError:          # not in this view layer
+        return False
 
 
-def hidden_by_ancestor(ob, scene):
+def hidden_by_ancestor(ob, scene, view_layer=None):
     p = ob.parent
     while p is not None:
-        if hidden_self(p, scene):
+        if hidden_self(p, scene, view_layer):
             return True
         p = p.parent
     return False
@@ -66,7 +74,7 @@ def sync(scene=None, view_layer=None):
         return 0
     changed = 0
     for ob in scene.objects:
-        by_parent = hidden_by_ancestor(ob, scene)
+        by_parent = hidden_by_ancestor(ob, scene, view_layer)
         if not by_parent and MARK not in ob:
             continue
         want = by_parent or _layer_hidden(ob, scene)

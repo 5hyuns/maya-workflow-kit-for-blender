@@ -151,3 +151,42 @@ def test_unregister_shows_what_the_parent_rule_hid():
     assert dag.MARK in c1
     dag.release_all()
     assert dag.MARK not in c1 and not c1.hide_get()
+
+
+def test_blender_hide_on_a_parent_hides_the_child():
+    """The Outliner's Ctrl+H is Blender's own hide (``hide_set``, not Visibility): Maya hides the group's children too,
+    and Alt+H / showing the group brings them back."""
+    g, c1, c2 = _scene()
+    g.hide_set(True)                             # outliner.hide on group1
+    _upd()
+    assert not c1.visible_get() and dag.MARK in c1, (c1.visible_get(), dag.MARK in c1)
+    assert not c1.hide_viewport and c2.visible_get()
+    g.hide_set(False)
+    _upd()
+    assert c1.visible_get() and dag.MARK not in c1
+
+
+def test_parenting_into_a_blender_hidden_group_hides_the_node():
+    g, c1, c2 = _scene()
+    g.hide_set(True)
+    _upd()
+    c2.parent = g                                # dropped onto group1 in the Outliner
+    _upd()
+    assert not c2.visible_get(), "Maya: a node parented under a hidden group is hidden"
+    c2.parent = None
+    _upd()
+    assert c2.visible_get()
+
+
+def test_a_grandchild_follows_a_blender_hidden_grandparent():
+    """The parent rule's own ``hide_set`` (``MARK``) on the middle node isn't a hide of its own: showing the top
+    group shows the whole chain."""
+    g, c1, c2 = _scene()
+    c2.parent = c1
+    _upd()
+    g.hide_set(True)
+    _upd()
+    assert not c1.visible_get() and not c2.visible_get()
+    g.hide_set(False)
+    _upd()
+    assert c1.visible_get() and c2.visible_get(), (c1.visible_get(), c2.visible_get())
