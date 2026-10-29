@@ -6,9 +6,25 @@ from step 10. Only this add-on's own settings live here: since step 130 (#13) no
 preferences (the navigation / undo / panel / auto key / theme / splash / density / font / wire presets are gone).
 """
 
+import json
+import os
+
 import bpy
 
+# True while ``register()`` puts saved settings back (see ``restore_backup``): no update callback runs then, as at a
+# normal start where Blender loads the saved values without calling them.
+_restoring = [False]
 
+
+def _quiet(fn):
+    def update(self, context):
+        if not _restoring[0]:
+            fn(self, context)
+    update.__name__ = fn.__name__
+    return update
+
+
+@_quiet
 def _redraw_tools(_self, context):
     wm = getattr(context, 'window_manager', None)
     for window in wm.windows if wm else ():
@@ -240,6 +256,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "Blender's menus and workspace tabs (Blender menus stay as submenus)",
         default=True)
     # Maya view furniture, in views whose Blender navigation gizmo is off.
+    @_quiet
     def _update_navigation(self, context):
         from .ui import view_furniture
         if view_furniture._handle:       # Maya mode on (view_furniture registered)
@@ -260,12 +277,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     maya_camera_names: bpy.props.BoolProperty(
         name="Camera Names", description="Maya camera name (persp, top -Y, ...) at the bottom of the view",
         default=True)
+    @_quiet
     def _update_selection_wire(self, context):
         for window in context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type == 'VIEW_3D':
                     area.tag_redraw()
 
+    @_quiet
     def _update_dock_colors(self, context):
         for window in context.window_manager.windows:
             for area in window.screen.areas:
@@ -370,6 +389,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                                           "or edges extrudes them and transforms the new ones",
         default=True)
 
+    @_quiet
     def _update_units(self, context):
         from .operators import units
         if self.maya_units:
@@ -539,7 +559,103 @@ def _menu_set_items():
 
 classes = (ALLSET_AddonPreferences,)
 
-register, unregister = bpy.utils.register_classes_factory(classes)
+_register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
+
+
+# --- settings backup -------------------------------------------------------------------------------------------
+# Blender deletes an add-on's preferences when the add-on is disabled from Preferences > Add-ons (and when it is
+# removed): ``addon_utils.disable(default_set=True)`` removes its ``preferences.addons`` entry. An update keeps the
+# entry. So every unregister copies the settings the user changed into ``preferences_backup.json`` in the
+# extension's user folder, and a register that finds a fresh entry (no setting set) puts them back. A setting the
+# user put back to its default stays there: the copy is taken at every unregister. Remove deletes the user folder and with it the copy;
+# a --factory-startup session neither writes nor reads it (delegated).
+
+BACKUP_FILE = "preferences_backup.json"
+
+
+def _factory_startup():
+    return bpy.app.factory_startup
+
+
+def _backup_path():
+    if _factory_startup():
+        return None
+    try:
+        folder = bpy.utils.extension_path_user(__package__, create=True)
+    except (ValueError, AttributeError):      # not installed as an extension (legacy add-on)
+        return None
+    return os.path.join(folder, BACKUP_FILE)
+
+
+def _names():
+    return [p.identifier for p in ALLSET_AddonPreferences.bl_rna.properties
+            if p.identifier not in ("rna_type", "bl_idname")]
+
+
+def _addon_prefs():
+    addon = bpy.context.preferences.addons.get(__package__)
+    return addon.preferences if addon is not None else None
+
+
+def save_backup():
+    """Write the settings that differ from a fresh install (the ones Blender stores) to the backup file."""
+    try:
+        p, path = _addon_prefs(), _backup_path()
+        if p is None or not path:
+            return
+        data = {}
+        for name in _names():
+            if p.is_property_set(name):
+                value = getattr(p, name)
+                if isinstance(value, set):
+                    value = sorted(value)
+                elif not isinstance(value, (bool, int, float, str)):
+                    value = list(value)       # vector values
+                data[name] = value
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=1, sort_keys=True)
+    except Exception as ex:                   # never stop the add-on from unregistering
+        print("Maya Workflow Kit: could not back up the add-on preferences:", ex)
+
+
+def restore_backup():
+    """Put the backup back when Blender gave the add-on a fresh preferences entry. Returns the names restored."""
+    done = []
+    try:
+        p, path = _addon_prefs(), _backup_path()
+        if p is None or not path or not os.path.isfile(path):
+            return done
+        names = _names()
+        if any(p.is_property_set(n) for n in names):
+            return done                       # Blender kept the settings (start, update): they win
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            return done
+        _restoring[0] = True
+        for name in names:
+            if name in data:
+                value = data[name]
+                try:
+                    flag = getattr(p.bl_rna.properties[name], "is_enum_flag", False)
+                    setattr(p, name, set(value) if flag else value)
+                    done.append(name)
+                except (TypeError, ValueError, AttributeError):
+                    pass                      # an option that changed type or lost an enum item since the backup
+    except Exception as ex:
+        print("Maya Workflow Kit: could not restore the add-on preferences:", ex)
+    finally:
+        _restoring[0] = False
+    return done
+
+
+def register():
+    _register_classes()
+    restore_backup()
+
+
+def unregister():
+    _unregister_classes()
 
 
 def get(context=None):

@@ -39,6 +39,7 @@ def register():
 
 
 def unregister():
+    preferences.save_backup()     # before any module runs: Blender may delete the preferences after this
     switch.unregister_mode()      # whatever Maya mode modules are registered (none after a failed start)
     for mod in reversed(CORE):
         mod.unregister()

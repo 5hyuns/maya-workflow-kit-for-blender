@@ -39,7 +39,33 @@ Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#2
   vertex or pivot, like Maya. Middle drag moves the last point; Ctrl+click inverts Blender's scene snapping for that
   click. Thanks to @Oxiidus for the report.
 
+- **Create > Lights > Dome Light** (#201): an image-based dome light (Blender World environment texture) with a
+  domeLight1 locator in the Outliner; its Rotate turns the image and its Intensity sets the strength.
+
 ### Fixed
+- **Scale manipulator like Maya** (#200): the centre handle scales uniformly by the horizontal drag, axis and plane
+  handles scale along them, Ctrl+drag on an axis scales the other two axes, middle drag is half speed and each
+  object scales about its own pivot.
+- **Kit windows remember their size and place** (#203): Hypershade, Render Settings, the editor windows and the
+  other kit windows open again where you left them.
+- **Set Driven Key on one channel twice** (#186): two driven keys on the same transform channel no longer show a
+  stale value; files made with an earlier version are updated when opened.
+- **Graph Editor, first week** (#192): selected objects without keys are listed, the tangent buttons sit on their
+  own row, only selected keys show handles, S sets keys, F / A frame like Maya and Shift+middle drag locks to time or
+  value.
+- **IK on chains of three or more bones** (#181): a Rotate Plane IK handle splits the bend between the joints like
+  Maya.
+- **Bevel part of a cylinder cap rim** (#182): the ends of an open edge chain bevel like Maya; Delete History can be
+  undone and brings the node back.
+- **Skin weights from a Maya FBX** (#189): imported joint weights add up to 1 per vertex, like Maya's own import of
+  the same file (Maya's FBX export leaves out weights of 0.001 and below; the mesh already matched).
+- **Scene updates with many objects** (#191): moving, editing or selecting no longer makes the kit go over every
+  object; on a 620-object scene an update costs about 0.6 ms more than plain Blender (was 2.9 ms).
+- **Shift+drag duplicate and the Outliner** (#217): a duplicate goes last among its siblings, like Maya, and the
+  Outliner rows no longer swap back and forth.
+- **Settings kept when the add-on is switched off and on**: Blender drops an add-on's preferences when it is unticked
+  in Preferences > Add-ons; the kit now keeps a copy in its own user folder and puts it back when it is ticked again
+  (Remove still resets everything).
 - **Maya operations in the Channel Box INPUTS** (#204): Edit Mesh > Bevel, Extrude and Mesh > Smooth (main menu,
   hotbox and shelf) leave their node (polyBevel1, polyExtrudeFace1, polySmoothFace1 …) in INPUTS in object mode too,
   and typing a new value there rebuilds the operation, as long as it is the latest kit operation and the mesh hasn't

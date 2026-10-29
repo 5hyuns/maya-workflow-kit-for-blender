@@ -86,9 +86,6 @@ def s_scene():
     for f, x in ((1, 0.0), (10, 18.0 * u)):
         cube.location.x = x
         cube.keyframe_insert("location", index=0, frame=f)
-    for fc in cube.animation_data.action.fcurves if hasattr(cube.animation_data.action, "fcurves") else ():
-        for kp in fc.keyframe_points:
-            kp.interpolation = 'LINEAR'
     try:
         compat = mod("compat")
         for fc in compat.id_fcurves(cube):
