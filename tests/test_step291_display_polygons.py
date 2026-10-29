@@ -1,8 +1,10 @@
 """Step 291: Display > Polygons is Maya's submenu (it opened Blender's edit-mode overlay popover). Its check items read
 and set the overlays of the 3D View the menu acts on (the largest one when the menu is in the top bar); Normals Size...
-and Reset Display are kit operators; the items without a Blender equivalent are greyed with a notice.
+is a small kit window whose slider is the overlay's Normal Size (live, open until OK); Reset Display is a kit
+operator; the items without a Blender equivalent are greyed with a notice.
 Kit: ui/menu_map.py, ui/status_line.view3d_space, ui/menu_sets.prop_owner, operators/poly_display.py, ui/notices.py."""
 
+import inspect
 import types
 from importlib import import_module
 
@@ -16,6 +18,8 @@ menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 notices = import_module(kit.MODULE + ".ui.notices")
 status_line = import_module(kit.MODULE + ".ui.status_line")
 poly_display = import_module(kit.MODULE + ".operators.poly_display")
+marked_window = import_module(kit.MODULE + ".ui.marked_window")
+window_places = import_module(kit.MODULE + ".ui.window_places")
 
 POLYGONS = "Display/Polygons"
 
@@ -53,7 +57,7 @@ class _Layout:
     def __init__(self):
         self.log = []
 
-    def prop(self, owner, attr, text=""):
+    def prop(self, owner, attr, text="", **_kw):
         self.log.append(("prop", owner, attr, text))
 
     def prop_enum(self, owner, attr, value, text=""):
@@ -137,11 +141,44 @@ def test_standard_and_soft_hard_edges_are_a_radio_pair():
     assert lay.log[0][0] == "op" and lay.log[0][1] == "allset.menu_set_value", lay.log
 
 
-def test_normals_size_sets_the_overlay_length():
-    overlay = _view().overlay
-    assert bpy.ops.allset.normals_size('EXEC_DEFAULT', size=0.5) == {'FINISHED'}
-    assert abs(overlay.normals_length - 0.5) < 1e-6
-    assert bpy.ops.allset.menu_item(item=f"{POLYGONS}/Normals Size...") in ({'FINISHED'}, {'RUNNING_MODAL'})
+def test_normals_size_is_a_window_until_ok():
+    # Maya's window stays open while the slider is dragged: a kit window, not a popup a click outside closes
+    assert poly_display.KIND in marked_window.KINDS
+    marks = [frozenset(v) for v in marked_window.KINDS.values()]
+    assert len(marks) == len(set(marks)), "two marked windows share a flag pair"
+    src = inspect.getsource(poly_display.ALLSET_OT_normals_size)
+    assert "invoke_props_dialog" not in src and "open_window" in src
+    assert menu_map.spec(f"{POLYGONS}/Normals Size...") == ("op", "allset.normals_size", {})
+    assert poly_display.ALLSET_PT_normals_size.bl_category == "Tool"
+
+
+def test_normals_size_slider_is_the_overlay_property():
+    # the slider is the 3D View's own property: the normals follow it while it is dragged; OK closes the window.
+    # Drawn in the kit window, whose screen has no 3D View: the main window's view is found
+    ctx = types.SimpleNamespace(space_data=None, screen=types.SimpleNamespace(areas=()),
+                                window_manager=bpy.context.window_manager)
+    assert status_line.view3d_space(ctx) == _view()
+    lay = _Layout()
+    poly_display.draw(lay, ctx)
+    assert ("prop", _view().overlay, "normals_length", "Normals Size") in lay.log, lay.log
+    assert [e[1:3] for e in lay.log if e[0] == "op"] == [("allset.marked_window_close", "OK")]
+
+
+def test_normals_size_opens_small_the_first_time():
+    # seeded under the name the kit window is remembered by (else the first window copies the whole 3D View)
+    assert poly_display.PLACE == f"marked:{poly_display.KIND}"
+    assert 'f"marked:{kind}"' in inspect.getsource(marked_window.open_window)
+    rect = poly_display.first_place(bpy.context)
+    assert rect is not None
+    window = bpy.context.window
+    area = max(window.screen.areas, key=lambda a: a.width * a.height)
+    scale = bpy.context.preferences.system.ui_scale or 1.0      # 0 in background
+    assert rect[2:] == (int(poly_display.WINDOW_PX[0] * scale), int(poly_display.WINDOW_PX[1] * scale))
+    rel = (rect[0] - window.x, rect[1] - window.y, rect[2], rect[3])
+    bounds = (area.x, area.y, area.width, area.height)
+    room = 2 * poly_display.WINDOW_MARGIN_PX
+    if area.width > rect[2] + room and area.height > rect[3] + room:
+        assert window_places.fit(rel, bounds) == rel          # inside the area: carved as it is
 
 
 def test_reset_display_back_to_factory():
@@ -165,3 +202,11 @@ def test_custom_polygon_display_is_the_overlay_popover():
     assert hasattr(theme, "vertex_size") and hasattr(theme, "edge_width")
     assert menu_map.spec(f"{POLYGONS}/Vertex Size...") == ("op", "screen.userpref_show", {"section": 'THEMES'})
     assert notices.tooltip(f"{POLYGONS}/Vertex Size...", mapped=True)
+
+
+def test_a_place_cut_on_four_sides_still_counts_as_carved():
+    # measured in Blender 5.2: the 340 x 120 place carved with four splits came out 338 x 116, 3 px higher; the old
+    # 3 px slack took that for a failed carve and the window copied the whole 3D View
+    rect = (62, 1163, 340, 120)
+    assert window_places.carved((62, 1166, 338, 116), rect)
+    assert not window_places.carved((403, 122, 1699, 1221), rect)

@@ -29,6 +29,10 @@ FILE = "window_places.json"
 MIN_MARGIN = 40          # px: a margin smaller than this is not split off (the window grows by it instead)
 MIN_SIZE = 120           # px: smallest window the kit reopens
 TICK = 0.5               # s between rect samples of the open kit windows
+# px a carved piece may differ from its target: each split's border takes ~2 px, and a place with margins on all
+# four sides is cut twice per axis (step 291, measured in Blender 5.2: 340 x 120 carved to 338 x 116, 3 px higher).
+# More than that is a failed carve, and the window copies the whole area instead.
+CARVE_SLACK = 6
 
 _places = {}             # kind -> [x, y, width, height] (screen px, bottom-left origin)
 _tracked = {}            # window pointer -> kind
@@ -140,6 +144,11 @@ def cuts(rect, bounds):
     return out
 
 
+def carved(got, rect, slack=CARVE_SLACK):
+    """True when the piece ``got`` (x, y, w, h) is the carved ``rect`` (within the split borders)."""
+    return all(abs(g - t) <= slack for g, t in zip(got, rect))
+
+
 def target_in_window(kind, window, area):
     """The remembered rect of ``kind`` in ``window``-relative px, fitted inside ``area``; None = no place."""
     rect = place(kind)
@@ -233,7 +242,7 @@ class _Carve:
                 self.wait = 0
             return TICK_FAST
         got = _rect(piece)
-        ok = all(abs(g - t) <= 3 for g, t in zip(got, self.rect))
+        ok = carved(got, self.rect)
         return self.finish(window, ok)
 
     def finish(self, window, ok):
