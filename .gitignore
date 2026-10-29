@@ -84,6 +84,14 @@ tests/maya257_chain_data.py
 tests/maya257_tangent_data.py
 tests/maya257_uv_data.py
 tests/maya257_uv_faces_data.py
+tests/maya282_ik_rp_data.py
+tests/maya283_bevel_data.py
+tests/maya284/
+tests/maya284_fbx_skin_data.py
+tests/test_step282_ik_rp_multi.py
+tests/test_step283_bevel_terminal.py
+tests/test_step284_fbx_skin.py
+tests/gui/gui_step284_fbx_skin.py
 tests/test_step139_shape.py
 tests/test_step155_uv_shells.py
 tests/test_step156_curves_maya.py

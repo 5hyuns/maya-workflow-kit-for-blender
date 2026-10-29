@@ -535,7 +535,12 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if self.clicked and self.item in OPTION_BOXES and option_click.on_box(context, self.item):
             return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)    # a click on ❒ (step 183)
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
-            return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
+            try:
+                return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
+            except RuntimeError as ex:      # Blender's own refusal (Select > Similar with nothing selected ...)
+                from ..operators import maya_errors
+                maya_errors.report_nested(self, ex)
+                return {'CANCELLED'}
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
         if isinstance(rule, str):     # Maya warns and does nothing
             self.report({'WARNING'}, rule)

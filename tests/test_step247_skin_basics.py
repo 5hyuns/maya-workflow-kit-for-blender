@@ -19,6 +19,7 @@ skin = import_module(kit.MODULE + ".operators.skin")
 sb = import_module(kit.MODULE + ".operators.skin_basics")
 rig_maya = import_module(kit.MODULE + ".operators.rig_maya")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
+compat = import_module(kit.MODULE + ".compat")
 
 
 def _reset():
@@ -57,7 +58,7 @@ def _skeleton(joints, name="skeleton1"):
 
 def _mesh(points, faces, name="body"):
     me = bpy.data.meshes.new(name)
-    me.from_pydata([_b(p) for p in points], [], faces)
+    compat.mesh_from_pydata(me, [_b(p) for p in points], [], faces)    # Blender 5.0.1 selection attributes
     ob = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(ob)
     return ob

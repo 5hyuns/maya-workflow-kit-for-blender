@@ -254,6 +254,18 @@ class ALLSET_OT_quick_smoke(bpy.types.Operator):
     def execute(self, context):
         from mathutils import Vector
         meshes = [ob for ob in context.selected_objects if ob.type == 'MESH']
+        # a mesh can hold one fluid modifier: Blender's quick_smoke fails on a selected container / emitter that already
+        # has one (the new emitter is the rest of the selection)
+        taken = [ob for ob in meshes if any(md.type == 'FLUID' for md in ob.modifiers)]
+        if taken:
+            meshes = [ob for ob in meshes if ob not in taken]
+            if not meshes:
+                self.report({'WARNING'}, "Smoke: select a mesh that isn't a fluid container or emitter yet.")
+                return {'CANCELLED'}
+            for ob in taken:
+                ob.select_set(False)
+            if context.view_layer.objects.active in taken:
+                context.view_layer.objects.active = meshes[0]
         lo, hi = _selection_bounds(meshes)
         before = set(bpy.data.objects)
         if not bpy.ops.object.quick_smoke.poll():
