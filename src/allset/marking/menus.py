@@ -483,6 +483,7 @@ SHIFT_FACE = MarkingMenu(
         "NW": ("Paint Select Faces", PAINT_SELECT),
     },
     items=[
+        ("Smart Extrude", _item("Edit Mesh/Smart Extrude")),
         ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),
         ("Assign Invisible Faces", None),
         ("Add Divisions To Faces", "mesh.subdivide"),
@@ -653,6 +654,7 @@ OPT_SCALE = MarkingMenu(
         ("Preserve Children", PRESERVE_CHILDREN),
         DIVIDER,
         ("Scale Options", TOOL_SETTINGS),
+        ("Prevent Negative Scale", ("allset.prevent_negative_scale", {})),
     ])
 
 OPT_SELECT = MarkingMenu(

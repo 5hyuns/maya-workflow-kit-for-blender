@@ -246,6 +246,9 @@ def pivot_frame(context, kind):
     else:
         pts, act = _object_points(context)
     center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+    if pivot_edit(context) and context.active_object is not None:
+        from ..operators import pivot
+        return center, pivot.axes_for(context.active_object), pivot.ORIENT_NAME
     return center, axes_of(context, otype, context.region_data), otype
 
 
@@ -339,6 +342,8 @@ def tool_kind(context):
     tool = active_tool(context)
     if tool is None or tool.widget != GROUP:
         return None
+    if tool.idname == 'builtin.rotate' and pivot_edit(context):
+        return 'TRANSLATE'
     return TOOLS.get(tool.idname)
 
 
@@ -440,6 +445,30 @@ class ALLSET_GT_maya_handle(Gizmo):
 # Maya = / - (operators/manip.ALLSET_OT_manip_size): the kit manipulator's own size factor for this session. Not
 # Blender's gizmo_size preference, which the kit never writes (step 130).
 SIZE = [1.0]
+PIVOT_RING_CACHE = {}  # region pointer -> (plain numeric signature, projected ring paths)
+_PIVOT_RING_POINTS = tuple(Vector(p) for p in _ring(1.0, 48)[::2])
+
+
+def _cache_pivot_rings(context, handles, editing):
+    """Share the rendered ring strokes with preselect; keep no live UI references."""
+    key = context.region.as_pointer()
+    if not editing:
+        PIVOT_RING_CACHE.pop(key, None)
+        return
+    matrices = [gz.matrix_world.copy() for gz, role, _axis in handles if role == 'PIVOT_RING']
+    region, projection = context.region, context.region_data.perspective_matrix
+    signature = (region.width, region.height, tuple(v for row in projection for v in row),
+                 tuple(v for matrix in matrices for row in matrix for v in row))
+    previous = PIVOT_RING_CACHE.get(key)
+    if previous is not None and previous[0] == signature:
+        return
+    from ..operators import preselect
+    paths = []
+    for matrix in matrices:
+        xy, front = preselect.project([matrix @ p for p in _PIVOT_RING_POINTS], projection, region.width, region.height)
+        if front.all():
+            paths.append(xy)
+    PIVOT_RING_CACHE[key] = (signature, paths)
 
 
 def scale_basis(context):
@@ -527,9 +556,14 @@ class ALLSET_GGT_xform(GizmoGroup):
         self._built_for = (kind, pivot)
         self._ops_for = None
 
-    def _bind_ops(self, kind, otype):
+    def _bind_ops(self, kind, otype, frame=None, clamp=False, live_move=False):
         """Point each handle at Blender's transform with its constraint and orientation."""
         op = {'TRANSLATE': "transform.translate", 'RESIZE': "transform.resize"}[kind]
+        if frame is None:
+            frame = Matrix.Identity(3)
+        editing = getattr(self, "_built_for", None) == ('TRANSLATE', True)
+        if editing:
+            op = "allset.pivot_translate"
         for gz, role, data in self.handles:
             if kind == 'RESIZE' and role in ('AXIS', 'PLANE', 'CENTER'):
                 # step 275 (#200): Maya's scale drag (operators/manip_scale.py)
@@ -542,26 +576,34 @@ class ALLSET_GGT_xform(GizmoGroup):
                 props.orient_type = otype
             elif role == 'AXIS':
                 axes = tuple(a == data for a in 'XYZ')
-                props = gz.target_set_operator(op)
+                props = gz.target_set_operator("allset.component_scale" if clamp and kind == 'RESIZE' else op)
                 props.constraint_axis = axes
-                props.orient_type = otype
-                props.release_confirm = True
+                if not editing:
+                    ALLSET_GGT_xform._orient(props, otype, frame)
+                    props.release_confirm = True
             elif role == 'PLANE':
-                props = gz.target_set_operator(op)
+                props = gz.target_set_operator('allset.live_translate' if live_move else op)
                 props.constraint_axis = PLANES[data][0]
-                props.orient_type = otype
-                props.release_confirm = True
+                if not editing:
+                    ALLSET_GGT_xform._orient(props, otype, frame)
+                    props.release_confirm = True
             elif role == 'CENTER':
-                props = gz.target_set_operator(op)
-                props.release_confirm = True
+                props = gz.target_set_operator('allset.live_translate' if live_move else op)
+                if not editing:
+                    props.release_confirm = True
             elif role == 'PIVOT_RING':
-                # D mode: turn the pivot about its own axes (Maya pivot orientation handle, M7)
-                props = gz.target_set_operator("transform.rotate")
-                props.orient_axis = data
-                props.orient_type = 'LOCAL'
-                props.constraint_axis = tuple(a == data for a in 'XYZ')
-                props.release_confirm = True
-        self._ops_for = (kind, otype)
+                props = gz.target_set_operator("allset.pivot_rotate")
+                props.axis = data
+        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move)
+
+    @staticmethod
+    def _orient(props, otype, frame):
+        # Gizmo operator properties expose built-in enum values on Blender 5.2.
+        # Supply the picked component axes explicitly for custom orientations.
+        builtin = {'GLOBAL', 'LOCAL', 'NORMAL', 'GIMBAL', 'VIEW', 'CURSOR', 'PARENT'}
+        props.orient_type = otype if otype in builtin else 'GLOBAL'
+        props.orient_matrix_type = 'GLOBAL'
+        props.orient_matrix = Matrix.Identity(3) if otype in builtin else frame
 
     def draw_prepare(self, context):
         kind = tool_kind(context)
@@ -572,16 +614,29 @@ class ALLSET_GGT_xform(GizmoGroup):
             self._build(context, kind, pivot)
         scene = context.scene
         otype = slot_type(scene, kind)
-        if self._ops_for != (kind, otype):
-            self._bind_ops(kind, otype)
+        rv3d = context.region_data
+        frame = axes_of(context, otype, rv3d)
+        if pivot and context.active_object is not None:
+            from ..operators import pivot as pivot_ops
+            frame, otype = pivot_ops.axes_for(context.active_object), pivot_ops.ORIENT_NAME
+        from ..operators import component_scale
+        scale_drag = component_scale.DRAG if kind == 'RESIZE' else None
+        if scale_drag is not None:
+            frame, otype = scale_drag._frame, 'GLOBAL'
+        clamp = kind == 'RESIZE' and component_scale.enabled(context)
+        from ..operators import live_translate
+        live_move = kind == 'TRANSLATE' and not pivot and live_translate.enabled(context)
+        signature = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move)
+        if self._ops_for != signature and not any(gz.is_modal for gz, _role, _data in self.handles):
+            self._bind_ops(kind, otype, frame=frame, clamp=clamp, live_move=live_move)
         if context.mode == 'EDIT_MESH':
             pts, act = _edit_points(context)
         else:
             pts, act = _object_points(context)
         center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+        if scale_drag is not None:
+            center = scale_drag._centre
         hide = center is None
-        rv3d = context.region_data
-        frame = axes_of(context, otype, rv3d)
         view = rv3d.view_rotation.to_matrix() if rv3d is not None else Matrix.Identity(3)
         colours = axis_colours()
         s = scale_basis(context)
@@ -604,10 +659,11 @@ class ALLSET_GGT_xform(GizmoGroup):
                 rot = frame if kind == 'RESIZE' else view
                 gz.color = ACTIVE if _is_active(kind, None) else CENTER_IDLE
             else:   # PIVOT_RING
-                rot = axes_of(context, 'LOCAL', rv3d) @ _axis_rot(data)
+                rot = frame @ _axis_rot(data)
                 gz.color = colours[data]
                 gz.scale_basis = s * PIVOT_RING_R
             gz.matrix_basis = Matrix.Translation(center) @ rot.to_4x4()
+        _cache_pivot_rings(context, self.handles, pivot and not hide)
 
 
 classes = (ALLSET_GT_maya_handle, ALLSET_GGT_xform)
@@ -633,6 +689,11 @@ def draw_tool_settings(self, context):
     col = layout.column(align=True)
     col.prop(scene.transform_orientation_slots[SLOT[kind]], "type", text="Axis Orientation")
     col.prop(ts, "transform_pivot_point", text="Pivot")
+    if kind == 'RESIZE':
+        from .. import preferences
+        row = col.row()
+        row.enabled = context.mode == 'EDIT_MESH'
+        row.prop(preferences.get(context), 'prevent_negative_scale')
     row = layout.row(align=True)
     row.label(text="Step Snap")
     mode = snap_align.step_snap_mode(ts, kind)
@@ -644,6 +705,8 @@ def draw_tool_settings(self, context):
         op.kind, op.mode = kind, m
     if kind == 'ROTATE':
         layout.prop(ts, "snap_angle_increment_3d", text="Step")
+    elif kind == 'RESIZE':
+        layout.label(text="Step: 0.1")
     else:
         # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template (step 25).
         layout.label(text="Step: one grid unit", icon='SNAP_INCREMENT')
@@ -708,7 +771,7 @@ def _find_item(mode, idname):
     return None
 
 
-def resetup(tool, mode):
+def resetup(tool, mode, widget=None):
     """Set ``tool`` (a WorkSpaceTool of ``mode``) up again from the current ToolDef: the gizmo
     group a tool uses is copied at activation, so a swapped ToolDef needs this."""
     item = _find_item(mode, tool.idname)
@@ -720,10 +783,17 @@ def resetup(tool, mode):
         keymap_fallback += " (fallback)"
     tool.setup(idname=item.idname, keymap=item.keymap[0] if item.keymap is not None else "",
                cursor=item.cursor or 'DEFAULT', options=item.options or set(),
-               gizmo_group=item.widget or "", brush_type=item.brush_type or 'ANY',
+               gizmo_group=(item.widget or "") if widget is None else widget, brush_type=item.brush_type or 'ANY',
                data_block=item.data_block or "", operator=item.operator or "", index=tool.index,
                idname_fallback=tool.idname_fallback, keymap_fallback=keymap_fallback)
     return True
+
+
+def refresh_pivot_tool(context):
+    """Rotate uses the pivot edit handles during D / Insert, then its normal rings again."""
+    tool = active_tool(context)
+    if context.mode == 'OBJECT' and tool is not None and tool.idname == 'builtin.rotate':
+        resetup(tool, context.mode, widget=GROUP if pivot_edit(context) else None)
 
 
 def stale(tool, patched):
@@ -742,6 +812,15 @@ def ensure_tools(patched=True):
             try:
                 tool = ws.tools.from_space_view3d_mode(mode, create=False)
             except (TypeError, RuntimeError):
+                continue
+            if tool is not None and tool.idname == 'builtin.rotate':
+                editing = (patched and mode == 'OBJECT' and ws == bpy.context.workspace
+                           and bpy.context.scene.tool_settings.use_transform_data_origin)
+                if (tool.widget == GROUP) != editing:
+                    try:
+                        done += resetup(tool, mode, widget=GROUP if editing else None)
+                    except (TypeError, RuntimeError, AttributeError) as ex:
+                        print("allset: pivot tool setup failed", tool.idname, ex)
                 continue
             if stale(tool, patched):
                 try:
@@ -776,6 +855,7 @@ def register():
 
 def unregister():
     SIZE[0] = 1.0
+    PIVOT_RING_CACHE.clear()
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     if bpy.app.timers.is_registered(_ensure_timer):

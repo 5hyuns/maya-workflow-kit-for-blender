@@ -205,12 +205,14 @@ def highlighted(context):
     space = _view(context)
     active = context.view_layer.objects.active
     out, seen = [], set()
+    from ..operators import live
+    live_objects = set(live.objects(context.scene))
 
     def visit(ob, lead):
         if ob.session_uid in seen:
             return
         seen.add(ob.session_uid)
-        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space):
+        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space) and ob not in live_objects:
             out.append((ob, lead))
         for child in ob.children:
             if not child.select_get():          # a selected child keeps its own colour (visited as a root)
@@ -231,8 +233,11 @@ def dormant_objects(context):
     if space is None or space.type != 'VIEW_3D' or space.shading.type != 'WIREFRAME':
         return []
     out = []
+    from ..operators import live
+    scene = getattr(context, "scene", None)
+    live_objects = set(live.objects(scene)) if scene is not None else set()
     for ob in context.visible_objects:
-        if ob.type not in TYPES or ob.mode != 'OBJECT' or ob.select_get():
+        if ob.type not in TYPES or ob.mode != 'OBJECT' or ob.select_get() or (live_objects and ob in live_objects):
             continue
         if not getattr(space, TYPE_FLAGS[ob.type], True):
             continue
@@ -268,14 +273,24 @@ def frame_ms():
     return sum(_times) / len(_times) * 1000.0 if _times else 0.0
 
 
+def live_wire_objects(context):
+    from ..operators import live
+    space = context.space_data
+    if space.shading.type != 'WIREFRAME' and not space.overlay.show_wireframes:
+        return []
+    return [o for o in live.objects(context.scene) if _shown(o, space)]
+
+
 def _draw():
     context = bpy.context
     space, rv3d = context.space_data, context.region_data
-    if rv3d is None or not space.overlay.show_overlays or space.shading.type == 'RENDERED' or not _enabled():
+    if rv3d is None or not space.overlay.show_overlays or space.shading.type == 'RENDERED':
         return
-    obs = highlighted(context)
-    dormant = dormant_objects(context)
-    if not obs and not dormant:
+    from ..operators import live
+    live_obs = live_wire_objects(context)
+    obs = highlighted(context) if _enabled() else []
+    dormant = dormant_objects(context) if _enabled() else []
+    if not obs and not dormant and not live_obs:
         return
     import time
     import gpu
@@ -308,6 +323,12 @@ def _draw():
         sh.uniform_float("mvp", pm @ ob.matrix_world)
         sh.uniform_float("color", lead if is_lead else other)
         batch.draw(sh)
+    sh.uniform_float('color', _linear(live.COLOR))
+    for ob in live_obs:
+        batch = _batch(ob, depsgraph)
+        if batch is not None:
+            sh.uniform_float('mvp', pm @ ob.matrix_world)
+            batch.draw(sh)
     gpu.state.depth_test_set('NONE')
     _times.append(time.perf_counter() - t0)
     if len(_times) > 120:

@@ -283,6 +283,10 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
         from . import maya_errors
         if maya_errors.refuse_hidden(self, ob):        # Blender can't edit a hidden object (#187)
             return {'CANCELLED'}
+        from . import live
+        if context.mode == 'OBJECT' and live.contains(context.scene, ob):
+            self.report({'WARNING'}, f"{ob.name} is live: turn off Make Live to edit its components.")
+            return {'CANCELLED'}
         # Maya joints are objects. Pose mode is their object-selection state;
         # Edit mode exposes the rest skeleton as components.
         if ob is not None and ob.type == 'ARMATURE':
