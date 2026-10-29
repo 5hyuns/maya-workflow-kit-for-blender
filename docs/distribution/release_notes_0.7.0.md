@@ -48,6 +48,16 @@ Changed
 
 The known differences listed in `CHANGELOG.md` still apply.
 
+## Why this exists
+
+Many artists learned 3D in Maya and spent years building muscle memory there. When they need to work in Blender,
+because a team, a client, a class or a personal project uses it, that muscle memory works against them. This kit tries
+to make that part a little easier. It is not meant to replace Maya or to move anyone away from it; many people use
+both, and the kit is for the moments when you are in Blender and want your hands to feel at home.
+
+Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
+goal behind it.
+
 ## Thank you
 
 @youngmin2k contributed pivot editing, Prevent Negative Scale, Smart Extrude and Make Live (#207) and the hidden-mesh

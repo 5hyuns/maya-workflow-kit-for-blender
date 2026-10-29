@@ -45,8 +45,23 @@ Thanks for giving it a try 🙂
 
 ---
 
+## Why this exists
+
+Many artists learned 3D in Maya and spent years building muscle memory there. When they need to work in Blender,
+because a team, a client, a class or a personal project uses it, that muscle memory works against them. This project
+tries to make that part a little easier.
+
+It is not meant to replace Maya or to move anyone away from it. Many people use both, and this kit is for the moments
+when you are in Blender and want your hands to feel at home.
+
+Maya Workflow Kit is a free, personal open-source project. There is no paid version, no donations requested, and no
+commercial goal behind it. It is not affiliated with or endorsed by Autodesk.
+
+---
+
 ## Contents
 
+- [Why this exists](#why-this-exists)
 - [Features](#features)
 - [Known limits](#known-limits)
 - [Installation](#installation)
