@@ -40,9 +40,10 @@ def test_visibility_keys():
     want = {(False, False, False): "TOGGLE", (False, True, False): "HIDE",
             (False, False, True): "HIDE_UNSELECTED", (True, False, False): "SHOW_SELECTED",
             (True, True, False): "SHOW_LAST"}
-    for (shift, ctrl, alt), action in want.items():
-        got = _kmis("Object Mode", "H", shift=shift, ctrl=ctrl, alt=alt)
-        assert [(k.idname, k.properties.action) for k in got] == [("allset.visibility", action)],             (shift, ctrl, alt, [k.idname for k in got])
+    for km in ("Object Mode", "Outliner"):         # Outliner: Maya hides there with the same keys
+        for (shift, ctrl, alt), action in want.items():
+            got = _kmis(km, "H", shift=shift, ctrl=ctrl, alt=alt)
+            assert [(k.idname, k.properties.action) for k in got] == [("allset.visibility", action)],                 (km, shift, ctrl, alt, [k.idname for k in got])
     alt_h = _kmis("Mesh", "H", alt=True)
     assert [k.idname for k in alt_h] == ["mesh.hide"] and alt_h[0].properties.unselected
     for mods in ({"shift": True}, {"ctrl": True, "shift": True}, {"ctrl": True, "alt": True}):

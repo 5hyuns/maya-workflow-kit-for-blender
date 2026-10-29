@@ -1,7 +1,8 @@
 """Maya: hiding a group hides everything below it, and a node parented under a hidden group is hidden too (step 164
 DAG rule). In a real UI: Ctrl+H on group1 in the Outliner and in the viewport, then pCube2 parented into the hidden
-group (no explicit ``dag.sync``: the depsgraph handler has to catch it). Before the fix the Outliner's Ctrl+H (Blender's
-``outliner.hide`` = ``hide_set``) left pCube1 visible."""
+group (no explicit ``dag.sync``: the depsgraph handler has to catch it), and Shift+H in the Outliner shows the group
+again. Before the fix the Outliner's Ctrl+H was Blender's ``outliner.hide`` (``hide_set``): pCube1 stayed visible and
+Shift+H there did nothing."""
 
 import os
 import sys
@@ -80,7 +81,25 @@ def s_outliner_check():
     g, c1, _c2 = obs()
     print(state(g), "|", state(c1), flush=True)
     check(f"Outliner Ctrl+H hides group1 ({state(g)})", not g.visible_get())
+    check(f"Outliner Ctrl+H is Maya's Hide: group1's Visibility goes off ({state(g)})", g.hide_viewport)
     check(f"Outliner Ctrl+H: pCube1 under group1 is hidden too ({state(c1)})", not c1.visible_get())
+    bpy.context.view_layer.objects.active = g      # group1 clicked in the Outliner (a hidden row can't select)
+
+
+@step
+def s_outliner_shift_h():
+    ev('LEFT_SHIFT', 'PRESS', shift=True)
+    ev('H', 'PRESS', shift=True)
+    ev('H', 'RELEASE', shift=True)
+    ev('LEFT_SHIFT', 'RELEASE')
+
+
+@step
+def s_outliner_shown():
+    g, c1, _c2 = obs()
+    print(state(g), "|", state(c1), flush=True)
+    check(f"Outliner Shift+H shows group1 again ({state(g)})", g.visible_get())
+    check(f"Outliner Shift+H: pCube1 comes back with it ({state(c1)})", c1.visible_get())
     show_all()
     select_only(g)
     hover(view3d())

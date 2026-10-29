@@ -506,6 +506,12 @@ def patch_undo_visibility(kd):
     kd.remove("Object Mode", "object.hide_view_clear", type="H", alt=True)
     for key, mods, action in VISIBILITY_KEYS:
         _add(kd, "Object Mode", "allset.visibility", make_event(key, **mods), {"action": action})
+    # Outliner: the same keys (Maya hides from the Outliner with them). IC Ctrl+H = outliner.hide (the view-layer
+    # flag, which Shift+H / Ctrl+Shift+H can't bring back), Alt+H = outliner.unhide_all.
+    kd.remove("Outliner", "outliner.hide", type="H", ctrl=True)
+    kd.remove("Outliner", "outliner.unhide_all", type="H", alt=True)
+    for key, mods, action in VISIBILITY_KEYS:
+        _add(kd, "Outliner", "allset.visibility", make_event(key, **mods), {"action": action})
     # Mesh components: hidden components can't be selected in Blender, so the "show"
     # keys reveal everything (and select it). IC Shift+H / Alt+H = hide unselected / reveal.
     kd.remove("Mesh", "mesh.hide", type="H", shift=True)
