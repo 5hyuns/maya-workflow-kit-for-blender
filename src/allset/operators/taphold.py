@@ -222,17 +222,6 @@ class SelectAllBinding(TapHoldBinding):
         modal.open_menu("SELECT_ALL", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
-class SpaceBinding(TapHoldBinding):
-    """Space: tap = four views <-> single view (Maya pane maximize).
-    Hold = hotbox (step 10)."""
-    name = "space"
-    label = "Four Views / Hotbox"
-
-    def tap(self, context):
-        if context.space_data is not None and context.space_data.type == 'VIEW_3D':
-            bpy.ops.allset.toggle_quad_view()
-
-
 def playback_range(scene):
     if scene.use_preview_range:
         return scene.frame_preview_start, scene.frame_preview_end
@@ -289,7 +278,7 @@ class TimeDragBinding(TapHoldBinding):
 
 
 classes = (ALLSET_OT_tap_hold,)
-_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding, SpaceBinding, TimeDragBinding)
+_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding, TimeDragBinding)
 
 
 def register_bindings():

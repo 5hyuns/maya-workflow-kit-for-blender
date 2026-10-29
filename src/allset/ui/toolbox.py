@@ -654,7 +654,10 @@ class ALLSET_OT_quick_layout(bpy.types.Operator):
         from .status_line import main_view3d
         area, _r = main_view3d(context.screen)
         if area is None:
-            return {'CANCELLED'}
+            # no 3D View panel (the one panel left is a Graph Editor ...): the layout itself
+            from . import four_view
+            done = four_view.set_layout(context, context.window, self.layout == 'FOUR')
+            return {'FINISHED'} if done else {'CANCELLED'}
         key = "LAYOUT_SINGLE" if self.layout == 'SINGLE' else "LAYOUT_FOUR"
         with context.temp_override(area=area, region=main_region(area)):
             return bpy.ops.allset.panel_set(key=key)

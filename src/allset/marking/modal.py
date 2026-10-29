@@ -337,11 +337,22 @@ def hotbox_rows(context, area_type=None):
 
 
 def pane_tap(context):
-    """Space tap: 3D View four views <-> single (step 4), other editors maximize the pane."""
-    if context.area is not None and context.area.type == 'VIEW_3D':
-        bpy.ops.allset.toggle_quad_view()
-    else:
-        bpy.ops.screen.screen_full_area()
+    """Maya Space tap over any editor: a panel of the four view stays alone, the panel left alone becomes the four
+    view again; a pane outside the layout is maximized, and a maximized pane goes back to its layout. Blender
+    refusing the split / join shows an in-view message instead of raising out of the hotbox."""
+    from ..ui import four_view, view_message
+    screen = context.screen
+    try:
+        if screen is not None and (screen.show_fullscreen or screen.name.endswith("-nonnormal")):
+            bpy.ops.screen.back_to_previous()
+            return
+        got = four_view.tap(context, context.area, context.window)
+        if got is None:
+            bpy.ops.screen.screen_full_area()
+        elif got == "failed":
+            view_message.show(context, "This panel can't be split into the four view here")
+    except RuntimeError:             # an operator's poll failed
+        view_message.show(context, "Space: this pane can't be maximized here")
 
 
 _LAST_HOLD_END = [None]   # monotonic time the last hotbox hold ended (engine.restart_too_soon)
@@ -552,7 +563,7 @@ class ALLSET_OT_hb_single(bpy.types.Operator):
             return {'CANCELLED'}
         from ..ui import four_view                 # step 237: the persp panel stays, the others close
         if four_view.is_four(context.window.screen):
-            four_view.leave(context, window=context.window, role="persp")
+            four_view.set_layout(context, context.window, False)
         return {'FINISHED'}
 
 

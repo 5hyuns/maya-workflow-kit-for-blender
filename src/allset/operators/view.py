@@ -628,18 +628,15 @@ class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
 
     def execute(self, context):
         from ..ui import four_view
-        area = context.area
-        if four_view.is_four(context.window.screen):
-            if bpy.app.background:
-                self.report({'WARNING'}, "Leaving the four view needs the Blender window")
-                return {'CANCELLED'}
-            kept = four_view.leave(context, keep=area)
-            if kept is None:
-                return {'CANCELLED'}
+        four = four_view.is_four(context.window.screen)
+        got = four_view.tap(context, context.area, context.window)
+        if got in ("four", "single"):
             return {'FINISHED'}
-        if not four_view.enter(context, area):
-            return {'CANCELLED'}
-        return {'FINISHED'}
+        if got == "failed" and four and bpy.app.background:
+            self.report({'WARNING'}, "Leaving the four view needs the Blender window")
+        elif got == "failed" and not bpy.app.background:
+            self.report({'WARNING'}, "This panel can't be split into the four view here")
+        return {'CANCELLED'}
 
 
 def _persp_store():

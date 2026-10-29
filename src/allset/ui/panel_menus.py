@@ -342,14 +342,13 @@ def apply(context, key):
         # the persp panel, Four View puts every panel back with its own settings
         from . import four_view
         from ..operators import view
+        # any editor can be one of the panels: the four view is never split again, one panel never joined again
         area, window = context.area, context.window
-        if four_view.is_four(window.screen) != (key == "LAYOUT_FOUR"):
-            if key == "LAYOUT_FOUR":
-                four_view.enter(context, area, window)
-            else:
-                area = four_view.leave(context, window=window, role="persp") or area
+        got = four_view.set_layout(context, window, key == "LAYOUT_FOUR", area)
         if key == "LAYOUT_SINGLE":
-            view.ensure_persp(area, area.spaces.active)     # Maya: Single Perspective is the persp camera (#8)
+            area = got or area
+            if area.type == 'VIEW_3D':
+                view.ensure_persp(area, area.spaces.active)     # Maya: Single Perspective is the persp camera (#8)
     else:
         return False
     return True
