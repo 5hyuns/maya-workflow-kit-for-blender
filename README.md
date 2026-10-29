@@ -6,7 +6,7 @@
 
 **The whole Maya workflow in Blender, in one install.**
 
-[![Blender 5.0 – 5.2](https://img.shields.io/badge/Blender-5.0%20%E2%80%93%205.2-5285a6)](#requirements)
+[![Blender 5.2 LTS](https://img.shields.io/badge/Blender-5.2%20LTS-5285a6)](#requirements)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 ![Maya Workflow Kit — for Maya users, in Blender. The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
@@ -55,7 +55,7 @@ Thanks for giving it a try 🙂
 - [Quick start for Maya users](#quick-start-for-maya-users)
 - [FAQ](#faq)
 - [Development](#development)
-- [Credits](#credits) · [License](#license) · [Trademarks](#trademarks)
+- [Contributors](#contributors) · [Credits](#credits) · [License](#license) · [Trademarks](#trademarks)
 
 ---
 
@@ -223,10 +223,10 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 
 ### Requirements
 
-- **Blender 5.0 through 5.2.x** (`blender_version_min = "5.0.0"`, `blender_version_max = "5.3.0"` exclusive).
-  The full test suites and the clean install → enable → disable → remove round trip were run on 5.0.1, 5.1.2 and
-  5.2.x ([]()). Blender 4.5 LTS is no longer supported: **0.6.2 is the last version
-  for Blender 4.5** — keep using 0.6.2 there.
+- **Blender 5.2 LTS.** For now the kit is supported and tested on Blender 5.2 only. It still installs on Blender 5.0
+  and 5.1 (`blender_version_min = "5.0.0"`, `blender_version_max = "5.3.0"` exclusive), but those versions are no
+  longer tested and **may have problems** — please use 5.2 if you can. Blender 4.5 LTS is no longer supported:
+  **0.6.2 is the last version for Blender 4.5** — keep using 0.6.2 there.
 - Pure Python, no compiled code, no network access. On Windows, hold keys read the keyboard state with one read-only
   system call; elsewhere Blender's own key-release event is used. Development and testing so far have been on Windows
   only.
@@ -369,8 +369,8 @@ unregistered, and nothing else was changed. See
 Yes — switch to Blender, follow along with Blender's own keys, and switch back to Maya.
 
 **Which Blender versions are supported?**
-Blender 5.0 through 5.2.x. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.2 are added once they
-are tested.
+For now, Blender 5.2 LTS only. The kit also installs on 5.0 and 5.1, but they are not tested and may have
+problems. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.2 are added once they are tested.
 
 **Does it open Maya `.ma` / `.mb` files?**
 No. Export FBX (or OBJ, Alembic, USD) from Maya; the kit's Import uses Maya presets (cm, Y-up).
@@ -421,6 +421,19 @@ Per-version results: [](). Things automated tests can't prove (feel, visuals) ar
 listed in []().
 
 ---
+
+## Contributors
+
+Thank you to everyone who sent code to the kit! 🙏
+
+| | Contribution |
+|---|---|
+| [@cnzim](https://github.com/cnzim) | Real-time transforms, joint selection and the Paint Skin Weights workspace ([#125](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/125)) |
+| [@LSKianhao](https://github.com/LSKianhao) | Time slider scaling on high-DPI screens and ruler text size tests ([#188](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/188)) |
+| [@youngmin2k](https://github.com/youngmin2k) | Hidden-mesh warning before component mode ([#196](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/196)); pivot editing, Prevent Negative Scale, Smart Extrude and Make Live ([#207](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/207)) |
+
+Many more people helped by reporting issues and testing; they are thanked in each [release note](https://github.com/5hyuns/maya-workflow-kit-for-blender/releases).
+Pull requests are welcome.
 
 ## Credits
 

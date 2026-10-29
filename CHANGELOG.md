@@ -8,11 +8,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [0.7.0] — 2026-10-29
 
 Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and
-Blender 5.0 – 5.2 only (0.6.2 stays the version for Blender 4.5 LTS).
+Supported on Blender 5.2 LTS only for now; 5.0 and 5.1 still install but are untested and may have problems (0.6.2
+stays the version for Blender 4.5 LTS).
 
 ### Changed
-- **Requires Blender 5.0 or newer (5.0 – 5.2).** 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
-  there. Blender 5.0, 5.1 and 5.2 are supported as before; versions after 5.2 are added once they are tested.
+- **Supported on Blender 5.2 LTS only, for now.** The extension needs Blender 5.0 or newer to install, but only 5.2 is
+  tested; on 5.0 and 5.1 there may be problems. 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
+  there. Versions after 5.2 are added once they are tested.
 
 ### Added
 Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#207) — thank you!

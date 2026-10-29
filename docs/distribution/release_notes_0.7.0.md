@@ -5,7 +5,7 @@ checklist in .
 
 ---
 
-**0.7.0 — Smart Extrude, pivot editing, a Maya Scale manipulator, and the fixes from your reports** (Blender 5.0 – 5.2; for Blender 4.5 LTS keep using 0.6.2)
+**0.7.0 — Smart Extrude, pivot editing, a Maya Scale manipulator, and the fixes from your reports** (Blender 5.2 LTS; for Blender 4.5 LTS keep using 0.6.2)
 
 Install it over 0.6.2, 0.6.1, 0.6.0 or 0.5.0 as usual; shelves, hotkeys, scenes and the kit's settings are kept.
 
@@ -43,7 +43,8 @@ Fixed
 - The kit's settings survive switching the add-on off and on in Preferences > Add-ons.
 
 Changed
-- 0.7.0 needs Blender 5.0, 5.1 or 5.2. On Blender 4.5 LTS keep using 0.6.2.
+- 0.7.0 is supported and tested on Blender 5.2 LTS only for now. It also installs on Blender 5.0 and 5.1, but those
+  are not tested and may have problems. On Blender 4.5 LTS keep using 0.6.2.
 
 The known differences listed in `CHANGELOG.md` still apply.
 
