@@ -17,6 +17,12 @@ take care of fitting it in with the rest.
 If something in Blender behaves differently from how your hands expect Maya to behave, please say so, even if you
 aren't sure it's a bug. Those notes are exactly what this project is built from.
 
+## One thing to keep in mind
+
+Describe Maya the way a user sees it: what is on the screen and what happens when you do something. Please don't
+include Autodesk's files, scripts, icons or text, or anything taken from inside Maya's program files. The kit
+re-creates Maya's behaviour in its own code, and keeping it that way protects both you and the project.
+
 ## If you'd like to dig in (optional)
 
 - Building and running the tests: see [Development](README.md#development) in the README. In short,
