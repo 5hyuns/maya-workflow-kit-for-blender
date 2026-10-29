@@ -94,10 +94,20 @@ def _blocked(context):
 
 def number_new(objects, rotate=True):
     """Give objects without ``allset_dag_order`` the next numbers in link order (Blender appends new objects, so link
-    order is creation order; the rotated rows of an unsynced scene are Blender's sort, not the user's)."""
-    top = max((o.get(ORDER, -1) for o in objects), default=-1)
+    order is creation order; the rotated rows of an unsynced scene are Blender's sort, not the user's).
+
+    A duplicate carries its original's number (Blender copies ID properties, #217): of the objects sharing a number
+    the oldest ID (lowest ``session_uid``) keeps it and the others count as new — Maya puts a duplicate last among its
+    siblings. Two equal numbers have no fixed order, so the sync would relink them for ever."""
+    holder = {}
     for ob in objects:
-        if ob.get(ORDER) is None:
+        n = ob.get(ORDER)
+        if n is not None and (n not in holder or ob.session_uid < holder[n].session_uid):
+            holder[n] = ob
+    top = max(-1, max(holder, default=-1))
+    for ob in objects:
+        n = ob.get(ORDER)
+        if n is None or holder[n] is not ob:
             top += 1
             ob[ORDER] = top
 
