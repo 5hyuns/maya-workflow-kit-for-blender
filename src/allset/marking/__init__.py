@@ -406,6 +406,24 @@ class ALLSET_OT_mm_python(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_mm_shelf_button(bpy.types.Operator):
+    """Run this shelf button, like a click on it (Maya: a shelf button dragged into a marking menu)"""
+    bl_idname = user_menus.SHELF_OP
+    bl_label = "Shelf Button"
+    bl_options = {'INTERNAL'}
+
+    shelf: StringProperty(options={'SKIP_SAVE'})
+    button: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from ..ui import shelf
+        index = shelf.button_index(self.shelf, self.button)
+        if index is None:
+            self.report({'WARNING'}, f"{self.button}: no longer on the {user_menus.shelf_text(self.shelf)} shelf")
+            return {'CANCELLED'}
+        return bpy.ops.allset.shelf_button(shelf=self.shelf, index=index)
+
+
 class ALLSET_OT_mm_clear_selection(bpy.types.Operator):
     """Clear the selection (objects or components)"""
     bl_idname = "allset.mm_clear_selection"
@@ -532,8 +550,8 @@ class SelectPolygonBinding(ToolOptionsBinding):
 SELECT_BINDINGS = (SelectComponentBinding, SelectPolygonBinding)
 
 
-classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_python, ALLSET_OT_mm_clear_selection,
-           *rmb_items.classes, *rmb_nodes.classes, *modal.classes, *_classes)
+classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_python, ALLSET_OT_mm_shelf_button,
+           ALLSET_OT_mm_clear_selection, *rmb_items.classes, *rmb_nodes.classes, *modal.classes, *_classes)
 
 
 def register():

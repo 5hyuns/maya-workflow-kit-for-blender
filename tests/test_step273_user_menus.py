@@ -243,6 +243,10 @@ def test_entry_actions_are_validated():
     assert um.entry_action({"type": "op", "op": "mesh.bevel", "props": "x"}) == "mesh.bevel"
     assert um.entry_action({"type": "python", "code": "  "}) is None
     assert um.entry_action({"type": "item", "path": ""}) is None
+    assert um.entry_action({"type": "shelf", "shelf": "Polygons", "button": "Delete By Type: History"}) == (
+        um.SHELF_OP, {"shelf": "Polygons", "button": "Delete By Type: History"})
+    assert um.entry_action({"type": "shelf", "shelf": "Polygons", "button": ""}) is None
+    assert um.describe({"type": "shelf", "shelf": "USER:Custom", "button": "Mine"}) == "Shelf button: Custom / Mine"
     assert um.entry_action({"type": "kit", "action": ["tool", "builtin.move", True]}) == ("tool", "builtin.move", True)
     assert um.entry_action({"type": "kit", "action": ["mesh.bevel", {"offset_type": 'OFFSET'}]}) == (
         "mesh.bevel", {"offset_type": 'OFFSET'})

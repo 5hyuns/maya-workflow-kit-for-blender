@@ -183,6 +183,21 @@ def all_buttons(name):
     return []
 
 
+def button_labels(shelf_id):
+    """[(index, label)] of every button of a shelf in slot order: a factory shelf's Maya slots then its added buttons,
+    or a user shelf's buttons (the Marking Menu Editor's Shelf Button items, step 273)."""
+    if shelf_id.startswith(USER_PREFIX):
+        s = user_shelf(shelf_id[len(USER_PREFIX):])
+        return [(i, b["label"]) for i, b in enumerate(s["buttons"])] if s is not None else []
+    out = [(i, label) for i, label, _action, _icon in all_buttons(shelf_id)]
+    return out + [(len(out) + k, b["label"]) for k, b in enumerate(factory_extras(shelf_id) or ())]
+
+
+def button_index(shelf_id, label):
+    """Slot index of the button ``label`` on shelf ``shelf_id`` (the first one of that label), or None."""
+    return next((i for i, lab in button_labels(shelf_id) if lab == label), None)
+
+
 def factory_buttons(name):
     """[(index, label, action, icon)] of the mapped buttons of a factory shelf."""
     return [b for b in all_buttons(name) if b[2] is not None]

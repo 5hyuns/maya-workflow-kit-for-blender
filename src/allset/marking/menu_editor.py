@@ -10,7 +10,8 @@ the extension's user folder) and is live in the next menu opened (``marking.appl
 
 A slot's command is one of: Kit Default (the kit's own item at that place, kept as a reference so kit updates still
 reach it), a Blender operator id + properties as JSON, a Maya main-menu item path (run like the menu), Python (like a
-shelf button), a submenu, or any kit action value as JSON.
+shelf button), a shelf button (Maya drags one from the shelf into the editor; here it is picked in a search field),
+a submenu, or any kit action value as JSON. The Maya menu item field completes the kit's menu paths as you type.
 
 Window = a ``marked_window`` kind "MARKING_MENU_EDITOR" (Properties Tool tab in its own window), like the Hotkey
 Editor; the slot fields live on the WindowManager and are filled by ``refresh`` (selection / edits), never in ``draw``.
@@ -29,6 +30,8 @@ KIND = "MARKING_MENU_EDITOR"
 TITLE = "Marking Menu Editor"
 GRID = (("NW", "N", "NE"), ("W", None, "E"), ("SW", "S", "SE"))
 DIVIDER_TEXT = "──────────"
+SHELF_SEP = " / "         # "Polygons / Delete By Type: History" in the Shelf Button field
+NEW_LABEL = "New Item"
 
 # Where Maya (and the kit) opens each kit menu: shown in the menu list.
 TRIGGERS = {
@@ -51,6 +54,7 @@ TYPE_ITEMS = (
     ("op", "Blender Operator", "A Blender operator id (mesh.bevel) and its properties as JSON"),
     ("item", "Maya Menu Item", "A Maya main-menu item, run like the menu (Edit Mesh/Bevel)"),
     ("python", "Python", "Python run like a shelf button (the maya.cmds look-alike is available)"),
+    ("shelf", "Shelf Button", "A shelf button, run like a click on it (Maya: drag it from the shelf)"),
     ("sub", "Submenu", "A submenu of its own (open it to edit its items)"),
     ("kit", "Kit Action", "A kit action value as JSON (ui/menu_map.py forms)"),
 )
@@ -140,7 +144,7 @@ def refresh(context, message=None):
     if e is None and not (slot in mm.RADIALS and sub is not None):
         _set(wm, allset_mme_slot="")
     vals = {"allset_mme_label": "", "allset_mme_op": "", "allset_mme_props": "", "allset_mme_item": "",
-            "allset_mme_code": "", "allset_mme_kit": "", "allset_mme_type": "op"}
+            "allset_mme_code": "", "allset_mme_shelf": "", "allset_mme_kit": "", "allset_mme_type": "op"}
     if e is not None:
         vals["allset_mme_label"] = um.entry_label(e)
         vals["allset_mme_type"] = e.get("type", "op")
@@ -151,6 +155,8 @@ def refresh(context, message=None):
             vals["allset_mme_item"] = e.get("path", "")
         elif e.get("type") == "python":
             vals["allset_mme_code"] = e.get("code", "")
+        elif e.get("type") == "shelf":
+            vals["allset_mme_shelf"] = shelf_field(e.get("shelf", ""), e.get("button", ""))
         elif e.get("type") == "kit":
             vals["allset_mme_kit"] = json.dumps(e.get("action"))
     if message is not None:
@@ -170,6 +176,45 @@ def changed(context, message=""):
     refresh(context, message)
 
 
+# --- search fields ----------------------------------------------------------------------------------------------
+
+def _matches(text, candidates):
+    words = text.lower().split()
+    return [c for c in candidates if all(w in c.lower() for w in words)]
+
+
+def item_search(self, context, edit_text):
+    """Maya main-menu paths the kit runs (``ui/menu_map.MAP``) containing every typed word."""
+    from ..ui import menu_map
+    return _matches(edit_text, sorted(menu_map.MAP))
+
+
+def shelf_choices():
+    """"Shelf / Button" texts of every shelf button, in shelf order."""
+    from ..ui import shelf
+    return [f"{tab}{SHELF_SEP}{label}" for sid, tab in shelf.shelves() for _i, label in shelf.button_labels(sid)]
+
+
+def shelf_search(self, context, edit_text):
+    return _matches(edit_text, shelf_choices())
+
+
+def shelf_field(shelf_id, button):
+    from ..ui import shelf
+    tab = next((t for sid, t in shelf.shelves() if sid == shelf_id), um.shelf_text(shelf_id))
+    return f"{tab}{SHELF_SEP}{button}" if shelf_id or button else ""
+
+
+def parse_shelf(text):
+    """(shelf id, button label) of a "Shelf / Button" text, or None when no shelf has that button."""
+    from ..ui import shelf
+    for sid, tab in shelf.shelves():
+        prefix = tab + SHELF_SEP
+        if text.startswith(prefix) and shelf.button_index(sid, text[len(prefix):]) is not None:
+            return sid, text[len(prefix):]
+    return None
+
+
 # --- slot field edits (update callbacks) ------------------------------------------------------------------------
 
 def _new_entry(wm, kind, label, old):
@@ -180,6 +225,9 @@ def _new_entry(wm, kind, label, old):
         return {"label": label, "type": "item", "path": wm.allset_mme_item.strip()}, ""
     if kind == "python":
         return {"label": label, "type": "python", "code": wm.allset_mme_code}, ""
+    if kind == "shelf":
+        found = parse_shelf(wm.allset_mme_shelf) or ("", "")
+        return {"label": label, "type": "shelf", "shelf": found[0], "button": found[1]}, ""
     if kind == "kit":
         action = old and um.entry_action(old)
         if isinstance(action, mm.Sub) or action is None:
@@ -214,7 +262,7 @@ def _on_type(self, context):
         return
     menu, path = wm.allset_mme_menu, full_path(context)
     old = um.entry_at(menu, path)
-    label = wm.allset_mme_label or (old and um.entry_label(old)) or "New Item"
+    label = wm.allset_mme_label or (old and um.entry_label(old)) or NEW_LABEL
     kind = wm.allset_mme_type
     if kind == "factory":
         if factory_here(context) is None:
@@ -250,7 +298,18 @@ def _on_field(field):
         elif field == "op":
             um.update_entry(menu, path, op=wm.allset_mme_op.strip())
         elif field == "item":
-            um.update_entry(menu, path, path=wm.allset_mme_item.strip())
+            item = wm.allset_mme_item.strip()
+            um.update_entry(menu, path, path=item)
+            if item and e.get("label") in ("", NEW_LABEL):      # a new item takes the menu item's name
+                um.update_entry(menu, path, label=item.split("#")[0].rsplit("/", 1)[-1])
+        elif field == "shelf":
+            found = parse_shelf(wm.allset_mme_shelf)
+            if found is None:
+                refresh(context, "Pick a shelf button in the list (type part of its name)")
+                return
+            um.update_entry(menu, path, shelf=found[0], button=found[1])
+            if e.get("label") in ("", NEW_LABEL):              # a new item takes the button's name
+                um.update_entry(menu, path, label=found[1])
         elif field == "code":
             um.update_entry(menu, path, code=wm.allset_mme_code)
         elif field == "kit":
@@ -431,7 +490,7 @@ class ALLSET_OT_mme_slot(bpy.types.Operator):
         wm = _wm(context)
         menu, path, slot = current(context)
         here = full_path(context)
-        new = {"label": "New Item", "type": "op", "op": "", "props": {}}
+        new = {"label": NEW_LABEL, "type": "op", "op": "", "props": {}}
         done, select = False, slot
         if self.action == "SET" and slot in mm.RADIALS:
             done = um.set_entry(menu, here, new)
@@ -679,7 +738,7 @@ def _draw_details(layout, context, sub):
         box.prop(wm, "allset_mme_op", text="Operator")
         box.prop(wm, "allset_mme_props", text="Properties")
     elif t == "item":
-        box.prop(wm, "allset_mme_item", text="Menu Item")
+        box.prop(wm, "allset_mme_item", text="Menu Item", icon='VIEWZOOM')
     elif t == "python":
         box.prop(wm, "allset_mme_code", text="Python")
         row = box.row(align=True)
@@ -687,6 +746,8 @@ def _draw_details(layout, context, sub):
         row.operator(ALLSET_OT_mme_use_text.bl_idname, text="Use")
         if "\n" in wm.allset_mme_code:
             box.label(text=f"{wm.allset_mme_code.count(chr(10)) + 1} lines", icon='TEXT')
+    elif t == "shelf":
+        box.prop(wm, "allset_mme_shelf", text="Shelf Button", icon='VIEWZOOM')
     elif t == "kit":
         box.prop(wm, "allset_mme_kit", text="Action")
     elif t == "sub":
@@ -695,7 +756,10 @@ def _draw_details(layout, context, sub):
         action = um.entry_action(e)
         if um.is_editable_sub(action):
             box.operator(ALLSET_OT_mme_open.bl_idname, text="Open Submenu", icon='RIGHTARROW').path = full_path(context)
-    box.label(text=um.describe(e) or "—")
+    if t == "shelf":        # the shelf's tab name, as in the field
+        box.label(text="Shelf button: " + (shelf_field(e.get("shelf", ""), e.get("button", "")) or "—"))
+    else:
+        box.label(text=um.describe(e) or "—")
     row = box.row(align=True)
     row.operator(ALLSET_OT_mme_slot.bl_idname, text="Option Box", icon='CHECKBOX_HLT' if um.has_option(menu, full_path(
         context)) else 'CHECKBOX_DEHLT').action = "OPTION"
@@ -745,7 +809,8 @@ classes = (ALLSET_OT_marking_menu_editor, ALLSET_OT_mme_select, ALLSET_OT_mme_op
            ALLSET_OT_mme_slot, ALLSET_OT_mme_hotkey, ALLSET_OT_mme_use_text, ALLSET_PT_marking_menu_editor)
 
 _WM_PROPS = ("allset_mme_menu", "allset_mme_path", "allset_mme_slot", "allset_mme_label", "allset_mme_type",
-             "allset_mme_op", "allset_mme_props", "allset_mme_item", "allset_mme_code", "allset_mme_kit",
+             "allset_mme_op", "allset_mme_props", "allset_mme_item", "allset_mme_shelf", "allset_mme_code",
+             "allset_mme_kit",
              "allset_mme_text", "allset_mme_message", "allset_mme_capture")
 
 
@@ -765,8 +830,11 @@ def register():
                                                   "Python Tooltips on to see one)")
     wm.allset_mme_props = StringProperty(name="Properties", update=_on_field("props"),
                                          description='Operator properties as JSON, e.g. {"type": "CENTER"}')
-    wm.allset_mme_item = StringProperty(name="Menu Item", update=_on_field("item"),
-                                        description="A Maya main-menu path, e.g. Edit Mesh/Bevel")
+    wm.allset_mme_item = StringProperty(name="Menu Item", update=_on_field("item"), search=item_search,
+                                        description="A Maya main-menu path, e.g. Edit Mesh/Bevel: type words of it "
+                                                    "(delete history) and pick one in the list")
+    wm.allset_mme_shelf = StringProperty(name="Shelf Button", update=_on_field("shelf"), search=shelf_search,
+                                         description="A shelf button: type part of its name and pick it in the list")
     wm.allset_mme_code = StringProperty(name="Python", update=_on_field("code"),
                                         description="Python run like a shelf button (; between statements, or "
                                                     "take a Text)")

@@ -17,6 +17,8 @@ entry = ``{"label": str, "type": T, ...}`` with T:
 - ``"op"``: a Blender operator, ``op`` id + ``props``;
 - ``"item"``: a Maya main menu item, ``path`` ("Edit Mesh/Bevel"; runs it like the menu does);
 - ``"python"``: ``code`` run like a shelf button / the Command Line (``maya.cmds`` look-alike available);
+- ``"shelf"``: a shelf button, ``shelf`` id + ``button`` label (Maya: a shelf button dragged into the editor), run
+  like a click on it; found by label, so it follows the shelf's edits;
 - ``"sub"``: a submenu, ``radial`` / ``items`` / ``options`` like a tree;
 - ``"kit"``: any kit action value (``ui/menu_map.py`` forms) as JSON, ``action``;
 - ``"factory"``: an entry of a kit menu (``menu`` + ``path`` + ``factory_label``), kept as the kit defines it
@@ -41,7 +43,8 @@ VERSION = 1
 FILE_NAME = "marking_menus.json"
 CUSTOM_PREFIX = "USER_"
 PYTHON_OP = "allset.mm_python"
-TYPES = ("op", "item", "python", "sub", "kit", "factory")
+SHELF_OP = "allset.mm_shelf_button"
+TYPES = ("op", "item", "python", "shelf", "sub", "kit", "factory")
 MODIFIERS = ("ctrl", "alt", "shift", "oskey")
 _NAME = re.compile(r"[A-Za-z0-9_]+")
 _OP = re.compile(r"[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*")
@@ -313,6 +316,11 @@ def entry_action(e):
     if t == "python":
         code = e.get("code")
         return (PYTHON_OP, {"code": code}) if isinstance(code, str) and code.strip() else None
+    if t == "shelf":
+        shelf, button = e.get("shelf"), e.get("button")
+        if isinstance(shelf, str) and isinstance(button, str) and shelf and button:
+            return (SHELF_OP, {"shelf": shelf, "button": button})
+        return None
     if t == "kit":
         return action_from_json(e.get("action"))
     if t == "factory":
@@ -671,6 +679,8 @@ def describe(entry):
     if t == "python":
         lines = (entry.get("code") or "").strip().splitlines()
         return "Python: " + (lines[0] + (" …" if len(lines) > 1 else "") if lines else "")
+    if t == "shelf":
+        return f"Shelf button: {shelf_text(entry.get('shelf', ''))} / {entry.get('button', '')}"
     if t == "sub":
         return "Submenu"
     if t == "kit":
@@ -686,6 +696,11 @@ def describe(entry):
             return "Kit submenu"
         return f"Kit default: {_action_text(act)}"
     return ""
+
+
+def shelf_text(shelf_id):
+    """A shelf's tab name from its id (a user shelf's id has a "USER:" prefix)."""
+    return shelf_id.split(":", 1)[1] if shelf_id.startswith("USER:") else shelf_id
 
 
 def _action_text(act):
@@ -704,5 +719,7 @@ def _action_text(act):
             return f"toggle {act[1]}"
         if act[0] == PYTHON_OP:
             return "Python"
+        if act[0] == SHELF_OP:
+            return f"shelf button {act[1]['button']}"
         return act[0]
     return repr(act)

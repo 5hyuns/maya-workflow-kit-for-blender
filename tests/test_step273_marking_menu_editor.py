@@ -255,6 +255,54 @@ def test_editor_edits_save_and_apply():
         _reset()
 
 
+def test_menu_item_search_and_shelf_buttons():
+    """Maya drags a shelf button or a menu item into the Marking Menu Editor; here both are search fields: the menu
+    item field completes the kit's Maya menu paths, a Shelf Button item runs a shelf button like a click."""
+    marking, mm, um, me = _mods()
+    shelf = m("ui.shelf")
+    wm = bpy.context.window_manager
+    _reset()
+    found = me.item_search(None, bpy.context, "delete history")
+    assert "Edit/Delete by Type/History" in found and all("delete" in p.lower() for p in found), found
+    assert "Edit/Delete by Type/History" in me.item_search(None, bpy.context, "")       # empty text: every path
+    # the shelf's Maya tab name (Poly Modeling), not its id (Polygons)
+    assert "Poly Modeling / Delete By Type: History" in me.shelf_search(None, bpy.context, "history")
+    assert me.parse_shelf("Poly Modeling / Delete By Type: History") == ("Polygons", "Delete By Type: History")
+    assert me.parse_shelf("Poly Modeling / Nope") is None
+    assert shelf.button_index("Polygons", "Delete By Type: History") is not None
+    # a user shelf's Python button, run from a marking menu item by its label
+    data = shelf.user_data()
+    data["shelves"].append({"name": "T273", "buttons": [
+        {"label": "Py", "script": "import bpy\nbpy.context.scene['s273'] = 3"}]})
+    try:
+        assert "T273 / Py" in me.shelf_choices()
+        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T273", button="Py") == {'FINISHED'}
+        assert bpy.context.scene["s273"] == 3
+        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T273", button="Gone") == {'CANCELLED'}
+        # in the editor: a new item becomes a shelf button and takes the button's name
+        bpy.ops.allset.mme_menu(action="NEW", label="Shelf Items")
+        name = wm.allset_mme_menu
+        bpy.ops.allset.mme_select(slot="N")
+        bpy.ops.allset.mme_slot(action="SET")
+        wm.allset_mme_type = "shelf"
+        wm.allset_mme_shelf = "T273 / Py"
+        assert mm.MENUS[name].radial["N"] == ("Py", (um.SHELF_OP, {"shelf": "USER:T273", "button": "Py"}))
+        assert wm.allset_mme_shelf == "T273 / Py"
+        wm.allset_mme_shelf = "T273 / Nope"
+        assert "Pick a shelf button" in wm.allset_mme_message and wm.allset_mme_shelf == "T273 / Py"
+        assert any("Shelf button: T273 / Py" in t for t in _draw(me.ALLSET_PT_marking_menu_editor).texts())
+        # a new Maya Menu Item takes the item's name
+        bpy.ops.allset.mme_select(slot="S")
+        bpy.ops.allset.mme_slot(action="SET")
+        wm.allset_mme_type = "item"
+        wm.allset_mme_item = "Edit/Delete by Type/History"
+        assert mm.MENUS[name].radial["S"] == ("History", ("item", "Edit/Delete by Type/History"))
+    finally:
+        data["shelves"][:] = [s for s in data["shelves"] if s["name"] != "T273"]
+        bpy.context.scene.pop("s273", None)
+        _reset()
+
+
 def test_file_applied_at_register_and_taken_back_at_unregister():
     """The file is read when the kit registers (it outlives kit updates in the extension's user folder); disabling
     leaves Blender as it was, the factory menus included."""

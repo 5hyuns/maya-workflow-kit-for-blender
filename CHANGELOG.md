@@ -7,8 +7,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ### Added
 - **Marking Menu Editor** (Windows > Settings/Preferences > Marking Menu Editor, before a notice): edit the kit's
-  marking menus in Maya's 3×3 grid plus the list under it — label, command (Blender operator, Maya menu item, Python
-  like a shelf button, submenu, or the kit's own item), option box, move, add or remove items, open submenus in place;
+  marking menus in Maya's 3×3 grid plus the list under it — label, command (Blender operator, Maya menu item found by
+  typing part of its path, a shelf button picked by name, Python like a shelf button, submenu, or the kit's own
+  item), option box, move, add or remove items, open submenus in place;
   Restore Default puts a kit menu back. **Your own marking menus** (New / Duplicate) open with a hotkey the Maya way:
   hold the key and press LMB, drag and release. Saved at once in the extension's user folder, so they survive kit
   updates; untouched items of an edited kit menu keep following the kit. Both styles (Maya Engine / Blender Pies).
