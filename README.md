@@ -121,6 +121,8 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
 - **Right-click, Shift+right-click and Ctrl+right-click marking menus** over objects and components, in Maya's radial
   positions, with gestures, click mode, submenus and option boxes; **Q / W / E / R + LMB** tool option menus;
   **Shift+Q / Alt+Q / Shift+S** hold menus.
+- **Marking Menu Editor** (Windows > Settings/Preferences): change the kit's marking menus (Restore Default puts them
+  back) and make your own, opened by holding a hotkey + LMB like Maya.
 - **Menu sets** Modeling / Rigging / Animation / FX / Rendering on **F2–F6**, Maya's menu order and names, Maya hotkeys
   shown in the menus, dotted tear-off lines.
 - **Option boxes (❒)** open Maya option windows with Maya 2022's factory values — Save Settings, Reset Settings, Apply
