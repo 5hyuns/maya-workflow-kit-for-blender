@@ -157,7 +157,7 @@ def patch_select_2d(kd, touched):
 
 # --- 2. 4/5/6/7 display modes ---------------------------------------------
 # Maya: 4 wireframe, 5 shaded, 6 shaded+textured, 7 all lights
-# (factory hotkeys 4..7).
+# (Maya hotkeys 4..7).
 
 DISPLAY_KEYS = (("FOUR", "WIREFRAME"), ("FIVE", "SHADED"),
                 ("SIX", "TEXTURED"), ("SEVEN", "LIGHTS"))

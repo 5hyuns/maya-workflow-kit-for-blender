@@ -310,7 +310,7 @@ def layout_along(groups, uv, direction='U'):
     return len(groups)
 
 
-# --- Stack Similar Shells (factory tolerance 0.1) ----------------------------------------------------------------
+# --- Stack Similar Shells (default tolerance 0.1) --------------------------------------------------------------------
 
 def _signature(cycle, pts, uv):
     """Border features of a shell (Stack Similar): per border UV the length to the previous one,

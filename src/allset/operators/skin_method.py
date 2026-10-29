@@ -58,7 +58,7 @@ def set_method(mesh, method):
         return method
     md.use_deform_preserve_volume = False
     if mesh.vertex_groups.get(BLEND_GROUP) is None:
-        mesh.vertex_groups.new(name=BLEND_GROUP)          # factory blendWeights 0: linear until painted
+        mesh.vertex_groups.new(name=BLEND_GROUP)          # blend weights start at 0: linear until painted
     if part is None:
         part = mesh.modifiers.new(md.name + PART_SUFFIX, 'ARMATURE')
     part.object = md.object
