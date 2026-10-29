@@ -1,5 +1,5 @@
 """Step 63: Modeling Toolkit dock, soft select in Maya units, Combine / Separate / Mirror / Boolean with Maya meaning.
-; GUI: tests/gui/gui_step63_mtk.py."""
+GUI: tests/gui/gui_step63_mtk.py."""
 
 from importlib import import_module
 
@@ -57,7 +57,7 @@ def test_dock_and_status_line_toggle():
     # one dock panel draws every mode (step 91; since step 116 in the Maya dock areas)
     assert not hasattr(bpy.types, "ALLSET_PT_modeling_toolkit") and hasattr(bpy.types, "ALLSET_PT_maya_dock")
     wm.allset_dock = 'CHANNEL_BOX'
-    assert status_line.EDITORS[0][0] == "MODELING_TOOLKIT", "Maya order: MTK first (ui_layout.md:212)"
+    assert status_line.EDITORS[0][0] == "MODELING_TOOLKIT", "Maya order: MTK first"
     m = menu_map.MAP
     assert m["Windows/Modeling Editors/Modeling Toolkit"][1] == "allset.dock_show"
     assert m["Mesh Tools/Hide Modeling Toolkit"][0] == "allset.editor_toggle"
@@ -87,7 +87,7 @@ def test_combine_maya_name_and_centre_pivot():
     lo = min(v[0] for v in before)
     hi = max(v[0] for v in before)
     pivot = ob.matrix_world.translation
-    assert abs(pivot.x - (lo + hi) / 2) < 1e-4 and abs(pivot.x - 1.75) < 1e-4, (pivot, lo, hi)  # Maya: 1.75
+    assert abs(pivot.x - (lo + hi) / 2) < 1e-4 and abs(pivot.x - 1.75) < 1e-4, (pivot, lo, hi)  # expected 1.75
     assert _world_verts(ob) == before, "vertices stay where they were"
 
 
@@ -105,7 +105,7 @@ def test_separate_maya_group():
     assert grp.type == 'EMPTY' and kids == ["polySurface1", "polySurface2"], (grp.type, kids)
     after = sorted(sum((_world_verts(bpy.data.objects[k]) for k in kids), []))
     assert after == before
-    for k in kids:   # Maya: translate 0, pivot at the world origin
+    for k in kids:   # translate 0, pivot at the world origin
         piece = bpy.data.objects[k]
         assert tuple(piece.location) == (0, 0, 0), (k, tuple(piece.location))
         assert piece.matrix_world.translation.length < 1e-5, (k, piece.matrix_world.translation)

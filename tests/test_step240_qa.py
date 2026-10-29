@@ -63,7 +63,7 @@ def test_outliner_rows_keep_dag_order():
     bpy.data.batch_remove(obs)
 
 
-# --- S2 fixes found by the new QA activities ------------------------------------------
+# --- S2 fixes found by the new QA activities ------------------------------------------------------------------
 
 def test_circularize_from_object_mode():
     """D-240-1: Edit Mesh > Circularize with an object selected raised TypeError (an old LoopTools "value" key)."""

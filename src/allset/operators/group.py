@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Ctrl+G group and Edit > Ungroup.
 
-Edit > Group factory options (under Parent, Preserve position, pivot at the origin)
+Edit > Group default options (under Parent, Preserve position, pivot at the origin)
 creates the group under the common parent with its pivot at the origin; with
 nothing selected it makes an empty group. Names are ``group1``, ``group2``, ...
 
 Blender form: an Empty is the group transform. Children are parented the Maya
-way (): world transform kept, ``matrix_parent_inverse``
+way: world transform kept, ``matrix_parent_inverse``
 left at identity so the child's local values are relative to the group.
 """
 
@@ -47,7 +47,7 @@ def make_group(context, objects):
 
     grp = bpy.data.objects.new(next_group_name(o.name for o in bpy.data.objects), None)
     grp.empty_display_type = 'PLAIN_AXES'
-    # 1 Maya unit, like a Create locator (, )
+    # 1 Maya unit, like a Create locator
     grp.empty_display_size = units.maya_unit(context.scene)
     collection.objects.link(grp)
     if parent is not None:
@@ -64,12 +64,12 @@ def make_group(context, objects):
 
 
 def ungroup(context, groups, world=False, preserve=True):
-    """Maya Edit > Ungroup (factory Ungroup under Parent, Preserve position on): each group's
+    """Maya Edit > Ungroup (default Ungroup under Parent, Preserve position on): each group's
     children move under the group's parent (``world``: to the world; the world when it has none) keeping their world
     transform, then the group goes. Preserve position off (``cmds.ungroup(relative=True)``) folds the group's local
     transform into each child's local values instead (grp t 0 5 0, child t 1 2 3 -> child t 1 7 3).
     A selected object that has data of its own (a mesh with
-    children) only loses its children (delegated, ). Returns the moved children."""
+    children) only loses its children (step 34). Returns the moved children."""
     moved = []
     for grp in groups:
         kids = list(grp.children)
@@ -100,7 +100,7 @@ class ALLSET_OT_ungroup(bpy.types.Operator):
 
     under: bpy.props.EnumProperty(
         name="Ungroup Under", options={'SKIP_SAVE'},
-        items=(('PARENT', "Parent", "Under the group's parent (Maya Ungroup Options, factory)"),
+        items=(('PARENT', "Parent", "Under the group's parent (Maya Ungroup Options, default)"),
                ('WORLD', "World", "At the top of the hierarchy")))
     preserve_position: bpy.props.BoolProperty(
         name="Preserve Position", default=True, options={'SKIP_SAVE'},

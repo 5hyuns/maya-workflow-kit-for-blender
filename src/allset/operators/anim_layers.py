@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya animation layers on Blender NLA tracks.
+"""Maya animation layers on Blender NLA tracks (step 180).
 
 Maya 2022: BaseAnimation = the plain anim curves; an Additive
 layer adds weight x its curve (rotations Euler component-wise, scale multiplies: below x layer^weight), an Override
 layer replaces ((1 - w) below + w layer); mute drops a layer, solo keeps BaseAnimation + the soloed layers; a key set
 on the selected layer is the curve value that makes the result the displayed value.
 
-Blender 4.5 NLA gives the same numbers (probe, ): BaseAnimation = a REPLACE strip on the bottom track,
+Blender 4.5 NLA gives the same numbers: BaseAnimation = a REPLACE strip on the bottom track,
 Additive = COMBINE (location / Euler add, scale multiplies with influence as exponent), Override = REPLACE, weight =
 the strip influence, mute = track mute; strips span a fixed wide range with 1:1 time so every key is evaluated.
 Blender's tweak mode evaluates only the tracks below the tweaked one (no Python switch for the upper stack), so keys
@@ -19,7 +19,7 @@ the ID property ``allset_anim_layer``.
 Display (step 194): Maya's Graph Editor, Dope Sheet and Time Slider show the
 keys of the layers selected in the Anim tab, the Channel Box marks layer members teal. A layered object's active
 action is the selected layer's strip action (BaseAnimation when the object is not in it) at action influence 0: the
-NLA result is unchanged (checked: 0 difference), and every reader of the active action (Graph Editor,
+NLA result is unchanged, and every reader of the active action (Graph Editor,
 Dope Sheet, compat.id_fcurves, the kit's key readers) sees that layer's curves.
 """
 
@@ -32,7 +32,7 @@ from . import naming
 
 BASE = "BaseAnimation"
 MARK = "allset_anim_layer"
-WIDE = (-1000.0, 1000.0)          # strip / action range: keys outside it are not evaluated (delegated)
+WIDE = (-1000.0, 1000.0)          # strip / action range: keys outside it are not evaluated
 SCALE_PATHS = {"scale", "delta_scale"}
 
 
@@ -327,8 +327,7 @@ def show_base(ob):
 
 def settle_base(scene, ob, prefixes):
     """After a bake wrote the VISUAL values into BaseAnimation: re-solve every baked key of channels the layers
-    above also animate, so base + layers = the baked value (otherwise the layers add again: audit 0.5.0 ⑤-8, the
-    elbow at 2 x -60). ``prefixes`` = data path prefixes of the baked owners ("" = the object)."""
+    above also animate, so base + layers = the baked value (otherwise the layers add again). ``prefixes`` = data path prefixes of the baked owners ("" = the object)."""
     base = tracks(ob).get(BASE)
     if base is None:
         return 0
@@ -381,7 +380,7 @@ def member_of_layer(ob, path, index):
 
 def hidden_base_curves(ob, scene):
     """BaseAnimation curves the display layer doesn't show: channels that are not in that layer still show their
-    base keys in Maya's Time Slider (ry ticks 1 / 24 with AnimLayer1 selected)."""
+    base keys in Maya's Time Slider."""
     layer = display_layer(scene, ob)
     if layer == BASE or BASE not in tracks(ob):
         return []
@@ -659,7 +658,7 @@ def key(ob, path, index, frame=None, value=None, scene=None, layer=None):
     return True
 
 
-# Quaternion channels (step 234: Rigify-style joints,  shows them as Euler). Blender's NLA mixes a quaternion
+# Quaternion channels (step 234: Rigify-style joints, shown as Euler). Blender's NLA mixes a quaternion
 # as a whole: REPLACE = component lerp of the lower result and the strip by the influence, COMBINE = lower @ strip^w
 # (checked in tests/test_step234_layer_joints.py against the evaluated pose). The layer's key is solved so the result
 # is the displayed rotation, with the layers above combined after it.
@@ -982,7 +981,7 @@ def zero_key(scene, obs, frame=None):
                 v = v[idx] if idx >= 0 else v
             except (ValueError, TypeError, IndexError):
                 continue
-            if isinstance(v, bool):       # visibility is not layered by the kit's NLA tracks (delegated)
+            if isinstance(v, bool):       # visibility is not layered by the kit's NLA tracks
                 continue
             idx = max(idx, 0)
             fc = _fcurve(act, path, idx) or _new_fcurve(ob, act, path, idx)
@@ -1005,7 +1004,7 @@ def zero_key(scene, obs, frame=None):
 
 
 def merge_down(scene, layer):
-    """Maya Merge Layers with BaseAnimation and ``layer`` selected (section 5, factory options:
+    """Maya Merge Layers with BaseAnimation and ``layer`` selected (section 5, default options:
     bake every frame, delete the merged layer): each member channel of ``layer`` gets a BaseAnimation curve keyed on
     every whole frame of the object's key range with the result of Base + ``layer``; non-member channels keep their
     keys; the layer is deleted."""

@@ -1,6 +1,6 @@
 """Step 25 in a real UI: X hold + Move gizmo drag snaps to whole Maya units (1 cm) in the
 Maya Workflow Kit layout and with Maya Units on, to whole metres in the factory scene; the grid
-shows in the Maya Workflow Kit persp view (screenshot). """
+shows in the Maya Workflow Kit persp view (screenshot)."""
 
 import os
 import sys

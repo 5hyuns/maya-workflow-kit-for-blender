@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Insert Edge Loop, Offset Edge Loop and Slide Edge.
+"""Maya Insert Edge Loop, Offset Edge Loop and Slide Edge (step 144, GitHub #31).
 
 Maya behaviour:
 - Insert Edge Loop (polySplitRing): the press on an edge inserts the loop at that point at once, dragging slides it
@@ -9,12 +9,12 @@ Maya behaviour:
   N loops at k/(N+1), wherever the click was.
 - Offset Edge Loop (polyDuplicateEdge): press-drag on an edge = a new loop on each side of its edge loop. Relative =
   offset × each side edge's own length, Equal = offset × the shortest side edge; inside the mesh a path end cuts the
-  faces beyond it into two triangles that Delete edge merges into one quad. A click without a drag uses Maya's offset
-  0.5 (setting polyDuplicateEdgeOffset).
+  faces beyond it into two triangles that Delete edge merges into one quad. A click without a drag uses an offset
+  of 0.5.
 - Slide Edge (polySlideEdge): middle-drag slides the selected edges along their side edges; Relative = a fraction of
   each vertex's side edge, Absolute = one distance (fraction × the shortest side edge of that side); Use Snapping
   catches the fraction at k/(points+1) within the tolerance.
-Tool Settings / window values live in ``Scene.allset_loop_tools`` (Maya factory values).
+Tool Settings / window values live in ``Scene.allset_loop_tools`` (default values).
 The bmesh parts are tested headless (tests/test_step144_loop.py).
 """
 
@@ -34,7 +34,7 @@ INSERT_TOOL = "allset.insert_edge_loop_tool"
 OFFSET_TOOL = "allset.offset_edge_loop_tool"
 SLIDE_TOOL = "allset.slide_edge_tool"
 EPS = 1e-6
-DRAG_PX = 3              # a press that moves less than this is a click (Offset: Maya's offset 0.5)
+DRAG_PX = 3              # a press that moves less than this is a click (Offset: offset 0.5)
 PRE_MESH = ".allset_loop_pre"
 
 INSERT_POSITIONS = (('RELATIVE', "Relative distance from edge", "The loop cuts every ring edge at the same fraction"),
@@ -46,7 +46,7 @@ SLIDE_MODES = (('RELATIVE', "Relative", "Each vertex slides the same fraction of
 
 
 class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
-    """Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (factory values)."""
+    """Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values)."""
     # Insert Edge Loop (SplitEdgeRingTool)
     iel_position: EnumProperty(name="Maintain position", items=INSERT_POSITIONS, default='RELATIVE')
     iel_loops: IntProperty(name="Number of edge loops", default=2, min=1, soft_max=10, max=100,
@@ -197,7 +197,7 @@ def _connect(bm, points, n_faces, closed):
 
 def insert_fractions(lengths, root_length, t, from_far, position='RELATIVE', count=2):
     """Per ring edge (``lengths``), the fractions from its side vertex where the new loops cut it. ``t`` = the click
-    on the root edge from its side vertex. Equal distance measures ``t``'s distance from the side the click was
+    on the root edge from its side vertex. Equal distance takes ``t``'s distance from the side the click was
     nearer to (``from_far``: the far side), clamped to the shortest ring edge."""
     if position == 'MULTIPLE':
         n = max(1, int(count))

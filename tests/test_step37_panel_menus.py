@@ -1,5 +1,5 @@
 """Step 37: Maya viewport panel menus (View / Shading / Lighting / Show / Renderer / Panels)
-in the 3D View header; Blender's View/Select/Add/Object under "Blender". 
+in the 3D View header; Blender's View/Select/Add/Object under "Blender".
 """
 
 import json

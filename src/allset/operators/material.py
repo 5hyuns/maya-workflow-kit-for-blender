@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya material assignment.
+"""Maya material assignment (step 29).
 
 Lighting/Shading > Material Attributes / Assign New / Favorite / Existing Material
  and the same items at the end of the RMB object
@@ -26,7 +26,7 @@ from .. import compat, depsgraph_filter
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
 # Maya shader kinds (shelf shader buttons) on Principled BSDF.
-# Maya factory values (lambert: ).
+# Default values (lambert: step 100).
 # Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
 # strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is
 # disabled), so since step 214 a "Maya Diffuse" Mix node (``ensure_diffuse``) puts color x diffuse into Base Color.
@@ -39,12 +39,12 @@ MAYA_ECCENTRICITY, MAYA_ROLL_OFF, MAYA_COSINE_POWER = 0.3, 0.7, 20.0
 
 def eccentricity_roughness(e):
     """Principled Roughness for a Maya Blinn eccentricity: Blinn's highlight is the Trowbridge-Reitz distribution
-    with c3 = eccentricity (Blinn 1977 ) = the GGX alpha, and Principled's alpha = roughness^2."""
+    with c3 = eccentricity (Blinn 1977) = the GGX alpha, and Principled's alpha = roughness^2."""
     return max(0.0, min(1.0, e)) ** 0.5
 
 
 def cosine_power_roughness(n):
-    """Principled Roughness for a Maya Phong cosine power: exponent n <-> microfacet alpha = sqrt(2 / (n + 2)) ,
+    """Principled Roughness for a Maya Phong cosine power: exponent n <-> microfacet alpha = sqrt(2 / (n + 2)),
     alpha = roughness^2."""
     return (2.0 / (max(2.0, n) + 2.0)) ** 0.25
 
@@ -81,7 +81,7 @@ FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
 # ID property naming the Maya node type of a kit-made material (AE tab label/sections, step 38).
 TYPE_PROP = "allset_type"
 # Maya's default material (step 100): every new shape joins initialShadingGroup, whose surface
-# shader is lambert1 (lambert, color 0.5, diffuse 0.8); Delete Unused Nodes keeps it, a new Lambert is lambert2.
+# shader is lambert1 (a lambert); Delete Unused Nodes keeps it, a new Lambert is lambert2.
 DEFAULT_PROP = "allset_default"
 DEFAULT_NAME = "lambert1"
 DEFAULT_GROUP = "initialShadingGroup"
@@ -122,7 +122,7 @@ def new_material(kind):
 # PrincipledBSDFWrapper needs that, $S\modules\bpy_extras\node_shader_utils.py:192-229). standardSurface has base 1 x
 # baseColor 0.8 and gets no node. The Principled Base Color default keeps the Maya colour too (sync), so readers that
 # skip links (Blender's own exporters) see the colour. Materials without the node read diffuse 1.0 (old files,
-# Blender-made materials: no migration, delegated).
+# Blender-made materials: no migration).
 
 DIFFUSE_NODE = "Maya Diffuse"
 DIFFUSE_SOCKET = "Diffuse"       # AE / map-button name of the diffuse factor (operators/shading_maps.py)

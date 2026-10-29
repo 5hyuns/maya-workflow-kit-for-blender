@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Edit Mesh / Mesh Tools commands with Maya's results (step 110,  「계획」 1-4;
-step 139 lane EDIT: Connect / Merge / Smooth / Symmetrize, ).
+"""Maya Edit Mesh / Mesh Tools commands with Maya's results (step 110;
+step 139: Connect / Merge / Smooth / Symmetrize).
 Circularize, Connect, Make Hole; Connect, Merge, Smooth, Symmetrize. Pure bmesh.
 """
 
@@ -625,7 +625,7 @@ def smooth(bm, faces, divisions=1):
 
 def smooth_targets(bm):
     """The faces Maya smooths for the component selection: selected faces, else the faces of the selected edges,
-    else of the selected vertices, else the whole mesh (delegated)."""
+    else of the selected vertices, else the whole mesh."""
     faces = [f for f in bm.faces if f.select]
     if faces:
         return faces
@@ -641,7 +641,7 @@ def smooth_targets(bm):
 # polySmoothFace history node (#204): Maya's Mesh > Smooth leaves polySmoothFace1 in Channel Box INPUTS with its
 # Divisions editable. Like the kit's extrude / bevel nodes it is the last kit operation on the mesh (operators/extrude.py
 # records), editable while the mesh is still its result, in component and object mode. The kit's Catmull-Clark has no
-# Method / Continuity switch, so Divisions is its only row (delegated).
+# Method / Continuity switch, so Divisions is its only row.
 
 def _build_smooth(bm, params, unit):
     targets = smooth_targets(bm)
@@ -732,8 +732,8 @@ class ALLSET_OT_smooth_edit(bpy.types.Operator):
 # Maya 2022: with symmetry off (factory) Edit Mesh > Symmetrize enters "Select Symmetry
 # Edge" ("Select a mesh edge for symmetry"), the mesh unchanged; the clicked edge = a topological symmetry seam, then
 # each selected component's counterpart takes the mirrored position (the selected side drives; with both sides
-# selected the side of the lowest-index selected vertex drives, Maya's -X side on a cube — delegated
-# rule). Object mode / nothing selected: "No components selected for Symmetrize."
+# selected the side of the lowest-index selected vertex drives, Maya's -X side on a cube).
+# Object mode / nothing selected: "No components selected for Symmetrize."
 
 SYMMETRIZE_NO_COMPONENTS = "No components selected for Symmetrize."
 SYMMETRIZE_PROMPT = "Select a mesh edge for symmetry"

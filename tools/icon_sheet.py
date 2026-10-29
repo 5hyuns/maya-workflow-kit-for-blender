@@ -4,7 +4,7 @@
 
 Runs itself in a background Blender (``blender -b --factory-startup``; numpy, blf and imbuf live there): every
 factory shelf button at 2x and 1x with its label, one sheet per shelf, and the Status Line / panel toolbar glyphs at
-16 / 24 / 32 px. Kit icons only — the Maya side-by-side comparison stays in tmp/ ().
+16 / 24 / 32 px. Kit icons only.
 """
 
 import os

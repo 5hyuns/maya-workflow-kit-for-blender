@@ -5,19 +5,17 @@
 1. ``tools/build.py`` (extension zip + legacy zip).
 2. ``blender --command extension validate`` on the zip.
 3. A fresh sandbox (tmp/release_env: empty user config, scripts and extensions;
-   the user's real Blender settings are never read or written, ):
+   the user's real Blender settings are never read or written):
    ``blender --command extension install-file -r user_default --enable``. Also the same install over a
    "user" setup in its own sandbox tmp/release_env_user (tools/release_probe.py seed: an enabled add-on of their own, changed input
    preferences, undo steps and theme). After the install the user's add-ons, theme and interface
    preferences are unchanged and only the kit's declared, backed-up changes appear (Maya keymap active,
-   prefs_preset navigation / undo values); after disabling the kit everything is as seeded (step 53,
-   competitor notes).
+   prefs_preset navigation / undo values); after disabling the kit everything is as seeded (step 53).
 4. A GUI Blender on that sandbox (no --factory-startup, so the saved sandbox
    preferences with the enabled extension load like a real first start) runs
    tools/release_shots.py: checks the extension and the Maya keymap are active,
    installs the Maya Workflow Kit layout, builds a small scene and writes docs/screenshots/.
    Only the Blender process started here is terminated on timeout.
- 「계획」.
 """
 
 import argparse
@@ -61,7 +59,7 @@ def _nothing():
 
 
 def run(cmd, env, timeout=TIMEOUT):
-    # a Blender holds one machine-wide slot while it runs (tools/blender_slots.py,  10-25)
+    # a Blender holds one machine-wide slot while it runs (tools/blender_slots.py)
     is_blender = "blender" in Path(cmd[0]).name.lower()
     with blender_slots.slot(f"release_check {' '.join(map(str, cmd[1:4]))}") if is_blender else _nothing():
         r = subprocess.run(cmd, env=env, stdin=subprocess.DEVNULL, capture_output=True,
@@ -69,7 +67,7 @@ def run(cmd, env, timeout=TIMEOUT):
     return r.returncode, r.stdout + r.stderr
 
 
-# What enabling the kit may change on purpose: the Maya keymap becomes active
+# What enabling the kit may change on purpose (step 53): the Maya keymap becomes active
 # (keymap/__init__.py register) and the navigation / undo presets (prefs_preset.PRESET, UNDO_PRESET), all
 # backed up and put back on disable.
 DECLARED_INPUTS = {"view_rotate_method", "use_rotate_around_active", "use_mouse_depth_navigate", "use_zoom_to_mouse",

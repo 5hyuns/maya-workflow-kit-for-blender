@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya pivot-edit RMB marking menu actions.
+"""Maya pivot-edit RMB marking menu actions (step 94).
 
 RMB held while editing a pivot (D / Insert) shows RMB_EMPTY's pivot-edit menu:
 Pin Component Pivot / Snap Pivot Position / Snap Pivot Orientation are Move tool options (check boxes, Maya defaults

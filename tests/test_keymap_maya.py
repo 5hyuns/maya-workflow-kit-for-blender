@@ -71,7 +71,7 @@ def test_uv_click_select():
 def test_box_select_modes():
     exact = {(False, False): "SET", (True, False): "XOR", (False, True): "SUB", (True, True): "ADD"}
     # outliner select_box has no XOR mode: Shift adds (workaround). uv / graph run the Shift box as SET and
-    # allset.select_2d_box (first) toggles it Maya's way (step 170, tests/test_step170_select_mods.py).
+    # allset.select_2d_box (first) toggles it the Maya way (step 170, tests/test_step170_select_mods.py).
     no_xor = {**exact, (True, False): "ADD"}
     set_xor = {**exact, (True, False): "SET"}
     cases = (("3D View Tool: Select Box", "view3d.select_box", exact),

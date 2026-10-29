@@ -2,7 +2,7 @@
 """Step 152 (#101) Maya option windows of the Render menu.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
-option_windows._extend appends ``WINDOWS``). Maya 2022 with factory prefs:
+option_windows._extend appends ``WINDOWS``). Maya's windows:
 
 - Render > Render Sequence ❒ = "Render Sequence (Current Frame)": Render Options (Current Camera persp, All
   Render-Enabled Layers / Cameras, Render Region, Ignore Local Overrides off, Alternate Output File Location empty),
@@ -11,7 +11,7 @@ option_windows._extend appends ``WINDOWS``). Maya 2022 with factory prefs:
 - Render > Batch Render ❒: the factory renderer (Arnold) opens no window; Maya Software opens "Batch Render Frame"
   (Use all available processors on, Number of processors to use 0; "Batch render and close" / "Batch render").
   The kit's batch render is a background Blender, so the Maya Software window maps to its ``-t`` threads
-  (delegated, step 152).
+  (step 152).
 - Render > Render Current Frame ❒ / IPR Render Current Frame ❒ open no window in Maya: the Help Line reads
   'Renderer "<name>" does not provide render options.' — ``NO_OPTIONS`` (option_windows.ALLSET_OT_option_generic).
 """

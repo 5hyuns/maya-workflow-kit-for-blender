@@ -1,5 +1,5 @@
 """Step 66: Maya UV workflow — UV Editor entry, UV components, Cut / Sew / Unfold / Layout, Texel Density, UV marking
-menus, UV Toolkit. ; GUI: tests/gui/gui_step66_uv.py."""
+menus, UV Toolkit. GUI: tests/gui/gui_step66_uv.py."""
 
 import math
 import types
@@ -81,7 +81,7 @@ def test_islands_and_seams():
     bm, uv = _bm(ob)
     assert len(uvt.islands(bm, uv)) == 1
     next(e for e in bm.edges if len(e.link_faces) == 2).seam = True
-    assert len(uvt.islands(bm, uv)) == 1, "Blender islands ignore seams (checked: pack_islands)"
+    assert len(uvt.islands(bm, uv)) == 1, "Blender islands ignore seams (as pack_islands does)"
     assert len(uvt.islands(bm, uv, seams=True)) == 2
 
 

@@ -1,5 +1,5 @@
-"""Step 161 G3 / G4 in the Maya Workflow Kit layout: the Space-tap four view shows Maya's
-ortho cameras (about 30 Maya units across), and the lead's green wire stays
+"""Step 161 G3 / G4 in the Maya Workflow Kit layout: the Space-tap four view shows Maya-style
+ortho cameras (about 30 units across), and the lead's green wire stays
 drawn in a side view maximised from the four view (step-154 dogfood shots 08 / 09). Shots with ``--shots``."""
 
 import os
@@ -137,7 +137,7 @@ def s_quad():
     C["widths"] = widths
     print("GUI quad ortho widths", widths, [r.data.view_distance for r in regions], flush=True)
     check(f"G3 three ortho panes ({len(widths)})", len(widths) == 3)
-    check(f"G3 each ortho pane is Maya's ortho camera: about 30 units across, not zoomed in ({widths})",
+    check(f"G3 each ortho pane is a Maya-style ortho camera: about 30 units across, not zoomed in ({widths})",
           all(w is not None and 24 <= w <= 40 for w in widths.values()))
     redraw()
 

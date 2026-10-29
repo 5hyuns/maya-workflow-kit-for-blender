@@ -1,5 +1,5 @@
 """Step 94: the pivot-edit RMB marking menu (D / Insert) — Maya positions, when it opens, check boxes, Reset
-(objects and components), Pin Component Pivot, Exit. """
+(objects and components), Pin Component Pivot, Exit."""
 
 from importlib import import_module
 

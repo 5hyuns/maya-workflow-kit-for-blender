@@ -1,6 +1,6 @@
 """Step 187 in a real UI (Maya Workflow Kit layout): Key > Create Character Set makes the Time Slider's character
 field show "character1" (Maya: the new set becomes current), its dropdown lists the sets + None, S keys the current
-character's attributes. """
+character's attributes."""
 
 import os
 import sys

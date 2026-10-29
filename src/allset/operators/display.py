@@ -63,7 +63,7 @@ class ALLSET_OT_display_mode(bpy.types.Operator):
 # "Set Shade Smooth" geometry-nodes modifier right before it, so the preview looks
 # smooth without touching the mesh's sharp_face data. The Subsurf stays last in the
 # stack, which keeps Blender's GPU subdivision. Both are display only: not history
-# (operators/history.py keeps them), hidden from INPUTS. 
+# (operators/history.py keeps them), hidden from INPUTS (step 15).
 
 PREVIEW_MOD_NAME = "Maya Smooth Preview"
 PREVIEW_SHADE_NAME = "Maya Smooth Preview Shading"
@@ -81,7 +81,7 @@ def _shade_group():
     """Node group that makes the preview smooth shaded: Set Shade Smooth on faces (sharp_face) and on edges
     (sharp_edge). Maya primitives keep their hard edges as sharp_edge (operators/prim_history.py
     fill_bmesh); the Subsurf hands that flag on to the child edges, so a face-only group left the preview
-    faceted (#61, ). Maya's smooth mesh preview is smooth shaded everywhere."""
+    faceted (#61). Maya's smooth mesh preview is smooth shaded everywhere."""
     ng = bpy.data.node_groups.get(SHADE_GROUP_NAME)
     if ng is not None and ng.bl_idname == 'GeometryNodeTree':
         if _shade_group_current(ng):
@@ -140,7 +140,7 @@ def preview_modifier(ob, create):
     if not create:
         return None
     mod = ob.modifiers.new(PREVIEW_MOD_NAME, 'SUBSURF')
-    mod.levels = 2          # Maya smooth preview divisions default 
+    mod.levels = 2          # Maya smooth preview divisions default
     mod.render_levels = 2
     mod.show_render = False  # preview only: renders unchanged
     mod.show_in_editmode = True
@@ -190,7 +190,7 @@ class ALLSET_OT_smooth_preview(bpy.types.Operator):
         return {'FINISHED'}
 
 
-SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range [delegated]
+SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range
 
 
 def change_smoothing_level(ob, delta):
@@ -270,7 +270,7 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
 
 
 # Shift+Q marking menu check boxes: Maya pick-mask
-# types that Blender has = the mesh select modes.
+# types that Blender has = the mesh select modes (step 78).
 MASK_KINDS = (("VERT", "Poly Vertices", ""), ("EDGE", "Poly Edges", ""), ("FACE", "Faces", ""),
               ("ALL", "All Components On", ""))
 _MASK_INDEX = {"VERT": 0, "EDGE": 1, "FACE": 2}
@@ -302,7 +302,7 @@ class ALLSET_OT_component_mask(bpy.types.Operator):
     def execute(self, context):
         ts = context.scene.tool_settings
         # a hidden object: Maya sets the pick mask silently; Blender can't
-        # enter edit mode on it, so only the mask changes (delegated, step 258)
+        # enter edit mode on it, so only the mask changes (step 258)
         from . import live
         if context.mode != 'EDIT_MESH' and context.active_object.visible_get() and not live.contains(context.scene, context.active_object):
             bpy.ops.object.mode_set(mode='EDIT')

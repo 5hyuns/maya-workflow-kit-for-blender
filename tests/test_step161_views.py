@@ -59,5 +59,5 @@ def test_ortho_keys_and_maya_width():
     class Space:
         lens = 70.0
     u = import_module(kit.MODULE + ".operators.units").maya_unit(bpy.context.scene)
-    # width along the longer side = distance x 72 / lens (checked, gui_step161_views) = 30 Maya units
+    # width along the longer side = distance x 72 / lens (gui_step161_views) = 30 Maya units
     assert abs(view.maya_ortho_distance(Space()) * 72 / 70 - 30 * u) < 1e-9

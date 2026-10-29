@@ -15,8 +15,8 @@ from mathutils import Vector
 from .. import results
 from . import create
 
-# Blender's viewport lens is checked on a 72 mm sensor (BKE_camera_params_from_view3d: lens on the 36 mm default
-# sensor with CAMERA_PARAM_ZOOM_INIT_PERSP 2;  step 41): a camera on 36 mm needs half the lens.
+# Blender's viewport lens is defined on a 72 mm sensor (BKE_camera_params_from_view3d: lens on the 36 mm default
+# sensor with CAMERA_PARAM_ZOOM_INIT_PERSP 2; step 41): a camera on 36 mm needs half the lens.
 VIEW_SENSOR = 72.0
 
 
@@ -108,7 +108,7 @@ class ALLSET_OT_camera_from_view(bpy.types.Operator):
             cam.type = 'PERSP'
             cam.lens = space.lens * cam.sensor_width / VIEW_SENSOR
         else:
-            #  Blender's ortho view width = view distance x VIEW_SENSOR / lens (same params as above)
+            # Blender's ortho view width = view distance x VIEW_SENSOR / lens (same params as above)
             cam.type = 'ORTHO'
             cam.ortho_scale = rv3d.view_distance * VIEW_SENSOR / space.lens
         for other in context.selected_objects:

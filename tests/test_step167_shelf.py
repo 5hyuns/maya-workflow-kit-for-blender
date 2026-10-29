@@ -1,5 +1,5 @@
 """Step 167: a shelf double-click = the button's option box (the first click ran the command once), and Maya's shelf
-overflow (rows that wrap, one shown, a scroll bar / the wheel move one row), following Maya 2022.
+overflow (rows that wrap, one shown, a scroll bar / the wheel move one row), like Maya.
 """
 
 from importlib import import_module
@@ -130,7 +130,7 @@ def test_row_layout_wraps_like_maya():
     limit = 1600 - (shelf.SCROLL_PX + shelf.SCROLL_RIGHT_PX + 2) * 1.25
     assert all(x + shelf.ICON_PX * 1.25 <= limit for _r, x in lay), "nothing under the scroll bar"
     lay = shelf.row_layout(1000, 43, 1.0, gaps=(7, 9))
-    assert max(r for r, _x in lay) == 1, "Maya at 1000 px: two rows (shelf167/narrow_1000.png)"
+    assert max(r for r, _x in lay) == 1, "at 1000 px: two rows"
 
 
 def test_scroll_clamps_and_keymap():

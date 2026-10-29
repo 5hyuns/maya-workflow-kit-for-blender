@@ -2,7 +2,7 @@
 
 Blender skips grid steps below 1 m in user perspective views and divides by scale_length,
 so ``units.grid_scale`` = metres per display unit. The Maya Workflow Kit template has it on every 3D
-view; Maya Units sets and restores it.  The snap itself is
+view; Maya Units sets and restores it. The snap itself is
 checked in tests/gui/gui_step25_grid_snap.py.
 """
 

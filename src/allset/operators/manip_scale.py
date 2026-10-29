@@ -54,7 +54,7 @@ ZERO_SCALE = 1e-12       # what a scale channel that was 0 becomes
 AXIS_PX = 90.0           # Maya's axis handle length per unit of scale change at UI scale 1, default size
 GIZMO_SIZE_DEFAULT = 75  # Blender's default gizmo size (the kit's equivalent of Maya's default manipulator size)
 STEP = 0.1               # Blender's increment for scale snapping
-FALLBACK_R_PX = 100.0    # a selection with no extent (one vertex): 100 px on screen per unit (delegated)
+FALLBACK_R_PX = 100.0    # a selection with no extent (one vertex): 100 px on screen per unit
 TINY = 1e-9
 LAST = {}                # the last drag: press point (region px), wpp, R, axis length, factor (read by tests)
 
@@ -95,7 +95,7 @@ def along(drag, screen_dir):
 
 def axis_length_px(ui_scale, gizmo_size, size=1.0):
     """Screen length of one unit of axis scale change: 90 px at the default manipulator size, following
-    Blender's gizmo size, the kit's = / - size and the UI scale (delegated)."""
+    Blender's gizmo size, the kit's = / - size and the UI scale."""
     return AXIS_PX * (ui_scale or 1.0) * gizmo_size / GIZMO_SIZE_DEFAULT * size
 
 
@@ -137,7 +137,7 @@ def skip_factor(f):
 
 def supported(context):
     """The kit drag runs in object mode and mesh edit mode; elsewhere (and with Blender options it can't put
-    back) Blender's own resize runs, as before (delegated)."""
+    back) Blender's own resize runs, as before."""
     ts = context.scene.tool_settings
     if context.mode == 'OBJECT':
         if ts.use_transform_data_origin or ts.use_transform_skip_children or ts.use_transform_pivot_point_align:

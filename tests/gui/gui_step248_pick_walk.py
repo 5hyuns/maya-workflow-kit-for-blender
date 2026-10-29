@@ -1,5 +1,5 @@
 """Step 248 (Issue #165) in a real UI: a spine with three branches made with the Joint Tool (L_arm, R_arm, neck order
-like the Maya fixture) -> arrow keys walk in creation order and wrap (Maya pickWalk, joint_rig_2026_select_pick.md) ->
+like the Maya fixture) -> arrow keys walk in creation order and wrap (Maya pick walk) ->
 the Channel Box shows Radius under Visibility; typing 2 changes it -> Display > Transform Display > Local Rotation
 Axes shows the joint axes -> Ctrl+Z -> save + open keeps the child order."""
 

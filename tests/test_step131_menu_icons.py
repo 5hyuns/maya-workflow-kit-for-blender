@@ -1,6 +1,6 @@
-"""Step 131 lane MENU (#23): Maya menu items that Maya 2022 draws with an icon show the kit's own drawing of the same
-command (ui/menu_icons.py, table ui/menu_icon_data.py from tools/gen_menu_icons.py). Plan / decisions:
-; GUI: tests/gui/gui_step131_menu_icons.py."""
+"""Step 131 lane MENU (#23): Maya menu items that Maya draws with an icon show the kit's own drawing of the same
+command (ui/menu_icons.py, table ui/menu_icon_data.py from tools/gen_menu_icons.py).
+GUI: tests/gui/gui_step131_menu_icons.py."""
 
 import collections
 from importlib import import_module
@@ -20,7 +20,7 @@ kit_icons = import_module(kit.MODULE + ".ui.kit_icons")
 menu_drawings = import_module(kit.MODULE + ".ui.menu_drawings")
 
 SIZES = (16, 20, 24)            # menu icon px at UI scale 1.0 / 1.25 / 1.5
-# Menus where Maya itself shows one picture on two items (same icon in Maya)
+# Menus where Maya itself shows one picture on two items 
 MAYA_SHARED = {"nCache/Merge Caches", "nHair/Convert Selection"}
 
 

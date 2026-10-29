@@ -1,8 +1,8 @@
 """Step 248 (Issue #165): Maya pick-walk order and joint display.
 
-Maya 2026 pick-walk:
+Maya pick-walk:
 spine's children L_arm, R_arm, neck in creation order; Left / Right walk the siblings in that order and wrap; Down = the
-first child; a leaf stays. Decision 6 (controller tags first, hidden bone collections skipped by default) is unchanged.
+first child; a leaf stays. Controller tags first, hidden bone collections skipped by default, as before.
 Kit: operators/joints.py child_order_key / stamp_last, operators/joint_display.py.
 """
 
@@ -88,13 +88,13 @@ def test_hidden_joint_is_walked_into_collection_hidden_is_skipped():
     ob = _build()
     ob.data.bones["R_arm"].hide = True                   # h: Maya walks into hidden joints
     assert _walk(ob, "L_arm", "RIGHT") == "R_arm"
-    coll = ob.data.collections.new("hidden_ctrls")       # : a hidden bone collection is skipped (pref on)
+    coll = ob.data.collections.new("hidden_ctrls")       # a hidden bone collection is skipped (pref on)
     coll.assign(ob.data.bones["R_arm"])
     coll.is_visible = False
     assert _walk(ob, "L_arm", "RIGHT", skip=True) == "R_hand"
     assert _walk(ob, "L_arm", "RIGHT", skip=False) == "R_arm"
     prefs = import_module(kit.MODULE + ".preferences")
-    assert prefs.get(bpy.context).pick_walk_skip_hidden_collections is True, " default kept"
+    assert prefs.get(bpy.context).pick_walk_skip_hidden_collections is True, "skip-hidden default kept"
 
 
 def test_operator_walks_in_child_order():

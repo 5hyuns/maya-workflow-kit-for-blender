@@ -40,7 +40,7 @@ def _select(sc, obs):
 
 def _layered():
     """pCube1 + pSphere1 (base tx 0@1 5@12 0@24, ry 0 -> 90 deg), AnimLayer1 from both, layer tx +2@6 -1@18 on the
-    cube and +1@6 on the sphere, ty +3@12 on the cube (anim_layers_193.md scene, two objects)."""
+    cube and +1@6 on the sphere, ty +3@12 on the cube (two objects)."""
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     for act in list(bpy.data.actions):
@@ -136,7 +136,7 @@ def test_extract_selected_objects_keeps_the_result():
 
 
 def test_extract_keeps_mode_not_weight():
-    """Maya (anim_layers_201.md): the extract layer keeps Additive / Override but has weight 1.0 without L's
+    """Maya: the extract layer keeps Additive / Override but has weight 1.0 without L's
     weight keys, so the result changes when L's weight isn't 1 (Maya extract case)."""
     sc, cube, sphere = _layered()
     e = sc.allset_anim_layers[1]
@@ -194,7 +194,7 @@ def test_duplicate_layer_adds_it_again():
     want = [[b + 2 * x for b, x in zip(rb, rl)] for rb, rl in zip(base, layer)]
     _same(_evaluated(sc, cube), want)
     _check_kit_is_nla(sc, cube)
-    # a second copy gets Maya's number suffix ()
+    # a second copy gets Maya's number suffix
     sc.allset_anim_layer_index = 1
     a4.duplicate(sc, "AnimLayer1")
     assert _names(sc) == [al.BASE, "AnimLayer1", "AnimLayer1_copy1", "AnimLayer1_copy"], _names(sc)
@@ -203,7 +203,7 @@ def test_duplicate_layer_adds_it_again():
 
 def test_duplicate_layer_no_animation():
     """Maya: an additive copy without animation adds nothing; an override one holds L's value at the current time
-    (anim_layers_201.md, copy_noanim_l1 / l2)."""
+    (copy without animation, L1 / L2)."""
     sc, cube, sphere = _layered()
     before = _evaluated(sc, cube)
     assert _op("anim_layer_duplicate", no_animation=True) == {'FINISHED'}

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""GPU drawing of the marking menu engine and the hotbox.
+"""GPU drawing of the marking menu engine and the hotbox (step 9).
 
 POST_PIXEL draw handlers per editor type and region type, added once at register.
 Maya's menus float over the whole window (step 52): the modal operators work in the
@@ -35,7 +35,7 @@ COVER_SPACES = SPACES + tuple(getattr(bpy.types, n) for n in (
 # 'HUD' = the Adjust Last Operation panel, drawn over the view: without it the RMB list went under it (step 91).
 REGION_TYPES = ('WINDOW', 'UI', 'TOOLS', 'HEADER', 'TOOL_HEADER', 'CHANNELS', 'FOOTER', 'HUD')
 
-# Maya greys and selection blue #5285A6. Menu boxes and the list body: #525252
+# Maya-style greys and selection blue #5285A6. Menu boxes and the list body: #525252
 # (step 52).
 BG = (0x52 / 255, 0x52 / 255, 0x52 / 255, 1.0)
 DIVIDER = (0x3a / 255, 0x3a / 255, 0x3a / 255, 1.0)
@@ -54,14 +54,14 @@ def ui_scale():
 
 
 def font_size():
-    # Maya menus: Segoe UI 11 px at Qt dpr 1.0 = Blender's 11 pt
-    # widget text at an effective scale of 1.0 (the Maya density preset, ).
+    # Menu text: Segoe UI 11 px = Blender's 11 pt
+    # widget text at an effective scale of 1.0 (step 44).
     # blf font 0 is the interface font, so it is Segoe UI when view.font_path_ui points there.
     return max(8, round(11 * ui_scale()))
 
 
 # Submenu arrow: drawn as a triangle, not the "▸" glyph. A UI font without it (Segoe UI, the Maya Font
-# preference) makes blf.dimensions return millions of pixels (checked, step 52: the RMB list spanned the view).
+# preference) makes blf.dimensions return millions of pixels (step 52: the RMB list spanned the view).
 ARROW = " ▸"
 
 
@@ -206,7 +206,7 @@ def _draw_layout(lay, cx, cy, hover):
         radial = it.kind == "radial"
         if radial:
             # the 1 px border on the box's outer pixels: a line on the rect's sides drew a box 1 px too tall / wide
-            # (22 px for Maya's 21, step 151 shot)
+            # (22 px instead of 21, step 151)
             r = it.rect
             _outline((r[0] + 0.5, r[1] + 0.5, r[2] - 0.5, r[3] - 0.5), EDGE, cx, cy)
             text = engine.Layout.ring_text(it.label, it.action)
@@ -254,7 +254,7 @@ def _draw_list_body(lay, cx, cy):
 # --- hotbox ---------------------------------------------------------------------------
 
 # Maya hotbox: no dimming; each row is one translucent strip (#444444 at 70 % = #4c4c4c over
-# Maya's #5c5c5c view), the hovered menu name lights up, the centre box
+# a #5c5c5c view), the hovered menu name lights up, the centre box
 # shows "Maya", four short white diagonal lines mark the zones (no zone names).
 ROW_BG = (0x44 / 255, 0x44 / 255, 0x44 / 255, 0.7)
 ROW_TEXT = (0xbb / 255, 0xbb / 255, 0xbb / 255, 1.0)
@@ -302,15 +302,15 @@ def _draw_last():
     """Move the handlers to the end of every region's draw list (step 136, #56): Blender draws a region's
     POST_PIXEL handlers in the order they were added, and kit handlers registered after ``marking`` (Time Slider
     numbers / key ticks, Range Slider, shelf, Outliner set rows) drew over the open menu
-    (tmp/audit133_ui/pairs/zoom_m14_list.png: Time Slider frame numbers on the list)."""
+    (Time Slider frame numbers on the list)."""
     if _handles:
         unregister_handlers()
         register_handlers()
 
 
 # Area borders (step 136, #56): Blender draws them after every region (ED_screen_draw_edges), so no POST_PIXEL
-# handler can draw over them. checked in GUI shots of the Maya Workflow Kit layout at UI scale 1.0 and 1.25
-# (tmp/probe136, ): areas are 3 px apart and a 2 px rim is drawn over each area's
+# handler can draw over them. In the Maya Workflow Kit layout at UI scale 1.0 and 1.25
+# areas are 3 px apart and a 2 px rim is drawn over each area's
 # edge at both scales (the border width preference is in pixels, it does not follow the UI scale). +1 px for the
 # rim's anti-aliasing.
 BORDER_RIM = 2

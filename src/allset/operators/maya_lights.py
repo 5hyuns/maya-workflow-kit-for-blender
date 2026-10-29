@@ -8,7 +8,7 @@ Maya (Maya Software):
 - volumeLight (Sphere, Outward, factory ramp): v = I x colour x diffuse x (1 - r/R) x max(0, cos toward the centre),
   0 for r >= R, R = the sphere radius = the transform's scale (scale 1 = 1 Maya unit), Decay Rate ignored, no 1/r^2.
 
-Blender stand-ins (approximations delegated by the main lane, errors checked by tests/test_step214_lights.py):
+Blender stand-ins (approximations; tests/test_step214_lights.py checks the errors):
 - Ambient Light = a point light at the object carrying the directional part s x I (No Decay: the Cycles Light Falloff
   Constant output of operators/lights.py; EEVEE / the viewport 1/r^2 matched at 10 units like every kit light),
   specular 0, no shadow; plus the flat part (1 - s) x I x colour added to the World for non-camera rays ("Maya
@@ -19,7 +19,7 @@ Blender stand-ins (approximations delegated by the main lane, errors checked by 
   t = 180 degrees); Cycles shadows the World part (ambient occlusion) where Maya never shadows it.
 - Volume Light = a point light at the centre. Cycles: exact — Light Falloff Constant whose Strength is
   max(0, 1 - Ray Length / R) (Light Path Ray Length in a light shader = the distance from the shading point to the
-  light, checked step 214). EEVEE / the viewport ignore light nodes: 1/r^2 cut at R by Custom Distance (EEVEE
+  light). EEVEE / the viewport ignore light nodes: 1/r^2 cut at R by Custom Distance (EEVEE
   attenuates by (1 - (r/R)^4)^2 inside the cutoff), matched to Maya at r = R/2.
 Maya intensity is kept in an ID property of the light (``INTENSITY_PROP``): the power can't hold it (s may be 0).
 """
@@ -38,7 +38,7 @@ KINDS = {'AMBIENT_LIGHT': AMBIENT, 'VOLUME_LIGHT': VOLUME}
 INTENSITY_PROP = "allset_maya_intensity"
 SHADE_PROP = "allset_ambient_shade"
 MAYA_SHADE = 0.45                      # ambientShade factory value
-# EEVEE volume fit: I x A x (R/r)^2 x (1 - (r/R)^4)^2 = 0.5 at r = R/2 (Maya's 1 - r/R there)
+# EEVEE volume fit: I x A x (R/r)^2 x (1 - (r/R)^4)^2 = 0.5 at r = R/2 (= 1 - r/R there)
 VOLUME_A = 0.5 / (4.0 * (1.0 - 1.0 / 16.0) ** 2)
 
 # volume light nodes (Cycles)
@@ -188,8 +188,8 @@ def set_intensity(light, value):
 
 def defaults(light, k):
     """A new Maya Ambient / Volume Light."""
-    light.shadow_soft_size = 0.0           # a point (Maya measures from the light's position / the volume centre)
-    light.use_shadow = False               # no shadows at Maya's factory render settings (delegated for volume)
+    light.shadow_soft_size = 0.0           # a point (Maya works from the light's position / the volume centre)
+    light.use_shadow = False               # no shadows at default render settings (a kit choice for volume)
     light.color = (1.0, 1.0, 1.0)
     light[lights.DECAY_PROP] = 0
     light[INTENSITY_PROP] = 1.0

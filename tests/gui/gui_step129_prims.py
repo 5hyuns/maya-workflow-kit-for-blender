@@ -58,7 +58,7 @@ def s_wait():
 def s_inputs_shot():
     shot("gui_step129_cylinder_inputs.png")
     ob = bpy.data.objects[C["ob"]]
-    check(f"Create > Cylinder: {C['ob']} with Maya's 42 vertices (caps = centre fans)", len(ob.data.vertices) == 42)
+    check(f"Create > Cylinder: {C['ob']} with 42 vertices (caps = centre fans)", len(ob.data.vertices) == 42)
 
 
 @step

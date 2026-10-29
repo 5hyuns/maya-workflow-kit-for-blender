@@ -119,7 +119,7 @@ def s_extruded():
     check(f"the extrusion adds 4 vertices ({C['v0']} -> {len(b.verts)})", len(b.verts) == C["v0"] + 4)
     top = max(v.co.z for v in b.verts)
     C["top"] = top
-    # three neighbouring rim edges at the +X side (Maya's e[20:22] on Create > Cylinder)
+    # three neighbouring rim edges at the +X side (edges e[20:22] of Create > Cylinder)
     rim = [e for e in b.edges if all(abs(v.co.z - top) < 1e-6 and v.co.xy.length > 0.9 * k() for v in e.verts)]
     rim.sort(key=lambda e: (angle((e.verts[0].co + e.verts[1].co) / 2) - 9.0) % 360.0)
     for e in b.edges:

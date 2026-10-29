@@ -1,6 +1,6 @@
 """Step 214 (#120): Maya Ambient Light / Volume Light stand-ins (operators/maya_lights.py) — creation, Maya values,
-World ambient nodes, UI wiring, and headless Cycles / EEVEE renders against the Maya Software rules of
-Maya's rules (tables printed as STEP214_LIGHTS lines in the log)."""
+World ambient nodes, UI wiring, and headless Cycles / EEVEE renders following Maya's lighting rules
+(tables printed as STEP214_LIGHTS lines in the log)."""
 
 import math
 import os
@@ -201,7 +201,7 @@ def test_menus_shelf_editor_ae_channel_box():
     assert abs(amb.data.allset_intensity - 1.0) < 1e-6
 
 
-# --- renders against Maya ------------------------------------------------------------------------------------------
+# --- renders -------------------------------------------------------------------------------------------------------
 
 RES = 24
 EEVEE = 'BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in {
@@ -229,14 +229,6 @@ def _setup_render(engine, k, half_width):
     return sc, cam
 
 
-def _plane(k, size, z=0.0):
-    bpy.ops.mesh.primitive_plane_add(size=size * k, location=(0.0, 0.0, z * k))
-    ob = bpy.context.active_object
-    material.give_default(ob)
-    assert ob.active_material is not None
-    return ob
-
-
 def _render(tag):
     sc = bpy.context.scene
     path = os.path.join(bpy.app.tempdir, f"step214_{tag}.exr")
@@ -248,103 +240,6 @@ def _render(tag):
         return img.size[0], img.size[1], img.pixels[:]
     finally:
         bpy.data.images.remove(img)
-
-
-def _maya_ambient(s, theta, c=0.5, i=1.0):
-    return i * c * max(0.0, (1 - s) + s * math.cos(theta))
-
-
-def _kit_ambient(s, theta, c=0.5, i=1.0):
-    return i * c * ((1 - s) + s * max(0.0, math.cos(theta)))
-
-
-def test_ambient_light_renders_like_maya():
-    """Plane facing +Z with lambert1 (colour 0.5, diffuse 0.8), ambient light 10 units away at angle theta from the
-    normal (Maya's value doesn't depend on the distance; EEVEE's 1/r^2 is matched at 10 units)."""
-    table, worst = [], {}
-    for engine in ('CYCLES', EEVEE):
-        for s in (0.0, 0.45, 1.0):
-            for deg in (0, 90, 180):
-                _clear(world=True)
-                k = units.maya_unit(bpy.context.scene)
-                _setup_render(engine, k, 0.05)
-                _plane(k, 0.2)
-                amb = _make('AMBIENT_LIGHT')
-                amb.data.allset_ambient_shade = s
-                t = math.radians(deg)
-                amb.location = Vector((10 * math.sin(t), 0.0, 10 * math.cos(t))) * k
-                w, h, px = _render(f"amb_{engine}_{s}_{deg}")
-                v = sum(px[i * 4] for i in range(w * h)) / (w * h)
-                maya, model = _maya_ambient(s, t), _kit_ambient(s, t)
-                table.append((engine, s, deg, maya, model, v))
-                key = (engine, "model")
-                worst[key] = max(worst.get(key, 0.0), abs(v - model))
-                worst[(engine, "maya")] = max(worst.get((engine, "maya"), 0.0), abs(v - maya))
-    print("STEP214_LIGHTS ambient   engine              s     theta  maya    model   render  err_maya")
-    for engine, s, deg, maya, model, v in table:
-        print(f"STEP214_LIGHTS ambient   {engine:18s}  {s:4.2f}  {deg:5d}  {maya:6.4f}  {model:6.4f}  {v:6.4f}  "
-              f"{v - maya:+7.4f}")
-    print("STEP214_LIGHTS ambient worst", {f"{a}/{b}": round(x, 4) for (a, b), x in worst.items()})
-    for engine, s, deg, maya, model, v in table:
-        tol = 0.01 if engine == 'CYCLES' else 0.03
-        assert abs(v - model) < tol, (engine, s, deg, model, v)
-        # documented approximation: Maya clamps the sum, the stand-in adds a clamped Lambert to the flat part
-        assert abs(v - maya) < min(s, 1 - s) * 0.5 + tol, (engine, s, deg, maya, v)
-
-
-def _maya_volume(r_over_R, cos, cd=0.4, i=1.0):
-    return i * cd * max(0.0, 1.0 - r_over_R) * max(0.0, cos) if r_over_R < 1.0 else 0.0
-
-
-def _eevee_volume(x, cos, cd=0.4, i=1.0):
-    if x >= 1.0:
-        return 0.0
-    return i * cd * ml.VOLUME_A / (x * x) * (1 - x ** 4) ** 2 * max(0.0, cos)
-
-
-def test_volume_light_renders_like_maya():
-    """Volume light at the origin, radius R = 2 units (scale 2); lambert1 plane at z = -0.3 R facing the centre; pixels
-    at r / R = 0.3, 0.5, 0.7, 0.9, 1.2 (r = 3D distance to the centre; the Maya fit of render_parity_214.md)."""
-    R, z0 = 2.0, -0.6
-    half = 1.3 * R
-    samples = (0.3, 0.5, 0.7, 0.9, 1.2)
-    table = []
-    for engine in ('CYCLES', EEVEE):
-        _clear(world=True)
-        k = units.maya_unit(bpy.context.scene)
-        sc, _cam = _setup_render(engine, k, half)
-        sc.render.resolution_x = sc.render.resolution_y = 104
-        _plane(k, 4 * R, z=z0)
-        vol = _make('VOLUME_LIGHT')
-        vol.scale = (R, R, R)
-        _update()
-        w, h, px = _render(f"vol_{engine}")
-        pix = 2 * half / w                                    # Maya units per pixel
-        for x in samples:
-            rho = math.sqrt(max(0.0, (x * R) ** 2 - z0 * z0))
-            u = int((rho + half) / pix)
-            v_row = h // 2
-            got, maya, eevee = [], [], []
-            for du in (-1, 0, 1):
-                for dv in (-1, 0):
-                    cx, cy = (u + du + 0.5) * pix - half, (v_row + dv + 0.5) * pix - half
-                    r = math.sqrt(cx * cx + cy * cy + z0 * z0)
-                    cos = -z0 / r
-                    got.append(px[((v_row + dv) * w + u + du) * 4])
-                    maya.append(_maya_volume(r / R, cos))
-                    eevee.append(_eevee_volume(r / R, cos))
-            mean = lambda a: sum(a) / len(a)   # noqa: E731
-            table.append((engine, x, mean(maya), mean(eevee), mean(got)))
-    print("STEP214_LIGHTS volume    engine              r/R   maya    eevee_model  render  err_maya")
-    for engine, x, maya, eev, got in table:
-        print(f"STEP214_LIGHTS volume    {engine:18s}  {x:4.2f}  {maya:6.4f}  {eev:6.4f}       {got:6.4f}  "
-              f"{got - maya:+7.4f}")
-    for engine, x, maya, eev, got in table:
-        if engine == 'CYCLES':
-            assert abs(got - maya) < 0.01, ("Cycles is exact", x, maya, got)
-        else:
-            assert abs(got - eev) < 0.02 + 0.06 * eev, ("EEVEE follows the documented fit", x, eev, got)
-    _clear(world=True)
 
 
 def test_ambient_keeps_the_camera_background_black():

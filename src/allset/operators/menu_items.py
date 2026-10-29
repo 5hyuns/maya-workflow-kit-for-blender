@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Small Maya menu commands Blender has no single operator for.
+"""Small Maya menu commands Blender has no single operator for (step 101).
 
 Each reproduces the Maya result with a few data / bmesh edits: Modify > Naming, Mesh Display > Soften/Harden
 Edges, Edit Mesh > Detach / Edit Edge Flow / Wedge, Deform > Nonlinear, Display > Object Display, Mesh Tools >
@@ -127,7 +127,7 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     angle: FloatProperty(name="Angle", default=30.0, min=0.0, max=180.0,
-                         description="default 30: faces at a smaller angle shade smooth across the edge")
+                         description="Default 30: faces at a smaller angle shade smooth across the edge")
     option_box: BoolProperty(options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
@@ -458,7 +458,7 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
         ob = context.active_object
         if context.mode != 'SCULPT' and not ob.visible_get():
             # Maya switches the tool without a check; Blender can't
-            # sculpt a hidden object, so the kit says so and stays in object mode (delegated, step 258)
+            # sculpt a hidden object, so the kit says so and stays in object mode (step 258)
             self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to sculpt it.")
             return {'CANCELLED'}
         if context.mode != 'SCULPT':
@@ -490,7 +490,7 @@ class ALLSET_OT_paint_hair_follicles(bpy.types.Operator):
     def execute(self, context):
         # Maya switches to the Paint Hair Follicles tool for any selection, a mesh included
         # (Maya). Blender grows hair as a Curves object attached to a surface mesh:
-        # the mesh's hair (its first Curves object) or a new empty one, then Sculpt mode (delegated, step 258).
+        # the mesh's hair (its first Curves object) or a new empty one, then Sculpt mode (step 258).
         ob = context.active_object
         if ob is not None and ob.mode != 'OBJECT' and ob.type != 'CURVES':
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -614,7 +614,7 @@ def _checker_material():
     node.location = (-570, 300)
     tree.nodes.active = node
     tree.links.new(node.outputs["Color"], material.color_socket(mat))
-    # a display aid, not a Maya shader: the checker shows at full brightness (diffuse 1, step 214, delegated)
+    # a display aid, not a Maya shader: the checker shows at full brightness (diffuse 1, step 214)
     material.ensure_diffuse(mat, 1.0)
     return mat
 

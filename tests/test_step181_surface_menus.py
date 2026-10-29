@@ -1,6 +1,6 @@
 """Step 181 (lane W): the Surfaces menu leaves mapped to the kit's NURBS surface commands, their Maya option windows
-(titles / fields / factory values), shelf routing and notices.
- Geometry: tests of operators/surfaces_maya.py."""
+(titles / fields / defaults), shelf routing and notices.
+Geometry: tests of operators/surfaces_maya.py."""
 
 import types
 from importlib import import_module
@@ -37,7 +37,7 @@ MAPPED = {
     "Surfaces/Open/Close": ("curve.cyclic_toggle", {}),
 }
 
-# Surfaces leaf -> (window key, Maya title, command button, the operator call the factory values make)
+# Surfaces leaf -> (window key, Maya title, command button, the operator call the default values make)
 WINDOWS = {
     "Surfaces/Loft": ("loft", "Loft Options", "Loft", "loft", dict(
         uniform=True, auto_reverse=True, close=False, degree='3', section_spans=1)),
@@ -138,7 +138,7 @@ def test_windows_bound_with_maya_titles_and_factory_values():
         rna = getattr(bpy.ops.allset, "opt_" + key).get_rna_type()
         for f in w.fields:
             assert f.name in rna.properties, (key, f.name)
-        # the factory values make the operator call of the plan table (= Maya's factory command)
+        # the default values make the expected operator call (= Maya's default command)
         name, mode, kw = _call(w)
         assert (name, mode) == (op, 'EXEC_DEFAULT'), (key, name, mode)
         assert kw == factory, (key, kw)
@@ -175,7 +175,7 @@ def test_window_fields_follow_maya():
         assert _call(d["surface_reverse"], {"direction": label})[2] == dict(direction=want)
     assert _call(d["surface_rebuild"], {"degree_u": "1 Linear", "degree_v": "5", "spans_v": 7})[2] == dict(
         spans_u=4, spans_v=7, degree_u='1', degree_v='5')
-    # Maya field order of the radio groups (Maya 2026 Reverse Surface Direction / Extrude option windows)
+    # Maya field order of the radio groups (Reverse Surface Direction / Extrude option windows)
     reverse = {f.name: f for f in d["surface_reverse"].fields}
     assert reverse["direction"].items == ("U", "V", "Swap", "Both")
     extrude = {f.name: f for f in d["surface_extrude"].fields}

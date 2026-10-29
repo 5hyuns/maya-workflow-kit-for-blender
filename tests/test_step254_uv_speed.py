@@ -1,6 +1,6 @@
 """Step 254 (#170 #172): the UV Editor froze on dense meshes in the Maya layout — the UV HUD statistics and the shell /
 texture borders were recomputed in Python on every redraw after a mesh or selection change (1.2-1.9 s each on a
-48 400-face sphere, checked tmp/p254), and Cut UV Edges scanned the whole shell per cut vertex (36 s).
+48 400-face sphere), and Cut UV Edges scanned the whole shell per cut vertex (36 s).
 
 operators/uv_arrays.py does the same in numpy. Checked here: the numpy results equal the Python rules
 (uv_hud.mesh_statistics, uv_display.border_segments) on meshes with seams, cuts, hidden faces, stacked and reversed
@@ -169,7 +169,7 @@ def test_with_edit_mode_modifier_reads_bmesh():
 
 
 def test_dense_mesh_is_interactive():
-    ob = _sphere(cuts=10, seg=32, rings=16)      # 48 400 faces, the mesh of the tmp/p254 checked
+    ob = _sphere(cuts=10, seg=32, rings=16)      # 48 400 faces, the slow case
     bm, uv = _bm(ob)
     n = len(bm.faces)
     assert n >= 48000, n

@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya UV workflow on Blender's UV Editor.
+"""Maya UV workflow on Blender's UV Editor (step 66).
 
 - Opening the UV Editor (Maya UV > UV Editor) enters edit mode with UV Sync Selection on, so the object's UVs show at
   once. Maya's UV / UV Shell components are UVs picked apart from the mesh
   vertices: Blender needs sync off for that (and then draws only the selected faces' UVs, so every face is selected).
 - UV Shell = Blender UV island. Blender's island operators group UVs by shared coordinates and ignore seams
-  (checked, step 66: pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
+  (step 66: pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
   2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the smaller shell moved onto the edge.
 - Unfold = Blender Unwrap (Minimum Stretch) on the chosen shells with their borders kept as seams, each shell put back where
   it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit.
@@ -26,7 +26,7 @@ from .. import compat
 EPS = 1e-5           # UVs closer than this are one UV
 NUDGE = 2e-4         # how far Cut moves the smaller side (0.2 px on a 1024 map)
 MAYA_MAP_SIZE = 1024
-MAYA_SHELL_PADDING = 2   # px 
+MAYA_SHELL_PADDING = 2   # px
 NOTICE_UNFOLD = "Unfold uses Blender Unwrap (Minimum Stretch), not Unfold3D: shapes can differ from Maya."
 
 
@@ -328,7 +328,7 @@ def layout(context, ob, padding_px, map_size):
 def auto_planes(count):
     """Projection directions of Maya's Automatic mapping (object space). 3 and 6 = the six axis planes (Maya 3 planes
     also gives 6 shells on a cube / sphere); 4 / 8 / 12 = tetrahedron / octahedron / dodecahedron faces,
-    5 = top, bottom and three around (delegated: only 6 is compared with Maya). Order = Maya X, Y, Z (Blender X, Z, -Y):
+    5 = top, bottom and three around (a kit choice). Order = Maya X, Y, Z (Blender X, Z, -Y):
     a face that ties goes to the earlier plane (a Maya cylinder's 45-degree sides go to X)."""
     count = int(count)
     if count in (3, 6):
@@ -355,8 +355,8 @@ def _basis(d):
 
 
 def _maya_shells(faces, k_unit, optimize=True):
-    """6 planes: Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the factory
-    optimize 1), fed with the faces in index order and the points in Maya axes and units (Blender (x, y, z) =
+    """6 planes: Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the default),
+    fed with the faces in index order and the points in Maya axes and units (Blender (x, y, z) =
     Maya (x, -z, y)). Returns ``[(projector, faces)]``; a projector maps a Blender point to the plane's (u, v)."""
     from . import autoproj_layout
     faces = sorted(faces, key=lambda f: f.index)
@@ -377,11 +377,11 @@ def _maya_shells(faces, k_unit, optimize=True):
 
 
 def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
-    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with factory options: 6 planes assign faces
+    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with the default options: 6 planes assign faces
     and build shells Maya's way (``_maya_shells``: candidate planes within 60 degrees, seeds by fewest candidates,
     flood fill that stops where a shell would overlap itself); other
     plane counts give every face the plane its normal faces most. Shells are laid out in 0-1 at one scale with
-    ``spacing`` percent between them (factory 0.2 %) by Maya's packed "Into square"
+    ``spacing`` percent between them (default 0.2 %) by Maya's packed "Into square"
     layout (operators/autoproj_layout.py, step 257). ``unit`` = Blender length of one Maya unit
     (``units.maya_unit``): Maya projects and packs in Maya units. Returns the shell count."""
     from . import autoproj_layout
@@ -526,8 +526,8 @@ class ALLSET_OT_uv_automatic(bpy.types.Operator):
 # Maya's UV > Automatic leaves a polyAutoProj node whose Channel Box INPUTS rows can be edited
 # (Planes, Optimize, Layout, Percentage Space, Scale Mode, Layout Method
 # after the projection's Translate / Rotate / Scale / Pivot). The kit's node shows the rows it rebuilds with
-# (delegated: Planes, Optimize = 1 Fewer pieces / 0 Less distortion, Percentage Space); the others stay at Maya's
-# factory values (Into square, Uniform, Bounding box, no projection transform). Like the kit's extrude / bevel
+# (Planes, Optimize = 1 Fewer pieces / 0 Less distortion, Percentage Space); the others stay at their
+# defaults (Into square, Uniform, Bounding box, no projection transform). Like the kit's extrude / bevel
 # nodes it is the last kit operation on the mesh (operators/extrude.py records); a UV > Automatic run from object
 # mode stays editable there while the mesh's UVs are the ones it made.
 
@@ -986,7 +986,7 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
         ob = context.view_layer.objects.active
         if ob is not None and ob.type == 'MESH' and ob.mode != 'EDIT' and not ob.visible_get():
             # a hidden object: Maya converts silently; Blender can't enter
-            # edit mode on it, so only the component type is set (delegated, step 258)
+            # edit mode on it, so only the component type is set (step 258)
             if self.mode in ('VERTEX', 'EDGE', 'FACE'):
                 ts.mesh_select_mode = (self.mode == 'VERTEX', self.mode == 'EDGE', self.mode == 'FACE')
             return {'FINISHED'}

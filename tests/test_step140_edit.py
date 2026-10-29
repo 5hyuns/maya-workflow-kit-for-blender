@@ -1,8 +1,6 @@
 """Step 140 lane EDIT: Maya option windows for the key commands, Parent / Unparent / Ungroup, Duplicate Special,
-Connect, Circularize, Make Hole and Insert Edge Loop (issues #33, #35). Fields / labels / factory defaults:
-Maya 2022; results: Maya 2022.
-,
-"""
+Connect, Circularize, Make Hole and Insert Edge Loop (issues #33, #35). Fields / labels / defaults
+follow Maya's option windows."""
 
 import math
 from importlib import import_module
@@ -46,9 +44,9 @@ _SCOPE = [("objects", "Objects:", "Selected"), ("hierarchy", "Hierarchy:", "Sele
           ("time_range", "Time range:", "All"), ("start", "Start time:", 0.0), ("end", "End time:", 10.0)]
 _DEL = [("method", "Method:", "Keys"), ("adjustment", "Adjustment:", "None"), ("connect", "Connect:", False)]
 
-# (field name, Maya label, Maya factory default) in Maya's screen order
+# (field name, label, default) in the window's screen order
 FIELDS = {
-    # option_boxes_140.md:77-90 (Control points: missing)
+    # (Control points: missing)
     "delete_keys": ("Delete Keys Options", "Delete Keys", _SCOPE + _DEL),
     # :92-95 (no Objects row)
     "cut_keys": ("Cut Keys Options", "Cut Keys", _SCOPE[1:] + _DEL),

@@ -1,5 +1,5 @@
 """Step 106: Tool Settings dock with Maya sections, Attribute Editor history tabs / menu bar / buttons / Notes, Blender
-explanation sentences moved into tooltips. """
+explanation sentences moved into tooltips."""
 
 
 from importlib import import_module
@@ -60,7 +60,7 @@ class Recorder:
 # --- Tool Settings -------------------------------------------------------------------------------------------------
 
 def test_sections_follow_maya():
-    # Maya 2022 frames_default / *_ts_full0.png: order and the one open section
+    # Maya 2022 frames: order and the one open section
     assert [s[1] for s in ts_mod.sections('TRANSLATE')] == [
         "Move Settings", "Joint Orient Settings", "Move Snap Settings", "Common Selection Options", "Soft Selection",
         "Symmetry Settings", "Smart Duplicate Settings"]

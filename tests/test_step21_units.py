@@ -1,9 +1,9 @@
-"""Step 21: one length rule for every creation path ().
+"""Step 21: one length rule for every creation path.
 
 A Maya length of 1 = one scene display unit: Create / shelf / menu / marking menu
 (``allset.create``), ``cmds.polyCube()`` and a Maya FBX import give the same size,
 with the Maya Workflow Kit template units (m + cm display), with "Maya Units" on and in a
-factory (m) scene.  「계획」.
+factory (m) scene.
 """
 
 import os
@@ -24,7 +24,7 @@ mm = import_module(kit.MODULE + ".marking.menus")
 preferences = import_module(kit.MODULE + ".preferences")
 
 TOL = 1e-6
-# Maya default sizes in Maya units (operators/create.py KINDS) and the cmds call for each.
+# Default primitive sizes in Maya units (operators/create.py KINDS) and the cmds call for each.
 PAIRS = {
     'CUBE': (cmds.polyCube, (1.0, 1.0, 1.0)),
     'SPHERE': (cmds.polySphere, (2.0, 2.0, 2.0)),
@@ -33,7 +33,7 @@ PAIRS = {
 }
 # name -> (system, length_unit, scale_length, BU per Maya unit)
 MODES = {
-    "template": ('METRIC', 'CENTIMETERS', 1.0, 0.01),     #  (tools/make_startup.py)
+    "template": ('METRIC', 'CENTIMETERS', 1.0, 0.01),     # tools/make_startup.py
     "maya_units": ('METRIC', 'CENTIMETERS', 0.01, 1.0),   # preference "Maya Units"
     "factory": ('METRIC', 'METERS', 1.0, 1.0),
 }
@@ -107,14 +107,14 @@ def test_other_kinds_scale_with_the_unit():
     assert _close((cam.data.clip_start, cam.data.clip_end), (0.001, 100.0)), \
         (cam.data.clip_start, cam.data.clip_end)
     assert abs(cam.data.display_size - 0.01) < TOL
-    assert (cam.data.lens, cam.data.sensor_width) == (35.0, 36.0), "Maya camera 35 mm on 36 mm film (step 81)"
+    assert (cam.data.lens, cam.data.sensor_width) == (35.0, 36.0), "camera 35 mm on 36 mm film (step 81)"
     circle = create.create(bpy.context, 'NURBS_CIRCLE')
     assert _close(circle.dimensions[:2], (0.02, 0.02), 1e-3), tuple(circle.dimensions)
     curve = create.create(bpy.context, 'CV_CURVE')
     assert curve.name == "curve1" and curve.type == 'CURVE', curve.name
     assert max(curve.dimensions) < 0.1, tuple(curve.dimensions)
     area = create.create(bpy.context, 'AREA_LIGHT')
-    assert abs(area.data.size - 0.02) < TOL, area.data.size     # Maya area light 2 x 2 units (step 137)
+    assert abs(area.data.size - 0.02) < TOL, area.data.size     # area light 2 x 2 units (step 137)
     _set_units("factory")
 
 

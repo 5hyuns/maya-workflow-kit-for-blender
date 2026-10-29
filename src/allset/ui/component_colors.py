@@ -1,30 +1,30 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya component colours in mesh edit mode.
+"""Maya-style component colours in mesh edit mode (step 134).
 
-Maya 2022 draws a mesh in component mode with its own colours (at UI scale 1.0):
-every visible edge 1 px hilite #64dcff; vertex mode: unselected vertices 3 px #c800c8 (hiliteComponent), selected
-vertices 4 px #fdff88 (the screen value of polyVertex); edge mode: selected edges #e3ac79 (polyEdge); face mode:
-selected faces a 1-in-4 pixel stipple #e3ac79 (polyFace), no fill.
+A mesh in component mode is drawn with these colours (at UI scale 1.0):
+every visible edge 1 px hilite #64dcff; vertex mode: unselected vertices 3 px #c800c8, selected
+vertices 4 px #fdff88; edge mode: selected edges #e3ac79; face mode:
+selected faces a 1-in-4 pixel stipple #e3ac79, no fill.
 
-Blender draws edit meshes with the user's theme (orange / black). The kit ships no theme (step 130, ),
+Blender draws edit meshes with the user's theme (orange / black). The kit ships no theme (step 130),
 so this POST_VIEW handler draws the Maya colours on top of Blender's own edit-mesh drawing (which stays under it).
 
-Reading the edit mesh (probe tmp/p134, 101 124 vertices): the evaluated object's ``to_mesh()`` is the current
+Reading the edit mesh (a mesh of 101 124 vertices): the evaluated object's ``to_mesh()`` is the current
 BMesh with ``.select_vert/edge/poly`` in ~4 ms; BMesh Python loops cost ~0.4 s. With a modifier shown in edit mode
 the evaluated mesh is not the cage, so the cage is read from the BMesh, only up to ``BMESH_LIMIT`` vertices
 (bigger meshes keep Blender's drawing). Arrays and GPU batches are cached per object and re-read when a
 depsgraph update names the object or its mesh.
 
 Selected faces (step 176): Blender's own selected-face tint (theme ``face_select``, drawn when the view's overlay
-``show_faces`` is on) sat under the kit stipple and turned Maya's 1-in-4 stipple into a near-opaque orange (kit 07
-pixels between the stipple dots #9d856b where the unselected face is #747577; Maya keeps its base grey #767676: look_compare ΔE00 40.5, ). In a
+``show_faces`` is on) sat under the kit stipple and turned the 1-in-4 stipple into a near-opaque orange (pixels between the stipple
+dots #9d856b where the unselected face is #747577; Maya keeps the base grey there). In a
 Maya layout 3D View, while the kit draws every edited mesh, the view's ``overlay.show_faces`` is switched off (view
 data, not preferences; from a timer, never inside the draw) and switched back when the kit stops drawing there
 (preference off, mesh over ``BMESH_LIMIT``) and on unregister. Views the kit didn't switch are left alone.
 
-Edges (step 185, ): Maya draws a thin hilite wire with crisp orange selected edges.
+Edges (step 185): Maya draws a thin hilite wire with crisp orange selected edges.
 Kit primitives keep Maya's hard edges as ``sharp_edge`` (step 134), so
-Blender drew its theme sharp-edge colour (factory #00ffff) about 3 px wide around the kit's line (GUI probe at UI 1.25,
+Blender drew its theme sharp-edge colour (factory #00ffff) about 3 px wide around the kit's line (at UI 1.25,
 cross-section of a silhouette edge: 519a9a 00dfdf 008a8a with the kit's 64dbff only in the middle) and the selected
 edge looked like an orange sliver inside a thick cyan band. ``overlay.show_edge_sharp`` is now switched off with
 ``show_faces`` (Maya has no sharp-edge colour); Blender's plain edit edge left under the kit line is 2 px (474747 333333),
@@ -36,14 +36,14 @@ hilite wire, ``EDGE_SEL_BIAS`` 0.003 for selected edges, drawn last and 2 px so 
 import bpy
 import numpy as np
 
-HILITE = "#64dcff"          # displayColor.hilite (18): the object being edited, every edge
-VERT = "#c800c8"            # displayColor.hiliteComponent (9): unselected vertices
-VERT_SEL = "#fdff88"        # selected vertices as Maya draws them (polyVertex 17 = #ffff00)
-EDGE_SEL = "#e3ac79"        # selected edges (polyEdge 21 = #e4ac79)
-FACE_SEL = "#e3ac79"        # selected face stipple (polyFace 21)
-VERT_PX = 3.0               # Maya pixel sizes at UI scale 1.0
+HILITE = "#64dcff"          # the object being edited, every edge
+VERT = "#c800c8"            # unselected vertices
+VERT_SEL = "#fdff88"        # selected vertices
+EDGE_SEL = "#e3ac79"        # selected edges
+FACE_SEL = "#e3ac79"        # selected face stipple
+VERT_PX = 3.0               # pixel sizes at UI scale 1.0
 VERT_SEL_PX = 4.0
-LINE_PX = 1.5               # Maya's lines are 1 px; 1.5 x UI scale just covers Blender's own 2 px edit edge (step 185)
+LINE_PX = 1.5               # thin lines; 1.5 x UI scale just covers Blender's own 2 px edit edge (step 185)
 EDGE_SEL_PX = 2.0           # selected edges a little wider, drawn over the hilite wire
 BMESH_LIMIT = 50000         # cage read from the BMesh (modifiers shown in edit mode) only up to this many vertices
 DEPTH_BIAS = 0.002          # relative pull toward the camera: 0.0005 lost the line's far side on silhouettes (step 185)

@@ -1,5 +1,5 @@
-"""Step 103: real Maya option windows (fields / defaults from Maya 2022),
-option boxes as Maya's right-side square, every mapped option box opens something. ;
+"""Step 103: real Maya option windows (Maya 2022 fields and defaults),
+option boxes as Maya's right-side square, every mapped option box opens something.
 GUI: tests/gui/gui_step103_option_windows.py."""
 
 import types
@@ -139,7 +139,7 @@ def test_primitives():
     _run("poly_cylinder", height=5.0, height_div=4, axis="X")
     ob = bpy.context.active_object
     assert abs(_size(ob).x - 5.0) < 1e-3, _size(ob)                    # Maya axis X: lies along X
-    assert len(ob.data.polygons) == 20 * 4 + 2 * 20     # Maya cap divisions 1: two centre fans (step 129)
+    assert len(ob.data.polygons) == 20 * 4 + 2 * 20     # cap divisions 1: two centre fans (step 129)
     _run("poly_plane", width=3.0, height=2.0, width_div=3, height_div=2)
     ob = bpy.context.active_object
     assert (_size(ob) - Vector((3, 2, 0))).length < 1e-4 and len(ob.data.polygons) == 6

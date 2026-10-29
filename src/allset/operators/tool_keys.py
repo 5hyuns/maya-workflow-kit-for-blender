@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya keys without a Blender operator of their own.
+"""Maya keys without a Blender operator of their own (step 35).
 
 - ``allset.box_zoom`` (Ctrl+Alt+LMB drag): draw a box; left→right zooms in on it,
   right→left zooms out.

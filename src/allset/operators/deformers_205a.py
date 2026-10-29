@@ -6,28 +6,28 @@ Maya 2022 facts: nodes / names / selection / Channel Box rows / option windows, 
 Blender has none of these deformers, so
 each is a Geometry Nodes modifier named like the Maya node (``tension1``) on a shared node group built here (the
 pattern of operators/wire_deformer.py, step 169); it reads its input from the modifiers above it (Maya: the upstream
-deformers) and its weights from the vertex group of its name (factory weight 1 on the deformed points, step 144).
+deformers) and its weights from the vertex group of its name (weight 1 on the deformed points, step 144).
 Maya's ``<shape>Orig`` (the rest shape Tension / Solidify compare with) is the mesh's base positions when the deformer
 is made, kept in a hidden point attribute ``.allset_rest_<node>`` (component edits made later are Maya tweaks = input,
 not rest); a topology change (Delete Non-Deformer History of a bevel, ...) re-takes it with the partner table.
 
-- **Tension** (every "O" case within 2.5e-7 in plain Python; the node group repeats Maya's Jacobi passes in a
+- **Tension** (the node group repeats Maya's Jacobi passes in a
   Repeat zone): partner table per vertex = edge neighbours (strength 1), face diagonals (Shear Strength), bend partners
   (Bend Strength) as hidden INT point attributes ``.allset_tension_p<k>`` = partner · 8 + flags (1 edge, 2 diagonal,
   4 bend, -1 none), computed from the topology in Python (operators can't build variable lists in Geometry Nodes).
   Vertex normals = Maya's corner rule (cross(f[k+h] - p, f[k-h] - p), h = max(1, m // 2 - 1)), recomputed each pass.
-- **Solidify** (): the known parts — membership = the vertex group (points selected at creation) picks
+- **Solidify** : the known parts — membership = the vertex group (points selected at creation) picks
   the solid region; Full on the whole mesh = a rigid transform of the rest region onto the input with translation =
   input centroid; Borders on the whole mesh = nothing moves; a region's border ring stays (falloff on) / moves too
-  (falloff off); envelope blends linearly. Unknown, delegated: the rotation is the least-squares (Kabsch / polar)
-  fit (Maya differs by ~2.5°), Stabilization Level n divides the angle by 1 + n/2 (Maya: level 2 halves it), the
+  (falloff off); envelope blends linearly. Unknown: the rotation is the least-squares (Kabsch / polar)
+  fit, Stabilization Level n divides the angle by 1 + n/2 (Maya: level 2 halves it), the
   border falloff is Blender's Blur Attribute of the inside weights, Scale Mode Edge / Edge Global = uniform scale by
   the region's edge-length ratio (× Scale Envelope), Normal / Tangent Plane Scale scale the normal / tangent part.
 - **Sculpt**: sculptor = an Empty ``sculptor1`` (display Sphere, radius 1 Maya unit: Maya's implicit sphere;
   delta scale = maya_unit so the Channel Box shows Maya's Scale 1) and ``sculpt1StretchOrigin`` (plain axes), both at
   the deformed points' bounding-box centre ("Center within selection"); the rule =
   a model ("O": Stretch / Even, Flip / Ring, Project at the sculptor); Stretch with the origin moved off the
-  sculptor, Flip / Even, Stretch / Ring, scaled sculptors and dropoff type None are  (the same rule, gaps recorded
+  sculptor, Flip / Even, Stretch / Ring, scaled sculptors and dropoff type None are (the same rule, gaps recorded
   in tests/test_step205_deform_a.py). Maximum Displacement is a length (× maya_unit) in Stretch / Flip and a
   fraction in Project (Maya: the same attribute).
 
@@ -377,7 +377,7 @@ def build_sculpt():
 
 
 def build_solidify():
-    """Maya solidify ( rule — see the module doc)."""
+    """Maya solidify (rule — see the module doc)."""
     ng, b, I, gout = _new_group(GROUPS["solidify"], SOLIDIFY_INPUTS)
     g0 = I["Geometry"]
     mem = b.math('GREATER_THAN', I["Weight"], 0.0)
@@ -618,12 +618,12 @@ def _attr_input(md, name, attribute):
 # --- creation ---------------------------------------------------------------------------------------------------
 
 DEFAULTS = {
-    # Tension Options (Maya factory values)
+    # Tension Options (default values)
     'TENSION': {"iterations": 10, "step": 0.5, "pin_border": True, "relative": 0.0, "inward": 0.0, "outward": 0.0,
                 "squash": 1.0, "stretch": 1.0, "shear": 0.0, "bend": 0.0},
-    # Solidify Options (Maya factory values)
+    # Solidify Options (default values)
     'SOLIDIFY': {"attachment": "Borders", "stabilization": 0, "border_falloff": True, "falloff_iterations": 2},
-    # Sculpt Options (Maya factory values)
+    # Sculpt Options (default values)
     'SCULPT': {"mode": "Stretch", "inside_mode": "Even", "max_displacement": 0.1, "dropoff_type": "Linear",
                "dropoff_distance": 1.0, "centered": True},
 }
@@ -716,7 +716,7 @@ def _sculpt(context, v):
 
 def create(context, kind, values=None):
     """Make Maya deformer ``kind`` (TENSION / SOLIDIFY / SCULPT) on the selection with ``values`` (option window
-    values; missing = Maya factory). Raises RuntimeError with a Maya-style message when the selection doesn't fit."""
+    values; missing = the default). Raises RuntimeError with a Maya-style message when the selection doesn't fit."""
     v = {**DEFAULTS[kind], **(values or {})}
     return {'TENSION': _tension, 'SOLIDIFY': _solidify, 'SCULPT': _sculpt}[kind](context, v)
 
@@ -879,7 +879,7 @@ def _attrs(rows):
 
 
 BASES = {"tension": ('NODES', "tension"), "solidify": ('NODES', "solidify"), "sculpt": ('NODES', "sculpt")}
-# keyable rows (Channel Box INPUTS), factory order
+# keyable rows (Channel Box INPUTS), default order
 ATTR_ROWS = {
     "tension": [("envelope", "Envelope", "NONE", "Envelope"),
                 ("smoothingIterations", "Smoothing Iterations", "INT", "Smoothing Iterations"),
@@ -972,7 +972,7 @@ def _windows():
             F("border_falloff", "", "bool", True, text="Use border falloff"),
             F("falloff_iterations", "Falloff iterations:", "int", 2, lo=0, hi=100)], run('SOLIDIFY'),
             paths=("Deform/Solidify",), missing=ADVANCED),
-        # Sculpt Options (Maya factory values)
+        # Sculpt Options (default values)
         Window("deform_sculpt", "Sculpt Options", "Create", (match, {"kind": 'SCULPT'}), [
             F("mode", "Mode:", "enum", "Stretch", items=SCULPT_MODES),
             F("inside_mode", "Inside mode:", "enum", "Even", items=INSIDE_MODES),

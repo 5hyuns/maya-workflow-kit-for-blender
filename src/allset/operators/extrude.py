@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya polyExtrudeFace and the "last kit modeling operation" history.
+"""Maya polyExtrudeFace and the "last kit modeling operation" history (step 65).
 
-Maya 2022 (step 65, unit cube, top face): Edit Mesh > Extrude = a zero-length extrusion
+Maya 2022 (step 65): Edit Mesh > Extrude = a zero-length extrusion
 (Thickness 0, Local Translate Z 0, Offset 0, Divisions 1, Keep Faces Together on); Local Translate Z moves each face along
 its normal (a vertex shared by several extruded faces moves by the average), Thickness offsets every face plane by the
 same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides.
@@ -200,8 +200,8 @@ def _region(bm, faces):
     caps = _caps(ret["geom"])
     gone = [f for f in faces if f.is_valid]
     if gone and closed:
-        # whole closed shells: Maya keeps the old faces, turned inside out (4 / 4 cases, step 257);
-        # bmesh has already turned them (checked in Blender 4.5)
+        # whole closed shells: Maya keeps the old faces, turned inside out (step 257);
+        # bmesh has already turned them (Blender 4.5)
         pass
     elif gone:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
         bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
@@ -225,7 +225,7 @@ def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, f
     levels = []
     caps = faces
     if together and _closed(faces):
-        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says (2 / 2 cases)
+        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says
     for level in range(max(1, divisions)):
         if level == 0 and not together:
             caps = bmesh.ops.extrude_discrete_faces(bm, faces=caps)["faces"]
@@ -335,7 +335,7 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
 
 
 # --- Maya's numbering of the result (step 257, #149) ---------------------------------------------------------------
-# polyExtrudeFacet (Maya 2026): vertices, edges and faces by index in 53 / 53 cases with a border + 4 / 4 whole closed
+# polyExtrudeFacet (Maya 2026): vertices, edges and faces by index, with a border and for whole closed
 # shells. The mesh's edge index is taken as Maya's edge id: kit
 # primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_maya.maya_edge_ids).
 
@@ -779,7 +779,7 @@ def run(ob, rec, params, unit):
 
 
 def mesh_axes(ob):
-    """Maya world X / Z in ``ob``'s mesh space (Maya measures ``localDirection`` in world space, step 151)."""
+    """Maya world X / Z in ``ob``'s mesh space (Maya takes ``localDirection`` in world space, step 151)."""
     m = ob.matrix_world.to_3x3().inverted_safe()
     return {"direction": m @ WORLD_X, "fallback": m @ MAYA_Z}
 

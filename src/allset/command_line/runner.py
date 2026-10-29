@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Run one command-line entry: Python only (MEL is not supported, ).
+"""Run one command-line entry: Python only (MEL is not supported).
 
-Maya's Command Line. Design:  「계획」 4, 
+Maya's Command Line (steps 7, 130).
 
 The kit runs no code itself (extension review, issue #40): the entry is written into a Text datablock and run by
 Blender's own ``text.run_script`` — the path of the Text Editor's Run Script. Before that the source is rewritten
@@ -16,7 +16,7 @@ with plain text edits (``prepare``):
 - a final expression ``x`` becomes ``_allset_result = (x)``: its value is the Maya-style ``# Result: ... #``.
 
 ``text.run_script`` runs in a fresh ``__main__`` namespace and reports a Python error as an operator error (a
-RuntimeError when called from Python, checked in 4.5): its last traceback line is the result line.
+RuntimeError when called from Python): its last traceback line is the result line.
 """
 
 import ast
@@ -36,7 +36,7 @@ _namespace = {}
 history = []
 _runs = []                              # per running entry (nested runs possible): {"names": its globals()}
 _last_run = {}                          # the last finished run's details ("kinds", "error")
-CONSOLE = "<maya console>"              # Maya's file name of Script Editor / Command Line code 
+CONSOLE = "<maya console>"              # Maya's file name of Script Editor / Command Line code
 
 
 class Result:
@@ -65,7 +65,7 @@ def namespace():
 
 def bind(names):
     """Called by the first line of a prepared entry with its ``globals()``: give it the session names and keep the
-    dictionary, read after the run (Blender doesn't clear a Run Script namespace, checked in 4.5)."""
+    dictionary, read after the run (Blender doesn't clear a Run Script namespace)."""
     names.update(namespace())
     if _runs:
         _runs[-1]["names"] = names
@@ -161,7 +161,7 @@ def _parse_error(message, text_name=None):
     """(last line, line number in the entry or None, Maya traceback lines) of a ``text.run_script`` error report.
 
     Blender 4.5 reports ``Error: Python: Traceback (most recent call last):`` / ``File "<backslash><text>", line N,
-    in <module>`` / ... / ``ZeroDivisionError: division by zero`` / ``Location: ...bpy/ops.py:109`` (checked, step
+    in <module>`` / ... / ``ZeroDivisionError: division by zero`` / ``Location: ...bpy/ops.py:109`` (step
     216). Frames of the entry Text become Maya's ``<maya console>`` with the line of the entry (the prepared source has one line in
     front); frames inside the kit (the ``cmds`` look-alike) are dropped: Maya's commands are C++ and leave none."""
     lines = [ln for ln in message.splitlines() if ln.strip() and not ln.startswith("Location:")]
@@ -220,7 +220,7 @@ def run_text(code, name=TEXT_NAME, persist=True):
     if printed:
         print(printed, end="")              # still reach the system console
     if error is not None:
-        # Blender also prints the error report to stdout (BPy_reports_write_stdout, checked): not the script's output
+        # Blender also prints the error report to stdout (BPy_reports_write_stdout): not the script's output
         head = (run.get("message") or "").strip().splitlines()[:1]
         cut = printed.rfind(head[0]) if head else -1
         if cut >= 0:
@@ -280,8 +280,8 @@ def _format(value):
 #
 # Kinds of history lines: ECHO (the executed input), OUTPUT (printed text), RESULT ("# Result: ... #"), INFO /
 # WARNING / ERROR (messages), TRACE (the traceback after an error, Show Stack Trace). Maya prints a Python error as
-# "# Error: <Type>: file <maya console> line <n>: <message>" with Line numbers in errors on , without the
-# "file ... line n:" part off ; Show Stack Trace adds the traceback lines, each behind "# " .
+# "# Error: <Type>: file <maya console> line <n>: <message>" with Line numbers in errors on, without the
+# "file ... line n:" part off; Show Stack Trace adds the traceback lines, each behind "# ".
 
 KINDS = ("ECHO", "OUTPUT", "RESULT", "INFO", "WARNING", "ERROR", "TRACE")
 OPTION_DEFAULTS = {         # Maya 2022 factory states (Script Editor History menu check items)
@@ -359,7 +359,7 @@ def _log(lines, lang):
 def action_call(kind, target, props):
     """The Python line Echo All Commands prints for a menu action (``menu_map.normalize`` form): the call the kit
     runs, so it can be run again from the Python tab. Maya prints its runtime command (``CreatePolygonCube;``),
-    which the kit has no table of (delegated, step 216)."""
+    which the kit has no table of (step 216)."""
     args = ", ".join(f"{k}={v!r}" for k, v in props.items())
     if kind in ("op", "v3d"):
         return f"bpy.ops.{target}({args})"

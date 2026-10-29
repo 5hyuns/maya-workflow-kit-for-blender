@@ -2,7 +2,7 @@
 persp / top / front / side first (real hidden Blender rows, not drawn after the objects), then the objects in creation
 order, the default sets and kit sets last; a click on the persp row makes it the lead (Channel Box "persp"). The
 Attribute Editor (dock fitted, ALLSET_FIT_WARP=1) shows its node tabs as one row and Select / Load Attributes /
-Copy Tab as one row (audit 16 G1 / G2, )."""
+Copy Tab as one row (audit 16 G1 / G2)."""
 
 import os
 import sys

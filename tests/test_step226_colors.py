@@ -1,8 +1,8 @@
-"""Step 226 lane B (Issue #136, ATTACH_PLAN L2): Maya control colours — Display > Wireframe Color... and the Attribute
+"""Step 226 lane B (Issue #136): Maya control colours — Display > Wireframe Color... and the Attribute
 Editor's Drawing Overrides (operators/wire_color.py).
 
-Maya: the colorIndex palette 1-31 of
-Maya 2026 (``colorIndex_gui``), user palette 1-8 = indices 24-31 (``userDefined_gui``), ``color -ud 3`` ->
+Maya: the colorIndex palette 1-31
+(``colorIndex_gui``), user palette 1-8 = indices 24-31 (``userDefined_gui``), ``color -ud 3`` ->
 useObjectColor 1 / objectColor 2, ``color -rgb 1 0 0`` -> useObjectColor 2 / wireColorRGB (``L2_wireframe_color_command``),
 override attributes all 0 / off by default (``L2_drawing_override_palette.default_attrs``)."""
 
@@ -19,7 +19,7 @@ wc = import_module(kit.MODULE + ".operators.wire_color")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
-# Maya 2026 "colorIndex_gui"
+# "colorIndex_gui"
 MAYA_INDEX = {
     1: [0.0, 0.0, 0.0], 2: [0.25, 0.25, 0.25], 3: [0.6, 0.6, 0.6], 4: [0.608, 0.0, 0.157], 5: [0.0, 0.016, 0.376],
     6: [0.0, 0.0, 1.0], 7: [0.0, 0.275, 0.098], 8: [0.149, 0.0, 0.263], 9: [0.784, 0.0, 0.784], 10: [0.541, 0.282, 0.2],
@@ -75,7 +75,7 @@ def _views():
 
 
 def test_object_color_is_scene_linear():
-    # checked basis for the sRGB -> linear conversion: Object.color is COLOR (linear), bone colours COLOR_GAMMA
+    # basis for the sRGB -> linear conversion: Object.color is COLOR (linear), bone colours COLOR_GAMMA
     assert bpy.types.Object.bl_rna.properties["color"].subtype == 'COLOR'
     _clear()
     pb = _arm().pose.bones[0]
@@ -170,7 +170,7 @@ def test_wireframe_color_on_pose_bones():
 def test_drawing_overrides_object():
     _clear()
     ob = _curve()
-    # Maya factory: overrideEnabled off, overrideColor 0, overrideRGBColors off
+    # defaults: overrideEnabled off, overrideColor 0, overrideRGBColors off
     assert not ob.allset_override_enabled and ob.allset_override_index == 0 and ob.allset_override_mode == 'INDEX'
     ob.allset_override_enabled = True
     assert tuple(ob.color) == (1.0, 1.0, 1.0, 1.0)            # index 0 = default colour

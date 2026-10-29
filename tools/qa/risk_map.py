@@ -1,7 +1,7 @@
 """QA activity I (step 240): change impact map since the previous release tag.
 
 For every changed file under src/: lines changed, which test files mention its module, and a risk score
-(lines x past bug count from step notes / commit messages x exposure). Files no test mentions are listed
+(lines x past bug count from commit messages x exposure). Files no test mentions are listed
 first: activities B / D / J aim at them.
 
     python tools/qa/risk_map.py [--since v0.5.0] [--out tmp/qa240/risk_map.md]

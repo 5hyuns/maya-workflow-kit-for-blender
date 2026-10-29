@@ -9,12 +9,12 @@ Storage: ``Action["allset_buffers"]["<data_path>|<array_index>"]`` = flat lists 
 (handle positions), "ipo" / "hlt" / "hrt" / "ease" (the enum values as ``foreach_get`` returns them). ID properties
 are undoable and saved with the file. The Action is the F-curve's ``id_data`` (4.5 and 5.x layered actions).
 
-Show Buffer Curves (add-on pref ``graph_show_buffers``, factory off like Maya) = a Graph Editor WINDOW POST_VIEW
+Show Buffer Curves (add-on pref ``graph_show_buffers``, default off like Maya) = a Graph Editor WINDOW POST_VIEW
 handler (view space = frame, displayed value) drawing each visible curve's buffer as a grey polyline: the stored
 Bezier segments sampled by the kit (CONSTANT / LINEAR honoured, Blender's easing types drawn as straight lines),
 Blender's handle correction applied like its evaluation (``_correct``), rotations in degrees when the scene shows degrees, constant
-extrapolation to the view edges. Normalized views (``use_normalization``) draw nothing (delegated: the normalization
-factor per curve isn't exposed to Python), NLA time mapping is ignored. The grey is not Maya's exact colour .
+extrapolation to the view edges. Normalized views (``use_normalization``) draw nothing (the normalization
+factor per curve isn't exposed to Python), NLA time mapping is ignored. The grey is not Maya's exact colour.
 """
 
 import math
@@ -116,8 +116,8 @@ def swap(fc):
 
 def _correct(p0, p1, p2, p3):
     """Blender 4.5's handle correction before evaluating a Bezier segment: a handle reaching past the segment's
-    other key is shortened (direction kept) to end at that key's frame (checked: fc.evaluate matches this within
-    1e-6, not the older shorten-both-together rule)."""
+    other key is shortened (direction kept) to end at that key's frame (``fc.evaluate`` follows
+    this, not the older shorten-both-together rule)."""
     span = p3[0] - p0[0]
     h1 = (p1[0] - p0[0], p1[1] - p0[1])
     h2 = (p2[0] - p3[0], p2[1] - p3[1])

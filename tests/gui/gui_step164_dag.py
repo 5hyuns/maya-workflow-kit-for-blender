@@ -107,7 +107,7 @@ step(redraw)
 
 @step
 def s_isolate_shot():
-    # Object.local_view_get / visible_in_viewport_get read False for every object here (checked), so the
+    # Object.local_view_get / visible_in_viewport_get read False for every object here, so the
     # screen decides: pCube1's pixels stay, pCube2's go (screenshots = the frame before, hence one tick later)
     import numpy as np
     px = shot("gui_step164_isolate.png")

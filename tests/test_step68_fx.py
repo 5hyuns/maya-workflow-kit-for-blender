@@ -1,5 +1,5 @@
-"""Step 68: Maya FX — simulation scale (), nucleus, nParticles emitter / Emit from Object, nCloth, Passive,
-rigid bodies, nCache. ; GUI: tests/gui/gui_step68_fx.py."""
+"""Step 68: Maya FX — simulation scale, nucleus, nParticles emitter / Emit from Object, nCloth, Passive,
+rigid bodies, nCache. GUI: tests/gui/gui_step68_fx.py."""
 
 import types
 from importlib import import_module
@@ -122,7 +122,7 @@ def test_create_emitter():
     st = psys.settings
     assert psys.name == "nParticle1" and st.name == "nParticle1", (psys.name, st.name)
     assert st.emit_from == 'VERT' and st.count == 500 and (st.frame_start, st.frame_end) == (1, 120), st.count
-    # Blender's hard minimum particle size is 0.001 m (= 0.1 unit in a cm scene; step 68 「계획」)
+    # Blender's hard minimum particle size is 0.001 m (= 0.1 unit in a cm scene)
     assert abs(st.particle_size - 0.001) < 1e-7 and abs(st.factor_random - 0.01) < 1e-7, (st.particle_size, st.factor_random)
     assert abs(st.display_size - 0.001) < 1e-7, "viewport dots in Maya units, not 10-unit balls"
     assert sc.allset_nucleus.exists and abs(sc.gravity.z + 0.098) < 1e-6
@@ -134,7 +134,7 @@ def test_create_emitter():
 def test_particles_fall_like_maya():
     cm, n = _fall(cm=True)
     m, _n = _fall(cm=False)
-    # same motion in Maya units in a cm scene and a m scene (); the oldest fell ~0.5 * 9.8 * 1^2 = 4.9
+    # same motion in Maya units in a cm scene and a m scene; the oldest fell ~0.5 * 9.8 * 1^2 = 4.9
     # units (+/- the omni speed of 1 unit/s)
     assert n > 50, n
     assert abs(cm - m) < 1e-3 * abs(m), (cm, m)

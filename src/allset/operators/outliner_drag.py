@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Outliner drag: parent / reorder / unparent the Maya way.
+"""Maya Outliner drag: parent / reorder / unparent the Maya way (step 82).
 
-Maya (): MMB-drag an item onto another = parent under it,
+Maya : MMB-drag an item onto another = parent under it,
 between two items = move there (that row's parent, that place), onto empty space = to the world; the world
 transform is kept and the local values are recomputed (= P). The drag does not
 change the selection.
 
-Blender (checked, ): LMB drag & drop = ``OUTLINER_OT_parent_drop`` (Blender parenting: parent inverse)
+Blender: LMB drag & drop = ``OUTLINER_OT_parent_drop`` (Blender parenting: parent inverse)
 or ``OUTLINER_OT_parent_clear`` (empty space); MMB does nothing. So
 - the LMB drop is redone the Maya way: a depsgraph handler sees the drop as the newest registered operator, a
   timer undoes it and applies the same parent changes with ``parenting`` (one undo step);
@@ -108,9 +108,9 @@ def _base_state(view_layer, ob):
 
 
 def displayed(names):
-    """Order Blender's unsorted Outliner draws a list in: the first item goes last (checked in 4.5 with and
+    """Order Blender's unsorted Outliner draws a list in: the first item goes last (with and
     without the kit: objects linked Z, Y, X list as Y, X, Z; per collection with collection rows, over the
-    whole view layer base list without; )."""
+    whole view layer base list without)."""
     return list(names[1:]) + list(names[:1])
 
 
@@ -185,7 +185,7 @@ def _restore_selection(context, saved):
     names, act, alc = saved
     vl = context.view_layer
     # an object operator tags the Outliner to re-sync its highlight from the objects (Python select_set
-    # doesn't, checked): deselect through one, then select by name
+    # doesn't): deselect through one, then select by name
     try:
         bpy.ops.object.select_all(action='DESELECT')
     except RuntimeError:

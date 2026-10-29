@@ -24,7 +24,7 @@ def test_maya_persp_shows_front_right_top_and_box_is_65px():
     xs = [p[0] for f in faces for p in f[1]]
     ys = [p[1] for f in faces for p in f[1]]
     assert abs(max(max(xs) - min(xs), max(ys) - min(ys)) - 65.0) < 0.5
-    # FRONT is on the left, RIGHT on the right (Maya shot 01)
+    # FRONT is on the left, RIGHT on the right
     cx = {f[0]: sum(p[0] for p in f[1]) / 4 for f in faces}
     assert cx["FRONT"] < 0 < cx["RIGHT"]
 
@@ -54,9 +54,9 @@ def test_labels():
 
 def test_sizes_and_layout_match_maya():
     assert abs(vf.cube_size(1001, 612) - 65.0) < 1e-6
-    assert abs(vf.cube_size(497, 300) - 48.0) < 1.5          # Maya four-view panel: 48 px
+    assert abs(vf.cube_size(497, 300) - 48.0) < 1.5          # four-view panel: 48 px
     assert abs(vf.cube_size(1001 * 1.25, 612 * 1.25, 1.25) - 65.0 * 1.25) < 1e-6
-    # Maya view (315, 172, 1001, 612) in image coords -> region-local bounds (0, 0, 1001, 612)
+    # a view at (315, 172, 1001, 612) in image coords -> region-local bounds (0, 0, 1001, 612)
     cube, label, triad = vf.layout((0, 0, 1001, 612), 1.0, 65.0)
     assert cube == (1001 - 26 - 32.5, 612 - 27 - 32.5)       # box 26 px from the right, 27 from the top
     assert label == (500.5 - 9, 9) and triad == (26, 26)

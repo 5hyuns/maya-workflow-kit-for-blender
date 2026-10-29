@@ -1,5 +1,5 @@
 """Step 151 (#98 #100): no Blender tooltip on the Maya Move / Scale manipulator, no Blender report texts in the status
-row (keying set, effector note, Pivot edit, status info warnings, Anim Player job). """
+row (keying set, effector note, Pivot edit, status info warnings, Anim Player job)."""
 
 import inspect
 import types

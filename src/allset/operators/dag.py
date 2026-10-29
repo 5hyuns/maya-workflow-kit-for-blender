@@ -6,7 +6,7 @@ hiding group1 (h, Ctrl+H, its Visibility channel, its display layer's V) hides p
 Visibility, and showing group1 again leaves a child that was hidden on its own hidden. Delete, Export Selection and
 Isolate Select take the selected nodes with everything below them.
 
-Blender (checked, same file): a parent's ``hide_viewport`` / ``hide_set`` never hides its children and
+Blender: a parent's ``hide_viewport`` / ``hide_set`` never hides its children and
 ``object.delete`` leaves the children, unparented. So:
 
 - ``sync``: an object whose ancestor is hidden (own Visibility = ``hide_viewport``, or its display layer's V) gets the

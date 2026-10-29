@@ -4,8 +4,7 @@ GUI shots of tools/marketing/shots.py and the copy in tools/marketing/content.js
     python tools/marketing/compose.py [--only NAME,...]
 
 Inputs: tmp/marketing/raw/<name>.png + meta.json (1920 x 1080 window shots, rects in top-down window pixels),
-tools/marketing/style.json (tokens, docs/distribution/marketing/style.md), tools/marketing/content.json (copy from
-docs/distribution/marketing/copy.md), the Inter font from the local assets folder (tools/marketing/
+tools/marketing/style.json (tokens), tools/marketing/content.json (copy), the Inter font from the local assets folder (tools/marketing/
 fetch_assets.py). Outputs: docs/distribution/marketing/screens/<n>_<name>.png, key_visual.png, key_visual_square.png,
 icon_256.png. Pure Pillow (no numpy) so it runs with any Python that has Pillow.
 """
@@ -97,7 +96,7 @@ def arrow(draw, start, end, col, width, head):
 
 
 def lockup(draw, x, y, name_px, one_line=False, anchor_right=False, colours=None, alpha=255):
-    """The lockup (style.md "Lockup"): the name (``component.lockup.name``, Bold) + the line (``lockup.line``,
+    """The lockup: the name (``component.lockup.name``, Bold) + the line (``lockup.line``,
     SemiBold at ``for_ratio`` x the name size), two lines on one left edge, or one line on one baseline. ``(x, y)`` =
     top-left of the name's em box (top right with ``anchor_right``). Returns the box (x0, y0, x1, y1) of the drawn
     ink rows."""

@@ -12,7 +12,7 @@ engine = import_module(kit.MODULE + ".marking.engine")
 mm = import_module(kit.MODULE + ".marking.menus")
 draw = import_module(kit.MODULE + ".marking.draw")
 
-# The Maya Workflow Kit layout at UI scale 1.25 in a 1600 x 900 window (checked, tmp/probe136): window pixels.
+# The Maya Workflow Kit layout at UI scale 1.25 in a 1600 x 900 window: window pixels.
 AREAS = [(356, 93, 773, 679), (0, 775, 1600, 56), (0, 834, 1600, 33), (0, 29, 1600, 61), (0, 93, 90, 679),
          (93, 93, 260, 679), (1132, 93, 468, 679)]
 VIEW = SimpleNamespace(x=356, y=93, width=773, height=615)        # main 3D View WINDOW region

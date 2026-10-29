@@ -1,9 +1,8 @@
 """Step 144 lane DEFORM (#34): Maya Deform menu items create Maya-like deformers (operators/deformers.py) with
 Maya option windows (operators/option_windows_deform.py), Channel Box INPUTS rows and Paint Weights targets.
 
-Maya 2022: the Deform option windows (fields, factory values) and the deformers created with factory options
-(nodes, selection, Channel Box rows, paint targets), plus the Cluster / Soft Mod / Nonlinear handles.
-"""
+The Deform option windows (fields, defaults) and the deformers created with default options
+(nodes, selection, Channel Box rows, paint targets), plus the Cluster / Soft Mod / Nonlinear handles."""
 
 import math
 from importlib import import_module
@@ -51,7 +50,7 @@ def _select(*obs):
 
 
 def _cube(name="pCube1", loc=(0, 0, 0), size=1.0, scale=(1, 1, 1), cuts=3):
-    """Maya's test cube: polyCube -sx 4 -sy 4 -sz 4 (options_144.md: deformers made on it)."""
+    """The test cube: polyCube -sx 4 -sy 4 -sz 4 (deformers made on it)."""
     bpy.ops.mesh.primitive_cube_add(size=size, location=loc)
     ob = bpy.context.active_object
     ob.name, ob.data.name = name, name + "Shape"
@@ -134,7 +133,7 @@ def test_menu_items_are_kit_deformers_with_windows():
 
 
 def test_window_titles_buttons_defaults_are_maya():
-    # options_144.md "Deform option windows": title (button) and Basic tab fields in screen order
+    # Deform option windows: title (button) and Basic tab fields in screen order
     titles = {k: (ow._BY_KEY[k].title, ow._BY_KEY[k].action) for k in PATHS}
     assert titles["deform_lattice"] == ("Lattice Options", "Create")
     assert titles["deform_soft_mod"] == ("Soft Modification Options", "Soft Modification")
@@ -169,7 +168,7 @@ def test_window_titles_buttons_defaults_are_maya():
     assert _fields("deform_texture") == [("point_space", "Point Space:", "UV"), ("direction", "Direction:", "Handle"),
                                          ("vector_space", "Vector Space:", "Object"), ("strength", "Strength:", 1.0),
                                          ("offset", "Offset:", 0.0)]
-    # every window lists Maya's Advanced tab (options_144.md "Common frame") as not in Blender
+    # every window lists Maya's Advanced tab as not in Blender
     for k in ("deform_lattice", "deform_delta_mush", "deform_cluster", "deform_bend"):
         assert any(m.startswith("Deformation order") for m in ow._BY_KEY[k].missing), k
 
@@ -203,7 +202,7 @@ def test_lattice_fits_selection_with_maya_divisions():
     after = _evaluated(cube)
     assert all(abs((q - p).z - 1.25) < 1e-4 for p, q in zip(before, after)), "points deform in lattice space"
     assert [m.name for m in cb._inputs(cube)] == ["ffd1"]            # ffd1Base (the hook) is part of ffd1
-    # INPUTS: the deformed mesh and the lattice both show ffd1 with Envelope 1 (options_144.md: ffd1 CB rows)
+    # INPUTS: the deformed mesh and the lattice both show ffd1 with Envelope 1
     assert _rows(cube, md) == [("Envelope", "1")], _rows(cube, md)
     assert cb.mod_node(md) in {cb.mod_node(m) for m in cb._inputs(lat)}
     assert ae.modifier_node(cube, md) == ("ffd1", "ffd")
@@ -304,7 +303,7 @@ def test_nonlinear_names_handles_selection_inputs():
         h = bpy.data.objects[f"{base}1Handle"]
         md = cyl.modifiers[f"{base}1"]
         assert md.type == mtype and md.vertex_group == f"{base}1", kind
-        assert (h.location - Vector((1, 0, 2))).length < 1e-5                     # bbox centre (110)
+        assert (h.location - Vector((1, 0, 2))).length < 1e-5                     # bbox centre
         assert all(abs(s - 2.0) < 1e-5 for s in h.scale), kind                    # half the height
         assert bpy.context.active_object == h, kind                               # Maya: bend1Handle selected
         assert ae.modifier_node(cyl, md) == (f"{base}1", "nonLinear"), kind

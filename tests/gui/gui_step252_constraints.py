@@ -56,7 +56,7 @@ def _empty(name, z):
 
 
 def _average_z(zs, ws):
-    """Maya Average of rotations about one axis: normalised weighted quaternion sum (060_rig.md)."""
+    """Maya Average of rotations about one axis: normalised weighted quaternion sum."""
     c = sum(w * math.cos(math.radians(z) / 2) for z, w in zip(zs, ws))
     s_ = sum(w * math.sin(math.radians(z) / 2) for z, w in zip(zs, ws))
     return math.degrees(2 * math.atan2(s_, c))

@@ -1,5 +1,5 @@
-"""Step 118: Blender 5.x compatibility — every version difference goes through src/allset/compat.py
-(). Runs on every Blender the suite runs on; each check holds on 5.0-5.2 (4.5 dropped in
+"""Step 118: Blender 5.x compatibility — every version difference goes through src/allset/compat.py.
+Runs on every Blender the suite runs on; each check holds on 5.0-5.2 (4.5 dropped in
 step 279)."""
 
 import re

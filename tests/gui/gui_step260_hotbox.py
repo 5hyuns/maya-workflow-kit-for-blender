@@ -2,7 +2,7 @@
 
 1. A click on each hotbox menu name (press and release in separate ticks, mouse not moved) opens that menu and runs no
    menu row. Before: Blender opened the popup on the PRESS with a row under the pointer and the RELEASE ran it (18 of 40
-   names ran an item, Edit > Cut deleted the cube; ).
+   names ran an item, Edit > Cut deleted the cube).
 2. A held Space whose auto-repeat arrives as RELEASE + PRESS pairs (X11 without detectable repeat, remote input) keeps
    the hotbox up and toggles no pane. Before: 5-14 Four View toggles for 20 pairs.
 3. A quick tap still toggles the pane once.

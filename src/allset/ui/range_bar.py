@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Range Slider bar in the timeline header: drag the playback range.
+"""Maya's Range Slider bar in the timeline header: drag the playback range (step 73).
 
-Maya: a dark
+The bar: a dark
 track (#373737) spans the animation range, the playback range is a rounded segment (#5d5d5d) on it with
 a handle square (#919191) inside each end and the start / end frames next to the handles. Dragging the
 segment moves the playback range, dragging a handle moves that end.
@@ -17,12 +17,12 @@ stretches before the bar.
 
 import bpy
 
-# --- Maya sizes and colours (step 73) ----------------------------------------------------------------
+# --- sizes and colours (step 73) ----------------------------------------------------------------
 TRACK_RGB = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 SEGMENT_RGB = (0x5d / 255, 0x5d / 255, 0x5d / 255, 1.0)
 HANDLE_RGB = (0x91 / 255, 0x91 / 255, 0x91 / 255, 1.0)
-TEXT_RGB = (0.8, 0.8, 0.8, 1.0)            #  light grey of the frame numbers
-MAYA_BAR_H = 23.0                          # track height, y 836-858
+TEXT_RGB = (0.8, 0.8, 0.8, 1.0)            # light grey of the frame numbers
+MAYA_BAR_H = 23.0                          # track height
 SEG_INSET = 2.0                            # segment inside the track
 HANDLE = (13.0, 14.0)                      # handle square w, h
 HANDLE_INSET = 5.0                         # from the segment end
@@ -93,7 +93,7 @@ def playback(scene):
 
 
 def toggle_whole(scene):
-    """Maya double-click on the Range Slider: the whole animation range <-> the playback range .
+    """Maya double-click on the Range Slider: the whole animation range <-> the playback range.
     Blender keeps the preview range while it is off, so this is the preview range toggle."""
     scene.use_preview_range = not scene.use_preview_range
 

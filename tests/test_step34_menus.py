@@ -1,6 +1,6 @@
 """Step 34: Maya menu dead ends filled — Windows editor submenus, UV Editor / Planar /
 Normal-Based, Edit > Ungroup, Heads Up Display > Poly Count, File > Increment and Save,
-File > Export Selection. ; GUI: tests/gui/gui_step34_menus.py."""
+File > Export Selection. GUI: tests/gui/gui_step34_menus.py."""
 
 import os
 import tempfile

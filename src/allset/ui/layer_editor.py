@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Layer Editor (Display Layers) wrapped on collections.
 
-Maya's Layer Editor; design  「계획」.
+Maya's Layer Editor.
 A display layer is a child collection of a "Display Layers" collection that
 is excluded from every view layer, so layers are membership lists that do
 not change the scene hierarchy or visibility by themselves. The layer state
@@ -11,7 +11,7 @@ attributes (step 129 #26; the object's visibility is ``hide_viewport``):
   T (template) -> unselectable, wireframe; R (reference) -> unselectable
                   (the member's own display type / selectability are kept in ``OWN`` and put back)
   P (playback) -> off: members hidden (view-layer flag) while animation plays
-An object belongs to at most one display layer, as in Maya.
+An object belongs to at most one display layer, like Maya.
 """
 
 import re
@@ -556,7 +556,7 @@ ANIM_TOGGLES = (("lock", ('UNLOCKED', 'LOCKED')), ("solo", ('SOLO_OFF', 'SOLO_ON
 # Maya greys these Layers menu items while BaseAnimation is among the selected layers
 # (Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
 # Export, Membership, Attribute Editor, Delete, Empty, Delete Empty Layers, Layer Mode). With no layer selected Maya
-# enables everything; the kit always has a selected layer (delegated).
+# enables everything; the kit always has a selected layer.
 GREY_WITH_BASE = ("Add Selected Objects", "Remove Selected Objects", "Delete", "Empty", "Delete Empty Layers")
 # Layer row right-click menu: the Layers menu without
 # the Create / Extract Non-Layered items, plus Lock / Mute / Solo; on BaseAnimation only Extract, Duplicate x2, Merge
@@ -722,7 +722,7 @@ def draw_anim_tab(layout, context):
     slider = w.row(align=True)
     slider.enabled = sel.name != anim_layers.BASE
     slider.prop(sel, "weight", slider=True)
-    w.operator("allset.anim_layer_key_weight", text="K").current = True     # Maya's K: key the weight 
+    w.operator("allset.anim_layer_key_weight", text="K").current = True     # Maya's K: key the weight
 
 
 class ALLSET_PT_layer_editor(bpy.types.Panel):
@@ -743,7 +743,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             set_driven_key.draw(layout, context)
             return
         layout.separator(type='LINE')   # Maya's splitter between Channel Box and Layer Editor
-        # Maya: slim tabs on the left (Display 67 px, Anim 56 px, 18 px high; le129/_le129.json), not a
+        # Maya: slim tabs on the left, not a
         # full-width switch
         tabs = layout.row(align=True)
         tabs.alignment = 'LEFT'

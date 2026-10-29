@@ -1,5 +1,5 @@
 """Step 33: marking menus and the hotbox stay inside the visible region (engine, no bpy UI).
-; GUI: tests/gui/gui_step33_menu_bounds.py."""
+GUI: tests/gui/gui_step33_menu_bounds.py."""
 
 from importlib import import_module
 

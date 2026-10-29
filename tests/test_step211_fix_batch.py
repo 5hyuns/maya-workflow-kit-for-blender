@@ -41,7 +41,7 @@ def _select(obs):
 
 def test_light_linking_submenu_opens_the_kit_editor():
     mm, ms = m("ui.menu_map"), m("ui.menu_sets")
-    # since the Maya 2026 menus (step 219) the submenu is in the menu data itself, no run-time CHILDREN entry
+    # since the step 219 menus the submenu is in the menu data itself, no run-time CHILDREN entry
     md = m("ui.menu_data")
     win = next(it for it in md.MENUS["mainWindowMenu"][3] if it[0] == "Relationship Editors")
     assert ("Light Linking", [("Light-Centric",), ("Object-Centric",)]) in win[1]
@@ -130,7 +130,7 @@ def test_paste_names_group_and_selection():
     assert bpy.context.view_layer.objects.active == grp
     assert objs["pCube1"].data.name == "pCubeShape1", "the original keeps its names"
     # second paste: Maya -> group1 | pasted__pCube1 (a second short name under another group); Blender names are
-    # unique, so the kit counts up (delegated)
+    # unique, so the kit counts up
     assert bpy.ops.allset.paste() == {'FINISHED'}
     assert "group1" in objs and "pasted__pCube2" in objs, sorted(objs.keys())
     assert objs["pasted__pCube2"].parent == objs["group1"]
@@ -249,7 +249,7 @@ def test_outliner_rotation_rule_is_inverted():
     for n in range(0, 14):
         want = list(range(n))
         assert oo.display_order(oo.base_for(want)) == want, n
-    # checked in the GUI (4.5, Windows): linked persp top front side pCube1 pSphere1 -> shown from top
+    # in the GUI (4.5, Windows): linked persp top front side pCube1 pSphere1 -> shown from top
     assert oo.display_order(["p", "t", "f", "s", "c", "y"]) == ["t", "f", "s", "c", "y", "p"]
     assert oo.display_order(list("abcdefghi")) == list("abcdefghi"), "9 and more: Blender's quicksort keeps them"
     assert oo.base_for(["a", "b"], rotate=False) == ["a", "b"]

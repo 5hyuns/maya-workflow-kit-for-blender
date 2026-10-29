@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya marking menu and hotbox logic, without Blender.
+"""Maya marking menu and hotbox logic, without Blender (step 9).
 
 Coordinates are region pixels (y up, as Blender's ``mouse_region_*``). Text
 width comes from a ``measure(text) -> width`` callback (``blf`` in Blender, a
@@ -7,7 +7,7 @@ character count in tests), so everything here is testable headless.
 
 Maya behaviour: radial slots, list
 under the ring, hotbox zones and rows, press/release,
-tap vs hold; timings and distances marked  are from Maya use.
+tap vs hold.
 """
 
 import math
@@ -36,8 +36,8 @@ class Params:
     ring_pad = 25.0        # text padding inside a radial box (a submenu arrow sits in the right one)
     ring_opt = 5.0         # extra radial box width for an option box
     ring_list_gap = 21.0   # ring bottom -> list top
-    show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks" 
-    click_time = 0.25      # s: a shorter press-release in the dead zone = click mode 
+    show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
+    click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
 
     SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
              "ring_list_gap")
@@ -161,7 +161,7 @@ class Layout:
 
     @staticmethod
     def ring_text(label, action):
-        """Text checked for a radial box width: the arrow lives in Maya's right padding,
+        """Text that sizes a radial box: the arrow lives in the right padding,
         toggles keep room for their check box."""
         return label + ("    " if is_toggle(action) and not Layout.has_arrow(action) else "")
 
@@ -223,7 +223,7 @@ MIN_COLUMN_ROWS = 4
 # --- area borders (step 136, #56) --------------------------------------------------------------------------------
 # ``edges`` = rectangles (x0, y0, x1, y1) where nothing a region draws is seen: the gaps between the window's areas
 # and the rim Blender draws over every area edge after all regions (draw.window_edges). A list row or radial box
-# overlapping one is cut (tmp/audit133_ui m14 / m15), so rows go below horizontal bands (one column kept, like
+# overlapping one is cut, so rows go below horizontal bands (one column kept, like
 # Maya's list) and whole lists / boxes move sideways off vertical ones.
 
 def _horizontal(band):
@@ -387,7 +387,7 @@ def _settle_list(rows, top, floor, x0, x1, gap_unit, edges, center=None, lift=No
 
 def fit_ring(layout, center, bounds, edges=()):
     """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1). The centre stays the press point the gesture
-    directions are checked from (step 33 「계획」): returns 0.0 (how far the centre moved).
+    directions start from (step 33): returns 0.0 (how far the centre moved).
 
     Radial boxes slide inside; the list goes under the ring (Maya), else beside it in one column (the side with no
     radial submenu on the way, step 161), else above it, else is pushed up from under the ring. Maya draws the whole
@@ -681,13 +681,13 @@ class Session:
 # --- hotbox ---------------------------------------------------------------------------
 
 class HotboxLayout:
-    """Maya hotbox (Maya 2022 hotbox;  「계획」 2): menu rows above the cursor
+    """Maya-style hotbox (step 52): menu rows above the cursor
     (``rows``, top first), the cursor row (``side`` = left / right boxes beside the centre box), rows under it
-    (``below``, top first), zone lines on the diagonals. Sizes are Maya's at scale 1 (row pitch
-    35 = box 26 + gap 9; the centre box is the title with padding)."""
+    (``below``, top first), zone lines on the diagonals. Sizes at scale 1: row pitch
+    35 = box 26 + gap 9; the centre box is the title with padding."""
 
     ROW_H, ROW_GAP, SIDE_GAP = 26.0, 9.0, 88.0
-    LINE_GAP, LINE_LEN = 20.0, 28.0     # zone lines: start past the rows, length per axis [checked, step 52]
+    LINE_GAP, LINE_LEN = 20.0, 28.0     # zone lines: start past the rows, length per axis (step 52)
 
     def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0, bounds=None,
                  below=(), side=None, title=PRODUCT):
@@ -834,9 +834,9 @@ def is_tap(press_t, release_t, clicked):
 
 
 # Step 260 (#174): a held Space must keep the hotbox up whatever the input path sends while the key is down. Some
-# send auto-repeat as RELEASE + PRESS pairs (X11 without detectable repeat, remote / remapping input; checked with
-# simulated pairs: the hold ended at each RELEASE and a fast pair toggled Four View, ), and
-# Windows' key state can read "up" for a moment. Delegated (kit design): a RELEASE ends the hold only when no PRESS
+# send auto-repeat as RELEASE + PRESS pairs (X11 without detectable repeat, remote / remapping input; with
+# simulated pairs the hold ended at each RELEASE and a fast pair toggled Four View), and
+# Windows' key state can read "up" for a moment. Kit design: a RELEASE ends the hold only when no PRESS
 # follows within RELEASE_GRACE; the key-state fallback ends it only after "up" readings span UP_TIME with no key event;
 # a new hotbox doesn't start within RELEASE_GRACE of the last one ending.
 RELEASE_GRACE = 0.12

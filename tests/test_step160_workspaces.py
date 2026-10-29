@@ -1,5 +1,5 @@
 """Step 160 (#81): Maya's workspaces in the template, Windows > Workspaces / Status Line dropdown, Reset Current
-Workspace.  GUI shots: tests/gui/gui_step160_workspaces.py."""
+Workspace. GUI shots: tests/gui/gui_step160_workspaces.py."""
 
 import ast
 import os
@@ -34,7 +34,7 @@ def test_template_carries_maya_workspaces():
     assert tuple(table) == ws_mod.IN_TEMPLATE, (tuple(table), ws_mod.IN_TEMPLATE)
     _m("first_start").new_maya_scene()
     names = [ws.name for ws in bpy.data.workspaces]
-    assert sorted(names) == sorted(table), names          # Blender's factory workspaces are not in a Maya scene
+    assert sorted(names) == sorted(table), names          # a Maya scene has no Blender factory workspaces
     for name, (menu_set, tab, _recipe) in table.items():
         ws = bpy.data.workspaces[name]
         assert ws["allset_template"] == name and ws["allset_menu_set"] == menu_set and ws["allset_dock_tab"] == tab

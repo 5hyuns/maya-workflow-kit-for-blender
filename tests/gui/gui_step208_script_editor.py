@@ -1,7 +1,7 @@
 """Step 208 in a real UI: a Maya script typed into the Script Editor's Python tab (Ctrl+Enter) that starts a new scene
 (``cmds.file(new=True, force=True)``), builds a small rig with group / parent / spaceLocator / duplicate, keys it and
 sets the playback range -> the scene has the Maya names and keys, the Script Editor window and its input survive the
-new scene, ``file -q -modified`` right after it is logged (Maya 0, kit True inside a script: deviation)."""
+new scene, ``file -q -modified`` right after it is logged (the kit reports True inside a script)."""
 
 import os
 import sys
@@ -103,7 +103,7 @@ def s_check():
     check(f"the script ran in a new scene: {names}", names == ["ctrl", "geo_grp", "pCube1", "pCube2"])
     # Maya: 0. Blender marks a file read inside a running operator (the script's Run Script) as modified; a new
     # scene from a timer is not (seen here, step 208) -> documented deviation
-    print(f"file -q -modified right after file -new inside the script: {ns.get('M')!r} (Maya False)")
+    print(f"file -q -modified right after file -new inside the script: {ns.get('M')!r}")
     ob = bpy.data.objects.get("pCube1")
     check("pCube1 under geo_grp under ctrl (Maya parent / group)",
           ob is not None and ob.parent is not None and ob.parent.name == "geo_grp" and

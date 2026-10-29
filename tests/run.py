@@ -5,8 +5,7 @@
 1. Builds dist/maya-workflow-kit-<version>.zip with tools/build.py (skip: --no-build).
 2. Recreates a sandbox tmp/test_env/{config,scripts,extensions} and points
    BLENDER_USER_CONFIG / BLENDER_USER_SCRIPTS / BLENDER_USER_EXTENSIONS at it,
-   so the real %APPDATA%/Blender Foundation is never touched
-   ().
+   so the real %APPDATA%/Blender Foundation is never touched.
 3. Installs the zip into the sandbox "user_default" repository with
    ``blender --command extension install-file``.
 4. Runs every tests/test_*.py in its own ``blender -b --factory-startup``
@@ -65,7 +64,7 @@ def make_sandbox():
 
 def blender_run(blender, args, env, log):
     # stdin=DEVNULL: `blender --command ...` hangs when it inherits a console stdin.
-    # one of the machine-wide Blender slots (tools/blender_slots.py,  10-25) while it runs
+    # one of the machine-wide Blender slots (tools/blender_slots.py) while it runs
     with blender_slots.slot(f"tests/run.py {Path(log).stem}"), \
             open(log, "w", encoding="utf-8", errors="replace") as fh:
         r = subprocess.run([blender, *args], env=env, stdin=subprocess.DEVNULL,

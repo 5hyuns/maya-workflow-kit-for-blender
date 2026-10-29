@@ -1,5 +1,5 @@
-"""Step 52: hotbox and RMB marking menu as Maya 2022 shows them (
-14_marking_menu_object.png). ; GUI: tests/gui/gui_step52_hotbox_rmb.py."""
+"""Step 52: hotbox and RMB marking menu as Maya 2022 shows them.
+GUI: tests/gui/gui_step52_hotbox_rmb.py."""
 
 from importlib import import_module
 
@@ -14,7 +14,7 @@ mm = import_module(kit.MODULE + ".marking.menus")
 modal = import_module(kit.MODULE + ".marking.modal")
 draw = import_module(kit.MODULE + ".marking.draw")
 
-# Maya 2022 hotbox rows read off 13_hotbox.png (top to bottom). MASH is a plug-in menu (no kit data).
+# Maya 2022 hotbox rows (top to bottom). MASH is a plug-in menu (no kit data).
 MAYA_ABOVE = [["File", "Edit", "Create", "Select", "Modify", "Display", "Windows", "Cache", "Help"],
               ["View", "Shading", "Lighting", "Show", "Renderer", "Panels"]]
 MAYA_SIDES = ["Recent Commands", "Hotbox Controls"]
@@ -25,7 +25,7 @@ MAYA_BELOW = [["Mesh", "Edit Mesh", "Mesh Tools", "Mesh Display", "Curves", "Sur
               ["Lighting/Shading", "Texturing", "Render", "Toon", "Stereo"]]
 PLUGIN = {"MASH"}
 
-# Maya 2022 RMB list over pCube1 (14_marking_menu_object.png), "-" = divider.
+# Maya 2022 RMB list over pCube1, "-" = divider.
 MAYA_RMB = ["pCube1...", "-", "Select", "Select All", "Deselect All", "Select Hierarchy", "Invert Selection", "-",
             "Select Similar", "-", "Make Live", "-", "DG Traversal", "Inputs", "Outputs", "Paint", "Metadata",
             "Actions", "UV Sets", "Color Sets", "Time Editor"]
@@ -63,7 +63,7 @@ def test_hotbox_layout_like_maya():
     want = MAYA_ABOVE + [MAYA_SIDES] + [[m for m in row if m not in PLUGIN] for row in MAYA_BELOW]
     assert order == want, order
     pitch = [round(a - b, 3) for a, b in zip(ys, ys[1:])]
-    assert set(pitch) == {35.0}, pitch                   # Maya: 26 px boxes, 9 px apart
+    assert set(pitch) == {35.0}, pitch                   # 26 px boxes, 9 px apart
     left, right = (r for r, k, _l in lay.labels if k in ("RECENT", "CONTROLS"))
     assert left[2] < lay.center_rect[0] and right[0] > lay.center_rect[2], "beside the centre box"
     assert len(lay.bands) == len(MAYA_ABOVE) + 2 + len(MAYA_BELOW)

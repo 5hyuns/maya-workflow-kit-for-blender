@@ -1,9 +1,8 @@
 """Step 135 lane WIDTH (#60) in a real UI: a new Maya scene fits the Maya tab stack to the running UI scale
-(toolbox.dock_width: Channel Box labels left of the vertical tab strip since step 142; between Maya's 277 and 480 px
+(toolbox.dock_width: Channel Box labels left of the vertical tab strip since step 142; between 277 and 480 px
 times the scale) through
 ALLSET_OT_fit_columns, the viewport takes the remaining width, the AE menu bar is one row, the longest Channel Box
-label fits its column. Run at the default 1.25, ``--ui-scale 0.8`` (1.0) and ``--ui-scale 1.2`` (1.5).
-Notes: """
+label fits its column. Run at the default 1.25, ``--ui-scale 0.8`` (1.0) and ``--ui-scale 1.2`` (1.5)."""
 
 import os
 import sys

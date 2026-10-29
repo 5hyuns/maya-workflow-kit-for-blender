@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya in-view messages: a short fading message box in the 3D View.
 
-Maya 2022: a rounded grey box
+The kit's box (step 72): a rounded grey box
 (#484848 at opacity 0.75), light text at opacity 0.9 with ``<hl>`` words in yellow #eded08, 25 px lines,
 10 px padding. The default position is the view's top left (10, 11) px in; ``topCenter`` messages sit
-centred at the same height. Fade in about 0.3 s, show 2.0 s (inViewMessageDisplayTime), fade
+centred at the same height. Fade in about 0.3 s, show 2.0 s, fade
 out about 1.5 s. One message at a time: a new one replaces the old one.
 
 ``show(context, text, pos)``: ``text`` may use ``<hl>...</hl>`` and ``\\n``. The message goes to the 3D View
 the calling operator ran in, else to the window's main 3D View. Turned off with the add-on preference
-``in_view_messages`` (Maya inViewMessageEnable).
+``in_view_messages``.
 """
 
 import re
@@ -31,7 +31,7 @@ LINE_PX = 25.0
 FONT_PX = 17.0
 PAD = 10.0
 INSET = (10.0, 11.0)   # from the view's left / top
-RADIUS = 6.0           # corner radius 
+RADIUS = 6.0           # corner radius
 
 POSITIONS = ('TOP_LEFT', 'TOP_CENTER')
 
@@ -165,7 +165,7 @@ def _rounded(x0, y0, x1, y1, r, steps=4):
 
 def placement(pos, space):
     """Where a message shown at ``pos`` goes in ``space``: Blender's text info sits in the top left (the Maya Workflow Kit
-    template hides it), so a TOP_LEFT message moves to the top centre where it is on [delegated]."""
+    template hides it), so a TOP_LEFT message moves to the top centre where it is on."""
     overlay = getattr(space, "overlay", None)
     if pos == 'TOP_LEFT' and overlay is not None and overlay.show_overlays and overlay.show_text:
         return 'TOP_CENTER'

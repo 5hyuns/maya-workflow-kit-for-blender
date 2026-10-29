@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya tangents and key edits for the Graph Editor toolbar and the Shift+S marking menu.
+"""Maya tangents and key edits for the Graph Editor toolbar and the Shift+S marking menu (step 70).
 
 Maya's Graph Editor tangent buttons and ``KEY_TANGENT`` act on the selected keys in the Graph Editor
 and on the current-time keys of the selection anywhere else (Maya's Time Slider tangent menu).
@@ -198,7 +198,7 @@ class ALLSET_OT_graph_view_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- t / Alt+/ / i ----------------
+# --- t / Alt+/ / i (step 92) ----------------
 
 def center_delta(frame_x, region_width):
     """Pixels to pan so the current frame (at region x ``frame_x``) sits in the middle (Maya t = lookAt currentTime:
@@ -493,7 +493,7 @@ class KeyTangentBinding(taphold.TapHoldBinding):
         modal.open_menu("KEY_TANGENT", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
-# --- Curves > Pre / Post Infinity, Edit > Change / Remove Curve Color -------------------
+# --- Curves > Pre / Post Infinity, Edit > Change / Remove Curve Color (step 104) -------------------
 # Maya infinity per side (Cycle, Cycle with Offset, Oscillate, Linear, Constant). Blender: Cycles F-modifier modes per
 # side (REPEAT / REPEAT_OFFSET / MIRROR), extrapolation Linear / Constant for the whole curve (both sides).
 INFINITY = {"CYCLE": 'REPEAT', "CYCLE_OFFSET": 'REPEAT_OFFSET', "OSCILLATE": 'MIRROR', "LINEAR": 'NONE',

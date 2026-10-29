@@ -3,7 +3,7 @@
 
 One tuple per factory binding: (key, modifiers, Maya key text,
 hotkey context, press runTimeCommand, press nameCommand, release runTimeCommand, Hotkey Editor category,
-position in the factory hotkey list, platform). Names and keys only ()."""
+position in the factory hotkey list, platform). Names and keys only."""
 
 FIELDS = ("key", "modifiers", "text", "context", "command", "name_command", "release", "category", "line", "platform")
 

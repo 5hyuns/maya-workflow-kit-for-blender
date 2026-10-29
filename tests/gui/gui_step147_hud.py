@@ -1,6 +1,6 @@
 """Step 147 (#92 #86) in the Maya Workflow Kit layout: Ctrl+E, Ctrl+B, the Joint Tool started from the Rigging shelf
 and the IK Handle Tool leave no Adjust Last Operation panel anywhere, and the shelf click after Create Joints reaches
-the shelf (#86: the Joint Tool panel covered the shelf and ate it). """
+the shelf (#86: the Joint Tool panel covered the shelf and ate it)."""
 
 import os
 import sys

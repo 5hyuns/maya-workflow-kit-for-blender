@@ -8,7 +8,7 @@
 - Dragging the marker line outside the handle moves only the marker; the ✕ circle at the bottom deletes it.
 - Markers live while the tool runs (kept per Graph Editor area pointer).
 
-Delegated decisions (recorded as delegated in ):
+Kit choices:
 - A marker can't pass or reach a neighbour: the drag target is clamped strictly inside (m[i-1], m[i+1]) with a gap of
   ``MIN_GAP`` frames (1 frame with Snap On Frame) — Maya's behaviour there was unknown.
 - Bézier handles are mapped through the same piecewise-linear time map as the keys (so a handle keeps its place in
@@ -25,7 +25,7 @@ import bpy
 
 from .. import live_refs
 
-MIN_GAP = 0.01            # frames; Blender merges keys closer than 0.01 in x ( step 97)
+MIN_GAP = 0.01            # frames; Blender merges keys closer than 0.01 in x (step 97)
 SNAP_GAP = 1.0
 YELLOW = (0.85, 0.85, 0.0, 1.0)
 GREY = (0.55, 0.55, 0.55, 1.0)
@@ -39,7 +39,7 @@ X_Y = 12                            # ✕ circle centre above the region bottom,
 
 def clamp_target(markers, index, new_time, snap=False):
     """``new_time`` for marker ``index`` of the sorted ``markers``, snapped to a whole frame when ``snap`` and kept
-    strictly between its neighbours (delegated)."""
+    strictly between its neighbours."""
     b = float(round(new_time)) if snap else float(new_time)
     gap = SNAP_GAP if snap else MIN_GAP
     if index > 0:
@@ -331,7 +331,7 @@ class ALLSET_OT_retime_tool(bpy.types.Operator):
 
     def _double(self, context, event):
         """A double-click on empty curve area: Blender's DOUBLE_CLICK, or a second PRESS within the double-click
-        time near the first (simulated events never become DOUBLE_CLICK,  step 73)."""
+        time near the first (simulated events never become DOUBLE_CLICK, step 73)."""
         now = time.monotonic()
         last, self._last_press = self._last_press, (now, event.mouse_x, event.mouse_y)
         if event.value == 'DOUBLE_CLICK':

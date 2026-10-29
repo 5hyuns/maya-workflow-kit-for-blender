@@ -4,7 +4,7 @@
 
 Maya keys (S keys every keyable attribute); Maya
 Time Slider menu (the time slider edits act on the Time Slider's highlighted range: the
-Shift-dragged range, else the current frame), design  「계획」 2, 4.
+Shift-dragged range, else the current frame), step 56.
 
 Nodes are the Channel Box's (``ui/channel_box.targets``): selected objects, or the selected pose bones
 in pose mode (a bone's curves are the armature action's ``pose.bones["n"]...`` curves).
@@ -506,7 +506,7 @@ PASTE_METHODS = ("Insert", "Replace", "Merge")
 
 def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, time_offset=0.0, value_offset=0.0,
                 copies=1, method="Merge", replace_region="Time range"):
-    """Maya pasteKey with the Paste Keys Options values (Maya-exact):
+    """Maya pasteKey with the Paste Keys Options values:
 
     * time: Current = the current frame (or ``frame``), Start / Start/End = the Start time field, Clipboard = where
       the keys were copied; copy k (0-based) lands at time + offset + k * (clipboard span + offset).
@@ -559,7 +559,7 @@ def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, 
 
 
 def delete_scope(context, scope, method="Keys", adjustment="None", connect=False, clipboard=False):
-    """Maya cutKey / cutKey -clear with the Delete / Cut Keys Options values (Maya-exact):
+    """Maya cutKey / cutKey -clear with the Delete / Cut Keys Options values:
     Keys = the keys in the range; Segments = also a key where the curve crosses each
     range end; Collapse = keys after the range move left by its length; Segments + Connect = the curve after the range
     joins the start key (later keys move left and by the value difference). ``clipboard`` (Cut) copies first.
@@ -612,7 +612,7 @@ def delete_scope(context, scope, method="Keys", adjustment="None", connect=False
 
 def scale_scope(context, scope, method="Scale/Pivot", only_specified=True, time_scale=1.0, time_pivot=0.0,
                 value_scale=1.0, value_pivot=0.0, new_start=1.0, new_end=10.0):
-    """Maya scaleKey with the Scale Keys Options values (Maya-exact): Scale/Pivot
+    """Maya scaleKey with the Scale Keys Options values: Scale/Pivot
     scales key times about the time pivot and values about the value pivot (Maya units); Start/End maps the range
     (All: first..last key) onto New start / end. With Only scale specified keys off, keys before / after the range
     move with the first / last scaled key. Returns the number of keys scaled."""
@@ -670,7 +670,7 @@ def _snap(x, m):
 
 
 def snap_scope(context, scope, snap="Times", time_multiple=1.0, value_multiple=1.0):
-    """Maya snapKey with the Snap Keys Options values (Maya-exact): key times to
+    """Maya snapKey with the Snap Keys Options values: key times to
     the nearest multiple of ``time_multiple``, values (Maya units) to multiples of ``value_multiple``. Returns the
     number of keys that moved."""
     rng = scope_range(context, scope)

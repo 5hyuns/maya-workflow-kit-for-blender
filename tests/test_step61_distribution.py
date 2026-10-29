@@ -4,7 +4,7 @@ Rules: manifest fields (https://docs.blender.org/manual/en/latest/advanced/exten
 tagline / permission reasons <= 64 chars without end punctuation, tags from the platform list, optional
 fields non-empty when present), Terms of Service 2.1 (no "Blender" in the name), 1.1 (GPL-3.0-or-later),
 moderation checklist (no auto-updater / network code, no hard-coded repository names; writable data in
-``extension_path_user``). Sources and the rules that need a human review: .
+``extension_path_user``).
 """
 
 import os

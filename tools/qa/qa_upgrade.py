@@ -392,7 +392,7 @@ else:
         install = [bl, "--factory-startup", "--command", "extension", "install-file", "-r", "user_default",
                    "--enable"]
         # the upgrade runs on the user's own preferences (a real user installs the new zip from their Blender);
-        # --factory-startup here would save factory preferences over the user's (checked, qa_e_factory_startup_*)
+        # --factory-startup here would save factory preferences over the user's
         upgrade = [a for a in install if a != "--factory-startup"]
         if os.environ.get("QA_UPG_FACTORY_UPGRADE"):
             upgrade = install

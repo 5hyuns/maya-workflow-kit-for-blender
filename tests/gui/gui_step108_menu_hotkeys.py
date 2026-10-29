@@ -33,7 +33,7 @@ def v3d():
 
 def park(x):
     """Mouse over the viewport, one tick before the menu opens (a move queued in the same tick as the popup closes
-    it). A popup opened with the mouse at the window top doesn't show in screen.screenshot (checked), so the menu
+    it). A popup opened with the mouse at the window top doesn't show in screen.screenshot, so the menu
     opens mid-window: Blender then fits the whole menu in the 900 px window (no scroll arrows) - the same space a
     top-bar dropdown has minus its title row."""
     area, region = v3d()
@@ -56,7 +56,7 @@ def s_setup():
 @step
 def s_keys():
     bpy.ops.allset.keymap_activate()
-    # an open tooltip hides the popup menu from screen.screenshot (checked): no tooltips in this session
+    # an open tooltip hides the popup menu from screen.screenshot: no tooltips in this session
     bpy.context.preferences.view.show_tooltips = False
     ms = mod(".ui.menu_sets")
     km = sys.modules["sim"].maya_kc().keymaps["Window"]

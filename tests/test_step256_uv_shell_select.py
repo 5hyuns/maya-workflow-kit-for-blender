@@ -1,7 +1,7 @@
-"""Step 256 (#172): Maya UV Shell selection (operators/uv_shell_select.py) against Maya 2026.
+"""Step 256 (#172): Maya UV Shell selection (operators/uv_shell_select.py), like Maya.
 Maya: polyCube with the four edges of the top face cut = 3 shells A = f[0] f[4]
 f[5] (front, right, left), B = f[1] (top), C = f[2] f[3] (back, bottom). The kit cube has Maya's face order (step 129),
-so the face indices of the Maya tables apply as they are."""
+so the face indices of the tables apply as they are."""
 
 from importlib import import_module
 
@@ -58,13 +58,13 @@ def test_entering_shell_mode():
     ts = bpy.context.scene.tool_settings
     assert uss.active(bpy.context)
     assert tuple(ts.mesh_select_mode) == (False, False, True) and ts.use_uv_select_sync
-    assert _sel(ob) == set()                      # Maya: switching to the mask clears the selection ()
+    assert _sel(ob) == set()                      # Maya: switching to the mask clears the selection
 
 
 def test_click_rules_match_maya():
     ob = _cube()
     ctx = bpy.context
-    steps = [  # (face clicked, shift, ctrl, Maya `ls -sl` faces) — table, rows 1-6
+    steps = [  # (face clicked, shift, ctrl, expected selected faces), rows 1-6
         (0, False, False, A),                     # click front -> f[0] f[4:5]
         (1, True, False, A | B),                  # Shift+click top -> adds B
         (4, True, False, B),                      # Shift+click right (A selected) -> A removed
@@ -129,7 +129,7 @@ def test_current_uv_set_only():
     me.uv_layers.active = second
     bpy.ops.object.mode_set(mode='EDIT')
     lab = _labels(ob)
-    assert len(set(lab.tolist())) == 6            # every face its own shell in set2 (Maya: f[0] alone,)
+    assert len(set(lab.tolist())) == 6            # every face its own shell in set2 (Maya: f[0] alone)
     bpy.ops.object.mode_set(mode='OBJECT')
     me.uv_layers.active = me.uv_layers[0]
     bpy.ops.object.mode_set(mode='EDIT')

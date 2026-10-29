@@ -1,6 +1,5 @@
 """Step 50: Maya editor chrome — Channel Box / Layer Editor / Outliner menu bars, empty Channel Box text,
-Time Slider buttons in the timeline sidebar, Range Slider order. ;
-GUI: tests/gui/gui_step50_chrome.py."""
+Time Slider buttons in the timeline sidebar, Range Slider order. GUI: tests/gui/gui_step50_chrome.py."""
 
 from importlib import import_module
 from pathlib import Path
@@ -44,7 +43,7 @@ class Recorder:
 def test_channel_box_menu_bar():
     rec = Recorder()
     chrome.menu_bar(rec, channel_box.MENU_BAR)
-    assert rec.texts("menu") == ["Channels", "Edit", "Object", "Show"]     # channel_box.md:27-30
+    assert rec.texts("menu") == ["Channels", "Edit", "Object", "Show"]
     for _label, idname in channel_box.MENU_BAR:
         assert hasattr(bpy.types, idname), idname
 

@@ -45,7 +45,7 @@ def test_new_maya_scene_layout():
     assert bpy.context.preferences.app_template == template, "no app template switch"
     assert bpy.data.filepath == "", "an untitled file: saving never writes into the extension"
     assert kit.is_enabled()
-    # Maya's flat #5c5c5c viewport as view data, not theme (#45): scene linear 0.10702
+    # the flat #5c5c5c viewport as view data, not theme (#45): scene linear 0.10702
     for screen in bpy.data.screens:
         for area in screen.areas:
             if area.type == 'VIEW_3D' and area.spaces.active.show_region_header:   # not the Tool Box column
@@ -65,7 +65,7 @@ def test_new_maya_scene_layout():
     # no sidebar (the Maya panels are their own areas, step 116); the Tool Box column replaces the toolbar (step 49);
     # the tool header row is Maya's panel toolbar (step 113)
     assert not v3d.show_region_ui and not v3d.show_region_toolbar and v3d.show_region_tool_header
-    # Maya persp angle (35 mm on 36 mm film) = Blender viewport lens 70 (72 mm sensor; step 81)
+    # persp angle (35 mm on 36 mm film) = Blender viewport lens 70 (72 mm sensor; step 81)
     assert abs(v3d.lens - 70.0) < 1e-6
     for area in scr.areas:
         if area.type == 'VIEW_3D':
@@ -73,7 +73,7 @@ def test_new_maya_scene_layout():
 
     scene = bpy.context.scene
     assert scene.unit_settings.length_unit == 'CENTIMETERS' and scene.unit_settings.scale_length == 1.0
-    # step 20: Maya animation range 1-200 = frame range, playback 1-120 = preview range
+    # step 20: animation range 1-200 = frame range, playback 1-120 = preview range
     assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 200, 24)
     assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (1, 120)
     # step 211: only Maya's hidden startup cameras (operators/startup_cameras.py)

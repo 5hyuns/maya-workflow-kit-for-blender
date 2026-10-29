@@ -1,10 +1,10 @@
-"""Step 225 (Issue #135, ATTACH_PLAN L24 + L21): Game Exporter clips and the Motion Trail Editor, Maya 2026.
+"""Step 225 (Issue #135): Game Exporter clips and the Motion Trail Editor.
 
-Maya: gameFbxExporter factory values, a new clip =
+Maya: gameFbxExporter default values, a new clip =
 the playback range with an empty name, one file = a take per clip (walk 1-10, run 11-24), a file per clip = file name
 prefix + clip name ("hero_walk.fbx"). Maya also writes the plug-in's "Take 001" and repeats earlier clips in later
 clip files — the kit writes only the clips' own takes (documented in operators/game_exporter.py).
-Motion trail: Maya factory settings (MotionTrailPreferences.py) and their round trip through Blender motion paths."""
+Motion trail: default settings and their round trip through Blender motion paths."""
 
 import math
 import os
@@ -100,7 +100,7 @@ def _takes(path):
 
 def test_game_exporter_factory_equals_maya_node():
     # the node's createNode values (FACTORY), then the window's first-open presets (step 266: "Model Default" /
-    # "Anim Default", Maya 2026 applyAttrPreset) — what the kit's fields start with
+    # "Anim Default" presets) — what the kit's fields start with
     sc = _clear()
     s = bpy.data.scenes.new("ge_fresh").allset_game_exporter
     for attr, maya in MAYA_NODE.items():
@@ -169,7 +169,7 @@ def test_export_single_file_takes():
     assert _takes(done[0][0]) == MAYA_SINGLE["takes"], _takes(done[0][0])
     tree, _v = fbx_rig.load(done[0][0])
     first = sorted({int(c.first(b"KeyTime").props[0][0]) for c in tree.first(b"Objects").find(b"AnimationCurve")})
-    assert first == [KTIME // 24, KTIME * 11 // 24], first      # keys at Maya's clip frames (1 and 11)
+    assert first == [KTIME // 24, KTIME * 11 // 24], first      # keys at the clip frames (1 and 11)
     arm = bpy.data.objects["skeleton1"]
     assert not arm.animation_data.nla_tracks and arm.animation_data.action is not None   # temporary tracks gone
 

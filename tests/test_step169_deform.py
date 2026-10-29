@@ -1,4 +1,4 @@
-"""Step 169: Deform completion — the kit wire deformer against Maya (translate / rotate / twist / scale / CV edit /
+"""Step 169: Deform completion — the kit wire deformer like Maya's (translate / rotate / twist / scale / CV edit /
 envelope / dropoff / dropoff locators), Wire edit items, ShrinkWrap target edits, Lattice reset / remove tweaks,
 Prune Membership, Point On Curve, Paint Weights windows, Deform >= 60 %, no "Blender has no settings" box left.
 """
@@ -23,8 +23,6 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 notices = import_module(kit.MODULE + ".ui.notices")
 
-TOL = 1e-3
-
 
 def _clear():
     if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
@@ -42,11 +40,6 @@ def _select(*obs, active=None):
     for o in bpy.context.scene.objects:
         o.select_set(o in obs)
     bpy.context.view_layer.objects.active = active or (obs[-1] if obs else None)
-
-
-def m2b(v):
-    """Maya Y-up -> Blender Z-up."""
-    return (v[0], -v[2], v[1])
 
 
 def _plane():
@@ -95,7 +88,7 @@ def _displacements(p):
     return out
 
 
-# --- the wire against Maya ---------------------------------------------------------------------------------------
+# --- the wire like Maya's --------------------------------------------------------------------------------------
 
 def test_wire_made_like_maya():
     p, c, md = _make()
@@ -249,7 +242,7 @@ def test_point_on_curve():
 def test_paint_weights_windows_and_wire_paint():
     for label in ("Blend Shape", "Cluster", "Delta Mush", "Proximity Wrap", "Lattice", "ShrinkWrap", "Wire",
                   "Nonlinear", "Texture Deformer", "Set Membership"):
-        # Maya 2026 moved Paint Weights > Set Membership to Deform > Paint Membership (step 219 menus, step 229)
+        # Maya's menus have Paint Weights > Set Membership under Deform > Paint Membership (step 219 menus, step 229)
         path = "Deform/Paint Membership" if label == "Set Membership" else f"Deform/Paint Weights/{label}"
         w = option_windows.find_path(path)
         assert w is not None and w.title in ("Paint Attributes Tool", "Paint Blend Shape Weights Tool"), path
@@ -277,9 +270,9 @@ def test_deform_option_boxes_and_count():
     print(f"Deform: {working} / {len(paths)} working ({100 * working / len(paths):.0f} %); boxes "
           + ", ".join(f"{k} {len(v)}" for k, v in sorted(kinds.items())))
     print("dead:", kinds.get("dead"))
-    # Maya 2026 menus (step 219) add the 70-item Maya Muscle plug-in submenu: a separate legacy muscle system the kit
-    # explains with notices (product rule 10-26: rare Maya systems get a notice, not a re-implementation), so the
-    # working share is counted without it (step 229, delegated); every greyed Muscle item still needs a notice below.
+    # Maya's menus (step 219) include the 70-item Maya Muscle plug-in submenu: a separate legacy muscle system the
+    # kit explains with notices (rare Maya systems get a notice, not a re-implementation), so the
+    # working share is counted without it (step 229); every greyed Muscle item still needs a notice below.
     core = [p for p in paths if not p.startswith("Deform/Muscle/")]
     working = sum(1 for p in core if p in menu_map.MAP)
     assert working / len(core) >= 0.60, (working, len(core))

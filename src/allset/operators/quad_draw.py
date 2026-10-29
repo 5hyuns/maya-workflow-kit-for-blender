@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Quad Draw (Mesh Tools > Quad Draw, Ctrl+Shift+Q): retopology on a live surface (
-「계획」 5, GitHub #30).
+"""Maya Quad Draw (Mesh Tools > Quad Draw, Ctrl+Shift+Q): retopology on a live surface (step 144,
+GitHub #30).
 
 The kit tool ``allset.quad_draw_tool`` (edit mode, ui/mesh_tools_poly.py) edits one mesh — the selected one, or a new
 empty ``polySurfaceN`` (``allset.quad_draw_start``) — on the reference surfaces: the Make Live mesh list,
@@ -36,9 +36,9 @@ from . import mesh_tools, multi_cut, poly_draw, preselect
 TOOL = "allset.quad_draw_tool"
 DOT_LAYER = "allset_dot"   # int vertex layer: 1 = a Quad Draw dot (a loose vertex until a face uses it)
 DRAG_PX = 4.0           # a press that moves less than this is a click
-BRUSH_PX = 50.0         # relax brush radius 
-RELAX_STEP = 0.5        # share of the way to the neighbours' average per brush move 
-DOT_RGB = (0.26, 1.0, 0.64)        # Maya selection green #43ffa3 for the dots 
+BRUSH_PX = 50.0         # relax brush radius
+RELAX_STEP = 0.5        # share of the way to the neighbours' average per brush move
+DOT_RGB = (0.26, 1.0, 0.64)        # selection green #43ffa3 for the dots
 FILL_RGB = (0.26, 1.0, 0.64)
 LOOP_RGB = (1.0, 0.55, 0.1)
 DELETE_RGB = (1.0, 0.2, 0.2)
@@ -209,8 +209,8 @@ def corner_quad(bm, v, co):
     """Tab+drag from border vertex ``v`` (Maya 2026 Quad Draw, Autodesk's help "Extend edges with Quad Draw": with
     the Edge extend option a vertex can be dragged to create a polygon): the quad A, V, B, N of ``v``, its two border
     neighbours and a new vertex at local ``co``. Only where that quad fills the open side of ``v`` (an inner corner):
-    at an outer corner or a straight border it would fold over the faces there, and nothing is made (delegated,
-    ). Returns the face or None."""
+    at an outer corner or a straight border it would fold over the faces there, and nothing is made
+    (a kit choice). Returns the face or None."""
     pair = corner_neighbours(v)
     if pair is None:
         return None
@@ -1313,7 +1313,7 @@ def _watch():
 
 
 def _drop_dots(name):
-    """Leaving Quad Draw clears its dots and the dot layer (Maya's dots live only in the tool) ."""
+    """Leaving Quad Draw clears its dots and the dot layer (Maya's dots live only in the tool)."""
     ob = bpy.data.objects.get(name) if name else None
     if ob is None or ob.type != 'MESH':
         return

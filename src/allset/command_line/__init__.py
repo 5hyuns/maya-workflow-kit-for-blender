@@ -2,8 +2,7 @@
 """Maya Command Line and Help Line in Blender's status bar.
 
 Maya's Command Line (language toggle, input/result field, Script Editor button) and Help Line.
-Design: 
-「계획」 4. Python only: MEL is not supported (). ``maya.cmds`` is a
+Python only: MEL is not supported. ``maya.cmds`` is a
 small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds`` in code run from the Command Line,
 shelf buttons and the Script Editor only: those imports are rewritten to the kit's module before Blender's Run Script
 runs the entry (``runner.prepare``, step 130).
@@ -50,8 +49,8 @@ def _on_command(self, context):
         return
     self.allset_cmd = ""  # re-enters this callback with "" -> returns above
     submit(text)  # an error shows red in the result field
-    # An operator called from a property update doesn't push an undo step
-    # (checked in the GUI test), so push one: one command = one Ctrl+Z.
+    # An operator called from a property update doesn't push an undo step,
+    # so push one: one command = one Ctrl+Z.
     bpy.ops.ed.undo_push(message=f"Command: {text[:40]}")
     undo_text.pushed(text.strip())        # Maya names a typed command's chunk by its text ("Undo: move -r 0 0 2")
 
@@ -159,23 +158,23 @@ def help_text(context):
 
 # --- status bar --------------------------------------------------------------------------
 
-# Maya 2022 puts the Help Line and the Command Line on one row, Help Line left;
-# widths in Maya's factory window (Help Line 675 px, Command Line 915 px
-# at 1600 px) in UI units (20 px at effective scale 1.0).
+# Help Line and Command Line on one row, Help Line left, like Maya;
+# widths for a 1600 px window (Help Line 675 px, Command Line 915 px)
+# in UI units (20 px at effective scale 1.0).
 HELP_UNITS = 33.75
 COMMAND_UNITS = 45.75
 # Inside the Command Line (1600 px window): language button ~35 px, input
 # ~335 px, result field ~485 px, Script Editor button. Step 161: the row is shared out as a fraction of the status bar
-# like Maya's (the fixed UI units ran 1988 px wide at UI scale 1.25 in a 1600 px window, so the result field was drawn
+# (the fixed UI units ran 1988 px wide at UI scale 1.25 in a 1600 px window, so the result field was drawn
 # off the right edge and a command's result never showed).
 INPUT_SHARE = 335 / 915
-LANG_UNITS = 3.5          # "Python" button (Maya's "MEL" is 35 px; "Python" needs more)
+LANG_UNITS = 3.5          # "Python" button (wider than a 35 px "MEL" button)
 MAYA_WINDOW_PX = 1600
 
 
 def units_for(width_px, ui_scale):
-    """(help, command, input) widths in UI units for a status bar ``width_px`` wide: Maya's 675 / 915 / 335 px of a
-    1600 px window, scaled to the bar (at most Maya's sizes in UI units: a wide window keeps them)."""
+    """(help, command, input) widths in UI units for a status bar ``width_px`` wide: 675 / 915 / 335 px of a
+    1600 px window, scaled to the bar (at most those sizes in UI units: a wide window keeps them)."""
     unit = 20.0 * max(ui_scale, 1e-3)
     f = min(1.0, width_px / unit / (MAYA_WINDOW_PX / 20.0))
     command = COMMAND_UNITS * f
@@ -195,7 +194,7 @@ def draw_help_line(layout, context):
     shows progress too)."""
     from ..ui import notices
     notices.remember_status_area(context.area, context.window)
-    note = notices.current()   # a notice of the menu item under the mouse (step 54)
+    note = notices.current()   # a "Not in Blender" notice of the menu item under the mouse (step 54)
     from ..ui import weight_numbers
     text = note or weight_numbers.help_note() or help_text(context)
     if text:

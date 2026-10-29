@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Maya Workflow Kit setup helper for Windows: find Blender installs, install / uninstall the extension.
-  Draft for the installer ( section (d)); called by allset.iss, usable on its own.
+  Draft for the installer; called by allset.iss, usable on its own.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -List

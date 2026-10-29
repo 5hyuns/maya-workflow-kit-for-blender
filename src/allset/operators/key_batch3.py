@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Key batch 3: Maya keys that had no or a wrong binding.
+"""Key batch 3 (step 107): Maya keys that had no or a wrong binding.
 
 Maya commands (meanings from Maya's annotations):
 - Ctrl+M ToggleMainMenubar: the main menu bar folds into Blender's top-bar menu button (``area.show_menus`` of the
@@ -15,19 +15,18 @@ from bpy.props import EnumProperty
 
 from .. import results
 
-# Maya background (step 120, ), Maya with factory prefs:
-# Maya's Alt+B background cycle is one global state for every viewport -
+# Background (step 120): the Maya-style Alt+B background cycle is one global state for every viewport -
 #   gradient on        -> background 0 0 0, gradient off
-#   background == 0    -> 0.36 (factory)
+#   background == 0    -> 0.36 (default)
 #   background <  0.5  -> 0.631
 #   else               -> gradient on (backgroundTop #889db3 at the top, backgroundBottom #0d0d0d at the bottom)
-# Values are display (sRGB) values: the factory viewport pixel is #5c5c5c = 0.36.
+# Values are display (sRGB) values: the default viewport pixel is #5c5c5c = 0.36.
 #
-# Step 130 (#40, ): the kit never edits the user's theme. Blender's only gradient background is the
+# Step 130 (#40): the kit never edits the user's theme. Blender's only gradient background is the
 # theme's (``view_3d.space.gradients``; a 3D View's own background is one flat ``View3DShading.background_color``),
-# so the cycle uses Maya's flat colours only, per view: grey 0.36 -> light 0.631 -> black -> grey (Maya's step
-# "0.631 -> gradient" goes to black, the step after Maya's gradient). A view that shows the user's theme
-# background (``THEME``) counts as Maya's factory grey, so the first Alt+B gives light grey like in Maya.
+# so the cycle uses the flat colours only, per view: grey 0.36 -> light 0.631 -> black -> grey (the step
+# "0.631 -> gradient" goes to black, the step after the gradient). A view that shows the user's theme
+# background (``THEME``) counts as the default grey, so the first Alt+B gives light grey like in Maya.
 FLAT, LIGHT, BLACK = 0.36, 0.631, 0.0
 CYCLE = ("GREY", "LIGHT", "BLACK")
 
@@ -43,7 +42,7 @@ def linear_to_srgb(c):
 def background_state(shading):
     """'GREY' / 'LIGHT' / 'BLACK' of a 3D View's shading, else the display value of its colour."""
     if shading.background_type == 'THEME':
-        return "GREY"                                # the user's theme background: Maya's factory starting point
+        return "GREY"                                # the user's theme background: the default starting point
     if shading.background_type != 'VIEWPORT':
         return FLAT                                  # world colour: read like Maya's flat background
     v = linear_to_srgb(shading.background_color[0])
@@ -99,7 +98,7 @@ def cycle_background(shading):
 
 
 def reset_background():
-    """Maya's factory background (flat 0.36) in every view: promotional / comparison shots use it (step 120)."""
+    """the default background (flat 0.36) in every view: promotional / comparison shots use it (step 120)."""
     apply_background("GREY")
 
 

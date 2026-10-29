@@ -1,6 +1,6 @@
 """Step 97: kit bugs the manual-checks sweep found (tests/gui/gui_manual_sweep.py) — headless regressions.
 Set Driven Key keys 1 cm apart in a cm scene, Channel Box custom attributes clamped to Min / Max, J / Alt+J render
-slot keys, the "Maya Pivot" Move axis follows the lead. """
+slot keys, the "Maya Pivot" Move axis follows the lead."""
 
 import math
 from importlib import import_module

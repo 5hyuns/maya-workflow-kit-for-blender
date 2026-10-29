@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """How many panel toolbar groups fit the 3D View tool header (Maya's » overflow, #52; no bpy, tested headless).
 
-Blender's header layout can't report where it put an item, so the widths are Blender's layout rules, checked with a
-1 px mouse sweep at effective UI scale 1.0 / 1.25 / 1.5: an icon button is one widget
+Blender's header layout can't report where it put an item, so the widths are Blender's layout rules at
+effective UI scale 1.0 / 1.25 / 1.5 (step 132): an icon button is one widget
 unit U = floor(18 s + 0.5) + 2 pixel_size wide, items of the (non-aligned) header row are ``floor(5 s)`` apart, the
 row starts ``floor(0.4 U)`` in, a ``ui_units_x = k`` sub-row is ``floor(k U)`` wide.
 """

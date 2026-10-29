@@ -2,8 +2,8 @@
 """Step 196 (#103): Maya option windows of Create > Polygon Primitives (Disc ... Ultra Shape) and Create > NURBS
 Primitives (same spec as operators/option_windows.py; option_windows._extend appends ``WINDOWS``).
 
-Titles, field labels, ranges and factory values: Maya 2022's
-option windows with factory settings.
+Titles, field labels and ranges follow Maya's
+option windows.
 Each window fills the kit's Maya creation node (operators/prim_history.py, prim_shapes*.py, prim_supershape.py) through
 ``create.create(context, kind, overrides)``: values are Maya values, lengths in Maya units (create() scales them).
 Fields Blender / the kit can't follow are listed as ``missing``."""
@@ -64,7 +64,7 @@ def _helix_extra(v, over):
 def _soccer_extra(v, over):
     # Maya links Radius and Side length both ways while editing
     # (Side = Radius x 0.4036); the kit node follows the radius, so a side length typed alone sets the radius
-    # (delegated: whichever field differs from the linked value wins)
+    # (whichever field differs from the linked value wins)
     from . import prim_shapes_more
     side = prim_shapes_more.SOCCER_SIDE
     if abs(v["sideLength"] - v["radius"] * side) > 1e-4 and abs(v["radius"] - 1.0) < 1e-9:

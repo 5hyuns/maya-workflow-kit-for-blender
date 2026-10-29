@@ -1,5 +1,5 @@
 """Step 137 (#67): Render > Render Current Frame / Render Sequence through the view's camera, else Maya's persp
-camera made on demand (operators/render_persp.py). ; GUI: tests/gui/gui_step137_render.py."""
+camera made on demand (operators/render_persp.py). GUI: tests/gui/gui_step137_render.py."""
 
 import math
 import os
@@ -62,7 +62,7 @@ def test_persp_made_on_demand_matches_view_and_is_reused():
     to_target = rv3d.view_location - ob.matrix_world.translation
     look = ob.matrix_world.to_3x3() @ Vector((0.0, 0.0, -1.0))
     assert abs(to_target.length - 8.0) < 1e-4 and look.angle(to_target) < 1e-4, "view distance in front of the camera"
-    # viewport lens is on a 72 mm sensor: lens 70 = 35 mm persp on a 36 mm film back
+    # viewport lens is on a 72 mm sensor: lens 70 = a 35 mm persp on a 36 mm film back
     assert ob.data.type == 'PERSP' and abs(ob.data.sensor_width - 36.0) < 1e-6 and abs(ob.data.lens - 35.0) < 1e-6
     clip = units.clip(sc)
     assert abs(ob.data.clip_start - clip["clip_start"]) < 1e-6 and abs(ob.data.clip_end - clip["clip_end"]) < 1e-3

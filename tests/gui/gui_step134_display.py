@@ -1,6 +1,6 @@
-"""Step 134 lane HUD in a real UI (Maya Workflow Kit layout): Maya's display / mode keys (1/2/3, 4-7, F8, F9-F11,
+"""Step 134 lane HUD in a real UI (Maya Workflow Kit layout): the Maya display / mode keys (1/2/3, 4-7, F8, F9-F11,
 Alt+A) leave no Adjust Last Operation panel (#58), and 3 draws the Maya cube smooth shaded while 1 draws it faceted
-(#61): the shading is checked along a line across the cube in screenshots. """
+(#61): the shading is read along a line across the cube in screenshots."""
 
 import os
 import sys
@@ -15,8 +15,8 @@ from sim import check, ev, run, step, setup, screenshot, view3d, win, load_maya_
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 # Largest step between neighbouring pixels across the cube, as a share of the whole light range along the line.
-# Faceted shading = a few flat bands with jumps between them; smooth shading = a gradient. checked
-#: 0.2.1 faceted 3 = 0.21-0.24, 1 = 0.55-0.58; smooth 3 = 0.01-0.03.
+# Faceted shading = a few flat bands with jumps between them; smooth shading = a gradient. Seen
+# with 0.2.1: faceted 3 = 0.21-0.24, 1 = 0.55-0.58; smooth 3 = 0.01-0.03.
 SMOOTH_MAX_STEP = 0.1
 
 

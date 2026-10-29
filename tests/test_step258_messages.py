@@ -1,6 +1,6 @@
 """Step 258 (#152): Maya's messages on wrong selections instead of Python errors or silence.
 
-Maya 2026 + the step-258 additions (constraints with one
+Maya's messages + the step-258 additions (constraints with one
 object, Set Blend Shape Target Weight Keys on a skeleton, nothing selected for Remesh / Reduce). Maya's Errors are the
 kit's ERROR reports: a menu item called from Python raises ``RuntimeError("Error: <Maya text>")`` (no traceback).
 Cases where Maya works silently must work without an error.
@@ -148,7 +148,7 @@ def test_other_modifier_items_with_a_joint_warn_without_traceback():
     assert not arm.modifiers
 
 
-# --- nHair > Paint Hair Follicles with a mesh: valid in Maya ----------------------------------------------------------
+# --- nHair > Paint Hair Follicles with a mesh: valid, like Maya ------------------------------------------------------
 
 def test_paint_hair_follicles_on_a_mesh_enters_hair_sculpt():
     _clear()
@@ -179,7 +179,7 @@ def test_smooth_tool_on_hidden_object_does_not_raise():
     _clear()
     cube = _cube()
     _hide(cube)
-    assert _run("Mesh Tools/Sculpting Tools/Smooth Tool") is None    # kit warning (delegated)
+    assert _run("Mesh Tools/Sculpting Tools/Smooth Tool") is None    # kit warning
     assert bpy.context.mode == 'OBJECT' and cube.hide_viewport
 
 
@@ -232,7 +232,7 @@ def test_bind_skin_without_a_joint_is_mayas_error():
 
 
 def test_bind_skin_nothing_selected_and_joints_only_are_mayas_errors():
-    # step 266 independent check (Maya 2026): nothing selected / only the skeleton
+    # step 266 independent check: nothing selected / only the skeleton
     _clear()
     arm = _skeleton()
     _cube()

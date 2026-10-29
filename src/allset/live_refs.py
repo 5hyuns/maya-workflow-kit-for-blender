@@ -1,4 +1,4 @@
-"""UI references that outlive a timer tick (#36, ).
+"""UI references that outlive a timer tick (#36, step 129).
 
 A ``bpy.types.Window`` (and the Screen / Area / Region / Space reached from it) kept across timer ticks is NOT
 invalidated when its window closes: reading it afterwards dereferences freed memory and Blender crashes
@@ -6,7 +6,7 @@ invalidated when its window closes: reading it afterwards dereferences freed mem
 the live object up again on every tick with the helpers below; None = gone, stop.
 
 Comparing pointers never dereferences the old object. A freed pointer can be reused by a new area / window
-(checked,  step 49), which at worst points a retry at a newer object of the same kind.
+(step 49), which at worst points a retry at a newer object of the same kind.
 """
 
 import bpy

@@ -1,9 +1,9 @@
 """Maya Show > NURBS Curves for rig controls drawn as bone custom shapes (step 262, Issue #173).
 
-In the kit's model a Maya NURBS control is a bone with a curve custom shape (DECISIONS7: control = bone Custom
-Shape). Blender draws a custom shape as part of its armature, so the view's curve filter
-(``SpaceView3D.show_object_viewport_curve``) hides curve *objects* only — checked in 
-(probe: NURBS Curves off, nothing selected, the bone's circle still drawn; Show > Joints off hides it). Blender has no
+In the kit's model a Maya NURBS control is a bone with a curve custom shape. Blender draws a custom shape as part
+of its armature, so the view's curve filter
+(``SpaceView3D.show_object_viewport_curve``) hides curve *objects* only (NURBS Curves off, nothing selected: the
+bone's circle is still drawn; Show > Joints off hides it). Blender has no
 per-view switch for custom shapes, so the kit hides those bones (pose-bone hide, every view) and marks them; turning
 NURBS Curves back on un-hides only marked bones, like Show > IK Handles (ui/panel_menus.show_ik_handles).
 """

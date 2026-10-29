@@ -1,6 +1,6 @@
 """Step 38: Channel Box text entry (Maya display, relative +=/-=/*=//=), edits on every selected
 object (custom attributes, SHAPES, INPUTS too) and every selected channel; AE material type
-labels and lambert/blinn/phong sections. 
+labels and lambert/blinn/phong sections.
 """
 
 import math

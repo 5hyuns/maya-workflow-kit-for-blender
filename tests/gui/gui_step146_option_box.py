@@ -135,8 +135,8 @@ def hold_case(menu, path):
         mod(".ui.menu_sets").AWAY_TICK = 0.3       # the simulated back move (s_back) comes after the warp back
         ev('MOUSEMOVE', 'NOTHING', x=x, y=y)      # the warp's own move (simulation keeps the pointer in sim._pos)
         ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
-        # cursor_warp sends no event under --enable-event-simulate (a real session gets the OS move: checked in a
-        # normal GUI Blender, ), so queue the move the option box's away warp makes, right
+        # cursor_warp sends no event under --enable-event-simulate (a real session gets the OS move in a
+        # normal GUI Blender), so queue the move the option box's away warp makes, right
         # behind the release like Blender's own move after the hold menu closes
         if closes():
             away_x = 2 if x > win().width // 2 else win().width - 3

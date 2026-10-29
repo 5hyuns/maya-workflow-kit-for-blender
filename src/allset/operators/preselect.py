@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya pre-selection highlight in mesh edit mode.
+"""Maya pre-selection highlight in mesh edit mode (steps 30, 74).
 
 Maya highlights the component under the mouse before you click (``preSelectHilite true``),
 following the select mode, also while the
@@ -9,7 +9,7 @@ Maya 2022 doesn't highlight objects in object mode (pre_01), so neither does the
 except for component targets while editing a custom pivot.
 
 Blender's ``GIZMO_GT_mesh_preselect_elem_3d`` (step 30) picks the nearest vertex in every select
-mode (checked, ), so this is a Python gizmo with its own picking:
+mode, so this is a Python gizmo with its own picking:
 
 - ``pick_*`` (numpy, no bpy): nearest vertex / edge within ``RADIUS_PX`` on screen that the
   ``visible`` callback accepts; a face = the one under the cursor (BVH ray cast).
@@ -35,12 +35,12 @@ SELECT_TOOLS = ("builtin.select", "allset.target_weld_tool", "allset.cut_sew_too
 TRANSFORM_TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE', "builtin.rotate": 'ROTATE',
                    "builtin.transform": 'TRANSFORM'}
 
-# --- Maya values () ------------------------------------------------------------------
+# --- Maya-style look (step 74) ------------------------------------------------------------------
 RGB = (1.0, 0.0, 0.0)               # preselect_hilite_component
 VERT_PX = 5.0
 LINE_PX = 2.0
-FACE_FILL = (0.85, 0.26, 0.25, 0.35)  # the #d84240 stipple seen as a fill 
-RADIUS_PX = 16.0                    # MT_preSelectSize 16 
+FACE_FILL = (0.85, 0.26, 0.25, 0.35)  # the #d84240 stipple seen as a fill
+RADIUS_PX = 16.0                    # pre-selection radius
 HANDLE_PX = 12.0                    # keep the hover on a manipulator handle this close
 ROTATE_RING = 1.25                  # Rotate (Blender's gizmo): disc of gizmo_size / 2 x this
 
@@ -123,7 +123,7 @@ def near_handles(mouse, center, tips, center_half, reach):
 
 class MeshCache:
     """World vertex positions, edges, visible-face BVH and (lazily) selection of one mesh.
-    Rebuilt after geometry / transform updates only (selection updates keep it, )."""
+    Rebuilt after geometry / transform updates only (selection updates keep it, step 74)."""
 
     def __init__(self, ob):
         import bmesh

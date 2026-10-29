@@ -1,5 +1,5 @@
 """Step 75: Maya Status Line input line (Abs / Rel transform, Rename, Select by name) and the greyed
-Construction History toggle. ; GUI: tests/gui/gui_step75_input_line.py."""
+Construction History toggle. GUI: tests/gui/gui_step75_input_line.py."""
 
 from importlib import import_module
 

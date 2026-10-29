@@ -5,7 +5,6 @@ installed + enabled from the command line, Maya Workflow Kit layout loaded), wit
 --enable-event-simulate. Every action is a simulated key/mouse event where the
 kit binds one (operators only to build the scene). Each "check" records what a
 Maya user would expect; screenshots go to $ALLSET_DOGFOOD_SHOTS for review.
- 「계획」.
 """
 
 import os
@@ -490,7 +489,7 @@ def s_delete():
     ev('Z', 'RELEASE', ctrl=True)
 
 
-# --- Maya muscle memory (rows of  still open) ------------------------
+# --- Maya muscle memory (keymap rows still open) ---------------------------------------------
 
 @step
 def s_h():

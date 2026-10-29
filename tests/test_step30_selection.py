@@ -2,7 +2,6 @@
 pre-selection gizmo group, Blender's undo steps left alone (step 130).
 
 Box/lasso through hidden vertices and the highlight are checked in tests/gui/gui_step30_selection.py.
-
 """
 
 import types
@@ -87,7 +86,7 @@ def test_preselect_group_registered_and_polls_off():
 
 
 def test_undo_steps_left_alone():
-    """The 256-step undo preset is gone since step 130 (): Blender's value stays."""
+    """The 256-step undo preset is gone since step 130: Blender's value stays."""
     prefs = bpy.context.preferences
     default = type(prefs.edit).bl_rna.properties["undo_steps"].default
     assert prefs.edit.undo_steps == default, prefs.edit.undo_steps

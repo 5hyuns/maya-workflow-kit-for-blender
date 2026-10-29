@@ -124,7 +124,7 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
                                  get=_normalize_get, set=_normalize_set)
     # Tool Settings frames in Maya 2024+ order (Skin Clusters / Influences / Brush / Visualization / Stroke /
     # Stylus Pressure / Display), then the Blender-only extras (ui/paint_weights.SECTIONS)
-    # Maya 2026 frame defaults: Skin Clusters collapsed (skinCtxClustersCollapsed 1), Influences / Brush /
+    # frame defaults: Skin Clusters collapsed, Influences / Brush /
     # Visualization open, Stroke / Stylus Pressure / Display collapsed
     show_skin_clusters: BoolProperty(default=False)
     show_influences: BoolProperty(default=True)
@@ -444,10 +444,9 @@ def vertex_targets(mesh, indices):
 # --- Flood (Maya 2026 Paint Skin Weights Flood) ---------
 # Maya applies the operation to the influence being painted, multiplied by Opacity o:
 #   Replace w' = w + o(v - w)   Add w' = min(1, w + o v)   Scale w' = w (1 - o (1 - v))
-#   Smooth  w' = w + o(avg - w), avg = the mean of the vertex and its edge neighbours (Value ignored; the neighbour
-#   rule was fitted to the checked rings, )
+#   Smooth  w' = w + o(avg - w), avg = the mean of the vertex and its edge neighbours (Value ignored)
 # and gives the change to the other unlocked influences in their old ratio; locked influences keep their weight; only
-# selected vertices change when any vertex is selected (Maya, on polyCylinder h 8 sx 20 sy 8).
+# selected vertices change when any vertex is selected (Maya).
 
 OPERATIONS = (('BRUSH', 'Brush', 'The current brush and its blend'), ('REPLACE', 'Replace', ''),
               ('ADD', 'Add', ''), ('SCALE', 'Scale', ''), ('SMOOTH', 'Smooth', ''))
@@ -487,7 +486,7 @@ def redistribute(weights, target, new, locked, influences):
     total = sum(others.values())
     if total <= 0.0:
         # nothing unlocked takes the rest: a normalized vertex can't lose weight, an unweighted one simply gets the
-        # value (Maya's value unknown: delegated)
+        # value (a kit choice)
         new = max(new, min(room, weights.get(target, 0.0)))
     else:
         rest = room - new
@@ -599,7 +598,7 @@ NO_INFLUENCE = 'Please select an influence first'      # Maya's warning text
 
 def picked_influences(context, mesh):
     """The influences "selected in the Influences list" (Maya's treeView selection): Blender's list has one active
-    row, so that row. Selected joints don't count (delegated): a skeleton often stays fully selected after it is
+    row, so that row. Selected joints don't count: a skeleton often stays fully selected after it is
     made or bound, which would turn Select Vertices into "every vertex"."""
     vg = mesh.vertex_groups.active
     return {vg.name} if vg is not None else set()

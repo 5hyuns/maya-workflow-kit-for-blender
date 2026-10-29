@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Character Sets on Blender Keying Sets.
+"""Maya Character Sets on Blender Keying Sets (step 187).
 
 A Maya character set is a node that owns a list of attributes; one of them can be *current* (Time Slider field), and
 then Set Key (S) keys the current character's attributes whatever is selected. Blender's absolute Keying Set is that
@@ -27,7 +27,7 @@ from .naming import next_number
 
 PARENT = "allset_character_parent"
 PICKED = "allset_character_nodes"
-EXCLUDED_KINDS = ("SCALE", "VIS")       # Maya factory Create Character Set: All keyable except Scale, Visibility
+EXCLUDED_KINDS = ("SCALE", "VIS")       # default Create Character Set: All keyable except Scale, Visibility
 MAYA_ATTR = {"tx": "translateX", "ty": "translateY", "tz": "translateZ", "rx": "rotateX", "ry": "rotateY",
              "rz": "rotateZ", "sx": "scaleX", "sy": "scaleY", "sz": "scaleZ", "v": "visibility"}
 MSG_NEED_CURRENT = "Must have a current character or select a character."
@@ -155,7 +155,7 @@ def node_paths(node, keys):
 
 
 def create_keys(node, excluded=EXCLUDED_KINDS):
-    """Maya Create Character Set attributes of one node: keyable, not the ``excluded`` kinds (factory: Scale /
+    """Maya Create Character Set attributes of one node: keyable, not the ``excluded`` kinds (default: Scale /
     Visibility; the option window's All keyable except: LOC / ROT / SCALE / VIS / CUSTOM = Dynamic, step 196)."""
     cb = _cb()
     keys = []
@@ -198,7 +198,7 @@ def remove_members(ks, triples):
 
 def new_character(scene, base, nodes, name="", keys_of=None):
     """A new character set ``name`` (empty = ``<base>N``) of ``nodes``; ``keys_of(node)`` -> Channel Box keys
-    (default: the factory attribute rule)."""
+    (default: the standard attribute rule)."""
     taken = {ks.bl_label for ks in scene.keying_sets}
     name = unique_name(taken, name, base) if name else next_name(taken, base)
     ks = scene.keying_sets.new(idname="", name=name)
@@ -276,7 +276,7 @@ class ALLSET_OT_character_create(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     sub: BoolProperty(name="Subcharacter", default=False, options={'SKIP_SAVE'})
-    # Create (Sub)character Set Options (step 196); defaults = Maya factory
+    # Create (Sub)character Set Options (step 196): default values
     character_name: StringProperty(name="Name", default="", options={'SKIP_SAVE'},
                          description="Empty: character1 / subCharacter1, counting up")
     attributes: EnumProperty(name="Include", items=[('ALL', "All keyable", ""),

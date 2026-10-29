@@ -1,4 +1,4 @@
-"""Step 183 (#82): option box click zone (ui/option_click.py). Headless: the row texts the zone is checked on are the
+"""Step 183 (#82): option box click zone (ui/option_click.py). Headless: the row texts the zone is built on are the
 texts the Maya menus draw, the zone model is off where it can't be trusted (no window / not opened from the menu
 bar), the click-point operator exists, and an option-box item still runs its command when nothing says "box".
 The geometry against real menus: tests/gui/gui_step183_option_click.py (UI scale 1.0 and 1.25)."""

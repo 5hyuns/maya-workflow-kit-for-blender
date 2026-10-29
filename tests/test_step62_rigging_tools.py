@@ -1,5 +1,5 @@
 """Step 62: Set Driven Key, pose-mode Constrain, Add / Edit / Delete Attribute, Blend Shape, Quick Rig (Rigify).
-; GUI: tests/gui/gui_step62_sdk.py (rigging_06 hand order)."""
+GUI: tests/gui/gui_step62_sdk.py (rigging_06 hand order)."""
 
 import math
 from importlib import import_module
@@ -73,7 +73,7 @@ def _ry(cube):
 
 
 def test_set_driven_key_rigging_06_order():
-    """Maya: locator tx drives cube ry; Key at 0/0 and 1/90 -> tx 0.5 gives ry 45 (rigging.md)."""
+    """Maya: locator tx drives cube ry; Key at 0/0 and 1/90 -> tx 0.5 gives ry 45."""
     _clear()
     loc, cube = _locator_and_cube()
     bpy.ops.allset.sdk_window()
@@ -134,7 +134,7 @@ def test_driven_value_not_held_when_window_closed():
 
 
 def test_joint_and_custom_attribute_drivers():
-    """Rigging.md 后보 D: control curl (custom) drives joint2 Rotate Z (pose bone)."""
+    """A control's curl (custom) drives joint2 Rotate Z (pose bone)."""
     _clear()
     ctrl = bpy.data.objects.new("nurbsCircle1", None)
     bpy.context.scene.collection.objects.link(ctrl)

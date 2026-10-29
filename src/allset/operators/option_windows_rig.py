@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 140 Maya option windows: rigging, skinning, deformers and constraints (issue #32, Aim / Pole Vector of #35).
 
-Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
-factory defaults are Maya 2022's.
+Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels follow
+Maya's windows.
 option_windows.py appends ``WINDOWS`` to its own list, so this module only imports ``F`` / ``Window`` / helpers from it.
 
 Maya tool boxes (Create Joints, Create IK Handle, Create IK Spline Handle, Paint Skin Weights) open Tool Settings,
 not a window: here they are the same kind of window titled with the tool name, whose
-button starts the tool with the values. Fields Blender can't honour are only listed
+button starts the tool with the values (step 140). Fields Blender can't honour are only listed
 (``missing``), never faked.
 """
 

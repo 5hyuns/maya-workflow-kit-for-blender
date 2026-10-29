@@ -32,8 +32,8 @@ from .. import undo_steps
 GEOMETRY = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 RECORD = "allset_snapshot"             # group Empty ID prop: {"start", "end", "increment", "update"}
 SOURCE = "allset_snapshot_source"      # group Empty ID prop: the source object (ID pointer)
-NO_GEOMETRY = "No geometry found to create snapshot."           # 
-NOTHING_TO_UPDATE = "Select motion trails or snapshots to update."  # 
+NO_GEOMETRY = "No geometry found to create snapshot."           #
+NOTHING_TO_UPDATE = "Select motion trails or snapshots to update."  #
 UPDATE_STYLES = ("demand", "animCurve", "force")                 # Maya -update values (On demand / Fast / Slow)
 FACTORY = {"time_slider": False, "start": 1.0, "end": 10.0, "increment": 1.0, "update": "animCurve"}
 EPS = 1e-6

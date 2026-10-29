@@ -25,10 +25,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Copy the public files only (no design notes)
+      - name: Copy the public files only (no notes)
         run: |
           mkdir -p _site
-          rsync -a --exclude '.impeccable' --exclude 'PRODUCT.md' --exclude 'DESIGN.md' --exclude '*.md' site/ _site/
+          rsync -a --exclude '.*' --exclude '*.md' site/ _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

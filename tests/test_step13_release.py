@@ -34,7 +34,7 @@ def test_package_contents():
     assert "blender_manifest.toml" in names and "LICENSE" in names and "__init__.py" in names
     assert "app_template/Maya_Workflow_Kit/startup.blend" in names
     assert not [n for n in names if "__pycache__" in n or n.endswith((".pyc", ".blend1"))]
-    # No Maya resources or research data in the package (). The only
+    # No Maya resources or research data in the package. The only
     # images are the kit's own, rendered by tools/make_splash.py.
     kit_images = {"app_template/Maya_Workflow_Kit/splash.png", "app_template/Maya_Workflow_Kit/splash_2x.png", "welcome.png"}
     assert kit_images <= set(names), kit_images - set(names)

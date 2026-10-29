@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""step 227 L16: Pose Space Deformation (Pose Interpolator, Pose Editor).
+"""step 227: Pose Space Deformation (Pose Interpolator, Pose Editor).
 
 Maya: Deform > Pose
 Space Deformation > Create Pose Interpolator on a joint makes ``<joint>_poseInterpolator`` (driver = the joint, factory
 Create neutral poses on, Driver twist axis X, interpolation Linear). A pose = the joint's rotation when it was added;
 ``poseInterpolatorAddShapePose`` makes a blendShape target named after the pose whose weight is the interpolator's
-output, in front of the skinCluster. checked (Linear, one pose ``elbowBent`` at rz -90): the pose weight is linear in
+output, in front of the skinCluster. With Linear and one pose at rz -90 the pose weight is linear in
 the **swing** angle between neutral and the pose (rz -5 -> 0.055556, -45 -> 0.5, -90 -> 1.0) and ignores twist about
 the driver twist axis ((10..90, 0, -45) -> 0.5, (30, 0, 0) -> 0).
 
-Kit (ATTACH_PLAN L16 (b), delegated): shape keys + **simple-expression drivers** (no Python auto-run needed):
+Kit: shape keys + **simple-expression drivers** (no Python auto-run needed):
 - interpolator node = an Empty ``<joint>_poseInterpolator`` (display size 0: nothing in the viewport, listed in the
   Outliner like Maya's node) holding ID props (``P_*``); its custom property ``<pose>`` = the pose's output weight
   (Maya ``output[i]``), driven;
@@ -20,12 +20,12 @@ Kit (ATTACH_PLAN L16 (b), delegated): shape keys + **simple-expression drivers**
   weight = max(0, 1 - phi / theta0) with r = head -> tip length and theta0 = the neutral -> pose angle (inline
   constants). Twist about the twist axis doesn't move the tip, so it is ignored like Maya; inside the neutral -> pose
   arc the weight equals Maya's swing ratio exactly. Outside it (past the pose, the other side of neutral, swing in
-  another plane) and with several poses Maya's RBF differs  (tests/test_step227_pose.py prints the deviations);
+  another plane) and with several poses Maya's RBF differs (tests/test_step227_pose.py prints the deviations);
 - Add Shape = a shape key named after the pose on the skinned mesh, value driver ``w`` = the interpolator's
   ``["<pose>"]`` (Maya connects the output straight to the target weight). Blender shape keys evaluate before every
   modifier, so the corrective sits in front of the Armature modifier like Maya's frontOfChain blendShape.
 Maya also outputs neutral / neutralSwing / neutralTwist weights: the kit keeps the neutral pose (Go to Pose) but no
-weights for it (delegated).
+weights for it.
 """
 
 import math
@@ -415,7 +415,7 @@ class ALLSET_OT_pose_interpolator_create(bpy.types.Operator):
         layout = self.layout
         layout.use_property_split = True
         row = layout.row()
-        row.enabled = False      # the kit always keeps the neutral pose: its weights are checked from it
+        row.enabled = False      # the kit always keeps the neutral pose: its weights are taken from it
         row.prop(self, "neutral")
         layout.row().prop(self, "twist_axis", expand=True)
 

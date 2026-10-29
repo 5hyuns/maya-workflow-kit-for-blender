@@ -1,6 +1,5 @@
 """Step 16: Maya z / Shift+Z / Ctrl+Y undo-redo, h / Ctrl+H / Alt+H / Shift+H /
-Ctrl+Shift+H visibility, Ctrl+1 isolate, Ctrl+Shift+I invert.
-"""
+Ctrl+Shift+H visibility, Ctrl+1 isolate, Ctrl+Shift+I invert."""
 
 from importlib import import_module
 

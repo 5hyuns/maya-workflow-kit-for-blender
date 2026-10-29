@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A ``maya.cmds`` look-alike for the command line.
+"""A ``maya.cmds`` look-alike for the command line (steps 7, 208).
 
 Re-implemented from Maya's documented command behaviour (flag long/short
 names, return values and Maya's results) — no Maya code. Numbers are in the
-scene's display units like Maya's current linear unit (cm by default, ) and angles in degrees (radians if
+scene's display units like Maya's current linear unit (cm by default) and angles in degrees (radians if
 the scene's rotation unit is radians). Attribute names match the Channel Box (``ui/channel_box.py`` MAIN). Channel
-numbers are Blender's axes as they are (the Channel Box's convention); Maya's Y-up is not converted ().
+numbers are Blender's axes as they are (the Channel Box's convention); Maya's Y-up is not converted.
 
 Supported: ls, select, move, rotate, scale, setAttr, getAttr, addAttr, xform, polyCube, polySphere, polyCylinder,
 polyPlane, delete, rename, objExists, listRelatives, parent, group, duplicate, spaceLocator (``cmds_dag.py``),
@@ -44,7 +44,7 @@ def __getattr__(name):
 # --- units, flags, objects ----------------------------------------------------------
 
 def linear_factor(scene=None):
-    """Blender units per Maya linear unit (= one scene display unit, )."""
+    """Blender units per Maya linear unit (= one scene display unit)."""
     return _units.maya_unit(scene)
 
 
@@ -411,7 +411,7 @@ def maya_world(ob):
 
 def set_maya_world(ob, m):
     """Give ``ob`` the Maya world matrix ``m`` (BU). A local matrix with shear (rotated child of a non-uniformly
-    scaled parent) keeps the residual in the parent inverse like ``parenting.set_parent_maya`` ()."""
+    scaled parent) keeps the residual in the parent inverse like ``parenting.set_parent_maya``."""
     dl = Vector(ob.delta_location)
     if ob.parent is not None and ob.parent_type == 'OBJECT':
         local = ob.parent.matrix_world.inverted_safe() @ m
@@ -426,7 +426,7 @@ def set_maya_world(ob, m):
 
 
 def _flat_matrix(m):
-    """Maya's 16 numbers: row-major with the translation in the last row (= Blender's columns), lengths in Maya
+    """The 16 numbers of a Maya matrix: row-major with the translation in the last row (= Blender's columns), lengths in Maya
     units."""
     k = linear_factor()
     return [m[i][j] / k if (i < 3 and j == 3) else m[i][j] for j in range(4) for i in range(4)]

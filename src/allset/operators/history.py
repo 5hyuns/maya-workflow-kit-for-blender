@@ -5,7 +5,6 @@ Maya history = upstream DG nodes; the closest
 Blender equivalent is the modifier stack plus shape keys (blendShape). Delete
 History (``cmds.delete(constructionHistory=True)``, Alt+Shift+D) bakes them; Non-Deformer History
 (``BakeNonDefHistory``) bakes the modelling operations and keeps the deformers.
- 「계획」 8.
 """
 
 import bpy
@@ -69,7 +68,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
     """Bake history on mesh ``objects``. Returns (baked, notes).
 
     ``non_deformer``: Maya Delete Non-Deformer History keeps the deformers. Its option window (step 162):
-    "All non-deformer history" (factory, ``bakePartialHistory
+    "All non-deformer history" (default, ``bakePartialHistory
     -prePostDeformers``) also removes the non-deformer nodes *after* a deformer — polyCube / extrude / bend / bevel
     keeps only bend — so every non-deformer modifier is baked into the mesh under the deformers;
     ``before_only`` = "History before deformers only" (``-preDeformers``) bakes only the modifiers above the first
@@ -77,7 +76,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
     from . import extrude, prim_history
     baked, notes = 0, []
     for ob in objects:
-        # Step 239 (#124, first-hour audit F-5): the kit's polyExtrudeFace / polyBevel record is a non-deformer
+        # Step 239 (#124): the kit's polyExtrudeFace / polyBevel record is a non-deformer
         # history node too — Maya's Delete History (both kinds) removes it from the Channel Box INPUTS
         rec = extrude.park(ob.name)              # kept for Ctrl+Z (step 283)
         if rec is not None:

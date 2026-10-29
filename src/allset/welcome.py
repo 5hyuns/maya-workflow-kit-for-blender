@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The opt-in: nothing changes until the user asks for Maya.
+"""The opt-in: nothing changes until the user asks for Maya (step 115).
 
 Part of CORE (registered whenever the extension is enabled, also in Blender mode). Enabling the extension only adds
 the Maya | Blender switch, an Edit menu item, Ctrl+Alt+Shift+M and, once in a GUI session, this welcome dialog. Its
@@ -40,7 +40,7 @@ def _window():
 
 def opt_in(open_layout=True):
     """Everything "Make Blender feel like Maya" does. Runs from a timer (switching registers the Maya mode
-    modules, which an operator of theirs must not do while it runs; )."""
+    modules, which an operator of theirs must not do while it runs; step 42)."""
     from . import switch
     switch.set_mode(True, layout=False)
     if not switch._registered[0]:     # Maya mode could not start (reported, rolled back): nothing more to do
@@ -52,7 +52,7 @@ def opt_in(open_layout=True):
         first_start.show_layout(_window())
 
 
-# Body text, wrapped to the checked room left of the icon: fixed lines were cut ("the Maya colou...") at 125 %
+# Body text, wrapped to the room left of the icon: fixed lines were cut ("the Maya colou...") at 125 %
 # UI scale (step 124).
 PARAGRAPHS = (
     "The whole Maya workflow in Blender, in one install.",
@@ -108,7 +108,7 @@ class ALLSET_OT_welcome(bpy.types.Operator):
 
     def invoke(self, context, event):
         # Step 260 (#177): a dialog closed without the confirm button (Cancel, Esc and moving away all reach Blender's
-        # popup cancel alike) opens once more at the next start; after WELCOME_SHOWS it stays closed (delegated: a
+        # popup cancel alike) opens once more at the next start; after WELCOME_SHOWS it stays closed (a
         # dismissed dialog left users in Blender mode without knowing, "Alt navigation doesn't work").
         prefs = preferences.get(context)
         prefs.welcome_shown += 1
@@ -119,7 +119,7 @@ class ALLSET_OT_welcome(bpy.types.Operator):
 
     def draw(self, context):
         icon = _splash_icon()
-        if icon:    # a plain row halves the dialog (checked): give the icon only its own width
+        if icon:    # a plain row halves the dialog: give the icon only its own width
             row = self.layout.split(factor=ICON_FACTOR)
             row.template_icon(icon_value=icon, scale=ICON_SCALE)
         else:
@@ -149,9 +149,9 @@ class ALLSET_OT_welcome(bpy.types.Operator):
 # Where the dialog may open (#170, step 254). Blender opens a props dialog at the window's last pointer position, clamped
 # into the window. Installing from Edit > Preferences leaves the main window's pointer on the menu bar, so the dialog
 # opened over File / Edit / ... and swallowed every click there, often hidden behind the Preferences window: "the top
-# menus don't respond" (GUI 4.5.4 / 5.2.2, tmp/p254/lane170). So the kit waits until the pointer moves inside the main
+# menus don't respond" (GUI 4.5.4 / 5.2.2). So the kit waits until the pointer moves inside the main
 # window far enough below its top for the whole dialog, and opens it there.
-DIALOG_ROOM_PX = 420      # unscaled px kept above the pointer (the dialog is ~378 px tall at UI scale 1.25 = ~300 unscaled, checked)
+DIALOG_ROOM_PX = 420      # unscaled px kept above the pointer (the dialog is ~378 px tall at UI scale 1.25 = ~300 unscaled)
 
 
 def spot_ok(window, x, y, ui_scale):

@@ -1,9 +1,8 @@
-"""Step 88:  items of steps 59-79 that event simulation can prove, run in one Maya Workflow Kit session.
+"""Step 88: the hand-check items of steps 59-79 that event simulation can prove, run in one Maya Workflow Kit session.
 
-Each check name starts with the item's id ``[M<step>-<n>]`` (n = its place in that step's list); an item is ticked in
-manual_checks.md only when all of its checks pass. Keys, clicks and drags are simulated events; a few Enter-in-a-field
-actions set the field's property (its setter is the Enter path; gui_step75 proves the typing itself).
-"""
+Each check name starts with the item's id ``[M<step>-<n>]`` (n = its place in that step's list); an item counts as
+done only when all of its checks pass. Keys, clicks and drags are simulated events; a few Enter-in-a-field
+actions set the field's property (its setter is the Enter path; gui_step75 proves the typing itself)."""
 
 import os
 import sys
@@ -713,7 +712,7 @@ def m79_3_outside_s_check():
 # Step 97: the remaining simulatable items of steps 59-79.
 # Menu / shelf / sidebar-button actions run the Maya menu path (allset.menu_item) or the button's operator: the
 # click -> operator link is what the menu / shelf / sidebar GUI tests prove (gui_step34, 51, 62, ...); keys, clicks
-# in the views and drags are simulated events (delegated,  「계획」).
+# in the views and drags are simulated events.
 # =============================================================================================================
 
 import math  # noqa: E402
@@ -2820,7 +2819,7 @@ def _m63_3_off_check():
     object_mode()
 
 
-# --- [M63-4] b tap soft select = Maya radius 5; b + drag header in Maya units = MTK Falloff radius; Volume / Surface;
+# --- [M63-4] b tap soft select = radius 5; b + drag header in Maya units = MTK Falloff radius; Volume / Surface;
 #     Reset ------------------------------------------------------------------------------------------------------
 
 @named("m63_4_setup")
@@ -2840,7 +2839,7 @@ def _m63_4_tap_wait():
 @named("m63_4_tap")
 def _m63_4_tap():
     r = ts().proportional_size / k()
-    check(f"[M63-4] b tap turns soft select on with Maya's radius 5 (= 5 cm here: {r:.3f})",
+    check(f"[M63-4] b tap turns soft select on with radius 5 (= 5 cm here: {r:.3f})",
           ts().use_proportional_edit and abs(r - 5) < 1e-6)
     check(f"[M63-4] the MTK Falloff radius shows the same number ({bpy.context.scene.allset_soft_radius:.3f})",
           abs(bpy.context.scene.allset_soft_radius - 5) < 1e-6)
@@ -4337,7 +4336,7 @@ def _m67_3_rows():
         ae.draw_row(rec, bpy.context, OB(), mat, ("socket", "Base Color", "Color"))
     labels = [t for kind, t, _x in rec.out if kind == "label"]
     tid = [x for kind, _t, x in rec.out if kind == "template_ID"]
-    check(f"[M67-3] the connected row reads 「connected (…)」, File gets the image New / Open ({labels}, {tid})",
+    check(f"[M67-3] the connected row reads 'connected (…)', File gets the image New / Open ({labels}, {tid})",
           any("connected (" in t for t in labels) and tid == [("image.new", "image.open")])
 
     class _P:
@@ -4379,7 +4378,7 @@ def _m67_4_menu():
         layout = rec
     with override():
         cls.draw(_M(), bpy.context)
-    # step 103: option-box items end with Maya's box mark; step 108: right-aligned after a filler (+ Maya hotkey)
+    # step 103: option-box items end with the box mark; step 108: right-aligned after a filler (+ Maya hotkey)
     rec.out = [(kind, t.replace(ms.HAIR, "").replace(ms.BOX_MARK.strip(), "").strip() if isinstance(t, str) else t, x)
                for kind, t, x in rec.out]
     texts = [t for kind, t, _x in rec.out if kind in ("op", "menu")]
@@ -4392,7 +4391,7 @@ def _m67_4_menu():
     batch = next(x for kind, t, x in rec.out if t == "Batch Render" and kind == "op")
     tip = mod("ui.notices").tooltip("Render/Batch Render", False)
     # step 152: Batch Render runs (a background Blender), its tooltip says so
-    check(f"[M67-4] Render Using = engine list ({using}), Batch Render runs ({batch[0]}) with "
+    check(f"[M67-4] Render Using = engine list ({using}), Batch Render runs ({batch[0]}) with 'blender -b' "
           f"in its tooltip", using == "ALLSET_MT_render_using" and batch[0] == "allset.menu_item"
           and "blender -b" in tip)
     menu("Render/Render Current Frame")
@@ -4414,7 +4413,7 @@ def _m67_4_rendered():
     with bpy.context.temp_override(window=w, area=a, space_data=a.spaces.active):
         rv.draw_header(rec, bpy.context)
     got = [(x[0] if kind == "op" else t) for kind, t, x in rec.out]
-    check(f"[M67-4] its header starts Render · Keep Image · Remove Image · ({got})",
+    check(f"[M67-4] its header starts Render · Keep Image · Remove Image · 'Slot N · k kept' ({got})",
           got[:3] == ["allset.render_current_frame", "allset.render_keep_image", "allset.render_remove_image"]
           and got[3].startswith("Slot 1") and got[3].endswith("0 kept"))
     C["rv"] = (w, a)
@@ -4540,7 +4539,7 @@ def _m68_2_emit():
     for label, want in (("Emitter", "allset.fx_emitter"), ("Add Emitter", "allset.fx_emit_from_object")):
         _i, act = shelf_action("FX", label)
         got = act[0] if isinstance(act, tuple) else act
-        check(f"[M68-2] shelf FX = {want} ({got})", got == want)
+        check(f"[M68-2] shelf FX '{label}' = {want} ({got})", got == want)
     select_only(a)
     run_shelf("FX", "Add Emitter")
     check(f"[M68-2] the shelf's Add Emitter adds an emitter to the selected mesh ({len(a.particle_systems)} systems)",
@@ -5294,7 +5293,7 @@ def _m79_2_select_check():
     object_mode()
 
 
-# --- [M60-2] Ctrl+Alt+Shift+M switches from any editor; Blender mode Edit menu (F3 search), -----
+# --- [M60-2] Ctrl+Alt+Shift+M switches from any editor; Blender mode Edit menu (F3 search) "Switch to Maya Mode", -----
 #             Maya mode Windows > Switch to Blender
 # --- [M60-3] the open file (objects, animation, path) stays; back in Blender the user's workspace returns and the Maya
 #             one is gone, also from the saved file

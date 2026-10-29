@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya-shaped Move / Rotate / Scale manipulators.
+"""Maya-shaped Move / Rotate / Scale manipulators (step 59).
 
 Blender's transform gizmo (``VIEW3D_GGT_xform_gizmo``) is C and its shape can't be
 changed: thick axes, small cones, a white centre
@@ -12,7 +12,7 @@ circle. Maya's:
   writes a theme). The Move / Scale handles here use Maya's own axis colours (``MAYA_AXIS``, step 142).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
 - Pivot edit mode (D / Insert): Move plus small rings to orient the pivot (M7).
-- Constant screen size, 108 px for the Move Y arrow at manipGlobalScale 1.5 (M3, M4).
+- Constant screen size: 108 px for the Move Y arrow (M3, M4).
 
 ``ALLSET_GGT_xform`` draws that and runs Blender's own transform operators from each
 handle (``target_set_operator``), so snapping, constraints, numeric input, Smart
@@ -33,8 +33,8 @@ GROUP = "ALLSET_GGT_xform"
 GIZMO = "ALLSET_GT_maya_handle"
 MODES = ('OBJECT', 'EDIT_MESH')
 # Rotate keeps Blender's C gizmo: its axis rings (front half), camera ring and trackball already
-# have Maya's layout (M5) and take the theme's axis colours; a Python dial can't clip the back half
-# the same way (checked, ). Delegated.
+# have Maya's layout and take the theme's axis colours; a Python dial can't clip the back half
+# the same way.
 TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE'}
 # Orientation slot per tool kind (Blender: 0 default, 1 move, 2 rotate, 3 scale).
 SLOT = {'TRANSLATE': 1, 'ROTATE': 2, 'RESIZE': 3}
@@ -253,7 +253,7 @@ def pivot_frame(context, kind):
 
 
 def _edit_normal_axes(context):
-    """Approximation of Blender's NORMAL orientation of the selection."""
+    """Approximation of Blender's NORMAL orientation of the selection (step 59)."""
     ob = context.edit_object
     if ob is None or ob.type != 'MESH':
         return None
@@ -360,15 +360,11 @@ def _has_selection(context):
     return False
 
 
-# Step 142 (#76): kit-fixed Maya axis colours instead of the user's theme gizmo axes (Blender's #ff3653 / #8adb00 /
-# #3b64a5, ΔE00 15 / 8 / 21 from Maya). Maya's manipulator as
-# drawn: X #e60000, Y #00e600 (displayRGBColor manipX / manipY), Z #0000ff
-# (the Z line as Maya draws it; the displayRGBColor
-# "Zaxis" #4a92ff is the grid / view axis light blue). The active and the hovered handle stay Maya's yellow
-# (displayColor manipCurrent #ffff00; hover = #ffff00). Gizmo colours
-# are sRGB like the theme values they replace (the gizmo shaders convert). Rotate keeps Blender's C gizmo, whose rings
-# read the theme's axis colours: Python can't recolour it without writing the theme (), so it keeps the
-# user's theme colours (recorded, ).
+# Step 142 (#76): kit-fixed Maya-style axis colours instead of the user's theme gizmo axes (Blender's #ff3653 /
+# #8adb00 / #3b64a5): X #e60000, Y #00e600, Z #0000ff. The active and the hovered handle stay yellow #ffff00. Gizmo
+# colours are sRGB like the theme values they replace (the gizmo shaders convert). Rotate keeps Blender's C gizmo, whose
+# rings read the theme's axis colours: Python can't recolour it without writing the theme, so it keeps the user's theme
+# colours.
 MAYA_AXIS = {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
 
 
@@ -476,7 +472,7 @@ def scale_basis(context):
     return ARROW_PX / 75.0 * context.preferences.view.gizmo_size * SIZE[0] / BASE_PX_PER_UNIT
 
 
-# Pixels one gizmo unit spans with use_draw_scale and scale_basis 1 at gizmo_size 75 (checked, step 59).
+# Pixels one gizmo unit spans with use_draw_scale and scale_basis 1 at gizmo_size 75 (step 59).
 BASE_PX_PER_UNIT = 75.0
 
 
@@ -486,7 +482,7 @@ class ALLSET_GGT_xform(GizmoGroup):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
     # TOOL_FALLBACK_KEYMAP like Blender's transform gizmo: without it the tool loses its select
-    # fallback (a marquee in empty space does nothing, checked).
+    # fallback (a marquee in empty space does nothing).
     bl_options = {'3D', 'PERSISTENT', 'TOOL_FALLBACK_KEYMAP'}
 
     @classmethod
@@ -699,7 +695,7 @@ def draw_tool_settings(self, context):
     mode = snap_align.step_snap_mode(ts, kind)
     for m in ('OFF', 'RELATIVE', 'ABSOLUTE'):
         cell = row.row(align=True)
-        # step 263: Move offers Absolute only with World axes (Maya, 060_messages_ui.md B5)
+        # step 263: Move offers Absolute only with World axes (Maya)
         cell.enabled = m != 'ABSOLUTE' or snap_align.absolute_offered(scene, kind)
         op = cell.operator("allset.step_snap", text=m.title(), depress=mode == m)
         op.kind, op.mode = kind, m

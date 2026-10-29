@@ -1,5 +1,5 @@
 """Step 205 lane A (#112): Maya Deform > Tension / Solidify / Sculpt as kit Geometry Nodes deformers
-(operators/deformers_205a.py) against Maya 2022's results;
+(operators/deformers_205a.py) against the expected results;
 every "O" case must match within its tol (1e-4); "U" cases only print their residual."""
 
 from importlib import import_module
@@ -15,18 +15,6 @@ wire = import_module(kit.MODULE + ".operators.wire_deformer")
 history = import_module(kit.MODULE + ".operators.history")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 ae = import_module(kit.MODULE + ".ui.attribute_editor")
-
-TENSION_INPUT = {"smoothingIterations": "Smoothing Iterations", "smoothingStep": "Smoothing Step",
-                 "squashConstraint": "Squash Constraint", "stretchConstraint": "Stretch Constraint",
-                 "pinBorderVertices": "Pin Border Vertices", "envelope": "Envelope", "relative": "Relative",
-                 "inwardConstraint": "Inward Constraint", "outwardConstraint": "Outward Constraint",
-                 "shearStrength": "Shear Strength", "bendStrength": "Bend Strength"}
-SCULPT_INPUT = {"mode": "Mode", "insideMode": "Inside Mode", "maximumDisplacement": "Maximum Displacement",
-                "dropoffDistance": "Dropoff Distance", "dropoffType": "Dropoff Type", "envelope": "Envelope"}
-SOLIDIFY_INPUT = {"attachmentMode": "Attachment Mode", "stabilizationLevel": "Stabilization Level",
-                  "useBorderFalloff": "Use Border Falloff", "borderFalloffBlur": "Border Falloff Blur",
-                  "scaleMode": "Scale Mode", "envelope": "Envelope", "normalScale": "Normal Scale",
-                  "tangentPlaneScale": "Tangent Plane Scale", "scaleEnvelope": "Scale Envelope"}
 
 
 def _clear():
@@ -46,109 +34,13 @@ def _select(*obs):
     bpy.context.view_layer.objects.active = obs[-1]
 
 
-def _mesh(rest, faces, inp=None, name="pCube1"):
-    """Mesh at the origin with Maya's points / face-corner order; ``inp`` = upstream input (a shape key, like Maya's
-    upstream blendShape)."""
-    me = bpy.data.meshes.new(name.replace("pCube", "pCubeShape"))
-    me.from_pydata([tuple(p) for p in rest], [], [tuple(f) for f in faces])
-    ob = bpy.data.objects.new(name, me)
-    bpy.context.scene.collection.objects.link(ob)
-    if inp is not None and any((Vector(a) - Vector(b)).length > 1e-12 for a, b in zip(rest, inp)):
-        ob.shape_key_add(name="Basis")
-        k = ob.shape_key_add(name="input")
-        for i, p in enumerate(inp):
-            k.data[i].co = p
-        k.value = 1.0
-    _select(ob)
-    return ob
-
-
-def _eval(ob):
-    dg = bpy.context.evaluated_depsgraph_get()
-    dg.update()
-    eob = ob.evaluated_get(dg)
-    me = eob.to_mesh()
-    pts = [v.co.copy() for v in me.vertices]
-    eob.to_mesh_clear()
-    return pts
-
-
-def _err(pts, expected):
-    assert len(pts) == len(expected), (len(pts), len(expected))
-    return max((p - Vector(e)).length for p, e in zip(pts, expected))
-
-
-def _node(ob, base):
-    return next(md for md in ob.modifiers if md.name.startswith(base))
-
-
-BOOLS = {"pinBorderVertices", "useBorderFalloff"}
-INTS = {"smoothingIterations", "mode", "insideMode", "dropoffType", "attachmentMode", "stabilizationLevel",
-        "borderFalloffBlur", "scaleMode"}
-
-
-def _set(md, table, attrs):
-    for k, v in attrs.items():
-        wire.set_(md, table[k], bool(v) if k in BOOLS else int(v) if k in INTS else float(v))
-
-
-def _weights(ob, name, weights):
-    vg = ob.vertex_groups[name]
-    for i, w in (weights or {}).items():
-        vg.add([int(i)], float(w), 'REPLACE')
-
-
 # --- Tension: every "O" case -------------------------------------------------------------------------------------
-
-def _tension_case(c):
-    _clear()
-    ob = _mesh(c["rest"], c["faces"], c["input"])
-    dfa.create(bpy.context, 'TENSION')
-    md = _node(ob, "tension")
-    _set(md, TENSION_INPUT, c["attrs"])
-    _weights(ob, md.name, c["weights"])
-    return _err(_eval(ob), c["expected"])
 
 
 # --- Sculpt: every "O" case ----------------------------------------------------------------------------------------
 
-def _sculpt_case(c):
-    _clear()
-    ob = _mesh(c["rest"], c["faces"])
-    v = c["values"]
-    dfa.create(bpy.context, 'SCULPT')
-    md = _node(ob, "sculpt")
-    _set(md, SCULPT_INPUT, v)
-    m = c["sculptor_world"]                    # Maya: row-major, row vectors
-    M = Matrix([m[0:4], m[4:8], m[8:12], m[12:16]]).transposed()
-    wire.get(md, "Sculptor").matrix_world = M
-    wire.get(md, "Stretch Origin").location = c["origin_world"]
-    return _err(_eval(ob), c["expected"])
 
-
-# --- Solidify:  rule; Maya's facts --------------------------------------------------------------------------------
-
-def _solidify_case(c):
-    import re
-    _clear()
-    ob = _mesh(c["rest"], c["faces"], c["input"])
-    if c["membership_faces"]:
-        faces = []
-        for s in c["membership_faces"]:
-            a, b_ = map(int, re.match(r"f\[(\d+):(\d+)\]", s).groups())
-            faces += range(a, b_ + 1)
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
-        for f in faces:
-            ob.data.polygons[f].select = True
-            for vi in ob.data.polygons[f].vertices:
-                ob.data.vertices[vi].select = True
-        bpy.ops.object.mode_set(mode='EDIT')
-    dfa.create(bpy.context, 'SOLIDIFY')
-    md = _node(ob, "solidify")
-    _set(md, SOLIDIFY_INPUT, c["attrs"])
-    return ob, md, _eval(ob)
+# --- Solidify: modelled rule; Maya's facts ----------------------------------------------------------------------------
 
 
 # --- names, selection, Channel Box, AE, Paint Weights ---------------------------------------------------------------

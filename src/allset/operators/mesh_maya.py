@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Mesh menu commands with Maya's meaning.
+"""Mesh menu commands with Maya's meaning (step 63).
 
-Maya 2022 (factory prefs, step 63):
+Maya:
 - Mesh > Combine = ``cmds.polyUnite(centerPivot=True, name=first)``: a new ``pCube2`` (pCube1 / pSphere1 stay behind as
   empty transforms, so the name skips 1), vertices where they were, pivot at the bounding-box centre, translate 0.
 - Mesh > Separate = ``cmds.polySeparate``: ``polySurface1`` / ``polySurface2`` under the original transform (now a
@@ -19,7 +19,7 @@ from mathutils import Matrix, Vector
 from .. import results
 from . import freeze, naming, parenting, units
 
-# Maya Y-up axis -> Blender (axis index, sign): X -> X, Y -> Z, Z -> -Y
+# Maya Y-up axis -> Blender (axis index, sign): X -> X, Y -> Z, Z -> -Y (step 57)
 MAYA_AXES = {'X': (0, 1.0), 'Y': (2, 1.0), 'Z': (1, -1.0)}
 
 

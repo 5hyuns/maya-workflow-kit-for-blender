@@ -1,7 +1,7 @@
-; Maya Workflow Kit Windows installer — DRAFT (step 61,  section (d)).
+; Maya Workflow Kit Windows installer — DRAFT (step 61).
 ; Not built, not signed, not published: compiling needs Inno Setup 6 (https://jrsoftware.org/isinfo.php),
-; and a public .exe needs an Authenticode signature (SmartScreen) — both are the user's decision
-; (). The work is done by allset_setup.ps1 (tested by tools/installer_check.py);
+; and a public .exe needs an Authenticode signature (SmartScreen) — neither is done yet.
+; The work is done by allset_setup.ps1 (tested by tools/installer_check.py);
 ; this script only shows pages and calls it.
 ;
 ; Build (after `python tools/build.py`):
@@ -25,7 +25,7 @@ AppId={{CFBBD6AA-65FB-4121-9094-10EF64C2A40D}
 AppName=Maya Workflow Kit
 AppVersion={#AppVersion}
 AppPublisher=ohnsk
-; Autodesk trademark footnote ( section (f)); the product name is still to be decided.
+; Autodesk trademark footnote.
 AppCopyright=GPL-3.0-or-later. Autodesk and Maya are trademarks of the Autodesk group of companies; this project is not affiliated with Autodesk.
 DefaultDirName={localappdata}\Maya Workflow Kit
 DisableDirPage=yes

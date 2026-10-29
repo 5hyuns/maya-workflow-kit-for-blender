@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Select > All by Type / Edit > Delete All by Type for the nodes the kit makes (step 166, audit 11 BS4).
+"""Maya Select > All by Type / Edit > Delete All by Type for the nodes the kit makes (step 166).
 
 Maya selects the transforms of the type (``SelectAllIKHandles`` = every ikHandle, ``SelectAllClusters`` = every
 clusterHandle; category "Menu items.Common.Select.All by Type") and deletes the
@@ -51,14 +51,14 @@ def cluster_handles(scene):
     return [ob for ob in scene.objects if ob in handles]
 
 
-# --- step 202 (#109, audit 15 NB9): wires, nCloths, nParticles, nRigids -----------------------------------------
+# --- step 202 (#109): wires, nCloths, nParticles, nRigids -----------------------------------------
 # Maya (SelectAllWires / SelectAllNCloths / SelectAllNParticles /
 # SelectAllNRigids, DeleteAllWires / DeleteAllNCloths / DeleteAllNParticles /
 # DeleteAllNRigids): select the wire nodes / the nCloth, nParticle, nRigid transforms; delete the wire nodes,
 # Remove nCloth / nRigid (nCloth > Remove nCloth: the meshes stay) and the nParticle shapes. The kit's nodes:
 # - wire = a kit wire Geometry Nodes modifier (operators/wire_deformer.py); it has no object, so Select picks the
-#   wire curves that drive one (delegated: the curve is what a Maya user grabs to work the wire), Delete removes the
-#   modifiers with their base wires and weights (wire_deformer.remove: the curve stays, checked in step 169);
+#   wire curves that drive one (the curve is what a Maya user grabs to work the wire), Delete removes the
+#   modifiers with their base wires and weights (wire_deformer.remove: the curve stays, step 169);
 # - nCloth = a Cloth modifier, nRigid = a Collision modifier (operators/fx.py ALLSET_OT_fx_ncloth / fx_passive; the
 #   same rule as Modify > Evaluate Nodes, operators/modify_maya.py _set_cloth / _set_nrigid): the meshes carrying one;
 # - nParticle = a particle system whose settings are named ``nParticleN`` (fx._particle_name; modify_maya

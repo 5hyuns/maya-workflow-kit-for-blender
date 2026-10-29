@@ -5,7 +5,7 @@ the visible part of a 3D view with Maya's fit factor.
 Maya: F frames the selection (no children), Ctrl+Shift+F
 with children, A everything; fit factor 0.95. Blender's view_selected fits a
 sphere into the region width only, so a cube overfills a wide 35 mm view and part of it
-sits under the sidebar. 
+sits under the sidebar (step 17).
 
 Pure ``mathutils`` (no bpy): the view matrix is rebuilt from location / rotation / distance
 (``RegionView3D.update`` does not exist in 4.5, so ``perspective_matrix`` would be stale);
@@ -16,7 +16,7 @@ orthographic: its extent scales with the distance).
 from mathutils import Matrix, Vector
 
 FIT = 0.95       # Maya fit factor
-MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units [delegated]
+MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units
 
 
 def view_matrix(loc, rot, dist):
@@ -83,7 +83,7 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
 
     def centred(d):
         """Pan at distance ``d`` until the projected box is centred in the visible rect (sidebar excluded):
-        (view location, box bounds or None). Newton steps on the checked response (the box's near and far
+        (view location, box bounds or None). Newton steps on the observed response (the box's near and far
         corners move by different amounts in perspective, so one unit at the centre's depth over- or
         undershoots), halved while the error grows."""
         loc = centre.copy()

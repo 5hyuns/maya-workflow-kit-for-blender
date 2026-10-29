@@ -1,6 +1,5 @@
-"""Step 134 lane SEL: Maya selection colours without a theme — the object wire uses kit-fixed Maya colours
-(lead #43ffa3, other selected #ffffff) and mesh edit mode gets Maya's component colours (ui/component_colors.py).
-"""
+"""Step 134 lane SEL: Maya selection colours without a theme — the object wire uses kit-fixed colours
+(lead #43ffa3, other selected #ffffff) and mesh edit mode gets Maya-style component colours (ui/component_colors.py)."""
 
 from importlib import import_module
 

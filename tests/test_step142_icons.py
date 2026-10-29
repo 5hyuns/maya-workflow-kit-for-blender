@@ -1,8 +1,8 @@
 """Step 142 (#54): kit-drawn icons for the Maya menu items that have no shelf button (ui/menu_drawings*.py, linked by
-tools/gen_menu_icons.py into ui/menu_icon_data.py). Plan / numbers: 
+tools/gen_menu_icons.py into ui/menu_icon_data.py).
 
 Checks: every drawing is linked and every linked drawing exists; the priority menus (Deform, Mesh Display, Effects,
-Fields, Edit Mesh, Mesh Tools, Mesh) have an icon on every item Maya 2022 shows with one; drawings render at every
+Fields, Edit Mesh, Mesh Tools, Mesh) have an icon on every item Maya shows with one; drawings render at every
 menu / shelf size; two different pictures in one menu look different (the step 131 shelf rule); the 2x picture is
 the 1x drawing; the totals don't fall back.
 """
@@ -20,8 +20,8 @@ mi = import_module(kit.MODULE + ".ui.menu_icons")
 md = import_module(kit.MODULE + ".ui.menu_drawings")
 ms = import_module(kit.MODULE + ".ui.menu_sets")
 
-# Maya 2022 menu items that show an icon in Maya and had none in the kit after step 131 (step 131 lane MENU "Left"),
-# in the menus #54 asks for first. Labels only (no Maya icons in the repository, ).
+# Maya menu items that Maya shows with an icon and had none in the kit after step 131 (step 131 lane MENU "Left"),
+# in the menus #54 asks for first. Labels only (no Maya icons in the repository).
 PRIORITY = """
 Deform/Display Intermediate Objects|Deform/Edit Membership Tool|Deform/Hide Intermediate Objects|Deform/Jiggle/Jiggle Deformer
 Deform/Jiggle/Jiggle Disk Cache|Deform/Jiggle/Jiggle Disk Cache Attributes|Deform/Mirror Deformer Weights|Deform/Nonlinear/Bend
@@ -70,8 +70,8 @@ Mesh/Triangulate
 """
 PRIORITY_PATHS = [p for line in PRIORITY.strip().splitlines() for p in line.split("|")]
 
-STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: items Maya 2026 renamed, step 219)
-MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (Maya 2022 + step 219 renames)
+STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: items renamed in step 219)
+MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (incl. step 219 renames)
 MIN_ICONS = 675             # this step: 675 of 679 (the 4 left have no exported Maya picture to follow)
 
 # Same uniqueness rule as tests/test_step131_icons.py (shelf / Status Line): enough pixels differ clearly.

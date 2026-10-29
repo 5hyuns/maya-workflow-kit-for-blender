@@ -1,5 +1,5 @@
 """Step 98: kit bug the audit-7 session found — the Channel Box depsgraph handler raised AttributeError when the context
-(a File Browser / Preferences window) has no ``active_object`` member. """
+(a File Browser / Preferences window) has no ``active_object`` member."""
 
 from importlib import import_module
 

@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya lengths in Blender units, and the optional "Maya Units": 1 BU = 1 cm
-(, #8).
+"""Maya lengths in Blender units, and the optional "Maya Units": 1 BU = 1 cm.
 
-Rule (,  「계획」): a Maya length of 1 is one scene
+Rule (step 21): a Maya length of 1 is one scene
 display length unit, like Maya's current linear unit.
 ``maya_unit()`` gives it in BU; every creation path scales by it, so a Create cube,
 ``cmds.polyCube()`` and a cube imported from a Maya FBX are the same size.
 
-Default (): metres kept, lengths shown in cm (the app template sets
+Default: metres kept, lengths shown in cm (the app template sets
 that, tools/make_startup.py). With the add-on preference on, the scenes of the
 current file get ``scale_length = 0.01`` + cm and the 3D views Maya's camera
 clip 0.1 / 10000 cm. Side effects (physics,
@@ -16,7 +15,7 @@ light falloff and importers assume 1 BU = 1 m).
 The values before are kept per scene in the custom property
 ``allset_units_backup`` and come back when the option is turned off. New
 files (no file path: the home file) get the units on load; saved files are
-never changed behind the user's back.  「계획」 7.
+never changed behind the user's back (step 10).
 """
 
 import json
@@ -26,9 +25,9 @@ from bpy.app.handlers import persistent
 
 BACKUP = "allset_units_backup"
 UNITS = {"system": 'METRIC', "length_unit": 'CENTIMETERS', "scale_length": 0.01}
-# Maya camera clipping in Maya units.
+# Default camera clipping in Maya units.
 CLIP = {"clip_start": 0.1, "clip_end": 10000.0}
-# Maya's new-scene persp camera at (28, 21, 28) Y-up looking at the origin 
+# Maya's new-scene persp camera at (28, 21, 28) Y-up looking at the origin
 # = Blender (28, -28, 21); used by tools/make_startup.py.
 PERSP_EYE = (28.0, -28.0, 21.0)
 
@@ -49,7 +48,7 @@ def grid_scale(scene=None):
     """Viewport grid scale that puts the finest perspective grid step on one Maya unit.
 
     Blender skips grid steps below the base unit (1 m) in user perspective views and
-    divides the steps by ``scale_length`` (checked, ), so with cm
+    divides the steps by ``scale_length`` (step 25), so with cm
     shown the grid (and X-hold grid snap) was 1 m. The step is ``grid_scale /
     scale_length`` BU = ``grid_scale`` m, so grid_scale = metres per display unit.
     """

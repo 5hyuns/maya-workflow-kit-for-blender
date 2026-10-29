@@ -2,7 +2,7 @@
 """step 226 L4: Maya multi-target constraints (weighted average).
 
 Maya: a point / orient / parent / scale constraint with several targets is
-one node ``<owner>_<type><n>`` with one weight attribute ``<target>W<i>`` per target (factory 1.0), the result is the
+one node ``<owner>_<type><n>`` with one weight attribute ``<target>W<i>`` per target (default 1.0), the result is the
 weighted average with the weights normalised w_i / Σw; every weight 0 = the equal-weight average.
 
 The kit (one Blender constraint reads one target):
@@ -17,12 +17,12 @@ The kit (one Blender constraint reads one target):
 - Parent with Maintain Offset (Maya default) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
   helper empty holding the owner's offset from that target (point: Copy Location with offset; else Child Of the
   target with the offset as its own channels). The helpers live in the hidden collection ``.AllsetConstraintHelpers``
-  (no scene: not in the Outliner, not exported, still evaluated as constraint targets — checked) and go when their
+  (no scene: not in the Outliner, not exported, still evaluated as constraint targets) and go when their
   constraint goes (``cleanup``, from a depsgraph handler through a timer).
 - Scale: Maya's multi-target scale is the weighted geometric mean: member i = Copy Scale with
   ``power = w_i / Σw`` (equal split when Σw = 0), the first replaces, the others multiply (``use_offset``) — exact.
 - Rotation: Maya's interpType (orient / parent) — step 252 (#168), operators/constrain_interp.py: Shortest is the
-  rotation members' influence w_i / W_total, the other types (factory Average) a kit-computed blend.
+  rotation members' influence w_i / W_total, the other types (default Average) a kit-computed blend.
 """
 
 import re
@@ -40,7 +40,7 @@ H_CON = "allset_cmulti_con"        # helper empty: the member constraint that re
 MAYA_TYPE = {'CHILD_OF': "parentConstraint", 'COPY_LOCATION': "pointConstraint",
              'COPY_ROTATION': "orientConstraint", 'COPY_SCALE': "scaleConstraint"}
 TYPES = tuple(MAYA_TYPE)
-DEFAULT_OFFSET = {'CHILD_OF': True}      # Maya factory Maintain Offset: parent on, point / orient / scale off
+DEFAULT_OFFSET = {'CHILD_OF': True}      # default Maintain Offset: parent on, point / orient / scale off
 ROT = " R"                               # suffix of a parent group's Copy Rotation member
 _NAME = re.compile(r"^(?P<group>[^:]+):(?P<index>\d+):(?P<label>.*?)(?P<rot> R)?$")
 
@@ -337,7 +337,7 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
                 first = c
     _state["armed"] = True
     if ctype in ('COPY_ROTATION', 'CHILD_OF') and len(targets) > 1:
-        # step 252 (#168): Maya interpType, factory Average (operators/constrain_interp.py); one target = its own
+        # step 252 (#168): Maya interpType, default Average (operators/constrain_interp.py); one target = its own
         # rotation whatever the type (Maya: fewer than 2 targets blend as Average = that target)
         from . import constrain_interp
         constrain_interp.set_mode(context, owner, group, constrain_interp.AVERAGE)

@@ -1,5 +1,5 @@
 """Step 84: Maya Time Slider range — drag the middle to move its keys, an end arrow to scale them.
-; GUI: tests/gui/gui_step84_time_range.py."""
+GUI: tests/gui/gui_step84_time_range.py."""
 
 from importlib import import_module
 

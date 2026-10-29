@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Maya layout file bundled inside the extension (generator: tools/make_startup.py, layout: ,
-).
+"""The Maya layout file bundled inside the extension (generator: tools/make_startup.py, layout:
+steps 5 and 49).
 
-Step 130 (): the file is no longer copied into the user's
+Step 130: the file is no longer copied into the user's
 scripts folder as an application template — nothing is written outside the extension's
 folders. It is only read from here: ``switch.enter_layout`` appends its layout workspace into the open file, and
 "New Scene in Maya Layout" (``first_start``) loads it as an untitled new file with
-``wm.read_homefile(filepath=...)``, which keeps the preferences (checked, step 130).
+``wm.read_homefile(filepath=...)``, which keeps the preferences (step 130).
 """
 
 import os

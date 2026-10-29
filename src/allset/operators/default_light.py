@@ -2,7 +2,7 @@
 """Maya's default light for kit renders of a scene without lights (step 152, #101).
 
 Maya (Maya Software): Render Settings > Common > Render Options >
-Enable Default Light (``defaultRenderGlobals.enableDefaultLight``, factory on) lights a scene that has no light node
+Enable Default Light (``defaultRenderGlobals.enableDefaultLight``, default on) lights a scene that has no light node
 (a hidden light, an ambient light or a light outside defaultLightSet all turn it off) with a white directional light
 of intensity 1 that follows the render camera: its direction is the camera's view axis turned 25 deg up and 25 deg to
 the left (toward the light, camera space normalize(-0.383, 0.423, 0.821)), no shadows. A lambert renders
@@ -17,12 +17,11 @@ marked lights (an undo step pushed while a render ran, a file saved during a ren
 load. The kit Outliner, defaultLightSet and the Light Editor skip it; a marked light never counts as a scene light.
 
 Blender's own render keys (step 214, #120): every ``bpy.app.handlers.render_*`` callback of a UI (INVOKE) render
-runs on the render job's thread, not the main one ( from m1_threads.py, factory 4.5.4 GUI:
-render_init / render_pre / render_post / render_complete all off ``threading.main_thread()``), and the engine builds
+runs on the render job's thread, not the main one (render_init / render_pre / render_post / render_complete all
+off ``threading.main_thread()``), and the engine builds
 its depsgraph there, so a render_init handler can't add the light safely: no handler fallback. Instead Maya mode wraps
 the render keys with ``allset.render_blender``: its invoke adds the light on the main thread, then starts
-``render.render`` INVOKE (the Render window opens as with F12;  same file: the wrapped render lit the cube 0.66 at
-the centre, the plain one 0.0, and the timer removed the light once the job ended). Keys (keymap/maya_patches.py
+``render.render`` INVOKE (the Render window opens as with F12, and the timer removes the light once the job ends). Keys (keymap/maya_patches.py
 ``patch_blender_render``): F12 = Render Image and Ctrl+F12 = Render Animation in "Screen" (Blender's default keys,
 whose own items are switched off in Maya mode; F12 over a 3D View in object / edit-mesh mode or over a UV Editor stays
 Maya's UV selection mask, a Maya default hotkey), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >

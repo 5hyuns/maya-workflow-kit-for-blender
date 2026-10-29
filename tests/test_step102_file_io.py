@@ -1,9 +1,9 @@
 """Step 102: Maya file I/O — one file dialog with Files of type, Maya cm / Y-up presets, default project, round trip
-with Maya. ; GUI:
+with Maya. GUI:
 tests/gui/gui_step102_file_dialog.py.
 
-The round trip writes tmp/file_io/kit_cube.* (for reading in Maya) and reads the
-Maya-written tmp/file_io/maya_cube.* when that script has run (skipped otherwise)."""
+The round trip writes tmp/file_io/kit_cube.* and reads tmp/file_io/maya_cube.* when those files exist
+(skipped otherwise)."""
 
 import os
 from importlib import import_module
@@ -54,7 +54,7 @@ def _cube():
     bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     k = 0.01
-    ob.scale = (SIZE[0], SIZE[2], SIZE[1])            # Maya cube is 1 unit; Maya Y (20) = Blender Z
+    ob.scale = (SIZE[0], SIZE[2], SIZE[1])            # the cube is 1 unit; Maya Y (20) = Blender Z
     bpy.ops.object.transform_apply(scale=True)
     assert abs(_bbox([ob]).x - SIZE[0] * k) < 1e-6
     return ob

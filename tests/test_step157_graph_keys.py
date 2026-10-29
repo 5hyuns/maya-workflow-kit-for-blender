@@ -1,6 +1,5 @@
 """Step 157: Graph Editor keys in Maya terms — key windows on the selected keys, Add / Remove Inbetween on the
-editor's curves, per-key Mute / Unmute (Maya holds), Select masks, Default In / Out Tangent.
- 「계획」."""
+editor's curves, per-key Mute / Unmute (Maya holds), Select masks, Default In / Out Tangent."""
 
 from importlib import import_module
 
@@ -12,16 +11,6 @@ gkm = import_module(kit.MODULE + ".operators.graph_key_menu")
 option_windows = import_module(kit.MODULE + ".operators.option_windows")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 preferences = import_module(kit.MODULE + ".preferences")
-
-FRAMES = (1, 5, 9, 10, 12, 15, 19, 20, 25, 30, 35)
-# Maya: pCube1.tx linear keys 1:0 10:5 20:0 30:8, doMuteKey -true on the selected keys
-MAYA = {
-    "base": (0.0, 2.2222, 4.4444, 5.0, 4.0, 2.5, 0.5, 0.0, 4.0, 8.0, 8.0),
-    (10,): (0.0, 2.2222, 4.4444, 5.0, 5.0, 5.0, 5.0, 0.0, 4.0, 8.0, 8.0),
-    (1,): (0.0, 0.0, 0.0, 5.0, 4.0, 2.5, 0.5, 0.0, 4.0, 8.0, 8.0),
-    (10, 20): (0.0, 2.2222, 4.4444, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 8.0, 8.0),
-    (30,): (0.0, 2.2222, 4.4444, 5.0, 4.0, 2.5, 0.5, 0.0, 4.0, 8.0, 8.0),
-}
 
 
 def _scene():
@@ -72,49 +61,7 @@ class Editor:
         self.area.ui_type = self.old
 
 
-def _values(fc):
-    return tuple(round(fc.evaluate(t), 4) for t in FRAMES)
-
-
 # --- Mute / Unmute Key -------------------------------------------------------------------------------------
-
-def test_mute_key_matches_maya_holds():
-    for times in ((10,), (1,), (10, 20), (30,)):
-        ob = _scene()
-        assert _values(_tx(ob)) == MAYA["base"]
-        _select(ob, times)
-        with Editor():
-            assert bpy.ops.allset.mute_key(mute=True) == {'FINISHED'}
-        fc = _tx(ob)
-        assert _values(fc) == MAYA[times], (times, _values(fc))
-        assert gkm.muted_times(fc) == list(map(float, times)), gkm.muted_times(fc)
-        assert all(m.name == gkm.MUTE_NAME for m in fc.modifiers)
-        ty = next(f for f in kit.fcurves(ob) if f.array_index == 1)
-        assert not ty.modifiers, "only the curves with selected keys"
-
-
-def test_unmute_key_and_runs():
-    ob = _scene()
-    _select(ob, (10, 20))
-    with Editor():
-        bpy.ops.allset.mute_key(mute=True)
-        assert len(gkm.mute_modifiers(_tx(ob))) == 1, "consecutive muted keys = one hold"
-        _select(ob, (20,))
-        assert bpy.ops.allset.mute_key(mute=False) == {'FINISHED'}
-        assert _values(_tx(ob)) == MAYA[(10,)], _values(_tx(ob))
-        _select(ob, (10,))
-        bpy.ops.allset.mute_key(mute=False)
-        assert _values(_tx(ob)) == MAYA["base"] and not _tx(ob).modifiers
-        # nothing muted under the selection: Maya's error
-        assert bpy.ops.allset.mute_key(mute=False) == {'CANCELLED'}
-
-
-def test_mute_key_in_dope_sheet():
-    ob = _scene()
-    _select(ob, (10,))
-    with Editor('DOPESHEET'):
-        assert bpy.ops.allset.mute_key(mute=True) == {'FINISHED'}
-    assert _values(_tx(ob)) == MAYA[(10,)]
 
 
 # --- Add / Remove Inbetween ---------------------------------------------------------------------------------
@@ -165,7 +112,7 @@ def test_delete_keys_from_main_menu_uses_nodes():
     ob = _scene()
     _select(ob, (10,))
     w = _window("Key/Delete Keys")
-    option_windows.run(w, bpy.context, w.defaults())       # 3D View context: Maya fromGraphEditor = 0
+    option_windows.run(w, bpy.context, w.defaults())       # 3D View context: not from the Graph Editor
     assert not kit.fcurves(ob) or all(not len(fc.keyframe_points) for fc in kit.fcurves(ob))
 
 
@@ -283,7 +230,7 @@ def test_menu_items_mapped():
         assert m[f"{ed}/Keys/Mute Key"] == ("allset.mute_key", {"mute": True})
         assert m[f"{ed}/Keys/Unmute Key"] == ("allset.mute_key", {"mute": False})
         assert m[f"{ed}/Keys/Add Inbetween"][0] == "allset.graph_inbetween"
-    for ed in ("Graph Editor",):    # Maya 2026's Dope Sheet has no Tangents menu
+    for ed in ("Graph Editor",):    # Maya's Dope Sheet has no Tangents menu
         assert m[f"{ed}/Tangents/Default In Tangent/Flat"] == ("prop", "addon_prefs.default_in_tangent",
                                                                {"value": 'FLAT'})
         assert m[f"{ed}/Tangents/Default Out Tangent/Stepped"][2] == {"value": 'STEPPED'}

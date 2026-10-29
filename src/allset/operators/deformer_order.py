@@ -103,8 +103,8 @@ def blend_shape_keys(ob):
 
 def key_target_weights(context, objects):
     """Key every blend shape target weight (shape key Value) of ``objects`` at the current frame; returns the count.
-    Maya 2026 keys nothing for any selection we could give it,
-    so the kit does what the menu name says (delegated)."""
+    Maya 2026 keys nothing here,
+    so the kit does what the menu name says."""
     frame = context.scene.frame_current
     n = 0
     for ob in objects:

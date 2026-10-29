@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Kit-drawn Maya-style icons for the Status Line, the menu bar and the viewport panel toolbar (,
-redrawn in step 131 for #23: ).
+"""Kit-drawn Maya-style icons for the Status Line, the menu bar and the viewport panel toolbar (step 113,
+redrawn in step 131 for #23).
 
-Decision 6: no Maya icons. Maya's Status Line (20 px) and panel toolbar (16 px) show flat light-grey #bcbcbc line art
+No Maya icons. The Status Line (20 px) and panel toolbar (16 px) glyphs are flat light-grey #bcbcbc line art
 with teal #48a9b4 accents, a dark outline around every shape and no button frame.
 Every glyph here is a few vector shapes in unit coordinates, rasterised
 with numpy (supersampled, no files) and handed to Blender as a ``bpy.utils.previews`` image (``icon_value``).
 
 Pixel hinting: ``Canvas`` snaps rectangle edges to the target size's pixel grid, rounds line widths to whole pixels
 (at least one) and centres odd-width strokes and odd-diameter discs on pixel centres, so the same drawing is crisp at
-16, 20, 24, 32 and 48 px. ``image(name, size)`` is that picture (top-down straight-alpha RGBA) with Maya's dark
+16, 20, 24, 32 and 48 px. ``image(name, size)`` is that picture (top-down straight-alpha RGBA) with the dark
 outline added at the final size. Blender draws a button icon at 16 px x UI scale; ``icon(name)`` hands it a picture
 of exactly that size (one image pixel per screen pixel) and rebuilds the previews when the UI scale changes.
 """
@@ -20,16 +20,16 @@ import numpy as np
 
 SIZE = 32          # default drawing size (``Canvas`` / ``render``)
 SS = 4             # minimum supersampling
-GREY = (0.74, 0.74, 0.74)      # Maya glyph grey #bcbcbc
+GREY = (0.74, 0.74, 0.74)      # glyph grey #bcbcbc
 LIGHT = (0.88, 0.88, 0.88)     # pointer / highlight
 DIM = (0.55, 0.55, 0.55)
-TEAL = (0.28, 0.66, 0.71)      # Maya accent #48a9b4
+TEAL = (0.28, 0.66, 0.71)      # accent #48a9b4
 TEAL_DARK = (0.18, 0.47, 0.52)
 TEAL_LIGHT = (0.55, 0.84, 0.88)
 BLUE = (0.40, 0.62, 0.86)
 ORANGE = (0.90, 0.58, 0.30)
 DARK = (0.20, 0.20, 0.20)
-OUTLINE = (0.13, 0.13, 0.13)   # Maya's #3a3a3a outline, darker so it also shows on Blender's darker header
+OUTLINE = (0.13, 0.13, 0.13)   # the #3a3a3a outline, darker so it also shows on Blender's darker header
 
 
 class Canvas:
@@ -598,7 +598,7 @@ def image(name, size=SIZE):
 # --- previews ---------------------------------------------------------------------------------------
 #
 # Blender draws a button icon at round(16 x UI scale) px and resamples a preview of another size; a preview of the
-# drawn size shows the hinted pixels 1:1 (checked: ). Previews are keyed by
+# drawn size shows the hinted pixels 1:1. Previews are keyed by
 # name and size ("undo@20"): a UI scale change makes new previews (from a timer, never inside a header draw while
 # an old-size preview can stand in) instead of rewriting pixels Blender may have cached on the GPU.
 

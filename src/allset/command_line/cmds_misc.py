@@ -6,13 +6,13 @@ Everything goes through the kit's own data so a script gives what the menus give
 
 - Maya nodes that aren't DAG objects (``_node``): materials = kit materials (``operators/material.py``, lambert1 =
   the ``DEFAULT_PROP`` material), a ``file`` texture = a Shader node group holding an Image Texture node (outputs
-  ``outColor`` / ``outAlpha``; delegated: Blender has no free-standing shader node, a group can be shared by every
+  ``outColor`` / ``outAlpha``; Blender has no free-standing shader node, a group can be shared by every
   material it is connected to like Maya's node), sets = kit sets (``operators/sets.py``), shading groups =
   initialShadingGroup / ``<material>SG`` (``material.shading_group_name``), creation nodes (``prim_history``),
   extrusions (``operators/extrude.py`` records + the per-mesh list ``HISTORY_PROP`` the commands keep), constraints
   (``channel_box.constraint_node_name``), bones = joints.
-- ``currentUnit`` = the scene's unit settings / frame rate (Maya's working units are the scene's display units,
-  ); ``ls`` / ``getAttr`` / ``setAttr`` / ``select`` / ``objExists`` learn these nodes in
+- ``currentUnit`` = the scene's unit settings / frame rate (Maya's working units are the scene's display units);
+  ``ls`` / ``getAttr`` / ``setAttr`` / ``select`` / ``objExists`` learn these nodes in
   ``_extend_shim`` (the shim's versions handle DAG objects only).
 """
 
@@ -37,7 +37,7 @@ DEFAULT_SETS = {"defaultLightSet": "objectSet", "defaultObjectSet": "objectSet",
 DEFAULT_NODES = {"time1": "time"}
 
 # nodeType -inherited (Maya's lists for joint and mesh; the others
-# follow Maya's documented node hierarchy )
+# follow Maya's documented node hierarchy)
 _DAG = ["containerBase", "entity", "dagNode"]
 _SHAPE = _DAG + ["shape"]
 _GEO = _SHAPE + ["geometryShape", "deformableShape", "controlPoint"]
@@ -417,7 +417,7 @@ def _linear_key(text):
 def _current_linear(scene):
     us = scene.unit_settings
     if us.system == 'NONE':
-        return "cm"      # 1 BU = 1 Maya unit, Maya's factory cm ()
+        return "cm"      # 1 BU = 1 Maya unit, cm
     if us.length_unit == 'ADAPTIVE':
         return "m" if us.system == 'METRIC' else "ft"
     return _LINEAR_BY_UNIT.get(us.length_unit, "cm")
@@ -451,7 +451,7 @@ def _set_range(scene, start_attr, end_attr, start, end):
 
 def _set_fps(scene, fps):
     """Maya keeps the time ranges in seconds when the time unit changes (Maya: 1 / 120 film -> 1.041667 / 125
-    pal); Blender frames are whole, so the kit rounds (keys stay where they are,  for Maya's keys)."""
+    pal); Blender frames are whole, so the kit rounds (keys stay where they are)."""
     old = _fps(scene)
     ratio = fps / old if old else 1.0
     r = scene.render
@@ -1092,7 +1092,7 @@ def listHistory(*args, **kwargs):
 
 
 def camera(*args, **kwargs):
-    """``camera`` = Create > Camera (``create.KINDS['CAMERA']``: camera1 / cameraShape1, 35 mm lens on 36 mm
+    """``camera`` = Create > Camera (``create.KINDS['CAMERA']``: camera1 / cameraShape1, a 35 mm lens on 36 mm
     film, level like Maya's); selected; returns [transform, shape]."""
     from ..operators import create
     f = _Flags("camera", kwargs)

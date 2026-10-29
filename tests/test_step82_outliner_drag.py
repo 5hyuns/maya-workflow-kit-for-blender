@@ -1,5 +1,5 @@
 """Step 82: Outliner drags parent the Maya way (drop zones, parenting, reorder in Blender's drawn order, keymap).
-; GUI: tests/gui/gui_step82_outliner_drag.py (LMB drop redone, MMB drag, undo)."""
+GUI: tests/gui/gui_step82_outliner_drag.py (LMB drop redone, MMB drag, undo)."""
 
 import json
 import math
@@ -28,7 +28,7 @@ def test_reordered_and_drawn_order():
     assert od.reordered(names, ["D"], "B", after=False) == ["A", "D", "B", "C"]
     assert od.reordered(names, ["A", "C"], "D", after=True) == ["B", "D", "A", "C"]
     assert od.reordered(names, ["B"], "B", after=True) == names          # onto itself: nothing
-    # Blender's unsorted Outliner draws the first linked object last (checked, )
+    # Blender's unsorted Outliner draws the first linked object last
     assert od.displayed(["Z", "Y", "X"]) == ["Y", "X", "Z"]
     assert od.linked(od.displayed(names)) == names
 

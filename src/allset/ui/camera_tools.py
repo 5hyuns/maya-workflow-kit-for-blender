@@ -7,7 +7,7 @@
   (5, 2, -3): rotation unchanged, centre of interest 44.82 -> 43.02 = |centre - eye|).
 - View > Camera Attribute Editor... / panel toolbar Camera Attributes = Maya's camera Attribute Editor: the Attribute
   Editor of the camera the panel looks through. Blender's own persp / ortho views have no camera object: a popover
-  shows the view's camera values (Focal Length in Maya millimetres, near / far clip) — Maya's perspShape.
+  shows the view's camera values (Focal Length in millimetres, near / far clip) — Maya's perspShape.
 - View > Camera Tools > Tumble / Track / Dolly Tool = Maya's camera tools: tools whose LMB drag tumbles / tracks /
   dollies the view (like Alt+LMB / Alt+MMB / Alt+RMB) until another tool is picked (Q / W / E / R).
 """
@@ -186,7 +186,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.WindowManager.allset_persp_focal = FloatProperty(
-        name="Focal Length", description="Maya focal length of this view (mm on 36 mm film back)",
+        name="Focal Length", description="Focal length of this view in mm (36 mm film back)",
         get=_persp_focal_get, set=_persp_focal_set, min=2.5, max=3500.0, precision=1)
     for i, tool in enumerate(TOOLS):
         bpy.utils.register_tool(tool, after={"builtin.measure"}, separator=(i % len(_TOOLS) == 0))

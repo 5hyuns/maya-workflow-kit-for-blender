@@ -1,5 +1,5 @@
 """Step 171: Visualize > Create Animation Snapshot / Update Snapshot and ghosting (Ghost Selected / Unghost Selected /
-Unghost All / Ghosting Editor). Maya 2022 rules and numbers.
+Unghost All / Ghosting Editor). Maya rules.
 
 Maya points are Y-up: Maya (x, y, z) = Blender (x, -z, y); Maya rotateY = Blender rotation Z (same sign)."""
 
@@ -79,7 +79,7 @@ def _anim_cube(rotate=True, tx_end=9.0):
 
 
 def _vid(ob, p=(-0.5, -0.5, -0.5)):
-    """Index of the source vertex at Blender point ``p`` (Maya's vtx[0] corner (-0.5, -0.5, 0.5))."""
+    """Index of the source vertex at Blender point ``p`` (the vtx[0] corner (-0.5, -0.5, 0.5))."""
     return min(range(len(ob.data.vertices)), key=lambda i: (ob.data.vertices[i].co - __import__("mathutils").Vector(p)).length)
 
 

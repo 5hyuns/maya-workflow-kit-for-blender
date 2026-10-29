@@ -1,6 +1,6 @@
 """Step 234 (Issue #143): animation layers on joints — key, bake, membership.
 
-Maya 2026 (chain and bake results):
+Expected (chain and bake results):
 Create Layer from Selected on a joint, Rotate X +20 at frame 12, S -> Rotate X 20 on every frame (one
 key on the layer, BaseAnimation has none); Bake Simulation leaves the pose unchanged (0.0 cm) and keeps the layers.
 Audit 0.5.0 ⑤-5 / ⑤-14: S on a layer joint keyed nothing; ⑤-8: the bake doubled the base animation (35.2 cm).
@@ -169,7 +169,7 @@ def test_bake_with_a_layer_keeps_the_pose_like_maya():
     post = _sample(sc, arm)
     worst = max((post[f][n] - pre[f][n]).length for f in pre for n in pre[f])
     print(f"step234 bake with a layer: pose change {worst:.2e}")
-    assert worst < 1e-4, worst                               # Maya: 0.0 cm (audit ⑤-8 had 35.2 cm)
+    assert worst < 1e-4, worst                               # expected 0.0 cm (audit ⑤-8 had 35.2 cm)
     assert layer in al.tracks(arm) and al.BASE in al.tracks(arm)    # the layers stay
     for path, i in (('pose.bones["elbow"].rotation_euler', 1), ('pose.bones["shoulder"].rotation_euler', 0)):
         fc = al.base_curve(arm, path, i)                     # really baked: a key on every frame of BaseAnimation

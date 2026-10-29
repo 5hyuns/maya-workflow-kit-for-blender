@@ -1,6 +1,5 @@
 """Step 96: Maya object sets — Create > Sets > Set / Quick Select Set, members, select, add / remove, delete, rename,
-save / reload, the sidebar Outliner SET rows, the Outliner overlay helpers, menu mapping. ;
-Maya behaviour."""
+save / reload, the sidebar Outliner SET rows, the Outliner overlay helpers, menu mapping."""
 
 import os
 import tempfile
@@ -48,7 +47,7 @@ def test_create_set_like_maya():
     assert bpy.ops.allset.create_set() == {'FINISHED'}
     s1 = bpy.data.collections["set1"]
     assert sets.is_set(s1) and {o.name for o in s1.objects} == {"pCube1", "pCube2"}
-    assert _selected() == {"pCube1", "pCube2"}, "Maya keeps the selection (sets.md S3)"
+    assert _selected() == {"pCube1", "pCube2"}, "Maya keeps the selection"
     assert s1.use_fake_user and not any(s1 in sc.collection.children_recursive for sc in bpy.data.scenes)
     assert a.users_collection and bpy.context.scene.collection in a.users_collection, "object stays in the scene"
     _select([a])
@@ -58,7 +57,7 @@ def test_create_set_like_maya():
     assert [s.name for s in sets.all_sets()] == ["set1", "set2", "set3"], "names and creation order (S2)"
     assert len(bpy.data.collections["set3"].objects) == 0, "nothing selected = empty set"
     sets.delete(bpy.data.collections["set1"])
-    assert sets.next_name() == "set4", "one past the highest, no gap filling (step 211, naming_211.md N1)"
+    assert sets.next_name() == "set4", "one past the highest, no gap filling (step 211)"
     bpy.ops.allset.create_set(name="propSet")
     assert sets.all_sets()[-1].name == "propSet"
 

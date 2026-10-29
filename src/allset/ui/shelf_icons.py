@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Kit-made colour shelf icons, drawn by code (step 51, re-drawn in step 109, redrawn per button in step 131).
 
-Decision 6: no Maya icons. Maya's shelf shows one 32 px colour pictogram per button; step 131 (#23) gives every
+No Maya icons. A Maya shelf shows one colour pictogram per button; step 131 (#23) gives every
 factory shelf button its own kit drawing that follows the Maya icon's subject, main colour, composition and size
-(clean-room descriptions of Maya's shared visual vocabulary; plan and
-scores: ). Shared Maya vocabulary used here:
+(clean-room descriptions of Maya's shared visual vocabulary). Shared vocabulary used here:
 
 - one hue per kind (NURBS blue, poly orange, UV green, rigging lavender, key orange-red, render yellow, FX salmon,
   editors teal), two or three tones per hue, light from the upper left;

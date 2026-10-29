@@ -129,7 +129,7 @@ status_line = import_module(MODULE + ".ui.status_line")
 
 
 def file_handle():
-    # the File group's collapse arrow (step 113: after the menu set combo and the five file / undo icons; checked
+    # the File group's collapse arrow (step 113: after the menu set combo and the five file / undo icons;
     # at x 296 in a scale 1.25 shot of the Maya Workflow Kit layout)
     strip = next(a for a in win().screen.areas if a.type == 'IMAGE_EDITOR' and shelf.is_strip(a.spaces.active))
     hdr = next(r for r in strip.regions if r.type == 'HEADER')

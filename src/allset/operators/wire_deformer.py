@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's wire deformer (Deform > Wire and Deform > Wire >, step 169).
 
-Maya rule (Maya-exact): for a deformed point p, c = the nearest point of the
+Maya rule: for a deformed point p, c = the nearest point of the
 *base* wire (a hidden copy of the curve made with the deformer, ``curve1BaseWire``) at parameter u, c' = the wire at
 the same u, T / T' their tangents, d = |p - c|, D = Dropoff Distance (× the dropoff locators' scale at u):
 
@@ -12,7 +12,7 @@ so a moved curve pulls the points with it, a bent one turns their offsets, and t
 alone change nothing (the curve's points don't move). Blender has no wire modifier, so the kit wire is a Geometry
 Nodes modifier named like the Maya node (``wire1``) on a shared node group: both curves become polylines at their
 evaluated points (same count, uniform in parameter), the nearest base edge gives c and u. The weights are the
-vertex group ``wire1`` (factory weight 1), which Deform > Paint Weights > Wire paints.
+vertex group ``wire1`` (default weight 1), which Deform > Paint Weights > Wire paints.
 
 Dropoff locators: a locator at parameter a with Percent s scales D; between neighbouring knots
 [0, locators sorted by parameter, 1] with scales [1, s..., 1] the scale is s_a + (s_b - s_a) g(t), g(t) = 1 - (1 - t²)²;

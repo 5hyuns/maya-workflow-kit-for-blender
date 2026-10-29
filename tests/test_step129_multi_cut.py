@@ -1,4 +1,4 @@
-"""Step 129: Maya Multi-Cut tool (GitHub #27, #28). ;
+"""Step 129: Maya Multi-Cut tool (GitHub #27, #28).
 GUI: tests/gui/gui_step129_multi_cut.py. Cut counts = Maya polySplit."""
 
 import math
@@ -23,7 +23,7 @@ TOOL = ("tool", "allset.multi_cut_tool", True)
 
 
 def _cube():
-    """Maya's polyCube 1 x 1 x 1 as a bmesh (8 v / 12 e / 6 f)."""
+    """A Maya-style polyCube 1 x 1 x 1 as a bmesh (8 v / 12 e / 6 f)."""
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=1.0)
     for seq in (bm.verts, bm.edges, bm.faces):
@@ -46,7 +46,7 @@ def _edge(bm, a, b):
 
 
 def _edge_point(bm, a, b, t_from_a):
-    """('EDGE', i, t) with t from the edge's first vertex, given t checked from ``a``."""
+    """('EDGE', i, t) with t from the edge's first vertex, given t counted from ``a``."""
     e = _edge(bm, a, b)
     t = t_from_a if (e.verts[0].co - Vector(a)).length < 1e-5 else 1.0 - t_from_a
     return ('EDGE', e.index, t)
@@ -153,7 +153,7 @@ def test_settings_maya_defaults_and_reset():
     s = bpy.context.scene.allset_mesh_tools
     want = {"snap_step": 10, "smoothing_angle": 180.0, "edge_flow": False, "subdivisions": 1,
             "ignore_backfaces": False, "delete_faces": False, "extract_faces": False, "slice_plane": 'NONE'}
-    assert {k: getattr(s, k) for k in want} == want, "Maya factory values (modeling_06_win1.png)"
+    assert {k: getattr(s, k) for k in want} == want, "default values"
     assert tuple(s.extract_offset) == (0.5, 0.5, 0.5)
     s.snap_step, s.subdivisions, s.slice_plane = 25, 4, 'XY'
     mc.reset_settings(s)

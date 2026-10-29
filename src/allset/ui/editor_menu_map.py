@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Graph Editor / Dope Sheet / UV Editor / UV Toolkit menu items -> Blender actions.
+"""Maya Graph Editor / Dope Sheet / UV Editor / UV Toolkit menu items -> Blender actions (step 104).
 
 Keys are ``editor_menu_data`` paths ("Graph Editor/Keys/Insert Key Tool"); values use ``menu_map``'s forms plus
 ``("prop", "<context path>")`` = a Maya check item drawn as Blender's own check box (``{"value": v}`` = one choice
@@ -99,7 +99,7 @@ def _curves_menu(ed, graph):
             f"{ed}/Curves/Resample Curve": "graph.bake_keys",
         })
     else:
-        # step 166: Maya's Dope Sheet runs the Graph Editor's curve commands (same annotations, _editors104.json)
+        # step 166: Maya's Dope Sheet runs the Graph Editor's curve commands (the same commands)
         m.update({f"{ed}/Curves/{label}": ("allset.dope_graph_op", {"command": cmd}) for label, cmd in (
             ("Isolate Curve", 'ISOLATE'), ("Smooth Filter (Butterworth)", 'BUTTERWORTH'),
             ("Smooth Filter (Gaussian)", 'GAUSSIAN'), ("Euler Filter", 'EULER'), ("Resample Curve", 'RESAMPLE'))})
@@ -157,7 +157,7 @@ def _keys_menu(ed, graph):
 _DS = "space_data.dopesheet"
 SHOW_OBJECTS = {"Geometry": "show_meshes", "Polygon Objects": "show_meshes", "NURBS Objects": "show_curves",
                 "GPU Cache": "show_cache_files", "Cameras": "show_cameras", "Joints": "show_armatures",
-                # step 150 (delegated): a Blender subdivision surface is a mesh with a Subdivision modifier
+                # step 150: a Blender subdivision surface is a mesh with a Subdivision modifier
                 "Subdiv Objects": "show_meshes"}
 # Maya attribute groups -> the channel name filter (Blender names: Location / Rotation / Scale)
 SHOW_ATTRIBUTES = {"Translate": "Location", "Rotate": "Rotation", "Scale": "Scale", "Scale Rotate Translate": "",
@@ -193,7 +193,7 @@ def _list_show_menus(ed):
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_WM}.allset_attr_{flag}")
               for label, flag in SHOW_ATTRIBUTE_FLAGS.items()})
     # Maya 2026: Show Animated Shapes is an All / One / None expand choice (Maya 2022: one check item); All =
-    # Blender's shape key channels shown (delegated), One / None greyed with notices
+    # Blender's shape key channels shown, One / None greyed with notices
     m[f"{ed}/List/Show Animated Shapes/All"] = _prop(f"{_DS}.show_shapekeys")
     if ed == "Graph Editor":
         m[f"{ed}/List/Show Upstream Curves"] = _prop(f"{_WM}.allset_show_upstream")

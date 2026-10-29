@@ -3,9 +3,8 @@
     python tools/marketing/kit.py
 
 Inputs: the step 122 GUI shots (tmp/marketing/raw/, tools/marketing/shots.py), the step 123 switch clip frames
-(tmp/marketing/clips/switch/, tools/marketing/clips.py), copy from tools/marketing/content.json (copy.md), tokens from
-style.json (style.md). Outputs in docs/distribution/marketing/kit/ (sizes from local platform notes 
-platform_rules_123.md: GitHub social preview 1280 x 640 < 1 MB, X image ≤ 5 MB, YouTube thumbnail 1280 x 720 ≤ 2 MB).
+(tmp/marketing/clips/switch/, tools/marketing/clips.py), copy from tools/marketing/content.json, tokens from
+style.json. Outputs in docs/distribution/marketing/kit/ (platform sizes: GitHub social preview 1280 x 640 < 1 MB, X image ≤ 5 MB, YouTube thumbnail 1280 x 720 ≤ 2 MB).
 """
 
 import json
@@ -55,7 +54,7 @@ def canvas(size, glow_at=None):
 
 
 def brand_block(d, x, y, s, lines, name_px):
-    """The lockup (style.md) at ``name_px``, then ``lines``; ``s`` scales the line sizes (given at 1920 x 1080)."""
+    """The lockup at ``name_px``, then ``lines``; ``s`` scales the line sizes (given at 1920 x 1080)."""
     box = lockup(d, x, y, name_px)
     y = box[3] + round(40 * s)
     for ln, size, col in lines:

@@ -8,7 +8,6 @@ never touched), then runs tools/dogfood_session.py in a GUI Blender with
 --enable-event-simulate. Prints each check, the screenshots written to
 tmp/dogfood/shots/ and every console error/traceback line of the session log.
 Only the Blender process started here is terminated on timeout.
- 「계획」.
 """
 
 import argparse

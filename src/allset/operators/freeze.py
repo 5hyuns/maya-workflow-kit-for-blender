@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Freeze Transformations, Reset Transformations and Center Pivot.
 
-Design and matrix math:  「계획」 0-3. The Maya pivot is the
+The Maya pivot is the
 Blender origin; ``delta_location`` plays the part of Maya's pivot offset
 (``rotatePivot``/``rotatePivotTranslate``), so the
 channels the Channel Box shows (``location``/``rotation``/``scale``) can read

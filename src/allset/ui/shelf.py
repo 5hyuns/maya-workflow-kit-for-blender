@@ -3,7 +3,6 @@
 scripts, drawn under the Status Line in a thin "Maya strip" area.
 
 Maya's shelf behaviour, tab order and buttons.
-Design:  「계획」.
 
 - The strip is an Image Editor area marked by the hidden Mask ``.AllsetStrip``
   (``space.mask``): its header row draws the Status Line, its tool header row the
@@ -11,7 +10,7 @@ Design:  「계획」.
   without its tool header and a shelf row marked ``.AllsetShelf`` whose header draws
   the shelf: Blender keeps every area at least one header high, so both rows follow
   the UI scale (a two-row area of fixed height lost its tool header at scale 1.25).
-- Step 51: the shelf row is 64 px shelf: its header = the shelf
+- Step 51: the shelf row is a 64 px shelf: its header = the shelf
   tabs, its WINDOW region = 32 px kit-made colour icons (``shelf_icons``) drawn and clicked as gizmos
   (``ALLSET_GGT_shelf``: a gizmo map runs before the image editor's tool keymap, gives hover and the
   operator's tooltip). Click = command; a second click within the double-click time or Ctrl+click =
@@ -47,7 +46,7 @@ MARKER = ".AllsetStrip"
 SHELF_MARKER = ".AllsetShelf"   # the template's shelf row (step 49)
 USER_PREFIX = "USER:"
 DEFAULT_USER = {"shelves": [{"name": "Custom", "buttons": []}]}
-STRIP_PX = 68          # header + tool header rows at UI scale 1 (checked,  「계획」 1)
+STRIP_PX = 68          # header + tool header rows at UI scale 1 (step 12)
 _user = {}             # cached shelves.json content
 
 
@@ -588,7 +587,7 @@ class ALLSET_OT_shelf_add_last_command(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Material buttons run allset.shelf_material (operators/material.py, ).
+# Material buttons run allset.shelf_material (operators/material.py).
 
 
 # --- the strip area ----------------------------------------------------------------------------------
@@ -811,7 +810,7 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
         return bpy.ops.allset.shelf_button('INVOKE_DEFAULT', shelf=cur, index=b[0])
 
 
-# Maya shelf buttons are 35x34 with 32 px icons (colors.json widget_size_histogram QPushButton 35x34).
+# Shelf buttons are 35x34 with 32 px icons.
 ICON_PX = 32
 PITCH_PX = 35
 LEFT_PX = 6
@@ -930,7 +929,7 @@ def scroll_rects(region, scale):
     tabs = tabs_in_window(_space_of(region))
     top = round(TAB_PX * scale) if tabs else 0
     # off the area's top-right corner: Blender's split / join action zone there takes the click before any region
-    # (checked with --debug-handlers: only "Screen Editing" saw the press)
+    # (with --debug-handlers only "Screen Editing" sees the press)
     x1 = region.width - round(SCROLL_RIGHT_PX * scale)
     x0 = x1 - round(SCROLL_PX * scale)
     y0, y1 = round(2 * scale), region.height - top - round(2 * scale)
@@ -992,10 +991,9 @@ def _hover_colour(base, mapped):
     return (ink, ink, ink, (0.18 if mapped else 0.08) if ink else (0.12 if mapped else 0.05))
 
 
-# Maya's shelf tab row is darker than the icon row and the Status Line (colors.json ui_samples:
-# shelf_tab_bar_bg / shelf_tab_inactive #373737, shelf_tab_active and shelf_icon_row_bg #444444), but
-# both rows share the Image Editor header colour. The tab row's header is dimmed by this black overlay
-# (Maya's ratio #444444 -> #373737, applied to whatever header colour the user's theme has).
+# The shelf tab row (and inactive tabs, #373737) is darker than the icon row, the active tab and the Status Line
+# (#444444), but both rows share the Image Editor header colour. The tab row's header is dimmed by this black
+# overlay (ratio #444444 -> #373737, applied to whatever header colour the user's theme has).
 TAB_DIM = 1.0 - 0x37 / 0x44
 
 
@@ -1038,7 +1036,7 @@ def _text(x, y, text, colour, size):
 
 
 def _draw_tabs(context, region, base):
-    """Maya's shelf tab strip: #373737 strip, flat tabs, the current one
+    """The shelf tab strip: #373737 strip, flat tabs, the current one
     in the row colour with light text, the others dim; the shelf menu glyph left of the tabs, the shelf editor gear
     left of the icons."""
     s = context.preferences.system.ui_scale or 1.0
@@ -1101,7 +1099,7 @@ def _separators(region, s, count):
 def draw_row():
     """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons; the tab strip when the row has
     no header). The gizmos only pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor
-    did not, checked)."""
+    does not show)."""
     context = bpy.context
     if not is_shelf_row(context.space_data):
         return
@@ -1151,7 +1149,7 @@ def _triangle(cx, cy, half, up, colour):
 
 
 def _draw_scroll_bar(region, s, base):
-    """Maya's shelf scroll bar (12 px, ▲ / ▼) while the shelf has more than one row; an
+    """The shelf scroll bar (12 px, ▲ / ▼) while the shelf has more than one row; an
     arrow is dimmed at its end."""
     rects = scroll_rects(region, s)
     if not rects:
@@ -1287,7 +1285,7 @@ class ALLSET_GT_shelf_icon(bpy.types.Gizmo):
 
 class ALLSET_GT_shelf_scroll(bpy.types.Gizmo):
     """The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come
-    before the image editor's tool keymap (its Sample tool took plain clicks, checked with --debug-handlers)."""
+    before the image editor's tool keymap (its Sample tool took plain clicks)."""
     bl_idname = "ALLSET_GT_shelf_scroll"
     __slots__ = ("slot",)
 
@@ -1336,7 +1334,7 @@ class ALLSET_OT_shelf_scroll(bpy.types.Operator):
         return {'FINISHED'}
 
 
-SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 37 in Maya 2026)
+SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 37 buttons)
 
 
 class ALLSET_GGT_shelf(bpy.types.GizmoGroup):

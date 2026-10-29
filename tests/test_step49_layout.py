@@ -1,5 +1,5 @@
 """Step 49: Maya layout parity — Tool Box, dock-only sidebar, Help + Command row, the Maya Workflow Kit template's
-areas. ; GUI: tests/gui/gui_step49_layout.py."""
+areas. GUI: tests/gui/gui_step49_layout.py."""
 
 import sys
 from importlib import import_module
@@ -103,7 +103,7 @@ def test_viewport_sidebar_has_no_maya_panel():
 
 def test_status_bar_is_help_and_command_row():
     assert command_line.draw_status_bar in bpy.types.STATUSBAR_HT_header.draw._draw_funcs   # own draw swapped (115)
-    # Maya widths at 1600 px (HelpLine 675, CommandLine 915) in 20 px units
+    # widths at 1600 px (Help Line 675, Command Line 915) in 20 px units
     assert command_line.HELP_UNITS * 20 == 675 and command_line.COMMAND_UNITS * 20 == 915
 
 

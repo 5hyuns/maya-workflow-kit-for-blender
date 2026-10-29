@@ -1,7 +1,7 @@
-"""Step 217 lane L18: Key > Bake Simulation against Maya 2026 ``bakeResults`` (menu factory flags).
+"""Step 217 lane L18: Key > Bake Simulation like Maya's ``bakeResults`` (menu default flags).
 
-Maya results: a constrained box (cases default / dic_off / pok_off / step2)
-and an IK chain (Disable implicit control on / off); rules in  「계획」 L18.
+Expected results: a constrained box (cases default / dic_off / pok_off / step2)
+and an IK chain (Disable implicit control on / off).
 
 Scene = the Maya scene in Blender axes (Maya (x, y, z) -> Blender (x, -z, y), 1 Maya unit = 1 m in this factory
 scene): locator ``ctrl`` keyed tx 0 -> 3 and ry 0 -> 350 (linear, frames 1 / 10), cube ``box`` at Maya (0, 5, 2)

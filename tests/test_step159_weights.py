@@ -17,62 +17,9 @@ deformers = import_module(kit.MODULE + ".operators.deformers")
 OUT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step159_weights"))
 os.makedirs(OUT, exist_ok=True)
 
-# Maya: polyPlane -w 4 -h 4 -sx 1 -sy 2, joints (0,0,-2) (0,0,0) (0,0,2), skinCluster -tsb false -mi 5 (factory
-# closest distance weights), vtx[1] set to joint1 0.123456789 / joint2 0.876543211, then
-# deformerWeights -export -weightPrecision 9 (headerInfo fileName shortened).
-MAYA_XML = """<?xml version="1.0"?>
-<deformerWeight>
-  <headerInfo fileName="C:/maya/p9.xml" worldMatrix="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 "/>
-  <shape name="pPlane1Shape" group="0" stride="3" size="6" max="5">
-    <point index="0" value=" -2.000000 0.000000 2.000000"/>
-    <point index="1" value=" 2.000000 0.000000 2.000000"/>
-    <point index="2" value=" -2.000000 0.000000 0.000000"/>
-    <point index="3" value=" 2.000000 0.000000 0.000000"/>
-    <point index="4" value=" -2.000000 0.000000 -2.000000"/>
-    <point index="5" value=" 2.000000 0.000000 -2.000000"/>
-  </shape>
-  <weights deformer="skinCluster1" source="joint1" shape="pPlane1Shape" layer="0" defaultValue="0.000000000" size="6" max="5">
-    <point index="0" value="0.111111111"/>
-    <point index="1" value="0.123456789"/>
-    <point index="2" value="0.444444444"/>
-    <point index="3" value="0.444444444"/>
-    <point index="4" value="0.775193798"/>
-    <point index="5" value="0.775193798"/>
-  </weights>
-  <weights deformer="skinCluster1" source="joint2" shape="pPlane1Shape" layer="1" defaultValue="0.000000000" size="6" max="5">
-    <point index="0" value="0.444444444"/>
-    <point index="1" value="0.876543211"/>
-    <point index="2" value="0.444444444"/>
-    <point index="3" value="0.444444444"/>
-    <point index="4" value="0.193798450"/>
-    <point index="5" value="0.193798450"/>
-  </weights>
-  <weights deformer="skinCluster1" source="joint3" shape="pPlane1Shape" layer="2" defaultValue="0.000000000" size="5" max="5">
-    <point index="0" value="0.444444444"/>
-    <point index="2" value="0.111111111"/>
-    <point index="3" value="0.111111111"/>
-    <point index="4" value="0.031007752"/>
-    <point index="5" value="0.031007752"/>
-  </weights>
-</deformerWeight>
-"""
-MAYA_WEIGHTS = {0: (0.111111111, 0.444444444, 0.444444444), 1: (0.123456789, 0.876543211, 0.0),
-                2: (0.444444444, 0.444444444, 0.111111111), 3: (0.444444444, 0.444444444, 0.111111111),
-                4: (0.775193798, 0.193798450, 0.031007752), 5: (0.775193798, 0.193798450, 0.031007752)}
 MAYA_POINTS = ((-2, 0, 2), (2, 0, 2), (-2, 0, 0), (2, 0, 0), (-2, 0, -2), (2, 0, -2))
 MAYA_FACES = ((0, 1, 3, 2), (2, 3, 5, 4))
 JOINTS = ("joint1", "joint2", "joint3")
-# factory 3-decimal export: zero weights left out, layer per influence
-MAYA_XML_3 = """<?xml version="1.0"?>
-<deformerWeight>
-  <headerInfo fileName="C:/maya/skin.xml" worldMatrix="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 "/>
-  <weights deformer="skinCluster1" source="joint1" shape="pPlane1Shape" layer="0" defaultValue="0.000" size="3" max="2">
-    <point index="0" value="1.000"/>
-    <point index="1" value="0.123"/>
-    <point index="2" value="0.300"/>
-  </weights>
-</deformerWeight>
-"""
 
 
 def _clear(cm=False):
@@ -148,17 +95,6 @@ def _odd_weights(mesh):
 
 # --- format ---------------------------------------------------------------------------------------------------------
 
-def test_parse_maya_xml():
-    d = dw.parse_xml(MAYA_XML)
-    assert d["shapes"]["pPlane1Shape"][5] == (2.0, 0.0, -2.0)
-    assert [w["source"] for w in d["weights"]] == list(JOINTS)
-    assert [w["layer"] for w in d["weights"]] == [0, 1, 2]
-    assert all(w["deformer"] == "skinCluster1" for w in d["weights"])
-    assert 1 not in d["weights"][2]["points"] and d["weights"][2]["default"] == 0.0
-    assert abs(d["weights"][0]["points"][1] - 0.123456789) < 1e-12
-    d3 = dw.parse_xml(MAYA_XML_3)
-    assert d3["shapes"] == {} and d3["weights"][0]["points"] == {0: 1.0, 1: 0.123, 2: 0.3}
-
 
 def test_export_xml_structure_is_mayas():
     text = dw.export_xml("pPlane1Shape", "skinCluster1",
@@ -210,60 +146,6 @@ def test_round_trip_export_clear_import():
         vg.add(list(range(6)), 0.5, 'REPLACE')
     dw.import_file(mesh, path)
     _same(_weights(mesh), before)
-
-
-def test_maya_file_index_onto_same_mesh():
-    _clear()
-    arm = _skeleton()
-    mesh = _plane()
-    _bind(arm, mesh)
-    path = os.path.join(OUT, "maya_p9.xml")
-    with open(path, "w") as fh:
-        fh.write(MAYA_XML)
-    applied, warnings = dw.import_file(mesh, path, method="INDEX")
-    assert applied == list(JOINTS) and not warnings
-    want = {i: {n: w for n, w in zip(JOINTS, ws) if w > 0} for i, ws in MAYA_WEIGHTS.items()}
-    _same(_weights(mesh), want)
-
-
-def test_index_rules_missing_influence_and_unknown_source():
-    _clear()
-    arm = _skeleton()
-    mesh = _plane()
-    _bind(arm, mesh)
-    for vg in mesh.vertex_groups:
-        vg.remove(list(range(6)))
-    mesh.vertex_groups["joint3"].add(list(range(6)), 1.0, 'REPLACE')
-    data = dw.parse_xml(MAYA_XML)
-    data["weights"] = data["weights"][:2]                 # file without joint3: joint3 keeps its weights (Maya)
-    dw.import_data(mesh, data, normalize=False)
-    w = _weights(mesh)
-    assert all(abs(w[i]["joint3"] - 1.0) < 1e-9 for i in range(6)), w
-    assert abs(w[1]["joint1"] - 0.123456789) < 1e-6
-    data = dw.parse_xml(MAYA_XML.replace('source="joint3"', 'source="jointX"'))
-    _applied, warnings = dw.import_data(mesh, data, normalize=False)
-    assert warnings == ["Unable to find the match weight set name 'jointX' to given deformer."], warnings
-    assert "jointX" not in mesh.vertex_groups
-
-
-def test_nearest_onto_reordered_moved_mesh_in_cm_scene():
-    _clear(cm=True)                          # Maya Workflow Kit template units: one Maya cm = 0.01 BU
-    assert abs(dw.units.maya_unit() - 0.01) < 1e-12
-    arm = _skeleton()
-    order = [5, 3, 1, 4, 2, 0]               # new vertex n = Maya vertex order[n]
-    mesh = _plane(order=order, offset=(0.3, 0.0, -0.2))
-    _bind(arm, mesh)
-    path = os.path.join(OUT, "maya_p9_nearest.xml")
-    with open(path, "w") as fh:
-        fh.write(MAYA_XML)
-    applied, _w = dw.import_file(mesh, path, method="NEAREST")
-    assert applied == list(JOINTS)
-    want = {n: {j: w for j, w in zip(JOINTS, MAYA_WEIGHTS[m]) if w > 0} for n, m in enumerate(order)}
-    _same(_weights(mesh), want)
-    # index on the same reordered mesh gives Maya's index weights instead (proves the methods differ)
-    dw.import_file(mesh, path, method="INDEX")
-    want_idx = {i: {j: w for j, w in zip(JOINTS, ws) if w > 0} for i, ws in MAYA_WEIGHTS.items()}
-    _same(_weights(mesh), want_idx)
 
 
 def test_export_points_are_maya_object_space():

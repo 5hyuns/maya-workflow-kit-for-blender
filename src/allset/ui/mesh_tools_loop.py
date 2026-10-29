@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Insert Edge Loop, Offset Edge Loop and Slide Edge as kit tools.
+"""Insert Edge Loop, Offset Edge Loop and Slide Edge as kit tools (GitHub #31).
 
 The tools run the modals of operators/edge_loops.py; their Maya Tool Settings (fields and factory values)
 are drawn here, in Blender's tool header and in the kit's Tool Settings dock (ui/tool_settings.py
@@ -16,7 +16,7 @@ from ..operators import edge_loops
 # greyed rows are in ui/tool_settings.TS_NOTICES since step 129)
 TS = "Tool Settings"
 GREY = {
-    f"{TS}/Offset Edge Loop/Start/End vertex offset": ("0", "The loop ends stay at their vertices (Maya's 0)"),
+    f"{TS}/Offset Edge Loop/Start/End vertex offset": ("0", "The loop ends stay at their vertices"),
     f"{TS}/Offset Edge Loop/Press enter": ("Automatically", "The loops are made when you release the mouse"),
 }
 

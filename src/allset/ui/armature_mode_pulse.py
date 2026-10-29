@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """A quiet, local highlight for the viewport's armature mode dropdown.
 
-No Maya version has a pulsing header element (PR125_MAYA_LATER.md 4a): it only runs with the add-on preference
+No Maya version has a pulsing header element: it only runs with the add-on preference
 ``armature_mode_pulse`` on (default off), and the timer idles cheaply otherwise."""
 
 import math

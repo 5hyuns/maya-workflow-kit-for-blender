@@ -26,7 +26,7 @@ _snap = {"ob": None, "bones": {}, "op": None}
 
 
 def preserve_children(context=None):
-    """Maya Preserve Children (Move tool, factory off) = Blender's own "Preserve Children" tool setting
+    """Maya Preserve Children (Move tool, off by default) = Blender's own "Preserve Children" tool setting
     (``use_transform_skip_children``, Tool Settings > Move Settings, carried across files by ui/scene_carry): one
     setting for objects and joints, as in Maya. Blender only reads it for objects; for joints the kit selects the
     picked joints head-only (joint_selection.reshape)."""
@@ -209,7 +209,7 @@ def rebase(context=None):
 
 def joint_translate(eb):
     """Maya translate of a joint in rest (Blender length, armature space): the head in the parent's Maya frame. A top
-    joint's translate is its position, in the kit's Z-up axes like every object Translate (; step 258: the
+    joint's translate is its position, in the kit's Z-up axes like every object Translate (step 258: the
     same numbers as the Pose-mode Channel Box, ``channel_box.root_translate``)."""
     if eb.parent is None:
         return eb.head.copy()
@@ -237,7 +237,7 @@ def set_joint_translate(ob, eb, t, preserve=False):
     if preserve:
         _move_head(eb, head)
     else:
-        # targets first: setting a bone's tail also moves its connected children's heads (RNA, checked)
+        # targets first: setting a bone's tail also moves its connected children's heads (RNA)
         moves = [(b, b.head + delta, b.tail + delta) for b in (eb, *eb.children_recursive)]
         for b, h, t in moves:
             b.head, b.tail = h, t
@@ -289,7 +289,7 @@ def _ssc_get(self):
 
 
 def _ssc_set(self, value):
-    # Maya segmentScaleCompensate on = Blender inherit_scale NONE, off = FULL (checked in Blender 4.5,
+    # Maya segmentScaleCompensate on = Blender inherit_scale NONE, off = FULL (Blender 4.5,
     # ALIGNED is not Maya)
     self.inherit_scale = 'NONE' if value else 'FULL'
 

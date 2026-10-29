@@ -23,8 +23,8 @@ def _kmis(km_name, idname, type, shift=False, ctrl=False, alt=False):
 # --- preferences: left alone (step 130) ---------------------------------------------
 
 def test_navigation_preferences_left_alone():
-    """The Maya navigation preset (turntable, dolly, no zoom to mouse, ...) is gone since step 130
-    (): Maya mode leaves Blender's navigation preferences at the user's values."""
+    """The Maya navigation preset (turntable, dolly, no zoom to mouse, ...) is gone since step 130:
+    Maya mode leaves Blender's navigation preferences at the user's values."""
     defaults = {p.identifier: p.default for p in INPUTS.bl_rna.properties
                 if p.identifier in ("view_zoom_axis", "view_zoom_method", "use_zoom_to_mouse", "view_rotate_method")}
     for name, default in defaults.items():

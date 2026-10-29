@@ -99,7 +99,7 @@ def s_loft_check():
     if ob is None:
         return
     sp = ob.data.splines[0]
-    # 3 curves, factory uniform cubic loft: n + 2 = 5 CV rows (surfaces_181.md); U = the curves' 6 CVs
+    # 3 curves, factory uniform cubic loft: n + 2 = 5 CV rows; U = the curves' 6 CVs
     check(f"5 CV rows x 6 along the curves ({sp.point_count_v} x {sp.point_count_u})",
           sp.point_count_v == 5 and sp.point_count_u == 6)
     smaya = import_module(MODULE + ".operators.surfaces_maya")

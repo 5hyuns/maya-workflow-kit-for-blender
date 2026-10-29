@@ -43,7 +43,7 @@ def root_joints(ob):
 
 def select_roots_if_empty(ob):
     """Maya: picking a skeleton picks its root joint (the Channel Box shows
-    the root's channels, Select > All = every root, lead = the last). When the automatic Pose mode () shows
+    the root's channels, Select > All = every root, lead = the last). When the automatic Pose mode shows
     a rig with no shown bone selected, select its root joints, the last one active. True when it selected."""
     from ..ui.channel_box import bone_selected, set_bone_selected
     if ob is None or ob.type != 'ARMATURE' or ob.pose is None:
@@ -101,11 +101,11 @@ def pick(context, ob, mouse, radius):
 # --- Edit or Pose (step 241, Issue #156) ------------------------------------
 # Maya moves a placed joint with W at any time (translate; the children follow). Blender can't translate a connected
 # bone in Pose mode, so while the **Move tool** is on, a skeleton that drives no mesh is shown in Edit mode (the rest
-# = where Maya's joints are); with any other tool joints are picked in Pose mode as before (: Channel Box
+# = where Maya's joints are); with any other tool joints are picked in Pose mode as before (Channel Box
 # channels, S keys, pick walk). A skinned (or animated) skeleton is posed with every tool, and Skin > Move Skinned
 # Joints puts it in Edit mode for the move (the Armature modifier deforms by pose x rest^-1: a new rest at the rest
-# pose leaves the mesh where it is = Maya's moveJointsMode rewriting bindPreMatrix). Delegated: the first cut entered
-# Edit mode on every pick and lost the Channel Box / S / pick walk of unskinned joints (19 GUI checks).
+# pose leaves the mesh where it is = Maya's moveJointsMode rewriting bindPreMatrix). Entering Edit mode on every pick would
+# lose the Channel Box / S / pick walk of unskinned joints.
 
 MOVE_SKINNED = "allset_move_skinned"
 AUTO_EDIT = "allset_joint_move_edit"      # Edit mode entered because of the Move tool (sync_tool_mode leaves it)
@@ -319,7 +319,7 @@ def select_edit(context, ob, name, shift=False, ctrl=False):
 
 def select(context, ob, name, shift=False, ctrl=False):
     """Maya replace / toggle / subtract / add on individual joints."""
-    # a bone with a custom shape is a control (DECISIONS7: control = bone Custom Shape), not a Maya joint: picking it
+    # a bone with a custom shape is a control (control = bone Custom Shape), not a Maya joint: picking it
     # keeps Pose mode with the Move tool too (#171, step 255: an unkeyed Rigify rig went to Edit mode on a W click)
     control = name in ob.pose.bones and ob.pose.bones[name].custom_shape is not None
     if ob.get(MOVE_SKINNED) or (joint_mode(ob) == 'EDIT' and not control and not ob.get(POSE_PIN)

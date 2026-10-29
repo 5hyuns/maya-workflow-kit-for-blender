@@ -7,7 +7,7 @@ targets, and the BlendShape deformer was named after the mesh. Maya writes one c
 in-between shapes, FullWeights = the in-between weights x 100 then 100 (bulge items 5500 / 6000),
 and the deformer is the blendShape node.
 
-``rewrite`` (after Blender's writer,  "FBX post-processing allowed"): each in-between's Shape moves under its
+``rewrite`` (after Blender's writer): each in-between's Shape moves under its
 target's channel in weight order, the helper channels / fix shapes go, FullWeights = Maya's, the deformer takes the
 Key's Maya name (``blendShapeN``).
 """

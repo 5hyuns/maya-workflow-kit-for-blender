@@ -1,7 +1,7 @@
 """Step 56: Maya keys and Time Slider — S keys every keyable channel, Set Breakdown Key, Time Slider
 Cut / Copy / Paste / Delete / Snap / Keys / Tangents / Set Range to, Key > Delete Keys = all keys,
 keymaps (timeline LMB / Shift / MMB / RMB, K time drag, S), the Channel Box RMB items.
-; GUI: tests/gui/gui_step56_time_slider.py."""
+GUI: tests/gui/gui_step56_time_slider.py."""
 
 import types
 from importlib import import_module

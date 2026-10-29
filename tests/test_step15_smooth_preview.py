@@ -1,6 +1,5 @@
 """Step 15: Smooth Mesh Preview (1/2/3) is display only — smooth shading without
-touching mesh data, never baked by Delete History, hidden from INPUTS.
-"""
+touching mesh data, never baked by Delete History, hidden from INPUTS."""
 
 from importlib import import_module
 

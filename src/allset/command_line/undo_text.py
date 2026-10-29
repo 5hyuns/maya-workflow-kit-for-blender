@@ -16,7 +16,7 @@ keeps its own list of step names in Blender's order, from what it can see being 
   its step named after ``bl_label`` when it finishes;
 - operators Blender registered (``WindowManager.operators``: REGISTER + UNDO operators run from keys, tools and
   buttons), read after every depsgraph update and before each kit push. Blender empties that list on undo / redo
-  *before* ``undo_pre`` runs (checked), so it can't be read from the undo handlers.
+  *before* ``undo_pre`` runs, so it can't be read from the undo handlers.
 
 ``undo_pre`` names the active step (the one Ctrl+Z takes back) and moves the position back, ``redo_pre`` moves forward
 and names that step; ``undo_post`` / ``redo_post`` write the text. A step the kit never saw (an UNDO-only operator
@@ -60,7 +60,7 @@ def _add(name):
 def _new_command():
     """A new undoable command ran: Maya's result field no longer shows the last ``Undo: <name>`` / ``Redo: <name>``
     (step 192 G4, #104 — ``Undo: Group`` stayed through P / Delete / Ctrl+E). A command with a result writes it right
-    after (``results.result``); one without leaves the field empty (delegated: Maya clears it for commands that return
+    after (``results.result``); one without leaves the field empty (Maya clears it for commands that return
     nothing)."""
     from . import _result, show_result
     if _result["text"].startswith(("Undo: ", "Redo: ")) or _result["text"] in ("Undo:", "Redo:"):

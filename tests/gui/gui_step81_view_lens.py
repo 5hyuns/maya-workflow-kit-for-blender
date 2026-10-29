@@ -1,6 +1,5 @@
-"""Step 81 in a real UI: the Maya Workflow Kit layout's persp view has Maya's angle (lens 70 = 54.4 deg), a Maya pCube1 looks the
-size it does in Maya's new scene, Four View keeps the angle, Ctrl+Shift+C makes a 35 mm camera.
-"""
+"""Step 81 in a real UI: the Maya Workflow Kit layout's persp view has a 54.4 deg angle (lens 70), a pCube1 has its
+usual on-screen size, Four View keeps the angle, Ctrl+Shift+C makes a 35 mm camera."""
 
 import math
 import os

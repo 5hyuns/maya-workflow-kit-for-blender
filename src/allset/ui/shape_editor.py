@@ -2,11 +2,11 @@
 """Maya's Shape Editor window (step 213, Issue #119).
 
 Maya: menu bar, a toolbar (Create Blend Shape, Add Target, search) and a tree of blendShape nodes with their targets
-(visibility dot, name, weight field + slider, Edit, Key). Blender (delegated mapping): a blendShape node = the base
+(visibility dot, name, weight field + slider, Edit, Key). Blender: a blendShape node = the base
 mesh's Key datablock (named ``blendShapeN``, step 62), its targets = the key blocks after the Basis, weight =
 ``KeyBlock.value``, visibility = ``not KeyBlock.mute``, Edit (sculptTarget) = the target is the object's active shape
 key (moving vertices in Edit Mode then writes into it, Blender's own behaviour). Blender has no envelope: the node row
-shows Maya's 1.000 read-only.
+shows 1.000 read-only.
 
 The window = ``marked_window`` kind SHAPE_EDITOR; menus from ``editor_menu_data`` ("Shape Editor"), actions from
 ``editor_menu_map``.
@@ -213,7 +213,7 @@ def flip(key, index, axis=0):
 
 def mirror(key, index, axis=0, direction='POSITIVE'):
     """Maya Mirror Target: one side's move copied onto the other (POSITIVE = +axis -> -axis); points on the plane
-    lose their move across it (delegated)."""
+    lose their move across it."""
     base = _coords(key.reference_key.data)
     kb = key.key_blocks[index]
     co = _coords(kb.data)
@@ -321,7 +321,7 @@ class ALLSET_OT_shape_create(bpy.types.Operator):
         made, had = [], []
         for ob in meshes:
             if ob.data.shape_keys is not None:
-                had.append(ob)      # Blender has one Key per mesh (delegated)
+                had.append(ob)      # Blender has one Key per mesh
                 continue
             with _object_mode(ob):
                 ob.shape_key_add(name="Basis", from_mix=False)
@@ -486,7 +486,7 @@ class ALLSET_OT_shape_duplicate(_TargetOp, bpy.types.Operator):
             ob = owner(key)
             src = key.key_blocks[i]
             # Maya Shape Editor Duplicate Target (behaviour): name <target>_Copy, made unique
-            # (_Copy1, _Copy2 ...); the copy's weight stays 0 (delegated)
+            # (_Copy1, _Copy2 ...); the copy's weight stays 0
             name = unique_target_name(key, src.name + "_Copy")
             with _object_mode(ob):
                 kb = ob.shape_key_add(name=name, from_mix=False)
@@ -594,7 +594,7 @@ def draw_tree(layout, context):
             pick = name.operator("allset.shape_pick", text=key.name, icon='SHAPEKEY_DATA', emboss=False)
             pick.key, pick.index = key.name, 0
         envelope = weight.row(align=True)
-        envelope.enabled = False             # Blender has no envelope: default 1.000, read-only
+        envelope.enabled = False             # Blender has no envelope: 1.000, read-only
         envelope.label(text="1.000")
         buttons.label(text="")
         if not open_:

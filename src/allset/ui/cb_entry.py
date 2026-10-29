@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Channel Box field text: Maya-style display and entry.
+"""Channel Box field text: Maya-style display and entry (step 38).
 
 Maya shows plain numbers in the current units (cm, degrees) and accepts relative entry
 ``+=5``, ``-=2``, ``*=2``, ``/=2`` (Maya's Channel Box entry). Values are
 shown in the scene's display length unit without the unit name; entry goes through
-``bpy.utils.units.to_value`` so ``5`` means 5 display units and ``5 m`` / ``2*3`` work too
-(tmp/probe38). Kinds: ``LENGTH``, ``ROTATION``, ``NONE`` (plain float), ``INT``, ``BOOL``.
+``bpy.utils.units.to_value`` so ``5`` means 5 display units and ``5 m`` / ``2*3`` work too.
+Kinds: ``LENGTH``, ``ROTATION``, ``NONE`` (plain float), ``INT``, ``BOOL``.
 """
 
 import math

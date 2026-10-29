@@ -59,7 +59,7 @@ def s_setup():
 def s_loaded():
     bpy.ops.allset.keymap_activate()
     units = import_module(MODULE + ".operators.units")
-    check(f"Maya Workflow Kit layout: 1 Maya unit = 0.01 BU (m + cm, ) ({units.maya_unit():.4f})",
+    check(f"Maya Workflow Kit layout: 1 Maya unit = 0.01 BU (m + cm) ({units.maya_unit():.4f})",
           abs(units.maya_unit() - 0.01) < 1e-6)
     area = main_view()
     shelf_map = import_module(MODULE + ".ui.shelf_map")

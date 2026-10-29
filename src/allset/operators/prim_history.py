@@ -50,7 +50,7 @@ def history_on(context):
 
 
 def to_blender(p, k):
-    """Maya Y-up point -> Blender Z-up, scaled by the Maya unit (): (x, y, z) -> (x, -z, y) * k."""
+    """Maya Y-up point -> Blender Z-up, scaled by the Maya unit: (x, y, z) -> (x, -z, y) * k."""
     return (p[0] * k, -p[2] * k, p[1] * k)
 
 
@@ -235,7 +235,7 @@ def new_curve_data(context, name, patch, k):
     """A Curve ('CURVE' for one row, 'SURFACE' otherwise) datablock holding ``patch``.
 
     Blender's Python API can't add rows to a NURBS surface: the rows are made by extruding the first one in edit
-    mode of a temporary object (checked: ``curve.extrude`` works in background, step 129)."""
+    mode of a temporary object (``curve.extrude`` works in background, step 129)."""
     rows, cols = len(patch.points), len(patch.points[0])
     cu = bpy.data.curves.new(name, 'SURFACE' if rows > 1 else 'CURVE')
     cu.dimensions = '3D'

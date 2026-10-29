@@ -1,7 +1,6 @@
 """Step 109: every Maya shelf button in its slot (greyed with a notice when unmapped), Sculpting brushes,
 Curves / Surfaces and FX buttons, Maya-style icons.
 
- 「계획」.
 """
 
 import json
@@ -23,8 +22,8 @@ notices = import_module(kit.MODULE + ".ui.notices")
 curve_tools = import_module(kit.MODULE + ".operators.curve_tools")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Maya 2026 factory shelf files (step 269)
-MAYA_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
+# factory shelf button counts (step 269)
+EXPECTED_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
                "Animation": 15, "Rendering": 26, "FX": 29, "FXCaching": 10}
 
 
@@ -66,7 +65,7 @@ def _evaluated_faces(ob):
 def test_drawn_mapped_at_least_150():
     mapped = {name: len(shelf.factory_buttons(name)) for name, _l, _b in shelf_data.SHELVES}
     total = sum(mapped.values())
-    print("mapped per shelf", mapped, "total", total, "/", sum(MAYA_COUNTS.values()))
+    print("mapped per shelf", mapped, "total", total, "/", sum(EXPECTED_COUNTS.values()))
     assert total >= 150, mapped
     assert mapped["Sculpting"] >= 19 and mapped["Curves"] + mapped["Surfaces"] >= 24 and mapped["FX"] >= 13, mapped
 
@@ -168,7 +167,7 @@ def test_loft_two_circles():
     _select(a, b)
     assert bpy.ops.allset.loft() == {'FINISHED'}
     ob = bpy.data.objects["loftedSurface1"]
-    assert ob.type == 'SURFACE', ob.type                 # a NURBS surface since step 181 (surfaces_181.md)
+    assert ob.type == 'SURFACE', ob.type                 # a NURBS surface since step 181
     sp = ob.data.splines[0]
     assert sp.use_cyclic_u and sp.point_count_v == 4, (sp.use_cyclic_u, sp.point_count_v)   # 2 curves: 1 cubic span
     ev = ob.evaluated_get(bpy.context.evaluated_depsgraph_get())

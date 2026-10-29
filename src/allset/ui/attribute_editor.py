@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Attribute Editor in the 3D View sidebar, sharing the Channel Box dock.
 
-Maya's Attribute Editor; design:  「계획」 1, 3.
+Maya's Attribute Editor.
 - Dock mode (``WindowManager.allset_dock``): the sidebar tabs "Channel Box / Layer
   Editor", "Attribute Editor", "Modeling Toolkit" = the tabs of Maya's right dock
   (step 99); Ctrl+A toggles
@@ -13,7 +13,7 @@ Maya's Attribute Editor; design:  「계획」 1, 3.
 - Joints (step 55): in pose mode the node is the lead pose bone (``channel_box.lead``): a
   ``joint`` tab (ae_layout.JOINT) plus one tab per constraint node, like Maya's
   ``pCube1_parentConstraint1``.
-- Step 106:
+- Step 106 (Maya 2022's Attribute Editor):
   the kit's last extrusion is a ``polyExtrudeFace`` history tab (``H``), modifiers are tabs with Maya node names
   (``MODIFIER_NODES``), and Maya's AE chrome: menu bar List / Selected / Focus / Attributes / Display / Show / Help,
   Focus / Presets / Show / Hide beside the node name, Notes, and Select / Load Attributes / Copy Tab at the bottom.
@@ -67,7 +67,7 @@ def node_type(ob):
     return ae_layout.NODE_TYPE.get(ob.type, ob.type.lower())
 
 
-# Blender modifier -> the Maya history node that does the same (Maya node type names; delegated where Maya has
+# Blender modifier -> the Maya history node that does the same (Maya node type names; where Maya has
 # none of its own: the closest poly / deformer node).
 MODIFIER_NODES = {
     'SUBSURF': "polySmoothFace", 'MULTIRES': "polySmoothFace", 'BEVEL': "polyBevel3", 'MIRROR': "polyMirror",
@@ -351,7 +351,7 @@ JOINT_AXIS_NOTE = "Bone Y points to the child joint (Maya Primary Axis X)"
 
 def joint_orient(pb):
     """Maya jointOrient (radians, xyz) from the joints' Maya frames (step 244: bone axes turned by
-    ``allset_maya_frame``; a top joint against Maya's world axes)."""
+    ``allset_maya_frame``; a top joint in Maya's world axes)."""
     from ..operators import joints
     bone = pb.bone
     frame = joints.maya_bone_frame(bone)
@@ -477,7 +477,7 @@ SECTION_INDENT = 1.2     # separator factor in front of an open section's conten
 
 def section_body(body):
     """The content of an open Attribute Editor section: Maya draws it inset under the section header, in a content
-    area of its own shade (Maya 2026 behaviour: 2 px in from each side, one step off the editor's grey;
+    area of its own shade (2 px in from each side, one step off the editor's grey;
     #194). The box starts under the section's disclosure arrow, gives the content area its shade and frame; the
     column is what the rows go into."""
     row = body.row()
@@ -615,8 +615,8 @@ def text_widths(context, labels, extra_units=None):
 
 def wrap_rows(context, labels, equal=True, extra_units=None):
     """``labels`` split into rows that each fit the dock, so no tab / button / menu text is cut ("pCubeS...",
-    "Sele...", step 192 dogfood, #104). Maya's AE is wider (460 px) and scrolls its tab bar; the kit dock can be
-    narrower (event-simulated sessions don't fit it, users drag it): rows wrap like a narrow Qt bar (delegated).
+    "Sele...", step 192 dogfood, #104). Maya's AE is wider and scrolls its tab bar; the kit dock can be
+    narrower (event-simulated sessions don't fit it, users drag it): rows wrap like a narrow Qt bar.
     ``equal``: an aligned row gives every button the same width, so a row needs n × its widest label; else the
     labels keep their natural widths (left / right aligned rows). Without a region (tests with a fake layout) one
     row."""
@@ -663,7 +663,7 @@ def tab_window(widths, avail, current, arrows):
 
 def draw_tab_strip(layout, context, ob, current):
     """One row of tabs at their text width, left-aligned like Maya's; a dock too narrow for all of them shows the
-    ones around the current tab with ◀ ▶ (previous / next tab, delegated: Qt's arrows only scroll)."""
+    ones around the current tab with ◀ ▶ (previous / next tab; Qt's arrows only scroll)."""
     items = tabs(ob)
     labels = [label for _k, label, _t in items]
     keys = [k for k, _l, _t in items]
@@ -749,7 +749,7 @@ def draw_head(layout, context, ob, key, target, entry):
         sub.operator("allset.ae_step", text="", icon='TRIA_LEFT').forward = False
         sub.operator("allset.ae_step", text="", icon='TRIA_RIGHT').forward = True
     # Maya puts Focus / Presets and Show / Hide right of the name field; the narrow dock gets them as one row
-    # under it, right-aligned (delegated)
+    # under it, right-aligned
     buttons = (("op", "allset.ae_focus", "Focus"), ("menu", "ALLSET_MT_ae_presets", "Presets"),
                ("op", "allset.ae_show_types", "Show"), ("op", "allset.ae_hide_type", "Hide"))
     for idx in wrap_rows(context, [b[2] for b in buttons], equal=False,
@@ -1055,7 +1055,7 @@ def draw_panel(layout, context):
         chrome.wrapped(layout, channel_box.PLACING_TEXT)
         return
     from . import chrome
-    # the dock is narrower than 460 px AE: the bar wraps where it would cut a menu name (delegated)
+    # the dock is narrower than Maya's AE: the bar wraps where it would cut a menu name
     for idx in wrap_rows(context, [label for label, _m in MENU_BAR], equal=False):
         chrome.menu_bar(layout, [MENU_BAR[i] for i in idx])
     ob = ae_node(context)
@@ -1066,8 +1066,8 @@ def draw_panel(layout, context):
     draw(layout, context, ob)
 
 
-# --- Maya AE chrome -------------------------------------------------------
-# Menus, buttons and tooltips as in Maya 2022's Attribute Editor (bars, widgets).
+# --- Maya AE chrome (step 106) ---------------------------------------------------------------------------------
+# Menus, buttons and tooltips like Maya 2022's Attribute Editor (bars, widgets).
 
 ATTRIBUTE_NAMES = (('NICE', "Nice", "Readable names (Translate X)"),
                    ('LONG', "Long", "Property names (location)"),

@@ -1,9 +1,8 @@
 """Step 231 (Issue #140): Game Exporter clip files are the same rig FBX as File > Export Selection.
 
-Audit 0.5.0 (③-16 / ⑤-9): a clip file opened in Maya had joints at
+Audit 0.5.0 (③-16 / ⑤-9): a clip file had joints at
 1/100 size and the mirrored chain in the wrong place, and kit animation layers (NLA tracks) leaked into the file as
-extra takes. Truth = the kit's own joint world positions per frame (Blender -> Maya axes, cm); the Maya side of the
-same files is checked against Maya.
+extra takes. Truth = the kit's own joint world positions per frame (Blender -> Maya axes, cm).
 """
 
 import math

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Auto Key without Blender's preferences (step 130, ).
+"""Maya Auto Key without Blender's preferences (step 130).
 
 Maya's Auto Key keys only attributes that already have keys. Blender's
 own auto keying keys every changed channel unless the user preference "Only Insert Available" is on, and the kit

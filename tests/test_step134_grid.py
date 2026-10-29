@@ -1,4 +1,4 @@
-"""Step 134 lane GRID (#59, ): the Maya grid is drawn in Maya's #404040 whatever the theme
+"""Step 134 lane GRID (#59): the Maya grid is drawn in a fixed #404040 whatever the theme
 (the kit ships none since step 130), the Maya layout views hide the 3D cursor, and the component pivot edit (D /
 Insert, step 18 / 77) shows it only while the cursor is the pivot."""
 

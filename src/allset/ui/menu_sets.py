@@ -4,8 +4,7 @@
 Maya's menu sets: the common menus are always shown,
 the menu set dropdown swaps the menus after them. Structure from
 ``menu_data`` (Maya's menu structure), Blender actions from
-``menu_map``; unmapped items are drawn greyed out. Design: 
-「계획」 2.
+``menu_map``; unmapped items are drawn greyed out (step 7).
 
 One ``Menu`` class per Maya menu and submenu is built from the data at import
 time. ``menu_idname(maya_name)`` is the public name for other UI (hotbox).
@@ -24,7 +23,7 @@ COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
 DEFAULT_SET = "modelingMenuSet"
 
-# Menu set dropdown items (Maya setting currentMenuBarTab).
+# Menu set dropdown items.
 SET_ITEMS = tuple((sid, label, f"Maya {label} menu set")
                   for sid, label, _menus in menu_data.MENU_SETS if sid != COMMON_SET)
 # Plugin menus (MASH, Bifrost, Boss) are listed in the sets but have no data: skipped.
@@ -94,15 +93,15 @@ def current_set(context=None):
 # --- items ---------------------------------------------------------------------
 
 def draw_item(layout, path, label, icon_value=0):
-    """Draw one Maya menu item: its Blender action, or greyed out. An item with a notice and an
+    """Draw one Maya menu item: its Blender action, or greyed out. An item with a "not in Blender" notice and an
     operator substitute runs through ``allset.menu_item``, whose tooltip carries the notice (step 54). So does a
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
-    enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
+    enabled and runs or warns (step 101, ``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
     (``menu_icons``, step 131), 0 = none."""
     s = menu_map.spec(path)
     # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
     # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``allset.menu_item``, which
-    # no key runs, so only the Maya hotkey drawn into the label shows (step 108 「계획」 3).
+    # no key runs, so only the Maya hotkey drawn into the label shows (step 108).
     if s is not None and s[0] == "op" and path in menu_map.GREY_ON_POLL and not op_polls(s[1]):
         draw_spec(layout, label, s, path, icon_value=icon_value)    # Maya greys it in this state (step 203)
         return
@@ -247,7 +246,7 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 
 # Maya's option box is a small square at the right end of the item's line.
 # A second button on a Blender menu line breaks consecutive lines into a staircase (step 51; checked again in step
-# 103 with row / split / column / grid_flow lines,  「계획」 1), so the item stays one button:
+# 103 with row / split / column / grid_flow lines), so the item stays one button:
 # its label ends with Maya's box mark, click = the command, press and hold = "Option Box" = the option window
 # (``operators/option_windows.py``) or the command's own settings. Since step 146 (#82) the hold needs no drag:
 # the pointer is put on the hold menu's "Option Box" row, so letting go runs it.
@@ -266,10 +265,10 @@ def _draw_boxed(layout, path, text, icon_value=0):
     op.item, op.clicked = path, True
 
 
-# --- Maya hotkey column -----------------------------------------------------
+# --- Maya hotkey column (step 108) ------------------------------------------------------------------------
 # Maya prints an item's hotkey right-aligned (File > New Scene "Ctrl+N",
 # Edit Mesh > Bevel "Ctrl+B"), the option box after it. Blender takes no such text for a Python button,
-# so the label carries it: label + filler + "Ctrl+N  ❒", the filler checked with the menu font so the tails line
+# so the label carries it: label + filler + "Ctrl+N  ❒", the filler sized with the menu font so the tails line
 # up on the right.
 HAIR = "\u200a"          # a hair space: fine filler steps (plain spaces only if the UI font lacks it)
 MIN_GAP = 3              # spaces between the longest label and its tail
@@ -368,7 +367,7 @@ def _draw_items(layout, items, prefix, submenus):
             layout.separator()
             if it[1]:
                 # Maya section titles are small; a lower row also keeps File inside a
-                # 900 px window at 125 % (step 108 「계획」 4)
+                # 900 px window at 125 % (step 108)
                 _section_label(layout, it[1])
             continue
         iv = menu_icons.icon_value(path)
@@ -572,12 +571,12 @@ def _op_description(path):
     return path.rsplit('/', 1)[-1]
 
 
-# Maya's values for commands it runs on a whole object:
+# Values for commands run on a whole object:
 # Bevel fraction 0.5, Chamfer Vertices 0.25 (Blender: percent of the adjacent edge).
 WHOLE_MESH_PROPS = {
     "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
     "Edit Mesh/Average Vertices": {"repeat": 10},
-    # Circularize: allset.circularize's own defaults are Maya's (step 110); the old LoopTools "value" key made every
+    # Circularize: allset.circularize's own defaults apply (step 110); the old LoopTools "value" key made every
     # object-mode Circularize raise TypeError (step 240 QA D-240-1)
 }
 
@@ -688,8 +687,8 @@ def _run_on_owners(context, action, path):
         bpy.ops.object.mode_set(mode='EDIT')
 
 
-# --- opening the option box by holding (step 146, #82;  「계획」) ----------------------------
-# checked (GUI probe; Blender 4.5 source interface_handlers.cc / interface_layout.cc ui_item_menu_hold): a held
+# --- opening the option box by holding (step 146, #82) ----------------------------------------------------------
+# Blender 4.5 (interface_handlers.cc / interface_layout.cc ui_item_menu_hold): a held
 # ``operator_menu_hold`` button opens its hold menu after BUTTON_AUTO_OPEN_THRESH (0.2 s) *below* the button, as a
 # popup of its own; letting go outside it cancels it, so before step 146 the user had to drag onto its row. Python
 # can't tell where on the item a click landed, Shift / Ctrl / Alt+click run nothing in event simulation, and an
@@ -1010,9 +1009,8 @@ class ALLSET_MT_menu_bar(bpy.types.Menu):
         draw_menu_bar(self.layout, context, collapsed=True)
 
 
-# Maya menu bar items are their text plus ~11 px ("File" 30 px,
-# "Mesh Display" 80 px, Segoe UI 11 px); Blender's header pulldowns add about a UI unit, so the Maya bar overflowed a
-# 1600 px window at 125 % (step 113). Each item gets its checked text width plus this padding.
+# Maya-style menu bar items are their text plus a small padding; Blender's header pulldowns add about a UI unit, so
+# the bar overflowed a 1600 px window at 125 % (step 113). Each item gets its blf text width plus this padding.
 MENU_PAD_PX = 11
 
 

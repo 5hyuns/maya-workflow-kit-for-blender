@@ -1,6 +1,6 @@
 """Step 100: Maya's default material — every new shape joins initialShadingGroup = lambert1 (color 0.5, lambert;
 Maya: lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
-lambert2). """
+lambert2)."""
 
 from importlib import import_module
 
@@ -36,9 +36,9 @@ def test_new_cubes_share_lambert1():
     assert len(a.material_slots) == 1 and material.is_default(ma)
     assert ma.get("allset_type") == "lambert" and ma.use_fake_user
     col = tuple(_principled(ma).inputs["Base Color"].default_value)
-    assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # Maya lambert1.color = (0.5, 0.5, 0.5)
+    assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # lambert1.color = (0.5, 0.5, 0.5)
     inc = tuple(_principled(ma).inputs["Emission Color"].default_value)
-    assert inc[:3] == (0.0, 0.0, 0.0), inc   # Maya lambert1.incandescence = (0, 0, 0)
+    assert inc[:3] == (0.0, 0.0, 0.0), inc   # lambert1.incandescence = (0, 0, 0)
     assert material.shading_group_name(ma) == "initialShadingGroup"
 
 

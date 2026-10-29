@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Light Editor = a kit light list in a 3D View window's sidebar.
+"""Maya Light Editor = a kit light list in a 3D View window's sidebar (step 67).
 
 Maya: a floating window with a toolbar (create lights),
 a list (Name / Color / Intensity / Exposure, enable and solo per row) and the Property Editor of the picked light.
@@ -44,7 +44,7 @@ def is_light_editor(context):
 
 
 def lights(context):
-    # scene.objects: view_layer.objects lags behind objects linked since the last depsgraph sync ( step 11)
+    # scene.objects: view_layer.objects lags behind objects linked since the last depsgraph sync (step 11)
     return sorted((o for o in context.scene.objects if o.type == 'LIGHT' and not o.get("allset_default_light")),
                   key=lambda o: o.name.lower())     # step 152: not the render-time default light
 

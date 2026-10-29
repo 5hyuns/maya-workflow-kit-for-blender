@@ -1,7 +1,6 @@
 """Step 56 in a real UI, Maya animation_01 hand order: frame 1 S -> LMB on the Time Slider at 24 -> move ->
 S -> keys [1, 24] -> RMB on the Time Slider at 24 > Delete -> only frame 24's key goes -> K held + LMB drag in the
-view moves the time and keeps the selection -> Shift+LMB drag highlights a red range -> MMB shows the notice.
- 「계획」 6."""
+view moves the time and keeps the selection -> Shift+LMB drag highlights a red range -> MMB shows the notice."""
 
 import os
 import sys

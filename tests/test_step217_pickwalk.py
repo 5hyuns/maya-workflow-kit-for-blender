@@ -1,8 +1,8 @@
-"""Step 217 L20: pose-mode pick walk per   (controller tags -> Maya controller
+"""Step 217 L20: pose-mode pick walk (controller tags -> Maya controller
 rule; untagged armature -> bones hidden by bone collections are walked past; bones hidden one by one are walked into
 like Maya; preference off -> plain DAG) and Control > Tag As Controller /
-Parent Controller. The Rigify case measures how many visible controls an Up walks onto a hidden bone, old vs new
-(reference: DECISIONS7 E4, 134 / 212 = 63 % before)."""
+Parent Controller. The Rigify case counts how many visible controls an Up walks onto a hidden bone, old vs new
+(134 / 212 = 63 % before)."""
 
 from importlib import import_module
 

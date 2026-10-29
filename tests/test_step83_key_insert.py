@@ -1,5 +1,5 @@
 """Step 83: Maya Insert Key (shape kept), Nudge Keys, Select Previous / Next Key, keymap.
-; GUI: tests/gui/gui_step83_key_insert.py."""
+GUI: tests/gui/gui_step83_key_insert.py."""
 
 from importlib import import_module
 
@@ -62,7 +62,7 @@ def _free_overshoot(fc):
 
 
 def test_plain_blender_insert_misses_free_handles():
-    # why the split is needed: Blender's insert keeps auto segments but not free / overshooting ones (checked 0.36)
+    # why the split is needed: Blender's insert keeps auto segments but not free / overshooting ones (0.36 here)
     _ob, fc = _animated()
     _free_overshoot(fc)
     before = _samples(fc)

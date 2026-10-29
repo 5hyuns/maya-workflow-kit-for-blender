@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Control > Tag As Controller / Parent Controller on bones.
+"""Control > Tag As Controller / Parent Controller on bones (step 217).
 
 Maya's ``controller`` command (menu Tag As Controller) tags nodes as controllers with
 an empty parent controller; ``cmds.controller(parent=True)`` (Parent Controller) makes the last selected node the
 parent controller of the others. Pick walk then follows the controller hierarchy
-(DECISIONS7 M4: tags alone leave the parent empty, so j3 Up still reaches the hidden j2 until Parent Controller).
+(tags alone leave the parent empty, so j3 Up still reaches the hidden j2 until Parent Controller).
 
 Kit translation: a controller tag is the data Bone ID property ``allset_controller`` (True), the parent controller
 ``allset_controller_parent`` (a bone name in the same armature). Only pose bones carry tags: objects are walked by
-Blender's own hierarchy (delegated). Walk rules: ``operators/joints.walk_bone``.
+Blender's own hierarchy. Walk rules: ``operators/joints.walk_bone``.
 """
 
 import bpy

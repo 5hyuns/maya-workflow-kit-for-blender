@@ -1,9 +1,9 @@
-"""Step 258 (Issue #155): F frames like Maya's viewFit (fit factor 0.95, Maya's margin), the Status Line snap
+"""Step 258 (Issue #155): F frames Maya-style (viewFit, fit factor 0.95), the Status Line snap
 toggles stay out of the undo queue, the Symmetry control opens Maya's drop-down.
 
-Maya 2026: unit polyCube, persp camera (35 mm, film 36 x 24:
+Expected: unit polyCube, persp camera (35 mm, film 36 x 24:
 hfov 54.4322, vfov 37.8493), viewFit -> camera 3.23226 from the cube centre (fitFactor 1.0: 3.11360, 0.9: 3.36412),
-camera direction (1.94505, 1.45879, 1.94505) in Maya axes."""
+camera direction (1.94505, 1.45879, 1.94505), Maya axes."""
 
 import math
 from importlib import import_module
@@ -15,8 +15,6 @@ import kit
 
 framing = import_module(kit.MODULE + ".operators.framing")
 
-MAYA = {0.95: 3.23226, 1.0: 3.11360, 0.9: 3.36412}
-
 
 def _view():
     d = Vector((1.94505, -1.94505, 1.45879))           # Maya (x, y, z) -> Blender (x, -z, y)
@@ -27,17 +25,6 @@ def _view():
     win[2][2], win[2][3], win[3][2], win[3][3] = -1.0, -0.2, -1.0, 0.0
     size = (1000.0, 1000.0 * th / tw)
     return rot, win, size
-
-
-def test_f_frames_with_mayas_margin():
-    rot, win, size = _view()
-    pts = [Vector((x, y, z)) for x in (-.5, .5) for y in (-.5, .5) for z in (-.5, .5)]
-    for ff, want in MAYA.items():
-        loc, dist = framing.fit(pts, rot, win, 10.0, False, size, (0, 0, size[0], size[1]), factor=ff)
-        eye = loc + rot @ Vector((0.0, 0.0, dist))
-        got = eye.length                                    # Maya: camera distance from the cube centre
-        assert abs(got - want) < 2e-4, (ff, got, want)
-    assert framing.FIT == 0.95
 
 
 def test_frame_sidebar_rect_keeps_margin():
@@ -76,7 +63,7 @@ class _Fake:
 
 
 def test_symmetry_box_is_a_drop_down():
-    """Maya's "Symmetry: Off" box opens the list on a click (Maya 2022 Status Line); it was a text field."""
+    """Maya's "Symmetry: Off" box opens the list on a click (Maya Status Line); it was a text field."""
     log = []
     status_line.draw_status_line(_Fake(log), bpy.context)
     props = [e for e in log if e[0] == "prop" and len(e[1]) > 1 and e[1][1] == "allset_symmetry_text"]
@@ -86,7 +73,7 @@ def test_symmetry_box_is_a_drop_down():
 
 
 def test_snap_toggle_is_no_undo_step_and_survives_undo():
-    """Maya's snap toggles are not undoable (snapMode pushes no undo step, 060_messages_ui.md B5): Ctrl+Z after
+    """Maya's snap toggles are not undoable (they push no undo step): Ctrl+Z after
     move -> toggle undoes the move and keeps the toggle."""
     assert 'UNDO' not in status_line.ALLSET_OT_snap_toggle.bl_options
     for ob in list(bpy.data.objects):

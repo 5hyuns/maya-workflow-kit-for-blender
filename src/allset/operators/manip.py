@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Smart Duplicate / Smart Extrude: Shift+drag a Move/Rotate/Scale manipulator
 duplicates the selected objects, or extrudes the selected faces/edges/vertices, and the drag
-transforms the copies / new components (Maya
-setting ``manipSmartDuplicate 1``, ``manipSmartExtrude 1``).
+transforms the copies / new components (Maya's smart duplicate / smart extrude).
 
 Blender's transform gizmo is C. Its keymap
 (``Generic Gizmo Maybe Drag``) runs ``gizmogroup.gizmo_tweak`` for any Shift; the
@@ -10,7 +9,7 @@ Maya keyconfig puts ``allset.manip_duplicate`` in front of it
 (keymap/maya_patches.py 21). This operator duplicates/extrudes and always passes the
 event on, so the gizmo then transforms the selection, which is the new part. A timer
 waits for the transform to end and takes the copy / extrusion back when nothing moved
-(a Shift+click, a cancelled drag). Plans: , 
+(a Shift+click, a cancelled drag). Steps 22 and 26.
 """
 
 import bmesh
@@ -21,7 +20,7 @@ from .. import live_refs
 from . import duplicate, keystate
 
 # Gizmo groups of the transform manipulator (tool gizmo and the viewport's object gizmos);
-# light/camera/spot gizmos share the keymap but are left alone (checked, ).
+# light/camera/spot gizmos share the keymap but are left alone (step 26).
 XFORM_GROUPS = {"VIEW3D_GGT_xform_gizmo", "VIEW3D_GGT_xform_gizmo_context",
                 "ALLSET_GGT_xform"}   # ui/manipulator.py, the Maya-shaped manipulator (step 59)
 POLL = 0.05
@@ -105,8 +104,8 @@ def _extrude_vertices(context, ob):
 
 
 def start_extrude(context):
-    """Extrude in place (Maya polyExtrudeFacet / polyExtrudeEdge, keepFacesTogether on ):
-    edges extrude as a region too, so a connected edge strip stays connected (delegated); vertices extrude Maya's
+    """Extrude in place (Maya polyExtrudeFacet / polyExtrudeEdge, keepFacesTogether on):
+    edges extrude as a region too, so a connected edge strip stays connected; vertices extrude Maya's
     polyExtrudeVertex way (``VERTEX_DRAG``)."""
     obs = _edit_meshes(context)
     saved = {}
@@ -370,8 +369,8 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
 
-# --- Ctrl+LMB axis = plane, Shift+MMB = automatic axis -------------------------
-# Maya : Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
+# --- Ctrl+LMB axis = plane, Shift+MMB = automatic axis (step 85) -------------------------
+# Maya: Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
 # handle (move / scale in the other two), Ctrl+click on the Move centre frees the active handle; Shift+MMB drag moves
 # along the axis closest to the drag direction.
 
@@ -505,7 +504,7 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
             op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
             try:
                 # launched from this MOUSEMOVE: release_confirm can't see the MMB, so the transform is
-                # confirmed by the MMB release below it (checked, )
+                # confirmed by the MMB release below it (step 85)
                 kwargs = dict(constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
                               release_confirm=True)
                 if self.mode == 'RESIZE':
@@ -551,8 +550,8 @@ class ALLSET_OT_manip_size(bpy.types.Operator):
     bl_label = "Manipulator Size"
     bl_options = {'INTERNAL'}
 
-    # Maya: manipOptions -r -s 2.0 / 0.5 (Maya default hotkeys, ); 1.25x steps within
-    # Blender's gizmo size range 10-200 px. Since step 130 this scales the kit's
+    # Maya's = / - keys grow / shrink the manipulator; here 1.25x steps within
+    # Blender's gizmo size range 10-200 px (step 27). Since step 130 this scales the kit's
     # Move / Scale manipulator only (ui/manipulator.SIZE): Blender's gizmo_size preference is never written, so
     # Blender's own gizmos (Rotate) keep their size.
     factor: bpy.props.FloatProperty(name="Factor", default=1.25, min=0.1, max=10.0,

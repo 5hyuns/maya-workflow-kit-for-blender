@@ -2,25 +2,25 @@
 """Maya weighted / non-weighted tangents and tangent length locks (step 198).
 
 Maya:
-- a weighted tangent's weight is the Bezier arm length in (frame, value) space, the angle is checked there too:
+- a weighted tangent's weight is the Bezier arm length in (frame, value) space, the angle is taken there too:
   control point = key ± w·(cos a, sin a). Maya ``ix / iy`` = 3 × the arm in (seconds, value), so
   arm frames = ix·fps / 3, arm value = iy / 3 — exactly a Blender F-curve handle (FREE) minus its key.
 - a non-weighted curve keeps every arm's time extent at Δt/3 of its neighbour interval (first / last key: their one
   interval), the angle free; Weighted Tangents keeps the shape, Non-weighted Tangents puts every arm back to Δt/3
   keeping its angle (the shape changes, key 5 at 40° stays 40°).
-- Lock Tangent Length (factory free): with the length locked, changing the angle keeps the weight.
+- Lock Tangent Length (default free): with the length locked, changing the angle keeps the weight.
 
 Blender's F-curve handles already are weighted tangents, so the kit only stores what Maya adds:
 
 ``Action["allset_weights"]`` = {"<data_path>|<array_index>": {"w": 0 | 1, "n": key count, "locks": flat floats}}
 - "w" 0 = the curve is non-weighted (the Δt/3 rule applies), 1 = weighted; a curve with no entry is weighted
-  (Blender's nature — delegated: only curves the kit marked non-weighted get the Δt/3 rule).
+  (Blender's nature: only curves the kit marked non-weighted get the Δt/3 rule).
 - "locks" = [index, frame, left length, right length] per locked key; "n" = the curve's key count when they were
   written. A lock finds its key by frame (±1e-3); when no key sits there but the key count is still "n" (keys
   were moved, none added / removed) it takes the key at the stored index and follows its new frame.
 
 ``watch(context)`` (every 0.25 s from ``ui/graph_view._tick``, never while a modal operator runs) re-applies both
-rules to FREE / ALIGNED handles. AUTO / AUTO_CLAMPED / VECTOR handles are Blender's to compute (delegated): Blender
+rules to FREE / ALIGNED handles. AUTO / AUTO_CLAMPED / VECTOR handles are Blender's to compute: Blender
 recalculates them on every update, a drag turns them ALIGNED / FREE and then the rule applies. Writes made by the
 watch push no undo step of their own (they join the next one).
 """

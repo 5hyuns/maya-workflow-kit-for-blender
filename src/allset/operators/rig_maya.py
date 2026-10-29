@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Skeleton / Skin / Deform commands with Maya's results (step 110,  「계획」 5-7).
+"""Maya Skeleton / Skin / Deform commands with Maya's results (step 110).
 
 Reroot, Preferred Angle, IK Spline Handle; Hammer, Add / Remove
 Influence, Remove Unused Influences; Cluster, Soft Mod (Nonlinear lives in ``menu_items``). A Maya joint is a
@@ -252,7 +252,7 @@ def fit_spans(points, spans=1):
 
 
 # Blender's Spline IK walks the curve's evaluated polyline (resolution_u segments per span): at 128 the joints land
-# within 7e-5 of Maya's 4-decimal numbers (64: 1.1e-4; tests/test_step218_curve_rig.py), so kit Spline IK curves get
+# where tests/test_step218_curve_rig.py expects them (64 is a little off), so kit Spline IK curves get
 # at least this.
 SPLINE_RESOLUTION = 128
 
@@ -398,8 +398,8 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
         if handle is not None and self.twist_type:
             handle["twistType"] = int(self.twist_type)
             handle.update_tag()
-        # Maya selects the new ikHandle (L6_spline_auto_curve): the kit handle is the
-        # constraint, so its bone becomes the only selected joint (delegated)
+        # Maya selects the new ikHandle: the kit handle is the
+        # constraint, so its bone becomes the only selected joint
         cb = _cb()
         owner = next(pb for pb in arm.pose.bones if pb.constraints.get(con.name) == con)
         for pb in arm.pose.bones:
@@ -785,9 +785,9 @@ class ALLSET_OT_hammer_weights(bpy.types.Operator):
 def _hook(context, ob, base, centre_world, vertex_indices=None):
     """Hook modifier ``<base>N`` driven by the empty ``<base>NHandle`` at ``centre_world`` (rest = no change).
 
-    Step 144 (#34): a mesh's points are the vertex group ``<base>N`` (weight 1, Maya's factory deformer weights),
+    Step 144 (#34): a mesh's points are the vertex group ``<base>N`` (weight 1, the default deformer weight),
     which Deform > Paint Weights paints; ``vertex_indices`` None = every point (a Hook with neither a group nor
-    indices moves nothing, checked step 110)."""
+    indices moves nothing, step 110)."""
     from . import deformers
     name = deformers.new_name(base)
     handle = bpy.data.objects.new(f"{name}Handle", None)
@@ -956,7 +956,7 @@ class ALLSET_OT_soft_mod(bpy.types.Operator):
         if centre is None:
             self.report({'WARNING'}, "Select components or an object")
             return {'CANCELLED'}
-        # a Hook with neither a vertex group nor indices moves nothing (checked): every vertex, weighted by falloff
+        # a Hook with neither a vertex group nor indices moves nothing: every vertex, weighted by falloff
         md, handle = _hook(context, ob, "softMod", centre, None)
         md.falloff_type = 'CURVE'
         md.falloff_radius = self.radius * units.maya_unit(context.scene)

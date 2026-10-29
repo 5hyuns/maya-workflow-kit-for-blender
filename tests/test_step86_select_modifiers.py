@@ -1,5 +1,5 @@
 """Step 86: Maya selection modifiers in the Dope Sheet, NLA and Node Editor (Shift toggle, Ctrl deselect,
-Ctrl+Shift add). ; GUI: tests/gui/gui_step86_select_modifiers.py."""
+Ctrl+Shift add). GUI: tests/gui/gui_step86_select_modifiers.py."""
 
 from importlib import import_module
 

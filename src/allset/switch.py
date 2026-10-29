@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya ⇄ Blender switch.
+"""Maya ⇄ Blender switch (steps 60, 130).
 
 The extension stays enabled; "Maya mode" is the set of sub-packages ``__init__.MODE``
 (keymap, UI, operators, ...). Switching off unregisters them, which puts
@@ -10,7 +10,7 @@ add-on preferences, Edit (Blender) / Windows > Settings/Preferences (Maya) menu 
 the menu search finds, and Ctrl+Alt+Shift+M (free in Blender, Industry Compatible and
 Maya's factory hotkeys).
 
-Nothing persistent (step 130, ): Maya mode writes none of Blender's preferences and
+Nothing persistent (step 130): Maya mode writes none of Blender's preferences and
 nothing outside the extension's folders, so switching off / disabling / removing needs no snapshot or restore —
 unregistering the Maya mode modules takes back everything they registered.
 
@@ -82,9 +82,9 @@ def _fit_views(ws, scene):
                 if space.type != 'VIEW_3D':
                     continue
                 # The tool header is Maya's panel toolbar in views with a header (step 113); the Tool Box column has
-                # neither. Set it explicitly: an appended screen came back with it shown (checked, step 60). Only a
+                # neither. Set it explicitly: an appended screen came back with it shown (step 60). Only a
                 # change is written (Modeling - Expert keeps a header without the toolbar row, step 160; writing a
-                # region flag of a screen no window shows crashes Blender in ED_area_init, checked in -b).
+                # region flag of a screen no window shows crashes Blender in ED_area_init in -b).
                 if space.show_region_tool_header and not space.show_region_header:
                     space.show_region_tool_header = False
                 for key, value in units.clip(scene).items():
@@ -135,7 +135,7 @@ def append_workspace(window, template_name):
     ws[TEMPLATE_KEY] = template_name
     window.workspace = ws
     # region flag writes call ED_area_init, which reads the context window's workspace (None after a file load in
-    # -b crashed Blender, checked)
+    # -b crashed Blender)
     with bpy.context.temp_override(**_window_override(window)):
         _mark_strips(ws)
         _fit_views(ws, window.scene)
@@ -185,7 +185,7 @@ MASK_KEY = "allset_switch_masks"
 
 def _mark_strips(ws):
     """Appending a workspace doesn't bring the Masks its Image Editors point to, and those mark the
-    Status Line row and the Shelf row (ui/shelf.is_strip, checked): load them and point the two
+    Status Line row and the Shelf row (ui/shelf.is_strip): load them and point the two
     top Image Editors (Status Line above the Shelf) at them again."""
     missing = [m for m in STRIP_MASKS if m not in bpy.data.masks]
     if missing:
@@ -228,7 +228,7 @@ def leave_layout(window):
 BLENDER_LAYOUT_KEY = "allset_blender_layout"
 BLENDER_PREV_KEY = "allset_blender_prev"     # on a template Maya workspace: the user's workspace before it (#185)
 # Blender's embedded factory startup file: what Add Workspace > General appends from (workspace_edit.cc
-# workspace_append_button, BLO_EMBEDDED_STARTUP_BLEND; checked on 4.5, step 129)
+# workspace_append_button, BLO_EMBEDDED_STARTUP_BLEND; step 129)
 EMBEDDED_STARTUP = "<startup.blend>"
 # The workspace the user's own file showed when a new Maya scene replaced it (first_start.new_maya_scene).
 START_WORKSPACE = {"name": None}
@@ -264,7 +264,7 @@ def _users_workspace(window):
 def _append_workspaces(path, names):
     """Append the workspaces ``names`` of ``path`` as data (marked BLENDER_LAYOUT_KEY); returns {name in path:
     workspace}. Not ``workspace.append_activate``: in the UI each of those switches the window to the workspace it
-    appended once the event loop runs, after the switch has chosen the one to show (checked, #185)."""
+    appended once the event loop runs, after the switch has chosen the one to show (#185)."""
     before = set(bpy.data.workspaces)
     try:
         with bpy.data.libraries.load(path, link=False) as (_src, dst):
@@ -333,7 +333,7 @@ def _leave_template_layout(window):
 
 def _delete_workspace(window, name, added):
     ws = bpy.data.workspaces.get(name)
-    # workspace.delete removes the window's active workspace whatever the override says (checked): remove the
+    # workspace.delete removes the window's active workspace whatever the override says: remove the
     # left one as data once no window shows it (4.5 and 5.1 GUI, step 118)
     if ws is not None and all(w.workspace != ws for w in _windows()):
         bpy.data.batch_remove(ids=[ws])

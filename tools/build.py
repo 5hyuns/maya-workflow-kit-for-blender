@@ -14,8 +14,7 @@ plain zip of src/allset with the manifest at the archive root, which is the
 layout the extension builder produces.
 
 The build runs Blender with a throwaway user config inside tmp/ so the
-user's real Blender settings are never read or written
-().
+user's real Blender settings are never read or written.
 """
 
 import argparse
@@ -29,13 +28,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "allset"
 DIST = ROOT / "dist"
-# Main target since step 272 (user 10-28): Blender 5.2 LTS, the portable 5.2.3 build; 5.0 / 5.1 are run with
-# ``--blender`` / ``BLENDER``. Blender 4.5 is not supported since 0.7.0 (step 279, user 10-29).
+# Main target since step 272: Blender 5.2 LTS, the portable 5.2.3 build; 5.0 / 5.1 are run with
+# ``--blender`` / ``BLENDER``. Blender 4.5 is not supported since 0.7.0 (step 279).
 BLENDER_52 = os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders", "blender-5.2.3-windows-x64",
                           "blender.exe")
 DEFAULT_BLENDER = BLENDER_52
 
-# Zip file name stem = the product name (step 125, ). `extension build` would name the file after the
+# Zip file name stem = the product name (step 125). `extension build` would name the file after the
 # manifest id; the output path is passed explicitly.
 ZIP_STEM = "maya-workflow-kit"
 
@@ -87,7 +86,7 @@ def build_extension_with_blender(blender, out):
     cmd = [blender, "--factory-startup", "--command", "extension", "build",
            "--source-dir", str(SRC), "--output-filepath", str(out)]
     # stdin must not be inherited: with an interactive stdin the command can hang.
-    from blender_slots import slot      # machine-wide Blender slots ( 10-25)
+    from blender_slots import slot      # machine-wide Blender slots
     with slot("tools/build.py extension build"):
         r = subprocess.run(cmd, env=sandbox_env(), stdin=subprocess.DEVNULL,
                            capture_output=True, text=True, timeout=300)

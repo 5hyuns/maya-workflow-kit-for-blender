@@ -208,7 +208,7 @@ def s_lattice_shot():
         if p is not None:
             pts.append((region.x + int(p.x), region.y + int(p.y)))
     share = green_share(px, pts)
-    check(f"selected lattice drawn in Maya's lead green ({share:.2f} of {len(pts)} edge midpoints)",
+    check(f"selected lattice drawn in the lead green ({share:.2f} of {len(pts)} edge midpoints)",
           share > 0.6 and len(pts) >= 20)
 
 

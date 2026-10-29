@@ -11,8 +11,7 @@ Blender has no dependency graph connections between properties: a connection is 
 one variable ``cn`` reading the left property (the step 62 SDK uses ``sdk`` the same way). Maya copies the number
 across attribute types through unit conversion (translateX 3 cm -> rotateX 3 degrees), so the driver expression scales
 by the same Maya-number factors (lengths / ``maya_unit()``, angles in degrees). Only attributes with a Blender
-counterpart are listed (transform channels, visibility, custom attributes): Maya's caching / nodeState / ... have none
-(delegated).
+counterpart are listed (transform channels, visibility, custom attributes): Maya's caching / nodeState / ... have none.
 """
 
 import math
@@ -167,7 +166,7 @@ def connect(scene, src, src_attr, dst, dst_attr):
         var.targets[0].data_path = f"{sres[0]}[{sres[1]}]" if sres[1] >= 0 else sres[0]
         drv.expression = expression(sres[2], kind, unit)
         n += 1
-    # a Python ID-property write tags nothing ( step 62): a custom attribute made after the last evaluation
+    # a Python ID-property write tags nothing (step 62): a custom attribute made after the last evaluation
     # isn't on the evaluated source yet, and the driver reads it as invalid until the source is tagged
     src.update_tag()
     dst.update_tag()
@@ -217,7 +216,7 @@ def is_open(context, side, attr):
 
 
 def direction(context):
-    """(source side, target side) for the current mode (Inputs connects right to left; delegated)."""
+    """(source side, target side) for the current mode (Inputs connects right to left)."""
     return ("RIGHT", "LEFT") if _wm(context).allset_cn_mode == "INPUTS" else ("LEFT", "RIGHT")
 
 

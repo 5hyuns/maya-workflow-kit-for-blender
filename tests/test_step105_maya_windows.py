@@ -1,6 +1,6 @@
 """Step 105: Hypershade, Render Settings and Script Editor look — Maya menu bars like Maya 2022's, the
 Render Settings Common tab writing scene.render, Maya presets, the new Create shader kinds, the Browser tabs, Script
-Editor run / echo. """
+Editor run / echo."""
 
 import types
 from importlib import import_module
@@ -56,7 +56,7 @@ def test_common_tab_writes_scene_render():
     sc.allset_rs_prefix = "shot"
     assert r.filepath.replace("\\", "/") == "//../images/shot", r.filepath
     sc.allset_rs_ext = 'DOT'
-    assert r.filepath.endswith("shot.####"), r.filepath      # Maya name.#.ext, padding 4
+    assert r.filepath.endswith("shot.####"), r.filepath      # name.#.ext, padding 4
     sc.allset_rs_padding = 3
     assert r.filepath.endswith("shot.###") and sc.allset_rs_padding == 3
     sc.allset_rs_ext = 'UNDERSCORE'
@@ -69,7 +69,7 @@ def test_common_tab_writes_scene_render():
     assert (r.resolution_x, r.resolution_y) == (720, 486) and abs(r.pixel_aspect_x / r.pixel_aspect_y - 0.9) < 1e-4
     r.resolution_x = 1000
     assert sc.allset_rs_size == 'CUSTOM'
-    # Presets > Import Render Settings > Default Settings = Maya factory (960 x 540, PNG, padding 4, single)
+    # Presets > Import Render Settings > Default Settings = factory (960 x 540, PNG, padding 4, single)
     r.image_settings.file_format = 'JPEG'
     assert bpy.ops.allset.rs_defaults() == {'FINISHED'}
     assert (r.resolution_x, r.resolution_y, r.pixel_aspect_x, r.pixel_aspect_y) == (960, 540, 1.0, 1.0)

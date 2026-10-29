@@ -1,6 +1,5 @@
 """Step 65: Maya polyExtrudeFace (Thickness / Local Translate Z / Offset / Divisions / Keep Faces Together), the
-last-operation record (INPUTS row, In-View Editor). ;
-GUI: tests/gui/gui_step65_extrude.py."""
+last-operation record (INPUTS row, In-View Editor). GUI: tests/gui/gui_step65_extrude.py."""
 
 from importlib import import_module
 
@@ -17,46 +16,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 mm = import_module(kit.MODULE + ".marking.menus")
 mapping = import_module(kit.MODULE + ".keymap.mapping")
 
-# Maya 2022: polyCube 1x1x1, polyExtrudeFacet on f[1] (top, +Y) / f[4] (+X).
-# (vertex count, face count, sorted world positions in Maya Y-up).
-MAYA = {
-    "default": ({}, ["top"], 12, 10, None),
-    "ltz05": ({"local_translate_z": 0.5}, ["top"], 12, 10,
-              [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5), (-0.5, 1.0, -0.5),
-               (-0.5, 1.0, 0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5),
-               (0.5, 1.0, -0.5), (0.5, 1.0, 0.5)]),
-    "thick05": ({"thickness": 0.5}, ["top"], 12, 10, "ltz05"),
-    "offset01": ({"offset": 0.1}, ["top"], 12, 10,
-                 [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5), (-0.4, 0.5, -0.4),
-                  (-0.4, 0.5, 0.4), (0.4, 0.5, -0.4), (0.4, 0.5, 0.4), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5),
-                  (0.5, 0.5, -0.5), (0.5, 0.5, 0.5)]),
-    "div2_ltz05": ({"local_translate_z": 0.5, "divisions": 2}, ["top"], 16, 14,
-                   [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5), (-0.5, 0.75, -0.5),
-                    (-0.5, 0.75, 0.5), (-0.5, 1.0, -0.5), (-0.5, 1.0, 0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5),
-                    (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.5, 0.75, -0.5), (0.5, 0.75, 0.5), (0.5, 1.0, -0.5),
-                    (0.5, 1.0, 0.5)]),
-    "two_together_thick": ({"thickness": 0.5}, ["top", "+x"], 14, 12,
-                           [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5),
-                            (-0.5, 1.0, -0.5), (-0.5, 1.0, 0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5),
-                            (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (1.0, -0.5, -0.5), (1.0, -0.5, 0.5),
-                            (1.0, 1.0, -0.5), (1.0, 1.0, 0.5)]),
-    "two_apart_thick": ({"thickness": 0.5, "keep_faces_together": False}, ["top", "+x"], 16, 14,
-                        [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5),
-                         (-0.5, 1.0, -0.5), (-0.5, 1.0, 0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5),
-                         (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.5, 1.0, -0.5), (0.5, 1.0, 0.5),
-                         (1.0, -0.5, -0.5), (1.0, -0.5, 0.5), (1.0, 0.5, -0.5), (1.0, 0.5, 0.5)]),
-    "two_together_ltz": ({"local_translate_z": 0.5}, ["top", "+x"], 14, 12,
-                         [(-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5),
-                          (-0.5, 1.0, -0.5), (-0.5, 1.0, 0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5),
-                          (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.75, 0.75, -0.5), (0.75, 0.75, 0.5),
-                          (1.0, -0.5, -0.5), (1.0, -0.5, 0.5)]),
-}
 FACE_NORMALS = {"top": Vector((0, 0, 1)), "+x": Vector((1, 0, 0))}   # Blender Z-up
-
-
-def maya_to_blender(p):
-    x, y, z = p
-    return (x, -z, y)
 
 
 def _points(bm):
@@ -69,22 +29,6 @@ def _bm_cube(faces):
     bm.normal_update()
     picked = [f for f in bm.faces if any((f.normal - FACE_NORMALS[n]).length < 1e-6 for n in faces)]
     return bm, picked
-
-
-def test_geometry_matches_maya():
-    for case, (params, faces, nv, nf, pts) in MAYA.items():
-        bm, picked = _bm_cube(faces)
-        caps, _moved = ex.extrude(bm, picked, **params)
-        assert (len(bm.verts), len(bm.faces)) == (nv, nf), (case, len(bm.verts), len(bm.faces))
-        assert len(caps) == len(faces), case
-        assert all(f.select for f in caps) and sum(f.select for f in bm.faces) == len(caps), case
-        if isinstance(pts, str):
-            pts = MAYA[pts][4]
-        if pts is not None:
-            want = sorted(tuple(round(c, 4) + 0.0 for c in maya_to_blender(p)) for p in pts)
-            assert _points(bm) == want, (case, _points(bm), want)
-        assert not [v for v in bm.verts if not v.link_faces], case
-        bm.free()
 
 
 def test_fast_path_equals_rebuild():

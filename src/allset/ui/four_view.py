@@ -9,7 +9,7 @@ View *areas* (``screen.area_split`` three times), each with its own ``SpaceView3
     ------+------
     front | side
 
-Blender's split rules (checked,  steps 49 / 106 / 116; ``hypershade_layout`` docstring): HORIZONTAL with
+Blender's split rules (steps 49 / 106 / 116; ``hypershade_layout`` docstring): HORIZONTAL with
 factor > 0.5 puts the new area on top, VERTICAL with factor < 0.5 on the left — so the panels' places are known
 without reading rects (areas get their rects one tick after a split).
 
@@ -183,7 +183,7 @@ def enter(context, area, window=None):
     in background mode, where a split-off area stays 0 x 0).
 
     Splits: ``area`` top / bottom, then the bottom left / right (front / side). A just-split area has no size until
-    the next redraw (checked in the GUI too: splitting it in the same call fails), so the top part is split into
+    the next redraw (in the GUI too: splitting it in the same call fails), so the top part is split into
     top / persp from a timer one tick later (``_split_top_later``; pointers only, #36)."""
     window = window or context.window
     screen = window.screen
@@ -255,7 +255,7 @@ def leave(context, keep=None, window=None, role=None):
     if keep is None or keep.as_pointer() not in {a.as_pointer() for a in placed.values()}:
         keep = placed[role or "persp"]
     keep_role = next(r for r, a in placed.items() if a == keep)
-    if bpy.app.background:           # screen.area_join crashes without a UI ( step 49)
+    if bpy.app.background:           # screen.area_join crashes without a UI (step 49)
         return None
     keep_ptr = keep.as_pointer()
     _join_into(context, window, placed, keep_role)
@@ -280,7 +280,7 @@ def _centre(*areas):
 
 def _join(context, window, source_xy, target_xy):
     """``screen.area_join``: the area at ``source_xy`` takes over the one at ``target_xy`` (window px; same props in
-    4.5 / 5.0 / 5.2, checked)."""
+    4.5 / 5.0 / 5.2)."""
     with context.temp_override(window=window, screen=window.screen):
         try:
             return bpy.ops.screen.area_join(source_xy=source_xy, target_xy=target_xy) == {'FINISHED'}
@@ -290,8 +290,8 @@ def _join(context, window, source_xy, target_xy):
 
 def _join_into(context, window, placed, keep_role):
     """The four panels back into the kept one, joined only with each other (``screen.area_close`` gave a closing
-    panel to whichever neighbour shared its edge — the Outliner / Properties column took half the viewport,
-    checked). The other row first, then the kept panel takes its row mate, then the other row."""
+    panel to whichever neighbour shared its edge — the Outliner / Properties column took half the viewport).
+    The other row first, then the kept panel takes its row mate, then the other row."""
     mine = next(r for r in ROWS if keep_role in r)
     other = next(r for r in ROWS if keep_role not in r)
     mate = next(r for r in mine if r != keep_role)

@@ -22,7 +22,7 @@ The kit (Blender constraints only blend by influence = a shortest slerp):
   rotation channels (the sign of q_Euler).
 - per-group state on the owner (Object / PoseBone): ``allset_interp_<group>`` (Maya enum value), ``allset_last_<group>``
   (No Flip memory), ``allset_rest_<group>`` (zero-weight output), ``allset_ooff_<group>`` (orient offset).
-- a parent constraint's offset Euler = Maya's offset Euler (step 266, Maya 2026, 720 + 90 cases exact): the
+- a parent constraint's offset Euler = Maya's offset Euler (step 266): the
   standard solution or the alternate
   (first + 180, 180 − middle, last + 180, not wrapped), whichever has the smaller sum of |angles| (ties: standard);
   the branch decides the offset quaternion's sign, which Average / No Flip read. A bone target's rest (Maya

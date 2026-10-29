@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya projects, scene saving and references.
+"""Maya projects, scene saving and references (step 69).
 
 Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's default sub-folders
 (Project Window) and a marker file; the current project and Recent Projects live in
@@ -8,12 +8,12 @@ the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 - File > Open / Save As (Ctrl+O / Ctrl+S on a new file / Ctrl+Shift+S) and Create Reference start in
   ``<root>/scenes`` (``wm.open_mainfile`` / ``wm.save_as_mainfile`` invoked with that ``filepath``);
 - a file saved inside the project renders to ``<root>/images`` (relative ``//../images/``) when its render
-  output is still Blender's default (``save_pre`` gets the path being saved, checked);
+  output is still Blender's default (``save_pre`` gets the path being saved);
 - opening a ``.blend`` under ``<root>/scenes`` of a marked project makes it the current project.
 
 Create Reference (Ctrl+R) = link the other file's scene contents and make them editable with a library override
 (Maya reference edits), under a ``<namespace>`` collection with ``ns:`` name prefixes (Blender has no namespaces);
-checked in step 69 「계획」.
+step 69.
 """
 
 import json
@@ -33,7 +33,7 @@ FOLDERS = ("scenes", "assets", "images", "sourceimages", "renderData", "clips", 
 MARKER = "allset_project.json"
 RECENT_MAX = 10
 DIALOG_WIDTH = 420
-# Blender's factory render output (checked '/tmp\\' on Windows).
+# Blender's factory render output ('/tmp\\' on Windows).
 DEFAULT_RENDER_PATHS = {"", "/tmp\\", "/tmp/", "//"}
 NOTICE = ("Blender has no project system: Maya Workflow Kit keeps this folder as your project. File dialogs open in its "
           "scenes folder, renders go to its images folder and paths are saved relative (//).")
@@ -52,7 +52,7 @@ def _norm(path):
 
 
 # Maya's default project is <Documents>/maya/projects/default, made at first start, so a dialog never starts in a
-# bare Documents folder (step 102 「계획」 2). The kit's own default sits next to it
+# bare Documents folder (step 102). The kit's own default sits next to it
 # under "Maya Workflow Kit/" (the product name, step 125; the user's real Maya folder is never written);
 # ALLSET_PROJECTS_DIR moves it (test sandboxes).
 DEFAULT_NAME = "default"
@@ -291,8 +291,8 @@ class ALLSET_MT_recent_projects(bpy.types.Menu):
 
 def browse_from_later(folder, op_idname="WM_OT_open_mainfile", tries=40):
     """Point the file browser that ``op_idname`` opens at ``folder`` once it is there (a few ticks later).
-    Blender's Open dialog starts at the most recent file whatever ``filepath`` it is given (checked, step 97:
-    Ctrl+O went to Documents), unlike Save As."""
+    Blender's Open dialog starts at the most recent file whatever ``filepath`` it is given (step 97:
+    Ctrl+O goes to Documents), unlike Save As."""
     left = [tries]
 
     def tick():
@@ -407,7 +407,7 @@ def reference(path, ns, context, editable=True):
         if editable:
             ov = coll.override_hierarchy_create(scene, view_layer, do_fully_editable=True)
             if ov is not None:
-                # the override takes the linked collection's place next to it (checked): drop the original
+                # the override takes the linked collection's place next to it: drop the original
                 if coll in list(group.children):
                     group.children.unlink(coll)
                 if ov not in list(group.children):

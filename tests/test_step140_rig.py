@@ -1,6 +1,6 @@
 """Step 140 lane RIG: Maya option windows / tool settings for Skeleton, Skin, Blend Shape and Aim / Pole Vector /
-Scale constraints (operators/option_windows_rig.py). Labels and factory defaults are Maya 2022's
-(cited per window). ; notes """
+Scale constraints (operators/option_windows_rig.py). Labels and defaults follow Maya's
+option windows."""
 
 import json
 import math
@@ -115,51 +115,51 @@ def test_paths_open_these_windows():
 
 
 def test_titles_buttons_fields_defaults_are_maya():
-    # Tool Settings tools: title = the tool name, button = start the tool (option_boxes_140.md:15-17)
+    # Tool Settings tools: title = the tool name, button = start the tool
     assert (_w("joint_tool").title, _w("ik_handle_tool").title, _w("ik_spline_tool").title,
             _w("paint_skin_weights").title) == ("Joint Tool", "IK Handle Tool", "IK Spline Handle Tool",
                                                 "Paint Skin Weights Tool")
-    # Joint Tool (option_boxes_140.md:196-206): secondary Y, world orientation +Y, Create IK handle off
-    # step 244: Maya 2026's Orientation section adds Orient Joint to World (off) and Auto orient secondary axis (on)
+    # Joint Tool: secondary Y, world orientation +Y, Create IK handle off
+    # step 244: the Orientation section adds Orient Joint to World (off) and Auto orient secondary axis (on)
     assert _fields("joint_tool")[:6] == [
         ("orient_world", "", False),
         ("secondary_axis", "Secondary Axis:", "Y"), ("secondary_world", "Secondary Axis World Orientation:", "Y"),
         ("secondary_sign", "", "+"), ("auto_secondary", "", True), ("create_ik", "", False)]
-    # IK Handle Tool (option_boxes_140.md:208-211): Rotate-Plane solver, Solver enable on, Weight 1
+    # IK Handle Tool: Rotate-Plane solver, Solver enable on, Weight 1
     assert _fields("ik_handle_tool") == [("solver", "Current solver:", "Rotate-Plane Solver"),
                                          ("solver_enable", "", True), ("weight", "Weight:", 1.0)]
-    assert _fields("ik_spline_tool") == [("root_on_curve", "", True), ("parent_curve", "", True),   # :214
+    assert _fields("ik_spline_tool") == [("root_on_curve", "", True), ("parent_curve", "", True),
                                          ("snap_curve", "", False), ("create_curve", "", True),
-                                         ("spans", "Number of spans:", "1"),       # step 218 (Maya 2026)
-                                         ("twist_type", "Twist type:", "Linear")]  # step 249 (Maya factory)
-    # Bind Skin (option_boxes_140.md:28-46), button "Apply and Close"
+                                         ("spans", "Number of spans:", "1"),       # step 218
+                                         ("twist_type", "Twist type:", "Linear")]  # step 249
+    # Bind Skin, button "Apply and Close"
     w = _w("bind_skin_maya")
     assert (w.title, w.action) == ("Bind Skin Options", "Apply and Close")
     assert _fields("bind_skin_maya") == [
         ("bind_to", "Bind to:", "Joint hierarchy"), ("bind_method", "Bind method:", "Closest distance"),
         ("skinning", "Skinning method:", "Classic linear"),
         ("normalize", "Normalize weights:", "Interactive"), ("max_influences", "Max influences:", 5),
-        # step 247: Maya 2026 factory Maintain max influences on, Dropoff rate 4.0 (skin_basics_247.md)
+        # step 247: Maintain max influences on, Dropoff rate 4.0
         ("maintain_max", "", True), ("dropoff", "Dropoff rate:", 4.0),
         ("remove_unused", "", True), ("colorize", "", True)]
-    # Detach Skin (option_boxes_140.md:48-51)
+    # Detach Skin
     w = _w("unbind_skin")
     assert (w.title, w.action) == ("Detach Skin Options", "Detach")
     assert _fields("unbind_skin") == [("history", "History:", "Delete history"),
                                       ("remove_colors", "Coloring:", True)]
-    # Copy Skin Weights (option_boxes_140.md:53-60)
+    # Copy Skin Weights
     assert (_w("copy_skin_weights").title, _w("copy_skin_weights").action) == ("Copy Skin Weights Options", "Copy")
     assert [d for _n, _l, d in _fields("copy_skin_weights")] == ["Closest point on surface", "Closest joint", "None",
                                                                "None", False]
-    # Paint Skin Weights Tool (option_boxes_140.md:225-237)
+    # Paint Skin Weights Tool
     assert dict((n, d) for n, _l, d in _fields("paint_skin_weights")) == {
         "operation": "Replace", "profile": "Soft", "normalize": "Interactive", "opacity": 1.0, "value": 1.0,
         "radius": 1.0, "screen_projection": False, "show_wireframe": True, "xray_joints": True}
-    # Blend Shape (option_boxes_140.md:125-134)
+    # Blend Shape
     assert (_w("blend_shape").title, _w("blend_shape").action) == ("Blend Shape Options", "Create")
     assert _fields("blend_shape") == [("node_name", "BlendShape node:", ""), ("origin", "Origin:", "Local"),
                                       ("check_topology", "", True), ("delete_targets", "", False)]
-    # Aim (option_boxes_140.md:169-185)
+    # Aim
     assert _fields("aim_constraint") == [
         ("aim_vector", "Aim vector:", (1.0, 0.0, 0.0)), ("up_vector", "Up vector:", (0.0, 1.0, 0.0)),
         ("world_up_type", "World up type:", "Vector"), ("world_up_vector", "World up vector:", (0.0, 1.0, 0.0)),
@@ -292,7 +292,7 @@ def test_joint_tool_options_reach_the_bones():
     assert bpy.ops.allset.joint_tool(points=pts, secondary_axis="NONE", secondary_world="Z") == {'FINISHED'}
     arm = bpy.context.active_object
     # step 244: Secondary Axis None = Maya's orient without a secondary world axis (traditional: Z = child x parent
-    # direction; principles2.md): joint2 bends in the Maya XY plane... here the chain is in Blender's XZ plane
+    # direction): joint2 bends in the Maya XY plane... here the chain is in Blender's XZ plane
     j2 = arm.data.bones[1]
     a = (j2.tail_local - j2.head_local).normalized()
     b = (arm.data.bones[0].head_local - j2.head_local).normalized()

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2026 Visualize > Motion Trail Editor on Blender motion paths (step 225, Issue #135; ATTACH_PLAN L21).
+"""Maya 2026 Visualize > Motion Trail Editor on Blender motion paths (step 225, Issue #135).
 
 Maya 2026 replaced "Create Editable Motion Trail" with the Motion Trail Editor
 (labels and defaults from Maya's Motion Trail Editor): Create
@@ -15,7 +15,7 @@ Slider), Increment -> frame step, Show Key / Numbers -> keyframe highlight / num
 line thickness, Draw Mode Constant / Past/Future -> custom path colour before / after the current frame. Settings
 Blender has no counterpart for (Draw When Selected, X-Ray, Alternating Frames / Velocity, Anchor Object, Local
 Position, marker sizes and colours, hiding frame markers) are greyed in the window with their reason. Moving a key on
-the trail (Maya's editable trail) is not done (delegated, ATTACH_PLAN L21 (c) "별도 step").
+the trail (Maya's editable trail) is not done yet.
 """
 
 import bpy

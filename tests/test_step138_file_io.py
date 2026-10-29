@@ -1,9 +1,8 @@
 """Step 138 (#69): FBX / OBJ / Alembic / USD round trip the Maya way — no axis / unit conversion left on the channels,
-Maya names.  「계획」; lane doc ; Maya side:
- (writes tmp/file_io138/maya_cube138.*, reads tmp/file_io138/kit_cube138*.*).
+Maya names (files in tmp/file_io138/: maya_cube138.*, kit_cube138*.*).
 
-The reference object is Maya's pCube1: polyCube 1 x 1 x 1 at Maya translate (1, 2, 3), rotate Y 28.6, tx keyed 1 at
-frame 1 and 5 at frame 10. The kit is Z up (Maya Y = Blender Z, Maya Z = Blender -Y,  / step 102), so in the
+The reference object is pCube1: polyCube 1 x 1 x 1 at Maya translate (1, 2, 3), rotate Y 28.6, tx keyed 1 at
+frame 1 and 5 at frame 10. The kit is Z up (Maya Y = Blender Z, Maya Z = Blender -Y, step 102), so in the
 kit's Channel Box the same object reads Translate (1, -3, 2), Rotate (0, 0, 28.6), Scale 1 (in display units).
 """
 
@@ -97,30 +96,6 @@ def import_file(path, cm=True):
     return describe(k)
 
 
-def test_measure():
-    """Writes kit_cube138*.* for Maya and the kit's view of everything into tmp/file_io138/kit_<tag>.json."""
-    IO.mkdir(parents=True, exist_ok=True)
-    out = {"kit_scene": None, "export": {}, "kit_to_kit": {}, "maya_to_kit": {}}
-    for cm, suffix in ((True, ""), (False, "_m")):
-        for fmt in EXT:
-            ob, k = _kit_cube(cm)
-            if out["kit_scene"] is None:
-                out["kit_scene"] = describe(k)
-            path = export_kit(fmt, suffix)
-            if fmt == 'OBJ':
-                out["export"][fmt + suffix] = [l for l in path.read_text().splitlines() if l[:2] in ("o ", "g ", "us")]
-            if fmt == 'USD':
-                from pxr import Usd
-                out["export"][fmt + suffix] = Usd.Stage.Open(str(path)).ExportToString()[:6000]
-            out["kit_to_kit"][fmt + suffix] = import_file(path, cm)
-    for fmt, ext in EXT.items():
-        path = IO / f"maya_cube138{ext}"
-        if path.exists():
-            out["maya_to_kit"][fmt] = import_file(path)
-    tag = os.environ.get("ALLSET_FIO_TAG", "now")
-    (IO / f"kit_{tag}.json").write_text(json.dumps(out, indent=1))
-
-
 # --- assertions -----------------------------------------------------------------------------------
 
 def _maya_channels(ent, fmt, label):
@@ -143,7 +118,7 @@ def _maya_channels(ent, fmt, label):
 
 def test_kit_round_trip_keeps_maya_channels():
     """Kit -> file -> kit: channels, names, keys identical for every format, in the cm template scene and in a
-    factory metre scene (1 Maya unit = 1 display unit there, )."""
+    factory metre scene (1 Maya unit = 1 display unit there)."""
     IO.mkdir(parents=True, exist_ok=True)
     for cm, suffix in ((True, ""), (False, "_m")):
         for fmt in EXT:
@@ -241,16 +216,3 @@ def test_presets():
     assert file_io.import_args('FBX', k, maya=False) == ("import_scene.fbx", {})
 
 
-def test_maya_written_files():
-    """tmp/file_io138/maya_cube138.*: Maya's channels, names and
-    keys in the kit (skipped when Maya hasn't run)."""
-    found = 0
-    for fmt, ext in EXT.items():
-        path = IO / f"maya_cube138{ext}"
-        if not path.exists():
-            continue
-        found += 1
-        obs = import_file(path)
-        assert len(obs) == 1, (fmt, [o["name"] for o in obs])
-        _maya_channels(obs[0], fmt, "maya " + fmt)
-    print(f"Maya-written files checked: {found}")

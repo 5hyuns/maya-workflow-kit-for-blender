@@ -8,7 +8,7 @@ and the bottom row "Auto Normalization: Interactive", Load Components / Close (C
 
 Blender: a ``marked_window`` kind "COMPONENT_EDITOR" (a Properties Tool tab in its own window) drawn by
 ``ALLSET_PT_component_editor``. The cells are Scene proxies (``Scene.allset_ce``: UI edits of Scene properties push undo
-steps,  step 38) whose get / set read and write the live mesh: positions ÷ ``units.maya_unit()`` (Maya units),
+steps, step 38) whose get / set read and write the live mesh: positions ÷ ``units.maya_unit()`` (Maya units),
 weights through ``skin_tools_199._Weights`` with Maya's Interactive normalisation (``normalize``, CE5). The proxy rows
 follow the selection from a depsgraph handler → timer while Auto Update is on (CE7); never written in ``draw``.
 """
@@ -73,7 +73,7 @@ def normalize(weights, index, value, locked=()):
 
 
 def cell_text(value):
-    """Maya's 3-decimal cells (CE3 / CE6)."""
+    """3-decimal cells, like Maya's."""
     return f"{value:.3f}"
 
 

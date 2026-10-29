@@ -3,8 +3,7 @@ trailer.
 
     python tools/marketing/clip_compose.py [--only NAME,...] [--no-trailer] [--no-gif]
 
-Each output frame (1920 x 1080, 30 fps) = the window picture in the shot rect (85 %, docs/distribution/marketing/
-style.md) + a caption band below it (accent tick, clip title, the caption of the moment, key chips, one-line lockup)
+Each output frame (1920 x 1080, 30 fps) = the window picture in the shot rect (85 %) + a caption band below it (accent tick, clip title, the caption of the moment, key chips, one-line lockup)
 + the mouse cursor (drawn here: event simulation never moves the OS cursor). Frames are synthesised with Pillow and
 piped raw into ffmpeg (no PNG sequence on disk). Step 124 motion:
 
@@ -23,7 +22,7 @@ piped raw into ffmpeg (no PNG sequence on disk). Step 124 motion:
   to ``accent``, then fades out; the newest key also shows for <= CURSOR_CHIP_MAX s as a small chip next to the
   cursor (above-right, flipped at the shot edges). Clicks: a ``highlight`` ring ripple + soft glow; a held button = an ``accent`` ring.
 - Outputs: docs/distribution/marketing/clips/<nn>_<name>.mp4 (H.264 High, yuv420p, 30 fps, +faststart, no audio,
-  <= 8 MB, references.md); docs/distribution/marketing/gif/<nn>_<name>.gif from a lossless 960 px intermediate
+  <= 8 MB); docs/distribution/marketing/gif/<nn>_<name>.gif from a lossless 960 px intermediate
   (tmp/marketing/gif_src/), fps / width / colours stepped down until <= 4 MB (GitHub README; never on
   extensions.blender.org); docs/distribution/marketing/clips/00_trailer.mp4 (30 - 45 s, <= 20 MB): a moving key-visual
   title card (frame 0 = the finished key visual = the store poster; screens drift with parallax) -> a zoom-through ->
@@ -59,7 +58,7 @@ GIF_SRC = ROOT / "tmp" / "marketing" / "gif_src"
 POSTERS = ROOT / "tmp" / "marketing" / "posters"
 CONTENT = json.loads((HERE / "content.json").read_text(encoding="utf-8"))
 W, H, FPS = 1920, 1080, 30
-SHOT = (144, 22, 1632, 918)          # x, y, w, h of the window picture (85 %, style.md)
+SHOT = (144, 22, 1632, 918)          # x, y, w, h of the window picture (85 %)
 BAND_Y = SHOT[1] + SHOT[3]            # caption band below it
 BAND_H = H - BAND_Y
 LIMIT_MP4, LIMIT_TRAILER, LIMIT_GIF = 8e6, 20e6, 4e6

@@ -3,13 +3,13 @@
 
 Every Maya modelPanel has its own menu bar. Menu contents
 follow Maya 2022's panel menus (View, Shading, Lighting,
-Show, Renderer, Panels); only labels and order. Design:  「계획」.
+Show, Renderer, Panels); only labels and order.
 
 Only the menu part of the 3D View header changes: ``VIEW3D_MT_editor_menus.draw_collapsible``
 (inherited from ``bpy.types.Menu``, called once by ``VIEW3D_HT_header.draw``,
 $S\\startup\\bl_ui\\space_view3d.py:915) is overridden while the add-on is enabled; the
 mode selector and the right-hand buttons (Maya's panel icon bar) stay Blender's. Blender's
-View / Select / Add / Object ... menus stay reachable under.
+View / Select / Add / Object ... menus stay reachable under "Blender ▸".
 
 Item forms (one tuple per row):
 ``("prop", owner, prop, label)`` check box on ``space`` / ``shading`` / ``overlay``;
@@ -61,7 +61,7 @@ def view_camera(context):
 
 def camera_locked(ob):
     """Maya Lock Camera (camera -lockTransform): the kit locks the camera's location and rotation channels;
-    Blender's camera-view navigation keeps locked channels (checked, step 129)."""
+    Blender's camera-view navigation keeps locked channels (step 129)."""
     return all(ob.lock_location) and all(ob.lock_rotation)
 
 
@@ -271,8 +271,8 @@ def apply(context, key):
     elif key == "RENDER_ENGINE":
         enter_rendered(space)
     elif key in ("TUMBLE_SELECTION", "TUMBLE_COI"):
-        # Blender's Orbit Around Selection is a user preference, which the kit never writes (step 130,
-        # ): the items show it and open Preferences > Navigation to change it.
+        # Blender's Orbit Around Selection is a user preference, which the kit never writes (step 130):
+        # the items show it and open Preferences > Navigation to change it.
         try:
             bpy.ops.screen.userpref_show('INVOKE_DEFAULT', section='NAVIGATION')
         except RuntimeError:      # no window (background)

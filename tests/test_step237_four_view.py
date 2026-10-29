@@ -1,7 +1,7 @@
 """Step 237 (Issue #148): Maya Four View = four real 3D View panels, each with its own shading / Show settings / camera.
 
-User 10-27: Blender's Quad View is one area cut by a cross (one header, one shading for all four). The kit now splits
-the 3D View area in four (ui/four_view.py). Background mode never gives a just-split area a size (checked: 0 x 0, so
+Blender's Quad View is one area cut by a cross (one header, one shading for all four). The kit now splits
+the 3D View area in four (ui/four_view.py). Background mode never gives a just-split area a size (0 x 0, so
 it can't be split again) and hangs in screen.area_close: making / leaving the four view is checked in
 tests/gui/gui_step237_four_view.py; here the parts that don't need a window: panel settings, roles, the record.
 """

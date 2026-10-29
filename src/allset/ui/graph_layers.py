@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Graph Editor with several selected animation layers.
+"""Graph Editor with several selected animation layers (step 204).
 
 Maya: the Graph Editor lists each selected layer under
 the object and draws every selected layer's curves in their own values. Blender's Graph Editor draws and edits one
@@ -9,7 +9,7 @@ listed as rows in the kit outliner (ui/editor_chrome.py rows); picking such a ro
 the last picked one, so its curves become Blender's editable ones.
 
 Drawing follows Blender's Graph Editor mapping (ANIM_unit_mapping_get_factor): rotation curves in degrees while the
-scene's rotation unit is degrees, and View > Normalize maps a curve's key range onto -1..1 (delegated: keys and handles
+scene's rotation unit is degrees, and View > Normalize maps a curve's key range onto -1..1 (keys and handles
 like Blender's normalization_factor_get, without its cache).
 """
 
@@ -20,7 +20,7 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 
 KINDS = ("LAYER", "LAYER_ATTR")     # kit outliner rows: a selected layer's name, its curves
-DIM = 0.6                           # other selected layers: Maya colours, dimmer (delegated)
+DIM = 0.6                           # other selected layers: Maya colours, dimmer
 PICK_PX = 8                         # curve pick distance in region pixels
 _ROTATIONS = ("rotation_euler", "delta_rotation_euler", "rotation_axis_angle")
 

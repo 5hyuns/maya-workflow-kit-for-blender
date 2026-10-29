@@ -55,7 +55,7 @@ def _user_setup():
     addon_utils.enable("node_wrangler", default_set=True)
 
 
-# Step 130 : the Maya keys live in the add-on keyconfig, so not even the stored keyconfig name changes:
+# Since step 130 the Maya keys live in the add-on keyconfig, so not even the stored keyconfig name changes:
 # no preference may change while Maya mode is on.
 KEYMAP_KEYS = ()
 
@@ -136,7 +136,7 @@ def _sandbox():
     if os.path.isdir(root):
         shutil.rmtree(root)
     cfg = os.path.join(root, "config")
-    os.makedirs(cfg)          # Blender ignores a BLENDER_USER_CONFIG that doesn't exist ()
+    os.makedirs(cfg)          # Blender ignores a BLENDER_USER_CONFIG that doesn't exist
     return cfg
 
 
@@ -162,7 +162,7 @@ def test_round_trip_across_restarts():
     bytes_e = _userpref(cfg)
     ndiff = sum(1 for x, y in zip(bytes_c, bytes_e) if x != y)
     # Same size; the differing bytes are memory addresses Blender writes into a .blend (two saves
-    # in one process are byte-identical, across processes the addresses change; checked, step 60).
+    # in one process are byte-identical, across processes the addresses change).
     print(f"userpref.blend after both switches to Blender: {len(bytes_c)} / {len(bytes_e)} bytes, "
           f"{ndiff} bytes differ (pointer values)")
     assert len(bytes_c) == len(bytes_e), (len(bytes_c), len(bytes_e))

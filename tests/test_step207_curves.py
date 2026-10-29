@@ -1,5 +1,5 @@
-"""Step 207: Curves 3 against Maya 2022.
-Pure maths on Maya's numbers first (1e-6), then the kit operators on
+"""Step 207: Curves 3, like Maya.
+Pure maths on the expected numbers first (1e-6), then the kit operators on
 Blender objects built from the same CVs (Maya Y-up -> Blender (X, -Z, Y))."""
 
 import json
@@ -19,45 +19,10 @@ smaya = import_module(kit.MODULE + ".operators.surfaces_maya")
 c207 = import_module(kit.MODULE + ".operators.curves_207")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOL = 1e-6
-_D = {}
 WORST = {}
 
 
-def named(c, name, when="after"):
-    return [x for x in c[when] if x["name"] == name][0]
-
-
-def err(a, b):
-    assert len(a) == len(b), (len(a), len(b))
-    return max(abs(p - q) for P, Q in zip(a, b) for p, q in zip(P, Q))
-
-
-def _modify_args(key, c):
-    words = c["cmds"][-1].split()     # the recorded command: <command> <operation> <amount> <amount>
-    if len(words) == 4 and words[1] in ("bend", "curl", "curvature", "smooth", "straighten"):
-        return words[1], float(words[2]), float(words[3])
-    op = key.split("_")[0]
-    return op, *{"bend": (0.2, 0.0), "curl": (0.3, 1.0), "curvature": (1.1, 0.8)}[op]
-
-
-KIND = {"bend": 'BEND', "curl": 'CURL', "curvature": 'CURVATURE'}
-
-
 # --- pure maths -----------------------------------------------------------------------------------------------
-
-
-def _surf(c):
-    S = c["surface"]
-    nu, nv, d = S["nu"], S["nv"], S["degree"]
-    cvs = [[tuple(S["cvs"][i * nv + j]) for j in range(nv)] for i in range(nu)]
-    ku = [k / (nu - d) for k in cm.clamped_uniform(nu, d)]
-    kv = [k / (nv - d) for k in cm.clamped_uniform(nv, d)]
-    return sm.Surf(cvs, ku, kv, d, d)
-
-
-LINES = {"dup_v0.5": [("V", 0.5)], "dup_u0.25": [("U", 0.25)], "dup_u0": [("U", 0.0)],
-         "dup_two": [("U", 0.25), ("V", 0.75)], "dup_d1": [("V", 0.5)]}
 
 
 def test_keep_leg_lengths():

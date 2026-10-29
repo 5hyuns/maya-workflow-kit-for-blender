@@ -3,9 +3,9 @@
     python tools/make_listing_media.py [--blender PATH] [--no-build] [--no-shots]
 
 Runs tools/marketing/make_marketing.py (licensed scene, GUI shots in a clean sandbox, Pillow compositing; the user's
-Blender settings are never read or written, ) and copies its outputs under the listing names:
+Blender settings are never read or written) and copies its outputs under the listing names:
 icon.png (256 x 256), featured.png (1920 x 1080 key visual) and 01_*.png ... 10_*.png (1920 x 1080 captioned
-screens, upload order = docs/distribution/listing.md part C). Store rules: docs/distribution/marketing/references.md.
+screens, in upload order).
 """
 
 import argparse

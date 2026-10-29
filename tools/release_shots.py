@@ -75,7 +75,7 @@ def s_scene():
           kc is not None and sys.modules[MODULE + ".keymap"].is_applied())
     check("layout has the Maya strip (Status Line + Shelf)",
           bpy.data.masks.get(".AllsetStrip") is not None)
-    k = import_module(MODULE + ".operators.units").maya_unit()  # Maya lengths ()
+    k = import_module(MODULE + ".operators.units").maya_unit()  # Maya lengths (cm)
     with v3d_override():
         bpy.ops.allset.create(kind='SPHERE')
         bpy.context.active_object.location = (3.5 * k, 0, k)

@@ -39,7 +39,7 @@ def override():
 
 
 def steady_ms(stats):
-    """Median draw time of frames that reused the cache (projection + labels;  budget)."""
+    """Median draw time of frames that reused the cache (projection + labels)."""
     ms = sorted(m for m, refreshed in stats["history"] if not refreshed)
     return ms[len(ms) // 2] if ms else float("nan")
 

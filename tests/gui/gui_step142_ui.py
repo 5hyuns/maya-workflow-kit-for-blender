@@ -6,8 +6,8 @@ row), the viewport takes the rest; a click on the strip's Attribute Editor tab r
 Maya's AE stack (cursor fit, ALLSET_FIT_WARP=1), the AE menu bar is one row; the Channel Box tab narrows it again.
 #77: the Maya menu bar shows every menu at 1.0 / 1.25 and hides the rest behind » at 1.5 (the shown ones fit the top
 bar's left region); the » menu opens with the hidden menus.
-#76: the Move manipulator draws Maya's axis colours (#e60000 / #00e600 / #0000ff), not Blender's theme gizmo colours;
-in wireframe shading an unselected cube's wire is Maya's dormant dark blue #000460."""
+#76: the Move manipulator draws the axis colours #e60000 / #00e600 / #0000ff, not Blender's theme gizmo colours;
+in wireframe shading an unselected cube's wire is the dormant dark blue #000460."""
 
 import os
 import sys
@@ -252,7 +252,7 @@ def s_move_colours():
     maya = {a: count(px, region, hexrgb(h), box=box) for a, h in mod("ui.manipulator").MAYA_AXIS.items()}
     theme = {a: count(px, region, hexrgb(h), box=box)
              for a, h in (("X", "#ff3653"), ("Y", "#8adb00"), ("Z", "#3b64a5"))}
-    check(f"Move manipulator in Maya's axis colours (px {maya}; Blender theme gizmo colours {theme})",
+    check(f"Move manipulator in the Maya-style axis colours (px {maya}; Blender theme gizmo colours {theme})",
           all(v >= 10 for v in maya.values()) and all(theme[a] < maya[a] // 4 + 5 for a in "XYZ"))
     # a second cube, unselected, in wireframe shading
     area, region = view3d()

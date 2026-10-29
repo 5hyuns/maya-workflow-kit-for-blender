@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Graph Editor / Dope Sheet key commands in Maya terms.
+"""Graph Editor / Dope Sheet key commands in Maya terms (step 157).
 
 - Edit menu key windows from a key editor act on the **selected keys** (Maya's Edit > Cut / Copy / Delete Keys & co.:
   from the Graph Editor with keys selected and the "keys" option; else the time range of the nodes,

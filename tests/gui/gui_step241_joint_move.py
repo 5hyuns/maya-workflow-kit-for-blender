@@ -246,8 +246,8 @@ def s_msj_on():
 
 @step
 def s_msj_move():
-    # the move the Move manipulator runs (dragging the manipulator itself after Move Skinned Joints is a manual check:
-    #  Step 241 — simulated presses there didn't reach the gizmo)
+    # the move the Move manipulator runs (dragging the manipulator itself after Move Skinned Joints is checked by hand:
+    # simulated presses there didn't reach the gizmo)
     _a, r = main_view()
     with ov():
         bpy.ops.transform.translate(value=(-0.05, 0, 0))

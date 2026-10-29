@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya File > Import / Export All / Export Selection: one file dialog with Files of type and an Options panel
-.
+(step 102).
 
 Maya opens a single dialog for every format and picks the translator from "Files of type" (or the extension,
 "Best Guess" on import); Blender has one operator per format. ``allset.file_dialog`` is that single dialog: the
@@ -101,7 +101,7 @@ def export_args(fmt, k, selection, maya=True):
             args.update(axis_forward='-Z', axis_up='Y', apply_unit_scale=True, global_scale=1.0,
                         apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_space_transform=True,
                         bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
-                        # step 222 (): Maya joints point X down the bone; step 232: Maya Y = the bone's
+                        # step 222: Maya joints point X down the bone; step 232: Maya Y = the bone's
                         # Z, Maya Z = its X (joints.JOINT_AXES, what Orient Joint sets) — '-Y' put Maya Y on the
                         # bone's -X (jointOrient 90 deg off Maya's); Maya exports joints, not the kit's control bones; a key per frame like Maya's bake (also re-composable by fbx_rig)
                         primary_bone_axis='X', secondary_bone_axis='Z', use_armature_deform_only=True,
@@ -134,8 +134,8 @@ def export_args(fmt, k, selection, maya=True):
 # --- step 138: the conversion goes into the geometry, not onto the channels ----------------------------
 #
 # Maya reads its transforms' channels straight from the file, so a Y-up / cm conversion written as a root
-# rotation or scale shows as Rotate X -90 / Scale 100 in Maya ( I1, I3) and Blender's readers
-# leave the reverse on the kit's channels (I2). The kit instead conjugates: a transform M becomes C M C^-1 and
+# rotation or scale shows as Rotate X -90 / Scale 100 in Maya and Blender's readers
+# leave the reverse on the kit's channels. The kit instead conjugates: a transform M becomes C M C^-1 and
 # geometry p becomes C p (C = axes x units), so channels read the same numbers in both programs (the kit's
 # Z-up axes: Maya translate (1, 2, 3) = kit (1, -3, 2), rotate Y = kit rotate Z).
 
@@ -406,7 +406,7 @@ def normalise_skin_weights(ob, eps=1e-6):
 
 
 def _file_time_slider(context, path, obs):
-    """Step 238 (#146, audit ③-17): an animated FBX without a skeleton sets the Time Slider to the file's range too —
+    """Step 238 (#146): an animated FBX without a skeleton sets the Time Slider to the file's range too —
     Maya's FBXImport does even with Fill Timeline off; Blender's reader
     leaves the scene's range (0-250). Rigs get it in fbx_rig_import.fix_armature (step 235)."""
     if not any(o.animation_data is not None and o.animation_data.action is not None for o in obs):
@@ -608,7 +608,7 @@ def write(context, fmt, path, op, args, maya, k, deform_only=True, maya_names=Tr
 
 
 class _BlendShapesKept:
-    """Step 235 (Issue #144, audit ④-8): Blender's FBX writer exports the EVALUATED mesh and drops its shape keys
+    """Step 235 (Issue #144): Blender's FBX writer exports the EVALUATED mesh and drops its shape keys
     when any non-Armature modifier is on ($S/addons_core/io_scene_fbx/export_fbx_bin.py:2645-2690, 2773), so a mesh
     with a blend shape and a cluster / lattice / kit deformer lost every blend shape. Maya's FBX keeps the blendShape
     (and skinCluster) and leaves the other deformers out: while writing, those deformer modifiers of meshes with
@@ -682,7 +682,7 @@ def _exported_armatures(context, args):
 
 def rig_fbx_maya(context, path, run, args, deform_only=True):
     """Step 222: joint orient as PreRotation, no armature Null (operators/fbx_rig.py). Needs a second export of the
-    same objects at the rest pose (the writer's own conventions, ). ``deform_only`` (step 236): only the
+    same objects at the rest pose (the writer's own conventions). ``deform_only`` (step 236): only the
     deforming joints, on the deforming chain (``fbx_skeleton.deform_parents``). Returns (joints, nulls) or None."""
     from . import fbx_rig
     rigs = _exported_armatures(context, args)
@@ -916,7 +916,7 @@ class _FileDialog:
         if self.mode != 'IMPORT':
             many = multi_skin_meshes(context.selected_objects if self.selection else context.scene.objects)
             if many:
-                #  (step 224): Blender reads a second Armature modifier back as one, engines keep one skin
+                # step 224: Blender reads a second Armature modifier back as one, engines keep one skin
                 self.report({'WARNING'}, f"{', '.join(many)}: several skin clusters — FBX and game engines keep one "
                                          "skin per mesh")
         results.result(self, f"{verb} {os.path.basename(path)}")

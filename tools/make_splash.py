@@ -1,13 +1,13 @@
-"""Generate the Maya Workflow Kit app template splash images.
+"""Generate the Maya Workflow Kit app template splash images (step 42).
 
     python tools/make_splash.py [--media]   # re-runs itself in `blender -b --factory-startup`
 
 Writes src/allset/app_template/Maya_Workflow_Kit/splash.png (1000x500) and splash_2x.png (2000x1000):
 Blender shows them as the splash screen while the Maya Workflow Kit template is active; and
 src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square), and the same
-square as docs/distribution/media/icon.png plus media/featured.png (1920x1080) for the extensions.blender.org listing. The artwork is the kit's own (: no Maya image or logo): Maya's
-panel grey and highlight blue, three wire cubes in Maya's
-dormant blue / lead green / selected white (displayColor 5 / 19 / 16), Blender's bundled font.
+square as docs/distribution/media/icon.png plus media/featured.png (1920x1080) for the extensions.blender.org listing. The artwork is the kit's own (no Maya image or logo): a Maya-like
+panel grey and highlight blue, three wire cubes in Maya-style
+dormant blue / lead green / selected white, Blender's bundled font.
 Rendered with Workbench (flat lighting, object colours, Standard view transform).
 """
 
@@ -120,7 +120,7 @@ def main():
         colour(ob, hex_colour)
     # Text (Blender's bundled font)
     title = len(bpy.data.objects)
-    # Step 125 (): the product name + the lockup line "for Maya users, in Blender" (step 111: Maya only
+    # Step 125: the product name + the lockup line "for Maya users, in Blender" (step 111: Maya only
     # as the audience)
     text("Maya Workflow Kit", 0.6, 1.0, 0.95, TEXT)
     text("for Maya users, in Blender", 0.65, -0.3, 0.55, TEXT_DIM)
@@ -165,7 +165,7 @@ def main():
     bpy.data.objects["bar"].location.z = 5.375
     bpy.data.objects["footer"].location.z = -5.175
     bpy.data.objects["Not affiliat"].location.z = -5.3
-    # the listing leads with "not just a keymap" (docs/distribution/listing.md)
+    # the listing leads with "not just a keymap"
     bpy.data.objects["hotbox · mar"].data.body = "not just a keymap: hotbox, Channel Box, menus, shelves, Maya concepts"
     cam.location.x = cam.location.z = 0.0
     cam_data.ortho_scale = 20.0

@@ -1,8 +1,7 @@
 """Step 217 B3 / B4 in a real UI.
 B3: a Joint Tool click inside an existing joint's drawn sphere branches from it, outside it starts a new skeleton
 (Maya 2026: hit area = the drawn sphere) - at two zoom levels.
-B4: picking the skeleton object with no bone selected enters Pose with the root joint selected (Channel Box = root,
-maya2026_joints.md section 4)."""
+B4: picking the skeleton object with no bone selected enters Pose with the root joint selected (Channel Box = root)."""
 
 import os
 import sys
@@ -139,7 +138,7 @@ def _case(name, factor, expect_branch):
     result.__name__ = f"s_{name}_result"
 
 
-# zoomed in: sphere ~ 20+ px -> inside at 0.7 r branches, outside at 1.4 r does not (22 px: 16 hit, 24 miss)
+# zoomed in: sphere ~ 20+ px -> inside at 0.7 r branches, outside at 1.4 r does not
 _case("near_in", 0.7, True)
 _case("near_out", 1.4, False)
 

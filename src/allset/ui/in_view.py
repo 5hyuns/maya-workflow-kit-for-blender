@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's extrude manipulator, In-View Editor and the INPUTS rows of the last extrusion
-.
+(step 65).
 
 - Visible while the active edit object's last kit extrusion is valid and its extruded faces are the selection
   (operators/extrude.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
   (ui/manipulator.py) hides meanwhile.
-- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended, :10). Step 151:
+- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended). Step 151:
   Maya's polyExtrudeFace manipulator in the faces' local frame - three
   arrows (Local Translate X red / Y green / Z blue = the normal), a cube past each cone (Local Scale X / Y / Z), three
   plane handles (two Local Translate values) and a light-blue centre square (uniform Local Scale). Every handle runs
@@ -15,7 +15,7 @@
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows (the shelf's way, step 51).
   Dragging a row sideways changes the value, a click without a drag types it, Keep Faces Together toggles.
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
-  undo step, the edit itself is one,  step 38) + the "only the last one" notice.
+  undo step, the edit itself is one, step 38) + the "only the last one" notice.
 """
 
 import blf
@@ -263,7 +263,7 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
 # local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
 # plane handles centred 0.5 / 0.5 between two axes (half 0.08, translucent with a full-colour rim), hollow centre square
 # half 0.12 (20 px at an 83 px Z arrow) in #64dcff, screen facing. Axis colours = the kit Move manipulator's Maya
-# colours (manipulator.MAYA_AXIS). Not drawn (delegated): Maya's cyan rotate ring (polyExtrudeFace Local Rotate - the
+# colours (manipulator.MAYA_AXIS). Not drawn: Maya's cyan rotate ring (polyExtrudeFace Local Rotate - the
 # kit doesn't model it) and its world / local toggle icon (world mode drives Translate / Rotate / Scale, not modelled).
 CONE_BASE, CONE_TIP, CONE_R = 0.64, 0.86, 0.05
 CUBE_AT, CUBE_HALF = 1.0, 0.07
@@ -271,8 +271,8 @@ PLANE_AT, PLANE_HALF = 0.5, 0.08
 PLANE_FILL = 0.25
 CENTER_HALF = 0.12
 CENTER_COLOUR = (0x64 / 255, 0xdc / 255, 1.0)
-SCALE_PX = 100.0          # px of mouse travel along a scale handle that doubles the scale (delegated)
-# Maya draws the extrude manipulator smaller than its Move one: Z arrow to cube 83 px at a ~27 deg persp elevation
+SCALE_PX = 100.0          # px of mouse travel along a scale handle that doubles the scale
+# the extrude manipulator is drawn smaller than the Move one: Z arrow to cube 83 px at a ~27 deg persp elevation
 # = ~93 px against the Move Y arrow's 108 px (manipulator.ARROW_PX)
 SIZE = 0.86
 

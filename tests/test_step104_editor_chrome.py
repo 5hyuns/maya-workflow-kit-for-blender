@@ -1,7 +1,7 @@
 """Step 104: Maya editor chrome — Graph Editor / Dope Sheet / UV Editor menu bars like Maya's (Maya 2026
 since step 269), every
 leaf mapped or greyed with a notice, check items, icon rows, header draws swapped and restored, Curves > Infinity,
-in / out tangents, Stats fields, the Graph Editor outliner rows. """
+in / out tangents, Stats fields, the Graph Editor outliner rows."""
 
 import json
 import os
@@ -22,7 +22,7 @@ graph_keys = import_module(kit.MODULE + ".operators.graph_keys")
 
 
 # Maya 2026 editor menu bars. The UV Editor window holds two menu bars: the
-# editor's (ending in Help) and the UV Toolkit's own Options / Help, both shown in Maya.
+# editor's (ending in Help) and the UV Toolkit's own Options / Help, both part of that window.
 MAYA_BARS = {"Graph Editor": ["Edit", "View", "Select", "Curves", "Keys", "Tangents", "List", "Show", "Help"],
              "Dope Sheet": ["Edit", "View", "Channels", "Keys", "List", "Show", "Help"],
              "UV Editor": ["Edit", "Create", "Select", "Cut/Sew", "Modify", "Tools", "View", "Image", "Textures",

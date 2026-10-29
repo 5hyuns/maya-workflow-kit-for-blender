@@ -4,7 +4,7 @@
 Maya press/release hotkeys, D hold /
 Insert, X grid, C curve, V point; j =
 MoveRotateScaleToolToggleSnapMode press/release. Design and limits:
- 「계획」 1-4.
+step 3.
 
 ``begin``/``end`` are plain functions (headless-testable). The operator
 ``allset.hold`` wraps them in a modal that waits for the key's RELEASE.
@@ -32,7 +32,7 @@ class HoldGroup:
 
 
 class SnapGroup(HoldGroup):
-    # Hold name -> Blender snap elements ( 「계획」 3).
+    # Hold name -> Blender snap elements.
     ELEMENTS = {"grid": {'GRID'}, "curve": {'EDGE'}, "point": {'VERTEX'}, "step": {'INCREMENT'}}
 
     def capture(self, ts):
@@ -61,7 +61,7 @@ class SnapGroup(HoldGroup):
 class PivotGroup(HoldGroup):
     """D hold: transform affects only object origins and
     not the children; ``pivot.watch`` rewrites each such transform the Maya way (channels
-    stay,  「계획」 1)."""
+    stay, step 59)."""
 
     def capture(self, ts):
         return (ts.use_transform_data_origin, ts.use_transform_skip_children)
@@ -172,7 +172,7 @@ def component_pivot_after(saved, moved):
     return 'BOUNDING_BOX_CENTER' if saved == 'CURSOR' else saved
 
 
-# --- component pivot edit: D hold and Insert toggle in mesh edit mode ----------
+# --- component pivot edit: D hold and Insert toggle in mesh edit mode (step 77) ----------
 
 CURSOR_TOOL = "builtin.cursor"
 CURSOR_OP = "view3d.cursor3d"
@@ -592,7 +592,7 @@ class ALLSET_OT_hold(bpy.types.Operator):
         self._pressed_at = time.monotonic()
         self._used = False
         if self.name == "component_pivot":
-            if COMPONENT.on:          # D while the Insert pivot edit is on: leave it (Maya D tap toggles )
+            if COMPONENT.on:          # D while the Insert pivot edit is on: leave it (Maya D tap toggles)
                 COMPONENT.finish(context)
                 return {'FINISHED'}
             COMPONENT.start(context)

@@ -4,7 +4,7 @@ listRelatives, parent, group, duplicate, spaceLocator.
 
 Maya's behaviour: return
 values, names, selection after each command, world positions kept. They go through the kit's own operations —
-``parenting`` (), ``group``, ``duplicate``, ``dag.delete_hierarchy`` (step 164), ``create`` — so a script
+``parenting``, ``group``, ``duplicate``, ``dag.delete_hierarchy`` (step 164), ``create`` — so a script
 gives what the menus give.
 """
 
@@ -333,7 +333,7 @@ def duplicate(*args, **kwargs):
 def spaceLocator(*args, **kwargs):
     """``spaceLocator`` = Create > Locator (``locatorN`` / ``locatorShapeN``, selected). ``-p`` is the shape's
     local position: the kit puts it into the pivot offset (``delta_location``), so translate stays 0 and the
-    locator draws there (delegated: Maya rotates it about the transform's origin, the kit about the locator)."""
+    locator draws there (Maya rotates it about the transform's origin, the kit about the locator)."""
     f = _Flags("spaceLocator", kwargs)
     name = f.get("name", "n")
     pos = f.get("position", "p")

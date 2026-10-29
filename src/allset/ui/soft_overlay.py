@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya soft select look in the 3D View (issues #1, #2; ).
+"""Maya soft select look in the 3D View (issues #1, #2).
 
 - Falloff colours (POST_VIEW): in Edit Mesh with soft select on, every vertex the transform will move gets Maya's
   false colour (Maya's soft select colour ramp: yellow at weight 1, red at 0.5, black at 0) on its edges

@@ -2,7 +2,7 @@
 Ctrl+Tab pose mode -> click joint2 in the view -> the Channel Box shows joint2 with Translate / Rotate /
 Scale (XYZ) -> type "+=10" in Rotate Z -> S keys it -> Lock Selected on Rotate -> rotating in the view
 does nothing; a Copy Location constraint to locator1 -> CB INPUTS weight row locator1W0 -> 0.5 ->
-influence 0.5, Translate fields blue.  「계획」 6."""
+influence 0.5, Translate fields blue."""
 
 import math
 import os
@@ -32,7 +32,7 @@ def shot(name):
 
 
 def ui_region():
-    return dock_region()       # Maya's tab stack (step 116; was the 3D View sidebar)
+    return dock_region()       # the Maya tab stack (step 116; was the 3D View sidebar)
 
 
 def dock():

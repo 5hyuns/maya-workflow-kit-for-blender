@@ -4,7 +4,7 @@
 Maya has one global state (``symmetricModelling``): on/off, about object/world/topology,
 axis x/y/z; factory default off, x, object. Blender keeps symmetry per mesh
 (``Mesh.use_mirror_x/y/z``, ``use_mirror_topology``, local axes through the object
-origin), read by edit-mode transforms and sculpt. Design:  「계획」.
+origin), read by edit-mode transforms and sculpt (step 36).
 
 - The global state lives in ``Scene.allset_symmetry`` (saved with the file; Blender
   user preferences stay untouched).
@@ -12,7 +12,7 @@ origin), read by edit-mode transforms and sculpt. Design:  「계획」.
   entering edit mode and reads back Blender's own header mirror buttons, so the two
   never disagree.
 - Axis names are Maya's = Blender's (X = X, Y = Y, Z = Z, like the Channel Box), not
-  swapped for Y-up (). World = the local axis closest to that world axis;
+  swapped for Y-up. World = the local axis closest to that world axis;
   Blender mirrors through the object origin, so World matches Maya only when the origin
   lies on the world plane (``world_fit`` warns otherwise).
 """

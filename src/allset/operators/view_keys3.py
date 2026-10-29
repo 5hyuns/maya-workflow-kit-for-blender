@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya view keys, batch 3: Alt+A cycle display, Alt+P camera persp / ortho, Alt+arrows 1-pixel move,
-` hold = tweak mode, \\ hold = 2D pan / zoom.
+` hold = tweak mode, \\ hold = 2D pan / zoom (step 87).
 
-Maya default hotkeys: Alt+A display cycle,
+Maya-style hotkeys: Alt+A display cycle,
 CameraModeToggle (orthographic / perspective), Alt+arrow pixel move, ` tweak mode,
 \\ 2D pan / zoom.
 """
@@ -16,7 +16,7 @@ from .. import undo_steps
 from . import keystate
 
 # --- Alt+A: cycle display ------------------------------------------------------------------------------------
-# Maya setting cycleDisplayLikeMobuVar (global, starts at 0): 0 -> joint X-ray on, everything shown (1),
+# Global cycle state (starts at 0): 0 -> joint X-ray on, everything shown (1),
 # 1 -> joint X-ray off, everything shown (2), 2 -> joints and curves hidden, meshes only (0).
 CYCLE = {0: ("XRAY_JOINTS", 1), 1: ("ALL", 2), 2: ("MESHES", 0)}
 CYCLE_LABELS = {"XRAY_JOINTS": "X-Ray Joints", "ALL": "Joints, Curves and Meshes", "MESHES": "Meshes Only"}

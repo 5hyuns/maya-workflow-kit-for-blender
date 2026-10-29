@@ -1,7 +1,7 @@
-"""Step 228 lane A (Issue #138, ATTACH_PLAN L8): Constrain > Motion Paths > Attach to Motion Path / Set Motion Path Key
+"""Step 228 lane A (Issue #138): Constrain > Motion Paths > Attach to Motion Path / Set Motion Path Key
 (operators/motion_path_228.py).
 
-Maya 2026 (rows =
+Expected (rows =
 [frame, world translate, rotate XYZ deg, uValue], path = 5 CV cubic, Time Slider 1-120). SETKEY_KNOTS / SETKEY_CVS = the
 path after ``SetKeyPath`` at frame 50. Maya Y-up (x, y, z) -> Blender
 (x, -z, y) x maya_unit (1 in the factory m scene). The values are written here."""
@@ -240,8 +240,8 @@ def test_set_motion_path_key_at_50():
     ep, er = _compare(car, SETKEY)
     print(f"mp_setkey50: knots {dk:.1e}, CVs {dc:.1e}, key value {dv:.1e}, u {du:.1e}, position {ep:.2e}, "
           f"rotation {er:.2e} deg")
-    # Maya's own arc length is approximate: the exact (double) arc-length positions on Maya's new curve differ from
-    # Maya's rows by up to 1.23e-4 (Maya length 23.82464, exact 23.82537), so this case allows 1.5e-4 / 2e-3 deg
+    # the expected arc length is approximate: the exact (double) arc-length positions on the new curve differ from
+    # the expected rows by up to 1.23e-4 (length 23.82464, exact 23.82537), so this case allows 1.5e-4 / 2e-3 deg
     assert du < 1e-5 and ep < 1.5e-4 and er < 2 * ROT_TOL, (du, ep, er)
 
 
@@ -266,7 +266,7 @@ def test_3d_path():
         front = max(front, math.degrees(want.angle(got, 0.0)))
     sc.frame_set(1)
     print(f"mp_3d: max position error {ep:.2e}; front axis {front:.2e} deg; rotation {er:.2f} deg "
-          "(Blender's up roll vs Maya world-up vector, recorded)")
+          "(Blender's up roll vs the Maya world-up vector)")
     assert ep < POS_TOL and front < ROT_TOL * 10, (ep, front)
     assert er < 10.0, er
 
@@ -285,7 +285,7 @@ def test_axes_and_inverse_up():
     _scene()
     try:
         bpy.ops.allset.motion_path_attach('EXEC_DEFAULT', front_axis="Y", up_axis="Y")
-    except RuntimeError as ex:      # an operator that reports ERROR raises in Python ( step 69)
+    except RuntimeError as ex:      # an operator that reports ERROR raises in Python (step 69)
         assert "must differ" in str(ex), ex
     else:
         raise AssertionError("same front and up axis attached")

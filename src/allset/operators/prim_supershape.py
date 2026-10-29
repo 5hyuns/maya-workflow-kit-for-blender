@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 polySuperShape (Create > Polygon Primitives > Super Ellipse / Spherical Harmonics / Ultra Shape).
+"""Maya polySuperShape (Create > Polygon Primitives > Super Ellipse / Spherical Harmonics / Ultra Shape).
 
 Pure Python (no bpy), Maya Y-up space and Maya units, returning ``prim_shapes.Mesh``. Every rule follows
-Maya 2022 (factory menu items, then one attribute changed at a time).
+Maya (default menu items and each attribute on its own).
 No Maya code or data was copied.
 
-checked rules in brief:
+Rules in brief:
 
 - One node type for all three menu items; they differ only by ``shape`` (0 Super Ellipse, 1 Spherical Harmonics,
   2 Ultra). The menu passes radius 1, 16 / 16 divisions, createUV 2 (sawtooth poles), merge on, the factory values.
@@ -22,7 +22,7 @@ checked rules in brief:
   (m1, e1, e2, mix, m2, e3, e4, e5) = the eight attributes in order; point = (r1 r2 cos b cos phi, r2 sin b,
   r1 r2 cos b sin phi). Ultra Mirror on = the vertical set copies the horizontal one.
 - Radius scales the point. Horizontal / Vertical Revolutions, Vertical Offset, Internal Radius, X / Z Offset change
-  nothing in Maya 2022 (on all three shapes, alone and together).
+  nothing in Maya (on all three shapes, alone and together).
 - Vertices column-major: column 0 rows 0..R (both poles), then each further column rows 1..R-1; column n = column 0.
   Faces row-major (rows from the bottom, columns inner): quad (i, j) (i, j+1) (i+1, j+1) (i+1, j) with merged
   corners dropped, so the poles are triangle fans (n x R faces, n x (R - 1) + 2 vertices). Merge Vertices off: the

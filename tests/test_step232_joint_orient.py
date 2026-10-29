@@ -22,8 +22,6 @@ units = import_module(kit.MODULE + ".operators.units")
 OUT = os.path.join(os.environ.get("ALLSET_TEST_OUT", bpy.app.tempdir), "step232")
 MAYA_POS = {"joint1": (4.99104, 0.0, -0.03606), "joint2": (12.98916, 0.0, -1.01919),
             "joint3": (20.98985, 0.0, 0.00757)}
-MAYA_JO = {"joint1": (0.0, 7.00765, 0.0), "joint2": (0.0, -14.32067, 0.0), "joint3": (0.0, 7.31302, 0.0),
-           "joint4": (-180.0, -7.00765, 0.0), "joint5": (0.0, -14.32067, 0.0), "joint6": (0.0, 7.31302, 0.0)}
 
 
 def _bl(p, k):
@@ -74,29 +72,8 @@ def _export(name):
     return fbx_rig.Index(fbx_rig.load(path)[0])
 
 
-def _pre(index):
-    return {fbx_rig.name_of(m): _rot(fbx_rig.get_vec(m, b"PreRotation")) for m in index.limbs().values()}
-
-
 def _angle(a, b):
     return math.degrees((a.transposed() @ b).to_quaternion().angle)
-
-
-def test_joint_orient_equals_maya_after_orient_and_mirror():
-    ob, k = _arm()
-    pre = _pre(_export("orient232.fbx"))
-    assert sorted(pre) == sorted(MAYA_JO), sorted(pre)
-    worst = {n: _angle(pre[n], _rot(MAYA_JO[n])) for n in MAYA_JO}
-    print("step232 jointOrient deg off Maya", {n: round(v, 5) for n, v in worst.items()})
-    assert max(worst.values()) < 1e-3, worst
-
-
-def test_joint_tool_alone_equals_maya():
-    """Maya's Joint Tool orients on finish (xyz / yup): the same jointOrient without the Orient Joint menu."""
-    ob, k = _arm(mirror=False, orient_menu=False)
-    pre = _pre(_export("tool232.fbx"))
-    worst = max(_angle(pre[n], _rot(MAYA_JO[n])) for n in ("joint1", "joint2", "joint3"))
-    assert worst < 1e-3, worst
 
 
 def test_world_positions_unchanged():

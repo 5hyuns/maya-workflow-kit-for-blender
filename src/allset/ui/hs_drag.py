@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Hypershade: middle-mouse drag a material swatch from the Browser onto an object in a viewport = assign it
-(step 162, :80 「남은 것」).
+(step 162).
 
 Maya: MMB-drag a shader swatch and release it over a surface in a modeling panel; the shader is assigned to that
 object (in component mode with faces selected on it: to those faces). The Hypershade is a separate window, so the
 3D View under the release is usually in another window.
 
-How (checked in Blender 4.5, tests/gui/gui_step162_hs_drag.py):
+How (Blender 4.5, tests/gui/gui_step162_hs_drag.py):
 
 - ``allset.hs_swatch_drag`` sits first in "View2D Buttons List" on MIDDLEMOUSE PRESS (that keymap's view2d.pan /
   scroller_activate would take the press otherwise). It passes through unless the region is the Hypershade Browser
   and the press is on a material swatch: its name button is the property ``Material.allset_hs_pick``, read from
-  ``context.property`` (the swatch image, ``template_icon``, is no button: nothing to read there, checked).
+  ``context.property`` (the swatch image, ``template_icon``, is no button: nothing to read there).
 - It then runs as a window modal. Blender keeps every mouse event in a window that has a modal operator handler,
   even when the cursor is outside it (wm_event_system ``wm_event_cursor_other_windows`` skips such windows, and
   GHOST captures the mouse while a button is down), so the release arrives here with coordinates outside the
@@ -124,7 +124,7 @@ def object_under(context, point, own_ptr=0):
 def swatch_material(context):
     """The material of the Browser swatch under the mouse, or None. The swatch's name button is the property
     ``Material.allset_hs_pick`` (ui/hypershade.py): ``context.property`` is the only hovered button a keymap
-    operator can read (``button_operator`` / ``context_pointer_set`` are absent there, checked)."""
+    operator can read (``button_operator`` / ``context_pointer_set`` are absent there)."""
     from . import hypershade
     if hypershade.context_pane(context) != 'BROWSER':
         return None

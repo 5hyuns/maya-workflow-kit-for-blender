@@ -1,5 +1,5 @@
-"""Step 92: Graph Editor t (center the current time), Alt+/ (Snap Time To Selection toggle), i hold (Insert Key tool).
-"""
+"""Step 92: Graph Editor t (center the current time), Alt+/ (Snap Time To Selection toggle), i hold (Insert Key
+tool)."""
 
 from importlib import import_module
 
@@ -33,7 +33,7 @@ def test_center_delta_pans_to_the_middle():
 
 
 def test_snap_target_is_the_earliest_selected_key():
-    # Maya (observed): 10 + 20 -> 10, 20 then add 10 -> 10, 20 alone -> 20, nothing -> stays
+    # Maya: 10 + 20 -> 10, 20 then add 10 -> 10, 20 alone -> 20, nothing -> stays
     assert gk.snap_target([10.0, 20.0]) == 10.0
     assert gk.snap_target([20.0, 10.0]) == 10.0
     assert gk.snap_target([20.0]) == 20.0

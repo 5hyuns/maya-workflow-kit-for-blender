@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya UV Editor display keys and Move UV Shell.
+"""Maya UV Editor display keys and Move UV Shell (step 155).
 
 Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
 
@@ -8,7 +8,7 @@ Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
 - 6 UVEditor_ToggleUVTextureImage -> ``SpaceImageEditor.image`` = None / back (Blender has no "hide the image"
   flag; the image is remembered per editor, else the active material's image texture is shown).
 - 8 UVEditor_ToggleUVShellBorder = Maya's shell border display toggle: shell
-  borders drawn in colour, width setting displayPolyBorderEdgeSize[1] = 3 px. Colour not known .
+  borders drawn in colour, 3 px wide.
 - 9 UVEditor_ToggleTextureBorder = ``ToggleTextureBorderDisplay``: Maya's "texture
   borders" are the UV shell border edges drawn thick (Select > Texture Borders selects the same edges; step 79
   cut_sew.py calls them that too), on in the Maya factory View menu (checked). Drawn 3 px in the
@@ -32,8 +32,8 @@ from .. import results
 from .. import compat
 from ..operators import uv_arrays, uv_tools
 
-BORDER_PX = 3.0                        # setting displayPolyBorderEdgeSize (factory 3.0, 3.0)
-SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour : Maya's colour isn't known
+BORDER_PX = 3.0                        # shell / texture border width
+SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour (the kit's choice)
 MOVE_TOOL = "builtin.move"
 
 MODES = (("WIREFRAME", "Wireframe", "Maya 4: UVs as wireframe (no shaded faces)"),
@@ -242,7 +242,7 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
 # ``_iso_sets`` (face indices per object); while the view is on, faces outside it are hidden (UV Sync Selection on:
 # Blender's hide, the 3D View too) or deselected (sync off: the UV Editor draws only selected faces). Filter Selection
 # > Connected / Contained Faces uses the same state with the faces of the selection at the time
-# it is turned on (delegated: Maya's filter follows later selection changes).
+# it is turned on (Maya's filter follows later selection changes).
 
 _isolated = {}       # object name -> {synced, gone (face indices the kit hid / deselected), before, count}
 _iso_sets = {}       # object name -> (face count, set of face indices): Maya's UV Editor isolate set

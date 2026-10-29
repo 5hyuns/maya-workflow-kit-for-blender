@@ -10,7 +10,7 @@ Blender preference, store review #40) mapped in ``editor_menu_map``:
   / pose-bone selection; when it changes, every Graph Editor in F-Curve mode refits its value axis to every curve it
   draws with Maya's Frame All rule (``operators/graph_frame.py``: 25 % value margins) and keeps its time range
   (step 281; Blender lists the selected objects' curves with Only Show Selected, so that frames them).
-* **Auto Frame Time** (factory off, "... reframe ... along the time axis"): the time axis too, with 10 % time
+* **Auto Frame Time** (factory off, "... reframe ... along the time axis"): the time axis too, with Maya-style 10 % time
   margins (alone: only the time axis). A normalised view gets Blender's View All.
 * **Curve Name** Always / Never / Active Only (factory Never): a WINDOW POST_PIXEL handler writes each visible
   curve's Maya plug name ("pCube1.translateX") in the curve colour just right of its last key (clamped into the
@@ -241,7 +241,7 @@ def hide_sidebars(context):
             if space.show_region_ui:
                 with context.temp_override(window=window, area=area):
                     space.show_region_ui = False
-    _sidebar_done.intersection_update(live)     # freed area pointers are reused ( step 9)
+    _sidebar_done.intersection_update(live)     # freed area pointers are reused (step 9)
 
 
 def _tick():

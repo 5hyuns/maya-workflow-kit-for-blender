@@ -1,7 +1,7 @@
-"""Step 226 lane C: Match Transformations to a joint, Maya multi-target constraints (weighted average) against Maya.
+"""Step 226 lane C: Match Transformations to a joint, Maya multi-target constraints (weighted average), like Maya.
 
-Maya 2026 results (the
-values are in MAYA below). Scene: locators ctrl (1, 4.5, 0), ctrlB (-3, 4, 0),
+Expected results (the
+values are in EXPECTED below). Scene: locators ctrl (1, 4.5, 0), ctrlB (-3, 4, 0),
 obj (0, 4, 0) in Maya Y-up -> Blender (x, -z, y) x maya_unit(). Rotations: Maya XYZ Euler degrees, R_b = C R_m C^-1.
 """
 
@@ -22,7 +22,7 @@ joints = import_module(kit.MODULE + ".operators.joints")
 TOL = 1e-4
 C3 = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))      # Maya axes -> Blender axes
 
-MAYA = {   # Maya 2026
+EXPECTED = {
     "orient": {"coaxial_equal": (0.0, 0.0, 15.0), "coaxial_w1_3": (0.0, 0.0, -0.26148),
                "skew_equal": (27.048397, 32.577252, 24.714866), "skew_w1_3": (18.464918, 48.151595, 9.316553)},
     "parent": {"start": (0.0, 4.0, 0.0), "a_x2": (1.0, 4.0, 0.0),
@@ -138,14 +138,14 @@ def test_point_two_targets_weighted_average():
     assert cb.weight_name(o.constraints[1]) == "ctrlBW1"
     fc = o.animation_data.drivers.find(f'constraints["{o.constraints[1].name}"].influence')
     assert fc is not None and fc.driver.is_simple_expression, fc and fc.driver.expression
-    _check_pos(o, MAYA["point"]["equal"], "equal")
+    _check_pos(o, EXPECTED["point"]["equal"], "equal")
     _weight(o, g, 1, 3.0)
-    _check_pos(o, MAYA["point"]["w1_3"], "w1_3")
+    _check_pos(o, EXPECTED["point"]["w1_3"], "w1_3")
     _weight(o, g, 0, 0.0)
     _weight(o, g, 1, 0.0)
-    _check_pos(o, MAYA["point"]["all_zero"], "all_zero")
+    _check_pos(o, EXPECTED["point"]["all_zero"], "all_zero")
     _weight(o, g, 0, 0.5)
-    _check_pos(o, MAYA["point"]["w0_half_only"], "w0_half_only")
+    _check_pos(o, EXPECTED["point"]["w0_half_only"], "w0_half_only")
 
 
 def test_three_targets_and_channel_box_rows():
@@ -201,9 +201,9 @@ def test_scale_two_targets_geometric_mean():
     g = _constrain('COPY_SCALE', a, b, o)
     _place(a, maya_scale=(2, 2, 2))
     _place(b, maya_scale=(1, 3, 1))
-    _check_scale(o, MAYA["scale"]["equal"], "equal")
+    _check_scale(o, EXPECTED["scale"]["equal"], "equal")
     _weight(o, g, 1, 3.0)
-    _check_scale(o, MAYA["scale"]["w1_3"], "w1_3")
+    _check_scale(o, EXPECTED["scale"]["w1_3"], "w1_3")
 
 
 # --- Orient ----------------------------------------------------------------------------------------------------------
@@ -213,18 +213,18 @@ def test_orient_two_targets():
     _place(a, maya_rot=(0, 0, 45))
     _place(b, maya_rot=(0, 0, -15))
     g = _constrain('COPY_ROTATION', a, b, o)
-    dev = _rot_dev(o, MAYA["orient"]["coaxial_equal"])
+    dev = _rot_dev(o, EXPECTED["orient"]["coaxial_equal"])
     assert dev < 1e-3, dev
     _weight(o, g, 1, 3.0)
-    DEVIATIONS["orient coaxial_w1_3 (deg)"] = _rot_dev(o, MAYA["orient"]["coaxial_w1_3"])
+    DEVIATIONS["orient coaxial_w1_3 (deg)"] = _rot_dev(o, EXPECTED["orient"]["coaxial_w1_3"])
     assert DEVIATIONS["orient coaxial_w1_3 (deg)"] < 1.0
     _weight(o, g, 1, 1.0)
     _place(a, maya_rot=(30, 0, 45))
     _place(b, maya_rot=(0, 60, -15))
-    DEVIATIONS["orient skew_equal (deg)"] = _rot_dev(o, MAYA["orient"]["skew_equal"])
+    DEVIATIONS["orient skew_equal (deg)"] = _rot_dev(o, EXPECTED["orient"]["skew_equal"])
     assert DEVIATIONS["orient skew_equal (deg)"] < 1e-3, DEVIATIONS
     _weight(o, g, 1, 3.0)
-    DEVIATIONS["orient skew_w1_3 (deg)"] = _rot_dev(o, MAYA["orient"]["skew_w1_3"])
+    DEVIATIONS["orient skew_w1_3 (deg)"] = _rot_dev(o, EXPECTED["orient"]["skew_w1_3"])
     assert DEVIATIONS["orient skew_w1_3 (deg)"] < 2.0, DEVIATIONS
 
 
@@ -241,7 +241,7 @@ def test_parent_two_targets_maintain_offset():
     hs = [h for h in multi.helpers() if ci.H_GROUP not in h.keys()]
     assert len(hs) == 2 and all(h.name not in bpy.context.scene.objects for h in multi.helpers())
     assert not any(h.parent for h in hs)         # helpers are no DAG children of the targets
-    p = MAYA["parent"]
+    p = EXPECTED["parent"]
     _check_pos(o, p["start"], "start")
     _place(a, maya_pos=(3, 4.5, 0))
     _check_pos(o, p["a_x2"], "a_x2")
@@ -313,7 +313,7 @@ def _skeleton():
     # bone X = Maya Z, bone Y = Maya X, bone Z = Maya Y (in Blender axes: (0,-1,0), (1,0,0), (0,0,1))
     b0 = Matrix(((0, 1, 0), (-1, 0, 0), (0, 0, 1)))
     m = (rot @ b0).to_4x4()
-    m.translation = b_point(MAYA["match"]["t"])
+    m.translation = b_point(EXPECTED["match"]["t"])
     eb.matrix = m
     eb.length = 0.5
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -325,13 +325,13 @@ def test_match_transform_to_joint():
     _clear()
     arm = _skeleton()
     ctrl = _locator("ctrl_grp", (0, 0, 0))
-    # Maya hand: the group first, the joint last (: picking the joint enters Pose mode)
+    # Maya hand: the group first, the joint last (picking the joint enters Pose mode)
     _select(ctrl, arm, active=arm)
     bpy.ops.object.mode_set(mode='POSE')
     arm.data.bones.active = arm.data.bones["joint1"]
     assert bpy.ops.allset.match_transform(kind='ALL') == {'FINISHED'}
     bpy.ops.object.mode_set(mode='OBJECT')
-    want = Matrix.LocRotScale(b_point(MAYA["match"]["t"]), b_rot(MAYA["match"]["r"]).to_quaternion(), None)
+    want = Matrix.LocRotScale(b_point(EXPECTED["match"]["t"]), b_rot(EXPECTED["match"]["r"]).to_quaternion(), None)
     got = ctrl.matrix_world
     assert (got.translation - want.translation).length < TOL, tuple(got.translation)
     assert angle_between(got.to_3x3(), want.to_3x3()) < 1e-3, ctrl.rotation_euler

@@ -1,6 +1,6 @@
 """Step 282 (#181) in a real UI: Joint Tool 4 clicks (a leg / spine of 3 bones) -> Enter -> Skeleton > Create IK
 Handle (first joint, then the last) -> the kit solves the chain Maya's way -> move the handle: the end reaches it and
-every joint sits where Maya's rule puts it -> Twist 45 -> Ctrl+Z -> save + open keeps it."""
+every joint sits where the Maya-style rule puts it -> Twist 45 -> Ctrl+Z -> save + open keeps it."""
 
 import os
 import sys
@@ -100,7 +100,7 @@ def compare(label):
     reach = (got[-1] - handle().matrix_world.translation).length / k
     length = sum((got[i + 1] - got[i]).length for i in range(len(got) - 1))
     inside = (handle().matrix_world.translation - got[0]).length < length * 0.98
-    check(f"{label}: joints on Maya's rule ({worst:.1e}), the end at the handle ({reach:.1e}, in reach {inside})",
+    check(f"{label}: joints on the Maya-style rule ({worst:.1e}), the end at the handle ({reach:.1e}, in reach {inside})",
           worst < 1e-4 and (reach < 2e-3 or not inside))
 
 

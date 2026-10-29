@@ -8,7 +8,7 @@ The table stays open for the next selection. Edges / faces selected: no CVs line
 
 Maya's values are the point tweaks (``pnts``, 0 on an untweaked cube); Blender keeps no tweak layer, so the rows
 show the vertex positions in object space, in display units, and typing moves the vertex (relative entry ``+=1``
-works like Maya's). [delegated]
+works like Maya's).
 """
 
 import bmesh

@@ -7,7 +7,7 @@ Maya 2026:
   joint's offset perpendicular to the chain), length 2 × jointDisplayScale, stored in the handle's parent space
   (world); a straight chain (every |p × d|² < 1e-10) falls back to e_k ⊥ d, k = the smallest |component| of d in the
   start joint's frame, pv = d × n;
-- step 266 (179 cases): for an RP handle on exactly 3 joints whose middle joint has
+- step 266: for an RP handle on exactly 3 joints whose middle joint has
   preferredAngle ≈ 0, jointOrient ≈ 0 (≤ 3e-5° bends, ≥ 1e-4° doesn't) and rotate 0 and a straight chain, ``ikHandle``
   first writes preferredAngle (0, 90, 0) on the middle joint, so the pv comes from that bent pose (along X with equal
   bones: (1.414, 0, 1.414)) and the chain bends that way; every other straight chain (4+ joints, a jointOrient on the
@@ -15,11 +15,11 @@ Maya 2026:
 - the solve plane: v = pv perpendicular to u = root -> goal, turned about u by +twist (right-handed); Pole Vector
   constraint = pv follows (target − start joint).
 
-Blender (4.5 checked): the IK constraint's pole target at root + R(u, twist)·pv with
-pole_angle = −signed_angle(base bone X -> rest bend direction about the rest chain axis) reproduces Maya's elbow to
-2.2e-4 for reachable goals (0.011 when the goal is out of reach: Blender's IK keeps a sliver of bend). A straight chain
+Blender (4.5): the IK constraint's pole target at root + R(u, twist)·pv with
+pole_angle = −signed_angle(base bone X -> rest bend direction about the rest chain axis) gives Maya's elbow for
+reachable goals (out of reach Blender's IK keeps a sliver of bend). A straight chain
 needs a starting bend (Blender's IK starts from the pose): the in-between joints get their preferred angle, else 1°
-toward the pole (step 245 checked: 0.01 rad is enough, less is not).
+toward the pole (step 245: 0.01 rad is enough, less is not).
 
 Kit pieces: the handle's custom properties ``poleVectorX/Y/Z`` (Maya units, Maya axes) and ``twist`` (degrees) are
 its Channel Box channels; a hidden empty ``<handle>Pole`` (at the chain's start joint + the turned pv, world, like
@@ -68,7 +68,7 @@ def chain_points(arm, bones, preferred=True):
     pts = [m.translation.copy()]
     for prev, b in zip(bones, bones[1:]):
         local = prev.bone.matrix_local.inverted() @ b.bone.matrix_local
-        # Maya sets every DOF to its preferred angle (factory 0 = the rest)
+        # Maya sets every DOF to its preferred angle (default 0 = the rest)
         rot = Matrix.Identity(4) if preferred else b.matrix_basis.to_3x3().to_4x4()
         if preferred and PREFERRED_PROP in b:
             from mathutils import Euler
@@ -115,9 +115,7 @@ def default_pole_vector(points, length, start_frame=None):
 
 # R4 (step 266): Maya writes the middle joint's preferred angle (0, 90, 0) — 90° about its Maya Y = the bone's Z
 # (joints.JOINT_AXES), as pose Euler XYZ in bone axes like rig_maya.PREFERRED_PROP — when the 3-joint chain is
-# straight. Straightness: the middle joint 1e-3 / 4 off the line still counts, 0.1 / 4 doesn't; the kit
-# takes 1e-3 of the chain length (delegated, inside that bracket). jointOrient bracket 3e-5° .. 1e-4°: the
-# kit takes 1e-6 rad (5.7e-5°).
+# straight. Straightness: the kit takes 1e-3 of the chain length; jointOrient: 1e-6 rad (5.7e-5°).
 AUTO_PREFERRED = (0.0, 0.0, 90.0)
 STRAIGHT_TOL = 1e-3
 JO_TOL = 1e-6
@@ -379,7 +377,7 @@ def unregister_handlers():
 # Copy Rotation constraint (world space) on its bone, reading a hidden helper empty the solve places: the FK channels
 # stay as they are, like under Blender's IK. The IK constraint stays (the handle, Ik Blend, Solver Enable keep working)
 # with its influence driven to Ik Blend x (1 - kit), the Copy Rotations to Ik Blend x kit (``MULTI`` on the handle = 1
-# while the kit solves). Joint limits, IK stiffness or a second IK handle on the chain keep Blender's IK (delegated).
+# while the kit solves). Joint limits, IK stiffness or a second IK handle on the chain keep Blender's IK.
 
 MULTI = "allset_rp_multi"              # handle: 1 while the kit solves its 3+ bone chain
 ROT_OWNER = "allset_rp_rot_of"         # bone helper empty -> "<handle>\t<bone>"

@@ -1,4 +1,4 @@
-"""Step 130 (#40, ): the extension uninstalls like any other — everything register() adds,
+"""Step 130 (#40): the extension uninstalls like any other — everything register() adds,
 unregister() takes back, and nothing it does needs an extra step to undo.
 
 In one process: before enable → enable (Blender mode) → Maya mode on (+ Make Blender Maya) → off → disable, with
@@ -30,7 +30,7 @@ ROOT = os.path.dirname(HERE)
 PREF_STRUCTS = ("inputs", "view", "edit", "system", "filepaths", "keymap", "experimental", "apps")
 # Window dependent values (0 in background)
 VOLATILE = ("system.ui_scale", "system.pixel_size", "system.ui_line_width")
-# The active keyconfig is lane K's (: the Maya keys move into the add-on keyconfig and the active keyconfig
+# The active keyconfig is lane K's (the Maya keys move into the add-on keyconfig and the active keyconfig
 # is never changed). Until that lands, Maya mode still switches it; everything else must stay put even in Maya mode.
 LANE_K_PENDING = ("keymap.active_keyconfig",)
 
@@ -253,7 +253,7 @@ def test_install_use_remove_from_blender():
 
 def test_install_use_command_line_remove():
     """``blender --command extension remove`` never imports the add-on: only what Blender saved remains, and the kit
-    saved nothing of Blender's (), so this is as clean as a Remove from inside Blender."""
+    saved nothing of Blender's, so this is as clean as a Remove from inside Blender."""
     root, env = _sandbox("lc130_cli")
     a = _session(root, env, "a", "save")
     files_a, bytes_a = _config_files(root), _userpref(root)

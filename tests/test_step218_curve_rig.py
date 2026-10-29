@@ -1,4 +1,4 @@
-"""Step 218 lane C: Spline IK on an existing curve (L6) and clusters on curve CVs (L7) against Maya 2026 numbers
+"""Step 218 lane C: Spline IK on an existing curve (L6) and clusters on curve CVs (L7) against the expected numbers
 Maya (x, y, z) = Blender (x, -z, y), factory scene = 1 unit.
 
 Scene: joint1..joint5 at Maya (0, 2i, 0); spineCurve = degree 3, CVs (1,0,0) (2,2,0) (1,4,1) (0,6,0) (1,8,0).
@@ -19,9 +19,6 @@ cb = import_module(kit.MODULE + ".ui.channel_box")
 
 
 CVS = [(1, 0, 0), (2, 2, 0), (1, 4, 1), (0, 6, 0), (1, 8, 0)]
-# Blender's Spline IK walks the curve's polyline (kit resolution 128): 7e-5 against Maya's numbers, which are
-# rounded to 4 decimals (±5e-5)
-ROOT_ON_CURVE_TOL = 1e-4
 
 
 def B(p):
@@ -79,15 +76,6 @@ def _chain(parent_bone=False):
         cb.set_bone_selected(pb, pb.name in ("joint1", "joint5"))
     data.bones.active = data.bones["joint5"]
     return arm
-
-
-def _joints(arm):
-    bpy.context.view_layer.update()
-    return [arm.matrix_world @ arm.pose.bones[f"joint{k}"].head for k in range(1, 6)]
-
-
-def _err(got, maya):
-    return max((g - B(m)).length for g, m in zip(got, maya))
 
 
 def _spline(curve=None, **kw):

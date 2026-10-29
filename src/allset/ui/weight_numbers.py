@@ -2,14 +2,14 @@
 """Maya 2024+ Paint Skin Weights > Visualization > Numeric: the painted influence's weight at every vertex
 (step 224, Issue #134 / #126 A3).
 
-Maya: Show Numbers off by default, Decimal Places 2 (1-4), Number Color yellow (1, 1, 0), optional Color Ramp
+Settings: Show Numbers off by default, Decimal Places 2 (1-4), Number Color yellow (1, 1, 0), optional Color Ramp
 (0 white -> 1 black), back-facing vertices drawn too. Blender has no such display, so the kit draws it: a 3D View
 WINDOW POST_PIXEL handler projects the (deformed) vertices with numpy and draws ``blf`` labels.
 
-Decision 7 (): no mesh-size limit; the cost is the labels on screen (blf 2.2 us each, weight
+No mesh-size limit; the cost is the labels on screen (blf 2.2 us each, weight
 read ~1 us), so at most ``LIMIT`` = 2,000 labels are drawn; with more vertices in view only those within twice the
-brush radius of the pointer are drawn and the Help Line says how many are in view (Maya draws all — kit difference,
-delegated). Projections and weights are cached and refreshed after a depsgraph update — not while a paint stroke runs
+brush radius of the pointer are drawn and the Help Line says how many are in view (Maya draws all — kit
+difference). Projections and weights are cached and refreshed after a depsgraph update — not while a paint stroke runs
 (the numbers follow when the stroke ends).
 """
 
@@ -170,7 +170,7 @@ def draw():
 
 
 def help_note():
-    """Help Line text while the labels are capped ()."""
+    """Help Line text while the labels are capped."""
     if STATS["capped"]:
         return f"{STATS['in_view']} vertices in view — zoom in to see all weights (numbers shown around the brush)"
     return ""

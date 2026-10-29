@@ -54,7 +54,7 @@ def keys_work(tag):
     took none until the screen was refreshed)."""
     def move():
         # event simulation: the first key after a layout change, sent in the same tick as the move, is lost
-        # (checked with the old Quad View off too: a real mouse moves first)
+        # (also with the old Quad View off: a real mouse moves first)
         a = fv().panes(win().screen)[0] if len(fv().panes(win().screen)) == 1 else fv().roles(win().screen)["top"]
         x, y = a.x + a.width // 3, a.y + a.height // 2
         C["xy"] = (x, y)

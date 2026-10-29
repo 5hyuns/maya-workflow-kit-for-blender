@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya file dialog's left column in every Blender file browser: Current Project + the project's folders + Set
 Project (Maya's file dialog: under Folder Bookmarks, "Current Project:"
-drop-down, the project folder list, "Set Project..." button). Blender's own bookmarks stay above it.
- 「계획」 1."""
+drop-down, the project folder list, "Set Project..." button). Blender's own bookmarks stay above it."""
 
 import os
 

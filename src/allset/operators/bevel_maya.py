@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polyBevel3 (Edit Mesh > Bevel, Ctrl+B) at once, as an editable history node like step 65's extrusion
-(#16,  「계획」).
+(#16, step 139).
 
-- Factory values: Fraction 0.5, Offset As Fraction on, Offset 0.2, Segments 1, Depth 1 (Chamfer on, Mitering auto).
+- Defaults: Fraction 0.5, Offset As Fraction on, Offset 0.2, Segments 1, Depth 1 (Chamfer on, Mitering auto).
 - Fraction is relative to one length for the whole selection: the shortest "slide" edge (an edge touching an end of a
   beveled edge), halved when both of its ends are used (two shells of different size get the same width). The width
-  Maya applies is 0.9999 x that (both modes).
+  applied is 0.9999 x that (both modes).
 - The profile is Blender's superellipse with ``profile = t^2``, t = 0.5 + Depth x (sqrt(1/2) - 1/2): Depth 1 = the
   round arc (0.5), 0 = straight, -1 = the arc mirrored over the chord (exact for 2 segments).
 - Zero-length slide edges don't count, and what the bevel makes is merged within 0.0001 (Merge Vertices): the
@@ -27,9 +27,9 @@ import bmesh
 
 from . import extrude
 
-MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (factory)
+MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (default)
 ZERO = 1e-6           # zero-length slide edges (a zero-length extrusion) don't limit the fraction
-FIT = 0.9999          # Maya's bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
+FIT = 0.9999          # bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
 CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x 2 box)
 
 
@@ -130,7 +130,7 @@ def width(edges, fraction=0.5, offset_as_fraction=True, offset=0.2, unit=1.0):
 # --- Maya numbering (step 257) -----------------------------------------------------------------------------------
 
 def maya_edge_ids(bm):
-    """{BMEdge: Maya edge id}: the mesh's edge index (delegated kit design, step 257). It is Maya's id wherever
+    """{BMEdge: Maya edge id}: the mesh's edge index (kit design, step 257). It is Maya's id wherever
     the kit made the edges: kit polyCube / polyCylinder are built with Maya's edge order (prim_shapes ``edges``) and
     kit extrusions sort their result into polyExtrudeFacet's order (extrude.renumber),
     Maya numbers a mesh made from a face list in face-corner order; bmesh's
@@ -222,7 +222,7 @@ def _plan(bm, edges, ids):
             corners.append(v.index)
     along = sorted({f.index for e in edges for f in e.link_faces})
     # the face order below is Maya's when every bevelled vertex ends two or more bevelled edges (closed loops, all
-    # edges: 16 / 16 cases); with a chain end or a lone edge Maya orders the faces another way, not yet
+    # edges); with a chain end or a lone edge Maya orders the faces another way, not yet
     # known, so the faces then keep Blender's order
     closed = all(sum(1 for e in v.link_edges if e in sel) >= 2 for v in order)
     return {"kept": [v.index for v in bm.verts if v not in seen], "slots": slots, "edge_faces": edge_faces,

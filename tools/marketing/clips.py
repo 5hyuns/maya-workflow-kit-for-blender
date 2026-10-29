@@ -3,7 +3,7 @@
     blender --enable-event-simulate --window-geometry 0 0 1920 1080 --python tools/marketing/clips.py -- result.json
     (env ALLSET_CLIP = clip name, ALLSET_CLIP_OUT = output folder)
 
-Recording: one action per timer tick. A tick first takes ``screen.screenshot`` (the
+Recording (step 123): one action per timer tick. A tick first takes ``screen.screenshot`` (the
 window as drawn after the previous tick's events — the screenshot shows the previous frame), then sends its action.
 The picture is what is on screen *while* that action happens, so it gets the action's duration (virtual time) and the
 cursor path (position before -> after the action). Ticks with duration 0 only give Blender time (no picture).
@@ -160,7 +160,7 @@ def record(on):
 
 
 def _check_backgrounds():
-    """Every Maya-mode frame must show Maya's flat #5c5c5c viewport background (tools/marketing/bg_check.py, #41).
+    """Every Maya-mode frame must show the flat #5c5c5c viewport background (tools/marketing/bg_check.py, #41).
     Excluded (``bg`` = "excluded"): plain-Blender frames (Blender mode shows Blender's own UI and theme: the switch
     clip's middle part) and a frame whose picture may still be the other mode (``maya_mode`` in ``_tick``)."""
     E = REC["entries"]
@@ -573,7 +573,7 @@ def ring_point(ob, deg):
     return region.x + int(s.x), region.y + int(s.y)
 
 
-RING_PX = 75.0 * 0.86     # Blender's rotate gizmo Z ring radius in gizmo-size units (checked on the shots)
+RING_PX = 75.0 * 0.86     # Blender's rotate gizmo Z ring radius in gizmo-size units (read off the shots)
 
 
 def clip_pivot_snap():
@@ -846,7 +846,7 @@ def clip_rigging():
 
 # ------------------------------------------------------------------------------------------------ 7 switch
 def switch_button(label):
-    """The Maya | Blender switch at the right end of the top bar: x from SWITCH_PX (checked on the shots)."""
+    """The Maya | Blender switch at the right end of the top bar: x from SWITCH_PX (read off the shots)."""
     def fn():
         ui = sim.scale()
         dx = SWITCH_PX[label] * ui

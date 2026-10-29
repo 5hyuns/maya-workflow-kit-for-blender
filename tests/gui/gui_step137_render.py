@@ -1,7 +1,7 @@
 """Step 137 (#67) in a real UI: Maya Workflow Kit layout -> File > New Scene -> Cube -> Render > Render Current Frame
 (the Maya menu item) -> a Render View window (Image Editor on Render Result) whose image shows the cube, rendered
 through Maya's persp camera made on demand (operators/render_persp.py). Before step 137 nothing opened ("Cannot render,
-no camera", :105 X1). Screenshots: gui_step137_render_view.png, gui_step137_main.png."""
+no camera"). Screenshots: gui_step137_render_view.png, gui_step137_main.png."""
 
 import os
 import sys

@@ -192,7 +192,7 @@ def s_add():
 
 
 # Boxes: Blender's event simulation copies no modifier into the window's event state, so a simulated drag's
-# CLICK_DRAG never carries Shift / Ctrl (checked: the plain select_box ran). The kit pipeline is driven directly in
+# CLICK_DRAG never carries Shift / Ctrl (the plain select_box runs). The kit pipeline is driven directly in
 # the Graph Editor region instead: allset.select_2d_box (what Shift+drag runs first) + Blender's box as SET.
 def run_box(op_kwargs, editor_box=True):
     def s():

@@ -12,7 +12,7 @@ gives a new window exactly the size and place of the area it copies; Python can'
 - opening that kind again carves an area of the remembered size and place out of the largest area of the window
   the command runs in (one split per tick: Blender lays areas out only between ticks), runs the opening command
   again, which copies that piece into the new window, and closes the pieces, so the main layout is as it was. A remembered rect is first fitted inside that area: the kit can only place a window over
-  the window it opens from (delegated), which also brings a window that was on another monitor or off the
+  the window it opens from, which also brings a window that was on another monitor or off the
   screen back into view.
 
 ``open_window(context, area, kind)`` in ``operators/menu_extras.py`` is the one place every kit window opens.

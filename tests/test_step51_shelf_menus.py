@@ -1,5 +1,5 @@
 """Step 51: Maya option boxes in the menus (count = Maya's), kit-made shelf icons,
-shelf icon row (draw handler + gizmo pool). ; GUI: tests/gui/gui_step51_shelf_menus.py."""
+shelf icon row (draw handler + gizmo pool). GUI: tests/gui/gui_step51_shelf_menus.py."""
 
 import json
 import sys
@@ -100,9 +100,9 @@ def test_shelf_row_layout():
     region = type("R", (), {"height": 38})()
     x0, y0, size = shelf.icon_rect(region, 0, 1.0)
     x1, _y, _s = shelf.icon_rect(region, 1, 1.0)
-    assert size == 32 and x1 - x0 == 35 and y0 == 3      # Maya shelf button 35x34, 32 px icons
+    assert size == 32 and x1 - x0 == 35 and y0 == 3      # shelf button 35x34, 32 px icons
     assert sorted(r for _h, r in shelf._handle) == ['HEADER', 'WINDOW'], "icon row + tab row dim handlers"
-    assert round(0x44 * (1 - shelf.TAB_DIM)) == 0x37   # Maya tab row #373737 over the #444444 header
+    assert round(0x44 * (1 - shelf.TAB_DIM)) == 0x37   # tab row #373737 over the #444444 header
     assert shelf.SLOTS >= max(len(b) for _s, _l, b in shelf_data.SHELVES)
     cur, buttons = shelf.icon_buttons(bpy.context)
     assert buttons and buttons[0][1] == "Polygon Sphere", (cur, buttons[:2])
@@ -115,7 +115,7 @@ def test_template_shelf_row():
     row = shelf.shelf_row_area(screen)
     # step 113: no header — tab strip and icons are drawn in the WINDOW region (64 px shelf block)
     assert not row.spaces.active.show_region_header
-    assert 60 <= row.height <= 68, row.height       # Maya shelf 64 (ui_layout.md:219)
+    assert 60 <= row.height <= 68, row.height       # shelf 64
 
 
 class _Fake:
@@ -136,7 +136,7 @@ class _Fake:
 
 
 def test_status_line_collapse_handles():
-    """Every Maya Status Line group has a collapse arrow (ui_layout.md:194-195); Maya's factory collapsed groups
+    """Every Maya Status Line group has a collapse arrow; Maya's factory collapsed groups
     (masks, history, input line) start collapsed (step 113)."""
     status_line = import_module(kit.MODULE + ".ui.status_line")
     icons = import_module(kit.MODULE + ".ui.status_icons")

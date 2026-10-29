@@ -1,10 +1,10 @@
 """Step 258 lane B (Issue #155): rig polish — root joint Translate, Outliner name, Orient Joint / Ghost Selected output,
 menu items that left pose mode, the Channel Box joint hint.
 
-Maya 2026: a new root joint is ``joint1`` in
+Maya: a new root joint is ``joint1`` in
 the Outliner and the Channel Box, its Translate = its position; Orient Joint after success = only the command echo;
 Ghost Selected prints nothing on success, "Nothing selected can be ghosted using the current settings." when nothing
-can be ghosted). Kit axes:  / step 239 — the kit shows Blender's Z-up values (Maya Translate Y = kit Z).
+can be ghosted). Kit axes: step 239 — the kit shows Blender's Z-up values (Maya Translate Y = kit Z).
 """
 
 import json

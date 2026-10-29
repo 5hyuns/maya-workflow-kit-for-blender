@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 factory primitives as data: creation nodes (attributes + defaults) and the shapes they build.
+"""Maya primitives as data: creation nodes (attributes + defaults) and the shapes they build.
 
 Pure Python (no bpy), in Maya's Y-up space and Maya units; ``prim_history`` turns a shape into a Blender mesh /
-curve. Every rule here follows Maya 2022 (factory option boxes; § numbers below are the kit's notes).
+curve. Every rule here follows Maya (default option boxes).
 No Maya code or data was copied; vertex counts, positions,
-face layouts and UVs were compared with Maya's output for the default and varied attributes
+face layouts and UVs follow Maya's for the default and varied attributes
 (``tests/test_step129_primitives.py`` keeps the count table).
 
 A polygon shape = ``Mesh(verts, faces, uvs, hard, edges)``: ``uvs`` one (u, v) per face corner (or None), ``hard`` the

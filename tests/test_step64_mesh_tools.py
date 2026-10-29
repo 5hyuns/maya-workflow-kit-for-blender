@@ -1,5 +1,5 @@
 """Step 64: Target Weld, Crease Tool, Multi-Cut feel (Ctrl+click edge loop, Shift snap step).
-; GUI: tests/gui/gui_step64_mesh_tools.py."""
+GUI: tests/gui/gui_step64_mesh_tools.py."""
 
 import math
 from importlib import import_module
@@ -81,7 +81,7 @@ def _corner(b, levels=2):
 
 
 def test_crease_mapping_matches_blender_sharpness():
-    """Blender OpenSubdiv sharpness = 10 * crease^2 (checked): Maya value c (sharp for c levels) = sqrt(c/10)."""
+    """Blender OpenSubdiv sharpness = 10 * crease^2: Maya crease c (sharp for c levels) = sqrt(c/10)."""
     if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     assert abs(_corner(mt.maya_to_blender_crease(2.0) + 1e-4) - 3.0) < 1e-5, "Maya 2 = sharp after 2 levels"
@@ -215,7 +215,7 @@ def test_snap_step():
     assert abs(mt.snap_factor(0.02, 10, inner=True) - 0.1) < 1e-9, "a loop stays inside the edge"
     assert abs(mt.snap_factor(0.98, 10, inner=True) - 0.9) < 1e-9
     assert mt.snap_factor(0.3, 50, inner=True) == 0.5 and mt.snap_factor(0.9, 100, inner=True) == 0.5
-    assert bpy.context.scene.allset_mesh_tools.snap_step == 10, "Maya Snap Step % 10 (modeling_06_win1)"
+    assert bpy.context.scene.allset_mesh_tools.snap_step == 10, "Snap Step % 10"
 
 
 def test_multicut_loop_at_the_clicked_position():

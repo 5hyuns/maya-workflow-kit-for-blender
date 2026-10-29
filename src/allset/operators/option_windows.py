@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya option windows (the □ option box of a menu item):  「계획」.
+"""Maya option windows (the □ option box of a menu item), step 103.
 
 Maya opens a window per command with its fields (labels right-aligned, field + slider), an Edit menu (Save Settings /
 Reset Settings) and three buttons: the command ("Create", "Extrude", ...), Apply (run, keep the window) and Close; the
-values are kept between sessions (setting). Fields, labels and factory defaults below were read from the running
-Maya 2022 windows.
+values are kept between sessions. Fields, labels and defaults below follow Maya's windows.
 
 Each ``Window`` becomes one operator ``allset.opt_<key>`` drawn with ``invoke_props_dialog`` (confirm = the
 command's button, Blender's cancel = Close); Apply / Save Settings / Reset Settings are toggle buttons inside the
@@ -266,7 +265,7 @@ def _run_set_key(context, v):
 
 
 def _run_bake(context, v):
-    # step 217 L18: Maya's bakeResults rules (operators/bake_maya.py). Keep unbaked keys = keys outside the range,
+    # step 217: Maya's bakeResults rules (operators/bake_maya.py). Keep unbaked keys = keys outside the range,
     # never constraint deletion
     return bpy.ops.allset.bake_simulation(
         'EXEC_DEFAULT', hierarchy_below=v["hierarchy"] == "Below", use_time_slider=v["time_range"] == "Time Slider",
@@ -328,8 +327,8 @@ def _run_new_scene(context, v):
         scene.frame_preview_start, scene.frame_preview_end = int(values["play_start"]), int(values["play_end"])
         scene.frame_current = int(values["play_start"])
         return None
-    # Maya's Save Changes prompt first (step 138, #57); never load a file inside a running operator (
-    # step 42): save_prompt runs it from a timer
+    # Maya's Save Changes prompt first (step 138, #57); never load a file inside a running operator
+    # (step 42): save_prompt runs it from a timer
     from ..ui import save_prompt
     save_prompt.ask(context, later)
     return {'FINISHED'}
@@ -541,7 +540,7 @@ def find_path(path):
     return find(menu_map.MAP.get(path)) if path in menu_map.MAP else None
 
 
-# --- saved settings (Maya setting -> add-on preferences) -----------------------------------------
+# --- saved settings (Maya's saved option values -> add-on preferences) ------------------------------
 
 def _prefs():
     from .. import preferences

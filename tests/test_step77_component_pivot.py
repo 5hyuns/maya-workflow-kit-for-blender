@@ -1,5 +1,5 @@
 """Step 77: edit-mode Insert = the D component pivot edit as a toggle; a turned 3D cursor becomes the
-"Maya Pivot" Move orientation. ; GUI: tests/gui/gui_step77_component_pivot.py."""
+"Maya Pivot" Move orientation. GUI: tests/gui/gui_step77_component_pivot.py."""
 
 from importlib import import_module
 
@@ -47,7 +47,7 @@ def test_insert_is_bound_in_mesh_and_object_mode():
 
 def test_tap_clears_to_mayas_component_manipulator():
     after = hold.component_pivot_after
-    assert after('CURSOR', False) == 'BOUNDING_BOX_CENTER'     # pivot_snap.md P11
+    assert after('CURSOR', False) == 'BOUNDING_BOX_CENTER'
     assert after('MEDIAN_POINT', False) == 'MEDIAN_POINT'
     assert after('BOUNDING_BOX_CENTER', True) == 'CURSOR'
 

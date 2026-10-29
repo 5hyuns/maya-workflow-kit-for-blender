@@ -84,7 +84,7 @@ def check_modifier(context, kind):
         if nothing or ob is None:
             raise MayaError(NO_CONFORM_SELECTION)
         if ob.type != 'MESH':
-            # Maya runs Shrinkwrap on a joint with a live surface; what it prints there isn't known (B4): kit text
+            # Maya runs Shrinkwrap on a joint with a live surface; the message here is the kit's own
             raise RuntimeError("Conform: select a mesh to conform onto the live surface.")
         return
     if kind in _NOTHING:

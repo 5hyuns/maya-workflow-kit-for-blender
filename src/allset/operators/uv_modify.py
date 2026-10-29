@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor Modify commands (step 178 lane A); the tests compare against Maya's numbers.
+"""Maya UV Editor Modify commands (step 178).
 
-Distribute UVs, Match Grid, Layout Along, Stack Similar Shells, Map Border and Straighten Border, with Maya's factory
+Distribute UVs, Match Grid, Layout Along, Stack Similar Shells, Map Border and Straighten Border, with the default
 options. Shells and Maya UVs (points: loops of one vertex sharing one coordinate, ordered by first loop index = Maya's UV
 index for meshes built face by face) come from operators/uv_shells.py. Modify > Symmetrize is not here: Maya's
-symmetrizeUV only acts after the Symmetrize UV tool's seam pick in a GUI session.
+symmetrizeUV only acts after the Symmetrize UV tool's seam pick.
 """
 
 import math
@@ -93,7 +93,7 @@ def distribute_uvs(items, axis=0):
         q = _get(p, uv)
         q[axis] = last + step
         _set(p, uv, q)
-        last = p[0][uv].uv[axis]          # read back (float32, like Maya's polyEditUV -q)
+        last = p[0][uv].uv[axis]          # read back (float32)
     return n
 
 
@@ -466,8 +466,8 @@ class ALLSET_OT_uv_distribute_uvs(_ModOp, bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_uv_match_grid(_ModOp, bpy.types.Operator):
-    """Move each selected UV to the centre of its 1/256 grid cell (Maya Match Grid, factory 256 x 256, pixel
-    centres)"""
+    """Move each selected UV to the centre of its 1/256 grid cell (default 256 x 256, pixel
+    centres; Maya Match Grid)"""
     bl_idname = "allset.uv_match_grid"
     bl_label = "Match Grid"
     empty = "Select UVs"

@@ -1,5 +1,5 @@
 """Step 58: IK Handle Tool, Pole Vector, Bind / Unbind Skin, Paint Skin Weights (+ influence list), Copy / Mirror Skin
-Weights, Copy / Paste Vertex Weights. ; GUI: tests/gui/gui_step58_skin.py."""
+Weights, Copy / Paste Vertex Weights. GUI: tests/gui/gui_step58_skin.py."""
 
 import types
 from importlib import import_module

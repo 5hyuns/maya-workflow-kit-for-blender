@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Step 205 lane P (issue #112): Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects,
+"""Step 205 (issue #112): Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects,
 Deform > Wrap > Add / Remove Influence.
 
 Maya 2022 behaviour (Maya's option windows):
@@ -33,14 +33,14 @@ Intermediate objects: Maya's intermediate object of a deformed shape is its
 ``<shape>Orig`` (every mesh deformer adds one); Display sets intermediateObject 0
 on it and selects it, Hide sets it back and selects the deformed objects. Blender keeps the undeformed mesh as the
 object's own data, so the kit shows it as a child object ``<shape>Orig`` sharing that mesh with no modifiers (edits
-to it edit the original shape, like Maya) and deletes it on Hide [delegated]. Base wires / pin and constraint helpers
+to it edit the original shape, like Maya) and deletes it on Hide. Base wires / pin and constraint helpers
 are not intermediate objects in Maya (curve1BaseWire = a hidden transform) and stay as they are.
 
 Wrap influences (Maya's Wrap deformer): the deformed surfaces are selected, the influence last. Blender's
 Surface Deform reads one target, so every extra influence is one more Surface Deform ``wrap1Influence<k>`` (+ its Hook
 ``wrap1Influence<k>Base`` like wrap1Base) and each wrapped point follows the influence nearest to it (its weight moves to
-that influence's vertex group; Maya blends influences by distance , delegated). Removing the last influence removes
-the wrap node (Maya keeps an empty wrap1) [delegated].
+that influence's vertex group; Maya blends influences by distance). Removing the last influence removes
+the wrap node (Maya keeps an empty wrap1).
 """
 
 import math
@@ -99,7 +99,7 @@ MSG_NO_WRAP = "No wrap deformer is associated with surface {0}."
 # from the UV (UV Pin) or the closest point (Proximity Pin); position = the same blend of the corner points, normal =
 # the same blend of Maya vertex normals (normalised sum of the unit face normals around the vertex), tangent = dP/du
 # of the face's FIRST Maya triangle (f0, f1, f[-1]) made orthogonal to the normal; the normal / tangent go to the
-# chosen axes and the third axis completes a right-handed frame. N-gons / triangles use the triangle barycentrics .
+# chosen axes and the third axis completes a right-handed frame. N-gons / triangles use the triangle barycentrics.
 
 def _vec_array(coll, attr, n, dim=3):
     a = np.empty(n * dim, dtype=np.float64)
@@ -171,9 +171,9 @@ class Geo:
             self.co = _vec_array(em.vertices, "co", nv)
         elif len(em.vertices) > nv:
             # a subdivided result (the kit's smooth preview): Blender's subdivision writes the mesh's own vertices
-            # first (checked, 4.5), at their smoothed place — the pin rides the displayed surface. Maya's preview is
-            # display only (the pin keeps the unsmoothed shape) [delegated]: Blender can't give the deformed,
-            # unsubdivided points here (BMesh.from_object(cage=True) applies deform modifiers twice, checked).
+            # first, at their smoothed place — the pin rides the displayed surface. Maya's preview is
+            # display only (the pin keeps the unsmoothed shape): Blender can't give the deformed,
+            # unsubdivided points here (BMesh.from_object(cage=True) applies deform modifiers twice).
             self.co = _vec_array(em.vertices, "co", len(em.vertices))[:nv]
         else:
             self.co = self.co0
@@ -284,7 +284,7 @@ class Geo:
             if abs(np.linalg.det(a)) > 1e-18:
                 tan = (e @ np.linalg.inv(a))[:, 0]                  # dP/du
         if tan is None:
-            tan = e[:, 0]                                           # no UVs: the edge f0 -> f1 [delegated]
+            tan = e[:, 0]                                           # no UVs: the edge f0 -> f1
         tan = tan - n * float(np.dot(tan, n))
         if np.linalg.norm(tan) < 1e-12:
             tan = np.cross(n, (1.0, 0.0, 0.0))
@@ -436,7 +436,7 @@ def pin_matrix(h, geo):
         want[:3, 3] = off_t * inp[:3, 3] + (1.0 - off_t) * f0[:3, 3]      # 0 = on the surface
     if off_o != 1.0:
         base = _orientation_base(inp, geo, loc, mode, axes)
-        want[:3, :3] = base if off_o == 0.0 else _rot_blend(base, inp[:3, :3], off_o)   # between 0 and 1 [delegated]
+        want[:3, :3] = base if off_o == 0.0 else _rot_blend(base, inp[:3, :3], off_o)   # between 0 and 1
     out = f1 @ np.linalg.inv(f0) @ want
     if env != 1.0:
         # Envelope: rotation slerp(input, pinned, e), translation lerp (the input as the geometry carries it at rest)

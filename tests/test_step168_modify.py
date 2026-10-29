@@ -98,7 +98,7 @@ def test_skinned_mesh_keeps_skin_cluster_and_gets_four_to_the_level_faces():
     base = _faces(ob)
     skin_names = [m.name for m in ob.modifiers if m.type == 'ARMATURE']
     assert skin_names == ["skinCluster1"], [m.name for m in ob.modifiers]
-    display.set_smooth_preview(ob, 3)                     # level 2 (Maya factory)
+    display.set_smooth_preview(ob, 3)                     # level 2 (default)
     assert _eval_faces(ob) == base * 16
     _select(ob)
     assert bpy.ops.allset.smooth_to_polygons() == {'FINISHED'}
@@ -107,7 +107,7 @@ def test_skinned_mesh_keeps_skin_cluster_and_gets_four_to_the_level_faces():
     assert names == ["skinCluster1"], names               # only the preview modifiers were applied
     assert not any(display.is_preview(m) for m in ob.modifiers)
     assert {g.name for g in ob.vertex_groups} >= {"joint1", "joint2"}
-    # the skin still deforms the converted mesh (Maya: polySmoothFace1 after skinCluster1, modify_168.md)
+    # the skin still deforms the converted mesh (Maya: polySmoothFace1 after skinCluster1)
     top = max(range(len(ob.data.vertices)), key=lambda i: ob.data.vertices[i].co.z)
     dg = bpy.context.evaluated_depsgraph_get()
     rest = ob.evaluated_get(dg).to_mesh().vertices[top].co.copy()
@@ -349,7 +349,7 @@ def test_evaluate_nodes_switches():
     ev.constraint = True
     assert not con.mute
     ev.expression = False
-    assert fc.mute and not sdk.mute                      # Set Driven Key is an animCurve in Maya
+    assert fc.mute and not sdk.mute                      # Set Driven Key is a Maya animCurve
     ev.expression = True
     assert not fc.mute
     ev.ncloth = False

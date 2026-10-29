@@ -194,7 +194,7 @@ class ALLSET_UL_influences(bpy.types.UIList):
 
 
 def _skin_clusters(layout, context):
-    """Maya 2024+ "Skin Clusters": every skin of the mesh in chain order (: shown read-only — the kit binds
+    """Maya 2024+ "Skin Clusters": every skin of the mesh in chain order (shown read-only — the kit binds
     one skin per mesh, FBX / engines keep one), the picked one filters the Influences list."""
     s, mesh = model.state(context), context.active_object
     col = _card(layout, 'Skin Clusters', setting='show_skin_clusters', context=context)
@@ -529,7 +529,7 @@ def _commands(layout, context):
     _muted(col, 'Locked influences stay protected.', 'LOCKED')
 
 
-# Maya 2024+ Tool Settings frames in order, then Blender extras (PR #125 follow-up, PR125_MAYA_LATER.md 6; Maya 2022
+# Maya 2024+ Tool Settings frames in order, then Blender extras (PR #125 follow-up; Maya 2022
 # had Influences / Gradient / Stroke / Stylus Pressure / Display)
 SECTIONS = (("Skin Clusters", _skin_clusters), ("Influences", _influences), ("Brush", _brush),
             ("Visualization", _visualization), ("Stroke", _stroke), ("Stylus Pressure", _pressure),

@@ -6,7 +6,7 @@
   (x, y, z) is Maya (x, z, -y), the frame's twist axis comes from Maya's world up). Object selected = every CV; in edit
   mode the selected CV range of a spline = Maya's ``cv[a:b]`` (the CVs after b follow).
 - Lock / Unlock Length = Maya's ``lockLength`` attribute (curve data ID property); while it is on, CV edits keep every
-  CV leg length (``curves_math.keep_leg_lengths``, a depsgraph handler; Maya's CV manipulator rule is , delegated).
+  CV leg length (``curves_math.keep_leg_lengths``, a depsgraph handler; Maya's CV manipulator rule is).
 - CV Hardness = ``cmds.hardenPointCurve(multiplicity=-1)`` on the last selected CV (knots; shape exact through
   write_spline).
 - Fit B-spline = fitBspline on degree-1 curves: a new ``fitBsplineCurveN``.
@@ -42,9 +42,9 @@ def from_maya(p):
 
 # --- Bend / Curl / Scale Curvature ------------------------------------------------------------------------------
 
-KINDS = (('BEND', "Bend", "Maya Curves > Bend (factory amount 0.2, twist 0)"),
-         ('CURL', "Curl", "Maya Curves > Curl (factory amount 0.3, frequency 1)"),
-         ('CURVATURE', "Scale Curvature", "Maya Curves > Scale Curvature (factory 1.1, max curvature 0.8)"))
+KINDS = (('BEND', "Bend", "Maya Curves > Bend (default amount 0.2, twist 0)"),
+         ('CURL', "Curl", "Maya Curves > Curl (default amount 0.3, frequency 1)"),
+         ('CURVATURE', "Scale Curvature", "Maya Curves > Scale Curvature (default 1.1, max curvature 0.8)"))
 FACTORY = {'BEND': (0.2, 0.0), 'CURL': (0.3, 1.0), 'CURVATURE': (1.1, 0.8)}
 
 
@@ -115,7 +115,7 @@ class ALLSET_OT_curve_modify(bpy.types.Operator):
                 if count < 3:
                     out.append(c)
                     continue
-                # Maya numbers are Maya lengths (Bend / Curl amounts are offsets): 1 = one Maya unit ()
+                # Maya numbers are Maya lengths (Bend / Curl amounts are offsets): 1 = one Maya unit
                 u = units.maya_unit()
                 pts = modify_points(self.kind, [cm.mul(to_maya(p), 1.0 / u) for p in c.cvs], a1, a2, start, count)
                 out.append(MCurve([from_maya(cm.mul(p, u)) for p in pts], c.knots, c.degree, c.weights))
@@ -303,7 +303,7 @@ def _select(context, obs):
 @undo_steps.no_redo_panel
 class ALLSET_OT_curve_align(bpy.types.Operator):
     """Move the first selected curve onto the nearest end of the second with matching tangent (Maya Curves > Align;
-    factory position + tangent)"""
+    default position + tangent)"""
     bl_idname = "allset.curve_align"
     bl_label = "Align Curves"
     bl_options = {'REGISTER', 'UNDO'}

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Hypershade = its own window in Maya's layout ( 「계획」, issue #25; before:
+"""Maya Hypershade = its own window, laid out the Maya way (step 131, issue #25; before:
 step 67 / 105 Shader Editor + sidebar tab).
 
 Maya 2022's factory Hypershade is a
@@ -198,7 +198,7 @@ def _largest_area(context):
 
 def _header_px(area):
     """Height for the menu strip: a header (Blender's HEADERY = 26 px x UI scale) plus the area border; an area
-    shorter than its header collapses the header to 1 px and shows the main region instead (checked)."""
+    shorter than its header collapses the header to 1 px and shows the main region instead."""
     header = next((r for r in area.regions if r.type == 'HEADER'), None)
     scale = bpy.context.preferences.system.ui_scale or 1.0
     h = header.height if header is not None and header.height > 1 else round(26 * scale)
@@ -362,7 +362,7 @@ class ALLSET_OT_hypershade(bpy.types.Operator):
         if is_hypershade(context.screen):     # Hypershade > Window > Browser / Create / Property Editor: shown here
             return {'FINISHED'}
         # Maya brings its one Hypershade to the front; Blender can't raise a window: the old one closes and a fresh
-        # one opens on top (delegated,  「계획」 6)
+        # one opens on top (step 131)
         from . import maya_dock
         for w in hypershade_windows(context.window_manager):
             maya_dock.close_window_later(w)
@@ -720,7 +720,7 @@ def _item_button(layout, tab, key, label, icon, cur, list_row=False):
         if mat is not None and mat.library is None:
             # a property button, not an operator one: the hovered property is the only button a keymap operator
             # can read (``context.property``; ``button_operator`` and ``context_pointer_set`` don't reach keymap
-            # handlers, checked step 162) -- the MMB swatch drag (ui/hs_drag.py) needs to know the swatch
+            # handlers, step 162) -- the MMB swatch drag (ui/hs_drag.py) needs to know the swatch
             layout.prop(mat, PICK_PROP, text=label, toggle=True, **kw)
             return
         op = layout.operator("allset.hs_pick", text=label, depress=picked, **kw)

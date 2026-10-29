@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya IK / FK switching on kit IK handles (step 223, Issue #133; ATTACH_PLAN L14).
+"""Maya IK / FK switching on kit IK handles (step 223, Issue #133).
 
 A kit IK handle is the ``ikHandleN`` empty an IK constraint targets (operators/skin.create_ik). Maya's handle
-attribute **Ik Blend** (keyable, factory 1) is the handle's custom property
+attribute **Ik Blend** (keyable, default 1) is the handle's custom property
 ``ikBlend``, and the IK constraint's Influence is driven by it — so the Channel Box shows "Ik Blend" on the handle, S
 and Set IK/FK Key key it on the handle like Maya. Like Maya's ``ikFK`` the chain joints get
 an ``ikBlend`` property connected (driven) from the handle.
 
-Maya 2026 rules (numbers in ):
+Maya 2026 rules:
 
 - Maya writes the IK solution into the joints' rotate attributes while IK is on; at Ik Blend 0 the joints use those
   rotate values. Blender's IK constraint leaves the bone channels alone, so every kit command below first writes the
@@ -18,7 +18,7 @@ Maya 2026 rules (numbers in ):
   Vector constraint drives it, the pole object's translate (step 253): the kit RP handle's ``twist`` /
   ``poleVectorX/Y/Z`` channels (step 245) and the pole object's
   location. Maya's Offset / Roll exist on the kit's spline handles only (step 249), not on RP handles.
-- **Enable IK Solver**: a global check (factory off); each use flips it and sets Ik Blend of
+- **Enable IK Solver**: a global check (default off); each use flips it and sets Ik Blend of
   the selected handles — or of the handles whose chain holds a selected joint — to the new state, keeping the
   joints' rotation (so switching IK off keeps the IK pose). Nothing selected: Maya's error.
 - **Move IK to FK**: the handle moves to the FK end joint (the chain evaluated without IK); Ik Blend
@@ -294,7 +294,7 @@ class ALLSET_OT_ik_fk_key(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Maya's ikFKSwitchState setting (factory 0 = the menu check is off; kit session state, not saved)
+# IK/FK switch menu check (off by default; kit session state, not saved)
 _STATE = {"on": False}
 
 
@@ -306,7 +306,7 @@ class ALLSET_OT_ik_solver_toggle(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        state = _STATE["on"] = not _STATE["on"]        # Maya flips the setting first, then looks for handles
+        state = _STATE["on"] = not _STATE["on"]        # Maya flips the check first, then looks for handles
         found = ik_constraints(context)
         if not found:
             self.report({'ERROR'}, NO_HANDLE)
@@ -343,7 +343,7 @@ class ALLSET_OT_move_ik_to_fk(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Step 238 (Issue #146, audit ③-6 CHAINS_AUDIT_0.5.0.md:190): Maya draws Enable IK Solver as a check item, so the hand
+# Step 238 (Issue #146): Maya draws Enable IK Solver as a check item, so the hand
 # sees the state. The menu draws it as this WindowManager property (``("prop", ...)`` kind, ui/menu_map.py); a click
 # runs the operator above (undo step, report) instead of only flipping the value.
 def _get_solver(_self):

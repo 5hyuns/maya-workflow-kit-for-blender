@@ -1,5 +1,5 @@
 """Step 18: Maya mesh component keys — D component pivot, Ctrl+Shift+A / Alt+D,
-Ctrl+E / Ctrl+B, Shift+> / Shift+<, Ctrl+F9-F11. """
+Ctrl+E / Ctrl+B, Shift+> / Shift+<, Ctrl+F9-F11."""
 
 from importlib import import_module
 
@@ -46,7 +46,7 @@ def test_component_pivot_release_rule():
     after = hold.component_pivot_after
     assert after('MEDIAN_POINT', True) == 'CURSOR', "a placed pivot stays"
     assert after('BOUNDING_BOX_CENTER', False) == 'BOUNDING_BOX_CENTER', "tap restores"
-    assert after('CURSOR', False) == 'BOUNDING_BOX_CENTER', "tap clears a custom pivot (Maya P11 bbox, step 77)"
+    assert after('CURSOR', False) == 'BOUNDING_BOX_CENTER', "tap clears a custom pivot (bbox centre, step 77)"
     assert after('CURSOR', True) == 'CURSOR'
 
 
@@ -149,7 +149,7 @@ def test_convert_selection_touching():
 
 
 def test_bevel_exec_width_is_in_maya_units():
-    # step 48: exec bevel width = 0.1 Maya units (), not 0.1 BU (10 Maya units in a cm scene)
+    # step 48: exec bevel width = 0.1 Maya units, not 0.1 BU (10 Maya units in a cm scene)
     import bmesh
     units = import_module(kit.MODULE + ".operators.units")
     us = bpy.context.scene.unit_settings
@@ -166,7 +166,7 @@ def test_bevel_exec_width_is_in_maya_units():
         bm.edges.ensure_lookup_table()
         bm.edges[0].select = True
         bmesh.update_edit_mesh(ob.data)
-        # step 139: Ctrl+B = Maya polyBevel3; an absolute Offset is in Maya units (0.1 cm here, x 0.9999 like Maya)
+        # step 139: Ctrl+B = Maya polyBevel3; an absolute Offset is in Maya units (0.1 cm here, x 0.9999)
         assert bpy.ops.allset.bevel(offset_as_fraction=False, offset=0.1) == {'FINISHED'}
         bm = bmesh.from_edit_mesh(ob.data)
         shortest = min(e.calc_length() for e in bm.edges)

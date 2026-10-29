@@ -7,17 +7,16 @@ Shift+H shows the selected hidden objects; Ctrl+Shift+H shows what was hidden la
 
 Maya's ``visibility`` attribute is ``Object.hide_viewport`` (per object, keyable; the Channel
 Box Visibility row reads the same flag): h, Display > Hide / Show and the Channel Box write one
-attribute. A display layer's V uses the view-layer flag
+attribute (step 129, #26). A display layer's V uses the view-layer flag
 (``hide_set``) instead, so it never changes this attribute.
 
 A hidden object can't stay selected in Blender, so Maya's "hidden but still selected" is kept
 as an ID property on the object (``KEPT``). ``LAST`` marks what the latest hide of this
-operator hid.  2.
+operator hid (step 16).
 
-Step 162: Toggle Show/Hide (h) follows Maya's "Toggle Visibility Options" (setting
-toggleVisibilityAndKeepSelectionBehaviour): the toggled set is
+Step 162: Toggle Show/Hide (h) follows Maya's "Toggle Visibility Options": the toggled set is
 the selection = the visible selected objects plus the hidden-but-selected ones (``KEPT``). First Selection Independent
-(factory, 1) flips each object; Dependent (2) gives every one the opposite of the first selected object's visibility.
+(default, 1) flips each object; Dependent (2) gives every one the opposite of the first selected object's visibility.
 The saved window value (option_windows.saved("toggle_show_hide")) applies to h and the menu click alike.
 """
 

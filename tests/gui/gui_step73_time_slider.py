@@ -1,6 +1,5 @@
 """Step 73 in a real UI (Maya Workflow Kit layout): red key ticks on the Time Slider at the keyed frames, and the
-Range Slider bar dragged like Maya's (segment = move, end handle = that end, double-click = whole range).
-"""
+Range Slider bar dragged like Maya's (segment = move, end handle = that end, double-click = whole range)."""
 
 import os
 import sys

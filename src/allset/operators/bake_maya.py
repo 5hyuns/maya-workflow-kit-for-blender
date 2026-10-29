@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Key > Bake Simulation (Edit > Keys > Bake Simulation, shelf, option window), step 217 lane L18.
 
-Maya 2026 rules of ``bakeResults`` and the menu's factory flags:
+Maya 2026 rules of ``bakeResults`` and the menu's default flags:
 
 1. every keyable transform channel of a baked node gets a key on each sample;
 2. samples = start, start + step, … ≤ end (``step2``: 1 3 5 7 9 on 1–10);
@@ -16,10 +16,10 @@ Maya 2026 rules of ``bakeResults`` and the menu's factory flags:
 Kit translation: Blender's ``nla.bake`` (visual keying, current action, constraints kept) writes the samples, then the
 Maya rules run on the baked F-curves. Rule 5 = **mute** every non-IK constraint on a baked object / pose bone (Blender
 has no disconnect; the constraint stays and shows as off) and every driver on a baked channel (a driver would win over
-the baked curve; Maya's bake replaces any input connection — delegated). Limit constraints stay: Maya's transform
-limits are attributes, not constraint nodes (delegated). Rule 6 = an IK constraint (kit IK handle, operators/skin.py)
+the baked curve; Maya's bake replaces any input connection). Limit constraints stay: Maya's transform
+limits are attributes, not constraint nodes. Rule 6 = an IK constraint (kit IK handle, operators/skin.py)
 whose chain holds a baked bone and whose target is not baked gets influence 0 (step 159: ikBlend = influence).
-Visibility (rule 1) is not baked: Maya visibility = ``hide_viewport``, which no constraint drives (delegated).
+Visibility (rule 1) is not baked: Maya visibility = ``hide_viewport``, which no constraint drives.
 """
 
 import bpy
@@ -35,7 +35,7 @@ _EPS = 1e-4
 
 
 def time_slider_range(scene):
-    """Maya Time Slider = the playback range: the preview range while it is on ( step 20)."""
+    """Maya Time Slider = the playback range: the preview range while it is on (step 20)."""
     if scene.use_preview_range:
         return scene.frame_preview_start, scene.frame_preview_end
     return scene.frame_start, scene.frame_end

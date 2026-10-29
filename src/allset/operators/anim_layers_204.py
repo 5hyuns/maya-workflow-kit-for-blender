@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya animation layer commands, part 4.
+"""Maya animation layer commands, part 4 (step 204, Issue #111).
 
 Maya 2022 Layer Editor Anim tab (its menus and labels),
 re-implemented on the kit's NLA layers (operators/anim_layers.py):
@@ -41,7 +41,7 @@ NOT_EMPTY = "Layer was not deleted because it was not empty: {}"     # Maya's wa
 def pick(scene, index, toggle=False, extend=False):
     """Maya's tree view click on layer ``index``: plain = only it, Ctrl = add / remove it, Shift = the range from the
     last picked one (list order = Maya's stack order). The last picked layer becomes ``allset_anim_layer_index``; a
-    Ctrl click on the last selected layer keeps it (the kit always has one selected layer, delegated)."""
+    Ctrl click on the last selected layer keeps it (the kit always has one selected layer)."""
     ls = al.layers(scene)
     n = len(ls)
     if not 0 <= index < n:
@@ -98,7 +98,7 @@ def redraw(context):
 # --- helpers ------------------------------------------------------------------------------------------------
 
 def maya_name(scene, base):
-    """Maya node naming: ``base`` when free, else ``base`` + 1, 2, ... ( the clash suffix)."""
+    """Maya node naming: ``base`` when free, else ``base`` + 1, 2, ... (the clash suffix)."""
     names = {e.name for e in al.layers(scene)}
     if base not in names:
         return base
@@ -126,7 +126,7 @@ def _keep_selection(scene, name, picked):
             e.picked = True
 
 
-SETTINGS = ("mute", "solo", "lock", "override")   # not weight: a copy / extract layer has weight 1.0 
+SETTINGS = ("mute", "solo", "lock", "override")   # not weight: a copy / extract layer has weight 1.0
 
 
 def insert_layer(scene, name, above, like=None):
@@ -155,7 +155,7 @@ def _rename_action(act, layer, ob):
 
 def move_track(scene, ob, src, dst):
     """``ob``'s curves on ``src`` go to a new ``dst`` track (Maya -extractAnimation: the same curves, keys and
-    tangents), the attribute list too; the weight and its keys stay with ``src`` (the new layer has weight 1.0 );
+    tangents), the attribute list too; the weight and its keys stay with ``src`` (the new layer has weight 1.0);
     BaseAnimation gets a new empty action."""
     tr = al.tracks(ob)[src]
     act = al._strip(tr).action
@@ -175,7 +175,7 @@ def move_track(scene, ob, src, dst):
 
 def copy_track(scene, ob, src, dst, with_curves=True, hold=None):
     """``ob``'s ``src`` track copied to a new ``dst`` track (Maya ``cmds.animLayer(copy=...)``: copies of the curves,
-    same members; weight 1.0 without weight keys ). ``with_curves`` False = ``copyNoAnimation=True``; ``hold`` = a
+    same members; weight 1.0 without weight keys). ``with_curves`` False = ``copyNoAnimation=True``; ``hold`` = a
     frame: every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation)."""
     tr = al.tracks(ob)[src]
     st = al._strip(tr)
@@ -196,7 +196,7 @@ def copy_track(scene, ob, src, dst, with_curves=True, hold=None):
 
 def static(ob, act, path, index, frame, value):
     """Maya's static (unkeyed) layer value of a member attribute. NLA has no per-strip constant, so the kit writes it
-    as one CONSTANT key (delegated: a one-key curve where Maya has no curve; the result is the same at every frame)."""
+    as one CONSTANT key (a one-key curve where Maya has no curve; the result is the same at every frame)."""
     fc = al._fcurve(act, path, index) or al._new_fcurve(ob, act, path, index)
     if fc is None:
         return None
@@ -280,7 +280,7 @@ def _finish(scene, obs):
 
 def extract(scene, objects, layer):
     """Maya Extract Selected Objects from ``layer`` (BaseAnimation: Extract Non-Layered Animation). Returns the new
-    layer's name. Maya makes the layer even when no object is a member ."""
+    layer's name. Maya makes the layer even when no object is a member."""
     if layer == al.BASE:
         new = insert_layer(scene, maya_name(scene, al.BASE + EXTRACT), 0)
         new.override = True              # Maya: an Override layer from the selection
@@ -300,10 +300,10 @@ def extract(scene, objects, layer):
 
 def duplicate(scene, layer, with_curves=True):
     """Maya Duplicate Layer / Duplicate Layer (No Animation): ``L_copy``
-    directly above L (a second copy ``L_copy1`` also directly above L, i.e. below the first), weight 1.0 ."""
+    directly above L (a second copy ``L_copy1`` also directly above L, i.e. below the first), weight 1.0."""
     if layer == al.BASE:
         if not with_curves:
-            return None      #  Duplicate Layer (No Animation) on BaseAnimation is unknown: nothing happens
+            return None      # Duplicate Layer (No Animation) on BaseAnimation is unknown: nothing happens
         return copy_base(scene)
     src = al.layers(scene)[_index_of(scene, layer)]
     new = insert_layer(scene, maya_name(scene, layer + COPY), _index_of(scene, layer), like=src)
@@ -344,8 +344,8 @@ def key_weight(scene, names, weight, frame=None):
     button (``weight`` None = the current weight), each layer's weight set, then
     ``setKeyframe <layer>.weight`` at ``frame``. The kit's weight is each member's strip influence, so the key goes on
     every member strip's influence curve (Maya auto tangents = Blender Auto Clamped, as for every kit key).
-    BaseAnimation's weight is not changed but still keyed ; the kit's BaseAnimation weight is always 1.0 (strip
-    influence 1), so it gets a key of 1.0 (delegated: no effect, like Maya's). Returns the keyed layers."""
+    BaseAnimation's weight is not changed but still keyed; the kit's BaseAnimation weight is always 1.0 (strip
+    influence 1), so it gets a key of 1.0 (no effect, like Maya's). Returns the keyed layers."""
     frame = scene.frame_current if frame is None else frame
     done = []
     for name in names:
@@ -480,7 +480,7 @@ class ALLSET_OT_anim_layer_key_weight(bpy.types.Operator):
         return "Set Weight to 1.0 and Key Layer" if props.weight >= 1.0 else "Zero Weight and Key Layer"
 
     def execute(self, context):
-        # Maya: no layer selected = nothing; the kit always has a selected layer (delegated)
+        # Maya: no layer selected = nothing; the kit always has a selected layer
         key_weight(context.scene, _names(context.scene, self.layer), None if self.current else self.weight)
         return {'FINISHED'}
 

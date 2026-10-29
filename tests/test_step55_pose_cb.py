@@ -1,6 +1,5 @@
 """Step 55: joints = pose bones in the Channel Box, Outliner and Attribute Editor; constraint
-weight rows (``locator1W0`` = influence) and constrained channels. ;
-GUI: tests/gui/gui_step55_pose.py."""
+weight rows (``locator1W0`` = influence) and constrained channels. GUI: tests/gui/gui_step55_pose.py."""
 
 import math
 from importlib import import_module
@@ -195,7 +194,7 @@ def test_quaternion_joint_rotate_order_button():
     pb3.rotation_quaternion.normalize()
     bpy.context.view_layer.update()
     before = pb3.matrix_basis.copy()
-    # step 221 (): a quaternion joint shows Maya's Rotate X / Y / Z (written back as a quaternion)
+    # step 221: a quaternion joint shows Maya's Rotate X / Y / Z (written back as a quaternion)
     assert cb.has_channel(pb3, "rx")
     rec = _draw_cb()
     assert "Rotation mode QUATERNION" not in rec.texts("label")

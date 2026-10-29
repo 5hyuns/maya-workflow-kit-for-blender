@@ -1,12 +1,12 @@
 """In-Blender part of tools/marketing/make_marketing.py (step 122): raw 1920 x 1080 GUI shots for the captioned
-feature screens and the key visuals (docs/distribution/marketing/style.md, copy.md).
+feature screens and the key visuals.
 
 Runs in a GUI Blender on a clean sandbox with the extension installed, with --enable-event-simulate
 (tests/gui/sim.py). The scene is built from the licensed models in the local assets folder
 (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md; recipes in tools/marketing/scene.py): the
 DOGWALK splash set (hero, hotbox), Pack Bot (components, Modeling Toolkit), Security Bot with its battery (Channel Box /
 Attribute Editor, pivot) and Rain (marking menus, menus, skin weights, animation), lit by the Studio Small 09 HDRI in
-Material Preview over Maya's flat #5c5c5c (no theme, #41). Each shot is taken one tick after the UI change
+Material Preview over a flat #5c5c5c viewport grey (no theme, #41). Each shot is taken one tick after the UI change
 (``screen.screenshot`` shows the previous frame). meta.json records UI rects (top-down window pixels) for callouts.
 The approach (event-driven steps, menus opened from mid-window, logo painted over) follows the step 117 listing shot script (removed in step 125: nothing ran it since step 122);
 the aborted 10-19 attempt (git stash) was read for the scene recipes only.

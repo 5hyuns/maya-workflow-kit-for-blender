@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Modify > Align: Snap Align Objects, Snap Together Tool, Make Live, Match
-Transformations.
+Transformations (step 59).
 
-Maya 2022:
+Maya:
 
 - S9 Point to Point: the object owning the first point moves (no rotation) so that point
   lands on the last one.
 - S10/S11 2 / 3 Points to 2 / 3 Points: move + rotate so the points line up (first on first,
   the rest give the direction / plane).
-- S11 Align Objects (factory options): world X only, mid, to the average.
+- S11 Align Objects (default options): world X only, mid, to the average.
 - S12 Snap Together Tool: click a surface point on the object to move, then a point on the
   target: the object moves there and turns so the two normals face each other.
 - S13 Make Live: a live surface the moves snap onto; "No Live Surface" in the Status Line.
@@ -152,8 +152,8 @@ def align_objects(context, axes=(True, False, False), mode='MID'):
 
 # --- Match Transformations ------------------------------------------------------------------------
 
-# A joint's Maya X / Y / Z = the bone's Y / Z / X, an object's Maya X / Y / Z = Blender X / Z / -Y ( step 57),
-# so an object lined up with a joint's Maya axes has world = bone world @ Rz(+90) (step 226 L1 uses the same turn).
+# A joint's Maya X / Y / Z = the bone's Y / Z / X, an object's Maya X / Y / Z = Blender X / Z / -Y (step 57),
+# so an object lined up with a joint's Maya axes has world = bone world @ Rz(+90) (step 226 uses the same turn).
 _BONE_TO_OBJECT = Matrix.Rotation(math.pi / 2, 4, 'Z')
 
 
@@ -173,8 +173,8 @@ def _set_maya_frame(node, m):
 
 def match_lead(context):
     """(lead, others) of Maya Match Transformations: the last selected node is the lead. A joint lead = the active pose
-    bone in pose mode (: picking a joint enters Pose mode, the objects picked before stay selected), or the
-    active bone of an active armature in object mode (step 226 L3, ATTACH_PLAN L3 (a))."""
+    bone in pose mode (picking a joint enters Pose mode, the objects picked before stay selected), or the
+    active bone of an active armature in object mode (step 226)."""
     lead = context.view_layer.objects.active
     if lead is None:
         return None, []
@@ -580,7 +580,7 @@ def set_step_snap(ts, kind, mode):
     # this tool's own mode (step 263); Blender's shared flag follows it until another tool's transform starts
     ts.use_snap_grid_absolute = mode == 'ABSOLUTE'
     if kind == 'ROTATE' and abs(ts.snap_angle_increment_3d - 0.0872664600610733) < 1e-6:
-        ts.snap_angle_increment_3d = MAYA_ROTATE_STEP     # Blender's 5 degrees -> Maya's 15
+        ts.snap_angle_increment_3d = MAYA_ROTATE_STEP     # Blender's 5 degrees -> the kit's 15
     return mode
 
 

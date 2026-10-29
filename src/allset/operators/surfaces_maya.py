@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Surfaces menu on Blender legacy NURBS surfaces (step 181;
-maths in ``surfaces_math`` — bpy-free, tested against Maya's numbers).
+"""Maya Surfaces menu on Blender legacy NURBS surfaces (step 181;
+maths in ``surfaces_math`` — bpy-free, tested headless).
 
 Representation: a Maya NURBS surface = a Blender
 SURFACE object, one NURBS spline, Maya U = Blender u (along a row), Maya V = the row index. Uniform directions are exact
@@ -8,7 +8,7 @@ SURFACE object, one NURBS spline, Maya U = Blender u (along a row), Maya V = the
 data's ID property ``allset_nurbs`` while the points are what the kit wrote (signature check), so later commands
 continue with Maya's parameters. Every rule works in any right-handed frame: the operators work in Blender world space;
 Maya axis choices go through ``MAYA_AXES`` (Maya (X, Y, Z) -> Blender (X, -Z, Y)) and Maya lengths through
-``units.maya_unit()`` ().
+``units.maya_unit()``.
 """
 
 import json
@@ -205,7 +205,7 @@ class ALLSET_OT_loft(_SurfOp, bpy.types.Operator):
     auto_reverse: BoolProperty(name="Auto reverse", default=True, options={'SKIP_SAVE'})
     degree: EnumProperty(name="Surface degree", items=DEGREES, default='3', options={'SKIP_SAVE'})
     section_spans: IntProperty(name="Section spans", default=1, min=1, max=1000, options={'SKIP_SAVE'})
-    # step 228 L10: Maya Output geometry (NURBS / Polygons; Bezier isn't made)
+    # step 228: Maya Output geometry (NURBS / Polygons; Bezier isn't made)
     output: EnumProperty(name="Output geometry", items=[('NURBS', "NURBS", ""), ('POLYGONS', "Polygons", "")],
                          default='NURBS', options={'SKIP_SAVE'})
 
@@ -223,13 +223,13 @@ class ALLSET_OT_loft(_SurfOp, bpy.types.Operator):
         return _done(self, context, [new_surface(context, "loftedSurface", s, select=False)])
 
 
-# --- step 228 L10: Loft > Output geometry Polygons, with kit history -------------------------------------------
+# --- step 228: Loft > Output geometry Polygons, with kit history -----------------------------------------------
 # Maya:
 # ``loft ... -po 1`` gives only a mesh ``loftedSurface1`` (history nurbsTessellate <- loft <- the curves; moving a CV
 # moves the mesh), UVs = the surface's normalised (u, v): UV u across the curves, UV v along them. Maya's general
-# tessellation (uNumber / vNumber 3, chord height 0.9) picks its own non-uniform rows ; the kit cuts each span
+# tessellation (uNumber / vNumber 3, chord height 0.9) picks its own non-uniform rows; the kit cuts each span
 # into TESS_ALONG x TESS_ACROSS uniform parameter steps, two triangles per cell (Maya polygonType 0 = triangles):
-# 40 vertices / 56 triangles / 40 UVs on a two-curve loft, like Maya (delegated).
+# 40 vertices / 56 triangles / 40 UVs on a two-curve loft, like Maya.
 
 LOFT_KEY = "allset_loft"       # mesh object ID prop: {"curves", "opts", "sig"} while the mesh is the kit's result
 TESS_ALONG = 7                 # segments per span along the curves (kit Surf U)
@@ -484,7 +484,7 @@ def _near(c, p, samples=64):
 
 
 def birail_roles(curves):
-    """(profile, rail1, rail2) from three curves by shape ( 「계획」, delegated): the profile is the curve
+    """(profile, rail1, rail2) from three curves by shape (step 181): the profile is the curve
     whose two ends lie nearest the other two curves, rail 1 the one at the profile's start; a rail is reversed when the
     profile sits nearer its end (Maya starts the surface at the rails' starts)."""
     best = None
@@ -589,7 +589,7 @@ class ALLSET_OT_surface_attach(_SurfOp, bpy.types.Operator):
 def _picked_lines(context):
     """(ob, Surf, direction, Maya parameters) from the CVs selected in edit mode: a selected CV row (same Blender row)
     = a V isoparm, a column = a U isoparm, at the Greville parameter of that line (Blender can't pick isoparms;
-    delegated like step 156 Detach)."""
+    like step 156 Detach)."""
     ob = context.edit_object if context.mode == 'EDIT_SURFACE' else None
     if ob is None or ob.type != 'SURFACE':
         return None
@@ -786,7 +786,7 @@ REBUILD_DEGREES = [('1', "1 Linear", ""), ('2', "2", ""), ('3', "3 Cubic", ""), 
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_surface_rebuild(_ObjectSurfOp, bpy.types.Operator):
-    """Rebuild the surface with uniform spans (Maya Surfaces > Rebuild; factory 4 x 4 spans, cubic)"""
+    """Rebuild the surface with uniform spans (default 4 x 4 spans, cubic; Maya Surfaces > Rebuild)"""
     bl_idname = "allset.surface_rebuild"
     bl_label = "Rebuild Surface"
 

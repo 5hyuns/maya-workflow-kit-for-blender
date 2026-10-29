@@ -97,7 +97,7 @@ def s_rmb():
     uv = s.layout.radial.get("E")
     check("E = UV with a submenu arrow", uv is not None and uv.label == "UV" and engine().Layout.has_arrow(uv.action))
     rows = [it for it in s.layout.items if it.kind == "list"]
-    # the list goes under the ring when it fits (Maya's gap 21 px), else one column beside it (step 161)
+    # the list goes under the ring when it fits (gap 21 px), else one column beside it (step 161)
     gap = s.layout.radial["S"].rect[1] - max(it.rect[3] for it in rows)
     boxes = [b.rect for b in s.layout.radial.values()]
     beside = (min(it.rect[0] for it in rows) >= max(b[2] for b in boxes)

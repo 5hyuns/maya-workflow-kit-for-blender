@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya File > Game Exporter (step 225, Issue #135; ATTACH_PLAN L24): the Model / Animation export window with
+"""Maya File > Game Exporter (step 225, Issue #135): the Model / Animation export window with
 Maya's Animation Clips list, written with the kit's Maya FBX preset (operators/file_io.py, step 222 rig post-process).
 
 Maya 2026 (the Game Exporter window):
 
-- settings live on a ``gameFbxExporter`` node; factory values (createNode, ``FACTORY``): Export All, Model tab,
+- settings live on a ``gameFbxExporter`` node; default values (createNode, ``FACTORY``): Export All, Model tab,
   one file, Bake Animation on, Skinning / Blend Shapes on, Smoothing Groups / Tangents and Binormals on, Triangulate /
   Move to Origin / Embed Media / Include Children / Input Connections off, Up Axis Y, Cameras / Lights on;
 - a new clip starts with the playback range, an empty name, export on; a typed name
@@ -13,7 +13,7 @@ Maya 2026 (the Game Exporter window):
   (``.fbx`` added) with a take per exported clip; **a file per clip** = file name used as a prefix + clip name +
   ``.fbx``. Maya's files also carry the FBX plug-in's own ``Take 001`` and its
   per-clip loop never clears the take list, so a later clip file repeats the earlier clips' takes — the
-  kit writes only the clip's own takes (delegated: engines would import those extra clips).
+  kit writes only the clip's own takes (engines would import those extra clips).
 
 Blender (step 231, Issue #140): each clip is the scene's timeline take written by the kit's Maya FBX preset (the
 step 222 rig rewrite included, so a clip file has Export Selection's joints), one write per clip with the scene's
@@ -184,8 +184,8 @@ class _ClipTimeline:
 
     Step 231 (Issue #140): the writer's NLA-strip takes evaluate one object's strip at a time (export_fbx_bin.py
     ``bake_anim_use_nla_strips``: every other strip muted, every active action removed), so a joint chain driven
-    by another object (an IK handle's keys, a constraint target) was written without that object's animation —
-    the audit's 21 cm IK arm. The timeline take evaluates the whole scene, like Maya's exporter, and leaves the
+    by another object (an IK handle's keys, a constraint target) was written without that object's animation.
+    The timeline take evaluates the whole scene, like Maya's exporter, and leaves the
     kit's animation-layer NLA tracks out of the take list (they evaluate into the result instead). The scene gets
     a unique name while it writes: Blender derives a take's element ids from the scene name, so the takes of
     several clips can be merged into one file (``merge_takes``)."""
@@ -347,7 +347,7 @@ def export(context, s):
                              else "The file name is empty or no clip is checked for export")
         names = [c.name for c in s.clips if c.export]
         if any(not n for n in names):
-            raise ValueError("Cannot export a clip without a name.")         # Maya's text (B6)
+            raise ValueError("Cannot export a clip without a name.")         # Maya's wording
         if len(set(names)) != len(names):
             raise ValueError("Every exported clip needs a unique name")
         for path, clips in files:
@@ -371,7 +371,7 @@ def export(context, s):
     roots = [o for o in obs if o.parent is None or o.parent not in obs]
     files = model_files(s, folder, roots)
     if not files:
-        raise ValueError("Choose a file name to export")            # Maya's text (B6)
+        raise ValueError("Choose a file name to export")            # Maya's wording
     for path, part in files:
         args = dict(fbx_args(context, s, True), bake_anim=False)
         keep = list(context.selected_objects)

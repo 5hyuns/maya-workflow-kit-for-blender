@@ -18,7 +18,7 @@ from .rig_maya import (MAX_INFLUENCES, MAX_INFLUENCES_PROP, DROPOFF_PROP, _influ
 
 BIND_POSE = "allset_bind_pose"          # armature ID prop {bone: 16 floats of the pose bone's matrix_basis at bind}
 MAINTAIN_MAX = "allset_maintain_max"    # mesh ID prop: Maya skinCluster.maintainMaxInfluences
-PRUNE_BELOW = 0.01                      # Maya setting scPruneWeight factory
+PRUNE_BELOW = 0.01                      # default Prune Small Weights threshold
 
 
 # --- weight matrix ----------------------------------------------------------------------------------

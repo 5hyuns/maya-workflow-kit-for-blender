@@ -4,10 +4,10 @@
 Maya's result is an animCurveUU from the driver attribute to the driven one.
 Blender equivalent: a driver on the driven
 channel (one variable ``sdk`` reading the driver channel, type AVERAGE = the variable) whose
-F-curve has keys (driver value, driven value) — the same curve shape.
+F-curve has keys (driver value, driven value) — the same curve shape (step 62).
 Values are raw RNA values (radians, metres), so the mapping is the one the user posed.
 
-Blender writes a driver's result back over a typed value at the next update (checked, step 62),
+Blender writes a driver's result back over a typed value at the next update (step 62),
 so while the Set Driven Key window is open, a Channel Box edit of a channel driven by a kit SDK
 driver mutes that driver until Key (which records the pose) or Close (which drops it).
 The window state lives on the WindowManager like a Maya window (not undoable, not saved).
@@ -15,15 +15,14 @@ The window state lives on the WindowManager like a Maya window (not undoable, no
 Step 226 (Maya 2026):
 1. Curve shape = Maya 2026 ``auto`` tangents written by the kit (``maya_auto``): end keys flat, a key between two
    neighbours gets the slope (y[i+1] - y[i-1]) / (x[i+1] - x[i-1]), a local extreme is flat (sdk_three_keys: the
-   middle key's slope is 9 = 90 / 10; sdk_four_keys_overshoot: both inner keys flat). Blender's own handles miss
-   (on the 29 samples of each case: Auto Clamped + Continuous Acceleration = step 223's choice: 1.2e-5 /
-   2.58 / 4e-6; Auto Clamped + None: 1.68 / 1.31 / 0.90; Auto + Continuous Acceleration: 1.2e-5 / 2.58 / 13.2),
-   so the handles are ALIGNED at a third of each segment with that slope (delegated). Pre / post infinity Constant.
+   middle key's slope is 9 = 90 / 10; sdk_four_keys_overshoot: both inner keys flat). Blender's own handle modes
+   (Auto / Auto Clamped, with or without Continuous Acceleration) give other shapes,
+   so the handles are ALIGNED at a third of each segment with that slope. Pre / post infinity Constant.
 2. A second driver on the same driven channel = Maya ``blendWeighted`` (the inputs are **added**, sdk_two_drivers):
    every driver's curve sits on a hidden float ID property ``allset_sdk_<n>`` of the file's input helper (step 280;
    its own kit SDK driver, variable ``sdk``), and the channel's driver becomes a SUM over variables ``sdk``, ``sdk1`` ...
    reading those properties (``is_blend``). Key on a summed channel keys that driver's input so the sum equals the
-   posed value (posed - the other inputs' current values; delegated — Maya keys one blendWeighted input).
+   posed value (posed - the other inputs' current values; Maya keys one blendWeighted input).
 3. Driven nodes besides objects / joints (Maya: any keyable attribute): a mesh's blendShape (its shape Key ID, one
    attribute per target = key block ``value``) and constraint nodes (Maya ``<target>W0`` = ``influence``, or the
    owner's ``allset_w_<constraint>`` weight property when a multi-target constraint group keeps one, step 226 L4).
@@ -302,7 +301,7 @@ LENGTH_KEYS = ("tx", "ty", "tz")
 
 
 def curve_scale(driver_key):
-    """Curve x per raw driver value. Blender merges F-curve keys less than 0.01 apart in x (checked, step 97),
+    """Curve x per raw driver value. Blender merges F-curve keys less than 0.01 apart in x (step 97),
     and a length driver in the cm template moves 0.01 BU per cm: those curves keep x in display units."""
     from . import units
     k = units.maya_unit()
@@ -389,8 +388,8 @@ def _new_curve(c):
     if old is not None:
         c.id.animation_data.drivers.remove(old)
     fc = c.id.driver_add(c.path, c.index) if c.index >= 0 else c.id.driver_add(c.path)
-    # A new driver curve maps 1:1 — a Generator modifier in 4.5, two keys (0, 0) (1, 1) in 5.x (checked,
-    # step 118): SDK curves start empty either way.
+    # A new driver curve maps 1:1 — a Generator modifier in 4.5, two keys (0, 0) (1, 1) in 5.x
+    # (step 118): SDK curves start empty either way.
     for mod in list(fc.modifiers):
         fc.modifiers.remove(mod)
     while len(fc.keyframe_points):
@@ -799,7 +798,7 @@ def hold_driven(node, key):
 
 # Blend shape weights and constraint weights are posed outside the Channel Box (Shape Editor, AE, Properties), so no
 # WRITE_HOOKS call reaches us: an RNA subscription on each loaded driven value of those nodes mutes its SDK driver
-# the same way. Driver results are written without an RNA update, so they don't publish (delegated, GUI unverified).
+# the same way. Driver results are written without an RNA update, so they don't publish (GUI unverified).
 _MSG = object()
 
 

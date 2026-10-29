@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Render Settings window.
+"""Maya Render Settings window (step 105).
 
 Maya 2022 (menus and factory values): a window with the menu bar Edit / Presets / Help, the rows
 Render Layer and Render Using, then the tabs Common | <renderer>. Common holds the output: Path / File name / Image
@@ -21,8 +21,8 @@ from bpy.props import EnumProperty, IntProperty, StringProperty
 _WINDOWS = set()        # window pointers of kit Render Settings windows
 _wrapped = []           # (panel class, its own poll or None, child panels)
 
-# Maya image size presets (Render Settings Presets labels; sizes  Maya presets, HD 540 = 960 x 540 is the
-# factory default): key -> (label, width, height, pixel aspect)
+# Image size presets (the Render Settings Presets labels; HD 540 = 960 x 540 is the
+# default): key -> (label, width, height, pixel aspect)
 SIZES = (
     ("320x240", "320x240", 320, 240, 1.0), ("640x480", "640x480", 640, 480, 1.0),
     ("1K_SQUARE", "1k Square", 1024, 1024, 1.0), ("2K_SQUARE", "2k Square", 2048, 2048, 1.0),
@@ -355,7 +355,7 @@ def _class_order(cls):
 def registration_key(cls):
     """Blender lists panels in registration order, and re-registering moves a panel to the end: re-register them in
     the order they were registered — bl_ui modules in ``bl_ui._modules`` order, each module's ``classes`` tuple
-    order, add-ons (Cycles) after them (checked: subclass order put EEVEE's Motion Blur above Sampling)."""
+    order, add-ons (Cycles) after them (subclass order put EEVEE's Motion Blur above Sampling)."""
     seq = _class_order(cls)
     index = seq.index(cls) if cls in seq else len(seq)
     if cls.__module__.startswith("bl_ui."):

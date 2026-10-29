@@ -55,7 +55,7 @@ def s_windows_shot():
     shot("gui_step34_windows_menu.png")
     C["general"] = menu_id("Windows/General Editors")
     check("Windows > General Editors is a submenu", C["general"] is not None)
-    # Hover the "General Editors" row of the open menu (placed at the mouse; rows checked
+    # Hover the "General Editors" row of the open menu (placed at the mouse; rows read
     # on the first screenshot: 25 px apart, General Editors 104 px under the menu title).
     h = win().height
     C["rows"] = {"General Editors": (560, h - 463), "Animation Editors": (560, h - 513)}

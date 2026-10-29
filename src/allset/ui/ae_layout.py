@@ -3,7 +3,7 @@
 
 Section names and open/closed state follow Maya's Attribute Editor templates
 (``collapse`` flag of each Attribute Editor section; Maya sections
-without a flag start collapsed ); rows are the Blender properties that play
+without a flag start collapsed); rows are the Blender properties that play
 the part of the Maya attributes. Maya
 attributes with no Blender counterpart (shear, rotateAxis, tessellation, depth
 map shadows, Node Behavior, UUID, ...) are left out.
@@ -146,7 +146,7 @@ DIRECTIONAL_LIGHT = [
         S("Raytrace Shadow Attributes", True, ("prop", "data", "angle", "Light Angle")),
     ]),
 ]
-# Spot and area lights: no template in the research; Maya's layout is the point light's .
+# Spot and area lights: Maya's layout is the point light's.
 SPOT_LIGHT = [
     S("Spot Light Attributes", True, *_LIGHT_MAIN,
       ("prop", "data", "spot_size", "Cone Angle"),
@@ -210,7 +210,7 @@ STANDARD_SURFACE = [
 ]
 
 # standardSurface / aiStandardSurface attribute -> Principled BSDF 4.5 input
-# (names from the public Autodesk Standard Surface spec ; Arnold's aiStandardSurface uses the same names).
+# (names from the public Autodesk Standard Surface spec; Arnold's aiStandardSurface uses the same names).
 # None = no Principled input. Map button tooltips name the Maya attribute (attribute_editor, step 67).
 STANDARD_SURFACE_ATTRS = (
     ("base", "Weight"), ("baseColor", "Base Color"), ("diffuseRoughness", "Diffuse Roughness"),
@@ -257,7 +257,7 @@ SURFACE_SHADER = [
     S("Surface Shader Attributes", True, ("socket", "Emission Color", "Out Color"),
       ("socket", "Alpha", "Out Opacity")),
 ]
-# Step 105 kinds (Maya AE section names ; Principled stand-ins + the extra nodes of operators/material._build)
+# Step 105 kinds (Maya AE section names; Principled stand-ins + the extra nodes of operators/material._build)
 PHONG_E = [_LAMBERT_COMMON,
            S("Specular Shading", True, ("socket", "Roughness", "Roughness"),
              ("socket", "Specular IOR Level", "Highlight Size"), ("socket", "Specular Tint", "Whiteness")),
@@ -310,7 +310,7 @@ JOINT = [
 ]
 
 # --- nucleus (step 68): Maya's nucleus1 attributes on Scene.allset_nucleus (operators/fx.py). Section names from
-# Maya's nucleus Attribute Editor  (no template in the research); Ground Plane / Wind / Time Scale are not kept.
+# Maya's nucleus Attribute Editor; Ground Plane / Wind / Time Scale are not kept.
 NUCLEUS = [
     S("Gravity and Wind", True,
       ("prop", "data", "gravity", "Gravity"),

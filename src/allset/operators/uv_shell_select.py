@@ -154,7 +154,7 @@ def uv_faces_at(a, shown, u, v):
 
 def _uv_face(context, region, xy):
     """(object, face index) of the UV face under region pixel ``xy`` in the UV Editor (lowest face index wins where
-    UV faces overlap — a kit choice, delegated)."""
+    UV faces overlap — a kit choice)."""
     u, v = region.view2d.region_to_view(*xy)
     for ob in edit_meshes(context):
         bm = bmesh.from_edit_mesh(ob.data)

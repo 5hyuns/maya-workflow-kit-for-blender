@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Quad Draw, Create Polygon and Append to Polygon as kit tools.
+"""Quad Draw, Create Polygon and Append to Polygon as kit tools (GitHub #30).
 
 The tools run the modals of operators/quad_draw.py and operators/poly_draw.py; their Maya Tool Settings (fields and
 factory values of Maya 2022) are drawn here, in Blender's tool header / Tool tab and in the kit's

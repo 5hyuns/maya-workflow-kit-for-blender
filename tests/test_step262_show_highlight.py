@@ -1,6 +1,6 @@
 """Step 262 (Issue #173): the panel Show menu's Selection Highlighting and NURBS Curves rows really drive what the
 viewport draws — icon == setting == behaviour — for the kit selection wire and for rig controls drawn as bone
-custom shapes. Cause / checked:  The drawn pixels: tests/gui/gui_step262_show.py.
+custom shapes. The drawn pixels: tests/gui/gui_step262_show.py.
 """
 
 from importlib import import_module

@@ -1,5 +1,5 @@
 """Step 86 in a real UI: Maya selection modifiers on Dope Sheet keys and Node Editor nodes — click = only that,
-Shift+click = toggle, Ctrl+click = deselect, Ctrl+Shift+click = add. """
+Shift+click = toggle, Ctrl+click = deselect, Ctrl+Shift+click = add."""
 
 import os
 import sys

@@ -1,4 +1,4 @@
-"""Step 208: maya.cmds look-alike 2 (Issue #115) — the same scripts as in Maya run
+"""Step 208: maya.cmds look-alike 2 (Issue #115) — Maya-style scripts run
 through the kit's Command Line runner (command_line/runner.py -> cmds_shim / cmds_dag / cmds_anim / cmds_file):
 returned values, names, channels, world positions, keys, time and playback range are compared. Each case starts with
 ``cmds.file(new=True, force=True)`` like a fresh Maya scene. Kit differences that can't follow Maya are listed in
@@ -22,66 +22,6 @@ prim_history = import_module(kit.MODULE + ".operators.prim_history")
 ROOT = Path(__file__).resolve().parents[1]
 TMP = ROOT / "tmp" / os.environ.get("ALLSET_SANDBOX", "test_env") / "cmds208"
 TOL = 1e-4
-ATTRS = (("translateX", "tx"), ("translateY", "ty"), ("translateZ", "tz"), ("rotateX", "rx"), ("rotateY", "ry"),
-         ("rotateZ", "rz"), ("scaleX", "sx"), ("scaleY", "sy"), ("scaleZ", "sz"), ("visibility", "v"))
-
-# Where the kit can't give Maya's answer (each with its reason), as {case: {"R<i>": kit value, "rename": {maya long
-# name: kit long name}, "skip": [paths not compared]}}.
-def _kit_path(value):
-    """A Maya scene path of the file case -> the kit's: the test folder, ``.ma`` -> ``.blend`` (cmds_file.py)."""
-    if isinstance(value, str) and ("/cmds201_" in value or value.endswith(".ma")):
-        name = value.rsplit("/", 1)[-1].replace(".ma", ".blend")
-        return name if "/" not in value else f"{TMP.as_posix()}/{name}"
-    return value
-
-
-DEVIATIONS = {
-    # Maya allows the same name under two parents; Blender names are unique, so copied children (and their shapes)
-    # get new numbers.
-    "duplicate_hierarchy": {"R0": ["rig1", "pCube2", "pSphere2"], "R1": ["rig2"], "R2": ["pCube2", "pSphere2"],
-                            "rename": {"|rig1|pCube1": "|rig1|pCube2", "|rig1|pSphere1": "|rig1|pSphere2",
-                                       "|rig2|pCube1": "|rig2|pCube3", "|rig2|pSphere1": "|rig2|pSphere3"},
-                            "node_skip": ["shapes"]},
-    # The kit can't write Maya files: .ma paths become .blend (and the test writes into tmp/).
-    "file_new_save_open": {"map": _kit_path},
-    # A rotated child of a non-uniformly scaled parent: Maya keeps a shear attribute, Blender channels can't, so the
-    # kit's closest rotate / scale differ (the world matrix is kept, the residual is in the parent inverse; ).
-    "xform_more": {"node_fields": {"|pCube1|pSphere1": ["r", "s"]}},
-    # After cutKey -clear Maya's compound getAttr(".rotate") reads 0 while getAttr(".rz") reads 10;
-    # the kit keeps 10 like the scalar read and Maya's Channel Box.
-    "cut_key": {"node_fields": {"|pCube1": ["r"]}},
-    # ls order: Maya's node order vs Blender's object order (compared as sets).
-    "space_locator": {"unordered": [6]},
-    # Maya leaves an attribute at its value when a key at another time goes onto an existing curve, until the time
-    # changes; Blender's depsgraph writes every animated property from its curve at the next update.
-    "set_keyframe": {"node_fields": {"|pCube1": ["t", "r", "s", "wt"]}},
-    # In background mode Blender reports a just-loaded home file as modified (checked: read_homefile() -> is_dirty
-    # True in -b); the GUI check is in tests/gui/gui_step208_script_editor.py.
-    "new_scene_unsaved": {"skip": ["R4"]},
-    # --- step 216 () ---
-    # Blender constraints act on the world matrix; the object's own channels keep their values under them (Maya's
-    # channels hold the constraint output). getAttr / xform read the constrained values (cmds_rig.intercept).
-    "c216_parent_constraint": {"node_fields": {"|pSphere1": ["t", "r"], "|pCube3": ["t"]}},
-    "c216_point_constraint_two_targets": {"node_fields": {"|pCube3": ["t"]}},
-    "c216_orient_scale_constraint": {"node_fields": {"|pCube2": ["r", "s"], "|pCube3": ["r"]}},
-    "c216_aim_constraint": {"node_fields": {"|pCube2": ["r"], "|pCube3": ["r"]}},
-    # Kit joints are bones of skeleton armatures (step 57): the scene objects are skeleton1/2/3, not joint transforms.
-    "c216_joint_chain": {"skip": ["nodes"]},
-    # A frozen parent keeps its pivot in delta_location and Blender children inherit it, so the child's world translate
-    # reads the parent's pivot (1 2 3) where Maya's reads 0 (pivot, bbox and geometry match; step 10 model).
-    "c216_make_identity": {"skip": ["R8"], "node_fields": {"|pCube1|pSphere1": ["wt"]}},
-    # Blender frames are whole numbers: pal keeps the playback range at whole frames (1 / 125, film again 1 / 120).
-    "c216_current_unit": {"R12": [1.0, 125.0]},
-    # Kit numbers are Blender's Z-up axes (): the cube's top f[1] is +Z, front f[0] -Y, and -ty moves
-    # along Blender Y like cmds.move.
-    "c216_poly_extrude_facet": {"R4": [-0.5, -0.5, -0.5, 0.5, 0.5, 2.5], "R10": [-0.5, -1.5, -0.5, 0.5, 1.5, 2.5],
-                                "R12": [-0.5, -1.5, -0.5, 0.5, 3.5, 2.5]},
-    # factory particleCloud1 / standardSurface1 have no kit counterpart in a new scene.
-    "c216_shading_node": {"R16": ["blinn1", "blinn2", "lambert1", "lambert2", "phong1", "skin"]},
-    # Create > Camera levels the Blender camera (rotate X 90) so it looks along Maya's -Z (= Blender +Y); the joint
-    # made under pCube1 is a bone of the skeleton armature skeleton1 (step 57).
-    "c216_node_type": {"node_fields": {"|camera1": ["r"], "|pCube1|skeleton1": ["shapes"]}, "rename": {"|pCube1|joint1": "|pCube1|skeleton1"}},
-}
 
 
 def _setup():
@@ -124,37 +64,7 @@ def _plain(v):
     return v
 
 
-def snapshot():
-    sc = bpy.context.scene
-    bpy.context.view_layer.update()
-    nodes = {}
-    for ob in sc.objects:
-        keys = {}
-        for attr, key in ATTRS:
-            fc = cb.fcurve(ob, key)
-            if fc is not None and len(fc.keyframe_points):
-                keys[attr] = [[kp.co.x, float(cmds.from_internal(key, kp.co.y))] for kp in fc.keyframe_points]
-        nodes[cmds._long_name(ob)] = {
-            "shapes": [cmds.shape_of(ob)] if cmds.shape_of(ob) else [],
-            "t": [cmds._from_bu(x) for x in ob.location],
-            "r": [math.degrees(x) for x in ob.rotation_euler],
-            "s": list(ob.scale),
-            "wt": [cmds._from_bu(x) for x in cmds.maya_world(ob).translation],
-            "v": not ob.hide_viewport,
-            "ro": cmds.ROTATE_ORDERS.index(ob.rotation_mode) if ob.rotation_mode in cmds.ROTATE_ORDERS else 0,
-            "keys": keys}
-    history = sorted(prim_history.node_dict(o)["name"] for o in
-                     {prim_history.owner_of(ob) for ob in sc.objects} - {None})
-    return {"nodes": nodes, "time": float(sc.frame_current) + sc.frame_subframe,
-            "playback": [cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True),
-                         cmds.playbackOptions(q=True, ast=True), cmds.playbackOptions(q=True, aet=True)],
-            "history": history}
-
-
-_BG_DIRTY = [True]
-
-
-# --- rules () ---------------------------------------------------
+# --- rules --------------------------------------------------------
 
 def test_maya_number_rule():
     nn = naming.next_number

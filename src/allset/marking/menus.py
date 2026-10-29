@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya marking menus as plain data.
+"""Maya marking menus as plain data (step 8).
 
 Positions and labels follow Maya's own marking menus. Re-implemented: only labels, radial
 positions and the Blender action (same value forms as ``ui/menu_map.py``:
@@ -41,7 +41,7 @@ def _mod(kind):
 
 
 def _create(kind):
-    # Maya name and size in Maya units (operators/create.py, ).
+    # Maya name and size in Maya units (operators/create.py, step 21).
     return ("allset.create", {"kind": kind})
 
 
@@ -73,7 +73,7 @@ SMART_EXTRUDE = ("allset.manip_option", {"option": 'SMART_EXTRUDE'})      # step
 
 def _item(path):
     """Run Maya main-menu item ``path`` exactly like the menu (``allset.menu_item``: component / object mode rules,
-    Maya warnings, option window as the option box);  「계획」 B."""
+    Maya warnings, option window as the option box); step 136."""
     return ("item", path)
 
 
@@ -115,7 +115,7 @@ SYMMETRY = ("Symmetry", Sub(radial={
 }))
 
 # Material items at the end of the RMB object list (Maya builds them when the RMB marking menu opens,
-# ). ``rmb``: with nothing selected
+# step 29). ``rmb``: with nothing selected
 # they act on the object the menu was opened on, like Maya.
 _FAVORITES = (("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'),
               ("Standard Surface", 'STANDARD_SURFACE'))
@@ -136,10 +136,10 @@ def _material_items():
 
 # --- RMB: RMB_MESH --------------------------
 # Mesh radials follow Maya 2022's RMB marking menu over a mesh and its object select masks;
-# NE "Object Mode".  resolved by hand.
+# NE "Object Mode".
 
 # The list under the ring, Maya 2022 order
-#. The first row is the object's name
+# (step 52). The first row is the object's name
 # (``OBJECT_TITLE`` is replaced by it when the menu opens). An empty ``Sub`` is a greyed submenu: Maya's
 # dependency-graph / metadata / set editors have no Blender counterpart here.
 OBJECT_TITLE = "<object>..."
@@ -203,8 +203,8 @@ RMB_MESH = MarkingMenu(
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya 2022 RMB marking
-        # menu); both open the UV Editor (step 66).
+        # A submenu, like Maya 2022's: the component at its own position, UV Shell at S (like Maya 2022's
+        # RMB marking menu); both open the UV Editor (step 66).
         "E": ("UV", Sub(radial={"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
                                 "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))})),
         "SW": ("Vertex Face", None),
@@ -347,7 +347,7 @@ PIVOT_EDIT = MarkingMenu(
     },
     items=[("Bake Pivot Orientation", _item("Modify/Bake Pivot"))])  # Blender bakes the orientation
 
-# --- Shift+RMB: Maya's polygon tool marking menus () ---------------------------------
+# --- Shift+RMB: Maya's polygon tool marking menus -------------------------------------
 
 SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
     "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
@@ -522,7 +522,7 @@ SHIFT_DEFAULT = MarkingMenu(
     ],
     options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane', 'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Sphere', 'Torus'])
 
-# --- Ctrl+RMB: CTRL_CONVERT () -------------------------------------------
+# --- Ctrl+RMB: CTRL_CONVERT -----------------------------------------------
 
 _CS = "Select/Convert Selection/"
 
@@ -578,7 +578,7 @@ CTRL_CONVERT = MarkingMenu(
         ("Selection Boundary", "mesh.region_to_loop"),
     ])
 
-# --- Tool options: q/w/e/r hold + LMB, Ctrl+Shift+RMB () -------------------
+# --- Tool options: q/w/e/r hold + LMB, Ctrl+Shift+RMB -----------------------
 # Maya manip modes -> Blender transform orientations (Object = Local, Component = Normal).
 
 OPT_MOVE = MarkingMenu(
@@ -670,7 +670,7 @@ OPT_SELECT = MarkingMenu(
 
 # --- A hold + LMB: SELECT_ALL -------------
 # Inputs/outputs = history in Maya; the Blender history equivalent (modifiers) has no
-# up/downstream selection, so W/E/N/S stay greyed.
+# up/downstream selection, so W/E/N/S stay greyed (step 10).
 
 SELECT_ALL = MarkingMenu(
     "SELECT_ALL", "Select All / History", "maya",
@@ -722,7 +722,7 @@ KEY_TANGENT = MarkingMenu(
         })),
     })
 
-# --- Shift+Q / Alt+Q hold + LMB (Maya factory hotkeys; ) ---------------------------------
+# --- Shift+Q / Alt+Q hold + LMB (Maya factory hotkeys; step 78) -----------------------------------------------
 # SELECT_COMPONENT (Maya's Shift+Q hold menu) = the component pick mask; Blender's mask is the
 # mesh select mode, so only Poly Vertices / Poly Edges / Faces / All Components on / Select Objects do something.
 # SELECT_POLYGON (Maya's Alt+Q hold menu) = F9 / F10 / F11 / F12.
@@ -886,7 +886,7 @@ HB_CENTER = MarkingMenu(
 
 HOTBOX_ZONES = {"N": HB_NORTH, "S": HB_SOUTH, "E": HB_EAST, "W": HB_WEST, "C": HB_CENTER}
 
-# --- UV Editor ---------------------------------------------------
+# --- UV Editor (step 66) ------------------------------------------------------------------------
 
 def _uvc(mode):
     return ("allset.uv_component", {"mode": mode})

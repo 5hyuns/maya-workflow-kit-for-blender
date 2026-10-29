@@ -1,6 +1,5 @@
 """Step 11: Maya Outliner (UIList rows) and Attribute Editor (node tabs, template sections).
 
- 「계획」 5.
 """
 
 import json

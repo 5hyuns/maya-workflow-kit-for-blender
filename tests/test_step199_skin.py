@@ -1,5 +1,5 @@
 """Step 199 lane S: Skin > Move Weights to Influences, Normalize Weights modes, Export / Import Weight Maps, Substitute
-Geometry, Bake Deformation to Skin Weights. Maya numbers below come from Maya 2022;
+Geometry, Bake Deformation to Skin Weights. Expected numbers are written below;
 scenes are built in Maya's coordinates (the rules are the same
 in any axes), lengths in Blender metres = Maya units."""
 
@@ -878,7 +878,7 @@ def _norm_scene(mode, offset=(0.0, 0.0, 0.0)):
     arm = _armature("skeleton1", [(0, 8, 0), (0, 4, 0), (0, 0, 0)], "joint")
     rows = globals()[f"NORM_W_{mode}"]
     mesh = _mesh("pCylinder1", [Vector(p) - Vector(offset) for p in CYL_REST])
-    mesh.location = offset                        # world points as in Maya, object transform not frozen
+    mesh.location = offset                        # world points like Maya's, object transform not frozen
     _skin(mesh, arm, NORM_NAMES, rows, "POST")
     _select(mesh)
     bpy.ops.allset.skin_normalize_mode(mode={0: "NONE", 1: "INTERACTIVE", 2: "POST"}[mode])
@@ -900,7 +900,7 @@ def test_normalize_modes_deform_like_maya():
             got = _evaluated(mesh)
             want = globals()[f"NORM_POS_{mode}"]
             rows = globals()[f"NORM_W_{mode}"]
-            # Blender clamps vertex group weights to [0, 1]: Maya's 1.5 (vertex 12) can't be stored
+            # Blender clamps vertex group weights to [0, 1]: the expected 1.5 (vertex 12) can't be stored
             ok = [i for i, r in enumerate(rows) if max(r) <= 1.0]
             assert len(ok) == len(rows) - 1
             d = max((Vector(got[i]) - Vector(want[i])).length for i in ok)

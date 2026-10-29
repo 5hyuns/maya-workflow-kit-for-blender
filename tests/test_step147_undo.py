@@ -1,7 +1,7 @@
 """Step 147 (#88 #92 #86): every Maya command is one undo step, and kit commands open no Adjust Last Operation.
-Plan / checked: ; GUI: tests/gui/gui_step147_hud.py.
+GUI: tests/gui/gui_step147_hud.py.
 
-``bpy.ops.ed.undo_push`` makes the undo stack in background (ed_undo.cc #60934), so undo is checked headless. A UI
+``bpy.ops.ed.undo_push`` makes the undo stack in background (ed_undo.cc #60934), so undo is tested headless. A UI
 button calls its operator at undo depth 0: ``op('EXEC_DEFAULT', True, ...)`` does the same from Python."""
 
 from importlib import import_module
@@ -113,7 +113,7 @@ def _opens_hud(cls):
 
 def test_no_kit_command_opens_adjust_last_operation():
     # what can end at undo depth 0 and register: keymap items, window-level modal tools, option windows (props
-    # dialogs); menu items run nested and never register (step 147 checked)
+    # dialogs); menu items run nested and never register
     reach = _reach()
     bad = []
     for name in dir(bpy.types):

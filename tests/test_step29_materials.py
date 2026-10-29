@@ -1,6 +1,6 @@
 """Step 29: Maya material assignment (Lighting/Shading menu, RMB menu, Shift+T).
 
-Object assignment = whole shape, face selection = only those faces. 
+Object assignment = whole shape, face selection = only those faces.
 """
 
 from importlib import import_module

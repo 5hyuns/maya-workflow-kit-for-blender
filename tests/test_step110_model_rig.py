@@ -1,7 +1,5 @@
-"""Step 110: modeling / rigging commands against Maya 2022's numbers.
+"""Step 110: modeling / rigging commands and their expected results.
 Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
-
- 「계획」.
 """
 
 import importlib.util
@@ -63,7 +61,7 @@ def test_circularize_matches_maya():
     assert poly.circularize_loops(bm, 'FACE') == 1
     border = [v for f in inner for v in f.verts if (abs(v.co.x) > 1e-6 or abs(v.co.y) > 1e-6)]
     radii = {round(v.co.xy.length, 4) for v in border}
-    assert radii == {1.2071}, radii                       # Maya: mean distance 1.2071
+    assert radii == {1.2071}, radii                       # mean distance 1.2071
     got = sorted((round(v.co.x, 4), round(v.co.y, 4)) for v in set(border))
     want = sorted([(-0.8536, 0.8536), (0.0, 1.2071), (0.8536, 0.8536), (-1.2071, 0.0), (1.2071, 0.0),
                    (-0.8536, -0.8536), (0.0, -1.2071), (0.8536, -0.8536)])
@@ -115,7 +113,7 @@ def test_edge_flow_close_to_maya():
     edges = [bm.edges.get((eq[i], eq[(i + 1) % 8])) for i in range(8)]
     assert menu_items.edge_flow(bm, edges) == 8
     radii = [v.co.xy.length for v in eq]
-    print("edge flow radius", radii[0], "Maya 0.9983")
+    print("edge flow radius", radii[0], "expected 0.9983")
     assert all(abs(r - 0.9983) < 0.005 for r in radii), radii
     assert all(abs(v.co.z) < 1e-6 for v in eq)
     bm.free()
@@ -149,7 +147,7 @@ def test_connect_two_opposite_edges():
     want = sorted(tuple(round(c, 4) for c in (a.co + b.co) / 2) for a, b in (e.verts for e in (e0, e2)))
     poly.connect(bm, 'EDGE')
     bm.verts.ensure_lookup_table()
-    assert (len(bm.verts), len(bm.faces), len(bm.edges)) == (10, 7, 15)      # Maya 10 / 7 / 15
+    assert (len(bm.verts), len(bm.faces), len(bm.edges)) == (10, 7, 15)      # 10 / 7 / 15
     mids = sorted(tuple(round(c, 4) for c in v.co) for v in bm.verts[8:])
     assert mids == want, (mids, want)
     bm.free()
@@ -169,7 +167,7 @@ def test_connect_ring_and_vertices():
     for e in set(ring):
         e.select = True
     poly.connect(bm, 'EDGE')
-    assert (len(bm.verts), len(bm.faces)) == (12, 10)                       # Maya 12 / 10
+    assert (len(bm.verts), len(bm.faces)) == (12, 10)                       # 12 / 10
     bm.free()
     bm = _cube()
     f = bm.faces[0]
@@ -187,7 +185,7 @@ def test_make_hole_bridges_the_stamp():
     pos = [v.co.copy() for v in inner]
     faces = poly.make_hole(bm, target, stamp)
     assert len(bm.verts) == 8 and len(faces) == 4 and len(bm.faces) == 4
-    assert all((v.co - p).length < 1e-9 for v, p in zip(inner, pos))        # Maya mode 6: no move
+    assert all((v.co - p).length < 1e-9 for v, p in zip(inner, pos))        # mode 6: no move
     assert all(len(f.verts) == 4 for f in bm.faces)
     bm.free()
 
@@ -299,7 +297,7 @@ def _skinned_plane():
 
 def test_hammer_is_the_neighbour_average():
     ob, _arm, g1, g2 = _skinned_plane()
-    # Maya's weights around vertex 12 (neighbours 7, 11, 13, 17)
+    # expected weights around vertex 12 (neighbours 7, 11, 13, 17)
     w = {12: (0.95, 0.05), 7: (0.9615, 0.0385), 17: (0.9615, 0.0385), 11: (1.0, 0.0), 13: (1.0, 0.0)}
     for i in range(25):
         a, b = w.get(i, (1.0, 0.0))
@@ -323,7 +321,7 @@ def test_add_remove_unused_influence():
     # Lock weights, Default weight 0 (the factory add recomputes the weights by distance: test_step202_add_influence)
     assert rig.add_influence(ob, ["joint3"], lock=True) == ["joint3"]
     g3 = ob.vertex_groups["joint3"]
-    assert all(g3.weight(i) == 0.0 for i in range(25))                     # Maya: weight 0
+    assert all(g3.weight(i) == 0.0 for i in range(25))                     # weight 0
     assert abs(g1.weight(0) - 0.8) < 1e-6                                   # others unchanged
     assert rig.unused_influences(ob) == ["joint3"]
     assert rig.remove_influence(ob, ["joint2"]) == ["joint2"]
@@ -346,7 +344,7 @@ def test_cluster_handle_at_component_centroid():
     h = bpy.data.objects["cluster1Handle"]
     md = cube.modifiers["cluster1"]
     assert md.type == 'HOOK' and md.object == h
-    assert (h.location - Vector((3, 0, 0.5))).length < 1e-6                 # Maya: centroid (3, 0.5, 0)
+    assert (h.location - Vector((3, 0, 0.5))).length < 1e-6                 # centroid (3, 0.5, 0), Maya Y-up
     h.location.z += 1.0
     bpy.context.view_layer.update()
     ev = cube.evaluated_get(bpy.context.evaluated_depsgraph_get())

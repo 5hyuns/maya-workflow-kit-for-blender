@@ -1,6 +1,6 @@
 """Step 135 lane CB (#55): Channel Box INPUTS nodes collapsed by default, Maya's click-the-name expansion (reset when the
 lead changes), the fixed Channel Box / Layer Editor split with a scrolling Channel Box part, the dock's tab widths.
-Maya 2022 layout. Real dock: tests/gui/gui_step135_dock.py."""
+Maya-style layout. Real dock: tests/gui/gui_step135_dock.py."""
 
 from importlib import import_module
 from types import SimpleNamespace
@@ -87,7 +87,7 @@ def test_inputs_node_starts_collapsed_and_toggles():
     assert "INPUTS" in rec.texts("label")
     names = [p.node for p in rec.ops("allset.cb_node_toggle")]
     assert names == [node], names
-    assert "Width" not in rec.texts("label"), "polyCube1 collapsed like Maya (cb135/d01_cube.png)"
+    assert "Width" not in rec.texts("label"), "polyCube1 collapsed like Maya"
     assert bpy.ops.allset.cb_node_toggle(node=node) == {'FINISHED'}
     assert cb.is_open(ob, node)
     rec = _draw()

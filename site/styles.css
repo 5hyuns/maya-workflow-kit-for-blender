@@ -1,5 +1,5 @@
 /* Maya Workflow Kit — product site. The page is a Maya shelf: Maya 2022 greys, Maya logo teal as the one accent,
-   Autodesk Hello Yellow only for the press moment (docs/distribution/marketing/style.md). */
+   Autodesk Hello Yellow only for the press moment. */
 
 @font-face {
   font-family: "Inter";
@@ -73,7 +73,7 @@ html { scrollbar-color: var(--rule) var(--canvas); }
 .menubar__menu a:hover, .menubar__repo:hover { background: #005f61; color: var(--text-strong); }   /* 6.4:1 */
 .menubar__repo { margin-left: auto; border: 1px solid var(--rule); }
 
-/* ---------------------------------------------------------------- lockup (style.md: name + 0.66 x line) */
+/* ---------------------------------------------------------------- lockup (name + 0.66 x line) */
 .lockup { display: flex; flex-direction: column; gap: .06em; }
 .lockup__name { font-size: clamp(36px, 3.5vw, 56px); font-weight: 750; line-height: 1; letter-spacing: -.03em; color: var(--text-strong); }
 .lockup__line { font-size: calc(clamp(36px, 3.5vw, 56px) * .66); font-weight: 600; line-height: 1.15; letter-spacing: -.015em; color: var(--teal); }

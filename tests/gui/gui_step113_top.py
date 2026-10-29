@@ -88,7 +88,7 @@ def s_layout():
     sl = mod("ui.status_line")
     with context.temp_override(window=win(), screen=win().screen):
         check("a Status Line is on screen, so the menu bar has no menu set dropdown", sl.status_line_shown(context))
-    # every Maya menu fits the menu bar at this scale: logo + checked items + the right side
+    # every Maya menu fits the menu bar at this scale: logo + the items' widths + the right side
     ms = mod("ui.menu_sets")
     prefs = mod("preferences").get()
     scale = context.preferences.system.ui_scale
@@ -156,7 +156,7 @@ def s_shot():
     row = shelf_row()
     top = win().height - (row.y + row.height)        # the shelf row's top edge, from the window top
     p_tab = pixel(path, w - 20, top + int(8 * scale))
-    # the tab strip = the theme's Image Editor header dimmed by Maya's ratio #444444 -> #373737 (ui/shelf.TAB_DIM)
+    # the tab strip = the theme's Image Editor header dimmed by the ratio #444444 -> #373737 (ui/shelf.TAB_DIM)
     tab_bg = tuple(round(c * 255 * (1 - mod("ui.shelf").TAB_DIM)) for c in th.image_editor.space.header[:3])
     check(f"shelf tab strip = theme header x Maya's dim {tab_bg} (pixel {p_tab})", near(p_tab, tab_bg))
     mod("switch").set_mode(False)

@@ -1,7 +1,6 @@
 # Release notes 0.7.0 (GitHub release)
 
-Text for the GitHub release of v0.7.0. Full list: `CHANGELOG.md`. Before publishing, run the maintainer
-checklist in .
+Text for the GitHub release of v0.7.0. Full list: the 0.7.0 section of `CHANGELOG.md`.
 
 ---
 

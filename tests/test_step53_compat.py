@@ -35,8 +35,8 @@ def test_keymap_patches_strict_on_target_drift_known_elsewhere():
 
 def test_manifest_declares_the_tested_range():
     data = tomllib.loads((ROOT / "src" / "allset" / "blender_manifest.toml").read_text(encoding="utf-8"))
-    assert data["blender_version_min"] == "5.0.0", "0.6.2 is the last version for 4.5 (step 279, user 10-29)"
-    assert data["blender_version_max"] == "5.3.0", "5.0.x-5.2.x: checked in step 118 (); re-measure before raising"
+    assert data["blender_version_min"] == "5.0.0", "0.6.2 is the last version for 4.5 (step 279)"
+    assert data["blender_version_max"] == "5.3.0", "5.0.x-5.2.x: checked since step 118; test a new version before raising"
     v = tuple(bpy.app.version)
     assert (5, 0, 0) <= v < (5, 3, 0), v
 

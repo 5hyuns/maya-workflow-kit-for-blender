@@ -7,16 +7,16 @@ name = "Maya Workflow Kit"
 tagline = "The whole Maya workflow in Blender, in one install"
 maintainer = "ohnsk <555hyuns@gmail.com>"
 type = "add-on"
-# Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; , step 61).
+# Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; step 61).
 # "User Interface" only: the moderator asked to remove every other tag (store review, GitHub #40, step 130).
 # No `website` until there is a public page; no `platforms`: pure Python, every OS.
 tags = ["User Interface"]
 
-# 5.0 since 0.7.0 (step 279, user 10-29): 0.6.2 is the last version for Blender 4.5.
+# 5.0 since 0.7.0 (step 279): 0.6.2 is the last version for Blender 4.5.
 blender_version_min = "5.0.0"
-# Exclusive. Main target 5.2 (step 272); 5.0-5.2 checked in step 118 (: headless, GUI and install
+# Exclusive. Main target 5.2 (step 272); 5.0-5.2 tested since step 118 (headless, GUI and install
 # round trip on 5.0.1, 5.1.2, 5.2.2; version differences in compat.py). A Blender after 5.2 gets a clear "not
-# compatible" until it is checked the same way.
+# compatible" until it is tested the same way.
 blender_version_max = "5.3.0"
 
 # Code GPL-3.0-or-later; the kit-made images and data files (welcome PNGs, the Maya layout startup.blend)
@@ -31,7 +31,7 @@ copyright = [
 
 [permissions]
 # Writes: the extension user folder (your shelves) and the Maya project folders the file dialogs open in
-# (docs/distribution/listing.md "Files it writes"). Since step 130 nothing outside them: no layout template, no
+# Since step 130 nothing outside them: no layout template, no
 # preference snapshot, no theme backup.
 files = "Your shelves and Maya project folders"
 

@@ -1,5 +1,5 @@
 """Step 35: Maya key batch — Ctrl+Alt+LMB box zoom, Ctrl+T, Y, Ctrl+Shift+X/Q, Return, F2–F6.
-; GUI: tests/gui/gui_step35_keys.py."""
+GUI: tests/gui/gui_step35_keys.py."""
 
 from importlib import import_module
 

@@ -1,6 +1,6 @@
 """Step 141 lane KEYS: Ctrl+A = Attribute Editor / Channel Box in every mode (#65), UV / Image Editor Alt+RMB dolly
 without Blender's Zoom Axis preference (B4), undo-depth hint (B6), joint names restart at joint1 (#73), Gravity /
-Newton field defaults (#72). ; notes: ;
+Newton field defaults (#72).
 GUI: tests/gui/gui_step141_keys.py."""
 
 from importlib import import_module
@@ -70,7 +70,10 @@ def test_ctrl_a_same_in_every_ic_version():
 def test_mapping_row_notes_every_mode():
     e = mapping.ENTRIES["ShowAttributeEditorOrChannelBox"]
     assert e["status"] == "KIT" and "step 141" in e["note"]
-    doc = (ROOT / "docs" / "keymap_mapping.md").read_text(encoding="utf-8")
+    path = ROOT / "docs" / "keymap_mapping.md"
+    if not path.exists():
+        raise kit.Skip("generated mapping table not in this clone")
+    doc = path.read_text(encoding="utf-8")
     row = next(ln for ln in doc.splitlines() if "ShowAttributeEditorOrChannelBox" in ln)
     assert "mesh.select_all" not in row and "Mesh: `allset.ae_toggle`" in row, row
 

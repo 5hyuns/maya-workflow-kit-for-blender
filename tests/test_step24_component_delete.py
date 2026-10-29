@@ -1,7 +1,7 @@
 """Step 24: Delete / Backspace on components deletes right away, the Maya way.
 
 Faces -> faces (and their unused edges/vertices) gone; edges -> non-border edges dissolved
-with their 2-edge vertices cleaned up; vertices -> dissolved. 
+with their 2-edge vertices cleaned up; vertices -> dissolved.
 """
 
 from importlib import import_module

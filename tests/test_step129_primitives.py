@@ -1,6 +1,6 @@
-"""Step 129 (#11, #12): Maya 2022 primitive topology and creation history nodes in Channel Box INPUTS.
+"""Step 129 (#11, #12): Maya primitive topology and creation history nodes in Channel Box INPUTS.
 
-Counts: Maya 2022, Create menu factory option boxes.
+Counts: Create menu default option boxes.
 """
 
 from importlib import import_module
@@ -15,7 +15,7 @@ history = import_module(kit.MODULE + ".operators.history")
 creation_inputs = import_module(kit.MODULE + ".ui.creation_inputs")
 attribute_editor = import_module(kit.MODULE + ".ui.attribute_editor")
 
-# Create menu item -> Maya node, (vertices, edges, faces), face sizes (Maya 2022, menu factory settings)
+# Create menu item -> Maya node, (vertices, edges, faces), face sizes (menu default settings)
 MAYA_MENU = {
     'CUBE': ("polyCube", (8, 12, 6), {4: 6}),
     'SPHERE': ("polySphere", (382, 780, 400), {4: 360, 3: 40}),
@@ -29,8 +29,8 @@ MAYA_MENU = {
     'PRISM': ("polyPrism", (6, 9, 5), {4: 3, 3: 2}),
 }
 
-# node, attributes -> (vertices, edges, faces) in Maya 2022 for non-default values
-MAYA_VARIANTS = [
+# node, attributes -> expected (vertices, edges, faces) for non-default values
+VARIANTS = [
     ("polyCube", dict(subdivisionsWidth=2, subdivisionsHeight=3, subdivisionsDepth=4), (54, 104, 52)),
     ("polySphere", dict(subdivisionsAxis=8, subdivisionsHeight=4), (26, 56, 32)),
     ("polySphere", dict(subdivisionsAxis=6, subdivisionsHeight=3), (14, 30, 18)),
@@ -134,7 +134,7 @@ def test_cylinder_caps_are_triangle_fans_around_a_centre_vertex():
 
 
 def test_variants_match_maya_counts():
-    for node_type, values, counts in MAYA_VARIANTS:
+    for node_type, values, counts in VARIANTS:
         got = _shape_counts(prim_shapes.build(node_type, values))
         assert got == counts, (node_type, values, got, counts)
 

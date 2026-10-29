@@ -11,7 +11,7 @@ Save / Don't Save / Cancel (default Save, Esc = Cancel):
 - Don't Save = the action; Cancel = nothing.
 
 ``ask(context, proceed)`` runs ``proceed`` (a callable that may load a file) from a timer after that check — never
-inside an operator ( step 42). An unmodified scene runs it without asking.
+inside an operator (step 42). An unmodified scene runs it without asking.
 """
 
 import os
@@ -147,7 +147,7 @@ def _draw(menu, _context):
     layout.label(text=message())
     layout.separator()
     # one row of three buttons; a popup menu gives the first one (Save) the spare width whatever the layout (row /
-    # split / grid_flow / column_flow checked, step 138)
+    # split / grid_flow / column_flow alike, step 138)
     row = layout.column_flow(columns=len(CHOICES))
     row.emboss = 'NORMAL'      # Maya's dialog buttons have frames (menu items are drawn flat)
     for key, label, _tip in CHOICES:
@@ -161,8 +161,8 @@ class ALLSET_OT_save_prompt(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
-        # A popup menu, not invoke_popup: invoke_popup blocks stay open after an operator button ran (checked,
-        # step 138); a menu closes on the click. Moving the mouse away / Esc closes it = Maya's Cancel ("dismiss").
+        # A popup menu, not invoke_popup: invoke_popup blocks stay open after an operator button ran (step 138);
+        # a menu closes on the click. Moving the mouse away / Esc closes it = Maya's Cancel ("dismiss").
         context.window_manager.popup_menu(_draw, title=title(), icon='QUESTION')
         return {'FINISHED'}
 

@@ -2,7 +2,7 @@
 """Rows of the Maya viewport panel menus (``ui/panel_menus.py``), the panel toolbar (``ui/panel_toolbar.py``) and the
 greyed Status Line widgets (``ui/status_line.py``) as plain data — no ``bpy`` — so ``tools/menu_count.py``,
 ``tools/menu_consistency.py`` and the step-101 notice rules can walk them like the main menus (step 177; until then
-these 36 + 9 greyed items were outside every count, research audit 12 BS2 / BS6, ).
+these 36 + 9 greyed items were outside every count).
 
 Item paths (``allset.menu_unavailable`` ``item``, ``notices.PANEL_MENU`` keys): ``Panel menu/<menu>/<sub>/<label>``,
 ``Panel toolbar/<label>``, ``Status Line/<tooltip>``. Rows: see ``ui/panel_menus.py``.
@@ -53,7 +53,7 @@ VIEW = [
 ]
 
 # Maya viewSet -vx = seen from +X (Maya 2022 panel View menu); axis names as Blender's
-# (X = X, Y = Y, Z = Z: , ).
+# (X = X, Y = Y, Z = Z).
 VIEW_AXIS = [_view("X", 'RIGHT'), _view("Y", 'BACK'), _view("Z", 'TOP'),
              _view("-X", 'LEFT'), _view("-Y", 'FRONT'), _view("-Z", 'BOTTOM')]
 
@@ -200,10 +200,10 @@ BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
 # (glyph, kind, data, label): kind "set" = panel_menus.ALLSET_OT_panel_set key, "prop" = (owner, prop) on the view,
 # "run" = (operator, props) run in the view, "grey" = no Blender equivalent (the label explains it).
 #
-# Step 129 (#10): every Maya toggle (a check button on Maya's panel toolbar; ``checkable`` in _top113.json) is a
+# Step 129 (#10): every Maya toggle (a check button on Maya's panel toolbar) is a
 # toggle here too — "set" keys are drawn with ``toggle=True`` so Wireframe / Smooth Shade All / Use All Lights turn
 # off to Maya's off state (panel_menus.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
-# disabled in Blender's persp / ortho views (Maya disables Lock Camera there too). Table: 
+# disabled in Blender's persp / ortho views (Maya disables Lock Camera there too).
 TOOLBAR = (
     (("cam_select", "set", "SELECT_CAMERA", "Select Camera"),
      ("cam_lock", "set", "CAMERA_LOCK", "Lock Camera"),

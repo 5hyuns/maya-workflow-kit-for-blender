@@ -1,5 +1,5 @@
 """Step 20: Maya . , Alt+. Alt+, key / frame stepping, Time + Range Slider in the Timeline
-header, timeline view following the playback range. """
+header, timeline view following the playback range."""
 
 from importlib import import_module
 

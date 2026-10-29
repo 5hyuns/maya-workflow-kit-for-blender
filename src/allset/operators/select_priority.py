@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya selection priority for object-mode clicks.
+"""Maya selection priority for object-mode clicks (step 76).
 
 Maya picks the overlapping candidate of the highest type priority (``selectPrefPriorityMode
 "animation"``; ikHandle 10, joint 9, nurbsCurve 4, everything else 2),
@@ -9,7 +9,7 @@ depth, so a control curve or a joint in front of (or behind) a mesh can lose to 
 ``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
 Pose mode directly; clicks away from a skeleton release Pose/Edit mode for native object picking.
 In Object mode, ordinary candidates still use Blender's native pick and cycling. With the Selection Priority
-preference off, an Object-mode click is only taken when it hits a joint ().
+preference off, an Object-mode click is only taken when it hits a joint.
 """
 
 import math
@@ -23,7 +23,7 @@ from .preselect import project, segment_distance
 
 # Maya factory customSelectPriority for the kit's object kinds; anything else is 2.
 IK_HANDLE, JOINT, CURVE, DEFAULT = 10, 9, 4, 2
-RADIUS_PX = 5.0     # clickBoxSize 4 = a box of half-width 4: half diagonal ~5.7 
+RADIUS_PX = 5.0     # a click box of half-width 4: half diagonal ~5.7
 BONE_WIDTH = 0.1    # octahedral bone: widest at 0.1 x length (Blender's bone shape)
 
 
@@ -138,7 +138,7 @@ def _segments(ob, kind, depsgraph):
     per unit of length (bones)."""
     mw = ob.matrix_world
     if kind == 'ARMATURE':
-        # a bone with a Custom Shape is drawn as that shape's wire, not the octahedron (step 226,  note 1)
+        # a bone with a Custom Shape is drawn as that shape's wire, not the octahedron (step 226)
         a, b, reach = [], [], []
         shapes = control_shapes.shows_custom_shapes(ob)
         for pb in ob.pose.bones:
@@ -266,7 +266,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         best = rank(hits(context, region, rv3d, mouse), radius) if enabled else None
         if best is None:
             if not enabled and context.mode == 'OBJECT':
-                # Selection Priority off (): only a click on a joint is the kit's (a Maya
+                # Selection Priority off: only a click on a joint is the kit's (a Maya
                 # joint is its own node: pick it, not the whole armature); every other click is Blender's own pick.
                 for ob in context.visible_objects:
                     if ob.type != 'ARMATURE' or ob.hide_select:

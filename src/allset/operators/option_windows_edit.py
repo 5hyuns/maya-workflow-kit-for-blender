@@ -2,10 +2,10 @@
 """Step 140 Maya option windows: modeling, parenting and key commands (issues #33, #35).
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
-factory defaults are Maya 2022's; what the values do matches Maya.
+what the values do follow Maya.
 option_windows.py appends ``WINDOWS`` to its own list, so this
 module only imports ``F`` / ``Window`` / helpers from it. Maya fields Blender can't honour are listed in ``missing``
-(drawn greyed), never as fields. Plan / decisions: , 
+(drawn greyed), never as fields.
 """
 
 import math
@@ -208,7 +208,7 @@ def _run_duplicate_special(context, v):
     return bpy.ops.allset.duplicate_special(
         'EXEC_DEFAULT', geometry_type=v["geometry_type"].upper(),
         group_under={"Parent": 'PARENT', "World": 'WORLD', "New group": 'NEW_GROUP'}[v["group_under"]],
-        # Maya Y up: Maya Y -> Blender Z, Maya Z -> Blender -Y ( step 57)
+        # Maya Y up: Maya Y -> Blender Z, Maya Z -> Blender -Y (step 57)
         translate=Vector((v["translate"][0], -v["translate"][2], v["translate"][1])) * k,
         rotate=tuple(math.radians(a) for a in (v["rotate"][0], -v["rotate"][2], v["rotate"][1])),
         scale=(v["scale"][0], v["scale"][2], v["scale"][1]), copies=v["copies"])
@@ -355,8 +355,7 @@ MESH_WINDOWS = [
 ]
 
 # --- Edit > Delete by Type > Non-Deformer History ❒ (step 162) ---------------------------------------------------
-# Maya 2022 "Delete Non Deformer History Options": Delete: All non-deformer history (factory, setting
-# bakePreDefHistory 0) /
+# Maya "Delete Non Deformer History Options": Delete: All non-deformer history (default) /
 # History before deformers only; buttons Delete / Apply / Close.
 NONDEF_ALL = "All non-deformer history"
 NONDEF_PRE = "History before deformers only"

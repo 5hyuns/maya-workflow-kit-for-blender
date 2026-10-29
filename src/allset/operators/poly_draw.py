@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Create Polygon and Append to Polygon tools.
+"""Maya Create Polygon and Append to Polygon tools (step 144, GitHub #30).
 
 - Create Polygon (Mesh Tools > Create Polygon): the kit tool ``allset.create_polygon_tool`` (object and edit mode) runs
   ``allset.create_polygon``: click = a point (Maya's construction plane: the ground in a perspective view, the view
@@ -11,8 +11,8 @@
   ``allset.append_polygon``: the first click picks a border edge of the edited mesh (its two vertices start the new
   face, wound against the face they border), later clicks pick another border edge (its two vertices) or place a point
   (on the plane through the first edge that faces the view), Enter adds the face to the mesh.
-Tool Settings (Divisions, Limit points, Keep new faces planar, Texture) live in ``Scene.allset_poly_tools``; their
-Maya factory values (Maya 2022 Tool Settings). Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
+Tool Settings (Divisions, Limit points, Keep new faces planar, Texture) live in ``Scene.allset_poly_tools`` with
+Maya-style defaults. Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
 ``build_polygon``, ``append_face``) are tested headless (tests/test_step144_poly.py).
 """
 
@@ -34,9 +34,9 @@ APPEND_TOOL = "allset.append_polygon_tool"
 BASE_NAME = "polySurface"        # Maya polyCreateFacet result (kit Maya naming, step 63 Separate)
 EDGE_PX = 16.0                   # border-edge pick radius (preselect.RADIUS_PX)
 SNAP_PX = 16.0                   # point snapping radius (V hold)
-POINT_RGB = (0.27, 0.82, 0.98)   # the tool's points / outline 
+POINT_RGB = (0.27, 0.82, 0.98)   # the tool's points / outline
 PREVIEW_RGB = (0.85, 0.85, 0.85)
-BORDER_RGB = (0.98, 0.65, 0.2)   # Append: the mesh's border edges 
+BORDER_RGB = (0.98, 0.65, 0.2)   # Append: the mesh's border edges
 POINT_PX = 7.0
 LINE_PX = 2.0
 
@@ -273,7 +273,7 @@ def append_face(bm, items, divisions=1, planar=True, texture='NORMALIZE'):
 
 
 def _fit_uvs(face, layer, uvs):
-    """The new face's UVs: its own projection, moved next to the UVs its first old vertex already has ."""
+    """The new face's UVs: its own projection, moved next to the UVs its first old vertex already has."""
     anchor = None
     for loop in face.loops:
         for other in loop.vert.link_loops:

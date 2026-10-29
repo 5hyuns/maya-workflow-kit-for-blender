@@ -1,7 +1,6 @@
 """Step 36: Maya symmetric modelling (Status Line Symmetry, W/E/R marking menu Symmetry ▸).
 
 One global Maya state (Scene.allset_symmetry) drives Blender's per-mesh mirror flags.
-
 """
 
 import math
@@ -151,7 +150,7 @@ def test_marking_menu_parts():
 
 
 def test_switching_on_symmetrizes_selection():
-    # Maya reflectionSetMode -> SymmetrizeSelection: the mirrored side is selected too.
+    # turning symmetry on symmetrizes the selection: the mirrored side is selected too.
     ob, = _scene()
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type='VERT')

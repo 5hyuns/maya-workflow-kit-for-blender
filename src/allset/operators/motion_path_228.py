@@ -1,34 +1,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""step 228 L8: Maya Attach to Motion Path / Set Motion Path Key on Follow Path.
+"""step 228: Maya Attach to Motion Path / Set Motion Path Key on Follow Path.
 
-Maya 2026 behaviour (Set Motion Path Key curve edit checked again for this lane).
-
-- Attach to Motion Path (Maya factory option values): the
-  selected objects + one curve in any order (Maya takes the curve as the path, ``L8_motion_path_wrong_order``). Per
+- Attach to Motion Path (default option values): the
+  selected objects + one curve in any order (Maya takes the curve as the path). Per
   object one Follow Path constraint ``motionPathN`` (Maya's node name, numbered one past the highest) with Fixed
   Position on: its Offset = Maya's ``uValue`` in fraction mode (arc-length fraction), keyed at the Time Slider start
   (0) and end (1) with Maya auto tangents (two keys = flat ends; ``driven_key.maya_auto``), constant extrapolation.
   Maya places the object on the path without adding its own position or rotation (``mp_offset`` /
   ``mp_rotated_obj`` = ``mp_default``), so the object's Translate (and Rotate while Follow is on) are zeroed
-  (delegated: Blender's Follow Path adds the owner's transform).
+  (Blender's Follow Path adds the owner's transform).
 - Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position is
   off by 5e-3 (0.15 deg) on the test path, so the path's splines get ``PATH_POINTS`` evaluated points (resolution
-  256 on the 4-span path: 9.5e-5 against Maya — the exact arc length itself differs from Maya by up to 9.6e-5, Maya's
-  own arc-length tolerance; rotation 1e-3 deg).
-- Front / Up axis: Maya local X / Y / Z = Blender X / Z / -Y ( step 57). Blender's Up is a positive axis
+  256 on the 4-span path: within about 1e-4 of the exact arc length; rotation 1e-3 deg).
+- Front / Up axis: Maya local X / Y / Z = Blender X / Z / -Y (step 57). Blender's Up is a positive axis
   only: a negative up axis (Maya Up Z, or Inverse up) is the positive one plus a 180 deg delta rotation about the
   front axis (the owner's rotation is applied inside the path frame). World up: Blender keeps the up axis toward
-  world Z (Maya Scene up = Vector (0, 1, 0)); on a planar path that is Maya exactly, on a 3D path Blender's roll rule
-  (vec_to_quat) differs from Maya's world-up projection (up to 9.7 deg on ``mp_3d``). Bank, Object up / Object rotation
+  world Z (Maya Scene up = Vector (0, 1, 0)); on a planar path that matches Maya, on a 3D path Blender's roll rule
+  (vec_to_quat) differs from Maya's world-up projection (by several degrees). Bank, Object up / Object rotation
   up / Normal and other world up vectors have no Follow Path equivalent (option window ``missing``).
-- Parametric length on (Maya fractionMode off, ``mp_parametric``): Blender's path is always by length, so the Maya
+- Parametric length on (Maya fractionMode off): Blender's path is always by length, so the Maya
   parameter keys (start -> 0, end -> maxValue) are kept on the object (``PROP``) and the Offset is baked to their
   arc-length fraction on every frame (exact on whole frames, linear between; not live when the curve changes).
-- Set Motion Path Key (``setKeyPath``, knots [0,0,0,1,2,2,2] -> [0,0,0,0.719319,1,2,2,2], 6 CVs): Maya adds an
+- Set Motion Path Key (``setKeyPath``): Maya adds an
   edit point at the object's current position — the cubic is re-interpolated through the old edit points plus that
-  position, with the old knots plus a new knot placed between the neighbouring edit points by chord length (0.719319),
+  position, with the old knots plus a new knot placed between the neighbouring edit points by chord length,
   and the old end derivatives — and keys ``uValue`` at the current time with the point's fraction of the new curve
-  (0.370764 at frame 50, auto tangents). A non-uniform curve
+  (auto tangents). A non-uniform curve
   is written as an exact Bezier decomposition (``curves_maya.write_spline``); its Maya knots stay in ``KNOTS_PROP``
   while the Bezier still matches them.
 """
@@ -53,7 +50,7 @@ MSG_SELECT = "Select the objects to animate and one curve for the path."
 MSG_AXES = "The front and up axes must differ."
 MSG_NO_PATH = "Select an object attached to a motion path."
 
-# Maya local axis -> Blender local axis and sign (Maya Y-up;  step 57)
+# Maya local axis -> Blender local axis and sign (Maya Y-up; step 57)
 AXIS = {"X": ("X", 1), "Y": ("Z", 1), "Z": ("Y", -1)}
 FORWARD = {("X", 1): 'FORWARD_X', ("Y", 1): 'FORWARD_Y', ("Z", 1): 'FORWARD_Z',
            ("X", -1): 'TRACK_NEGATIVE_X', ("Y", -1): 'TRACK_NEGATIVE_Y', ("Z", -1): 'TRACK_NEGATIVE_Z'}

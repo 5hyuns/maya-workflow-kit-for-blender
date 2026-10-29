@@ -1,5 +1,5 @@
 """Step 76: Maya selection priority for object-mode clicks (IK handle 10 > joint 9 > curve 4 > mesh 2).
-; GUI: tests/gui/gui_step76_select_priority.py."""
+GUI: tests/gui/gui_step76_select_priority.py."""
 
 import types
 from importlib import import_module

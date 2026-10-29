@@ -1,6 +1,6 @@
 """Step 92 in a real UI (Maya Workflow Kit layout, the big view switched to the Graph Editor): t centers the current time,
 Alt+/ turns on Snap Time To Selection (clicking key 20 moves the time there), i held + MMB click inserts a key that
-keeps the curve shape. """
+keeps the curve shape."""
 
 import os
 import sys

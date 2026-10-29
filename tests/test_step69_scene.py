@@ -1,6 +1,6 @@
 """Step 69: Maya projects (Set Project / Project Window / Recent Projects), file dialogs in the project's scenes folder,
 render output to images, Ctrl+Alt+S = Maya Increment and Save, Create Reference (Ctrl+R) with namespaces, Reference
-Editor. ; GUI: tests/gui/gui_step69_scene.py."""
+Editor. GUI: tests/gui/gui_step69_scene.py."""
 
 import os
 import tempfile

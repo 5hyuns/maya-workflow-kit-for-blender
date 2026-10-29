@@ -2,8 +2,8 @@
 """Step 171 Maya windows of the Visualize menu: Create Animation Snapshot ❒ and the Ghosting Editor.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
-option_windows._extend appends ``WINDOWS``). Titles, labels, buttons and factory values are Maya 2022's
-with factory prefs (Snapshot options, Ghosting Editor; labels as Maya shows them).
+option_windows._extend appends ``WINDOWS``). Titles, labels and buttons follow Maya
+(Snapshot options, Ghosting Editor; labels as Maya shows them).
 
 The Ghosting Editor is a panel in Maya, not an option box: here it is a window whose command button is Maya's
 "Create Ghost from Selection" and whose Apply puts the display values on every current ghost (Maya's editor applies

@@ -6,7 +6,7 @@ skeleton node above it. The kit's skeleton is an
 armature object ``skeleton<N>`` holding the joints as bones (operators/joints.py), and Blender's C Outliner shows the
 object name. Renaming the object after its root joint would put an object and a bone of the same name in the scene
 (the kit's ``maya.cmds`` look-up, FBX nodes and many rig tools find nodes by name; 100+ test references), so the kit
-draws the label instead (delegated, step 258): a WINDOW POST_PIXEL handler finds the rows whose text is the armature
+draws the label instead (step 258): a WINDOW POST_PIXEL handler finds the rows whose text is the armature
 object's name and paints the root joint's name over it. Python can't ask Blender where a row is (rows of expanded
 objects move the rest), so a row is recognised by its pixels: Blender's text of the object name is rendered offscreen
 with the same font and compared with the row's ink; a row that doesn't match keeps Blender's text. Clicks still

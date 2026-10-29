@@ -104,7 +104,7 @@ def s_unregister():
     if hid:
         check(f"unregister gives the strip back ({header and header.height} px)",
               header is not None and header.height > 1)
-    else:   # 5.2.3 (checked, step 153): Blender keeps the collapsed shelf's header at 1 px itself, the kit hid nothing
+    else:   # 5.2.3 (step 153): Blender keeps the collapsed shelf's header at 1 px itself, the kit hid nothing
         check(f"the kit hid no strip, so unregister has nothing to give back ({header and header.height} px)",
               header is not None and header.height <= 1)
 

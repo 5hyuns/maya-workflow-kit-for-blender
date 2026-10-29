@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Rig FBX import the way Maya 2026 reads it (step 223, Issue #133; ATTACH_PLAN L12,  D).
+"""Rig FBX import the way Maya 2026 reads it (step 223, Issue #133).
 
-What Blender's FBX reader does with a Maya rig (checked, ):
+What Blender's FBX reader does with a Maya rig:
 
 - it samples every bone at the union of its channels' key times and keys ``rotation_quaternion`` / ``location`` there
   with **linear** interpolation between the keys ($S/addons_core/io_scene_fbx/import_fbx.py:710-735, 851-890): Maya's
-  cubic tangents are lost, so poses between keys are off (2.9 cm at a head joint of a 24-frame test rig; the 0.27 cm
-  of a step 222 round trip, DECISIONS7 , is the same thing);
+  cubic tangents are lost, so poses between keys are off (also after a step 222 round trip);
 - the armature object carries the axis / unit conversion (Rotate X 90, Scale 0.01) and the skinned mesh is its child
   (Rotate X -90, Scale 100);
 - the Time Slider keeps Blender's range (Maya sets it to the file's range).
@@ -14,23 +13,23 @@ What Blender's FBX reader does with a Maya rig (checked, ):
 ``fix_armature`` rebuilds that the Maya way from the file itself (Blender's bundled ``parse_fbx``, operators/fbx_rig):
 
 1. Each Maya channel curve becomes an F-curve with the same keys and tangents: Maya 2026's ``auto`` tangent (FBX flags
-   cubic + auto, no slopes stored) is Blender's Auto Clamped handle with the curve's Continuous Acceleration smoothing
-   (equal within 4e-5 deg on six Maya curves); user / break tangents (Maya linear, flat, spline,
+   cubic + auto, no slopes stored) is Blender's Auto Clamped handle with the curve's Continuous Acceleration smoothing;
+   user / break tangents (Maya linear, flat, spline,
    clamped, plateau, fixed are written that way) keep their slopes (value per second) as free handles at 1/3 of the
-   span; linear / constant keys keep their interpolation. Weighted tangents are read as non-weighted (delegated).
+   span; linear / constant keys keep their interpolation. Weighted tangents are read as non-weighted.
 2. The bone correction C (Blender bone axes in the FBX joint frame) is read at the earliest key frame, where Blender's
    linear sampling is still exact (every curve holds its first value before its first key). Then a bone's pose basis
    is B(t) = K . L(t) . C with L = T . Pre . R . S the FBX local matrix and K constant (rest and parent correction).
 3. Rotation: when K . Pre = C^-1 and C is a signed axis permutation (a Maya rig bound at rotate 0 — the common case),
    B's rotation is R(t) with permuted axes, so the Maya rotate curves are copied 1:1 (same keys and tangents) into
    ``rotation_euler`` with the matching Euler order (Maya xyz -> Blender YXZ for bone Y = joint X). Otherwise the
-   rotation is keyed every frame as continuous XYZ Euler (``rotation_display.euler_curve``) —  D: imported
+   rotation is keyed every frame as continuous XYZ Euler (``rotation_display.euler_curve``): imported
    rotations are Euler, like Maya's FBX import (Quaternion = resample).
 4. Translation: B's location is A . T(t) + b; copied 1:1 when A is a scaled signed permutation, else keyed every frame.
 5. The conversion goes into the bones (armature object = identity, like a Maya skeleton), the skinned meshes leave the
    armature keeping their place (kit Bind Skin rule, step 58), the Time Slider = the file's time span.
 
-A root joint under another node (a Maya group above the skeleton) is left to Blender's reader (delegated).
+A root joint under another node (a Maya group above the skeleton) is left to Blender's reader.
 """
 
 import math
@@ -399,7 +398,7 @@ def _rebuild(context, arm, joints, parents, scratch, f0, tree, fps):
         if fw is not None:
             # step 235: the mesh's place from the file (conversion @ its FBX world). Blender's reader parents a
             # skinned root mesh under the armature and, when the joints have no parent node (a file the kit wrote:
-            # Maya layout, step 222), keeps the conversion on both -> 1/100 size turned 90 deg (audit ③-17)
+            # Maya layout, step 222), keeps the conversion on both -> 1/100 size turned 90 deg (step 238)
             mw = g @ fw
         ob.parent = None
         ob.matrix_parent_inverse = Matrix.Identity(4)

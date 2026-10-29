@@ -1,7 +1,7 @@
 """Step 227 L15 (Issue #137): blendShape in-between and combination targets on shape keys
 (operators/blend_shapes_227.py, ui/shape_editor.py).
 
-Maya 2026:
+Expected:
 polyPlane w2 h2 sx2 sy2 ``face``; ``smile`` = vtx[0:2] + (0, 1, 0); ``smile_half`` = vtx[0:2] + (0, 0.2, 0.3);
 ``smile_more`` = vtx[0:2] + (0.5, 0.9, -0.2); in-betweens at 0.5 (``inbetween_one``) / 0.3 + 0.7 (``inbetween_two``),
 vertex 0's world position sampled at 37 weights -0.4 ... 1.4. Combinations: combinationShape output weight for
@@ -23,9 +23,6 @@ notices = import_module(kit.MODULE + ".ui.notices")
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.path.join(ROOT, "tmp", "test_step227")
 TOL = 1e-4
-MAYA_BASE0 = (-1.0, 0.0, 1.0)            # polyPlane vertex 0
-METHODS = ('MULTIPLY', 'LOWEST', 'SMOOTH')
-MAX = {}                                  # case -> max deviation (printed at the end of each test)
 
 
 def _b(v):
@@ -216,7 +213,7 @@ def _channels(path):
 
 def test_fbx_export_writes_maya_blend_shapes():
     """Kit File > Export All (FBX), step 235: Maya's blendShape layout — one channel per target, an in-between is a
-    second shape of its target's channel (FullWeights 50 / 100 like Maya's items 5500 / 6000), the helper keys are
+    second shape of its target's channel (FullWeights 50 / 100, items 5500 / 6000), the helper keys are
     not channels; a combination target is a plain target (Maya FBX writes the combo the same way)."""
     _fresh()
     face, key = _face(("smile", (0, 1, 0)), ("blink", (0, 1, 0)))

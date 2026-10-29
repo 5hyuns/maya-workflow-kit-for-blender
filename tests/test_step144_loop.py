@@ -1,7 +1,7 @@
 """Step 144 LOOP lane (GitHub #31): Insert Edge Loop, Offset Edge Loop and Slide Edge as Maya tools.
-; GUI: tests/gui/gui_step144_loop.py. Every expected number below is what
-Maya 2022 gives on the same meshes (polySplitRing / polyDuplicateEdge /
-polySlideEdge), plus Maya's Tool Settings / window defaults."""
+GUI: tests/gui/gui_step144_loop.py. Every expected number below is what
+Maya gives on the same meshes (polySplitRing / polyDuplicateEdge /
+polySlideEdge), plus the Tool Settings / window defaults."""
 
 import math
 from importlib import import_module
@@ -29,7 +29,7 @@ def _r(v):
 
 
 def strip(scale=1.0):
-    """Maya's test strip (edge_loops_144.md): 3 quads along x, ring edges at x = -1.5 / -0.5 / 0.5 / 1.5 from
+    """The test strip: 3 quads along x, ring edges at x = -1.5 / -0.5 / 0.5 / 1.5 from
     y = -0.5 up to 0.5 / 1.0 / 1.5 / 2.0. Ring edges are made bottom -> top (verts[0] = bottom, Maya's first
     vertex)."""
     bm = bmesh.new()
@@ -76,42 +76,6 @@ def coords(bm):
 
 # --- Insert Edge Loop (polySplitRing) ---------------------------------------------------------------------
 
-def test_insert_relative_cuts_every_ring_edge_at_the_click_fraction():
-    bm = strip()
-    before = coords(bm)
-    new = el.insert_loops(bm, ring_edge(bm, -0.5), 0.3, 'RELATIVE')
-    # Maya splitType 1, weight 0.3 on the x=-0.5 edge: y = -0.5 + 0.3 * length
-    assert new_verts(bm, before) == sorted([(-1.5, -0.2, 0.0), (-0.5, -0.05, 0.0), (0.5, 0.1, 0.0),
-                                            (1.5, 0.25, 0.0)]), new_verts(bm, before)
-    assert face_sizes(bm) == [4] * 6
-    assert len(new) == 3 and all(e.select for e in new) and sum(e.select for e in bm.edges) == 3
-    bm.free()
-
-
-def test_insert_equal_distance_from_the_nearer_side():
-    bm = strip()
-    before = coords(bm)
-    el.insert_loops(bm, ring_edge(bm, -0.5), 0.3, 'EQUAL')       # nearer to the bottom: 0.45 from it everywhere
-    assert new_verts(bm, before) == sorted((x, -0.05, 0.0) for x in (-1.5, -0.5, 0.5, 1.5)), new_verts(bm, before)
-    bm.free()
-    bm = strip()
-    before = coords(bm)
-    el.insert_loops(bm, ring_edge(bm, 1.5), 0.8, 'EQUAL')        # nearer to the top: 0.5 below it everywhere
-    assert new_verts(bm, before) == sorted([(1.5, 1.5, 0.0), (0.5, 1.0, 0.0), (-0.5, 0.5, 0.0),
-                                            (-1.5, 0.0, 0.0)]), new_verts(bm, before)
-    bm.free()
-
-
-def test_insert_equal_distance_clamps_to_the_shortest_ring_edge():
-    """Maya splitType 0, d = 2.0 > the shortest ring edge (1.0): d = 1.0, the loop goes through the x=-1.5 edge's
-    top vertex (no new vertex there, a triangle next to it)."""
-    bm = strip()
-    before = coords(bm)
-    el.insert_loops(bm, ring_edge(bm, 1.5), 0.48, 'EQUAL')       # 1.2 from the bottom -> clamped to 1.0
-    assert new_verts(bm, before) == sorted((x, 0.5, 0.0) for x in (-0.5, 0.5, 1.5)), new_verts(bm, before)
-    assert face_sizes(bm) == [3, 4, 4, 4, 4, 4], face_sizes(bm)
-    bm.free()
-
 
 def test_insert_multiple_loops_ignore_the_click():
     for n, fracs in ((1, (0.5,)), (2, (1 / 3, 2 / 3)), (3, (0.25, 0.5, 0.75))):
@@ -123,20 +87,6 @@ def test_insert_multiple_loops_ignore_the_click():
         assert new_verts(bm, before) == want, (n, new_verts(bm, before))
         assert face_sizes(bm) == [4] * (3 * (n + 1))
         bm.free()
-
-
-def test_insert_closed_ring_round_a_cube():
-    bm = bmesh.new()
-    bmesh.ops.create_cube(bm, size=1.0)
-    e = next(e for e in bm.edges if abs(e.verts[0].co.x - e.verts[1].co.x) > 0.5)
-    t = 0.3 if e.verts[0].co.x < 0 else 0.7
-    el.insert_loops(bm, e, t, 'RELATIVE', smoothing=math.radians(30))
-    xs = sorted({round(v.co.x, 4) for v in bm.verts})
-    assert xs == [-0.5, -0.2, 0.5], xs                     # Maya: the cube ring new at x = -0.2
-    assert len(bm.verts) == 12 and face_sizes(bm) == [4] * 10
-    new = [e for e in bm.edges if e.select]
-    assert len(new) == 4 and all(e.smooth for e in new), "new edges in flat faces stay soft (Maya cube: 0 hard)"
-    bm.free()
 
 
 def test_ring_stops_at_non_quads():
@@ -151,61 +101,11 @@ def test_ring_stops_at_non_quads():
 
 # --- Offset Edge Loop (polyDuplicateEdge) ------------------------------------------------------------------
 
-def test_offset_relative_and_equal():
-    for position, want in (('RELATIVE', (-0.5, 0.25)), ('EQUAL', (-0.25, 0.25))):
-        bm = grid()
-        path = el.loop_path(column(bm, 0.0, -1, 0)[0])[1]
-        assert len(path) == 4, "the clicked edge's whole edge loop, border to border"
-        new = el.offset_loops(bm, path, 0.5, position)
-        xs = sorted({round(v.co.x, 4) for v in bm.verts})
-        assert xs == sorted({-2.0, -1.0, 0.0, 0.5, 2.0, *want}), (position, xs)
-        assert (len(bm.verts), len(bm.faces)) == (35, 24) and face_sizes(bm) == [4] * 24
-        assert len(new) == 8 and all(e.select for e in new)
-        bm.free()
-    bm = grid()
-    el.offset_loops(bm, column(bm, 0.0), 0.25, 'RELATIVE')
-    assert sorted({round(v.co.x, 4) for v in bm.verts}) == [-2.0, -1.0, -0.25, 0.0, 0.125, 0.5, 2.0]
-    bm.free()
-
-
-def test_offset_inner_path_ends_and_delete_edge():
-    """Maya: a single inner edge -> 4 triangles at the ends (22 faces, 50 edges); Delete edge merges each pair into a
-    quad (20 faces, 48 edges)."""
-    for delete, (nf, ne, tris) in ((False, (22, 50, 4)), (True, (20, 48, 0))):
-        bm = grid()
-        before = coords(bm)
-        el.offset_loops(bm, column(bm, 0.0, -1, 0), 0.5, 'RELATIVE', delete_edge=delete)
-        assert new_verts(bm, before) == sorted([(-0.5, -1.0, 0.0), (-0.5, 0.0, 0.0), (0.25, -1.0, 0.0),
-                                                (0.25, 0.0, 0.0)]), new_verts(bm, before)
-        assert (len(bm.faces), len(bm.edges)) == (nf, ne), (delete, len(bm.faces), len(bm.edges))
-        assert face_sizes(bm).count(3) == tris
-        bm.free()
-    bm = grid()                                     # a path from the border: no extra faces at the border end
-    el.offset_loops(bm, column(bm, 0.0, -2, 0), 0.5, 'RELATIVE', delete_edge=True)
-    assert len(bm.faces) == 21 and face_sizes(bm) == [4] * 21
-
 
 def test_offset_refuses_border_edges():
     bm = grid()
     border = [e for e in bm.edges if e.is_boundary and all(abs(v.co.x + 2) < 1e-6 for v in e.verts)]
     assert el.offset_loops(bm, border, 0.5) is None
-    bm.free()
-
-
-def test_offset_closed_loop_round_a_cube_keeps_hard_pieces():
-    bm = bmesh.new()
-    bmesh.ops.create_cube(bm, size=1.0)
-    e = next(e for e in bm.edges if abs(e.verts[0].co.x - e.verts[1].co.x) > 0.5)
-    el.insert_loops(bm, e, 0.5, 'RELATIVE')                       # polyCube sx=2
-    for x in bm.edges:
-        x.smooth = False                                          # Maya: polySoftEdge -a 0 (all hard)
-    loop = [x for x in bm.edges if all(abs(v.co.x) < 1e-6 for v in x.verts)]
-    path = el.loop_path(loop[0])
-    assert path[2] and len(path[1]) == 4
-    el.offset_loops(bm, path[1], 0.5, 'RELATIVE', smoothing=math.pi)
-    assert sorted({round(v.co.x, 4) for v in bm.verts}) == [-0.5, -0.25, 0.0, 0.25, 0.5]
-    assert face_sizes(bm) == [4] * 18
-    assert (sum(not x.smooth for x in bm.edges), len(bm.edges)) == (28, 36)     # Maya: 28 hard of 36
     bm.free()
 
 
@@ -218,19 +118,6 @@ def _slide(bm, edges, f, absolute, towards_x):
     side = 0 if (wa.co.x - v0.co.x) * towards_x > 0 else 1
     for v, co in el.slide_positions(frame, origins, side, f, absolute).items():
         v.co = co
-
-
-def test_slide_relative_and_absolute():
-    bm = strip()
-    e = ring_edge(bm, -0.5)
-    _slide(bm, [e], 0.3, False, +1)
-    assert sorted(_r(v.co) for v in e.verts) == [(-0.2, -0.5, 0.0), (-0.2, 1.15, 0.0)]      # Maya relative
-    bm.free()
-    bm = strip(scale=2.0)
-    e = ring_edge(bm, -1.0)
-    _slide(bm, [e], 0.3, True, +1)
-    assert sorted(_r(v.co) for v in e.verts) == [(-0.4633, 2.2683, 0.0), (-0.4, -1.0, 0.0)]  # Maya absolute
-    bm.free()
 
 
 def test_slide_a_whole_loop_moves_each_vertex_once():

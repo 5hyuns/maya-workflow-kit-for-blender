@@ -2,12 +2,11 @@
 """Maya Duplicate (Ctrl+D), Duplicate Special (Ctrl+Shift+D) and Duplicate with
 Transform (Shift+D).
 
-Maya ``duplicateSpecial`` factory options (copy,
+Maya ``duplicateSpecial`` default options (copy,
 count 1, group under Parent, T/R = 0, S = 1) and ``shiftD``
 (``cmds.duplicate(smartTransform=True)``). Edit > Duplicate Special runs with
 the saved options (DuplicateSpecial), no dialog; Blender's Adjust Last Operation
 edits them afterwards. Maya duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
- 「계획」 5; Ctrl+D: 
 """
 
 import bpy

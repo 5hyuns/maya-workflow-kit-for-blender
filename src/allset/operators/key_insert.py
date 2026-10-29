@@ -5,11 +5,11 @@ Maya runtime commands:
 InsertKeyTranslate / Rotate / Scale = ``cmds.setKeyframe(insert=True, attribute="translate" / ...)``, InsertKey =
 Insert Key (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's),
 Nudge = ``cmds.keyframe(animation="keys", relative=True, option="over", timeChange=±1)``, SelectNext/PreviousKey
-(from the last selected key: find the next / previous key, select only it, go there). 
+(from the last selected key: find the next / previous key, select only it, go there) (step 83).
 
 An insert keeps the curve's shape. Blender 4.5's ``keyframe_points.insert`` already subdivides a segment between two
-auto-handle keys (checked: 1e-6) and keeps the handles auto (= Maya Auto tangents, which follow later edits); with
-free / aligned handles it misses (0.36 on an overshooting curve, ), so those segments are split
+auto-handle keys and keeps the handles auto (= Maya Auto tangents, which follow later edits); with
+free / aligned handles it misses, so those segments are split
 here (de Casteljau) with the touched handles pinned.
 """
 

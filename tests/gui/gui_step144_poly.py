@@ -2,8 +2,7 @@
 Enter -> polySurface1 (and Limit points completes by itself); Append to Polygon = click a border edge + 2 points,
 Enter -> a face added to that mesh; Quad Draw (Ctrl+Shift+Q, the Cube made live) = clicks drop dots on the cube's top,
 Shift hover previews and Shift+click fills a quad, Ctrl+click = edge loop, drag a vertex = it stays on the surface,
-Tab+drag a border edge = a new quad, Ctrl+Shift+click = delete a face, Esc = Select tool.
-"""
+Tab+drag a border edge = a new quad, Ctrl+Shift+click = delete a face, Esc = Select tool."""
 
 import os
 import sys

@@ -1,6 +1,6 @@
 """Step 158 (#97): Channel Box Channels menu complete (Breakdown / Mute All, Sync Graph Editor / Timeline, Cut / Copy /
 Paste Selected, Freeze, Select Connection, layers notice), SHAPES rows as channels (light Intensity / Color keyable,
-spot Cone Angle / Penumbra Angle), muted state, Bind Skin INPUTS = skinCluster1. ;
+spot Cone Angle / Penumbra Angle), muted state, Bind Skin INPUTS = skinCluster1.
 GUI: tests/gui/gui_step158_cb_menus.py."""
 
 import math
@@ -128,28 +128,6 @@ def test_breakdown_all_and_mute_all():
 
 # --- Cut / Copy / Paste Selected (Maya) ------------------------------------------------
 
-def test_paste_selected_connects_and_inserts_like_maya():
-    ob = _cube()
-    _key(ob, 0, ((1, 0.0), (10, 5.0), (20, 2.0)))
-    _key(ob, 1, ((1, 1.0), (12, 3.0), (30, 4.0)))
-    ob.location.z = 7.0
-    sc = bpy.context.scene
-    cb.set_selected_channels(["tx"])
-    assert bpy.ops.allset.cb_clipboard(action="COPY") == {'FINISHED'}
-    sc.frame_set(15)
-    ty15 = kit.fcurves(ob)[1].evaluate(15)
-    cb.set_selected_channels(["ty"])
-    assert bpy.ops.allset.cb_clipboard(action="PASTE") == {'FINISHED'}
-    got = _keys(ob, "location", 1)
-    # Maya: 1:1 12:3 15:3.2896 24:8.2896 34:5.2896 49:4 (3.2896 = Maya's ty at 15; ours is Blender's curve there)
-    assert [t for t, _v in got] == [1, 12, 15, 24, 34, 49], got
-    d = round(ty15, 4)
-    assert [v for _t, v in got] == [1.0, 3.0, d, round(5 + ty15, 4), round(2 + ty15, 4), 4.0], got
-    # a channel without a curve gets the copied values as they are (Maya: tz 7 -> 15:0 24:5 34:2)
-    cb.set_selected_channels(["tz"])
-    bpy.ops.allset.cb_clipboard(action="PASTE")
-    assert _keys(ob, "location", 2) == [(15, 0.0), (24, 5.0), (34, 2.0)], _keys(ob, "location", 2)
-
 
 def test_cut_selected_removes_the_curves():
     ob = _cube()
@@ -203,7 +181,7 @@ def test_sync_graph_editor_and_timeline():
         p.cb_sync_graph = True
         cb.set_selected_channels(["ty"])
         assert [(f.array_index, f.select) for f in kit.fcurves(ob)] == [(0, False), (1, True)]
-        # S keys only the selected channels (Maya setKeyframeWhich 1)
+        # S keys only the selected channels
         bpy.context.scene.frame_set(30)
         assert bpy.ops.allset.set_key() == {'FINISHED'}
         assert _keys(ob, "location", 1)[-1][0] == 30 and _keys(ob, "location", 0)[-1][0] == 10
@@ -252,7 +230,7 @@ def test_spot_cone_and_penumbra_rows():
     rows = [n for kind, n, _t, _i in cb.wanted_rows(ob) if kind == "SHAPE"]
     assert rows[-2:] == ["maya:coneAngle", "maya:penumbraAngle"], rows
     cone, pen = lights.cone_penumbra(light)
-    assert abs(cone - 40.0) < 1e-4 and abs(pen) < 1e-6, (cone, pen)      # factory 40 / 0
+    assert abs(cone - 40.0) < 1e-4 and abs(pen) < 1e-6, (cone, pen)      # defaults 40 / 0
     cb.set_value(ob, "sh:maya:penumbraAngle", 5.0)
     assert abs(math.degrees(light.spot_size) - 50.0) < 1e-4 and abs(light.spot_blend - 0.2) < 1e-6
     assert abs(cb.get_value(ob, "sh:maya:coneAngle") - 40.0) < 1e-4

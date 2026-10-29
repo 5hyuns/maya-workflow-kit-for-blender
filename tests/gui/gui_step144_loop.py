@@ -1,8 +1,7 @@
 """Step 144 LOOP lane in a real UI (GitHub #31): Mesh Tools > Insert Edge Loop = edit mode + the kit tool, one
 click on a cube edge = a loop right at that height (no second click), Ctrl+Z takes it back, press-drag = the loop
-follows the mouse; Offset Edge Loop = a click on that loop = two loops (Maya offset 0.5, relative to each side
-edge), a drag sets the offset; Slide Edge = middle-drag slides the selected loop along the cube's sides.
-"""
+follows the mouse; Offset Edge Loop = a click on that loop = two loops (offset 0.5, relative to each side
+edge), a drag sets the offset; Slide Edge = middle-drag slides the selected loop along the cube's sides."""
 
 import os
 import sys
@@ -181,7 +180,7 @@ def s_offset_clicked():
     z = C["z"]
     got = loop_zs()
     above, below = z + 0.5 * (1.0 - z), z - 0.5 * (z + 1.0)        # Maya relative: half of each side edge
-    check(f"a click = loops on both sides at Maya's offset 0.5 ({got}, want {round(below, 3)} / {round(z, 3)} / "
+    check(f"a click = loops on both sides at offset 0.5 ({got}, want {round(below, 3)} / {round(z, 3)} / "
           f"{round(above, 3)})", len(got) == 3 and abs(got[0] - below) < 2e-3 and abs(got[2] - above) < 2e-3
           and len(verts()) == 20)
     shot("gui_step144_loop_offset_click.png")

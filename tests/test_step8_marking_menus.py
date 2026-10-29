@@ -15,7 +15,7 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 taphold = import_module(kit.MODULE + ".operators.taphold")
 maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
-# Menus resolved by hand (radials set from variables in Maya, hotkeys_and_menus.md:248-252).
+# Menus resolved by hand (Maya builds their radials at run time).
 HAND_RESOLVED = {"RMB_MESH", "RMB_CURVE", "RMB_EMPTY"}
 LABEL_ALIASES = {"To Edges": "<$toEdges>", "To Faces": "<$toFaces>"}
 

@@ -1,6 +1,6 @@
 """Step 254 (#170): the welcome dialog opened at the main window's last pointer position. After installing from
 Edit > Preferences that was the menu bar, so the dialog sat over File / Edit / ... and swallowed every click there
-("top menus not responding" on 5.2.2; same in 4.5, GUI tmp/p254/lane170). Now it waits (allset.welcome_wait) until the
+("top menus not responding" on 5.2.2; same in 4.5). Now it waits (allset.welcome_wait) until the
 pointer moves inside the main window clear of the menu bar, and opens there. Look at the shots: ALLSET_GUI_SHOTS."""
 
 import os

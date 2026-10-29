@@ -187,7 +187,7 @@ def test_tap_timing():
 
 def test_hotbox_rows_follow_menu_set():
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences
-    assert prefs.hotbox_all_sets, "Maya default: Show All Menu Sets (step 52)"
+    assert prefs.hotbox_all_sets, "default: Show All Menu Sets (step 52)"
     above, sides, below = modal.hotbox_rows(bpy.context)
     assert sides[0][0] == "RECENT" and [l for _k, l in above[0]][:3] == ["File", "Edit", "Create"]
     assert "Mesh" in [l for _k, l in below[0]] and len(below) == 5

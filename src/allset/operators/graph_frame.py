@@ -21,7 +21,7 @@ fraction of a pixel (its corners are whole pixels of the tiny view).
 
 The editor's value axis shows rotation curves in degrees (scene rotation unit), so their values are converted the same
 way. A normalised view (Blender's Normalize) and the Drivers editor keep Blender's own frame operators.
-(delegated: the bottom pad = Blender's scroll bar / marker row height, margins applied after the zero-span rule)
+The bottom pad = Blender's scroll bar / marker row height, margins applied after the zero-span rule.
 """
 
 import math

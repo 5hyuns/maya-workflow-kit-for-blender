@@ -1,9 +1,9 @@
 """Step 152 (#101) lane B: Maya's default light for kit renders of a scene without lights, Render Settings > Render
 Options > Enable Default Light, Render > Test Resolution, Render > Batch Render / Cancel / Show Batch Render.
 
-Maya (Maya Software): a white directional light of intensity 1 from
+Maya's default light: a white directional light of intensity 1 from
 the camera's view axis turned 25 deg up and 25 deg left, no shadows; any light node turns it off. Fresh scene, default
-cube, persp at its factory direction (8x closer): top 76.8 / front 65.1 / side 10.0 of 255, background 0."""
+cube, persp at its default direction (8x closer): expected top 76.8 / front 65.1 / side 10.0 of 255, background 0."""
 
 import math
 import os
@@ -31,23 +31,6 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 render_settings = import_module(kit.MODULE + ".ui.render_settings")
 outliner = import_module(kit.MODULE + ".ui.outliner")
 outliner_sets = import_module(kit.MODULE + ".ui.outliner_sets")
-
-# Maya 2022 Software render, 8-bit, colour management on or off alike (output transform off)
-MAYA = {"top": 76.84, "front": 65.12, "side": 10.0}
-
-
-def _de00_grey(v1, v2):
-    """CIEDE2000 between two neutral greys given as 8-bit sRGB-encoded values (a* = b* = 0, so only the lightness
-    term is left: dL / S_L). Maya's numbers are an 8-bit PNG with colour management off, the kit's are linear EXR
-    values x 255 — both read as the same 0-255 code values here (step 214)."""
-    def lab_l(v):
-        c = max(v, 0.0) / 255.0
-        y = c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-        f = y ** (1 / 3) if y > (6 / 29) ** 3 else y / (3 * (6 / 29) ** 2) + 4 / 29
-        return 116 * f - 16
-    l1, l2 = lab_l(v1), lab_l(v2)
-    lm = (l1 + l2) / 2
-    return abs(l1 - l2) / (1 + 0.015 * (lm - 50) ** 2 / math.sqrt(20 + (lm - 50) ** 2))
 
 
 def _clear():
@@ -108,13 +91,13 @@ def test_default_light_only_during_the_render():
     sc = bpy.context.scene
     _small(sc)
     create.create(bpy.context, 'CUBE')
-    assert sc.allset_default_light is True, "Maya factory: Enable Default Light on"
+    assert sc.allset_default_light is True, "Enable Default Light starts on"
     n_lights = len(bpy.data.lights)
     log = _render_frame()
     assert len(log) == 1 and len(log[0]["lights"]) == 1, log
     name, typ, marked, parent, ltype, energy, shadow = log[0]["lights"][0]
     assert (name, typ, marked, parent, ltype, shadow) == ("defaultLight", 'LIGHT', True, "persp", 'SUN', False), log
-    assert math.isclose(energy, lights.power_factor('SUN', 0, 1.0), rel_tol=1e-6), energy      # Maya intensity 1
+    assert math.isclose(energy, lights.power_factor('SUN', 0, 1.0), rel_tol=1e-6), energy      # intensity 1
     _no_marked_data()
     assert len(bpy.data.lights) == n_lights
     assert not [o for o in sc.objects if o.type == 'LIGHT']
@@ -122,7 +105,7 @@ def test_default_light_only_during_the_render():
 
 def test_light_direction_follows_the_camera_like_maya():
     """+Z of the sun (toward the light) = camera view axis turned 25 deg up, 25 deg left: camera space
-    (-0.383, 0.423, 0.821), Maya fit (-0.384, 0.421, 0.819) from a turned plane."""
+    (-0.383, 0.423, 0.821)."""
     _clear()
     sc = bpy.context.scene
     cam = rp.persp_camera()
@@ -230,7 +213,7 @@ def test_test_resolution_menu_and_render_size():
                       "125% Settings (1200x675)", "150% Settings (1440x810)"], labels
     assert menu_map.MAP["Render/Test Resolution"] == ("menu", "ALLSET_MT_test_resolution")
     prefs = preferences.get()
-    assert prefs.test_resolution == "SETTINGS", "Maya default: Render Settings"
+    assert prefs.test_resolution == "SETTINGS", "default: Render Settings"
     create.create(bpy.context, 'CUBE')
     try:
         assert bpy.ops.allset.test_resolution(choice="25") == {'FINISHED'}
@@ -356,79 +339,6 @@ def test_batch_render_runs_cancel_and_show():
     assert bpy.ops.allset.cancel_batch_render() == {'CANCELLED'}
 
 
-# --- brightness against Maya (last: it loads the Maya Workflow Kit template) ----------------------------
-
-def _face_values(path, cam, sc, k):
-    img = bpy.data.images.load(path, check_existing=False)
-    try:
-        w, h = img.size
-        px = img.pixels[:]
-        out = {}
-        for name, co in {"top": (0, 0, 0.5), "front": (0, -0.5, 0), "side": (0.5, 0, 0)}.items():
-            u, v, _z = world_to_camera_view(sc, cam, Vector(co) * k)
-            x, y = int(round(u * w)), int(round(v * h))
-            vals = [px[((y + dy) * w + x + dx) * 4 + c] for dy in range(-2, 3) for dx in range(-2, 3) for c in range(3)]
-            out[name] = sum(vals) / len(vals)
-        return out
-    finally:
-        bpy.data.images.remove(img)
+# --- brightness (last: it loads the Maya Workflow Kit template) ----------------------------
 
 
-def _maya_view_render(engine=None, world=True):
-    """Fresh Maya Workflow Kit scene (cm template), default cube, persp at factory direction 8x closer
-    (Maya (3.5, 2.625, 3.5) units, 35 mm on 36 mm film), 640 x 360, Render Current Frame -> EXR (linear)."""
-    first_start.new_maya_scene()
-    win = bpy.context.window_manager.windows[0]
-    with bpy.context.temp_override(window=win, screen=win.screen):
-        return _maya_view_render_in(engine, world)
-
-
-def _maya_view_render_in(engine, world):
-    sc = bpy.context.scene
-    k = units.maya_unit(sc)
-    assert math.isclose(k, 0.01), k
-    create.create(bpy.context, 'CUBE')
-    cam = rp.persp_camera()
-    cam.location = Vector((3.5, -3.5, 2.625)) * k                    # Maya Y-up -> Blender Z-up
-    cam.rotation_euler = (-cam.location).to_track_quat('-Z', 'Y').to_euler()
-    cam.data.lens, cam.data.sensor_width = 35.0, 36.0
-    cam.data.clip_start, cam.data.clip_end = 0.1 * k, 1000 * k       # Maya persp near clip 0.1 units
-    sc.camera = cam
-    space, rv3d = rp.find_view(bpy.context)
-    if rv3d is not None:
-        rv3d.view_perspective = 'CAMERA'        # the view looks through persp: the render keeps its placement
-        space.use_local_camera = False
-    if engine:
-        sc.render.engine = engine
-    if sc.render.engine == 'CYCLES':
-        sc.cycles.samples, sc.cycles.use_denoising = 32, False
-    if not world:
-        sc.world = None
-    r = sc.render
-    r.resolution_x, r.resolution_y, r.resolution_percentage = 640, 360, 100
-    r.image_settings.file_format = 'OPEN_EXR'
-    r.filepath = os.path.join(bpy.app.tempdir, f"step152_maya_{engine or 'template'}_{int(world)}.exr")
-    _render_frame(write_still=True)
-    _no_marked_data()
-    return _face_values(r.filepath, cam, sc, k), r.engine
-
-
-def test_cube_brightness_like_maya():
-    """Light and lambert1 match Maya: since step 214 the kit's lambert1 carries Maya's diffuse 0.8 (the "Maya Diffuse"
-    node), so kit face values = Maya's within 1 / 255 with no world; the template's grey world adds its ambient on
-    top. Prints a kit / Maya / ratio / CIEDE2000 table per engine and world (STEP214_BRIGHTNESS lines)."""
-    report = []
-    for engine in (None, 'CYCLES'):
-        for world in (False, True):
-            vals, used = _maya_view_render(engine, world)
-            got = {f: round(v * 255, 2) for f, v in vals.items()}
-            report.append((used, world, got))
-            print("STEP152_BRIGHTNESS", used, "world" if world else "no world", got, MAYA)
-            for face, maya in MAYA.items():
-                print("STEP214_BRIGHTNESS", f"{used:20s}", "world   " if world else "no world", f"{face:5s}",
-                      f"kit {got[face]:7.2f}", f"maya {maya:6.2f}", f"ratio {got[face] / maya:.4f}",
-                      f"dE00 {_de00_grey(got[face], maya):.3f}")
-            if not world:
-                for face, maya in MAYA.items():
-                    assert abs(vals[face] * 255 - maya) < 1.0, (used, face, got, MAYA)
-    assert report

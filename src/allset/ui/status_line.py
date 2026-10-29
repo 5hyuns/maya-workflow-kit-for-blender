@@ -3,13 +3,12 @@
 
 Maya's menu bar and Status Line groups;
 $S\\startup\\bl_ui\\space_topbar.py:14-62.
-Design:  「계획」 1 and 3.
 
 ``TOPBAR_HT_upper_bar.draw_left`` / ``draw_right`` are swapped for Maya
 versions while the add-on is enabled and put back on unregister; the
 originals still run when the "Maya Menu Bar" preference is off. Maya has the
 Status Line on its own row under the menus; one TOPBAR row can't hold both
-(checked at 1600 px, ), so the Status Line is
+(at 1600 px), so the Status Line is
 drawn first in the tool header of the largest 3D View.
 """
 
@@ -256,7 +255,7 @@ _SNAP_UNDO_HANDLERS = (("undo_pre", _keep_snap_pre), ("redo_pre", _keep_snap_pre
                        ("undo_post", _keep_snap_post), ("redo_post", _keep_snap_post))
 
 
-# --- symmetry (207 group 8; operators/symmetry.py, ) ------
+# --- symmetry (operators/symmetry.py) ------
 
 class ALLSET_MT_symmetry(bpy.types.Menu):
     """Maya symmetry modes (Status Line ▾ list)"""
@@ -292,7 +291,7 @@ TRANSFORM_TOOLS = ("builtin.move", "builtin.rotate", "builtin.scale", "builtin.t
 
 
 def draw_tool_symmetry(self, context):
-    """Maya Move/Rotate/Scale Tool Settings (edit mesh only)."""
+    """Maya Move/Rotate/Scale Tool Settings "Symmetry Settings" (edit mesh only)."""
     if context.mode != 'EDIT_MESH':
         return
     tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
@@ -418,7 +417,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
 
 # Maya Status Line groups each start with a collapse handle that hides the group.
 # Kept for the
-# session only (Maya keeps them in setting; delegated).
+# session only (Maya keeps them in its preferences).
 GROUPS = (
     ("FILE", "File: New, Open, Save, Undo, Redo"),
     ("SELECT_MODE", "Selection mode: hierarchy, object, component"),
@@ -508,7 +507,7 @@ def draw_status_line(layout, context, compact=False):
     """The Maya Status Line, left to right (Maya 2022:
     menu set combo, then groups of bar + buttons + collapse arrow, sidebar toggles at the right end). ``compact``
     (the 3D View tool header of other layouts, which overflows): the input line goes after the editor toggles
-    (step 75, delegated)."""
+    (step 75)."""
     from .. import preferences
     screen = context.screen
     ts = context.scene.tool_settings
@@ -516,7 +515,7 @@ def draw_status_line(layout, context, compact=False):
     space = area.spaces.active if area else None
 
     sub = layout.row(align=True)
-    sub.ui_units_x = 5                       # Maya: 100 px combo
+    sub.ui_units_x = 5                       # 100 px combo
     sub.prop(preferences.get(context), "menu_set", text="")
 
     if _group(layout, "FILE"):
@@ -664,10 +663,10 @@ def redraw_top_bars():
 
 
 # --- menu bar overflow (step 142, #77) -------------------------------------------------------------------------
-# Maya at 150 % in a 1600 px window hides the menus that don't fit behind a » button at the menu bar's right end; the
+# Maya hides the menus that don't fit behind a » button at the menu bar's right end; the
 # kit's bar ran under the Workspace field instead ("Deform U", GUI shot at UI scale 1.5). Same pattern as the panel
 # toolbar's » (step 132 #52, ui/panel_toolbar.py): Blender's header layout can't report where it put an item, so the
-# widths follow its layout rules (toolbar_fit.unit; a ``ui_units_x = k`` sub-row is floor(k U) wide, checked step 132).
+# widths follow its layout rules (toolbar_fit.unit; a ``ui_units_x = k`` sub-row is floor(k U) wide, step 132).
 MENU_LEAD_UNITS = 0.4    # the header region's left padding
 LOGO_UNITS = 1.6         # the Blender logo pulldown (icon only)
 MENU_SET_UNITS = 5.5     # the menu set dropdown (= menu_sets.draw_menu_bar)

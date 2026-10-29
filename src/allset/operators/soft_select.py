@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya soft selection as ONE global state (issues #1, #15) and the falloff maths of the colour overlay (#2).
 
-Maya's soft select is one global option (``cmds.softSelect(softSelectEnabled=...)``, factory 0 = off,
- 「계획」 0). Blender has two per-scene flags, ``use_proportional_edit_objects`` (object mode)
+Maya's soft select is one global option (``cmds.softSelect(softSelectEnabled=...)``, off by default,
+step 129). Blender has two per-scene flags, ``use_proportional_edit_objects`` (object mode)
 and ``use_proportional_edit`` (edit modes, UV), so the kit keeps both flags of every scene equal to ``STATE``:
 kit toggles call ``set_on``; a flag changed by Blender's own UI is pulled in (``pull``: depsgraph handler +
 msgbus); loads / undo / redo push the state back (a file saved with soft select on follows the global state).
@@ -17,7 +17,7 @@ import bpy
 import numpy as np
 from bpy.app.handlers import persistent
 
-STATE = {"on": False}          # Maya factory: softSelect -q -sse = 0
+STATE = {"on": False}          # off by default
 
 FLAGS = ("use_proportional_edit_objects", "use_proportional_edit")
 
@@ -156,7 +156,7 @@ def unregister_handlers():
 
 # --- falloff maths (numpy, no bpy) ---------------------------------------------------------------
 
-# Maya softSelect -q -softSelectColorCurve "1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1": (r, g, b, position, linear).
+# Colour ramp "1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1": (r, g, b, position, linear).
 RAMP_POS = (0.0, 0.5, 1.0)
 RAMP_RGB = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0))
 

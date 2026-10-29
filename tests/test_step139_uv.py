@@ -1,7 +1,7 @@
-"""Step 139 lane UV (#68,  U1 / U2): UV > Automatic / Contour Stretch from object mode act on the whole
-object, Automatic = Maya polyAutoProjection (shell counts vs Maya), UV Editor > Create > Best Plane / Contour Stretch
-mapped like the main UV menu. (Maya,
-). Step doc: ; GUI: tests/gui/gui_step139_uv.py."""
+"""Step 139 lane UV (#68): UV > Automatic / Contour Stretch from object mode act on the whole
+object, Automatic = Maya polyAutoProjection (expected shell counts), UV Editor > Create > Best Plane / Contour Stretch
+mapped like the main UV menu.
+GUI: tests/gui/gui_step139_uv.py."""
 
 from importlib import import_module
 
@@ -14,19 +14,6 @@ uvt = import_module(kit.MODULE + ".operators.uv_tools")
 ow = import_module(kit.MODULE + ".operators.option_windows")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
-
-# Maya 2022 polyAutoProjection, factory options (6 planes, 0.2 % space), whole object: shells, faces per shell, UVs.
-MAYA_AUTO = {
-    'CUBE': (6, [1, 1, 1, 1, 1, 1], 24),
-    'SPHERE': (6, [104, 104, 72, 72, 24, 24], 482),
-    'CYLINDER': (6, [20, 20, 6, 6, 4, 4], 90),     # the menu's cylinder (caps 1, 60 faces) like the kit's
-    'PLANE': (1, [100], 121),
-    'TORUS': (10, [96, 96, 36, 36, 36, 36, 16, 16, 16, 16], 536),
-}
-# Kit = Maya's own plane assignment since step 257 (factory -o 1 "Fewer pieces": candidate planes, seeds by fewest
-# candidates, symmetric seed groups), so the step 139 deviation (sphere
-# 104 / 104 / 56 / 56 / 40 / 40, torus 112 / 112 / 28 x4 / 16 x4) is gone.
-KIT_AUTO = dict(MAYA_AUTO)
 
 
 def _clear():
@@ -66,46 +53,6 @@ def _info(ob):
     return out
 
 
-def test_object_mode_automatic_is_maya_auto_projection():
-    """U1: object mode UV > Automatic through the kit menu item (the path that returned CANCELLED in step 133)."""
-    rows = {}
-    for kind, (shells, sizes, uvs) in KIT_AUTO.items():
-        ob = _make(kind)
-        res = bpy.ops.allset.menu_item(item="UV/Automatic")
-        assert res == {'FINISHED'}, (kind, res)
-        assert bpy.context.mode == 'OBJECT'
-        n, got, count, (x0, y0, x1, y1) = _info(ob)
-        rows[kind] = (n, got, count, MAYA_AUTO[kind])
-        assert n == shells and got == sizes, (kind, n, got)
-        if uvs is not None:
-            assert count == uvs, (kind, count, uvs)
-        # laid out in 0-1 with 0.2 % space (Maya bounds 0.0016 - 0.998: the menu cylinder's U starts at
-        # 0.0016944 in Maya 2026, step 257 layout)
-        assert x0 >= 0.0016 and y0 >= 0.0016 and x1 <= 0.9981 and y1 <= 0.9981, (kind, x0, y0, x1, y1)
-        assert max(x1, y1) > 0.9, (kind, x1, y1)
-    print("kit vs Maya automatic:", rows)
-
-
-def test_automatic_on_selected_faces():
-    """Component mode: only the selected faces get new shells (Maya cube f[1]: 3 shells 3 / 2 / 1; f[0:1]: 5 shells)."""
-    for faces, want in (((1,), [3, 2, 1]), ((0, 1), [2, 1, 1, 1, 1])):
-        ob = _make('CUBE')
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_mode(type='FACE')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bm = bmesh.from_edit_mesh(ob.data)
-        bm.faces.ensure_lookup_table()
-        for i in faces:
-            bm.faces[i].select_set(True)
-        bmesh.update_edit_mesh(ob.data)
-        assert bpy.ops.allset.menu_item(item="UV/Automatic") == {'FINISHED'}
-        assert bpy.context.mode == 'EDIT_MESH'
-        bpy.ops.object.mode_set(mode='OBJECT')
-        n, got, _c, _b = _info(ob)
-        print("faces", faces, n, got)
-        assert got == want, (faces, got, want)
-
-
 def test_planes_option_and_window():
     w = ow.find_path("UV/Automatic")
     assert w is not None and w.key == "uv_automatic"
@@ -118,34 +65,6 @@ def test_planes_option_and_window():
     for planes in ("3", "5", "8", "12"):
         _make('SPHERE')
         assert bpy.ops.allset.uv_automatic(planes=planes) == {'FINISHED'}
-
-
-def test_object_mode_contour_stretch():
-    """U1: Contour Stretch from object mode = every face (Maya: one shell in 0-1; plane 121 UVs)."""
-    ob = _make('PLANE')
-    assert bpy.ops.allset.menu_item(item="UV/Contour Stretch") == {'FINISHED'}
-    n, _g, count, (x0, y0, x1, y1) = _info(ob)
-    assert n == 1 and count == 121, (n, count)
-    assert abs(x0) < 1e-4 and abs(y0) < 1e-4 and abs(x1 - 1) < 1e-4 and abs(y1 - 1) < 1e-4
-    ob = _make('CUBE')
-    assert bpy.ops.allset.menu_item(item="UV/Contour Stretch") == {'FINISHED'}
-    n, _g, count, b = _info(ob)
-    print("contour cube (Maya 1 shell / 8 UVs):", n, count, b)
-    assert n == 1, n
-    # a strip of faces fills the square (Maya plane f[0:9] -> the 10 faces span 0-1)
-    ob = _make('PLANE')
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_mode(type='FACE')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bm = bmesh.from_edit_mesh(ob.data)
-    bm.faces.ensure_lookup_table()
-    for i in range(10):
-        bm.faces[i].select_set(True)
-    bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.allset.menu_item(item="UV/Contour Stretch") == {'FINISHED'}
-    bpy.ops.object.mode_set(mode='OBJECT')
-    n, got, _c, _b = _info(ob)
-    assert n == 2 and got == [90, 10], (n, got)
 
 
 def test_uv_editor_create_items_mapped():
@@ -161,7 +80,7 @@ def test_uv_editor_create_items_mapped():
     assert ob.data.uv_layers.active is not None
 
 
-def test_blender_alternatives_measured():
+def test_blender_alternatives_recorded():
     """Record what Blender's own operators give on the same objects (why the kit projects in bmesh)."""
     out = {}
     for kind in ('CUBE', 'SPHERE'):

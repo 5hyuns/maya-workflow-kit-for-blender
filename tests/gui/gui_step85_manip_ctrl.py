@@ -1,6 +1,6 @@
 """Step 85 in a real UI: Move tool, Ctrl+LMB drag on the X arrow moves in the YZ plane and makes YZ the active handle,
 Ctrl+click on the centre frees it, Shift+MMB drag in the front view picks X (sideways) / Z (up), Scale tool Ctrl+X
-arrow scales Y and Z. """
+arrow scales Y and Z."""
 
 import os
 import sys

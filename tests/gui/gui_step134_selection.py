@@ -1,6 +1,6 @@
 """Step 134 lane SEL in a real UI: Maya selection colours without a theme.
 
-Object mode: the lead's wire is Maya green #43ffa3, another selected object's white, an unselected object has none.
+Object mode: the lead's wire is green #43ffa3, another selected object's white, an unselected object has none.
 Edit mode (ui/component_colors.py): vertex mode = selected vertex #fdff88, unselected #c800c8, edges #64dcff;
 edge mode = selected edge #e3ac79; face mode = a 1-in-4 stipple #e3ac79 on the selected face. Then the frame time
 of a 100k-vertex edit mesh with and without the kit colours."""
@@ -203,9 +203,9 @@ def s_vertex_mode():
     order = C["order"]
     sel = to_window(mw @ bm.verts[order[0]].co)
     uns = [to_window(mw @ bm.verts[i].co) for i in order[1:4]]
-    check("vertex mode: the selected vertex is Maya yellow #fdff88", hits(px, sel, VERT_SEL))
+    check("vertex mode: the selected vertex is yellow #fdff88", hits(px, sel, VERT_SEL))
     n = sum(hits(px, p, VERT) for p in uns)
-    check(f"vertex mode: unselected visible vertices are Maya purple #c800c8 ({n}/3)", n >= 2)
+    check(f"vertex mode: unselected visible vertices are purple #c800c8 ({n}/3)", n >= 2)
     near_edges = [e for e in bm.edges if bm.verts[order[0]] not in e.verts and
                   any(v.index in order[1:4] for v in e.verts)]
     n = sum(hits(px, to_window(mw @ ((e.verts[0].co + e.verts[1].co) / 2)), HILITE) for e in near_edges)
@@ -261,7 +261,7 @@ def s_face_mode():
     x, y = int(c[0]), int(c[1])
     win_px = px[y - r:y + r, x - r:x + r]
     frac = float(near(win_px, EDGE_SEL, 0.09).mean())
-    check(f"face mode: selected face is Maya's stipple #e3ac79 ({frac * 100:.0f} % of pixels, ~25 %)",
+    check(f"face mode: selected face is the stipple #e3ac79 ({frac * 100:.0f} % of pixels, ~25 %)",
           0.15 < frac < 0.4)
     # step 176: the pixels between the stipple dots keep the face's own grey (Blender's face tint is off)
     rest = win_px[~near(win_px, EDGE_SEL, 0.09)]

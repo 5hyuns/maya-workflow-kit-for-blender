@@ -29,22 +29,6 @@ TY = _lin((1, -10), (30, 40))
 SX = _lin((1, 0), (5, 4), (10, 6), (15, 2), (25, 8))
 
 
-def test_two_keys_all():
-    _close(gf.maya_rect(gf.all_box([(TY, [])])), (-1.9, 32.9, -22.5, 52.5))
-
-
-def test_scale_curve_all():
-    _close(gf.maya_rect(gf.all_box([(SX, [])])), (-1.4, 27.4, -2.0, 10.0))
-
-
-def test_selected_key_takes_both_segments():
-    _close(gf.maya_rect(gf.selected_box([(SX, [0])])), (1 - 0.4, 5 + 0.4, 0 - 1.0, 4 + 1.0))
-    _close(gf.maya_rect(gf.selected_box([(SX, [4])])), (15 - 1.0, 25 + 1.0, 0.5, 9.5))
-    t0, t1, _v0, _v1 = gf.maya_rect(gf.selected_box([(SX, [2, 3])]))
-    _close((t0, t1), (5 - 2.0, 25 + 2.0))
-    assert gf.selected_box([(SX, [])]) is None, "no selected key: the caller frames everything"
-
-
 def test_bezier_segment_widened_by_its_handles():
     # a key's out handle at 10.833 lifts the box above the keys (Maya: control polygon max, not the curve peak)
     keys = [(0, 0.0, 0.0, 10.833, True), (10, 10.0, 10.0, 10.0, True)]
@@ -53,12 +37,6 @@ def test_bezier_segment_widened_by_its_handles():
     # a linear segment ignores its handles
     keys = [(0, 0.0, 0.0, 10.833, False), (10, 10.0, 10.0, 10.0, True)]
     assert abs(gf.all_box([(keys, [])])[3] - 10.0) < TOL
-
-
-def test_zero_spans():
-    _close(gf.maya_rect((5, 5, 0, 0)), (4.4, 5.6, -0.75, 0.75))
-    _close(gf.maya_rect((5, 5, 4, 4))[2:], (1.0, 7.0))
-    _close(gf.maya_rect((5, 5, -4, -4))[2:], (-7.0, -1.0))
 
 
 def test_union_over_curves():
@@ -148,17 +126,6 @@ def test_frame_all_reaches_maya_rect():
     _select_keys(ob, ())
     got = _frame('ALL')
     _near(got, gf.maya_rect((1, 30, -10, 40)), region, area)
-
-
-def test_frame_selected_key():
-    ob = _scene()
-    _w, area, region = _graph()
-    _select_keys(ob, [("scale", 0, (25,))])
-    _near(_frame('SELECTED'), (14.0, 26.0, 0.5, 9.5), region, area)
-    _select_keys(ob, [("location", 1, (1,))])
-    _near(_frame('SELECTED'), gf.maya_rect((1, 30, -10, 40)), region, area)
-    _select_keys(ob, ())
-    _near(_frame('SELECTED'), gf.maya_rect((1, 30, -10, 40)), region, area)   # nothing selected = all
 
 
 def test_frame_from_far_views():

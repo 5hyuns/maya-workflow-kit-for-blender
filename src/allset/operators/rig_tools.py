@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Rigging menu items with Maya meaning.
+"""Rigging menu items with Maya meaning (step 62).
 
 - Constrain > Parent / Point / Orient / Scale / Aim ...: Maya order (targets, then the constrained node
   last). In pose mode the constraint goes on the active joint (pose bone), the target is the selected
@@ -119,7 +119,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
         return {'FINISHED'}
 
     def _multi(self, context, owner, targets, label):
-        """Maya multi-target constraint: one node, weighted average of the targets (step 226 L4)."""
+        """Maya multi-target constraint: one node, weighted average of the targets (step 226)."""
         mo = None if self.maintain_offset == 'DEFAULT' else self.maintain_offset == 'ON'
         constrain_multi.build(context, owner, targets, self.type, mo, self.weight)
         names = ", ".join(constrain_multi.target_label(t, sub) for t, sub in targets)
@@ -134,9 +134,9 @@ class ALLSET_OT_constrain(bpy.types.Operator):
 
 # --- Aim (Maya aimConstraint) -----------------------------------------------------------------------
 
-# Maya aimConstraint factory values: aim vector +X, up vector +Y, world up
-# type Vector, world up vector (0, 1, 0). Maya is Y-up: an object's Maya X / Y / Z = Blender X / Z / -Y (
-# step 57); a joint's Maya X / Y / Z = the bone's Y / Z / X (the bone's Y points at the child, Maya's primary X).
+# aimConstraint defaults: aim vector +X, up vector +Y, world up
+# type Vector, world up vector (0, 1, 0). Maya is Y-up: an object's Maya X / Y / Z = Blender X / Z / -Y
+# (step 57); a joint's Maya X / Y / Z = the bone's Y / Z / X (the bone's Y points at the child, Maya's primary X).
 AIM_VECTOR, UP_VECTOR, WORLD_UP = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), "Vector"
 # Maya aimConstraint world up types (enum order of the node's worldUpType: Scene Up / Object Up / Object Rotation Up /
 # Vector / None, command default Vector — step 252)

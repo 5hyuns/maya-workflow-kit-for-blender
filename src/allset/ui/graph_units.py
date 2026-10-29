@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Graph Editor value axis in display units (#66, ).
+"""Graph Editor value axis in display units (#66, step 137).
 
 Blender's Graph Editor draws F-curve values as stored and converts only rotations (C ``ANIM_unit_mapping_get_factor``),
-so in the Maya Workflow Kit scene (cm shown, ``scale_length`` 1,  / 8) a 5 cm Translate X curve reads
-0.00 - 0.05 while the Channel Box and Maya's Graph Editor read 0 - 5. When every curve the Graph Editor shows is a length property, the kit writes Blender's value
+so in the Maya Workflow Kit scene (cm shown, ``scale_length`` 1) a 5 cm Translate X curve reads
+0.00 - 0.05 while the Channel Box and the Maya Graph Editor read 0 - 5. When every curve the Graph Editor shows is a length property, the kit writes Blender's value
 numbers again as ``value / units.maya_unit()`` on the same grid lines; mixed units (length + rotation / scale) keep
 Blender's numbers, one axis can't carry two units.
 
 Blender 4.5 draws those numbers in the WINDOW region's *overlay* (``graph_main_region_draw_overlay`` ->
 ``UI_view2d_draw_scale_y__values``, Blender source space_graph.cc:352-358, view2d_draw.cc:340-400), which is drawn
-after every Python POST_PIXEL handler of the region: a POST_PIXEL cover stays under them (checked, step 137 shot).
+after every Python POST_PIXEL handler of the region: a POST_PIXEL cover stays under them (step 137).
 The only Python drawing that comes after a region overlay is a window-manager draw cursor
 (``WindowManager.draw_cursor_add``, wm_draw ``wm_paintcursor_draw``), which Blender draws for the region under the
 mouse only. So:
@@ -323,7 +323,7 @@ def _cursor(*_args):
         uv += [((a - bx0) / bw, (b - by0) / bh) for a, b in quad]
     # the window projection of a draw cursor is shifted by Blender's 0.375 px pixel offset (GLA_PIXEL_OFS), which
     # resamples the pasted pixels and blurs glyphs: draw with an exact pixel ortho (crisp like Blender's own labels,
-    # checked step 137)
+    # step 137)
     import mathutils
     _vx, _vy, vw, vh = gpu.state.viewport_get()
     gpu.matrix.push_projection()

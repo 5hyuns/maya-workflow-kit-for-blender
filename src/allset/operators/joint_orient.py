@@ -169,6 +169,6 @@ def joint_orient(parent_frame, frame):
 
 
 def radius(length):
-    """Maya Joint Tool variable bone radius (jointCtx factory: length 1 -> 0.5, length 30 -> 2; L 5 ->
-    0.7073, L 3.6 -> 0.6356) for a bone ``length`` in Maya units."""
+    """Maya Joint Tool variable bone radius (length 1 -> 0.5, length 30 -> 2, linear
+    in between) for a bone ``length`` in Maya units."""
     return min(2.0, max(0.5, 0.5 + (length - 1.0) / 29.0 * 1.5))

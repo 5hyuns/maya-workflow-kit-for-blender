@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya keymap, as add-on keymap items (step 130, ).
+"""Maya keymap, as add-on keymap items (step 130).
 
 The Maya keymap data = Industry Compatible data (static, ``ic_data``) patched by ``maya_patches``. Until step 130 it became a keyconfig "Maya-style" that was made
 the *active* keyconfig — its name was saved in the user preferences and outlived the add-on (GitHub #46, #40). Now
 the active keyconfig and every keymap preference stay as the user has them:
 
 - every non-modal Maya item goes into the **add-on keyconfig** (``wm.keyconfigs.addon``). Blender merges add-on
-  items in front of the active keyconfig's items of the same keymap, one at a time at the head (checked: they
+  items in front of the active keyconfig's items of the same keymap, one at a time at the head (they
   come out reversed), so they are added in reverse to keep the Maya order (``first=True`` / PASS_THROUGH items);
 - the active keyconfig's own items of those keymaps are switched off **in memory** (``KeyMapItem.active``) while
   Maya mode is on, so an event the Maya data doesn't bind falls through to the later keymaps exactly as in the old
   Maya keyconfig. A consuming "blocker" item can't do that: whatever it returns, it either stops the whole event or
-  lets the user's item below it run (checked). Preset keyconfigs are rebuilt from their preset file at every start
-  and the flags are not part of the user's keymap edits (checked: saved preferences + restart = items active,
+  lets the user's item below it run. Preset keyconfigs are rebuilt from their preset file at every start
+  and the flags are not part of the user's keymap edits (saved preferences + restart = items active,
   no user-modified keymap), so nothing outlives the add-on;
-- modal keymaps can't be add-on keymaps ("Modal key-maps not supported for add-on key-config", checked): the few
+- modal keymaps can't be add-on keymaps ("Modal key-maps not supported for add-on key-config"): the few
   Maya modal differences (Transform / Knife modal maps) are switched / added in the active keyconfig's modal map in
   memory the same way and removed again.
 
@@ -30,7 +30,7 @@ from .. import compat
 # Before step 130 the kit made a keyconfig of this name active and Blender stored the name in the preferences;
 # switch.py still recognises it to clean up after older versions. No keyconfig of this name is made any more.
 KEYCONFIG_NAME = "Maya-style"
-TARGET_VERSION = compat.TARGET   #  
+TARGET_VERSION = compat.TARGET
 WATCH_INTERVAL = 1.0
 
 # (KeyMap, KeyMapItem) pairs add_item created in wm.keyconfigs.addon.
@@ -68,7 +68,7 @@ def add_item(km_name, idname, type, value, space_type="EMPTY", region_type="WIND
 def generate_data():
     """IC data with the Maya patches applied (fresh list each call). Strict on Blender 5.2 (step 272: the kit's
     own static IC data of that minor); elsewhere IC differences are collected in ``patch.DRIFT``
-."""
+    (step 53)."""
     from . import ic_data, maya_patches, patch
     patch.STRICT = compat.IS_STRICT
     patch.DRIFT.clear()
@@ -124,7 +124,7 @@ def _apply_addon(data):
             _state["addon_made"].append((name, space, region))
         km = kc.keymaps.new(name, **km_args)
         before = {k.as_pointer() for k in km.keymap_items}
-        # reversed: Blender puts add-on items at the head of the merged keymap one by one ()
+        # reversed: Blender puts add-on items at the head of the merged keymap one by one (step 130)
         keymap_init_from_data(km, list(reversed(content["items"])))
         _state["addon_items"].update(k.as_pointer() for k in _new_items(km, before))
 

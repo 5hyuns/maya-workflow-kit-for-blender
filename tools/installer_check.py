@@ -4,7 +4,7 @@
 
 Runs tools/installer/allset_setup.ps1 (what the Inno Setup draft allset.iss calls) with Windows
 PowerShell 5.1 on a clean sandbox (tmp/release_env_installer; BLENDER_USER_* point there and are
-inherited by the Blender processes the script starts, ) after seeding a "user" setup
+inherited by the Blender processes the script starts) after seeding a "user" setup
 (tools/release_probe.py seed). The .exe itself is not built or signed here.
 """
 

@@ -81,7 +81,7 @@ joints.finish(bpy.context, second, [c])
 selection.select(bpy.context, rig, a)
 assert bpy.context.active_object == rig and bpy.context.mode == 'POSE'
 assert not any(bone_selected(pb) for pb in second.pose.bones)
-# Maya never branches from a joint picked before the Joint Tool starts (PR125_MAYA_CHECK.md 8b):
+# Maya never branches from a joint picked before the Joint Tool starts:
 # the tool starts a new chain; cancelling before placement preserves the selection.
 status = []
 proxy = SimpleNamespace(window=bpy.context.window, active_object=rig,

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Marking-menu items that had no Blender action.
+"""Marking-menu items that had no Blender action (step 136, #74 #62).
 
 - RMB list (RMB_MESH): Select Hierarchy (selects the object the menu was opened
   on and everything below it), items run on the object the menu was opened on (Make Live, Actions ▸ Template /
@@ -86,7 +86,7 @@ class ALLSET_OT_mm_select_hierarchy(bpy.types.Operator):
         ob = target(context)
         if ob is None:
             return {'CANCELLED'}
-        if context.mode != 'OBJECT':      # from component mode: back to objects first (delegated, step 136)
+        if context.mode != 'OBJECT':      # from component mode: back to objects first (step 136)
             bpy.ops.object.mode_set(mode='OBJECT')
         _select_only(context, [ob, *ob.children_recursive], ob)
         return {'FINISHED'}

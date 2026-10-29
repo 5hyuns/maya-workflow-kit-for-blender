@@ -3,10 +3,10 @@
     python tools/repo_check.py [--blender PATH] [--no-build]
 
 Everything runs in a clean sandbox (tmp/release_env_repo: empty user config, scripts and
-extensions; ) with a "user" setup seeded first (tools/release_probe.py seed: an add-on of
+extensions) with a "user" setup seeded first (tools/release_probe.py seed: an add-on of
 their own, changed navigation, undo steps and theme). The repository is a folder in the sandbox
 served as ``file:///.../index.json`` — the same listing a static web host would serve
-(tools/build_repo.py,  §(b)):
+(tools/build_repo.py):
 
  1. repo-add + sync + ``extension install allset --enable`` (what "Add Remote Repository" +
     Install does in Preferences > Get Extensions)

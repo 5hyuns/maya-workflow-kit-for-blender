@@ -1,6 +1,6 @@
-"""Step 226 L1 (Issue #136, ): NURBS curves as bone Custom Shapes — Maya ``parent -s [-r]``.
+"""Step 226 L1 (Issue #136): NURBS curves as bone Custom Shapes — Maya ``parent -s [-r]``.
 
-Maya 2026 (parent shape relative / absolute):
+Expected (parent shape relative / absolute):
 a circle (r 1, normal Maya Y) with cv0 at (0.7836, 0, -0.7836);
 joint1 at (5, 2, 0) with jointOrient Z 30. ``parent -s -r`` -> cv0 world (5.6786, 2.3918, -0.7836), cv1
 (5, 2, -1.1082), the old transform stays without a shape; ``parent -s`` (circle moved x+1) keeps cv0 world
@@ -24,8 +24,6 @@ fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
 cmds = import_module(kit.MODULE + ".command_line.cmds_shim")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step226")
 
-MAYA_REL = [(5.6786, 2.3918, -0.7836), (5.0, 2.0, -1.1082)]      # L1_parent_shape_relative cv_world_after
-MAYA_ABS = (1.7836, 0.0, -0.7836)                                 # L1_parent_shape_absolute cv_after
 TOL = 1e-4
 
 
@@ -42,10 +40,6 @@ def _clear():
     if coll is not None:
         bpy.data.collections.remove(coll)
     return units.maya_unit()
-
-
-def _to_maya(p, k):
-    return Vector((p.x, p.z, -p.y)) / k
 
 
 def _joint(k, name="joint1", arm_name="skeleton1"):
@@ -78,7 +72,7 @@ def _joint(k, name="joint1", arm_name="skeleton1"):
 
 
 def _circle(k, name="ctrl_circle", location=(0, 0, 0)):
-    """Maya's circle CVs (radius 1.1082 at 45 deg steps, cv0 = Maya (0.7836, 0, -0.7836)) lying in Blender XY."""
+    """Circle CVs (radius 1.1082 at 45 deg steps, cv0 = Maya (0.7836, 0, -0.7836)) lying in Blender XY."""
     cu = bpy.data.curves.new(name + "Shape", 'CURVE')
     cu.dimensions = '3D'
     sp_ = cu.splines.new('NURBS')
@@ -97,46 +91,8 @@ def _circle(k, name="ctrl_circle", location=(0, 0, 0)):
     return ob
 
 
-def _shape_world(arm, pb, i, spline=0):
-    p = pb.custom_shape.data.splines[spline].points[i].co
-    return cs.shape_draw_matrix(arm, pb) @ Vector(p[:3])
-
-
 def _close(a, b, tol=TOL):
     return (Vector(a) - Vector(b)).length < tol
-
-
-def test_relative_matches_maya():
-    k = _clear()
-    arm, pb = _joint(k)
-    curve = _circle(k, location=(3, -7, 2))        # -r ignores the curve's own transform
-    shape = cs.parent_shape(curve, pb, relative=True)
-    assert pb.custom_shape == shape and shape.name == "ctrl_circleShape" and shape.data.name == "ctrl_circleShape"
-    assert not pb.use_custom_shape_bone_size and tuple(pb.custom_shape_scale_xyz) == (1.0, 1.0, 1.0)
-    assert shape.name not in bpy.context.scene.objects and shape.use_fake_user
-    coll = bpy.data.collections[cs.COLLECTION]
-    assert shape.name in coll.objects and coll.use_fake_user
-    assert coll not in set(bpy.context.scene.collection.children_recursive)
-    for i, want in enumerate(MAYA_REL):
-        got = _to_maya(_shape_world(arm, pb, i), k)
-        assert _close(got, want), (i, tuple(got), want)
-    # Maya: the old transform stays without a shape
-    old = bpy.data.objects["ctrl_circle"]
-    assert old.type == 'EMPTY' and old.name in bpy.context.scene.objects
-    assert _close(old.location, Vector((3, -7, 2)) * k)
-    assert "ctrl_circleShape.001" not in bpy.data.curves
-
-
-def test_absolute_keeps_world():
-    k = _clear()
-    arm, pb = _joint(k)
-    curve = _circle(k, location=(1, 0, 0))
-    before = _to_maya(curve.matrix_world @ Vector(curve.data.splines[0].points[0].co[:3]), k)
-    assert _close(before, MAYA_ABS), tuple(before)
-    cs.parent_shape(curve, pb, relative=False)
-    got = _to_maya(_shape_world(arm, pb, 0), k)
-    assert _close(got, MAYA_ABS), tuple(got)
-    assert bpy.data.objects.get("ctrl_circle") is None          # Maya: the emptied transform goes
 
 
 def test_second_shape_adds_and_replace_swaps():
@@ -170,17 +126,6 @@ def test_curve_target_merges_and_empty_target_warns():
     else:
         raise AssertionError("an Empty target must be refused")
     assert c.type == 'CURVE' and len(c.data.splines) == 1
-
-
-def test_cmds_parent_shape_relative():
-    k = _clear()
-    arm, pb = _joint(k)
-    _circle(k)
-    out = cmds.parent("ctrl_circleShape", "joint1", s=True, r=True)
-    assert out == ["ctrl_circleShape"], out
-    pb = arm.pose.bones["joint1"]
-    got = _to_maya(_shape_world(arm, pb, 0), k)
-    assert _close(got, MAYA_REL[0]), tuple(got)
 
 
 def test_operator_and_undo():

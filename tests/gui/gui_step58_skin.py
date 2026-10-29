@@ -1,7 +1,7 @@
 """Step 58 in a real UI, Maya rigging_04 hand order on the Maya Workflow Kit layout: a cylinder + a three-joint skeleton ->
 click the skeleton, Shift+click the cylinder (joints first, mesh last) -> Skin > Bind Skin -> Armature modifier + three
 joint groups -> Skin > Paint Skin Weights -> pick joint2 in the influence list -> paint on the mesh -> joint2's weights go
-up.  「계획」 5."""
+up."""
 
 import os
 import sys
@@ -205,7 +205,7 @@ step(find_button(tool_settings_region, lambda path, cmd: path.endswith("allset_w
 @step
 def s_found_row():
     found = C.get("search")
-    # list rows are one UI unit tall, the first one 1.4 units under the search field's centre (checked on
+    # list rows are one UI unit tall, the first one 1.4 units under the search field's centre (read from
     # gui_step58_paint_panel.png at UI 1.25), in hierarchy order
     C["lock"] = (found[0], found[1] - int(C["unit"] * (1.4 + C["pos"]))) if found else None
 

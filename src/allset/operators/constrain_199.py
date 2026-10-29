@@ -1,23 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 199 lane C: Constrain > Normal / Tangent / Remove Target / Set Rest Position / Modify Constrained Axis.
 
-- Normal / Tangent (Maya Normal / Tangent Constraint Options, factory: weight 1, aim (1, 0, 0),
+- Normal / Tangent (Maya Normal / Tangent Constraint Options, default: weight 1, aim (1, 0, 0),
   up (0, 1, 0), world up type Vector (0, 1, 0)): Maya only turns the object — its aim vector = the target's normal at
   the closest surface point (MFnMesh.getClosestPointAndNormal) / the curve's tangent at the closest curve point, its up
   vector towards the world up. No Blender constraint computes Maya's normal: Blender's Shrinkwrap uses Blender's
   corner-angle normals on Blender's triangulation, Maya interpolates face-vertex normals weighted by corner angle x
   face area (mesh vertexNormalMethod "Angle and Area Weighted") on its own triangulation (a quad is split along the
-  shorter diagonal only when d02^2 < 0.999 d13^2, else 1-3; on 540 quads). So the kit setup is: a Track To on
+  shorter diagonal only when d02^2 < 0.999 d13^2, else 1-3). So the kit setup is: a Track To on
   the object (Maya's aim / up, rig_tools.aim) towards a hidden helper empty that a depsgraph / frame handler keeps at
   P + L * direction  (P = the object's world position, direction computed the Maya way in double precision:
-  ``SurfaceData.normal`` / ``CurveData.tangent``). Matches Maya within 6e-6 (1e-7 away from the world-up pole).
+  ``SurfaceData.normal`` / ``CurveData.tangent``).
 - Remove Target: targets selected, the constrained object last; the constraints of the
   checked types whose target is selected go. When the last target of a type goes Maya deletes the constraint node and
   the channels keep the constrained value (Maya) — the kit bakes the visual value into the object's own channels.
 - Set Rest Position: Maya stores the current constrained channels as the constraint's
   rest values, used when every target weight is 0. In Blender a constraint at influence 0 shows the object's own
   channels, so the rest position is the own channels: the kit writes the current constrained values into them.
-- Modify Constrained Axis (factory X / Y / Z on, Maintain offset off): which axes the point
+- Modify Constrained Axis (default X / Y / Z on, Maintain offset off): which axes the point
   / orient / scale / parent constraints drive (Blender use_x / use_y / use_z, Child Of use_location_* / use_rotation_*;
   the axes are the Channel Box's). A newly skipped channel keeps its last constrained value (Maya); Maintain offset
   = Blender's constraint offsets set so nothing moves now.
@@ -449,7 +449,7 @@ def helpers_owned_by(objects):
 
 def remove_helpers(objs):
     """Delete helper empties (each once; objects already gone are skipped). Maya's normal / tangent constraint is a
-    DAG child of the constrained object, so it goes with the object and with Delete by Type > Constraints 
+    DAG child of the constrained object, so it goes with the object and with Delete by Type > Constraints
     (step 202, #109; Remove Target already did this, ``remove_targets``)."""
     seen = set()
     for h in objs:
@@ -497,7 +497,7 @@ def add_surface_constraint(context, kind, owner, surface, aim_vector=rig_tools.A
     return con
 
 
-WORLD_UP_ITEMS = (("Vector", "Vector", "World up vector (0, 1, 0) = Blender world Z (Maya factory)"),
+WORLD_UP_ITEMS = (("Vector", "Vector", "World up vector (0, 1, 0) = Blender world Z (default)"),
                   ("Scene up", "Scene up", "The scene's up axis (Maya Y = Blender Z)"),
                   ("None", "None", "No up vector: the shortest turn (Blender Damped Track)"))
 

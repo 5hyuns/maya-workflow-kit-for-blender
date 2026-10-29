@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Rig FBX the way Maya 2026 writes it (step 222, Issue #132; , ).
+"""Rig FBX the way Maya 2026 writes it (step 222, Issue #132).
 
 Blender's FBX writer puts the rest orientation (and the current frame's pose) of every joint into ``Lcl Rotation`` and
 writes the armature object as a ``Null`` (Lcl Rotation -90 X / Lcl Scaling 100 for the kit's Y-up cm preset), joint
@@ -12,7 +12,7 @@ first into the second with Blender's bundled ``io_scene_fbx.parse_fbx`` / ``enco
    of the bind pose / skin clusters lose the scale (their rotation part / s), cluster ``Transform`` follows
    (TransformLink^-1 @ mesh world). The Null, its attribute and connections go.
 2. PreRotation = the joint's rest rotation, read from a second export of the same objects at the rest pose
-   (``rest_rotations``): the writer's own axis conventions, never the current frame ('s trap).
+   (``rest_rotations``): the writer's own axis conventions, never the current frame.
    Lcl Rotation default and keys become Pre^-1 R(t), compat Euler (``rotation_display.euler_curve``'s rule).
 
 3. Step 232: joints whose Maya frame a bone can't take (``joints.MAYA_FRAME``: an oriented end joint lines up with
@@ -22,7 +22,7 @@ first into the second with Blender's bundled ``io_scene_fbx.parse_fbx`` / ``enco
    translation; skin clusters / bind pose of a turned joint: TransformLink Q_j, Transform = Q_j^-1 Transform. The
    joints' world positions and the skinned mesh don't change.
 
-An animated armature object (curves on the Null) keeps its Null: only step 2 runs (delegated).
+An animated armature object (curves on the Null) keeps its Null: only step 2 runs.
 """
 
 import array

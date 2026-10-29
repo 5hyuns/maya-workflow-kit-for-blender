@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Tool Settings: Reset Tool and the dock's Maya sections (step 106).
+"""Maya Tool Settings: Reset Tool (step 93) and the dock's Maya sections (step 106).
 
 Maya's Tool Settings window has the tool name, Reset Tool / Tool Help above the active tool's options.
 Since step 106 the kit's Tool Settings is a dock
@@ -186,7 +186,7 @@ def draw_reset_row(self, context):
     self.layout.operator(ALLSET_OT_reset_tool.bl_idname, icon='LOOP_BACK')
 
 
-# --- Tool Settings dock: Maya sections ------------------------------------
+# --- Tool Settings dock: Maya sections (step 106) -------------------------------------------------------------
 # Section order, default open state and rows as in Maya 2022 (Move / Rotate / Scale Tool Settings).
 # Rows without kit state are greyed with a tooltip (TS_NOTICES).
 
@@ -223,7 +223,7 @@ SECTIONS = (
     ("symmetry", "Symmetry Settings", False, (*MANIP, *SELECTING)),
     ("smart_duplicate", "Smart Duplicate Settings", False, MANIP),
 )
-# Maya Rotate / Scale Center (rotate_ts / scale_ts) -> Blender pivot point (delegated: Default = the manipulator at
+# Maya Rotate / Scale Center (rotate_ts / scale_ts) -> Blender pivot point (Default = the manipulator at
 # the lead's pivot, the kit's Maya default MAYA_PIVOT; Object = each object's own pivot; Manip = where the component
 # pivot edit put the manipulator, the 3D cursor (step 77); Selection = the selection's centre).
 CENTERS = {'ROTATE': (("Default", 'ACTIVE_ELEMENT'), ("Object", 'INDIVIDUAL_ORIGINS'), ("Manip", 'CURSOR'),
@@ -396,7 +396,7 @@ def draw_settings(layout, context, kind):
     mode = snap_align.step_snap_mode(ts, kind)
     for m in ('OFF', 'RELATIVE', 'ABSOLUTE'):
         cell = row.row(align=True)
-        # step 263: Move offers Absolute only with World axes (Maya, 060_messages_ui.md B5)
+        # step 263: Move offers Absolute only with World axes (like Maya)
         cell.enabled = m != 'ABSOLUTE' or snap_align.absolute_offered(scene, kind)
         op = cell.operator("allset.step_snap", text=m.title(), depress=mode == m)
         op.kind, op.mode = kind, m
@@ -515,7 +515,7 @@ def draw_brush(layout, context, kind):
     row = _labelled(layout, "Radius(U):")
     if props is not None:
         row.prop(props, "radius", text="")
-    notices.tip(row, "Maya measures the radius in scene units, Blender's paint selection in screen pixels")
+    notices.tip(row, "Maya's radius is in scene units, Blender's paint selection in screen pixels")
     _grey(_labelled(layout, "Radius(L):"), "Paint/Radius(L)", text="0.0010")
     _grey(_labelled(layout, "Profile:"), "Paint/Profile", text="Soft")
     _grey(_labelled(layout, ""), "Paint/Rotate to stroke", text="Rotate to stroke", check=True)

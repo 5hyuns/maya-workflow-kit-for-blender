@@ -4,12 +4,12 @@
 
 dist/repo/ gets the extension zip(s) and the listing Blender reads, made by Blender itself:
 ``blender --command extension server-generate --repo-dir dist/repo --html`` -> index.json +
-index.html. Any static file host can serve the folder ( §(b)); a Blender
+index.html. Any static file host can serve the folder; a Blender
 user adds ``<url>/index.json`` once under Preferences > Get Extensions > Repositories and then
 gets updates like from extensions.blender.org. ``file:///.../index.json`` works too, which is how
 tools/repo_check.py tests the whole path offline.
 
-Nothing is uploaded: publishing is the user's decision ().
+Nothing is uploaded: publishing is a separate, manual step.
 """
 
 import argparse

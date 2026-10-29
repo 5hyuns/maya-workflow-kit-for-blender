@@ -1,6 +1,5 @@
 """Step 134 lane HUD: Maya display / mode keys leave no Adjust Last Operation panel (#58), and Smooth Mesh
-Preview (3) is smooth shaded on Maya primitives whose hard edges are sharp_edge (#61).
-"""
+Preview (3) is smooth shaded on Maya primitives whose hard edges are sharp_edge (#61)."""
 
 from importlib import import_module
 
@@ -16,8 +15,8 @@ NO_HUD = ("allset.display_mode", "allset.smooth_preview", "allset.smooth_level",
           "allset.component_mask", "allset.toggle_sel_mode", "allset.select_mode", "allset.mm_component",
           "allset.uv_component", "allset.cycle_display", "allset.camera_mode_toggle", "allset.symmetry",
           "allset.cycle_background", "allset.toggle_grid", "allset.pivot_toggle")
-# Maya keeps these in its undo queue (component mode = hilite; )
-# or Blender needs the push so a later undo doesn't drop the change (smooth preview, delegated).
+# Maya keeps these in its undo queue (component mode = hilite)
+# or Blender needs the push so a later undo doesn't drop the change (smooth preview).
 KEEP_UNDO = ("allset.smooth_preview", "allset.smooth_level", "allset.component_mode", "allset.component_mask",
              "allset.toggle_sel_mode", "allset.select_mode")
 KEYS = {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "F7", "F8", "F9", "F10", "F11", "PAGE_UP",

@@ -1,5 +1,5 @@
 """Step 138 / #57: Maya's Save Changes prompt before New Scene (ui/save_prompt.py). Headless: the texts with and without
-a file path (the wording of Maya 2022's Save Changes dialog), the answers' effects (Cancel = nothing, Don't Save = the
+a file path (the wording of Maya's Save Changes dialog), the answers' effects (Cancel = nothing, Don't Save = the
 action, Save with a path = save then the action, untitled Save = the action only after a real save), and every New
 Scene path (Ctrl+N / File > New Scene operator, the New Scene option window) going through the prompt.
 The dialog itself, clicks and the Save As browser: tests/gui/gui_step138_prompt.py."""
@@ -42,8 +42,7 @@ def test_texts_untitled_and_saved():
     assert [c[1] for c in save_prompt.CHOICES] == ["Save", "Don't Save", "Cancel"]
 
 
-# An unmodified scene runs the action without asking: GUI test (in -b a loaded or saved file still reads is_dirty,
-# checked).
+# An unmodified scene runs the action without asking: GUI test (in -b a loaded or saved file still reads is_dirty).
 
 
 def test_cancel_does_nothing():

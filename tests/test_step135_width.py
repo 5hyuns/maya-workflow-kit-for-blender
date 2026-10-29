@@ -1,6 +1,6 @@
 """Step 135 lane WIDTH (#60): the Maya tab stack width follows the UI scale — wide enough for its tab row, the Channel
-Box labels and the AE menu bar (blf widths), between Maya's Channel Box stack (277 px) and Maya's stack with the
-Attribute Editor raised (480 px) times the scale. Notes: ; GUI side:
+Box labels and the AE menu bar (blf widths), between the Channel Box stack (277 px) and the stack with the
+Attribute Editor raised (480 px) times the scale. GUI side:
 tests/gui/gui_step135_width.py."""
 
 import sys
@@ -53,7 +53,7 @@ def test_ae_menu_bar_is_one_row_at_that_width():
 
 
 def test_rule_is_blf_based_with_a_fallback():
-    assert abs(toolbox.text_px("Subdivisions Height", 1.0) - 107) <= 3        # checked blf, 11 pt UI font
+    assert abs(toolbox.text_px("Subdivisions Height", 1.0) - 107) <= 3        # blf width, 11 pt UI font
     fixed = toolbox.dock_width(1.25, measure=lambda text, s: len(text) * 7 * s)
     assert round(toolbox.DOCK_MAYA_PX * 1.25) <= fixed <= round(toolbox.DOCK_MAX_PX * 1.25)
 

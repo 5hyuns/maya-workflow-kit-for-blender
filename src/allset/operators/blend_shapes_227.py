@@ -11,7 +11,7 @@ Maya (``inbetween_one`` / ``inbetween_two`` /
   default, negatives included), their minimum (lowest weighting) or n·Π / Σ(products of n − 1) (smooth = harmonic
   mean), 0 when any input ≤ 0 for smooth.
 
-Blender (ATTACH_PLAN L15 (b), delegated in the plan): shape keys + **simple-expression drivers** (no Python, so they
+Blender: shape keys + **simple-expression drivers** (no Python, so they
 run without "Auto Run Python Scripts" and survive the kit being disabled):
 
 - the user handle stays the target key (``smile``), value = Maya weight: Channel Box, Shape Editor, SDK, keys and FBX

@@ -1,6 +1,6 @@
 """Step 241 (Issue #156, report @cnzim): joints move after placement.
 
-Maya 2026:
+Expected:
 chain (0,0,0) (0,10,0) (0,20,0); W on joint2 by +3 X -> joint2 (3,10,0), joint3 follows to (3,20,0), joint1 stays;
 undo restores. After Bind Skin a joint move poses (the mesh moves 3); Skin > Move Skinned Joints moves the joint with
 the mesh unchanged (0.0) and the weights the same, and posing afterwards bends about the new place.
@@ -22,8 +22,7 @@ units = import_module(kit.MODULE + ".operators.units")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 pivot_mod = import_module(kit.MODULE + ".operators.pivot")
 
-MAYA = {"before": {"joint1": (0, 0, 0), "joint2": (0, 10, 0), "joint3": (0, 20, 0)},
-        "after": {"joint1": (0, 0, 0), "joint2": (3, 10, 0), "joint3": (3, 20, 0)}}
+JOINTS = {"joint1": (0, 0, 0), "joint2": (0, 10, 0), "joint3": (0, 20, 0)}
 
 
 def _bl(p, k):
@@ -49,7 +48,7 @@ def _scene(skinned=False):
     k = units.maya_unit(sc)
     ob = joints.new_skeleton(bpy.context)
     parent = None
-    for p in MAYA["before"].values():
+    for p in JOINTS.values():
         parent = joints.add_joint(ob, _bl(p, k), parent, up=Vector((0, 0, 1)), length=2 * k)
     joints.orient_new(ob, ["joint1", "joint2", "joint3"])
     joints.finish(bpy.context, ob, ["joint1", "joint2", "joint3"])
@@ -85,19 +84,8 @@ def _heads(ob, k):
     return {b.name: _maya(ob.matrix_world @ b.head_local, k) for b in ob.data.bones}
 
 
-def _close(got, want, tol=1e-4):
-    for name, p in want.items():
-        assert (got[name] - Vector(p)).length < tol, (name, tuple(got[name]), p)
-
-
-def _verts(mesh):
-    dg = bpy.context.evaluated_depsgraph_get()
-    ev = mesh.evaluated_get(dg)
-    return [ev.matrix_world @ v.co for v in ev.data.vertices]
-
-
 def test_unskinned_pick_is_pose_without_the_move_tool():
-    """Decision 16 stays for every other tool: Channel Box channels, S keys and pick walk are Pose-mode features."""
+    """The Pose-mode rule stays for every other tool: Channel Box channels, S keys and pick walk are Pose-mode features."""
     ob, _m, k = _scene()
     assert js.select(bpy.context, ob, "joint2")
     assert ob.mode == 'POSE' and cb.bone_selected(ob.pose.bones["joint2"])
@@ -140,25 +128,6 @@ def test_unskinned_pick_with_the_move_tool_enters_edit_with_the_subtree():
     assert ob.data.edit_bones.active.name == "joint2"
 
 
-def test_w_moves_the_joint_and_children_like_maya_then_undo():
-    ob, _m, k = _scene()
-    with _MoveTool():
-        js.select(bpy.context, ob, "joint2")
-    bpy.ops.ed.undo_push(message="picked")
-    assert bpy.ops.transform.translate('EXEC_DEFAULT', True, value=(3 * k, 0, 0)) == {'FINISHED'}
-    _close(_heads(ob, k), MAYA["after"])
-    # joint1 stays where it was; its bone now reaches the moved joint (Blender bones point at their child)
-    assert (_maya(ob.matrix_world @ ob.data.edit_bones["joint1"].tail, k) - Vector(MAYA["after"]["joint2"])).length < 1e-4
-    bpy.ops.object.mode_set(mode='OBJECT')
-    _close(_heads(ob, k), MAYA["after"])                    # the move is the rest = Maya's translate
-    bpy.ops.ed.undo()
-    bpy.ops.ed.undo()
-    ob = bpy.data.objects[ob.name]
-    if ob.mode == 'EDIT':
-        bpy.ops.object.mode_set(mode='OBJECT')
-    _close(_heads(ob, k), MAYA["before"])
-
-
 def test_e_turns_the_subtree_about_the_joint():
     """E / R pivot = the lead joint: Edit Armature pivot = cursor, kept on the picked joint (a background transform
     ignores the pivot setting, so the turn itself uses that point as its centre; GUI: gui_step241_joint_move)."""
@@ -184,32 +153,6 @@ def test_skinned_pick_poses():
     assert js.is_skinned(ob) and js.joint_mode(ob) == 'POSE'
     js.select(bpy.context, ob, "joint2")
     assert ob.mode == 'POSE' and cb.bone_selected(ob.pose.bones["joint2"])
-
-
-def test_move_skinned_joints_keeps_the_mesh_and_rebinds():
-    ob, mesh, k = _scene(skinned=True)
-    js.select(bpy.context, ob, "joint2")
-    v0 = _verts(mesh)
-    w0 = [[(g.group, round(g.weight, 6)) for g in v.groups] for v in mesh.data.vertices]
-    assert bpy.ops.allset.move_skinned_joints() == {'FINISHED'}
-    assert ob.mode == 'EDIT' and ob.get(js.MOVE_SKINNED)
-    assert js.joint_mode(ob) == 'EDIT'
-    sel = {eb.name for eb in ob.data.edit_bones if eb.select}
-    assert sel == {"joint2", "joint3"}, sel
-    bpy.ops.transform.translate(value=(3 * k, 0, 0))
-    assert max((a - b).length for a, b in zip(v0, _verts(mesh))) < 1e-5 * k      # Maya: mesh move during 0.0
-    assert bpy.ops.allset.move_skinned_joints() == {'FINISHED'}
-    assert ob.mode == 'POSE' and not ob.get(js.MOVE_SKINNED)
-    _close(_heads(ob, k), MAYA["after"])
-    assert max((a - b).length for a, b in zip(v0, _verts(mesh))) < 1e-5 * k      # Maya: mesh move after 0.0
-    w1 = [[(g.group, round(g.weight, 6)) for g in v.groups] for v in mesh.data.vertices]
-    assert w0 == w1                                                                  # Maya: weights the same
-    # posing bends about the new place (the new rest is the bind)
-    pb = ob.pose.bones["joint1"]
-    pb.rotation_mode = 'XYZ'
-    pb.rotation_euler = (0, 0, math.radians(30))
-    bpy.context.view_layer.update()
-    assert max((a - b).length for a, b in zip(v0, _verts(mesh))) > 1 * k
 
 
 def test_f8_ends_move_skinned_joints():

@@ -1,6 +1,6 @@
 """Step 214 (#120) lane F12: Blender's own render keys lit by Maya's default light.
 
-A UI render's render_* handlers run on the job thread (checked, operators/default_light.py docstring), so the kit
+A UI render's render_* handlers run on the job thread (operators/default_light.py docstring), so the kit
 wraps the keys with ``allset.render_blender`` (light added on the main thread, render.render, light removed when the
 render ends). Maya mode binds F12 / Ctrl+F12 in "Screen" and wraps IC's Ctrl+Alt+Enter; F12 stays Maya's UV mask in
 the 3D View (object / edit mesh) and the UV Editor. The GUI side (F12 opens the Render window, lit cube, light gone

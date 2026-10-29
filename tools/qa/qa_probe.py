@@ -1,4 +1,4 @@
-"""QA 240 probe: which toggle effects can be checked headless (snap / proportional / mirror / auto key / undo)."""
+"""QA 240 check: which toggle effects show headless (snap / proportional / mirror / auto key / undo)."""
 import bpy
 import bmesh
 from importlib import import_module

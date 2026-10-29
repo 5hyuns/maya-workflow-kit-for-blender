@@ -1,6 +1,6 @@
 """Audit 128 repro (scene lane): Maya scene concepts a Maya user touches in the first minutes.
 - Create menu kinds get Maya node names (pSphere1, nurbsCircle1, joint1, camera1, pointLight1, locator1, null1).
-- Visibility is ONE attribute in Maya: Channel Box Visibility, h / Shift+H and Display > Show All all read and
+- Maya has ONE Visibility attribute: Channel Box Visibility, h / Shift+H and Display > Show All all read and
   write it; a Display Layer's V is a separate override (turning the layer back on does not show an object whose
   own visibility is off).
 - Channel Box typing with two objects selected sets the value on both (Maya: every selected node).

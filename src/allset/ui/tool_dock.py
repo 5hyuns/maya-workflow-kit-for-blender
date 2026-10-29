@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Tool Settings as a docked column left of the viewport.
+"""Maya Tool Settings as a docked column left of the viewport (step 106).
 
 Maya's Tool Settings is a dock control on the left of the main window (docked
 left in Maya 2022). The kit's dock is a
@@ -7,12 +7,12 @@ Properties editor on its Tool tab, split off the left edge of the main 3D View, 
 hidden: the Tool tab draws the 3D View "Tool" panels, i.e. ``tool_settings.ALLSET_PT_tool_settings`` (Maya sections)
 and, for tools without Maya sections, Blender's own tool panels. The dock is recognised by its state (Tool tab and no
 header), so it survives saving and reloading the file. ToggleToolSettings shows / hides it (Maya: visible ->
-hidden -> visible); closing = ``screen.area_close`` (the viewport gets its width back, checked).
+hidden -> visible); closing = ``screen.area_close`` (the viewport gets its width back).
 
-GUI facts (checked with the step 106 probe): ``screen.area_split(direction='VERTICAL', factor=f)`` with f < 0.5 puts
+GUI facts (step 106): ``screen.area_split(direction='VERTICAL', factor=f)`` with f < 0.5 puts
 the new area on the left with width f x the old width; ``SpaceProperties.context`` can only be set the tick after the
 area became a Properties editor (its enum is empty before); ``screen.region_toggle(region_type='NAVIGATION_BAR')``
-hides the tab column. ``screen.area_close`` hangs in background mode (), so ``close`` is GUI only.
+hides the tab column. ``screen.area_close`` hangs in background mode, so ``close`` is GUI only.
 """
 
 import bpy

@@ -1,5 +1,5 @@
 """Step 68 in a real UI, Maya Workflow Kit layout (1 unit = 1 cm): F5 -> nParticles >
-Create Emitter -> Alt+V plays -> after one second the oldest particles fell ~4.9 units like in Maya -> ground plane
+Create Emitter -> Alt+V plays -> after one second the oldest particles fell ~4.9 units (Maya-style gravity) -> ground plane
 Create Passive Collider + a 1 unit plane two units up nCloth > Create nCloth -> two seconds -> the cloth lies on the
 ground (Blender's 0.015 m collision distance would keep it 1.5 units up) -> AE nucleus1 tab (screenshots)."""
 
@@ -96,7 +96,7 @@ def s_playing():
     psys = ob.evaluated_get(bpy.context.evaluated_depsgraph_get()).particle_systems[0]
     zs = [p.location.z / k() for p in psys.particles if p.alive_state == 'ALIVE']
     low = min(zs) if zs else 0.0
-    check(f"Alt+V plays; after one second the oldest particles fell like in Maya (~4.9 units; got {low:.2f} units, "
+    check(f"Alt+V plays; after one second the oldest particles fell ~4.9 units ( got {low:.2f} units, "
           f"{len(zs)} particles, was playing {playing})", zs and -6.5 < low < -3.5)
     redraw()
 

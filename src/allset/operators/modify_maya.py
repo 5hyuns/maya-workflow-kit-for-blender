@@ -18,7 +18,7 @@ from .. import undo_steps
 
 # --- Convert > Smooth Mesh Preview to Polygons ------------------------------
 
-WARN_NO_PREVIEW = "No polygonal objects selected were in smooth preview mode."   # 
+WARN_NO_PREVIEW = "No polygonal objects selected were in smooth preview mode."   #
 WARN_NO_POLYS = "No polygonal objects selected."
 
 
@@ -129,7 +129,7 @@ class ALLSET_OT_default_manip(bpy.types.Operator):
     def execute(self, context):
         obs = list(context.selected_objects)
         if not obs:
-            self.report({'WARNING'}, "No objects selected.")     # Maya's warning text 
+            self.report({'WARNING'}, "No objects selected.")     # Maya's warning text
             return {'CANCELLED'}
         for ob in obs:
             if self.value:
@@ -610,7 +610,7 @@ def _rotation_matrix(node):
 
 def reorder_rotation(nodes, order):
     """Change the rotate order of objects / pose bones keeping their orientation (Maya's -preserve): setting
-    rotation_mode from Python only reinterprets the values (checked, step 229), so the Euler angles are recomputed
+    rotation_mode from Python only reinterprets the values (step 229), so the Euler angles are recomputed
     from the old rotation, closest to the old angles. Keys are left as they are. Returns how many changed."""
     n = 0
     for node in nodes:

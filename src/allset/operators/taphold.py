@@ -3,8 +3,7 @@
 
 Maya hold keys: on press Maya builds a marking menu on
 LMB; if no menu was posted before release, the release runs the default
-action (``a`` tap = FrameAll). Design:
- 「계획」 5.
+action (``a`` tap = FrameAll), step 3.
 
 API (used by the marking-menu step): subclass ``TapHoldBinding``, then
 ``register_binding(MyBinding())``; bind ``allset.tap_hold`` with
@@ -133,14 +132,13 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
 
 # --- bindings of this step ----------------------------------------------------
 
-# Maya's factory soft select radius: softSelect -q -softSelectDistance = 5.0 (Maya units; factory
-# prefs, ). Blender's own default proportional_size is 1.0 BU.
+# Default soft select radius 5.0 (Maya units). Blender's own default proportional_size is 1.0 BU.
 MAYA_SOFT_RADIUS = 5.0
 BLENDER_SOFT_RADIUS = 1.0
 
 
 def maya_soft_radius(context):
-    """Turning soft select on with Blender's untouched default radius: use Maya's (x maya_unit, )."""
+    """Turning soft select on with Blender's untouched default radius: use the Maya-style one (x maya_unit)."""
     from . import units
     ts = context.scene.tool_settings
     if abs(ts.proportional_size - BLENDER_SOFT_RADIUS) < 1e-9:
@@ -148,9 +146,8 @@ def maya_soft_radius(context):
 
 
 def radius_from_drag(start_size, dx):
-    """B + LMB / MMB drag: doubles the radius every 100 px to the right. Maya's rate is unknown (synthetic
-    drags don't reach Maya's screen slider,  「계획」 0); relative, so it feels
-    the same at every radius (delegated)."""
+    """B + LMB / MMB drag: doubles the radius every 100 px to the right. Relative, so it feels
+    the same at every radius."""
     return max(1e-4, start_size * 2.0 ** (dx / 100.0))
 
 
@@ -207,7 +204,7 @@ class SoftSelectBinding(TapHoldBinding):
 
 class SelectAllBinding(TapHoldBinding):
     """A: tap = frame all; hold + LMB = the Maya marking menu SELECT_ALL
-    (delete history, freeze; )."""
+    (delete history, freeze; step 10)."""
     name = "select_all"
     label = "Frame All / History Menu"
 
@@ -243,8 +240,8 @@ def playback_range(scene):
 
 
 def frames_per_pixel(scene, width):
-    """K drag speed: the editor's width spans the playback range once (Maya's speed is unknown,
-     「계획」 3), never slower than 1 frame per 50 px."""
+    """K drag speed: the editor's width spans the playback range once (step 56),
+    never slower than 1 frame per 50 px."""
     a, b = playback_range(scene)
     return max((b - a + 1) / max(width, 1), 0.02)
 

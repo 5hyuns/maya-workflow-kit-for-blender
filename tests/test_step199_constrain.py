@@ -23,7 +23,7 @@ def to_b(p):
 
 
 def b_matrix(rows):
-    """Maya xform -q -ws -m (row-major, translation in the last row) -> Blender world matrix."""
+    """Maya world matrix (row-major, translation in the last row) -> Blender world matrix."""
     m = Matrix([rows[0:4], rows[4:8], rows[8:12], rows[12:16]]).transposed()
     return C4 @ m @ C4.inverted()
 
@@ -73,7 +73,7 @@ def _select(*obs):
 def _mesh(name, verts, faces, sharp=False):
     me = bpy.data.meshes.new(name)
     me.from_pydata([to_b(v) for v in verts], [], faces)
-    me.shade_smooth()           # kit primitives: smooth faces, Maya's hard edges as sharp_edge ( step 134)
+    me.shade_smooth()           # kit primitives: smooth faces, Maya's hard edges as sharp_edge (step 134)
     if sharp:
         attr = me.attributes.new("sharp_edge", 'BOOLEAN', 'EDGE')
         attr.data.foreach_set("value", [True] * len(me.edges))
@@ -84,7 +84,7 @@ def _mesh(name, verts, faces, sharp=False):
 
 
 def _maya_targets():
-    """The three Maya target meshes (kit's Maya-exact primitives, Maya vertex / face order)."""
+    """The three target meshes (kit primitives, Maya vertex / face order)."""
     a = prim.defaults("polySphere")
     a.update(radius=5.0, subdivisionsAxis=20, subdivisionsHeight=20)
     s = prim.poly_sphere(a)

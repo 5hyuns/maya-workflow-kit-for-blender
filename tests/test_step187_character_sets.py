@@ -1,6 +1,6 @@
 """Step 187: Maya Character Sets on Blender Keying Sets.
 
-Expected values are Maya 2022's: pCube1 has a keyable custom attribute ``custom``; pCube2 / pCube3 plain cubes."""
+pCube1 has a keyable custom attribute ``custom``; pCube2 / pCube3 plain cubes."""
 
 
 from importlib import import_module

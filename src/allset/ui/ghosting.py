@@ -16,7 +16,7 @@ Maya 2022 rules:
   k = 1 / 2 / 3). Shaded ghosts blend their front and back faces (alpha 191 / 139 / 71 = 1 − (1 − a)²), so the kit
   draws every triangle, both faces, without depth writes. Maya's colours live in its rendering space (ACEScg, colour
   management on by default): the kit converts them to linear Rec.709 and scales by GHOST_GAIN / WIRE_GAIN, fitted
-  to Maya's ghost pixels over its #5c5c5c background.
+  to look right over the #5c5c5c background.
 
 Kit: ghost settings = ``Object.allset_ghost`` (Maya's per-node attributes); geometry per (object, absolute frame) is
 cached in world space — it stays valid when the current frame moves. Missing frames are sampled by a timer with
@@ -550,7 +550,7 @@ class ALLSET_OT_ghost(bpy.types.Operator):
     @classmethod
     def description(cls, context, props):
         return {"GHOST": "Ghost selected objects", "UNGHOST": "Remove ghosts from selected objects",
-                "UNGHOST_ALL": "All object(s) to be unghosted."}[props.action]   # Maya annotations, 
+                "UNGHOST_ALL": "All object(s) to be unghosted."}[props.action]   # Maya's messages
 
     def execute(self, context):
         from .. import results
@@ -561,7 +561,7 @@ class ALLSET_OT_ghost(bpy.types.Operator):
                 return {'CANCELLED'}
             _schedule()
             _redraw()
-            results.result(self, "")    # Maya prints nothing on success (060_messages_ui.md B7)
+            results.result(self, "")    # Maya prints nothing on success
             return {'FINISHED'}
         elif self.action == "UNGHOST":
             obs = unghost(list(context.selected_objects))

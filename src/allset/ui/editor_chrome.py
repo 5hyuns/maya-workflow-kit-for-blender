@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya editor chrome for the Graph Editor, Dope Sheet and UV Editor.
+"""Maya editor chrome for the Graph Editor, Dope Sheet and UV Editor (step 104).
 
 Maya 2022's editors:
 
@@ -14,7 +14,7 @@ Blender: ``GRAPH_HT_header.draw`` and ``DOPESHEET_HT_header.draw`` are swapped w
 unregister, ``tests/kit.py`` snapshots them); the UV Editor's header / tool header go through the ``ui/shelf.py``
 ``IMAGE_HT_header`` wrapper. Graph Editor and Dope Sheet areas have a single header row (no tool header region), so
 the icon row follows the menus on it; the UV Editor's tool header is Maya's second row. Blender's own editor menus
-stay in a menu at the end of the bar.
+stay in a "Blender" menu at the end of the bar.
 """
 
 import re
@@ -458,22 +458,22 @@ def _stats_set(field):
 
 # --- Graph Editor channel list (Maya outliner pane: node rows, "Translate X" rows) --------------------------------
 # Maya lists DAG nodes with their animated attributes under them: objects, joints (= pose bones,
-#  step 55; their curves live on the armature object as ``pose.bones["joint1"].location``) and the
+# step 55; their curves live on the armature object as ``pose.bones["joint1"].location``) and the
 # blendShape node of a mesh (= its shape-key datablock, ``rig_tools`` names it blendShapeN; its curves are the Key
 # ID's ``key_blocks["smile"].value``, one row per target, Maya's attribute = the target name). Step 150, #96.
 
 MAYA_ATTR = {"location": "Translate", "rotation_euler": "Rotate", "scale": "Scale", "rotation_quaternion": "Rotate",
              "delta_location": "Delta Translate", "delta_rotation_euler": "Delta Rotate", "delta_scale": "Delta Scale"}
-# One-value attributes: Maya visibility = hide_viewport ( step 129); hide_render has no transform attribute
-# in Maya, the closest is the shape's render stat Primary Visibility (step 150, delegated).
+# One-value attributes: Maya visibility = hide_viewport (step 129); hide_render has no Maya transform attribute,
+# the closest is the shape's render stat Primary Visibility (step 150).
 MAYA_SCALAR = {"hide_render": "Primary Visibility"}
 AXES = "XYZ"
 # Maya's default attribute name colours in the Graph Editor outliner (Translate X red,
 # Translate Y green; Z blue by the same rule as the manipulator / theme axis colours), other attributes light grey.
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
-BACK = (0.267, 0.267, 0.267, 1.0)        # Maya outliner pane #444444 (colors.json ui_samples)
-SELECT = (0.322, 0.522, 0.651, 1.0)      # Maya selection blue #5285a6 (kit-drawn pane: Maya's colours, any theme)
+BACK = (0.267, 0.267, 0.267, 1.0)        # outliner pane #444444
+SELECT = (0.322, 0.522, 0.651, 1.0)      # selection blue #5285a6 (kit-drawn pane: fixed colours, any theme)
 THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (right of the rows)
 _expanded = {}                           # node key -> bool (Maya shows attributes expanded)
 _scroll = {}                             # area pointer -> first row shown
@@ -649,11 +649,11 @@ def listed_objects(context, space):
 # default and the list follows the selection; unchecking it freezes the list shown then; Load / Add Selected Objects
 # are greyed while Auto Load is on (the kit's poll fails) and replace / append the frozen list (nothing selected =
 # empty list), Auto Load stays off. Maya's first Add right after a Load drops the loaded objects — the kit appends
-# (looks like a Maya bug; delegated). Pin Channel pins the highlighted rows (a node row = all its channels; nothing
+# (looks like a Maya bug). Pin Channel pins the highlighted rows (a node row = all its channels; nothing
 # highlighted = nothing pinned); pinned channels stay listed under their node, below the listed nodes. Show >
 # Attributes / Objects check items list only the checked kinds (several = union). Show Upstream Curves (on by default)
 # lists a driven-key channel's SDK curve and the driver's own curve under it. Pins / filters are one state for every
-# editor (Maya keeps pins per editor ; delegated).
+# editor (Maya keeps pins per editor).
 #
 # Blender: a Graph Editor / Dope Sheet draws the objects its own filters let through (Only Show Selected, the
 # Collection filter ``dopesheet.filter_collection``). A list Blender's selection filter can't express (loaded, plus
@@ -663,14 +663,14 @@ def listed_objects(context, space):
 # timer (``sync``). Curves Blender then draws that the Maya list doesn't show (unpinned curves of a pinned curve's
 # node, joints not loaded, attributes filtered out) are hidden (``fc.hide``) and shown again when they're listed
 # (``_kit_hidden``). Driven channels (driver curves: Maya driven key / expression) are listed like keyed ones: Blender
-# draws drivers only in the Graph Editor's Drivers mode, so those rows have no curve in F-Curve mode (delegated).
+# draws drivers only in the Graph Editor's Drivers mode, so those rows have no curve in F-Curve mode.
 
 LIST_MARK = "allset_list"      # kit list collection marker
 LOADED = "allset_loaded"       # loaded object names (absent = no loaded list)
 BONES = "allset_bones"         # loaded joints "armature\tbone" (an armature without entries = all its joints)
 AUTO = "allset_auto"           # Auto Load state while Only Show Selected is off for the kit list
 ATTR_FILTERS = ("hidden", "anim_curve", "expression", "driven_key", "user_defined")
-_pinned = set()                # ATTR row ids of pinned channels (Maya Pin Channel; session state, delegated)
+_pinned = set()                # ATTR row ids of pinned channels (Maya Pin Channel; session state)
 _kit_hidden = set()            # (id kind, id name, data path, index) of curves the kit hid
 
 
@@ -785,7 +785,7 @@ def row_objects(context, space):
         obs = None
     if obs is not None and _is_dope_space(space) and _wm_flag("allset_hierarchy_below"):
         # Maya shows the descendants' keys in the object's own rows without listing them; Blender's C Dope Sheet
-        # list can't merge another object's keys into a row, so the kit lists the descendants (delegated)
+        # list can't merge another object's keys into a row, so the kit lists the descendants
         obs = obs + [o for o in _descendants(obs) if o not in obs]
     kinds = _object_kinds()
     if "ik" in kinds:
@@ -797,7 +797,7 @@ def row_objects(context, space):
     flt = attr_filters()
     if flt and _is_dope_space(space):
         # Blender's Dope Sheet channel list can't drop single channels (fc.hide is Graph Editor only, drivers are
-        # no Dope Sheet channels): the attribute filters keep the objects with a matching attribute (delegated)
+        # no Dope Sheet channels): the attribute filters keep the objects with a matching attribute
         obs = [o for o in (context.scene.objects if obs is None else obs) if _has_attr(o, flt)]
     if obs is not None:
         in_scene = set(context.scene.objects)
@@ -1000,7 +1000,7 @@ def is_pinned(node, fc):
     return (node_key(node), fc.data_path, fc.array_index) in _pinned
 
 
-# Show > Attributes kinds of a curve (Maya attribute filters ): keyed curves are "Driven by Anim Curve", kit SDK
+# Show > Attributes kinds of a curve (Maya attribute filters): keyed curves are "Driven by Anim Curve", kit SDK
 # drivers (variable ``sdk``) "Driven by Driven Key", scripted drivers "Driven by Expression", custom properties
 # "User Defined", Channel Box hidden channels (Channel Control / Hide Selected, ``channel_box.HIDDEN_PROP``) "Hidden".
 
@@ -1019,7 +1019,7 @@ def is_driver(fc):
 
 def _character_routed(node):
     """{(data path, index)} of the node's channels that are character members (index -1 = whole array): Maya routes
-    a character member's curve through the character node, so it is not "Driven by Anim Curve" ()."""
+    a character member's curve through the character node, so it is not "Driven by Anim Curve"."""
     from ..operators import character_sets
     owner = node.id_data if isinstance(node, bpy.types.PoseBone) else node
     scene = bpy.context.scene
@@ -1088,7 +1088,7 @@ def filter_curves(node, curves, flt=None):
 
 
 # Maya lists a node's attributes in its attribute order (translate, rotate, scale, visibility, then the rest, e.g.
-# custom attributes / blend shape targets), not in the order they were keyed (step 150, delegated).
+# custom attributes / blend shape targets), not in the order they were keyed (step 150).
 ATTR_ORDER = ("location", "rotation_euler", "rotation_quaternion", "scale", "hide_viewport", "hide_render")
 
 
@@ -1103,11 +1103,11 @@ def listed_nodes(context, space):
     """[(kind, node, curves)]: per listed object its own row (step 281: also without curves, a bare node row like Maya;
     its curves include its data-block's = Maya shape channels), its joints (with Only
     Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
-    then — checked in gui_step150_outliner), its blendShape node. A node's curves are its keyed and its driven
+    then, gui_step150_outliner), its blendShape node. A node's curves are its keyed and its driven
     (driver) channels: Maya lists a driven-key / expression channel too. A checked Show >
-    Objects > Sets / Characters lists only those nodes (): kit sets as rows without channels (a Maya set row has
+    Objects > Sets / Characters lists only those nodes: kit sets as rows without channels (a Maya set row has
     none), character sets (a character is a set) with their member channels; kit sets and characters can't be
-    selected like Maya's, so every one is listed (delegated)."""
+    selected like Maya's, so every one is listed."""
     from . import channel_box
     out = []
     flt = attr_filters()
@@ -1247,7 +1247,7 @@ def picked_ids(context, all_rows):
 def highlighted(kind, rid, selected, picked):
     """Maya: once rows were picked in the outliner exactly those are highlighted; before that the selected nodes
     (never their attribute rows — Blender selects every F-curve of a selected object, so ``fc.select`` is not
-    the highlight). Clicking an attribute un-highlights its node like Maya's outliner (step 150, delegated)."""
+    the highlight). Clicking an attribute un-highlights its node like Maya's outliner (step 150)."""
     if picked:
         return rid in picked
     return kind not in ATTR_KINDS and selected

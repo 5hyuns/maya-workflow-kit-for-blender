@@ -1,8 +1,8 @@
 """Step 142 lane MEDIA (#41): the store / marketing / release media generators never apply a theme.
 
-Since step 130 (#40) the kit ships no theme; the promotional captures use Blender's factory theme and get Maya's flat
+Since step 130 (#40) the kit ships no theme; the promotional shots use Blender's factory theme and get a flat
 #5c5c5c viewport from view / scene data (tools/marketing/scene.py ``maya_look``). This test fails when a generator
-writes a theme again (static scan of the generators) and checks tools/marketing/bg_check.py, which every capture
+writes a theme again (static scan of the generators) and checks tools/marketing/bg_check.py, which every shot
 runs: flat Maya grey passes, Blender's factory theme background and step 125's theme gradient fail.
 """
 

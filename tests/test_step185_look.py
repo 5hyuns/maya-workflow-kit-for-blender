@@ -2,7 +2,7 @@
 
 Edges: Blender's sharp-edge overlay is switched off with the face overlay in Maya layout views, the hilite wire is
 1.5 px (just covers Blender's own 2 px edit edge), selected edges 2 px with a larger depth bias. Manipulator: plane
-handles at Maya's 0.52-0.68 arrow units with a rim + lightened translucent fill, the active handle / centre #fdff88,
+handles at 0.52-0.68 arrow units with a rim + lightened translucent fill, the active handle / centre #fdff88,
 the centre light blue #64dcff while an axis is active."""
 
 from importlib import import_module

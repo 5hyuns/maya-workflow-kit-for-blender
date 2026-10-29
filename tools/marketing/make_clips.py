@@ -4,7 +4,7 @@
 
 1. tools/marketing/fetch_assets.py checks the licensed models (CREDITS.md).
 2. The extension is installed in a clean sandbox (tmp/marketing_env; the user's Blender settings are never read or
-   written, ) and, per clip, a GUI Blender (1920 x 1080 window, --enable-event-simulate) runs
+   written) and, per clip, a GUI Blender (1920 x 1080 window, --enable-event-simulate) runs
    tools/marketing/clips.py: frames + timeline.json in tmp/marketing/clips/<name>/. Only the Blender started here is
    killed on timeout.
 3. tools/marketing/clip_compose.py draws cursor / clicks / key chips / caption band and encodes with ffmpeg:

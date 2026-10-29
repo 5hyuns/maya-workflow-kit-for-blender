@@ -1,5 +1,5 @@
 """Step 90: global key batch 4 — Ctrl+X cut, Alt+X walk, Alt+\\ playback range = animation range, Alt+1 / 2 / 4 show
-toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy; Edit > Cut. """
+toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy; Edit > Cut."""
 
 from importlib import import_module
 

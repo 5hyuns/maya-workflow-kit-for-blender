@@ -11,7 +11,7 @@ Blender's Outliner is C: Python can't put rows above its object rows, so the kit
 in Maya's order once the Maya Outliner lists objects unsorted (``use_sort_alpha`` off, ui/maya_outliner.setup);
 selecting one in the Outliner makes it the lead like Maya (Channel Box shows ``persp``, Visibility off). They don't
 render (``hide_render``), aren't drawn (``hide_viewport`` = Maya Visibility) and the kit's exports leave them out
-(``excluded``). Only a kit new Maya scene gets them; other files keep step 99's drawn rows (delegated).
+(``excluded``). Only a kit new Maya scene gets them; other files keep step 99's drawn rows.
 """
 
 import math
@@ -108,7 +108,7 @@ def _relink_first(coll, first, view_layer):
 
 class excluded:
     """Context manager: the startup cameras are out of the scene while a kit export runs (Maya's exporters leave the
-    startup cameras out, delegated), then linked back ahead of the other objects."""
+    startup cameras out), then linked back ahead of the other objects."""
 
     def __init__(self, scene, view_layer):
         self.scene, self.view_layer = scene, view_layer

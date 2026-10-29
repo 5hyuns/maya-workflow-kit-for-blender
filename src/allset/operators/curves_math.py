@@ -221,7 +221,7 @@ def cv_curve(points, degree=3):
 
 
 def ep_curve(points, degree=3, uniform=True):
-    """Maya EP Curve Tool (factory: degree 3, knot spacing Uniform): the curve passes through the points at
+    """Maya EP Curve Tool (default: degree 3, knot spacing Uniform): the curve passes through the points at
     u = 0 .. n-1 (Uniform) or at cumulative chord lengths (Chord length), natural ends."""
     pts = [tuple(p) for p in points]
     if degree == 1 or len(pts) < 3:
@@ -357,7 +357,7 @@ def to_bezier(cvs, knots, degree=3):
     return [cvs[i:i + 4] for i in range(0, len(cvs) - 1, 3)]
 
 
-# --- Rebuild (a model of Maya's Rebuild, not its exact algorithm ) --------------------------
+# --- Rebuild (a model of Maya's Rebuild, not its exact algorithm) --------------------------
 
 def arc_length_points(cvs, knots, degree, count, weights=None, dense=400):
     a, b = knots[0], knots[-1]
@@ -379,7 +379,7 @@ def arc_length_points(cvs, knots, degree, count, weights=None, dense=400):
 
 
 def rebuild(cvs, knots, degree, spans=4, new_degree=3, weights=None):
-    """Maya Rebuild (factory Uniform, 4 spans, degree 3, range 0-1, keep ends): least-squares fit of a clamped uniform
+    """Maya Rebuild (default Uniform, 4 spans, degree 3, range 0-1, keep ends): least-squares fit of a clamped uniform
     curve to equal-arc-length points with the end points fixed and the end legs kept on the original end tangents."""
     p = new_degree
     n = spans + p
@@ -446,7 +446,7 @@ def reverse(cvs, knots, weights=None):
 
 
 def attach(a, b, degree, method="BLEND", bias=0.5):
-    """Maya Attach (factory Blend, bias 0.5): the nearest pair of ends joins (``a`` = the first selected curve, turned so
+    """Maya Attach (default Blend, bias 0.5): the nearest pair of ends joins (``a`` = the first selected curve, turned so
     its near end is its end; ``b`` turned so its near end is its start); B's knots continue from A's end. Blend: A minus
     its last ceil(d/2) CVs, one CV bias*A_end + (1-bias)*B_start, B minus its first d//2 + 1 (joint knot multiplicity
     1). Connect: B's first CV = A's last, joint knot full multiplicity."""
@@ -629,7 +629,7 @@ def _closest_params(ca, cb):
 
 
 def fillet_curves(ca, cb, radius=1.0):
-    """Maya Fillet (factory: circular, radius 1, no trim / join) between two curves (cvs, knots, degree, weights):
+    """Maya Fillet (default: circular, radius 1, no trim / join) between two curves (cvs, knots, degree, weights):
     a circle tangent to both curves' tangent lines at their crossing, on each curve's start side (its end side when the
     curve starts at the crossing) — exact for straight curves; a rational cubic."""
     ua, ub = _closest_params(ca, cb)
@@ -655,7 +655,7 @@ def piece_length(cvs, knots, degree, weights=None, n=200):
 
 
 def cut_all(curves, last_only=False, keep_longest=False):
-    """Maya Cut (factory: keep all pieces): every curve is split at each crossing with the others.
+    """Maya Cut (default: keep all pieces): every curve is split at each crossing with the others.
     ``curves`` = list of (cvs, knots, degree, weights) -> list per input of its pieces (cvs, knots).
     Cut Options: ``last_only`` = "Using last curve" (only
     the crossings with the last curve; the last curve itself stays whole), ``keep_longest`` = "Longest segments" (one
@@ -757,7 +757,7 @@ def from_deflections(defl, points):
 
 
 def bend_cvs(points, amount=0.2, twist=0.0, count=None):
-    """Maya Bend (factory amount 0.2, twist 0): deflections of the first ``count`` CVs get amount x (twist, 1 - twist)
+    """Maya Bend (default amount 0.2, twist 0): deflections of the first ``count`` CVs get amount x (twist, 1 - twist)
     added sideways (ramped in over the first 5 CVs), leg lengths kept."""
     pts = [tuple(p) for p in points]
     n = len(pts) if count is None else count
@@ -780,7 +780,7 @@ def bend_cvs(points, amount=0.2, twist=0.0, count=None):
 
 
 def scale_curvature_cvs(points, factor=1.1, max_curvature=0.8, count=None):
-    """Maya Scale Curvature (factory 1.1, max 0.8): each leg's bend angle (1 - cos-ish of its deflection) scales by
+    """Maya Scale Curvature (default 1.1, max 0.8): each leg's bend angle (1 - cos-ish of its deflection) scales by
     ``factor`` up to 2 x max, the sideways part scales by the ratio of sines, leg lengths kept."""
     pts = [tuple(p) for p in points]
     n = len(pts) if count is None else count
@@ -818,7 +818,7 @@ def _smooth_pass(pts, count):
 
 
 def curl_cvs(points, amount=0.3, frequency=1.0, count=None):
-    """Maya Curl (factory amount 0.3, frequency 1): the CVs of a 4-pass smoothed copy carry the frame; each CV i
+    """Maya Curl (default amount 0.3, frequency 1): the CVs of a 4-pass smoothed copy carry the frame; each CV i
     moves by amount x (sin(f i) side + cos(f i) twist axis), ramped in while f i < 2."""
     pts = [tuple(p) for p in points]
     n = len(pts) if count is None else count
@@ -877,7 +877,7 @@ def fit_bspline(points):
     return interpolate(pts, params, knots, 3), knots, 3
 
 
-# --- Align (alignCurve, factory position + tangent continuity) ------------------------------------
+# --- Align (alignCurve, default position + tangent continuity) ------------------------------------
 
 def align_ends(a, b):
     """Maya Align with the first selected curve ``a`` moving: the closest pair of ends (a start / end, b start / end)
@@ -902,7 +902,7 @@ def align_ends(a, b):
 def keep_leg_lengths(old, new):
     """After CVs of a length-locked curve moved (``old`` -> ``new``), the moved CVs stay and every other CV follows
     its neighbour towards the moved ones so each CV leg keeps its old length (Maya's locked curve keeps its length
-    under the CV manipulator; the exact solver is )."""
+    under the CV manipulator; the exact solver is)."""
     old = [tuple(p) for p in old]
     new = [tuple(p) for p in new]
     if len(old) != len(new) or len(old) < 2:

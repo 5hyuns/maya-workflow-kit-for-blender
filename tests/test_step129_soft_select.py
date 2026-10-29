@@ -1,5 +1,5 @@
 """Step 129: one Maya soft select state (#15, #1), B + MMB radius drag (#1), falloff colour overlay (#2).
-; GUI: tests/gui/gui_step129_soft_select.py."""
+GUI: tests/gui/gui_step129_soft_select.py."""
 
 import os
 import tempfile
@@ -69,7 +69,7 @@ def _coords(ob):
 # --- one state (#15) ------------------------------------------------------------------------
 
 def test_maya_mode_starts_off():
-    assert soft.is_on() is False, "Maya factory: softSelect -q -sse = 0"
+    assert soft.is_on() is False, "soft select starts off"
 
 
 def test_b_tap_is_one_state_in_object_and_component_mode():
@@ -153,7 +153,7 @@ def test_b_drags_with_lmb_and_mmb():
 # --- colours (#2) ----------------------------------------------------------------------------
 
 def test_maya_colour_ramp():
-    """softSelect -q -softSelectColorCurve = 1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1 (Maya, step 129)."""
+    """Falloff colour curve 1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1 (r, g, b, position, linear)."""
     c = soft.ramp(np.array([1.0, 0.75, 0.5, 0.25, 0.0]))
     want = [(1, 1, 0), (1, 0.5, 0), (1, 0, 0), (0.5, 0, 0), (0, 0, 0)]
     assert np.allclose(c, want), c

@@ -3,9 +3,7 @@
 (back to object mode), Ctrl+B bevel (Maya polyBevel3 at once, Chamfer Vertex in vertex mode: step 139),
 Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
-(SelectNone: object selection mode, selection cleared),
-:79 (Ctrl+F9-F12 convert),  (Ctrl+B BevelPolygon, Maya default hotkey).
- 「계획」 2-3, 5; Delete:  「계획」.
+Alt+D = SelectNone (object selection mode, selection cleared); Ctrl+B = BevelPolygon, a Maya default hotkey.
 """
 
 import bmesh
@@ -161,7 +159,7 @@ def touching(bm, select_mode, target):
     the selection, read from the current component type (faces -> their edges / vertices;
     vertices -> the edges / faces using them). Blender's select_mode switch keeps only
     *contained* elements, which is Maya's separate "To Contained ..." (Ctrl+RMB menu), and
-    ``use_expand=True`` clears the selection instead (checked in 4.5)."""
+    ``use_expand=True`` clears the selection instead (4.5)."""
     sv, se, sf = select_mode
     if sf and not (sv or se):
         src = [f for f in bm.faces if f.select]
@@ -300,7 +298,7 @@ class ALLSET_OT_select_loops(bpy.types.Operator):
 
     def execute(self, context):
         # Blender 5.0: mesh.loop_multi_select(ring); 5.1+: mesh.select_edge_loop_multi /
-        # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops, ).
+        # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops).
         from .. import compat
         if compat.has_op(bpy.ops.mesh, "loop_multi_select"):
             return bpy.ops.mesh.loop_multi_select(ring=self.ring)

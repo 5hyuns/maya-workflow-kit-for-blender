@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya runTimeCommand -> Blender handling, for .
+"""Maya runTimeCommand -> Blender handling, for the keymap mapping table.
 
 Pure Python. Used by tools/gen_keymap_mapping.py (writes the doc) and by
 tests/test_keymap_maya.py (checks every IC/KIT row is really bound).
 
 Maya side: Maya's factory hotkeys (keys, contexts and
-runTimeCommand names only; no MEL is copied, ).
+runTimeCommand names only; no MEL is copied).
 
 Status:
   IC    Industry Compatible already does the Maya thing; kept.
   KIT   Bound by this kit's "Maya" keyconfig.
-  STEP  Planned in  step ``step``.
+  STEP  Planned for step ``step``.
   NO    Not applicable / not possible in Blender (see ``note``).
 Rows without an entry are "unreviewed".
 
@@ -95,7 +95,7 @@ ENTRIES = {
     "Duplicate": _e("KIT", (OBJ, "allset.duplicate", {}),
                     note="제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고, step 129)"),
     "FrameSelectedWithoutChildren": _e("KIT", (V3D, "allset.frame", {"selected": True}),
-                                       note="Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
+                                       note="여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "allset.tap_hold", {"binding": "select_all"}),
                                note="탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9)"),
     "RepeatLast": _e("KIT", ("Screen", "allset.repeat_last", {}), step=175,
@@ -224,7 +224,7 @@ ENTRIES = {
                                  note="스무스 프리뷰 단계 0–4 — step 27"),
     "SmoothingLevelDecrease": _e("KIT", (OBJ, "allset.smooth_level", {"delta": -1})),
     "IncreaseManipulatorSize": _e("KIT", (V3D, "allset.manip_size", {"factor": 1.25}),
-                                  note="gizmo_size ×1.25 (Maya ×2), 끄면 원래 값 — step 27"),
+                                  note="gizmo_size ×1.25, 끄면 원래 값 — step 27"),
     "DecreaseManipulatorSize": _e("KIT", (V3D, "allset.manip_size", {"factor": 0.8})),
     "Parent": _e("KIT", (OBJ, "allset.parent", {}),
                  note="월드 유지, parent inverse 단위행렬 (환경설정 Parent Mode=Blender 로 IC 방식); "
@@ -325,7 +325,7 @@ ENTRIES = {
     "RepeatLastActionAtMousePosition": _e("KIT", (V3D, "allset.repeat_at_mouse", {}),
                                           note="마지막 동작 반복 → 선택을 마우스 아래 바닥 (Z=0) 으로"),
     "CreateCameraFromView": _e("KIT", (OBJ, "allset.camera_from_view", {}), note="뷰와 같은 camera1 (렌즈·직교 크기), 뷰는 그대로"),
-    # --- step 83: insert / nudge / select keys ---
+    # --- step 83: insert / nudge / select keys (operators/key_insert.py) ---
     "InsertKey": _e("KIT", ("Screen", "allset.insert_key", {"channels": "ALL"}),
                     note="곡선 모양 그대로 현재 시간 키: Graph Editor 선택 곡선 → 보이는 곡선, 그 밖 = 선택 노드 곡선"),
     "InsertKeyTranslate": _e("KIT", ("Screen", "allset.insert_key", {"channels": "TRANSLATE"}),
@@ -338,7 +338,7 @@ ENTRIES = {
     "SelectNextKey": _e("KIT", ("Screen", "allset.select_key", {"direction": "NEXT"}),
                         note="선택 키 (없으면 현재 시간) 다음 키로 가서 그 키만 선택"),
     "SelectPreviousKey": _e("KIT", ("Screen", "allset.select_key", {"direction": "PREVIOUS"})),
-    # --- step 87: view keys 3 ---
+    # --- step 87: view keys 3 (operators/view_keys3.py) ---
     "CycleDisplayMode": _e("KIT", (V3D, "allset.cycle_display", {}),
                            note="X-ray 조인트 (아마추어 In Front) → 전부 → 메시만 (조인트·커브 숨김) 순환"),
     "CameraModeToggle": _e("KIT", (V3D, "allset.camera_mode_toggle", {}),
@@ -352,7 +352,7 @@ ENTRIES = {
     "TogglePanZoomPress": _e("KIT", (V3D, "allset.pan_zoom_hold", {}),
                              note="카메라 뷰에서 누르는 동안 LMB 팬 / MMB 줌 (camera view offset / zoom, 렌더 그대로)"),
     "TogglePanZoomRelease": _e("KIT", note="놓기 = pan_zoom_hold 모달이 끝냄 (누름 행의 항목)"),
-    # --- step 90: global key batch 4 ---
+    # --- step 90: global key batch 4 (operators/global_keys4.py) ---
     "CutSelected": _e("KIT", (OBJ, "allset.cut", {}), note="선택 (+ 그 아래 계층) 을 클립보드로 복사 후 삭제, Ctrl+V 로 되돌림 (Outliner 도)"),
     "WalkContext_Command": _e("KIT", (V3D, "view3d.walk", {}), note="Blender Walk 모달 (클릭 / Enter = 끝, ESC = 취소); IC Alt+X X-ray 제거"),
     "PlaybackRangeAnimStartEnd": _e("KIT", ("Screen", "allset.playback_range_anim", {}),
@@ -373,7 +373,7 @@ ENTRIES = {
                         note="Blender 붙여넣기 + 첫 오브젝트가 lead (Channel Box); Maya 의 pasted_ 접두사는 없음 (이름이 비면 원래 이름)"),
     "outlinerPanel:OutlinerRenameSelectedItem": _e("IC", ("Outliner", "outliner.item_rename", {}), note="활성 행 이름 바꾸기"),
     "outlinerPanel:OutlinerRevealSelected": _e("IC", ("Outliner", "outliner.show_active", {}), note="선택 항목까지 펼치고 보이기"),
-    # --- step 92: Graph Editor key batch ---
+    # --- step 92: Graph Editor key batch (operators/graph_keys.py) ---
     "graphEditor:GraphEditorFrameCenterView": _e("KIT", ("Graph Editor", "allset.graph_center_time", {}),
                                                  note="현재 시간을 가운데로 (가로만, 확대 그대로)"),
     "graphEditor:SnapTimeToSelection": _e("KIT", ("Graph Editor", "allset.snap_time_toggle", {}),
@@ -414,7 +414,7 @@ ENTRIES = {
     "ToggleModelEditorBars": _e("KIT", (V3D, "wm.context_toggle", {"data_path": "space_data.show_region_header"}),
                                 note="3D 뷰 머리 (메뉴 + 아이콘 줄) 숨김/보임"),
     "CycleBackgroundColor": _e("KIT", (V3D, "allset.cycle_background", {}),
-                               note="모든 뷰: 회색 0.36 → 밝은 회색 0.631 → 그라데이션 → 검정 (Maya 실측, 그라데이션은 Maya 테마일 때만; step 120)"),
+                               note="모든 뷰: 회색 0.36 → 밝은 회색 0.631 → 그라데이션 → 검정 (그라데이션은 Maya 테마일 때만; step 120)"),
     "PaintOperationMarkingMenuPress": _e("KIT", ("Weight Paint", "wm.call_menu", {"name": "ALLSET_MT_paint_operation"}),
                                          note="Replace / Add / Scale / Smooth 메뉴 (누르면 열림, 드래그 아님)"),
     "ModifyPaintValuePress": _e("KIT", ("Weight Paint", "wm.radial_control", {}), note="가중치 값 드래그"),

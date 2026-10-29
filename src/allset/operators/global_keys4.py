@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Global key batch 4: Ctrl+X cut / Ctrl+V paste, Alt+\\ playback range = animation range,
+"""Global key batch 4 (step 90): Ctrl+X cut / Ctrl+V paste, Alt+\\ playback range = animation range,
 Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X walk is Blender's view3d.walk.
 
 Maya 2022 behaviour:
@@ -83,7 +83,7 @@ def _unsuffixed(name):
 def pasted_name(orig, taken):
     """Maya Edit > Paste imports with every node renamed by the prefix "pasted_": every node becomes ``pasted__<name>``.
     Maya keeps a clashing short name under another group; Blender names are
-    unique, so a taken one counts up like a new node (``pasted__pCube2``, delegated)."""
+    unique, so a taken one counts up like a new node (``pasted__pCube2``)."""
     name = PASTE_PREFIX + orig
     if name not in taken:
         return name

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya UV Toolkit: a "UV Toolkit" tab in the UV Editor sidebar.
+"""Maya UV Toolkit: a "UV Toolkit" tab in the UV Editor sidebar (step 66).
 
 Order of Maya's toolkit: component icons (Vertex · Edge ·
 Face | UV · UV Shell), "N object selected", Pick/Marquee · Drag · Tweak/Marquee, Symmetry, Selection / Transform

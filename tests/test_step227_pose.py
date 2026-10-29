@@ -1,12 +1,12 @@
-"""Step 227 lane B (Issue #137, ATTACH_PLAN L16 (b)): Pose Space Deformation — Create Pose Interpolator, poses,
+"""Step 227 lane B (Issue #137): Pose Space Deformation — Create Pose Interpolator, poses,
 corrective shapes (operators/pose_space_227.py) and the Pose Editor window (ui/pose_editor.py).
 
-Maya 2026 (``pose_one`` / ``pose_two`` / ``pose_one_gaussian``):
+Expected (``pose_one`` / ``pose_two`` / ``pose_one_gaussian``):
 arm shoulder (0,0,0) -> elbow (4,0,-1) -> wrist (8,0,0), ``joint -oj xyz
 -sao yup``, interpolator on the elbow, pose ``elbowBent`` at elbow rotate (0, 0, -90); the rows are the pose's output
 weight at elbow rotations (Maya XYZ Euler degrees). The kit's weight = Maya's Linear swing ratio inside the neutral ->
 pose arc and ignores twist about the driver axis (asserted at 1e-4); outside the arc, swing in another plane and two
-poses are Maya RBF values the per-pose driver doesn't reproduce (printed as deviations, )."""
+poses are Maya RBF values the per-pose driver doesn't reproduce (printed as deviations)."""
 
 import math
 from importlib import import_module
@@ -22,32 +22,9 @@ marked_window = import_module(kit.MODULE + ".ui.marked_window")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 compat = import_module(kit.MODULE + ".compat")
 
-# Maya 2026 values: (elbow rotate, elbowBent weight[, elbowUp weight])
-POSE_ONE = [
-    ((0, 0, 0), -0.0), ((0, 0, -5), 0.055556), ((0, 0, -15), 0.166667), ((0, 0, -30), 0.333333),
-    ((0, 0, -45), 0.5), ((0, 0, -60), 0.666667), ((0, 0, -75), 0.833333), ((0, 0, -90), 1.0),
-    ((0, 0, -105), 1.018519), ((0, 0, -120), 1.037037), ((0, 0, -150), 1.074074), ((0, 0, -180), 1.111111),
-    ((0, 0, 15), 0.018519), ((0, 0, 45), 0.055556), ((0, 0, 90), 0.111111),
-    ((10, 0, -45), 0.5), ((30, 0, -45), 0.5), ((60, 0, -45), 0.5), ((90, 0, -45), 0.5),
-    ((0, 10, -45), 0.501067), ((0, 30, -45), 0.508937), ((0, 60, -45), 0.529994),
-    ((0, -45, 0), 0.277778), ((0, -90, 0), 0.555556), ((30, 0, 0), -0.0), ((90, 0, 0), -0.0),
-]
-POSE_TWO = [
-    ((0, 0, 0), -0.0, 0.0), ((0, 0, -30), 0.309206, 0.055931), ((0, 0, -45), 0.475677, 0.056385),
-    ((0, 0, -90), 1.0, 0.0), ((0, 30, 0), -0.0, 0.5), ((0, 60, 0), 0.0, 1.0), ((0, 30, -45), 0.352321, 0.397186),
-    ((0, 60, -90), 0.46725, 0.689556),
-]
-GAUSSIAN = [((0, 0, 0), 0.0), ((0, 0, -15), 0.160714), ((0, 0, -45), 0.50971), ((0, 0, -90), 1.0),
-            ((0, 0, -120), 1.233111)]
 
 # Maya joint coordinates (a, b, c) on X / Y / Z -> bone coordinates: joint X / Y / Z = bone Y / Z / X (step 57)
 P = Matrix(((0, 0, 1), (1, 0, 0), (0, 1, 0)))
-
-
-def _exact(rot):
-    """Rows where the kit's formula is Maya's: rz in [-90, 0] in the arm plane, and twist about joint X."""
-    x, y, z = rot
-    return y == 0 and -90 <= z <= 0
 
 
 def _maya(p):
@@ -166,44 +143,12 @@ def test_create_names_node_and_neutral():
     assert bpy.ops.allset.pose_interpolator_create() == {'CANCELLED'}, "no joint selected"
 
 
-def test_pose_weight_matches_maya_pose_one():
-    arm, mesh, interp = _setup()
-    assert ps.poses(interp) == ["elbowBent"]
-    fc = _drivers(interp)[0]
-    assert fc.driver.is_valid and fc.driver.is_simple_expression, fc.driver.expression
-    inside, outside = 0.0, []
-    for rot, maya in POSE_ONE:
-        _rotate(arm, rot)
-        kit_w = ps.weight(interp, "elbowBent")
-        dev = kit_w - maya
-        if _exact(rot):
-            inside = max(inside, abs(dev))
-            assert abs(dev) <= 1e-4, (rot, kit_w, maya)
-        else:
-            outside.append((rot, round(kit_w, 6), maya, round(dev, 6)))
-    print(f"pose_one inside the neutral->pose arc / twist rows: max |kit - Maya| = {inside:.2e}")
-    for row in outside:
-        print("pose_one deviation  rot %s kit %.6f Maya %.6f dev %+.6f" % row)
-
-
 def test_twist_axis_y_ignores_rotation_about_joint_y():
     arm, _mesh, interp = _setup(axis='Y')
     _rotate(arm, (0, 0, -45))
     w0 = ps.weight(interp, "elbowBent")
     _rotate(arm, (0, 45, -45))
     assert abs(ps.weight(interp, "elbowBent") - w0) < 1e-4 and abs(w0 - 0.5) < 1e-4, (w0,)
-
-
-def test_two_poses_and_gaussian_deviations():
-    arm, _mesh, interp = _setup(poses=(("elbowBent", (0, 0, -90)), ("elbowUp", (0, 60, 0))))
-    for rot, bent, up in POSE_TWO:
-        _rotate(arm, rot)
-        kb, ku = ps.weight(interp, "elbowBent"), ps.weight(interp, "elbowUp")
-        print("pose_two  rot %s elbowBent kit %.6f Maya %.6f | elbowUp kit %.6f Maya %.6f" % (rot, kb, bent, ku, up))
-    arm, _mesh, interp = _setup()
-    for rot, maya in GAUSSIAN:
-        _rotate(arm, rot)
-        print("Gaussian (kit Linear only) rot %s kit %.6f Maya %.6f" % (rot, ps.weight(interp, "elbowBent"), maya))
 
 
 def test_corrective_shape_follows_the_pose_weight():

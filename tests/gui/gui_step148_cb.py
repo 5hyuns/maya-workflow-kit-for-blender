@@ -5,7 +5,7 @@
 top); its first row Key Selected keys the clicked channel.
 #83: the Channel Box pane has no empty rows above the Layer Editor (the scroll window fills its part).
 #85: the Channel Box menu bar reads "Channels"; numbers in the Channel Box / AE fields are not cut.
-#95 / lights: a lattice reads Maya's Scale 2, a point light shows Color R / G / B and Intensity."""
+#95 / lights: a lattice reads Scale 2, a point light shows Color R / G / B and Intensity."""
 
 import os
 import sys
@@ -229,9 +229,9 @@ def s_lattice_shot():
     lat = bpy.data.objects.get("ffd1Lattice")
     sc = tuple(round(v, 4) for v in lat.scale) if lat else None
     size = tuple(round(v, 5) for v in lat.matrix_world.to_scale()) if lat else None
-    # Maya's polyCube is 1 unit wide: its lattice reads Scale 1 1 1 (a radius 1 sphere's reads 2 in Maya); the
+    # a polyCube is 1 unit wide: its lattice reads Scale 1 1 1 (a radius 1 sphere's reads 2); the
     # world size is the cube's (1 cm in the cm template), not 1 m
-    check(f"#95 ffd1Lattice Scale = Maya's 1 1 1 around the 1-unit cube ({sc}; world {size})",
+    check(f"#95 ffd1Lattice Scale = 1 1 1 around the 1-unit cube ({sc}; world {size})",
           sc is not None and all(abs(v - 1.0) < 1e-3 for v in sc)
           and all(abs(v - 0.01) < 1e-4 for v in size))
     with override():

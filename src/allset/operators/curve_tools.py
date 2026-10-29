@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Curves / Surfaces commands Blender can build (step 109,  「계획」 3).
+"""Maya Curves / Surfaces commands Blender can build (step 109).
 
-Results in Maya ( 「계획」, defaults of the commands):
+Results in Maya (defaults of the commands):
 - Planar on a closed curve -> ``planarTrimmedSurface1``; here a copy of the curve filled in 2D (Blender fills
   closed 2D curves; the curve is flattened onto its local XY plane).
 - Loft / Extrude: real NURBS surfaces since step 181 (operators/surfaces_maya.py).
@@ -13,7 +13,7 @@ Results in Maya ( 「계획」, defaults of the commands):
   points (curve edit mode).
 
 Selection order: Maya lofts / extrudes in selection order; Blender objects have none, so the active (last
-selected) object is last, the others keep their name order (delegated).
+selected) object is last, the others keep their name order.
 """
 
 import bpy
@@ -139,7 +139,7 @@ def resample(points, count, closed):
     return out
 
 
-# Loft / Extrude moved to operators/surfaces_maya.py (step 181: real NURBS surfaces, Maya-exact).
+# Loft / Extrude moved to operators/surfaces_maya.py (step 181: real NURBS surfaces).
 
 
 # --- Bevel Plus ---------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ def sweep_mesh(context, ob):
     data.extrude = 0.0
     data.offset = 0.0
     data.bevel_depth = SWEEP_RADIUS * k
-    data.bevel_resolution = SWEEP_SIDES // 2 - 2     # Blender: 2 * (resolution + 2) sides around (checked)
+    data.bevel_resolution = SWEEP_SIDES // 2 - 2     # Blender: 2 * (resolution + 2) sides around
     data.use_fill_caps = True
     tmp = bpy.data.objects.new("sweepTmp", data)
     tmp.matrix_world = ob.matrix_world

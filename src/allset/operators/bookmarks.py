@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Time Slider bookmarks as Blender timeline markers.
+"""Maya Time Slider bookmarks as Blender timeline markers (step 107).
 
 Maya 2022 hotkeys: Alt+T CreateTimeSliderBookmark
 ("Create a new Time Slider Bookmark from selection", a name dialog), Alt+Shift+T QuickCreate, ' / ; Next / Previous

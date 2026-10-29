@@ -8,9 +8,9 @@ collection's link order) and then calls ``outliner_collections_children_sort`` o
 a C ``qsort`` whose comparator says "equal" for all of them (only TE_CHILD_NOT_IN_COLLECTION differs; Blender
 4.5 / 5.0 source, editors/space_outliner/outliner_tree.cc). ``qsort`` isn't stable: the Windows CRT short sort
 (lists of 2-8, CUTOFF 8) swaps the first element with the last one, then the new first with the one before ... so a
-list shows rotated left by one (checked: persp, top, front, side, pCube1, pSphere1 -> top, front, side, pCube1,
+list shows rotated left by one (persp, top, front, side, pCube1, pSphere1 -> top, front, side, pCube1,
 pSphere1, persp); its quicksort (9 and more) leaves an all-equal list as it is. Only the top list is affected (child
-lists draw in link order, checked). Python can't change the sort, so the kit links the top list rotated right by one
+lists draw in link order). Python can't change the sort, so the kit links the top list rotated right by one
 (``base_for``) and Blender's rotation puts it back; children are linked in creation order.
 
 Creation order = the object ID property ``allset_dag_order`` (given when the kit first sees an object, in link
@@ -29,7 +29,7 @@ _state = {"busy": False}
 
 
 def rotates_small_lists():
-    """True where Blender's qsort rotates an all-equal list of 2-8 (the Windows CRT, checked in 4.5)."""
+    """True where Blender's qsort rotates an all-equal list of 2-8 (the Windows CRT)."""
     return sys.platform == "win32"
 
 

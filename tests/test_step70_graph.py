@@ -1,5 +1,5 @@
 """Step 70: Graph Editor tangent toolbar, Shift+S keyframe / tangent marking menu, Graph Editor G / D, Maya Auto Key
-(only keyed channels), Playblast. ; GUI: tests/gui/gui_step70_graph.py."""
+(only keyed channels), Playblast. GUI: tests/gui/gui_step70_graph.py."""
 
 import types
 from importlib import import_module

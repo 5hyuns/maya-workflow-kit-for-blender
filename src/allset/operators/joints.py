@@ -3,7 +3,7 @@
 
 Maya rigging (a Maya joint = a bone of one armature per
 skeleton, ``skeleton1`` / ``joint1``, rotate order XYZ, Blender's bone Y points at the child), design
- 「계획」. A Maya joint is a point and a Blender bone a segment, so N clicks make N
+step 57. A Maya joint is a point and a Blender bone a segment, so N clicks make N
 bones: bone K runs from click K to click K+1, the last (Maya's end joint) gets a short tail along the
 previous segment.
 """
@@ -93,7 +93,7 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
     if parent is not None and (p - parent.head).length < 1e-6:
         return parent.name
     eb = ebs.new(next_joint_name())
-    eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (factory; Blender 4.5 checked)
+    eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (the default; Blender 4.5)
     stamp_last(eb)                 # Maya child order = creation order (step 248)
     eb.head = p
     if parent is None:
@@ -141,7 +141,7 @@ def view_under(window, x, y):
 
 
 # Maya Joint Tool settings the kit honours: Secondary Axis Y with
-# Secondary Axis World Orientation +Y (Joint Tool factory), Create IK handle off. Blender bones point their Y at the
+# Secondary Axis World Orientation +Y (Joint Tool default), Create IK handle off. Blender bones point their Y at the
 # child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
 SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "Y", "The bone's Z axis"),
                   ("Z", "Z", "The bone's X axis"), ("NONE", "None", "Leave the bone roll as placed"))
@@ -206,10 +206,9 @@ def maya_frames(ob):
 
 
 # Step 233 (Issue #142): Blender ignores every location constraint on a CONNECTED bone (its head is glued to the
-# parent's tail; checked 4.5: Copy Location / Child Of / Copy Transforms / Limit Location leave it in place, rotation
-# constraints work), while a Maya joint's translate is free: Constrain > Point / Parent on a child joint moves it
-# (Maya 2026: joint3 (12, 12, 0), W1 = 3 -> (12, 13, 0)).
-# The joint that gets such a constraint is disconnected (delegated: only that bone — Joint Tool chains stay connected,
+# parent's tail; 4.5: Copy Location / Child Of / Copy Transforms / Limit Location leave it in place, rotation
+# constraints work), while a Maya joint's translate is free: Constrain > Point / Parent on a child joint moves it.
+# The joint that gets such a constraint is disconnected (only that bone — Joint Tool chains stay connected,
 # so moving a joint in edit mode still drags the chain); it stays where it is (rest pose unchanged) and the bone is
 # marked ``FREED``. Undo brings the connection back with the constraint.
 LOCATION_CONSTRAINTS = frozenset({'COPY_LOCATION', 'CHILD_OF', 'COPY_TRANSFORMS', 'LIMIT_LOCATION', 'LIMIT_DISTANCE',
@@ -250,7 +249,7 @@ def free_location_constrained(context, arm):
 
 
 def orient_new(ob, names, secondary="Y", world="Y", sign="+", aos=True, to_world=False):
-    """Orient the new joints the way Maya's Joint Tool does on finish (Joint Tool factory: orientation xyz, secondary
+    """Orient the new joints the way Maya's Joint Tool does on finish (Joint Tool default: orientation xyz, secondary
     axis yup, auto orient secondary on): primary X, ``secondary`` Y /
     Z toward the Maya world axis ``world`` / ``sign`` (bend normal with ``aos``), "NONE" = Maya's traditional orient (no
     secondary axis), ``to_world`` = Orient Joint to World. Also writes Maya's variable bone radius. Returns the number of
@@ -320,8 +319,7 @@ def orient_bones(ob, ebs, names, oj="xyz", sao="yup", aos=True, skipped=None, re
     joints are skipped (``skipped`` gets (name, reason)). Returns the number oriented."""
     from . import joint_orient
     # Skin-bound joints are oriented too, without a warning. Maya then moves the skinned mesh (bindPreMatrix
-    # kept: 2.06 units on a test rig);
-    # Blender's skin follows the new rest, so the kit's mesh stays (step 252, a checked difference).
+    # kept); Blender's skin follows the new rest, so the kit's mesh stays (step 252, a kit difference).
     depth = {eb.name: len(eb.parent_recursive) for eb in ebs}
     order = sorted(names, key=lambda nm: depth.get(nm, 0))
     todo = []
@@ -441,7 +439,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
                                   items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
     secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
-    # Maya 2025+ Joint Tool factory: auto orient secondary on; Orient Joint to World =
+    # Maya 2025+ Joint Tool default: auto orient secondary on; Orient Joint to World =
     # no orientation
     auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True)
     orient_world: BoolProperty(name="Orient Joint to World", default=False)
@@ -666,7 +664,7 @@ _AXES = [(a, a, "") for a in ("X", "Y", "Z")]
 
 
 def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
-    """Maya Skeleton > Orient Joint (``cmds.joint(edit=True, oj=oj, sao=sao, aos=..., ch=True, zso=True)``; factory xyz
+    """Maya Skeleton > Orient Joint (``cmds.joint(edit=True, oj=oj, sao=sao, aos=..., ch=True, zso=True)``; default xyz
     / yup / aos on / children on): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no
     secondary world axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints
     are skipped (``skipped``). Returns the number oriented."""
@@ -682,7 +680,7 @@ def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
 
 
 def _load_options(op, key, names):
-    """The values last used (Maya setting): Blender doesn't remember properties of operators run from Python."""
+    """The values last used (like Maya's saved options): Blender doesn't remember properties of operators run from Python."""
     from .option_windows import saved
     for name, value in (saved("op_" + key) or {}).items():
         if name in names:
@@ -725,7 +723,7 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
 
     def invoke(self, context, event):
         # Maya: a plain menu click runs with the saved options, the option box opens the window (step 232; the
-        # dialog on every click kept the keyboard until closed, audit 0.5.0 ③-2). Blender keeps the last values.
+        # dialog on every click kept the keyboard until closed). Blender keeps the last values.
         if self.option_box:
             return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Orient")
         _load_options(self, "orient_joint", self.OPTIONS)
@@ -851,7 +849,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
     bl_label = "Mirror Joints Options"
     bl_options = {'UNDO'}
 
-    # Maya 2026 factory: XY (step 246)
+    # default XY (step 246)
     plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="XY")
     function: EnumProperty(name="Mirror Function", items=(("BEHAVIOR", "Behavior", "Mirrored joints rotate "
                                                            "the opposite way (Blender symmetrize)"),
@@ -867,7 +865,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
 
     def invoke(self, context, event):
         # Maya: a plain menu click runs with the saved options, the option box opens the window (step 232; the
-        # dialog on every click kept the keyboard until closed, audit 0.5.0 ③-2). Blender keeps the last values.
+        # dialog on every click kept the keyboard until closed). Blender keeps the last values.
         if self.option_box:
             return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Mirror")
         _load_options(self, "mirror_joints", ("plane", "function", "search", "replace"))
@@ -895,11 +893,11 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
 
 # --- joint pick-walk and parenting --------------------------------------------------------------
 
-# Step 217 ( ,  L20): Maya's pickWalk walks the DAG and
+# Step 217: Maya's pick walk walks the DAG and
 # goes into hidden nodes; with controller tags it follows the controller
 # hierarchy. Kit controller tags live on data Bones (operators/controllers.py). An untagged armature treats
 # bones whose bone collections are all hidden as "not a control" and walks past them (preference
-# pick_walk_skip_hidden_collections; Maya walks into hidden display layers — kit difference, delegated). Bones
+# pick_walk_skip_hidden_collections; Maya walks into hidden display layers — kit difference). Bones
 # hidden one by one (h) are walked into like Maya.
 CONTROLLER = "allset_controller"
 CONTROLLER_PARENT = "allset_controller_parent"
@@ -1021,9 +1019,9 @@ def _visible_walk(bone, direction):
     return _wrap(sibs, bone, direction)
 
 
-# Step 236 (Issue #145, audit CHAINS_AUDIT_0.5.0.md:321): in a Rigify rig 63 % of the controls hang on hidden MCH
-# bones, so the nearest shown ancestor of upper_arm_fk.L is tweak_spine.003, not shoulder.L. Decision 6's flip
-# signal = "Rigify rule (ORG hierarchy projection)": a generated rig (data property ``rig_id``) without kit tags gets
+# Step 236 (Issue #145): in a Rigify rig 63 % of the controls hang on hidden MCH
+# bones, so the nearest shown ancestor of upper_arm_fk.L is tweak_spine.003, not shoulder.L. The
+# Rigify rule (ORG hierarchy projection): a generated rig (data property ``rig_id``) without kit tags gets
 # controller parents computed from its ORG bones (never stored, so Tag / Parent Controller still win): control C ->
 # its ORG twin (C's name without the variant word: upper_arm_fk.L -> ORG-upper_arm.L, tweak_spine.003 ->
 # ORG-spine.003) -> up the ORG parents to the first one with a shown control twin, same variant first
@@ -1091,7 +1089,7 @@ def rigify_parents(arm):
             up = visible_ancestor(bones[name])
             parent = up.name if up is not None else None
         out[name] = parent
-    for name in list(out):                      # a loop (never checked) makes that control a root
+    for name in list(out):                      # a loop (not expected) makes that control a root
         seen, cur = set(), name
         while cur is not None and cur not in seen:
             seen.add(cur)

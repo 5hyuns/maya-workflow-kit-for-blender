@@ -1,6 +1,6 @@
 """Background check for promotional captures (step 142, #41; was step 125's gradient check): every Maya-mode 3D
-viewport in a screenshot / key visual / clip frame must show factory flat background #5c5c5c
-(Maya default). The kit ships no theme since step 130 (#40): the captures use Blender's
+viewport in a screenshot / key visual / clip frame must show the flat background #5c5c5c.
+The kit ships no theme since step 130 (#40): the captures use Blender's
 factory theme and the flat grey is view / scene data (tools/marketing/scene.py ``maya_look``), so Blender's factory
 theme background (#3d3d3d) or a theme gradient (step 125's #889db3 top) fail here.
 
@@ -11,19 +11,19 @@ Pure Python (no bpy, no numpy): the pixels come from Pillow outside Blender, fro
 (Blender's Python has no Pillow; ``load_rgb``). For each rect, thin horizontal strips are sampled near the top and
 further down the view and split into colour clusters; a background candidate is a cluster covering >= MIN_SHARE
 of its strip (grid lines, HUD text, menus and objects form other clusters and don't decide the colour). The top
-background must be Maya's flat grey; the deepest strip that still shows it is reported (sets whose ground covers
+background must be the flat grey; the deepest strip that still shows it is reported (sets whose ground covers
 the lower part of the view, like the DOGWALK snow, pass on the part above the horizon).
 """
 
 import math
 import sys
 
-MAYA_FLAT = (0x5c, 0x5c, 0x5c)         # Maya 2022 factory viewport background
+MAYA_FLAT = (0x5c, 0x5c, 0x5c)         # Maya-style flat viewport background
 BLENDER_FACTORY = (0x3d, 0x3d, 0x3d)   # Blender 4.5 factory theme 3D View background (what a missed view shows)
 
 # Thresholds. A capture passes when the top background (searched in the top TOP_BAND) is within DE_FLAT_MAX of
-# #5c5c5c. checked (step 142): Solid views with the view colour #5c5c5c / #5d5d5d, Material Preview with the
-# marketing world #5a5a5a under AgX (dE00 0.8). Blender's factory #3d3d3d is dE00 10.6 away, Maya's light grey
+# #5c5c5c. Step 142: Solid views with the view colour show #5c5c5c / #5d5d5d, Material Preview with the
+# marketing world #5a5a5a under AgX (dE00 0.8). Blender's factory #3d3d3d is dE00 10.6 away, a light grey
 # #a1a1a1 26, step 125's gradient top #889db3 27.
 DE_FLAT_MAX = 3.0
 TOP_BAND = 0.15
@@ -183,7 +183,7 @@ def _strips(px, x, y, w, h, from_top, band=None):
 def check_rect(px, rect, scale=1.0):
     """Flat-grey check of one viewport rect [x, y, w, h] (top-down window px; ``scale`` = image px per window px).
     Returns a dict: ok (True / False / None = not checked), reason, top (the background found near the top),
-    bottom (the deepest background strip still Maya's grey), de (ΔE00 of the top to #5c5c5c), depth (bottom's t)."""
+    bottom (the deepest background strip still the flat grey), de (ΔE00 of the top to #5c5c5c), depth (bottom's t)."""
     x, y, w, h = (int(round(v * scale)) for v in rect)
     W, H = px.size
     x, y = max(0, x), max(0, y)

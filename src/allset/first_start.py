@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Maya layout as a new file, "Make Blender Maya" and starting Blender in the Maya layout (,
+"""The Maya layout as a new file, "Make Blender Maya" and starting Blender in the Maya layout (step 42,
 reworked in step 130).
 
 - ``allset.new_maya_scene`` ("New Scene in Maya Layout"): a new untitled file read from the layout file bundled inside
   the extension (``app_template.STARTUP``) with ``wm.read_homefile(filepath=...)``. Unlike the app template of
-  steps 5–129 nothing is copied into the user's scripts folder, and the preferences are kept (checked, step 130).
+  steps 5–129 nothing is copied into the user's scripts folder, and the preferences are kept (step 130).
 - ``allset.make_maya``: "Start in Maya Layout" on (this add-on's own setting) and the Maya layout now: a new Maya
   scene when the open file is untouched, else the layout workspace appended to the open file
   (``switch.enter_layout``). It writes none of Blender's preferences: the Maya theme, splash, density, font, wire,
-  navigation, undo and panel presets of steps 42–112 are gone ().
+  navigation, undo and panel presets of steps 42–112 are gone (step 130).
 - Start in the Maya layout: armed on register, the first load_post (Blender's startup file, loaded right after the
   add-ons register) opens a new Maya scene when Blender started without a file; the first timer tick disarms it, so
   File > New later is left alone.

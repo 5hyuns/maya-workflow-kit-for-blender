@@ -1,6 +1,6 @@
-"""Step 151 lane A (#99): the marking-menu ring has Maya 2022's geometry — radius 55, diagonal boxes with their corner
+"""Step 151 lane A (#99): the marking-menu ring has Maya-style geometry — radius 55, diagonal boxes with their corner
 on the diagonal, boxes 21 px high and text + 2 x 25 px wide, the submenu arrow inside the right padding, the list
-21 px under the ring. Numbers of Maya's object marking menu and Shift+RMB menu.
+21 px under the ring. Numbers of the object marking menu and the Shift+RMB menu.
 Engine only (no bpy UI)."""
 
 from importlib import import_module
@@ -10,16 +10,16 @@ import kit
 engine = import_module(kit.MODULE + ".marking.engine")
 mm = import_module(kit.MODULE + ".marking.menus")
 
-PRESS = (815, 458)     # Maya press point (pixel, y down) in both menus
+PRESS = (815, 458)     # press point (pixel, y down) in both menus
 
-# Maya text ink widths (px) and box outer rects (x0, y0, x1, y1 border pixels, y down), marking_ring_151.md.
+# Text ink widths (px) and expected box outer rects (x0, y0, x1, y1 border pixels, y down).
 INK_14 = {"Edge": 26, "Object Mode": 69, "Vertex": 33, "UV": 15, "Vertex Face": 59, "Multi": 28, "Face": 24}
-MAYA_14 = {"N": (776, 393, 853, 413), "NE": (854, 419, 975, 439), "W": (676, 448, 760, 468),
+EXPECTED_14 = {"N": (776, 393, 853, 413), "NE": (854, 419, 975, 439), "W": (676, 448, 760, 468),
            "E": (870, 448, 936, 468), "SW": (665, 477, 776, 497), "SE": (854, 477, 933, 497),
            "S": (777, 503, 852, 523)}
 INK_15 = {"Create Polygon Tool": 107, "Plane": 29, "Disc": 22, "Cylinder": 45, "Sphere": 36, "Cone": 28,
           "Torus": 29, "Cube": 28}
-MAYA_15 = {"N": (734 - 1, 393, 895 + 1, 413), "NW": (691, 419, 776, 439), "NE": (854, 419, 931, 439),
+EXPECTED_15 = {"N": (734 - 1, 393, 895 + 1, 413), "NW": (691, 419, 776, 439), "NE": (854, 419, 931, 439),
            "W": (660, 448, 760, 468), "E": (870, 448, 962, 468), "SW": (693, 477, 776, 497),
            "SE": (854, 477, 939, 497), "S": (773, 503, 856, 523)}
 LIST_TOP_14 = 545      # list body top border (y down)
@@ -63,8 +63,8 @@ def test_params_are_maya():
 
 
 def test_rmb_object_ring_matches_maya_14():
-    # Every border within 1 px vertically, 1.6 px horizontally (the text advance is estimated from Maya's ink).
-    lay = _compare(mm.with_object_name(mm.RMB_MESH, "pCube1"), INK_14, MAYA_14, (1.6, 1.0, 1.6, 1.0))
+    # Every border within 1 px vertically, 1.6 px horizontally (the text advance is estimated from the ink).
+    lay = _compare(mm.with_object_name(mm.RMB_MESH, "pCube1"), INK_14, EXPECTED_14, (1.6, 1.0, 1.6, 1.0))
     r = lay.radial
     # the anchored sides, exactly
     assert abs(r["E"].rect[0] - 55) < 1e-6 and abs(r["W"].rect[2] + 55) < 1e-6
@@ -77,7 +77,7 @@ def test_rmb_object_ring_matches_maya_14():
 
 def test_shift_rmb_ring_matches_maya_15():
     # all 8 directions, option boxes (+5 px) on every box
-    lay = _compare(mm.SHIFT_DEFAULT, INK_15, MAYA_15, (1.6, 1.0, 1.6, 1.0))
+    lay = _compare(mm.SHIFT_DEFAULT, INK_15, EXPECTED_15, (1.6, 1.0, 1.6, 1.0))
     rects = [it.rect for it in lay.radial.values()]
     for i, a in enumerate(rects):
         for b in rects[i + 1:]:
@@ -85,7 +85,7 @@ def test_shift_rmb_ring_matches_maya_15():
 
 
 def test_widths_follow_text_not_ring_max():
-    """Maya sizes each box to its text (UV 67 px, Object Mode 122 px): text + 2 x 25 (+ 5 with an option box)."""
+    """Each box is sized to its text (UV 67 px, Object Mode 122 px): text + 2 x 25 (+ 5 with an option box)."""
     lay = engine.Layout(mm.RMB_MESH, _measure(INK_14), engine.Params())
     for key, it in lay.radial.items():
         assert abs((it.rect[2] - it.rect[0]) - (INK_14[it.label] + ADVANCE + 50)) < 1e-6, (key, it.rect)
@@ -100,7 +100,7 @@ def test_uv_is_a_submenu_with_the_arrow_in_the_padding():
     assert engine.Layout.ring_text(label, action) == "UV", "the arrow doesn't widen the box"
     assert not engine.Layout.has_arrow(mm.RMB_MESH.radial["N"][1])
     assert engine.Layout.has_arrow(("menu", "X")), "a Blender menu opens as a submenu too"
-    # flick E past the ring: the submenu opens in place, E = UV, S = UV Shell (Maya 2022 RMB marking menu)
+    # flick E past the ring: the submenu opens in place, E = UV, S = UV Shell (Maya's RMB marking menu)
     s = engine.Session(mm.RMB_MESH, (500.0, 400.0), 0.0, lambda t: 7.0 * len(t))
     s.move(530.0, 400.0, 0.05)
     s.move(560.0, 400.0, 0.1)

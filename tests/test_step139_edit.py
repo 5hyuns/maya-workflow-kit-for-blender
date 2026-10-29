@@ -1,8 +1,5 @@
-"""Step 139 lane EDIT: Edit Mesh > Connect / Merge / Symmetrize and Mesh > Smooth against Maya 2022's numbers.
+"""Step 139 lane EDIT: Edit Mesh > Connect / Merge / Symmetrize and Mesh > Smooth against the expected numbers.
 Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
-
-
- 「계획」, 
 """
 
 from importlib import import_module
@@ -61,7 +58,7 @@ TOP, FRONT, BOTTOM, RIGHT = B(0, 1, 0), B(0, 0, 1), B(0, -1, 0), B(1, 0, 0)
 T2, T3, T5, T4 = B(-.5, .5, .5), B(.5, .5, .5), B(.5, .5, -.5), B(-.5, .5, -.5)
 
 
-# --- Connect (edit_mesh_139_edit.md) ----------------------------------------------------------
+# --- Connect -----------------------------------------------------------------------------------
 
 def _connect(select, mode, bm=None):
     bm = bm or _cube()
@@ -143,7 +140,7 @@ def test_connect_faces_like_maya():
         assert _has(bm, p), p
 
 
-# --- Merge () ----------------------------------------------------------------------------------
+# --- Merge ---------------------------------------------------------------------------------------
 
 V0, V1, V2 = B(-.5, -.5, .5), B(.5, -.5, .5), B(-.5, .5, .5)      # Maya pCube1.vtx[0], [1], [2]
 
@@ -199,7 +196,7 @@ def test_merge_like_maya():
     assert _counts(bm) == (8, 12, 6)
 
 
-# --- Smooth () ---------------------------------------------------------------------------------
+# --- Smooth --------------------------------------------------------------------------------------
 
 def _positions(bm):
     return sorted(tuple(round(c, 4) for c in v.co) for v in bm.verts)
@@ -266,7 +263,7 @@ def test_smooth_open_plane_like_maya():
     assert all(abs(a - b) < 1e-5 for a, b in zip(zs, want)), zs
 
 
-# --- Symmetrize () -----------------------------------------------------------------------------
+# --- Symmetrize ----------------------------------------------------------------------------------
 
 def _sym_cube():
     """Maya polyCube -sx 2 with every +X vertex moved out 0.3 (the top ones also up 0.2)."""

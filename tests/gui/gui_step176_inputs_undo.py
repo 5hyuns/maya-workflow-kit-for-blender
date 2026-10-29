@@ -1,4 +1,4 @@
-"""Step 176 (dogfood G1, ): Channel Box INPUTS polyCube1 after Ctrl+D / Ctrl+G / Ctrl+Z / P.
+"""Step 176 (dogfood G1): Channel Box INPUTS polyCube1 after Ctrl+D / Ctrl+G / Ctrl+Z / P.
 
 tools/dogfood_session.py showed pCube1's INPUTS polyCube1 in 03 / 04 and not in 05. Its key sequence between them is
 3 -> Alt+Shift+D -> 1 -> Ctrl+D -> Ctrl+G -> Ctrl+Z -> P. Here the same keys run twice in the Maya layout:

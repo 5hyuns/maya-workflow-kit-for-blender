@@ -1,5 +1,5 @@
 """Step 101 in a real UI: with a cube selected in object mode the Edit Mesh menu has no greyed mapped item,
-Poke from the menu pokes the whole cube (Maya runs it on every face), the Cache menu has Maya's three
+Poke from the menu pokes the whole cube (Maya pokes every face), the Cache menu has Maya's three
 submenus, the Audio menu is filled; screenshots (ALLSET_GUI_SHOTS)."""
 
 import os

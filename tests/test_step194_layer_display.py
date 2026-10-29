@@ -1,6 +1,6 @@
 """Step 194: animation layer keys stay visible. A layered object's active action is
 the selected layer's strip action at influence 0: the evaluated result is unchanged, the Time Slider ticks show the
-selected layer + the BaseAnimation keys of channels not in it, the Channel Box marks layer members (teal in Maya),
+selected layer + the BaseAnimation keys of channels not in it, the Channel Box marks layer members (Maya teal),
 Zero Key Layer and Merge Layers follow Maya."""
 
 from importlib import import_module
@@ -17,7 +17,7 @@ FRAMES = (-5, 1, 3, 6, 9, 12, 15, 18, 21, 24, 30)
 
 
 def _scene():
-    """Maya scene of anim_layers_193.md: pCube1, base tx 0@1 5@12 0@24, ry 0@1 90@24 (here radians)."""
+    """The layer scene: pCube1, base tx 0@1 5@12 0@24, ry 0@1 90@24 (here radians)."""
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     for act in list(bpy.data.actions):
@@ -93,7 +93,7 @@ def test_display_action_keeps_the_result():
 
 
 def test_readers_follow_the_selected_layer():
-    """Maya (anim_layers_193.md section 2-3): Base selected -> ticks 1 12 24 (as before any layer); AnimLayer1
+    """Like Maya: Base selected -> ticks 1 12 24 (as before any layer); AnimLayer1
     selected -> 1 6 18 24 (layer tx + base ry, which is not in the layer); Graph Editor curves = the shown layer's."""
     sc, ob, (ticks0, _e) = _layered()
     assert ticks0 == [1.0, 12.0, 24.0], ticks0

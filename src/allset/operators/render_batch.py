@@ -3,7 +3,7 @@
 
 Test Resolution (Maya's Render > Test Resolution submenu): Camera Panel,
 Render Settings (WxH), then 10 / 25 / 50 / 75 % and 110 / 125 / 150 % of the Render Settings size, a check on the
-current one, default Render Settings. It is a Maya preference (setting renderViewTestResolution) used by Render View
+current one, default Render Settings. It is a Maya preference used by Render View
 renders only, not by batch renders: the kit keeps it in the add-on preference ``test_resolution`` and applies it to
 its Render Current Frame / Render Sequence for the duration of the render (``scaled``), Render Settings untouched.
 Camera Panel = the size of the 3D View the render follows.

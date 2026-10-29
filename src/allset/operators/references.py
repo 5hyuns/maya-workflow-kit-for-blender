@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya references on Blender links + library overrides (step 209, Issue #116;  「계획」).
+"""Maya references on Blender links + library overrides (step 209, Issue #116).
 
 A kit reference (step 69, ``project.reference``) is a collection named after its namespace, marked ``REF`` (the
 source path) and ``NODE`` (Maya's reference node name, propRN / propRN1), holding library overrides of the source
@@ -7,9 +7,9 @@ file's first scene. Maya's rules:
 
 - Reload keeps the reference edits and shows the source's other changes = ``Library.reload()`` (an edited attribute
   hides the source's change of that attribute in both programs: Maya's edit is a whole-attribute setAttr, Blender's
-  override operation covers the whole ``location`` array — checked).
+  override operation covers the whole ``location`` array).
 - Unload: the nodes go, the edits stay; Load brings both back = the namespace's layer collection excluded / included
-  (the overrides are kept; delegated: Blender has no unloaded state, the data stays in memory).
+  (the overrides are kept; Blender has no unloaded state, the data stays in memory).
 - Replace: the new file comes in under the same namespace and the edits are applied again by node name.
 - Import Objects from Reference: the nodes become local with their ``ns:`` names = ``make_local(clear_liboverride=True)``.
 - Remove: nodes and namespace go (the library too when no other reference uses it).
@@ -292,7 +292,7 @@ def import_objects(ref, scene=None):
     for idb in ids(ref):
         try:
             if idb.override_library is not None:
-                idb.make_local(clear_liboverride=True)      # in place: name and edited values kept (probe 4.5)
+                idb.make_local(clear_liboverride=True)      # in place: name and edited values kept
                 n += 1
             elif isinstance(idb, bpy.types.Object):
                 n += idb.make_local() is not None

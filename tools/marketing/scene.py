@@ -7,11 +7,11 @@ the Poly Haven Studio Small 09 HDRI (step 125; local asset inventory).
 
 Viewport background (step 142, #41; replaces step 125's theme gradient): the kit ships no theme since step 130 (#40),
 so these captures use Blender's factory theme and never write one (``theme_unchanged`` is checked with every capture).
-factory viewport is flat #5c5c5c, which without a theme is view / scene
+The Maya layout viewport is flat grey #5c5c5c, which without a theme is view / scene
 data: Solid views get the view's own background colour (``View3DShading.background_type = 'VIEWPORT'``, what the
-Maya layout template saves, #45). Material Preview ignores that colour (checked: it draws the theme background), so
+Maya layout template saves, #45). Material Preview ignores that colour (it draws the theme background), so
 in Maya mode it uses the scene world ``.Allset Marketing World`` = the Studio Small 09 HDRI for lighting and flat
-#5c5c5c for camera rays (Light Path "Is Camera Ray"; checked #5c5c5c with Standard, #5a5a5a with AgX = dE00 < 1).
+#5c5c5c for camera rays (Light Path "Is Camera Ray"; #5c5c5c with Standard, #5a5a5a with AgX = dE00 < 1).
 ``maya_look()`` turns it on and a persistent timer (``LOOK_KEEPER``) keeps every 3D View of every window in that state,
 so views made later in a session (Graph Editor split, switch back from Blender, new windows) are flat Maya grey
 before they are drawn; captures are checked afterwards by tools/marketing/bg_check.py (``viewport_rects`` = what to
@@ -443,7 +443,7 @@ def rain_keys(rig, frames=(1, 12, 24)):
 # ------------------------------------------------------------------------------------------------ look-dev
 LOOK = {"rotate": 0.0, "intensity": 1.0}
 WORLD_NAME = ".Allset Marketing World"
-FLAT_SRGB = 0.36            # factory viewport grey #5c5c5c (operators/key_batch3.FLAT)
+FLAT_SRGB = 0.36            # flat viewport grey #5c5c5c (operators/key_batch3.FLAT)
 
 
 def studio_light():
@@ -672,7 +672,7 @@ def LOOK_KEEPER():
 
 
 def maya_look():
-    """Maya's flat #5c5c5c viewport background without a theme (step 142, #41), no tooltips / in-view messages in
+    """The flat #5c5c5c viewport background without a theme (step 142, #41), no tooltips / in-view messages in
     the pictures. The keeper timer re-applies it to views made later; the theme is remembered so captures can check
     that nothing wrote it."""
     if LOOK_STATE["theme"] is None:

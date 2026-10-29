@@ -1,5 +1,5 @@
 """Step 67: Hypershade window, kit Light Editor, Render menu, Render View Keep Image, AE map buttons, standardSurface
-names. ; GUI: tests/gui/gui_step67_render.py."""
+names. GUI: tests/gui/gui_step67_render.py."""
 
 import types
 from importlib import import_module

@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya viewport panel bar in the Maya Workflow Kit layout: the panel menu bar alone, and the panel toolbar under it.
 
-Maya 2022: every model panel has a 19 px menu bar
-(View Shading Lighting Show Renderer Panels) and under it a toolbar of 16 px icons on a 19 px pitch in groups —
+Maya 2022: every model panel has a menu bar
+(View Shading Lighting Show Renderer Panels) and under it a toolbar of small icons in groups —
 camera, gates and grid, shading modes and lights, effects, isolate / X-ray — then exposure and gamma fields and the
 colour management view. Blender's 3D View header mixed Maya's menus with its own editor-type button, mode selector,
-transform orientation, pivot, snapping, proportional editing, overlays and shading (user report 2026-10-19,
-).
+transform orientation, pivot, snapping, proportional editing, overlays and shading (step 113).
 
 In 3D Views of the Maya Workflow Kit layout (a screen with the Maya strip) the class's own draw of ``VIEW3D_HT_header`` is
 replaced by the Maya menu bar and the tool header's by the Maya panel toolbar (like ``editor_chrome``: only the

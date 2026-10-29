@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""step 226 L2: Maya Wireframe Color / Drawing Overrides colour index.
+"""step 226: Maya Wireframe Color / Drawing Overrides colour index (#136).
 
 Maya has two ways to colour a control's wire:
 
@@ -14,18 +14,18 @@ Maya has two ways to colour a control's wire:
 The kit keeps the Maya state as ID properties (``OBJECT_KEY`` / ``OVERRIDE_KEY``) on the object or pose bone and
 writes the Blender colour from it:
 
-- object: ``Object.color`` — RNA subtype COLOR = scene linear (checked: ``Object.color`` subtype 'COLOR', bone
+- object: ``Object.color`` — RNA subtype COLOR = scene linear (``Object.color`` subtype 'COLOR', bone
   ``custom.normal`` 'COLOR_GAMMA'), so Maya's sRGB values are converted. Blender draws an object's wire in
   ``Object.color`` only where the 3D View's ``shading.wireframe_color_type`` is 'OBJECT' (a view setting, not a
   preference): the kit switches it from 'THEME' to 'OBJECT' in the 3D Views of Maya workspaces only
   (``switch.is_maya_workspace``, not the Tool Box column) and marks those screens (``SCREEN_KEY``) so it can switch
   them back when no kit colour is left.
 - joint / bone control: ``PoseBone.color`` palette 'CUSTOM', normal = the colour (sRGB, COLOR_GAMMA); select / active
-  = Maya's selection colours (other selected white, lead #43ffa3 = ui/selection_wire.py) because Maya draws a
-  selected control in the selection colours, not its own [delegated].
+  = the kit's selection colours (other selected white, lead #43ffa3 = ui/selection_wire.py) because Maya draws a
+  selected control in the selection colours, not its own.
 
 Which wins when both are set: the drawing override (enabled with an index > 0 or RGB), then the object colour
-[U: precedence unknown; delegated].
+(a kit choice).
 """
 
 import bpy

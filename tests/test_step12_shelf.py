@@ -1,6 +1,5 @@
 """Step 12: Maya shelf (factory shelves as Blender buttons, user Python shelves, strip area).
 
- 「계획」 4.
 """
 
 import json
@@ -106,8 +105,8 @@ def test_mapping_targets_and_icons_exist():
 def test_mapped_buttons_per_shelf():
     counts = {name: len(shelf.factory_buttons(name)) for name, _l, _b in shelf_data.SHELVES}
     print("mapped shelf buttons:", counts)
-    assert counts["Polygons"] >= 30, counts      # 37 in Maya 2026; no Sweep, SVG, ...
-    assert counts["UVEditing"] >= 10, counts     # 12 in Maya 2026
+    assert counts["Polygons"] >= 30, counts      # 37 in the factory shelf; no Sweep, SVG, ...
+    assert counts["UVEditing"] >= 10, counts     # 12 in the factory shelf
     assert counts["Rigging"] >= 13 and counts["Animation"] >= 13 and counts["Rendering"] >= 13, counts
     assert all(v >= 1 for v in counts.values()), counts
 
@@ -126,7 +125,7 @@ def test_poly_cube_button_creates_maya_cube():
     assert ob.name == "pCube1" and tuple(ob.dimensions) == (1.0, 1.0, 1.0)
     bpy.ops.allset.shelf_button(shelf="Polygons", index=_index("Polygons", "Freeze Transformations"))
     bpy.ops.allset.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
-    assert ob.active_material.name == "lambert2"   # lambert1 = Maya's default material (step 100)
+    assert ob.active_material.name == "lambert2"   # lambert1 = the default material (step 100)
     node = next(n for n in ob.active_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     assert node.inputs["Roughness"].default_value == 1.0
 

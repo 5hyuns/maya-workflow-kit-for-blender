@@ -133,7 +133,7 @@ A small update to 0.6.0. Blender 4.5 LTS through 5.2.x.
 
 ### Added
 - `CONTRIBUTING.md`: the ways to help (reports, "this feels different from Maya" notes, pull requests). Tests that
-  compare against Maya reference data a fresh clone doesn't have are reported as skipped instead of failing.
+  need reference data a fresh clone doesn't have are reported as skipped instead of failing.
 
 ## [0.6.0] — 2026-10-28
 
@@ -152,7 +152,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
 - **Skeleton menu with Maya's meaning** (#163): Insert Joints is a click-and-drag tool; Remove Joints, Disconnect
   Joint and Connect Joint (connect / parent mode) work like Maya's; Mirror Joints defaults to the XY plane.
 - **Skinning methods** (#167): Classic Linear, Dual Quaternion and Weight Blended, chosen in the Bind Skin options or
-  the Attribute Editor skinCluster tab (all three within 3.5e-6 of Maya 2026).
+  the Attribute Editor skinCluster tab (all three as in Maya 2026).
 - **Bind Skin options** (#164): skinning method, dropoff rate, Maintain max influences and Closest in hierarchy;
   Mirror Skin Weights gets Normalize and works from component mode.
 - **Spline IK Twist and Roll** (#166): the Spline IK handle is a selectable `ikHandleN` with Twist, Roll and Twist
@@ -180,7 +180,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
   selected channels.
 
 ### Changed
-- **Joint orientation = Maya 2025+ factory** (#161): the Joint Tool and Skeleton > Orient Joint orient with Maya's
+- **Joint orientation like Maya 2025+** (#161): the Joint Tool and Skeleton > Orient Joint orient with Maya's
   auto orient secondary axis; new joints have Segment Scale Compensate on and Maya's joint radius.
 - **IK RP like Maya** (#162): a new RP handle gets Maya's default pole vector, Pole Vector X / Y / Z and Twist channels;
   Constrain > Pole Vector turns the plane to the target, and straight chains bend by their preferred angle like Maya.
@@ -189,7 +189,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
 - **Pick walk order** (#165): arrows follow Maya's child order (Down = first child, Left / Right = siblings in
   creation order, wrapping), for joints and for objects.
 - **Joint orientation the Maya way** (#141): a plain click on Orient Joint / Mirror Joints runs at once with the saved
-  options (❒ opens the window); FBX joints carry Maya's jointOrient (within 4e-5° of Maya 2026).
+  options (❒ opens the window); FBX joints carry Maya's jointOrient.
 - **Constraints on child joints** (#142) move the joint like Maya: position constraints detach only that joint, and
   rotation-following joints get Maya's axes (a 90° offset is gone).
 - **Game Exporter clips** (#140) are written as timeline takes: Maya scale, IK arms in place, only the clip takes in
@@ -213,7 +213,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
 - **Rig and animation polish** (#146): Enable IK Solver shows its check mark; the first Paint Skin Weights entry picks
   the first influence in hierarchy order; importing an animation FBX sets the Time Slider to the file's range; typing a
   value in the Set Driven Key window is no longer overwritten before Key.
-- **Hotkeys, shelves and editor menus follow Maya 2026**: the Hotkey Editor lists Maya 2026's 495 factory bindings;
+- **Hotkeys, shelves and editor menus follow Maya 2026**: the Hotkey Editor lists Maya 2026's factory bindings;
   shelves have the 2026 tabs (Curves, Surfaces, UV Editing) and buttons; Graph Editor and Dope Sheet menu bars and icon
   rows follow Maya 2026.
 - **Alt navigation with Emulate 3 Button Mouse** (#177): the preferences and the welcome dialog explain that Blender's
@@ -270,8 +270,8 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
   list shows every skin on the mesh.
 - **Skin tools**: Move Weights to Influences, the three Normalize Weights modes, Export / Import Weight Maps,
   Substitute Geometry, Bake Deformation to Skin Weights (#106); Add Influence with Maya's distance weights (#109).
-- **Rig FBX round trip with Maya** (#132 #133): exports write joint orientation the way Maya does (joints open in
-  Maya 2026 within 5e-6 cm, skinned vertices within 1e-6 cm); imports rebuild Maya's curves, tangents, Euler keys and
+- **Rig FBX round trip with Maya** (#132 #133): exports write joint orientation the way Maya does (joints and
+  skinned vertices open in Maya 2026 where they were); imports rebuild Maya's curves, tangents, Euler keys and
   the frame range without converting the skeleton.
 - **IK / FK switching** (#133): IK handles get Ik Blend; Set IK/FK Key, Enable IK Solver and Move IK to FK work like
   Maya. IK Spline can use an existing curve, and a cluster on curve CVs moves exactly those CVs (#129).
@@ -280,7 +280,7 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
 - **Game Exporter** (#135): Maya's clip list, one FBX take per clip or one file per clip, Maya's defaults.
 - **Motion Trail Editor** (#135) with Maya's settings, and **motion paths** (#138): Attach to Motion Path with Maya's
   offset keys, Set Motion Path Key, Flow Path Object, Loft with polygon output.
-- **Preferences window and Hotkey Editor** (#121): Maya's 38 categories with the kit's settings in Maya's pages;
+- **Preferences window and Hotkey Editor** (#121): Maya's categories with the kit's settings in Maya's pages;
   Maya's factory hotkeys with search and rebinding.
 - **Component, Shape and Connection Editors** (#119) with Maya's menu bars: editable skin weights and vertex
   positions, blend shape targets, attribute connections as drivers.
@@ -297,7 +297,7 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
   Surface Curves, Intersect.
 - **Lights**: Ambient Light and Volume Light (#120).
 - **Command Line / Script Editor** `maya.cmds` (#115 #122): parenting, grouping, keys, files, constraints, joints,
-  connections, sets and more, checked against Maya; Script Editor History options.
+  connections, sets and more; Script Editor History options.
 - **34 Maya option windows** for primitives, character sets, curves and UV commands (#103); Mesh > Cleanup with its
   Cleanup Options window (#104).
 
@@ -316,7 +316,7 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
   pastes `pasted__` copies under a new group; new scenes have Maya's hidden startup cameras; the Outliner lists
   objects in creation order; Attribute Editor tabs stay in one row.
 - Docks are Maya's grey and the Time Slider's current-time cell looks like Maya's.
-- Channel Box wheel scrolls 3 lines per notch (Maya: 15 px × 3 wheel lines).
+- Channel Box wheel scrolls 3 lines per notch.
 - Select Priority off now only steps in for joint picking; other clicks are Blender's own pick.
 - The armature mode picker and its highlight are optional (add-on preferences, off by default).
 
@@ -480,7 +480,7 @@ those reports (labelled `user-report` on GitHub).
 - Alt+RMB dolly works without Blender's zoom preference (#51); Maya menu items that used to write preferences open
   Blender's Preferences instead (#43).
 - Store tags: User Interface only.
-- **Renamed to Maya Workflow Kit** (step 125,  —  revision): store / display
+- **Renamed to Maya Workflow Kit** (step 125): store / display
   name "Maya Workflow Kit" (no "Blender" in the store name), repository "Maya Workflow Kit for Blender"
   (`maya-workflow-kit-for-blender`), release zip `maya-workflow-kit-<version>.zip`, default project folder
   `Documents/Maya Workflow Kit/projects/default`. Unchanged: extension id `allset` (updates keep working), package
@@ -550,8 +550,8 @@ The first version prepared for extensions.blender.org (steps 14–117). Blender 
   Boolean (63), editable extrude history (65), UV tools (66, 79), render and look-dev (67), FX scale (68), projects and
   references (69), playblast (70), sets (96), file import / export (102), rigging (57, 58, 110).
 - **Option windows** with Maya 2022's factory values, Save / Reset Settings and Apply (103).
-- **Listing package** (117): `docs/distribution/listing.md` (form fields, long description, media captions, technical
-  disclosure), `docs/distribution/media/` (icon, featured image, six workflow screenshots; `tools/make_listing_media.py`).
+- **Listing package** (117): form fields, long description, media captions, technical
+  disclosure, `docs/distribution/media/` (icon, featured image, six workflow screenshots; `tools/make_listing_media.py`).
 
 ### Changed
 - **Opt-in**: enabling changes nothing until you choose Maya; no automatic preference saves; the layout template holds
@@ -561,7 +561,7 @@ The first version prepared for extensions.blender.org (steps 14–117). Blender 
 - Permission reason: "Layout template, settings backup, shelves, Maya project folders"; tag Rigging added (117).
 - Extension guidelines: no `sys.modules` entries, CC0 assets, no `bl_info` in the extension build (114); the
   moderation ruff command passes on the extension source (117).
-- **Renamed to Allset for Maya Users** (step 111, ): extension id `allset`, tagline "The whole Maya
+- **Renamed to Allset for Maya Users** (step 111): extension id `allset`, tagline "The whole Maya
   workflow in Blender, in one install", Python package `src/allset`, operator / class prefixes `allset.` /
   `ALLSET_`, app template `Allset` (an old `MayaKit` template install is removed), keymap "Maya-style", theme
   "Studio Grey (Maya-inspired)", Help > Blender Extensions; trademark notice in the README and the preferences.
@@ -575,7 +575,7 @@ First release (Blender 4.2+, built and tested on Blender 4.5.4 LTS).
   (`tools/build.py`); `blender --command extension validate` passes; GPL-3.0-or-later `LICENSE`;
   `tools/release_check.py` (build → validate → clean-config install + enable → screenshot set).
 - **Maya keymap** (step 2): "Maya" keyconfig generated from Industry Compatible data with Maya patches, Maya selection
-  modifiers, 4/5/6/7 display modes, Ctrl+G group, keymap mapping document ().
+  modifiers, 4/5/6/7 display modes, Ctrl+G group, keymap mapping document.
 - **Hold / tap keys** (step 3): X/C/V/J snapping while held, D/Insert pivot editing, B soft select, A tap, arrow pick-walk.
 - **Camera and view feel** (step 4): Maya navigation preferences preset with backup/restore, ortho tumble lock,
   Shift+F/Shift+A framing in all views, view undo, Space four views, 1/2/3 smooth preview, F7–F11 component modes.

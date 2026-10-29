@@ -1,8 +1,4 @@
-"""Step 59: the Maya pivot concept, snapping and the Maya-shaped manipulator, checked headless.
-
-Maya reference (P = pivot, S = snap, M = manipulator rows).
- 「계획」 6.
-"""
+"""Step 59: the Maya pivot concept, snapping and the Maya-shaped manipulator, checked headless."""
 
 import math
 from importlib import import_module
@@ -282,7 +278,7 @@ def test_tools_use_the_maya_manipulator():
                    if it is not None}
         for idname in ("builtin.move", "builtin.scale"):
             assert widgets[idname] == manipulator.GROUP, (mode, idname, widgets[idname])
-        for idname in ("builtin.rotate", "builtin.transform"):   # Blender's rings already Maya-like (M5)
+        for idname in ("builtin.rotate", "builtin.transform"):   # Blender's rings already Maya-like
             assert widgets[idname] == "VIEW3D_GGT_xform_gizmo", (mode, idname)
     for mode in ('POSE', 'EDIT_CURVE'):
         widgets = {it.idname: it.widget for it, _i in
@@ -298,7 +294,7 @@ def test_shapes_and_centre():
         for t, verts in draw + [pick]:
             assert len(verts) % (2 if t == 'LINES' else 3) == 0, (kind, t)
     tip = max(v[2] for t, verts in manipulator.shapes('ARROW')[0] for v in verts)
-    assert abs(tip - 1.0) < 1e-6      # arrow length = 1 unit = 108 px
+    assert abs(tip - 1.0) < 1e-6      # arrow length = 1 unit
     pts = [Vector((-0.183, -0.5, 0.683)), Vector((0.683, -0.5, 0.183)), Vector((0.683, 0.5, 0.183))]
     bb = manipulator.center_of(pts, None, 'BOUNDING_BOX_CENTER', Vector())
     assert (bb - Vector((0.25, 0.0, 0.433))).length < 1e-3       # P10 (Maya manip position)

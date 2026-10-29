@@ -1,6 +1,6 @@
 """Step 54 in a real UI (Maya Workflow Kit template = cm scene, maya_unit 0.01), Maya hand order:
 Create > Lights > Point Light -> intensity 1, No Decay (step 137: power = 4 pi^2 x 10^2 x maya_unit^2); Fields/Solvers > Gravity -> field 1 Maya unit;
-Windows > Animation Editors > Trax Editor under the mouse -> tooltip + Help Line notice.
+Windows > Animation Editors > Trax Editor under the mouse -> tooltip + Help Line "NLA" notice.
 Menus are the kit's Maya menus, opened as menus and picked with the keyboard (accelerator / arrows).
 Screenshot: gui_step54_trax_notice.png."""
 

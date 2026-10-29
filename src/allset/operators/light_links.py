@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya light / shadow linking on Blender light linking.
+"""Maya light / shadow linking on Blender light linking (step 179).
 
 Maya 2022: every light illuminates and every object casts
 shadows from every light by default; Lighting/Shading > Make / Break Light Links link / unlink every
@@ -9,14 +9,14 @@ with. Make / Break Shadow Links = the same for shadows. Select Objects Illuminat
 *first* selected node, and select the transforms of the linked objects (no groups, no shapes, no sets), or nothing when
 that node is not a light; Select Lights Illuminating / Shadowing Object do the reverse.
 
-Blender 4.5 (Cycles probe, ): ``Object.light_linking.receiver_collection`` / ``blocker_collection`` of a
+Blender 4.5 (Cycles): ``Object.light_linking.receiver_collection`` / ``blocker_collection`` of a
 light; objects in it with link state EXCLUDE are not lit / cast no shadow while everything else is (an empty
 collection = everything), and once any object is INCLUDE only the INCLUDE objects are. So:
 - default light: a broken link = the object EXCLUDE in the light's collection, a made link = no entry;
 - Illuminates by Default off (``Object.allset_illuminates_by_default``, Maya's light attribute): linked objects are
   INCLUDE, and the light itself is INCLUDE too as a placeholder (a light receives no light), so no links = nothing lit.
 Collections: ``<light>_lightLinks`` / ``<light>_shadowLinks``, linked to no scene, fake user (Maya keeps the links on
-its lightLinker node; delegated names).
+its lightLinker node; kit names).
 """
 
 import bpy
@@ -147,7 +147,7 @@ def lights_of(ob, kind, scene):
 
 def first_selected(context):
     """Maya reads the first node of the active list; Blender keeps no selection order, so the active object when it
-    is selected, else the first selected one (delegated)."""
+    is selected, else the first selected one."""
     ob = context.active_object
     sel = list(context.selected_objects)
     if ob is not None and ob in sel:

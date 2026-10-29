@@ -5,7 +5,7 @@ Maya rules: nodes / names / option windows, Morph, Jiggle.
 Blender has neither deformer, so each is a Geometry Nodes modifier named like the Maya node (``morph1``,
 ``jiggle1``) on a shared node group, like the kit wire (operators/wire_deformer.py, step 169): it deforms whatever
 reaches it (upstream modifiers / shape keys), its painted weights are the vertex group of the node's name (Maya
-factory weight 1), Deform > Paint Weights > Jiggle paints it, Delete Non-Deformer History keeps it
+default weight 1), Deform > Paint Weights > Jiggle paints it, Delete Non-Deformer History keeps it
 (history.is_deformer: every kit deformer of ``deformers.BASES``), and the Channel Box INPUTS show the Maya
 attributes (``deformers.ATTRS``, rows ``maya:<key>``).
 
@@ -23,8 +23,8 @@ Jiggle: a Simulation zone steps, per frame in world space, v = x − x_prev, S =
 F = (k + d) S − d (v·û) û, F *= fan c + fot (1 − c) with c = |F̂·n̂|, x ← goal + (x + v + F − goal) · jiggleWeight ·
 envelope · weight (the weighted point is the next state). Disable = the input; Ignore Transform = the same in object
 space (the object's motion moves nothing); Enable Only After Object Stops follows the step-205 model (the input while
-the goal moves, then the spring from a point moved back by Motion Multiplier × the last goal step) ; Direction Bias
-is kept but changes nothing . Blender's simulation cache plays Maya's jiggle1Cache (bake folder ``//jiggle1Cache``).
+the goal moves, then the spring from a point moved back by Motion Multiplier × the last goal step); Direction Bias
+is kept but changes nothing. Blender's simulation cache plays Maya's jiggle1Cache (bake folder ``//jiggle1Cache``).
 """
 
 import bpy
@@ -60,7 +60,7 @@ MORPH_INPUTS = (
     ("Morph Space", 'NodeSocketInt', 0, 0, 1),
     ("Mirror Direction", 'NodeSocketInt', 0, 0, 8),
     ("Use Original Morph Target", 'NodeSocketBool', False, None, None),
-    # Maya attributes Maya's modes don't use (Retarget's scaling rules are ): kept for the Channel Box
+    # Maya attributes Maya's modes don't use (Retarget's scaling rules are): kept for the Channel Box
     ("Scale Envelope", 'NodeSocketFloat', 1.0, None, None),
     ("Uniform Scale Weight", 'NodeSocketFloat', 1.0, None, None),
     ("Normal Scale", 'NodeSocketFloat', 1.0, None, None),
@@ -348,7 +348,7 @@ def build_jiggle():
     F = b.vmath('SCALE', F, scale=fac)                                                # noqa: N806
     sw = b.math('MULTIPLY', b.math('MULTIPLY', I["Jiggle Weight"], I["Envelope"]), I["Weight"])
     x_on = b.lerp(g, b.vmath('ADD', b.vmath('ADD', x, v), F), sw)                     # Enable
-    # Enable Only After Object Stops (step-205 model; Maya scales it by ~0.69 )
+    # Enable Only After Object Stops (step-205 model; Maya scales it by ~0.69)
     moving = b.math('GREATER_THAN', b.vmath('DISTANCE', g, gp, out="Value"), 1e-9)
     F2 = b.vmath('SUBTRACT', b.vmath('SCALE', s, scale=kd), b.vmath('SCALE', v, scale=dmp))   # noqa: N806
     x_still = b.vmath('ADD', b.vmath('ADD', x, v), F2)
@@ -683,12 +683,12 @@ def _run_jiggle(context, v):
 
 
 def windows():
-    """Maya's Morph Options / Jiggle Deformer Options / Paint Weights > Jiggle boxes (factory
+    """Maya's Morph Options / Jiggle Deformer Options / Paint Weights > Jiggle boxes (default
     values); main adds them to operators/option_windows.WINDOWS."""
     from .option_windows import F, Window
     from .option_windows_deform import ADVANCED, PAINT_FIELDS, PAINT_MISSING, _paint
     return [
-        # Maya's Morph Options factory values: Morph mode Absolute, Morph space Object, Use Original Morph Target off,
+        # Maya's Morph Options default values: Morph mode Absolute, Morph space Object, Use Original Morph Target off,
         # Use Component Lookup off
         Window("deform_morph", "Morph Options", "Create", ("allset.morph", {}), [
             F("mode", "Morph mode:", "enum", "Absolute", items=MORPH_MODES),
@@ -696,7 +696,7 @@ def windows():
             F("use_original", "", "bool", False, text="Use Original Morph Target")], _run_morph,
             paths=("Deform/Morph",),
             missing=("Use Component Lookup (points pair by index)",) + ADVANCED),
-        # Maya Jiggle Options factory values: Stiffness 0.5, Damping 0.5, Weight 1.0, Jiggle only when object stops
+        # Maya Jiggle Options default values: Stiffness 0.5, Damping 0.5, Weight 1.0, Jiggle only when object stops
         # off, Ignore transform off
         Window("deform_jiggle", "Jiggle Deformer Options", "Create", ("allset.jiggle", {}), [
             F("stiffness", "Stiffness:", "float", 0.5, lo=0.0, hi=1.0),

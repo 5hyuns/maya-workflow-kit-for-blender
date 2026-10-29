@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Status Line Input Line.
+"""Maya's Status Line Input Line (step 75).
 
 A mode button (Absolute transform / Relative transform / Rename / Select by name) and either three
 X / Y / Z fields or one text field. Behaves like Maya 2022's Status Line
@@ -305,11 +305,11 @@ def draw(layout, context):
     if inp.mode in {'ABS', 'REL'}:
         for axis in "xyz":
             cell = row.row(align=True)
-            cell.ui_units_x = 2.6        # Maya: label + 40 px field
+            cell.ui_units_x = 2.6        # label + 40 px field
             cell.prop(inp, axis, text=axis.upper())
     else:
         cell = row.row(align=True)
-        cell.ui_units_x = 8.3            # Maya: 166 px
+        cell.ui_units_x = 8.3            # 166 px
         cell.prop(inp, "text", text="", icon='NONE')
 
 
@@ -338,7 +338,7 @@ def register():
     bpy.types.WindowManager.allset_construction_history = BoolProperty(
         name="Construction History", default=True,
         description="Maya Construction History: off = new primitives, extrusions and bevels keep no history node "
-                    "(Channel Box INPUTS / In-View Editor), like Maya's -ch 0")
+                    "(Channel Box INPUTS / In-View Editor), like Maya")
 
 
 def unregister():

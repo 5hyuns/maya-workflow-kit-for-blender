@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner as a UIList in the 3D View sidebar (category "Outliner").
 
-Maya's default Outliner: showShapes 0,
-showDagOnly 1, autoExpand 0; Maya transform / shape nodes;
+Maya's default Outliner: no shapes,
+DAG objects only, no auto expand; Maya transform / shape nodes;
 Blender's Outliner tree is C: a UIList is the
-way to a custom tree, without drag and drop. Design:  「계획」 2.
+way to a custom tree, without drag and drop.
 
 Rows (``WindowManager.allset_outliner_rows``) are rebuilt outside drawing
 (ID data can't be written while drawing): from the depsgraph / load handlers

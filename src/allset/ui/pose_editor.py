@@ -3,7 +3,7 @@
 
 Maya: Windows > Animation Editors > Pose Editor / Deform > Pose Space Deformation > Pose Editor — pose interpolators on
 the left, the current interpolator's poses on the right (Add Pose, Add Shape, Edit, Go to Pose, Delete, the pose
-weights). The window's exact layout isn't known : the kit layout (delegated) = toolbar row, then two columns
+weights). The kit's layout = toolbar row, then two columns
 (interpolators | poses with their read-only weight), then the interpolation (Linear; Gaussian greyed with a notice).
 Logic in ``operators/pose_space_227.py``; the window is ``marked_window`` kind POSE_EDITOR.
 """

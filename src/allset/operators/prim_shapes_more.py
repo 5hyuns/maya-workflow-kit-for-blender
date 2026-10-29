@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Pipe / Helix / Gear / Soccer Ball (Create > Polygon Primitives) as data, like ``prim_shapes``.
+"""Maya Pipe / Helix / Gear / Soccer Ball (Create > Polygon Primitives) as data, like ``prim_shapes``.
 
 Pure Python (no bpy), Maya Y-up space and Maya units, ``prim_shapes.Mesh`` results. Every rule follows
-Maya 2022 (factory Create menu commands).
+Maya (default Create menu commands).
 No Maya code or data was copied; vertex order, face lists (start corner
-and winding), UVs per face corner and hard edges were compared case by case with Maya's output.
+and winding), UVs per face corner and hard edges follow Maya's.
 
 polyPipe: rings of ``subdivisionsAxis`` vertices, vertex i at angle -360 i / n in (x, z) (ring starts on +X, unlike
 polyCylinder). Ring order = the cross-section loop: inner wall bottom -> top, top cap inner -> outer, outer wall top
@@ -98,7 +98,7 @@ def orient_z(verts, a):
     return [ps._apply(m, p) for p in verts]
 
 
-# Axis 0 0 -1 (+Z -> -Z has no shortest rotation): 180 degrees about X  (soccer_ax00m1 checks it)
+# Axis 0 0 -1 (+Z -> -Z has no shortest rotation): 180 degrees about X (soccer_ax00m1 checks it)
 Z_FLIP = ((1.0, 0.0, 0.0), (0.0, -1.0, 0.0), (0.0, 0.0, -1.0))
 
 
@@ -408,8 +408,8 @@ def poly_gear(a):
 
 
 # polyGear hard edges: faces meeting at >= 30 degrees over the whole mesh (30.0 = 6 sides' inner ring hard, 29.04
-# soft: gear_s6 / s3 / s16_h1 / r2 / tw / tp); a face without area (Gear Offset 0, Gear Spacing 1) has no normal and
-# hardens its edges [I: gear_s6_off0 keeps 4 of those soft in Maya]
+# soft); a face without area (Gear Offset 0, Gear Spacing 1) has no normal and
+# hardens its edges (Maya keeps a few of those soft)
 GEAR_FACET = 29.9
 
 

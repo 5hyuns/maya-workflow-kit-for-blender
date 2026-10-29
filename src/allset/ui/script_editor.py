@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Script Editor window.
+"""Maya Script Editor window (step 105).
 
 Maya 2022:
 menu bar File / Edit / History / Command / Tabs / Help, an icon row, the history pane (echo of commands and results)
 over the input pane with tabs MEL / Python (+). Ctrl+Enter executes and keeps the input; the Execute button / numpad
-Enter executes and clears it (Maya ).
+Enter executes and clears it.
 
 Blender: one window split into history = Info editor (Blender's report log: every operator echoed as Python, the
 kit's command echo and results as reports) over input = Text Editor showing the text "Python" or "MEL". The window is
 marked (window pointer); in it the Info header draws the Maya menu bar + icon row and the Text header the tabs. The
 Python tab runs through the command line runner (``command_line/runner.py``: ``cmds`` subset, ``bpy``, C, D; the
-value of a last expression is the result); the MEL tab gives Maya's warning (: no MEL).
+value of a last expression is the result); the MEL tab gives Maya's warning (no MEL).
 
 History menu (step 216): Maya's scriptEditorInfo options are add-on preferences (``se_*``) drawn as check / radio
 items; ``runner.history_lines`` applies them to what a run writes into the history, ``runner.echo_command`` writes

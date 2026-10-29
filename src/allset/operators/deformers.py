@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Deform menu deformers (step 144 lane DEFORM, issue #34; plan  「계획」).
+"""Maya Deform menu deformers (step 144, issue #34).
 
-Maya 2022 facts: the Deform option windows (fields / factory defaults), the deformers made with factory options
+Maya 2022 facts: the Deform option windows (fields / defaults), the deformers made with default options
 (nodes, names, selection afterwards, Channel Box rows, Paint Weights targets) and the handle position / size.
 Each Maya deformer becomes the Blender
 modifier that does the same job, named like the Maya node (``ffd1``, ``deltaMush1``, ``bend1``), plus the Maya
 transform it is driven by (``ffd1Lattice``, ``bend1Handle``). Its weights are the vertex group of the node's name
-(factory weight 1 on the deformed points), which Deform > Paint Weights paints.
+(weight 1 on the deformed points), which Deform > Paint Weights paints.
 
 ``ATTRS`` are the Maya attributes the Channel Box INPUTS show for a node (ui/channel_box.py reads them as virtual
 rows ``maya:<key>``): each converts between the Maya value and the modifier's own settings.
@@ -162,7 +162,7 @@ def _wire_input(name):
 _ENVELOPE = _prop("envelope", "Envelope", "NONE", "strength")
 _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", "High Bound", "NONE", *_limit(1))]
 
-# Maya deformers made with factory options: their Channel Box rows (only those Blender can hold)
+# Maya deformers made with default options: their Channel Box rows (only those Blender can hold)
 ATTRS = {
     "ffd": [_ENVELOPE],
     "deltaMush": [_prop("smoothingIterations", "Smoothing Iterations", "INT", "iterations"),
@@ -191,7 +191,7 @@ ATTRS = {
                         Attr("offset", "Offset", "NONE", _tex_offset_get, _tex_offset_set)],
     "curveWarp": [],
     # step 169: the wire modifier's inputs; Crossing Effect / Tension / Local Influence /
-    # Scale[0] have no form in the kit wire (factory 0 / 1 / 0 / 1 = no effect in Maya)
+    # Scale[0] have no form in the kit wire (defaults 0 / 1 / 0 / 1 = no effect)
     "wire": [Attr("envelope", "Envelope", "NONE", *_wire_input("Envelope")),
              Attr("rotation", "Rotation", "NONE", *_wire_input("Rotation")),
              Attr("dropoffDistance[0]", "Dropoff Distance[0]", "LENGTH", *_wire_input("Dropoff Distance"))],
@@ -286,7 +286,7 @@ def _bounds(items):
 
 
 def _weights(ob, name, idx):
-    """The deformer's weights = vertex group ``name``, weight 1 on its points (Maya factory weights)."""
+    """The deformer's weights = vertex group ``name``, weight 1 on its points (default weights)."""
     if not hasattr(ob, "vertex_groups") or ob.type not in {'MESH', 'LATTICE'}:
         return ""
     count = len(ob.data.vertices) if ob.type == 'MESH' else len(ob.data.points)
@@ -348,12 +348,12 @@ def _lattice(context, v):
     lat = bpy.data.lattices.new(f"{name}LatticeShape")
     s, t, u = (max(2, int(x)) for x in v["divisions"])
     # the object first: a lattice used by an object keeps its -0.5..0.5 box when its points change, a bare one grows
-    # to (points - 1) units (checked)
+    # to (points - 1) units
     lob = _link(context, bpy.data.objects.new(f"{name}Lattice", lat))
     lat.points_u, lat.points_v, lat.points_w = s, u, t           # Maya S T U along X Y Z; Maya Y = Blender Z
     size = hi - lo
     big = max(size.x, size.y, size.z, 1e-6)
-    # Maya's ffd1Lattice Scale = the box size in Maya units (2 around a radius 1 sphere, #95): the cm factor goes in
+    # Maya's ffd1Lattice Scale = the box size in Maya units (#95): the cm factor goes in
     # delta_scale, so the Channel Box / AE Scale reads Maya's number and the world size stays the box
     u = units.maya_unit(context.scene)
     lob.delta_scale = (u, u, u)
@@ -547,7 +547,7 @@ def _texture(context, v):
         raise RuntimeError("Blender displaces along object or world axes: Vector Space Tangent isn't available.")
     name = new_name("textureDeformer")
     # no texture yet: Maya's deformer moves nothing; Blender's Displace without a texture pushes by 1, an empty
-    # ('NONE') texture by 0 (checked)
+    # ('NONE') texture by 0
     tex = bpy.data.textures.new(f"{name}Texture", 'NONE')
     strength = float(v["strength"])
     for ob, idx in items:
@@ -561,7 +561,7 @@ def _texture(context, v):
     return items[0][0]
 
 
-# option window field defaults = Maya factory values
+# option window field defaults
 DEFAULTS = {
     'LATTICE': {"divisions": (2, 5, 2), "center": True, "auto_parent": False},
     'DELTA_MUSH': {"iterations": 10, "step": 0.5, "pin_border": True},
@@ -584,7 +584,7 @@ DEFAULTS = {
 
 def create(context, kind, values=None):
     """Make the Maya deformer ``kind`` on the selection with ``values`` (Maya option window values; missing =
-    factory). Raises RuntimeError with a Maya-style message when the selection doesn't fit."""
+    default). Raises RuntimeError with a Maya-style message when the selection doesn't fit."""
     v = {**DEFAULTS[kind], **(values or {})}
     if kind == 'LATTICE':
         return _lattice(context, v)
@@ -609,7 +609,7 @@ KINDS = tuple((k, k.replace("_", " ").title(), "") for k in DEFAULTS)
 
 
 class ALLSET_OT_deformer(bpy.types.Operator):
-    """Make a Maya deformer on the selection with Maya's factory options (Maya Deform menu)"""
+    """Make a Maya deformer on the selection with the default options (Maya Deform menu)"""
     bl_idname = "allset.deformer"
     bl_label = "Create Deformer"
     bl_options = {'REGISTER', 'UNDO'}

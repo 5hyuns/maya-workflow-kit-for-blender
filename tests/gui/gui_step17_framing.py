@@ -1,5 +1,5 @@
 """Step 17 in a real UI: F / A / Ctrl+Shift+F / Shift+F fit 0.95 of the part of the view
-not under the sidebar; hotbox rows stay inside the window."""
+not under the sidebar; hotbox rows stay inside the window (step 52)."""
 
 import os
 import sys
@@ -179,7 +179,7 @@ def s_quad_check():
     r = next(r for r in persp.regions if r.type == 'WINDOW')
     ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)
     # back to one view through Tool Box > Single Perspective View (a Space tap here left the factory layout's view
-    # without a hotbox on the next Space press; in the Maya layout it works — tmp/qa240/h_main/hb, step 240 QA)
+    # without a hotbox on the next Space press; in the Maya layout it works, step 240)
     with bpy.context.temp_override(window=win(), area=persp, region=r):
         bpy.ops.allset.quick_layout(layout='SINGLE')
 

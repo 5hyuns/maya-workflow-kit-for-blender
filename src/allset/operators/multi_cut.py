@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Multi-Cut.
+"""Maya Multi-Cut (step 129, GitHub #27).
 
 The kit tool ``allset.multi_cut_tool`` (ui/mesh_tools.py) runs ``allset.multi_cut``, a modal that places Maya's cut
 points and cuts on completion:
@@ -31,18 +31,18 @@ from mathutils import Vector, geometry
 from . import mesh_tools, preselect
 
 TOOL = "allset.multi_cut_tool"
-VERT_PX = 10.0          # a press this close to a vertex starts there 
+VERT_PX = 10.0          # a press this close to a vertex starts there
 EDGE_PX = 16.0          # Maya MT_preSelectSize (preselect.RADIUS_PX)
 SLICE_PX = 8.0          # a press-drag longer than this on a face / empty space = slice
 END_T = 0.001           # an edge point this close to an end is that vertex
-POINT_RGB = (1.0, 0.85, 0.1)       # Maya draws the cut points / line yellow-ish 
+POINT_RGB = (1.0, 0.85, 0.1)       # Maya draws the cut points / line yellow-ish
 PREVIEW_RGB = (0.85, 0.85, 0.85)
 LOOP_RGB = (1.0, 0.55, 0.1)
 REJECT_RGB = (0.9, 0.2, 0.2)
 POINT_PX = 7.0
 LINE_PX = 2.0
 
-# Maya Y-up plane names -> Blender plane normal (X -> X, Y -> Z, Z -> -Y;  step 57)
+# Maya Y-up plane names -> Blender plane normal (X -> X, Y -> Z, Z -> -Y; step 57)
 PLANE_NORMALS = {'YZ': Vector((1, 0, 0)), 'ZX': Vector((0, 0, 1)), 'XY': Vector((0, 1, 0))}
 
 

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Add-on preferences (Preferences > Add-ons > Maya Workflow Kit).
 
-Options backed by : Maya units (#1) and parent mode (#2)
-from step 10. Only this add-on's own settings live here: since step 130 (#13) no option writes Blender's
+Options for Maya units and parent mode
+from step 10. Only this add-on's own settings live here: since step 130 no option writes Blender's
 preferences (the navigation / undo / panel / auto key / theme / splash / density / font / wire presets are gone).
 """
 
@@ -38,13 +38,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     # Set once "Maya" was activated automatically on first enable, so later
-    # starts respect a different keymap the user picked.
+    # starts respect a different keymap the user picked (step 2).
     keymap_auto_activated: bpy.props.BoolProperty(options={'HIDDEN'})
 
-    # Maya mode on/off (switch.py, ), kept across restarts. Off after install: enabling the
-    # extension changes nothing until the user opts in (welcome dialog / button / switch; ).
+    # Maya mode on/off (switch.py, step 60), kept across restarts. Off after install: enabling the
+    # extension changes nothing until the user opts in (welcome dialog / button / switch; step 115).
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
-    # Edit-mode marquee/lasso also selects occluded components (Maya selectPrefUseDepth false).
+    # Edit-mode marquee/lasso also selects occluded components, like Maya.
     select_through: bpy.props.BoolProperty(
         name="Marquee Selects Hidden Components",
         description="In mesh edit mode, box and lasso selection also pick vertices, edges and faces "
@@ -69,7 +69,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
                     "under the mouse, like Maya's selection priority",
         default=True)
-    # Step 217 /  : bone collections = the rigger's "animator controls" set.
+    # Step 217: bone collections = the rigger's "animator controls" set.
     pick_walk_skip_hidden_collections: bpy.props.BoolProperty(
         name="Pick Walk Skips Hidden Bone Collections",
         description="In Pose mode the arrow keys walk past bones whose bone collections are all hidden (Rigify MCH / "
@@ -78,8 +78,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "bones hidden one by one (H) are still walked into, and an armature with controller tags "
                     "(Control > Tag As Controller) follows its controller hierarchy instead. Off: plain hierarchy",
         default=True)
-    # PR #125 extras with no Maya counterpart (no Maya 2022-2027 viewport header has a mode picker or a pulse,
-    # PR125_MAYA_LATER.md 4a): off by default.
+    # PR #125 extras with no Maya counterpart (no Maya 2022-2027 viewport header has a mode picker or a pulse):
+    # off by default.
     armature_mode_header: bpy.props.BoolProperty(
         name="Armature Mode Picker",
         description="Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header "
@@ -89,7 +89,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Pulse Armature Mode",
         description="Softly pulse the viewport header's mode button while a skeleton is selected (not part of Maya)",
         default=False)
-    # First start: welcome dialog shown once.
+    # First start (step 42): welcome dialog shown once.
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
     # step 260 (#177): how often the welcome dialog opened without "Make Blender feel like Maya" being clicked
     welcome_shown: bpy.props.IntProperty(options={'HIDDEN'})
@@ -120,12 +120,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     cb_hyperbolic: bpy.props.BoolProperty(
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
-    # Graph Editor View > Snap Time To Selection (Maya setting snapTimeToSelection, default off; Alt+/ toggles it;
-    # ).
+    # Graph Editor View > Snap Time To Selection (default off; Alt+/ toggles it;
+    # step 92).
     snap_time_to_selection: bpy.props.BoolProperty(
         name="Snap Time To Selection",
         description="Selecting keys in the Graph Editor moves the current time to the earliest selected key")
-    # Graph Editor View > Auto Frame / Auto Frame Time / Curve Name (Maya factory: on / off / Never;
+    # Graph Editor View > Auto Frame / Auto Frame Time / Curve Name (defaults: on / off / Never;
     # ui/graph_view.py, step 150).
     graph_auto_frame: bpy.props.BoolProperty(
         name="Auto Frame", default=True,
@@ -165,7 +165,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Curve Colors", default="",
         description="Colour rules by attribute name (Maya Edit > Set Curve Colors...)")
 
-    # Script Editor History menu (Maya scriptEditorInfo setting; Maya 2022 factory states:
+    # Script Editor History menu (defaults:
     # Batch Render Messages / Line numbers in errors on,
     # the rest off, History Output Show Both). Read by command_line/runner.py (step 216).
     se_batch_render_messages: bpy.props.BoolProperty(
@@ -202,7 +202,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                ('MEL', "Show MEL Only", "Show only MEL output in the history"),
                ('PYTHON', "Show Python Only", "Show only Python output in the history")))
 
-    # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (Maya setting, factory off;
+    # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (default off;
     # Maya Channel Box Channels menu, ui/cb_channels.py, step 158).
     cb_sync_graph: bpy.props.BoolProperty(
         name="Sync Selection in Graph Editor",
@@ -237,7 +237,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                ('STEPPED', "Stepped", "Blender Constant")),
         description="Out tangent of the keys the kit sets (Maya Tangents > Default Out Tangent)")
 
-    # Render > Test Resolution (Maya setting renderViewTestResolution, default Render Settings; step 152,
+    # Render > Test Resolution (default Render Settings; step 152,
     # operators/render_batch.py): the size of Render Current Frame / Render Sequence.
     test_resolution: bpy.props.EnumProperty(
         name="Test Resolution",
@@ -249,13 +249,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Maya Render > Test Resolution: the size of Render Current Frame / Render Sequence "
                     "(batch renders use the Render Settings size)")
 
-    # Top UI.
+    # Top UI (step 7; Maya Windows > UI Elements).
     maya_top_bar: bpy.props.BoolProperty(
         name="Maya Menu Bar",
         description="Top bar shows the Maya menus, menu sets and Status Line instead of "
                     "Blender's menus and workspace tabs (Blender menus stay as submenus)",
         default=True)
-    # Maya view furniture, in views whose Blender navigation gizmo is off.
+    # Maya view furniture (step 46), in views whose Blender navigation gizmo is off.
     @_quiet
     def _update_navigation(self, context):
         from .ui import view_furniture
@@ -291,25 +291,25 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                 if area.type == 'PROPERTIES':
                     area.tag_redraw()
 
-    # Maya wireframe on selected objects over shading.
+    # Maya wireframe on selected objects over shading (step 47).
     maya_selection_wire: bpy.props.BoolProperty(
         name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
                                                 "Maya (lead light green, others white); in wireframe shading "
                                                 "unselected objects are Maya's dark blue",
         default=True, update=_update_selection_wire)
-    # Maya component colours in mesh edit mode.
+    # Maya component colours in mesh edit mode (step 134).
     maya_component_colors: bpy.props.BoolProperty(
         name="Component Colors", description="Mesh edit mode shows Maya's component colors: light blue edges, "
                                               "purple / yellow vertices, orange edges and stippled faces",
         default=True, update=_update_selection_wire)
-    # Maya grey docks (step 195): the dock areas are lifted from the theme's Properties grey to Maya's #444444
+    # Maya grey docks (step 195): the dock areas are lifted from the theme's Properties grey to #444444
     maya_dock_colors: bpy.props.BoolProperty(
         name="Dock Colors", description="The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn "
                                         "in Maya's lighter grey",
         default=True, update=_update_dock_colors)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
-    # Maya in-view messages (inViewMessageEnable 1; ).
+    # Maya in-view messages (on by default; step 72).
     in_view_messages: bpy.props.BoolProperty(
         name="In-View Messages", description="Short fading messages in the view when you group, hide, toggle "
                                              "object/component selection (F8), soft select or Make Live, like Maya",
@@ -324,7 +324,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         items=lambda self, context: _menu_set_items(), default=0)
     show_status_line: bpy.props.BoolProperty(
         name="Status Line", description="Maya Status Line icons in the top bar", default=True)
-    # Maya layout parity.
+    # Maya layout parity (step 49).
     maya_toolbox: bpy.props.BoolProperty(
         name="Maya Tool Box", description="3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, "
                                           "Paint Select, Move, Rotate, Scale, the last other tool and quick layout "
@@ -336,7 +336,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Help Line", description="Maya-style help for the active tool in the status bar",
         default=True)
 
-    # Marking menus and hotbox.
+    # Marking menus and hotbox (step 9).
     marking_menu_style: bpy.props.EnumProperty(
         name="Marking Menus",
         description="How Maya marking menus are shown",
@@ -351,22 +351,22 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default='ALL')
     hotbox_all_sets: bpy.props.BoolProperty(
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
-                                               "the current one (Maya's default, step 52)",
+                                               "the current one (Maya's default)",
         default=True)
 
-    # Shelf: current tab (factory file name or "USER:<name>").
+    # Shelf (step 12): current tab (factory file name or "USER:<name>").
     shelf_current: bpy.props.StringProperty(options={'HIDDEN'})
 
-    # Maya project (operators/project.py, ): Blender has no projects, so the current
+    # Maya project (operators/project.py, step 69): Blender has no projects, so the current
     # project folder and the Recent Projects list live here, like Maya keeps the workspace in its prefs.
     project_root: bpy.props.StringProperty(name="Current Project", subtype='DIR_PATH',
                                            description="Maya Workflow Kit project folder: file dialogs open in its scenes "
                                                        "folder, renders go to its images folder")
     recent_projects: bpy.props.StringProperty(options={'HIDDEN'})   # newline-separated, newest first
-    # Maya option window values (operators/option_windows.py, step 103): Maya keeps them in setting.
+    # Maya option window values (operators/option_windows.py, step 103).
     option_settings: bpy.props.StringProperty(options={'HIDDEN'})   # JSON {window key: {field: value}}
 
-    # Scene concepts.
+    # Scene concepts (step 10).
     parent_mode: bpy.props.EnumProperty(
         name="Parent Mode", description="What P (Parent) does to the child's values",
         items=(('MAYA', "Maya", "Keep the world position and recompute the local values "
@@ -378,12 +378,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Maya Naming", description="Create menu names objects pCube1 / pCubeShape1 "
                                         "(otherwise Blender names)",
         default=True)
-    # Maya setting manipSmartDuplicate 1.
+    # On by default, like Maya.
     smart_duplicate: bpy.props.BoolProperty(
         name="Smart Duplicate", description="Shift+drag a Move/Rotate/Scale manipulator "
                                             "duplicates the selection and transforms the copy",
         default=True)
-    # Maya setting manipSmartExtrude 1.
+    # On by default, like Maya.
     smart_extrude: bpy.props.BoolProperty(
         name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
                                           "or edges extrudes them and transforms the new ones",
@@ -484,9 +484,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         box.prop(self, "in_view_messages")
 
 
-# Step 111 (, docs/distribution/naming.md, docs/distribution/extensions_audit.md 「필수 고지문」)
 # Undo depth (step 141, B6): Maya's undo queue is infinite, Blender keeps 32 steps
-# by default and the kit may not write Blender's preferences (step 130), so the kit only tells the user (delegated).
+# by default and the kit may not write Blender's preferences (step 130), so the kit only tells the user.
 UNDO_RECOMMENDED = 256      # Blender's maximum
 UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Maya-style sessions raise Edit > "
              "Preferences > System > Memory & Limits > Undo Steps to 256 (Blender's maximum).")
@@ -500,7 +499,7 @@ EMULATE_HINT = ("Emulate 3 Button Mouse is on (Preferences > Input): Blender tur
 def emulate_hint(context=None):
     """Step 260 (#177): the Emulate 3 Button Mouse hint while that Blender preference is on, else None (read only:
     the kit never writes Blender's preferences, step 130). Blender converts Alt+LMB into a plain MMB without Alt
-    (wm_event_system.cc wm_eventemulation, )."""
+    (wm_event_system.cc wm_eventemulation)."""
     inputs = (context or bpy.context).preferences.inputs
     return EMULATE_HINT if getattr(inputs, "use_mouse_emulate_3_button", False) else None
 
@@ -568,7 +567,7 @@ _register_classes, _unregister_classes = bpy.utils.register_classes_factory(clas
 # entry. So every unregister copies the settings the user changed into ``preferences_backup.json`` in the
 # extension's user folder, and a register that finds a fresh entry (no setting set) puts them back. A setting the
 # user put back to its default stays there: the copy is taken at every unregister. Remove deletes the user folder and with it the copy;
-# a --factory-startup session neither writes nor reads it (delegated).
+# a --factory-startup session neither writes nor reads it.
 
 BACKUP_FILE = "preferences_backup.json"
 

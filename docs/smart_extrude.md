@@ -20,7 +20,7 @@
 
 The tool header / Tool Settings expose **Component**, **Object**, **World** and
 **Custom Pivot** orientation, and **Keep Faces Together**. Component orientation
-inherits the kit's edited pivot frame. A component pivot placed with D is captured
+inherits the kit's edited pivot frame. A component pivot placed with D is stored
 before the first drag so changing cap topology cannot move the operation's pivot.
 
 ## Geometry and limits

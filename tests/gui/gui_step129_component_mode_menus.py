@@ -1,6 +1,6 @@
 """Step 129 (#39, #17, #18), from the audit 128 repro: Edit / Select / Modify menu items a Maya user clicks in
 component mode, run through the real menu button operator (allset.menu_item, as a click does), and Ctrl+D typed in
-face mode. Expected = Maya 2022: Select > All / Inverse
+face mode. Expected (Maya behaviour): Select > All / Inverse
 act on the faces, Deselect All clears and goes to object mode, Edit > Delete deletes the face, Group makes an empty
 group null1, Freeze / Delete History leave everything alone, Duplicate (menu and Ctrl+D) copies nothing."""
 

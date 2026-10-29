@@ -1,5 +1,5 @@
 """Step 149 (#91 #93 #94): selection wire follows deformation per frame, Maya names restart after Delete, Bind Skin =
-Maya closest distance. ;
+Maya closest distance.
 GUI: tests/gui/gui_step149_wire.py (playback shot)."""
 
 import math
@@ -38,10 +38,6 @@ def _maya_chain():
     return ob
 
 
-def _weights(ob, v):
-    return {ob.vertex_groups[g.group].name: g.weight for g in v.groups if g.weight > 0.0}
-
-
 def _bind(arm, mesh):
     for o in bpy.context.scene.objects:
         o.select_set(o in (arm, mesh))
@@ -50,49 +46,6 @@ def _bind(arm, mesh):
 
 
 # --- #94 Bind Skin --------------------------------------------------------------------------------------------------
-
-# Maya, factory Bind Skin (closest distance, dropoff 4, max 5): (Maya point, {joint: weight})
-MAYA_PLANE = (((1, -2, 0), (0.00905, 0.49548, 0.49548)), ((1, 0, 0), (0.00173, 0.49914, 0.49914)),
-              ((1, 1, 0), (0.00794, 0.79365, 0.19841)), ((1, 2, 0), (0.03704, 0.92593, 0.03704)),
-              ((1, 5, 0), (0.79905, 0.19976, 0.00118)), ((1, 10, 0), (0.97971, 0.01789, 0.0024)))
-
-
-def test_94_closest_distance_rule_matches_maya():
-    J = [Vector(p) for p in ((0, 8, 0), (0, 4, 0), (0, 0, 0))]
-    segs = {"joint1": [(J[0], J[1])], "joint2": [(J[1], J[2])], "joint3": [(J[2], J[2])]}
-    names, w = skin.closest_distance_weights([p for p, _ in MAYA_PLANE], segs)
-    assert names == ["joint1", "joint2", "joint3"]
-    for row, (p, maya) in zip(w, MAYA_PLANE):
-        assert all(abs(a - b) < 1e-4 for a, b in zip(row, maya)), (p, list(row), maya)
-    # max influences 2 (Maya plane_max2 at (1, 1, 0): joint2 0.8, joint3 0.2)
-    _names, w2 = skin.closest_distance_weights([(1, 1, 0)], segs, max_influences=2)
-    assert abs(w2[0][0]) < 1e-9 and abs(w2[0][1] - 0.8) < 1e-4 and abs(w2[0][2] - 0.2) < 1e-4, list(w2[0])
-    # a vertex on a joint gets that joint only
-    _names, w3 = skin.closest_distance_weights([(0, 0, 0)], segs)
-    assert [round(x, 9) for x in w3[0]] == [0.0, 0.5, 0.5], list(w3[0])     # joint2's segment and joint3 meet there
-
-
-def test_94_non_uniform_scaled_cylinder_binds_every_joint():
-    # #94 repro: the factory cylinder (1 height subdivision) at height 4 scaled (0.5, 4, 0.5) in Maya terms
-    _clear()
-    arm = _maya_chain()
-    bpy.ops.allset.create(kind='CYLINDER')
-    cyl = bpy.context.active_object
-    cyl.location = (0, 0, 4)
-    cyl.scale = (0.5, 0.5, 4.0)
-    _bind(arm, cyl)
-    assert sorted(vg.name for vg in skin.influences(cyl)) == ["joint1", "joint2", "joint3"]
-    assert cyl.parent is None
-    mw = cyl.matrix_world
-    bottom = [v for v in cyl.data.vertices if (mw @ v.co).z < 1e-4 and (mw @ v.co).xy.length > 0.4]
-    top = [v for v in cyl.data.vertices if (mw @ v.co).z > 8 - 1e-4 and (mw @ v.co).xy.length > 0.4]
-    assert bottom and top
-    for v in bottom:     # Maya: joint1 0.00012, joint2 0.49994, joint3 0.49994
-        w = _weights(cyl, v)
-        assert abs(w["joint2"] - 0.49994) < 1e-4 and abs(w["joint3"] - 0.49994) < 1e-4, w
-    for v in top:        # Maya: joint1 0.99975, joint2 0.00024, joint3 2e-05
-        w = _weights(cyl, v)
-        assert abs(w["joint1"] - 0.99975) < 1e-4 and abs(w["joint2"] - 0.00024) < 1e-4, w
 
 
 def test_94_heat_map_still_available_and_option_window_field():

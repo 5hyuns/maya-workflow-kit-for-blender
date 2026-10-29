@@ -184,7 +184,7 @@ def s_click_check():
     with bpy.context.temp_override(window=graph()[0], area=graph()[1], region=graph()[2]):
         labels = [chrome.attr_label(fc) for k, n, fc in chrome.rows(bpy.context, graph()[1].spaces.active)
                   if k == "ATTR" and n.name == "joint1"]
-    check(f"joint attributes in Maya order, not keying order ({labels})",
+    check(f"joint attributes in the Maya order, not keying order ({labels})",
           labels == ["Translate Y", "Rotate Z", "Scale X"])
     redraw()
 

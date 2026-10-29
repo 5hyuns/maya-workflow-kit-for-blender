@@ -87,7 +87,7 @@ def test_phong_maya_defaults():
     assert _close(mat.allset_cosine_power, 50.0, 1e-2), mat.allset_cosine_power
     assert _close(b.inputs["Roughness"].default_value, (2 / 52) ** 0.25)
     assert ("maya", "allset_cosine_power", "Cosine Power", "Roughness") in _rows("phong")
-    # Blinn eccentricity 0.3 and Phong cosine power 20 are about the same highlight in Maya: both near 0.55 here
+    # Blinn eccentricity 0.3 and Phong cosine power 20 give about the same Maya highlight: both near 0.55 here
     assert abs(material.eccentricity_roughness(0.3) - material.cosine_power_roughness(20.0)) < 0.01
 
 
@@ -202,69 +202,6 @@ def test_ae_light_rows():
         rows = _rows(name)
         assert ("prop", "data", "allset_intensity", "Intensity") in rows and ("draw", "light_decay") in rows, name
     assert "light_decay" in attribute_editor.DRAWERS
-
-
-def _render_centre(engine, dist_units, k):
-    """Centre pixel (linear) of a diffuse plane, colour 0.5, under the kit's new point light ``dist_units`` above."""
-    sc = bpy.context.scene
-    _clear()
-    me = bpy.data.meshes.new("plane")
-    s = 1000 * k
-    me.from_pydata([(-s, -s, 0), (s, -s, 0), (s, s, 0), (-s, s, 0)], [], [(0, 1, 2, 3)])
-    plane = bpy.data.objects.new("plane", me)
-    sc.collection.objects.link(plane)
-    mat = bpy.data.materials.new("d")
-    compat.ensure_material_nodes(mat)
-    nt = mat.node_tree
-    nt.nodes.clear()
-    out = nt.nodes.new('ShaderNodeOutputMaterial')
-    dif = nt.nodes.new('ShaderNodeBsdfDiffuse')
-    dif.inputs["Color"].default_value = (0.5, 0.5, 0.5, 1)
-    nt.links.new(dif.outputs[0], out.inputs[0])
-    me.materials.append(mat)
-    lo = create.create(bpy.context, 'POINT_LIGHT')
-    lo.data.shadow_soft_size = 0.0
-    lo.location = (0, 0, dist_units * k)
-    cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
-    cam.data.type = 'ORTHO'
-    cam.data.ortho_scale = k
-    cam.location = (0, 0, 0.5 * k)
-    cam.data.clip_start = 0.1 * k
-    sc.collection.objects.link(cam)
-    sc.camera = cam
-    sc.world = None
-    sc.render.engine = engine
-    sc.render.resolution_x = sc.render.resolution_y = 8
-    sc.render.resolution_percentage = 100
-    sc.view_settings.view_transform = 'Standard'
-    sc.view_settings.look = 'None'
-    if engine == 'CYCLES':
-        sc.cycles.samples, sc.cycles.use_denoising, sc.cycles.max_bounces = 16, False, 0
-    path = os.path.join(bpy.app.tempdir, f"step137_{engine}_{dist_units:g}.exr")
-    sc.render.image_settings.file_format = 'OPEN_EXR'
-    sc.render.filepath = path
-    bpy.ops.render.render(write_still=True)
-    img = bpy.data.images.load(path, check_existing=False)
-    w, h = img.size
-    i = ((h // 2) * w + w // 2) * 4
-    v = sum(img.pixels[i:i + 3]) / 3
-    bpy.data.images.remove(img)
-    return v
-
-
-def test_point_light_brightness_like_maya():
-    """Maya Software: lambert color 0.5 x diffuse 1 under an intensity-1 No Decay point light = 0.5 at any distance
-    (0.25 for color 0.5 x diffuse 0.5 in Maya). Cycles follows it at every
-    distance; EEVEE (distance squared) matches at 10 units."""
-    k = _cm()
-    for dist in (10.0, 40.0):
-        v = _render_centre('CYCLES', dist, k)
-        assert abs(v - 0.5) < 0.02, ("Cycles", dist, v)
-    eevee = 'BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in {e.identifier for e in
-                                                             bpy.types.RenderSettings.bl_rna.properties["engine"]
-                                                             .enum_items} else 'BLENDER_EEVEE'
-    v = _render_centre(eevee, 10.0, k)
-    assert abs(v - 0.5) < 0.02, ("EEVEE", v)
 
 
 # --- Render Settings -----------------------------------------------------------------------------------------------

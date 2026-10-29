@@ -111,7 +111,7 @@ def s_scene():
     a = al()
     key_of = mod("operators.character_sets").channel_key_of
     with bpy.context.temp_override(window=win(), area=area, region=reg):
-        # AnimLayer1: additive, member tx only (Maya Add Selected + attribute list of anim_layers_201.md)
+        # AnimLayer1: additive, member tx only (Maya Add Selected + attribute list)
         bpy.ops.allset.anim_layer_create(from_selected=False)
         a.add_attrs(sc, ob, "AnimLayer1", [key_of("location", 0)])
         a.sync(sc)
@@ -220,7 +220,7 @@ def s_ctrl_up():
     sel = selected_names()
     C["via_click"] = sel == ["AnimLayer1", "AnimLayer2"]
     if not C["via_click"]:
-        # fallback ( step 170: a simulated modifier may not reach the button): the Ctrl+click operator call
+        # fallback (step 170: a simulated modifier may not reach the button): the Ctrl+click operator call
         print("GUI NOTE Ctrl+click did not reach the row button; calling allset.anim_layer_select(toggle=True)",
               flush=True)
         area, reg = dock()
@@ -327,7 +327,7 @@ def s_graph_check():
 
 @step
 def s_graph_pixels():
-    # screen.screenshot shows the previous frame: take it again one tick later ( step 9)
+    # screen.screenshot shows the previous frame: take it again one tick later (step 9)
     if "shot" not in C:
         return
     path, w, rect = C["shot"]
@@ -337,7 +337,7 @@ def s_graph_pixels():
     check(f"two curves on screen in the Graph Editor: AnimLayer1 tx (kit-drawn dim red) {red} px, AnimLayer2 ty "
           f"(Blender's curve) {green} px (shot {size}, region {rect})", red > 60 and green > 60)
     fc = next(f for f in al().layer_curves(cube(), "AnimLayer2") if f.data_path == "location")
-    check(f"AnimLayer2's Translate Y curve drawn in Maya's Y green like its outliner row (color_mode {fc.color_mode}, "
+    check(f"AnimLayer2's Translate Y curve drawn in the Y green like its outliner row (color_mode {fc.color_mode}, "
           f"color {tuple(round(c, 2) for c in fc.color)})", fc.color_mode == 'AUTO_RGB')
     shot("gui_step204_main.png")
 

@@ -99,7 +99,7 @@ def test_header_extras_off_and_search_under_layouts():
 
 
 def test_priority_off_leaves_non_joint_clicks_to_blender():
-    """Selection Priority off (): an Object-mode click is the kit's only when it hits a joint;
+    """Selection Priority off: an Object-mode click is the kit's only when it hits a joint;
     everything else passes through to Blender's own pick (the PR called view3d.select for every click)."""
     from types import SimpleNamespace
     sp = import_module(kit.MODULE + ".operators.select_priority")
@@ -137,7 +137,7 @@ def test_priority_off_leaves_non_joint_clicks_to_blender():
 
 
 def test_paint_skin_weights_sections_and_channel_box():
-    """Paint Skin Weights Tool Settings = Maya 2024+ frames in order (PR125_MAYA_LATER.md 6), Blender extras after;
+    """Paint Skin Weights Tool Settings = Maya 2024+ frames in order, Blender extras after;
     the Channel Box stays the Channel Box in weight paint mode (no Maya version swaps it for paint UI)."""
     import inspect
     pw = import_module(kit.MODULE + ".ui.paint_weights")

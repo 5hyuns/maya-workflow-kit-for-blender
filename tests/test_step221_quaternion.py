@@ -1,4 +1,4 @@
-"""Step 221 (Issue #131, ): quaternion bones of a received rig show Maya's Rotate X / Y / Z in the Channel
+"""Step 221 (Issue #131): quaternion bones of a received rig show Maya's Rotate X / Y / Z in the Channel
 Box, typed values come back as typed (compat conversion, <= 0.002 deg), S keys the rotation (rotation_quaternion
 curves), the Graph Editor names the keyed curves; undo. The rig keeps its QUATERNION mode."""
 
@@ -54,7 +54,7 @@ def _select_only(rig, pb):
 
 def test_pure_round_trip():
     """2000 random typed Euler triples (-360..360) through the quaternion and back: <= 0.005 deg (mathutils is
-    float32;  checked 0.002 with another sample — the Channel Box keeps typed values exactly, below)."""
+    float32; 0.002 with another sample — the Channel Box keeps typed values exactly, below)."""
     random.seed(221)
     worst = 0.0
     for _ in range(2000):

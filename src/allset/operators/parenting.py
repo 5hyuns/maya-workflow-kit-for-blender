@@ -3,10 +3,9 @@
 
 Maya ``parentPreserve 1`` /
 ``unparentPreserve 1``: the world transform is kept and the child's local
-values are recomputed relative to the new parent. :
-that is the default ("Maya" Parent Mode, parent inverse = identity); the
+values are recomputed relative to the new parent.
+That is the default ("Maya" Parent Mode, parent inverse = identity); the
 "Blender" mode keeps Blender's parent inverse (``object.parent_set``).
- 「계획」 4.
 """
 
 import bpy
@@ -33,7 +32,7 @@ def set_parent_maya(child, parent):
     The parent inverse stays identity unless the local matrix has shear (rotated
     child under a non-uniformly scaled parent): Maya stores that in ``shear``,
     Blender channels can't, so the residual goes into the parent inverse and the
-    channels hold the closest translate/rotate/scale (delegated, step 10).
+    channels hold the closest translate/rotate/scale (step 10).
     """
     world = child.matrix_world.copy()
     local = parent.matrix_world.inverted_safe() @ world

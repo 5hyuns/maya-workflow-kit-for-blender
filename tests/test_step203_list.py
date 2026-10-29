@@ -1,7 +1,7 @@
 """Step 203 lane B (#110): Graph Editor / Dope Sheet List > Load / Add Selected Objects with Auto Load, Curves > Pin /
 Unpin Channel, Show > Attributes filters (Hidden, Driven by Anim Curve / Expression / Driven Key, User Defined),
 Show > Objects > IkHandles / Sets / Characters, List > Show Upstream Curves / Hierarchy Below (ui/editor_chrome.py),
-following Maya 2022."""
+like Maya."""
 
 import types
 from importlib import import_module
@@ -32,7 +32,7 @@ def _clear():
     chrome._kit_hidden.clear()
     wm = bpy.context.window_manager
     for name, _label, _tip in chrome.FLAGS:
-        setattr(wm, name, name in chrome.FLAGS_ON)       # Maya factory state
+        setattr(wm, name, name in chrome.FLAGS_ON)       # default state
     wm.allset_show_characters = False
 
 
@@ -194,7 +194,7 @@ def test_pinned_channel_stays_when_the_selection_changes():
     assert [(n.name, fc.array_index) for n, fc in targets] == [("pCube1", 0)]
     chrome._pinned.update((chrome.node_key(n), fc.data_path, fc.array_index) for n, fc in targets)
     _select(b)
-    # pinned nodes not in the list follow it (order , lane M confirms)
+    # pinned nodes not in the list follow it (order not confirmed)
     assert _labels(sp) == [("OBJECT", "pCube2"), ("ATTR", "Translate X"), ("ATTR", "Translate Y"),
                            ("OBJECT", "pCube1"), ("ATTR", "Translate X")], _labels(sp)
     # Blender has to draw pCube1 too: a kit list (pCube1 + the selection), Auto Load kept on
@@ -220,7 +220,7 @@ def _pick(*ids):
 
 
 def test_pin_with_nothing_highlighted_pins_nothing():
-    # Maya (b15): nothing highlighted -> nothing pinned, "no channels selected"
+    # Maya: nothing highlighted -> nothing pinned, "no channels selected"
     _clear()
     a = _cube("pCube1")
     sp = _space()
@@ -391,14 +391,14 @@ def test_dope_sheet_characters_draw_members():
 
 def test_hierarchy_below():
     # Maya: descendants' keys show in the object's rows; Blender's Dope Sheet can't merge them, the kit lists
-    # the descendants (delegated). Graph Editor: no effect.
+    # the descendants. Graph Editor: no effect.
     _clear()
     a, child = _cube("pCube1"), _cube("pCube2")
     child.parent = a
     _select(a)
     wm = bpy.context.window_manager
     ds_space, ge_space = _space('DOPESHEET_EDITOR'), _space()
-    assert not wm.allset_hierarchy_below                  # Maya factory off
+    assert not wm.allset_hierarchy_below                  # default off
     wm.allset_hierarchy_below = True
     assert _names(ds_space) == ["pCube1", "pCube2"] and _names(ge_space) == ["pCube1"]
 
@@ -423,7 +423,7 @@ def _sdk_rig():
 
 
 def test_show_upstream_curves():
-    # Maya (grab 40): on (factory) = under the driven-key channel "> pCube1.User A" (the SDK curve) and
+    # Maya: on (default) = under the driven-key channel "> pCube1.User A" (the SDK curve) and
     # "pCube1.User A" (the driver's own curve); off = only the channel's own rows
     cube, sphere = _sdk_rig()
     sp = _space()

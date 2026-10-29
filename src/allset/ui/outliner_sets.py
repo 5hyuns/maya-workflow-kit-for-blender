@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Outliner set rows on Blender's Outliner.
+"""Maya Outliner set rows on Blender's Outliner (step 96).
 
 Maya lists object sets after the DAG nodes, outside the hierarchy; expanding one shows its members.
 The Maya Workflow Kit layout's Outliner is Blender's C tree (``maya_outliner``),
@@ -10,16 +10,16 @@ per region; the "Outliner" keymap items ``allset.outliner_set_click`` (LMB CLICK
 ``allset.outliner_set_menu`` (RMB) act on them and pass through elsewhere.
 
 Maya's default rows (step 99): a new Maya scene lists the startup cameras persp / top / front / side (hidden, so
-greyed) and the sets defaultLightSet / defaultObjectSet (:
-defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
+greyed) and the sets defaultLightSet / defaultObjectSet
+(defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
 selecting persp selects the hidden camera). The kit has no camera objects behind them (Blender's user views aren't
 cameras; real objects would render, export and sort among the user's objects), so they are drawn rows too: the
 cameras first, then the default sets, then the kit sets. Blender's rows can't be pushed down, so with objects in
-the scene the cameras follow the DAG rows instead of leading them (delegated, step 99). Step 211 (#117): a kit new
+the scene the cameras follow the DAG rows instead of leading them (step 99). Step 211 (#117): a kit new
 Maya scene has real hidden startup cameras (operators/startup_cameras.py) that are Blender's first rows
 (ui/outliner_order.py); only scenes without them still get drawn camera rows.
 
-Blender row geometry (checked, step 96): row height = UI_UNIT_Y = round(18 x scale) + 2 x pixel size,
+Blender row geometry (step 96): row height = UI_UNIT_Y = round(18 x scale) + 2 x pixel size,
 row k spans view y [-(k + 1)·U, -k·U]; a depth-0 row draws its disclosure triangle at ~1.6 U, the icon
 at ~2.5 U and the name from ~3.25 U (1 U less without the mode column, step 202).
 """

@@ -1,5 +1,5 @@
 """Step 87: Maya view keys 3 (Alt+A cycle display, Alt+P camera mode, Alt+arrows pixel move, ` tweak hold,
-\\ 2D pan/zoom) and the mapping table's cell escaping. """
+\\ 2D pan/zoom) and the mapping table's cell escaping."""
 
 import math
 import os
@@ -77,8 +77,10 @@ def test_keymap_items():
 
 
 def test_mapping_table_columns():
-    """Every row of  has its table's column count (a pipe in a cell is an entity)."""
+    """Every row of the generated keymap mapping table has its table's column count (a pipe in a cell is an entity)."""
     path = os.path.join(ROOT, "docs", "keymap_mapping.md")
+    if not os.path.exists(path):
+        raise kit.Skip("generated mapping table not in this clone")
     width, bad = None, []
     for line in open(path, encoding="utf-8"):
         if not line.startswith("|"):

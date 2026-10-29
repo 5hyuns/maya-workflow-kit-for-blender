@@ -6,7 +6,7 @@ Lattice around Object, Local effect off) on an object that has a motion path mak
 ``ffd1Lattice`` / ``ffd1Base``: a lattice around the object whose points the flow node places along the motion path
 (each point at its own distance along the path, offset in the path's frame), the ffd deforming the object.
 
-Blender construction (delegated,  「계획」 B):
+Blender construction:
 - the kit lattice deformer of step 144 (``deformers.create('LATTICE')``: ``ffd1`` Lattice modifier + ``ffd1Base`` Hook
   + ``ffd1Lattice``, Front / Up / Side = lattice u / w / v), interpolation Linear;
 - the lattice gets a Curve modifier ``flow1`` on the path (Blender's Curve modifier maps curve-space X to the distance
@@ -152,7 +152,7 @@ class ALLSET_OT_flow_path(bpy.types.Operator):
 
 
 def windows():
-    """Maya Flow Path Object Options (factory values —
+    """Maya Flow Path Object Options (default values —
     Divisions Front 5 / Up 2 / Side 2, Lattice around Object, Local effect off 2 / 2 / 2)."""
     from .option_windows import F, Window
 

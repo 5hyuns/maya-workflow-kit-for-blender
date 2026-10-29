@@ -1,5 +1,5 @@
 """Step 27: = / - manipulator size (kit manipulator only since step 130), PgUp/PgDn smoothing level, 0,
-Home default view, Alt+5 wireframe on shaded. """
+Home default view, Alt+5 wireframe on shaded."""
 
 from importlib import import_module
 from types import SimpleNamespace

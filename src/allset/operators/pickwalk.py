@@ -2,9 +2,9 @@
 """Maya arrow-key pick-walk (object mode).
 
 Maya arrow keys: Up = parent, Down = child,
-Left/Right = sibling (Maya default hotkeys). Siblings are in Maya's
+Left/Right = sibling (Maya-style hotkeys). Siblings are in Maya's
 creation order (a re-parented node last; the kit's ``outliner_order.ORDER`` numbers) and wrap around —
-step 266 independent check, locators made b, a, c walk b -> a -> c -> b, Down = the first made.
+locators made b, a, c walk b -> a -> c -> b, Down = the first made.
 Edit mode:
 component pick-walk at the end of this file (step 39).
 """
@@ -82,9 +82,9 @@ class ALLSET_OT_pick_walk(bpy.types.Operator):
 
 
 # --- component pick-walk (step 39) ----------------------------------------------------
-#  「계획」 1. Maya 2022 pick-walk: edges walk the edge ring (Up/Down)
+# Maya pick-walk: edges walk the edge ring (Up/Down)
 # and the edge loop (Left/Right); faces/vertices (Maya: face loop / index order) walk to the
-# neighbour whose screen direction is closest to the arrow (delegated).
+# neighbour whose screen direction is closest to the arrow.
 
 SCREEN_DIR = {"UP": (0.0, 1.0), "DOWN": (0.0, -1.0), "LEFT": (-1.0, 0.0), "RIGHT": (1.0, 0.0)}
 MIN_ALIGN = 0.3   # vertices / faces: no neighbour within ~72 degrees of the arrow = stay

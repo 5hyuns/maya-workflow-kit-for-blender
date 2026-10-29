@@ -1,5 +1,5 @@
 {
- "_doc": "Copy for tools/marketing/compose.py, from docs/distribution/marketing/copy.md (step 122). Callout rects: names from tmp/marketing/raw/meta.json or [x, y, w, h] in raw 1920 x 1080 window pixels (top-down).",
+ "_doc": "Copy for tools/marketing/compose.py (step 122). Callout rects: names from tmp/marketing/raw/meta.json or [x, y, w, h] in raw 1920 x 1080 window pixels (top-down).",
  "_credits_doc": "Step 125: optional attribution per shot / clip name (e.g. a CC-BY model credit), printed small and muted: screens = right of the title band's line row, key visuals = under the footer, kit cards = a bottom corner, clips = the caption band's bottom-right corner. trailer.end_card_credits = lines printed at the bottom of the trailer end card. Empty = nothing printed.",
  "credits": {
   "hero": "DOGWALK (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
@@ -297,7 +297,7 @@
   "end_headline": "The tutorial ends. Your Channel Box comes back.",
   "end_line": "Free and open source · Blender 5.0 – 5.2",
   "download": "Get it on extensions.blender.org/add-ons/allset",
-  "download_note": "placeholder until the listing is live (: nothing published yet)",
+  "download_note": "placeholder until the listing is live (nothing published yet)",
   "end_seconds": 2.5,
   "end_card_credits": [
    "3D assets: Rain, Pack Bot and Security Bot rigs and DOGWALK scene (CC BY 4.0) Blender Foundation | studio.blender.org, modified",

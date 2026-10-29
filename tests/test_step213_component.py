@@ -1,5 +1,5 @@
 """Step 213 lane CE: Maya's Component Editor — Smooth Skins weights table with
-Hold / Hide Zero Columns / Interactive normalisation (Maya's numbers), Polygons positions in Maya units, cell
+Hold / Hide Zero Columns / Interactive normalisation (Maya's rule), Polygons positions in Maya units, cell
 edits through the Scene proxies (undoable), Auto Update and the window's classes / properties."""
 
 from importlib import import_module
@@ -91,7 +91,7 @@ def _weights(ob, vi):
     return out
 
 
-# --- the normalisation rule against Maya ------------------------------------------------------------------------
+# --- the normalisation rule -----------------------------------------------------------------------------------
 
 def test_normalize_matches_maya():
     _close(ce.normalize([0.8, 0.2, 0.0], 0, 0.5), [0.5, 0.5, 0.0])
@@ -106,7 +106,7 @@ def test_normalize_hold_and_empty_others():
     _close(ce.normalize([0.5, 0.2, 0.3], 0, 0.4, locked={1}), [0.4, 0.2, 0.4])
     # a held influence can't be pushed: w is limited to 1 - held
     _close(ce.normalize([0.5, 0.2, 0.3], 0, 0.9, locked={1}), [0.8, 0.2, 0.0])
-    # the others weigh nothing: the rest is shared equally by the unheld others (delegated)
+    # the others weigh nothing: the rest is shared equally by the unheld others
     _close(ce.normalize([1.0, 0.0, 0.0], 0, 0.5), [0.5, 0.25, 0.25])
     # nothing to rebalance: only the edited cell changes
     _close(ce.normalize([0.5, 0.5], 0, 0.3, locked={1}), [0.3, 0.5])
@@ -125,7 +125,7 @@ def test_smooth_skins_table():
     _close(rows[0]["values"], [0.962, 0.038, 0.0, 1.0], 1e-5)
     _close(rows[2]["values"], [0.8, 0.2, 0.0, 1.0], 1e-5)
     assert tab["hold"] == [False, False, False], tab["hold"]
-    # Hide Zero Columns: joint3 weighs nothing on the shown vertices (CE3: hidden in the Maya shot)
+    # Hide Zero Columns: joint3 weighs nothing on the shown vertices (hidden, like Maya)
     tab = ce.table(bpy.context, "SMOOTH_SKINS", hide_zero=True)
     assert tab["columns"] == ["joint1", "joint2", "Total"], tab["columns"]
     assert len(tab["shapes"][0][1][0]["values"]) == 3

@@ -10,7 +10,7 @@
   (``allset_rule_colors``) so removing a rule gives them Blender's automatic colour back.
 - Keys > Add Key Tool (Maya annotation "Add keys to an animation curve"): while the tool runs, a middle click
   in the curve area adds a key at the whole frame and the value under the mouse on the selected curves (Insert Key Tool
-  keeps the curve shape instead; graph_keys.ALLSET_OT_insert_key_tool). Esc / Q W E R T end it (delegated, like the
+  keeps the curve shape instead; graph_keys.ALLSET_OT_insert_key_tool). Esc / Q W E R T end it (like the
   Retime Tool).
 """
 

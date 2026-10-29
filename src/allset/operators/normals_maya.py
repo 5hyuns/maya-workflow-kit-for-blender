@@ -7,7 +7,7 @@ Maya keeps a normal per vertex-face (corner) with a "locked" (frozen, user) flag
 the same thing: a corner with a custom normal keeps it, a corner without one (custom value (0, 0) in its normal
 space) follows the computed normal. So locked = custom, unlocked = auto, and every command rewrites the mesh's
 custom normals with ``Mesh.normals_split_custom_set`` (an unlocked corner gets the computed normal). Blender can't tell a locked corner whose
-normal equals the computed one from an unlocked one [delegated: such a lock is lost; it looks the same].
+normal equals the computed one from an unlocked one (such a lock is lost; it looks the same).
 
 Which corners: Object Mode = every corner of the selected meshes; Edit Mode = the corners of the selected vertices
 (Maya's conversion of a vertex selection); Set to Face = the selected faces' corners.
@@ -101,7 +101,7 @@ def computed(me):
 
 def write(me, normals, locked):
     """Custom normals = the locked corners' normals; the others get the computed normal (stored as "no custom
-    normal": a zero vector isn't reliably taken as auto on hard edges, checked). No locked corner = none at all."""
+    normal": a zero vector isn't reliably taken as auto on hard edges). No locked corner = none at all."""
     attr = me.attributes.get("custom_normal")
     if not any(locked):
         if attr is not None:

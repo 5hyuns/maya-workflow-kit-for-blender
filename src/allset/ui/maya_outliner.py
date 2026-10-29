@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Outliner chrome on Blender's Outliner.
+"""Maya Outliner chrome on Blender's Outliner (step 50).
 
 Maya's Outliner has a menu bar Display / Show / Help and a search field.
 Outliners set up the Maya way (the Maya Workflow Kit layout and Windows > Outliner:

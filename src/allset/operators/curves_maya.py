@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 curve commands on Blender curves (step 156;
-maths in ``curves_math`` — bpy-free, tested against Maya's numbers).
+maths in ``curves_math``, bpy-free).
 
 Representation: a Maya clamped-uniform NURBS curve = a Blender NURBS spline with
-``use_endpoint_u`` and order = degree + 1 (Blender's endpoint knots are the clamped uniform vector, checked); periodic
+``use_endpoint_u`` and order = degree + 1 (Blender's endpoint knots are the clamped uniform vector); periodic
 uniform = a cyclic NURBS spline; degree 1 = a POLY spline; any other cubic (non-uniform knots after Detach / Cut at a
 curve point) = an exact Bezier decomposition. Blender Bezier input = a cubic B-spline with triple interior knots.
 """
@@ -162,7 +162,7 @@ def make_cv_curve(context, points, degree=3):
 
 
 def make_ep_curve(context, points, degree=3, uniform=True):
-    """Maya EP Curve Tool (factory Uniform knot spacing): the cubic through the clicks at u = 0 .. n-1, natural ends."""
+    """Maya EP Curve Tool (default Uniform knot spacing): the cubic through the clicks at u = 0 .. n-1, natural ends."""
     cvs, knots, deg = cm.ep_curve([tuple(p) for p in points], degree, uniform)
     return _new_curve_object(context, "curve", [MCurve(cvs, knots, deg)])
 
@@ -194,7 +194,7 @@ class _CurveOp:
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_curve_rebuild(_CurveOp, bpy.types.Operator):
-    """Rebuild the selected curves with uniform spans (Maya Curves > Rebuild; factory 4 spans, degree 3)"""
+    """Rebuild the selected curves with uniform spans (Maya Curves > Rebuild; default 4 spans, degree 3)"""
     bl_idname = "allset.curve_rebuild"
     bl_label = "Rebuild Curve"
 
@@ -209,7 +209,7 @@ class ALLSET_OT_curve_rebuild(_CurveOp, bpy.types.Operator):
             for sp in ob.data.splines:
                 c = read_spline(sp)
                 if c.periodic:
-                    out.append(c)       # periodic rebuild unknown : left as it is
+                    out.append(c)       # periodic rebuild unknown: left as it is
                     continue
                 cvs, knots, deg = cm.rebuild(c.cvs, c.knots, c.degree, self.spans, int(self.degree), c.weights)
                 out.append(MCurve(cvs, knots, deg))
@@ -219,7 +219,7 @@ class ALLSET_OT_curve_rebuild(_CurveOp, bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_curve_attach(_CurveOp, bpy.types.Operator):
-    """Join two curves into a new one at their nearest ends (Maya Curves > Attach; factory Blend, bias 0.5)"""
+    """Join two curves into a new one at their nearest ends (Maya Curves > Attach; default Blend, bias 0.5)"""
     bl_idname = "allset.curve_attach"
     bl_label = "Attach Curves"
 
@@ -354,7 +354,7 @@ class ALLSET_OT_curve_cut(_CurveOp, bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_curve_fillet(_CurveOp, bpy.types.Operator):
-    """A circular fillet curve between two curves (Maya Curves > Fillet; factory radius 1)"""
+    """A circular fillet curve between two curves (Maya Curves > Fillet; default radius 1)"""
     bl_idname = "allset.curve_fillet"
     bl_label = "Fillet Curves"
 
@@ -383,7 +383,7 @@ class ALLSET_OT_curve_straighten(_CurveOp, bpy.types.Operator):
     bl_idname = "allset.curve_straighten"
     bl_label = "Straighten Curve"
 
-    # Straighten Curves Options (step 196): factory Straightness 1, Preserve length on
+    # Straighten Curves Options (step 196): default Straightness 1, Preserve length on
     straightness: FloatProperty(name="Straightness", default=1.0, soft_min=0.0, soft_max=2.0, options={'SKIP_SAVE'})
     preserve_length: BoolProperty(name="Preserve length", default=True, options={'SKIP_SAVE'})
 
@@ -404,7 +404,7 @@ class ALLSET_OT_curve_straighten(_CurveOp, bpy.types.Operator):
 @undo_steps.no_redo_panel
 class ALLSET_OT_curve_smooth_curves(_CurveOp, bpy.types.Operator):
     """Smooth the CVs of the selected curves, ends kept (Maya Curves > Smooth in the Modify section, nHair > Modify
-    Curves > Smooth; factory Smooth factor 4)"""
+    Curves > Smooth; default Smooth factor 4)"""
     bl_idname = "allset.curve_smooth_curves"
     bl_label = "Smooth Curves"
 

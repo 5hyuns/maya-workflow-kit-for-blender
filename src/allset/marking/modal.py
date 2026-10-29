@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Modal operators: the marking menu engine and the hotbox.
+"""Modal operators: the marking menu engine and the hotbox (step 9).
 
 ``allset.mm_engine``: one marking menu (``marking/menus.py``) drawn with the
 GPU, driven by ``engine.Session``. ``allset.hotbox``: Space hold (menu rows,
@@ -78,9 +78,9 @@ def hover_notice(session):
 
 
 def run_action(context, action, option=False, path=None):
-    """Run a menu action like Maya runs the item (or its option box). An action with an option window
-    (``operators/option_windows``) opens it as the option box, and a plain run uses its saved values (Maya runs
-    a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path. A finished
+    """Run a menu action like the Maya menu item (or its option box). An action with an option window
+    (``operators/option_windows``) opens it as the option box, and a plain run uses its saved values (a Maya
+    menu item runs with its option values); ``path`` = the Maya menu path, for windows tied to a path. A finished
     command is one undo step named after the item (``undo_steps.command``, step 147)."""
     from .. import undo_steps
     outer = undo_steps.depth() == 0
@@ -158,7 +158,7 @@ def _call(op, option, props):
         return op('INVOKE_DEFAULT', option_box=True, **props)
     if option:
         # Maya's option box opens the command's settings: Blender's Adjust Last Operation, which needs the operator
-        # registered, so it is called with undo=True (its own undo step; step 147 checked nothing registered before)
+        # registered, so it is called with undo=True (its own undo step; before step 147 nothing was registered)
         from .. import undo_steps
         res = op('INVOKE_DEFAULT', True, **props)
         undo_steps.mark_pushed()
@@ -188,7 +188,7 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
     button: EnumProperty(items=BUTTONS, options={'SKIP_SAVE'})
     # Where the button went down (region pixels). Callers pass the press position: the
     # event a nested invoke gets is the window's latest state, which may already have
-    # moved on (checked with simulated events in the step-9 GUI test).
+    # moved on (seen with simulated events in the step-9 GUI test).
     origin: bpy.props.IntVectorProperty(size=2, default=(-1, -1), options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
@@ -319,7 +319,7 @@ def open_menu(menu_name, button, origin=None):
 # --- hotbox ---------------------------------------------------------------------------
 
 def hotbox_rows(context, area_type=None):
-    """(rows above, cursor row sides, rows below) like Maya's hotbox (Maya 2022):
+    """(rows above, cursor row sides, rows below) like Maya 2022's hotbox:
     common menus (+ Cache, Help), the 3D View's panel menus, then the menu set rows (every set when
     Hotbox Controls > Show All Menu Sets is on, Maya's default; else the current one)."""
     prefs = _prefs(context)
@@ -438,7 +438,7 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
                     return {'RUNNING_MODAL'}
                 zone = self._layout.zone(x, y)
                 if zone is not None:
-                    self._cleanup(context)  # the zone's marking menu takes over (delegated)
+                    self._cleanup(context)  # the zone's marking menu takes over
                     open_menu(mm.HOTBOX_ZONES[zone].name, event.type, (x, y))
                     return {'FINISHED'}
                 return {'RUNNING_MODAL'}

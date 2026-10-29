@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Engine-ready skeletons in kit FBX files (step 236, Issue #145; DECISIONS7 ).
+"""Engine-ready skeletons in kit FBX files (step 236, Issue #145).
 
 Maya's FBX holds joints only (control curves don't go out). A Blender
 rig made with Rigify keeps its deforming bones (DEF-*) under helper bones (ORG-, MCH-, controls), and Blender's
 ``use_armature_deform_only`` still writes every non-deforming ancestor of a deforming bone: a Rigify human went out
-with 278 joints for its 160 deforming ones (audit CHAINS_AUDIT_0.5.0.md:324). Two passes over the written file:
+with 278 joints for its 160 deforming ones. Two passes over the written file:
 
 1. ``deform_parents`` (Blender side) names each deforming bone's joint parent in the file: the nearest deforming
    ancestor, or the deforming twin of a helper ancestor (Rigify's ORG-x / MCH-x / x sit where DEF-x sits), else
-   none (a root). Nearest-deforming-ancestor alone gave the Rigify human 96 roots ().
+   none (a root). Nearest-deforming-ancestor alone gave the Rigify human 96 roots.
    ``reparent`` (FBX side) computes every LimbNode's world matrix from the file (each take, each key), gives the
    re-parented joints local = W_parent^-1 W, and deletes the joints that don't stay (model, attribute, curves,
    bind pose entry, connections). Runs before ``fbx_rig.rewrite``'s Null fold / PreRotation, on the rest file too.

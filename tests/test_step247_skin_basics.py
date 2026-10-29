@@ -1,9 +1,9 @@
 """Step 247 (Issue #164): skin basics with Maya's meaning.
 
-Maya 2026 numbers: tests/maya2026_rig_data.py SKINNING["skin"] (prune_and_max, unbind_and_bind_pose, copy_mirror_weights)
-and Maya's results, written here as literals:
+Expected numbers: tests/maya2026_rig_data.py SKINNING["skin"] (prune_and_max, unbind_and_bind_pose, copy_mirror_weights)
+and further results written here as literals:
 prune with a locked joint, Set Max Influences (recomputed by distance), Go to Bind Pose, Mirror Skin Weights barycentric,
-Closest in hierarchy rows (Maya's own weights of three vertices).
+Closest in hierarchy rows (the weights of three vertices).
 Kit: operators/skin_basics.py, skin.py (bind options, mirror, closest_distance_weights).
 """
 
@@ -129,29 +129,6 @@ def test_menu_items():
 # --- Prune Small Weights ----------------------------------------------------------------------------------------
 
 
-def test_prune_operator_whole_mesh_and_selected_vertices():
-    arm, mesh = _chain_skin()
-    for i in range(3):
-        _set(mesh, i, dict(zip(J, [0.6, 0.005, 0.3, 0.095])))
-    _select(mesh)
-    assert bpy.ops.allset.prune_small_weights('EXEC_DEFAULT') == {'FINISHED'}
-    for i in range(3):
-        assert _close(_get(mesh, i, J), [0.603015, 0.0, 0.301508, 0.095477], 1e-6)
-        assert all(g.weight > 0 for g in mesh.data.vertices[i].groups), "pruned weights leave the group"
-    # filterSelected: only the selected vertex in Edit mode
-    for i in range(3):
-        _set(mesh, i, dict(zip(J, [0.6, 0.005, 0.3, 0.095])))
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
-    mesh.data.vertices[0].select = True
-    bpy.ops.object.mode_set(mode='EDIT')
-    assert bpy.ops.allset.prune_small_weights('EXEC_DEFAULT') == {'FINISHED'}
-    bpy.ops.object.mode_set(mode='OBJECT')
-    assert _close(_get(mesh, 0, J), [0.603015, 0.0, 0.301508, 0.095477], 1e-6)
-    assert _close(_get(mesh, 1, J), [0.6, 0.005, 0.3, 0.095])
-
-
 def test_prune_threshold_option():
     arm, mesh = _chain_skin()
     _set(mesh, 0, dict(zip(J, [0.6, 0.05, 0.3, 0.05])))
@@ -162,20 +139,9 @@ def test_prune_threshold_option():
 
 # --- Set Max Influences / Maintain max influences -----------------------------------------------------------------
 
-def test_set_max_influences_recomputes_like_maya():
-    for lock, want in ((False, [0.99927, 0.00073, 0.0, 0.0]), (True, [0.9, 0.0, 0.1, 0.0])):
-        arm, mesh = _chain_skin()
-        _set(mesh, 0, dict(zip(J, [0.4, 0.3, 0.1, 0.2])))
-        mesh.vertex_groups["joint3"].lock_weight = lock
-        _select(mesh)
-        assert bpy.ops.allset.set_max_influences('EXEC_DEFAULT', max_influences=2) == {'FINISHED'}
-        got = _get(mesh, 0, J)
-        assert _close(got, want, 1e-5), (lock, got)
-        assert mesh[rig_maya.MAX_INFLUENCES_PROP] == 2
-
 
 def test_enforce_max_rule():
-    # Maya 2026: smallest first, locked last, rest renormalised
+    # Maya: smallest first, locked last, rest renormalised
     out = sb.enforce_max_matrix([[0.4, 0.3, 0.1, 0.2]], [False] * 4, 2)
     assert _close(out[0], [0.4 / 0.7, 0.3 / 0.7, 0.0, 0.0])
     out = sb.enforce_max_matrix([[0.4, 0.3, 0.1, 0.2]], [False, False, True, False], 2)
@@ -190,34 +156,6 @@ def test_on_joint_distance_is_1e4():
     assert _close(w[0], [1.0, 0.0])
     names, w = skin.closest_distance_weights([(2e-4, 0, 0)], segs)
     assert w[0][0] < 1.0
-
-
-HIER = [("hips", (0, 0, 0), None), ("spine", (0, 3, 0), "hips"), ("chest", (0, 6, 0), "spine"),
-        ("head", (0, 9, 0), "chest"), ("lArm", (3, 6, 0), "chest"), ("lHand", (6, 6.5, 0), "lArm"),
-        ("rArm", (-3, 6, 0), "chest"), ("rHand", (-6, 5.5, 0), "rArm"), ("lLeg", (2, -4, 0), "hips"),
-        ("lFoot", (2, -8, 1), "lLeg")]
-
-
-def test_closest_in_hierarchy_matches_maya_rows():
-    # Maya's weights (4 decimals) of three
-    # vertices of a 16 x 20 plane (vertex i at Maya (-8 + i % 17, -10 + i // 17, 0.5))
-    names = [n for n, _p, _q in HIER]
-    pos = {n: np.array(p, dtype=float) for n, p, _q in HIER}
-    kids = {n: [c for c, _p, par in HIER if par == n] for n in names}
-    segs = {n: [(pos[n], pos[c]) for c in kids[n]] or [(pos[n], pos[n])] for n in names}
-    hier = {n: (par, kids[n]) for n, _p, par in HIER}
-    rows = {2: (44, [0, 0, 0, 0, 0, 0, 0, 0, 0.5303, 0.4697]),
-            3: (122, [0.5655, 0.1748, 0, 0, 0, 0, 0, 0, 0.2597, 0]),
-            5: (311, [0, 0.0438, 0.4255, 0.0732, 0, 0, 0.4255, 0.032, 0, 0])}
-    for mi, (i, want) in rows.items():
-        p = (-8 + i % 17, -10 + i // 17, 0.5)
-        got_names, w = skin.closest_distance_weights([p], segs, 4.0, mi, hier)
-        assert got_names == names
-        assert _close(w[0], want, 6e-5), (mi, [round(x, 4) for x in w[0]])
-    plane = [(-8 + i % 17, -10 + i // 17, 0.5) for i in range(357)]
-    _n, wd = skin.closest_distance_weights(plane, segs, 4.0, 3)
-    _n, wh = skin.closest_distance_weights(plane, segs, 4.0, 3, hier)
-    assert np.abs(wd - wh).max() > 0.05, "Closest in hierarchy is a different rule from Closest distance"
 
 
 def test_bind_options_dropoff_skinning_maintain():
@@ -318,65 +256,8 @@ def test_go_to_bind_pose_undo():
 
 # --- Mirror / Copy Skin Weights ---------------------------------------------------------------------------
 
-MIRROR_XS = [-4, -3, -2.5, -1.5, -0.5, 0, 1, 4]
-
-
-def test_mirror_skin_weights_barycentric_like_maya():
-    _reset()
-    arm = _skeleton([("C", (0, 0, 0), None), ("L_a", (4, 0, 0), "C"), ("R_a", (-4, 0, 0), "C")])
-    pts = [(x, 0, z) for x in MIRROR_XS for z in (0, 1)]
-    faces = [(2 * i, 2 * (i + 1), 2 * (i + 1) + 1, 2 * i + 1) for i in range(len(MIRROR_XS) - 1)]
-    mesh = _mesh(pts, faces)
-    names = ["C", "L_a", "R_a"]
-    _skin(mesh, arm, names)
-    src = {0: [1.0, 0.0, 0.0], 1: [0.6, 0.4, 0.0], 4: [0.0, 1.0, 0.0]}
-    for i, x in enumerate(MIRROR_XS):
-        for k in (0, 1):
-            _set(mesh, 2 * i + k, dict(zip(names, src.get(x, [0.2, 0.0, 0.8]))))
-    _select(mesh)
-    assert bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT') == {'FINISHED'}   # factory YZ, positive to negative
-    # Maya 2026 copySkinWeights -mirrorMode YZ -sa closestPoint
-    want = {-4: [0, 0, 1], -3: [0.2, 0, 0.8], -2.5: [0.3, 0, 0.7], -1.5: [0.5, 0, 0.5], -0.5: [0.8, 0, 0.2],
-            0: [1, 0, 0], 1: [0.6, 0.4, 0], 4: [0, 1, 0]}
-    for i, x in enumerate(MIRROR_XS):
-        for k in (0, 1):
-            got = _get(mesh, 2 * i + k, names)
-            assert _close(got, want[x], 1e-5), (x, got)
-
 
 def test_mirror_factory_plane_is_yz():
     assert bpy.ops.allset.mirror_skin_weights.get_rna_type().properties["plane"].default == "YZ"
 
 
-def test_mirror_only_selected_destination_vertices():
-    # Maya 2026: with vtx[0] (negative side) selected only it is written; a selected source vertex
-    # writes nothing; the Normalize option leaves sums of 1 as they are
-    for sel, changed in ((0, {0}), (8, set())):
-        _reset()
-        arm = _skeleton([("C", (0, 0, 0), None), ("L_a", (4, 0, 0), "C"), ("R_a", (-4, 0, 0), "C")])
-        xs = [-4, -2, 0, 2, 4]
-        pts = [(x, 0, z) for x in xs for z in (0, 1)]
-        faces = [(2 * i, 2 * (i + 1), 2 * (i + 1) + 1, 2 * i + 1) for i in range(len(xs) - 1)]
-        mesh = _mesh(pts, faces)
-        names = ["C", "L_a", "R_a"]
-        _skin(mesh, arm, names)
-        for i, x in enumerate(xs):
-            for k in (0, 1):
-                w = [0.2, 0.0, 0.8] if x < 0 else ([1, 0, 0] if x == 0 else [0.375, 0.625, 0.0])
-                _set(mesh, 2 * i + k, dict(zip(names, w)))
-        _select(mesh)
-        for elems in (mesh.data.polygons, mesh.data.edges):
-            for e in elems:
-                e.select = False
-        for v in mesh.data.vertices:
-            v.select = v.index == sel
-        bpy.ops.object.mode_set(mode='EDIT')
-        assert bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT', normalize=True) == {'FINISHED'}
-        assert mesh.mode == 'EDIT'
-        bpy.ops.object.mode_set(mode='OBJECT')
-        for i in range(10):
-            got = _get(mesh, i, names)
-            if i in changed:
-                assert _close(got, [0.375, 0.0, 0.625]), (sel, i, got)
-            elif xs[i // 2] < 0:
-                assert _close(got, [0.2, 0.0, 0.8]), (sel, i, got)

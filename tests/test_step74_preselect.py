@@ -1,5 +1,5 @@
 """Step 74: pre-selection highlight for vertices, edges and faces, also with the transform tools.
-; GUI: tests/gui/gui_step74_preselect.py."""
+GUI: tests/gui/gui_step74_preselect.py."""
 
 from importlib import import_module
 
@@ -41,7 +41,7 @@ def test_pick_vert_nearest_visible_within_radius():
 
 
 def test_pick_edge_follows_edge_mode_near_a_vertex():
-    # a square's 4 edges; the mouse right next to corner (0, 0) still picks an edge (Maya pre_04)
+    # a square's 4 edges; the mouse right next to corner (0, 0) still picks an edge
     xy = np.array([[0.0, 0.0], [100.0, 0.0], [100.0, 100.0], [0.0, 100.0]])
     edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
     ok = np.array([True] * 4)

@@ -1,6 +1,6 @@
 """Step 131 lane TOOLBOX (#23) in a real UI: the Maya Workflow Kit layout's Tool Box column shows the kit-drawn Maya
 tool and quick-layout icons (unscaled, at the toolbar's icon size), the Layer Editor toolbar and the Outliner's
-default rows show kit glyphs in Maya's colours, and a Tool Box click still sets the tool. Screenshots of the
+default rows show kit glyphs in Maya-style colours, and a Tool Box click still sets the tool. Screenshots of the
 column / Outliner / Layer Editor go to ALLSET_GUI_SHOTS (run once with --ui-scale 0.8 = effective 1.0 on a 125 %
 display, once without)."""
 
@@ -115,7 +115,7 @@ def s_check():
         C["tb"] = (r.x, r.y, r.width, r.height)
     # quick layout buttons under the tools: light grey framed glyphs (Blender's VIEW_PERSPECTIVE is line art)
     below = px[r.y:tool_y(5) - half, r.x:r.x + r.width]
-    check(f"quick layout icons in Maya grey ({int(near(below, LIGHT, 0.05).sum())} px)", near(below, LIGHT, 0.05).sum() > 60)
+    check(f"quick layout icons in the Maya-style grey ({int(near(below, LIGHT, 0.05).sum())} px)", near(below, LIGHT, 0.05).sum() > 60)
     # Outliner default rows: the set ring has a teal flag, the cameras a grey body
     outl = next(a for a in win().screen.areas if a.type == 'OUTLINER')
     reg = next(rg for rg in outl.regions if rg.type == 'WINDOW')
@@ -138,10 +138,10 @@ def s_check():
     stack = dock_area()
     sreg = next(rg for rg in stack.regions if rg.type == 'WINDOW')
     crop = px[sreg.y:sreg.y + sreg.height, sreg.x:sreg.x + sreg.width]
-    # the dock's additive lift to Maya's grey (step 195, maya_dock.draw_tint) also lifts the icons drawn under it
+    # the dock's additive lift to the dock grey (step 195, maya_dock.draw_tint) also lifts the icons drawn under it
     lift = import_module(MODULE + ".ui.maya_dock").dock_lift(bpy.context)
     t = near(crop, np.clip(TEAL + lift, 0.0, 1.0))
-    check(f"Layer Editor toolbar icons in Maya teal ({int(t.sum())} px)", t.sum() > 12)
+    check(f"Layer Editor toolbar icons in the Maya-style teal ({int(t.sum())} px)", t.sum() > 12)
     if SHOTS:
         save_crops(px, r, reg, sreg)
     # a Tool Box click still sets the tool (Rotate)

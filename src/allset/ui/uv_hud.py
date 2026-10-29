@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor heads-up displays (step 206): View > Heads-Up Display > Isolate Select / UV Position / UV Statistics.
 
-Maya 2022:
-all three are on in the factory UV Editor (textureWindow -q -display*HUD = 1). Text #cfcfcf, ~10 px caps, 5 px from
+Maya:
+all three are on in the factory UV Editor. Kit drawing: text #cfcfcf, ~10 px caps, 5 px from
 the view's left / right edge, baseline 7 px above its bottom; a second line 20 px higher.
 
 - UV Statistics, bottom right: "(a/b) UV shells, (c/d) overlapping UVs, (e/f) reversed UVs" — first number = among
   the selected components, second = over the objects (Maya counts objects selected as objects; Blender's edit-mode
-  objects are always selected, so the kit always shows the totals, delegated). Shells are Maya's: faces sharing
+  objects are always selected, so the kit always shows the totals). Shells are Maya's: faces sharing
   any UV, a corner is enough. Overlapping UVs = UVs lying exactly on
   a UV of another shell (stacked shells counted 8, a partly overlapping shell 0), reversed UVs = UVs of
   faces whose UV winding is clockwise.
@@ -26,8 +26,8 @@ from bpy.props import BoolProperty
 from ..operators import uv_arrays, uv_shells
 from .. import compat
 
-TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (Maya's HUD text)
-FONT_PX = 10                         # Maya's HUD caps ~7 px high
+TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (HUD text)
+FONT_PX = 10                         # HUD caps ~7 px high
 MARGIN_PX = 5
 BASELINE_PX = 7
 LINE_PX = 20

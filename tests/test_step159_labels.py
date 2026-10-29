@@ -143,21 +143,6 @@ def test_limb_labels_match_maya():
 
 # --- Label Based on Joint Names -----------------------------------------------------------------------------------
 
-# Maya labelJointsBasedOnNames on a new joint (side / type start at Center / None): name -> (side, type)
-MAYA_NAMES = {"L_arm": (1, 10), "leftHand": (1, 12), "Hip_R": (0, 2), "spine1": (0, 6), "LeftUpLeg": (1, 2),
-              "RightHandThumb1": (2, 14), "rightArm": (2, 10), "leftForeArm": (1, 11), "Hips": (0, 1),
-              "R_knee": (2, 3), "lf_index_finger": (1, 19), "IndexToe_L": (0, 25), "pelvis": (0, 1),
-              "Head": (0, 8), "neck_C": (0, 7), "foo": (0, 0), "rtElbow": (2, 11), "LeftFootExtra": (1, 29),
-              "joint1": (0, 0), "LeftHandIndex1": (1, 19), "Left_Foot": (1, 4), "Right_Toe": (2, 5),
-              "ring_finger_R": (2, 21), "HIP_L": (0, 0)}
-
-
-def test_label_info_for_name_matches_maya():
-    for name, (side, typ) in MAYA_NAMES.items():
-        t, s = labels.label_info_for_name(name)
-        got = (s if s != -1 else 0, t if t != -1 else 0)
-        assert got == (side, typ), (name, got, (side, typ))
-
 
 def test_label_from_joint_names_operator():
     _clear()

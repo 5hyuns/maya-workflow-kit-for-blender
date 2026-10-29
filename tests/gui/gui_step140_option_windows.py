@@ -1,5 +1,5 @@
 """Step 140 in a real UI: the option boxes of Skeleton > Create Joints, Key > Delete Keys and Constrain > Aim open
-their Maya option windows; screenshots (ALLSET_GUI_SHOTS) for the step doc."""
+their Maya option windows; screenshots (ALLSET_GUI_SHOTS)."""
 
 import os
 import sys

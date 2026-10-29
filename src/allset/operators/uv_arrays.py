@@ -2,12 +2,12 @@
 """UV Editor read-outs in numpy (step 254, #170 #172): the per-redraw data of the UV HUD (ui/uv_hud.py) and the shell
 / texture borders (ui/uv_display.py) without Python loops over every BMesh loop.
 
-checked (Blender 4.5, a 48 400-face sphere in the UV Editor, Maya layout): the Python versions took
+On a 48 400-face sphere in the UV Editor (Blender 4.5, Maya layout) the Python versions took
 1.2-1.9 s per redraw after every mesh or selection change, so one click in the UV Editor froze Blender ~3 s, a shell
 drag 12 s and Cut UV Edges 36 s (Windows reports "Not responding" after 5 s). These are the same rules on arrays:
 
-- topology + UVs: the evaluated edit mesh's ``to_mesh()`` (62 k faces in 8 ms, checked) when no modifier is shown
-  in edit mode (then it is the cage; same element order as the BMesh, ), else one BMesh pass;
+- topology + UVs: the evaluated edit mesh's ``to_mesh()`` (62 k faces in 8 ms) when no modifier is shown
+  in edit mode (then it is the cage; same element order as the BMesh, step 134), else one BMesh pass;
 - selection / hidden flags: always from the BMesh (the evaluated mesh's selection may lag, step 134).
 
 ``uv_points`` = uv_shells.uv_points (same vertex, coordinates within uv_tools.EPS, first-fit in loop-index order),
@@ -84,7 +84,7 @@ def _read_evaluated(ob, depsgraph, bm, uv_name):
         a.loop_start = ints(me.polygons, "loop_start", nf)
         a.loop_total = ints(me.polygons, "loop_total", nf)
         # the corner attributes read faster than MeshLoop.vertex_index / edge_index (12 vs 22-32 ms on 240 k loops),
-        # the UV attribute's "vector" faster than MeshUVLoop.uv (0.1 vs 12 ms; checked)
+        # the UV attribute's "vector" faster than MeshUVLoop.uv (0.1 vs 12 ms)
         attrs = me.attributes
         cv, ce, uva = attrs.get(".corner_vert"), attrs.get(".corner_edge"), attrs.get(uv_name)
         a.corner_vert = ints(cv.data, "value", nl) if cv is not None else ints(me.loops, "vertex_index", nl)

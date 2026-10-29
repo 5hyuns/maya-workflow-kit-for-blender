@@ -2,16 +2,15 @@
 """Step 152 (#101) Maya option windows of the Display menu: Display > Grid ❒ = Maya's Grid Options.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
-option_windows._extend appends ``WINDOWS``). Labels, kinds, factory defaults and buttons are Maya 2022's
-with factory prefs (Grid Options;
-grid size 12, spacing 5, divisions 5,
-displayColor grid / gridAxis / gridHighlight = index 2 = 0.25 grey).
+option_windows._extend appends ``WINDOWS``). Labels, kinds and buttons follow Maya's Grid Options;
+defaults: grid size 12, spacing 5, divisions 5,
+grid / axis / highlight colour = index 2 = 0.25 grey.
 
-Maya keeps grid options as setting (gridSize / gridSpacing / gridDivisions, displayGrid*: per user), so the kit
+Maya keeps grid options per user, so the kit
 keeps them where every option window keeps its values: the add-on preference ``option_settings`` (key
-"grid_options"). ui/maya_grid.py draws from ``grid_settings()`` = the applied values over Maya's factory ones.
-Colours: Maya picks them on its 31-entry colour index slider; Blender has a colour picker (delegated, step 152), with
-Maya's index 2 grey (#404040) as the default. Grid numbers are not drawn by the kit (Maya's factory: Hide).
+"grid_options"). ui/maya_grid.py draws from ``grid_settings()`` = the applied values over the defaults.
+Colours: Maya picks them on its 31-entry colour index slider; Blender has a colour picker (step 152), with
+index 2 grey (#404040) as the default. Grid numbers are not drawn by the kit (hidden by default).
 """
 
 import json
@@ -22,7 +21,7 @@ from bpy.props import FloatVectorProperty
 from .option_windows import F, Window
 
 KEY = "grid_options"
-MAYA_GREY = (0.25, 0.25, 0.25)       # Maya colour index 2 (colorIndex -q 2), every grid colour's factory value
+MAYA_GREY = (0.25, 0.25, 0.25)       # grey 0.25, the default of every grid colour
 
 
 class FColor(F):
@@ -55,7 +54,7 @@ FIELDS = [
 
 def _run_grid(context, v):
     """Apply = the grid redraws with the window's values (execute / Apply stored them first). Maya's Apply doesn't
-    turn a hidden grid on (delegated: the values only change how the grid looks, Display > Grid shows / hides it)."""
+    turn a hidden grid on (the values only change how the grid looks, Display > Grid shows / hides it)."""
     _CACHE.clear()
     wm = context.window_manager
     for win in wm.windows if wm else ():
@@ -66,8 +65,8 @@ def _run_grid(context, v):
 
 
 # --- Display > Toggle Show/Hide ❒ (step 162) ----------------------------------------------------------------------
-# Maya 2022 "Toggle Visibility Options": First Selection: Independent (factory, setting
-# toggleVisibilityAndKeepSelectionBehaviour 1) / Dependent (2); buttons Apply and Close / Apply / Close. The plain
+# Maya "Toggle Visibility Options": First Selection: Independent (default, stored 1) / Dependent (2); buttons
+# Apply and Close / Apply / Close. The plain
 # click and h run with the saved value (operators/visibility.toggle_dependent).
 TOGGLE_KEY = "toggle_show_hide"
 
@@ -98,7 +97,7 @@ _CACHE = {}
 
 
 def grid_settings():
-    """Maya grid options in Maya units: the applied ones over the factory ones (cached on the stored text)."""
+    """Maya grid options in Maya units: the applied ones over the defaults (cached on the stored text)."""
     from .. import preferences
     try:
         raw = preferences.get().option_settings or ""

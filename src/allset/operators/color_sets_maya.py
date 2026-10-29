@@ -4,7 +4,7 @@ Vertex Color, Prelight (Maya), vertex bake sets (Assign New / Existing, Edit Ass
 
 A Maya colour set = a Blender colour attribute, the current set = the active colour attribute; Maya colours live per
 vertex-face, so new sets are CORNER float colours (unclamped, like Maya). Maya corners can have no colour; Blender's
-can't [delegated: a corner Maya leaves uncoloured is white (1, 1, 1, 1), neutral under the material].
+can't [a corner Maya leaves uncoloured is white (1, 1, 1, 1), neutral under the material].
 """
 
 import colorsys
@@ -18,17 +18,17 @@ from .. import results, undo_steps
 
 NEW_SET = "colorSet1"          # Apply Color on a mesh without a set
 UNSET = (1.0, 1.0, 1.0, 1.0)
-APPLY_COLOR = (0.5, 0.5, 0.5)  # Maya Apply Color Options factory value (polyApplyColor<Channel>Value)
+APPLY_COLOR = (0.5, 0.5, 0.5)  # Apply Color Options default value
 APPLY_ALPHA = 1.0
-OPERATIONS = (('REPLACE', "Replace", "Replace the colour (Maya factory)"), ('ADD', "Add", "Add the colour"),
+OPERATIONS = (('REPLACE', "Replace", "Replace the colour (default)"), ('ADD', "Add", "Add the colour"),
               ('SUBTRACT', "Subtract", "Subtract the colour"), ('REMOVE', "Remove", "Remove the colour"))
 BAKE_SETS = "allset_bake_sets"   # Scene ID property: {vertexBakeSetN: {Maya attribute: value}}
 BAKE_SET = "allset_bake_set"     # Object ID property: the assigned bake set's name
 BLENDS = ("Overwrite", "Add", "Subtract", "Multiply", "Divide", "Average")   # vertexBakeSet colorBlending 0-5
-# vertexBakeSet factory attributes the kit uses
+# vertexBakeSet default attributes the kit uses
 BAKE_DEFAULTS = {"bakeColor": True, "bakeAlpha": False, "colorBlending": 0, "alphaBlending": 0, "scaleRgba": 1.0,
                  "clampMin": False, "minColor": (0.0, 0.0, 0.0, 0.0), "clampMax": False, "maxColor": (0.0, 0.0, 0.0, 1.0)}
-PRELIGHT_SAMPLES = 16          # Cycles bake samples [delegated: Maya's polyGeoSampler samples the shading network once]
+PRELIGHT_SAMPLES = 16          # Cycles bake samples [Maya's polyGeoSampler samples the shading network once]
 
 
 # --- pure rules (tests/test_step189_colors.py) ---------------------------------------------------------------
@@ -75,14 +75,14 @@ def ramp_value(ramp, x):
     return pts[-1][1]
 
 
-IDENTITY = [(0.0, 0.0, 1), (1.0, 1.0, 1)]   # polyColorMod factory ramps (linear 0 -> 0, 1 -> 1)
+IDENTITY = [(0.0, 0.0, 1), (1.0, 1.0, 1)]   # polyColorMod default ramps (linear 0 -> 0, 1 -> 1)
 
 
 def color_mod(rgba, hue=0.0, saturation=1.0, value=1.0, red=IDENTITY, green=IDENTITY, blue=IDENTITY,
               alpha=IDENTITY, intensity=IDENTITY):
     """Maya polyColorMod on one colour: clamp to [0, 1]; HSV: hue + degrees, saturation and value
     multiplied (saturation not clamped before HSV -> RGB), clamp; channel ramps map r / g / b / a; the colour is
-    multiplied by intensityScale(max(r, g, b)) — so the factory node darkens every colour by its own value."""
+    multiplied by intensityScale(max(r, g, b)) — so the default node darkens every colour by its own value."""
     r, g, b, a = (min(1.0, max(0.0, c)) for c in rgba)
     if hue or saturation != 1.0 or value != 1.0:
         h, s, v = colorsys.rgb_to_hsv(r, g, b)
@@ -188,7 +188,7 @@ def _read(attr, me, corners):
 
 def _write(attr, me, values):
     """Unclamped like Maya (subtract can go below 0): ``foreach_set`` skips the RNA soft range that ``.color`` = ...
-    clamps at 0 (checked)."""
+    clamps at 0."""
     flat = [0.0] * (len(attr.data) * 4)
     attr.data.foreach_get("color", flat)
     for c, rgba in values.items():
@@ -335,7 +335,7 @@ class ALLSET_OT_color_keyframe(bpy.types.Operator):
                 if attr is None:
                     continue
                 index = sorted({me.loops[c].vertex_index for c in corners}) if attr.domain == 'POINT' else corners
-                for i in index:   # element-level keyframe_insert can't make a path to attribute data (checked)
+                for i in index:   # element-level keyframe_insert can't make a path to attribute data
                     me.keyframe_insert(f'attributes["{attr.name}"].data[{i}].color', frame=frame, group=attr.name)
                     keys += 1
         finally:
@@ -369,7 +369,7 @@ def _assign(context, name):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_bake_set_assign_new(bpy.types.Operator):
-    """Make a new vertex bake set with Maya's factory prelight settings and assign the selected meshes to it (Maya
+    """Make a new vertex bake set with the default prelight settings and assign the selected meshes to it (Maya
     Mesh Display > Assign New Set)"""
     bl_idname = "allset.bake_set_assign_new"
     bl_label = "Assign New Bake Set"

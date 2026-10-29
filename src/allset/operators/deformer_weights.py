@@ -35,7 +35,7 @@ NO_DEFORMER = "No deformer found.  Please select an object with a deformer."
 
 
 # --- Maya <-> Blender object space ----------------------------------------------------------------------------------
-# Maya Y-up axes map to Blender as X -> X, Y -> Z, Z -> -Y ( step 57); one Maya length = units.maya_unit().
+# Maya Y-up axes map to Blender as X -> X, Y -> Z, Z -> -Y (step 57); one Maya length = units.maya_unit().
 
 def to_maya(co, k=1.0):
     """Blender object-space point -> Maya point (x, y, z)."""

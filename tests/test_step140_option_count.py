@@ -1,5 +1,5 @@
 """Step 140: what every Maya option box opens, counted like audit 8
-. Writes the table to
+(window / dialog / tool / redo / generic / dead). Writes the table to
 tmp/<sandbox>/results/option_kinds.json for ``python tools/menu_count.py --options``.
 
 Baseline (step 133, 0.2.1): 507 boxes, dead 231, generic 62, window 48."""

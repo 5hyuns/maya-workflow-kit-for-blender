@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya light Intensity and Decay Rate on Blender lights (step 137, issue #71).
 
-Maya (Maya Software renders): a new point / spot / area / volume
+Maya: a new point / spot / area / volume
 light has intensity 1 and Decay Rate No Decay; a lambert surface facing a point / spot light at any distance renders
 color x diffuse x intensity (Linear divides by the distance in Maya units, Quadratic by its square, Cubic by its
-cube). A directional light renders color x diffuse x intensity. An area light (2 x 2 units) falls off by itself:
-about 9.87 x intensity / distance^2 at 10 units with No Decay, and the Decay Rate divides by distance^n on top.
+cube). A directional light renders color x diffuse x intensity. An area light (2 x 2 units) falls off by itself,
+and the Decay Rate divides by distance^n on top.
 
-Blender (checked the same way, Diffuse BSDF colour a, 4.5): a point / spot light of power P watts renders
+Blender (Diffuse BSDF colour a, 4.5): a point / spot light of power P watts renders
 a x P / (4 pi^2 r^2) (r in metres) in Cycles and EEVEE; a sun of strength S renders a x S / pi; an area light renders
 a x P / (pi^2 r^2) far away. A Light Falloff node on the light's node tree (Cycles only — EEVEE and the viewport
-ignore light nodes, checked) changes the distance law: its Constant output removes the 1/r^2, Linear leaves 1/r,
+ignore light nodes) changes the distance law: its Constant output removes the 1/r^2, Linear leaves 1/r,
 Quadratic is Blender's own law; its Strength multiplies the power.
 
 The kit's rule (k = maya_unit(), n = Maya Decay Rate 0..3, matched at REF_UNITS = 10 Maya units):
@@ -44,7 +44,7 @@ AREA_FAR = 9.87                        # Maya area light, No Decay: brightness x
 DECAY_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 FALLOFF_OUTPUT = {0: "Constant", 1: "Linear"}
 MAYA_SPOT_CONE, MAYA_SPOT_PENUMBRA = 40.0, 0.0      # degrees (coneAngle 40, penumbraAngle 0)
-MAYA_AREA_SIZE = 2.0                   # Maya's area light is a 2 x 2 unit square 
+MAYA_AREA_SIZE = 2.0                   # the area light is a 2 x 2 unit square
 KIND_PROP = "allset_light_kind"        # step 214: "ambientLight" / "volumeLight" (operators/maya_lights.py)
 
 

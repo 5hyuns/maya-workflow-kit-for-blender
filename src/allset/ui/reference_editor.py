@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Reference Editor window (step 209, Issue #116;  「계획」).
+"""Maya's Reference Editor window (step 209, Issue #116).
 
 Maya 2022: menu
 bar File / Reference / Proxy / View / Help, an icon row, File Particulars (Unresolved name, Resolved name with Reload,

@@ -4,28 +4,27 @@
 Maya draws every edge of a selected object in the selection colour over its shading;
 Blender only outlines it.
 
-The kit draws the edges itself (POST_VIEW), :
+The kit draws the edges itself (POST_VIEW):
 - Blender's own ``Object.show_wire`` mixes a selected object's colour with the theme's dormant wire colour
-  by up to ~19 % depending on how the edge faces the view (checked #37cf95 = 0.81 lead + 0.19 #000460),
+  by up to ~19 % depending on how the edge faces the view (#37cf95 = 0.81 lead + 0.19 #000460),
   so it can't give Maya's flat colour; it is also ID data (saved, in undo steps) and shared with the
   smooth preview 2 cage wire (operators/display.py ``_WIRE_FLAG``).
 - Here: evaluated mesh edges in a cached batch per object (numpy, ~28 ms for 100k polys, rebuilt only when
   the object's geometry changes), drawn with the object matrix and a small depth bias (no z-fighting).
   Nothing is written to the file.
-- Step 134: the colours are kit-fixed Maya values (). Steps 130-133 read the
+- Step 134: the colours are kit-fixed. Steps 130-133 read the
   user's theme ``object_active`` / ``object_selected``, which is Blender's orange since the kit ships no theme.
-  LEAD / OTHER = Maya's viewport displayColor lead (19) / active (16).
-- Step 142 (#76): in wireframe shading Maya draws unselected objects in its dormant polymesh wire colour, dark blue
-  #000460; Blender draws them in the
-  theme's wire colour (#181818 here, ΔE00 26). The same pass draws them in DORMANT (the "Selection Wireframe"
+  LEAD / OTHER = Maya's lead / other selected colours.
+- Step 142 (#76): in wireframe shading Maya draws unselected objects in a dark blue dormant
+  wire colour (DORMANT); Blender draws them in the
+  theme's wire colour (#181818 here). The same pass draws them in DORMANT (the "Selection Wireframe"
   preference covers both).
 - Step 149 (#91): a frame change (playback, scrubbing, ``frame_set``) evaluates the depsgraph without a
   ``depsgraph_update_post``, so a skinned / nCloth mesh kept the wire of the first evaluated frame. ``frame_change_post``
   drops the batches of objects whose evaluated shape can depend on time (``time_dependent``: modifiers, shape keys,
   animated data); static meshes keep their batch.
-- Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya's lattice selected colour is
-  display colour index 16 = white for an active lattice, lead 19 (Maya's
-  displayColor index), the same as meshes. Edges = the lattice grid along U / V / W through the evaluated points
+- Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya draws a selected
+  lattice in the same colours as meshes (white, the lead green). Edges = the lattice grid along U / V / W through the evaluated points
   (``co_deform``).
 - Step 161 (G4): Maya highlights the whole hierarchy under a selected object: every descendant shape is drawn in the
   colour of its nearest selected ancestor (Maya: group1
@@ -38,10 +37,10 @@ from bpy.app.handlers import persistent
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
-DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template (probe)
-LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active), displayColor lead
-OTHER = "#ffffff"          # Maya other selected objects, displayColor.active
-DORMANT = "#000460"        # Maya unselected polymesh wire in wireframe shading, colors.json dormant_polymesh_wire
+DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template
+LEAD = "#43ffa3"           # lead (last selected = Blender's active)
+OTHER = "#ffffff"          # other selected objects
+DORMANT = "#000460"        # unselected polymesh wire in wireframe shading
 # the 3D View's per-type visibility (the Tool Box column hides every type, ui/toolbox.is_toolbox)
 TYPE_FLAGS = {'MESH': "show_object_viewport_mesh", 'CURVE': "show_object_viewport_curve",
               'SURFACE': "show_object_viewport_surf", 'FONT': "show_object_viewport_font",
@@ -128,7 +127,7 @@ def _view(context):
 
 def _shown(ob, space):
     """Drawn in this view: the per-view type filter and local view count (step 262: ``visible_get()`` alone
-    ignores them, ``visible_get(viewport=space)`` doesn't — checked, )."""
+    ignores them, ``visible_get(viewport=space)`` doesn't)."""
     if isinstance(space, bpy.types.SpaceView3D):
         return ob.visible_get(viewport=space)
     return ob.visible_get()
@@ -136,7 +135,7 @@ def _shown(ob, space):
 
 # Maya Show > Selection Highlighting is per panel (step 262, Issue #173). The kit's highlight is this wire; Maya
 # Workflow Kit views keep Blender's outline off (step 47), so ``show_outline_selected`` can't be the row's state.
-# Views with highlighting off = a JSON {area index: Blender outline was on} on their screen (delegated: Blender
+# Views with highlighting off = a JSON {area index: Blender outline was on} on their screen (Blender
 # spaces / areas take no ID properties; an area index survives save / open).
 HILITE_OFF = "allset_hilite_off"
 

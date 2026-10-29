@@ -1,5 +1,5 @@
-"""Step 202 (#109): Maya Workflow Kit layout details found by audit 15 ( G1 / G2,
- time_slider_current at UI 1.25). Real windows: tests/gui/gui_step202_ui.py."""
+"""Step 202 (#109): Maya Workflow Kit layout details found by audit 15 (time slider current
+frame at UI 1.25). Real windows: tests/gui/gui_step202_ui.py."""
 
 import re
 from importlib import import_module
@@ -63,5 +63,5 @@ def test_fit_leaves_a_fitted_time_slider_alone():
     area = toolbox.time_slider_area(screen)
     hdr = next((r.height for r in area.regions if r.type == 'HEADER'), 0)
     if hdr == 0 or area.height <= 1:
-        return            # -b loads the screen without region sizes (: sizes appear after a UI load)
+        return            # -b loads the screen without region sizes (sizes appear after a UI load)
     assert abs(round(toolbox.TIME_SLIDER_PX * 1.0) + hdr - area.height) <= 2

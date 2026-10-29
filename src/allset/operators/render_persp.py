@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Render > Render Current Frame / Render Sequence through Maya's persp camera (step 137, #67).
 
-Maya renders the active panel's camera; a new Maya scene's renderable camera is ``perspShape``
-. Blender's user
+Maya renders the active panel's camera; a new Maya scene's renderable camera is ``perspShape``.
+Blender's user
 views aren't cameras and the Maya Workflow Kit startup file has none, so ``render.render`` stopped with
 "Cannot render, no camera". The kit renders:
 
@@ -15,10 +15,10 @@ views aren't cameras and the Maya Workflow Kit startup file has none, so ``rende
 
 The view is the 3D View the operator runs in, else the main window's largest 3D View (not the Tool Box column).
 
-The persp camera is linked to no collection (delegated, step 137): the kit Outliner already draws Maya's
+The persp camera is linked to no collection (step 137): the kit Outliner already draws Maya's
 default ``persp`` row (``ui/outliner_sets.default_entries``, step 99), which stands for it; unlinked, it isn't a
 second row in Blender's Outliner, isn't selectable in the viewport, doesn't render as an object and isn't
-exported. ``scene.camera`` doesn't count as a user (checked: renders, follows its matrix, survives
+exported. ``scene.camera`` doesn't count as a user (it renders, follows its matrix, survives
 save / reload with ``use_fake_user``), so the object keeps a fake user like Maya's startup cameras, which every
 scene has. An unlinked ``scene.camera`` renders and follows its transform.
 """
@@ -32,7 +32,7 @@ from .key_batch import VIEW_SENSOR, camera_matrix
 
 PROP = "allset_persp"
 NAME, SHAPE = "persp", "perspShape"
-MAYA_FILM_MM = 36.0          # 35 mm camera film back (create.MAYA_FILM_MM)
+MAYA_FILM_MM = 36.0          # film back of the 35 mm camera (create.MAYA_FILM_MM)
 
 
 def persp_camera(create=True):
@@ -54,7 +54,7 @@ def match_view(ob, space, rv3d, scene=None):
     """Put camera ``ob`` where the view (``space``, ``rv3d``) looks from, with the same lens."""
     cam = ob.data
     # From view_location / rotation / distance, not rv3d.view_matrix: that is only recomputed when the view draws
-    # (stale after a scripted view change, checked in -b; step 17).
+    # (stale after a scripted view change in -b; step 17).
     ob.matrix_world = camera_matrix(framing.view_matrix(rv3d.view_location, rv3d.view_rotation, rv3d.view_distance))
     if rv3d.view_perspective != 'ORTHO':        # (is_perspective is updated on draw too)
         cam.type = 'PERSP'

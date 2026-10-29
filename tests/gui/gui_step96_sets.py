@@ -91,7 +91,7 @@ def s_row_drawn():
     r = rows()
     _a, region = outl()
     u = mod("ui.outliner_sets").unit(bpy.context.preferences)
-    # step 99: Maya's default rows (4 cameras, defaultLightSet, defaultObjectSet) come between
+    # step 99: the default Maya rows (4 cameras, defaultLightSet, defaultObjectSet) come between
     top3 = region.view2d.view_to_region(0, -9 * u, clip=False)[1]
     check(f"Outliner draws one set row right under the three DAG rows and the six default rows ({[(x[0], x[1], x[2], x[3]) for x in r]}, "
           f"row 3 top {top3})", len(r) == 1 and r[0][2] == 'SET' and r[0][3] == "set1" and abs(r[0][1] - top3) <= 1)

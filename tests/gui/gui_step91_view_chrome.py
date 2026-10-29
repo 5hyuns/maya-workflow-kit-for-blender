@@ -1,6 +1,6 @@
 """Step 91 in a real UI (Maya Workflow Kit layout): no parent relationship lines in the template views, the RMB marking-menu
 list draws over the Adjust Last Operation (HUD) panel, and the dock stays one panel when Ctrl+A shows the Attribute
-Editor (the "Channel Box" sidebar tab no longer moves under "Item"). """
+Editor (the "Channel Box" sidebar tab no longer moves under "Item")."""
 
 import os
 import sys

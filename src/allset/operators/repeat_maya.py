@@ -11,15 +11,15 @@ commands are never registered (``marking/modal.run_action`` calls operators from
 keeps its own record of Maya commands (``record``) next to Blender's operator list: G repeats whichever is newer —
 the kit record unless a repeatable Blender operator was registered after it (key commands such as Ctrl+E,
 Ctrl+D). Selection, transform, view, undo and screen operators never count: Maya's repeatLast doesn't take selection
-clicks or manipulator drags (delegated, ); a manipulator drag on a kit node (Ctrl+E then drag) is a node edit, so
-G after it extrudes the new selection (Maya 2026 behaviour; #184).
+clicks or manipulator drags; a manipulator drag on a kit node (Ctrl+E then drag) is a node edit, so
+G after it extrudes the new selection (like Maya; #184).
 """
 
 import bpy
 
 from .. import results
 
-MAX = 30                     # history kept (Maya's Recent Commands list is a short history; delegated)
+MAX = 30                     # history kept (Maya's Recent Commands list is a short history)
 HISTORY = []                 # oldest first: {"label", "action", "path", "mark"}
 # Blender operators Maya's repeatLast never records (selection, manipulator / transform, view, undo, UI).
 SKIP_PREFIXES = ("TRANSFORM_OT_", "VIEW3D_OT_view", "VIEW3D_OT_zoom", "VIEW3D_OT_move", "VIEW3D_OT_rotate",

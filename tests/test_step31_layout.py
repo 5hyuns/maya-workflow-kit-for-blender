@@ -1,5 +1,5 @@
 """Step 31: Maya Workflow Kit layout Outliner (width, Maya DAG rows) and marking-menu toggle state in the
-Blender pie fallback. ; GUI: tests/gui/gui_step31_layout.py."""
+Blender pie fallback. GUI: tests/gui/gui_step31_layout.py."""
 
 import sys
 from importlib import import_module

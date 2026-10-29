@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Hide Blender's 3D View "Tool" panels where a Properties Tool tab hosts a Maya panel (,
+"""Hide Blender's 3D View "Tool" panels where a Properties Tool tab hosts a Maya panel (step 49,
 step 106, step 116).
 
 A Properties editor on its Tool tab draws the 3D View "Tool"-category panels. The kit's Maya dock areas

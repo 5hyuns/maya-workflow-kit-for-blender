@@ -1,5 +1,5 @@
 """Step 159: Skeleton / Skin / Deform menu items reach the kit commands (Joint Labelling, IK enable, deformer weights),
-Reset Default Weights gives the bind weights back, greyed items carry their notices. """
+Reset Default Weights gives the bind weights back, greyed items carry their notices."""
 
 from importlib import import_module
 

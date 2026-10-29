@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Graph Editor toolbar: tangent buttons and buffer curves in the Graph Editor header.
+"""Maya Graph Editor toolbar: tangent buttons and buffer curves in the Graph Editor header (step 70).
 
 Maya's Graph Editor has a toolbar of tangent buttons (Auto, Spline, Clamped, Linear, Flat, Stepped, Plateau, then
 Break / Unify) and buffer curve buttons.

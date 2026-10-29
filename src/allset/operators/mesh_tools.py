@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Target Weld, Crease Tool and Multi-Cut feel.
+"""Maya Target Weld, Crease Tool and Multi-Cut feel (step 64).
 
 - Target Weld (Maya polyMergeVertexContext):
   drag a vertex (an edge in edge mode) onto another one; a dragged vertex that is selected takes every selected
-  vertex with it (Maya's tool description,  「계획」 실측). Merge To Target / Center.
+  vertex with it (Maya's tool description). Merge To Target / Center.
 - Crease Tool (Maya polyCreaseCtx): MMB drag left / right = less / more crease on the selected
   edges (vertices in vertex mode), shown as Maya's value. Blender stores 0-1 with OpenSubdiv sharpness = 10 * b^2
   (step 64), so Maya value c is stored as sqrt(c / 10).
@@ -24,7 +24,7 @@ from mathutils import Vector, geometry
 
 
 PICK_RADIUS = 15          # px at UI scale 1: how far from a vertex / edge a press still picks it
-CREASE_PER_PX = 0.02      # Maya crease value per px of horizontal MMB drag (50 px = 1; sensitivity )
+CREASE_PER_PX = 0.02      # Maya crease value per px of horizontal MMB drag (50 px = 1; sensitivity)
 MAYA_CREASE_MAX = 10.0    # Blender crease 1.0 = sharpness 10 (and "infinitely" sharp)
 MAYA_SNAP_STEP = 10       # Multi-Cut Snap Step %
 

@@ -148,7 +148,7 @@ def s_clicked_box():
     del C["calls"][:]
     print("GUI143 click on the box mark:", C["click"], flush=True)
     # #82 (0.4.0): the item is one button (a second button on a menu line staircases the menu, step 103) and Python
-    # can't tell where on it the click landed (the operator runs with the opener's region, checked), so a click on
+    # can't tell where on it the click landed (the operator runs with the opener's region), so a click on
     # the box mark runs the command like a click on the label
     check(f"#82 a click on Grid's box mark runs the command ({C['click']})",
           C["click"] == [("item", "Display/Grid")])

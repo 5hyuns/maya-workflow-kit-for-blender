@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Operators behind Maya menu items that had no Blender action.
+"""Operators behind Maya menu items that had no Blender action (step 34).
 
 - ``allset.open_editor``: Windows > ... Editors open a floating editor window, like
   Maya's panels torn off into windows.
@@ -38,7 +38,7 @@ EDITOR_TYPES = (
 
 
 def _maya_outliner(space):
-    # Same filters as the Maya Workflow Kit layout's Outliner (Maya DAG, , ).
+    # Same filters as the Maya Workflow Kit layout's Outliner (Maya DAG, steps 31 and 50).
     from ..ui import maya_outliner
     maya_outliner.setup(space)
 
@@ -56,7 +56,7 @@ def sidebar_tab_later(window, category, tries=100):
     """Show the sidebar of ``window``'s only area and make ``category`` its active tab.
 
     ``Region.active_panel_category`` can be set once the region has drawn its tabs (before that it raises
-    "read-only"; step 67, checked:
+    "read-only"; step 67:
     a new window's sidebar starts on the first tab, Node / Item, whatever ``bl_order`` says), and
     ``show_region_ui`` set inside an operator doesn't stick (step 9): both run from a timer."""
     state = {"n": tries}
@@ -93,7 +93,7 @@ def sidebar_tab_later(window, category, tries=100):
 
 def properties_tab_later(window, tab, tries=40):
     """Put the new window's Properties editor on ``tab``: a Properties space made in this operator has no tab
-    list until it has drawn, so the assignment is retried from a timer (step 67, checked: it stayed OBJECT)."""
+    list until it has drawn, so the assignment is retried from a timer (step 67: it stays OBJECT otherwise)."""
     state = {"n": tries}
 
     ptr = window.as_pointer()
@@ -205,7 +205,7 @@ class ALLSET_OT_increment_save(bpy.types.Operator):
             return {'CANCELLED'}
         new = increment_path(bpy.data.filepath)
         # Maya asks before replacing an existing file; never overwrite, take the next free
-        # number instead (delegated).
+        # number instead (a kit choice).
         while os.path.exists(new):
             new = increment_path(new)
         bpy.ops.wm.save_as_mainfile(filepath=new, copy=False)

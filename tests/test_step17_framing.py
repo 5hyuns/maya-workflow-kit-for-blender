@@ -1,5 +1,5 @@
 """Step 17: Maya framing fit (0.95 of the visible part of the view) and hotbox rows kept
-out from under the sidebar. """
+out from under the sidebar."""
 
 import math
 from importlib import import_module

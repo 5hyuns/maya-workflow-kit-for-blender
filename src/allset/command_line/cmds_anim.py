@@ -187,7 +187,7 @@ def setKeyframe(*args, **kwargs):
                 count += bool(insert_key(ob, key, frame, None if v is None else float(v), bd))
             # Maya leaves the attribute alone when a key at another time goes onto an existing curve (until the time
             # changes); Blender's next depsgraph update writes every animated
-            # property from its curve anyway, so the script sees that value right away (deviation,)
+            # property from its curve anyway, so the script sees that value right away (a kit difference)
             touched.append((ob, key))
     refresh(touched)
     return count
@@ -212,7 +212,7 @@ def _remove_points(ob, key, a, b):
 
 def cutKey(*args, **kwargs):
     """Remove keys (all, or in -time); returns the number of curves cut, 0 with -clear. The keys are
-    not put on the animation clipboard (delegated: the kit's clipboard holds Channel Box / Graph Editor copies)."""
+    not put on the animation clipboard (the kit's clipboard holds Channel Box / Graph Editor copies)."""
     f = _Flags("cutKey", kwargs)
     at = f.get("attribute", "at")
     t = f.get("time", "t")

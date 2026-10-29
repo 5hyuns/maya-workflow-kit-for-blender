@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's docking model: every Maya panel is its own area or window, torn off by its ::::: handle
-.
+(step 116).
 
 Maya builds every UI element as a dockable ``workspaceControl``; the right column is one tab stack of Channel Box /
 Layer Editor, Attribute Editor and Modeling Toolkit, and a panel's
@@ -9,7 +9,7 @@ dotted handle tears it off into a floating window. Here:
 - **Dock areas.** A Maya panel lives in its own Properties editor on the Tool tab, header and tab column hidden (the
   Tool tab draws 3D View "Tool"-category panels, step 106), never in the viewport's sidebar. The area's role is kept
   in the space's hidden tab flags (``ROLE_FLAGS``: Tool tab + one flag), so it survives saving and ``area_dupli``
-  (checked: the copy keeps context, flags and the hidden header). The Tool Settings dock (``tool_dock``) is the
+  (the copy keeps context, flags and the hidden header). The Tool Settings dock (``tool_dock``) is the
   Tool tab with no role flag.
 - **Stack.** The ``STACK`` area shows Maya's vertical tab strip on its right edge (step 142) and the selected tab
   (``WindowManager.allset_dock``); kinds that have a floating window leave the strip.
@@ -35,7 +35,7 @@ LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attr
 ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
               'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
               'MENU': "show_properties_texture"}
-WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya 2022 defaults)
+WIDTH = 260                  # unscaled px: Maya-style narrow panels
 HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
 TEAR_LINE = "- " * 18        # Maya's tear-off line at the top of a menu (``-to true``)
 
@@ -191,7 +191,7 @@ def main_window(wm=None):
 
 def split_side(context, window, side, width, ui_type):
     """Split ``window``'s main viewport and return the new area on ``side`` ('LEFT' / 'RIGHT') of ``width`` unscaled
-    px (checked: VERTICAL factor < 0.5 = new area left, factor > 0.5 = new area right, ``1 - factor`` wide)."""
+    px (VERTICAL factor < 0.5 = new area left, factor > 0.5 = new area right, ``1 - factor`` wide)."""
     screen = window.screen
     area, region = _main_view(screen)
     if area is None or region is None:
@@ -313,9 +313,9 @@ def open_floating(context, kind):
 # --- tear off / dock -----------------------------------------------------------------------------------------------
 # Issue #4: Blender has no API to size or place a window, and ``screen.area_dupli`` opens a window of the copied
 # area's size. So the source area is first split (``area_split`` HORIZONTAL, factor > 0.5 = the new area on top,
-# 1 - factor tall: checked, step 129) to the content height checked by ``layout_measure``; that top piece is
+# 1 - factor tall, step 129) to the content height computed by ``layout_measure``; that top piece is
 # copied a tick later (a split area has no size before the screen refreshed: a copy in the same call opened a
-# default-size window, checked) and closed again, which gives the source its height back.
+# default-size window) and closed again, which gives the source its height back.
 
 MIN_ROWS = 6                 # a torn-off window is never shorter than this ...
 PAD_ROWS = 1.5               # ... and gets the region's top / bottom margins on top of its content
@@ -334,7 +334,7 @@ def panel_rows(context, area=None):
     from . import layout_measure
     area = area or context.area
     if area is not None and area.type == 'OUTLINER':
-        n = sum(1 for _ in context.scene.objects) + 7       # objects + Maya's default rows (step 99) + header
+        n = sum(1 for _ in context.scene.objects) + 7       # objects + the startup rows Maya lists (step 99) + header
         return min(n, 40)
     if role(area) is None:
         from . import tool_dock
@@ -701,22 +701,21 @@ def text_units(context, text, pad):
 
 # --- vertical tab strip (step 142, #78) ----------------------------------------------------------------------------
 # Maya's stack tabs are a vertical strip on the stack's right edge, so the stack is only as wide as its panel
-# (Maya's factory screen: strip x 1584-1599 = 16 px; tabs from the content top, y 133:
-# "Channel Box / Layer Editor" 133-294, "Attribute Editor" 297-404, "Modeling Toolkit" 407-520 = the text + about
-# 11 px at each end, 2 px apart; raised tab = the panel colour #444444, lowered tabs #373737, strip #2b2b2b, text
-# #eeeeee / #929292, reading top to bottom). Blender can't lay a button out rotated, so the strip is drawn here
+# (tabs from the content top, the text + a small margin at each end, close together, reading top to bottom; the
+# raised tab in the panel colour, lowered tabs and the strip darker). Blender can't lay a button out rotated, so the
+# strip is drawn here
 # (POST_PIXEL, blf rotation) in a column the panel content keeps clear of (``content_layout``), and a click on it goes
-# to ``ALLSET_OT_dock_strip_click`` (first in "View2D Buttons List", like ui/outliner_sets.py's rows). Delegated over
+# to ``ALLSET_OT_dock_strip_click`` (first in "View2D Buttons List", like ui/outliner_sets.py's rows). Chosen over
 # a width that follows the raised tab with horizontal tabs: the tab row alone needed 466 px at UI scale 1 (step 135).
-STRIP_PX = 18          # strip width at UI scale 1 (Maya 16; Blender's UI font is a little taller)
+STRIP_PX = 18          # strip width at UI scale 1 (Blender's UI font is a little taller)
 STRIP_GAP_PX = 6       # between the content and the strip
 STRIP_TOP_PX = 4       # first tab below the region's top
-TAB_END_PX = 11        # around a tab's text (Maya: 162 px for a 140 px caption)
+TAB_END_PX = 11        # around a tab's text
 TAB_GAP_PX = 2
-STRIP_SHADE = 0.63     # strip background x the region background (Maya 43 / 68)
-TAB_SHADE = 0.81       # lowered tab x the region background (Maya 55 / 68)
-TEXT_LOWERED = 0.62    # lowered tab text x the theme text colour (Maya 146 / 238)
-PANEL_MARGIN_U = 0.4   # Blender's panel margin on each side of a Properties region, in widget units (checked)
+STRIP_SHADE = 0.63     # strip background x the region background
+TAB_SHADE = 0.81       # lowered tab x the region background
+TEXT_LOWERED = 0.62    # lowered tab text x the theme text colour
+PANEL_MARGIN_U = 0.4   # Blender's panel margin on each side of a Properties region, in widget units
 
 _drawn = {}            # stack area pointer -> the tab drawn last (draw -> tab change -> dock width, toolbox)
 _strip_handle = []
@@ -756,7 +755,7 @@ def content_factor(width, scale, pixel_size=1.0):
 class StripClear:
     """The stack panel's root layout kept left of the strip: every item drawn into it goes into its own split
     (content | an empty strip column). One split column for everything would move every row: a nested column spaces
-    its items by the style's ``buttonspacey``, the panel's root by ``templatespace`` (checked: the Channel Box rows
+    its items by the style's ``buttonspacey``, the panel's root by ``templatespace`` (the Channel Box rows
     came 4 px closer each at UI scale 1.5, and the GUI tests' row offsets missed). Attributes go to the root."""
 
     __slots__ = ("_root", "_factor")
@@ -842,10 +841,10 @@ def _strip_colours(context):
     return tuple(min(1.0, c + lift) for c in back), text
 
 
-# Maya's dock grey (#444444; Blender's factory Properties grey is #303030). The kit
+# Maya-style dock grey #444444 (Blender's factory Properties grey is #303030). The kit
 # ships no theme (step 130), so the dock areas are lifted by the difference after drawing: an additive grey over the
-# region raises the background to Maya's and the value fields with it (#1d1d1d -> #313131, #2b2b2b); text stays
-# near white (step 195). Only a theme darker than Maya's is lifted, never a light one.
+# region raises the background to #444444 and the value fields with it (#1d1d1d -> #313131); text stays
+# near white (step 195). Only a theme darker than that is lifted, never a light one.
 MAYA_DOCK_GREY = 0x44 / 255.0
 TINTED_ROLES = {'STACK', 'CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'}
 
@@ -921,7 +920,7 @@ _hole_row = {}    # region pointer -> framebuffer row that last crossed the list
 
 
 def _list_hole(context, region):
-    """The Layer Editor list body (#2a2a2a, Blender's list grey is as dark): left unlifted. Found in the drawn
+    """The Layer Editor list body (Blender's list grey is already as dark): left unlifted. Found in the drawn
     pixels — one row near the region bottom for its sides, one column inside its left edge for its top."""
     import gpu
     scale = context.preferences.system.ui_scale or 1.0
@@ -933,7 +932,7 @@ def _list_hole(context, region):
     from . import channel_box
     le_top = int(region.height * (1.0 - channel_box.cb_share(region, channel_box._unit(context))))
     # the list ends 14 px x scale above the region bottom in a tall dock, higher in a shorter one (step 202: the
-    # Time Slider grew at UI 1.25 and the list bottom left the checked row): probe upwards, the last hit first
+    # Time Slider grew at UI 1.25 and the list bottom left the sampled row): sample upwards, the last hit first
     fb = gpu.state.active_framebuffer_get()
     key = region.as_pointer()
     first = max(1, round(14 * scale))

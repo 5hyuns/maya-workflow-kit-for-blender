@@ -1,7 +1,6 @@
 """Machine-wide Blender slots: at most ``SLOTS`` Blender processes from this repository's harnesses at once.
 
-The PC crashed three times on 2026-10-23 with several Blenders (+ Maya) running together ( 10-25:
-lanes may go up to 4, Blender processes stay at 2). Every harness that starts a Blender (tests/run.py,
+Several Blenders running together can overload the machine, so Blender processes stay at 2. Every harness that starts a Blender (tests/run.py,
 tests/gui/run.py, tools/release_check.py, tools/build.py) holds one slot while that process runs:
 
     with blender_slots.slot("tests/run.py install"):

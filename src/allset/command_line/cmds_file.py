@@ -7,9 +7,9 @@ Maya's behaviour: ``file -rename`` only names the scene (returns the path),
 -new / -open on a modified scene without -force raise "Unsaved changes". The script goes on in the new scene.
 
 Blender form: the kit can't read or write Maya files, so a ``.ma`` / ``.mb`` path becomes the same path with
-``.blend`` (delegated). New = the Maya Workflow Kit scene (the kit's ``startup.blend``: cm, Maya views), loaded
+``.blend``. New = the Maya Workflow Kit scene (the kit's ``startup.blend``: cm, Maya views), loaded
 like Open with ``load_ui=False`` so the windows — Script Editor included — stay, as in Maya. Loading a file from a
-Run Script is synchronous (checked in 4.5: the script's next line sees the new file); ``runner.run_text`` already
+Run Script is synchronous (the script's next line sees the new file); ``runner.run_text`` already
 copes with its own Text being gone afterwards.
 """
 
@@ -43,7 +43,7 @@ _window = {"ptr": 0}         # the window a script loaded a file from (see ``scr
 
 
 def _load(path):
-    """A file read leaves the running script's context without window / screen (checked in the UI: the next
+    """A file read leaves the running script's context without window / screen (the next
     command had no ``selected_objects``; a ``temp_override`` around the load doesn't bring them back), so the window
     is remembered and every later cmds call runs in it (``cmds_shim._guarded``)."""
     _state["name"] = ""

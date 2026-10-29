@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-""" notices: the near substitute + one line, for Maya menu items ( 「Maya 워크플로우
-계획」 W3,  「계획」 (b)).
+"""Not-in-Blender notices: the near substitute + one line, for Maya menu items (step 54).
 
 One table for every place a Maya item has no Blender equivalent, or a different one: the item's tooltip
 (greyed items: ``allset.menu_unavailable``; items with a substitute: ``allset.menu_item``) and the Help
@@ -127,7 +126,7 @@ NOTICES = {
         "(radius 5, smooth), driven by softModNHandle."),
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
-    # FX (step 68, )
+    # FX (step 68)
     **{path: ("one-point mesh emitter", "Blender particles come from a mesh: Maya Workflow Kit makes a one-point mesh emitter1 "
               "with the particles, sized in Maya units.")
        for path in ("nParticles/Create Emitter", "nParticles/Create Emitter#2")},
@@ -226,7 +225,7 @@ NOTICES.update({
                            ("Amplify", "Sharpen"), ("Freeze", "Mask"))},
     "Deform/Cluster": ("Hook", "Blender's cluster1 is a Hook modifier driven by cluster1Handle; its weights are the "
                        "vertex group cluster1."),
-    # step 144 (#34, ): the Deform menu's Blender constructs and the Maya deformers
+    # step 144 (#34): the Deform menu's Blender constructs and the Maya deformers
     # Blender has none of
     "Deform/Nonlinear/Sine": ("Wave modifier", "Blender has no sine deformer: sine1 is a Wave modifier along X "
                               "around sine1Handle (Blender's wave shape, no bounds)."),
@@ -482,8 +481,8 @@ CATEGORIES.update({
     "UV Editor/View/Isolate Select": (
         "Add Selected / Remove Selected", "Blender has no saved quick-select sets to load into the isolate view: "
         "build it with Add Selected / Remove Selected (Ctrl+1 isolates the selection)."),
-    # step 178: Maya's symmetrizeUV only works after the Symmetrize UV brush's own seam pick in Maya
-    # (without it no UV changes): no rule to copy.
+    # step 178: Maya's Symmetrize UV changes UVs only after the brush's own seam pick (without it no UV changes):
+    # no rule to copy.
     "UV Editor/Modify/Symmetrize": (
         "UV > Mirror / Snap", "Blender has no UV symmetrize: mirror the UVs (Modify > Flip) and weld them (Match UVs), "
         "or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
@@ -586,8 +585,8 @@ PANEL_MENU = {
         "Controllers", "Subdiv Surfaces", "Planes", "Dynamics", "Particle Instancers",
         "Follicles", "nCloths", "nParticles", "nRigids", "Dynamic Constraints", "Dimensions", "Handles",
         "Texture Placements", "Strokes", "Plugin Shapes", "Clip Ghosts")},
-    # step 197 (#104) re-checked in a GUI 4.5: overlay display_handle NONE and vertex_opacity 0 change no pixel of a
-    # NURBS surface / curve hull or CVs in Edit Mode (tmp/p197 probe), so no overlay toggle can stand in for these
+    # step 197 (#104): in Blender 4.5 overlay display_handle NONE and vertex_opacity 0 change no pixel of a
+    # NURBS surface / curve hull or CVs in Edit Mode, so no overlay toggle can stand in for these
     **{_PM + f"Show/{t}": (
         "Edit Mode", "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit "
         "Mode, and always there: they can't be shown in Object Mode or hidden per view.") for t in (
@@ -715,7 +714,7 @@ def _expire():
 
 class ALLSET_OT_tip(bpy.types.Operator):
     """A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window
-; clicking puts it in the Help Line"""
+    (step 106); clicking puts it in the Help Line"""
     bl_idname = "allset.tip"
     bl_label = "Note"
     bl_options = {'INTERNAL'}
@@ -979,7 +978,7 @@ CATEGORIES.update({
 })
 
 
-# Greyed marking-menu entries (step 136, ): key = "<menu>/<label path>" (the kit menu
+# Greyed marking-menu entries (step 136): key = "<menu>/<label path>" (the kit menu
 # name in marking/menus.MENUS, then the labels down to the item), same (substitute, one line) form. While a marking
 # menu hovers a greyed entry, marking/modal.py puts its line in the Help Line. tests/test_step136_items.py checks that
 # every greyed entry has one and every key is a greyed entry.

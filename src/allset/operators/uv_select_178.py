@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor Select / Edit commands of step 178 (lane B); the tests compare against Maya's numbers.
+"""Maya UV Editor Select / Edit commands of step 178.
 
 Maya's commands work on every component of the hilited meshes of the current component mask
 (UV Editor Select menu).

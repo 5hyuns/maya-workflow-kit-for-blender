@@ -12,7 +12,7 @@ Oracles (qa_plan_240 3.1-1 internal consistency, 3.1-2 metamorphic):
   I5  undo + redo returns the same scene-stored UI state
   E   effects measurable headless: auto key keys, layer mute / solo changes the evaluated value, Enable IK Solver
       writes the Ik Blend of the selected handle.
-Not measurable headless (checked by the probe tools/qa/qa_probe.py): transform.translate exec ignores grid /
+Not measurable headless (see tools/qa/qa_probe.py): transform.translate exec ignores grid /
 increment snapping, proportional editing and mesh mirror in -b (no region) -> snap / soft select / symmetry effects
 are checked through their Blender flags only.
 """

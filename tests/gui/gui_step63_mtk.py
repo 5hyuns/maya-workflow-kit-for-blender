@@ -2,7 +2,7 @@
 Modeling Toolkit in the dock -> Face mode icon -> a face selected -> Extrude button -> more faces; cube + sphere
 -> Combine button -> one pCube2 -> Separate button -> two pieces. Screenshots (vs shots/modeling_03.png)."""
 
-GUI_SKIP = "fails only inside the full GUI run (dock button lookup), passes alone 13/13 (step 140) - checks in  Step 141"   # tests/gui/run.py leaves it out (--include-skipped runs it)
+GUI_SKIP = "fails only inside the full GUI run (dock button lookup), passes alone 13/13 (step 140)"   # tests/gui/run.py leaves it out (--include-skipped runs it)
 
 import os
 import sys
@@ -15,7 +15,7 @@ from sim import check, dock_area, dock_region, ev, find_button, px, run, screens
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
-# checked in gui_step63_explore*.png (1600 x 900, scale 1.25, sidebar UI region (971, 94, 350, 709)):
+# Read from gui_step63_explore*.png (1600 x 900, scale 1.25, sidebar UI region (971, 94, 350, 709)):
 # (px left of the sidebar's right edge, px below the top of its content).
 FACE_ICON, OBJECT_ICON = (188, 90), (310, 90)
 COMBINE, SEPARATE = (248, 457), (106, 457)          # object mode
@@ -190,7 +190,7 @@ def s_check_extrude():
     check(f"MTK Extrude: one face extruded, 6 -> {n} faces", n == 10)
     ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
     _o, rec = ex.active(bpy.context)
-    check(f"... as Maya's polyExtrudeFace1 with its manipulator (step 65; got {rec and rec.name})",
+    check(f"... as polyExtrudeFace1 with its manipulator (step 65; got {rec and rec.name})",
           rec is not None and rec.name == "polyExtrudeFace1")
 
 

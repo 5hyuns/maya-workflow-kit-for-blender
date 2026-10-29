@@ -1,17 +1,14 @@
-"""Maya polyAutoProjection "Into square" shell layout (UV > Automatic, factory options), bpy-free.
+"""Maya polyAutoProjection "Into square" shell layout (UV > Automatic, default options), bpy-free.
 
-Behaviour: Maya 2026's.
-Checked against Maya 2026 on 15 meshes,
-every shell bbox within 3e-7 (tests/test_step257_uv_layout.py).
+Behaviour: Maya 2026's (tests/test_step257_uv_layout.py).
 
-The factory UV > Automatic runs the packed layout with Layout 2 (Into square), Scale Mode 1 (Uniform), Shell
+The default UV > Automatic runs the packed layout with Layout 2 (Into square), Scale Mode 1 (Uniform), Shell
 stacking 0 (Bounding box = brick rows), sort by size on, back-and-forth rows on, no prescale, rotate mode 1 (a
 shell wider than tall turns 90 degrees) and spacing = Percentage Space / 100. Only each shell's bounding box
 takes part in the packing, so the input is one bbox per shell.
 
 Which plane each face takes and how faces form shells (``assign_planes``) is
-checked against Maya 2026 face by face on 29 meshes with optimize 0 and 1 plus two partial selections
-(tests/test_step257_uv_auto.py).
+Maya's too (tests/test_step257_uv_auto.py).
 
 Input bbox = the shell's extent in the projection plane in **Maya units** (object space; Blender lengths divided
 by ``units.maya_unit()``). The packer is not scale invariant: the size comparator has an absolute 1e-6 tolerance
@@ -174,9 +171,8 @@ def bbox_of(points):
 def layout(boxes, spacing=0.2):
     """Maya's Into-square layout of UV shells given by their projected bboxes (umin, vmin, umax, vmax).
 
-    ``boxes`` must be in Maya's shell order = ascending lowest face index of each shell (on all 15
-    meshes; the order only decides between shells of equal height). ``spacing`` = Percentage Space (Maya factory
-    0.2). Returns a ``Layout``; ``Layout.transform(i, u, v)`` maps a projected point of shell i to its final UV."""
+    ``boxes`` must be in Maya's shell order = ascending lowest face index of each shell (the order only
+    decides between shells of equal height). ``spacing`` = Percentage Space (default 0.2). Returns a ``Layout``; ``Layout.transform(i, u, v)`` maps a projected point of shell i to its final UV."""
     gap = F(F(spacing) / F(100.0))
     shells = [_Shell(i, b) for i, b in enumerate(boxes)]
     if not shells:
@@ -217,8 +213,7 @@ FAILED = 0x80000000           # a face that would make the shell overlap itself
 
 
 def face_normals(points, faces):
-    """Maya's polygon normals in float32: Newell sums in corner order, times the float32 reciprocal of the length
-    (bit-identical to MFnMesh.getPolygonNormal on 29 meshes, 6086 faces)."""
+    """Maya's polygon normals in float32: Newell sums in corner order, times the float32 reciprocal of the length."""
     p = np.asarray(points, dtype=F)
     n = len(faces)
     out = np.zeros((n, 3), dtype=F)
@@ -362,9 +357,8 @@ def assign_planes(points, faces, optimize=True):
 
     ``points`` = vertex positions in Maya object space and Maya units (Y up); ``faces`` = vertex index lists of the
     faces to project, in Maya face order (only these take part; others block the flood like unselected faces).
-    ``optimize`` = Fewer pieces (factory 1). Returns ``[(plane, [face positions])]`` in creation order; ``plane``
-    indexes ``PLANES6``. Checked against Maya 2026 on 29 meshes (6086 faces, optimize 0 and 1) and two partial
-    selections: every face in the same shell as Maya's."""
+    ``optimize`` = Fewer pieces (default 1). Returns ``[(plane, [face positions])]`` in creation order; ``plane``
+    indexes ``PLANES6``: every face in the same shell as Maya's."""
     n = len(faces)
     normals = face_normals(points, faces)
     mask = [0] * n

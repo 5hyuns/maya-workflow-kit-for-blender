@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Kit-drawn Maya-style icons for the Tool Box, the Layer Editor toolbar and the Outliner rows the kit draws
-.
+(step 131; issue #23).
 
-Decision 6: no Maya icon files. Each glyph is a few vector shapes in Maya's icon palette (light grey #bdbdbd line
+No Maya icon files. Each glyph is a few vector shapes in a Maya-style icon palette (light grey #bdbdbd line
 art, teal #48aab5 accents, a dark #3a3a3a rim) that follow the Maya
 icon's silhouette, colour and composition, rasterised with numpy (``status_icons.Canvas``, 4x supersampled) at the
 exact pixel size the icon is shown at, so nothing is resampled:
@@ -270,8 +270,8 @@ class Geo:
     def data(self, saturation=1.0):
         """(coords, colours) bytes for ``bpy.app.icons.new_triangles`` with range (0, 255): x right, y up.
         ``saturation`` = the theme's Icon Saturation, which Blender applies to toolbar vector icons
-        (out = s * in + (1 - s) * luma, luma = 0.3 R + 0.59 G + 0.11 B; checked in the step 131 GUI shot: teal
-        #48aab5 came out #6a9ba1 at the default 0.5): colours are pre-compensated so the Maya teal shows."""
+        (out = s * in + (1 - s) * luma, luma = 0.3 R + 0.59 G + 0.11 B; teal
+        #48aab5 comes out #6a9ba1 at the default 0.5): colours are pre-compensated so the Maya teal shows."""
         k = 255.0 / self.base
         coords, cols = bytearray(), bytearray()
         for tri, colour in self.tris:
@@ -597,7 +597,7 @@ def geom_icon(name, context=None):
         import bpy
         coords, cols = triangles(name, sat)
         # Blender 4.5 crashes freeing an icon made by ``new_triangles`` (released or at quit: "MEM_freeN on a
-        # pointer created with MEM_new", checked in -b); icons read by ``new_triangles_from_file`` free cleanly,
+        # pointer created with MEM_new", also in -b); icons read by ``new_triangles_from_file`` free cleanly,
         # so the kit writes Blender's own .dat layout (datafiles/icons: "VCO", version 0, 255 x 255, offset 0,
         # coords, colours) into the extension's user folder and reads it back.
         path = _dat_path(name, sat)
@@ -640,7 +640,7 @@ _textures = {}
 
 def texture(name, n, greyed=False):
     """GPU texture of ``name`` at ``n`` px (call from a draw handler). Display (sRGB) values: the Outliner's region
-    draws the builtin 'IMAGE' shader's values as they are (checked, step 131; unlike the shelf's image editor)."""
+    draws the builtin 'IMAGE' shader's values as they are (step 131; unlike the shelf's image editor)."""
     key = (name, n, greyed)
     tex = _textures.get(key)
     if tex is None:

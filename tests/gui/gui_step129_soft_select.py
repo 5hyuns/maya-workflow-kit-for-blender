@@ -1,6 +1,5 @@
 """Step 129 with simulated events: B tap = one soft select state for object + component mode (#15, #1), B hold + MMB
-drag sets the radius with a circle / value in the view and no navigation (#1), falloff colour overlay (#2).
-"""
+drag sets the radius with a circle / value in the view and no navigation (#1), falloff colour overlay (#2)."""
 
 import os
 import sys

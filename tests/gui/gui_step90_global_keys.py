@@ -1,6 +1,5 @@
 """Step 90 in a real UI (Maya Workflow Kit layout): Ctrl+X cuts the cube, Ctrl+V pastes it back, Alt+X starts Walk (ESC ends it),
-Alt+2 hides meshes in the view under the mouse, Alt+\\ sets the playback range to the animation range.
-"""
+Alt+2 hides meshes in the view under the mouse, Alt+\\ sets the playback range to the animation range."""
 
 import os
 import sys

@@ -1,6 +1,5 @@
 """Step 129 (viewport lane): panel toolbar toggles turn off again (#10), IPR off keeps the shading (#24), F in a
-camera view moves the camera (#9), UV checker toggle (#13). GUI side: tests/gui/gui_step129_*.py.
-Table: """
+camera view moves the camera (#9), UV checker toggle (#13). GUI side: tests/gui/gui_step129_*.py."""
 
 from importlib import import_module
 

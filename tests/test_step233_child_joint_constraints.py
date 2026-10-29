@@ -1,6 +1,6 @@
 """Step 233 (Issue #142): constraints on a CHILD joint move it like Maya.
 
-Maya 2026: joints (0, 10, 0) ->
+Expected: joints (0, 10, 0) ->
 (6, 10, 0) -> (12, 10, 0) (cmds.joint), transforms ctrlA t (12, 10, 0) r (0, 0, 30) and ctrlB t (12, 14, 0)
 r (10, -20, 0); ctrlA, ctrlB, then joint3 selected -> Constrain > Point / Parent / Orient / Aim; W1 = 3; then
 ctrlB moved to (14, 15, 1). Audit 0.5.0 ①-7: the kit's Point constraint left joint3 at (12, 10, 0) (Blender ignores
@@ -39,7 +39,7 @@ MAYA_R = {"point": {"w11": I3, "w13": I3, "moved": I3},
           # aim: position only — two aim targets are not a weighted target average in the kit (step 226 scope;
           # Maya aims at (12, 12, 0) here), and its up vector is parallel to the aim (degenerate)
           "aim": {}}
-# kit - Maya axis differences (deg) allowed where the kit's blend isn't Maya's (step 226: orient = Blender's
+# kit - expected axis differences (deg) allowed where the kit's blend isn't Maya's (step 226: orient = Blender's
 # weighted rotation mix, not Maya's)
 ROT_TOL = {"orient": 1.0}
 

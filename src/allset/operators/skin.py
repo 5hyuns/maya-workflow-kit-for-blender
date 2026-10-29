@@ -3,7 +3,7 @@
 Mirror Skin Weights, Copy / Paste Vertex Weights.
 
 Maya rigging: skin = Armature modifier + vertex
-groups named after the joints), design  「계획」. A Maya joint is a bone's head (or the
+groups named after the joints), step 58. A Maya joint is a bone's head (or the
 tail of a chain end, step 57); Blender's IK pulls a bone's tail, so a Maya IK handle on end joint J is an IK
 constraint on the bone whose tail is J.
 """
@@ -329,7 +329,7 @@ def armature_modifier(mesh):
 
 def armature_modifiers(mesh):
     """Every skin (Armature modifier with a skeleton) of a mesh, stack order = Maya's skinCluster chain from the
-    first bound (: the kit makes one, a received file may hold more — shown read-only)."""
+    first bound (the kit makes one, a received file may hold more — shown read-only)."""
     return [m for m in getattr(mesh, "modifiers", ()) if m.type == 'ARMATURE' and m.object is not None
             and not _skin_part(m)]
 
@@ -640,7 +640,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
             return {'CANCELLED'}
         skinned = [m for m in meshes if armature_modifier(m) is not None]
         if skinned:
-            # Maya 2024+ asks before a second skinCluster; : the kit
+            # Maya 2024+ asks before a second skinCluster; the kit
             # keeps one skin per mesh — the question with Yes greyed and the Blender way (step 224)
             QUESTION["mesh"] = skinned[0].name
             if context.window is not None:
@@ -936,7 +936,7 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         mesh[PAINT_SEEN] = True
         # Maya keeps a vertex selection made before the tool and floods only it
         # (Maya): Blender shows that selection only with the vertex
-        # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then (delegated).
+        # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then.
         shown = [v.select for v in mesh.data.vertices if not v.hide]
         if any(shown) and not all(shown) and not mesh.data.use_paint_mask:
             mesh.data.use_paint_mask_vertex = True
@@ -1081,7 +1081,7 @@ class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
         src_names = [vg.name for vg in influences(srcs[0])]
         bpy.ops.object.data_transfer(use_reverse_transfer=True, data_type='VGROUP_WEIGHTS', use_create=True,
                                      vert_mapping=VERT_MAPPING[self.surface],
-                                     # reverse transfer swaps the two layer enums (checked)
+                                     # reverse transfer swaps the two layer enums
                                      layers_select_src='NAME', layers_select_dst='ALL')
         if dst_arm != src_arm:
             modes = [m for m in (self.influence1, self.influence2, self.influence3) if m != "NONE"]
@@ -1240,7 +1240,7 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
     positive_to_negative: BoolProperty(name="Direction: Positive to Negative", default=True)
     influence1: EnumProperty(name="Influence Association 1", items=MIRROR_INFLUENCE, default="CLOSEST_JOINT")
     influence2: EnumProperty(name="Influence Association 2", items=MIRROR_INFLUENCE_2, default="NONE")
-    # Maya setting mirrorSkinNormalize, factory 0 (Mirror Skin Weights Options)
+    # off by default (Mirror Skin Weights Options)
     normalize: BoolProperty(name="Normalize", default=False)
 
     @classmethod
@@ -1335,7 +1335,7 @@ class ALLSET_OT_paste_vertex_weights(bpy.types.Operator):
 
 class ALLSET_OT_reset_skin_weights(bpy.types.Operator):
     """Maya Reset Default Weights: give the skinned mesh its bind weights again (closest distance, the joints it is
-    bound to, at most as many influences as each vertex has now, at least factory 5)"""
+    bound to, at most as many influences as each vertex has now, at least 5)"""
     bl_idname = "allset.reset_skin_weights"
     bl_label = "Reset Default Weights"
     bl_options = {'REGISTER', 'UNDO'}

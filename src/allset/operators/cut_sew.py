@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 3D Cut and Sew UV Tool.
+"""Maya 3D Cut and Sew UV Tool (step 79).
 
 UV > 3D Cut and Sew UV Tool switches to edge mode; in the 3D View an LMB drag
 along edges cuts the UVs there, Ctrl+drag sews; tool keys x / s / d = Cut / Sew / Unfold + Layout (Maya default
@@ -19,8 +19,8 @@ TOOL = "allset.cut_sew_tool"
 STEP_PX = 4.0                         # drag samples: every 4 px between two mouse events
 END_PX = 6.0                          # drag samples this close to an edge end don't count: at a corner the
                                       # side edges are as near as the next edge of the path
-STROKE_RGB = (1.0, 0.85, 0.1)         # the edges a stroke collected (Maya draws the cut path yellow )
-BORDER_RGB = (0.95, 0.95, 0.95)       # shell borders, thick (Maya Texture Borders) 
+STROKE_RGB = (1.0, 0.85, 0.1)         # the edges a stroke collected (Maya draws the cut path yellow)
+BORDER_RGB = (0.95, 0.95, 0.95)       # shell borders, thick (Maya Texture Borders)
 BORDER_PX = 3.0
 STROKE_PX = 3.0
 

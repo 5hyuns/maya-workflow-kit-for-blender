@@ -1,4 +1,4 @@
-"""Step 114: the two extension guideline violations of the audit (docs/distribution/extensions_audit.md) stay fixed.
+"""Step 114: the two extension guideline violations of the audit stay fixed.
 
 1. No global module dictionary / module path changes: enabling, using and disabling the kit leaves ``sys.modules``
    without any ``maya`` entry and ``sys.path`` unchanged; ``import maya.cmds`` works only inside the Command Line /

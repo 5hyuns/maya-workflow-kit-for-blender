@@ -1,5 +1,5 @@
 """Step 108: Maya hotkeys right-aligned in the kit's Maya menus (from the item's Maya command and the kit keymap),
-never a Blender shortcut. """
+never a Blender shortcut."""
 
 import importlib.util
 from importlib import import_module

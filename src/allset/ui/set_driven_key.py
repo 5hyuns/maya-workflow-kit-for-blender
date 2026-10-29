@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Set Driven Key window drawn in the dock under the Channel Box.
+"""Set Driven Key window drawn in the dock under the Channel Box (step 62).
 
 Layout of Maya's window: a "Driver" bar, node list |
 attribute list; a "Driven" bar, node list | attribute list; buttons Key · Load Driver · Load Driven · Close.
@@ -38,7 +38,7 @@ def remember_room(context, cb_units):
 
 
 def list_rows(room):
-    """Rows of each list when ``room`` UI units are left (None: unknown = Maya's 4)."""
+    """Rows of each list when ``room`` UI units are left (None: unknown = 4)."""
     if room is None:
         return ROWS
     return max(MIN_ROWS, min(ROWS, int((room - FIXED_UNITS) / 2)))

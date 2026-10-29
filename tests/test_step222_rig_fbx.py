@@ -1,6 +1,6 @@
-"""Step 222 (Issue #132, ): rig FBX like Maya 2026 — joint orient as PreRotation (rotate 0 at rest), joint
+"""Step 222 (Issue #132): rig FBX like Maya — joint orient as PreRotation (rotate 0 at rest), joint
 translations in cm, no armature Null; the joint world positions the file describes (T . Pre . R . S) equal
-Blender's at every frame, cross-checked with Maya 2026 (numbers in ).
+Blender's at every frame.
 """
 
 import math
@@ -133,7 +133,7 @@ def test_world_positions_every_frame_equal_blender():
         for name, w in got.items():
             worst = max(worst, (w.to_translation() - truth[name]).length)
     print(f"step222 max joint world position error {worst:.2e} cm")
-    # Blender truth for the Maya 2026 cross-check
+    # Blender truth for the cross-check
     import json
     dg = bpy.context.evaluated_depsgraph_get()
     truth = {}
@@ -162,7 +162,7 @@ def test_skin_clusters_follow_the_fold():
 
 
 def test_rest_rotations_ignore_the_current_frame():
-    """Decision 3's trap: the PreRotation must not depend on the frame the export ran at."""
+    """The trap: the PreRotation must not depend on the frame the export ran at."""
     rig, body, k = _rig()
     pres = []
     for frame in (1, 7):

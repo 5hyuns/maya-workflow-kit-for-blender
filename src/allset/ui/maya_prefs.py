@@ -7,10 +7,10 @@ on the right in sections, Save / Cancel at the bottom; closing the window by its
 
 The kit's window is a ``marked_window`` kind (a Properties Tool tab in its own window) drawing the pages of
 ``maya_prefs_data.PAGES``: kit add-on preferences and the values the kit keeps in the scene, grouped by Maya's
-categories. Blender preferences are never written by the kit ( decisions 13 / 14): those rows
+categories. Blender preferences are never written by the kit: those rows
 show Blender's value read-only with the Recommended setup note and a button that opens that Preferences section.
 
-Save / Cancel (delegated): the window takes a snapshot of every row's value when it opens; Save keeps the changes and
+Save / Cancel: the window takes a snapshot of every row's value when it opens; Save keeps the changes and
 closes (the add-on preferences are kept by Blender's Auto-Save Preferences or File > Save Preferences, like every
 add-on), Cancel and Edit > Revert to Saved write the snapshot back; Edit > Restore Default Settings = the add-on
 preferences' defaults and Maya's factory scene values (``maya_prefs_data.MAYA_FACTORY``). Closing by the OS button keeps

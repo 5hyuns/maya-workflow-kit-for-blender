@@ -42,7 +42,7 @@ def s_setup():
 def s_header_shot():
     shot("gui_step37_header.png")
     check("3D View header redrawn (screenshot)", True)
-    click(286)  # "Shading" (x checked in gui_step37_header.png, 1600 px window)
+    click(286)  # "Shading" (x read from gui_step37_header.png, 1600 px window)
 
 
 def click(x, y=None):

@@ -1,5 +1,5 @@
-"""Step 54: create paths in Maya units (PLAN W5), light power x maya_unit^2, and the shared
-notices (PLAN W3). ; GUI: tests/gui/gui_step54_units_notices.py."""
+"""Step 54: create paths in Maya units, light power x maya_unit^2, and the shared "not in Blender"
+notices. GUI: tests/gui/gui_step54_units_notices.py."""
 
 import math
 import types
@@ -17,7 +17,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 mm = import_module(kit.MODULE + ".marking.menus")
 
-# The three unit setups of : Maya Workflow Kit template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
+# The three unit setups: Maya Workflow Kit template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
 SETUPS = {
     "template": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=1.0),   # maya_unit 0.01
     "maya units": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=0.01),  # 1
@@ -73,14 +73,14 @@ def test_create_paths_in_maya_units():
         g = bpy.data.objects["gravityField1"]
         assert (g.matrix_world.to_3x3().col[2]).z < -0.99
         u = bpy.data.objects["uniformField1"]
-        assert (u.matrix_world.to_3x3().col[2]).x > 0.99, "Maya uniform field direction (1, 0, 0)"
+        assert (u.matrix_world.to_3x3().col[2]).x > 0.99, "uniform field direction (1, 0, 0)"
 
 
 def test_light_power_scaled_by_maya_unit_squared():
     for setup in SETUPS:
         _fresh()
         k = _units(setup)
-        # step 137: Maya intensity 1 / No Decay, power matched to Maya Software renders (operators/lights.py):
+        # step 137: Maya intensity 1 / No Decay, power matched to Maya renders (operators/lights.py):
         # still x maya_unit^2, now 4 pi^2 x 100 (point / spot, matched at 10 units) and pi^2 x 9.87 (area)
         pi2 = math.pi ** 2
         for kind, base in (('POINT_LIGHT', 4 * pi2 * 100), ('SPOT_LIGHT', 4 * pi2 * 100), ('AREA_LIGHT', pi2 * 9.87)):

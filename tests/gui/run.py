@@ -83,7 +83,7 @@ def file_timeout(path):
 
 def skip_reason(path):
     """A quarantined file has a top-level ``GUI_SKIP = "<reason>"`` line (step 141): it hangs or fails only for
-    environment reasons; it is left out unless --include-skipped and its checks live in ."""
+    environment reasons; it is left out unless --include-skipped and its checks are done by hand."""
     m = re.search(r"^GUI_SKIP\s*=\s*[\"'](.+)[\"']", path.read_text(encoding="utf-8"), re.M)
     return m.group(1) if m else ""
 

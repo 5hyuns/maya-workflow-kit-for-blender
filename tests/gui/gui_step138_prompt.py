@@ -171,7 +171,7 @@ step(wait)
 
 @step
 def s_modify_saved():
-    # a tick after the save: a change made in the save's own tick was marked saved again (checked)
+    # a tick after the save: a change made in the save's own tick was marked saved again
     add_cube()      # a second cube: modified again
 
 

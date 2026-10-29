@@ -1,5 +1,5 @@
 """Step 112: the Tool Box column identity and framing beside the dock. The Solid Side Panels preset (Region Overlap
-off) is gone since step 130 (): Maya mode leaves Blender's Region Overlap as the user set
+off) is gone since step 130: Maya mode leaves Blender's Region Overlap as the user set
 it."""
 
 from importlib import import_module
@@ -15,7 +15,7 @@ toolbox = import_module(kit.MODULE + ".ui.toolbox")
 
 def test_maya_mode_leaves_region_overlap_alone():
     p = bpy.context.preferences.system
-    assert p.use_region_overlap, "factory value (on) kept in Maya mode"
+    assert p.use_region_overlap, "factory value (on) kept with Maya mode on"
     assert not hasattr(preferences.get(), "use_maya_panels")
     p.use_region_overlap = False          # the user's own choice survives disable / enable
     try:

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Select menu / Ctrl+RMB (CTRL_CONVERT) conversions Blender has no operator for (step 141 lane SELECT):
+"""Maya Select menu / Ctrl+RMB (CTRL_CONVERT) conversions Blender has no operator for (step 141):
 Grow / Shrink Along Loop, To Vertex / Edge / Face Perimeter, To Face Path, To Shell Border, To UV Shell Border,
 To UVs, To UV Perimeter, To UV Edge Loop.
 
@@ -23,7 +23,7 @@ Every rule is Maya 2022's, checked on a 4 x 4 plane, a 6 x 6 plane and a cube.
 Blender has no UV component in the 3D View: a UV result is the UV Editor's selection with UV Sync Selection off
 (the kit's Maya UV component, operators/uv_tools.set_component, step 66). In that state the selection *is* the UV
 selection, so a conversion reads it as vertices (the selected UVs' vertices); sync off alone is Blender's factory
-state, so ``uv_source`` decides (delegated, ).
+state, so ``uv_source`` decides (step 141).
 """
 
 import bmesh
@@ -285,7 +285,7 @@ def shell_border(kind, elems):
 
 def uv_shell_border(kind, elems):
     """Maya To UV Shell Border on vertices / edges / faces: the open-border components of the shells the selection
-    touches. checked on a cube without its top face: the result also has the border face of the other UV piece, so
+    touches. On a cube without its top face the result also has the border face of the other UV piece, so
     the grouping is the mesh shell (the UV shell only counts for UVs, ``uv_border_loops``)."""
     if not elems:
         return set()

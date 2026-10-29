@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 NURBS surface maths, bpy-free (step 181).
+"""Maya NURBS surface maths, bpy-free (step 181).
 
 Conventions (Maya's):
 - knot lists are Maya lists (no phantom end knots: len = CVs + degree - 1);
@@ -225,7 +225,7 @@ def compatible(curves):
            and all(abs(x - y) < EPS for x, y in zip(c.knots, c0.knots)) for c in curves):
         return list(c0.knots), c0.degree, [list(c.cvs) for c in curves]
     if any(c.periodic for c in curves):
-        #  mixed periodic / open curves unknown: periodic ones are opened over their domain first
+        # mixed periodic / open curves unknown: periodic ones are opened over their domain first
         curves = [open_periodic_curve(c) if c.periodic else c for c in curves]
         c0 = curves[0]
     p = max(c.degree for c in curves)
@@ -368,7 +368,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
     n, ncv = len(cc), len(cc[0])
     ss = max(1, int(section_spans))
     if degree == 1:
-        if close:       #  unknown: the first curve again at the end (closed form)
+        if close:       # unknown: the first curve again at the end (closed form)
             cc = cc + [cc[0]]
             n += 1
         chord = [0.0]
@@ -401,7 +401,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
             raise ValueError("a closed loft needs 3 or more curves")
         kv = [float(k) for k in range(n + 5)]
         cols = [_interp_periodic([cc[k][i] for k in range(n)], kv) for i in range(ncv)]
-        #  section spans on a closed loft unknown: ignored
+        # section spans on a closed loft unknown: ignored
         return Surf(cols, knots_u, kv, p, 3, periodic_u, True)
     kv = [params[0]] * 3 + [params[1]] * 3 if n == 2 else [params[0]] * 2 + params + [params[-1]] * 2
     cols = [_interp_open([cc[k][i] for k in range(n)], params, kv) for i in range(ncv)]
@@ -505,8 +505,8 @@ def extrude_tube(profile, path, pivot=(0.0, 0.0, 0.0), at_path=False, component_
     """Maya Extrude, style Tube. U = profile, V = path; every CV ring is a rigid copy of the
     profile CVs carried by the discrete parallel transport of the path CV directions. ``pivot`` = the profile
     transform's world rotate pivot (used At path only). A straight profile (no Newell normal) is not turned onto
-    the path [delegated]. Exact on cubic paths; along a degree-1 path Maya's interior ring directions are not the
-    control-polygon bisectors used here (0.052 off on extrude_tube_d1_path, rule ). Rotation / Scale ."""
+    the path. Exact on cubic paths; along a degree-1 path Maya's interior ring directions are not the
+    control-polygon bisectors used here (an approximation there). Rotation / Scale are not modelled."""
     pr, pa = _crv(profile), _crv(path)
     P = pa.cvs
     dirs = _path_dirs(P)
@@ -560,7 +560,7 @@ def birail1(profile, rail1, rail2, proportional=True):
     """Maya Birail 1: U = rails (knots normalised 0..1), V = profile (normalised). Row j = the
     profile mapped by the transform taking (profile start, profile end) onto (rail1 CV j, rail2 CV j): minimal
     rotation of the chord, scale uniform (proportional) or along the chord only. Exact for rails whose chords stay
-    in one plane; twisted rails differ from Maya by 0.17-0.61 . Rails with different knots are made compatible
+    in one plane; twisted rails are an approximation. Rails with different knots are made compatible
     (loft rule) first."""
     pr = _crv(profile)
     r1, r2 = _crv(rail1), _crv(rail2)
@@ -590,7 +590,7 @@ def birail1(profile, rail1, rail2, proportional=True):
 # --- 4.6 Boundary / Square ------------------------------------------------------------------------------------
 
 def order_boundary(curves):
-    """Maya "Automatic" curve ordering [delegated]: start with curves[0] as drawn, then chain the remaining curves
+    """Maya "Automatic" curve ordering: start with curves[0] as drawn, then chain the remaining curves
     head to tail by the nearest end point (reversing a curve whose end is the nearer one)."""
     rest = [_crv(c) for c in curves]
     chain = [rest.pop(0)]
@@ -607,7 +607,7 @@ def order_boundary(curves):
 def coons(edge_v0, edge_v1, edge_u0, edge_u1, gu, gv):
     """Bilinearly blended Coons patch of four compatible CV nets: edge_v0[i] / edge_v1[i] = the v = 0 / 1 edges (over
     U), edge_u0[j] / edge_u1[j] = the u = 0 / 1 edges (over V); gu / gv = the normalised Greville parameters. Exact:
-    the linear blends are reproduced by Greville weights (multi-span sides )."""
+    the linear blends are reproduced by Greville weights (multi-span sides)."""
     c00, c10, c01, c11 = edge_v0[0], edge_v0[-1], edge_v1[0], edge_v1[-1]
     out = []
     for i, u in enumerate(gu):
@@ -723,7 +723,7 @@ def attach(a, b, method="BLEND", bias=0.5):
     if flip:
         B = reverse(B, "V")
     if A.degree_u != B.degree_u or A.num_cvs[1] != B.num_cvs[1]:
-        raise ValueError("surfaces not compatible along the joined edge [U]")
+        raise ValueError("surfaces not compatible along the joined edge")
     lines, knots = [], None
     for la, lb in zip(A.lines_u(), B.lines_u()):
         cvs, knots = _join_line(la, A.knots_u, lb, B.knots_u, A.degree_u, method.upper(), bias)
@@ -757,8 +757,8 @@ def open_periodic(s, direction, at=None):
 
 
 def insert_knot(s, direction, t, times=1):
-    """Maya Insert Isoparms (Boehm insertion, shape unchanged). A periodic direction is opened first [delegated:
-    Maya's periodic insert keeps the form, unknown]."""
+    """Maya Insert Isoparms (Boehm insertion, shape unchanged). A periodic direction is opened first (Maya's
+    periodic insert keeps the form)."""
     if times < 1:
         return s.copy()
     w, back = _along(s, direction)
@@ -773,8 +773,7 @@ def insert_knot(s, direction, t, times=1):
 
 def detach(s, direction, t):
     """Maya Detach at the isoparm ``t``: insertion to full multiplicity, split; the pieces keep
-    the original parameters. A periodic direction is opened at ``t`` instead: returns (that open surface, None)
-    [delegated, unknown]."""
+    the original parameters. A periodic direction is opened at ``t`` instead: returns (that open surface, None)."""
     w, back = _along(s, direction)
     if w.periodic_u:
         return back(open_periodic(w, "U", t)), None
@@ -802,15 +801,14 @@ def sub_patch(s, u0, u1, v0, v1):
     return out
 
 
-# --- 4.9 Rebuild ( Maya algorithm) -----------------------------------------------------------------------------
+# --- 4.9 Rebuild (Maya algorithm) -----------------------------------------------------------------------------
 
 def rebuild(s, spans_u=4, spans_v=4, degree_u=3, degree_v=3):
     """Maya Rebuild (factory Uniform, 4 x 4 spans, cubic, range 0..1, keep ends) [U algorithm]: per direction, every
-    CV line is mapped linearly onto 0..1 and interpolated at the Greville points of Maya's factory knots (clamped
+    CV line is mapped linearly onto 0..1 and interpolated at the Greville points of the default knots (clamped
     uniform over 0..1, exact). Exact when the new space contains the old one (e.g. 2 -> 4 spans); otherwise
-    an approximation: rebuild_surface case CVs within 0.066 of Maya, points at the same parameters within 0.035
-    (the step 156 curve model, equal-arc-length least squares per line, was 1.8 / 1.3 off: per-line arc lengths
-    disagree)."""
+    an approximation (the step 156 curve model, equal-arc-length least squares per line, fits worse: per-line arc
+    lengths disagree)."""
     out = s
     for direction, spans, deg in (("U", spans_u, degree_u), ("V", spans_v, degree_v)):
         w, _back = _along(out, direction)
@@ -945,7 +943,7 @@ def _knots_from_flags(n, order, cyclic, endpoint, bezier):
         return [float(x) for x in range(m + 1) for _ in range(d)], False
     if endpoint or d == 1:
         return cm.clamped_uniform(n, d), False
-    return [float(i) for i in range(1, n + d)], False       # Blender plain uniform (unclamped) 
+    return [float(i) for i in range(1, n + d)], False       # Blender plain uniform (unclamped)
 
 
 def from_blender_grid(rows, order_u, order_v, cyclic_u=False, cyclic_v=False, endpoint_u=True, endpoint_v=True,

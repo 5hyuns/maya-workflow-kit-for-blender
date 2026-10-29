@@ -8,7 +8,7 @@ each option: the "Fix by Tesselation" boxes triangulate, the "Remove Geometry" b
 
 The kit finds the same components in bmesh: 4-sided / more-than-4-sided faces, concave faces (a reflex corner),
 non-planar faces (a corner off the face plane by more than ``PLANAR_TOL`` of the face size — Maya's own tolerance is
-not exposed ), lamina faces (two faces on the same vertices), nonmanifold edges (more than two faces) and vertices,
+not exposed), lamina faces (two faces on the same vertices), nonmanifold edges (more than two faces) and vertices,
 zero-length edges, zero-area faces and zero-UV-area faces under their tolerances. Blender has no holed faces, so
 "Faces with holes" never matches. Select matching polygons selects them in component mode; Cleanup triangulates /
 collapses / deletes them.

@@ -331,8 +331,8 @@ Optional — the kit leaves your theme and preferences to you. Maya users usuall
 
 ## Quick start for Maya users
 
-With Maya mode on. The table of all 468 Maya 2022 factory hotkeys, their Blender counterparts and the status of each:
-[]().
+With Maya mode on. Every Maya hotkey and its Blender counterpart is listed in Maya's Hotkey Editor
+(*Windows > Settings/Preferences > Hotkey Editor*).
 
 | Action | Keys / mouse |
 |---|---|
@@ -416,7 +416,7 @@ variables `ALLSET_*`); the id stays the same whatever the display name.
 | `src/allset/` | The extension: `blender_manifest.toml`, `preferences.py`, `switch.py`, `keymap/`, `marking/`, `operators/`, `ui/`, `compat.py` (all Blender-version differences) |
 | `tests/` | Headless harness `run.py`, GUI tests `gui/`, helpers `kit.py`, tests `test_*.py` |
 | `tools/` | `build.py` (packages), `release_check.py`, `build_repo.py` (static extension repository), `make_startup.py` (layout template) |
-| `docs/` | `keymap_mapping.md`, `compat_5x.md`, `manual_checks.md`, `distribution/`, user guides |
+| `docs/` | `distribution/` (release notes, store and marketing media), user guides |
 
 ### Build and test
 
@@ -431,9 +431,6 @@ python tests/gui/run.py            # GUI tests with simulated key / mouse events
 python tools/release_check.py      # build, extension validate, clean-config install + enable, screenshots
 python tools/build_repo.py         # static extension repository in dist/repo/ (zip + index.json + index.html)
 ```
-
-Per-version results: [](). Things automated tests can't prove (feel, visuals) are
-listed in []().
 
 ---
 

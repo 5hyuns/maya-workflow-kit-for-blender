@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 226 L1: NURBS curve shapes as bone Custom Shapes (Maya ``cmds.parent(shape=True)``)
-.
 
 Maya gives a joint a control shape with ``cmds.parent(curveShape, joint, shape=True, relative=True)``
 (case ``L1_parent_shape_relative``): the curve
 shape moves under the joint keeping its CV local values, the old transform stays without a shape. Without ``relative``
 the CVs keep their world positions and the old transform goes away. A second shape on the same
-node is added (two shapes, one control). Decision 1 (): every kit
+node is added (two shapes, one control). Every kit
 control = a bone Custom Shape — the shape is a copy of the curve data baked into bone space on a curve object in the
 hidden collection ``.AllsetControlShapes`` (not linked to any scene, fake user), Custom Shape transform identity and
 bone size off.
@@ -112,7 +111,7 @@ def custom_shape_objects(data=None):
 
 def is_rig_template(ob):
     """A Rigify metarig: its bones carry Rigify rig types (the template Generate builds the rig from, not a skeleton;
-    its bones all deform, so an Export All wrote 159 more joints — audit CHAINS_AUDIT_0.5.0.md:324, step 236)."""
+    its bones all deform, so an Export All wrote 159 more joints — step 236)."""
     if ob.type != 'ARMATURE' or ob.pose is None or ob.data.get("rig_id"):      # rig_id = a generated rig
         return False
     return any(getattr(pb, "rigify_type", None) or pb.get("rigify_type") for pb in ob.pose.bones)
@@ -124,8 +123,8 @@ def rig_templates(data=None):
 
 class excluded:
     """Context manager: every Custom Shape object (kit controls, Rigify WGT objects ...) is out of the scene's
-    collections while a kit export runs ( note 2: controls are not exported), then linked back in the
-    same order with the same select / hide state. Rigify metarigs go out too (step 236, delegated)."""
+    collections while a kit export runs (controls are not exported), then linked back in the
+    same order with the same select / hide state. Rigify metarigs go out too (step 236)."""
 
     def __init__(self, scene, view_layer):
         self.scene, self.view_layer = scene, view_layer
@@ -298,7 +297,7 @@ def _empty_in_place(ob):
 
 
 def _finish_source(curve_ob, relative):
-    # absolute: Maya deletes the transform it emptied (old_transform None); one with children stays 
+    # absolute: Maya deletes the transform it emptied (old_transform None); one with children stays
     if relative or curve_ob.children:
         return _empty_in_place(curve_ob)
     _drop(curve_ob)

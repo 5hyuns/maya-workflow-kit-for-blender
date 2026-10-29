@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya ikRPsolver on chains of 3+ bones (step 282, #181): how Maya splits the bend over the in-between joints.
 
-No bpy: plain maths on numpy arrays (column vectors), so the rule can be checked against Maya's numbers headless.
+No bpy: plain maths on numpy arrays (column vectors), so the rule can be tested headless.
 
 Maya 2026's rule, in the order it runs:
 1. The degrees of freedom are the rotate X / Y / Z (radians, each joint's own rotate order) of every joint from the start

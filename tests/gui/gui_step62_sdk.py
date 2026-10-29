@@ -15,7 +15,7 @@ from sim import MODULE, check, dock_area, dock_region, ev, find_button, px, run,
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
-# Sidebar points checked in gui_step62_sdk_loaded / _scrolled.png (1600 x 900, scale 1.25, UI region
+# Sidebar points read from gui_step62_sdk_loaded / _scrolled.png (1600 x 900, scale 1.25, UI region
 # (971, 94, 350, 709)): (px left of the region's right edge, px below the top of the sidebar content).
 TX_LABEL, RY_LABEL = (266, 114), (266, 193)        # Channel Box row labels (select the channel)
 TX_FIELD, RY_FIELD = (136, 114), (136, 193)        # their value fields
@@ -30,7 +30,7 @@ def shot(name):
 
 
 def ui_region():
-    return dock_region()       # Maya's tab stack (step 116; was the 3D View sidebar)
+    return dock_region()       # the Maya tab stack (step 116; was the 3D View sidebar)
 
 
 def dock():

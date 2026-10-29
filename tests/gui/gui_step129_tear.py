@@ -12,7 +12,7 @@ from sim import MODULE, check, run, screenshot, setup, step, win, load_maya_layo
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
-MIN_WINDOW = 200     # Blender doesn't open a window shorter than about this (checked 194 px at any UI scale)
+MIN_WINDOW = 200     # Blender doesn't open a window shorter than about this (194 px at any UI scale)
 
 
 def mod(name):

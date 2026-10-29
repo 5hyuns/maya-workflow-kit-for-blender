@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A click on the option box ❒ of a Maya menu item opens its option window (step 183, #82; 
-「계획」).
+"""A click on the option box ❒ of a Maya menu item opens its option window (step 183, #82).
 
-Blender runs a menu item's operator with EXEC and tells Python nothing about the popup menu (no region, no rect —
-checked: ``context.region`` in ``Menu.draw`` is the region the menu was called from, ``Screen`` has no popup
+Blender runs a menu item's operator with EXEC and tells Python nothing about the popup menu (no region, no rect:
+``context.region`` in ``Menu.draw`` is the region the menu was called from, ``Screen`` has no popup
 regions, a screenshot taken in ``execute`` already shows the menu closed). Two things are known, though:
 - where the click was: a nested ``INVOKE_DEFAULT`` call inside ``execute`` gets the window's latest event, the
   LEFTMOUSE release on the row (``ALLSET_OT_click_point``);
@@ -20,7 +19,7 @@ Shift / Ctrl+click.
 
 import bpy
 
-# checked: in widget units (toolbar_fit.unit)
+# In widget units (toolbar_fit.unit)
 from .. import compat
 LEAD_UNITS = compat.MENU_BAR_LEAD_UNITS   # top bar region left -> first Maya menu button (4.5 1.48, 5.x 1.25)
 TEXT_UNITS = 1.6         # menu edge -> item text (menu padding + icon column)
@@ -114,7 +113,7 @@ def top_left(context, label):
     window = context.window
     region_x = _OPEN.get(window.as_pointer(), {}).get(label)
     if region_x is None or status_line.status_line_shown(context) is False:
-        return None          # opened elsewhere, or the bar also holds the menu set field (not checked)
+        return None          # opened elsewhere, or the bar also holds the menu set field (not modelled)
     names, n = status_line.shown_menus(window)
     labels = [getattr(getattr(bpy.types, menu_sets.menu_idname(nm), None), "bl_label", nm) for nm in names]
     if label not in labels[:n] or n < len(names):

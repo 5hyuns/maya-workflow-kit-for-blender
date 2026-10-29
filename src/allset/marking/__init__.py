@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya marking menus, first version: Blender pie menus.
+"""Maya marking menus, first version: Blender pie menus (step 8).
 
 Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-release via pie_tap_timeout.
 
@@ -127,7 +127,7 @@ for _m in mm.MENUS.values():
 _NAME_BY_ID = {idname(name): name for name in mm.MENUS}
 
 
-# --- choosing the menu (Maya builders,  「계획」 2) -----------------------------
+# --- choosing the menu (Maya builders, step 8) ---------------------------------------
 
 def resolve(trigger, context, picked=None):
     """("pie" | "menu", Menu idname) for a trigger in this context, or None."""
@@ -180,7 +180,7 @@ def resolve(trigger, context, picked=None):
             return ("pie", idname("RMB_MESH"))
         if ob.type in {'CURVE', 'SURFACE'}:
             return ("pie", idname("RMB_CURVE"))
-        return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type (delegated)
+        return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type
     return None
 
 
@@ -312,7 +312,7 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
 
     def tap(self, context):
         # Tapping the key of the active tool again goes back to the centre handle (free MMB
-        # drag), Maya ; 
+        # drag), like Maya; step 28.
         kind = HANDLE_KINDS.get(self.tool)
         tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
         if kind and tool is not None and tool.idname == self.tool:

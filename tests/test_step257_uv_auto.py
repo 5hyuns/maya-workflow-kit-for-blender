@@ -1,10 +1,10 @@
 """Step 257 (Issue #150): UV > Automatic packs the shells with Maya's "Into square" layout and shows an editable
 polyAutoProj node in the Channel Box INPUTS.
 
-Maya's result for the #150 mesh (step-239 chain: cylinder, cap extruded Local Translate Z 1, cap rim bevelled, history
-deleted, UV > Automatic with factory options) = Maya 2026's table.
+Expected result for the #150 mesh (step-239 chain: cylinder, cap extruded Local Translate Z 1, cap rim bevelled, history
+deleted, UV > Automatic with default options) = the table below.
 Which face goes to which plane / shell follows Maya
-(Maya 2026, 11 meshes incl. self-overlapping helicoids, jittered meshes and partial selections)."""
+(11 meshes incl. self-overlapping helicoids, jittered meshes and partial selections)."""
 
 from importlib import import_module
 
@@ -21,59 +21,6 @@ uvt = import_module(kit.MODULE + ".operators.uv_tools")
 al = import_module(kit.MODULE + ".operators.autoproj_layout")
 in_view = import_module(kit.MODULE + ".ui.in_view")
 extrude = import_module(kit.MODULE + ".operators.extrude")
-
-# (u0, v0, u1, v1) of Maya's six shells
-MAYA_SHELLS = [
-    (0.001992, 0.001856, 0.300239, 0.554836),
-    (0.308172, 0.001856, 0.606419, 0.554836),
-    (0.406530, 0.558827, 0.775184, 0.927481),
-    (0.102148, 0.558827, 0.400395, 0.927481),
-    (0.614158, 0.001856, 0.830847, 0.463817),
-    (0.781319, 0.467808, 0.998008, 0.929769),
-]
-
-
-def chain():
-    for ob in list(bpy.data.objects):
-        bpy.data.objects.remove(ob)
-    if bpy.context.mode != 'OBJECT':
-        bpy.ops.object.mode_set(mode='OBJECT')
-    ob = create.create(bpy.context, 'CYLINDER')
-    if bpy.context.mode != 'OBJECT':
-        bpy.ops.object.mode_set(mode='OBJECT')
-    k = units.maya_unit(bpy.context.scene)
-    bm = bmesh.new()
-    bm.from_mesh(ob.data)
-    cap = [f for f in bm.faces if f.calc_center_median().z > 0.99 * k]
-    ex.extrude(bm, cap, local_translate_z=1.0 * k)
-    top = {f for f in bm.faces if f.calc_center_median().z > 1.99 * k}
-    border = [e for e in bm.edges if sum(1 for f in e.link_faces if f in top) == 1]
-    bev.bevel_edges(bm, border, unit=k)
-    bm.to_mesh(ob.data)
-    bm.free()
-    ex.RECORDS.pop(ob.name, None)
-    for o in bpy.context.view_layer.objects:
-        o.select_set(o == ob)
-    bpy.context.view_layer.objects.active = ob
-    return ob
-
-
-def shells(ob):
-    bm = bmesh.new()
-    bm.from_mesh(ob.data)
-    uv = bm.loops.layers.uv.active
-    out = []
-    for s in uvt.islands(bm, uv):
-        pts = [lp[uv].uv for f in s for lp in f.loops]
-        out.append((min(p.x for p in pts), min(p.y for p in pts), max(p.x for p in pts), max(p.y for p in pts)))
-    bm.free()
-    return sorted(out)
-
-
-def _same_partition(a, b):
-    """Two face labelings put the same faces together (shell ids themselves differ)."""
-    fw, bw = {}, {}
-    return all(fw.setdefault(x, y) == y and bw.setdefault(y, x) == x for x, y in zip(a, b))
 
 
 # --- polyAutoProj history node (Channel Box INPUTS) -------------------------------------------------------------
@@ -103,7 +50,7 @@ def _bounds(ob):
 
 
 def test_object_mode_automatic_leaves_an_editable_poly_auto_proj_node():
-    """Maya: UV > Automatic in object mode -> Channel Box INPUTS polyAutoProj1 (060_modeling_anim.md B2), its values
+    """Maya: UV > Automatic in object mode -> Channel Box INPUTS polyAutoProj1, its values
     can be typed there and change the UVs; Delete History removes it."""
     ob = _cube()
     assert bpy.ops.allset.menu_item(item="UV/Automatic") == {'FINISHED'}

@@ -1,4 +1,4 @@
-"""Step 180: Maya animation layers on NLA (operators/anim_layers.py) against Maya:
+"""Step 180: Maya animation layers on NLA (operators/anim_layers.py) like Maya:
 the same base keys, the same layer keys set like Maya's setKeyframe -v (the value is the result), raw layer curves and
 translateX / rotateX / rotateY / rotateZ / scaleX at frames 1..10, then weight, mute, solo, override and the key that
 the selected layer receives."""
@@ -18,7 +18,7 @@ cb = import_module(kit.MODULE + ".ui.channel_box")
 PATH = {"translateX": ("location", 0, 1.0), "rotateX": ("rotation_euler", 0, math.pi / 180),
         "rotateY": ("rotation_euler", 1, math.pi / 180), "rotateZ": ("rotation_euler", 2, math.pi / 180),
         "scaleX": ("scale", 0, 1.0)}
-TOL = 1e-5          # Blender keeps rotations in float32 radians: ~3e-6 deg at 116 deg (probe: max 4e-6)
+TOL = 1e-5          # Blender keeps rotations in float32 radians: ~3e-6 deg at 116 deg (max 4e-6)
 
 
 def linear(ob):

@@ -4,10 +4,10 @@
 Maya: interactive creation is off by default, so a
 primitive appears at the origin at its default size (polyCube 1x1x1, polySphere
 r=1, polyPlane 1x1 with 10x10); names ``pCube1`` / ``pCubeShape1``.
-Other default values are Maya behaviour knowledge 
-and two are unverified .
+Other default values are Maya behaviour knowledge
+and two are unverified.
 
-Size rule (,  「계획」, delegated): a Maya length of 1
+Size rule: a Maya length of 1
 is one scene display unit (``units.maya_unit``), like ``cmds.polyCube()`` and a
 Maya FBX import: pCube1 shows 1 cm in the Maya Workflow Kit template (0.01 BU) and with
 the "Maya Units" preference (1 BU). Lengths below are in Maya units.
@@ -23,7 +23,7 @@ from . import lights, naming, prim_history, units
 
 HALF_PI = math.pi / 2
 # Maya's Y-up "front" (looking down -Z) is Blender's front (+Y): directional lights,
-# spots, area lights and cameras start level, not pointing at the floor (delegated).
+# spots, area lights and cameras start level, not pointing at the floor.
 LEVEL = (HALF_PI, 0.0, 0.0)
 
 # kind: (label, Maya base name, operator, props, rotation)
@@ -55,7 +55,7 @@ KINDS = {
     'NURBS_SQUARE': ("NURBS Square", "nurbsSquare", None, {}, None),
     'NURBS_CUBE': ("NURBS Cube", "nurbsCube", None, {}, None),
     'NURBS_CONE': ("NURBS Cone", "nurbsCone", None, {}, None),
-    # Maya's curve tools draw a curve; Blender adds one to edit (names "curve1" / "bezier1" ).
+    # Maya's curve tools draw a curve; Blender adds one to edit (names "curve1" / "bezier1").
     'CV_CURVE': ("CV Curve", "curve", "curve.primitive_nurbs_curve_add", {"radius": 1.0}, None),
     'BEZIER_CURVE': ("Bezier Curve", "bezier", "curve.primitive_bezier_curve_add",
                      {"radius": 1.0}, None),
@@ -72,8 +72,8 @@ KINDS = {
                 {"type": 'PLAIN_AXES', "radius": 1.0}, None),
     'EMPTY_GROUP': ("Empty Group", "null", "object.empty_add",
                     {"type": 'PLAIN_AXES', "radius": 1.0}, None),
-    # Step 54, PLAN W5): create paths that used Blender's operators with
-    # metre defaults. A joint = a bone in one armature (W1): bone length 1.
+    # Step 54: create paths that used Blender's operators with
+    # metre defaults. A joint = a bone in one armature: bone length 1.
     'JOINT': ("Joint", "skeleton", "object.armature_add", {"radius": 1.0}, None),
     'TEXT': ("Type", "typeMesh", "object.text_add", {"radius": 1.0}, None),
     # Maya's Free Image Plane faces the front camera with no image yet: an image empty, no file browser.
@@ -92,7 +92,7 @@ KINDS = {
                       (0.0, HALF_PI, 0.0)),
     'FIELD_VORTEX': ("Vortex Field", "vortexField", "object.effector_add", {"type": 'VORTEX', "radius": 1.0}, None),
 }
-# Maya Fields/Solvers factory magnitudes (Gravity / Newton Options):
+# Fields/Solvers default magnitudes (Gravity / Newton Options):
 # Gravity 9.8 along Maya -Y (the Wind above is turned to blow down),
 # Newton 5 pulling in (Blender Force: negative strength attracts). An acceleration in Maya units per second squared,
 # so it is scaled by the step 68 simulation scale g = maya_unit() / Space Scale like the nucleus gravity (#72).
@@ -103,7 +103,7 @@ NO_SHAPE_NAME = {'JOINT', 'TEXT'}
 # ``locatorShapeN`` (step 208)
 LOCATOR_PROP = "allset_locator"
 # Lights (step 137, operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
-# (x maya_unit()^2, step 54) and is set so an intensity-1 light lights a surface like Maya's at 10 units;
+# (x maya_unit()^2, step 54) and is set so an intensity-1 light at 10 units lights a surface the Maya way;
 # Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
 FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "

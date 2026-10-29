@@ -3,7 +3,7 @@
 
 Maya's own Create > Lights has no dome light (renderers add one). In Blender a dome light is the World: an
 environment texture lights everything and shows behind the scene. ``allset.dome_light`` builds that on the scene's
-World (the same World again on a second run, delegated) and adds a ``domeLight1`` locator so the Maya user finds it
+World (the same World again on a second run) and adds a ``domeLight1`` locator so the Maya user finds it
 the Maya way: selectable in the Outliner, Rotate X / Y / Z turn the image (Maya's dome transform), and its
 Intensity attribute in the Channel Box is the World strength. The menu item opens a file browser for the image
 (.hdr / .exr / any image); choosing a new file later replaces the image of the same dome.
@@ -103,7 +103,7 @@ def ensure_locator(context):
     n = naming.next_number(BASE, {o.name for o in bpy.data.objects})
     ob = bpy.data.objects.new(f"{BASE}{n}", None)
     ob.empty_display_type = 'SPHERE'
-    ob.empty_display_size = 100.0 * units.maya_unit()      # a 100-unit sphere around the scene (delegated)
+    ob.empty_display_size = 100.0 * units.maya_unit()      # a 100-unit sphere around the scene
     ob[MARK] = True
     ob[INTENSITY] = 1.0
     ob.id_properties_ui(INTENSITY).update(min=0.0, soft_max=10.0, description="Dome light intensity (World strength)")

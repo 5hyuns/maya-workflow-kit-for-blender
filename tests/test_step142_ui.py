@@ -1,6 +1,6 @@
 """Step 142 lane UI: Maya's vertical dock tab strip and the dock width per raised tab (#78), the menu bar's » overflow
 and the Set Driven Key lists that give up rows (#77), Maya manipulator axis colours and the dormant wireframe colour
-(#76). Rules only; real windows: tests/gui/gui_step142_ui.py. Notes: """
+(#76). Rules only; real windows: tests/gui/gui_step142_ui.py."""
 
 import re
 from importlib import import_module
@@ -34,7 +34,7 @@ def test_channel_box_stack_is_maya_narrow():
         mtk = toolbox.dock_width(s, kind='MODELING_TOOLKIT')
         ae = toolbox.dock_width(s, kind='ATTRIBUTE_EDITOR')
         print("scale", s, "CB", cb, "MTK", mtk, "AE", ae, toolbox.dock_need(s))
-        # Maya: 277 px x the scale with the Channel Box up; the kit only as much wider as its labels need
+        # 277 px x the scale with the Channel Box up; the kit only as much wider as its labels need
         assert round(toolbox.DOCK_MAYA_PX * s) <= cb <= round(toolbox.DOCK_MAYA_PX * s * 1.06), (s, cb)
         assert cb < OLD_DOCK[s] - 150, (s, cb)
         assert mtk == cb, (s, mtk, cb)
@@ -69,11 +69,11 @@ def test_strip_tabs_geometry():
         prev_y0 = h
         for kind, x0, y0, x1, y1 in tabs:
             assert x1 == w and w - x0 == maya_dock.strip_px(s), (kind, x0, x1)
-            # a tab is its caption plus Maya's ends (Maya: 162 px for a 140 px caption at 100 %)
+            # a tab is its caption plus the tab ends (162 px for a 140 px caption at 100 %)
             assert y1 - y0 >= toolbox.text_px(maya_dock.LABELS[kind], s) + 2 * maya_dock.TAB_END_PX * s - 1
             assert y1 <= prev_y0, (kind, y1, prev_y0)
             prev_y0 = y0
-        # Maya's strip is 16 px at 100 %
+        # the strip is 16 px at 100 %
         assert 16 * s <= maya_dock.strip_px(s) <= 20 * s
         # clicks map to the tab under the point; left of the strip passes through
         for kind, x0, y0, x1, y1 in tabs:
@@ -201,7 +201,7 @@ def test_menu_bar_overflows_a_1600_px_window_only_at_150():
     right = {}
     for s in SCALES:
         widths, fixed, more = status_line.menu_bar_widths(_ctx(s), names, False)
-        # the top bar's right region: "Workspace:" + dropdown (7 U) + Maya | Blender (checked ~ 13 U at 1.25)
+        # the top bar's right region: "Workspace:" + dropdown (7 U) + Maya | Blender (~ 13 U at 1.25)
         right[s] = round(18 * (round(18 * s) + 2))
         n = status_line.menu_fit(widths, 1600 - right[s], fixed, more)
         print("scale", s, "menus", sum(widths) + fixed, "shown", n, "of", len(names))

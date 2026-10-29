@@ -2,7 +2,7 @@
 Reverse Direction / Smooth (both) / Straighten, the circular arc tools, Merge UVs, Contour Stretch, Set / Assume
 Preferred Angle and Add Influence (operators/option_windows_misc196.py).
 
-Window titles / buttons / factory values of Maya's
+Window titles / buttons / defaults of Maya's
 option windows and the option effects."""
 
 import json
@@ -163,7 +163,7 @@ def test_arc_tool_settings():
 # --- UVs ------------------------------------------------------------------------------------------------
 
 def _uv_plane(shift):
-    """Maya's case: a 2-face plane cut along the middle edge, the right face's UVs shifted by ``shift`` in U."""
+    """The case: a 2-face plane cut along the middle edge, the right face's UVs shifted by ``shift`` in U."""
     _clear()
     me = bpy.data.meshes.new("pPlaneShape1")
     me.from_pydata([(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0)], [], [(0, 1, 4, 3), (1, 2, 5, 4)])

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya menu item -> Blender action.
+"""Maya menu item -> Blender action (step 7).
 
 Key = label path in ``menu_data.MENUS`` ("Create/Polygon Primitives/Cube"),
 starting with the menu *label*, so the Deform and Constrain menus that
@@ -21,7 +21,7 @@ time (not in the static menu data), e.g. Modify's Pivot section.
 """
 
 def _create(kind):
-    # Maya default size at the origin, Maya names (operators/create.py, ).
+    # Maya default size at the origin, Maya names (operators/create.py).
     return ("allset.create", {"kind": kind})
 
 
@@ -89,7 +89,7 @@ def _kit_pref(prop):
 
 # Windows > ... Editors: Maya fills these submenus at run time (Maya's labels).
 # Items listed in
-# CHILDREN without an action here draw greyed. 
+# CHILDREN without an action here draw greyed (step 34).
 _WINDOW_EDITORS = {
     "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
     "General Editors/Channel Box / Layer Editor": _dock('CHANNEL_BOX'),
@@ -113,7 +113,7 @@ _WINDOW_EDITORS = {
     "General Editors/Hypergraph: Hierarchy": _editor('OUTLINER'),
     "General Editors/Hypergraph: Connections": _editor('DRIVERS'),
     "Rendering Editors/Hypershade": "allset.hypershade",                 # step 67: browser + graph + AE
-    # step 219 (Maya 2026 Windows menu): Blender engines in Maya's places ( 10-26)
+    # step 219 (Maya 2026 Windows menu): Blender engines in Maya's places
     "LookdevX Graph Editor": "allset.hypershade",                        # Maya shading graph -> Shader Editor
     "Bifrost Graph Editor": _editor('GeometryNodeTree'),                   # Bifrost graph -> Geometry Nodes
     "Rendering Editors/Light Editor": "allset.light_editor",             # step 67: kit light list
@@ -162,7 +162,7 @@ MAP = {
     "Edit/Keys/Copy Keys": ("allset.time_keys", {"action": "COPY", "time_range": 'ALL'}),
     "Edit/Keys/Paste Keys": ("allset.time_keys", {"action": "PASTE"}),
     "Edit/Keys/Bake Simulation": "allset.bake_simulation",          # step 217 L18
-    # step 140: Maya factory Scale Keys = factor 1 (a no-op), so a plain click opens the window
+    # step 140: Scale Keys defaults to factor 1 (a no-op), so a plain click opens the window
     "Edit/Keys/Scale Keys": "allset.opt_scale_keys",
     "Edit/Delete": "allset.delete",                              # step 164: with the hierarchy
     "Edit/Ungroup": "allset.ungroup",                            # step 34
@@ -302,7 +302,7 @@ MAP = {
     "Display/Frame Selection with Children in All Views": ("allset.frame_all_views",
                                                            {"selected": True, "children": True}),
     # --- Windows ---
-    "Windows/Workspaces": ("menu", "ALLSET_MT_maya_workspaces"),     # step 160: Maya's workspaces + Reset (#81)
+    "Windows/Workspaces": ("menu", "ALLSET_MT_maya_workspaces"),     # step 160: the Maya workspaces + Reset (#81)
     # Maya raises a docked Outliner, else opens a floating one (ui/maya_dock.py, step 116)
     "Windows/Outliner": ("allset.panel_show", {"panel": 'OUTLINER'}),
     "Windows/Node Editor": _editor('ShaderNodeTree'),
@@ -545,7 +545,7 @@ MAP = {
     "Effects/Fire": ("allset.quick_smoke", {"style": 'FIRE'}),
     "Effects/Smoke": "allset.quick_smoke",
     # --- Rendering ---
-    # Materials (operators/material.py, ).
+    # Materials (operators/material.py, step 29).
     "Lighting/Shading/Material Attributes": ("v3d", "allset.material_attributes", {}),
     # Maya 2026: Assign New Material is a submenu (favourites + New Material...) (step 219)
     "Lighting/Shading/Assign New Material/New Material...": "allset.assign_new_material",
@@ -924,7 +924,7 @@ MAP.update({
 })
 
 # Mapped items whose Blender operator needs component (edit) mode run the Maya way from object mode
-# (step 101 「계획」 4):
+# (step 101):
 # ('ALL', select mode) = Maya acts on every component of the selected meshes; a string = Maya's warning.
 OBJECT_MODE = {
     "Edit Mesh/Add Divisions": ('ALL', 'FACE'),
@@ -952,7 +952,7 @@ OBJECT_MODE = {
     "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
     # Step 136 (the Shift+RMB object menu runs these from object mode): PolyExtrude extrudes every face;
-    # Mesh > Fill Hole / Quadrangulate act on the whole object in Maya  (delegated).
+    # Mesh > Fill Hole / Quadrangulate act on the whole object, like Maya.
     "Edit Mesh/Extrude": ('ALL', 'FACE'),
     "Mesh/Fill Hole": ('ALL', 'EDGE'),
     "Mesh/Quadrangulate": ('ALL', 'FACE'),
@@ -966,7 +966,7 @@ OBJECT_MODE = {
 # #17 / #18; with pCube1.f[1] selected after F11):
 # ("run", action) = this action instead of the object one; ("object", action) = back to object mode, then the
 # action; ("owner", action) = the action on the objects whose components are selected, then back to component mode
-# with the same components; ("warn", text) = Maya's warning, nothing done; ("none",) = Maya runs it with no effect.
+# with the same components; ("warn", text) = Maya's warning, nothing done; ("none",) = no effect, like Maya.
 _NO_DUPLICATE = "No object(s) to duplicate"
 _NO_PARENT = "Cannot parent components or objects in the underworld."
 EDIT_MODE = {
@@ -974,7 +974,7 @@ EDIT_MODE = {
     "Select/Inverse": ("run", ("mesh.select_all", {"action": 'INVERT'})),
     "Select/Deselect All": ("run", "allset.select_none"),       # SelectNone: select -cl + object mode
     "Select/Hierarchy": ("none",),
-    "Select/Similar": ("run", "mesh.select_similar"),           # SelectSimilar on components (step 136, delegated)
+    "Select/Similar": ("run", "mesh.select_similar"),           # SelectSimilar on components (step 136)
     "Edit/Delete": ("run", "allset.delete_components"),        # the Delete key (step 24)
     "Edit/Cut": ("run", "allset.delete_components"),           # deletes the components; nothing goes to the clipboard
     "Edit/Group": ("object", _create('EMPTY_GROUP')),          # Group on components = an empty group null1
@@ -1098,10 +1098,10 @@ from .editor_menu_map import GREY_ON_POLL  # noqa: E402,F401  (menu_sets.draw_it
 
 MAP.update(_EDITOR_MAP)
 
-# Step 166 (audit 11 BS4 / #9 #10): the same Maya command greyed in one menu while it works in another
+# Step 166: the same Maya command greyed in one menu while it works in another
 # (tools/menu_consistency.py finds them: label + runTimeCommand / annotation) gets the working item's action.
 # UV Editor Tools > Unfold / Cut / Sew / Pin are Maya's brush tools; the kit runs the command on the selection
-# (Blender's UV editor has no unfold / cut / sew brush) [delegated].
+# (Blender's UV editor has no unfold / cut / sew brush).
 TWINS = {
     **{f"Key/{label}": f"Control/{label}" for label in (
         "Create Character Set", "Create Subcharacter Set", "Attribute Editor", "Add to Character Set",

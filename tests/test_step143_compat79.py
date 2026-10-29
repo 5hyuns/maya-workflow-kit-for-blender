@@ -1,6 +1,6 @@
 """Step 143 / issue #79: Maya mode failed to switch on in Blender 5.2.3 with "'module' object is not iterable" —
 ui/render_settings.registration_key read a render panel's module global ``classes`` and a third-party add-on's
-module had a submodule there (``from . import classes``). Plan / cause: """
+module had a submodule there (``from . import classes``)."""
 
 import types
 from importlib import import_module

@@ -1,5 +1,5 @@
 """Step 131 lane TOOLBOX (#23): kit-drawn Maya icons for the Tool Box tools and quick layouts, the Layer Editor
-toolbar and the Outliner rows the kit draws (ui/kit_icons.py). Plan / inventory: ;
+toolbar and the Outliner rows the kit draws (ui/kit_icons.py).
 GUI: tests/gui/gui_step131_toolbox_icons.py."""
 
 from importlib import import_module
@@ -90,7 +90,7 @@ def test_previews_and_toolbar_cache():
     ctx = bpy.context
     for name in ki.GLYPHS:
         n = ki.size_for(name, ctx.preferences.system.ui_scale)
-        ki.make(name, n)      # icon ids are 0 in -b ( step 113); the preview itself exists
+        ki.make(name, n)      # icon ids are 0 in -b; the preview itself exists
         pv = ki._collection()[ki._key(name, n)]
         assert tuple(pv.icon_size) == (n, n) and tuple(pv.image_size) == (n, n), (name, tuple(pv.icon_size))
         assert len(pv.icon_pixels_float) == n * n * 4

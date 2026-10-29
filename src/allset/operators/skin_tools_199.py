@@ -13,7 +13,7 @@ its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex
 - Normalize Weights modes (skinCluster.normalizeWeights 0 / 1 / 2): Maya deforms
   a point by sum(w_i M_i p) in world space in None and Interactive (unnormalised weights scale the point about the
   world origin; a point without weights stays put) and by sum(w_i M_i p) / sum(w_i) in Post. Blender's Armature
-  modifier is Post (it divides by the weight sum, checked), so None / Interactive skins get a Geometry Nodes modifier
+  modifier is Post (it divides by the weight sum), so None / Interactive skins get a Geometry Nodes modifier
   after the Armature modifier that multiplies the world position by the weight sum.
 - Weight maps (Maya Export / Import Skin Weight Maps): a ``<name>.weightMap`` text file (two comment lines, then
   ``<skin>\\t<influence>\\t<image>`` per weighted influence) and a ``<name>/`` folder with one grey image per influence
@@ -26,9 +26,8 @@ its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex
   point is within the reweighting distance, else the weights of the nearest old vertex.
 - Bake Deformation to Skin Weights (``bakeDeformer``): per vertex the weights are the
   least-squares fit, over a range of motion, of linear blend skinning of the **source rest point** to the source's
-  deformed points, constrained to w >= 0 and sum(w) = 1 (exact against Maya with a known custom range of
-  motion). Maya's default range of motion is internal; the kit samples each joint rotated +-45 degrees about its X / Y
-  / Z axes, a set Maya gives the same weights for as its default in the known cases.
+  deformed points, constrained to w >= 0 and sum(w) = 1. The kit's range of motion samples each joint rotated
+  +-45 degrees about its X / Y / Z axes.
 """
 
 import math
@@ -165,7 +164,7 @@ def move_weights(mesh, source, targets, verts=None):
 def picked_joints(arm):
     """Selected joints of ``arm`` as (source, targets): Maya takes the first selected joint as the source; Blender
     keeps no selection order, so with two joints the active (last picked) one is the target, with more the joints
-    other than the active one come in skeleton order and the first is the source (delegated)."""
+    other than the active one come in skeleton order and the first is the source."""
     from ..ui import channel_box      # Bone.select is gone in 5.x: the shim (step 200)
     sel = [pb.name for pb in arm.pose.bones if channel_box.bone_selected(pb)]
     act = arm.data.bones.active
@@ -473,7 +472,7 @@ def export_weight_maps(meshes, filepath, width=512, height=512, file_format="PNG
         if mesh.data.uv_layers.active is None:
             raise ValueError(f"{mesh.name} has no UVs: weight maps are drawn in UV space")
         for inf in influence_names(mesh):
-            if not _vertex_weights(mesh, inf).any():          # skinCluster -q -wi: weighted influences only
+            if not _vertex_weights(mesh, inf).any():          # weighted influences only
                 continue
             name = map_file_name(taken, base, mesh.name, inf, len(taken))
             taken.append(name)
@@ -711,7 +710,7 @@ def face_weights(p, corners):
     if len(corners) == 4:
         return _quad_weights(p, corners)
     from mathutils.interpolate import poly_3d_calc
-    return tuple(poly_3d_calc(corners, p))       # n-gons: Blender's polygon weights (delegated)
+    return tuple(poly_3d_calc(corners, p))       # n-gons: Blender's polygon weights
 
 
 def substitute_weights(old_co, old_faces, old_w, new_co, tolerance):
@@ -835,7 +834,7 @@ class ALLSET_OT_substitute_geometry(bpy.types.Operator):
 
 
 # --- Bake Deformation to Skin Weights ------------------------------------------------------------------------------
-BAKE_ANGLE = 45.0          # degrees: each joint +-45 about its X / Y / Z axes (delegated, see the module doc)
+BAKE_ANGLE = 45.0          # degrees: each joint +-45 about its X / Y / Z axes (see the module doc)
 
 
 def simplex_lsq(Q, c, tol=1e-12):

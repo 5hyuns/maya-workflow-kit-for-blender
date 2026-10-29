@@ -519,9 +519,9 @@ def test_cmds_create_and_units():
     assert abs(max(ys) - min(ys) - 0.04) < 1e-6, "Maya depth -> Blender Y"
     assert cmds.ls(sl=True) == ["pCube1"] and bpy.context.view_layer.objects.active == ob
     assert cmds.polyCube()[0] == "pCube2"
-    assert len(bpy.data.objects[cmds.polySphere()[0]].data.vertices) == 382  # Maya 20x20
+    assert len(bpy.data.objects[cmds.polySphere()[0]].data.vertices) == 382  # 20x20
     assert len(bpy.data.objects[cmds.polyCylinder()[0]].data.vertices) == 40
-    assert len(bpy.data.objects[cmds.polyPlane()[0]].data.vertices) == 121  # Maya 10x10
+    assert len(bpy.data.objects[cmds.polyPlane()[0]].data.vertices) == 121  # 10x10
     assert cmds.polyCube(n="box")[0] == "box"
     _units(scale=0.01)  # "Maya units" option: 1 BU = 1 cm
     try:

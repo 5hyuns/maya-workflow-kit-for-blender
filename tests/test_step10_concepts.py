@@ -2,7 +2,6 @@
 
 Freeze / Reset / Center Pivot, Maya parenting, Duplicate Special / with Transform,
 Maya creation and naming, Maya units, Delete History / by Type, keys and menus.
- 「계획」 10.
 """
 
 import math

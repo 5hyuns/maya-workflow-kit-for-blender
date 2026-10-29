@@ -1,4 +1,4 @@
-"""Step 252 (#168): Maya orient / parent constraint Interp Type and aim world up types against Maya 2026
+"""Step 252 (#168): Maya orient / parent constraint Interp Type and aim world up types against the expected
 results."""
 
 import math
@@ -12,8 +12,7 @@ from bl_ext.user_default.allset.operators.joints import MAYA_WORLD as K
 from bl_ext.user_default.allset.ui import channel_box as cb
 
 QK = K.to_quaternion()
-TOL_DEG = 1e-3
-TOL_KIT = 0.05      # end to end: Blender's float32 transforms (worst 0.04 deg checked)
+TOL_KIT = 0.05      # end to end: Blender's float32 transforms (worst 0.04 deg)
 
 
 def mq(rot, order='XYZ'):
@@ -23,17 +22,6 @@ def mq(rot, order='XYZ'):
 
 def ang(a, b):
     return math.degrees(2.0 * math.acos(min(1.0, abs(ci.qdot(ci.q_tuple(a), ci.q_tuple(b))))))
-
-
-def maya_matrix(m16):
-    """Maya xform -q -ws -m (row-major, row vectors) -> (rotation in Maya axes as a column matrix, translation)."""
-    rows = [Vector(m16[i * 4:i * 4 + 3]) for i in range(3)]
-    r = Matrix([rows[0].normalized(), rows[1].normalized(), rows[2].normalized()]).transposed()
-    return r, Vector(m16[12:15])
-
-
-def to_blender_rot(r_maya):
-    return K @ r_maya @ K.inverted()
 
 
 def _reset():
@@ -77,12 +65,6 @@ def _constrain(owner, targets, ctype, mo=None):
     return groups[0]
 
 
-def _set_weights(owner, group, ws):
-    for (prop, _label), w in zip(cm.weights(owner, group), ws):
-        owner[prop] = float(w)
-    owner.id_data.update_tag()       # like a Channel Box edit (channel_box.set_value): drivers re-read the weights
-
-
 def _settle(owner, group):
     for _ in range(3):
         bpy.context.view_layer.update()
@@ -91,14 +73,10 @@ def _settle(owner, group):
     bpy.context.view_layer.update()
 
 
-def _world_rot(ob):
-    return ob.matrix_world.to_3x3().normalized()
+# --- the maths -------------------------------------------------------------------------------------------------------
 
 
-# --- the maths against Maya ------------------------------------------------------------------------------------------
-
-
-# --- the kit against Maya ---------------------------------------------------------------------------------------------
+# --- the kit ----------------------------------------------------------------------------------------------------------
 
 
 def test_blend_is_part_of_the_node_and_goes_with_it():

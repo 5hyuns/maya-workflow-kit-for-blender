@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor shell commands (step 155); the tests compare against Maya's numbers.
+"""Maya UV Editor shell commands (step 155).
 
 Shell = the step-66 island rule (`uv_tools.islands`, shared UV coordinates); any selected UV / edge / face of a shell picks
 the whole shell for the shell commands. A "UV" = the loops of one vertex that share
@@ -18,7 +18,7 @@ from .. import compat, undo_steps
 from . import uv_tools
 from .uv_tools import EPS, islands, sync, uv_bounds
 
-DELETED = Vector((0.0, 0.0))      # Delete UVs: Blender has no unmapped face — its UVs collapse here (delegated)
+DELETED = Vector((0.0, 0.0))      # Delete UVs: Blender has no unmapped face — its UVs collapse here
 
 
 # --- selection -----------------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ def move_sew(bm, uv, edges):
     for (i, j), items in by_pair.items():
         mover, fixed = (i, j) if len(groups[i]) < len(groups[j]) else (j, i)
         if len(groups[i]) == len(groups[j]):
-            mover, fixed = (j, i)           # equal face counts: Maya's choice unknown ; the later shell moves
+            mover, fixed = (j, i)           # equal face counts: Maya's choice unknown; the later shell moves
         verts = []
         for e, fs in items:
             fm = fs[0] if where[fs[0]] == mover else fs[1]
@@ -640,7 +640,7 @@ def _set_pt(pt, uv, p):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_uv_merge(_ShellOp, bpy.types.Operator):
-    """Merge the selected UVs of each vertex that lie within the threshold (Maya UV > Merge UVs; factory 0.01)"""
+    """Merge the selected UVs of each vertex that lie within the threshold (default 0.01; Maya UV > Merge UVs)"""
     bl_idname = "allset.uv_merge"
     bl_label = "Merge UVs"
     empty = "Select UVs to merge"

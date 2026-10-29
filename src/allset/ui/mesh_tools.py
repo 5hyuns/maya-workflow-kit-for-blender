@@ -4,7 +4,7 @@
 - Target Weld (Maya Mesh Tools > Target Weld): LMB press on a
   vertex / edge starts ``allset.target_weld``; a press away from them falls back to the select tool.
 - Crease Tool (Mesh Tools > Crease Tool): MMB drag = ``allset.crease_drag``; LMB selects (fallback).
-- Multi-Cut (step 129, ): the kit tool ``allset.multi_cut_tool`` running
+- Multi-Cut (step 129): the kit tool ``allset.multi_cut_tool`` running
   ``allset.multi_cut`` (operators/multi_cut.py); its Tool Settings are Maya's.
 Settings live in ``Scene.allset_mesh_tools`` (operators/mesh_tools.py).
 """

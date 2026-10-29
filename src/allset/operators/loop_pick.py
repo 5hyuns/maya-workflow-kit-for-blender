@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's double-click component selection (issue #22, ).
+"""Maya's double-click component selection (issue #22, step 129).
 
-Maya 2022 polygon selection : double-click an edge = its edge loop (vertex: the vertex loop along the
+Maya 2022 polygon selection: double-click an edge = its edge loop (vertex: the vertex loop along the
 nearest edge, face: the face loop across the nearest edge); select a component, then Shift+double-click a
 second one on the same loop = the run of components between the two (both kept). A second component on no
 common loop gets its whole loop added, like a Shift+double-click on its own.

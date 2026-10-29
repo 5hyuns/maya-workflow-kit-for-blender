@@ -1,6 +1,6 @@
 """Step 26: Smart Extrude (Shift+manipulator on faces/edges), taking back a copy or
 extrusion that didn't move, only the transform manipulator, hold-menu check boxes.
-The drag itself: tests/gui/gui_step26_smart_extrude.py. 
+The drag itself: tests/gui/gui_step26_smart_extrude.py.
 """
 
 from importlib import import_module
@@ -115,7 +115,7 @@ def _vertices(ob):
 
 
 def test_extrude_vertex():
-    """#183, Maya 2026: Shift+drag with one cube corner selected = polyExtrudeVertex (Width 0.5,
+    """#183: Shift+drag with one cube corner selected = polyExtrudeVertex (Width 0.5,
     Length 0): 8/12/6 -> 11/18/9, and the corner plus its three new base vertices are selected for the drag."""
     ob = _cube('VERT', faces=(0,))
     corner = _vertices(ob)[0]
@@ -131,7 +131,7 @@ def test_extrude_vertex():
 
 
 def test_extrude_two_vertices():
-    """Maya 2026: two corners of one edge -> 14/24/12."""
+    """Two corners of one edge -> 14/24/12."""
     ob = _cube('VERT', faces=(0,))
     bm = bmesh.from_edit_mesh(ob.data)
     v0 = next(v for v in bm.verts if v.select)

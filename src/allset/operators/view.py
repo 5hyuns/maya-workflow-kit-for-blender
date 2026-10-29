@@ -2,7 +2,7 @@
 """Maya camera/view feel: ortho tumble lock, Alt+Shift axis-locked tumble/track, framing in all views,
 view-change undo (``[`` / ``]``), Space-tap four-view toggle.
 
-Design:  「계획」 2-5.
+Step 4.
 """
 
 import bpy
@@ -15,14 +15,14 @@ from . import framing, units
 
 
 def tumble_locked(rv3d, lock):
-    """Maya top/front/side views do not tumble ( 「계획」 2)."""
+    """Maya top/front/side views do not tumble (step 4)."""
     return bool(lock) and rv3d.view_perspective == 'ORTHO' and rv3d.is_orthographic_side_view
 
 
 def camera_navigation(context):
     """Maya: tumbling a view that looks through a camera moves that camera (#9). Blender leaves the camera view
     unless the view's Lock Camera to View is on, so turn it on there; a Maya-locked camera (locked channels) stays
-    put because Blender's camera lock keeps locked channels (checked, step 129)."""
+    put because Blender's camera lock keeps locked channels (step 129)."""
     space, rv3d = context.space_data, context.region_data
     if space is not None and space.type == 'VIEW_3D' and rv3d is not None and rv3d.view_perspective == 'CAMERA':
         space.lock_camera = True
@@ -49,7 +49,7 @@ class ALLSET_OT_tumble(bpy.types.Operator):
 # --- Alt+RMB dolly (#51) -----------------------------------------------------------------
 # Maya dollies with a left / right drag. Blender's view3d.zoom reads the drag axis from the
 # user preferences (Vertical by default), which the kit no longer writes (step 130, #40), so the drag is read here.
-DOLLY_PX_PER_DOUBLING = 150.0     # px of drag (at UI scale 1) that halve / double the view distance (delegated)
+DOLLY_PX_PER_DOUBLING = 150.0     # px of drag (at UI scale 1) that halve / double the view distance
 
 
 def dolly_distance(distance0, dx, dy, ui_scale=1.0):
@@ -100,7 +100,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
 # --- Alt+RMB dolly in the UV / Image Editor (step 141, B4) ---------------------------------
 # Maya dollies 2D panels with Alt+RMB too. IC's image.view_zoom reads the drag axis
 # from Blender's Zoom Axis preference (factory Vertical), so like allset.dolly the drag is read here and applied with
-# a plain image.view_zoom call with a factor (centred, like Blender's factory "Zoom to Mouse Position" off; delegated).
+# a plain image.view_zoom call with a factor (centred, like Blender's factory "Zoom to Mouse Position" off).
 
 
 def dolly_zoom_factor(dx, dy, ui_scale=1.0):
@@ -152,8 +152,8 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
 
 
 # --- Alt+Shift drag: tumble / track locked to one axis (step 39) ---------------------
-# Maya (): the first dominant drag direction (horizontal or
-# vertical) is kept for the whole drag.  「계획」 2.
+# Maya : the first dominant drag direction (horizontal or
+# vertical) is kept for the whole drag (step 39).
 
 AXIS_THRESHOLD = 4   # px of movement before the axis is chosen
 
@@ -301,7 +301,7 @@ def frame_points(context, v3d, selected, children, exclude=None):
                 if ch.name not in seen and _visible(ch, vl, v3d):
                     seen.add(ch.name)
                     sel.append(ch)
-    objs = sel or objs    # nothing selected: Maya F frames everything [delegated]
+    objs = sel or objs    # nothing selected: Maya F frames everything
     return [p for ob in objs for p in _object_points(ob, dg)]
 
 
@@ -372,7 +372,7 @@ def camera_projection(context, cam):
 
 
 def frame_camera(context, cam, points):
-    """Move ``cam`` so ``points`` fill Maya's 0.95 of its frame, keeping its orientation (Maya framing in a camera
+    """Move ``cam`` so ``points`` fill 0.95 of its frame, keeping its orientation (Maya framing in a camera
     view dollies / tracks the camera; an orthographic camera changes its width). A locked camera (Maya Lock Camera,
     ui/panel_menus.camera_locked) stays. Returns True when the camera moved."""
     if all(cam.lock_location):
@@ -591,10 +591,9 @@ class ALLSET_OT_view_history(bpy.types.Operator):
 # --- Space tap: four views <-> single view -------------------------------------
 
 
-# --- Maya's ortho cameras (step 161, G3) ---------------------------------------------------------------------------
-# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) (a
-# 1-unit cube is ~16 px of a ~495 px pane = ~31 units across). Blender's viewport ortho width along the longer side =
-# view_distance x 72 / lens (checked, gui_step161_views: distance 3 cm with lens 70 = 3.086 units across). Step 237:
+# --- Maya-style ortho cameras (step 161) ----------------------------------------------------------------------------
+# The top / front / side cameras show 30 units across (Maya units). Blender's viewport ortho width along the longer side =
+# view_distance x 72 / lens (distance 3 cm with lens 70 = 3.086 units across). Step 237:
 # the four view's panels are real 3D View areas that keep their own camera (ui/four_view.py).
 MAYA_ORTHO_WIDTH = 30.0
 FOUR_VIEW_NOTE = "each panel has its own camera, shading and Show settings, like Maya's"

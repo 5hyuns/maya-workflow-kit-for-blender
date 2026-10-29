@@ -110,7 +110,7 @@ def test_ep_and_arcs_state_machine():
 
 def test_grid_snap():
     step = cd.grid_step(bpy.context.scene)
-    assert abs(step - 1.0 * kit_unit()) < 1e-9, step     # factory grid: 5 spacing / 5 divisions = 1 unit
+    assert abs(step - 1.0 * kit_unit()) < 1e-9, step     # default grid: 5 spacing / 5 divisions = 1 unit
     p = cd.snap_grid(Vector((1.4 * step, -2.6 * step, 0.0)), step)
     assert (p - Vector((step, -3 * step, 0.0))).length < 1e-9
 

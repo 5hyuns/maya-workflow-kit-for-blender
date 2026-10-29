@@ -1,6 +1,5 @@
 """Step 136 lane ITEMS (#74 #62): marking-menu entries run their main-menu items, greyed entries have notices,
-component-mode RMB Select All / Deselect All / Invert follow the main menu's component rules.
- 「계획」 B; result: """
+component-mode RMB Select All / Deselect All / Invert follow the main menu's component rules."""
 
 from importlib import import_module
 
@@ -19,7 +18,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 # Before step 136 (af51cd0): menus.walk over MENUS = 464 entries, 128 greyed (None or an empty Sub).
 BASELINE = (464, 128)
 
-# : greyed marking entries whose Maya command already worked from the main menus.
+# Greyed marking entries whose Maya command already worked from the main menus.
 QUANT_25 = [
     "SHIFT_OBJECT/Fill Holes", "SHIFT_OBJECT/Extrude", "SHIFT_OBJECT/Quadrangulate",
     "SHIFT_OBJECT/Booleans/Union", "SHIFT_OBJECT/Booleans/Difference",

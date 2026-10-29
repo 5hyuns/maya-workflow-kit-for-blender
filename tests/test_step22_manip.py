@@ -3,7 +3,7 @@
 The Maya keyconfig puts ``allset.manip_duplicate`` (Shift+LMB press, PASS_THROUGH)
 in front of the gizmo's own tweak; the operator duplicates only in object mode with a
 selection, the option on and the transform gizmo shown. The drag itself is checked in
-tests/gui/gui_step22_manip_duplicate.py.  「계획」.
+tests/gui/gui_step22_manip_duplicate.py.
 """
 
 from importlib import import_module
@@ -53,7 +53,7 @@ def test_gizmo_tweak_takes_shift_drag():
 
 
 def test_shift_precision_kept():
-    # checked (GUI): Shift held when the drag starts doesn't turn precision on, so Blender's
+    # Shift held when the drag starts doesn't turn precision on, so Blender's
     # Shift precision during a drag stays.
     km = kit.maya_kc().keymaps["Transform Modal Map"]
     assert {k.type for k in km.keymap_items if k.propvalue == 'PRECISION'} == {'LEFT_SHIFT', 'RIGHT_SHIFT'}
@@ -103,7 +103,7 @@ def test_hold_menus_toggle_smart_duplicate():
         assert items["Smart Duplicate"] == ("allset.manip_option", {"option": 'SMART_DUPLICATE'}), menu
         assert items["Smart Extrude"] == ("allset.manip_option", {"option": 'SMART_EXTRUDE'}), menu
     prefs = preferences.get()
-    assert prefs.smart_duplicate is True, "Maya default on (PREF:371-374)"
+    assert prefs.smart_duplicate is True, "on by default"
     bpy.ops.allset.manip_option(option='SMART_DUPLICATE')
     assert prefs.smart_duplicate is False
     bpy.ops.allset.manip_option(option='SMART_DUPLICATE')

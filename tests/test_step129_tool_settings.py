@@ -1,5 +1,5 @@
 """Step 129 (Tool Settings lane): Tool Box double-click opens Tool Settings (#3); Maya Tool Settings sections for the
-Tool Box select tools (#29) and the Mesh Tools tools (#28). """
+Tool Box select tools (#29) and the Mesh Tools tools (#28)."""
 
 
 from importlib import import_module
@@ -17,7 +17,7 @@ dock_tabs = import_module(kit.MODULE + ".ui.dock_tabs")
 notices = import_module(kit.MODULE + ".ui.notices")
 mesh_ops = import_module(kit.MODULE + ".operators.mesh_tools")
 
-# Maya 2022 factory Tool Settings: section titles in display order and which start open (frames_default + widget y)
+# Default Tool Settings: section titles in display order and which start open
 MAYA = {
     'SELECT': [("Common Selection Options", True), ("Soft Selection", False), ("Symmetry Settings", False)],
     'LASSO': [("Lasso Settings", True), ("Soft Selection", False), ("Symmetry Settings", False)],
@@ -147,7 +147,7 @@ def test_paint_select_rows_and_options():
     assert props.mode == 'ADD'
     props.mode = 'SET'
     assert bpy.ops.allset.reset_tool() == {'FINISHED'}
-    assert props.mode == 'ADD', props.mode      # Maya factory: Select + Add to current selection
+    assert props.mode == 'ADD', props.mode      # default: Select + Add to current selection
 
 
 def _owners(rec):

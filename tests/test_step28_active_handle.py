@@ -1,5 +1,5 @@
 """Step 28: MMB drag = the last picked manipulator handle (Maya active handle).
-The drag itself: tests/gui/gui_step28_active_handle.py. """
+The drag itself: tests/gui/gui_step28_active_handle.py."""
 
 from importlib import import_module
 from types import SimpleNamespace

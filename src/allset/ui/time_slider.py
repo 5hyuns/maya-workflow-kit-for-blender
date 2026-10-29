@@ -2,9 +2,9 @@
 """Maya Time Slider + Range Slider in the Timeline header, and a timeline view that
 follows the playback range.
 
-Maya's Time Slider (8 transport buttons, current time
+Maya's Time Slider (transport buttons, current time
 field, auto key) and Range Slider (animation start, playback start, [range], playback end,
-animation end). Blender form:
+animation end). Blender form (step 20):
 - the timeline header's ``draw_header`` (``DOPESHEET_HT_editor_buttons`` in Timeline mode, a plain class, not in
   bpy.types) is wrapped to draw ``draw_header`` below and restored on unregister.
 - Maya's animation range = scene frame_start/end; its playback range = the preview range
@@ -43,10 +43,10 @@ _RANGE_PROPS = ("frame_start", "frame_end", "frame_preview_start", "frame_previe
 
 
 def draw_transport(layout, context):
-    """Current frame field + Maya's 8 transport buttons."""
+    """Current frame field + the 8 Maya transport buttons."""
     scene, screen = context.scene, context.screen
     row = layout.row()
-    row.ui_units_x = 4.5    # Maya current time field width 90
+    row.ui_units_x = 4.5    # current time field width 90 px
     row.prop(scene, "frame_current", text="")
     row = layout.row(align=True)
     row.operator("screen.frame_jump", text="", icon='REW').end = False
@@ -66,8 +66,8 @@ def draw_transport(layout, context):
 
 def has_slider_panel(space, area=None):
     """The timeline shows the Time Slider buttons in its sidebar (the Maya Workflow Kit layout). With ``area``, the
-    sidebar must also have room: Blender 5.x loads the 4.5 template's timeline sidebar 1 px wide
-, and then the buttons stay in the header."""
+    sidebar must also have room: Blender 5.x loads the 4.5 template's timeline sidebar 1 px wide,
+    and then the buttons stay in the header."""
     if space is None or space.type != 'DOPESHEET_EDITOR' or not space.show_region_ui:
         return False
     if area is None:
@@ -85,7 +85,7 @@ def draw_header(context, layout):
     space, area = context.space_data, context.area
     if has_slider_panel(space) and not has_slider_panel(space, area):
         # Maya Workflow Kit layout whose sidebar can't open (Blender 5.x: the Timeline mode keeps its sidebar 1 px, even in a
-        # factory file — checked, step 118): one row, Range Slider first, the Time Slider buttons at the right end
+        # factory file, step 118): one row, Range Slider first, the Time Slider buttons at the right end
         draw_range_slider(layout, context)
         layout.separator_spacer()
         draw_transport(layout, context)
@@ -108,7 +108,7 @@ def draw_range_slider(layout, context):
     row.active = scene.use_preview_range
     row.prop(scene, "frame_preview_start", text="")
     # Maya's range bar. In the Maya Workflow Kit layout an empty label holds its place and
-    # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
+    # ui/range_bar.py draws the draggable bar there (step 73). Elsewhere Blender has no such
     # widget: the toggle = use the playback range (off = the whole animation range), the button frames it.
     from . import range_bar
     bar = layout.row(align=True)
@@ -195,13 +195,13 @@ class ALLSET_PT_time_slider(bpy.types.Panel):
         draw_transport(self.layout.row(align=False), context)
 
 
-# --- Time Slider hand feel ---------------------------------
+# --- Time Slider hand feel (step 56) ---------------------------------------------------------------
 # Maya: LMB anywhere on the Time Slider moves the time, Shift+LMB drag highlights a range, RMB = the
 # Time Slider menu (Maya 2022 labels).
 # Blender's timeline is a Dope Sheet mode, so these sit first in the "Dopesheet" keymap and pass
 # through in the Dope Sheet itself (keys are clicked there in Maya too).
 
-RANGE_COLOR = (0.78, 0.16, 0.16, 0.35)   # Maya's red range highlight 
+RANGE_COLOR = (0.78, 0.16, 0.16, 0.35)   # red range highlight
 RANGE_ARROW_COLOR = (1.0, 1.0, 1.0, 0.9)
 MMB_NOTICE = ("Blender always updates the scene when the time changes (no Maya MMB time drag): "
               "copy keys instead (RMB > Copy, move, RMB > Paste).")
@@ -279,7 +279,7 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
-RANGE_EDGE_PX = 8          # end-arrow zone of a highlighted range (x UI scale),  「계획」 1
+RANGE_EDGE_PX = 8          # end-arrow zone of a highlighted range (x UI scale), step 84
 
 
 def range_zone(context, region, x):
@@ -538,7 +538,7 @@ def _draw_range():
     gpu.state.blend_set('ALPHA')
     shader.uniform_float("color", RANGE_COLOR)
     batch.draw(shader)
-    # Maya's arrows on a highlighted range  (step 84): ◀ / ▶ in the end zones (scale), ◀▶ in the middle (move)
+    # Maya's arrows on a highlighted range (step 84): ◀ / ▶ in the end zones (scale), ◀▶ in the middle (move)
     edge = RANGE_EDGE_PX * (context.preferences.system.ui_scale or 1.0)
     k = min(edge * 0.6, h * 0.25)
     y = h * 0.5
@@ -558,43 +558,42 @@ def _draw_range():
     gpu.state.blend_set('NONE')
 
 
-# --- Maya ruler -----------------------------
-# The Maya Workflow Kit layout's Time Slider is painted over Blender's timeline drawing: Maya's background, one 2 px
-# tick + label per step (Maya picks the smallest step whose spacing fits the labels), the bottom band and the
-# translucent current-time block with its white frame number. Maya 2022 at UI scale 1.0
-# (1292 x 32 px widget): rows 1-8 labels #757575, ticks rows 13-27 #7c7c7c, rows 29-31
-# #373737, background #2b2b2b, current time = white at 18.4 % over the frame's cell (step 195), its number white in
-# rows 16-23.
-# Blender draws its own current-frame box in the region overlay after every Python handler (probe tmp/probe186:
-# a full-region POST_PIXEL fill hides everything else of Blender's) and no RNA / theme-free switch hides it, so
-# that box stays on top (recorded, step 186).
+# --- Maya ruler (step 186) -------------------------------------------
+# The Maya Workflow Kit layout's Time Slider is painted over Blender's timeline drawing: a dark background, one 2 px
+# tick + label per step (the smallest step whose spacing fits the labels, like Maya), the bottom band and the
+# translucent current-time block with its white frame number. At UI scale 1.0 (a 32 px tall ruler): rows 1-8 labels
+# #757575, ticks rows 13-27 #7c7c7c, rows 29-31 #373737, background #2b2b2b, current time = white at 18.4 % over the
+# frame's cell (step 195), its number white in rows 16-23.
+# Blender draws its own current-frame box in the region overlay after every Python handler (a full-region
+# POST_PIXEL fill hides everything else of Blender's) and no RNA / theme-free switch hides it, so that box stays on
+# top (step 186).
 MAYA_RULER_H = 32.0
 RULER_BG = (0x2b / 255, 0x2b / 255, 0x2b / 255, 1.0)
 RULER_BAND = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 RULER_TICK = (0x7c / 255, 0x7c / 255, 0x7c / 255, 1.0)
 RULER_LABEL = (0x75 / 255, 0x75 / 255, 0x75 / 255, 1.0)
-# step 195: Maya's current-time block is #525252 over the #2b2b2b ruler = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %, not the 25 % estimated in step 186
+# step 195: the current-time block is #525252 over the #2b2b2b ruler = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %
 RULER_CURRENT = (1.0, 1.0, 1.0, (0x52 - 0x2b) / (0xff - 0x2b))
 RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
-# (top row, bottom row) of 32 px widget. With Time Slider bookmarks
-# (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down:
+# (top row, bottom row) of the 32 px ruler. With Time Slider bookmarks
+# (kit: timeline markers, operators/bookmarks.py) the ruler gets a strip on top and moves labels / ticks down:
 # strip #454545 rows 0-8, each bookmark's colour at 80 % over
 # it in rows 0-4 with a solid 1 px left edge over the strip height.
 ROWS = {"label": (1, 8), "tick": (13, 27), "current_label": (16, 23), "band": (29, 31)}
 ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26), "band": (29, 31),
                   "strip": (0, 8), "bookmark": (0, 4)}
 BOOKMARK_STRIP = (0x45 / 255, 0x45 / 255, 0x45 / 255, 1.0)
-BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # Maya's bookmark colour (Maya picks one per bookmark)
+BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # bookmark colour (Maya picks one per bookmark)
 TICK_PX = 2.0
-# Eight-pixel label row in Maya's standard 32 px ruler, converted to BLF size.
+# Eight-pixel label row in the 32 px ruler, converted to BLF size.
 RULER_FONT_SIZE = 8.0 / 0.72
 NICE_STEPS = tuple(m * 10 ** e for e in range(8) for m in (1, 2, 5))
 
 
-# Maya cases (widget px, first, last frame) this model doesn't reproduce (tests/test_step186_time_slider.py; 32 of 43
-# match, the default 1-120 and the short ranges exactly): Maya's threshold also moves with the widget width and the
-# step, and uses steps of 4 / 400 / 4000 with wide labels . A grid search over
-# "max(a, b x digits)" thresholds with 1-2-4 steps matched 33 but drew 1-120 every 4 frames: not taken (delegated).
+# Cases (widget px, first, last frame) where this model picks another step than Maya (tests/test_step186_time_slider.py;
+# the default 1-120 and the short ranges match): Maya's threshold also moves with the widget width and the step, and
+# it uses steps of 4 / 400 / 4000 with wide labels. "max(a, b x digits)" thresholds with 1-2-4 steps drew 1-120 every
+# 4 frames: not taken.
 STEP_MATCHES = 32
 STEP_DEVIATIONS = ((1292, 1, 10000), (692, 1, 120), (1592, 1, 120), (1592, 1, 60), (1292, 1, 215), (1292, 1, 230),
                    (1292, 1, 250), (1292, 1001, 1100), (1292, 1, 100000), (692, 1, 130), (692, 1, 110))
@@ -605,8 +604,8 @@ def label_digits(frame):
 
 
 def label_need_px(digits):
-    """Spacing (px at UI scale 1) Maya needs between two labels of ``digits`` characters (fitted to the 1292 px
-    widget cases: <= 3 digits fit at 25.6 px but not 24.7, 4 digits need more than 25.6 and fit at 32, 5 digits
+    """Spacing (px at UI scale 1) between two labels of ``digits`` characters (at a 1292 px wide
+    ruler: <= 3 digits fit at 25.6 px but not 24.7, 4 digits need more than 25.6 and fit at 32, 5 digits
     need more than 32)."""
     return max(25.0, 7.0 * digits + 3.0)
 
@@ -710,7 +709,7 @@ def _draw_ruler(context, region):
     cur = scene.frame_current
     cx0, cx1 = x_of(cur - 0.5), x_of(cur + 0.5)
     rects([(round(cx0), 0, max(round(cx0) + 1, round(cx1)), h)], RULER_CURRENT)
-    # labels: Maya puts them 2 px + a fifth of a frame right of the tick
+    # labels: 2 px + a fifth of a frame right of the tick
     l0, _l1 = _rows("label", h, rows, s)
     # The same UI-scaled font is used for the current-frame number.
     blf.size(0, RULER_FONT_SIZE * s)
@@ -733,9 +732,9 @@ def playback_range(scene):
     return scene.frame_start, scene.frame_end
 
 
-# --- key ticks -----------------------------------------------------
-# Maya draws the keys of the selected nodes (setting timeSliderShowKeys "active") as 1 px lines over the
-# whole Time Slider height: displayRGBColor timeSliderKey red, timeSliderBreakdown green.
+# --- key ticks (step 73) -----------------------------------------------------------------------------
+# Maya draws the keys of the selected nodes as 1 px lines over the whole Time Slider height: keys red,
+# breakdowns green.
 KEY_RGB = (1.0, 0.0, 0.0, 1.0)
 BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
 
