@@ -5,6 +5,11 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-29
+
+Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and
+Blender 5.0 – 5.2 only (0.6.2 stays the version for Blender 4.5 LTS).
+
 ### Changed
 - **Requires Blender 5.0 or newer (5.0 – 5.2).** 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
   there. Blender 5.0, 5.1 and 5.2 are supported as before; versions after 5.2 are added once they are tested.
@@ -38,21 +43,21 @@ Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#2
   point, hold X for the grid, C for the nearest curve or edge (drag to slide along it) or V for the nearest CV,
   vertex or pivot, like Maya. Middle drag moves the last point; Ctrl+click inverts Blender's scene snapping for that
   click. Thanks to @Oxiidus for the report.
-
 - **Create > Lights > Dome Light** (#201): an image-based dome light (Blender World environment texture) with a
-  domeLight1 locator in the Outliner; its Rotate turns the image and its Intensity sets the strength.
+  domeLight1 locator in the Outliner; its Rotate turns the image and its Intensity sets the strength. Thanks to
+  @leo2ard for the suggestion.
 
 ### Fixed
 - **Scale manipulator like Maya** (#200): the centre handle scales uniformly by the horizontal drag, axis and plane
   handles scale along them, Ctrl+drag on an axis scales the other two axes, middle drag is half speed and each
-  object scales about its own pivot.
+  object scales about its own pivot. Thanks to @Fizkefaaz for the report.
 - **Kit windows remember their size and place** (#203): Hypershade, Render Settings, the editor windows and the
-  other kit windows open again where you left them.
+  other kit windows open again where you left them. Thanks to @leo2ard for the report.
 - **Set Driven Key on one channel twice** (#186): two driven keys on the same transform channel no longer show a
   stale value; files made with an earlier version are updated when opened.
 - **Graph Editor, first week** (#192): selected objects without keys are listed, the tangent buttons sit on their
   own row, only selected keys show handles, S sets keys, F / A frame like Maya and Shift+middle drag locks to time or
-  value.
+  value. Thanks to @swarnava05 for the report.
 - **IK on chains of three or more bones** (#181): a Rotate Plane IK handle splits the bend between the joints like
   Maya.
 - **Bevel part of a cylinder cap rim** (#182): the ends of an open edge chain bevel like Maya; Delete History can be
@@ -62,7 +67,7 @@ Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#2
 - **Scene updates with many objects** (#191): moving, editing or selecting no longer makes the kit go over every
   object; on a 620-object scene an update costs about 0.6 ms more than plain Blender (was 2.9 ms).
 - **Shift+drag duplicate and the Outliner** (#217): a duplicate goes last among its siblings, like Maya, and the
-  Outliner rows no longer swap back and forth.
+  Outliner rows no longer swap back and forth. Thanks to @Weeliano for the report and the video.
 - **Settings kept when the add-on is switched off and on**: Blender drops an add-on's preferences when it is unticked
   in Preferences > Add-ons; the kit now keeps a copy in its own user folder and puts it back when it is ticked again
   (Remove still resets everything).
@@ -77,7 +82,8 @@ Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#2
 - **Maya menus and switching back on Blender 5.1** (#199, #198): when one part of Maya mode fails to start, the kit now
   takes back everything it had started and stays in plain Blender, and says why (console, a message and the add-on
   preferences) instead of leaving a Maya menu bar whose menus don't open. Switching back to Blender always removes the
-  Maya menu bar, the Workspace menu and the Tool Box tools. A menu whose command is missing still draws.
+  Maya menu bar, the Workspace menu and the Tool Box tools. A menu whose command is missing still draws. Thanks to
+  @Zhadowcode99 for the reports.
 - **Commands on a hidden object** (#187): component modes (F7 / F9 / F10 / F11), F8, the component marking menu,
   the Status Line selection mode, the Tool Box joint modes and menu / shelf / marking-menu items no longer print
   Blender's "Cannot edit hidden object" or a Python error when the active object is hidden; they warn
