@@ -1,4 +1,5 @@
-"""Step 85 in a real UI: Move tool, Ctrl+LMB drag on the X arrow moves in the YZ plane and makes YZ the active handle,
+"""Step 85 in a real UI: Move tool, Ctrl+LMB drag on the X arrow moves along X with grid snapping and makes X the
+active handle,
 Ctrl+click on the centre frees it, Shift+MMB drag in the front view picks X (sideways) / Z (up), Scale tool Ctrl+X
 arrow scales Y and Z."""
 
@@ -71,7 +72,7 @@ def drag(button, mods, start, end):
 
     def s2():
         for m in mods:
-            ev(keys[m], 'PRESS')
+            ev(keys[m], 'PRESS', **{m: True})       # a real modifier key: mouse-only modifiers reach no window state
         C["a"], C["b"] = start(), end()
         ev(button, 'PRESS', x=int(C["a"].x), y=int(C["a"].y), **{m: True for m in mods})
 
@@ -127,9 +128,10 @@ def s_ctrl_check():
     d = ob1().location - C["start"]
     k = mod("operators.units").maya_unit()
     h = mod("operators.manip").HANDLES.get('TRANSLATE')
-    check(f"Ctrl+X arrow drag: X kept, Y/Z moved ({d.x / k:.3f}, {d.y / k:.3f}, {d.z / k:.3f} cm)",
-          abs(d.x) < 1e-6 and (abs(d.y) > 0.05 * k or abs(d.z) > 0.05 * k))
-    check(f"YZ plane is the active handle ({h})", h is not None and tuple(h["constraint_axis"]) == (False, True, True))
+    cm = d.x / k
+    check(f"Ctrl+X arrow drag: X only, whole cm ({d.x / k:.3f}, {d.y / k:.3f}, {d.z / k:.3f} cm)",
+          abs(cm) > 0.5 and abs(cm - round(cm)) < 1e-3 and abs(d.y) < 1e-6 and abs(d.z) < 1e-6)
+    check(f"X is the active handle ({h})", h is not None and tuple(h["constraint_axis"]) == (True, False, False))
     C["d"] = d
     redraw()
 
@@ -137,13 +139,13 @@ def s_ctrl_check():
 @step
 def s_shot():
     if SHOTS:
-        screenshot(os.path.join(SHOTS, "gui_step85_active_yz.png"))
+        screenshot(os.path.join(SHOTS, "gui_step85_active_x.png"))
     hover(screen(ob1().matrix_world.translation))
 
 
 @step
 def s_center_ctrl():
-    ev('LEFT_CTRL', 'PRESS')
+    ev('LEFT_CTRL', 'PRESS', ctrl=True)
     p = screen(ob1().matrix_world.translation)
     ev('LEFTMOUSE', 'PRESS', x=int(p.x), y=int(p.y), ctrl=True)
 
@@ -160,6 +162,7 @@ def s_center_check():
     h = mod("operators.manip").HANDLES.get('TRANSLATE')
     check(f"Ctrl+click on the centre frees the active handle ({h})", h is None)
     check("and doesn't move the cube", (ob1().location - C["start"] - C["d"]).length < 1e-6)
+    check("and keeps the selection", ob1().select_get())
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.view3d.view_axis(type='FRONT')

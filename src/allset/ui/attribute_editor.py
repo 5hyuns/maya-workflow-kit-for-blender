@@ -297,7 +297,11 @@ def _maya_number_rows(layout, context, ob):
         split.label(text=label)
         row = split.row(align=True)
         for key in keys:
-            row.prop(cb, key + "_text", text="")
+            # each field its own cell: the Channel Box key colours (keyed / animated / driven / muted) and lock
+            cell = row.row(align=True)
+            cell.alert = channel_box.state_alert(channel_box.channel_state(ob, key))
+            cell.enabled = not channel_box.is_locked(ob, key)
+            cell.prop(cb, key + "_text", text="")
     return True
 
 

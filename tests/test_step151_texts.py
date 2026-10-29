@@ -47,10 +47,12 @@ def test_100_shift_w_e_r_key_only_their_channels():
     assert _paths(ob) == sorted([(p, i) for p in ("location", "rotation_euler", "scale") for i in range(3)])
     # the keymap: Shift+W / E / R = allset.set_key(channels), IC's keyframe_insert_by_name gone
     kc = kit.maya_kc()
+    items = {(i.type, i.properties.channels) for i in kc.keymaps["Screen"].keymap_items
+             if i.idname == "allset.set_key" and i.shift and i.active}
+    assert items == {("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")}, items
     for km in ("Object Mode", "Pose"):
-        items = {(i.type, i.properties.channels) for i in kc.keymaps[km].keymap_items
-                 if i.idname == "allset.set_key" and i.shift and i.active}
-        assert items == {("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")}, (km, items)
+        assert not [i for i in kc.keymaps[km].keymap_items if i.active and i.shift and i.type in {'W', 'E', 'R'}
+                    and not i.ctrl and not i.alt and i.idname == "anim.keyframe_insert_by_name"], km
 
 
 def test_100_ik_handle_result_in_command_line_not_a_blender_note():

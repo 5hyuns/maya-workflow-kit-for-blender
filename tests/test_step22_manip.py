@@ -42,14 +42,15 @@ def test_gizmo_keymaps_run_smart_duplicate_first():
 
 def test_gizmo_tweak_takes_shift_drag():
     # Step 261 (#175): a CLICK_DRAG carries the press's modifiers, so the gizmo's tweak must accept
-    # Shift or the Shift+drag that manip_duplicate passes on starts no transform. Ctrl / Alt as IC.
+    # Shift or the Shift+drag that manip_duplicate passes on starts no transform. Ctrl too (a drag started with
+    # Ctrl held moves the handle with snapping); Alt as IC.
     kc = kit.maya_kc()
     for name in patches.GIZMO_KEYMAPS:
         tweaks = [k for k in kc.keymaps[name].keymap_items if k.active
                   and k.idname == "gizmogroup.gizmo_tweak" and k.type == 'LEFTMOUSE' and k.value == 'CLICK_DRAG']
         assert tweaks, name
         for k in tweaks:
-            assert (k.shift, k.ctrl, k.alt) == (-1, 0, 0), (name, k.shift, k.ctrl, k.alt)
+            assert (k.shift, k.ctrl, k.alt) == (-1, -1, 0), (name, k.shift, k.ctrl, k.alt)
 
 
 def test_shift_precision_kept():
