@@ -5,6 +5,18 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Added
+- **Channel Box value dragging** from Tom Pilott (#224) — thank you! Left-drag a Channel Box value sideways to change
+  it: Ctrl snaps to whole displayed units, Shift is 10× finer, Alt 100× finer; the wheel adjusts the value during a
+  drag and Ctrl+wheel over a value steps it. Esc or right-click puts the starting values back, one drag is one undo
+  step, and Auto Key keys channels that already have keys. Clicking a value still edits it, a drag down the values
+  still selects channels, and the middle-mouse virtual slider is unchanged.
+
+### Fixed
+- **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
+  Ctrl+Shift+H, h and Alt+H in the Outliner run Maya's visibility commands like in the viewport, and a node hidden
+  with Blender's own hide (or parented under one) hides everything below it.
+
 ## [0.7.0] — 2026-10-29
 
 Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and

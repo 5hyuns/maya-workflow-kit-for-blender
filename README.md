@@ -443,6 +443,8 @@ Thank you to everyone who sent code to the kit! 🙏
 | [@cnzim](https://github.com/cnzim) | Real-time transforms, joint selection and the Paint Skin Weights workspace ([#125](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/125)) |
 | [@LSKianhao](https://github.com/LSKianhao) | Time slider scaling on high-DPI screens and ruler text size tests ([#188](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/188)) |
 | [@youngmin2k](https://github.com/youngmin2k) | Hidden-mesh warning before component mode ([#196](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/196)); pivot editing, Prevent Negative Scale, Smart Extrude and Make Live ([#207](https://github.com/5hyuns/maya-workflow-kit-for-blender/pull/207)) |
+| [@Kevorama](https://github.com/Kevorama) | Outliner hide keys and hidden parents ([#223](https://github.com/5hyuns/maya-workflow-kit-for-blender/issues/223)) |
+| Tom Pilott | Channel Box value dragging ([#224](https://github.com/5hyuns/maya-workflow-kit-for-blender/issues/224)) |
 
 Many more people helped by reporting issues and testing; they are thanked in each [release note](https://github.com/5hyuns/maya-workflow-kit-for-blender/releases).
 Pull requests are welcome.
