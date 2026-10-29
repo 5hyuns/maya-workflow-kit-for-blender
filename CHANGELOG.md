@@ -6,6 +6,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Component shading after reopening Quad Draw files**: save native viewport settings instead of temporary
+  Retopology overrides; restore each owned view on tool/mode/workspace changes and failed saves. Shading >
+  Restore Modeling Display repairs the affected viewport in older files without editing the mesh or materials.
 - **Quad Draw symmetry**: World/Object and bound Topology symmetry cover drawing, extensions, cuts, relaxation,
   deletion and welding. Seam captures share vertices; Ctrl loop cuts pair source edges before live projection,
   preventing valid cuts from being cancelled on slightly asymmetric references.
