@@ -190,3 +190,16 @@ def test_a_grandchild_follows_a_blender_hidden_grandparent():
     g.hide_set(False)
     _upd()
     assert c1.visible_get() and c2.visible_get(), (c1.visible_get(), c2.visible_get())
+
+
+def test_a_show_menu_type_filter_hides_only_that_node():
+    """The panel Show menu hides a node type (IK handles) with Blender's hide: a type filter, so the node's children
+    stay visible."""
+    g, c1, c2 = _scene()
+    g.hide_set(True)
+    g[dag.SHOW_FILTER] = True
+    _upd()
+    assert c1.visible_get() and dag.MARK not in c1, (c1.visible_get(), dag.MARK in c1)
+    del g[dag.SHOW_FILTER]
+    _upd()
+    assert not c1.visible_get(), "a plain Blender hide on the group still hides its children"

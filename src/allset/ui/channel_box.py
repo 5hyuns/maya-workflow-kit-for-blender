@@ -1498,8 +1498,12 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         self._anchor = key
         self._part = part
         self._key = key
-        if part == 'VALUE':
-            # Modifier selection remains on names; modifiers over values scrub.
+        self._mods = (event.shift, event.ctrl)
+        if part == 'VALUE' and (event.shift or event.ctrl):
+            # over a value, a modifier press may start a drag (Shift finer, Ctrl whole units): the Shift / Ctrl
+            # selection waits for the release of a plain click (_on_release)
+            pass
+        elif part == 'VALUE':
             if key not in self._base:
                 set_selected_channels([key], context)
                 _anchor["key"] = key
@@ -1553,8 +1557,16 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
 
     def _on_release(self, context, event):
         part, self._press = self._press, None
+        shift, ctrl = getattr(self, "_mods", (False, False))
         if self._dragging:
             self._extend(context, self._current(event))   # the hover of the last move
+        elif part == "VALUE" and (shift or ctrl):
+            # a Shift / Ctrl click on a value selects like one on the name
+            if shift and _anchor["key"] is not None:
+                select_range(self._ob, _anchor["key"], self._key, "SET", context=context)
+            else:
+                select_channel(self._key, "TOGGLE", context)
+                _anchor["key"] = self._key
         elif part == "VALUE" and not (event.ctrl or event.shift):
             # a click on a field: Maya edits it in place. The press was eaten, so the field is edited in a popup
             # over it (text active at once); Enter writes the text into every selected channel (apply_entry).

@@ -23,6 +23,8 @@ from bpy.app.handlers import persistent
 from .. import depsgraph_filter
 
 MARK = "allset_hidden_by_parent"
+# a type filter of the panel Show menu hides only that node, never its children (ui/panel_menus.SHOW_HIDDEN)
+SHOW_FILTER = "allset_hidden_by_show"
 
 
 def hierarchy(objects):
@@ -44,10 +46,11 @@ def _layer_hidden(ob, scene):
 
 def hidden_self(ob, scene, view_layer=None):
     """Maya: the node's own visibility off, or its display layer hidden (the node's drawOverride). Blender's own hide
-    (the Outliner's Ctrl+H, ``hide_set``) counts too, unless this rule set it (``MARK``)."""
+    (the Outliner's Ctrl+H, ``hide_set``) counts too, unless this rule set it (``MARK``) or a Show menu type
+    filter did (``SHOW_FILTER``)."""
     if ob.hide_viewport or _layer_hidden(ob, scene):
         return True
-    if view_layer is None or MARK in ob:
+    if view_layer is None or MARK in ob or SHOW_FILTER in ob:
         return False
     try:
         return ob.hide_get(view_layer=view_layer)
