@@ -311,7 +311,7 @@ def open_menu(menu_name, button, origin=None):
     """Engine or pie, per the "Marking Menu Style" preference (step 8 pies as fallback)."""
     from . import pie_idname
     if _prefs(bpy.context).marking_menu_style == 'PIE':
-        return bpy.ops.wm.call_menu_pie(name=pie_idname(menu_name))   # a user-edited menu has its own (step 273)
+        return bpy.ops.wm.call_menu_pie(name=pie_idname(menu_name))   # a user-edited menu has its own (step 292)
     kw = {"origin": origin} if origin is not None else {}
     return bpy.ops.allset.mm_engine('INVOKE_DEFAULT', menu=menu_name, button=button, **kw)
 

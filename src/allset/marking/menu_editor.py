@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Marking Menu Editor window (step 273; Windows > Settings/Preferences > Marking Menu Editor).
+"""Maya's Marking Menu Editor window (step 292; Windows > Settings/Preferences > Marking Menu Editor).
 
 Maya 2022's Marking Menu Editor lists the marking menus, edits one in a 3×3 grid of its radial positions (the centre is
 the menu itself) plus the list under it, gives each item a label, a command and an option box, makes new menus

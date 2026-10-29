@@ -21,7 +21,7 @@ the active keyconfig and every keymap preference stay as the user has them:
 A persistent timer follows the active keyconfig (the user picks another preset, a keyconfig preference rebuilds
 it, the preset loads after the add-on at startup) and re-applies; ``unregister`` restores everything. Small
 feature-owned overlays still go through ``add_item``; keys the user assigned in a kit editor that must win over the
-Maya key of the same event (step 273: a custom marking menu's hotkey, Maya: assigning a hotkey replaces the old one)
+Maya key of the same event (step 292: a custom marking menu's hotkey, Maya: assigning a hotkey replaces the old one)
 go through ``set_overlay``.
 """
 
@@ -152,7 +152,7 @@ def _restore_addon():
     _state["addon_count"] = -1
 
 
-# --- overlays (step 273) ----------------------------------------------------------------------------------------
+# --- overlays (step 292) ----------------------------------------------------------------------------------------
 
 def _add_overlay(owner):
     """Add ``owner``'s items after the Maya items of their keymaps: the last add-on item is the first one Blender

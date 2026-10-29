@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""User-edited marking menus: the data behind the Marking Menu Editor (step 273, marking/menu_editor.py).
+"""User-edited marking menus: the data behind the Marking Menu Editor (step 292, marking/menu_editor.py).
 
 Maya's Marking Menu Editor (Windows > Settings/Preferences > Marking Menu Editor) edits the factory marking menus
 (Restore Default puts one back) and makes new ones that a hotkey opens: hold the key, press LMB, drag and release.

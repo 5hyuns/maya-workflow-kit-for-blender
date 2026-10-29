@@ -1,4 +1,4 @@
-"""Step 273: the data behind the Marking Menu Editor (marking/user_menus.py), on the document alone.
+"""Step 292: the data behind the Marking Menu Editor (marking/user_menus.py), on the document alone.
 
 Maya's Marking Menu Editor edits the factory marking menus (Restore Default puts one back) and makes new ones. A changed
 kit menu keeps its untouched entries as references to the kit's entries, so kit fixes still reach them; the factory

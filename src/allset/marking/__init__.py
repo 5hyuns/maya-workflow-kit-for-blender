@@ -7,7 +7,7 @@ Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-releas
 - ``engine.py`` / ``draw.py`` / ``modal.py``: the step-9 marking menu engine
   (GPU, gestures, in-place submenus, option boxes) and the hotbox; the
   "Marking Menu Style" preference picks the engine (default) or the pies.
-- ``user_menus.py``: the user's edited and own menus (step 273, Marking Menu
+- ``user_menus.py``: the user's edited and own menus (step 292, Marking Menu
   Editor, ``menu_editor.py``), put into ``menus.MENUS`` at register.
 - Here: one pie ``Menu`` class per marking menu and radial submenu (plain
   ``Menu`` for list submenus), ``allset.marking_menu`` (picks the menu for a
@@ -91,7 +91,7 @@ def draw_pie(pie, sub, path):
 
 def _make(sub, name, label, path, is_pie, out=None, reuse=False):
     """Menu classes for ``sub`` and its submenus into ``out`` (the factory ``_classes``). ``reuse``: a submenu that
-    already has a class keeps it (the factory submenus a user menu shares with the kit, step 273)."""
+    already has a class keeps it (the factory submenus a user menu shares with the kit, step 292)."""
     out = _classes if out is None else out
     _sub_ids[id(sub)] = (name, is_pie)
     # Children first so their ids exist when the parent draws.
@@ -136,7 +136,7 @@ for _m in mm.MENUS.values():
 _NAME_BY_ID = {idname(name): name for name in mm.MENUS}
 
 
-# --- the user's menus (step 273, Marking Menu Editor) -----------------------------------
+# --- the user's menus (step 292, Marking Menu Editor) -----------------------------------
 
 _user_classes = []      # Menu classes of the menus user_menus.apply built, registered while those are in MENUS
 _user_sub_ids = []      # their _sub_ids keys (the built Subs stay alive in MENUS / the draw closures until dropped)

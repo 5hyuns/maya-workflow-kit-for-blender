@@ -21,7 +21,7 @@ KINDS = {
     "PREFERENCES": ("show_properties_scene", "show_properties_output"),   # step 215: Maya Preferences
     "POSE_EDITOR": ("show_properties_object", "show_properties_constraints"),   # step 227 (ui/pose_editor.py)
     "GAME_EXPORTER": ("show_properties_scene", "show_properties_physics"),   # step 263 (operators/game_exporter.py)
-    "MARKING_MENU_EDITOR": ("show_properties_bone", "show_properties_data"),   # step 273 (marking/menu_editor.py)
+    "MARKING_MENU_EDITOR": ("show_properties_bone", "show_properties_data"),   # step 292 (marking/menu_editor.py)
 }
 
 

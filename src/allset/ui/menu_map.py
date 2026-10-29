@@ -312,7 +312,7 @@ MAP = {
     "Windows/Settings/Preferences/Preferences": "allset.maya_preferences",   # step 215: kit window
     "Windows/Settings/Preferences/Hotkey Editor": "allset.hotkey_editor",   # step 215: Maya list + kit keys
     "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
-    "Windows/Settings/Preferences/Marking Menu Editor": "allset.marking_menu_editor",   # step 273: kit window
+    "Windows/Settings/Preferences/Marking Menu Editor": "allset.marking_menu_editor",   # step 292: kit window
     "Windows/Settings/Preferences/Plug-in Manager": ("screen.userpref_show", {"section": 'ADDONS'}),
     "Windows/Playblast": ("v3d", "allset.playblast", {}),              # step 70: temp movie + player
     "Windows/Output Window": "wm.console_toggle",

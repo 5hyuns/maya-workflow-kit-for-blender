@@ -1,4 +1,4 @@
-"""Step 273: Maya's Marking Menu Editor in the kit (marking/menu_editor.py, marking/user_menus.py).
+"""Step 292: Maya's Marking Menu Editor in the kit (marking/menu_editor.py, marking/user_menus.py).
 
 Windows > Settings/Preferences > Marking Menu Editor opens the kit window (it was a notice); the user's file is put
 into the marking menus at register and taken out at unregister; a custom menu's hotkey is Maya's "hold the key + LMB"
@@ -79,15 +79,15 @@ def test_python_item_runs_like_a_shelf_button():
     _marking, _mm, um, _me = _mods()
     scene = bpy.context.scene
     assert um.PYTHON_OP == "allset.mm_python"
-    r = bpy.ops.allset.mm_python(code="import bpy\nbpy.context.scene['mm273'] = 7")
-    assert r == {'FINISHED'} and scene["mm273"] == 7
+    r = bpy.ops.allset.mm_python(code="import bpy\nbpy.context.scene['mm292'] = 7")
+    assert r == {'FINISHED'} and scene["mm292"] == 7
     try:
         bpy.ops.allset.mm_python(code="raise ValueError('nope')")
     except RuntimeError as ex:          # the ERROR report of a script error
         assert "nope" in str(ex), ex
     else:
         raise AssertionError("a failing script must report an error")
-    del scene["mm273"]
+    del scene["mm292"]
 
 
 def test_custom_hotkey_is_hold_key_plus_lmb_and_wins():
@@ -272,25 +272,25 @@ def test_menu_item_search_and_shelf_buttons():
     assert shelf.button_index("Polygons", "Delete By Type: History") is not None
     # a user shelf's Python button, run from a marking menu item by its label
     data = shelf.user_data()
-    data["shelves"].append({"name": "T273", "buttons": [
-        {"label": "Py", "script": "import bpy\nbpy.context.scene['s273'] = 3"}]})
+    data["shelves"].append({"name": "T292", "buttons": [
+        {"label": "Py", "script": "import bpy\nbpy.context.scene['s292'] = 3"}]})
     try:
-        assert "T273 / Py" in me.shelf_choices()
-        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T273", button="Py") == {'FINISHED'}
-        assert bpy.context.scene["s273"] == 3
-        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T273", button="Gone") == {'CANCELLED'}
+        assert "T292 / Py" in me.shelf_choices()
+        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T292", button="Py") == {'FINISHED'}
+        assert bpy.context.scene["s292"] == 3
+        assert bpy.ops.allset.mm_shelf_button(shelf="USER:T292", button="Gone") == {'CANCELLED'}
         # in the editor: a new item becomes a shelf button and takes the button's name
         bpy.ops.allset.mme_menu(action="NEW", label="Shelf Items")
         name = wm.allset_mme_menu
         bpy.ops.allset.mme_select(slot="N")
         bpy.ops.allset.mme_slot(action="SET")
         wm.allset_mme_type = "shelf"
-        wm.allset_mme_shelf = "T273 / Py"
-        assert mm.MENUS[name].radial["N"] == ("Py", (um.SHELF_OP, {"shelf": "USER:T273", "button": "Py"}))
-        assert wm.allset_mme_shelf == "T273 / Py"
-        wm.allset_mme_shelf = "T273 / Nope"
-        assert "Pick a shelf button" in wm.allset_mme_message and wm.allset_mme_shelf == "T273 / Py"
-        assert any("Shelf button: T273 / Py" in t for t in _draw(me.ALLSET_PT_marking_menu_editor).texts())
+        wm.allset_mme_shelf = "T292 / Py"
+        assert mm.MENUS[name].radial["N"] == ("Py", (um.SHELF_OP, {"shelf": "USER:T292", "button": "Py"}))
+        assert wm.allset_mme_shelf == "T292 / Py"
+        wm.allset_mme_shelf = "T292 / Nope"
+        assert "Pick a shelf button" in wm.allset_mme_message and wm.allset_mme_shelf == "T292 / Py"
+        assert any("Shelf button: T292 / Py" in t for t in _draw(me.ALLSET_PT_marking_menu_editor).texts())
         # a new Maya Menu Item takes the item's name
         bpy.ops.allset.mme_select(slot="S")
         bpy.ops.allset.mme_slot(action="SET")
@@ -298,8 +298,8 @@ def test_menu_item_search_and_shelf_buttons():
         wm.allset_mme_item = "Edit/Delete by Type/History"
         assert mm.MENUS[name].radial["S"] == ("History", ("item", "Edit/Delete by Type/History"))
     finally:
-        data["shelves"][:] = [s for s in data["shelves"] if s["name"] != "T273"]
-        bpy.context.scene.pop("s273", None)
+        data["shelves"][:] = [s for s in data["shelves"] if s["name"] != "T292"]
+        bpy.context.scene.pop("s292", None)
         _reset()
 
 

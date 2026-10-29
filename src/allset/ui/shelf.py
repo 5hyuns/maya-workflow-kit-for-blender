@@ -185,7 +185,7 @@ def all_buttons(name):
 
 def button_labels(shelf_id):
     """[(index, label)] of every button of a shelf in slot order: a factory shelf's Maya slots then its added buttons,
-    or a user shelf's buttons (the Marking Menu Editor's Shelf Button items, step 273)."""
+    or a user shelf's buttons (the Marking Menu Editor's Shelf Button items, step 292)."""
     if shelf_id.startswith(USER_PREFIX):
         s = user_shelf(shelf_id[len(USER_PREFIX):])
         return [(i, b["label"]) for i, b in enumerate(s["buttons"])] if s is not None else []
