@@ -11,7 +11,7 @@ the meshes in edit mode. Both act on the 3D View the menu reads (``ui/status_lin
   at the first click outside it. Blender's own slider stops at 0.01 (soft min, 2 decimals); the kit's goes down to
   0.001 with 3 decimals (user request: small meshes need shorter normals).
 - Reset Display: Maya puts the polygon display options back to their defaults = the overlays this menu sets, back to
-  Blender's factory values (measured in Blender 5.2's factory startup).
+  Blender 5.2's factory values.
 - Vertex Size... / Edge Width...: Blender theme preferences (3D Viewport > Vertex Size / Edge Width). The kit opens
   Preferences > Themes with its search field set to the setting (Blender 5.2 lists the theme sections folded), and
   never writes the preference itself (#43).

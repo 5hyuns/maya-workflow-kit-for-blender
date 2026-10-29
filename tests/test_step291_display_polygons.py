@@ -241,7 +241,7 @@ def test_torn_off_check_items_keep_their_check_mark():
 
 
 def test_a_place_cut_on_four_sides_still_counts_as_carved():
-    # measured in Blender 5.2: the 340 x 120 place carved with four splits came out 338 x 116, 3 px higher; the old
+    # Blender 5.2: the 340 x 120 place carved with four splits came out 338 x 116, 3 px higher; the old
     # 3 px slack took that for a failed carve and the window copied the whole 3D View
     rect = (62, 1163, 340, 120)
     assert window_places.carved((62, 1166, 338, 116), rect)

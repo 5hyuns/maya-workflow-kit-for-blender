@@ -30,7 +30,7 @@ MIN_MARGIN = 40          # px: a margin smaller than this is not split off (the 
 MIN_SIZE = 120           # px: smallest window the kit reopens
 TICK = 0.5               # s between rect samples of the open kit windows
 # px a carved piece may differ from its target: each split's border takes ~2 px, and a place with margins on all
-# four sides is cut twice per axis (step 291, measured in Blender 5.2: 340 x 120 carved to 338 x 116, 3 px higher).
+# four sides is cut twice per axis (step 291, Blender 5.2: 340 x 120 carved to 338 x 116, 3 px higher).
 # More than that is a failed carve, and the window copies the whole area instead.
 CARVE_SLACK = 6
 
