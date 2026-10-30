@@ -855,7 +855,7 @@ def patch_time_slider(kd):
     for shift in (False, True):
         _add(kd, "Dopesheet", "allset.time_scrub", make_event("LEFTMOUSE", shift=shift), {"range": shift},
              first=True, shadows=TIME_SLIDER_SHADOWS)
-    _add(kd, "Dopesheet", "allset.time_scrub", make_event("MIDDLEMOUSE"), {"notice": True}, first=True,
+    _add(kd, "Dopesheet", "allset.time_scrub", make_event("MIDDLEMOUSE"), {"hold": True}, first=True,
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "allset.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)

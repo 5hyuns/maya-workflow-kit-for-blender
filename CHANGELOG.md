@@ -6,6 +6,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
+  without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
+  The next ordinary time change (left-click, playback, arrow keys) shows the animation again.
 - **Interactive Creation** (#225): turn on Create > Polygon Primitives > Interactive Creation and the Create menu,
   shelf and option boxes let you draw a polygon primitive in a view, like Maya: drag to place it and size its base,
   then drag again for its height (torus: section radius; pipe: height and thickness; helix: height and coils).

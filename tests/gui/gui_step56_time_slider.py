@@ -1,6 +1,7 @@
 """Step 56 in a real UI, Maya animation_01 hand order: frame 1 S -> LMB on the Time Slider at 24 -> move ->
 S -> keys [1, 24] -> RMB on the Time Slider at 24 > Delete -> only frame 24's key goes -> K held + LMB drag in the
-view moves the time and keeps the selection -> Shift+LMB drag highlights a red range -> MMB shows the notice."""
+view moves the time and keeps the selection -> Shift+LMB drag highlights a red range -> MMB moves the time to 40
+without updating the scene -> S keys the held pose at 40 -> LMB at 30 updates the scene again."""
 
 import os
 import sys
@@ -209,6 +210,13 @@ def s_range_shot():
 
 @step
 def s_mmb():
+    # a far key so frame 40 evaluates to another pose than the one held
+    ob, scene = cube(), bpy.context.scene
+    held = tuple(ob.location)
+    ob.location = (held[0] + 8.0, held[1], held[2])
+    ob.keyframe_insert("location", frame=100)
+    scene.frame_set(scene.frame_current)
+    C["held"] = tuple(round(v, 4) for v in ob.location)
     x, y = C["t40"]
     ev('MIDDLEMOUSE', 'PRESS', x=x, y=y)
     ev('MIDDLEMOUSE', 'RELEASE', x=x, y=y)
@@ -216,11 +224,45 @@ def s_mmb():
 
 @step
 def s_mmb_check():
-    notices = import_module(MODULE + ".ui.notices")
-    check(f"MMB on the Time Slider: time 40 + the notice ({bpy.context.scene.frame_current})",
-          bpy.context.scene.frame_current == 40 and "always updates" in notices.current())
+    ob = cube()
+    now = tuple(round(v, 4) for v in ob.location)
+    check(f"MMB on the Time Slider: time 40 ({bpy.context.scene.frame_current})",
+          bpy.context.scene.frame_current == 40)
+    check(f"MMB keeps the pose ({now} == {C['held']})", now == C["held"])
     wm = bpy.context.window_manager
     check("a plain click drops the range", not wm.allset_time_range_on)
+    hover_view()
+
+
+@step
+def s_mmb_key():
+    tap('S')
+
+
+@step
+def s_mmb_key_check():
+    check(f"S keys the held pose at 40 ({frames()})", 40 in frames())
+    ob, scene = cube(), bpy.context.scene
+    fc = import_module(MODULE + ".ui.channel_box")._fcurves(ob).find("location", index=0)
+    check(f"the key at 40 holds the pose ({fc.evaluate(40):.4f})", abs(fc.evaluate(40) - C["held"][0]) < 1e-3)
+    x, y = tx(30)
+    C["t30"] = (x, y)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+@step
+def s_lmb_after():
+    x, y = C["t30"]
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+@step
+def s_lmb_after_check():
+    ob = cube()
+    fc = import_module(MODULE + ".ui.channel_box")._fcurves(ob).find("location", index=0)
+    check(f"LMB updates the scene again (frame {bpy.context.scene.frame_current}, x {ob.location.x:.4f})",
+          bpy.context.scene.frame_current == 30 and abs(ob.location.x - fc.evaluate(30)) < 1e-4)
 
 
 run()

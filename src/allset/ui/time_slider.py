@@ -13,7 +13,7 @@ animation end). Blender form (step 20):
   range changes, every Timeline runs ``anim.scene_range_frame`` (a msgbus subscription and
   a load_post handler defer it to a timer).
 - Step 56: LMB on the timeline = time (Shift = red range), RMB = Maya's
-  Time Slider menu, MMB = time + a notice (no Maya MMB time drag in Blender).
+  Time Slider menu, MMB = move the time without updating the scene (Maya's MMB drag).
 - Step 50: the
   header is the Range Slider row in Maya's order; Blender's Playback / Keying / View / Marker menus move
   into the animation preferences menu at its right end (``DOPESHEET_MT_editor_menus.draw_collapsible`` is
@@ -203,8 +203,6 @@ class ALLSET_PT_time_slider(bpy.types.Panel):
 
 RANGE_COLOR = (0.78, 0.16, 0.16, 0.35)   # red range highlight
 RANGE_ARROW_COLOR = (1.0, 1.0, 1.0, 0.9)
-MMB_NOTICE = ("Blender always updates the scene when the time changes (no Maya MMB time drag): "
-              "copy keys instead (RMB > Copy, move, RMB > Paste).")
 # Time Slider items with no Blender equivalent: (label, Help Line text)
 TIME_NOTICES = {
     "Paste Connect": "Blender pastes keys as they were copied: no connect (offset) paste.",
@@ -227,15 +225,15 @@ def set_range(wm, a, b, on=True):
 
 
 class ALLSET_OT_time_scrub(bpy.types.Operator):
-    """Maya Time Slider: click or drag to move the time (Shift: highlight a range)"""
+    """Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)"""
     bl_idname = "allset.time_scrub"
     bl_label = "Time Slider Scrub"
     bl_options = {'INTERNAL'}
 
     range: bpy.props.BoolProperty(name="Range", description="Shift-drag: highlight a time range",
                                   options={'SKIP_SAVE'})
-    notice: bpy.props.BoolProperty(name="Notice", description="Show the MMB time drag notice",
-                                   options={'SKIP_SAVE'})
+    hold: bpy.props.BoolProperty(name="Hold", description="Move the time without updating the scene, so the "
+                                 "current pose can be keyed at another frame", options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
         region = context.region
@@ -243,6 +241,11 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
             return {'PASS_THROUGH'}
         self._region = region
         self._button = event.type
+        self._held = None
+        if self.hold:
+            # Maya MMB: every animated channel keeps the value it has now while the time moves
+            from ..operators import time_hold
+            self._held = time_hold.snapshot()
         wm, scene = context.window_manager, context.scene
         self._old = (scene.frame_current, tuple(wm.allset_time_range), wm.allset_time_range_on)
         f = frame_at(region, event.mouse_x)
@@ -251,13 +254,17 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
             set_range(wm, f, f)
         else:
             wm.allset_time_range_on = False   # a plain click drops the highlighted range (Maya)
-            scene.frame_current = f
-        if self.notice:
-            from . import notices
-            notices.show(MMB_NOTICE)
+            self._set_frame(scene, f)
         _tag(context)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
+
+    def _set_frame(self, scene, f):
+        if self._held is None:
+            scene.frame_current = f
+        else:
+            from ..operators import time_hold
+            time_hold.move_time(scene, f, self._held)
 
     def modal(self, context, event):
         wm, scene = context.window_manager, context.scene
@@ -266,13 +273,13 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
             if self.range:
                 set_range(wm, self._anchor, f)
             elif f != scene.frame_current:
-                scene.frame_current = f
+                self._set_frame(scene, f)
             _tag(context)
             return {'RUNNING_MODAL'}
         if event.type == self._button and event.value == 'RELEASE':
             return {'FINISHED'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
-            scene.frame_current = self._old[0]
+            self._set_frame(scene, self._old[0])
             set_range(wm, *self._old[1], on=self._old[2])
             _tag(context)
             return {'CANCELLED'}
