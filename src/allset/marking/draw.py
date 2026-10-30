@@ -19,6 +19,7 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 
 from . import engine
+from .. import i18n
 
 # The interaction being drawn: {"region": pointer, "window": pointer, "origin": (x, y) of that region
 # in the window, "session": Session} or {..., "hotbox": HotboxLayout, "hover": key, ...}; empty = nothing.
@@ -70,6 +71,8 @@ def _arrow_w():
 
 
 def measure(text):
+    """Drawn width of a menu text; a label is sized as ``_text`` draws it (in the interface language)."""
+    text = i18n.core(text)
     blf.size(0, font_size())
     if text.endswith(ARROW):
         return blf.dimensions(0, text[:-len(ARROW)])[0] + _arrow_w()
@@ -111,6 +114,7 @@ def _line(points, color, width=1.0):
 
 
 def _text(x, y, s, color):
+    s = i18n.core(s)
     blf.size(0, font_size())
     arrow = s.endswith(ARROW)
     if arrow:

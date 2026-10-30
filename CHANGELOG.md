@@ -6,6 +6,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Japanese and Simplified Chinese** (#197): the kit's own labels and tooltips follow Blender's Preferences >
+  Interface > Language. With Japanese (ja_JP) or Simplified Chinese (zh_HANS) chosen, the Maya menu bar and every
+  Maya menu, the Graph Editor / Dope Sheet / UV Editor / Hypershade menu bars, the viewport panel menus, marking
+  menus and the hotbox, the shelf tabs, the dock tabs, the "not in Blender" notes and many window and preference
+  labels are shown in that language. Blender's Translate switches decide: Interface for labels, Tooltips for
+  tooltips. Menu hotkeys and option boxes stay lined up with the translated labels. `tools/i18n_strings.py` lists
+  every translatable string and the coverage of each language; corrections from native speakers are welcome.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.

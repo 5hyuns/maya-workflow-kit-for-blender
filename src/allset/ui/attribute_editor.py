@@ -988,7 +988,7 @@ class ALLSET_OT_dock_show(bpy.types.Operator):
 
     dock: EnumProperty(items=DOCK_ITEMS, name="Editor")
     le_tab: bpy.props.StringProperty(name="Layer Editor Tab", options={'SKIP_SAVE', 'HIDDEN'},
-                                     description="DISPLAY / ANIM: the Layer Editor tab to raise (step 188)")
+                                     description="DISPLAY / ANIM: the Layer Editor tab to raise")
 
     def execute(self, context):
         show_dock(context, self.dock)

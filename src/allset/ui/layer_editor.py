@@ -20,6 +20,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 
+from .. import i18n
 from . import chrome
 from ..operators import naming
 
@@ -749,7 +750,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
         tabs.alignment = 'LEFT'
         tabs.scale_y = 0.9
         for ident, label, _tip in TABS:
-            tabs.prop_enum(wm, "allset_le_tab", ident, text=f"  {label}  ")
+            tabs.prop_enum(wm, "allset_le_tab", ident, text=f"  {i18n.iface(label)}  ", translate=False)
         chrome.menu_bar(layout, MENU_BAR)
         if wm.allset_le_tab == 'ANIM':
             draw_anim_tab(layout, context)    # step 180: Maya animation layers on NLA tracks

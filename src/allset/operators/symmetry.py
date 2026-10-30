@@ -21,6 +21,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty
 
+from .. import i18n
+
 AXES = ("X", "Y", "Z")
 ABOUT = (("OBJECT", "Object", "Mirror across the object's own axis"),
          ("WORLD", "World", "Mirror across the world axis"),
@@ -70,7 +72,7 @@ def mode_of(sym):
 def label(sym):
     """Status Line text: Maya's "Symmetry: Off" or the mode name."""
     mode = mode_of(sym)
-    return "Symmetry: Off" if mode == "OFF" else dict(MODES)[mode]
+    return i18n.mark("Symmetry: Off") if mode == "OFF" else dict(MODES)[mode]
 
 
 def set_mode(sym, mode):

@@ -11,7 +11,7 @@ import time
 
 import bpy
 
-from .. import live_refs
+from .. import i18n, live_refs
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
@@ -697,9 +697,10 @@ def tooltip(path, mapped):
     n = NOTICES.get(path) or PANEL_NOTICES.get(path) or PANEL_MENU.get(path) or (None if mapped else category(path))
     if n is None:
         return None
-    substitute, line = n
-    head = f"Maya: {path}  →  Blender: {substitute}" if mapped else f"Maya: {path} (greyed)  →  {substitute}"
-    show(f"{path.rsplit('/', 1)[-1]}: {line}")
+    substitute, line = (i18n.tip(part) for part in n)     # in the tooltip language
+    shown = i18n.path(path, i18n.tip)
+    head = f"Maya: {shown}  →  Blender: {substitute}" if mapped else f"Maya: {shown} (greyed)  →  {substitute}"
+    show(f"{shown.rsplit('/', 1)[-1]}: {line}")
     return f"{head}\n{line}"
 
 
@@ -759,11 +760,11 @@ class ALLSET_OT_tip(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return props.text
+        return i18n.tip(props.text)
 
     def execute(self, context):
         if self.text:
-            show(self.text)
+            show(i18n.tip(self.text))
         return {'FINISHED'}
 
 

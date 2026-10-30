@@ -26,7 +26,7 @@ from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProp
 
 from .. import results
 from ..operators import auto_key, display
-from .. import compat
+from .. import compat, i18n
 from . import cb_entry, cb_points, chrome
 
 # Maya's dock is one tab stack with vertical tabs on its right edge: the
@@ -2158,12 +2158,13 @@ class ALLSET_MT_cb_show(bpy.types.Menu):
 MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit"),
             ("Object", "ALLSET_MT_cb_object"), ("Show", "ALLSET_MT_cb_show"))
 # Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).
-EMPTY_TEXT = ("Select objects in the scene to view,", "edit and set keyframes on channels", "(attributes)")
+EMPTY_TEXT = (i18n.mark("Select objects in the scene to view,"), i18n.mark("edit and set keyframes on channels"),
+              i18n.mark("(attributes)"))
 
 
 # step 241 (#156): an unskinned skeleton's joints are edited in Edit mode (W / E / R reposition them); their keyable
 # channels are in Pose mode
-PLACING_TEXT = ("Editing joints: W / E / R move them,", "F8 = pose mode (channels and keys)")
+PLACING_TEXT = (i18n.mark("Editing joints: W / E / R move them,"), i18n.mark("F8 = pose mode (channels and keys)"))
 # step 258 (#155 H3-4): short enough for the dock at its default width (the longer text was cut at UI scale 1.25)
 POSE_HINT = "Ctrl+Tab: joint channels"
 

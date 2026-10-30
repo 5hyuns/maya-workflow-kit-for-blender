@@ -20,7 +20,7 @@ Shift / Ctrl+click.
 import bpy
 
 # In widget units (toolbar_fit.unit)
-from .. import compat
+from .. import compat, i18n
 LEAD_UNITS = compat.MENU_BAR_LEAD_UNITS   # top bar region left -> first Maya menu button (4.5 1.48, 5.x 1.25)
 TEXT_UNITS = 1.6         # menu edge -> item text (menu padding + icon column)
 PAD_SUB_UNITS = 1.6      # widest text -> menu right edge when the menu has submenu rows (arrow column)
@@ -74,8 +74,7 @@ def rows(path):
     if got is None or not got[0]:
         return None
     items, prefix, top_label = got
-    kids = [(p, ((menu_sets._dynamic_label(p, it[0]),) + tuple(it[1:])) if p is not None else it)
-            for p, it in menu_sets.children(items, prefix)]
+    kids = menu_sets.menu_rows(items, prefix)       # labels in the interface language
     plain = [(p, it[0], p in menu_sets.OPTION_BOXES) for p, it in kids
              if p is not None and not (menu_sets.sub_items(p, it) and p not in menu_map.MAP)]
     texts = menu_sets.item_texts(plain)
@@ -83,14 +82,14 @@ def rows(path):
     for p, it in kids:
         if p is None:
             if len(it) > 1 and it[1]:
-                out.append((it[1], False))
+                out.append((i18n.iface(it[1]), False))   # drawn by Blender, translated
         elif menu_sets.sub_items(p, it) and p not in menu_map.MAP:
             out.append((it[0] + (menu_sets.BOX_MARK if p in menu_sets.OPTION_BOXES else ""), True))
         else:
             out.append((texts[p], False))
     blender = menu_map.BLENDER_MENU.get(top_label) if top_label else None
     if blender:
-        out.append((blender[1], True))
+        out.append((i18n.iface(blender[1]), True))
     return out, texts
 
 

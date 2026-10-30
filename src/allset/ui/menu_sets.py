@@ -15,7 +15,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
-from .. import results
+from .. import i18n, results
 from .. import compat, undo_steps
 from . import draw_safe, editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices, option_click
 
@@ -92,25 +92,26 @@ def current_set(context=None):
 
 # --- items ---------------------------------------------------------------------
 
-def draw_item(layout, path, label, icon_value=0):
+def draw_item(layout, path, label, icon_value=0, translate=True):
     """Draw one Maya menu item: its Blender action, or greyed out. An item with a "not in Blender" notice and an
     operator substitute runs through ``allset.menu_item``, whose tooltip carries the notice (step 54). So does a
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
     enabled and runs or warns (step 101, ``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
-    (``menu_icons``, step 131), 0 = none."""
+    (``menu_icons``, step 131), 0 = none. ``translate=False``: ``label`` is already in the interface language."""
     s = menu_map.spec(path)
     # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
     # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``allset.menu_item``, which
     # no key runs, so only the Maya hotkey drawn into the label shows (step 108).
     if s is not None and s[0] == "op" and path in menu_map.GREY_ON_POLL and not op_polls(s[1]):
-        draw_spec(layout, label, s, path, icon_value=icon_value)    # Maya greys it in this state (step 203)
+        draw_spec(layout, label, s, path, icon_value=icon_value, translate=translate)  # Maya greys it here
         return
     if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
             notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
-        op = draw_safe.op(layout, ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value)
+        op = draw_safe.op(layout, ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value,
+                          translate=translate)
         op.item, op.clicked = path, True
         return
-    draw_spec(layout, label, s, path, icon_value=icon_value)
+    draw_spec(layout, label, s, path, icon_value=icon_value, translate=translate)
 
 
 def _has_saved_options(path):
@@ -149,16 +150,19 @@ def maya_warning(path, target):
     return f"{label}: select {what} first."
 
 
-def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
+def draw_spec(layout, label, s, path, icon='NONE', icon_value=0, translate=True):
     """Draw a normalised action (``menu_map.normalize``); None = greyed out with
-    ``path`` (the Maya menu path) in the tooltip. ``icon_value`` (a kit icon) wins over ``icon``."""
+    ``path`` (the Maya menu path) in the tooltip. ``icon_value`` (a kit icon) wins over ``icon``.
+    ``translate=False``: ``label`` is already in the interface language (Blender doesn't look it up again)."""
     iv = {"icon_value": icon_value} if icon_value else {"icon": icon}
+    if not translate:
+        iv["translate"] = False
     if s is None:
         draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label, **iv).item = path
         return
     kind, target, props = s
     if kind == "prop":
-        draw_prop(layout, label, target, props, path)
+        draw_prop(layout, label, target, props, path, translate=translate)
     elif kind == "menu":
         layout.menu(proxy_menu(target), text=label, **iv)
     elif kind == "pie":
@@ -202,13 +206,14 @@ def prop_owner(context, target):
     return (owner, attr) if hasattr(owner, attr) else (None, attr)
 
 
-def draw_prop(layout, label, target, props, path=""):
+def draw_prop(layout, label, target, props, path="", translate=True):
     """A Maya check item = Blender's check box; a radio choice = ``prop_enum`` for enums, else a radio-marked
     button that sets the value (``allset.menu_set_value``). Greyed with the notice when the property isn't
     there in this context (e.g. a Graph Editor setting drawn from another editor)."""
     owner, attr = prop_owner(bpy.context, target)
+    tr = {} if translate else {"translate": False}
     if owner is None:
-        draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label).item = path
+        draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label, **tr).item = path
         return
     if "value" not in props:
         from . import maya_dock
@@ -216,18 +221,18 @@ def draw_prop(layout, label, target, props, path=""):
         if maya_dock.drawing_torn() and isinstance(current, bool):
             # a torn-off menu is a panel with menu emboss, where Blender drops a check box (Blender 5.2):
             # the check mark is drawn as the item's icon
-            layout.prop(owner, attr, text=label, icon='CHECKBOX_HLT' if current else 'CHECKBOX_DEHLT')
+            layout.prop(owner, attr, text=label, **tr, icon='CHECKBOX_HLT' if current else 'CHECKBOX_DEHLT')
             return
-        layout.prop(owner, attr, text=label)
+        layout.prop(owner, attr, text=label, **tr)
         return
     value = props["value"]
     rna = owner.bl_rna.properties.get(attr)
     if rna is not None and rna.type == 'ENUM':
-        layout.prop_enum(owner, attr, value, text=label)
+        layout.prop_enum(owner, attr, value, text=label, **tr)
         return
     current = getattr(owner, attr)
     on = abs(current - value) < 1e-6 if isinstance(value, float) else current == value
-    op = draw_safe.op(layout, ALLSET_OT_menu_set_value.bl_idname, text=label,
+    op = draw_safe.op(layout, ALLSET_OT_menu_set_value.bl_idname, text=label, **tr,
                       icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF')
     op.target, op.value = target, repr(value)
 
@@ -262,16 +267,17 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 # (``operators/option_windows.py``) or the command's own settings. Since step 146 (#82) the hold needs no drag:
 # the pointer is put on the hold menu's "Option Box" row, so letting go runs it.
 BOX_MARK = "  ❒"
-BOX_TIP = "❒ Option box: click the box, or press and hold the item (or Shift / Ctrl+click)"
+BOX_TIP = i18n.mark("❒ Option box: click the box, or press and hold the item (or Shift / Ctrl+click)")
 
 
 def _draw_boxed(layout, path, text, icon_value=0):
-    """An item with a Maya option box; ``text`` already ends with the box mark (``item_texts``)."""
+    """An item with a Maya option box; ``text`` already ends with the box mark (``item_texts``) and is in the
+    interface language."""
     s = menu_map.spec(path)
     if s is None or s[0] in ("menu", "pie"):
-        draw_spec(layout, text, s, path, icon_value=icon_value)
+        draw_spec(layout, text, s, path, icon_value=icon_value, translate=False)
         return
-    op = draw_safe.op_hold(layout, ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value,
+    op = draw_safe.op_hold(layout, ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value, translate=False,
                            menu=ALLSET_MT_option_box.bl_idname)
     op.item, op.clicked = path, True
 
@@ -358,19 +364,26 @@ def item_texts(rows, size=None):
 
 
 def _dynamic_label(path, label):
-    """Maya labels built when the menu opens: Edit > Repeat = 'Repeat "<last command>"' (Maya 2022 Edit menu)."""
+    """The label a menu row shows, in the interface language. Maya labels built when the menu opens:
+    Edit > Repeat = 'Repeat "<last command>"' (Maya 2022 Edit menu)."""
     if path == "Edit/Repeat":
         from ..operators import repeat_maya
         try:
             return repeat_maya.label(bpy.context)
         except (AttributeError, ReferenceError):
-            return label
-    return label
+            pass
+    return i18n.iface(label)
+
+
+def menu_rows(items, prefix):
+    """(path, item) rows of a Maya menu with each item's label as shown (``_dynamic_label``); separators as they
+    are. Shared with ``option_click``, which models the drawn widths."""
+    return [(path, ((_dynamic_label(path, it[0]),) + tuple(it[1:])) if path is not None else it)
+            for path, it in children(items, prefix)]
 
 
 def _draw_items(layout, items, prefix, submenus):
-    kids = [(path, ((_dynamic_label(path, it[0]),) + tuple(it[1:])) if path is not None else it)
-            for path, it in children(items, prefix)]
+    kids = menu_rows(items, prefix)
     texts = item_texts([(path, it[0], path in OPTION_BOXES) for path, it in kids
                         if path is not None and not (sub_items(path, it) and path not in menu_map.MAP)])
     for path, it in kids:
@@ -383,11 +396,12 @@ def _draw_items(layout, items, prefix, submenus):
             continue
         iv = menu_icons.icon_value(path)
         if sub_items(path, it) and path not in menu_map.MAP:
-            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""), icon_value=iv)
+            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""), icon_value=iv,
+                        translate=False)
         elif path in OPTION_BOXES:
             _draw_boxed(layout, path, texts[path], iv)
         else:
-            draw_item(layout, path, texts[path], iv)
+            draw_item(layout, path, texts[path], iv, translate=False)
 
 
 def _section_label(layout, text):
@@ -503,7 +517,7 @@ class ALLSET_OT_menu_unavailable(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return notices.tooltip(props.item, mapped=False) or f"Maya: {props.item}\nNo Blender equivalent in Maya Workflow Kit yet"
+        return notices.tooltip(props.item, mapped=False) or _no_equivalent(props.item)
 
     def execute(self, context):
         return {'CANCELLED'}
@@ -526,11 +540,10 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
     @classmethod
     def description(cls, context, props):
         if props.item not in menu_map.MAP:
-            return notices.tooltip(props.item, mapped=False) or \
-                f"Maya: {props.item}\nNo Blender equivalent in Maya Workflow Kit yet"
+            return notices.tooltip(props.item, mapped=False) or _no_equivalent(props.item)
         text = notices.tooltip(props.item, mapped=True) or _op_description(props.item)
         if props.item in OPTION_BOXES:
-            text += "\n" + BOX_TIP
+            text += "\n" + i18n.tip(BOX_TIP)
         return text
 
     def execute(self, context):
@@ -571,15 +584,23 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _no_equivalent(path):
+    """Tooltip of a greyed Maya item without a notice, in the tooltip language."""
+    return f"Maya: {i18n.path(path, i18n.tip)}\n" + i18n.tip("No Blender equivalent in Maya Workflow Kit yet")
+
+
 def _op_description(path):
+    """Tooltip of a mapped item: its Blender operator's description, else the item's label (tooltip language)."""
     s = menu_map.spec(path)
     if s is not None and s[0] in ("op", "v3d"):
         try:
             mod, name = s[1].split(".")
-            return getattr(getattr(bpy.ops, mod), name).get_rna_type().description or path.rsplit('/', 1)[-1]
+            text = getattr(getattr(bpy.ops, mod), name).get_rna_type().description
+            if text:
+                return i18n.tip(text)
         except (AttributeError, KeyError, ValueError):
             pass
-    return path.rsplit('/', 1)[-1]
+    return i18n.tip(path.rsplit('/', 1)[-1])
 
 
 # Values for commands run on a whole object:

@@ -14,7 +14,7 @@ import os
 
 import bpy
 
-from . import preferences
+from . import i18n, preferences
 
 # Square art made by tools/make_splash.py (icons are square; the 2:1 splash would letterbox).
 WELCOME_IMAGE = os.path.join(os.path.dirname(__file__), "welcome.png")
@@ -55,14 +55,14 @@ def opt_in(open_layout=True):
 # Body text, wrapped to the room left of the icon: fixed lines were cut ("the Maya colou...") at 125 %
 # UI scale (step 124).
 PARAGRAPHS = (
-    "The whole Maya workflow in Blender, in one install.",
-    "Nothing has changed yet. Make Blender feel like Maya turns on the Maya-style keys: Alt+mouse, QWER, Space "
-    "hotbox, marking menus; the Maya layout, menus, Channel Box and shelf.",
-    "Your Blender preferences are never changed: the Maya | Blender switch at the top right or Ctrl+Alt+Shift+M "
-    "goes back to plain Blender at any time.",
+    i18n.mark("The whole Maya workflow in Blender, in one install."),
+    i18n.mark("Nothing has changed yet. Make Blender feel like Maya turns on the Maya-style keys: Alt+mouse, QWER, "
+              "Space hotbox, marking menus; the Maya layout, menus, Channel Box and shelf."),
+    i18n.mark("Your Blender preferences are never changed: the Maya | Blender switch at the top right or "
+              "Ctrl+Alt+Shift+M goes back to plain Blender at any time."),
     # step 141 (B6): the kit may not raise Blender's undo depth itself
-    "Tip: Maya's undo is unlimited, Blender keeps 32 steps by default. Raise Edit > Preferences > System > Undo "
-    "Steps to 256 if you like Maya's long undo.",
+    i18n.mark("Tip: Maya's undo is unlimited, Blender keeps 32 steps by default. Raise Edit > Preferences > System > "
+              "Undo Steps to 256 if you like Maya's long undo."),
 )
 WELCOME_SHOWS = 2       # starts the welcome dialog opens on until it is confirmed (step 260)
 DIALOG_WIDTH = 640      # unscaled px
@@ -84,16 +84,20 @@ def text_width(text, size):
 
 def wrap(text, width, size, measure=text_width):
     """Words of ``text`` in lines no wider than ``width`` px at font ``size`` (a word longer than a line stays whole)."""
+    if any(i18n.width(ch) == 2 for ch in text):    # Chinese / Japanese: a line may break between any two characters
+        words, sep = [w for w in i18n.split_points(text) if w.strip()], ""
+    else:
+        words, sep = text.split(), " "
     lines, cur = [], ""
-    for word in text.split():
-        cand = f"{cur} {word}" if cur else word
+    for word in words:
+        cand = f"{cur}{sep}{word}" if cur else word
         if cur and measure(cand, size) > width:
-            lines.append(cur)
+            lines.append(cur.rstrip())
             cur = word
         else:
             cur = cand
     if cur:
-        lines.append(cur)
+        lines.append(cur.rstrip())
     return lines
 
 
@@ -115,7 +119,8 @@ class ALLSET_OT_welcome(bpy.types.Operator):
         if prefs.welcome_shown >= WELCOME_SHOWS:
             prefs.welcome_done = True
         return context.window_manager.invoke_props_dialog(
-            self, width=DIALOG_WIDTH, title="Welcome to Maya Workflow Kit", confirm_text="Make Blender feel like Maya")
+            self, width=DIALOG_WIDTH, title=i18n.iface("Welcome to Maya Workflow Kit"),
+            confirm_text=i18n.iface("Make Blender feel like Maya"))
 
     def draw(self, context):
         icon = _splash_icon()
@@ -136,8 +141,8 @@ class ALLSET_OT_welcome(bpy.types.Operator):
         for k, para in enumerate(paras):
             if k:
                 col.separator()
-            for line in wrap(para, width, size):
-                col.label(text=line)
+            for line in wrap(i18n.iface(para), width, size):      # translated before wrapping
+                col.label(text=line, translate=False)
 
     def execute(self, context):
         preferences.get(context).welcome_done = True
