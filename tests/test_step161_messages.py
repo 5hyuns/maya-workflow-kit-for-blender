@@ -19,7 +19,7 @@ PKG = os.path.dirname(import_module(kit.MODULE).__file__)
 HINT_REPORTS = {
     "operators/cut_sew.py": 1,
     "operators/graph_menu_198.py": 1,     # Add Key Tool usage hint (step 198)
-    "operators/quad_draw.py": 2,
+    "operators/quad_draw.py": 3,
     "ui/script_editor.py": 1,
 }
 

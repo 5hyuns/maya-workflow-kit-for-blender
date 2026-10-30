@@ -128,4 +128,82 @@ def s_between():
           len(sel) == 3 and all(e.select for e in row))
 
 
+def front_face():
+    """A face of the big cube's front side (-Y), its middle one."""
+    ob, bm = edit()
+    y = min(v.co.y for v in bm.verts)
+    fs = [f for f in bm.faces if all(abs(v.co.y - y) < 1e-4 for v in f.verts)]
+    return ob, bm, min(fs, key=lambda f: (f.calc_center_median().x ** 2 + f.calc_center_median().z ** 2))
+
+
+def shell_of(face):
+    seen, todo = {face}, [face]
+    while todo:
+        f = todo.pop()
+        for e in f.edges:
+            for g in e.link_faces:
+                if g not in seen:
+                    seen.add(g)
+                    todo.append(g)
+    return seen
+
+
+@step
+def s_second_shell():
+    # #222: a second, separate piece in the same mesh (Maya: double-click picks only the shell under the mouse)
+    ob, bm = edit()
+    bm.select_mode = {'FACE'}
+    half = max(abs(c) for v in bm.verts for c in v.co)      # the big cube's half size (template units)
+    bmesh.ops.create_cube(bm, size=half * 0.3,
+                          matrix=__import__("mathutils").Matrix.Translation((0.0, 0.0, half * 1.6)))
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    bmesh.update_edit_mesh(ob.data)
+    bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+    ob, _bm, f = front_face()
+    C["x"], C["y"] = screen_of(ob, f.calc_center_median())
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+@step
+def s_face_click():
+    ev('LEFTMOUSE', 'PRESS')
+    ev('LEFTMOUSE', 'RELEASE')
+
+
+@step
+def s_face_double_click():
+    got = invoke(False)
+    ob, bm, f = front_face()
+    want = {g.index for g in shell_of(f)}
+    sel = {g.index for g in bm.faces if g.select}
+    check(f"#222: double-click a face selects its shell ({got}, {len(sel)} faces, shell {len(want)}, mesh "
+          f"{len(bm.faces)})",
+          sel == want and len(want) < len(bm.faces))
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.context.tool_settings.mesh_select_mode = (True, False, False)
+    ob, bm = edit()
+    y = min(v.co.y for v in bm.verts)
+    v = min((v for v in bm.verts if abs(v.co.y - y) < 1e-4), key=lambda v: v.co.x ** 2 + v.co.z ** 2)
+    C["x"], C["y"] = screen_of(ob, v.co)
+    _o, _b, f = front_face()
+    C["shell_verts"] = {u.index for g in shell_of(f) for u in g.verts}
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+@step
+def s_vert_click():
+    ev('LEFTMOUSE', 'PRESS')
+    ev('LEFTMOUSE', 'RELEASE')
+
+
+@step
+def s_vert_double_click():
+    got = invoke(False)
+    _ob, bm = edit()
+    sel = {v.index for v in bm.verts if v.select}
+    check(f"#222: double-click a vertex selects its shell's vertices ({got}, {len(sel)} of {len(bm.verts)})",
+          sel == C["shell_verts"] and len(sel) < len(bm.verts))
+
+
 run()

@@ -129,6 +129,8 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
     angle: FloatProperty(name="Angle", default=30.0, min=0.0, max=180.0,
                          description="Default 30: faces at a smaller angle shade smooth across the edge")
     option_box: BoolProperty(options={'HIDDEN', 'SKIP_SAVE'})
+    # Quad Draw's options menu: every edge of the edited mesh, then nothing stays selected
+    whole: BoolProperty(options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
@@ -143,7 +145,11 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
         for ob in _meshes(context):
             if ob.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(ob.data)
-                soften_harden(bm, self.angle, [e for e in bm.edges if e.select] or None)
+                soften_harden(bm, self.angle, None if self.whole else ([e for e in bm.edges if e.select] or None))
+                if self.whole:
+                    for seq in (bm.verts, bm.edges, bm.faces):
+                        for el in seq:
+                            el.select = False
                 bmesh.update_edit_mesh(ob.data)
             else:
                 bm = bmesh.new()

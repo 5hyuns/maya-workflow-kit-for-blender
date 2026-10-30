@@ -207,7 +207,6 @@ class ALLSET_TL_quad_draw(bpy.types.WorkSpaceTool):
         ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "any": True},
          {"properties": [("middle", True)]}),
         ("allset.quad_draw_tab", {"type": 'TAB', "value": 'PRESS'}, None),
-        ("allset.quad_draw_options", {"type": 'RIGHTMOUSE', "value": 'PRESS', 'ctrl':True,'shift':True}, None),
         ("allset.quad_draw_exit", {"type": 'ESC', "value": 'PRESS'}, None),
         *_hover_items(),
     )

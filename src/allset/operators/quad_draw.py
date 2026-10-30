@@ -32,6 +32,7 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
 from . import mesh_tools, multi_cut, poly_draw, preselect, quad_draw_symmetry
+from .. import results
 
 TOOL = "allset.quad_draw_tool"
 DOT_LAYER = "allset_dot"   # int vertex layer: 1 = a Quad Draw dot (a loose vertex until a face uses it)
@@ -1777,7 +1778,7 @@ class ALLSET_OT_quad_draw_pick_seam(bpy.types.Operator):
                         self.report({'WARNING'},str(ex));return {'RUNNING_MODAL'}
                     from . import symmetry
                     sym=symmetry.state(ctx.scene);sym.on=True;sym.about='TOPOLOGY';sym.last='TOPOLOGY';symmetry.apply(sym,[ob])
-                    _geometry_reset(None);self.report({'INFO'},'Reference seam bound: '+reference.name)
+                    _geometry_reset(None);results.result(self, 'Reference seam bound: '+reference.name)
                     return self._end(ctx,{'FINISHED'})
                 return {'RUNNING_MODAL'}
             comp=component_at(ctx,region,ctx.region_data,mouse,ob,edges_only=True)
@@ -1835,32 +1836,6 @@ class ALLSET_OT_restore_modeling_display(bpy.types.Operator):
         _overlay_save_runtime.pop(ptr, None)
         _set_overlay_values(space, (False, original[1], original[2]))
         context.area.tag_redraw()
-        return {'FINISHED'}
-
-
-class ALLSET_MT_quad_draw_options(bpy.types.Menu):
-    bl_label='Quad Draw'
-
-    def draw(self,context):
-        s=poly_draw.settings(context)
-        pie=self.layout.menu_pie()
-        box=pie.box();box.label(text='Auto-weld');box.prop(s,'qd_auto_weld',text='Enabled');box.prop(s,'qd_weld_px',text='Tolerance (px)')
-        box=pie.box();box.label(text='Extend');box.prop(s,'qd_extend',expand=True)
-        box=pie.box();box.label(text='Relax');box.prop(s,'qd_relax',expand=True)
-        box=pie.box();box.prop(s,'qd_strip_width',text='Strip Width');box.operator('allset.quad_draw_clear_dots',text='Clear Dots')
-        box.operator('allset.poly_tools_reset',text='Reset Settings').kind='QUAD_DRAW'
-
-
-class ALLSET_OT_quad_draw_options(bpy.types.Operator):
-    bl_idname='allset.quad_draw_options'
-    bl_label='Quad Draw Options'
-    bl_options={'INTERNAL'}
-
-    @classmethod
-    def poll(cls,context):return tool_active(context)
-
-    def invoke(self,context,event):
-        bpy.ops.wm.call_menu_pie('INVOKE_DEFAULT',name='ALLSET_MT_quad_draw_options')
         return {'FINISHED'}
 
 
@@ -2182,7 +2157,7 @@ class ALLSET_OT_quad_draw_start(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_quad_draw_hover, ALLSET_OT_quad_draw, ALLSET_OT_quad_draw_tab, ALLSET_OT_quad_draw_clear_dots,
-           ALLSET_OT_quad_draw_exit, ALLSET_OT_restore_modeling_display, ALLSET_OT_quad_draw_start,ALLSET_MT_quad_draw_options,ALLSET_OT_quad_draw_options,ALLSET_OT_quad_draw_pick_seam)
+           ALLSET_OT_quad_draw_exit, ALLSET_OT_restore_modeling_display, ALLSET_OT_quad_draw_start,ALLSET_OT_quad_draw_pick_seam)
 
 
 def register_handlers():

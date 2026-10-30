@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's double-click component selection (issue #22, step 129).
+"""Maya's double-click component selection (issue #22, step 129; Maya 2026 rules, #222).
 
-Maya 2022 polygon selection: double-click an edge = its edge loop (vertex: the vertex loop along the
-nearest edge, face: the face loop across the nearest edge); select a component, then Shift+double-click a
-second one on the same loop = the run of components between the two (both kept). A second component on no
-common loop gets its whole loop added, like a Shift+double-click on its own.
+Maya 2026 polygon selection: double-click an edge = its edge loop; double-click a vertex or a face = every
+vertex / face of its shell (the connected piece of the mesh). Select a component, then Shift+double-click a
+second one on the same loop = the run of components between the two (both kept); for two neighbouring faces
+that run is the whole face loop through both. A second component on no common loop gets its whole loop added.
 
-Blender has the loop pick (``mesh.loop_select``: nearest edge decides the direction in every select mode) but
-no "between two picks on the loop" — ``mesh.shortest_path_select`` takes any shortest path — so the run is
-walked here in bmesh: an edge loop continues through a 4-valence vertex on the edge that shares no face with
-the current one, a face loop crosses a quad to its opposite edge.
+Blender has the loop pick (``mesh.loop_select``: nearest edge decides the direction in every select mode) and
+the linked pick (``mesh.select_linked_pick``) but no "between two picks on the loop" — ``mesh.shortest_path_select``
+takes any shortest path — so the run is walked here in bmesh: an edge loop continues through a 4-valence vertex
+on the edge that shares no face with the current one, a face loop crosses a quad to its opposite edge.
 
 Keymap: "Mesh" LEFTMOUSE DOUBLE_CLICK (Shift = between). A double-click is first offered to every keymap as
 DOUBLE_CLICK and re-sent as PRESS only when nothing took it, so the select tool's own press items keep
@@ -109,6 +109,40 @@ def face_run(a, b):
     return _shortest(found)
 
 
+def face_loop(a, b):
+    """The whole face loop through the neighbouring faces ``a`` and ``b`` (across their shared edge), or None."""
+    shared = next((e for e in a.edges if b in e.link_faces), None)
+    if shared is None:
+        return None
+    loop = [a]
+    for start, across in ((a, shared), (b, None)):
+        cur = start
+        if across is None:          # walk on from b, away from a
+            loop.append(b)
+            if len(b.verts) != 4:
+                continue
+            gone = set(shared.verts)
+            across = next((e for e in b.edges if not (set(e.verts) & gone)), None)
+            cur = b
+        else:                       # walk on from a, away from b
+            if len(a.verts) != 4:
+                continue
+            gone = set(shared.verts)
+            across = next((e for e in a.edges if not (set(e.verts) & gone)), None)
+        while across is not None:
+            others = [f for f in across.link_faces if f is not cur]
+            if len(others) != 1 or others[0] in loop:
+                break
+            nf = others[0]
+            loop.append(nf)
+            if len(nf.verts) != 4:
+                break
+            gone = set(across.verts)
+            across = next((e for e in nf.edges if not (set(e.verts) & gone)), None)
+            cur = nf
+    return loop
+
+
 def select_run(bm):
     """Select the run between the last two components of the select history; count selected, or 0 when they
     are on no common loop (or the history has no such pair)."""
@@ -126,6 +160,8 @@ def select_run(bm):
         elems = (run[0] + run[1]) if run else []
     else:
         run = face_run(a, b)
+        if run is not None and len(run) == 2:     # neighbours: Maya takes the whole face loop through both
+            run = face_loop(a, b)
         elems = run or []
     if not run:
         return 0
@@ -133,6 +169,12 @@ def select_run(bm):
         el.select_set(True)
     bm.select_history.add(b)     # the second pick stays the active component
     return len(elems)
+
+
+def shell_mode(select_mode):
+    """True when a plain double-click picks the shell: vertex or face select mode without edges."""
+    vert, edge, face = select_mode
+    return (vert or face) and not edge
 
 
 def loop_select_args(extend):
@@ -143,8 +185,8 @@ def loop_select_args(extend):
 
 @undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_loop_pick(bpy.types.Operator):
-    """Maya double-click: select the loop under the mouse; Shift: the components between the last pick and
-    this one along their loop"""
+    """Maya double-click: an edge selects its loop, a vertex or face its shell; Shift: the components between the
+    last pick and this one along their loop"""
     bl_idname = "allset.loop_pick"
     bl_label = "Select Loop (Maya Double-Click)"
     bl_options = {'REGISTER', 'UNDO'}
@@ -175,9 +217,11 @@ class ALLSET_OT_loop_pick(bpy.types.Operator):
     def invoke(self, context, event):
         if self.between and self._between(context):
             return {'FINISHED'}
-        # plain double-click, or a second pick on no common loop: Blender's loop pick at the mouse
-        # (Shift adds the loop to the selection)
+        # plain double-click on a vertex / face: its shell (Maya 2026); on an edge, or a second pick on no common
+        # loop: Blender's loop pick at the mouse (Shift adds the loop to the selection)
         try:
+            if not self.between and shell_mode(context.tool_settings.mesh_select_mode):
+                return bpy.ops.mesh.select_linked_pick('INVOKE_DEFAULT', deselect=False, delimit=set())
             return bpy.ops.mesh.loop_select('INVOKE_DEFAULT', **loop_select_args(self.between))
         except RuntimeError:
             return {'PASS_THROUGH'}
