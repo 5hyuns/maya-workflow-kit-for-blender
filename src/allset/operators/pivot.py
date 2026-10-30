@@ -257,6 +257,38 @@ def pivot_mode(context=None):
     return scene is not None and context.mode == 'OBJECT' and scene.tool_settings.use_transform_data_origin
 
 
+def origins_for_groups(context):
+    """Before Blender's own Move in pivot mode: Affect Only Origins skips objects without data, so a group (an
+    Empty) would not move and V / X / C snapping its pivot did nothing (step 312). When no selected object has
+    data, that one transform runs with Affect Only Origins off: Affect Only Parents keeps the children in place
+    (and snappable), ``process`` turns the move into a pivot edit, and ``_tick`` turns the flag back on after it.
+    Returns True when it did."""
+    ts = context.scene.tool_settings
+    objects = context.selected_objects
+    if not pivot_mode(context) or not ts.use_transform_skip_children or not objects:
+        return False
+    if any(ob.data is not None for ob in objects):
+        return False
+    from . import hold
+    ts.use_transform_data_origin = False
+    _watch["origins_off"] = "pivot" in hold._state or hold._object_toggle_saved is not None
+    watch()
+    return True
+
+
+def _origins_back(context):
+    """Affect Only Origins back on after ``origins_for_groups``, unless the pivot edit ended meanwhile (D released)."""
+    held = _watch.pop("origins_off", None)
+    if held is None:
+        return
+    from . import hold
+    ts = context.scene.tool_settings
+    if held and "pivot" not in hold._state and hold._object_toggle_saved is None:
+        return
+    if not ts.use_transform_data_origin and ts.use_transform_skip_children:
+        ts.use_transform_data_origin = True
+
+
 def _selected(context):
     return [ob for ob in context.selected_objects]
 
@@ -287,6 +319,7 @@ def _tick():
         if _transform_running():
             return POLL / 2
         context = bpy.context
+        _origins_back(context)
         if context.mode == 'OBJECT':
             process(context)
         if pivot_mode(context):
