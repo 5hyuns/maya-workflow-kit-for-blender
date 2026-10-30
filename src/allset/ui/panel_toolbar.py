@@ -346,8 +346,10 @@ def _draw_item(row, context, item, text=""):
     if kind == "set":
         on = bool(panel_menus.state(context, data))
         sub = _flat(row, on, bool(text))
-        if data in panel_menus.CAMERA_KEYS or data == "SELECT_CAMERA":
+        if data in panel_menus.CAMERA_KEYS:
             sub.enabled = panel_menus.view_camera(context) is not None
+        elif data == "SELECT_CAMERA":
+            sub.enabled = panel_menus.panel_camera(context) is not None
         op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text=text, icon_value=_icon(glyph),
                           depress=on)
         op.key, op.toggle = data, True

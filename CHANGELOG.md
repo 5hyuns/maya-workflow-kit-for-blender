@@ -17,7 +17,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
     is never changed.
   - **ViewCube**: a softer perspective, shaded faces and hover controls — Home, roll arrows on a face-aligned view,
     small orbit arrows and a menu.
-  - **Selected wire**: a selected object's back edges no longer show through its faces.
+  - **Selected wire**: a selected object's back edges no longer show through its faces, also when zoomed far
+    out in a centimetre scene (#243, #229).
 
 ### Changed
 - **Double-click a vertex or face** selects its whole shell (the connected piece), like Maya 2026; an edge still
@@ -70,6 +71,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Target Weld skips hidden components in shaded mode** (#233, thanks @Troyzerk for the report and the fix idea):
   the press and the drop only pick vertices / edges you can see, like the pre-selection highlight; with X-ray or
   wireframe they pick through the mesh again.
+- **View > Select Camera** in a view that doesn't look through a camera picks that panel's own Maya camera — persp,
+  top, front or side — in scenes made with File > New Scene, instead of doing nothing (#229).
 
 ## [0.7.0] — 2026-10-29
 

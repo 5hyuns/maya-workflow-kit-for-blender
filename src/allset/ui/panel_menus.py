@@ -59,6 +59,32 @@ def view_camera(context):
     return context.scene.camera
 
 
+# Maya's startup camera of an orthographic view by its looking direction (Blender Z-up world)
+_ORTHO_CAMERAS = (("top", (0.0, 0.0, -1.0)), ("front", (0.0, 1.0, 0.0)), ("side", (-1.0, 0.0, 0.0)))
+
+
+def panel_camera(context):
+    """Maya's camera of this panel: the camera it looks through, else the scene's startup camera of that view
+    (persp for a perspective view, top / front / side for those orthographic views), else None."""
+    cam = view_camera(context)
+    if cam is not None:
+        return cam
+    space = _space(context)
+    rv3d = context.region_data or getattr(space, "region_3d", None)
+    if rv3d is None:
+        return None
+    from ..operators import startup_cameras
+    found = {ob.get(startup_cameras.MARK): ob for ob in startup_cameras.cameras(context.scene)}
+    if rv3d.view_perspective == 'PERSP':
+        return found.get("persp")
+    from mathutils import Vector
+    forward = rv3d.view_rotation @ Vector((0.0, 0.0, -1.0))
+    for name, axis in _ORTHO_CAMERAS:
+        if forward.dot(Vector(axis)) > 0.999:
+            return found.get(name)
+    return None
+
+
 def camera_locked(ob):
     """Maya Lock Camera (camera -lockTransform): the kit locks the camera's location and rotation channels;
     Blender's camera-view navigation keeps locked channels (step 129)."""
@@ -82,7 +108,8 @@ EXPOSURE_LAST, GAMMA_LAST, TRANSFORM_LAST = "allset_exposure_last", "allset_gamm
 RAW = 'Raw'
 
 FAILS = {
-    "SELECT_CAMERA": "This view is not looking through a camera object (Blender's persp view has none)",
+    "SELECT_CAMERA": "This view has no camera: only scenes made with File > New Scene have Maya's persp / top / "
+                     "front / side cameras",
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
 }
@@ -309,12 +336,16 @@ def apply(context, key):
                     for name in _COPY_OVERLAY:
                         setattr(other.overlay, name, getattr(space.overlay, name))
     elif key == "SELECT_CAMERA":
-        cam = view_camera(context)
+        cam = panel_camera(context)
         if cam is None:
             return False
-        for ob in context.scene.objects:
-            if ob.visible_get():
-                ob.select_set(ob == cam)
+        for ob in context.view_layer.objects:
+            if ob is not None and ob.select_get():
+                ob.select_set(False)
+        try:
+            cam.select_set(True)
+        except RuntimeError:
+            pass
         context.view_layer.objects.active = cam
     elif key in CAMERA_KEYS:
         ob = view_camera(context)
