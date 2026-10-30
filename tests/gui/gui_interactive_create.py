@@ -482,6 +482,139 @@ def s_q_mid_shape():
 def s_y_back():
     check(f"Y (last tool) comes back to the creation tool ({tool()})", tool() == TOOL)
     key('Q')
+    prefs().exit_on_completion = True
+    mark()
+
+
+# --- a single click in the front view: default cube, upright, centred on the click
+step(lambda: start('CUBE'))
+
+
+@step
+def s_ortho_click():
+    x, y = at(0.6, 0.6)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+
+
+@step
+def s_ortho_click_up():
+    x, y = at(0.6, 0.6)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+@step
+def s_ortho_click_done():
+    obs = new_objects()
+    check(f"a click in the front view made one cube ({[o.name for o in obs]})", len(obs) == 1)
+    ob = obs[0]
+    n = node(ob)["attrs"]
+    check(f"the clicked cube stays upright: axis Y, rotation 0 ({(n['axisX'], n['axisY'], n['axisZ'])})",
+          (n["axisX"], n["axisY"], n["axisZ"]) == (0.0, 1.0, 0.0) and max(abs(c) for c in ob.rotation_euler) < 1e-9)
+    ys = [(ob.matrix_world @ v.co).y for v in ob.data.vertices]
+    check(f"centred on the view plane (y {min(ys):.4f} .. {max(ys):.4f})", abs(min(ys) + max(ys)) < 1e-4)
+    # back to the perspective view looking down at the grid
+    _area, region = main_view()
+    from mathutils import Euler
+    region.data.view_perspective = 'PERSP'
+    region.data.view_rotation = Euler((1.0, 0.0, 0.0)).to_quaternion()
+    mark()
+
+
+def k():
+    return mod(".operators.units").maya_unit(bpy.context.scene) or 1.0
+
+
+def ground(f, g):
+    """Where the screen point (f, g) of the main view meets the grid (z = 0)."""
+    from bpy_extras import view3d_utils
+    _area, region = main_view()
+    co = (int(region.width * f), int(region.height * g))      # whole pixels, like the drags
+    o = view3d_utils.region_2d_to_origin_3d(region, region.data, co)
+    d = view3d_utils.region_2d_to_vector_3d(region, region.data, co)
+    return o + d * (-o.z / d.z)
+
+
+def px(a, b):
+    return (at(*b)[0] - at(*a)[0]) / (bpy.context.preferences.system.ui_scale or 1.0)
+
+
+step(lambda: start('PYRAMID'))
+drag("pyramid", (0.5, 0.5), (0.56, 0.47))
+
+
+@step
+def s_pyramid_done():
+    obs = new_objects()
+    check(f"one drag made a pyramid ({[o.name for o in obs]})", len(obs) == 1 and not running())
+    a = node(obs[0])["attrs"]
+    d = ground(0.56, 0.47) - ground(0.5, 0.5)
+    big = max(abs(d.x), abs(d.y)) / k()
+    check(f"side = sqrt 2 x the larger ground offset ({a['sideLength']:.4f}, big {big:.4f})",
+          abs(a["sideLength"] - 2 ** 0.5 * big) < 1e-3)
+    lo, hi = world_z(obs[0])
+    check(f"a pyramid is centred on the grid ({lo:.4f} .. {hi:.4f})", abs(lo + hi) < 1e-4 and hi > 0)
+    mark()
+
+
+step(lambda: start('PIPE'))
+drag("pipe_r", (0.5, 0.5), (0.56, 0.5))
+drag("pipe_h", (0.56, 0.5), (0.56, 0.58))
+drag("pipe_t", (0.56, 0.58), (0.6, 0.58))
+
+
+@step
+def s_pipe_done():
+    obs = new_objects()
+    check(f"one pipe after three drags ({[o.name for o in obs]})", len(obs) == 1 and not running())
+    a = node(obs[0])["attrs"]
+    lo, hi = world_z(obs[0])
+    check(f"on the grid, Height attribute = twice the drawn height ({a['height']:.4f}, {lo:.4f} .. {hi:.4f})",
+          abs(lo) < 1e-4 and hi > 0 and abs(a["height"] - 2 * (hi - lo) / k()) < 1e-3)
+    t = 0.5 + 0.1 * px((0.56, 0.58), (0.6, 0.58))
+    check(f"thickness = 0.5 + 0.1 per px dragged sideways ({a['thickness']:.4f} vs {t:.4f})",
+          abs(a["thickness"] - t) < 1e-6)
+    mark()
+
+
+step(lambda: start('HELIX'))
+drag("helix_w", (0.5, 0.5), (0.56, 0.5))
+drag("helix_h", (0.56, 0.5), (0.56, 0.58))
+drag("helix_c", (0.56, 0.58), (0.6, 0.58))
+drag("helix_r", (0.6, 0.58), (0.62, 0.58))
+
+
+@step
+def s_helix_done():
+    obs = new_objects()
+    check(f"one helix after four drags ({[o.name for o in obs]})", len(obs) == 1 and not running())
+    a = node(obs[0])["attrs"]
+    d = (ground(0.56, 0.5) - ground(0.5, 0.5)).length / k()
+    check(f"width = 2 x the ground distance ({a['width']:.4f}, d {d:.4f})", abs(a["width"] - 2 * d) < 1e-3)
+    c = 3 + 0.1 * px((0.56, 0.58), (0.6, 0.58))
+    r = 0.4 + 0.1 * px((0.6, 0.58), (0.62, 0.58))
+    check(f"coils = 3 + 0.1 per px ({a['coils']:.4f} vs {c:.4f})", abs(a["coils"] - c) < 1e-6)
+    check(f"tube radius = 0.4 + 0.1 per px ({a['radius']:.4f} vs {r:.4f})", abs(a["radius"] - r) < 1e-6)
+    lo, hi = world_z(obs[0])
+    check(f"the coil path runs from the grid up: centre at half the height ({(lo + hi) / 2:.4f} vs "
+          f"{a['height'] * k() / 2:.4f})", abs((lo + hi) / 2 - a["height"] * k() / 2) < 1e-3)
+    mark()
+
+
+step(lambda: start('CONE'))
+drag("cone_r", (0.5, 0.5), (0.56, 0.5))
+drag("cone_h", (0.56, 0.5), (0.56, 0.42))      # down the screen = below the grid
+
+
+@step
+def s_cone_done():
+    obs = new_objects()
+    check(f"one cone ({[o.name for o in obs]})", len(obs) == 1 and not running())
+    a = node(obs[0])["attrs"]
+    lo, hi = world_z(obs[0])
+    check(f"dragged below the grid the cone turns over, base on the grid ({lo:.4f} .. {hi:.4f}, axis "
+          f"{(a['axisX'], a['axisY'], a['axisZ'])})",
+          abs(hi) < 1e-4 and lo < 0 and a["axisY"] < -0.99 and a["height"] > 0)
     prefs().interactive_creation = False
 
 

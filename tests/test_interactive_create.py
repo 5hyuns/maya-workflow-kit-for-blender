@@ -59,6 +59,21 @@ def test_sizes():
     assert close(m.section_radius(0.5, 30), 3.5) and m.section_radius(0.5, -100) == 0.01, "torus section per px"
 
 
+def test_maya_rules_for_more_primitives():
+    m = ic()
+    assert 'DISC' not in m.STEPS, "Maya draws no disc: Create > Disc makes it at the origin"
+    assert m.STEPS['HELIX'] == ("width", "height", "coils", "radius")
+    assert m.radius('PYRAMID', 3, -4) == 4, "pyramid: corner distance = the larger offset"
+    assert close(m.first_values('PYRAMID', 2.0, 4)["sideLength"], 2 * math.sqrt(2))
+    assert m.height_value('PIPE', 1.5) == 3.0 and m.height_value('CONE', 1.5) == 1.5, "pipe Height = 2 x drawn"
+    assert close(m.px_value("thickness", 0.5, 200), 20.5), "pipe thickness has no upper limit"
+    assert m.px_value("thickness", 0.5, -100) == 0.01
+    assert close(m.px_value("coils", 3, 37), 6.7) and m.px_value("coils", 3, -60) == 0.5
+    assert close(m.px_value("radius", 0.4, 7), 1.1) and m.px_value("radius", 0.4, -60) == 0.01
+    assert m.step_attr('HELIX', "radius") == "radius"
+    assert {'PLATONIC', 'SOCCER_BALL'} <= m.SHIFT_LIFT and 'HELIX' in m.SHIFT_HEIGHT
+
+
 def test_view_axes():
     m = ic()
     assert m.maya_axis((0, 0, 1)) == (0, 1, 0), "ground: Maya Y"

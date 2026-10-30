@@ -42,25 +42,30 @@ STEPS = {
     'SPHERE': ("radius",),
     'SOCCER_BALL': ("radius",),
     'PLATONIC': ("radius",),
-    'DISC': ("radius",),
     'TORUS': ("radius", "section"),
     'CYLINDER': ("radius", "height"),
     'CONE': ("radius", "height"),
     'PRISM': ("side", "height"),
     'PYRAMID': ("side",),
     'PIPE': ("radius", "height", "thickness"),
-    'HELIX': ("width", "height", "coils"),
+    'HELIX': ("width", "height", "coils", "radius"),
 }
+# Disc, Gear and the super shapes have no interactive creation in Maya: they are made at the origin at once.
 # One-size primitives centred on the plane (Shift: sitting on it); the rest sit on the plane.
-SOLIDS = {'SPHERE', 'SOCCER_BALL', 'PLATONIC', 'TORUS'}
-# Radius = the larger ground offset instead of the distance
-MAX_RADIUS = {'SPHERE'}
+SOLIDS = {'SPHERE', 'SOCCER_BALL', 'PLATONIC', 'TORUS', 'PYRAMID'}
+# Radius = the larger ground offset instead of the distance (pyramid: the corner distance)
+MAX_RADIUS = {'SPHERE', 'PYRAMID'}
 # Shift sets radius and height together (radius = larger offset x sqrt 2, height = 2 x larger offset)
-SHIFT_HEIGHT = {'CYLINDER', 'CONE', 'PRISM', 'PIPE'}
+SHIFT_HEIGHT = {'CYLINDER', 'CONE', 'PRISM', 'PIPE', 'HELIX'}
+# Shift: radius = larger offset x sqrt 2, centre lifted by the larger offset (Ctrl+Shift: centred)
+SHIFT_LIFT = {'PLATONIC', 'SOCCER_BALL'}
 HEIGHT_ATTR = {'PRISM': "length"}
+HEIGHT_FACTOR = {'PIPE': 2.0}   # the pipe node's Height is twice the drawn height
 SECTION_PX = 0.1        # torus section radius per px dragged sideways (from its default)
 SECTION_MIN = 0.01
-COIL_PX = 20.0          # px of drag per coil
+# later steps sized by a sideways drag: default + PX_STEP x px, at least the minimum
+PX_STEP = 0.1
+PX_MIN = {"thickness": 0.01, "coils": 0.5, "radius": 0.01, "section": SECTION_MIN}
 FLAT = 1e-4             # smallest size while drawing (a zero size has no faces to build)
 # size attributes a single click sets to the option-window / factory value
 SIZES = ("width", "height", "depth", "radius", "sideLength", "length", "sectionRadius", "thickness", "coils")
@@ -212,7 +217,17 @@ def first_values(kind, size, sides=4, width_along_a=True):
 
 def step_attr(kind, step):
     return {"height": HEIGHT_ATTR.get(kind, "height"), "section": "sectionRadius", "thickness": "thickness",
-            "coils": "coils"}.get(step)
+            "coils": "coils", "radius": "radius"}.get(step)
+
+
+def height_value(kind, h):
+    """The node attribute value for a drawn height ``h`` (Maya units, positive)."""
+    return h * HEIGHT_FACTOR.get(kind, 1.0)
+
+
+def px_value(step, default, px):
+    """Pipe thickness, helix coils / tube radius, torus section after a sideways drag of ``px`` logical pixels."""
+    return max(default + PX_STEP * px, PX_MIN.get(step, 0.0))
 
 
 def section_radius(default, px):
@@ -327,6 +342,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         self._vals = {}
         self._history = True
         self._done_early = False  # Shift: the first drag set every size
+        self._upright = False     # a single click: rotation 0 whatever the view
 
     def _end(self, context):
         context.workspace.status_text_set(None)
@@ -474,7 +490,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         self._place()
 
     def _rotation(self):
-        return Matrix.Identity(4) if self._axis_node else self._plane.rotation()
+        return Matrix.Identity(4) if (self._axis_node or self._upright) else self._plane.rotation()
 
     def _place(self):
         ob, n = self._ob, self._plane.normal
@@ -505,23 +521,20 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             if t is None:      # orthographic: the vertical drag distance
                 t = (event.mouse_y - self._down[1]) * _px_size(region, region.data, self._base)
             h = t / k
-            if self._mode != "centre":
+            changes = {attr: height_value(kind, max(abs(h), FLAT))}
+            if kind == 'HELIX':
+                self._mode, self._lift = "lift", t / 2       # the coil path runs from the plane to the height
+            elif kind == 'CONE' and self._axis_node:
+                # dragged below the plane: the cone turns over, base on the plane, apex down
+                ax = maya_axis(-plane.normal if h < 0 else plane.normal)
+                changes.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2])
+                self._mode = "top" if h < 0 else "base"
+            elif self._mode != "centre":
                 self._mode = "top" if h < 0 else "base"     # dragged below the plane: the shape hangs under it
-            self._set(context, {attr: max(abs(h), FLAT)})
-        elif step == "section":
+            self._set(context, changes)
+        else:
             px = (event.mouse_x - self._down[0]) / (context.preferences.system.ui_scale or 1.0)
-            self._set(context, {attr: section_radius(self._default(attr), px)})
-        elif step == "thickness":
-            coord = (event.mouse_x - region.x, event.mouse_y - region.y)
-            p = plane.hit(*_ray(region, region.data, coord), forward_only=region.data.is_perspective)
-            if p is None:
-                return
-            ca, cb = plane.coords(self._base)
-            a, b = plane.coords(p)
-            r = math.hypot(a - ca, b - cb) / k
-            self._set(context, {attr: max(self._vals.get("radius", 1.0) - r, 0.0)})
-        elif step == "coils":
-            self._set(context, {attr: max(self._default(attr) + (event.mouse_y - self._down[1]) / COIL_PX, 0.5)})
+            self._set(context, {attr: px_value(step, self._default(attr), px)})
 
     def _first(self, context, event, k):
         """The first drag: location and base size, with Maya's Shift / Ctrl rules."""
@@ -549,16 +562,20 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             self._mode = "centre" if (shift and ctrl and kind == 'CUBE') else "base"
         else:
             self._base = plane.point(a0, b0)
-            if shift and kind in SHIFT_HEIGHT | {'TORUS'}:
+            if shift and kind in SHIFT_HEIGHT | SHIFT_LIFT | {'TORUS'}:
                 r = big * math.sqrt(2.0)
             else:
                 r = radius(kind, da, db)
             changes = first_values(kind, r / k, sides)
             if shift and kind in SHIFT_HEIGHT:
-                changes[step_attr(kind, "height")] = 2 * big / k
+                changes[step_attr(kind, "height")] = height_value(kind, 2 * big / k)
                 self._done_early = True
             if kind == 'TORUS' and shift and not ctrl:
                 self._mode, self._lift = "lift", self._default("sectionRadius") * k   # raised by the default section
+            elif kind in SHIFT_LIFT and shift:
+                self._mode, self._lift = ("centre", 0.0) if ctrl else ("lift", big)
+            elif kind == 'HELIX' and shift and not ctrl:
+                self._mode, self._lift = "lift", big          # the coil path from the plane up
             elif kind in SOLIDS:
                 self._mode = "base" if (shift and not ctrl) else "centre"
             else:
@@ -593,7 +610,11 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         ob = self._ob
         steps = STEPS[self.kind]
         if default:
-            self._set(context, {a: self._default(a) for a in SIZES if a in self._vals})
+            changes = {a: self._default(a) for a in SIZES if a in self._vals}
+            if self._axis_node:            # a click makes the primitive upright (Maya Y up), not facing the view
+                changes.update(axisX=0.0, axisY=1.0, axisZ=0.0)
+            self._upright = True
+            self._set(context, changes)
             self._mode = "centre"
             self._place()
         else:
