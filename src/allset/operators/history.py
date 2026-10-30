@@ -35,7 +35,9 @@ def is_deformer(md):
     from . import skin_tools_199, wire_deformer
     if wire_deformer.is_wire(md) or skin_tools_199.is_part(md):
         return True
-    from . import deformers                       # step 205: every kit GN deformer of deformers.BASES (morph1, ...)
+    from . import deformers, sweep_mesh           # every kit GN deformer of deformers.BASES (morph1, ...)
+    if sweep_mesh.is_sweep(md):                   # sweepMeshCreator1 is creation history, not a deformer
+        return False
     return deformers.base_of(md) is not None
 
 

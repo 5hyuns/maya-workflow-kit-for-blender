@@ -177,6 +177,7 @@ from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Rese
 classes += poly_display.classes
 from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
 classes += interactive_create.classes
+from . import sweep_mesh  # noqa: E402  Create > Sweep Mesh: live sweepMeshCreator node (#238)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -256,9 +257,11 @@ def register():
     deformers_205b.register_handlers()
     deformers_205a.register_handlers()
     curves_207.register_handlers()
+    sweep_mesh.register()
 
 
 def unregister():
+    sweep_mesh.unregister()
     ik_rp.unregister_handlers()
     joint_edit.unregister()
     joint_display.unregister_props()

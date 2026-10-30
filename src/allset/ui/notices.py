@@ -73,8 +73,8 @@ NOTICES = {
     "Create/Curve Tools/Pencil Curve Tool": (
         "Curve Draw tool", "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane)."),
     "Create/Sweep Mesh": (
-        "Curve bevel, converted", "Blender makes the mesh from a copy of the curve with a round bevel (8 sides); no live "
-        "profile options."),
+        "Geometry Nodes sweep", "Blender builds the mesh with a Geometry Nodes modifier, sweepMeshCreator1: profile, "
+        "steps, taper and twist stay editable in the Attribute Editor and Channel Box INPUTS."),
     "Curves/Add Points Tool": (
         "Extrude (E)", "Blender extrudes the curve's end points: move the mouse, click to place the new point."),
     "Curves/Offset/Offset Curve": (
