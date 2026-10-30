@@ -467,6 +467,22 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_panel_tear_off(bpy.types.Operator):
+    """Open a copy of this view in a new window, with the same camera and display"""
+    bl_idname = "allset.panel_tear_off"
+    bl_label = "Tear Off Copy"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        area = context.area
+        if context.window is None or area is None or area.type != 'VIEW_3D':
+            return {'CANCELLED'}
+        with context.temp_override(window=context.window, area=area, region=main_region(area)):
+            # the copy needs the invoke (exec alone is refused)
+            bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
+        return {'FINISHED'}
+
+
 # --- drawing --------------------------------------------------------------------------
 
 def draw_rows(layout, context, rows, idname=""):
@@ -649,7 +665,7 @@ _generated = [
     _menu("ALLSET_MT_panel_layouts", "Layouts", LAYOUTS, "Maya panel layouts"),
 ]
 
-classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_persp,
+classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_tear_off, ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_persp,
            ALLSET_MT_panel_perspective, ALLSET_MT_panel_orthographic, ALLSET_MT_panel_panel,
            ALLSET_MT_panel_blender, ALLSET_MT_panel_bar, *_generated)
 

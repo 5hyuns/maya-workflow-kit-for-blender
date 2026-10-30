@@ -178,8 +178,8 @@ PANELS = [
     ("menu", "Layouts", "ALLSET_MT_panel_layouts"),
     _grey("Saved Layouts"),
     _sep(),
-    _run("Tear Off...", "allset.open_editor", ui_type='VIEW_3D'),
-    _run("Tear Off Copy...", "allset.open_editor", ui_type='VIEW_3D'),
+    _run("Tear Off...", "allset.panel_tear_off"),
+    _run("Tear Off Copy...", "allset.panel_tear_off"),
     _sep(),
     _grey("Panel Editor..."),
 ]
