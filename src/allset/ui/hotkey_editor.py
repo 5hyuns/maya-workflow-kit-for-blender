@@ -478,7 +478,8 @@ class ALLSET_OT_hotkey_import(bpy.types.Operator):
         msg = f"Imported {done} hotkey{'s' if done != 1 else ''}"
         if skipped:
             msg += f"; {len(skipped)} left out (see the system console)"
-        self.report({'INFO'}, msg)
+        from .. import results
+        results.result(self, msg)
         return {'FINISHED'}
 
 
