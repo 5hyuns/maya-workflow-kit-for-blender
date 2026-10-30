@@ -306,6 +306,23 @@ def strip_pairs(path, width):
     return out
 
 
+TAB_HINT = ("Quad Draw: hold Tab and drag a border edge to extend it, a corner vertex to fill the corner, or drag in "
+            "empty space for a strip of quads; middle-drag in empty space sets the strip width")
+
+
+def width_preview(center, width, count=3):
+    """Tab+MMB drag in empty space: the screen line segments of a preview strip of ``count`` quads ``width`` pixels
+    wide, running up from ``center`` (the quads a Tab+LMB stroke of that width would make)."""
+    x, y = center
+    pairs = strip_pairs([(x, y), (x, y + width * count)], width)
+    segs = []
+    for k, (left, right) in enumerate(pairs):
+        segs += [left, right]
+        if k:
+            segs += [pairs[k - 1][0], left, pairs[k - 1][1], right]
+    return segs
+
+
 def strip_faces(bm, pairs):
     """Quads between consecutive (left, right) local points; winding: counter-clockwise for a path seen from the
     viewer going left to right on screen with left = +normal side (callers pass screen-ordered pairs)."""
@@ -895,6 +912,13 @@ def _draw_pixel():
         from . import quad_draw_overlay
         quad_draw_overlay.draw_front(context)
         pv = STATE["preview"]
+        if pv is not None and pv[0] == 'WIDTH':
+            width = poly_draw.settings(context).qd_strip_width * _ui_scale(context)
+            gpu.state.blend_set('ALPHA')
+            _lines(context.region, [(*p, 0.0) for p in width_preview(pv[1], width)], FILL_RGB,
+                   LINE_PX * _ui_scale(context))
+            gpu.state.blend_set('NONE')
+            return
         if pv is None or pv[0] != 'BRUSH':
             return
         region = context.region
@@ -1452,8 +1476,7 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
         self._refs = reference_objects(context)
         update_hover(context, context.region, context.region_data, _mouse(event), False, False, tab=True)
         context.window_manager.modal_handler_add(self)
-        context.workspace.status_text_set("Quad Draw: hold Tab and drag a border edge to extend it, a corner "
-                                          "vertex to fill the corner, or drag in empty space for a strip of quads")
+        context.workspace.status_text_set(TAB_HINT)
         _redraw(context)
         return {'RUNNING_MODAL'}
 
@@ -1483,6 +1506,7 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
             elif self._drag[0]=='WIDTH':
                 width=self._drag[2]+(mouse[0]-self._drag[1][0])/_ui_scale(context)
                 poly_draw.settings(context).qd_strip_width=max(1,round(width))
+                STATE["preview"]=('WIDTH',self._drag[1])
                 context.workspace.status_text_set(f'Quad Strip Width: {poly_draw.settings(context).qd_strip_width:.1f} px — Esc to cancel')
             else:
                 self._update_drag(context, mouse)
@@ -1495,6 +1519,8 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
             ei=poly_draw.border_edge_at(context,region,rv3d,mouse,ob) if vi is None else None
             if vi is None and ei is None and event.type=='MIDDLEMOUSE':
                 self._button=event.type;self._drag=('WIDTH',mouse,poly_draw.settings(context).qd_strip_width)
+                STATE["preview"]=('WIDTH',mouse)     # a preview strip of the current width while dragging
+                _redraw(context)
                 return {'RUNNING_MODAL'}
             if not _begin_symmetry(self,context,ob,coordinate_only=True):return {'RUNNING_MODAL'}
             self._press_mouse=mouse
@@ -1534,6 +1560,10 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
         if event.type == getattr(self, "_button", 'LEFTMOUSE') and event.value == 'RELEASE' \
                 and self._drag is not None:
             self._commit(context, mouse)
+            if self._drag[0]=='WIDTH':
+                STATE["preview"]=None
+                context.workspace.status_text_set(TAB_HINT)
+                _redraw(context)
             self._drag = None
             self._snap = None
             STATE["snap"] = []
