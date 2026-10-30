@@ -5,6 +5,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Fixed
+- **Torn-off menus read like the menu**: the items' text starts at the left edge instead of being centred, with
+  the hotkeys and option boxes still lined up on the right.
+
 ## [0.7.0] — 2026-10-29
 
 Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and
