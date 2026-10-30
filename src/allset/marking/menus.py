@@ -875,7 +875,7 @@ HB_SOUTH = MarkingMenu(
         "N": ("Outliner", _pane('OUTLINER')),                              # Maya 2022 hotbox South zone
         "E": ("Graph Editor", _pane('FCURVES')),
         "SE": ("Dope Sheet", _pane('DOPESHEET')),
-        "S": ("Hypergraph", _pane('OUTLINER')),  # hierarchy = the Outliner
+        "S": ("Hypergraph", ("allset.hypergraph", {})),   # the kit's Hypergraph: Hierarchy window
         "SW": ("Node Editor", _pane('ShaderNodeTree')),
         "W": ("Hypershade", _pane('ShaderNodeTree')),
         "NW": ("Render View", _pane('IMAGE_EDITOR')),

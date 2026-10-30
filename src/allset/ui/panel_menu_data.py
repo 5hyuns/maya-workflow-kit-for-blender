@@ -174,7 +174,7 @@ PANELS = [
     _grey("Camera Set"),
     _sep(),
     ("menu", "Panel", "ALLSET_MT_panel_panel"),
-    _grey("Hypergraph Panel"),
+    _run("Hypergraph Panel", "allset.hypergraph"),
     ("menu", "Layouts", "ALLSET_MT_panel_layouts"),
     _grey("Saved Layouts"),
     _sep(),

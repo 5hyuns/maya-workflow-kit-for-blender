@@ -29,7 +29,9 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.emulated_tumble", "allset.cb_
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
-                      "allset.graph_key_drag")
+                      "allset.graph_key_drag",
+                      "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
+                      "allset.hg_frame")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -393,6 +395,18 @@ def patch_cb_slider(kd):
     # swatch
     _add(kd, "View2D Buttons List", "allset.hs_swatch_drag", make_event("MIDDLEMOUSE"), first=True,
          shadows=("View2D Buttons List",))
+    # Hypergraph: Hierarchy window (ui/hypergraph.py): a kit-drawn graph in a marked Properties region. The items
+    # sit first in the region's earliest keymap and poll False outside a Hypergraph region.
+    hg = ("View2D Buttons List", "Property Editor", "Screen", "Window", "Frames")
+    for button, idname in (("LEFTMOUSE", "allset.hg_click"), ("MIDDLEMOUSE", "allset.hg_mmb"),
+                           ("RIGHTMOUSE", "allset.hg_rmb")):
+        _add(kd, "View2D Buttons List", idname, make_event(button, "PRESS", any=True), first=True, shadows=hg)
+    for wheel, direction in (("WHEELUPMOUSE", "IN"), ("WHEELDOWNMOUSE", "OUT")):
+        _add(kd, "View2D Buttons List", "allset.hg_zoom", make_event(wheel), {"direction": direction},
+             first=True, shadows=hg)
+    for key, everything in (("F", False), ("A", True)):
+        _add(kd, "View2D Buttons List", "allset.hg_frame", make_event(key), {"all": everything},
+             first=True, shadows=hg)
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB (step 8) ---------------------------
@@ -1186,7 +1200,7 @@ def patch_render_slots(kd):
 
 def patch_graph_outliner(kd):
     _add(kd, "Animation Channels", "allset.graph_channel_click", make_event("LEFTMOUSE", any=True),
-         first=True, shadows=("Animation Channels",))
+         first=True, shadows=("Animation Channels", "View2D Buttons List"))   # Hypergraph items poll False here
     # step 150 (#96): the wheel scrolls the kit's rows (ui/editor_chrome.py keeps the offset). In the channel region
     # the wheel goes to "View2D" and never reaches "Animation Channels" (--debug-handlers), so the items
     # sit first in View2D; the operator passes through anywhere but a kit Graph Editor's outliner pane.

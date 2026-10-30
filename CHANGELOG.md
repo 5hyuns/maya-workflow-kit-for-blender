@@ -42,6 +42,16 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   labels are shown in that language. Blender's Translate switches decide: Interface for labels, Tooltips for
   tooltips. Menu hotkeys and option boxes stay lined up with the translated labels. `tools/i18n_strings.py` lists
   every translatable string and the coverage of each language; corrections from native speakers are welcome.
+- **Hypergraph: Hierarchy** (#232): Windows > General Editors > Hypergraph: Hierarchy (and the viewport's
+  Panels > Hypergraph Panel, the hotbox's Hypergraph) opens a window with the scene hierarchy as a graph of nodes,
+  like Maya: children in the row below their parent, lines from parent to child, an icon for groups, meshes,
+  joints, cameras, lights, curves and locators, and each node filled with its display layer's colour. Click a node
+  to select it (Shift toggles, Ctrl removes, Ctrl+Shift adds), drag on empty space for a marquee; the selection
+  follows the scene both ways. Middle-mouse drag a node onto another to parent it there (the whole selection when
+  the dragged node is selected), onto empty space to unparent it; world positions stay. Double-click a node to
+  collapse or expand its children. Alt+middle-mouse tracks, Alt+right-mouse dollies, the wheel zooms, F / A frame
+  the selection / everything; the strip at the top and the right-click menu hold Frame All, Frame Selection,
+  Expand All and Collapse All. Nothing is stored in the scene file.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.

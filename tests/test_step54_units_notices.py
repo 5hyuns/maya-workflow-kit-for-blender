@@ -131,7 +131,7 @@ def test_notices_are_real_menu_paths_with_a_line():
         assert substitute and line.startswith("Blender") or "Blender" in line, (path, line)
     want = {"Windows/Animation Editors/Trax Editor": "NLA",
             # step 197: Relationship Editors > Character Sets is real (operators/character_sets.py)
-            "Windows/General Editors/Hypergraph: Hierarchy": "Outliner", "Skeleton/HumanIK": "Rigify",
+            "Windows/General Editors/Hypergraph: Connections": "Drivers", "Skeleton/HumanIK": "Rigify",
             "Windows/General Editors/Namespace Editor": "ns:", "File/Create Reference...": "Library Override",
             "File/Set Project...": "projects", "Modify/Evaluate Nodes/nucleuses": "nucleus",
             "Windows/Rendering Editors/Light Editor": "Light Editor", "Create/Lights/Point Light": "square"}

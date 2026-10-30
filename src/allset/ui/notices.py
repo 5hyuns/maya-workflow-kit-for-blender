@@ -42,12 +42,10 @@ NOTICES = {
     # Sets (step 96): kit sets are collections outside the scene; Blender has no exclusive sets
     "Create/Sets/Partition": (
         "Set", "Blender has no partitions (sets whose members can't be in another set of the partition): use Create > Sets > Set."),
-    # Dependency graph editors (W3: Node Editor -> none, Hypergraph -> Outliner)
+    # Dependency graph editors (Node Editor -> none, Hypergraph: Connections -> Drivers)
     "Windows/Node Editor": (
         "Shader Editor", "Blender has no node graph of attribute connections: attribute links are drivers "
         "(Expression Editor), material nodes are in the Shader Editor (Hypershade)."),
-    "Windows/General Editors/Hypergraph: Hierarchy": (
-        "Outliner", "Blender has no Hypergraph: the Outliner shows the hierarchy."),
     "Windows/General Editors/Hypergraph: Connections": (
         "Drivers", "Blender has no connection graph: attribute links are drivers (Expression Editor)."),
     "Windows/General Editors/Namespace Editor": (
@@ -641,9 +639,6 @@ PANEL_MENU = {
         "window mode, not a panel type."),
     _PM + "Panels/Camera Set": (
         "Timeline markers", "Blender has no camera sets: bind cameras to timeline markers to switch between them."),
-    _PM + "Panels/Hypergraph Panel": (
-        "Outliner / Node Editor", "Blender has no Hypergraph: hierarchy is in the Outliner, node networks in the Node "
-        "Editor (Panels > Panel)."),
     _PM + "Panels/Saved Layouts": (
         "Windows > Workspaces", "Blender saves layouts as workspaces (Windows > Workspaces, the Status Line drop-down)."),
     _PM + "Panels/Panel Editor...": (
