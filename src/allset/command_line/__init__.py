@@ -139,6 +139,8 @@ TOOL_HELP = {
                                    "Backspace: remove the last point"),
     "allset.target_weld_tool": "Target Weld: drag a vertex or edge onto the target. Selected vertices are merged too",
     "allset.crease_tool": "Crease Tool: select edges or vertices, then middle-drag left to crease less, right for more",
+    "allset.interactive_create_tool": ("Interactive Creation: drag to place and size the primitive, drag again for "
+                                       "the height. Shift equal sides, Ctrl from the centre"),
 }
 
 

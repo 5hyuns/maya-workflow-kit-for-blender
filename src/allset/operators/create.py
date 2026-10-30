@@ -217,8 +217,8 @@ class ALLSET_OT_create(bpy.types.Operator):
 
     def execute(self, context):
         from . import interactive_create
-        if interactive_create.wanted(context, self.kind):    # Create > Polygon Primitives > Interactive Creation
-            interactive_create.start(context, self.kind)
+        # Create > Polygon Primitives > Interactive Creation: the creation tool draws it in a view
+        if interactive_create.wanted(context, self.kind) and interactive_create.start(context, self.kind):
             return {'FINISHED'}
         ob = create(context, self.kind, _maya_naming(context))
         note = LIGHT_NOTICE if ob.type == 'LIGHT' and ob.data.type in FALLOFF_LIGHTS else ""
