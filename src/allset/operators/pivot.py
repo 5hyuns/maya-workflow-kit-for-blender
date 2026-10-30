@@ -259,7 +259,7 @@ def pivot_mode(context=None):
 
 def origins_for_groups(context):
     """Before Blender's own Move in pivot mode: Affect Only Origins skips objects without data, so a group (an
-    Empty) would not move and V / X / C snapping its pivot did nothing (step 312). When no selected object has
+    Empty) would not move and V / X / C snapping its pivot did nothing. When no selected object has
     data, that one transform runs with Affect Only Origins off: Affect Only Parents keeps the children in place
     (and snappable), ``process`` turns the move into a pivot edit, and ``_tick`` turns the flag back on after it.
     Returns True when it did."""

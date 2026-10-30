@@ -1,4 +1,4 @@
-"""D + V + MMB drag snaps a group's pivot onto a vertex of one of its children (step 312)."""
+"""D + V + MMB drag snaps a group's pivot onto a vertex of one of its children."""
 import os
 import sys
 from importlib import import_module

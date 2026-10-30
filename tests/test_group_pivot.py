@@ -1,7 +1,7 @@
-"""A group's pivot (an Empty) moves with Blender's own Move in pivot mode, so V / X / C can snap it (step 312).
+"""A group's pivot (an Empty) moves with Blender's own Move in pivot mode, so V / X / C can snap it.
 
 Blender's Affect Only Origins skips objects without data: the group stayed where it was. The GUI side (D + V + MMB
-drag onto a child's vertex) is tests/gui/gui_step312_group_pivot_snap.py."""
+drag onto a child's vertex) is tests/gui/gui_group_pivot_snap.py."""
 from importlib import import_module
 
 import bpy
