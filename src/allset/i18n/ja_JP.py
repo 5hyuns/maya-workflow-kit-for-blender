@@ -2439,7 +2439,7 @@ STRINGS = {
     "Maya cluster envelope = the Hook's strength": 'Maya クラスタのエンベロープ = フックの強度',
     'Maya crease value (Absolute) or the change (Relative)': 'Maya のクリース値 (絶対) または変化量 (相対)',
     'Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the Maya Diffuse node)': 'Maya の拡散: 反射されるカラーの割合 (ベースカラー = Maya Diffuse ノードを通したカラー x 拡散)',
-    "Maya image size presets (HD 540 = 960 x 540 is Maya's default)": 'Maya のイメージサイズプリセット (HD 540 = 960 x 540 が Maya のデフォルト)',
+    'Maya image size presets (HD 540 = 960 x 540 is the default)': 'Maya のイメージサイズプリセット (HD 540 = 960 x 540 がデフォルト)',
     'Maya joint display scale': 'Maya のジョイント表示スケール',
     "Maya joint radius (sizes the joint's click sphere)": 'Maya のジョイント半径 (ジョイントのクリック球の大きさ)',
     'Maya layer weight (NLA strip influence)': 'Maya のレイヤウェイト (NLA ストリップの影響)',

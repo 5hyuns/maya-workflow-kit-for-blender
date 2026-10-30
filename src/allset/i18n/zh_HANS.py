@@ -2439,7 +2439,7 @@ STRINGS = {
     "Maya cluster envelope = the Hook's strength": 'Maya 簇包络 = 钩挂的强度',
     'Maya crease value (Absolute) or the change (Relative)': 'Maya 折痕值 (绝对) 或变化量 (相对)',
     'Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the Maya Diffuse node)': 'Maya 漫反射：颜色被反射的比例 (基础色 = 颜色 x 漫反射，经由 Maya Diffuse 节点)',
-    "Maya image size presets (HD 540 = 960 x 540 is Maya's default)": 'Maya 图像大小预设 (HD 540 = 960 x 540 为 Maya 默认)',
+    'Maya image size presets (HD 540 = 960 x 540 is the default)': 'Maya 图像大小预设 (HD 540 = 960 x 540 为默认)',
     'Maya joint display scale': 'Maya 关节显示比例',
     "Maya joint radius (sizes the joint's click sphere)": 'Maya 关节半径 (决定关节单击球体的大小)',
     'Maya layer weight (NLA strip influence)': 'Maya 层权重 (NLA 片段影响)',

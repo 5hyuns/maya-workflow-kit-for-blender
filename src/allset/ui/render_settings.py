@@ -451,7 +451,7 @@ def register():
     sc.allset_rs_padding = IntProperty(name="Frame padding", min=1, max=10, get=get, set=set_,
                                          description="Digits of the frame number (Maya extensionPadding)")
     sc.allset_rs_size = EnumProperty(name="Image Size Presets", items=SIZE_ITEMS, get=_size_get, set=_size_set,
-                                       description="Maya image size presets (HD 540 = 960 x 540 is Maya's default)")
+                                       description="Maya image size presets (HD 540 = 960 x 540 is the default)")
     bpy.types.WindowManager.allset_rs_tab = EnumProperty(name="Render Settings Tab", items=_tab_items,
                                                            options={'SKIP_SAVE'})
     for cls in classes:
