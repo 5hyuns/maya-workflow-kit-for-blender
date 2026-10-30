@@ -110,6 +110,7 @@ classes += graph_curves_203.classes
 from . import anim_layers_204  # noqa: E402  step 204: animation layers 4
 classes += anim_layers_204.classes
 from . import pins_205  # noqa: E402  step 205 lane P: UV / Proximity Pin, intermediate objects, wrap influences
+from . import skin_follow  # noqa: E402  a skin moves with its skeleton object; older files get it on load
 classes += pins_205.classes
 from . import deformers_205b  # noqa: E402  step 205 lane B: Morph / Jiggle deformers
 classes += deformers_205b.classes
@@ -251,6 +252,7 @@ def register():
     constrain_199.register_handlers()
     graph_curves_203.register_handlers()
     pins_205.register_handlers()
+    skin_follow.register_handlers()
     deformers_205b.register_handlers()
     deformers_205a.register_handlers()
     curves_207.register_handlers()
@@ -265,6 +267,7 @@ def unregister():
     curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()
     deformers_205b.unregister_handlers()
+    skin_follow.unregister_handlers()
     pins_205.unregister_handlers()
     graph_curves_203.unregister_handlers()
     constrain_199.unregister_handlers()

@@ -48,11 +48,60 @@ def attach(mesh, arm):
     return con
 
 
+def _under(ob, arm):
+    """``ob`` sits somewhere below ``arm`` in the parent chain: the parent already carries it."""
+    p = ob.parent
+    while p is not None:
+        if p == arm:
+            return True
+        p = p.parent
+    return False
+
+
+def _needs_follow(ob, arm):
+    return (ob.type == 'MESH' and ob.library is None and arm is not None and arm.type == 'ARMATURE'
+            and _skinned_to(ob, arm) and not follows(ob) and not _under(ob, arm))
+
+
 def ensure(arm):
     """Give every mesh skinned to ``arm`` that has no follow one (scenes bound before the kit made it)."""
     for ob in bpy.data.objects:
-        if ob.type == 'MESH' and _skinned_to(ob, arm) and not follows(ob):
+        if _needs_follow(ob, arm):
             attach(ob, arm)
+
+
+def repair_file():
+    """Skins the kit bound before it gave them a follow: each gets one from its current place on, so it moves with
+    its skeleton from now like a Maya skin (nothing moves on load). Returns how many meshes got one."""
+    from .skin import NORMALIZE_PROP        # set on every mesh the kit's Bind Skin bound
+    n = 0
+    for ob in bpy.data.objects:
+        if ob.type != 'MESH' or NORMALIZE_PROP not in ob:
+            continue
+        for md in ob.modifiers:
+            if md.type == 'ARMATURE' and _needs_follow(ob, md.object):
+                attach(ob, md.object)
+                n += 1
+                break
+    return n
+
+
+@bpy.app.handlers.persistent
+def _on_load(*_args):
+    n = repair_file()
+    if n:
+        from ..command_line import show_result
+        show_result(f"{n} skinned mesh{'es' if n > 1 else ''} now move with their skeleton")
+
+
+def register_handlers():
+    if _on_load not in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.append(_on_load)
+
+
+def unregister_handlers():
+    if _on_load in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load)
 
 
 def _own_world(mesh):
