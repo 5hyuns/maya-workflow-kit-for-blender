@@ -89,3 +89,9 @@ def test_preview_handler_start_stop():
     assert len(preview._handles) == 1
     preview.stop()
     assert not preview.running() and preview.STATE["ob"] is None
+
+
+def test_preview_colours_follow_maya():
+    jp = import_module(kit.MODULE + ".operators.joint_preview")
+    assert tuple(round(c * 255) for c in jp.UNSELECTED) == (0x26, 0x00, 0x43), "earlier joints: dark violet"
+    assert tuple(round(c * 255) for c in jp.LEAD) == (0x43, 0xff, 0xa3), "the newest joint: lead green"

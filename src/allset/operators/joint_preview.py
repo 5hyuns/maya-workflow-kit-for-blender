@@ -5,7 +5,7 @@ While the tool runs one POST_PIXEL handler draws, in every 3D View but the Tool 
 
 - each joint of this run (and the joint it branches from) as a joint circle, the bones between them as wedges from
   the parent's circle to the child (like Maya's joints); the current joint — the one the next click attaches to —
-  in the lead green, the others white;
+  in the lead green, the others and their bones in Maya's unselected joint colour (dark violet);
 - in the view under the pointer only: a ghost joint where a click would place the next joint and a dimmer bone from
   the current joint to it; before the first click, pointing at an existing joint (a click branches from it)
   highlights that joint instead.
@@ -25,7 +25,8 @@ from mathutils import Vector
 from . import units
 
 LEAD = (0x43 / 255, 1.0, 0xa3 / 255)       # Maya's lead (last selected) green
-JOINT = (1.0, 1.0, 1.0)                     # selected joints white
+JOINT = (1.0, 1.0, 1.0)                     # the ghost joint / bone (dimmed)
+UNSELECTED = (0x26 / 255, 0.0, 0x43 / 255)  # Maya's unselected joint colour: the joints placed before the current one
 GHOST_ALPHA = 0.55
 LINE_PX = 1.5
 RADIUS_MIN_PX = 5.0
@@ -207,7 +208,7 @@ def _draw_region(context):
     shader.uniform_float("viewportSize", (region.width, region.height))
     shader.uniform_float("lineWidth", LINE_PX * scale)
     _lines(shader, ghost, JOINT, GHOST_ALPHA)
-    _lines(shader, white, JOINT)
+    _lines(shader, white, UNSELECTED)
     _lines(shader, green, LEAD)
     _lines(shader, branch_ring, LEAD)
     gpu.state.blend_set('NONE')
