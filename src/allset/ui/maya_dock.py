@@ -26,7 +26,7 @@ import math
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
-from .. import live_refs
+from .. import i18n, live_refs
 
 KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT')
 LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attribute Editor",
@@ -686,7 +686,7 @@ def draw_handle(layout, context=None, tabs=False):
         current = current_tab(context.window_manager)
         for kind in stack_tabs(context.window_manager):
             tab = row.row(align=True)
-            tab.ui_units_x = text_units(context, LABELS[kind], TAB_PAD)
+            tab.ui_units_x = text_units(context, i18n.iface(LABELS[kind]), TAB_PAD)
             tab.operator(ALLSET_OT_dock_tab.bl_idname, text=LABELS[kind], depress=(kind == current)).kind = kind
 
 
@@ -806,7 +806,7 @@ def strip_tabs(kinds, width, height, scale, measure=None):
     y = height - round(STRIP_TOP_PX * scale)
     out = []
     for kind in kinds:
-        length = math.ceil(measure(LABELS[kind], scale) + 2 * TAB_END_PX * scale)
+        length = math.ceil(measure(i18n.iface(LABELS[kind]), scale) + 2 * TAB_END_PX * scale)
         out.append((kind, x0, y - length, x1, y))
         y -= length + round(TAB_GAP_PX * scale)
     return out
@@ -999,7 +999,7 @@ def draw_strip():
             colour = text if raised else tuple(c * TEXT_LOWERED for c in text)
             blf.color(0, *colour, 1.0)
             blf.position(0, round((tx0 + tx1) / 2 - cap / 2), ty1 - round(TAB_END_PX * scale), 0)
-            blf.draw(0, LABELS[kind])
+            blf.draw(0, i18n.iface(LABELS[kind]))
     finally:
         blf.disable(0, blf.ROTATION)
         gpu.state.blend_set('NONE')

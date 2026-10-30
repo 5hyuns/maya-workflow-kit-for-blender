@@ -62,7 +62,7 @@ def test_runtime_submenus_are_menus():
     calls = []
 
     class Fake:
-        def menu(self, idname, text="", icon='NONE', icon_value=0):     # step 131: menu icons
+        def menu(self, idname, text="", icon='NONE', icon_value=0, translate=True):     # menu icons
             calls.append(text)
 
         def operator(self, *a, **k):
@@ -73,7 +73,7 @@ def test_runtime_submenus_are_menus():
         def separator(self):
             pass
 
-        def label(self, text=""):
+        def label(self, text="", translate=True):
             pass
 
         def row(self):     # step 108: section titles sit on a lower row

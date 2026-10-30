@@ -131,7 +131,7 @@ class ALLSET_OT_open_editor(bpy.types.Operator):
     ui_type: EnumProperty(items=EDITOR_TYPES, name="Editor")
     tab: StringProperty(name="Properties Tab", options={'SKIP_SAVE'})
     display_mode: StringProperty(name="Outliner Display Mode", options={'SKIP_SAVE'},
-                                 description="e.g. LIBRARIES = Blender File (Maya Reference Editor, step 69)")
+                                 description="e.g. LIBRARIES = Blender File (Maya Reference Editor)")
 
     def execute(self, context):
         window = context.window

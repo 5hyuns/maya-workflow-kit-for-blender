@@ -25,7 +25,7 @@ animation end). Blender form (step 20):
 import bpy
 
 from .. import results
-from .. import compat
+from .. import compat, i18n
 from bpy.app.handlers import persistent
 
 # Blender 5.x: the Timeline is a Dope Sheet mode; compat names the header classes.
@@ -146,9 +146,9 @@ def draw_range_slider(layout, context):
     ks = scene.keying_sets.active
     sub = layout.row()
     sub.ui_units_x = 6
-    sub.menu("ALLSET_MT_character_set_current", text=ks.bl_label if ks is not None else "No Character Set",
+    sub.menu("ALLSET_MT_character_set_current", text=ks.bl_label if ks is not None else i18n.mark("No Character Set"),
              icon='DOWNARROW_HLT')
-    for text, on in ((sel.name if sel is not None else "No Anim Layer", sel is not None),):
+    for text, on in ((sel.name if sel is not None else i18n.mark("No Anim Layer"), sel is not None),):
         sub = layout.row()
         sub.enabled = on
         sub.ui_units_x = 6

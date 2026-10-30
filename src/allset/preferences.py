@@ -11,6 +11,8 @@ import os
 
 import bpy
 
+from . import i18n
+
 # True while ``register()`` puts saved settings back (see ``restore_backup``): no update callback runs then, as at a
 # normal start where Blender loads the saved values without calling them.
 _restoring = [False]
@@ -548,10 +550,11 @@ UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Ma
              "Preferences > System > Memory & Limits > Undo Steps to 256 (Blender's maximum).")
 
 
-EMULATE_HINT = ("Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag "
-                "before any key map sees it. On Windows the kit still tumbles on Alt+LMB; elsewhere Maya's Alt+LMB "
-                "tumble can't work, so turn it off for Maya navigation (Alt+MMB track and Alt+RMB dolly work "
-                "either way).")
+EMULATE_HINT = i18n.mark(
+    "Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag "
+    "before any key map sees it. On Windows the kit still tumbles on Alt+LMB; elsewhere Maya's Alt+LMB "
+    "tumble can't work, so turn it off for Maya navigation (Alt+MMB track and Alt+RMB dolly work "
+    "either way).")
 
 
 def emulate_hint(context=None):
@@ -580,16 +583,11 @@ TRADEMARK_NOTICE = (
 
 
 def _wrapped(layout, text, width=110):
-    line = ""
+    """``text`` in the interface language, in lines of about ``width`` characters (CJK characters count twice)."""
+    from . import i18n
     col = layout.column(align=True)
-    for word in text.split():
-        if line and len(line) + 1 + len(word) > width:
-            col.label(text=line)
-            line = word
-        else:
-            line = f"{line} {word}" if line else word
-    if line:
-        col.label(text=line)
+    for line in i18n.wrap(i18n.iface(text), width):
+        col.label(text=line, translate=False)
 
 
 def draw_about(layout):

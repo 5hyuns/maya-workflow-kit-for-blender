@@ -95,6 +95,9 @@ one-line note saying why and what to use instead.
 - The Maya **Move / Scale manipulator**.
 - **Alt+B** cycles the background of every 3D view through Maya's solid background colours.
 - The kit uses your own Blender theme; see [Recommended setup](#recommended-setup) for a Maya-like look.
+- **Languages**: the kit's menus, marking menus, shelves and tooltips follow Blender's *Preferences > Interface >
+  Language* — Japanese (日本語) and Simplified Chinese (简体中文) so far, with Blender's *Translate* switches for
+  interface and tooltips. Corrections from native speakers are welcome.
 
 ### Navigation & selection
 

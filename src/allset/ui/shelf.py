@@ -39,7 +39,7 @@ import traceback
 import bpy
 from bpy.props import BoolProperty, IntProperty, StringProperty
 
-from .. import results
+from .. import i18n, results
 from . import own_draw, shelf_data, shelf_icons, shelf_map
 
 MARKER = ".AllsetStrip"
@@ -165,8 +165,9 @@ def record_tooltip(b):
 # --- shelves and buttons -------------------------------------------------------------------------
 
 def shelves():
-    """[(id, tab label)] in Maya order: factory tabs, then the user shelves ("Custom" first)."""
-    out = [(name, label) for name, label, _b in shelf_data.SHELVES]
+    """[(id, tab label)] in Maya order: factory tabs (labels in the interface language), then the user shelves
+    ("Custom" first, named by the user)."""
+    out = [(name, i18n.iface(label)) for name, label, _b in shelf_data.SHELVES]
     out += [(USER_PREFIX + s["name"], s["name"]) for s in user_data()["shelves"]]
     return out
 

@@ -817,7 +817,7 @@ class ALLSET_PG_anim_layer(bpy.types.PropertyGroup):
     override: BoolProperty(name="Override", update=_sync_update,
                            description="Override the layers below (else Additive)")
     picked: BoolProperty(name="Selected", options={'HIDDEN'},
-                         description="Selected in the Layer Editor (Ctrl / Shift click, step 204)")
+                         description="Selected in the Layer Editor (Ctrl / Shift click)")
 
 
 def _layer_entry(scene, name=""):
