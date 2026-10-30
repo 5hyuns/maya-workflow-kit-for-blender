@@ -26,6 +26,8 @@ def enabled(context):
 def start(context, kwargs, button='LEFTMOUSE'):
     if enabled(context) and sum(kwargs.get('constraint_axis', ())) != 1:
         return bpy.ops.allset.live_translate('INVOKE_DEFAULT', release_event=button, **kwargs)
+    from . import pivot
+    pivot.origins_for_groups(context)
     return bpy.ops.transform.translate('INVOKE_DEFAULT', **kwargs)
 
 

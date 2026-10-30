@@ -86,6 +86,7 @@ class ALLSET_OT_pivot_translate(bpy.types.Operator):
         # J-only gestures use our frame so snap can change during the modal drag.
         if snap_align.other_snaps_on(context.tool_settings):
             frame = context.scene.cursor.matrix.to_3x3() if context.mode == 'EDIT_MESH' else pivot.axes_for(context.active_object)
+            pivot.origins_for_groups(context)
             bpy.ops.transform.translate('INVOKE_DEFAULT', constraint_axis=self.constraint_axis,
                     orient_type='GLOBAL', orient_matrix_type='GLOBAL', orient_matrix=frame,
                     cursor_transform=context.mode == 'EDIT_MESH', release_confirm=True)

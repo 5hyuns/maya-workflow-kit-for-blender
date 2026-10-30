@@ -67,6 +67,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   inside a chain warns and changes nothing (Blender can't put a group between two joints of one skeleton).
   Unbind Skin and Delete History remove the skin's link to the skeleton with it. Skins bound with an older version
   get the link when their skeleton is grouped.
+- **A group's pivot moves and snaps in pivot editing**: D + V (or X / C) then a drag, or a middle-mouse drag, left
+  a group's pivot where it was, because Blender's Affect Only Origins skips Empties. It now moves and snaps onto
+  any vertex, its own children's included; the children, the group's channels and the pivot edit stay as they were.
 - **Quad Draw workflow** from @youngmin2k (#231) — thank you!
   - **Quad Draw surface inference and symmetry**: rank candidate quads in 3D as well as screen space; resolve
     competing snap targets across multi-point strips. Pick Reference Seam supports posed live meshes away from an
