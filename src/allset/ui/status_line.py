@@ -31,6 +31,23 @@ def main_view3d(screen=None):
     return best, next((r for r in best.regions if r.type == 'WINDOW'), None)
 
 
+def view3d_space(context):
+    """The 3D View a Maya Display item reads and sets: the one the menu is drawn in, else the largest of
+    the screen (the main menu bar is in the top bar), else the largest of the first window that has one (a kit
+    window such as Normals Size has none of its own). Maya keeps polygon display on the meshes; Blender keeps it on
+    each 3D View's overlays. None without a 3D View."""
+    space = getattr(context, "space_data", None)
+    if space is not None and space.type == 'VIEW_3D':
+        return space
+    area, _region = main_view3d(getattr(context, "screen", None))
+    wm = getattr(context, "window_manager", None)
+    for window in (wm.windows if wm is not None and area is None else ()):
+        area, _region = main_view3d(window.screen)
+        if area is not None:
+            break
+    return area.spaces.active if area is not None else None
+
+
 def all_view3d_spaces():
     """Every 3D View space in every screen (Maya selection masks are global)."""
     for screen in bpy.data.screens:

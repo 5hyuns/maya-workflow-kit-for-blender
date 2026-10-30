@@ -680,7 +680,26 @@ MAP.update({
     "Display/Object Display/Untemplate": ("allset.object_display", {"kind": 'UNTEMPLATE'}),
     "Display/Object Display/Bounding Box": ("allset.object_display", {"kind": 'BBOX'}),
     "Display/Object Display/No Bounding Box": ("allset.object_display", {"kind": 'NO_BBOX'}),
-    "Display/Polygons": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh", "keep_open": True}),
+    # Display > Polygons is Maya's submenu, no longer a leaf. Its check items are the overlays of the 3D View
+    # the menu acts on ("view3d.", ui/status_line.view3d_space), drawn on meshes in edit mode; Maya's Standard /
+    # Soft/Hard Edges pair = Blender's Sharp edge overlay off / on; Custom Polygon Display = Blender's edit-mode
+    # overlay popover (the item this menu used to be). The rest is greyed with a notice (ui/notices.py).
+    "Display/Polygons/Backface Culling": ("prop", "view3d.shading.show_backface_culling", {}),
+    "Display/Polygons/Face Normals": ("prop", "view3d.overlay.show_face_normals", {}),
+    "Display/Polygons/Vertex Normals": ("prop", "view3d.overlay.show_vertex_normals", {}),
+    "Display/Polygons/Normals Size...": "allset.normals_size",
+    "Display/Polygons/Standard Edges": ("prop", "view3d.overlay.show_edge_sharp", {"value": False}),
+    "Display/Polygons/Soft/Hard Edges": ("prop", "view3d.overlay.show_edge_sharp", {"value": True}),
+    "Display/Polygons/Hard Edges (color)": ("prop", "view3d.overlay.show_edge_sharp", {}),
+    "Display/Polygons/Crease Edges": ("prop", "view3d.overlay.show_edge_crease", {}),
+    "Display/Polygons/Texture Border Edges": ("prop", "view3d.overlay.show_edge_seams", {}),
+    "Display/Polygons/Face Centers": ("prop", "view3d.overlay.show_face_center", {}),
+    "Display/Polygons/Reset Display": "allset.poly_display_reset",
+    "Display/Polygons/Custom Polygon Display": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh",
+                                                                         "keep_open": True}),
+    # Blender's vertex and edge sizes are theme preferences (#43): open them, searched for the setting, don't write them
+    "Display/Polygons/Vertex Size...": ("allset.theme_setting", {"name": "Vertex Size"}),
+    "Display/Polygons/Edge Width...": ("allset.theme_setting", {"name": "Edge Width"}),
     "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
     "Display/Animation/Joint Size...": "allset.joint_size",              # step 248: Maya jointDisplayScale
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),

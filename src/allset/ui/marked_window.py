@@ -15,6 +15,7 @@ from .. import live_refs
 
 KINDS = {
     "COMPONENT_EDITOR": ("show_properties_object", "show_properties_modifiers"),
+    "NORMALS_SIZE": ("show_properties_view_layer", "show_properties_data"),   # operators/poly_display.py
     "SHAPE_EDITOR": ("show_properties_object", "show_properties_data"),
     "CONNECTION_EDITOR": ("show_properties_object", "show_properties_material"),
     "HOTKEY_EDITOR": ("show_properties_bone", "show_properties_bone_constraints"),   # step 215 (ui/hotkey_editor.py)

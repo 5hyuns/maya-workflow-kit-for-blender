@@ -171,6 +171,8 @@ from . import graph_move  # noqa: E402  step 281 (#192): Graph Editor Shift axis
 classes += graph_move.classes
 from . import graph_frame  # noqa: E402  step 281: Graph Editor F / A frame Maya's rectangle
 classes += graph_frame.classes
+from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
+classes += poly_display.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -192,6 +194,7 @@ def register():
     default_light.register()
     joint_edit.register()
     joint_display.register_props()
+    poly_display.register_props()
     skin_method.register_props()
     ik_rp.register_handlers()
     snap_align.register_props()
@@ -254,6 +257,7 @@ def unregister():
     ik_rp.unregister_handlers()
     joint_edit.unregister()
     joint_display.unregister_props()
+    poly_display.unregister_props()
     skin_method.unregister_props()
     curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()

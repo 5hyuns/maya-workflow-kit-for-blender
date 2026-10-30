@@ -19,9 +19,19 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
     small orbit arrows and a menu.
   - **Selected wire**: a selected object's back edges no longer show through its faces.
 
+### Changed
+- **Display > Polygons is Maya's submenu** (from @TMouraille, #240 — thank you!) instead of opening Blender's overlay popover. Face Normals, Vertex Normals,
+  Backface Culling, Crease Edges, Texture Border Edges (seams), Face Centers and Hard Edges (color) are check boxes
+  that show and change the overlays of the 3D View (the largest one when the menu is in the top bar); Standard Edges /
+  Soft/Hard Edges turn the sharp edge display off / on. Normals Size... is a small window whose slider (down to 0.001)
+  changes the normal length while you drag and stays open until OK, Reset Display puts these back to Blender's
+  defaults, and Custom Polygon Display opens the full overlay popover. Blender draws normals and edge display on
+  meshes in edit mode. Vertex Size... and Edge Width... open the theme preferences searched for that setting; the
+  other items are greyed with a note on the closest Blender feature.
+
 ### Fixed
-- **Frame Selection (F)** (from @youngmin2k, #237 — thank you!): Object and mesh component modes keep Maya's framing shortcut ahead of another
-  add-on's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
+- **Frame Selection (F)** (from @youngmin2k, #237 — thank you!): Object and mesh component modes keep Maya's
+  framing shortcut ahead of another add-on's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
 - **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
   Ctrl+Shift+H, h and Alt+H in the Outliner run Maya's visibility commands like in the viewport, and a node hidden
   with Blender's own hide (or parented under one) hides everything below it.

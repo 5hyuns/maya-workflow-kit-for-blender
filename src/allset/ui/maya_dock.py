@@ -662,6 +662,11 @@ def draw_tear_line(layout, idname):
 _drawing_torn = [False]
 
 
+def drawing_torn():
+    """True while a torn-off menu window draws its menu's items."""
+    return _drawing_torn[0]
+
+
 # --- panel ---------------------------------------------------------------------------------------------------------
 
 def draw_handle(layout, context=None, tabs=False):
