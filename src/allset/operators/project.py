@@ -176,6 +176,9 @@ def fix_render_output(blend_path, root):
 def _on_save_pre(filepath, *_args):
     if not isinstance(filepath, str) or not filepath:
         return
+    from . import autosave
+    if autosave.saving():       # an autosave copy leaves the open scene as it is
+        return
     root = current_root() or detect_root(filepath)
     if root and inside(filepath, root):
         fix_render_output(filepath, root)

@@ -109,6 +109,9 @@ def _stop_watch():
 
 
 def _on_save_post(filepath, *_args):
+    from ..operators import autosave
+    if autosave.saving():       # an autosave copy is not the scene being saved
+        return
     if filepath and os.path.isfile(filepath):
         _save_watch["saved"] = True
 

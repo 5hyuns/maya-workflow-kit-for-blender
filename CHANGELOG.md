@@ -6,6 +6,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Project autosave** (#254): Windows > Settings/Preferences > Preferences > Files/Projects > AutoSave (also in the
+  add-on preferences) saves a copy of the scene every few minutes into the current project's `autosave` folder,
+  like Maya, instead of only Blender's recovery file in the system temp folder. Copies are named
+  `<scene>.0001.blend`, `<scene>.0002.blend` ... (`untitled` for a scene never saved) and follow the project when
+  you set another one; a Named Folder can be chosen instead. Limit Autosaves keeps only the newest copies of each
+  scene. The scene's own file and its unsaved state are left alone, and nothing is written while the scene is
+  unchanged or a tool drag / render is running. Blender still writes its own `.blend1` backups next to the file.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.
