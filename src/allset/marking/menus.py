@@ -972,6 +972,9 @@ MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
                              UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
+# The kit's own menus. MENUS is what opens: user_menus.apply (Marking Menu Editor) puts rebuilt copies of the
+# menus the user changed and the user's own menus into it; these factory objects are never changed.
+FACTORY = dict(MENUS)
 
 # Active tool -> its options marking menu (Maya's tool hold menus).
 TOOL_OPTIONS = {"builtin.move": "OPT_MOVE", "builtin.rotate": "OPT_ROTATE",

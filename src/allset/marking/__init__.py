@@ -7,10 +7,13 @@ Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-releas
 - ``engine.py`` / ``draw.py`` / ``modal.py``: the step-9 marking menu engine
   (GPU, gestures, in-place submenus, option boxes) and the hotbox; the
   "Marking Menu Style" preference picks the engine (default) or the pies.
+- ``user_menus.py``: the user's edited and own menus (Marking Menu
+  Editor, ``menu_editor.py``), put into ``menus.MENUS`` at register.
 - Here: one pie ``Menu`` class per marking menu and radial submenu (plain
   ``Menu`` for list submenus), ``allset.marking_menu`` (picks the menu for a
   trigger and the context, like Maya's builders), helper operators, and the
-  Q/W/E/R "hold + LMB" bindings on the step-3 tap/hold framework.
+  Q/W/E/R "hold + LMB" bindings on the step-3 tap/hold framework; the user's
+  menus get their pie classes and hotkeys from ``apply_user_menus``.
 """
 
 import bpy
@@ -18,7 +21,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
-from . import draw, modal, rmb_items, rmb_nodes
+from . import draw, menu_editor, modal, rmb_items, rmb_nodes, user_menus
 from . import menus as mm
 
 # Blender fills a pie in this order (UILayout.menu_pie).
@@ -42,7 +45,10 @@ _sub_ids = {}  # id(Sub) -> (idname, is_pie)
 
 def _entry_spec(action):
     if isinstance(action, mm.Sub):
-        name, is_pie = _sub_ids[id(action)]
+        found = _sub_ids.get(id(action))
+        if found is None:       # a submenu without a class (never expected): greyed rather than a broken draw
+            return None
+        name, is_pie = found
         return ("pie" if is_pie else "menu", name, {})
     return menu_map.normalize(action)
 
@@ -83,15 +89,18 @@ def draw_pie(pie, sub, path):
             pie.separator()
 
 
-def _make(sub, name, label, path, is_pie):
+def _make(sub, name, label, path, is_pie, out=None, reuse=False):
+    """Menu classes for ``sub`` and its submenus into ``out`` (the factory ``_classes``). ``reuse``: a submenu that
+    already has a class keeps it (the factory submenus a user menu shares with the kit)."""
+    out = _classes if out is None else out
     _sub_ids[id(sub)] = (name, is_pie)
     # Children first so their ids exist when the parent draws.
     for pos, (child_label, action) in sub.radial.items():
-        if isinstance(action, mm.Sub):
-            _make(action, f"{name}_{pos}", child_label, f"{path}/{child_label}", is_pie=True)
+        if isinstance(action, mm.Sub) and not (reuse and id(action) in _sub_ids):
+            _make(action, f"{name}_{pos}", child_label, f"{path}/{child_label}", True, out, reuse)
     for i, entry in enumerate(sub.items):
-        if entry != mm.DIVIDER and isinstance(entry[1], mm.Sub):
-            _make(entry[1], f"{name}_{i}", entry[0], f"{path}/{entry[0]}", is_pie=False)
+        if entry != mm.DIVIDER and isinstance(entry[1], mm.Sub) and not (reuse and id(entry[1]) in _sub_ids):
+            _make(entry[1], f"{name}_{i}", entry[0], f"{path}/{entry[0]}", False, out, reuse)
 
     if is_pie:
         def draw(self, context):
@@ -118,13 +127,123 @@ def _make(sub, name, label, path, is_pie):
                 if pos in sub.radial:
                     draw_entry(self.layout, sub.radial[pos][0], sub.radial[pos][1], path)
             _draw_list(self.layout, sub, path)
-    _classes.append(type(name, (bpy.types.Menu,), {
+    out.append(type(name, (bpy.types.Menu,), {
         "bl_idname": name, "bl_label": label, "draw": draw, "__doc__": f"Maya marking menu: {path}"}))
 
 
 for _m in mm.MENUS.values():
     _make(_m, idname(_m.name), _m.label, _m.label, is_pie=True)
 _NAME_BY_ID = {idname(name): name for name in mm.MENUS}
+
+
+# --- the user's menus (Marking Menu Editor) ---------------------------------------------
+
+_user_classes = []      # Menu classes of the menus user_menus.apply built, registered while those are in MENUS
+_user_sub_ids = []      # their _sub_ids keys (the built Subs stay alive in MENUS / the draw closures until dropped)
+_USER_IDS = {}          # menu name -> its pie class idname (Blender Pies style)
+
+
+def user_idname(menu_name, sub_path=""):
+    # own prefix: a user menu's name never makes a factory class name (custom names are any identifier)
+    return "ALLSET_MT_mmu_" + idname(menu_name, sub_path)[len("ALLSET_MT_mm_"):]
+
+
+def pie_idname(menu_name):
+    """The pie class of ``menu_name`` as it is now (a changed kit menu has its own; step 8 fallback style)."""
+    return _USER_IDS.get(menu_name) or idname(menu_name)
+
+
+def _drop_user_pies():
+    for cls in reversed(_user_classes):
+        try:
+            bpy.utils.unregister_class(cls)
+        except RuntimeError:
+            pass
+    for key in _user_sub_ids:
+        _sub_ids.pop(key, None)
+    _user_classes.clear()
+    _user_sub_ids.clear()
+    _USER_IDS.clear()
+
+
+def _make_user_pies():
+    for name in user_menus.changed_names():
+        menu = mm.MENUS.get(name)
+        if menu is None or menu is mm.FACTORY.get(name):
+            continue
+        before = set(_sub_ids)
+        made = []
+        _make(menu, user_idname(name), menu.label, menu.label, True, made, reuse=True)
+        for cls in made:
+            bpy.utils.register_class(cls)
+        _user_classes.extend(made)
+        _user_sub_ids.extend(k for k in _sub_ids if k not in before)
+        _USER_IDS[name] = user_idname(name)
+
+
+class CustomMenuBinding(taphold.TapHoldBinding):
+    """A custom marking menu's hotkey, Maya's way: hold the key and press LMB = the menu (drag and release picks);
+    a tap does nothing (Maya runs the hotkey's release command, which a marking menu hotkey doesn't have)."""
+    menu = ""
+
+    def click(self, context, event):
+        modal.open_menu(self.menu, 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
+
+
+# 3D View keymaps the hotkey of a custom menu goes into: Blender runs the mode keymaps before "3D View", so the key is
+# in each of them, like the Maya keys of that mode (keymap.set_overlay puts it in front of them).
+HOTKEY_KEYMAPS = (("Object Mode", 'EMPTY'), ("Mesh", 'EMPTY'), ("Curve", 'EMPTY'), ("Curves", 'EMPTY'),
+                  ("Armature", 'EMPTY'), ("Pose", 'EMPTY'), ("Metaball", 'EMPTY'), ("Lattice", 'EMPTY'),
+                  ("Font", 'EMPTY'), ("Particle", 'EMPTY'), ("Sculpt", 'EMPTY'), ("Weight Paint", 'EMPTY'),
+                  ("Vertex Paint", 'EMPTY'), ("Image Paint", 'EMPTY'), ("3D View", 'VIEW_3D'))
+HOTKEY_OWNER = "custom_marking_menus"
+_user_bindings = []     # tap/hold binding names of the custom menus' hotkeys
+
+
+def binding_name(menu_name):
+    return f"user_mm_{menu_name}"
+
+
+def hotkey_items():
+    """keymap.set_overlay items for every custom menu with a hotkey (``allset.tap_hold`` on the key's press)."""
+    out = []
+    for name, hk in user_menus.hotkeys():
+        mods = {m: hk[m] for m in user_menus.MODIFIERS}
+        for km_name, space in HOTKEY_KEYMAPS:
+            out.append((km_name, space, "allset.tap_hold", hk["key"], 'PRESS', mods, {"binding": binding_name(name)}))
+    return out
+
+
+def _set_hotkeys():
+    for b in _user_bindings:
+        taphold.unregister_binding(b)
+    _user_bindings.clear()
+    for name, _hk in user_menus.hotkeys():
+        cls = type(f"Binding_{binding_name(name)}", (CustomMenuBinding,),
+                   {"name": binding_name(name), "label": user_menus.menu_label(name), "menu": name})
+        taphold.register_binding(cls())
+        _user_bindings.append(cls.name)
+    from .. import keymap
+    keymap.set_overlay(HOTKEY_OWNER, hotkey_items())
+
+
+def apply_user_menus():
+    """The document (user_menus) into MENUS, the pie classes of the menus it changed and the custom menus' hotkeys.
+    Called at register and after every edit in the Marking Menu Editor."""
+    _drop_user_pies()
+    user_menus.apply()
+    _make_user_pies()
+    _set_hotkeys()
+
+
+def _clear_user_menus():
+    from .. import keymap
+    keymap.set_overlay(HOTKEY_OWNER, [])
+    for b in _user_bindings:
+        taphold.unregister_binding(b)
+    _user_bindings.clear()
+    _drop_user_pies()
+    user_menus.reset()
 
 
 # --- choosing the menu (Maya builders, step 8) ---------------------------------------
@@ -280,6 +399,41 @@ class ALLSET_OT_mm_component(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_mm_python(bpy.types.Operator):
+    """Run this marking menu item's Python command (like a shelf button: maya.cmds look-alike available)"""
+    bl_idname = user_menus.PYTHON_OP
+    bl_label = "Python Command"
+    bl_options = {'INTERNAL'}
+
+    code: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from ..ui import shelf
+        ok, msg = shelf.run_script(context, "Marking Menu", self.code)
+        if not ok:
+            self.report({'ERROR'}, msg)
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_OT_mm_shelf_button(bpy.types.Operator):
+    """Run this shelf button, like a click on it (Maya: a shelf button dragged into a marking menu)"""
+    bl_idname = user_menus.SHELF_OP
+    bl_label = "Shelf Button"
+    bl_options = {'INTERNAL'}
+
+    shelf: StringProperty(options={'SKIP_SAVE'})
+    button: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from ..ui import shelf
+        index = shelf.button_index(self.shelf, self.button)
+        if index is None:
+            self.report({'WARNING'}, f"{self.button}: no longer on the {user_menus.shelf_text(self.shelf)} shelf")
+            return {'CANCELLED'}
+        return bpy.ops.allset.shelf_button(shelf=self.shelf, index=index)
+
+
 class ALLSET_OT_mm_clear_selection(bpy.types.Operator):
     """Clear the selection (objects or components)"""
     bl_idname = "allset.mm_clear_selection"
@@ -406,8 +560,8 @@ class SelectPolygonBinding(ToolOptionsBinding):
 SELECT_BINDINGS = (SelectComponentBinding, SelectPolygonBinding)
 
 
-classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_clear_selection,
-           *rmb_items.classes, *rmb_nodes.classes, *modal.classes, *_classes)
+classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_python, ALLSET_OT_mm_shelf_button,
+           ALLSET_OT_mm_clear_selection, *rmb_items.classes, *rmb_nodes.classes, *modal.classes, *_classes)
 
 
 def register():
@@ -419,9 +573,14 @@ def register():
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.register_binding(cls())
     draw.register()
+    user_menus.load()
+    apply_user_menus()
+    menu_editor.register()
 
 
 def unregister():
+    menu_editor.unregister()
+    _clear_user_menus()
     draw.unregister()
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.unregister_binding(cls.name)
