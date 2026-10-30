@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(r"C:\Repos\blender-maya-kit")
-BIN = Path(r"C:\Users\ohnsk\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin")
+BIN = Path(os.environ.get("LOCALAPPDATA", "")) / "hermes" / "tools" / "ffmpeg-9.0.1-win32-x64" / "bin"
 FF, FP = str(BIN / "ffmpeg.exe"), str(BIN / "ffprobe.exe")
 MK = ROOT / "docs/distribution/marketing"
 OUT = ROOT / "site/media"

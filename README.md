@@ -462,7 +462,7 @@ These assets are used only in the marketing media and are not shipped in the ext
 
 Code: **GPL-3.0-or-later** ([LICENSE](LICENSE)). The kit-made images and data files in the extension (welcome PNGs,
 the Maya layout `startup.blend`) are **CC0-1.0**
-([src/allset/ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)). Copyright 2026 ohnsk.
+([src/allset/ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)). Copyright 2026 5hyuns.
 
 ## Trademarks
 

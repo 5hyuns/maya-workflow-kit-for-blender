@@ -109,7 +109,7 @@ def legacy_bl_info():
     return ("\n\n# Legacy add-on metadata, added by tools/build.py (extensions read blender_manifest.toml).\n"
             "bl_info = {\n"
             f"    \"name\": {manifest_value('name')!r},\n"
-            "    \"author\": \"ohnsk\",\n"
+            "    \"author\": \"5hyuns\",\n"
             f"    \"version\": {version!r},\n"
             f"    \"blender\": {blender!r},\n"
             "    \"location\": \"Preferences > Add-ons\",\n"

@@ -22,7 +22,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "src" / "allset" / "keymap"
-PORTABLE = Path(os.environ.get("ALLSET_BLENDERS", r"C:\Users\ohnsk\AppData\Local\allset_blenders"))
+PORTABLE = Path(os.environ.get("ALLSET_BLENDERS",
+                                os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders")))
 
 
 def blenders():

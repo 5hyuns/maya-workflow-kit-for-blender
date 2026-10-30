@@ -84,7 +84,7 @@ def test_own_annotations_and_merged_classes():
 
 PY314 = (
     os.environ.get("ALLSET_PY314", ""),
-    r"C:\Users\ohnsk\AppData\Local\hermes\tools\python-3.14.9+20261021-win32-x64\python.exe",
+    os.path.expandvars(r"%LOCALAPPDATA%\hermes\tools\python-3.14.9+20261021-win32-x64\python.exe"),
     os.path.expandvars(r"%APPDATA%\uv\python\cpython-3.14-windows-x86_64-none\python.exe"),
 )
 

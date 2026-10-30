@@ -62,7 +62,7 @@ SHOT = (144, 22, 1632, 918)          # x, y, w, h of the window picture (85 %)
 BAND_Y = SHOT[1] + SHOT[3]            # caption band below it
 BAND_H = H - BAND_Y
 LIMIT_MP4, LIMIT_TRAILER, LIMIT_GIF = 8e6, 20e6, 4e6
-FFMPEG_FALLBACK = Path("C:/Users/ohnsk/AppData/Local/hermes/tools/ffmpeg-9.0.1-win32-x64/bin/ffmpeg.exe")
+FFMPEG_FALLBACK = Path(os.environ.get("LOCALAPPDATA", "")) / "hermes/tools/ffmpeg-9.0.1-win32-x64/bin/ffmpeg.exe"
 
 SPEED = 1.35            # default playback speed (content.json clip "speed")
 CAPTION_MIN = 1.2       # s a caption stays at least (output time)

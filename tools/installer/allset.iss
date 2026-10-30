@@ -24,7 +24,7 @@
 AppId={{CFBBD6AA-65FB-4121-9094-10EF64C2A40D}
 AppName=Maya Workflow Kit
 AppVersion={#AppVersion}
-AppPublisher=ohnsk
+AppPublisher=5hyuns
 ; Autodesk trademark footnote.
 AppCopyright=GPL-3.0-or-later. Autodesk and Maya are trademarks of the Autodesk group of companies; this project is not affiliated with Autodesk.
 DefaultDirName={localappdata}\Maya Workflow Kit

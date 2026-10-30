@@ -5,7 +5,7 @@ id = "allset"
 version = "0.7.0"
 name = "Maya Workflow Kit"
 tagline = "The whole Maya workflow in Blender, in one install"
-maintainer = "ohnsk <555hyuns@gmail.com>"
+maintainer = "5hyuns <555hyuns@gmail.com>"
 type = "add-on"
 # Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; step 61).
 # "User Interface" only: the moderator asked to remove every other tag (store review, GitHub #40, step 130).
@@ -26,7 +26,7 @@ license = [
   "SPDX:CC0-1.0",
 ]
 copyright = [
-  "2026 ohnsk",
+  "2026 5hyuns",
 ]
 
 [permissions]
