@@ -80,6 +80,33 @@ def current(context):
     return mat
 
 
+def assigned_materials():
+    """Materials some object in a scene uses (Maya: connected to a shading group with members). Data left behind by
+    a deleted object still counts as a user in Blender, so users alone don't tell."""
+    out = set()
+    for scene in bpy.data.scenes:
+        for ob in scene.objects:
+            out.update(s.material for s in ob.material_slots if s.material is not None)
+    return out
+
+
+def release_editors(mats):
+    """Let every Shader Editor showing one of ``mats`` go of its tree before the materials are removed: a pinned
+    editor keeps drawing the freed tree and Blender crashes."""
+    trees = {m.node_tree.as_pointer() for m in mats if m.node_tree is not None}
+    if not trees:
+        return
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            for space in area.spaces:
+                if space.type != 'NODE_EDITOR':
+                    continue
+                shown = {t.as_pointer() for t in (space.node_tree, space.edit_tree) if t is not None}
+                if shown & trees:
+                    space.node_tree = None
+                    space.pin = False
+
+
 def show(context, mat, space=None):
     """Make ``mat`` current and show it in the Shader Editor ``space`` (default: the Hypershade Graph of this
     window, since panes are Properties editors): the active object's slot when it has the material (the editor
@@ -533,16 +560,18 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
             if material_ops.is_default(cur):
                 self.report({'WARNING'}, f"{cur.name} can't be deleted (Maya's default material)")
                 return {'CANCELLED'}
+            release_editors([cur])
             bpy.data.materials.remove(cur)
             context.window_manager.allset_hs_material = ""
         elif act in {"DELETE_UNUSED", "DELETE_MATERIALS"}:
-            n = 0
-            for m in list(materials()):
-                used = m.users - (1 if m.use_fake_user else 0) > 0
-                if material_ops.is_default(m) or (act == "DELETE_UNUSED" and used):
-                    continue
+            assigned = assigned_materials() if act == "DELETE_UNUSED" else set()
+            doomed = [m for m in materials() if not material_ops.is_default(m) and m not in assigned]
+            release_editors(doomed)
+            if context.window_manager.allset_hs_material in {m.name for m in doomed}:
+                context.window_manager.allset_hs_material = ""
+            for m in doomed:
                 bpy.data.materials.remove(m)
-                n += 1
+            n = len(doomed)
             results.result(self, f"Deleted {n} material{'s' if n != 1 else ''}")
         elif act == "SELECT_OBJECTS":
             for o in context.selected_objects:

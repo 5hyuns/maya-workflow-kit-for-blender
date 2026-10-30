@@ -64,6 +64,12 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   with Blender's own hide (or parented under one) hides everything below it.
 - **Torn-off menus read like the menu**: the items' text starts at the left edge instead of being centred, with
   the hotkeys and option boxes still lined up on the right.
+- **Hypershade Delete Unused Nodes no longer crashes Blender** (#251, thanks @DAI3rd for the report and the crash
+  logs). Shader Editors showing a deleted material let go of it first, and a material that only a deleted object's
+  leftover data still held counts as unused, like Maya.
+- **Target Weld skips hidden components in shaded mode** (#233, thanks @Troyzerk for the report and the fix idea):
+  the press and the drop only pick vertices / edges you can see, like the pre-selection highlight; with X-ray or
+  wireframe they pick through the mesh again.
 
 ## [0.7.0] — 2026-10-29
 

@@ -123,9 +123,24 @@ def _segment_distance(p, a, b):
     return (a + ab * t - p).length
 
 
-def pick(view, objects, mouse, kind='VERT', radius=PICK_RADIUS, exclude=None):
+def visible_test(context):
+    """``f(world point) -> bool``: the point isn't behind a mesh in edit mode, like the pre-selection highlight;
+    None (everything visible) while X-ray is on."""
+    space = context.space_data
+    if space is None or space.type != 'VIEW_3D':
+        return None
+    from . import multi_cut, preselect
+    if preselect._xray(space):
+        return None
+    cs = preselect.caches(context)
+    region, rv3d = context.region, context.region_data
+    return lambda w: not multi_cut._occluded(cs, region, rv3d, w, False)
+
+
+def pick(view, objects, mouse, kind='VERT', radius=PICK_RADIUS, exclude=None, visible=None):
     """(object, element index) of the vertex / edge nearest to ``mouse`` on screen within ``radius`` px.
-    Occlusion is not checked; near ties go to the one nearer to the camera."""
+    ``visible`` (see ``visible_test``) skips hidden elements (an edge by its middle); without it occlusion is not
+    checked. Near ties go to the one nearer to the camera."""
     region, rv3d = view
     mouse = Vector(mouse)
     best = None
@@ -162,6 +177,8 @@ def pick(view, objects, mouse, kind='VERT', radius=PICK_RADIUS, exclude=None):
                 d = _segment_distance(mouse, p0, p1)
                 depth = _depth(rv3d, (w0 + w1) / 2)
             if d > radius:
+                continue
+            if visible is not None and not visible(w if kind == 'VERT' else (w0 + w1) / 2):
                 continue
             key = (round(d / 3), depth)
             if best is None or key < best[0]:
@@ -317,13 +334,15 @@ class ALLSET_OT_target_weld(bpy.types.Operator):
         self.element = 'EDGE' if mode[1] and not mode[0] else 'VERT'
         radius = PICK_RADIUS * _ui_scale()
         mouse = (event.mouse_region_x, event.mouse_region_y)
-        ob, index = pick(view, _mesh_objects(context), mouse, self.element, radius)
+        visible = visible_test(context)
+        ob, index = pick(view, _mesh_objects(context), mouse, self.element, radius, visible=visible)
         if ob is None:
             return {'PASS_THROUGH'}     # the tool's select fallback gets the press
         s = settings(context)
         self.object, self.source = ob.name, index
         self.merge_to, self.preserve_uvs = s.weld_merge_to, s.weld_preserve_uvs
         self._view, self._radius, self._button = view, radius, event.type
+        self._visible = visible
         self._mouse, self._hover = mouse, -1
         self._region = context.region
         self._space = context.space_data
@@ -369,7 +388,8 @@ class ALLSET_OT_target_weld(bpy.types.Operator):
         ob = self._ob()
         if ob is None:
             return -1
-        hit_ob, index = pick(self._view, [ob], mouse, self.element, self._radius, exclude=(ob.name, self.source))
+        hit_ob, index = pick(self._view, [ob], mouse, self.element, self._radius, exclude=(ob.name, self.source),
+                             visible=self._visible)
         return index if hit_ob is not None else -1
 
     def _finish(self, context):
