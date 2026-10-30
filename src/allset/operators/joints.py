@@ -500,6 +500,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         # clicks -> an unparented chain); clicking an existing joint with the tool does
         # (``_branch_from``).
         self._names, self._ob, self._parent, self._top = [], None, None, None
+        self._placed, self._redo = [], []   # joints placed by this tool run, newest last / undone ones
         self._swallow = False
         self._drag = None          # (joint name, area pointer, region pointer) while the button is held
         self._cursor = False
@@ -551,7 +552,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
             coord = (event.mouse_x - region.x, event.mouse_y - region.y)
             branch = None
             if self._ob is None:
-                arms = [o for o in context.view_layer.objects if o.type == 'ARMATURE' and o.visible_get()]
+                arms = [o for o in context.view_layer.objects if o is not None and o.type == 'ARMATURE' and o.visible_get()]
                 scale = context.preferences.system.ui_scale or 1.0
                 if arms:
                     found = pick_branch_joint(region, region.data, arms, coord, BRANCH_MIN_PX * scale)
@@ -587,24 +588,100 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         if self._ob is None and self._branch_from(context, area, region, coord):
             return True
         point = click_point(region, rv3d, coord)
-        if self._ob is None:
+        up = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+        self._redo.clear()
+        name = self._add_at(context, area, region, point, up)
+        if name is not None:
+            self._drag = (name, area.as_pointer(), region.as_pointer())
+        return True
+
+    def _add_at(self, context, area, region, point, up):
+        """Place the next joint at world ``point``; returns its name (None when the click repeats the current
+        joint). Each placed joint is remembered so undo inside the tool can take it back."""
+        created = self._ob is None
+        if created:
             with context.temp_override(window=context.window, area=area, region=region):
                 self._ob = new_skeleton(context)
         if self._ob.mode != 'EDIT':
             with context.temp_override(window=context.window, area=area, region=region):
                 bpy.ops.object.mode_set(mode='EDIT')
-        up = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+        parent = self._ob.data.edit_bones.get(self._parent) if self._parent else None
+        tail = parent.tail.copy() if parent is not None and len(parent.children) == 0 else None
         name = add_joint(self._ob, point, self._parent, up=up, length=units.maya_unit(context.scene))
-        if name != self._parent:
-            self._names.append(name)
-            self._drag = (name, area.as_pointer(), region.as_pointer())
+        if name == self._parent:
+            return None
+        self._names.append(name)
+        self._placed.append((name, self._parent, tail, Vector(point), Vector(up), created))
         self._parent = name
         area.tag_redraw()
-        return True
+        return name
+
+    def _undo_joint(self, context):
+        """Undo inside the tool (like Maya): take back the last joint this run placed; the skeleton goes when its
+        first joint does. The tool keeps running."""
+        if not self._placed or self._ob is None:
+            return
+        name, parent, tail, point, up, created = self._placed.pop()
+        self._drag = None
+        hit = self._any_view(context)
+        override = dict(window=context.window, area=hit[0], region=hit[1]) if hit else dict(window=context.window)
+        ob = self._ob
+        with context.temp_override(**override):
+            if ob.mode != 'EDIT':
+                bpy.ops.object.mode_set(mode='EDIT')
+            ebs = ob.data.edit_bones
+            eb = ebs.get(name)
+            if eb is not None:
+                ebs.remove(eb)
+            pe = ebs.get(parent) if parent else None
+            if pe is not None and tail is not None:
+                pe.tail = tail
+            if name in self._names:
+                self._names.remove(name)
+            self._parent = parent
+            self._redo.append((point, up))
+            if created:
+                bpy.ops.object.mode_set(mode='OBJECT')
+                arm = ob.data
+                bpy.data.objects.remove(ob)
+                if arm.users == 0:
+                    bpy.data.armatures.remove(arm)
+                self._ob, self._parent, self._names, self._placed = None, None, [], []
+        if hit:
+            hit[0].tag_redraw()
+
+    def _redo_joint(self, context):
+        """Redo inside the tool: place the joint the last undo took back."""
+        if not self._redo:
+            return
+        point, up = self._redo.pop()
+        hit = self._any_view(context)
+        if hit is not None:
+            self._add_at(context, hit[0], hit[1], point, up)
+
+    def _check_alive(self):
+        """The skeleton or its joints can be removed behind the tool (Edit > Undo, a script): forget what is
+        gone instead of touching removed data."""
+        if self._ob is None:
+            return
+        try:
+            ebs = self._ob.data.edit_bones if self._ob.mode == 'EDIT' else None
+        except ReferenceError:
+            self._names, self._ob, self._parent, self._top = [], None, None, None
+            self._placed, self._redo, self._drag = [], [], None
+            return
+        if ebs is None:
+            return
+        self._names = [n for n in self._names if n in ebs]
+        self._placed = [e for e in self._placed if e[0] in ebs]
+        if self._parent is not None and self._parent not in ebs:
+            self._parent = self._names[-1] if self._names else self._top
+        if self._drag is not None and self._drag[0] not in ebs:
+            self._drag = None
 
     def _branch_from(self, context, area, region, coord):
         """The first click on an existing joint: the new joints go under it (Maya Joint Tool). True when hit."""
-        arms = [o for o in context.view_layer.objects if o.type == 'ARMATURE' and o.visible_get()]
+        arms = [o for o in context.view_layer.objects if o is not None and o.type == 'ARMATURE' and o.visible_get()]
         scale = context.preferences.system.ui_scale or 1.0
         hit = pick_branch_joint(region, region.data, arms, coord, BRANCH_MIN_PX * scale) if arms else None
         if hit is None:
@@ -623,6 +700,17 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         return True
 
     def modal(self, context, event):
+        self._check_alive()
+        if event.value == 'PRESS' and event.type in {'Z', 'Y'} and not (event.alt or event.oskey):
+            plain = not (event.ctrl or event.shift)
+            if (event.type == 'Z' and (plain or (event.ctrl and not event.shift))):
+                self._undo_joint(context)
+                self._hover(context, event)
+                return {'RUNNING_MODAL'}
+            if (event.type == 'Z' and event.shift) or (event.type == 'Y' and event.ctrl and not event.shift):
+                self._redo_joint(context)
+                self._hover(context, event)
+                return {'RUNNING_MODAL'}
         # Maya 2026 ends the tool on Enter / Q / W / E / R with the branch top selected; Enter and Q leave the Select
         # Tool, W / E / R their tool.
         enter = event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS'
