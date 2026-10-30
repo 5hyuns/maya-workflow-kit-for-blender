@@ -60,6 +60,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   other items are greyed with a note on the closest Blender feature.
 
 ### Fixed
+- **Undo while the Joint Tool runs** (#256): z / Ctrl+Z take back the last joint placed and the tool keeps
+  running (undoing the first joint removes the new skeleton); Shift+Z / Ctrl+Y place it again. Before, Ctrl+Z
+  undid the whole skeleton and the tool stopped with an error.
 - **Group a joint, move the group, the skin follows** (#230): Edit > Group / Ctrl+G with a skeleton's root joint
   selected (in the viewport or the Outliner) puts the skeleton under `group1` and selects the group, like Maya.
   A skinned mesh now moves with its skeleton however the skeleton moves — its root joint, the skeleton itself or a

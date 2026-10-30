@@ -347,6 +347,7 @@ def stop():
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     _watch.update(running=False, snaps={}, last_op=None)
+    _watch.pop("origins_off", None)
 
 
 # --- pivot point per mode (P10/P11) ------------------------------------------------------------
