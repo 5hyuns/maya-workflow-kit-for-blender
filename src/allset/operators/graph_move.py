@@ -23,6 +23,12 @@ from bpy.props import EnumProperty
 
 DECIDE_PX = 3          # Maya: the first move reaching 3 px from the press decides the axis
 WHOLE_EPS = 1e-4       # a time this close to a whole frame counts as that frame
+SCALE_PX = 100.0       # Scale Keys tool: px of drag per 1.0 of scale
+ROTATE_DEG_PER_PX = 0.5   # rotate tool on keys: tangent turn per px of drag
+
+TOOLS = (('MOVE', "Move Keys", "Middle-mouse drags move the selected keys (w)"),
+         ('ROTATE', "Rotate Tangents", "Middle-mouse drags turn the selected keys' tangents (e)"),
+         ('SCALE', "Scale Keys", "Middle-mouse drags scale the selected keys around the press point (r)"))
 
 
 # --- pure rules -------------------------------------------------------------------------------------------------
@@ -70,6 +76,31 @@ def normalization(points):
     return 1.0, -lo
 
 
+def scaled(v, pivot, factor):
+    return pivot + (v - pivot) * factor
+
+
+def scale_factor(d_px, px=None):
+    """Scale Keys tool: a drag of ``d_px`` pixels from the press scales by 1 + d / SCALE_PX (0 at -SCALE_PX, then
+    the keys flip over the press point)."""
+    return 1.0 + d_px / (SCALE_PX if px is None else px)
+
+
+def rotate_angle(dx, dy):
+    """Rotate tool on keys: the tangents turn ROTATE_DEG_PER_PX per pixel the mouse moves up or right
+    (counter-clockwise)."""
+    return math.radians((dx + dy) * ROTATE_DEG_PER_PX)
+
+
+def rotate_offset(x, y, c, s):
+    return c * x - s * y, s * x + c * y
+
+
+def rotated_type(handle_type):
+    """A turned tangent keeps its direction: automatic / vector handles become aligned ones."""
+    return 'ALIGNED' if handle_type in {'AUTO', 'AUTO_CLAMPED', 'VECTOR'} else handle_type
+
+
 def time_snap_on(scene):
     ts = scene.tool_settings
     return bool(getattr(ts, "use_snap_anim", False)) and getattr(ts, "snap_anim_element", 'FRAME') == 'FRAME'
@@ -103,6 +134,14 @@ def _recalc(fc):
         pts.handles_recalc()
 
 
+def _offset(context, fc):
+    """Blender's normalized-view offset of one curve (0 in an absolute view): display = (value + offset) / scale."""
+    if not getattr(context.space_data, "use_normalization", False):
+        return 0.0
+    pts = [(kp.co.y, kp.handle_left.y, kp.handle_right.y, kp.interpolation) for kp in fc.keyframe_points]
+    return normalization(pts)[1]
+
+
 class KeySet:
     """The selected keys of the editable curves with their positions at the press."""
 
@@ -110,10 +149,16 @@ class KeySet:
         fcs = [fc for fc in (getattr(context, "editable_fcurves", None) or ())
                if any(kp.select_control_point for kp in fc.keyframe_points)]
         self.curves = []
+        self.offsets = []
+        self.types = {}
         for fc, scale in zip(fcs, _value_scales(context, fcs) if fcs else ()):
             keys = [(i, tuple(kp.co), tuple(kp.handle_left), tuple(kp.handle_right))
                     for i, kp in enumerate(fc.keyframe_points) if kp.select_control_point]
             self.curves.append((fc, scale, keys))
+            self.offsets.append(_offset(context, fc))
+            for i, *_rest in keys:
+                kp = fc.keyframe_points[i]
+                self.types[(fc.as_pointer(), i)] = (kp.handle_left_type, kp.handle_right_type)
 
     def __bool__(self):
         return bool(self.curves)
@@ -130,7 +175,47 @@ class KeySet:
                 kp.handle_right = (right[0] + ox, right[1] + oy)
             _recalc(fc)
 
+    def apply_scale(self, pivot, sx, sy, snap):
+        """Every key and its handles scaled by (``sx`` in time, ``sy`` in display value) around ``pivot`` = (frame,
+        display value); with time snap the keys land on whole frames."""
+        pt, pv = pivot
+        for (fc, scale, keys), off in zip(self.curves, self.offsets):
+            for i, co, left, right in keys:
+                nx = scaled(co[0], pt, sx)
+                if snap:
+                    nx = float(round(nx))
+                shift = nx - scaled(co[0], pt, sx)
+                kp = fc.keyframe_points[i]
+
+                def value(y):
+                    return scaled((y + off) / scale, pv, sy) * scale - off
+                kp.co = (nx, value(co[1]))
+                kp.handle_left = (scaled(left[0], pt, sx) + shift, value(left[1]))
+                kp.handle_right = (scaled(right[0], pt, sx) + shift, value(right[1]))
+            _recalc(fc)
+
+    def apply_rotate(self, angle, px_frame, px_value):
+        """Every key's tangents turned by ``angle`` radians on screen (counter-clockwise), the key itself stays.
+        ``px_frame`` / ``px_value`` = region pixels per frame / per display unit. Automatic tangents become aligned
+        ones so the new direction is kept."""
+        c, s = math.cos(angle), math.sin(angle)
+        for fc, scale, keys in self.curves:
+            for i, co, left, right in keys:
+                kp = fc.keyframe_points[i]
+                lt, rt = self.types[(fc.as_pointer(), i)]
+                kp.handle_left_type = rotated_type(lt)
+                kp.handle_right_type = rotated_type(rt)
+                for attr, h in (("handle_left", left), ("handle_right", right)):
+                    hx, hy = rotate_offset((h[0] - co[0]) * px_frame, (h[1] - co[1]) / scale * px_value, c, s)
+                    setattr(kp, attr, (co[0] + hx / px_frame, co[1] + hy * scale / px_value))
+                kp.co = co
+            _recalc(fc)
+
     def restore(self):
+        for fc, _scale, keys in self.curves:
+            for i, *_rest in keys:
+                kp = fc.keyframe_points[i]
+                kp.handle_left_type, kp.handle_right_type = self.types[(fc.as_pointer(), i)]
         self.apply(0.0, 0.0, False)
 
     def finish(self):
@@ -191,6 +276,7 @@ class ALLSET_OT_graph_axis_drag(bpy.types.Operator):
         if self.button == 'LEFT':
             px = getattr(event, "mouse_prev_press_x", event.mouse_x) - region.x
             py = getattr(event, "mouse_prev_press_y", event.mouse_y) - region.y
+            undo_shift_toggle(context, px, py)
             if not near_selected_key(context, px, py):
                 return {'PASS_THROUGH'}             # Blender's Shift marquee
         else:
@@ -240,6 +326,165 @@ class ALLSET_OT_graph_axis_drag(bpy.types.Operator):
             _redraw(context)
             return {'RUNNING_MODAL'}
         if event.type == release and event.value == 'RELEASE':
+            if not self._moved:
+                return {'CANCELLED'}
+            self._keys.finish()
+            _redraw(context)
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
+# --- Shift+LMB press on a selected key ---------------------------------------------------------------------------
+# Blender's Shift+click toggles the key off on the press, so the drag that follows found no selected key under the
+# mouse and ran the marquee. The press remembers the selection; a drag from it puts the selection back and moves
+# the keys along one axis, a plain Shift+click keeps Blender's toggle.
+
+_SHIFT_PRESS = {}
+PRESS_EPS = 1.5        # px: the drag's press position is the remembered press
+
+
+def undo_shift_toggle(context, px, py):
+    """Put back the selection a Shift press on a selected key toggled (the drag starting at (px, py) moves it)."""
+    p = _SHIFT_PRESS.pop("press", None)
+    if p is None or context.area is None or p["area"] != context.area.as_pointer():
+        return False
+    if abs(p["pos"][0] - px) > PRESS_EPS or abs(p["pos"][1] - py) > PRESS_EPS:
+        return False
+    from . import select_2d
+    select_2d.set_key_state(p["state"])
+    return True
+
+
+class ALLSET_OT_graph_shift_press(bpy.types.Operator):
+    """Shift+press on a selected key: remember the key selection for a Shift+drag that moves the keys"""
+    bl_idname = "allset.graph_shift_press"
+    bl_label = "Shift Press on Keys"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        _SHIFT_PRESS.pop("press", None)
+        if not _graph_window(context):
+            return {'PASS_THROUGH'}
+        region = context.region
+        x, y = event.mouse_x - region.x, event.mouse_y - region.y
+        if near_selected_key(context, x, y):
+            from . import select_2d
+            _SHIFT_PRESS["press"] = {"state": select_2d.key_state(), "pos": (x, y),
+                                     "area": context.area.as_pointer()}
+        return {'PASS_THROUGH'}
+
+
+# --- Graph Editor key tools (w / e / r) and plain middle drags -----------------------------------------------------
+
+def key_tool(context):
+    return getattr(context.window_manager, "allset_graph_key_tool", 'MOVE')
+
+
+def unconstrained(context):
+    from .. import preferences
+    try:
+        return bool(preferences.get(context).graph_unconstrained_drag)
+    except KeyError:
+        return True
+
+
+def _tag_headers(context):
+    for area in context.screen.areas if context.screen else ():
+        if area.type == 'GRAPH_EDITOR':
+            area.tag_redraw()
+
+
+class ALLSET_OT_graph_key_tool(bpy.types.Operator):
+    """Pick what a middle-mouse drag does to the selected keys: move, turn their tangents or scale them
+    (w / e / r in the Graph Editor, like Maya)"""
+    bl_idname = "allset.graph_key_tool"
+    bl_label = "Graph Editor Key Tool"
+    bl_options = {'INTERNAL'}
+
+    tool: EnumProperty(items=TOOLS, name="Tool", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        context.window_manager.allset_graph_key_tool = self.tool
+        from .. import results
+        results.result(self, next(label for k, label, _d in TOOLS if k == self.tool) + " Tool")
+        _tag_headers(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_graph_key_drag(bpy.types.Operator):
+    """Middle-mouse drag in the Graph Editor: move / turn / scale the selected keys with the current key tool,
+    counted from the press"""
+    bl_idname = "allset.graph_key_drag"
+    bl_label = "Drag Keys"
+    bl_options = {'UNDO', 'INTERNAL'}
+
+    def invoke(self, context, event):
+        if not _graph_window(context):
+            return {'PASS_THROUGH'}
+        self._keys = KeySet(context)
+        if not self._keys:
+            return {'PASS_THROUGH'}         # nothing to drag: Blender's own drag (selected handles) still runs
+        region = self._region = context.region
+        self._press = (event.mouse_x - region.x, event.mouse_y - region.y)
+        self._tool = key_tool(context)
+        self._lock = not unconstrained(context) and self._tool != 'ROTATE'
+        self._axis = None
+        self._origin = self._press
+        self._moved = False
+        self._snap = time_snap_on(context.scene)
+        v2d = region.view2d
+        x0, y0 = v2d.view_to_region(0.0, 0.0, clip=False)
+        x1, y1 = v2d.view_to_region(1.0, 1.0, clip=False)
+        self._px_frame = (x1 - x0) or 1.0
+        self._px_value = (y1 - y0) or 1.0
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _view(self, x, y):
+        return self._region.view2d.region_to_view(x, y)
+
+    def _update(self, x, y):
+        if self._lock and self._axis is None:
+            self._axis = decide(x - self._press[0], y - self._press[1])
+            if self._axis is None:
+                return False
+            if self._tool == 'MOVE':
+                self._origin = (x, y)               # like Shift: the deciding move itself is dropped
+                return False
+        if self._tool == 'MOVE':
+            t0, v0 = self._view(*self._origin)
+            t1, v1 = self._view(x, y)
+            dt, dv = t1 - t0, v1 - v0
+            if self._axis == 'TIME':
+                dv = 0.0
+            elif self._axis == 'VALUE':
+                dt = 0.0
+            self._keys.apply(dt, dv, self._snap, time_axis=self._axis != 'VALUE')
+        elif self._tool == 'SCALE':
+            sx = scale_factor(x - self._press[0])
+            sy = scale_factor(y - self._press[1])
+            if self._axis == 'TIME':
+                sy = 1.0
+            elif self._axis == 'VALUE':
+                sx = 1.0
+            self._keys.apply_scale(self._view(*self._press), sx, sy, self._snap)
+        else:
+            self._keys.apply_rotate(rotate_angle(x - self._press[0], y - self._press[1]),
+                                    self._px_frame, self._px_value)
+        return True
+
+    def modal(self, context, event):
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            self._keys.restore()
+            self._keys.finish()
+            _redraw(context)
+            return {'CANCELLED'}
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+            if self._update(event.mouse_x - self._region.x, event.mouse_y - self._region.y):
+                self._moved = True
+                _redraw(context)
+            return {'RUNNING_MODAL'}
+        if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
             if not self._moved:
                 return {'CANCELLED'}
             self._keys.finish()
@@ -334,7 +579,20 @@ class ALLSET_OT_graph_move_snap(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
-classes = (ALLSET_OT_graph_axis_drag, ALLSET_OT_graph_move_snap)
+classes = (ALLSET_OT_graph_axis_drag, ALLSET_OT_graph_move_snap, ALLSET_OT_graph_shift_press,
+           ALLSET_OT_graph_key_tool, ALLSET_OT_graph_key_drag)
+
+
+def register_props():
+    bpy.types.WindowManager.allset_graph_key_tool = EnumProperty(
+        items=TOOLS, name="Key Tool", default='MOVE',
+        description="What a middle-mouse drag does to the selected keys in the Graph Editor")
+
+
+def unregister_props():
+    _SHIFT_PRESS.clear()
+    if hasattr(bpy.types.WindowManager, "allset_graph_key_tool"):
+        del bpy.types.WindowManager.allset_graph_key_tool
 
 
 def unregister_timers():

@@ -117,8 +117,10 @@ def _edit_menu(ed, graph):
         f"{ed}/Edit/Paste": _key("PASTE"),
         f"{ed}/Edit/Delete": _key("DELETE"),
         f"{ed}/Edit/Scale": scale,
-        f"{ed}/Edit/Transformation Tools/Move Keys Tool": move,
-        f"{ed}/Edit/Transformation Tools/Scale Keys Tool": scale,
+        f"{ed}/Edit/Transformation Tools/Move Keys Tool":
+            ("prop", "window_manager.allset_graph_key_tool", {"value": 'MOVE'}) if graph else move,
+        f"{ed}/Edit/Transformation Tools/Scale Keys Tool":
+            ("prop", "window_manager.allset_graph_key_tool", {"value": 'SCALE'}) if graph else scale,
         f"{ed}/Edit/Snap": ("graph.snap" if graph else "action.snap", {"type": 'NEAREST_FRAME'}),
     }
     if graph:

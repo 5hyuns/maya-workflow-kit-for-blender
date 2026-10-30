@@ -352,6 +352,106 @@ def _draw_names():
     blf.disable(font, blf.SHADOW)
 
 
+# --- L = value lines -------------------------------------------------------------------------------------------
+# Horizontal lines across the Graph Editor: the zero value and the lowest / highest key value of the selected curves
+# (curves with a selected key or selected in the list; none selected = every curve shown).
+
+ZERO_RGBA = (1.0, 1.0, 1.0, 0.45)
+RANGE_RGBA = (1.0, 0.85, 0.35, 0.7)
+
+
+def value_line_curves(curves):
+    """The curves whose key range the value lines show."""
+    curves = [fc for fc in curves if len(fc.keyframe_points)]
+    picked = [fc for fc in curves if fc.select or any(kp.select_control_point for kp in fc.keyframe_points)]
+    return picked or curves
+
+
+def value_range(values):
+    """(lowest, highest) of the display values, None without values."""
+    values = list(values)
+    return (min(values), max(values)) if values else None
+
+
+def value_lines(context):
+    """[(display value, rgba)] of this Graph Editor's value lines: zero first, then the curves' lowest / highest key
+    value (once when they are equal)."""
+    space = context.space_data
+    if space is None or space.type != 'GRAPH_EDITOR' or space.mode != 'FCURVES':
+        return []
+    from .. import preferences
+    try:
+        if not preferences.get(context).graph_value_lines:
+            return []
+    except KeyError:
+        return []
+    out = [(0.0, ZERO_RGBA)]
+    fcs = value_line_curves(getattr(context, "visible_fcurves", None) or ())
+    if not fcs:
+        return out
+    from ..operators import graph_move
+    scales = graph_move._value_scales(context, fcs)
+    vals = []
+    for fc, scale in zip(fcs, scales):
+        off = graph_move._offset(context, fc)
+        vals += [(kp.co.y + off) / scale for kp in fc.keyframe_points]
+    rng = value_range(vals)
+    if rng is not None:
+        out += [(v, RANGE_RGBA) for v in sorted(set(rng))]
+    return out
+
+
+def _draw_value_lines():
+    context = bpy.context
+    region = context.region
+    if region is None or region.type != 'WINDOW':
+        return
+    try:
+        lines = value_lines(context)
+    except (AttributeError, ReferenceError):
+        return
+    if not lines:
+        return
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    v2d = region.view2d
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    for value, rgba in lines:
+        _x, y = v2d.view_to_region(0.0, value, clip=False)
+        if not -1 <= y <= region.height + 1:
+            continue
+        shader.uniform_float("color", rgba)
+        batch_for_shader(shader, 'LINES', {"pos": [(0, y), (region.width, y)]}).draw(shader)
+    gpu.state.blend_set('NONE')
+
+
+class ALLSET_OT_graph_value_lines(bpy.types.Operator):
+    """Show or hide the value lines: the zero value and the lowest / highest value of the selected curves (Maya l)"""
+    bl_idname = "allset.graph_value_lines"
+    bl_label = "Value Lines"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        from .. import preferences, results
+        prefs = preferences.get(context)
+        prefs.graph_value_lines = not prefs.graph_value_lines
+        results.result(self, "Value Lines: " + ("on" if prefs.graph_value_lines else "off"))
+        for area in context.screen.areas if context.screen else ():
+            if area.type == 'GRAPH_EDITOR':
+                area.tag_redraw()
+        return {'FINISHED'}
+
+
+def draw_view_menu(self, context):
+    """Blender's Graph Editor View menu > Value Lines."""
+    from .. import preferences
+    try:
+        self.layout.prop(preferences.get(context), "graph_value_lines")
+    except KeyError:
+        pass
+
+
 # --- Show > Objects > Clear Below -----------------------------------------------------------------------------
 
 class ALLSET_OT_graph_show_clear(bpy.types.Operator):
@@ -378,7 +478,10 @@ class ALLSET_OT_graph_show_clear(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(ALLSET_OT_graph_show_clear)
+    bpy.utils.register_class(ALLSET_OT_graph_value_lines)
     _handles.append(bpy.types.SpaceGraphEditor.draw_handler_add(_draw_names, (), 'WINDOW', 'POST_PIXEL'))
+    _handles.append(bpy.types.SpaceGraphEditor.draw_handler_add(_draw_value_lines, (), 'WINDOW', 'POST_PIXEL'))
+    bpy.types.GRAPH_MT_view.append(draw_view_menu)
     bpy.app.timers.register(_tick, first_interval=POLL, persistent=True)
     bpy.app.handlers.load_post.append(_reset)
     _state["sig"] = None
@@ -389,7 +492,9 @@ def unregister():
         bpy.app.handlers.load_post.remove(_reset)
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
+    bpy.types.GRAPH_MT_view.remove(draw_view_menu)
     while _handles:
         bpy.types.SpaceGraphEditor.draw_handler_remove(_handles.pop(), 'WINDOW')
+    bpy.utils.unregister_class(ALLSET_OT_graph_value_lines)
     bpy.utils.unregister_class(ALLSET_OT_graph_show_clear)
     _state["sig"] = None

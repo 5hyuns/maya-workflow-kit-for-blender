@@ -1,7 +1,7 @@
 """Step 281 (#192) in a real UI (Maya Workflow Kit layout, the big view switched to the Graph Editor): Shift+MMB moves
 the selected key along time only or value only (the first 3 px decide, that motion is dropped), a single long move
 then release moves nothing, Shift+LMB drag on a selected key locks the same way, and with time snap on a key at 10.3
-moved by Blender's MMB drag lands on frame 10."""
+moved by a plain MMB drag lands on frame 10."""
 
 import os
 import sys
@@ -196,11 +196,11 @@ def _fraction():
 
 
 _case("mmb_snap_fraction", 'MIDDLEMOUSE',
-      lambda: [(4, 0), (4 + int(round(0.38 * C["ppf"])), 0), (4 + int(round(0.38 * C["ppf"])), 0)], _mid,
+      lambda: [(int(round(0.38 * C["ppf"])), 0), (int(round(0.38 * C["ppf"])), 0)], _mid,
       lambda s, e: (e[0] == 10.0, "time snap: 10.3 + 0.38 f lands on 10"), mods=False, prep=_fraction)
 
 _case("mmb_snap_fraction_up", 'MIDDLEMOUSE',
-      lambda: [(4, 0), (4 + int(round(0.62 * C["ppf"])), 0), (4 + int(round(0.62 * C["ppf"])), 0)], _mid,
+      lambda: [(int(round(0.62 * C["ppf"])), 0), (int(round(0.62 * C["ppf"])), 0)], _mid,
       lambda s, e: (e[0] == 11.0, "time snap: 10.3 + 0.62 f lands on 11"), mods=False, prep=_fraction)
 
 

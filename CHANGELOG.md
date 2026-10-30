@@ -29,6 +29,12 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   the Channel Box INPUTS show Profile Poly Sides, Scale / Rotate Profile, Twist, Taper, the interpolation values and
   Caps. Editing or moving the curve updates the mesh. Delete History (or Construction History off) makes it a plain
   mesh, and deleting the curve keeps the mesh.
+- **Graph Editor key tools and value lines** (#211): w / e / r over the Graph Editor pick what a middle-mouse drag
+  does to the selected keys — move them, turn their tangents, or scale them around the point where you pressed —
+  instead of starting a move / rotate / scale at once; the toolbar shows the current one, and Edit >
+  Transformation Tools > Move Keys Tool / Scale Keys Tool pick it too. l shows the value lines: the zero line and
+  the lowest / highest value of the selected curves (also in Blender's View menu). The toolbar's new Unconstrained
+  drag button (on by default) lets middle drags move keys in time and value; off, the first move picks one of them.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.
@@ -94,6 +100,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   that preference is on; on Windows the kit now tumbles on it anyway (a real middle drag is left alone).
 - **Panels > Tear Off / Tear Off Copy** (#255) opened nothing (an error in the console): they now open a copy of
   the view in a new window, with the same camera and display.
+- **Graph Editor drags** (#211): Shift+left-drag that starts on an already selected key moves the selected keys
+  along time or value only (before, the key was toggled off and a box started); a Shift+click still toggles it. A
+  plain middle drag now counts from where you pressed, like Maya, instead of from a few pixels later.
 - **Undo while the Joint Tool runs** (#256): z / Ctrl+Z take back the last joint placed and the tool keeps
   running (undoing the first joint removes the new skeleton); Shift+Z / Ctrl+Y place it again. Before, Ctrl+Z
   undid the whole skeleton and the tool stopped with an error.
