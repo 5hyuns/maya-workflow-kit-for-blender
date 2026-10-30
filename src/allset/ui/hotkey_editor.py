@@ -23,7 +23,7 @@ import bpy
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, IntProperty, StringProperty
 
 from . import marked_window
-from ..keymap import hotkey_rows, mapping
+from ..keymap import hotkey_import, hotkey_rows, mapping
 
 KIND = "HOTKEY_EDITOR"
 TITLE = "Hotkey Editor"
@@ -436,6 +436,52 @@ class ALLSET_OT_hotkey_restore(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def import_hotkeys(context, text):
+    """Apply a Maya hotkey set file's bindings to the kit rows. Returns (changed, skipped bindings)."""
+    bindings, names = hotkey_import.parse(text)
+    changes, skipped = hotkey_import.plan(rows(), bindings, names, key_of=hotkey_rows.event_key)
+    done = 0
+    for row, event in changes:
+        ok, _clash = assign(context, row, event)
+        if ok:
+            done += 1
+        else:
+            skipped.append(({"key": row["maya_key"], "name": row["command"]}, "the kit key can't be changed here"))
+    return done, skipped
+
+
+class ALLSET_OT_hotkey_import(bpy.types.Operator):
+    """Import a hotkey set exported from Maya's Hotkey Editor (.mhk): its keys replace the kit keys of the same
+    commands (only key bindings are read; nothing in the file is run)"""
+    bl_idname = "allset.hotkey_import"
+    bl_label = "Import..."
+    bl_options = {'INTERNAL'}
+
+    filepath: StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'})
+    filter_glob: StringProperty(default="*.mhk;*.mel;*.txt", options={'HIDDEN'})
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        try:
+            with open(self.filepath, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
+        except OSError as exc:
+            self.report({'ERROR'}, f"Could not read {self.filepath}: {exc}")
+            return {'CANCELLED'}
+        done, skipped = import_hotkeys(context, text)
+        refresh(context)
+        for b, reason in skipped[:20]:
+            print(f"Hotkey import: {b.get('key')} {b.get('name')}: {reason}")
+        msg = f"Imported {done} hotkey{'s' if done != 1 else ''}"
+        if skipped:
+            msg += f"; {len(skipped)} left out (see the system console)"
+        self.report({'INFO'}, msg)
+        return {'FINISHED'}
+
+
 class ALLSET_OT_hotkey_blender_prefs(bpy.types.Operator):
     """Open Blender's Preferences > Keymap (every Blender and add-on key)"""
     bl_idname = "allset.hotkey_blender_prefs"
@@ -504,6 +550,7 @@ class ALLSET_PT_hotkey_editor(bpy.types.Panel):
         layout = self.layout
         top = layout.row(align=True)
         top.label(text=f"Hotkey Set: {SET_NAME}")
+        top.operator(ALLSET_OT_hotkey_import.bl_idname, icon='IMPORT')
         top.operator(ALLSET_OT_hotkey_blender_prefs.bl_idname, icon='PREFERENCES')
         search = layout.row(align=True)
         search.prop(wm, "allset_hk_by", text="")
@@ -524,7 +571,7 @@ class ALLSET_PT_hotkey_editor(bpy.types.Panel):
 
 
 classes = (ALLSET_PG_hotkey_row, ALLSET_UL_hotkeys, ALLSET_OT_hotkey_editor, ALLSET_OT_hotkey_assign,
-           ALLSET_OT_hotkey_restore, ALLSET_OT_hotkey_blender_prefs, ALLSET_PT_hotkey_editor)
+           ALLSET_OT_hotkey_restore, ALLSET_OT_hotkey_import, ALLSET_OT_hotkey_blender_prefs, ALLSET_PT_hotkey_editor)
 
 _WM_PROPS = ("allset_hk_rows", "allset_hk_active", "allset_hk_search", "allset_hk_by", "allset_hk_category",
              "allset_hk_capture")

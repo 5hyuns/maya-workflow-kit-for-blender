@@ -6,6 +6,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Hotkey Editor > Import...** (#219): read a hotkey set exported from Maya's Hotkey Editor (.mhk). Its keys
+  replace the kit keys of the same commands; keys that are already Maya's stay, and commands the kit doesn't bind
+  are listed in the system console. Only the key bindings are read — nothing in the file is run. Restore puts the
+  Maya keys back.
 - **UV Editor Shaded shows flipped UVs** (#246): 5 or View > Shaded colours front-facing UV faces blue and
   flipped (clockwise) ones red, like Maya's shaded UV display; 4 or View > Wireframe turns the faces off.
 - **Channel Box value dragging** from Tom Pilott (#224) — thank you! Left-drag a Channel Box value sideways to change
