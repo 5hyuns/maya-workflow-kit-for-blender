@@ -58,7 +58,10 @@ def make_group(context, objects):
     grp.matrix_basis = Matrix.Identity(4)
     context.view_layer.update()
 
+    from . import skin_follow
     for ob in objects:
+        if ob.type == 'ARMATURE':
+            skin_follow.ensure(ob)      # its skin moves with the group (meshes bound before the kit's follow)
         set_parent_keep_world(ob, grp)
     return grp
 
@@ -132,20 +135,61 @@ def _depth(ob):
     return n
 
 
+# A joint inside a bone chain can't be given a group parent here (a bone's parent is another bone of its skeleton).
+CHILD_JOINT_WARNING = ("Cannot group joint {name}: only the top (root) joints of a skeleton can go under a group. "
+                       "Select the root joint to group the whole skeleton.")
+SOME_ROOTS_WARNING = ("Cannot group joint {name} alone: its skeleton has other root joints ({others}) that would move "
+                      "with it. Select every root joint of the skeleton.")
+
+
+def joint_selection(context):
+    """Selected joints as ``(skeletons, warning)``: the armature objects whose root joints are picked (pose mode,
+    or skeleton edit mode), or a warning text when a picked joint can't be grouped on its own."""
+    from . import joints
+    skeletons = []
+    for ob in context.view_layer.objects:
+        if ob is None or ob.type != 'ARMATURE' or ob.mode not in {'POSE', 'EDIT'}:
+            continue
+        picked = joints.selected_joint_names(ob)
+        if not picked:
+            continue
+        bones = ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones
+        for name in picked:
+            bone = bones.get(name)
+            if bone is not None and bone.parent is not None:
+                return [], CHILD_JOINT_WARNING.format(name=name)
+        roots = [b.name for b in bones if b.parent is None]
+        others = [n for n in roots if n not in picked]
+        if others:
+            return [], SOME_ROOTS_WARNING.format(name=picked[0], others=", ".join(others))
+        skeletons.append(ob)
+    return skeletons, None
+
+
 class ALLSET_OT_group(bpy.types.Operator):
-    """Group the selected objects under a new transform (Maya Ctrl+G)"""
+    """Group the selected objects under a new transform (Maya Ctrl+G). With root joints selected their skeleton
+    goes under the group"""
     bl_idname = "allset.group"
     bl_label = "Group"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT' and context.view_layer is not None
+        return context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'} and context.view_layer is not None
 
     def execute(self, context):
-        objects = [ob for ob in context.selected_objects]
+        skeletons, in_mode = [], set()
+        if context.mode != 'OBJECT':
+            skeletons, warning = joint_selection(context)
+            if warning:
+                self.report({'WARNING'}, warning)
+                return {'CANCELLED'}
+            # a skeleton in pose / edit mode counts through its picked joints only
+            in_mode = {ob for ob in context.view_layer.objects if ob is not None and ob.mode != 'OBJECT'}
+            bpy.ops.object.mode_set(mode='OBJECT')      # Maya selects the new group (an object)
+        objects = skeletons + [ob for ob in context.selected_objects if ob not in in_mode]
         grp = make_group(context, objects)
-        for ob in objects:
+        for ob in context.selected_objects:
             ob.select_set(False)
         grp.select_set(True)
         context.view_layer.objects.active = grp

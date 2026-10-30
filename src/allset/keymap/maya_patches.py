@@ -184,6 +184,9 @@ def patch_group(kd):
     for km in ("Object Mode", "Outliner"):
         kd.remove(km, None, type="G", ctrl=True)
         _add(kd, km, "allset.group", make_event("G", ctrl=True))
+    # A picked joint (pose mode, or skeleton edit mode with the Move tool): its skeleton goes under the group.
+    for km in ("Pose", "Armature"):
+        _add(kd, km, "allset.group", make_event("G", ctrl=True))
 
 
 # --- 4. Space reserved for the hotbox ---------------------------------------

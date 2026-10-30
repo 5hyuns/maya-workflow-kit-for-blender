@@ -537,8 +537,10 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
             mesh[rig_maya.DROPOFF_PROP] = {vg.name: float(dropoff) for vg in influences(mesh)}
         from . import skin_method
         skin_method.set_method(mesh, skinning)       # step 250: Classic linear / Dual quaternion / Weight blended
-    from . import skin_basics
+    from . import skin_basics, skin_follow
     skin_basics.store_bind_pose(arm)
+    for mesh in meshes:
+        skin_follow.attach(mesh, arm)       # the skin moves with the skeleton object / a group above it (Maya)
     if colorize_skeleton:
         colorize(arm)
     arm.select_set(True)
@@ -680,7 +682,8 @@ def unbind(context, mesh, history="DELETE"):
                 mesh.vertex_groups.remove(vg)
     if NORMALIZE_PROP in mesh:
         del mesh[NORMALIZE_PROP]
-    from . import skin_basics
+    from . import skin_basics, skin_follow
+    skin_follow.detach(mesh, keep_shape=history == "BAKE")
     for arm in arms:
         skin_basics.forget_bind_pose(arm)
     return arms
