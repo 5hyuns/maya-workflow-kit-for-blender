@@ -213,6 +213,8 @@ def _skin_clusters(layout, context):
         _muted(col, 'Several skin clusters: FBX and game engines keep one skin per mesh.', 'ERROR')
     row = col.row(align=True)
     row.prop(context.tool_settings, 'use_lock_relative', text='Lock-relative', toggle=True)
+    if mods:
+        col.operator('allset.skin_tools', text='Skin Tools (layers)', icon='RENDERLAYERS')
 
 
 def _influences(layout, context):

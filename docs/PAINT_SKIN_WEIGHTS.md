@@ -21,8 +21,12 @@ The sections follow Maya 2024+ Tool Settings, then two Blender extras:
 
 Flood applies the chosen operation and opacity to the active influence and keeps locked influences.
 
+Skin weight layers like Maya's Skin Tools: the **Skin Tools (layers)** button in Skin Clusters opens the Skin Tools
+window (Initialize Skin Layers, Layers, Influences with the Mask, Paint / Set Weights / Mirror). Once a mesh has
+layers, Skin > Paint Skin Weights opens Skin Tools instead of this tool.
+
 Not done yet (GitHub issues): Maya's influence context menu (Select / Add / Remove Affected Verts), Maya 2024's several
-skinClusters per mesh, Maya 2027 Skin Tools (ngSkinTools-based layers).
+skinClusters per mesh.
 
 ## Validation
 
