@@ -7,8 +7,8 @@ Results in Maya (defaults of the commands):
 - Loft / Extrude: real NURBS surfaces since step 181 (operators/surfaces_maya.py).
 - Bevel Plus on a closed curve -> ``bevelPolygon1`` (a **mesh**, the curve kept): width 0.1, depth 0.1, extrude
   depth 0.25 in Maya units.
-- Offset Curve -> ``offsetNurbsCurve1`` (distance 1), Sweep Mesh -> ``sweep1`` (an 8-sided tube mesh): see the
-  constants below.
+- Offset Curve -> ``offsetNurbsCurve1`` (distance 1), Sweep Mesh -> ``sweep1`` (an 8-sided tube mesh with a live
+  ``sweepMeshCreator1``, operators/sweep_mesh.py): see the constants below.
 - Pencil Curve Tool / Add Points Tool: Blender's curve Draw tool on a new curve / extruding the curve's end
   points (curve edit mode).
 
@@ -241,43 +241,19 @@ class ALLSET_OT_offset_curve(bpy.types.Operator):
 
 
 # --- Sweep Mesh ---------------------------------------------------------------------------------
-# Maya 2022 Sweep Mesh (sweep plug-in): a mesh sweep1 / sweepShape1 around the curve, default profile an
-# 8-sided polygon of scale 1, 6 rings on a 4-CV curve (48 vertices, 40 faces); the curve is kept.
+# Sweep Mesh: a mesh sweep1 / sweepShape1 around the curve with a live sweepMeshCreator1 node (by default an
+# 8-sided profile of radius 1, 6 rings on a one-span curve); the curve is kept (operators/sweep_mesh.py).
 SWEEP_RADIUS, SWEEP_SIDES = 1.0, 8
 
 
 def sweep_mesh(context, ob):
-    k = units.maya_unit(context.scene)
-    data = ob.data.copy()
-    data.dimensions = '3D'
-    data.fill_mode = 'FULL'
-    data.bevel_mode = 'ROUND'
-    data.bevel_object = None
-    data.extrude = 0.0
-    data.offset = 0.0
-    data.bevel_depth = SWEEP_RADIUS * k
-    data.bevel_resolution = SWEEP_SIDES // 2 - 2     # Blender: 2 * (resolution + 2) sides around
-    data.use_fill_caps = True
-    tmp = bpy.data.objects.new("sweepTmp", data)
-    tmp.matrix_world = ob.matrix_world
-    context.collection.objects.link(tmp)
-    try:
-        context.view_layer.update()
-        me = bpy.data.meshes.new_from_object(tmp.evaluated_get(context.evaluated_depsgraph_get()))
-    finally:
-        bpy.data.objects.remove(tmp)
-        bpy.data.curves.remove(data)
-    me.materials.clear()
-    new = bpy.data.objects.new("sweep", me)
-    new.matrix_world = ob.matrix_world
-    _link_new(context, new, "sweep", select=False)
-    from . import material
-    material.give_default(new)
-    return new
+    from . import sweep_mesh as sweep
+    return sweep.create(context, ob)
 
 
 class ALLSET_OT_sweep_mesh(bpy.types.Operator):
-    """Make a tube mesh along the selected curves, the curves kept (Maya Create > Sweep Mesh)"""
+    """Make a tube mesh along the selected curves; its profile, size and steps stay editable and it follows the
+    curves (Maya Create > Sweep Mesh)"""
     bl_idname = "allset.sweep_mesh"
     bl_label = "Sweep Mesh"
     bl_options = {'REGISTER', 'UNDO'}

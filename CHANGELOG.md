@@ -22,6 +22,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   you set another one; a Named Folder can be chosen instead. Limit Autosaves keeps only the newest copies of each
   scene. The scene's own file and its unsaved state are left alone, and nothing is written while the scene is
   unchanged or a tool drag / render is running. Blender still writes its own `.blend1` backups next to the file.
+- **Sweep Mesh stays editable** (#238): Create > Sweep Mesh now keeps a live sweepMeshCreator1 node, like Maya.
+  Its tab in the Attribute Editor sets the profile (Poly circle or star with sides and inner radius, Rectangle with
+  corner radius and segments, Line, Arc, Wave), Scale Profile (also X / Y), Rotate / Translate Profile, Twist,
+  Taper, Caps, Reverse Normals and the interpolation along the curve (Start to End, EP to EP, Distance, Precision);
+  the Channel Box INPUTS show Profile Poly Sides, Scale / Rotate Profile, Twist, Taper, the interpolation values and
+  Caps. Editing or moving the curve updates the mesh. Delete History (or Construction History off) makes it a plain
+  mesh, and deleting the curve keeps the mesh.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.

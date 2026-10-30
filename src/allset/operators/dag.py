@@ -137,6 +137,8 @@ def delete_hierarchy(context, objects):
     poles = ik_rp.helpers_of(obs)          # a kit RP handle's pole helper goes with the handle (step 245)
     from . import spline_twist
     spline_twist.release(obs)              # a kit Spline IK handle takes its twist drivers and constraint (step 249)
+    from . import sweep_mesh
+    sweep_mesh.release(context, obs)       # a deleted curve leaves its sweeps as plain meshes, like Maya
     datas = {ob.data for ob in obs if ob.data is not None}
     n = len(obs)
     for ob in reversed(obs):              # children first
