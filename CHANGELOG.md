@@ -64,6 +64,16 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   Surfaces, Stereo > Create. Hypershade: volume, hair, USD Preview Surface and Shading Map materials, Env Fog, UV
   chooser, particle sampler, environment and sky textures, colour / float correct and composite, Image Plane,
   Connection Editor. The new page docs/fx_render_concepts.md lists which Blender system stands for each Maya one.
+- **Skin Tools** (#127): skin weight layers on a skinned mesh, like Maya's Skin Tools. Open it from the Skin
+  Clusters card of Paint Skin Weights' Tool Settings and click Initialize Skin Layers: the current weights become
+  the base layer. Add, duplicate, delete, reorder, rename, switch off and fade layers; each layer has its own
+  weights and a Mask (painted like a joint) that sets where it covers the layers below. The skin's weights are
+  always the stack's result. Pick a joint (or the Mask) in Influences and click Paint to weight paint that layer
+  (Ctrl+click on a joint switches joints); Set Weights (Replace / Add / Scale / Smooth with an intensity) works on
+  the selected vertices, Mirror copies one side of the layer onto the other (joints paired by label, then by place),
+  Assign from Closest Joint gives a layer starting weights. Layers are saved with the file and every edit is one
+  undo step. Once a mesh has layers, Skin > Paint Skin Weights opens Skin Tools; Delete Skin Layers goes back to the
+  classic tool.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.

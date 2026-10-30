@@ -942,6 +942,9 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
     settings: BoolProperty(name="Apply Tool Settings", default=False, options={'SKIP_SAVE', 'HIDDEN'},
                            description="Apply the Maya tool settings above (the option window); a plain click keeps "
                                        "the brush as it is")
+    classic: BoolProperty(name="Classic Tool", default=False, options={'SKIP_SAVE', 'HIDDEN'},
+                          description="Start the paint tool even when the mesh has skin layers (Skin Tools paints "
+                                      "through it)")
 
     def _settings(self, context, mesh):
         if not self.settings:
@@ -965,6 +968,15 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         if mesh is None:
             self.report({'WARNING'}, "Select a skinned mesh (Skin > Bind Skin first)")
             return {'CANCELLED'}
+        # like Maya's Skin Tools: once the skin has layers, Paint Skin Weights opens Skin Tools (its Paint button
+        # paints a layer); the option window still sets up the classic tool
+        from . import skin_layers
+        if not self.classic and not self.settings and skin_layers.is_initialized(mesh):
+            try:
+                return bpy.ops.allset.skin_tools()
+            except RuntimeError as ex:
+                self.report({'WARNING'}, str(ex))
+                return {'CANCELLED'}
         arm = armature_modifier(mesh).object
         if context.active_object is not None and context.active_object.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
