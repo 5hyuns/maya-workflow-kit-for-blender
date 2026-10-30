@@ -64,9 +64,10 @@ def _half_sin(e, v):
 
 
 def edge_half_sin(e, sel):
-    """One sin(alpha / 2) for a whole bevelled edge, like Maya: taken at its first vertex (the lower index); at a
-    vertex that ends two or more bevelled edges, the smallest of theirs there."""
-    v = min(e.verts, key=lambda x: x.index)
+    """One sin(alpha / 2) for a whole bevelled edge, like Maya: taken at its end where two or more bevelled edges
+    meet (the smallest of theirs there), else at its first vertex (the lower index)."""
+    ends = sorted(e.verts, key=lambda x: (sum(1 for y in x.link_edges if y in sel) < 2, x.index))
+    v = ends[0]
     mine = [x for x in v.link_edges if x in sel]
     vals = [h for h in (_half_sin(x, v) for x in (mine if len(mine) >= 2 else [e])) if h is not None]
     return min(vals) if vals else None
