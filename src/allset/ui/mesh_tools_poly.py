@@ -11,16 +11,9 @@ import bpy
 from . import notices
 from ..operators import poly_draw, quad_draw
 
-# Maya rows the kit can't honour (Live Constraint Options):
+# Remaining Maya rows without a matching tool gesture:
 # (notice key) -> (substitute, one line)
-_LIVE = "Blender draws the edited mesh with its Retopology overlay (over the surface, theme colours)"
 GREY = {
-    "Quad Draw/Wireframe Overlay": ("Retopology overlay", _LIVE),
-    "Quad Draw/Mesh Color": ("Retopology overlay", _LIVE),
-    "Quad Draw/Mesh Alpha": ("Retopology overlay", _LIVE),
-    "Quad Draw/Surface Offset": ("Overlays > Retopology > Offset", "Set the offset in the viewport's Overlays popover"),
-    "Quad Draw/Tab+MMB in empty space": ("Quad Strip Width", "Strips are as wide as Quad Strip Width; change it here"),
-    "Quad Draw/Ctrl+Shift+RMB": ("this Tool Settings dock", "Quad Draw's options marking menu isn't in the kit"),
     "Append to Polygon/Rotation angle": ("Rotate afterwards", "Maya keeps this field greyed in the tool too"),
 }
 
@@ -37,13 +30,16 @@ QUAD_DRAW_SHORTCUTS = (
     ("Ctrl + LMB", "click edge to insert loop"),
     ("Ctrl + MMB", "click edge to insert centred loop"),
     ("Shift + LMB", "drag to relax points"),
-    ("Shift + MMB", "drag to relax highlighted points"),
+    ("Shift + MMB", "right: relax; left: undo within the stroke"),
     ("Tab + LMB", "drag to extend border edge (Extend: Loop = the border)"),
     ("Tab + MMB", "drag to extend border edge loop"),
     ("Ctrl + Shift + LMB", "click or drag across faces to delete"),
     ("Ctrl + Shift + LMB", "click edge to delete edge loop"),
     ("Ctrl + Shift + MMB", "drag edge to tweak edge loop"),
+    ("Y", "reactivate the last Quad Draw tool"),
     ("Esc", "leave the tool"),
+    ("Tab + MMB outside the mesh", "drag to resize quad strips"),
+    ("Ctrl + Shift + RMB", "Quad Draw options marking menu"),
 )
 CREATE_SHORTCUTS = (
     ("Click", "place a point (drag to move it)"),
@@ -97,16 +93,43 @@ def draw_quad_draw(layout, context, header=False):
     _row(layout, "Extend:").prop(s, "qd_extend", text="")
     _row(layout, "Quad Strip Width:").prop(s, "qd_strip_width", text="")
     _row(layout, "").operator("allset.quad_draw_clear_dots", text="Clear Dots")
+    sym=context.scene.allset_symmetry
+    if sym.about=='TOPOLOGY':
+        row=layout.row(align=True);row.operator('allset.quad_draw_pick_seam',text='Pick Seam',icon='EYEDROPPER')
+        row.prop(sym,'allow_partial',text='Partial')
+        layout.operator('allset.quad_draw_pick_seam',text='Pick Reference Seam',icon='EYEDROPPER').reference=True
+        if not sym.on:
+            layout.label(text='Symmetry off; pick a seam to enable',icon='INFO')
+            return
+        info=quad_draw.STATE.get('topology_info')
+        ob=context.edit_object
+        if info and ob is not None and info['object']==ob.name:
+            layout.label(text=f"{info['paired']} pairs · {info['unmatched']} unpaired",icon='MOD_MIRROR' if info['paired'] else 'INFO')
+            if info.get('message'):layout.label(text=info['message'],icon='INFO')
+            elif info.get('hover_supported') is False:layout.label(text='Component outside matched region',icon='INFO')
+        else:layout.label(text='Select a center edge to check symmetry',icon='INFO')
 
 
 def draw_live(layout, context):
-    """Live Constraint Options (Maya factory: Wireframe Overlay on black, Mesh Color on blue, Mesh Alpha 0.75,
+    """Live Constraint Options (black wire, cyan retopology tint, Mesh Alpha 0.75,
     Surface Offset off 0, Snap to Backfaces off)."""
     s = poly_draw.settings(context)
-    _grey(_row(layout, "Wireframe Overlay:"), "Quad Draw/Wireframe Overlay", "on", check=True)
-    _grey(_row(layout, "Mesh Color:"), "Quad Draw/Mesh Color", "on", check=True)
-    _grey(_row(layout, "Mesh Alpha:"), "Quad Draw/Mesh Alpha", "0.7500", check=True)
-    _grey(_row(layout, "Surface Offset:"), "Quad Draw/Surface Offset", "0.0000", check=False)
+    row = _row(layout, "Wireframe Overlay:")
+    row.prop(s, "qd_wire_overlay", text="")
+    sub = row.row(); sub.active = s.qd_wire_overlay
+    sub.prop(s, "qd_wire_color", text="")
+    row = _row(layout, "Mesh Color:")
+    row.prop(s, "qd_mesh_color_on", text="")
+    sub = row.row(); sub.active = s.qd_mesh_color_on
+    sub.prop(s, "qd_mesh_color", text="")
+    _row(layout, "Mesh Alpha:").prop(s, "qd_mesh_alpha", text="", slider=True)
+    unit=context.scene.unit_settings.length_unit
+    unit={'CENTIMETERS':'cm','MILLIMETERS':'mm','METERS':'m','MICROMETERS':'µm','KILOMETERS':'km','INCHES':'in','FEET':'ft','MILES':'mi','THOU':'thou'}.get(unit,'BU')
+    if context.scene.unit_settings.system=='NONE':unit='BU'
+    row = _row(layout, f"Surface Offset ({unit}):")
+    row.prop(s, "qd_offset_on", text="")
+    sub = row.row(); sub.active = s.qd_offset_on
+    sub.prop(s, "qd_surface_offset", text="")
     _row(layout, "Snap to Backfaces:").prop(s, "qd_snap_backfaces", text="")
     from ..operators import live
     _row(layout, "Live surface:").label(text=live.text(context.scene))
@@ -156,9 +179,6 @@ def draw_shortcuts(layout, rows):
         split = col.split(factor=0.42)
         split.label(text=key)
         split.label(text=what)
-    if rows is QUAD_DRAW_SHORTCUTS:
-        _grey(col, "Quad Draw/Tab+MMB in empty space", "Tab + MMB outside the mesh: drag to resize quad strips")
-        _grey(col, "Quad Draw/Ctrl+Shift+RMB", "Ctrl + Shift + RMB: Quad Draw options")
 
 
 def _hover_items():
@@ -187,6 +207,7 @@ class ALLSET_TL_quad_draw(bpy.types.WorkSpaceTool):
         ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "any": True},
          {"properties": [("middle", True)]}),
         ("allset.quad_draw_tab", {"type": 'TAB', "value": 'PRESS'}, None),
+        ("allset.quad_draw_options", {"type": 'RIGHTMOUSE', "value": 'PRESS', 'ctrl':True,'shift':True}, None),
         ("allset.quad_draw_exit", {"type": 'ESC', "value": 'PRESS'}, None),
         *_hover_items(),
     )

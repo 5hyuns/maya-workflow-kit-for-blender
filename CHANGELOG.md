@@ -30,6 +30,28 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   other items are greyed with a note on the closest Blender feature.
 
 ### Fixed
+- **Quad Draw workflow** from @youngmin2k (#231) — thank you!
+  - **Quad Draw surface inference and symmetry**: rank candidate quads in 3D as well as screen space; resolve
+    competing snap targets across multi-point strips. Pick Reference Seam supports posed live meshes away from an
+    axis, with a mirrored Topology fill preview matching committed points and shared, bounded correspondence caches.
+    Paired cuts skip duplicate topology replay; deletes capture local rings while retaining full native rollback.
+  - **Component shading after reopening Quad Draw files**: save native viewport settings instead of temporary
+    Retopology overrides; restore each owned view on tool/mode/workspace changes and failed saves. Shading >
+    Restore Modeling Display repairs the affected viewport in older files without editing the mesh or materials.
+  - **Quad Draw symmetry**: World/Object and bound Topology symmetry cover drawing, extensions, cuts, relaxation,
+    deletion and welding. Seam captures share vertices; Ctrl loop cuts pair source edges before live projection,
+    preventing valid cuts from being cancelled on slightly asymmetric references.
+  - **Quad Draw gestures**: complete-loop Ctrl+Shift delete/tweak previews, continuous-border relaxation,
+    Soft Selection influence preview and reversible Shift+MMB relaxation share the Modeling Toolkit settings.
+  - **Quad Draw connections**: Shift previews use boundary edges and reject overlapping faces, skipped boundary
+    vertices and non-manifold edges. Auto-weld previews vertex/edge targets while dragging, then welds the same targets
+    on release, including Tab extensions. Escape cancels without merging; tolerance uses actual screen pixels.
+  - **Quad Draw drag preview**: dragging a vertex or dot no longer leaves its cyan hover marker at the original position.
+  - **Quad Draw**: activating the tool opens its options in the Modeling Toolkit. Retopology has a temporary cyan
+    face tint with editable wire color, opacity and surface offset, without changing materials or the theme.
+    Component drags keep their cursor offset and stay on the live surface when the cursor leaves its silhouette;
+    view projection avoids jumping to hidden sheets during relax and extension. With no live surface, dots use the grid.
+    Relax includes All Vertices, Auto-Lock keeps its choice for the stroke, and Extend distinguishes Loop from Border.
 - **Frame Selection (F)** (from @youngmin2k, #237 — thank you!): Object and mesh component modes keep Maya's
   framing shortcut ahead of another add-on's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
 - **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
