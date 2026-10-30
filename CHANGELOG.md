@@ -52,6 +52,18 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   collapse or expand its children. Alt+middle-mouse tracks, Alt+right-mouse dollies, the wheel zooms, F / A frame
   the selection / everything; the strip at the top and the right-click menu hold Frame All, Frame Selection,
   Expand All and Collapse All. Nothing is stored in the scene file.
+- **More Maya FX and Rendering menu items run Blender's own systems** (#123): 75 items that were greyed now
+  work, each with a tooltip naming the Blender feature it uses. nParticles: Fill Object, Instancer, Create Options.
+  Fluids: Add/Edit Contents > Emitter, Edit Fluid Resolution. nCloth: Rest Shape, Paint Vertex Properties (Input
+  Attract, Stretch, Compression, Bend, Rest Length Scale on the cloth's vertex groups). nConstraint: Transform
+  Constraint (pinned vertices hooked to a dynamicConstraint empty), Disable Collision, Add / Remove / Replace / Select
+  Members, Remove Dynamic Constraint. nCache: Create Particle Disk Cache, Transfer Cache To Input Mesh, cache settings.
+  Fields/Solvers: Volume Curve, Initial State, Set Active / Passive Key, Break Rigid Body Connections, Create Rigid
+  Body Solver and its attributes. Effects: Create / Delete Selected Flow, Collide with Effect. Rendering: Transfer
+  Maps (Cycles Bake), Toon > Assign Fill Shader (seven EEVEE toon materials), Set Camera Background Color, Reverse
+  Surfaces, Stereo > Create. Hypershade: volume, hair, USD Preview Surface and Shading Map materials, Env Fog, UV
+  chooser, particle sampler, environment and sky textures, colour / float correct and composite, Image Plane,
+  Connection Editor. The new page docs/fx_render_concepts.md lists which Blender system stands for each Maya one.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.
