@@ -99,3 +99,40 @@ def test_mesh_keymap_double_click():
              and k.value == 'DOUBLE_CLICK' and not k.ctrl and not k.alt]
     by_shift = {k.shift: k.properties.between for k in items}
     assert by_shift == {False: False, True: True}, by_shift
+
+
+def _face_row(bm, k):
+    y = sorted({round(f.calc_center_median().y, 5) for f in bm.faces})[k]
+    return sorted((f for f in bm.faces if abs(f.calc_center_median().y - y) < 1e-4),
+                  key=lambda f: f.calc_center_median().x)
+
+
+def test_neighbour_faces_take_the_whole_loop():
+    # Maya 2026 (#222): pick a face, Shift+double-click its neighbour = the whole face loop through both;
+    # two faces further apart = only the faces between them
+    bm = _bm_grid()
+    row = _face_row(bm, 2)
+    assert set(loop_pick.face_loop(row[2], row[3])) == set(row)
+    for f in bm.faces:
+        f.select = False
+    for f in (row[2], row[3]):
+        f.select_set(True)
+        bm.select_history.add(f)
+    assert loop_pick.select_run(bm) == len(row)
+    assert {f.index for f in bm.faces if f.select} == {f.index for f in row}
+    for f in bm.faces:
+        f.select = False
+    bm.select_history.clear()
+    for f in (row[2], row[4]):
+        f.select_set(True)
+        bm.select_history.add(f)
+    assert loop_pick.select_run(bm) == 3
+    assert {f.index for f in bm.faces if f.select} == {f.index for f in row[2:5]}
+
+
+def test_double_click_picks_shell_for_vertices_and_faces():
+    # Maya 2026 (#222): a vertex or face double-click selects its whole shell, an edge double-click its loop
+    assert loop_pick.shell_mode((False, False, True))
+    assert loop_pick.shell_mode((True, False, False))
+    assert not loop_pick.shell_mode((False, True, False))
+    assert not loop_pick.shell_mode((True, True, True))

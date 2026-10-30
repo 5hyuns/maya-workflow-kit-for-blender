@@ -20,6 +20,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   - **Selected wire**: a selected object's back edges no longer show through its faces.
 
 ### Changed
+- **Double-click a vertex or face** selects its whole shell (the connected piece), like Maya 2026; an edge still
+  selects its loop. Pick a face, then Shift+double-click its neighbour to select the whole face loop through both
+  (a face further along still selects only the faces between) (#222).
 - **Quad Draw options (Ctrl+Shift+RMB)** are Maya's marking menu: Multi-Cut Tool, Auto-weld, Clear Dots,
   Soften/Harden Edges, Relax and Extend submenus, then Snap to Backfaces and Reset Settings (#89).
 - **Display > Polygons is Maya's submenu** (from @TMouraille, #240 — thank you!) instead of opening Blender's overlay popover. Face Normals, Vertex Normals,
