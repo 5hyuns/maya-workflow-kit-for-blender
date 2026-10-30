@@ -20,7 +20,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.cb_virtual_slider", "allset.cb_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
+PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
@@ -369,7 +369,8 @@ def patch_cb_slider(kd):
     for km in SLIDER_TOOL_KEYMAPS:
         _add(kd, km, "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"), first=True,
              shadows=(km,))
-    _add(kd, "Object Mode", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"))
+    _add(kd, "Object Mode", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"),
+         shadows=("Object Mode", "3D View"))     # the emulated Alt+LMB tumble (#242) passes through otherwise
     # Channel Box rows: drag over names / fields selects a range (the dock is a Properties editor, step 116;
     # ui/channel_box.ALLSET_OT_cb_hover, step 129)
     _add(kd, "Property Editor", "allset.cb_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
@@ -837,7 +838,8 @@ def patch_component_pick_walk(kd):
 
 def patch_pose_joints(kd):
     _add(kd, "Object Non-modal", "object.posemode_toggle", make_event("TAB", ctrl=True), shadows=("Screen",))
-    _add(kd, "Pose", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"))
+    _add(kd, "Pose", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"),
+         shadows=("Pose", "3D View"))            # the emulated Alt+LMB tumble (#242) passes through otherwise
 
 
 # --- 31. Time Slider and keys (step 56) --------------------------------------------------------
@@ -1435,7 +1437,22 @@ def patch_global_set_key(kd):
              shadows=under)
 
 
-PATCHES += (patch_weight_paint_exit, patch_global_set_key)
+# --- Alt+LMB tumble under Emulate 3 Button Mouse (#242) ------------------------------------------------------
+# Blender turns Alt+LMB into a plain middle drag before any key map sees it. While the Alt key is still held that
+# drag tumbles (a real middle drag passes through). It goes first wherever the kit's middle drag items run before
+# "3D View" (tool keymaps: Maya's middle drag on the manipulator; Object Mode / Pose: the Channel Box slider), so
+# this patch runs last.
+
+EMULATED_TUMBLE_KEYMAPS = SLIDER_TOOL_KEYMAPS + ("Object Mode", "Pose", "3D View")
+
+
+def patch_emulated_tumble(kd):
+    for km in EMULATED_TUMBLE_KEYMAPS:
+        _add(kd, km, "allset.emulated_tumble", make_event("MIDDLEMOUSE"), first=True,
+             shadows=("Image Paint", "Object Mode", "Pose") if km == "3D View" else (km, "3D View"))
+
+
+PATCHES += (patch_weight_paint_exit, patch_global_set_key, patch_emulated_tumble)
 
 
 def apply(data):

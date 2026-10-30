@@ -46,6 +46,35 @@ class ALLSET_OT_tumble(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def emulated_alt_drag(context):
+    """True when a middle press is really Alt+LMB turned into a middle drag by Blender's Emulate 3 Button Mouse
+    (with Alt as its modifier): the converted press carries no Alt, but the Alt key is still held. None-safe: an
+    OS that can't tell whether Alt is held gives False, so a real middle drag is never taken."""
+    inputs = context.preferences.inputs
+    if not getattr(inputs, "use_mouse_emulate_3_button", False):
+        return False
+    if getattr(inputs, "mouse_emulate_3_button_modifier", 'ALT') != 'ALT':
+        return False
+    from . import keystate
+    return bool(keystate.is_down('LEFT_ALT') or keystate.is_down('RIGHT_ALT'))
+
+
+class ALLSET_OT_emulated_tumble(bpy.types.Operator):
+    """Alt+LMB tumble while Emulate 3 Button Mouse is on (Blender delivers that drag as a middle drag)"""
+    bl_idname = "allset.emulated_tumble"
+    bl_label = "Tumble (Emulated Middle Mouse)"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region_data is not None
+
+    def invoke(self, context, event):
+        if event.alt or not emulated_alt_drag(context):
+            return {'PASS_THROUGH'}
+        return ALLSET_OT_tumble.invoke(self, context, event)
+
+
 # --- Alt+RMB dolly (#51) -----------------------------------------------------------------
 # Maya dollies with a left / right drag. Blender's view3d.zoom reads the drag axis from the
 # user preferences (Vertical by default), which the kit no longer writes (step 130, #40), so the drag is read here.
@@ -698,7 +727,7 @@ class ALLSET_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
+classes = (ALLSET_OT_tumble, ALLSET_OT_emulated_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
            ALLSET_OT_toggle_quad_view, ALLSET_OT_view_home)
 
 

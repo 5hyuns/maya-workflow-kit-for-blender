@@ -501,8 +501,9 @@ UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Ma
 
 
 EMULATE_HINT = ("Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag "
-                "before any key map sees it, so Maya's Alt+LMB tumble can't work. Turn it off for Maya navigation "
-                "(Alt+MMB track and Alt+RMB dolly work either way).")
+                "before any key map sees it. On Windows the kit still tumbles on Alt+LMB; elsewhere Maya's Alt+LMB "
+                "tumble can't work, so turn it off for Maya navigation (Alt+MMB track and Alt+RMB dolly work "
+                "either way).")
 
 
 def emulate_hint(context=None):

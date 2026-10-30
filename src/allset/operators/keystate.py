@@ -21,6 +21,7 @@ _VK.update({
     "SPACE": 0x20, "TAB": 0x09, "ACCENT_GRAVE": 0xC0, "BACK_SLASH": 0xDC,
     "LEFTMOUSE": 0x01, "RIGHTMOUSE": 0x02, "MIDDLEMOUSE": 0x04,
     "LEFT_SHIFT": 0xA0, "RIGHT_SHIFT": 0xA1, "LEFT_CTRL": 0xA2, "RIGHT_CTRL": 0xA3,
+    "LEFT_ALT": 0xA4, "RIGHT_ALT": 0xA5,
 })
 
 _user32 = None

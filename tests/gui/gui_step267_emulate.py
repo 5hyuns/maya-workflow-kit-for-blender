@@ -1,7 +1,8 @@
 """Step 267 (Issue #177, Blender 5.1 + a 2-button mouse with a wheel): Alt+LMB tumble with Emulate 3 Button Mouse off / on.
 
 1. Emulate off: Alt+LMB drag tumbles (the view rotation changes).
-2. Emulate on: Blender turns Alt+LMB into a plain MMB without Alt before any keymap sees it (wm_event_system.cc
+2. Emulate on: Blender turns Alt+LMB into a plain MMB without Alt before any keymap sees it; with Alt still held
+   (asked from the OS) the kit tumbles anyway (#242) (wm_event_system.cc
    wm_eventemulation :5637-5658, only on the GHOST path :6226 / :6276; ``event_simulate`` skips it), so the add-on only ever
    gets that MMB drag. Sent here as such: no tumble.
 3. Emulate on: the kit's hint is in the welcome dialog paragraphs and in the add-on preferences (read only, step 260).
@@ -59,6 +60,18 @@ def s_on_no_tumble():
           tuple(r.view_rotation) == C["rot"])
     C["moved_view"] = (r.view_distance, tuple(r.view_location)) != C["view"]
     print("GUI note: plain MMB drag changed the view:", C["moved_view"], flush=True)
+    # the same converted drag with the Alt key still held (Windows can tell): the kit tumbles (#242)
+    import sim
+    sim._down.add('LEFT_ALT')
+    C["rot"] = tuple(r.view_rotation)
+    drag('MIDDLEMOUSE', 150, 40)
+
+
+@step
+def s_on_alt_held_tumbles():
+    import sim
+    sim._down.discard('LEFT_ALT')
+    check("Emulate on + Alt held: the converted Alt+LMB tumbles", tuple(rv3d().view_rotation) != C["rot"])
 
 
 @step

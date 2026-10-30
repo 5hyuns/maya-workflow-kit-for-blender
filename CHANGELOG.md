@@ -72,6 +72,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   other items are greyed with a note on the closest Blender feature.
 
 ### Fixed
+- **Alt+LMB tumble with Emulate 3 Button Mouse on** (#242): Blender turns Alt+left drag into a middle drag when
+  that preference is on; on Windows the kit now tumbles on it anyway (a real middle drag is left alone).
 - **Panels > Tear Off / Tear Off Copy** (#255) opened nothing (an error in the console): they now open a copy of
   the view in a new window, with the same camera and display.
 - **Undo while the Joint Tool runs** (#256): z / Ctrl+Z take back the last joint placed and the tool keeps
