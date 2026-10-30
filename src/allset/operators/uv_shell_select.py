@@ -25,6 +25,7 @@ import numpy as np
 from bpy.props import BoolProperty
 
 from . import uv_arrays
+from .. import compat
 
 FLAG = "allset_uv_shell_mask"
 BOX_OPS = ("VIEW3D_OT_select_box", "VIEW3D_OT_select_lasso", "UV_OT_select_box", "UV_OT_select_lasso",
@@ -94,6 +95,7 @@ def write_selection(ob, bm, chosen):
     for i in sorted(chosen):
         bm.faces[i].select_set(True)
     bm.select_flush_mode()
+    compat.uv_sync_from_mesh(bm)
     bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
 
 

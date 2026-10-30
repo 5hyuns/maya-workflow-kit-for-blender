@@ -169,6 +169,13 @@ def set_uv_face_selected(face, uv, value):
     face.uv_select = value
 
 
+def uv_sync_from_mesh(bm):
+    """After the mesh selection was written with UV Sync Selection on: 5.x keeps a UV selection of its own while
+    ``uv_select_sync_valid``, and the UV Editor draws that one, so it is refreshed from the mesh selection (#245)."""
+    if getattr(bm, "uv_select_sync_valid", False):
+        bm.uv_select_sync_from_mesh()
+
+
 # --- Bone visibility ------------------------------------------------------------------------
 # 5.x: a bone is hidden in pose / object mode by ``PoseBone.hide``; ``Bone.hide`` only hides the edit bone
 # (step 118, api notes).

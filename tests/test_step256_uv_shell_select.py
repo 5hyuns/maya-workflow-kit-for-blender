@@ -151,3 +151,31 @@ def test_move_uv_shell_keeps_blender_islands():
     uv_tools.set_component(bpy.context, 'ISLAND')
     ts = bpy.context.scene.tool_settings
     assert not ts.use_uv_select_sync and not uss.flag(bpy.context)
+
+
+def _uv_sel(ob):
+    return {f.index for f in bmesh.from_edit_mesh(ob.data).faces if f.uv_select}
+
+
+def test_uv_editor_selection_follows_shell_picks():
+    # #245: faces picked in the UV Editor with UV Sync on leave a UV selection of its own; entering UV Shell mode and
+    # picking a shell must show in the UV Editor too, not only in the viewport
+    ob = _cube()
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.mode_set(mode='EDIT')
+    ts = bpy.context.scene.tool_settings
+    ts.use_uv_select_sync = True
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.faces.ensure_lookup_table()
+    for f in bm.faces:
+        f.select_set(f.index == 2)
+    bm.select_flush_mode()
+    bm.uv_select_sync_from_mesh()          # what a UV Editor face pick leaves with sync on
+    bmesh.update_edit_mesh(ob.data)
+    assert bmesh.from_edit_mesh(ob.data).uv_select_sync_valid
+    uv_tools.set_component(bpy.context, 'SHELL')
+    assert _sel(ob) == set() and _uv_sel(ob) == set()
+    uss.pick(bpy.context, ob, 1, False, False)
+    assert _sel(ob) == B and _uv_sel(ob) == B
+    uss.pick(bpy.context, ob, 0, True, False)
+    assert _sel(ob) == A | B and _uv_sel(ob) == A | B
