@@ -20,6 +20,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   - **Selected wire**: a selected object's back edges no longer show through its faces.
 
 ### Changed
+- **Quad Draw options (Ctrl+Shift+RMB)** are Maya's marking menu: Multi-Cut Tool, Auto-weld, Clear Dots,
+  Soften/Harden Edges, Relax and Extend submenus, then Snap to Backfaces and Reset Settings (#89).
 - **Display > Polygons is Maya's submenu** (from @TMouraille, #240 — thank you!) instead of opening Blender's overlay popover. Face Normals, Vertex Normals,
   Backface Culling, Crease Edges, Texture Border Edges (seams), Face Centers and Hard Edges (color) are check boxes
   that show and change the overlays of the 3D View (the largest one when the menu is in the top bar); Standard Edges /

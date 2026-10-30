@@ -1838,32 +1838,6 @@ class ALLSET_OT_restore_modeling_display(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ALLSET_MT_quad_draw_options(bpy.types.Menu):
-    bl_label='Quad Draw'
-
-    def draw(self,context):
-        s=poly_draw.settings(context)
-        pie=self.layout.menu_pie()
-        box=pie.box();box.label(text='Auto-weld');box.prop(s,'qd_auto_weld',text='Enabled');box.prop(s,'qd_weld_px',text='Tolerance (px)')
-        box=pie.box();box.label(text='Extend');box.prop(s,'qd_extend',expand=True)
-        box=pie.box();box.label(text='Relax');box.prop(s,'qd_relax',expand=True)
-        box=pie.box();box.prop(s,'qd_strip_width',text='Strip Width');box.operator('allset.quad_draw_clear_dots',text='Clear Dots')
-        box.operator('allset.poly_tools_reset',text='Reset Settings').kind='QUAD_DRAW'
-
-
-class ALLSET_OT_quad_draw_options(bpy.types.Operator):
-    bl_idname='allset.quad_draw_options'
-    bl_label='Quad Draw Options'
-    bl_options={'INTERNAL'}
-
-    @classmethod
-    def poll(cls,context):return tool_active(context)
-
-    def invoke(self,context,event):
-        bpy.ops.wm.call_menu_pie('INVOKE_DEFAULT',name='ALLSET_MT_quad_draw_options')
-        return {'FINISHED'}
-
-
 # --- start: the mesh to edit, the view, the watcher -----------------------------------------------------
 
 # Save the user's overlay values, never the tool's temporary display in a .blend.
@@ -2182,7 +2156,7 @@ class ALLSET_OT_quad_draw_start(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_quad_draw_hover, ALLSET_OT_quad_draw, ALLSET_OT_quad_draw_tab, ALLSET_OT_quad_draw_clear_dots,
-           ALLSET_OT_quad_draw_exit, ALLSET_OT_restore_modeling_display, ALLSET_OT_quad_draw_start,ALLSET_MT_quad_draw_options,ALLSET_OT_quad_draw_options,ALLSET_OT_quad_draw_pick_seam)
+           ALLSET_OT_quad_draw_exit, ALLSET_OT_restore_modeling_display, ALLSET_OT_quad_draw_start,ALLSET_OT_quad_draw_pick_seam)
 
 
 def register_handlers():

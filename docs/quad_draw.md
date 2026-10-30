@@ -26,7 +26,7 @@ Activate **Mesh Tools > Quad Draw**, the shelf button or **Ctrl+Shift+Q**. The M
 - Extend offers Edge, Loop (the boundary chain up to a corner/pole), and Border (the connected border).
 - Quad Strip Width sets the width in pixels. Clear Dots removes unfinished dots; Reset Settings restores defaults.
 - Hold Tab and middle-drag outside the retopo mesh to resize strips; Escape restores the previous width.
-  Tab+MMB over a border edge still extends its loop. Ctrl+Shift+RMB opens the Quad Draw options pie menu;
+  Tab+MMB over a border edge still extends its loop. Ctrl+Shift+RMB opens the Quad Draw options marking menu in Maya's layout;
   its Auto-weld, Extend, Relax and width controls share the Modeling Toolkit settings.
 - Live Constraint Options controls the wire overlay/color, mesh tint, opacity, surface offset and backface snapping.
   The default base tint is display sRGB `#01ACFF`, stored as linear RGB

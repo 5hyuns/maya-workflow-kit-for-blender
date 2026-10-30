@@ -680,6 +680,41 @@ OPT_SELECT = MarkingMenu(
         "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),
     })
 
+def _qd(prop, value=None):
+    """A Quad Draw setting: a check item (``value`` None) or a radio item."""
+    path = f"scene.allset_poly_tools.{prop}"
+    if value is None:
+        return ("wm.context_toggle", {"data_path": path})
+    return ("wm.context_set_enum", {"data_path": path, "value": value})
+
+
+# Quad Draw's Ctrl+Shift+RMB options menu (Maya's layout).
+OPT_QUAD_DRAW = MarkingMenu(
+    "OPT_QUAD_DRAW", "Quad Draw Options", "maya",
+    radial={
+        "N": ("Multi-Cut Tool", MULTI_CUT),
+        "W": ("Auto-weld", _qd("qd_auto_weld")),
+        "E": ("Clear Dots", "allset.quad_draw_clear_dots"),
+        "NE": ("Soften/Harden Edges", ("allset.soften_harden", {"whole": True})),
+        "NW": ("Relax", Sub(radial={
+            "N": ("All vertices", _qd("qd_relax", 'ALL')),
+            "NW": ("Auto-Lock", _qd("qd_relax", 'AUTO_LOCK')),
+            "SW": ("Interior vertices", _qd("qd_relax", 'INTERIOR')),
+            "W": ("Border vertices", _qd("qd_relax", 'BORDER')),
+        })),
+        "SW": ("Extend", Sub(radial={
+            "W": ("Border", _qd("qd_extend", 'BORDER')),
+            "SW": ("Edge", _qd("qd_extend", 'EDGE')),
+            "S": ("Loop", _qd("qd_extend", 'LOOP')),
+        })),
+    },
+    items=[
+        ("Snap to Backfaces", _qd("qd_snap_backfaces")),
+        DIVIDER,
+        ("Reset Settings", ("allset.poly_tools_reset", {"kind": 'QUAD_DRAW'})),
+    ],
+    options={"Soften/Harden Edges"})
+
 # --- A hold + LMB: SELECT_ALL -------------
 # Inputs/outputs = history in Maya; the Blender history equivalent (modifiers) has no
 # up/downstream selection, so W/E/N/S stay greyed (step 10).
@@ -968,7 +1003,7 @@ SHIFT_UV_SHELL = MarkingMenu(
 
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
-                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
+                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
                              UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
@@ -978,7 +1013,8 @@ FACTORY = dict(MENUS)
 
 # Active tool -> its options marking menu (Maya's tool hold menus).
 TOOL_OPTIONS = {"builtin.move": "OPT_MOVE", "builtin.rotate": "OPT_ROTATE",
-                "builtin.scale": "OPT_SCALE", "builtin.transform": "OPT_MOVE"}
+                "builtin.scale": "OPT_SCALE", "builtin.transform": "OPT_MOVE",
+                "allset.quad_draw_tool": "OPT_QUAD_DRAW"}
 SELECT_OPTIONS = "OPT_SELECT"
 
 

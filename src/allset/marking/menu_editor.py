@@ -41,7 +41,7 @@ TRIGGERS = {
     "SHIFT_EDGE": "Shift+RMB, edge mode", "SHIFT_FACE": "Shift+RMB, face mode",
     "SHIFT_DEFAULT": "Shift+RMB, nothing selected", "CTRL_CONVERT": "Ctrl+RMB on a mesh",
     "OPT_MOVE": "W + LMB (Move Tool)", "OPT_ROTATE": "E + LMB (Rotate Tool)", "OPT_SCALE": "R + LMB (Scale Tool)",
-    "OPT_SELECT": "Q + LMB (Select Tool)", "SELECT_ALL": "A + LMB",
+    "OPT_SELECT": "Q + LMB (Select Tool)", "OPT_QUAD_DRAW": "Ctrl+Shift+RMB (Quad Draw Tool)", "SELECT_ALL": "A + LMB",
     "HB_NORTH": "Hotbox, north zone", "HB_SOUTH": "Hotbox, south zone", "HB_EAST": "Hotbox, east zone",
     "HB_WEST": "Hotbox, west zone", "HB_CENTER": "Hotbox, centre zone",
     "UV_EDITOR_RMB": "RMB in the UV Editor", "SHIFT_UV": "Shift+RMB in the UV Editor",
