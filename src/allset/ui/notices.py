@@ -372,7 +372,8 @@ CATEGORIES = {
     "Create": ("Add menu (Shift+A)", "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects "
                "extension have the closest shapes."),
     "Create/Polygon Primitives": ("Create at the origin", "The kit creates primitives at the origin at once; "
-                                  "Blender has no interactive (drag to size) creation."),
+                                  "for drag-to-size creation use Blender's Add Cube / Cone / Cylinder / Sphere "
+                                  "tools in the toolbar (object and edit mode)."),
     "Create/NURBS Primitives": ("Add > Surface", "Blender's NURBS primitives are in Add > Surface (no cube, cone or "
                                 "square); objects are created at once, never interactively."),
     "Create/Volume Primitives": ("Volume / Mesh to Volume", "Blender has no volume primitives: a Volume object or a "
