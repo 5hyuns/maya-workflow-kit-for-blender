@@ -534,6 +534,9 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
                     from . import component_scale
                     component_scale.start(context, kwargs, 'MIDDLEMOUSE')
                 else:
+                    if self.mode == 'TRANSLATE':
+                        from . import pivot
+                        pivot.origins_for_groups(context)
                     op('INVOKE_DEFAULT', **kwargs)
             except RuntimeError:
                 return {'CANCELLED'}
