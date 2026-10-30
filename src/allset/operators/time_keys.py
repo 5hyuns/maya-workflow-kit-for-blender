@@ -318,6 +318,11 @@ def _channel_filter(context, node):
     for k in cb.selected_channels(context):
         if cb.is_shape_key(k):      # a SHAPES channel's curves live on the object data, not the node
             continue
+        if cb.is_input_key(k):      # an INPUTS channel: the modifier's property, on the object
+            owner = cb.input_owner(node, k)
+            if owner is not None:
+                allowed.update((owner.path_from_id(p), max(i, 0)) for p, i in cb.input_paths(owner, k))
+            continue
         try:
             path, idx, _kind = cb.channel_path(k)
         except KeyError:

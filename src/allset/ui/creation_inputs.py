@@ -8,7 +8,7 @@ every selected object whose node has the same type; ``operators/prim_history.reb
 """
 
 import bpy
-from bpy.props import PointerProperty, StringProperty
+from bpy.props import BoolProperty, PointerProperty, StringProperty
 
 from ..operators import prim_history, prim_shapes
 from . import cb_entry
@@ -97,9 +97,28 @@ def _text_set(name):
     return set_
 
 
+def _sel_get(name):
+    def get(_self):
+        from . import channel_box
+        return channel_box.HISTORY_PREFIX + name in channel_box.selected_channels()
+    return get
+
+
+def _sel_set(name):
+    def set_(self, value):
+        from . import channel_box
+        channel_box._sel_set(channel_box.HISTORY_PREFIX + name)(self, value)
+    return set_
+
+
 class ALLSET_PG_creation(bpy.types.PropertyGroup):
-    __annotations__ = {f"{n}_text": StringProperty(name=n, get=_text_get(n), set=_text_set(n), options={'SKIP_SAVE'})
-                       for n in ALL_ATTRS}
+    __annotations__ = {
+        **{f"{n}_text": StringProperty(name=n, get=_text_get(n), set=_text_set(n), options={'SKIP_SAVE'})
+           for n in ALL_ATTRS},
+        **{f"{n}_sel": BoolProperty(name=n, get=_sel_get(n), set=_sel_set(n), options={'SKIP_SAVE'},
+                                    description="Select this attribute: click, Ctrl toggle, Shift range, drag "
+                                                "over the rows; then middle-drag in the viewport changes it")
+           for n in ALL_ATTRS}}
 
 
 def has_node(ob):
@@ -123,7 +142,8 @@ def draw_cb(layout, context, ob):
         if row is None:
             continue
         split = row.split(factor=0.5, align=True)
-        split.label(text=prim_shapes.spec(node["type"], name)[1])
+        selected = channel_box.HISTORY_PREFIX + name in channel_box.selected_channels(context)
+        split.prop(props, f"{name}_sel", text=prim_shapes.spec(node["type"], name)[1], toggle=True, emboss=selected)
         split.prop(props, f"{name}_text", text="")
     return True
 

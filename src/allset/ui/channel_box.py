@@ -71,10 +71,13 @@ _LOCK_PROP = {"LOC": "lock_location", "ROT": "lock_rotation", "SCALE": "lock_sca
 HIDDEN_PROP = "allset_cb_hidden"
 NONKEYABLE_PROP = "allset_cb_nonkeyable"
 CUSTOM_PREFIX = "cp:"
+HISTORY_PREFIX = "ph:"   # an attribute of the creation node (polyCube1 ...): "ph:<attribute>"
+INPUT_PREFIX = "in:"     # an INPUTS row as a channel: "in:<modifier type>:<nth of that type>:<property>"
 SHAPE_PREFIX = "sh:"     # a SHAPES row as a channel (step 158): light Intensity / Color, camera Focal Length ...
 
 # MMB slider: value change per pixel at speed Medium.
-SLIDER_STEP = {"LOC": 0.01, "ROT": math.radians(0.5), "SCALE": 0.01, "CUSTOM": 0.01}
+SLIDER_STEP = {"LOC": 0.01, "ROT": math.radians(0.5), "SCALE": 0.01, "CUSTOM": 0.01, "SHAPE": 0.01, "INPUT": 0.01,
+               "HISTORY": 0.01}
 SPEEDS = (("SLOWEST", "Slowest", "x0.01", 0.01), ("SLOW", "Slow", "x0.1", 0.1),
           ("MEDIUM", "Medium", "x1", 1.0), ("FAST", "Fast", "x10", 10.0))
 SPEED_FACTOR = {s[0]: s[3] for s in SPEEDS}
@@ -264,6 +267,90 @@ def shape_paths(owner, key):
     return [(name, -1)] if rna is not None and rna.is_animatable else []
 
 
+def is_input_key(key):
+    return key.startswith(INPUT_PREFIX)
+
+
+def input_key(mod_type, nth, name):
+    return f"{INPUT_PREFIX}{mod_type}:{nth}:{name}"
+
+
+def input_parts(key):
+    """(modifier type, nth, property) of an INPUTS channel key."""
+    mod_type, nth, name = key[len(INPUT_PREFIX):].split(":", 2)
+    return mod_type, int(nth), name
+
+
+def input_owner(ob, key):
+    """The modifier holding INPUTS channel ``key`` on ``ob`` (same type at the same position, like a typed value)."""
+    if not is_input_key(key) or is_bone(ob) or not hasattr(ob, "modifiers"):
+        return None
+    mod_type, nth, name = input_parts(key)
+    return row_owner(ob, "INPUT", name, mod_type, nth)
+
+
+def input_paths(owner, key):
+    """[(path on the modifier, index)] a key on an INPUTS channel sets."""
+    name = input_parts(key)[2]
+    v = _virtual(owner, name)
+    if v is not None:
+        return list(getattr(v, "paths", ()))
+    rna = owner.bl_rna.properties.get(name)
+    return [(name, -1)] if rna is not None and rna.is_animatable else []
+
+
+def is_history_key(key):
+    return key.startswith(HISTORY_PREFIX)
+
+
+def history_node_of(ob, key):
+    """(owner, node) of ``ob``'s creation node when it has attribute ``key`` and the lead's node type, else (None,
+    None) (a typed value goes to every selected object whose node has the same type)."""
+    if not is_history_key(key) or not isinstance(ob, bpy.types.Object):
+        return None, None
+    from ..operators import prim_history
+    owner, node = prim_history.node_of(ob)
+    name = key[len(HISTORY_PREFIX):]
+    if node is None or name not in prim_history.attrs(owner):
+        return None, None
+    ld = lead()
+    if ld is not None and ld is not ob and isinstance(ld, bpy.types.Object):
+        _o, lead_node = prim_history.node_of(ld)
+        if lead_node is not None and lead_node["type"] != node["type"]:
+            return None, None
+    return owner, node
+
+
+def _history_get(ob, key):
+    from ..operators import prim_history
+    owner, node = history_node_of(ob, key)
+    name = key[len(HISTORY_PREFIX):]
+    return prim_history.to_entry(node, name, prim_history.attrs(owner)[name])
+
+
+def _history_set(ob, key, value):
+    from ..operators import prim_history, prim_shapes
+    owner, node = history_node_of(ob, key)
+    name = key[len(HISTORY_PREFIX):]
+    value = prim_history.from_entry(node, name, value)
+    if prim_history.entry_kind(node["type"], name) == "INT":
+        value = math.floor(value + 0.5)      # a drag / slider gives floats: integer attributes step
+    value = prim_shapes.clamp(node["type"], name, value)
+    if value != prim_history.attrs(owner)[name]:
+        prim_history.rebuild(bpy.context, ob, {name: value})
+
+
+def row_key(row):
+    """The channel key of a Channel Box row (CUSTOM / SHAPE / INPUT), or None."""
+    if row.kind == "CUSTOM":
+        return CUSTOM_PREFIX + row.name
+    if row.kind == "SHAPE":
+        return SHAPE_PREFIX + row.name
+    if row.kind == "INPUT":
+        return input_key(row.mod_type, row.nth, row.name)
+    return None
+
+
 def curve_owner(ob, key):
     """The ID whose animation holds channel ``key``'s curves."""
     return shape_owner(ob, key) if is_shape_key(key) else ob.id_data
@@ -275,6 +362,10 @@ def channel_path(key):
         return f'["{key[len(CUSTOM_PREFIX):]}"]', -1, "CUSTOM"
     if is_shape_key(key):
         return key[len(SHAPE_PREFIX):], -1, "SHAPE"
+    if is_input_key(key):
+        return input_parts(key)[2], -1, "INPUT"
+    if is_history_key(key):
+        return key[len(HISTORY_PREFIX):], -1, "HISTORY"
     c = MAIN_BY_KEY[key]
     return c[2], c[3], c[4]
 
@@ -294,6 +385,16 @@ def channel_label(key):
         ob = lead()
         name = key[len(SHAPE_PREFIX):]
         return shape_label(ob, name) if ob is not None and shape_owner(ob, key) is not None else nice_name(name)
+    if is_input_key(key):
+        ob = lead()
+        owner = input_owner(ob, key) if ob is not None else None
+        name = input_parts(key)[2]
+        return input_label(owner, name) if owner is not None else nice_name(name)
+    if is_history_key(key):
+        from ..operators import prim_shapes
+        _owner, node = history_node_of(lead(), key) if lead() is not None else (None, None)
+        name = key[len(HISTORY_PREFIX):]
+        return prim_shapes.spec(node["type"], name)[1] if node is not None else nice_name(name)
     return MAIN_BY_KEY[key][1]
 
 
@@ -302,6 +403,10 @@ def has_channel(ob, key):
         return key[len(CUSTOM_PREFIX):] in ob.keys()
     if is_shape_key(key):
         return shape_owner(ob, key) is not None
+    if is_input_key(key):
+        return input_owner(ob, key) is not None
+    if is_history_key(key):
+        return history_node_of(ob, key)[1] is not None
     # Maya rotation channels are always Rotate X / Y / Z: quaternion / axis-angle nodes show Euler (step 221)
     return MAIN_BY_KEY[key][4] != "ROT" or hasattr(ob, "rotation_mode")
 
@@ -314,6 +419,10 @@ def get_value(ob, key):
     path, idx, kind = channel_path(key)
     if kind == "SHAPE":
         return _row_read(shape_owner(ob, key), "SHAPE", path)
+    if kind == "INPUT":
+        return _row_read(input_owner(ob, key), "INPUT", path)
+    if kind == "HISTORY":
+        return _history_get(ob, key)
     if kind == "CUSTOM":
         return ob[key[len(CUSTOM_PREFIX):]]
     if kind == "VIS":
@@ -337,6 +446,16 @@ def set_value(ob, key, value):
     path, idx, kind = channel_path(key)
     if kind == "SHAPE":
         _row_write(shape_owner(ob, key), "SHAPE", path, value)
+        return
+    if kind == "INPUT":
+        owner = input_owner(ob, key)
+        rna = owner.bl_rna.properties.get(path)
+        if rna is not None and rna.type == 'INT' and not isinstance(value, bool):
+            value = int(math.floor(value + 0.5))     # a drag / slider gives floats: integer attributes step
+        _row_write(owner, "INPUT", path, value)
+        return
+    if kind == "HISTORY":
+        _history_set(ob, key, value)
         return
     if kind == "CUSTOM":
         name = key[len(CUSTOM_PREFIX):]
@@ -368,6 +487,8 @@ def set_value(ob, key, value):
 
 def keyframe(ob, key, keytype='KEYFRAME'):
     path, idx, kind = channel_path(key)
+    if kind == "HISTORY":
+        return False
     if kind == "VIS" and is_bone(ob):
         return False
     if _non_euler_rot(ob, kind):
@@ -377,13 +498,13 @@ def keyframe(ob, key, keytype='KEYFRAME'):
     elif kind == "LOC" and is_root_joint(ob):
         # a root joint's Translate X / Y / Z mixes the bone's location components (rest axes): key all three (step 258)
         idx = -1
-    if kind == "SHAPE":
-        owner = shape_owner(ob, key)
+    if kind in ("SHAPE", "INPUT"):
+        owner = shape_owner(ob, key) if kind == "SHAPE" else input_owner(ob, key)
         if owner is None:
             return False
         from ..operators import graph_key_menu
         done = False
-        for p, i in shape_paths(owner, key):
+        for p, i in (shape_paths(owner, key) if kind == "SHAPE" else input_paths(owner, key)):
             try:
                 if owner.keyframe_insert(p, index=i, keytype=keytype):
                     graph_key_menu.after_insert(owner, p, i, bpy.context.scene.frame_current)
@@ -427,9 +548,27 @@ def shape_fcurves(ob, key):
     return out
 
 
+def input_fcurves(ob, key):
+    owner = input_owner(ob, key)
+    fcs = _fcurves(ob) if owner is not None else None
+    if fcs is None:
+        return []
+    out = []
+    for p, i in input_paths(owner, key):
+        fc = fcs.find(owner.path_from_id(p), index=max(i, 0))
+        if fc is not None:
+            out.append(fc)
+    return out
+
+
 def fcurve(ob, key):
+    if is_history_key(key):
+        return None
     if is_shape_key(key):
         fcs = shape_fcurves(ob, key)
+        return fcs[0] if fcs else None
+    if is_input_key(key):
+        fcs = input_fcurves(ob, key)
         return fcs[0] if fcs else None
     fcs = _fcurves(ob)
     if fcs is None:
@@ -447,6 +586,10 @@ def channel_fcurves(ob, key):
     """Every F-curve behind a channel (a SHAPES channel can have several: spot Cone Angle = size + blend)."""
     if is_shape_key(key):
         return shape_fcurves(ob, key)
+    if is_input_key(key):
+        return input_fcurves(ob, key)
+    if is_history_key(key):
+        return []
     if _non_euler_rot(ob, MAIN_BY_KEY.get(key, ("", "", "", 0, ""))[4]):
         from .. import rotation_display
         fcs, path = _fcurves(ob), full_path(ob, rotation_display.curve_path(ob))
@@ -466,8 +609,15 @@ def remove_channel_curves(ob, key):
 
 
 def driver(ob, key):
-    if is_shape_key(key):
+    if is_shape_key(key) or is_history_key(key):
         return None
+    if is_input_key(key):
+        owner = input_owner(ob, key)
+        ad = ob.animation_data if owner is not None else None
+        if ad is None:
+            return None
+        return next((d for p, i in input_paths(owner, key)
+                     for d in [ad.drivers.find(owner.path_from_id(p), index=max(i, 0))] if d is not None), None)
     ad = ob.id_data.animation_data
     if ad is None:
         return None
@@ -484,7 +634,7 @@ def channel_state(ob, key, frame=None):
     if driver(ob, key) is not None:
         return 'DRIVEN'
     fc = fcurve(ob, key)
-    if not is_shape_key(key) and (isinstance(ob, bpy.types.Object) or is_bone(ob)):
+    if not is_shape_key(key) and not is_input_key(key) and not is_history_key(key) and (isinstance(ob, bpy.types.Object) or is_bone(ob)):
         from ..operators import anim_layers
         id_ob = ob.id_data
         if anim_layers.has_layers(id_ob):
@@ -539,7 +689,23 @@ def drawn_keys(ob):
     keys += [CUSTOM_PREFIX + n for n in custom_keys(ob) if not is_hidden(ob, CUSTOM_PREFIX + n)]
     keys += [SHAPE_PREFIX + n for n in SHAPE_PROPS.get(getattr(ob, "type", ""), ())
              if has_channel(ob, SHAPE_PREFIX + n) and not is_hidden(ob, SHAPE_PREFIX + n)]
+    scene = bpy.context.scene
+    rows = scene.allset_cb.rows if scene is not None and hasattr(scene, "allset_cb") else ()
+    keys += history_keys(ob)
+    keys += [k for r in rows if r.kind == "INPUT" for k in [row_key(r)] if has_channel(ob, k)]
     return keys
+
+
+def history_keys(ob):
+    """Channel keys of the creation node's attributes while its INPUTS node is open (Channel Box order)."""
+    if not isinstance(ob, bpy.types.Object):
+        return []
+    from ..operators import prim_history
+    _owner, node = prim_history.node_of(ob)
+    if node is None or not is_open(ob, history_node(node["name"])):
+        return []
+    from . import creation_inputs
+    return [HISTORY_PREFIX + n for n in creation_inputs.node_rows(node["type"])]
 
 
 def channel_range(ob, first, last):
@@ -582,13 +748,15 @@ def cell_key(path, scene=None):
     m = re.match(r"^allset_cb\.([a-z]+)_(text|sel)$", path or "")
     if m and m.group(1) in MAIN_BY_KEY:
         return m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
+    m = re.match(r"^allset_creation\.([A-Za-z0-9]+)_(text|sel)$", path or "")
+    if m:
+        return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
     m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel)$", path or "")
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
-        if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE"):
-            prefix = CUSTOM_PREFIX if rows[i].kind == "CUSTOM" else SHAPE_PREFIX
-            return prefix + rows[i].name, ("VALUE" if m.group(2) == "text" else "NAME")
+        if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT"):
+            return row_key(rows[i]), ("VALUE" if m.group(2) == "text" else "NAME")
     return None
 
 
@@ -634,6 +802,13 @@ def entry_kind(ob, key):
         return cb_entry.kind_of_value(ob.get(key[len(CUSTOM_PREFIX):]))
     if is_shape_key(key):
         return _row_kind(shape_owner(ob, key), "SHAPE", key[len(SHAPE_PREFIX):])
+    if is_input_key(key):
+        return _row_kind(input_owner(ob, key), "INPUT", input_parts(key)[2])
+    if is_history_key(key):
+        from ..operators import prim_history
+        _owner, node = history_node_of(ob, key)
+        kind = prim_history.entry_kind(node["type"], key[len(HISTORY_PREFIX):])
+        return None if kind == "ENUM" else kind
     return _KIND_ENTRY[MAIN_BY_KEY[key][4]]
 
 
@@ -1004,18 +1179,15 @@ def _row_set(self, text):
     apply_row_entry(self, text)
 
 
-_ROW_PREFIX = {"CUSTOM": CUSTOM_PREFIX, "SHAPE": SHAPE_PREFIX}
-
-
 def _row_sel_get(self):
-    prefix = _ROW_PREFIX.get(self.kind)
-    return prefix is not None and prefix + self.name in selected_channels()
+    key = row_key(self)
+    return key is not None and key in selected_channels()
 
 
 def _row_sel_set(self, value):
-    prefix = _ROW_PREFIX.get(self.kind)
-    if prefix is not None:
-        _sel_set(prefix + self.name)(self, value)
+    key = row_key(self)
+    if key is not None:
+        _sel_set(key)(self, value)
 
 
 class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
@@ -1073,17 +1245,32 @@ def slider_targets(context):
             continue
         for ob in targets(context):
             if has_channel(ob, key) and not is_locked(ob, key) and not is_hidden(ob, key):
-                if key.startswith(CUSTOM_PREFIX) and isinstance(get_value(ob, key), bool):
+                value = get_value(ob, key)
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
                     continue
+                if is_history_key(key) and entry_kind(ob, key) is None:
+                    continue     # an enum attribute (Maya's slider skips it)
                 out.append((ob, key))
     return out
+
+
+def drag_limit(ob, key, value):
+    """A dragged INPUTS value stays in the property's soft range, like Blender's own field drag (a Subdivision's
+    Levels stops at 6; typing can go to the hard limit)."""
+    if not is_input_key(key):
+        return value
+    owner = input_owner(ob, key)
+    rna = owner.bl_rna.properties.get(input_parts(key)[2]) if owner is not None else None
+    if rna is None or rna.type not in {'INT', 'FLOAT'}:
+        return value
+    return max(rna.soft_min, min(rna.soft_max, value))
 
 
 def slider_apply(starts, dx, speed=1.0, ctrl=False, shift=False, hyperbolic=False):
     """starts: {(ob, key): start value}. Sets each to start + delta."""
     for (ob, key), start in starts.items():
         kind = channel_path(key)[2]
-        set_value(ob, key, start + slider_delta(dx, kind, speed, ctrl, shift, hyperbolic))
+        set_value(ob, key, drag_limit(ob, key, start + slider_delta(dx, kind, speed, ctrl, shift, hyperbolic)))
 
 
 class ALLSET_OT_cb_virtual_slider(bpy.types.Operator):
@@ -1192,6 +1379,8 @@ def start_field_drag(context, event, key, start_x):
 
 
 def _field_is_driven(ob, key):
+    if is_input_key(key) or is_history_key(key):
+        return driver(ob, key) is not None
     if not is_shape_key(key):
         kind = MAIN_BY_KEY.get(key, (None, None, None, None, None))[4]
         # A displayed Euler channel on a quaternion/axis-angle node writes the
@@ -1297,6 +1486,7 @@ class ALLSET_OT_cb_field_drag(bpy.types.Operator):
             if kind == 'INT':
                 # Symmetric nearest integer, independent of the sign of the starting value.
                 value = math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
+            value = drag_limit(ob, key, value)
             if get_value(ob, key) != value:
                 set_value(ob, key, value)
         try:
@@ -1583,11 +1773,11 @@ def field_owner(context, key):
     cb = context.scene.allset_cb
     if key in MAIN_BY_KEY:
         return cb, key + "_text"
-    if key.startswith(CUSTOM_PREFIX):
-        name = key[len(CUSTOM_PREFIX):]
-        for r in cb.rows:
-            if r.kind == "CUSTOM" and r.name == name:
-                return r, "text"
+    for r in cb.rows:
+        if row_key(r) == key:
+            return r, "text"
+    if is_history_key(key):
+        return context.scene.allset_creation, key[len(HISTORY_PREFIX):] + "_text"
     return None, None
 
 
@@ -2232,9 +2422,10 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
     # icon's column, so SHAPES / INPUTS values line up under Translate X ... (Maya: one value column, step 148)
     line = layout.row(align=True)
     split = line.split(factor=0.5, align=True)
-    if kind == "SHAPE" and row is not None:
-        # a SHAPES row is a channel (step 158): selectable name, keyed / animated state like Translate X
-        key = SHAPE_PREFIX + prop
+    if kind in ("SHAPE", "INPUT") and row is not None:
+        # a SHAPES / INPUTS row is a channel: selectable name (MMB virtual slider, value drag), keyed / animated
+        # state like Translate X
+        key = row_key(row)
         sub = split.row(align=True)
         sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
         right = split.row(align=True)

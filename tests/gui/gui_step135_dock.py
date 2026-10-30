@@ -152,7 +152,7 @@ def s_collapsed():
 
 
 def labels_now():
-    """Labels the Channel Box would draw now (a recorder pass of the same body)."""
+    """Labels (and attribute name toggles) the Channel Box would draw now (a recorder pass of the same body)."""
     class Rec:
         def __init__(self, log):
             self.log = log
@@ -162,6 +162,9 @@ def labels_now():
                 return lambda *a, **k: Rec(self.log)
             if name == "label":
                 return lambda *a, **k: self.log.append(k.get("text", ""))
+            if name == "prop":      # selectable attribute names are toggles labelled with the Maya name
+                return lambda *a, **k: (self.log.append(k["text"]) if k.get("toggle") and "text" in k else None,
+                                        type("P", (), {})())[1]
             return lambda *a, **k: type("P", (), {})()
 
         def __setattr__(self, name, value):

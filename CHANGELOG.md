@@ -21,6 +21,11 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
     out in a centimetre scene (#243, #229).
 
 ### Changed
+- **Channel Box INPUTS attributes work like channels** (#230, #222): click a history attribute's name (polyCube1
+  Subdivisions Height, a Subdivision's Levels, a Bevel's Width ...) to select it, then middle-drag in the viewport
+  (Maya's virtual slider) or left-drag its value sideways to change it on every selected object with the same node.
+  Whole-number attributes step by whole numbers, and a drag stops at the attribute's usual range (typing can go
+  further). Modifier attributes can be keyed and show their key state like Translate X.
 - **Double-click a vertex or face** selects its whole shell (the connected piece), like Maya 2026; an edge still
   selects its loop. Pick a face, then Shift+double-click its neighbour to select the whole face loop through both
   (a face further along still selects only the faces between) (#222).

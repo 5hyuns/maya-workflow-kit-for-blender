@@ -91,9 +91,12 @@ def test_inputs_node_starts_collapsed_and_toggles():
     assert bpy.ops.allset.cb_node_toggle(node=node) == {'FINISHED'}
     assert cb.is_open(ob, node)
     rec = _draw()
-    assert "Width" in rec.texts("label") and "Subdivisions Width" in rec.texts("label"), rec.texts("label")
+    # the attribute names are selectable channel names (a toggle labelled with the Maya name)
+    names = rec.texts("label") + rec.texts("prop")
+    assert "Width" in names and "Subdivisions Width" in names, names
     assert bpy.ops.allset.cb_node_toggle(node=node) == {'FINISHED'}
-    assert not cb.is_open(ob, node) and "Width" not in _draw().texts("label")
+    rec = _draw()
+    assert not cb.is_open(ob, node) and "Width" not in rec.texts("label") + rec.texts("prop")
 
 
 def test_new_lead_collapses_every_node():

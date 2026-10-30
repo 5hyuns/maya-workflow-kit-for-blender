@@ -336,5 +336,41 @@ ctrl_click(row("pA4"))
 def s_toggle_on():
     check(f"Ctrl+click toggles pA4 on ({selected()})", selected() == ["pA1", "pA3", "pA4"])
 
+def real_ctrl_click(xy):
+    """A real Ctrl+click: the Ctrl key event carries the modifier into the window state (step 261), then the click."""
+    wait()
+
+    def s1():
+        ev('MOUSEMOVE', 'NOTHING', x=xy()[0], y=xy()[1])
+        ev('LEFT_CTRL', 'PRESS', x=xy()[0], y=xy()[1], ctrl=True)
+
+    def s2():
+        x, y = xy()
+        ev('LEFTMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+        ev('LEFTMOUSE', 'RELEASE', x=x, y=y, ctrl=True)
+
+    def s3():
+        ev('LEFT_CTRL', 'RELEASE', x=xy()[0], y=xy()[1])
+    step(s1)
+    step(s2)
+    step(s3)
+    wait(2)
+
+
+real_ctrl_click(row("pA1"))
+
+
+@step
+def s_real_ctrl_off():
+    check(f"real Ctrl+click toggles pA1 off ({selected()})", selected() == ["pA3", "pA4"])
+
+
+real_ctrl_click(row("pA2"))
+
+
+@step
+def s_real_ctrl_on():
+    check(f"real Ctrl+click adds pA2 ({selected()})", selected() == ["pA2", "pA3", "pA4"])
+
 
 run()
