@@ -1,6 +1,7 @@
 """Create > Polygon Primitives > Interactive Creation (#225): a cube drawn with two drags (base, then height) sits
 on the grid with its Maya name and creation node; a single click makes a default sphere there; with Exit On
-Completion off the tool keeps drawing until Esc; Enter completes a cylinder after its base."""
+Completion off the tool keeps drawing until Esc; Enter waits on a height step and a click skips it (flat);
+torus section, Shift cube, front view, Esc."""
 
 import os
 import sys
@@ -285,14 +286,29 @@ def s_cyl_enter_up():
 
 
 @step
+def s_cyl_waits():
+    check("Enter on the height step waits for the height drag", running() and len(new_objects()) == 1)
+    x, y = at(0.56, 0.6)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+
+
+@step
+def s_cyl_skip():
+    x, y = at(0.56, 0.6)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+@step
 def s_cyl_done():
     obs = new_objects()
     check(f"one cylinder ({[o.name for o in obs]})", len(obs) == 1 and obs[0].name.startswith("pCylinder"))
     a = node(obs[0])["attrs"]
-    check(f"Enter: height = 2 x radius ({a['radius']:.3f}, {a['height']:.3f})",
-          a["radius"] > 0.1 and abs(a["height"] - 2 * a["radius"]) < 1e-6)
-    lo, _hi = world_z(obs[0])
-    check(f"on the grid ({lo:.5f})", abs(lo) < 1e-4)
+    ob = obs[0]
+    check(f"a click on the height step keeps the default height, flat ({a['height']:.3f}, scale {tuple(ob.scale)})",
+          abs(a["height"] - 2.0) < 1e-6 and abs(ob.scale.z) < 1e-9 and a["radius"] > 0.1)
+    lo, hi = world_z(ob)
+    check(f"flat on the grid ({lo:.5f} .. {hi:.5f})", abs(lo) < 1e-6 and abs(hi) < 1e-6)
     check("tool ended", not running())
     # one undo removes the cylinder
     with bpy.context.temp_override(window=win()):
@@ -344,8 +360,10 @@ def s_torus_done():
     obs = new_objects()
     check(f"one torus ({[o.name for o in obs]})", len(obs) == 1 and obs[0].name.startswith("pTorus"))
     a = node(obs[0])["attrs"]
-    check(f"section radius = the second drag's distance from the ring ({a['radius']:.3f}, {a['sectionRadius']:.3f})",
-          0.05 * a["radius"] < a["sectionRadius"] < a["radius"])
+    _a, r = main_view()
+    px = (at(0.62, 0.5)[0] - at(0.58, 0.5)[0]) / (bpy.context.preferences.system.ui_scale or 1.0)
+    check(f"section radius = 0.5 + 0.1 per px dragged sideways ({a['sectionRadius']:.4f}, {px:.1f} px)",
+          abs(a["sectionRadius"] - (0.5 + 0.1 * px)) < 1e-6)
     lo, hi = world_z(obs[0])
     check(f"a torus is centred on the grid ({lo:.4f} .. {hi:.4f})", abs(lo + hi) < 1e-4)
     check("tool ended", not running())
@@ -387,6 +405,42 @@ def s_front_done():
           max(abs(y) for y in ys) < 1e-4)
     zs = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]
     check(f"standing up in the front view (z span {max(zs) - min(zs):.3f})", max(zs) - min(zs) > 0.5)
+    n = node(ob)["attrs"]
+    check(f"rotation 0, the node's axis faces the viewer ({tuple(ob.rotation_euler)}, "
+          f"{(n['axisX'], n['axisY'], n['axisZ'])})",
+          max(abs(c) for c in ob.rotation_euler) < 1e-9 and (n["axisX"], n["axisY"], n["axisZ"]) == (0.0, 0.0, 1.0))
+    mark()
+
+
+step(lambda: start('CUBE'))
+drag("esc_cube", (0.45, 0.45), (0.52, 0.40))
+
+
+@step
+def s_esc_press():
+    check("a base is being drawn", len(new_objects()) == 1)
+    ev('ESC', 'PRESS', x=at(0.5, 0.5)[0], y=at(0.5, 0.5)[1])
+
+
+@step
+def s_esc_release():
+    ev('ESC', 'RELEASE', x=at(0.5, 0.5)[0], y=at(0.5, 0.5)[1])
+
+
+@step
+def s_esc_check():
+    check("Esc drops the unfinished cube and the tool stays", not new_objects() and running())
+    ev('ESC', 'PRESS', x=at(0.5, 0.5)[0], y=at(0.5, 0.5)[1])
+
+
+@step
+def s_esc_end():
+    ev('ESC', 'RELEASE', x=at(0.5, 0.5)[0], y=at(0.5, 0.5)[1])
+
+
+@step
+def s_esc_ended():
+    check("a second Esc with nothing started ends the tool", not running())
     prefs().interactive_creation = False
 
 

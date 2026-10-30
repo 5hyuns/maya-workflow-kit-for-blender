@@ -4,19 +4,24 @@
 While the check item is on, a polygon primitive from the Create menu, the shelf or its option window is drawn in a
 view instead of appearing at the origin, like Maya:
 
-- the first click-drag sets the location and the base (cube / plane: corner to corner, the others: the radius from
-  the press point); the following click-drags set the remaining sizes (height; torus section radius; pipe thickness;
-  helix coils);
-- a single click without dragging creates the default-size primitive at that point; a click on a later step skips it;
-- Enter completes the primitive at once (the remaining sizes keep the default proportions);
-- Shift: equal proportions from the first drag (the remaining steps are skipped), growing from the base;
-  Ctrl: cube / plane grow from their centre; Ctrl+Shift: equal proportions, centred on the press point;
-- Esc drops an unfinished primitive and ends the tool;
-- Exit On Completion (on by default) ends the tool after one primitive; off, it stays until Esc / Enter with nothing
-  started / Q / W / E / R.
+- a perspective view draws on the ground grid (z = 0, base edges along the world axes), an orthographic view on its
+  own plane through the origin; the object keeps rotation 0 and its creation node's Axis points at the viewer;
+- the first click-drag places the primitive and sizes its base: cube / plane corner to corner, the others a radius
+  from the press point (a sphere's radius = the larger of the two ground offsets);
+- the next click-drag sets the height: in a perspective view the height follows the pointer itself (the point of
+  the vertical line through the base closest to the pointer), in an orthographic view the vertical drag distance;
+  below the plane the shape hangs under it. A torus' second drag sets its section radius from the sideways drag;
+- a click without dragging on a later step leaves that size at its default (a skipped height leaves the shape flat);
+  a single click on the first step makes the default-size primitive centred on the clicked point;
+- Shift: a cube / plane gets equal sides centred on the press point, a cylinder / cone a radius and height from the
+  drag in one go (both sit on the plane), a sphere sits on the plane; Ctrl: a cube / plane grows from its centre;
+  Ctrl+Shift: like Shift, centred on the plane;
+- Enter completes a primitive whose remaining sizes aren't heights (torus section: its default); on a height step it
+  waits for the drag; Esc drops an unfinished primitive and the tool stays (Esc with nothing started ends it);
+- Exit On Completion (on by default) ends the tool after one primitive; off, it stays until Esc / Q / W / E / R or
+  another tool.
 
-Perspective views draw on the ground grid (z = 0), orthographic views on the view plane through the origin. The
-primitive is a regular kit primitive (Maya name, creation node in Channel Box INPUTS, lambert1), rebuilt while
+The primitive is a regular kit primitive (Maya name, creation node in Channel Box INPUTS, lambert1), rebuilt while
 dragging; each finished primitive is one undo step.
 """
 
@@ -44,23 +49,21 @@ STEPS = {
     'PIPE': ("radius", "height", "thickness"),
     'HELIX': ("width", "height", "coils"),
 }
-# Primitives with one size only (no height step): centred on the plane unless Shift grows them from their base.
+# One-size primitives centred on the plane (Shift: sitting on it); the rest sit on the plane.
 SOLIDS = {'SPHERE', 'SOCCER_BALL', 'PLATONIC', 'TORUS'}
-# The attribute each later step drives (prism height = its "length")
+# Radius = the larger ground offset instead of the distance
+MAX_RADIUS = {'SPHERE'}
+# Shift sets radius and height together (radius = larger offset x sqrt 2, height = 2 x larger offset)
+SHIFT_HEIGHT = {'CYLINDER', 'CONE', 'PRISM', 'PIPE'}
 HEIGHT_ATTR = {'PRISM': "length"}
-# Default proportions of the later sizes to the first one (as the default primitives: cube 1 x 1 x 1, cylinder / cone r 1
-# h 2, torus r 1 section 0.5, prism side 1 length 2, pipe r 1 h 2 thickness 0.5, helix width 2 height 2 coils 3).
-RATIO = {
-    'CUBE': {"height": 1.0}, 'CYLINDER': {"height": 2.0}, 'CONE': {"height": 2.0},
-    'TORUS': {"sectionRadius": 0.5}, 'PRISM': {"length": 2.0}, 'PIPE': {"height": 2.0, "thickness": 0.5},
-    'HELIX': {"height": 1.0},
-}
+SECTION_PX = 0.1        # torus section radius per px dragged sideways (from its default)
+SECTION_MIN = 0.01
 COIL_PX = 20.0          # px of drag per coil
 FLAT = 1e-4             # smallest size while drawing (a zero size has no faces to build)
 # size attributes a single click sets to the option-window / factory value
-SIZES = ("width", "height", "depth", "radius", "sideLength", "length", "sectionRadius", "thickness")
-STATUS = ("Interactive Creation: drag to place and size, click to skip a step, Enter to complete, "
-          "Shift equal proportions, Ctrl from the centre, Esc to cancel")
+SIZES = ("width", "height", "depth", "radius", "sideLength", "length", "sectionRadius", "thickness", "coils")
+STATUS = ("Interactive Creation: drag to place and size, drag again for the height, click to skip. "
+          "Shift equal sides, Ctrl from the centre")
 
 
 def wanted(context, kind):
@@ -114,6 +117,19 @@ class Plane:
         return Matrix((self.u, self.v, self.normal)).transposed().to_4x4()
 
 
+def world_axis(vec):
+    """The signed world axis closest to ``vec``."""
+    i = max(range(3), key=lambda j: abs(vec[j]))
+    out = Vector((0.0, 0.0, 0.0))
+    out[i] = 1.0 if vec[i] >= 0 else -1.0
+    return out
+
+
+def maya_axis(normal):
+    """A Blender world direction as a Maya Y-up direction (the creation node's Axis): (x, y, z) -> (x, z, -y)."""
+    return (normal[0], normal[2], -normal[1])
+
+
 def axis_param(center, normal, ray_origin, ray_dir):
     """Parameter t of the point on the line ``center + normal t`` closest to the ray, or None when they're parallel."""
     n, d = Vector(normal), Vector(ray_dir).normalized()
@@ -126,26 +142,36 @@ def axis_param(center, normal, ray_origin, ray_dir):
 
 
 def rect(a0, b0, a1, b1, centred=False, square=False):
-    """(centre a, centre b, width, depth) of a base dragged from (a0, b0) to (a1, b1) in plane coordinates."""
+    """(centre a, centre b, side a, side b) of a base dragged from (a0, b0) to (a1, b1) in plane coordinates:
+    corner to corner; ``centred`` (Ctrl) = centred on the press, sides 2|da| x 2|db|; ``square`` (Shift) = equal
+    sides 2 x max(|da|, |db|) centred on the press."""
     da, db = a1 - a0, b1 - b0
     if square:
-        s = max(abs(da), abs(db))
-        da, db = math.copysign(s, da or 1.0), math.copysign(s, db or 1.0)
+        s = 2 * max(abs(da), abs(db))
+        return a0, b0, s, s
     if centred:
         return a0, b0, 2 * abs(da), 2 * abs(db)
     return a0 + da / 2, b0 + db / 2, abs(da), abs(db)
 
 
-def side_for_radius(radius, sides):
-    """Side length of a regular ``sides``-gon with circumradius ``radius``."""
-    return 2.0 * radius * math.sin(math.pi / sides)
+def radius(kind, da, db):
+    """First-step radius from the ground offset (da, db)."""
+    if kind in MAX_RADIUS:
+        return max(abs(da), abs(db))
+    return math.hypot(da, db)
 
 
-def first_values(kind, size, sides=4):
-    """Node attributes the first step sets from its size (Maya units): width x depth for "rect", else a radius."""
+def side_for_radius(r, sides):
+    """Side length of a regular ``sides``-gon with circumradius ``r``."""
+    return 2.0 * r * math.sin(math.pi / sides)
+
+
+def first_values(kind, size, sides=4, width_along_a=True):
+    """Node attributes the first step sets from its size (Maya units): (side a, side b) for "rect", else a radius."""
     step = STEPS[kind][0]
     if step == "rect":
-        w, dp = size
+        a, b = size
+        w, dp = (a, b) if width_along_a else (b, a)
         return {"width": w, ("height" if kind == 'PLANE' else "depth"): dp}
     if step == "side":
         return {"sideLength": side_for_radius(size, sides)}
@@ -154,51 +180,37 @@ def first_values(kind, size, sides=4):
     return {"radius": size}
 
 
-def base_size(kind, values):
-    """The first step's size the default proportions refer to."""
-    if kind == 'CUBE':
-        return max(values["width"], values["depth"])
-    if kind in {'PRISM', 'PYRAMID'}:
-        return values["sideLength"]
-    if kind == 'HELIX':
-        return values["width"]
-    return values.get("radius", 1.0)
-
-
-def skipped(kind, values, step):
-    """Attribute values of a skipped later ``step``: the factory proportion to the first size."""
-    attr = step_attr(kind, step)
-    if attr is None:
-        return {}
-    if attr == "coils":
-        return {}                  # keeps its value (factory 3)
-    ratio = RATIO.get(kind, {}).get(attr)
-    if ratio is None:
-        return {}
-    return {attr: ratio * base_size(kind, values)}
-
-
 def step_attr(kind, step):
     return {"height": HEIGHT_ATTR.get(kind, "height"), "section": "sectionRadius", "thickness": "thickness",
             "coils": "coils"}.get(step)
 
 
-def placement(base_point, normal, zmin, zmax, mode):
-    """Object location so the shape (local extent [zmin, zmax] along ``normal``) sits on the plane: "base" = bottom
-    on the plane, "top" = top on it (a height dragged below), "centre" = centred on it."""
+def section_radius(default, px):
+    """Torus section radius after a sideways drag of ``px`` (logical) pixels."""
+    return max(default + SECTION_PX * px, SECTION_MIN)
+
+
+def placement(base_point, normal, zmin, zmax, mode, lift=0.0):
+    """Object location so the shape (extent [zmin, zmax] along ``normal``) sits on the plane: "base" = bottom on the
+    plane, "top" = top on it (a height dragged below), "centre" = centred on it, "lift" = centre ``lift`` above it."""
     n = Vector(normal)
-    off = {"base": -zmin, "top": -zmax}.get(mode, -(zmin + zmax) / 2)
+    off = {"base": -zmin, "top": -zmax, "lift": lift - (zmin + zmax) / 2}.get(mode, -(zmin + zmax) / 2)
     return Vector(base_point) + n * off
 
 
 # --- the tool --------------------------------------------------------------------------------------------------
 
 def drawing_plane(rv3d):
-    """Ground (z = 0, X / Y) in a perspective view, else the view plane through the origin."""
+    """Ground (z = 0, X / Y) in a perspective view, else the view plane through the origin, snapped to the world axes
+    (normal towards the viewer)."""
     if rv3d.is_perspective:
         return Plane((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0))
     rot = rv3d.view_rotation
-    return Plane((0.0, 0.0, 0.0), rot @ Vector((0.0, 0.0, 1.0)), rot @ Vector((1.0, 0.0, 0.0)))
+    n = world_axis(rot @ Vector((0.0, 0.0, 1.0)))
+    u = world_axis(rot @ Vector((1.0, 0.0, 0.0)))
+    if abs(u.dot(n)) > 0.5:          # a view looking down a diagonal: any axis across the normal
+        u = world_axis(rot @ Vector((0.0, 1.0, 0.0))).cross(n)
+    return Plane((0.0, 0.0, 0.0), n, u)
 
 
 def _ray(region, rv3d, coord):
@@ -216,6 +228,20 @@ def _px_size(region, rv3d, point):
     a = view3d_utils.region_2d_to_location_3d(region, rv3d, c, point)
     b = view3d_utils.region_2d_to_location_3d(region, rv3d, (c[0], c[1] + 1.0), point)
     return (b - a).length
+
+
+def _has_axis(node_type):
+    from . import prim_shapes
+    return "axisX" in prim_shapes.defaults(node_type)
+
+
+def _width_along_u(axis, plane):
+    """Does the node's width (Maya X after its Axis turn) run along the plane's u?"""
+    from . import prim_history, prim_shapes
+    m = prim_shapes._rot_to(axis)
+    w = prim_shapes._apply(m, (1.0, 0.0, 0.0)) if m is not None else (1.0, 0.0, 0.0)
+    wb = Vector(prim_history.to_blender(w, 1.0))
+    return abs(wb.dot(plane.u)) >= abs(wb.dot(plane.v))
 
 
 class ALLSET_OT_interactive_create(bpy.types.Operator):
@@ -237,6 +263,8 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             self._over = {}
         self._reset()
         self._made = 0
+        from .. import command_line
+        command_line.MODAL_HELP[self.bl_idname] = STATUS        # the Help Line while the tool runs
         context.workspace.status_text_set(STATUS)
         context.window.cursor_modal_set('CROSSHAIR')
         context.window_manager.modal_handler_add(self)
@@ -250,29 +278,54 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         self._moved = False
         self._area = self._region = None
         self._plane = None
-        self._history = True
-        self._px0 = 0
         self._start = None       # plane coords of the first press
         self._base = None        # base point on the plane
         self._mode = "centre" if self.kind in SOLIDS else "base"
+        self._lift = 0.0
         self._vals = {}
-        self._t0 = None
-        self._v0 = 0.0
+        self._history = True
+        self._done_early = False  # Shift: the first drag set every size
 
     def _end(self, context):
         context.workspace.status_text_set(None)
         if context.window is not None:
             context.window.cursor_modal_restore()
 
+    def _default(self, attr):
+        """The option-window value, else the factory value, of ``attr``."""
+        from . import prim_history, prim_shapes
+        if attr in self._over:
+            return self._over[attr]
+        node_type = prim_history.KIND_NODES[self.kind][0]
+        return prim_shapes.defaults(node_type).get(attr)
+
+    def _superseded(self, context):
+        """Another drawing tool started after this one (Maya: picking a tool leaves the current one)."""
+        me = self.as_pointer()
+        for op in context.window.modal_operators:
+            if op.as_pointer() == me:
+                return False                 # this one comes first: nothing newer
+            if op.bl_idname == self.bl_idname or op.bl_idname.endswith("_TOOL"):
+                return True
+        return False
+
     # --- events
     def modal(self, context, event):
+        if context.window is not None and self._superseded(context):
+            self._drop()
+            self._end(context)
+            return {'FINISHED'} if self._made else {'CANCELLED'}
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             if self._ob is None:
                 self._end(context)
                 return {'FINISHED'} if self._made else {'CANCELLED'}
-            return self._complete(context, rest=True)
+            if STEPS[self.kind][self._step] == "height" and self._step > 0:
+                return {'RUNNING_MODAL'}             # a height only comes from its drag
+            return self._complete(context)
         if event.type == 'ESC' and event.value == 'PRESS':
-            self._drop()
+            if self._ob is not None:
+                self._drop()                          # the unfinished primitive goes, the tool stays
+                return {'RUNNING_MODAL'}
             self._end(context)
             return {'FINISHED'} if self._made else {'CANCELLED'}
         if self._ob is None and event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS' \
@@ -307,10 +360,6 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             self._new(context)
         elif self._region is None or view_under(context.window, event.mouse_x, event.mouse_y) is None:
             return {'PASS_THROUGH'}            # a later step is dragged in a view; clicks elsewhere go on
-        else:
-            self._t0 = self._axis_t(event)
-            self._v0 = self._vals.get(step_attr(self.kind, STEPS[self.kind][self._step]), 0.0) or 0.0
-            self._px0 = event.mouse_y
         self._down = (event.mouse_x, event.mouse_y)
         self._moved = False
         return {'RUNNING_MODAL'}
@@ -327,31 +376,38 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         self._down = None
         steps = STEPS[self.kind]
         if self._step == 0 and not self._moved:
-            return self._complete(context, rest=False, default=True)     # single click: default size here
-        if self._step == 0 and event.shift:
-            return self._complete(context, rest=True)                    # equal proportions: one drag
+            return self._complete(context, default=True)        # single click: default size, centred there
         if self._step > 0 and not self._moved:
-            self._set(context, skipped(self.kind, self._vals, steps[self._step]))
+            self._skip(context, steps[self._step])
         self._step += 1
+        while self._step < len(steps) and self._done_early and steps[self._step] == "height":
+            self._step += 1                                     # Shift already set the height
         if self._step >= len(steps):
-            return self._complete(context, rest=False)
-        if self._step == 1 and steps[1] == "height":
+            return self._complete(context)
+        if steps[self._step] == "height":
             self._set(context, {step_attr(self.kind, "height"): FLAT})   # the height starts flat
         return {'RUNNING_MODAL'}
 
     # --- the primitive
     def _new(self, context):
         from . import create, material, prim_history
+        node_type = prim_history.KIND_NODES[self.kind][0]
+        self._axis_node = _has_axis(node_type)
         with context.temp_override(window=context.window, area=self._area, region=self._region):
             if context.mode != 'OBJECT' and context.active_object is not None:
                 bpy.ops.object.mode_set(mode='OBJECT')
             vals = dict(self._over)
             uvs = bool(vals.pop("createUVs", True))
-            tiny = FLAT         # grows from nothing
-            vals.update(first_values(self.kind, (tiny, tiny) if STEPS[self.kind][0] == "rect" else tiny,
+            if self._axis_node:          # the node turns towards the viewer, the object keeps rotation 0
+                ax = maya_axis(self._plane.normal)
+                vals.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2])
+                self._width_u = _width_along_u(ax, self._plane)
+            else:
+                self._width_u = True
+            vals.update(first_values(self.kind, (FLAT, FLAT) if STEPS[self.kind][0] == "rect" else FLAT,
                                      int(vals.get("numberOfSides", 4 if self.kind == 'PYRAMID' else 3))))
-            for later in STEPS[self.kind][1:]:
-                vals.update(skipped(self.kind, vals, later))
+            if "height" in STEPS[self.kind]:
+                vals[step_attr(self.kind, "height")] = FLAT
             history = prim_history.history_on(context)
             wm = context.window_manager
             live = hasattr(wm, "allset_construction_history")
@@ -376,11 +432,16 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             self._vals = vals
         self._place()
 
+    def _rotation(self):
+        return Matrix.Identity(4) if self._axis_node else self._plane.rotation()
+
     def _place(self):
-        ob = self._ob
-        zs = [v.co.z for v in ob.data.vertices] or [0.0]
-        ob.matrix_world = Matrix.Translation(
-            placement(self._base, self._plane.normal, min(zs), max(zs), self._mode)) @ self._plane.rotation()
+        ob, n = self._ob, self._plane.normal
+        rot = self._rotation()
+        scale = Matrix.Diagonal(ob.scale.to_4d())
+        zs = [(rot @ scale @ v.co.to_4d()).to_3d().dot(n) for v in ob.data.vertices] or [0.0]
+        ob.location = placement(self._base, n, min(zs), max(zs), self._mode, self._lift)
+        ob.rotation_euler = rot.to_euler(ob.rotation_mode if len(ob.rotation_mode) == 3 else 'XYZ')
         if self._area is not None:
             self._area.tag_redraw()
 
@@ -394,68 +455,114 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         k = units.maya_unit(context.scene) or 1.0
         region, plane, kind = self._region, self._plane, self.kind
         step = STEPS[kind][self._step]
-        coord = (event.mouse_x - region.x, event.mouse_y - region.y)
         if self._step == 0:
-            p = plane.hit(*_ray(region, region.data, coord), forward_only=region.data.is_perspective)
-            if p is None:
-                return
-            a, b = plane.coords(p)
-            a0, b0 = self._start
-            equal = event.shift
-            if step == "rect":
-                ca, cb, w, dp = rect(a0, b0, a, b, centred=event.ctrl, square=equal)
-                self._base = plane.point(ca, cb)
-                changes = first_values(kind, (w / k, dp / k))
-            else:
-                changes = first_values(kind, math.hypot(a - a0, b - b0) / k,
-                                       int(self._vals.get("numberOfSides", 3)))
-            for later in STEPS[kind][1:]:
-                # Shift: every remaining size follows the first one; else only the in-plane ones (torus section,
-                # pipe thickness) do while the base is dragged, the height starts flat in its own step
-                if equal or later != "height":
-                    changes.update(skipped(kind, {**self._vals, **changes}, later))
-            if equal:
-                self._mode = "centre" if event.ctrl else "base"
-            else:
-                self._mode = "centre" if kind in SOLIDS else "base"
-            self._set(context, changes)
+            self._first(context, event, k)
             return
         attr = step_attr(kind, step)
         if step == "height":
-            t = self._axis_t(event)
-            if t is None or self._t0 is None:
-                t = (event.mouse_y - self._px0) * _px_size(region, region.data, self._base)
-                h = self._v0 * self._sign() + t / k
-            else:
-                h = self._v0 * self._sign() + (t - self._t0) / k
-            self._mode = "top" if h < 0 else "base"     # dragged below the plane: the shape hangs under it
+            t = self._axis_t(event) if region.data.is_perspective else None
+            if t is None:      # orthographic: the vertical drag distance
+                t = (event.mouse_y - self._down[1]) * _px_size(region, region.data, self._base)
+            h = t / k
+            if self._mode != "centre":
+                self._mode = "top" if h < 0 else "base"     # dragged below the plane: the shape hangs under it
             self._set(context, {attr: max(abs(h), FLAT)})
-        elif step in {"section", "thickness"}:
+        elif step == "section":
+            px = (event.mouse_x - self._down[0]) / (context.preferences.system.ui_scale or 1.0)
+            self._set(context, {attr: section_radius(self._default(attr), px)})
+        elif step == "thickness":
+            coord = (event.mouse_x - region.x, event.mouse_y - region.y)
             p = plane.hit(*_ray(region, region.data, coord), forward_only=region.data.is_perspective)
             if p is None:
                 return
             ca, cb = plane.coords(self._base)
             a, b = plane.coords(p)
             r = math.hypot(a - ca, b - cb) / k
-            radius = self._vals.get("radius", 1.0)
-            self._set(context, {attr: abs(r - radius) if step == "section" else max(radius - r, 0.0)})
+            self._set(context, {attr: max(self._vals.get("radius", 1.0) - r, 0.0)})
         elif step == "coils":
-            self._set(context, {attr: max(self._v0 + (event.mouse_y - self._px0) / COIL_PX, 0.5)})
+            self._set(context, {attr: max(self._default(attr) + (event.mouse_y - self._down[1]) / COIL_PX, 0.5)})
 
-    def _sign(self):
-        return -1.0 if self._mode == "top" else 1.0
+    def _first(self, context, event, k):
+        """The first drag: location and base size, with Maya's Shift / Ctrl rules."""
+        region, plane, kind = self._region, self._plane, self.kind
+        coord = (event.mouse_x - region.x, event.mouse_y - region.y)
+        p = plane.hit(*_ray(region, region.data, coord), forward_only=region.data.is_perspective)
+        if p is None:
+            return
+        a, b = plane.coords(p)
+        a0, b0 = self._start
+        da, db = a - a0, b - b0
+        shift, ctrl = event.shift, event.ctrl
+        big = max(abs(da), abs(db))
+        sides = int(self._vals.get("numberOfSides", 3))
+        changes = {}
+        self._lift = 0.0
+        self._done_early = False
+        if STEPS[kind][0] == "rect":
+            ca, cb, sa, sb = rect(a0, b0, a, b, centred=ctrl, square=shift)
+            self._base = plane.point(ca, cb)
+            changes = first_values(kind, (sa / k, sb / k), width_along_a=self._width_u)
+            if shift and kind == 'CUBE':
+                changes["height"] = sa / k                    # equal sides: one drag
+                self._done_early = True
+            self._mode = "centre" if (shift and ctrl and kind == 'CUBE') else "base"
+        else:
+            self._base = plane.point(a0, b0)
+            if shift and kind in SHIFT_HEIGHT | {'TORUS'}:
+                r = big * math.sqrt(2.0)
+            else:
+                r = radius(kind, da, db)
+            changes = first_values(kind, r / k, sides)
+            if shift and kind in SHIFT_HEIGHT:
+                changes[step_attr(kind, "height")] = 2 * big / k
+                self._done_early = True
+            if kind == 'TORUS' and shift and not ctrl:
+                self._mode, self._lift = "lift", self._default("sectionRadius") * k   # raised by the default section
+            elif kind in SOLIDS:
+                self._mode = "base" if (shift and not ctrl) else "centre"
+            else:
+                self._mode = "centre" if (shift and ctrl) else "base"
+        self._set(context, changes)
 
-    def _complete(self, context, rest, default=False):
-        """Finish the primitive: ``rest`` = remaining steps take the default proportions, ``default`` = factory size."""
-        from . import prim_history, prim_shapes
+    def _skip(self, context, step):
+        """A click without a drag on a later step: the size stays at its default; a skipped height leaves the shape
+        flat (scale 0 along the plane normal)."""
+        attr = step_attr(self.kind, step)
+        if attr is None:
+            return
+        self._set(context, {attr: self._default(attr)})
+        if step == "height":
+            self._flatten()
+
+    def _flatten(self):
         ob = self._ob
-        if default:   # the option-window size, else the factory size
-            factory = prim_shapes.defaults(prim_history.node_of(ob)[1]["type"])
-            self._set(context, {a: self._over.get(a, factory[a]) for a in SIZES if a in factory})
-        elif rest:    # Enter: the steps not done yet keep the default proportions
-            first = max(self._step + (1 if self._down is not None else 0), 1)   # a step being dragged keeps its value
-            for later in STEPS[self.kind][first:]:
-                self._set(context, skipped(self.kind, self._vals, later))
+        rot = self._rotation().to_3x3()
+        local_n = rot.inverted() @ self._plane.normal
+        i = max(range(3), key=lambda j: abs(local_n[j]))
+        s = list(ob.scale)
+        s[i] = 0.0
+        ob.scale = s
+        self._mode = "base"
+        self._place()
+
+    def _complete(self, context, default=False):
+        """Finish the primitive: the steps not done yet keep their default sizes; ``default`` (a single click) = every
+        size at its default, centred on the click."""
+        from . import prim_history
+        ob = self._ob
+        steps = STEPS[self.kind]
+        if default:
+            self._set(context, {a: self._default(a) for a in SIZES if a in self._vals})
+            self._mode = "centre"
+            self._place()
+        else:
+            first = self._step + (1 if self._down is not None else 0)    # a step being dragged keeps its value
+            for later in steps[max(first, 1):]:
+                if later == "height" and self._done_early:
+                    continue
+                attr = step_attr(self.kind, later)
+                if attr is not None:
+                    self._set(context, {attr: self._default(attr)})
         if not self._history:
             prim_history.drop(ob)                   # Construction History off: no creation node (Maya -ch 0)
         name = ob.name
