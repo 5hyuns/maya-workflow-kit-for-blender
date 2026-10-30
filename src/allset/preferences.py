@@ -127,7 +127,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size")
     exit_on_completion: bpy.props.BoolProperty(
         name="Exit On Completion", default=True,
-        description="Interactive Creation ends after one primitive; off, it keeps drawing primitives until Esc")
+        description="Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives")
 
     # Graph Editor View > Snap Time To Selection (default off; Alt+/ toggles it;
     # step 92).

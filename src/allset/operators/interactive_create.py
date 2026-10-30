@@ -17,9 +17,11 @@ view instead of appearing at the origin, like Maya:
   drag in one go (both sit on the plane), a sphere sits on the plane; Ctrl: a cube / plane grows from its centre;
   Ctrl+Shift: like Shift, centred on the plane;
 - Enter completes a primitive whose remaining sizes aren't heights (torus section: its default); on a height step it
-  waits for the drag; Esc drops an unfinished primitive and the tool stays (Esc with nothing started ends it);
-- Exit On Completion (on by default) ends the tool after one primitive; off, it stays until Esc / Q / W / E / R or
-  another tool.
+  waits for the drag; Esc drops an unfinished primitive and the tool stays (Esc with nothing started keeps it too);
+- picking a primitive makes the Interactive Creation tool current (a workspace tool, ui/interactive_tool.py; its LMB
+  press starts one primitive there). Exit On Completion (on by default) switches to the Select tool after one
+  primitive; off, the tool stays and the next drag draws another one. Q / W / E / R or another tool leave it (an
+  unfinished primitive is dropped); Y comes back to it.
 
 The primitive is a regular kit primitive (Maya name, creation node in Channel Box INPUTS, lambert1), rebuilt while
 dragging; each finished primitive is one undo step.
@@ -64,6 +66,10 @@ FLAT = 1e-4             # smallest size while drawing (a zero size has no faces 
 SIZES = ("width", "height", "depth", "radius", "sideLength", "length", "sectionRadius", "thickness", "coils")
 STATUS = ("Interactive Creation: drag to place and size, drag again for the height, click to skip. "
           "Shift equal sides, Ctrl from the centre")
+TOOL = "allset.interactive_create_tool"
+SELECT_TOOL = "builtin.select_box"
+# What the tool draws next: kind, option-window values (Maya node attributes), and a counter each pick raises
+CURRENT = {"kind": 'CUBE', "values": {}, "pick": 0}
 
 
 def wanted(context, kind):
@@ -77,10 +83,34 @@ def wanted(context, kind):
         return False
 
 
+def pick(kind, overrides=None):
+    """Remember the primitive the tool draws next."""
+    CURRENT.update(kind=kind, values=dict(overrides or {}), pick=CURRENT["pick"] + 1)
+
+
 def start(context, kind, overrides=None):
-    """Start the tool for ``kind`` with option-window values ``overrides`` (Maya node attributes)."""
-    import json
-    return bpy.ops.allset.interactive_create('INVOKE_DEFAULT', kind=kind, values=json.dumps(overrides or {}))
+    """Make the Interactive Creation tool current for ``kind`` with option-window values ``overrides``.
+    False when the tool can't be set (the caller then creates the primitive at the origin)."""
+    pick(kind, overrides)
+    if context.mode != 'OBJECT':
+        try:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        except RuntimeError:
+            return False
+    try:
+        bpy.ops.wm.tool_set_by_id(name=TOOL, space_type='VIEW_3D')
+    except (RuntimeError, TypeError, ValueError):
+        return False
+    return tool_active(context)
+
+
+def tool_active(context):
+    """True when the Interactive Creation tool is the current tool of the mode."""
+    try:
+        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+    except (AttributeError, TypeError, RuntimeError):
+        return False
+    return tool is not None and tool.idname == TOOL
 
 
 # --- geometry (no bpy) ----------------------------------------------------------------------------------------
@@ -245,28 +275,40 @@ def _width_along_u(axis, plane):
 
 
 class ALLSET_OT_interactive_create(bpy.types.Operator):
-    """Maya Interactive Creation: drag in a view to place and size a polygon primitive"""
+    """Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"""
     bl_idname = "allset.interactive_create"
     bl_label = "Interactive Creation"
     bl_options = set()          # each finished primitive pushes its own undo step
 
-    kind: EnumProperty(name="Kind", items=[(k, k.replace("_", " ").title(), "") for k in STEPS])
+    kind: EnumProperty(name="Kind", items=[(k, k.replace("_", " ").title(), "") for k in STEPS], options={'SKIP_SAVE'})
     values: StringProperty(options={'SKIP_SAVE', 'HIDDEN'}, description="JSON: option-window node attributes")
 
+    @classmethod
+    def poll(cls, context):
+        from ..ui import toolbox
+        area, region = context.area, context.region
+        return (context.window is not None and area is not None and area.type == 'VIEW_3D' and region is not None
+                and region.type == 'WINDOW' and not toolbox.is_toolbox(context.space_data))
+
     def invoke(self, context, event):
+        """A press in a view: start one primitive there and follow it until it's finished, dropped or left."""
         import json
-        if context.window is None:
-            return {'CANCELLED'}
-        try:
-            self._over = dict(json.loads(self.values)) if self.values else {}
-        except (ValueError, TypeError):
-            self._over = {}
+        if self.properties.is_property_set("kind"):
+            try:
+                self._over = dict(json.loads(self.values)) if self.values else {}
+            except (ValueError, TypeError):
+                self._over = {}
+        else:                                   # the tool's press: the primitive picked last
+            self.kind = CURRENT["kind"]
+            self._over = dict(CURRENT["values"])
+        self._pick = CURRENT["pick"]
         self._reset()
-        self._made = 0
+        result = self._press(context, event)
+        if self._ob is None:                    # outside a view / the ray misses the drawing plane
+            return {'PASS_THROUGH'} if 'PASS_THROUGH' in result else {'CANCELLED'}
         from .. import command_line
-        command_line.MODAL_HELP[self.bl_idname] = STATUS        # the Help Line while the tool runs
+        command_line.MODAL_HELP[self.bl_idname] = STATUS        # the Help Line while a primitive is drawn
         context.workspace.status_text_set(STATUS)
-        context.window.cursor_modal_set('CROSSHAIR')
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -288,8 +330,6 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
 
     def _end(self, context):
         context.workspace.status_text_set(None)
-        if context.window is not None:
-            context.window.cursor_modal_restore()
 
     def _default(self, attr):
         """The option-window value, else the factory value, of ``attr``."""
@@ -300,7 +340,9 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         return prim_shapes.defaults(node_type).get(attr)
 
     def _superseded(self, context):
-        """Another drawing tool started after this one (Maya: picking a tool leaves the current one)."""
+        """Another tool or primitive was picked (Maya: picking a tool leaves the current one)."""
+        if CURRENT["pick"] != self._pick or not tool_active(context):
+            return True
         me = self.as_pointer()
         for op in context.window.modal_operators:
             if op.as_pointer() == me:
@@ -314,24 +356,23 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         if context.window is not None and self._superseded(context):
             self._drop()
             self._end(context)
-            return {'FINISHED'} if self._made else {'CANCELLED'}
+            return {'CANCELLED'}
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             if self._ob is None:
                 self._end(context)
-                return {'FINISHED'} if self._made else {'CANCELLED'}
+                return {'CANCELLED'}
             if STEPS[self.kind][self._step] == "height" and self._step > 0:
                 return {'RUNNING_MODAL'}             # a height only comes from its drag
             return self._complete(context)
         if event.type == 'ESC' and event.value == 'PRESS':
-            if self._ob is not None:
-                self._drop()                          # the unfinished primitive goes, the tool stays
-                return {'RUNNING_MODAL'}
+            self._drop()                              # the unfinished primitive goes, the tool stays
             self._end(context)
-            return {'FINISHED'} if self._made else {'CANCELLED'}
-        if self._ob is None and event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS' \
+            return {'CANCELLED'}
+        if event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS' \
                 and not (event.alt or event.ctrl or event.shift or event.oskey):
-            self._end(context)                       # the key goes on to pick its tool
-            return {'FINISHED', 'PASS_THROUGH'} if self._made else {'CANCELLED', 'PASS_THROUGH'}
+            self._drop()                              # leaving the tool drops an unfinished primitive
+            self._end(context)                        # the key goes on to pick its tool
+            return {'CANCELLED', 'PASS_THROUGH'}
         if event.type == 'LEFTMOUSE' and not event.alt:
             if event.value == 'PRESS':
                 return self._press(context, event)
@@ -566,7 +607,6 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         if not self._history:
             prim_history.drop(ob)                   # Construction History off: no creation node (Maya -ch 0)
         name = ob.name
-        self._made += 1
         self._reset()
         with context.temp_override(window=context.window):
             bpy.ops.ed.undo_push(message=f"Create {name}")
@@ -576,10 +616,13 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             exit_now = preferences.get(context).exit_on_completion
         except (KeyError, AttributeError):
             exit_now = True
-        if exit_now:
-            self._end(context)
-            return {'FINISHED'}
-        return {'RUNNING_MODAL'}
+        self._end(context)
+        if exit_now:                                  # Maya: the Select tool after one primitive
+            try:
+                bpy.ops.wm.tool_set_by_id(name=SELECT_TOOL, space_type='VIEW_3D')
+            except (RuntimeError, TypeError):
+                pass
+        return {'FINISHED'}
 
     def _drop(self):
         ob = self._ob

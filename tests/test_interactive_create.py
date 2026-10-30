@@ -113,3 +113,57 @@ def test_plain_create_without_a_window():
         assert len(new) == 1 and new[0].name.startswith("pCube"), new
     finally:
         prefs.interactive_creation = False
+
+
+def _object_tools():
+    from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
+
+    def flat(items):
+        for item in items:
+            if type(item) is tuple:
+                yield from (i for i in item if i is not None)
+            elif item is not None:
+                yield item
+    return {t.idname for t in flat(TOOLBAR._tools['OBJECT'])}
+
+
+def test_a_tool_in_object_mode():
+    """Picking a primitive makes a tool current (Esc keeps a tool): LMB presses (plain / Shift / Ctrl / both) start a
+    primitive, nothing is bound to Esc or Alt, and it isn't a Select / Move / Rotate / Scale tool, so Y (last tool)
+    comes back to it."""
+    m = ic()
+    assert m.TOOL in _object_tools()
+    items = import_module(kit.MODULE + ".ui.interactive_tool").ALLSET_TL_interactive_create.bl_keymap
+    presses = {(kw.get("shift", False), kw.get("ctrl", False)) for op, kw, _p in items
+               if op == "allset.interactive_create" and kw["type"] == 'LEFTMOUSE' and kw["value"] == 'PRESS'}
+    assert presses == {(False, False), (True, False), (False, True), (True, True)}, presses
+    assert not any(kw["type"] == 'ESC' or kw.get("alt") for _op, kw, _p in items), "Esc keeps the tool, Alt navigates"
+    tool_keys = import_module(kit.MODULE + ".operators.tool_keys")
+    assert not tool_keys.is_sacred(m.TOOL)
+    tool_keys.remember('OBJECT', m.TOOL)
+    assert tool_keys.LAST['OBJECT'] == m.TOOL
+    command_line = import_module(kit.MODULE + ".command_line")
+    assert command_line.help_for_tool(m.TOOL).startswith("Interactive Creation"), "Help Line while the tool waits"
+
+
+def test_pick_remembers_the_primitive():
+    m = ic()
+    n = m.CURRENT["pick"]
+    m.pick('CYLINDER', {"subdivisionsAxis": 8})
+    assert m.CURRENT["kind"] == 'CYLINDER' and m.CURRENT["values"] == {"subdivisionsAxis": 8}
+    assert m.CURRENT["pick"] == n + 1, "a new pick leaves a primitive being drawn"
+    # start() makes the tool current (False = the caller creates at the origin instead)
+    assert m.start(bpy.context, 'CUBE') is True and m.tool_active(bpy.context)
+    assert m.CURRENT["kind"] == 'CUBE' and m.CURRENT["values"] == {}
+    bpy.ops.wm.tool_set_by_id(name="builtin.select_box", space_type='VIEW_3D')      # Q
+    assert not m.tool_active(bpy.context)
+
+
+def test_disable_removes_the_tool():
+    tool = ic().TOOL
+    kit.disable()
+    try:
+        assert tool not in _object_tools(), "disabling unregisters the tool"
+    finally:
+        kit.enable()
+    assert tool in _object_tools()

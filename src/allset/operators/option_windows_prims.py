@@ -18,9 +18,8 @@ _AXES = {"X": (1.0, 0.0, 0.0), "Y": (0.0, 1.0, 0.0), "Z": (0.0, 0.0, 1.0)}
 
 def _create(context, kind, over):
     from . import create, interactive_create
-    if interactive_create.wanted(context, kind):     # Interactive Creation: draw it with these values
-        interactive_create.start(context, kind, over)
-        return {'FINISHED'}
+    if interactive_create.wanted(context, kind) and interactive_create.start(context, kind, over):
+        return {'FINISHED'}                          # Interactive Creation: the tool draws it with these values
     create.create(context, kind, overrides=over)
     return {'FINISHED'}
 
