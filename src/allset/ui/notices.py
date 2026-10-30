@@ -991,7 +991,7 @@ _RMB_LIST = {
                     "Editors)."),
 }
 MARKING = {
-    **{f"{menu}/{label}": n for menu in ("RMB_MESH", "RMB_CURVE") for label, n in _RMB_LIST.items()},
+    **{f"{menu}/{label}": n for menu in ("RMB_MESH", "RMB_CURVE", "RMB_LATTICE") for label, n in _RMB_LIST.items()},
     "RMB_MESH/Vertex Face": (
         "Face corners", "Blender has no vertex-face component: per-corner values (normals, colours, UVs) are edited "
         "on the face corners through their tools."),
