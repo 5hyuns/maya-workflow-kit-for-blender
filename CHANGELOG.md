@@ -6,6 +6,15 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Render Sequence with All Render-Enabled Cameras** (#252): every camera has a Renderable check (Attribute Editor
+  camera tab > Output Settings, and Render Settings > Common > Renderable Cameras), on for new cameras and for
+  persp, off for top / front / side, like Maya. Render > Render Sequence ❒ > All Render-Enabled Cameras renders the
+  animation once per renderable camera; with more than one camera each camera's frames go into a folder named after
+  the camera inside the output folder (for example `images/camFront/shot_0001.png`). The output path, render camera
+  and render size come back afterwards.
+- **Skip existing frames** (#252) in Render Settings > Common > Render Options: animation renders leave frames that
+  already exist and mark the frame in progress with an empty file (Blender's Overwrite off, Placeholders on), so a
+  stopped render picks up where it stopped and several computers can render the same frame range into one folder.
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.

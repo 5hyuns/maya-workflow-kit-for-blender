@@ -123,6 +123,8 @@ CAMERA = [
     S("Orthographic Views", False,
       ("prop", "data", "type", "Projection"),
       ("prop", "data", "ortho_scale", "Orthographic Width")),
+    S("Output Settings", False,
+      ("prop", "data", "allset_renderable", "Renderable")),     # operators/render_cameras.py
 ]
 
 # --- lights (Maya 2022 Attribute Editor point / directional light tabs) ----------------------

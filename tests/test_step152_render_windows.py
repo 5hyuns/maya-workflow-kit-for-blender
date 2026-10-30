@@ -22,8 +22,9 @@ def test_render_sequence_window_is_maya():
     assert (w.title, w.action, w.apply_text) == ("Render Sequence (Current Frame)", "Render Sequence and Close",
                                                 "Render Sequence")
     assert [(f.name, f.label, f.default) for f in w.fields] == [
-        ("camera", "Current Camera:", "persp"), ("output", "Alternate Output File Location:", "")]
-    assert "Render Region" in w.missing and "All Render-Enabled Cameras" in w.missing
+        ("camera", "Current Camera:", "persp"), ("all_cameras", "", False),
+        ("output", "Alternate Output File Location:", "")]
+    assert "Render Region" in w.missing and "All Render-Enabled Cameras" not in w.missing
     assert menu_sets.option_kind("Render/Render Sequence") == "window"
     assert hasattr(bpy.ops.allset, "opt_render_sequence")
 

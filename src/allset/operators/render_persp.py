@@ -112,12 +112,17 @@ def render_camera(context):
     return ob
 
 
+def alternate_path(scene, folder):
+    """The output path with its folder replaced by ``folder`` (the file name part is kept)."""
+    import os
+    return os.path.join(bpy.path.abspath(folder), bpy.path.basename(scene.render.filepath) or "")
+
+
 def _alternate_output(scene, folder):
     """Render into ``folder`` for this render only (Maya Alternate Output File Location): the old output path comes
     back when the render completes or is cancelled."""
-    import os
     old = scene.render.filepath
-    scene.render.filepath = os.path.join(bpy.path.abspath(folder), bpy.path.basename(old) or "")
+    scene.render.filepath = alternate_path(scene, folder)
 
     def restore(*_args):
         scene.render.filepath = old
@@ -138,6 +143,8 @@ class _Render:
     # File Location (a folder used for this render only)
     camera: StringProperty(name="Camera", default="", options={'SKIP_SAVE', 'HIDDEN'})
     output: StringProperty(name="Output", default="", options={'SKIP_SAVE', 'HIDDEN'})
+    # All Render-Enabled Cameras: Render Sequence renders every renderable camera (operators/render_cameras.py)
+    all_cameras: BoolProperty(name="All Render-Enabled Cameras", default=False, options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
@@ -145,6 +152,10 @@ class _Render:
 
     def _render(self, context, how):
         from . import default_light, render_batch
+        if self.ANIMATION and self.all_cameras:
+            from . import render_cameras
+            base = alternate_path(context.scene, self.output) if self.output else None
+            return render_cameras.render_all(self, context, how, base)
         picked = bpy.data.objects.get(self.camera) if self.camera else None
         if picked is not None and picked.type == 'CAMERA':
             context.scene.camera = ob = picked
