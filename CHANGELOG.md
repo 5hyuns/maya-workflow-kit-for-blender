@@ -20,6 +20,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   - **Selected wire**: a selected object's back edges no longer show through its faces.
 
 ### Fixed
+- **Frame Selection (F)** (from @youngmin2k, #237 — thank you!): Object and mesh component modes keep Maya's framing shortcut ahead of another
+  add-on's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
 - **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
   Ctrl+Shift+H, h and Alt+H in the Outliner run Maya's visibility commands like in the viewport, and a node hidden
   with Blender's own hide (or parented under one) hides everything below it.
