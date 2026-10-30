@@ -110,7 +110,7 @@ _WINDOW_EDITORS = {
     "Relationship Editors/Animation Layers": ("v3d", "allset.dock_show", {"dock": 'CHANNEL_BOX', "le_tab": 'ANIM'}),
     # step 197 (#104): character sets are real since step 187 (operators/character_sets.py)
     "Relationship Editors/Character Sets": ("v3d", "allset.character_editor", {}),
-    "General Editors/Hypergraph: Hierarchy": _editor('OUTLINER'),
+    "General Editors/Hypergraph: Hierarchy": ("allset.hypergraph", {}),   # kit-drawn node graph (#232)
     "General Editors/Hypergraph: Connections": _editor('DRIVERS'),
     "Rendering Editors/Hypershade": "allset.hypershade",                 # step 67: browser + graph + AE
     # step 219 (Maya 2026 Windows menu): Blender engines in Maya's places
