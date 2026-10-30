@@ -45,7 +45,7 @@ from . import deformers  # noqa: E402  step 144 DEFORM: Maya Deform menu deforme
 
 classes += deformers.classes
 
-from . import default_light, render_batch  # noqa: E402  step 152 RENDER: default light, Test Resolution, Batch (#101)
+from . import default_light, render_batch, render_cameras  # noqa: E402  step 152 RENDER: default light, Test Resolution, Batch (#101)
 
 classes += render_batch.classes
 
@@ -196,6 +196,7 @@ def register():
     motion_path_228.register_props()
     flow_path_228.register_props()
     default_light.register()
+    render_cameras.register_props()
     joint_edit.register()
     joint_display.register_props()
     poly_display.register_props()
@@ -341,6 +342,7 @@ def unregister():
     driven_key.unregister_props()
     snap_align.unregister_props()
     render_batch.unregister()
+    render_cameras.unregister_props()
     default_light.unregister()
     _unregister_classes()
 

@@ -7,7 +7,8 @@ option_windows._extend appends ``WINDOWS``). Maya's windows:
 - Render > Render Sequence ❒ = "Render Sequence (Current Frame)": Render Options (Current Camera persp, All
   Render-Enabled Layers / Cameras, Render Region, Ignore Local Overrides off, Alternate Output File Location empty),
   Render View Options (Add to Render View off); buttons "Render Sequence and Close" / "Render Sequence" / "Close".
-  The kit runs Current Camera and Alternate Output File Location; the rest are Maya concepts Blender has no part for.
+  The kit runs Current Camera, All Render-Enabled Cameras (operators/render_cameras.py) and Alternate Output File
+  Location; the rest are Maya concepts Blender has no part for.
 - Render > Batch Render ❒: the factory renderer (Arnold) opens no window; Maya Software opens "Batch Render Frame"
   (Use all available processors on, Number of processors to use 0; "Batch render and close" / "Batch render").
   The kit's batch render is a background Blender, so the Maya Software window maps to its ``-t`` threads
@@ -70,7 +71,7 @@ class FPath(F):
 def _run_sequence(context, v):
     camera = v.get("camera") or "persp"
     return bpy.ops.allset.render_sequence('INVOKE_DEFAULT', camera="" if camera == "persp" else camera,
-                                          output=v.get("output") or "")
+                                          output=v.get("output") or "", all_cameras=bool(v.get("all_cameras")))
 
 
 def _run_batch(context, v):
@@ -81,9 +82,10 @@ def _run_batch(context, v):
 WINDOWS = [
     Window("render_sequence", "Render Sequence (Current Frame)", "Render Sequence and Close", None, [
         FCamera("camera", "Current Camera:"),
+        F("all_cameras", "", "bool", False, text="All Render-Enabled Cameras"),
         FPath("output", "Alternate Output File Location:")], _run_sequence, paths=("Render/Render Sequence",),
         apply_text="Render Sequence",
-        missing=("All Render-Enabled Layers", "All Render-Enabled Cameras", "Render Region",
+        missing=("All Render-Enabled Layers", "Render Region",
                  "Ignore Local Overrides", "Render View Options: Add to Render View")),
     Window("batch_render", "Batch Render Frame", "Batch render and close", None, [
         F("all_processors", "", "bool", True, text="Use all available processors"),
