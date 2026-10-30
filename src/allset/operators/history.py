@@ -99,6 +99,8 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             continue
         if not non_deformer:
             _bake(context, ob, keep=preview)
+            from . import skin_follow
+            skin_follow.detach(ob, keep_shape=True)      # the baked skin stays where it shows
             baked += 1
             continue
         if not before_only:

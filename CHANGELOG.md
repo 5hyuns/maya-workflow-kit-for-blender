@@ -60,6 +60,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   other items are greyed with a note on the closest Blender feature.
 
 ### Fixed
+- **Group a joint, move the group, the skin follows** (#230): Edit > Group / Ctrl+G with a skeleton's root joint
+  selected (in the viewport or the Outliner) puts the skeleton under `group1` and selects the group, like Maya.
+  A skinned mesh now moves with its skeleton however the skeleton moves — its root joint, the skeleton itself or a
+  group above it — while the mesh keeps its own place in the hierarchy and its own channel values. Grouping a joint
+  inside a chain warns and changes nothing (Blender can't put a group between two joints of one skeleton).
+  Unbind Skin and Delete History remove the skin's link to the skeleton with it. Skins bound with an older version
+  get the link when their skeleton is grouped.
 - **Quad Draw workflow** from @youngmin2k (#231) — thank you!
   - **Quad Draw surface inference and symmetry**: rank candidate quads in 3D as well as screen space; resolve
     competing snap targets across multi-point strips. Pick Reference Seam supports posed live meshes away from an

@@ -78,7 +78,7 @@ V3D, OBJ, OBJ_NM = "3D View", "Object Mode", "Object Non-modal"
 # Keyed by runTimeCommand (global context unless the key says otherwise).
 ENTRIES = {
     # --- KIT: step 2 ---
-    "Group": _e("KIT", (OBJ, "allset.group", {}), note="Empty 그룹, 피벗 원점, group1 명명 (Outliner 도)"),
+    "Group": _e("KIT", (OBJ, "allset.group", {}), note="Empty 그룹, 피벗 원점, group1 명명 (Outliner 도; 루트 조인트 선택 = 스켈레톤을 그룹)"),
     "DisplayWireframe": _e("KIT", (V3D, "allset.display_mode", {"mode": "WIREFRAME"})),
     "DisplayShaded": _e("KIT", (V3D, "allset.display_mode", {"mode": "SHADED"})),
     "DisplayShadedAndTextured": _e("KIT", (V3D, "allset.display_mode", {"mode": "TEXTURED"})),
