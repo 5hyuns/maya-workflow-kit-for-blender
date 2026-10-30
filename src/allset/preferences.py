@@ -372,6 +372,29 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                                            description="Maya Workflow Kit project folder: file dialogs open in its scenes "
                                                        "folder, renders go to its images folder")
     recent_projects: bpy.props.StringProperty(options={'HIDDEN'})   # newline-separated, newest first
+    # Autosave (operators/autosave.py): copies of the open scene in the project's autosave folder, like Maya's
+    # Files/Projects > AutoSave. Blender's own auto save (a recovery file in the temp folder) is separate.
+    autosave_enable: bpy.props.BoolProperty(
+        name="Autosave", default=False,
+        description="Save a copy of the scene every few minutes into the autosave folder (the scene's own file "
+                    "is not touched)")
+    autosave_interval: bpy.props.FloatProperty(
+        name="Interval (minutes)", default=10.0, min=0.5, soft_max=120.0, precision=1,
+        description="Minutes between autosaves")
+    autosave_limit: bpy.props.BoolProperty(
+        name="Limit Autosaves", default=False,
+        description="Keep only the newest autosaves of each scene")
+    autosave_count: bpy.props.IntProperty(
+        name="Number of Autosaves", default=10, min=1, soft_max=100,
+        description="How many autosaves of each scene are kept when Limit Autosaves is on")
+    autosave_destination: bpy.props.EnumProperty(
+        name="Autosave Destination", default='PROJECT',
+        items=(('PROJECT', "Project", "The current project's autosave folder"),
+               ('FOLDER', "Named Folder", "The folder set below")),
+        description="Where autosaves go")
+    autosave_folder: bpy.props.StringProperty(
+        name="Autosave Folder", subtype='DIR_PATH',
+        description="Autosave folder when the destination is Named Folder")
     # Maya option window values (operators/option_windows.py, step 103).
     option_settings: bpy.props.StringProperty(options={'HIDDEN'})   # JSON {window key: {field: value}}
 
@@ -465,6 +488,21 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "smart_duplicate")
         row.prop(self, "smart_extrude")
         box.prop(self, "project_root")
+        row = box.row()
+        row.prop(self, "autosave_enable")
+        sub = row.row()
+        sub.active = self.autosave_enable
+        sub.prop(self, "autosave_interval")
+        sub.prop(self, "autosave_limit")
+        num = sub.row()
+        num.active = self.autosave_limit
+        num.prop(self, "autosave_count", text="")
+        row = box.row()
+        row.active = self.autosave_enable
+        row.prop(self, "autosave_destination", text="")
+        folder = row.row()
+        folder.active = self.autosave_destination == 'FOLDER'
+        folder.prop(self, "autosave_folder", text="")
 
         box = layout.box()
         box.label(text="UI Elements")
