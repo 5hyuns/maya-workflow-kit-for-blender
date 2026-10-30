@@ -177,6 +177,8 @@ from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Rese
 classes += poly_display.classes
 from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
 classes += interactive_create.classes
+from . import fx_more, render_more  # noqa: E402  Maya FX / Rendering items on Blender systems (#123)
+classes += fx_more.classes + render_more.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -217,6 +219,7 @@ def register():
     uv_tools.register_props()
     uv_shell_select.register_props()
     fx.register_props()
+    fx_more.register_props()
     taphold.register_bindings()
     graph_keys.register_bindings()
     graph_key_menu.register_bindings()
@@ -322,6 +325,7 @@ def unregister():
     sets.unregister_props()
     pivot_menu.unregister_props()
     taphold.unregister_bindings()
+    fx_more.unregister_props()
     fx.unregister_props()
     anim_layers.unregister_props()
     light_links.unregister_props()

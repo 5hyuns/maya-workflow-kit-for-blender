@@ -306,6 +306,150 @@ NOTICES.update({
     "Help/About Maya": ("About Blender", "Blender's About shows its version (Maya Workflow Kit is an extension)."),
 })
 
+# #123: Maya FX / Rendering / Hypershade items that run Blender's own system (tooltip: which one, in Maya terms)
+_PAINT_SLOT = {"Input Attract": "Pin Group", "Stretch": "Structural stiffness group",
+               "Compression": "Structural stiffness group", "Bend": "Bending stiffness group",
+               "Rest Length Scale": "Shrinking group"}
+_HS_C = "Hypershade/Create/"
+NOTICES.update({
+    "nParticles/Fill Object": (
+        "Particles from the volume", "Blender fills the mesh with a particle system emitting from its volume on a "
+        "grid, all at the start frame (the mesh stays the emitter)."),
+    "nParticles/Instancer": (
+        "Render As Object / Collection", "Blender instances the selected objects on the particles with the particle "
+        "system's Render As Object (several objects: a Collection)."),
+    **{f"nParticles/Create Options/{label}": (
+        "Particle display", "Blender draws new particle systems as dots (Point, Water) or circles (Balls, Cloud); "
+        "Water also uses Blender's fluid particle physics.") for label in ("Point", "Balls", "Cloud", "Thick Cloud",
+                                                                           "Water")},
+    "Fluids/Add/Edit Contents/Emitter": (
+        "Fluid flow mesh", "Blender emits fluid from a mesh: a smoke Flow (Inflow) sphere at the container's centre."),
+    "Fluids/Edit Fluid Resolution": (
+        "Domain Resolution Divisions", "Blender sets the Mantaflow domain's Resolution Divisions (along the "
+        "longest side)."),
+    "nCloth/Rest Shape/Set Rest To Start Shape": (
+        "Rest Shape Key cleared", "Blender's cloth rests at its input mesh when it has no Rest Shape Key."),
+    "nCloth/Rest Shape/Connect Input Mesh to Rest Shape": (
+        "Rest Shape Key cleared", "Blender's cloth rests at its input mesh when it has no Rest Shape Key."),
+    "nCloth/Rest Shape/Connect Selected Mesh to Rest Shape": (
+        "Rest Shape Key", "Blender adds the selected mesh as a shape key of the cloth and makes it the Rest Shape "
+        "Key (select the rest mesh, then the nCloth)."),
+    **{f"nCloth/Paint Vertex Properties/{label}": (
+        f"Cloth {slot}", f"Blender paints the cloth's {slot} in Weight Paint mode: weight 0 keeps the cloth's "
+        "value, 1 uses its Max value (Physics > Cloth).") for label, slot in _PAINT_SLOT.items()},
+    "nConstraint/Transform Constraint": (
+        "Pin group + Hook", "Blender pins the selected cloth vertices (Pin Group) and hooks them to the empty "
+        "dynamicConstraintN: move the empty to move them."),
+    "nConstraint/Disable Collision": (
+        "Collision vertex group", "Blender leaves the selected vertices out of the cloth's object and self "
+        "collisions (Collisions > Vertex Group)."),
+    "nConstraint/Remove Dynamic Constraint": (
+        "Pin group + Hook removed", "Blender removes the constraint's hook, empty and vertex group (select the "
+        "constraint empty, or the nCloth to remove all)."),
+    **{f"nConstraint/{label}": (
+        "Constraint vertex group", "Blender edits the constraint's vertex group with the selected vertices (Edit "
+        "Mode; select the constraint empty too, else the newest constraint).")
+       for label in ("Select Members", "Add Members", "Remove Members", "Replace Members")},
+    "nCache/Create Particle Disk Cache": (
+        "Particle Disk Cache bake", "Blender bakes the particle cache with Disk Cache on, next to the saved .blend "
+        "file."),
+    "nCache/Transfer Cache To Input Mesh": (
+        "Simulated shape written", "Blender writes the cloth's simulated shape at this frame into the mesh (the "
+        "Cloth modifier stays) and starts the simulation from it."),
+    "nCache/Edit Oversampling or Cache Settings...": (
+        "Physics properties", "Blender keeps cache and quality settings in each object's Physics properties "
+        "(Cache, Quality Steps)."),
+    "Fields/Solvers/Volume Curve": (
+        "Curve Guide field", "Blender guides particles along a curve with a Curve Guide force field on the curve."),
+    "Fields/Solvers/Initial State/Set for Selected": (
+        "Simulated shape written", "Blender writes the simulated cloth shape into the mesh and the simulated rigid "
+        "body places into the transforms; the simulation then starts from there."),
+    "Fields/Solvers/Initial State/Set for All Dynamic": (
+        "Simulated shape written", "Blender writes every simulated cloth shape and rigid body place in the scene "
+        "into the start state."),
+    "Fields/Solvers/Set Active Key": (
+        "Rigid body Animated key", "Blender keys the rigid body's Animated checkbox off: the solver moves it from "
+        "this frame."),
+    "Fields/Solvers/Set Passive Key": (
+        "Rigid body Animated key", "Blender keys the rigid body's Animated checkbox on (with its place): animation "
+        "moves it from this frame."),
+    "Fields/Solvers/Break Rigid Body Connections": (
+        "Rigid body removed", "Blender keeps the object where the simulation put it and removes its rigid body."),
+    "Fields/Solvers/Rigid Body Solver Attributes": (
+        "Scene > Rigid Body World", "Blender's rigid body solver settings are the Scene properties' Rigid Body "
+        "World panel."),
+    "Fields/Solvers/Create Rigid Body Solver": (
+        "Rigid Body World", "Blender has one rigid body solver per scene, the Rigid Body World (made if missing)."),
+    "Effects/Flow/Create Curve Flow": (
+        "Curve Guide + emitter", "Blender makes the curve a Curve Guide force field and adds a point emitter at its "
+        "start; the particles follow the curve."),
+    "Effects/Flow/Delete Selected Flow": (
+        "Curve Guide off", "Blender turns the curve's Curve Guide field off and deletes its flow emitter."),
+    "Effects/Collide with Effect": (
+        "Fluid effector", "Blender's fire and smoke are Mantaflow fluids: the selected meshes become Fluid "
+        "effectors."),
+    "Lighting/Shading/Transfer Maps...": (
+        "Cycles Bake, Selected to Active", "Blender transfers maps with Cycles Bake (Render properties > Bake, "
+        "Selected to Active): select the source meshes, then the target."),
+    "Toon/Assign Fill Shader/Solid Color": (
+        "Emission material", "Blender's flat fill is a surfaceShader-like material: Principled BSDF with full "
+        "emission."),
+    **{f"Toon/Assign Fill Shader/{label}": (
+        "Shader to RGB material", "Blender's toon fill is Shader to RGB + a constant Color Ramp into an Emission "
+        "shader; it shows in EEVEE (Cycles has no Shader to RGB).")
+       for label in ("Light Angle Two Tone", "Shaded Brightness Two Tone", "Shaded Brightness Three Tone",
+                     "Dark Profile", "Rim Light", "Circle Highlight")},
+    **{f"Toon/Set Camera Background Color/{cam}": (
+        "World colour", "Blender has one background for every camera: this sets the World colour.")
+       for cam in ("persp", "front", "side", "top")},
+    "Toon/Reverse Surfaces": (
+        "Flip Normals", "Blender flips the normals of the selected meshes (Mesh > Normals > Flip)."),
+    "Stereo/Create": (
+        "Stereoscopy", "Blender stereo = a camera with Render > Stereoscopy (Views) on, no stereo rig."),
+    _HS_C + "General Utilities/Uv Chooser": ("UV Map node", "Blender picks a UV set with the UV Map node."),
+    _HS_C + "Particle Utilities/Particle Sampler": (
+        "Particle Info node", "Blender reads particle values in a shader with the Particle Info node."),
+    **{_HS_C + f"Environment Textures/{label}": (
+        "Environment Texture node", "Blender maps an environment image with an Environment Texture node (World "
+        "for the background).") for label in ("Env Ball", "Env Cube")},
+    _HS_C + "Environment Textures/Env Sky": (
+        "Sky Texture node", "Blender's procedural sky is the Sky Texture node (World for the background)."),
+    _HS_C + "Color Utilities/Color Composite": (
+        "Mix node", "Blender composites two colours with a Mix node (Color, with its blend modes)."),
+    _HS_C + "Color Utilities/Color Correct": (
+        "Hue/Saturation/Value node", "Blender corrects colours with Hue/Saturation/Value (add Brightness/Contrast "
+        "or Gamma for the rest)."),
+    _HS_C + "Scalar Utilities/Float Composite": (
+        "Math node", "Blender composites two numbers with a Math node (Add, Multiply, Mix ...)."),
+    _HS_C + "Scalar Utilities/Float Correct": (
+        "Map Range node", "Blender remaps a number with the Map Range node (gain / offset / clamp)."),
+    _HS_C + "2D Textures/Mountain": (
+        "Noise Texture node", "Blender has no mountain texture: a Noise Texture (fractal) is the closest."),
+    _HS_C + "3D Textures/Stucco": (
+        "Noise Texture node", "Blender has no stucco texture: a Noise Texture is the closest."),
+    **{_HS_C + f"Volumetric Materials/{label}": (
+        "Volume output", f"Blender renders volumes from the material's Volume output: {what}.")
+       for label, what in (("Volume Shader", "a Principled Volume"), ("Volume Fog", "a Volume Scatter"),
+                           ("Light Fog", "a Volume Scatter"))},
+    _HS_C + "Volumetric Materials/Env Fog": (
+        "World Volume", "Blender's scene fog is a Principled Volume on the World's Volume output."),
+    **{_HS_C + f"Materials/{label}": (
+        "Principled Hair BSDF", "Blender shades hair with a Principled Hair BSDF material (Cycles and EEVEE).")
+       for label in ("Hair Physical Shader", "Hair Tube Shader")},
+    _HS_C + "Materials/Usd Preview Surface": (
+        "Principled BSDF", "Blender's USD export writes a Principled BSDF material as UsdPreviewSurface."),
+    _HS_C + "Materials/Shading Map": (
+        "Shader to RGB + Color Ramp", "Blender remaps shading to colours with Shader to RGB + a Color Ramp into an "
+        "Emission shader (EEVEE)."),
+    _HS_C + "Image Plane": (
+        "Image empty", "Blender's image plane is an image empty (same as Create > Free Image Plane)."),
+    **{f"Hypershade/Window/{label}": (
+        "Connection Editor", "Blender connects attributes with drivers: the kit's Connection Editor makes them.")
+       for label in ("Connection Editor...", "Connect Selected...")},
+    "Hypershade/Edit/Duplicate/With Connections to Network": (
+        "Material copy", "Blender copies a material with its whole node tree, the inputs included."),
+})
+
 # Greyed items (no Blender action in Maya Workflow Kit) by Maya menu path prefix: (closest Blender feature, one line).
 # notices.category picks the longest matching prefix; tests/test_step101_menu_honesty.py checks that every
 # greyed menu item has a notice and that every rule here matches at least one greyed item.
@@ -346,8 +490,6 @@ CATEGORIES = {
                 "Lightning, Shatter and Flow aren't built in (Cell Fracture extension for Shatter)."),
     "Toon": ("Line Art / Freestyle", "Blender toon lines are Line Art (Grease Pencil) or Freestyle; line attributes "
              "are Line Art modifiers, not painted maps."),
-    "Toon/Assign Fill Shader": ("Shader to RGB material", "Blender toon fills are materials with Shader to RGB + a "
-                                "Color Ramp (EEVEE)."),
     "Stereo": ("Stereoscopy (Views)", "Blender stereo = Render > Stereoscopy with the camera's Stereoscopy "
                "settings: there are no stereo rigs or camera links."),
     "Audio": ("Sound strips", "Blender sounds are Video Sequencer strips (waveforms show in the Sequencer); "
@@ -385,8 +527,6 @@ CATEGORIES = {
                "diagnostics, Backburner and NURBS tessellation have no counterpart."),
     "Texturing": ("Shader Editor / Texture Paint", "Blender has no PSD networks or texture reference objects: "
                   "textures are image nodes in the Shader Editor, painted in Texture Paint mode."),
-    "Lighting/Shading": ("Cycles Bake", "Blender transfers maps between meshes with Cycles Bake (Render "
-                         "properties > Bake, Selected to Active)."),
     # modeling
     **{f"Mesh Display/{sub}": ("Color Attribute node", "Blender mixes vertex colors into materials with a Color "
                                "Attribute node in the Shader Editor, not a per-object setting.")
@@ -893,8 +1033,6 @@ CATEGORIES.update({
         "File > Clean Up > Purge."),
     "Hypershade/Edit/Select All by Type": (
         "Outliner", "Blender selects materials and textures in the Outliner's Blender File view, not in the scene."),
-    "Hypershade/Edit/Duplicate": (
-        "Duplicate", "Blender copies a material with its whole node tree (Duplicate / Shading Network)."),
     "Hypershade/Create": (
         "Shift+A in the Shader Editor", "Blender has no node of this Maya type: add the closest node with Shift+A "
         "in the Shader Editor."),
@@ -904,14 +1042,10 @@ CATEGORIES.update({
     "Hypershade/Create/Volumetric Materials": (
         "Volume shaders", "Blender's volumes are shaders on the material's Volume output (Principled Volume) or the "
         "World's: add them with Shift+A > Volume."),
-    "Hypershade/Create/Image Plane": (
-        "Image Plane", "Blender's image planes are made in the 3D View (Create > Free Image Plane)."),
     "Hypershade/Create/Rendering": (
         "View Layers / AOVs", "Blender's render passes are View Layer passes (View Layer Properties > Passes)."),
     "Hypershade/Create/Glow": (
         "Bloom / Glare", "Blender makes glow in the compositor (Glare node)."),
-    "Hypershade/Create/Particle Utilities": (
-        "Attribute node", "Blender's particles feed shaders through the Particle Info / Attribute nodes."),
     "Hypershade/Create/Switch Utilities": (
         "Mix nodes", "Blender switches between inputs with Mix nodes (or Geometry Nodes Switch)."),
     "Hypershade/Create/Create Options": (

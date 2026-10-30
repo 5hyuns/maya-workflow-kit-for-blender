@@ -10,6 +10,7 @@ import kit
 
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
+editor_menu_map = import_module(kit.MODULE + ".ui.editor_menu_map")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 notices = import_module(kit.MODULE + ".ui.notices")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
@@ -217,7 +218,9 @@ def test_hypershade_browser_create_assign():
         wm.allset_hs_create_cat = 'SURFACE'          # step 131: Create pane = Maya's category tree + node list
         hs.draw_create(rec, bpy.context)
         made = [p.item.rsplit("/", 1)[-1] for i, p in rec.ops() if i == "allset.menu_item"]
-        assert made == [material.MATERIALS[k][1] for k in hs.CREATE], made
+        # + the Maya materials Blender builds from other nodes (hair, USD Preview, Shading Map)
+        extra = [label.rsplit("/", 1)[-1] for label in editor_menu_map.HS_EXTRA if label.startswith("Materials/")]
+        assert made == sorted([material.MATERIALS[k][1] for k in hs.CREATE] + extra), made
         wm.allset_hs_create_cat = 'MAYA'
         rec = Rec()
         hs.draw_property_editor(rec, bpy.context)

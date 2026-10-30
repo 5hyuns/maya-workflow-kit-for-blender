@@ -949,6 +949,7 @@ MAP.update({
 # (step 101):
 # ('ALL', select mode) = Maya acts on every component of the selected meshes; a string = Maya's warning.
 OBJECT_MODE = {
+    "Toon/Reverse Surfaces": ('ALL', 'FACE'),      # #123: reverses whole selected meshes like Maya's
     "Edit Mesh/Add Divisions": ('ALL', 'FACE'),
     "Edit Mesh/Collapse": ('ALL', 'FACE'),
     "Edit Mesh/Merge": ('ALL', 'VERT'),
@@ -1104,6 +1105,51 @@ MAP.update({
     "Deform/Wrap#2/Remove Influence": ("allset.wrap_influence", {"action": 'REMOVE'}),
 })
 
+# Maya FX / Rendering items on Blender's own systems (#123, operators/fx_more.py and render_more.py); each has a
+# notice saying which Blender feature it uses (ui/notices.py)
+_NCLOTH_PAINT = {"Input Attract": 'INPUT_ATTRACT', "Stretch": 'STRETCH', "Compression": 'COMPRESSION',
+                 "Bend": 'BEND', "Rest Length Scale": 'REST_LENGTH_SCALE'}
+_NCONSTRAINT = {"Transform Constraint": 'TRANSFORM', "Disable Collision": 'DISABLE_COLLISION',
+                "Remove Dynamic Constraint": 'REMOVE', "Select Members": 'SELECT', "Add Members": 'ADD',
+                "Remove Members": 'SUBTRACT', "Replace Members": 'REPLACE'}
+_TOON_FILLS = {"Solid Color": 'SOLID_COLOR', "Light Angle Two Tone": 'LIGHT_ANGLE_TWO_TONE',
+               "Shaded Brightness Two Tone": 'SHADED_BRIGHTNESS_TWO_TONE',
+               "Shaded Brightness Three Tone": 'SHADED_BRIGHTNESS_THREE_TONE', "Dark Profile": 'DARK_PROFILE',
+               "Rim Light": 'RIM_LIGHT', "Circle Highlight": 'CIRCLE_HIGHLIGHT'}
+NPARTICLE_STYLES = {"Point": 'POINT', "Balls": 'BALLS', "Cloud": 'CLOUD', "Thick Cloud": 'THICK_CLOUD',
+                    "Water": 'WATER'}
+MAP.update({
+    "nParticles/Fill Object": "allset.fx_fill_object",
+    "nParticles/Instancer": "allset.fx_instancer",
+    **{f"nParticles/Create Options/{label}": ("prop", "window_manager.allset_nparticle_style", {"value": key})
+       for label, key in NPARTICLE_STYLES.items()},
+    "Fluids/Add/Edit Contents/Emitter": "allset.fluid_add_emitter",
+    "Fluids/Edit Fluid Resolution": "allset.fluid_resolution",
+    "nCloth/Rest Shape/Set Rest To Start Shape": ("allset.ncloth_rest", {"mode": 'START'}),
+    "nCloth/Rest Shape/Connect Input Mesh to Rest Shape": ("allset.ncloth_rest", {"mode": 'START'}),
+    "nCloth/Rest Shape/Connect Selected Mesh to Rest Shape": ("allset.ncloth_rest", {"mode": 'SELECTED'}),
+    **{f"nCloth/Paint Vertex Properties/{label}": ("allset.ncloth_paint_vertex", {"attr": key})
+       for label, key in _NCLOTH_PAINT.items()},
+    **{f"nConstraint/{label}": ("allset.nconstraint", {"action": key}) for label, key in _NCONSTRAINT.items()},
+    "nCache/Create Particle Disk Cache": "allset.particle_disk_cache",
+    "nCache/Transfer Cache To Input Mesh": "allset.fx_initial_state",
+    "nCache/Edit Oversampling or Cache Settings...": _props('PHYSICS'),
+    "Fields/Solvers/Volume Curve": "allset.fx_curve_field",
+    "Fields/Solvers/Initial State/Set for Selected": "allset.fx_initial_state",
+    "Fields/Solvers/Initial State/Set for All Dynamic": ("allset.fx_initial_state", {"all": True}),
+    "Fields/Solvers/Set Active Key": ("allset.fx_rigid_key", {"passive": False}),
+    "Fields/Solvers/Set Passive Key": ("allset.fx_rigid_key", {"passive": True}),
+    "Fields/Solvers/Break Rigid Body Connections": "allset.fx_break_rigid",
+    "Fields/Solvers/Rigid Body Solver Attributes": _props('SCENE'),
+    "Fields/Solvers/Create Rigid Body Solver": "allset.fx_rigid_world",
+    "Effects/Flow/Create Curve Flow": ("allset.fx_curve_field", {"flow": True}),
+    "Effects/Flow/Delete Selected Flow": "allset.fx_delete_flow",
+    "Lighting/Shading/Transfer Maps...": "allset.transfer_maps",
+    **{f"Toon/Assign Fill Shader/{label}": ("allset.toon_fill", {"kind": key}) for label, key in _TOON_FILLS.items()},
+    **{f"Toon/Set Camera Background Color/{cam}": ("allset.camera_background", {"camera": cam})
+       for cam in ("persp", "front", "side", "top")},
+})
+
 # Blender's own menu kept at the end of the Maya menu with the same role.
 BLENDER_MENU = {
     "File": ("TOPBAR_MT_file", "Blender File"),
@@ -1147,6 +1193,16 @@ TWINS = {
     "nHair/Modify Curves/Bend": "Curves/Bend",          # step 207
     "nHair/Modify Curves/Curl": "Curves/Curl",          # step 207
     "nHair/Modify Curves/Scale Curvature": "Curves/Scale Curvature",          # step 207
+    # #123: the same Blender action from the FX / Rendering / Hypershade menus
+    "Effects/Collide with Effect": "Fluids/Make Collide",
+    "Toon/Reverse Surfaces": "Mesh Display/Reverse",
+    "Stereo/Create": "Create/Cameras/Stereo Camera",
+    "Hypershade/Create/Image Plane": "Create/Free Image Plane",
+    "Hypershade/Window/Connection Editor...": "Windows/General Editors/Connection Editor",
+    "Hypershade/Window/Connect Selected...": "Windows/General Editors/Connection Editor",
+    "Hypershade/Edit/Duplicate/With Connections to Network": "Hypershade/Edit/Duplicate/Shading Network",
+    **{f"Lighting/Shading/Light Linking Editor/{mode}": f"Windows/Relationship Editors/Light Linking/{mode}"
+       for mode in ("Light-Centric", "Object-Centric")},
 }
 MAP.setdefault("UV/Delete UVs", "allset.uv_delete")   # step 189 (audit 13 BS1): main menu twin of the UV marking menu
 for _twin, _source in TWINS.items():

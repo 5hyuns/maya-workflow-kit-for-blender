@@ -485,7 +485,19 @@ HS_NODES = {
     "Color Utilities/Rgb To Hsv": 'ShaderNodeSeparateColor', "Color Utilities/Luminance": 'ShaderNodeRGBToBW',
     "Color Utilities/Remap Value": 'ShaderNodeMapRange', "Color Utilities/Remap Color": 'ShaderNodeRGBCurve',
     "Color Utilities/Remap Hsv": 'ShaderNodeHueSaturation',
+    # #123: Blender nodes that do the same job (ui/notices.py names the Blender node in the tooltip)
+    "General Utilities/Uv Chooser": 'ShaderNodeUVMap', "Particle Utilities/Particle Sampler": 'ShaderNodeParticleInfo',
+    "Environment Textures/Env Ball": 'ShaderNodeTexEnvironment',
+    "Environment Textures/Env Cube": 'ShaderNodeTexEnvironment', "Environment Textures/Env Sky": 'ShaderNodeTexSky',
+    "Color Utilities/Color Composite": 'ShaderNodeMix', "Color Utilities/Color Correct": 'ShaderNodeHueSaturation',
+    "Scalar Utilities/Float Composite": 'ShaderNodeMath', "Scalar Utilities/Float Correct": 'ShaderNodeMapRange',
+    "2D Textures/Mountain": 'ShaderNodeTexNoise', "3D Textures/Stucco": 'ShaderNodeTexNoise',
 }
+# #123: Maya materials Blender builds from other nodes (operators/render_more.py EXTRA_KINDS)
+HS_EXTRA = {"Volumetric Materials/Volume Shader": 'VOLUME_SHADER', "Volumetric Materials/Volume Fog": 'VOLUME_FOG',
+            "Volumetric Materials/Light Fog": 'LIGHT_FOG', "Volumetric Materials/Env Fog": 'ENV_FOG',
+            "Materials/Hair Physical Shader": 'HAIR_PHYSICAL', "Materials/Hair Tube Shader": 'HAIR_TUBE',
+            "Materials/Usd Preview Surface": 'USD_PREVIEW', "Materials/Shading Map": 'SHADING_MAP'}
 
 
 def _hs_nodes():
@@ -516,6 +528,7 @@ MAP.update({
     f"{HS}/View/Reverse Order": _prop("window_manager.allset_hs_reverse"),
     **{f"{HS}/Create/Materials/{label}": ("allset.hs_create", {"kind": kind}) for label, kind in _HS_MATERIALS.items()},
     **{f"{HS}/Create/Lights/{label}": ("allset.create", {"kind": kind}) for label, kind in _HS_LIGHTS.items()},
+    **{f"{HS}/Create/{label}": ("allset.hs_create_extra", {"kind": kind}) for label, kind in HS_EXTRA.items()},
     f"{HS}/Create/Camera": ("allset.create", {"kind": 'CAMERA'}),
     f"{HS}/Create/Rendering/Render Layer": "scene.view_layer_add",
     f"{HS}/Create/Create Render Node...": ("wm.call_menu", {"name": "NODE_MT_add"}),

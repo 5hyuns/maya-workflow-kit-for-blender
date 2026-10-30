@@ -148,6 +148,8 @@ def setup_particles(settings, scene):
     settings.display_method = 'DOT'                      # Maya nParticle "Points"
     settings.display_size = PARTICLE_DISPLAY * k         # the viewport draws dots this size (0.1 m = 10 units in cm)
     settings.render_type = 'HALO'
+    from . import fx_more                                # nParticles > Create Options style
+    fx_more.apply_style(settings, fx_more.style())
 
 
 def _new_particles(ob, scene, name):
