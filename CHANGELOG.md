@@ -63,6 +63,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   other items are greyed with a note on the closest Blender feature.
 
 ### Fixed
+- **Bevel, more cases like Maya** (#213): a lone rim edge of an n-gon cap with many sides gets the narrower
+  width Maya gives it; a lone edge next to a non-planar face bevels with one width along the whole edge; border
+  edges in the selection are left as they are, so a loop that runs along a mesh border bevels only its inner
+  edges; vertex numbers stay in Maya's order after Merge Vertices joins new vertices to old ones; and faces come
+  in Maya's order at the ends of open chains and lone edges too. Still different: the corner points where a
+  bevelled spoke of a flat cap meets bevelled rim edges, and the corners of chains on meshes whose faces don't
+  meet at right angles.
 - **Undo while the Joint Tool runs** (#256): z / Ctrl+Z take back the last joint placed and the tool keeps
   running (undoing the first joint removes the new skeleton); Shift+Z / Ctrl+Y place it again. Before, Ctrl+Z
   undid the whole skeleton and the tool stopped with an error.
