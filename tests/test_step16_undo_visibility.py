@@ -128,3 +128,28 @@ def test_show_selected_uses_kept():
     _select(c)
     _vis('SHOW_SELECTED')
     assert not a.hide_viewport and not b.hide_viewport
+
+
+def test_outliner_visibility_keys():
+    # step 293 (#223): the Maya visibility keys work with the mouse over the Outliner
+    want = {(False, False, False): "TOGGLE", (False, True, False): "HIDE",
+            (False, False, True): "HIDE_UNSELECTED", (True, False, False): "SHOW_SELECTED",
+            (True, True, False): "SHOW_LAST"}
+    for (shift, ctrl, alt), action in want.items():
+        got = _kmis("Outliner", "H", shift=shift, ctrl=ctrl, alt=alt)
+        assert [(k.idname, k.properties.action) for k in got] == [("allset.visibility", action)], \
+            (shift, ctrl, alt, [k.idname for k in got])
+
+
+def test_group_hide_show_with_children():
+    # #223: Ctrl+H on a group in the Outliner hides its children too (dag.sync);
+    # Shift+H with the hidden row active shows the group and its children again
+    grp, child, other = _scene(("group1", "pCube1", "pCube2"))
+    child.parent = grp
+    bpy.context.view_layer.update()
+    _select(grp)
+    _vis('HIDE')
+    assert grp.hide_viewport and child.hide_get() and not other.hide_get()
+    bpy.context.view_layer.objects.active = grp      # the hidden row clicked in the Outliner
+    _vis('SHOW_SELECTED')
+    assert not grp.hide_viewport and not child.hide_get()

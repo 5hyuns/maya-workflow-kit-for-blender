@@ -229,6 +229,18 @@ RMB_CURVE = MarkingMenu(
     options=("Select Similar",))
 
 
+# Lattice (step 294, #227): Maya's RMB marking menu over a lattice has Lattice Point at W; the
+# list is the same object list as a mesh / curve.
+RMB_LATTICE = MarkingMenu(
+    "RMB_LATTICE", "Lattice", "maya",
+    radial={
+        "W": ("Lattice Point", _comp('LATTICE')),
+        "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
+    },
+    items=_object_items(),
+    options=("Select Similar",))
+
+
 def with_object_name(menu, name):
     """A copy of ``menu`` whose ``OBJECT_TITLE`` row shows ``name`` (Maya: "pCube1...")."""
     items = [(f"{name}...", e[1]) if e != DIVIDER and e[0] == OBJECT_TITLE else e for e in menu.items]
@@ -954,7 +966,7 @@ SHIFT_UV_SHELL = MarkingMenu(
     },
     items=list(_UV_TAIL))
 
-MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
+MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,

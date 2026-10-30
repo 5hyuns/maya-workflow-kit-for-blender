@@ -1108,7 +1108,7 @@ def draw_torn_menu(layout, context):
     col.emboss = 'PULLDOWN_MENU'
     _drawing_torn[0] = True
     try:
-        cls.draw(_Holder(col), context)
+        cls.draw(_Holder(_LeftItems(col)), context)
     finally:
         _drawing_torn[0] = False
 
@@ -1116,6 +1116,34 @@ def draw_torn_menu(layout, context):
 class _Holder:
     def __init__(self, layout):
         self.layout = layout
+
+
+# Maya's torn-off menu reads like the menu, every item's text from the left edge (step 293). Outside a menu Blender
+# centres an operator button's text (plain, press-and-hold for the option box, radio choice; sub-menu rows, labels
+# and check boxes stay left), and ``column.alignment`` doesn't change that: a row aligned LEFT around the button
+# sizes it to its text, which then starts at the left. The hotkey / option box column (``menu_sets.item_texts``) is
+# in the text, so it still lines up; the rows keep their height (``menu_rows``).
+_CENTRED = ("operator", "operator_menu_hold", "prop_enum")
+
+
+class _LeftItems:
+    """The torn-off menu's column: each centred button in its own left-aligned row, the rest as drawn."""
+
+    def __init__(self, col):
+        object.__setattr__(self, "_col", col)
+
+    def __getattr__(self, name):
+        if name not in _CENTRED:
+            return getattr(self._col, name)
+
+        def left(*args, **kwargs):
+            row = self._col.row(align=True)
+            row.alignment = 'LEFT'
+            return getattr(row, name)(*args, **kwargs)
+        return left
+
+    def __setattr__(self, name, value):
+        setattr(self._col, name, value)
 
 
 def _close_stale_menus():

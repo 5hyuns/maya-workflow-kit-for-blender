@@ -16,7 +16,7 @@ taphold = import_module(kit.MODULE + ".operators.taphold")
 maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
 # Menus resolved by hand (Maya builds their radials at run time).
-HAND_RESOLVED = {"RMB_MESH", "RMB_CURVE", "RMB_EMPTY"}
+HAND_RESOLVED = {"RMB_MESH", "RMB_CURVE", "RMB_LATTICE", "RMB_EMPTY"}
 LABEL_ALIASES = {"To Edges": "<$toEdges>", "To Faces": "<$toFaces>"}
 
 
@@ -74,7 +74,7 @@ def _fresh():
 # --- definitions ------------------------------------------------------------------
 
 def test_definitions_well_formed():
-    assert len(mm.MENUS) == 26, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10) + 3 UV Editor (step 66) + pivot edit (step 94)
+    assert len(mm.MENUS) == 27, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10) + 3 UV Editor (step 66) + pivot edit (step 94) + lattice (step 294)
     # + Shift+S keyframe / tangent (step 70) + Shift+Q / Alt+Q (step 78)
     for name, menu in mm.MENUS.items():
         for path, label, action in mm.walk(menu, name):
@@ -162,6 +162,21 @@ def test_dispatch_by_context():
         assert R("RMB", bpy.context) == ("menu", "VIEW3D_MT_object_context_menu")
         bpy.ops.curve.primitive_bezier_curve_add()
         assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_CURVE"))
+
+
+def test_lattice_dispatch_and_component():
+    # step 294 (#227): a lattice gets the Maya RMB menu in object and edit mode, and
+    # Lattice Point enters lattice edit mode
+    _fresh()
+    R = marking.resolve
+    with _override():
+        bpy.ops.object.add(type='LATTICE')
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_LATTICE"))
+        bpy.ops.allset.mm_component(type='LATTICE')
+        assert bpy.context.mode == 'EDIT_LATTICE'
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_LATTICE"))
+        bpy.ops.allset.mm_component(type='NONE')
+        bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def test_tool_options_dispatch():

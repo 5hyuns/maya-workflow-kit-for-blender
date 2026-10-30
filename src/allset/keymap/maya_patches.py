@@ -506,6 +506,13 @@ def patch_undo_visibility(kd):
     kd.remove("Object Mode", "object.hide_view_clear", type="H", alt=True)
     for key, mods, action in VISIBILITY_KEYS:
         _add(kd, "Object Mode", "allset.visibility", make_event(key, **mods), {"action": action})
+    # step 293 (#223): the same keys over the Outliner. IC's Ctrl+H there is outliner.hide, which hides the
+    # object without its children, and Shift+H is unbound; allset.visibility hides the hierarchy (dag.sync)
+    # and Shift+H shows the hidden rows selected / active in the tree.
+    kd.remove("Outliner", "outliner.hide", type="H", ctrl=True)
+    kd.remove("Outliner", "outliner.unhide_all", type="H", alt=True)
+    for key, mods, action in VISIBILITY_KEYS:
+        _add(kd, "Outliner", "allset.visibility", make_event(key, **mods), {"action": action})
     # Mesh components: hidden components can't be selected in Blender, so the "show"
     # keys reveal everything (and select it). IC Shift+H / Alt+H = hide unselected / reveal.
     kd.remove("Mesh", "mesh.hide", type="H", shift=True)
