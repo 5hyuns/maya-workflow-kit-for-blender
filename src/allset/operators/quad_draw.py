@@ -32,6 +32,7 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
 from . import mesh_tools, multi_cut, poly_draw, preselect, quad_draw_symmetry
+from .. import results
 
 TOOL = "allset.quad_draw_tool"
 DOT_LAYER = "allset_dot"   # int vertex layer: 1 = a Quad Draw dot (a loose vertex until a face uses it)
@@ -1777,7 +1778,7 @@ class ALLSET_OT_quad_draw_pick_seam(bpy.types.Operator):
                         self.report({'WARNING'},str(ex));return {'RUNNING_MODAL'}
                     from . import symmetry
                     sym=symmetry.state(ctx.scene);sym.on=True;sym.about='TOPOLOGY';sym.last='TOPOLOGY';symmetry.apply(sym,[ob])
-                    _geometry_reset(None);self.report({'INFO'},'Reference seam bound: '+reference.name)
+                    _geometry_reset(None);results.result(self, 'Reference seam bound: '+reference.name)
                     return self._end(ctx,{'FINISHED'})
                 return {'RUNNING_MODAL'}
             comp=component_at(ctx,region,ctx.region_data,mouse,ob,edges_only=True)
