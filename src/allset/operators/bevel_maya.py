@@ -15,10 +15,12 @@
 - Numbering (step 257, #149): kept vertices first in their old
   order, then the new vertices of each bevelled vertex, the bevelled vertices taken in the order the selected edges
   reach them (ascending Maya edge id, ends by ascending vertex id) and each one's new vertices in Maya's vertex ->
-  edge order (``vertex_edges``). Faces, when every bevelled vertex ends two or more bevelled edges: old faces off the
-  bevelled edges, the bevel faces, old faces along bevelled edges, corner faces. Maya's edge ids = the mesh's edge
-  index (``maya_edge_ids``) unless the caller passes them.
-  Not renumbered (Maya's order there is unknown): Segments > 1, border vertices, merged results.
+  edge order (``vertex_edges``; at a vertex that ends one bevelled edge, one new vertex on each of its other edges).
+  Faces, when every bevelled vertex ends two or more bevelled edges: old faces at no bevelled vertex, the bevel
+  faces, old faces at a bevelled vertex, corner faces. Maya's edge ids = the mesh's edge index (``maya_edge_ids``)
+  unless the caller passes them.
+  Not renumbered (Maya's order there is unknown): Segments > 1, two or more bevelled edges at a border vertex,
+  merged results; faces of open chains and lone edges.
 """
 
 import math
@@ -31,6 +33,7 @@ MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (default)
 ZERO = 1e-6           # zero-length slide edges (a zero-length extrusion) don't limit the fraction
 FIT = 0.9999          # bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
 CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x 2 box)
+NEAR_LINE = 0.9       # |cos| of a slide edge's angle to the bevelled edge above this: it runs near that line
 
 
 def terminal_moves(edges):
@@ -81,34 +84,155 @@ def terminal_moves(edges):
     return moves, limits
 
 
+def end_moves(edges):
+    """Ends of an open chain (or a lone edge) between two faces where a slide edge runs near the bevelled edge's line
+    (|cos| of their angle above 0.9: an n-gon cap's rim neighbour, a cone's rim). Each of the two slide edges s gets a
+    direction S: the unit vector along s when s runs near the line, else that vector over sin(its angle to e) (the
+    point a plain bevel uses, one width from e). Both new vertices go to v + W x c x S with one c for the vertex: the
+    chord between the two faces' unit offsets over the distance between the two S seen along e, so the new edge
+    across the end is as long as a plain bevel's there. Returns ([(v position, unit(s), k = distance along s / W,
+    s's other vertex)], {s: [lengths / k]}, {vertices handled})."""
+    sel = set(edges)
+    moves, limits, done = [], {}, set()
+    for v in {v for e in edges for v in e.verts}:
+        mine = [e for e in v.link_edges if e in sel]
+        if len(mine) != 1 or len(mine[0].link_faces) != 2:
+            continue
+        e = mine[0]
+        d = e.other_vert(v).co - v.co
+        if d.length <= ZERO:
+            continue
+        d.normalize()
+        slides = [s for f in e.link_faces for s in v.link_edges if s is not e and f in s.link_faces]
+        if len(slides) != 2 or slides[0] is slides[1]:
+            continue
+        units = [s.other_vert(v).co - v.co for s in slides]
+        if any(u.length <= ZERO for u in units):
+            continue
+        units = [u.normalized() for u in units]
+        across = [u - d * u.dot(d) for u in units]
+        sins = [a.length for a in across]
+        lines = [abs(u.dot(d)) > NEAR_LINE for u in units]
+        if min(sins) <= ZERO or not any(lines):
+            continue
+        dirs = [u if line else u / sin for u, sin, line in zip(units, sins, lines)]
+        gap = ((dirs[0] - d * dirs[0].dot(d)) - (dirs[1] - d * dirs[1].dot(d))).length
+        chord = (across[0] / sins[0] - across[1] / sins[1]).length
+        if gap <= ZERO or chord <= ZERO:
+            continue
+        done.add(v)
+        for s, u, x in zip(slides, units, dirs):
+            k = chord / gap * x.length
+            moves.append((v.co.copy(), u, k, s.other_vert(v)))
+            limits.setdefault(s, []).append(s.calc_length() / k)
+    return moves, limits, done
+
+
+def _corner(v, f, sel):
+    """Two bevelled edges of face ``f`` meet at ``v``: their new corner moves into ``f`` along the bisector, W / sin(half
+    the angle) from v. Returns (unit bisector, half the angle, limit): the limit is the distance to where the bisector
+    leaves the face x sin(half the angle), halved when it leaves through a vertex whose own corner moves back along
+    the same line (a whole n-gon rim). None when the corner is degenerate."""
+    a, b = [e for e in v.link_edges if e in sel and f in e.link_faces][:2]
+    ua = (a.other_vert(v).co - v.co)
+    ub = (b.other_vert(v).co - v.co)
+    if ua.length <= ZERO or ub.length <= ZERO:
+        return None
+    ua.normalize()
+    ub.normalize()
+    half = math.acos(max(-1.0, min(1.0, ua.dot(ub)))) / 2.0
+    ray = ua + ub
+    if ray.length <= ZERO or math.sin(half) <= ZERO:
+        return None
+    ray.normalize()
+    side = ua.cross(ub).cross(ray)      # the ray's line in the face plane: points p with (p - v) . side = 0
+    if side.length <= ZERO:
+        return None
+    best = None
+    for loop in f.loops:
+        p, q = loop.vert, loop.link_loop_next.vert
+        if v in (p, q):
+            continue
+        sp, sq = (p.co - v.co).dot(side), (q.co - v.co).dot(side)
+        if (sp > 0) == (sq > 0) and abs(sp) > ZERO and abs(sq) > ZERO:
+            continue
+        x = sp / (sp - sq) if abs(sp - sq) > ZERO else 0.0
+        hit = p.co.lerp(q.co, x)
+        t = (hit - v.co).dot(ray)
+        if t > ZERO and (best is None or t < best[0]):
+            end = p if x < 1e-4 else q if x > 1 - 1e-4 else None
+            best = (t, end)
+    if best is None:
+        return None
+    t, end = best
+    shared = 2 if end is not None and sum(1 for e in end.link_edges if e in sel and f in e.link_faces) >= 2 else 1
+    return ray, half, t * math.sin(half) / shared
+
+
+def corners_of(edges):
+    """{(vertex, face)} where two bevelled edges of the face meet."""
+    sel = set(edges)
+    out = set()
+    for e in edges:
+        for v in e.verts:
+            for s in v.link_edges:
+                if s is not e and s in sel:
+                    out.update((v, f) for f in set(e.link_faces).intersection(s.link_faces))
+    return out
+
+
+def corner_moves(edges):
+    """Corners of a face where two bevelled edges meet almost straight (|cos| of the angle above 0.9: an n-gon cap with
+    many sides): Blender leaves the new corner on the old vertex, Maya moves it W / sin(half the angle) along the
+    bisector like any other corner. [(v position, unit bisector, k = 1 / sin(half the angle))]."""
+    sel = set(edges)
+    out = []
+    for v, f in corners_of(edges):
+        got = _corner(v, f, sel)
+        if got is not None and math.cos(2.0 * got[1]) < -NEAR_LINE:
+            out.append((v.co.copy(), got[0], 1.0 / math.sin(got[1])))
+    return out
+
+
 def slide_limit(edges):
     """Maya's fraction base (a perpendicular width): the smallest of
     (a) slide edges — an edge at an end of a bevelled edge that lies in one of its faces: length x sin(angle to the
-        bevelled edge) / (number of its ends a bevel slides along);
+        bevelled edge) / (number of its ends a bevel slides along); at a chain end where a slide edge runs near the
+        bevelled edge's line (``end_moves``) length / k there instead;
     (b) terminal edges at the end of an open chain (``terminal_moves``): length x s_phi / sin(alpha / 2) / (number of
-        its ends that are such chain ends).
+        its ends that are such chain ends);
+    (c) corners where two bevelled edges of one face meet (``_corner``): the new corner slides along the bisector.
 
-    Another beveled edge is a slide only where it shares a face with this one (the cube's top loop: the corner slides
-    inside the top face along it). Step 239 (#124): a cylinder cap's border ring
+    Step 239 (#124): a cylinder cap's border ring
     has no face holding two ring edges, so Maya slides along the side / cap fan edges (length 1) — and the width is
     perpendicular, so the fan edges at 81 degrees to the ring give 0.49995 x sin 81 = 0.49379 (the side ring lands at
-    y 1.5062, the cap ring at radius 0.5). Step 283: an edge in no face of the bevelled edge is no slide edge; at a
-    chain end it is a terminal edge (part of a cap rim: the unbevelled rim neighbour)."""
+    y 1.5062, the cap ring at radius 0.5); an n-gon cap gives the same through (c). Step 283: an edge in no face of the
+    bevelled edge is no slide edge; at a chain end it is a terminal edge (part of a cap rim: the unbevelled rim
+    neighbour)."""
     sel = set(edges)
     used = {}
+    _moves, near, near_ends = end_moves(edges)
     for e in edges:
         faces = set(e.link_faces)
         d = (e.verts[1].co - e.verts[0].co).normalized()
         for v in e.verts:
+            if v in near_ends:
+                continue
             for s in v.link_edges:
-                if s is e or not faces.intersection(s.link_faces):
+                if s is e or s in sel or not faces.intersection(s.link_faces):
                     continue
                 t = (s.other_vert(v).co - v.co)
                 sin = t.normalized().cross(d).length if t.length > ZERO else 0.0
                 ent = used.setdefault(s, [set(), 1.0])
                 ent[0].add(v)
                 ent[1] = min(ent[1], sin)
-    caps = [s.calc_length() * sin / len(ends) for s, (ends, sin) in used.items() if s.calc_length() > ZERO]
+    caps = [c[2] for c in (_corner(v, f, sel) for v, f in corners_of(edges)) if c is not None and c[2] > ZERO]
+    for s in set(used) | set(near):
+        if s.calc_length() <= ZERO:
+            continue
+        ends, sin = used.get(s, (set(), 1.0))
+        lengths = near.get(s, []) + ([s.calc_length() * sin] if ends else [])
+        caps.append(min(lengths) / (len(ends) + len(near.get(s, []))))
     _moves, ends = terminal_moves(edges)
     caps += [min(ls) / len(ls) for ls in ends.values()]
     if caps:
@@ -175,21 +299,24 @@ def _face_between(v, e_out, e_in):
 
 def _slots(v, sel, ids):
     """The new vertices of bevelled vertex ``v`` in Maya's order, each as the set of old face indices it lies in;
-    None where the order is unknown (border vertices, one bevelled edge at a two-edge vertex)."""
+    None where the order is unknown (two or more bevelled edges at a border vertex, one bevelled edge at a two-edge
+    vertex)."""
     E = vertex_edges(v, ids)
-    if E is None or any(e.is_boundary or e.is_wire for e in E):
+    if E is None or any(e.is_wire for e in E):
         return None
     n = len(E)
+    marks = [k for k in range(n) if E[k] in sel]
+    if len(marks) == 1:
+        if n < 3 or E[marks[0]].is_boundary:
+            return None
+        # one bevelled edge: a new vertex on every other edge at v (the two next to it, and at a chain end with more
+        # edges the terminal ones too; on a border vertex its border edges), in E(v)'s list order
+        return [frozenset(f.index for f in E[j].link_faces) for j in range(n) if j != marks[0]]
+    if any(e.is_boundary for e in E):
+        return None
     between = [_face_between(v, E[k], E[(k + 1) % n]) for k in range(n)]
     if None in between:
         return None
-    marks = [k for k in range(n) if E[k] in sel]
-    if len(marks) == 1:
-        if n < 3:
-            return None
-        k = marks[0]
-        # one bevelled edge: a new vertex on each edge next to it, in E(v)'s list order
-        return [frozenset((between[j - 1].index, between[j].index)) for j in sorted({(k - 1) % n, (k + 1) % n})]
     out = []
     for i, k in enumerate(marks):      # one new vertex per wedge, the wedge after each bevelled edge in E(v)'s order
         span = (marks[(i + 1) % len(marks)] - k) % n or n
@@ -220,7 +347,8 @@ def _plan(bm, edges, ids):
                 edge_faces.append(frozenset(x.index for x in e.verts))
         if sum(1 for e in v.link_edges if e in sel) >= 3:
             corners.append(v.index)
-    along = sorted({f.index for e in edges for f in e.link_faces})
+    # old faces at a bevelled vertex (along a bevelled edge, or only touching one: a plane's faces round a loop)
+    along = sorted({f.index for v in order for f in v.link_faces})
     # the face order below is Maya's when every bevelled vertex ends two or more bevelled edges (closed loops, all
     # edges); with a chain end or a lone edge Maya orders the faces another way, not yet
     # known, so the faces then keep Blender's order
@@ -230,11 +358,12 @@ def _plan(bm, edges, ids):
             "co": {v.index: v.co.copy() for v in order}}
 
 
-def _renumber(bm, plan, vlay, flay, made, new_verts):
+def _renumber(bm, plan, old_verts, flay, made, new_verts):
     """Sort the bevelled mesh into Maya's order. Vertices only when every one is matched; faces only when every face
-    is (else they keep Blender's order). A new vertex is matched by the old faces it lies in, and among bevelled
-    vertices with a wedge of the same faces by the nearest old position (bevel copies a neighbour's custom data onto
-    new vertices, so they carry no reliable source index)."""
+    is (else they keep Blender's order). A kept vertex is the same BMVert as before (``old_verts``: BMVert -> old
+    index); a new vertex is matched by the old faces it lies in, and among bevelled vertices with a wedge of the same
+    faces by the nearest old position (bevel copies a neighbour's custom data onto new vertices, and sometimes onto
+    vertices it doesn't touch, so vertex custom data carries no reliable source index)."""
     kept = {i: n for n, i in enumerate(plan["kept"])}
     by_key = {}
     for n, (v, key) in enumerate(plan["slots"]):
@@ -242,8 +371,8 @@ def _renumber(bm, plan, vlay, flay, made, new_verts):
     rank, owner = {}, {}
     for v in bm.verts:
         if v not in new_verts:
-            r = kept.get(v[vlay] - 1)
-            src = v[vlay] - 1
+            src = old_verts.get(v)
+            r = kept.get(src)
         else:
             cands = by_key.get(frozenset(f[flay] - 1 for f in v.link_faces if f not in made), ())
             if not cands:
@@ -295,34 +424,52 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     plan = _plan(bm, edges, ids) if ids is not None and int(segments) == 1 else None
     bm.edges.index_update()
     picked = [e.index for e in edges]
-    # source indices ride along as custom data (bevel copies them onto what it makes); added before elements are
+    # face source indices ride along as custom data (bevel copies them onto what it makes); added before elements are
     # collected again, since adding a layer can invalidate element references (step 64)
-    vlay = bm.verts.layers.int.new(".allset_bevel_src")
     tlay = bm.verts.layers.int.new(".allset_bevel_made")
     flay = bm.faces.layers.int.new(".allset_bevel_src")
-    for v in bm.verts:
-        v[vlay] = v.index + 1
+    bm.verts.index_update()
+    old_verts = {v: v.index for v in bm.verts}
     for f in bm.faces:
         f[flay] = f.index + 1
     bm.edges.ensure_lookup_table()
     edges = [bm.edges[i] for i in picked]
     verts = {v for e in edges for v in e.verts}
     # Offset As Fraction only: with an absolute Offset Maya leaves that vertex at W along the edge, as Blender does
-    moves = terminal_moves(edges)[0] if int(segments) == 1 and offset_as_fraction else []
+    moves = [m + (None,) for m in terminal_moves(edges)[0]] if int(segments) == 1 and offset_as_fraction else []
+    # an end whose slide edge runs near the bevelled edge's line: Maya's offsets there, in both modes
+    moves += end_moves(edges)[0] if int(segments) == 1 else []
+    corners = corner_moves(edges) if int(segments) == 1 else []
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=max(1, int(segments)), profile=profile(depth), affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
     made = [v for v in ret["verts"] if v.is_valid]
-    # step 283: Blender puts a chain end's new vertex on a terminal edge at W along it; Maya (Fraction) at W x k
-    for origin, unit_dir, k in moves:
+    # step 283: Blender puts a chain end's new vertex on a terminal edge at W along it; Maya (Fraction) at W x k. The
+    # new vertex is the one on that edge's line next to its far vertex (Blender doesn't put it on the edge when the
+    # edge runs almost along the bevelled one), else the nearest made vertex on the line
+    made_set = set(made)
+    for origin, unit_dir, k, far in moves:
         best = None
-        for v in made:
-            off = v.co - origin
-            s = off.dot(unit_dir)
-            if s > 1e-7 and (off - unit_dir * s).length < 1e-5 and (best is None or s < best[0]):
-                best = (s, v)
+        if far is not None and far.is_valid and far not in verts:
+            for x in (e.other_vert(far) for e in far.link_edges):
+                if x in made_set:
+                    off = x.co - origin
+                    gap = (off - unit_dir * off.dot(unit_dir)).length
+                    if best is None or gap < best[0]:
+                        best = (gap, x)
+        if best is None:
+            for v in made:
+                off = v.co - origin
+                s = off.dot(unit_dir)
+                if s > 1e-7 and (off - unit_dir * s).length < 1e-5 and (best is None or s < best[0]):
+                    best = (s, v)
         if best is not None:
             best[1].co = origin + unit_dir * (w * k)
+    for origin, ray, k in corners:
+        target = origin + ray * (w * k)
+        best = min(made, key=lambda x: (x.co - target).length_squared, default=None)
+        if best is not None and (best.co - origin).length < 1e-6:
+            best.co = target
     near = set(made)
     for v in made:
         near.update(e.other_vert(v) for e in v.link_edges)
@@ -337,10 +484,9 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
         if v.is_valid:
             v[tlay] = 1
     if plan is not None and not pairs:      # Maya's numbering after Merge Vertices merged something is unknown
-        _renumber(bm, plan, vlay, flay, {f for f in ret["faces"] if f.is_valid}, {v for v in made if v.is_valid})
+        _renumber(bm, plan, old_verts, flay, {f for f in ret["faces"] if f.is_valid}, {v for v in made if v.is_valid})
     bm.verts.index_update()
     tracked = [v.index for v in bm.verts if v[tlay]]
-    bm.verts.layers.int.remove(vlay)
     bm.verts.layers.int.remove(tlay)
     bm.faces.layers.int.remove(flay)
     bm.verts.ensure_lookup_table()
