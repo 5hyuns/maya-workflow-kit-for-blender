@@ -537,12 +537,62 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
             mesh[rig_maya.DROPOFF_PROP] = {vg.name: float(dropoff) for vg in influences(mesh)}
         from . import skin_method
         skin_method.set_method(mesh, skinning)       # step 250: Classic linear / Dual quaternion / Weight blended
+    context.view_layer.update()
+    for mesh in meshes:
+        unpose_mesh(arm, mesh)
     from . import skin_basics
     skin_basics.store_bind_pose(arm)
     if colorize_skeleton:
         colorize(arm)
     arm.select_set(True)
     return meshes
+
+
+def unpose_mesh(arm, mesh):
+    """Maya binds in the current pose: a chain posed by hand or bent by an IK handle / pole vector must not move the
+    mesh. Blender deforms from the rest pose, so each vertex gets the base position that the current pose deforms back
+    to where it is (the inverse of its weighted bone matrix, Blender's linear blend). Returns how many vertices moved
+    (0 when the skeleton is at rest)."""
+    from mathutils import Matrix
+    bones = {}
+    for pb in arm.pose.bones:
+        if not pb.bone.use_deform:
+            continue
+        m = pb.matrix @ pb.bone.matrix_local.inverted()
+        bones[pb.name] = m
+    if not bones or all(_near_identity(m) for m in bones.values()):
+        return 0
+    me = mesh.data
+    if me.shape_keys is not None or not me.vertices:
+        return 0
+    to_arm = arm.matrix_world.inverted() @ mesh.matrix_world
+    from_arm = to_arm.inverted()
+    names = {vg.index: vg.name for vg in mesh.vertex_groups}
+    moved = 0
+    for v in me.vertices:
+        total, blend = 0.0, Matrix(((0.0,) * 4,) * 4)
+        for g in v.groups:
+            m = bones.get(names.get(g.group))
+            if m is None or g.weight <= 0.0:
+                continue
+            blend += m * g.weight
+            total += g.weight
+        if total <= 0.0:
+            continue
+        blend = from_arm @ (blend * (1.0 / total)) @ to_arm
+        try:
+            v.co = blend.inverted() @ v.co
+        except ValueError:
+            continue
+        moved += 1
+    me.update()
+    return moved
+
+
+def _near_identity(m, eps=1e-6):
+    from mathutils import Matrix
+    ident = Matrix.Identity(4)
+    return all(abs(m[i][j] - ident[i][j]) < eps for i in range(4) for j in range(4))
 
 
 QUESTION = {"mesh": None}                 # the last mesh the second-skin question was asked for (tests)

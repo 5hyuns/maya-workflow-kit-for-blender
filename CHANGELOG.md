@@ -82,6 +82,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Target Weld skips hidden components in shaded mode** (#233, thanks @Troyzerk for the report and the fix idea):
   the press and the drop only pick vertices / edges you can see, like the pre-selection highlight; with X-ray or
   wireframe they pick through the mesh again.
+- **Bind Skin keeps the mesh where it is** (#230): binding to joints that are posed, or bent by an IK handle / pole
+  vector, no longer moves the mesh — like Maya, the current pose is the bind pose.
 - **View > Select Camera** in a view that doesn't look through a camera picks that panel's own Maya camera — persp,
   top, front or side — in scenes made with File > New Scene, instead of doing nothing (#229).
 
