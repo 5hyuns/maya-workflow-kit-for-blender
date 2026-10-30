@@ -6,9 +6,10 @@ While the tool runs one POST_PIXEL handler draws, in every 3D View but the Tool 
 - each joint of this run (and the joint it branches from) as a joint circle, the bones between them as wedges from
   the parent's circle to the child (like Maya's joints); the current joint — the one the next click attaches to —
   in the lead green, the others and their bones in Maya's unselected joint colour (dark violet);
-- in the view under the pointer only: a ghost joint where a click would place the next joint and a dimmer bone from
-  the current joint to it; before the first click, pointing at an existing joint (a click branches from it)
-  highlights that joint instead.
+- like Maya, nothing follows the pointer while no button is held: the next joint appears on the press. Before the
+  first click, pointing at an existing joint (a click branches from it) highlights that joint.
+- joints are drawn at world size like Maya's (half the joint Radius x Joint Size). In the Maya layout's views the
+  kit's Maya joint drawing (``ui/maya_joints.py``) shows the skeleton instead, with the same colours.
 
 The handler keeps no Blender data: the operator writes ``STATE`` (object name, joint names, region pointer, world
 point) and the draw looks the skeleton up by name.
@@ -22,15 +23,10 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-from . import units
 
 LEAD = (0x43 / 255, 1.0, 0xa3 / 255)       # Maya's lead (last selected) green
-JOINT = (1.0, 1.0, 1.0)                     # the ghost joint / bone (dimmed)
 UNSELECTED = (0x26 / 255, 0.0, 0x43 / 255)  # Maya's unselected joint colour: the joints placed before the current one
-GHOST_ALPHA = 0.55
 LINE_PX = 1.5
-RADIUS_MIN_PX = 5.0
-RADIUS_MAX_PX = 20.0
 CIRCLE_SEGMENTS = 24
 
 STATE = {
@@ -91,16 +87,21 @@ def _parents(ob):
     return {b.name: (b.parent.name if b.parent else None) for b in ob.data.bones}
 
 
-def _radius_px(region, rv3d, world, scale):
-    """Screen radius of a joint circle at ``world``: one Maya unit (x Joint Size), kept readable at any zoom."""
-    ctx = bpy.context
-    size = float(getattr(ctx.scene, "allset_joint_size", 1.0) or 1.0)
-    r = units.maya_unit(ctx.scene) * size
+def _radius_px(region, rv3d, world, r):
+    """Screen radius of a joint circle of world radius ``r`` at ``world`` (Maya: pure world size)."""
     right = rv3d.view_rotation @ Vector((1.0, 0.0, 0.0))
     p = view3d_utils.location_3d_to_region_2d(region, rv3d, world)
     q = view3d_utils.location_3d_to_region_2d(region, rv3d, world + right * r)
-    px = (q - p).length if p is not None and q is not None else RADIUS_MIN_PX * scale
-    return max(RADIUS_MIN_PX * scale, min(RADIUS_MAX_PX * scale, px))
+    return (q - p).length if p is not None and q is not None else 0.0
+
+
+def _world_radius(ob, name):
+    from ..ui import maya_joints
+    bones = ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones
+    bone = bones.get(name)
+    if bone is None:
+        return 0.0
+    return maya_joints.drawn_radius(bone, bpy.context.scene, max(ob.matrix_world.to_scale()))
 
 
 def _circle(c, r):
@@ -155,8 +156,8 @@ def _draw():
 
 
 def _draw_region(context):
-    from ..ui import toolbox
-    if toolbox.is_toolbox(context.space_data):
+    from ..ui import maya_joints, toolbox
+    if toolbox.is_toolbox(context.space_data) or maya_joints.is_maya_view(context.space_data, context.window.workspace):
         return
     region, rv3d = context.region, context.region_data
     if region is None or rv3d is None:
@@ -174,8 +175,8 @@ def _draw_region(context):
     for n in shown:
         p = to2d(heads[n])
         if p is not None:
-            spots[n] = (p, _radius_px(region, rv3d, heads[n], scale))
-    white, green, ghost = [], [], []
+            spots[n] = (p, _radius_px(region, rv3d, heads[n], _world_radius(ob, n)))
+    white, green = [], []
     for n, (p, r) in spots.items():
         (green if n == STATE["current"] else white).extend(_circle(p, r))
         par = parents.get(n)
@@ -190,24 +191,15 @@ def _draw_region(context):
             w = arm.matrix_world @ bone.head_local
             p = to2d(w)
             if p is not None:
-                r = _radius_px(region, rv3d, w, scale)
+                r = max(_radius_px(region, rv3d, w, _world_radius(arm, bone.name)), 3.0 * scale)
                 branch_ring = _circle(p, r) + _circle(p, r + 2.0 * scale)
-    elif here and STATE["point"] is not None:
-        p = to2d(Vector(STATE["point"]))
-        if p is not None:
-            r = _radius_px(region, rv3d, Vector(STATE["point"]), scale)
-            ghost.extend(_circle(p, r))
-            cur = spots.get(STATE["current"])
-            if cur is not None:
-                ghost.extend(_wedge(cur[0], cur[1], p))
-    if not (white or green or ghost or branch_ring):
+    if not (white or green or branch_ring):
         return
     shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
     gpu.state.depth_test_set('NONE')
     shader.uniform_float("viewportSize", (region.width, region.height))
     shader.uniform_float("lineWidth", LINE_PX * scale)
-    _lines(shader, ghost, JOINT, GHOST_ALPHA)
     _lines(shader, white, UNSELECTED)
     _lines(shader, green, LEAD)
     _lines(shader, branch_ring, LEAD)

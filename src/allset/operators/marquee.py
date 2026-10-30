@@ -102,6 +102,8 @@ def _watch():
 
 
 def restore_all():
+    from . import joint_marquee
+    joint_marquee.cancel_all()
     for entry in _active.values():
         _restore(entry)
     _active.clear()
@@ -117,6 +119,8 @@ class ALLSET_OT_select_through(bpy.types.Operator):
 
     def invoke(self, context, event):
         begin(context)
+        from . import joint_marquee
+        joint_marquee.begin(context)      # joints drawn by the kit: Maya's marquee rules once the drag ends
         return {'PASS_THROUGH'}
 
 

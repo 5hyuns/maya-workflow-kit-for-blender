@@ -68,6 +68,9 @@ def pick_joint(context, ob, mouse, radius):
     """``joint_selection.pick`` for pose / object mode with Custom Shapes: a bone that has one is hit on its drawn
     wire (projected evaluated shape segments), not on the octahedron Blender doesn't draw for it (step 226)."""
     from . import joint_selection
+    from ..ui import maya_joints
+    if maya_joints.is_maya_view(context.space_data, getattr(getattr(context, "window", None), "workspace", None)):
+        return maya_joints.pick(context, ob, mouse, radius)    # joints drawn like Maya's: a click hits the wire
     shaped = any(pb.custom_shape is not None for pb in ob.pose.bones)
     if ob.mode == 'EDIT' or not shaped or not control_shapes.shows_custom_shapes(ob):
         return joint_selection.pick(context, ob, mouse, radius)
@@ -188,11 +191,17 @@ def hits(context, region, rv3d, mouse):
     depsgraph = context.evaluated_depsgraph_get()
     targets = ik_targets(context.scene)
     persp = np.array(rv3d.perspective_matrix, dtype=np.float64)
+    from ..ui import maya_joints
+    maya_view = maya_joints.is_maya_view(space, getattr(getattr(context, "window", None), "workspace", None))
     out = []
     for ob in context.scene.objects:   # view_layer.objects can yield None after removals (step 67)
         kind = kind_of(ob, targets)
         pri = priority(kind)
         if pri <= DEFAULT or not _selectable(ob, space, view_layer):
+            continue
+        if kind == 'ARMATURE' and maya_view:
+            d = min(maya_joints.screen_distance(context, ob, mouse).values(), default=float("inf"))
+            out.append((ob.name, pri, d))
             continue
         a, b, reach = _segments(ob, kind, depsgraph)
         if len(a) == 0:
@@ -251,7 +260,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         # A click away from the skeleton releases the edit-mode lock.
         if context.mode == 'EDIT_ARMATURE':
             ob = context.active_object
-            name = joint_selection.pick(context, ob, mouse, radius)
+            name = pick_joint(context, ob, mouse, radius)
             if name is not None:
                 if joint_selection.joint_mode(ob) == 'EDIT':
                     # step 241 (#156): a joint of a skeleton shown in Edit mode is picked like a Maya joint (its

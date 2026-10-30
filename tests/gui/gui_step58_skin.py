@@ -105,8 +105,12 @@ def s_scene():
 @step
 def s_positions():
     k = C["k"]
-    # joint3's bone sticks out of the cylinder top: click it there (positions after the view refit)
-    C["joint_xy"] = screen_of(Vector((0, 0, 1.3 * k)))
+    # click joint3's drawn wire where its sphere pokes out of the cylinder top (an end joint draws no bone, like
+    # Maya; positions after the view refit)
+    mj = import_module(MODULE + ".ui.maya_joints")
+    j3 = mj.skeleton(arm(), bpy.context.scene)["joint3"]
+    top = max((j3.frame.col[i] * s for i in range(3) for s in (1, -1)), key=lambda v: v.z)
+    C["joint_xy"] = screen_of(j3.centre + top * j3.radius)
     C["cyl_xy"] = screen_of(Vector((0, -k, -0.5 * k)))       # the cylinder's front side
     ev('MOUSEMOVE', 'NOTHING', x=C["joint_xy"][0], y=C["joint_xy"][1])
 
