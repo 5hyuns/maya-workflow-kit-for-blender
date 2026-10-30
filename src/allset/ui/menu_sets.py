@@ -1015,12 +1015,13 @@ MENU_PAD_PX = 11
 
 
 def menu_width_units(text, context):
-    """``ui_units_x`` of a header pulldown showing ``text`` at Maya's spacing."""
+    """``ui_units_x`` of a header pulldown showing ``text`` at Maya's spacing. ``text`` is the English label; it is
+    measured as the interface shows it, so translated labels (Japanese, #249) are not cut off."""
     import blf
     prefs = context.preferences
     scale = prefs.system.ui_scale or 1.0
     blf.size(0, prefs.ui_styles[0].widget.points * scale)
-    w = blf.dimensions(0, text)[0]
+    w = blf.dimensions(0, bpy.app.translations.pgettext_iface(text))[0]
     return (w + MENU_PAD_PX * scale) / (20.0 * scale)
 
 
