@@ -148,7 +148,25 @@ def help_for_tool(idname):
     return TOOL_HELP.get(idname, "")
 
 
+# Window modal tools (not workspace tools) show their help while they run: {operator bl_idname: text}.
+MODAL_HELP = {}
+
+
+def modal_help(context):
+    window = getattr(context, "window", None)
+    if window is None or not MODAL_HELP:
+        return ""
+    for op in window.modal_operators:
+        text = MODAL_HELP.get(op.bl_idname)
+        if text:
+            return text
+    return ""
+
+
 def help_text(context):
+    text = modal_help(context)
+    if text:
+        return text
     try:
         tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
     except (AttributeError, TypeError):
