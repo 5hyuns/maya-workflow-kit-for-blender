@@ -173,6 +173,8 @@ def resolve(trigger, context, picked=None):
         return ("pie", idname("RMB_MESH"))
     if mode in {'EDIT_CURVE', 'EDIT_SURFACE'}:
         return ("pie", idname("RMB_CURVE"))
+    if mode == 'EDIT_LATTICE':
+        return ("pie", idname("RMB_LATTICE"))
     if mode == 'OBJECT':
         if ob is None:
             return ("pie", idname("RMB_EMPTY"))
@@ -180,6 +182,8 @@ def resolve(trigger, context, picked=None):
             return ("pie", idname("RMB_MESH"))
         if ob.type in {'CURVE', 'SURFACE'}:
             return ("pie", idname("RMB_CURVE"))
+        if ob.type == 'LATTICE':
+            return ("pie", idname("RMB_LATTICE"))  # step 294 (#227)
         return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type
     return None
 
@@ -229,6 +233,7 @@ class ALLSET_OT_marking_menu(bpy.types.Operator):
 
 COMPONENTS = (("VERT", "Vertex", ""), ("EDGE", "Edge", ""), ("FACE", "Face", ""),
               ("MULTI", "Multi", ""), ("CV", "Control Vertex", "Curve edit mode"),
+              ("LATTICE", "Lattice Point", "Lattice edit mode"),
               ("NONE", "Select", "Only select the object"))
 
 
@@ -262,6 +267,11 @@ class ALLSET_OT_mm_component(bpy.types.Operator):
             return {'CANCELLED'}
         if self.type == "CV":
             if ob.type in {'CURVE', 'SURFACE'} and context.mode == 'OBJECT':
+                bpy.ops.object.mode_set(mode='EDIT')
+            return {'FINISHED'}
+        if self.type == "LATTICE":
+            # step 294 (#227): Lattice Point on a lattice = its edit mode
+            if ob.type == 'LATTICE' and context.mode == 'OBJECT':
                 bpy.ops.object.mode_set(mode='EDIT')
             return {'FINISHED'}
         if ob.type != 'MESH':

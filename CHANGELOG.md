@@ -23,6 +23,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
   Ctrl+Shift+H, h and Alt+H in the Outliner run Maya's visibility commands like in the viewport, and a node hidden
   with Blender's own hide (or parented under one) hides everything below it.
+- **Torn-off menus read like the menu**: the items' text starts at the left edge instead of being centred, with
+  the hotkeys and option boxes still lined up on the right.
 
 ## [0.7.0] — 2026-10-29
 
