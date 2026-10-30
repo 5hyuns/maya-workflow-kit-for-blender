@@ -11,7 +11,7 @@ Blender's preferences, so a page row is one of:
                                              Recommended setup note and a button that opens that Preferences section
   ("missing", label, note)                   a Maya control with no kit / Blender counterpart (greyed + the reason)
 
-``MAYA_FACTORY`` = the Maya factory value of each scene row (Edit > Restore Default Settings).
+``MAYA_FACTORY`` = the default value of each scene row, like Maya (Edit > Restore Default Settings).
 """
 
 # (key, label, depth, page title, sections) — sections = [(section title, [rows])]; order = Maya's list.

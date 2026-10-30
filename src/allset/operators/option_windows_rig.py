@@ -156,7 +156,7 @@ def _run_aim(context, v):
     cons = owner.constraints
     if (tuple(v["aim_vector"]), tuple(v["up_vector"]), world_up, tuple(v["world_up_vector"])) != (
             rig_tools.AIM_VECTOR, rig_tools.UP_VECTOR, rig_tools.WORLD_UP, (0.0, 1.0, 0.0)):
-        # the operator made Maya's factory aim; redo it with the window's values on a fresh Track To
+        # the operator made the default aim (like Maya); redo it with the window's values on a fresh Track To
         target, sub, name = con.target, getattr(con, "subtarget", ""), con.name
         cons.remove(con)
         con = cons.new('TRACK_TO')
@@ -242,7 +242,7 @@ WINDOWS = [
           items=("Classic linear", "Dual quaternion", "Weight blended")),
         F("normalize", "Normalize weights:", "enum", "Interactive", items=("None", "Interactive", "Post")),
         F("max_influences", "Max influences:", "int", 5, lo=1, hi=30),
-        # Maya 2026 factory: Maintain max influences on, Dropoff rate 4.0
+        # defaults like Maya: Maintain max influences on, Dropoff rate 4.0
         F("maintain_max", "", "bool", True, text="Maintain max influences"),
         F("dropoff", "Dropoff rate:", "float", 4.0, lo=0.1, hi=100.0),
         F("remove_unused", "", "bool", True, text="Remove unused influences"),

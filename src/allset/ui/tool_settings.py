@@ -9,7 +9,7 @@ state (Maya 2022's rows; rows the kit can't do are greyed with a tooltip).
 Other tools keep Blender's tool panels under the head row; the Reset Tool row is also prepended to
 ``VIEW3D_PT_active_tool`` for Blender's own Tool tab / popups.
 Reset = the active tool's operator options back to their defaults (every operator of the tool's keymap) and, for
-the Move / Rotate / Scale tools, Maya's factory tool options: axis World / Object / Object, the
+the Move / Rotate / Scale tools, the default tool options like Maya: axis World / Object / Object, the
 manipulator at the lead object's pivot (step 59), Step Snap off and rotate step 15
 degrees (S3), Smart Duplicate / Smart Extrude at their defaults (Move tool, step 22 / 26).
 """
@@ -25,7 +25,7 @@ from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
 from ..operators.quad_draw import TOOL as QUAD_DRAW_TOOL
 from .manipulator import KINDS, SLOT, active_tool
 
-# Maya factory axis per tool; the same values tools/make_startup.py writes into the template.
+# Default axis per tool, like Maya; the same values tools/make_startup.py writes into the template.
 MAYA_AXIS = {'TRANSLATE': 'GLOBAL', 'ROTATE': 'LOCAL', 'RESIZE': 'LOCAL'}
 MAYA_PIVOT = 'ACTIVE_ELEMENT'
 MAYA_ROTATE_STEP = math.radians(15.0)
@@ -85,7 +85,7 @@ def reset_operator_properties(props):
 
 
 def reset_maya_options(context, kind):
-    """Maya's factory options of the Move / Rotate / Scale tool."""
+    """Default options of the Move / Rotate / Scale tool, like Maya."""
     from ..operators import snap_align
     scene = context.scene
     ts = scene.tool_settings
@@ -128,7 +128,7 @@ def reset_tool(context):
 
 
 def reset_kind_defaults(context, kind, tool=None):
-    """Maya factory values where they differ from the Blender tool's defaults:
+    """Default values like Maya where they differ from the Blender tool's defaults:
     Paint Selection = Select + Add to current selection; Target Weld = Target, Preserve UVs on; Crease = Absolute."""
     if kind == 'PAINT_SELECT':
         _paint_add[0] = True
@@ -224,7 +224,7 @@ SECTIONS = (
     ("smart_duplicate", "Smart Duplicate Settings", False, MANIP),
 )
 # Maya Rotate / Scale Center (rotate_ts / scale_ts) -> Blender pivot point (Default = the manipulator at
-# the lead's pivot, the kit's Maya default MAYA_PIVOT; Object = each object's own pivot; Manip = where the component
+# the lead's pivot, the kit's default MAYA_PIVOT like Maya; Object = each object's own pivot; Manip = where the component
 # pivot edit put the manipulator, the 3D cursor (step 77); Selection = the selection's centre).
 CENTERS = {'ROTATE': (("Default", 'ACTIVE_ELEMENT'), ("Object", 'INDIVIDUAL_ORIGINS'), ("Manip", 'CURSOR'),
                       ("Selection", 'BOUNDING_BOX_CENTER')),
@@ -495,7 +495,7 @@ def _lines(layout, *lines):
 
 
 def draw_lasso(layout, context, kind):
-    """Lasso Settings: Draw style Closed (Open greyed), Component selection (greyed; Maya default Fast)."""
+    """Lasso Settings: Draw style Closed (Open greyed), Component selection (greyed; Fast by default, like Maya)."""
     row = _labelled(layout, "Draw style:")
     _grey(row, "Lasso/Open", text="Open", icon='RADIOBUT_OFF')
     _fixed(row, "Closed")

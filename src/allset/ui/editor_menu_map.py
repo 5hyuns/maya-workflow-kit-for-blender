@@ -250,10 +250,10 @@ MAP = {
     f"{GE}/View/Frame/Frame Playback Range": "anim.scene_range_frame",
     f"{GE}/View/Center Current Time": "allset.graph_center_time",
     f"{GE}/View/Infinity": _prop(f"{_SP}.show_extrapolation"),
-    # step 150: kit modes (ui/graph_view.py); Maya factory: Auto Frame on, Auto Frame Time off, Curve Name Never
+    # kit modes (ui/graph_view.py); defaults like Maya: Auto Frame on, Auto Frame Time off, Curve Name Never
     f"{GE}/View/Auto Frame": _prop("addon_prefs.graph_auto_frame"),
     f"{GE}/View/Auto Frame Time": _prop("addon_prefs.graph_auto_frame_time"),
-    f"Dope Sheet/View/Auto Frame": _prop("addon_prefs.dope_auto_frame"),      # step 166 (Maya factory off)
+    f"Dope Sheet/View/Auto Frame": _prop("addon_prefs.dope_auto_frame"),      # (off by default, like Maya)
     f"{GE}/View/Curve Name/Always": _prop("addon_prefs.graph_curve_names", 'ALWAYS'),
     f"{GE}/View/Curve Name/Never": _prop("addon_prefs.graph_curve_names", 'NEVER'),
     f"{GE}/View/Curve Name/Active Only": _prop("addon_prefs.graph_curve_names", 'ACTIVE'),

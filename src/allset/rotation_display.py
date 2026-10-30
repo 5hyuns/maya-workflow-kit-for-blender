@@ -14,7 +14,7 @@ uses to rebuild rotation curves.
 from mathutils import Euler, Quaternion
 
 EULER_MODES = frozenset({'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'})
-SHOWN_ORDER = 'XYZ'          # Maya's default rotateOrder xyz
+SHOWN_ORDER = 'XYZ'          # rotate order xyz by default, like Maya
 
 _shown = {}                  # node key -> last Euler shown / typed (radians)
 

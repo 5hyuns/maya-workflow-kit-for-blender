@@ -19,7 +19,7 @@ from . import naming, prim_shapes, units
 
 KEY = "allset_history"        # the node, on the shape data or the group empty
 PART = "allset_history_part"  # nurbsSquare / nurbsCube part index, on the part objects
-UV_NAME = "map1"              # Maya's default UV set
+UV_NAME = "map1"              # default UV set name, like Maya
 
 # Create menu kind -> (Maya node type, transform base name)
 KIND_NODES = {

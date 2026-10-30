@@ -194,7 +194,7 @@ SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range
 
 
 def change_smoothing_level(ob, delta):
-    """Maya PgUp / PgDn (Maya default hotkeys): the smooth preview's
+    """Maya PgUp / PgDn (Maya hotkeys): the smooth preview's
     division level. An object without a preview gets a hidden one that keeps the level
     (Maya's smoothLevel shows only in 3 mode too). Returns the new level."""
     mod = preview_modifier(ob, create=False)

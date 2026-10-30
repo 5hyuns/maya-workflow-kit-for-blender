@@ -399,7 +399,7 @@ WINDOWS = [
         _run_combine, missing=("Merge UV Sets", "Combine Skinning")),
     Window("smooth", "Smooth Options", "Smooth", None, [
         F("levels", "Division levels:", "int", 1, lo=0, hi=6)], _run_smooth,
-        # the kit always smooths like Maya's factory options (step 139): sharp edges and corners, selection border kept
+        # the kit always smooths with the default options, like Maya: sharp edges and corners, selection border kept
         paths=("Mesh/Smooth",), missing=("Exponentially / Linearly", "Maya Catmull-Clark", "Propagate Edge Hardness",
                                         "Vertex Boundary: Sharp edges", "Smooth UVs: off", "Map borders",
                                         "Preserve: Geometry / Selection borders")),
@@ -666,7 +666,7 @@ def _make(window):
     ann["save_now"] = BoolProperty(name="Save Settings", options={'SKIP_SAVE'}, update=_save_update(window),
                                    description="Keep these settings for next time (Maya Edit > Save Settings)")
     ann["reset_now"] = BoolProperty(name="Reset Settings", options={'SKIP_SAVE'}, update=_reset_update(window),
-                                    description="Back to Maya's factory settings (Maya Edit > Reset Settings)")
+                                    description="Back to the default settings (like Maya's Edit > Reset Settings)")
 
     def invoke(self, context, event):
         if window.key == "paint_skin_weights":

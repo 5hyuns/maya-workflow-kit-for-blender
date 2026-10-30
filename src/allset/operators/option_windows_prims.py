@@ -92,7 +92,7 @@ def _run_super(context, v):
 
 def _super_fields(shape):
     """Polygon Super Shape Options: General / Helix / Super Ellipse / Spherical Harmonics / Ultra
-    frames (Maya factory values; the menu item sets the Shape)."""
+    frames (default values like Maya; the menu item sets the Shape)."""
     sh = [F(f"harmonics{i}", f"{'V' if i < 4 else 'H'} {'Multiplier' if i % 2 == 0 else 'Exponent'} {i % 4 // 2 + 1}:",
             "float", d, lo=-20.0 if i % 2 == 0 else 0.0, hi=20.0 if i % 2 == 0 else 5.0)
           for i, d in enumerate((0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0))]
@@ -347,7 +347,7 @@ WINDOWS = [
         F("sweep", "Sweep angle:", "float", 360.0, lo=-3600.0, hi=3600.0),
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=1000), _degree_field("Degree:"), *_sections()],
         _run_circle, missing=("Normal axis: Active view", _TOL)),
-    # Square (Maya factory): centre, normal Y, sides 1 x 1, 1 span per side, degree 3
+    # Square (defaults like Maya): centre, normal Y, sides 1 x 1, 1 span per side, degree 3
     Window("nurbs_square", "NURBS Square Options", "Create", ("allset.create", {"kind": 'NURBS_SQUARE'}), [
         F("center", "Center:", "vec3", (0.0, 0.0, 0.0)), *_axis_fields("Normal axis:", "Normal definition:"),
         F("side1", "Length of Side 1:", "length", 1.0, lo=0.1, hi=1000),

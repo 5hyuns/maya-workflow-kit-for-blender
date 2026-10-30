@@ -555,7 +555,7 @@ def test_delete_non_deformer_history_keeps_deformers():
     bpy.ops.allset.delete_history(non_deformer=True, before_only=True)
     assert [m.name for m in ob.modifiers] == ["arm", "sub"], [m.name for m in ob.modifiers]
     assert len(ob.data.vertices) > n_before   # bevel baked
-    # Maya's factory option "All non-deformer history" (step 162): the Subdivision after the deformer goes too
+    # the default option "All non-deformer history": the Subdivision after the deformer goes too
     n_mid = len(ob.data.vertices)
     bpy.ops.allset.delete_history(non_deformer=True)
     assert [m.name for m in ob.modifiers] == ["arm"], [m.name for m in ob.modifiers]

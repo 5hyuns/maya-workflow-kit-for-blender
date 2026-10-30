@@ -31,7 +31,7 @@ _flatten = _shim._flatten
 HISTORY_PROP = "allset_cmds_history"   # mesh data: [{name, type, values}] of the extrusions made by commands
 TEXTURE_PROP = "allset_shading_node"   # node group: Maya node type ("file")
 FILE_NAME_PROP = "allset_file_texture_name"
-# Maya's factory scene nodes that aren't DAG objects (Maya: ls -type objectSet, nodeType time1)
+# Maya's standard scene nodes that aren't DAG objects (Maya: ls -type objectSet, nodeType time1)
 DEFAULT_SETS = {"defaultLightSet": "objectSet", "defaultObjectSet": "objectSet",
                 "initialParticleSE": "shadingEngine", "initialShadingGroup": "shadingEngine"}
 DEFAULT_NODES = {"time1": "time"}
@@ -629,7 +629,7 @@ def new_file_texture(name=None):
 
 def shadingNode(*args, **kwargs):
     """``shadingNode lambert -asShader`` = a kit material (``material.new_material``: lambert2 while lambert1
-    exists, blinn1, phong1 …, Maya's factory values); ``file -asTexture`` = ``new_file_texture``. No shading group
+    exists, blinn1, phong1 …, default values like Maya); ``file -asTexture`` = ``new_file_texture``. No shading group
     is made; the new node becomes the selection."""
     from ..operators import material
     f = _Flags("shadingNode", kwargs)

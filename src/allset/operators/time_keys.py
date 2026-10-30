@@ -184,7 +184,7 @@ def copy_keys(context, a, b):
 
 
 def paste_keys(context, frame):
-    """Time Slider paste at ``frame`` (Maya's factory Merge): one copied node goes to every node, several in order."""
+    """Time Slider paste at ``frame`` (Merge by default, like Maya): one copied node goes to every node, several in order."""
     return paste_scope(context, frame=frame)
 
 
@@ -775,7 +775,7 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
 
     action: EnumProperty(name="Action", items=ACTIONS, options={'SKIP_SAVE'})
     tangent: EnumProperty(name="Tangent", items=TANGENT_ITEMS, options={'SKIP_SAVE'})
-    # step 140: the Key / Edit > Keys menu items run with Maya's factory option values (Time range All);
+    # the Key / Edit > Keys menu items run with the default option values, like Maya (Time range All);
     # the Time Slider menu acts on its range / the current frame
     time_range: EnumProperty(name="Time Range", options={'SKIP_SAVE'}, items=(
         ('SLIDER', "Time Slider", "The Shift-dragged Time Slider range, else the current frame"),

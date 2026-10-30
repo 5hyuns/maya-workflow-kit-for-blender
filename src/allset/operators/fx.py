@@ -57,8 +57,8 @@ class AllsetNucleus(bpy.types.PropertyGroup):
     gravity_direction: FloatVectorProperty(name="Gravity Direction", size=3, default=(0.0, -1.0, 0.0), update=_update,
                                            description="Maya axes (Y up): (0, -1, 0) = down")
     space_scale: FloatProperty(name="Space Scale", default=1.0, min=1e-4, soft_max=10.0, update=_update,
-                               description="Maya nucleus Space Scale: 1 simulates one unit as one metre (Maya's "
-                                           "default), 0.01 simulates centimetres at their real size")
+                               description="Maya nucleus Space Scale: 1 simulates one unit as one metre (the "
+                                           "default, like Maya), 0.01 simulates centimetres at their real size")
     substeps: IntProperty(name="Substeps", default=MAYA_SUBSTEPS, min=1, max=100, update=_update,
                           description="Maya nucleus substeps: cloth quality and rigid body substeps follow them")
 

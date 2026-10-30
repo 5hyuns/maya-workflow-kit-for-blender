@@ -80,7 +80,7 @@ KIND_ITEMS = [(k, v[1], f"Maya {v[0]} (Principled BSDF)") for k, v in MATERIALS.
 FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
 # ID property naming the Maya node type of a kit-made material (AE tab label/sections, step 38).
 TYPE_PROP = "allset_type"
-# Maya's default material (step 100): every new shape joins initialShadingGroup, whose surface
+# The default material, like Maya: every new shape joins initialShadingGroup, whose surface
 # shader is lambert1 (a lambert); Delete Unused Nodes keeps it, a new Lambert is lambert2.
 DEFAULT_PROP = "allset_default"
 DEFAULT_NAME = "lambert1"
@@ -295,7 +295,7 @@ def _build(mat, bsdf, kind):
         ramp = nodes.new('ShaderNodeValToRGB')
         facing.location = (bsdf.location.x - 780, bsdf.location.y)
         ramp.location = (bsdf.location.x - 520, bsdf.location.y)
-        for el in ramp.color_ramp.elements:      # Maya's default ramp: one 0.5 grey entry
+        for el in ramp.color_ramp.elements:      # default ramp (like Maya): one 0.5 grey entry
             el.color = (0.5, 0.5, 0.5, 1.0)
         links.new(facing.outputs["Facing"], ramp.inputs["Fac"])
         links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])

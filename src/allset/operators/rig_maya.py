@@ -167,7 +167,7 @@ class ALLSET_OT_set_preferred_angle(_PoseBones, bpy.types.Operator):
     bl_label = "Set Preferred Angle"
     bl_options = {'REGISTER', 'UNDO'}
 
-    hierarchy: BoolProperty(name="Hierarchy", default=True, options={'SKIP_SAVE', 'HIDDEN'})    # Maya factory
+    hierarchy: BoolProperty(name="Hierarchy", default=True, options={'SKIP_SAVE', 'HIDDEN'})    # default like Maya
 
     def execute(self, context):
         set_preferred(self.bones(context), self.hierarchy)

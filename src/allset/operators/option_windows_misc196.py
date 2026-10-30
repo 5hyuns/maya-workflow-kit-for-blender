@@ -4,8 +4,8 @@
 / Straighten, the circular arc tools, UV Merge UVs / Contour Stretch, Set / Assume Preferred Angle, Add Influence.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator, bound to its
-menu paths; option_windows._extend appends ``WINDOWS``). Titles, buttons, labels and factory values come from Maya
-2022's option windows; fields the kit
+menu paths; option_windows._extend appends ``WINDOWS``). Titles, buttons, labels and default values match the Maya
+option windows; fields the kit
 can't honour are only listed (``missing``), never faked. Every window run with its defaults does what the plain menu
 item does; Merge UVs / Smooth (Modify section) run the kit's Maya operators, like their plain menu items
 (menu_map, step 196).

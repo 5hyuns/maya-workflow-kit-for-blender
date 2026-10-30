@@ -58,7 +58,7 @@ def test_check_boxes_follow_the_options():
     for opt, _prop, default in pivot_menu.OPTIONS:
         action = ("allset.pivot_option", {"option": opt})
         assert engine.is_toggle(action)
-        assert draw.checked(action) is default, (opt, default)        # Maya defaults: pin off, snaps on
+        assert draw.checked(action) is default, (opt, default)        # defaults like Maya: pin off, snaps on
     assert bpy.ops.allset.pivot_option(option="PIN") == {'FINISHED'}
     assert draw.checked(("allset.pivot_option", {"option": "PIN"})) is True
     bpy.ops.allset.pivot_option(option="PIN")
@@ -107,7 +107,7 @@ def test_component_reset_and_pin():
     assert all(abs(a) < 1e-9 for a in cursor.rotation_euler)
     hold.COMPONENT.finish(bpy.context)
     assert ts.transform_pivot_point != 'CURSOR' and not hold.COMPONENT.custom, "after a reset there is no custom pivot"
-    # a placed pivot, Pin off (Maya default): a new selection drops it
+    # a placed pivot, Pin off (default, like Maya): a new selection drops it
     hold.COMPONENT.start(bpy.context, toggled=True)
     cursor.location = (3.0, 0.0, 0.0)
     hold.COMPONENT.finish(bpy.context)

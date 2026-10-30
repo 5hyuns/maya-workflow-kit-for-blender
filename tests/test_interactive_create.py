@@ -113,7 +113,7 @@ def test_menu_items_are_checks():
         assert action[0] == "prop" and action[1] == f"addon_prefs.{pref}", action
     assert "Create/Polygon Primitives" not in notices.CATEGORIES, "nothing in that menu is greyed any more"
     prefs = import_module(kit.MODULE + ".preferences").get()
-    assert prefs.interactive_creation is False and prefs.exit_on_completion is True, "Maya defaults off / on"
+    assert prefs.interactive_creation is False and prefs.exit_on_completion is True, "defaults off / on, like Maya"
 
 
 def test_plain_create_without_a_window():

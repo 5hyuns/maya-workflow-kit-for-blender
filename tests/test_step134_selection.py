@@ -133,7 +133,7 @@ def test_read_paths_and_rules():
 
 def test_option_and_disable():
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences
-    assert prefs.maya_component_colors and prefs.maya_selection_wire        # Maya defaults
+    assert prefs.maya_component_colors and prefs.maya_selection_wire        # on by default, like Maya
     prefs.maya_component_colors = False
     assert not cc._enabled()
     prefs.maya_component_colors = True

@@ -205,7 +205,7 @@ def patch_space(kd):
 
 # --- 5. Hold keys: X/C/V/J snapping ------------------------------------------
 # Maya: snapping only while the key is held, Shift variants identical
-# (Maya factory hotkeys x/X, c/C, v/V, j).
+# (Maya hotkeys x/X, c/C, v/V, j).
 # Paint/sculpt modes keep their own X (brush color flip): they are checked
 # before "3D View", so the hold never runs there.
 _PAINT_MODES = ("Sculpt", "Vertex Paint", "Image Paint", "Weight Paint")
@@ -251,7 +251,7 @@ def patch_tap_hold_and_pivot(kd):
 
 
 # --- 8. Arrow-key pick-walk (object mode) -----------------------------------
-# Maya default hotkeys. IC puts Left/Right frame
+# Maya hotkeys. IC puts Left/Right frame
 # stepping into each mode keymap (IC:93-97 _template_items_animation); only
 # Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 7).
 
@@ -304,7 +304,7 @@ def patch_camera(kd):
 
 
 # --- 10. View-change undo: [ ] and Alt+Z / Alt+Y ----------------------------
-# Maya default hotkeys. IC [ ] = select_hierarchy
+# Maya hotkeys. IC [ ] = select_hierarchy
 # (IC:2506-2512), replaced by the arrow pick-walk in step 3. Paint modes keep
 # [ ] for brush size.
 
@@ -437,7 +437,7 @@ def patch_marking_menus(kd):
 
 
 # --- 16. Scene concepts: P / Shift+P, Shift+D, Ctrl+Shift+D, Alt+Shift+D (step 10) ------------------
-# Maya factory hotkeys: p Parent, P Unparent, D DuplicateWithTransform,
+# Maya hotkeys: p Parent, P Unparent, D DuplicateWithTransform,
 # Ctrl+D (capital) DuplicateSpecial, Alt+D (capital) DeleteHistory.
 # IC Object Mode P / Shift+P = object.parent_set / parent_clear.
 
@@ -461,7 +461,7 @@ def patch_concepts(kd):
 
 
 # --- 17. Ctrl+A Attribute Editor / Channel Box, Ctrl+Shift+A / Alt+D (step 11) ------------------
-# Maya factory hotkeys: Ctrl+a ShowAttributeEditorOrChannelBox, Ctrl+A (capital)
+# Maya hotkeys: Ctrl+a ShowAttributeEditorOrChannelBox, Ctrl+A (capital)
 # SelectAll, Alt+d SelectNone. IC Object Mode Ctrl+A / Ctrl+Shift+A = select all / none.
 
 def patch_attribute_editor(kd):
@@ -563,7 +563,7 @@ def patch_undo_visibility(kd):
 
 # --- 19. Mesh component keys (step 18) --------------------------------------------------
 # Maya: Ctrl+Shift+A / Alt+D, Ctrl+F9-F11 convert, > < (grow / shrink,
-# Ctrl: along loop), D component pivot; Maya default hotkeys Ctrl+E extrude, Ctrl+B bevel.
+# Ctrl: along loop), D component pivot; Maya hotkeys Ctrl+E extrude, Ctrl+B bevel.
 
 CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 
@@ -602,7 +602,7 @@ def patch_mesh_components(kd):
 
 
 # --- 20. Key / frame stepping: . , Alt+. Alt+, (step 20) --------------------------------------
-# Maya factory hotkeys (NextKey, PreviousKey, NextFrame, PreviousFrame).
+# Maya hotkeys (NextKey, PreviousKey, NextFrame, PreviousFrame).
 # "Frames" is in nearly every editor; the 3D View / Image pies on . , go (pivot and orientation stay
 # in the headers). The Outliner (show active) and Clip Editor (pivot pie) keep their own . first.
 
@@ -649,7 +649,7 @@ def patch_manip_duplicate(kd):
 # --- 22. Delete / Backspace on components (step 24) -------------------------------------------
 # Maya deletes the selected faces / edges / vertices right away (Delete,
 # DeleteEdge, DeleteVertex); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace
-# keep IC's mesh.dissolve_mode = Maya DeletePolyElements (Maya factory hotkeys).
+# keep IC's mesh.dissolve_mode = Maya DeletePolyElements (Maya hotkeys).
 
 def patch_component_delete(kd):
     for key in ("DEL", "BACK_SPACE"):
@@ -658,7 +658,7 @@ def patch_component_delete(kd):
 
 
 # --- 23. Manipulator size, smoothing level, default view, wireframe on shaded -------------------
-# Maya factory hotkeys = Shift++ -, PgUp/PgDn, 0, Home, Alt+5 (step 27).
+# Maya hotkeys = Shift++ -, PgUp/PgDn, 0, Home, Alt+5.
 
 def patch_view_keys(kd):
     for ev, factor in ((make_event("EQUAL"), 1.25), (make_event("EQUAL", shift=True), 1.25),
@@ -704,7 +704,7 @@ def patch_active_handle(kd):
 
 
 # --- 25. Shift+T Assign New Material (step 29) ---------------------------------------------------
-# Maya factory hotkey. IC binds Shift+T only in the
+# Maya hotkey. IC binds Shift+T only in the
 # Dope Sheet.
 
 def patch_materials(kd):
@@ -823,7 +823,7 @@ def patch_key_batch(kd):
 
 
 # --- 28. Component pick-walk, Alt+Shift axis-locked navigation (step 39) -------------------------
-# Arrows in edit mode walk vertices / edges / faces (Maya factory arrow keys, Maya pick-walk); IC's Up/Down
+# Arrows in edit mode walk vertices / edges / faces (Maya arrow keys, Maya pick-walk); IC's Up/Down
 # grow/shrink go (Maya: Shift+> / <, step 18). Alt+Shift+LMB / MMB = tumble / track on one axis
 # (Maya); IC's Alt+Shift+LMB click-select toggle goes (a PRESS item would hide it anyway).
 
@@ -860,7 +860,7 @@ def patch_pose_joints(kd):
 # --- 31. Time Slider and keys (step 56) --------------------------------------------------------
 # Maya Time Slider. The timeline is a Dope Sheet mode: the Maya Time Slider
 # mouse (LMB time, Shift+LMB range, MMB time + notice, RMB menu) goes first in "Dopesheet" and passes
-# through in the Dope Sheet. K (Time Dragger, Maya factory hotkey) is global ("Screen"); editor keymaps
+# through in the Dope Sheet. K (Time Dragger, Maya hotkey) is global ("Screen"); editor keymaps
 # run first, so their plain K goes: Mesh knife tool cycle (IC:3074; Multi-Cut = Ctrl+Shift+X) and
 # Dope Sheet select_column (IC:1435). "User Interface" / Outliner K only act over a button / row.
 # S (Maya Set Key) = every keyable channel, not IC's LocRotScale (IC:2463, :2536).
@@ -944,7 +944,7 @@ def patch_uv(kd):
 
 
 # --- 36. Scene files (step 69) -------------------------------------------------------------------------
-# Maya default hotkeys Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+Alt+S / Ctrl+R. IC binds the first four in "Window"
+# Maya hotkeys Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+Alt+S / Ctrl+R. IC binds the first four in "Window"
 # (IC:194-199): replaced in place by the kit's (file dialogs start in the project's scenes folder; Ctrl+Alt+S =
 # Maya's Increment and Save rule shot_v001 -> shot_v001.0001, not Blender's shot_v002). Ctrl+R = Create Reference;
 # editor keymaps that bind Ctrl+R themselves keep it there (they run first).
@@ -971,7 +971,7 @@ def patch_scene_files(kd):
 
 
 # --- 37. Graph Editor keys, Shift+S tangent marking menu (step 70) ---------------------------------------
-# Maya default hotkeys: Graph Editor G = FramePlaybackRange, D = TangentAuto, Shift+S hold =
+# Maya hotkeys: Graph Editor G = FramePlaybackRange, D = TangentAuto, Shift+S hold =
 # KeyframeTangentMarkingMenu. G / D go in "Graph Editor" (it runs before Screen's G = repeat_last);
 # Shift+S replaces IC's keyframe_insert menu in Object Mode / Pose (IC:2462, 2535) and is added to the Graph Editor
 # and Dope Sheet. Mesh / UV Shift+S (UV Sew, step 66) stay.
@@ -987,7 +987,7 @@ def patch_graph_keys(kd):
 
 # --- 38. Key batch 2 (step 78) --------------------------------------------------------------------------
 # Graph Editor 1/2/3, Shift+Q / Alt+Q select tool marking menus, Ctrl+Alt+Left/Right
-# Spin Edge, Shift+G repeat at the mouse, Ctrl+Shift+C camera from view (Maya default hotkeys).
+# Spin Edge, Shift+G repeat at the mouse, Ctrl+Shift+C camera from view (Maya hotkeys).
 # IC has none of these events in these keymaps; same-event IC items elsewhere stay (editor keymaps run first):
 # Shift+Q in Grease Pencil modes, Shift+G select similar / grouped in Armature, Metaball, Grease Pencil.
 SELECT_MM_KEYMAPS = ("Object Mode", "Mesh")
@@ -1020,7 +1020,7 @@ def patch_outliner_drag(kd):
 
 
 # --- 39. Insert / nudge / select keys (step 83) ---------------------------------------------------------
-# Maya global keys (Maya factory hotkeys). "Screen" so they work over the 3D View, Graph Editor,
+# Maya global keys (Maya hotkeys). "Screen" so they work over the 3D View, Graph Editor,
 # Dope Sheet and Time Slider; the operators read the editor under the mouse. Editor / mode keymaps with the same
 # event run first and keep it (Weight Paint / Grease Pencil / Mask Alt+I, Animation Channels Ctrl+Shift+W, Text
 # Ctrl+Shift+E, the UI colour-ramp eyedropper Alt+I).
@@ -1081,7 +1081,7 @@ def patch_manip_ctrl(kd):
 
 
 # --- 42. View keys 3 (step 87) -----------------------------------------------------------------------------
-# Maya factory hotkeys Alt+p, Alt+a, Alt+arrows, `, backslash. All in "3D View" (Maya's model
+# Maya hotkeys Alt+p, Alt+a, Alt+arrows, `, backslash. All in "3D View" (Maya's model
 # panel); the same events elsewhere belong to other editors / modes, whose keymaps run first.
 VIEW3_SHADOWS = ("Sculpt", "Font", "Text", "File Browser", "Sequencer", "Clip", "Node Editor", "Grease Pencil Selection")
 PIXEL_MOVE_KEYS = (("UP_ARROW", 0, 1), ("DOWN_ARROW", 0, -1), ("LEFT_ARROW", -1, 0), ("RIGHT_ARROW", 1, 0))
@@ -1099,7 +1099,7 @@ def patch_view_keys_3(kd):
 
 
 # --- 43. Global key batch 4 (step 90) -------------------------------------------------------------------
-# Maya factory hotkeys Ctrl+x, Alt+x, Alt+backslash, Alt+1/2/4, Ctrl+` / Shift+~ /
+# Maya hotkeys Ctrl+x, Alt+x, Alt+backslash, Alt+1/2/4, Ctrl+` / Shift+~ /
 # Ctrl+Shift+~). Ctrl+X exists only in other editors / modes (Text, Console, Font, Grease Pencil edit); Alt+X was IC's
 # X-ray toggle; the rest were free. Plain ` stays step 87's tweak hold.
 CUT_SHADOWS = ("Text", "Console", "Font", "Grease Pencil Edit Mode")
@@ -1125,7 +1125,7 @@ def patch_global_keys_4(kd):
 
 
 # --- 44. Graph Editor key batch (step 92) ---------------------------------------------------------------
-# Maya factory hotkeys t = GraphEditorFrameCenterView, Alt+/ = SnapTimeToSelection toggle, i hold =
+# Maya hotkeys t = GraphEditorFrameCenterView, Alt+/ = SnapTimeToSelection toggle, i hold =
 # Insert Key tool; Maya binds it globally, it only means something in the Graph Editor.
 # None of these events is bound in the Graph Editor keymaps.
 
@@ -1232,7 +1232,7 @@ def patch_script_editor(kd):
     # (Render > Render Current Frame has no default hotkey; Ctrl+Alt+Enter render animation stays IC's).
     kd.remove("Screen Editing", "render.render", type="RET", ctrl=True, alt=False)
     # Blender 5.x IC adds Alt+F12 / Ctrl+Alt+F12 sequencer-scene renders there too (5.2 IC:299-302, step 118): they
-    # took the UV Editor's Maya Alt+F12 (UV Shell, Maya factory hotkey).
+    # took the UV Editor's Maya Alt+F12 (UV Shell, Maya hotkey).
     for ctrl in (False, True):
         if kd.find("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl):
             kd.remove("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl)
@@ -1244,7 +1244,7 @@ def patch_script_editor(kd):
 
 
 # --- 49. Key batch 3: wrong daily keys, missing keys (step 107) ----------------------------------------------------
-# Maya factory hotkeys: Alt+r ToggleReflection, Ctrl+i, F1 Help, Alt+c ToggleColorFeedback,
+# Maya hotkeys: Alt+r ToggleReflection, Ctrl+i, F1 Help, Alt+c ToggleColorFeedback,
 # m ModifyDisplacement, Ctrl+PgUp / PgDn PickWalkIn / Out, Ctrl+, PrevSkinPaintMode,
 # Ctrl+m / Shift+M / Ctrl+Shift+M menu bars, Alt+b, paint u / n / Alt+f / Ctrl+Alt+c / v,
 # sculpt Ctrl+0-9, f, b, m, Shift+U, Ctrl+Shift+I, Graph Editor h / j, Time Slider
@@ -1378,8 +1378,8 @@ def patch_key_batch_3(kd):
 
     # UV Editor display toggles
     _add(kd, "UV Editor", "wm.context_toggle", make_event("SEVEN"), {"data_path": "space_data.uv_editor.show_stretch"})
-    # step 155 (Maya UV Editor factory keys; ui/uv_display.py, operators/uv_shells.py). IC's UV Editor 4 (island select
-    # mode) and Ctrl+1 (vertex select mode) go: Maya's UV component keys are F9-F12 (Maya factory hotkeys).
+    # Maya UV Editor keys (ui/uv_display.py, operators/uv_shells.py). IC's UV Editor 4 (island select
+    # mode) and Ctrl+1 (vertex select mode) go: Maya's UV component keys are F9-F12 (Maya hotkeys).
     if kd.find("UV Editor", "uv.select_mode", type="FOUR"):
         kd.remove("UV Editor", "uv.select_mode", type="FOUR")
     else:       # 5.x IC: island picking is a toggle of tool_settings.use_uv_select_island on the same key
@@ -1411,7 +1411,7 @@ def patch_repeat(kd):
     # there; the Dope Sheet's g (step 269) steps aside in the Timeline, so the Time Slider still repeats
 
 
-# --- 51. Blender's render keys with Maya's default light (step 214, #120) ------------------------------------------
+# --- 51. Blender's render keys with the default light, like Maya (#120) ---------------------------------------------
 # A UI render's render_* handlers run on the job thread (operators/default_light.py), so the light is added by a kit
 # operator wrapping render.render. F12 / Ctrl+F12 = Blender's Render Image / Animation keys: their default-keyconfig
 # items in "Screen" are switched off in Maya mode (Screen is a patched keymap), so the kit's go there. The 3D View's

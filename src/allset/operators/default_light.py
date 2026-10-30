@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's default light for kit renders of a scene without lights (step 152, #101).
+"""The default light (like Maya) for kit renders of a scene without lights (#101).
 
 Maya (Maya Software): Render Settings > Common > Render Options >
 Enable Default Light (``defaultRenderGlobals.enableDefaultLight``, default on) lights a scene that has no light node
@@ -24,7 +24,7 @@ the render keys with ``allset.render_blender``: its invoke adds the light on the
 ``render.render`` INVOKE (the Render window opens as with F12, and the timer removes the light once the job ends). Keys (keymap/maya_patches.py
 ``patch_blender_render``): F12 = Render Image and Ctrl+F12 = Render Animation in "Screen" (Blender's default keys,
 whose own items are switched off in Maya mode; F12 over a 3D View in object / edit-mesh mode or over a UV Editor stays
-Maya's UV selection mask, a Maya default hotkey), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >
+Maya's UV selection mask, a Maya hotkey), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >
 Render Image / Render Animation (the kit's "Blender Render" menu) still runs ``render.render`` itself: no light.
 """
 
@@ -140,7 +140,7 @@ def _stray(*_args):
 # --- Blender's render keys with the default light (step 214) -----------------------------------------------------
 
 class ALLSET_OT_render_blender(bpy.types.Operator):
-    """Render with Blender's own render command (F12 / Ctrl+F12 in Maya mode), lit by Maya's default light while the
+    """Render with Blender's own render command (F12 / Ctrl+F12 in Maya mode), lit by the default light (like Maya) while the
     scene has no lights"""
     bl_idname = "allset.render_blender"
     bl_label = "Render"

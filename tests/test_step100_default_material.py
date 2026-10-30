@@ -1,4 +1,4 @@
-"""Step 100: Maya's default material — every new shape joins initialShadingGroup = lambert1 (color 0.5, lambert;
+"""The default material (lambert1, like Maya) — every new shape joins initialShadingGroup = lambert1 (color 0.5, lambert;
 Maya: lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
 lambert2)."""
 

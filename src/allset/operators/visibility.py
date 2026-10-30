@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya object visibility keys: h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H.
 
-Maya default hotkeys: h toggles the visibility of the
+Maya hotkeys: h toggles the visibility of the
 selection and keeps it selected; Ctrl+H hides the selection, Alt+H the rest;
 Shift+H shows the selected hidden objects; Ctrl+Shift+H shows what was hidden last.
 

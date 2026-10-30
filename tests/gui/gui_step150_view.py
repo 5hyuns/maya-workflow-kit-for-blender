@@ -1,6 +1,6 @@
 """Step 150 lane A (#96) in a real UI: Maya Workflow Kit layout, pCube1 Translate X / Y keyed, Graph Editor from
 Windows > Animation Editors. View > Curve Name > Always writes "pCube1.translateX" / "pCube1.translateY" beside the
-last keys in the curve colours (Never: nothing); View > Auto Frame (Maya factory on) refits the value axis when
+last keys in the curve colours (Never: nothing); View > Auto Frame (on by default, like Maya) refits the value axis when
 the selection changes to pCube2 (keys at 40 .. 200, values 0 .. 50; the time range stays)."""
 
 import os
@@ -142,7 +142,7 @@ def s_always_shot():
         diffs.append(round(float(np.abs(on[box] - off[box]).max()), 2))
     check(f"names drawn beside the last keys (max pixel change per label {diffs})", diffs and min(diffs) > 0.2)
     C["x"] = view_x(r)
-    select(C["B"])          # Auto Frame (Maya factory on): the selection change reframes the Graph Editor
+    select(C["B"])          # Auto Frame (on by default): the selection change reframes the Graph Editor
     redraw()
 
 

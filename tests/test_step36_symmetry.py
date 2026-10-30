@@ -42,7 +42,7 @@ def _sym():
 
 
 def test_factory_default_is_maya():
-    # Maya factory: off, axis x, about object.
+    # defaults like Maya: off, axis x, about object.
     scene = bpy.data.scenes.new("SymDefaults")
     try:
         s = scene.allset_symmetry

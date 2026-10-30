@@ -19,7 +19,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 data = import_module(kit.MODULE + ".ui.editor_menu_data")
 modal = import_module(kit.MODULE + ".marking.modal")
 
-# Maya 2022 factory states of the Script Editor History menu (check marks)
+# default states (like Maya) of the Script Editor History menu (check marks)
 MAYA_FACTORY = {"se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True,
                 "se_stack_trace": False, "se_suppress_results": False, "se_suppress_info": False,
                 "se_suppress_warnings": False, "se_suppress_errors": False, "se_suppress_dup_vars": False,
@@ -210,14 +210,14 @@ def test_echo_all_commands():
 
 def test_prefs_round_trip_and_disable_enable():
     """The options are this add-on's preferences: what the menu sets is what the runner reads; disable removes the
-    echo operator, enable brings back Maya's factory states."""
+    echo operator, enable brings back the default states."""
     p = _prefs()
     p.se_stack_trace, p.se_history_output, p.se_line_numbers = True, 'PYTHON', False
     assert runner.option("se_stack_trace") is True and runner.option("se_history_output") == 'PYTHON'
     assert runner.option("se_line_numbers") is False
     kit.disable()
     assert not hasattr(bpy.types, "ALLSET_OT_script_echo"), "unregistered on disable"
-    assert runner.option("se_line_numbers") is True, "without the preferences: Maya's factory state"
+    assert runner.option("se_line_numbers") is True, "without the preferences: the default state"
     kit.enable()
     p = _prefs()
     assert {k: getattr(p, k) for k in MAYA_FACTORY} == MAYA_FACTORY

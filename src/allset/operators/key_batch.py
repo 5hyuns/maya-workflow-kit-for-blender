@@ -5,7 +5,7 @@ the view.
 - Shift+G = Maya's Repeat Last at the mouse position:
   the point on the
   ground plane under the mouse, then the last action again, then the (new) selection moved there.
-- Ctrl+Shift+C = ``MTcreateCameraFromView`` (Maya default hotkey).
+- Ctrl+Shift+C = ``MTcreateCameraFromView`` (Maya hotkey).
 """
 
 import bpy

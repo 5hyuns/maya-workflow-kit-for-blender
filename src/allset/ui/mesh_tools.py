@@ -73,7 +73,7 @@ class ALLSET_TL_crease(bpy.types.WorkSpaceTool):
 
 class ALLSET_TL_cut_sew(bpy.types.WorkSpaceTool):
     """Maya 3D Cut and Sew UV Tool: drag = cut, Ctrl+drag = sew, Shift+drag = select;
-    x / s / d = Cut / Sew / Unfold + Layout (Maya factory hotkeys, tool context polyCutUV)."""
+    x / s / d = Cut / Sew / Unfold + Layout (Maya hotkeys, tool context polyCutUV)."""
     bl_space_type = 'VIEW_3D'
     bl_context_mode = 'EDIT_MESH'
     bl_idname = cut_sew.TOOL

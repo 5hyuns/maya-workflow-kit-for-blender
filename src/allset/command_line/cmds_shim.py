@@ -216,7 +216,7 @@ def _select_only(obs):
         vl.objects.active = o
 
 
-# Maya's default cameras: the kit draws them as Outliner rows (step 99), Maya's names are taken (Maya: group -n top
+# Maya's startup cameras: the kit draws them as Outliner rows, Maya's names are taken (Maya: group -n top
 # -> top1)
 DEFAULT_CAMERAS = ("persp", "top", "front", "side")
 

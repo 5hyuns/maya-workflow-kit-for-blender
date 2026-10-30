@@ -1,4 +1,4 @@
-"""Step 137, issue #71, in the Maya Workflow Kit layout: Assign New Material > Blinn shows Maya's defaults in the
+"""Issue #71, in the Maya Workflow Kit layout: Assign New Material > Blinn shows Maya's Blinn values in the
 Attribute Editor (Color 0.5, Incandescence black, Eccentricity 0.3, Specular Roll Off 0.7); a new point light shows
 Intensity 1 / Decay Rate No Decay. Screenshots for a visual check."""
 

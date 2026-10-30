@@ -90,7 +90,7 @@ def test_windows_registered_with_maya_titles_and_buttons():
         for p in w.paths:
             # editor menu bars (Graph Editor / Dope Sheet Edit key windows, step 157) have their own boxes
             assert (p in menu_data.OPTION_BOXES or p in editor_menu_data.OPTION_BOXES) and p in menu_map.MAP, (w.key, p)
-    # Maya factory values
+    # default values, as in Maya
     d = ow._BY_KEY
     assert d["poly_plane"].defaults()["width_div"] == 10 and d["poly_sphere"].defaults()["axis_div"] == 20
     assert d["bevel"].defaults()["width"] == 0.5 and d["merge"].defaults()["threshold"] == 0.01

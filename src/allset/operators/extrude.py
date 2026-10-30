@@ -492,7 +492,7 @@ def edge_frame(e):
 
 
 def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, unit=1.0, **_unused):
-    """Maya polyExtrudeEdge (Keep Faces Together off, Maya's default for edges): every edge alone gets ``divisions``
+    """Maya polyExtrudeEdge (Keep Faces Together off, the default for edges in Maya): every edge alone gets ``divisions``
     quads ``(a, b, b', a')``; the new edge moves by Z * (Thickness + Local Translate Z) + Y * Offset (Maya units).
     The outer edges end up selected. Returns the new vertices."""
     bm.normal_update()

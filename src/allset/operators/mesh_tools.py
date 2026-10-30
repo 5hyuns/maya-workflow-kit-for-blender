@@ -52,7 +52,7 @@ class ALLSET_PG_mesh_tools(bpy.types.PropertyGroup):
     snap_step: IntProperty(
         name="Snap Step %", default=MAYA_SNAP_STEP, min=1, max=100,
         description="Multi-Cut: Shift snaps the cut point along the edge in these steps")
-    # Multi-Cut Tool Settings, Maya factory values
+    # Multi-Cut Tool Settings, default values (like Maya)
     smoothing_angle: FloatProperty(
         name="Smoothing Angle", default=180.0, min=0.0, max=180.0, precision=0,
         description="New edges between faces bent more than this are hard (sharp), the rest soft")

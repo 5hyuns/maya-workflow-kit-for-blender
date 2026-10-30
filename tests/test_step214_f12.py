@@ -1,4 +1,4 @@
-"""Step 214 (#120) lane F12: Blender's own render keys lit by Maya's default light.
+"""#120 lane F12: Blender's own render keys lit by the default light (like Maya).
 
 A UI render's render_* handlers run on the job thread (operators/default_light.py docstring), so the kit
 wraps the keys with ``allset.render_blender`` (light added on the main thread, render.render, light removed when the

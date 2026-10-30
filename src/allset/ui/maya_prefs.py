@@ -13,7 +13,7 @@ show Blender's value read-only with the Recommended setup note and a button that
 Save / Cancel: the window takes a snapshot of every row's value when it opens; Save keeps the changes and
 closes (the add-on preferences are kept by Blender's Auto-Save Preferences or File > Save Preferences, like every
 add-on), Cancel and Edit > Revert to Saved write the snapshot back; Edit > Restore Default Settings = the add-on
-preferences' defaults and Maya's factory scene values (``maya_prefs_data.MAYA_FACTORY``). Closing by the OS button keeps
+preferences' defaults and the default scene values (like Maya) (``maya_prefs_data.MAYA_FACTORY``). Closing by the OS button keeps
 the changes (Maya saves).
 """
 
@@ -95,7 +95,7 @@ def revert(context):
 
 
 def restore_defaults(context):
-    """Kit preferences back to their defaults, scene rows to Maya's factory values (Restore Default Settings)."""
+    """Kit preferences back to their defaults, scene rows to their default values, like Maya (Restore Default Settings)."""
     for row in editable_rows():
         owner, attr = _target(context, row)
         if owner is None:
@@ -311,7 +311,7 @@ class ALLSET_OT_prefs_revert(bpy.types.Operator):
 
 
 class ALLSET_OT_prefs_restore_defaults(bpy.types.Operator):
-    """Kit settings back to their defaults and the scene values to Maya's factory settings (Maya's Edit > Restore
+    """Kit settings back to their defaults and the scene values to the default settings (like Maya's Edit > Restore
     Default Settings)"""
     bl_idname = "allset.prefs_restore_defaults"
     bl_label = "Restore Default Settings"

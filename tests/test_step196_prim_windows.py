@@ -1,5 +1,5 @@
 """Step 196 (#103): Create > Polygon Primitives (Disc ... Ultra Shape) and Create > NURBS Primitives option boxes open
-Maya's option windows (Maya factory values) and fill the kit's Maya
+Maya's option windows (default values) and fill the kit's Maya
 creation node (operators/option_windows_prims.py)."""
 
 import json

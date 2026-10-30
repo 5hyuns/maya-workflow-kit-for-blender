@@ -94,7 +94,7 @@ def straight_fallback(d_local):
 
 
 def default_pole_vector(points, length, start_frame=None):
-    """Maya's default pole vector (world) for the chain ``points`` (start .. end): the in-between joint with the
+    """The default pole vector (world, like Maya) for the chain ``points`` (start .. end): the in-between joint with the
     largest |p × d|, its offset perpendicular to d; a straight chain: the A2 fallback in ``start_frame`` (the start
     joint's Maya axes in world, a 3x3; world axes when None)."""
     p0 = points[0]

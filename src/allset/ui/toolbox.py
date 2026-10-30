@@ -267,7 +267,7 @@ GAP_PX = 8
 # the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
 # window at UI scale 1.5 keeps a 439 px viewport
 MIN_VIEW_PX = 280
-# the longest Maya default channel labels the Channel Box shows (polyCube / polyCylinder / polySphere INPUTS)
+# the longest channel labels the Channel Box shows by default (polyCube / polyCylinder / polySphere INPUTS)
 LONG_LABELS = ("Subdivisions Height", "Subdivisions Width", "Subdivisions Depth", "Subdivisions Axis",
                "Subdivisions Caps")
 FONT_PT = 11         # Blender's widget font (Preferences > Interface > Text Rendering: ui_styles[0].widget.points)

@@ -9,7 +9,7 @@ row is one flat stripe colour; rows are contiguous, so a binary search). The row
 per region; the "Outliner" keymap items ``allset.outliner_set_click`` (LMB CLICK) and
 ``allset.outliner_set_menu`` (RMB) act on them and pass through elsewhere.
 
-Maya's default rows (step 99): a new Maya scene lists the startup cameras persp / top / front / side (hidden, so
+Startup rows: a new Maya scene lists the startup cameras persp / top / front / side (hidden, so
 greyed) and the sets defaultLightSet / defaultObjectSet
 (defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
 selecting persp selects the hidden camera). The kit has no camera objects behind them (Blender's user views aren't
@@ -59,8 +59,8 @@ _picked = {"camera": ""}   # camera row clicked last (highlighted while no objec
 
 
 def default_entries(scene=None):
-    """Maya's default Outliner rows the kit draws: [(kind, name, "")]. Startup cameras the scene really has (a kit
-    new Maya scene, operators/startup_cameras.py, step 211) are Blender's own rows at the top instead."""
+    """Maya's startup Outliner rows the kit draws: [(kind, name, "")]. Startup cameras the scene really has (a kit
+    new Maya scene, operators/startup_cameras.py) are Blender's own rows at the top instead."""
     real = set()
     if scene is not None:
         from ..operators import startup_cameras
@@ -287,7 +287,7 @@ class ALLSET_OT_outliner_set_click(bpy.types.Operator):
 
 
     def _default_row(self, context, event, kind, name):
-        """Maya default rows: a camera row selects the (hidden) camera — the kit has none, so it clears the object
+        """Maya startup rows: a camera row selects the (hidden) camera — the kit has none, so it clears the object
         selection and highlights the row; defaultLightSet selects every light, defaultObjectSet nothing."""
         if context.mode != 'OBJECT' and context.active_object is not None:
             bpy.ops.object.mode_set(mode='OBJECT')

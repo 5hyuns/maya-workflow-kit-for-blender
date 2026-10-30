@@ -123,7 +123,7 @@ def key_changed(ob, frame):
         group = fc.group.name if fc.group is not None else ""
         try:
             ob.keyframe_insert(fc.data_path, index=fc.array_index, frame=frame, group=group)
-            from . import graph_key_menu      # Maya default tangents (step 157)
+            from . import graph_key_menu      # default tangents, like Maya
             graph_key_menu.after_insert(ob, fc.data_path, fc.array_index, frame)
             count += 1
         except (RuntimeError, TypeError):

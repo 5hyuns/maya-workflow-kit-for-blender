@@ -64,7 +64,7 @@
   {
    "name": "menus_shelves",
    "title": "Menu sets, shelves, option boxes",
-   "line": "F2–F6 menu sets, factory shelves, option windows with Maya's defaults.",
+   "line": "F2–F6 menu sets, factory shelves, option windows with the same defaults as Maya.",
    "callouts": [
     {
      "rect": "IMAGE_EDITOR",

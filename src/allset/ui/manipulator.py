@@ -707,7 +707,7 @@ def draw_tool_settings(self, context):
         # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template (step 25).
         layout.label(text="Step: one grid unit", icon='SNAP_INCREMENT')
     if kind == 'TRANSLATE':
-        # Blender snapping always keeps the selection's spacing (Maya's default; off = not possible).
+        # Blender snapping always keeps the selection's spacing (on by default, like Maya; off = not possible).
         layout.label(text="Retain Component Spacing", icon='CHECKBOX_HLT')
     if context.mode == 'OBJECT':
         layout.label(text="Pivot")

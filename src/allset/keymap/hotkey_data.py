@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2026 factory hotkeys for the kit Hotkey Editor (generated file — do not edit).
+"""Maya 2026 standard hotkeys for the kit Hotkey Editor (generated file — do not edit).
 
-One tuple per factory binding: (key, modifiers, Maya key text,
+One tuple per standard binding: (key, modifiers, Maya key text,
 hotkey context, press runTimeCommand, press nameCommand, release runTimeCommand, Hotkey Editor category,
-position in the factory hotkey list, platform). Names and keys only."""
+position in the standard hotkey list, platform). Names and keys only."""
 
 FIELDS = ("key", "modifiers", "text", "context", "command", "name_command", "release", "category", "line", "platform")
 

@@ -97,7 +97,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     area, _region = view3d()
     rv3d = area.spaces.active.region_3d
-    # Maya's default persp angle (from +X, front, above)
+    # the startup persp angle, like Maya (from +X, front, above)
     rv3d.view_perspective = 'PERSP'
     rv3d.view_rotation = Euler((math.radians(62), 0, math.radians(42))).to_quaternion()
     rv3d.view_location = (0, 0, 0.3)

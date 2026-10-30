@@ -21,7 +21,7 @@ from .. import compat
 from . import control_shapes
 from .preselect import project, segment_distance
 
-# Maya factory customSelectPriority for the kit's object kinds; anything else is 2.
+# selection priority (like Maya) for the kit's object kinds; anything else is 2.
 IK_HANDLE, JOINT, CURVE, DEFAULT = 10, 9, 4, 2
 RADIUS_PX = 5.0     # a click box of half-width 4: half diagonal ~5.7
 BONE_WIDTH = 0.1    # octahedral bone: widest at 0.1 x length (Blender's bone shape)

@@ -83,7 +83,7 @@ def test_names_and_shapes():
     assert cmds.shape_name_for("box10") == "boxShape10" and cmds.shape_name_for("hero") == "heroShape"
     assert cmds.renamed_shape("ctrl", "ctrlShape", "ctrl2") == "ctrl2Shape"
     assert cmds.renamed_shape("pCube1", "pCubeShape1", "pCube1x") == "pCube1xShape"
-    assert cmds.group(em=True, n="top") == "top1", "Maya's default camera names are taken"
+    assert cmds.group(em=True, n="top") == "top1", "Maya's startup camera names are taken"
     assert cmds.ls("null*") == [] and cmds.ls("top*") == ["top1"]
     a = cmds.polyCube()[0]
     assert cmds.ls("pCube*") == ["pCube1", "pCubeShape1"], cmds.ls("pCube*")

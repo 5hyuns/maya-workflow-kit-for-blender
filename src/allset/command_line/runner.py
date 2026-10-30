@@ -284,7 +284,7 @@ def _format(value):
 # "file ... line n:" part off; Show Stack Trace adds the traceback lines, each behind "# ".
 
 KINDS = ("ECHO", "OUTPUT", "RESULT", "INFO", "WARNING", "ERROR", "TRACE")
-OPTION_DEFAULTS = {         # Maya 2022 factory states (Script Editor History menu check items)
+OPTION_DEFAULTS = {         # default states, like Maya (Script Editor History menu check items)
     "se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True, "se_stack_trace": False,
     "se_suppress_results": False, "se_suppress_info": False, "se_suppress_warnings": False,
     "se_suppress_errors": False, "se_suppress_stack_window": False, "se_suppress_dup_vars": False,
@@ -299,7 +299,7 @@ _PREFIXES = (("# Warning:", "WARNING"), ("// Warning:", "WARNING"), ("# Error:",
 
 
 def option(name):
-    """A Script Editor History option (add-on preference ``name``); Maya's factory state without the preferences."""
+    """A Script Editor History option (add-on preference ``name``); the default state (like Maya) without the preferences."""
     try:
         from .. import preferences
         return getattr(preferences.get(), name)

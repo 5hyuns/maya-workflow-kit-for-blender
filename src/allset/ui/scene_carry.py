@@ -139,8 +139,8 @@ def _in_maya_layout():
 def carries_from_current():
     """The current scene holds the session's Maya tool settings: a file was loaded since Maya mode came on (that
     load already carried / started them), or the window shows the Maya layout. Not Blender's startup scene right after
-    Blender started: its Blender defaults (Median Point pivot, Global Rotate axis) must not replace the Maya
-    defaults of the kit's New Scene (the first Maya scene of a session starts from Maya's factory settings)."""
+    Blender started: its Blender defaults (Median Point pivot, Global Rotate axis) must not replace the Maya-style
+    defaults of the kit's New Scene (the first Maya scene of a session starts from the default settings, like Maya)."""
     return _session["loaded"] or _in_maya_layout()
 
 

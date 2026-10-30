@@ -318,7 +318,7 @@ def default_tangents():
 
 
 def apply_default(fc, kp):
-    """Maya's default in / out tangent on a key the kit just set (Auto = Blender's own new key: untouched)."""
+    """The default in / out tangent (like Maya) on a key the kit just set (Auto = Blender's own new key: untouched)."""
     tin, tout = default_tangents()
     if tin == "AUTO" and tout == "AUTO":
         return False

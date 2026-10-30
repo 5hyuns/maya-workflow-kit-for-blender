@@ -18,7 +18,7 @@ W = H = 400
 
 
 def test_priority_table_is_mayas():
-    # Maya defaults
+    # priorities like Maya
     assert sp.priority('IK_HANDLE') == 10 and sp.priority('ARMATURE') == 9 and sp.priority('CURVE') == 4
     for other in ('MESH', 'EMPTY', 'LIGHT', 'CAMERA', 'SURFACE', 'FONT', 'OTHER'):
         assert sp.priority(other) == 2, other

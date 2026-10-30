@@ -1,6 +1,6 @@
 """Step 214 (#120) lane F12 in a real UI: Maya Workflow Kit layout, a cube, no lights, a camera -> F12 over the
 Outliner = Blender's Render Image through ``allset.render_blender``: the Render window opens, the cube is lit by
-Maya's default light (added on the main thread before the render job, operators/default_light.py) and the light is
+the default light, like Maya (added on the main thread before the render job, operators/default_light.py) and the light is
 gone after the job. F12 over the 3D View in object mode stays Maya's UV selection mask (no render).
 Screenshots: gui_step214_f12_render.png (Render window), gui_step214_f12_main.png."""
 

@@ -22,7 +22,7 @@ NOTICES = {
        for item in ("Interactive Bind Skin", "Interactive Bind Skin Tool")},
     # Windows > Settings/Preferences (step 120)
     "Windows/Settings/Preferences/Shelf Editor": (
-        "Shelves", "The shelves are Maya's factory shelves; there is no shelf editor (right-click a Blender "
+        "Shelves", "The shelves are Maya's standard shelves; there is no shelf editor (right-click a Blender "
         "button > Add to Quick Favorites keeps your own commands)."),
     "Windows/Settings/Preferences/Panel Editor": (
         "Workspaces", "Blender saves panel layouts as workspaces: drag area edges and save the file or "
@@ -791,7 +791,7 @@ PANEL_MENU = {
         "Editor > Film Offset)."),
     _PT + "Resolution Gate": (
         "Camera view frame (always on)", "Blender's camera view always draws the render resolution frame (Maya's "
-        "resolution gate; Maya's factory camera has it off, overscan 1.0): it can't be "
+        "resolution gate; a new Maya camera has it off, overscan 1.0): it can't be "
         "hidden. Gate Mask dims the outside (Blender passepartout)."),
     _PT + "Field Chart": (
         "Safe Action / Safe Title", "Blender has no field chart: the safe areas (Safe Action / Safe Title) are the "
@@ -1002,8 +1002,8 @@ NOTICES.update({
         "Dope Sheet key types", "Blender draws Graph Editor keys without state marks; key types (breakdown, ...) "
         "show in the Dope Sheet.") for item in ("Detailed", "Simple")},
     **{_GE_VIEW + "Time Ruler Placement/" + item: (
-        "Top", "Blender's Graph Editor time ruler is always at the top (the scrubbing area), Maya's factory "
-        "placement.") for item in ("Top", "Bottom")},
+        "Top", "Blender's Graph Editor time ruler is always at the top (the scrubbing area), like Maya's "
+        "standard placement.") for item in ("Top", "Bottom")},
     _GE_VIEW + "Simple Toolbar": (
         "Graph Editor toolbar", "Blender has one row for the Maya Graph Editor toolbar: there is no simple "
         "variant."),
@@ -1103,7 +1103,7 @@ CATEGORIES.update({
     "Component Editor/Options/Show Path Name": (
         "Mesh names", "The table shows the mesh data names: Blender has no DAG path or namespace to add."),
     "Component Editor/Options/Change Precision...": (
-        "3 decimals", "Blender fields show 3 decimals here (Maya's factory precision); type more digits in a cell to set them."),
+        "3 decimals", "Blender fields show 3 decimals here (the default precision, like Maya); type more digits in a cell to set them."),
     "Component Editor/Options/Remember This Layout...": (
         "Hide Zero Columns", "Blender keeps no saved column layouts here: Hide Zero Columns / Show All Columns pick the "
         "columns."),

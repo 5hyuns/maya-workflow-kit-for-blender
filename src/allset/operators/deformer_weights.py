@@ -9,7 +9,7 @@ same structure, so Maya reads its files and the kit reads Maya's (and Maya's JSO
 A kit skin = the Armature modifier (named ``skinClusterN``, step 158) + vertex groups named after its bones; a kit
 deformer (operators/deformers.py) owns one vertex group = its ``baseLayer`` weights.
 
-Import "Index" (Maya's default): an influence in the file replaces that influence's whole weight list — vertices the
+Import "Index" (the default, like Maya): an influence in the file replaces that influence's whole weight list — vertices the
 file leaves out get the element's defaultValue (0 = out of the group); influences the file doesn't mention keep their
 weights. "Nearest": each vertex takes the weights of the file point closest to it (object space). Sources that aren't
 influences of the target are skipped with Maya's warning.
@@ -28,7 +28,7 @@ from . import units
 
 PRECISION = 9          # Maya writes 3 decimals by default (-weightPrecision 3); the kit writes 9 (lossless to 1e-9)
 BASE_LAYER = "baseLayer"
-METHODS = (("INDEX", "Index", "Weights by vertex index (Maya's default)"),
+METHODS = (("INDEX", "Index", "Weights by vertex index (the default, like Maya)"),
            ("NEAREST", "Nearest", "Each vertex takes the weights of the closest point in the file"))
 UNKNOWN_WARNING = "Unable to find the match weight set name '{}' to given deformer."
 NO_DEFORMER = "No deformer found.  Please select an object with a deformer."

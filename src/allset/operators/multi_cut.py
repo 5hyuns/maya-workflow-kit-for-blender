@@ -824,7 +824,7 @@ class ALLSET_OT_multi_cut_exit(bpy.types.Operator):
 
 
 class ALLSET_OT_multi_cut_reset(bpy.types.Operator):
-    """Reset the Multi-Cut options to Maya's factory values (Tool Settings > Reset Tool)"""
+    """Reset the Multi-Cut options to their default values, like Maya (Tool Settings > Reset Tool)"""
     bl_idname = "allset.multi_cut_reset"
     bl_label = "Reset Multi-Cut"
     bl_options = {'REGISTER', 'UNDO'}

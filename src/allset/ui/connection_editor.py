@@ -450,7 +450,7 @@ def register():
     wm.allset_cn_open = StringProperty(name="Open Compounds")
     wm.allset_cn_mode = EnumProperty(name="Mode", items=MODES, default="FROM_TO")
     wm.allset_cn_auto = BoolProperty(name="Auto-connect", default=True,
-                                     description="A pick on the right connects / breaks at once (Maya factory: on)")
+                                     description="A pick on the right connects / breaks at once (on by default, like Maya)")
     wm.allset_cn_names = EnumProperty(name="Channel Names", default="LONG",
                                       items=(("NICE", "Nice", ""), ("LONG", "Long", ""), ("SHORT", "Short", "")))
 

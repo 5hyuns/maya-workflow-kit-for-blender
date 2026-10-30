@@ -97,7 +97,7 @@ def s_cut():
 @step
 def s_shot_default():
     wm = bpy.context.window_manager
-    check("Maya factory: Texture Borders on", wm.allset_uv_texture_borders and not wm.allset_uv_shell_borders)
+    check("default: Texture Borders on", wm.allset_uv_texture_borders and not wm.allset_uv_shell_borders)
     w, _a, _r = uv_window()
     seg = mod(".ui.uv_display").segments_of(cube(), bpy.context.scene.tool_settings.use_uv_select_sync)
     check(f"border segments drawn: {len(seg) // 2}", len(seg) // 2 == 12 + 4)   # 5-face cross outline 12 + top face 4

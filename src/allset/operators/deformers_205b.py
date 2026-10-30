@@ -3,9 +3,9 @@
 
 Maya rules: nodes / names / option windows, Morph, Jiggle.
 Blender has neither deformer, so each is a Geometry Nodes modifier named like the Maya node (``morph1``,
-``jiggle1``) on a shared node group, like the kit wire (operators/wire_deformer.py, step 169): it deforms whatever
-reaches it (upstream modifiers / shape keys), its painted weights are the vertex group of the node's name (Maya
-default weight 1), Deform > Paint Weights > Jiggle paints it, Delete Non-Deformer History keeps it
+``jiggle1``) on a shared node group, like the kit wire (operators/wire_deformer.py): it deforms whatever
+reaches it (upstream modifiers / shape keys), its painted weights are the vertex group of the node's name (default
+weight 1, like Maya), Deform > Paint Weights > Jiggle paints it, Delete Non-Deformer History keeps it
 (history.is_deformer: every kit deformer of ``deformers.BASES``), and the Channel Box INPUTS show the Maya
 attributes (``deformers.ATTRS``, rows ``maya:<key>``).
 

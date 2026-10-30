@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2026 factory shelves (generated file — do not edit).
+"""Maya's standard shelves (generated file — do not edit).
 
 Labels and runTimeCommand names only. SHELVES = [(file name, tab label, [(button label, runTimeCommand | None)])].
 GAPS = {file name: button indices that follow a Maya shelf separator}.

@@ -155,7 +155,7 @@ def test_bake_default_matches_maya():
     after = _pos(box, (1, 5, 10))
     for f in (1, 5, 10):
         assert (after[f] - before[f]).length < 1e-3, (f, after[f], before[f])
-    # moving the driver no longer moves the baked box (Maya default case)
+    # moving the driver no longer moves the baked box (default case, like Maya)
     for kp in _curve(ctrl, "location", 0).keyframe_points:
         if abs(kp.co.x - 10.0) < 1e-6:
             kp.co.y = kp.handle_left.y = kp.handle_right.y = 6.0

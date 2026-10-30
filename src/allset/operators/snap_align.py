@@ -128,7 +128,7 @@ def snap_points(context, count):
 
 
 def align_objects(context, axes=(True, False, False), mode='MID'):
-    """Snap Align Objects > Align Objects with Maya's factory options (S11): along world
+    """Snap Align Objects > Align Objects with the default options (like Maya, S11): along world
     ``axes``, the bounding boxes' min / mid / max lined up at their average."""
     obs = list(context.selected_objects)
     if len(obs) < 2:

@@ -4,7 +4,7 @@
 Maya: every target gives a quaternion
 q_i = canon(rotation(targetParent · constraintParent⁻¹)) ⊗ q_Euler(rotate) [⊗ q_Euler(targetOffsetRotate), parent
 constraint with offset, applied first]; the matrix part has w >= 0, the Euler parts keep their sign. Then
-- Average (1, Maya's default): normalize(Σ w_i q_i), no hemisphere alignment;
+- Average (1, the default, like Maya): normalize(Σ w_i q_i), no hemisphere alignment;
 - Shortest (2) / Longest (3): acc = q_0, acc = slerp(acc, q_i, w_i / W_total) the short / long way;
 - No Flip (0): Shortest and Longest are both built, the one turning (1, 1, 1) closer to where the previous output
   turned it wins (tie: Longest); the previous output starts as the output when the constraint was made;

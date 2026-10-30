@@ -42,7 +42,7 @@ NOTICES = {
     PATH + "Import Workspace Files...": ("File > Append", "Blender brings workspaces from other files with File > "
                                          "Append > WorkSpace."),
     PATH + "Delete Current Workspace": ("Workspace tabs", "Blender deletes a workspace from its tab's menu; Maya's "
-                                        "factory workspaces come back with Reset."),
+                                        "standard workspaces come back with Reset."),
     PATH + "Disable Docking/Undocking": ("Area corners", "Blender's areas are split and joined at their corners; "
                                          "there is no docking lock."),
 }

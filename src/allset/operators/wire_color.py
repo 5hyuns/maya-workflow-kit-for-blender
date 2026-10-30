@@ -31,7 +31,7 @@ Which wins when both are set: the drawing override (enabled with an index > 0 or
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatVectorProperty, IntProperty
 
-# Maya 2026 factory colorIndex palette, sRGB 0-1.
+# Maya's colorIndex palette, sRGB 0-1.
 # Index 0 = the default colour (no override). Values only.
 PALETTE = {
     1: (0.0, 0.0, 0.0), 2: (0.25, 0.25, 0.25), 3: (0.6, 0.6, 0.6), 4: (0.608, 0.0, 0.157),
@@ -330,7 +330,7 @@ def _annotations():
         "apply_now": BoolProperty(name="Apply", options={'SKIP_SAVE'}, update=_apply_update,
                                   description="Colour the selected objects and keep the window open (Maya Apply)"),
         "default_now": BoolProperty(name="Default", options={'SKIP_SAVE'}, update=_default_update,
-                                    description="Back to the default wire colour (Maya Default)"),
+                                    description="Back to the default wire colour (like the Default button in Maya)"),
     }
     for i in range(1, USER_COUNT + 1):
         ann[f"swatch_{i}"] = FloatVectorProperty(name=f"User Color {i}", subtype='COLOR_GAMMA', size=3,

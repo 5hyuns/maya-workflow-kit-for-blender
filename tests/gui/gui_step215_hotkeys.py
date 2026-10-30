@@ -1,5 +1,5 @@
 """Step 215 (#121) in a real UI: Windows > Settings/Preferences > Hotkey Editor opens the kit Hotkey Editor window
-(Maya's factory hotkeys, the kit's key for each); typing "select toggle" into its search field filters the list;
+(Maya's standard hotkeys, the kit's key for each); typing "select toggle" into its search field filters the list;
 Assign New Hotkey takes the next key press (Ctrl+F6), after which Ctrl+F6 over the viewport runs Maya's
 SelectToggleMode and F8 no longer does; Restore brings F8 back. Shots: the window, the window after the search."""
 

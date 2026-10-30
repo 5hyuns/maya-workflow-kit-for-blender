@@ -182,7 +182,7 @@ VOLUME_LIGHT = [
       ("missing", "Emit Ambient", "not in Blender's point light"),
       ("prop", "data", "diffuse_factor", "Emit Diffuse"),
       ("prop", "data", "specular_factor", "Emit Specular")),
-    S("Color Range", False, ("missing", "Color Range", "linear centre-to-edge falloff only (Maya factory ramp)")),
+    S("Color Range", False, ("missing", "Color Range", "linear centre-to-edge falloff only (like the default Maya ramp)")),
     S("Penumbra", False, ("missing", "Penumbra", "Blender has no volume light penumbra")),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
 ]

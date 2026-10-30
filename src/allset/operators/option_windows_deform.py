@@ -2,7 +2,7 @@
 """Step 144 (#34) Maya option windows of the Deform menu: same spec as operators/option_windows.py (``F`` fields,
 ``Window`` = one ``allset.opt_<key>`` operator; option_windows._extend appends ``WINDOWS``).
 
-Titles, buttons, Basic tab fields in screen order and factory defaults: Maya's Deform
+Titles, buttons, Basic tab fields in screen order and default values match Maya's Deform
 option windows. Every Python-built deformer box also has an
 Advanced tab (Deformation order / Exclusive / Partition): Blender's modifier stack
 has none of them, so they and every Basic field Blender can't honour are listed as ``missing``, never faked.

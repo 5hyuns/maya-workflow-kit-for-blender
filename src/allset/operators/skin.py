@@ -354,12 +354,12 @@ def normalize_mode(mesh):
     return mesh.get(NORMALIZE_PROP, "INTERACTIVE")
 
 
-# Maya Bind Skin "Bind method". Closest distance is Maya's factory method: weight of joint i on a vertex is
+# Maya Bind Skin "Bind method". Closest distance is the default method (like Maya): weight of joint i on a vertex is
 # distance(world vertex, joint i's segments) ** -dropoff, the segments run from the joint to each child joint (an end
 # joint is a point), dropoff = skinCluster dropoffRate (factory 4), the largest ``max influences`` kept, normalised.
 # World space: an object's non-uniform scale doesn't matter (#94 - Blender's bone heat on a mesh with Scale Y 8 and
 # one height subdivision left joint2 with no weights). Heat Map = Blender's automatic weights (bone heat).
-BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Maya's factory bind: weights fall off with the distance to "
+BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Default bind (like Maya): weights fall off with the distance to "
                  "each joint"),
                 ("CLOSEST_HIERARCHY", "Closest in hierarchy", "Only the joints next to the closest one in the "
                  "skeleton (and the end joints) take weight"),
@@ -368,7 +368,7 @@ DROPOFF = 4.0
 # Maya treats a vertex within 1e-4 of joints as on them: those share it equally
 # (the kit used 1e-9 before step 247)
 ON_JOINT = 1e-4
-SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matrices (Maya factory)"),
+SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matrices (the default, like Maya)"),
             ("DUAL_QUATERNION", "Dual quaternion", "Volume-preserving blend (Blender Preserve Volume)"),
             ("WEIGHT_BLENDED", "Weight blended", "Per vertex mix of linear and dual quaternion by the blendWeights "
              "vertex group (0 = linear until painted)"))

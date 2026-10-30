@@ -17,7 +17,7 @@ from .menu_map import MAP as _MENU_MAP, _con, _create, _dock, _mod
 
 
 def _key(kind):
-    # step 157: Translate / Rotate / Scale keys go through the kit's Set Key (Maya default tangents apply)
+    # Translate / Rotate / Scale keys go through the kit's Set Key (the default tangents apply, like Maya)
     channels = {"Location": "TRANSLATE", "Rotation": "ROTATE", "Scaling": "SCALE"}.get(kind)
     if channels:
         return ("allset.set_key", {"channels": channels})

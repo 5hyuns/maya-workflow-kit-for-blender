@@ -172,7 +172,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Graph Editor 1 / 2 / 3 = the Graph Editor view modes (Maya default
+# Graph Editor 1 / 2 / 3 = the Graph Editor view modes (Maya
 # hotkeys). Blender has Normalize; a stacked view (each curve in its own band) isn't there: 2 = normalized + notice.
 VIEW_MODES = (("ABSOLUTE", "Absolute", "Maya 1: curves at their values"),
               ("STACKED", "Stacked", "Maya 2: not in Blender, curves are normalized instead"),

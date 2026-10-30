@@ -8,7 +8,7 @@ registers them again. Only this module and the preferences stay registered in Bl
 mode, so the switch is always there: a small toggle at the right of the top bar, the
 add-on preferences, Edit (Blender) / Windows > Settings/Preferences (Maya) menu items that
 the menu search finds, and Ctrl+Alt+Shift+M (free in Blender, Industry Compatible and
-Maya's factory hotkeys).
+Maya's standard hotkeys).
 
 Nothing persistent (step 130): Maya mode writes none of Blender's preferences and
 nothing outside the extension's folders, so switching off / disabling / removing needs no snapshot or restore —

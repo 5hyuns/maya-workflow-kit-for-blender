@@ -4,7 +4,7 @@
 Pure Python. Used by tools/gen_keymap_mapping.py (writes the doc) and by
 tests/test_keymap_maya.py (checks every IC/KIT row is really bound).
 
-Maya side: Maya's factory hotkeys (keys, contexts and
+Maya side: Maya's standard hotkeys (keys, contexts and
 runTimeCommand names only; no MEL is copied).
 
 Status:
@@ -43,7 +43,7 @@ _DIGITS = ("ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT
 
 
 def maya_event(hotkey):
-    """Blender event dict for a Maya factory hotkey entry (PRESS)."""
+    """Blender event dict for a Maya hotkey entry (PRESS)."""
     key, mods = hotkey["key"], hotkey["modifiers"]
     shift = "sht" in mods
     if len(key) == 1 and key.isalpha():
@@ -678,13 +678,13 @@ ENTRIES = {
 
 
 def entry_for(hotkey):
-    """Mapping entry for a Maya factory hotkey item (None = unreviewed)."""
+    """Mapping entry for a Maya hotkey item (None = unreviewed)."""
     press = hotkey.get("press") or {}
     # MTK keys (Ctrl+Shift+X / Q) only have a nameCommand
     rtc = press.get("runTimeCommand") or press.get("nameCommand")
     if not rtc:         # release-only row (e.g. TogglePanZoomRelease, step 87)
         rtc = (hotkey.get("release") or {}).get("runTimeCommand")
-    if not rtc:         # an explicitly empty Maya binding (Maya 2022 factory hotkeys, step 107)
+    if not rtc:         # an explicitly empty Maya binding (Maya's standard hotkeys)
         return ENTRIES.get(f"line:{hotkey.get('line')}")
     if hotkey.get("context", "global") != "global":
         return ENTRIES.get(f"{hotkey['context']}:{rtc}")

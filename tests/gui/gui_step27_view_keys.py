@@ -72,7 +72,7 @@ def s_wire():
 @step
 def s_home():
     rv3d = view3d()[0].spaces.active.region_3d
-    check(f"Home goes to the Maya default persp view (distance {rv3d.view_distance:.2f} BU, "
+    check(f"Home goes to the startup persp view (distance {rv3d.view_distance:.2f} BU, "
           f"location {tuple(round(v, 2) for v in rv3d.view_location)})",
           abs(rv3d.view_distance - 44.82) < 0.05 and rv3d.view_location.length < 1e-6)
     cube = bpy.data.objects["Cube"]

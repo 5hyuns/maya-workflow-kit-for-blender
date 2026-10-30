@@ -730,7 +730,7 @@ def clear_objects():
         if not c.get("allset_set"):
             bpy.data.collections.remove(c)
     bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
-    sc = bpy.context.scene                  # Maya's default time range for every new set
+    sc = bpy.context.scene                  # the startup time range (like Maya) for every new set
     sc.frame_start, sc.frame_end = 1, 120
     sc.use_preview_range = False
     sc.frame_set(1)

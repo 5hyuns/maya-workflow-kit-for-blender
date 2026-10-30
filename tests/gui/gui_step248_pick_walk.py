@@ -127,7 +127,7 @@ def s_right2():
 def s_radius_shot():
     shot("radius_row")
     b = rig().data.bones["R_arm"]
-    check(f"R_arm Radius reads Maya's default ({b.allset_joint_radius:g})", abs(b.allset_joint_radius - 1.0) < 1e-6)
+    check(f"R_arm Radius reads the default (1, {b.allset_joint_radius:g})", abs(b.allset_joint_radius - 1.0) < 1e-6)
     b.allset_joint_radius = 2.0
     with ov():
         bpy.ops.allset.menu_item(item="Display/Transform Display/Local Rotation Axes")

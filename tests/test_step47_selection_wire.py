@@ -94,7 +94,7 @@ def test_saved_file_keeps_no_wire():
 
 def test_option_and_disable():
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences
-    assert prefs.maya_selection_wire                    # Maya default: wireframe on selected
+    assert prefs.maya_selection_wire                    # default, like Maya: wireframe on selected
     prefs.maya_selection_wire = False
     assert not sw._enabled()
     prefs.maya_selection_wire = True

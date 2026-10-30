@@ -2,7 +2,7 @@
 
 New Maya Workflow Kit scene -> the Tool Box column shows its tools at the running UI scale (run at the default 1.25 and with
 ``--ui-scale 0.8``: the column is resized through ALLSET_OT_fit_columns, the main view keeps no toolbar), the
-layout Outliner lists Maya's default rows (persp / top / front / side, defaultLightSet, defaultObjectSet) from the
+layout Outliner lists Maya's startup rows (persp / top / front / side, defaultLightSet, defaultObjectSet) from the
 top, the dock shows Maya's three tabs (Channel Box / Layer Editor first) and allset_dock follows them both ways.
 Then a cube and a light: the default rows follow the DAG rows, defaultLightSet selects the light, persp clears the
 selection."""
@@ -106,7 +106,7 @@ def s_toolbox():
     # step 211: persp / top / front / side are Maya's startup cameras = Blender's first four rows; the kit draws the
     # default sets right under them
     want_rows = [('DEFAULT_SET', "defaultLightSet"), ('DEFAULT_SET', "defaultObjectSet")]
-    check(f"Outliner draws Maya's default sets ({names})", names == want_rows)
+    check(f"Outliner draws Maya's startup sets ({names})", names == want_rows)
     _a, reg = outl()
     u = mod("ui.outliner_sets").unit(bpy.context.preferences)
     cams = [o.name for o in mod("operators.startup_cameras").cameras(bpy.context.scene)]

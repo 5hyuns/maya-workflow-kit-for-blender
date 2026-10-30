@@ -128,7 +128,7 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
   back) and make your own, opened by holding a hotkey + LMB like Maya.
 - **Menu sets** Modeling / Rigging / Animation / FX / Rendering on **F2–F6**, Maya's menu order and names, Maya hotkeys
   shown in the menus, dotted tear-off lines.
-- **Option boxes (❒)** open Maya option windows with Maya 2022's factory values — Save Settings, Reset Settings, Apply
+- **Option boxes (❒)** open Maya option windows with the same defaults as Maya — Save Settings, Reset Settings, Apply
   and the command button; a plain click then uses your saved values.
 - **Shelves**: the factory shelves (Polygons, Rigging, Animation, Rendering, FX …) with every button in its Maya slot,
   plus your own Python shelves.
@@ -148,7 +148,7 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
   selected channels, Channels menu and right-click menu, display layers.
 - **Attribute Editor** with Maya's node tabs and sections (transform, shape, history, material, shading group) and
   Notes; **Ctrl+A** toggles Channel Box ↔ Attribute Editor.
-- **Outliner** with Maya's Display / Show menus (DAG hierarchy, Shapes toggle), sets and Maya's default rows.
+- **Outliner** with Maya's Display / Show menus (DAG hierarchy, Shapes toggle), sets and Maya's startup rows (cameras, default sets).
 - Maya menu bars in the **Graph Editor, Dope Sheet, UV Editor, Hypershade, Render Settings and Script Editor**; a
   **Tool Settings** dock; the **Modeling Toolkit**.
 - **Command Line** and **Script Editor** run Python with a small `maya.cmds` look-alike (e.g. `cmds.polyCube()`,

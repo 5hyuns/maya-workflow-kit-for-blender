@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya projects, scene saving and references (step 69).
 
-Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's default sub-folders
+Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's standard sub-folders
 (Project Window) and a marker file; the current project and Recent Projects live in
 the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 
@@ -26,7 +26,7 @@ from bpy.props import BoolProperty, StringProperty
 from .. import results
 from ..names import PRODUCT
 
-# Maya's default project folders (Scenes, Templates = assets, Images, Source Images, Render Data,
+# Maya's standard project folders (Scenes, Templates = assets, Images, Source Images, Render Data,
 # Clips, Sound, Scripts, Disk Cache = data, Movies, ..., AutoSave); "cache" for Blender's simulation caches.
 FOLDERS = ("scenes", "assets", "images", "sourceimages", "renderData", "clips", "sound", "scripts", "data", "movies",
            "cache", "autosave")
@@ -51,9 +51,9 @@ def _norm(path):
     return os.path.normcase(os.path.abspath(bpy.path.abspath(path))) if path else ""
 
 
-# Maya's default project is <Documents>/maya/projects/default, made at first start, so a dialog never starts in a
-# bare Documents folder (step 102). The kit's own default sits next to it
-# under "Maya Workflow Kit/" (the product name, step 125; the user's real Maya folder is never written);
+# Like Maya, which keeps a default project under <Documents>/maya/projects, a dialog never starts in a
+# bare Documents folder. The kit's own default sits next to it
+# under "Maya Workflow Kit/" (the product name; the user's real Maya folder is never written);
 # ALLSET_PROJECTS_DIR moves it (test sandboxes).
 DEFAULT_NAME = "default"
 
@@ -224,7 +224,7 @@ class ALLSET_OT_set_project(bpy.types.Operator):
 
 
 class ALLSET_OT_project_window(bpy.types.Operator):
-    """Create a project: a folder with Maya's default sub-folders (Maya File > Project Window)"""
+    """Create a project: a folder with Maya's standard sub-folders (Maya File > Project Window)"""
     bl_idname = "allset.project_window"
     bl_label = "Project Window"
 

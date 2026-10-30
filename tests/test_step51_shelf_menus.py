@@ -136,8 +136,8 @@ class _Fake:
 
 
 def test_status_line_collapse_handles():
-    """Every Maya Status Line group has a collapse arrow; Maya's factory collapsed groups
-    (masks, history, input line) start collapsed (step 113)."""
+    """Every Maya Status Line group has a collapse arrow; the groups Maya collapses by default
+    (masks, history, input line) start collapsed."""
     status_line = import_module(kit.MODULE + ".ui.status_line")
     icons = import_module(kit.MODULE + ".ui.status_icons")
 

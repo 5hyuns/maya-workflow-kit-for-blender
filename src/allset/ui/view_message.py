@@ -22,7 +22,7 @@ from gpu_extras.batch import batch_for_shader
 
 # --- Maya sizes and colours (step 72) ----------------------------------------------------------------
 FADE_IN = 0.3
-HOLD = 2.0          # inViewMessageDisplayTime 2.0 (Maya default)
+HOLD = 2.0          # message display time 2.0 s, like Maya
 FADE_OUT = 1.5
 BOX_RGBA = (0.282, 0.282, 0.282, 0.75)   # inViewMessageOpacity 75
 TEXT_RGBA = (0.95, 0.95, 0.95, 0.9)

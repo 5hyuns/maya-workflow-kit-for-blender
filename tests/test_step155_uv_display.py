@@ -89,7 +89,7 @@ def test_display_ops():
     a, r = _uv_area()
     sp = a.spaces.active
     wm = bpy.context.window_manager
-    assert wm.allset_uv_texture_borders and not wm.allset_uv_shell_borders, "Maya factory: texture borders on"
+    assert wm.allset_uv_texture_borders and not wm.allset_uv_shell_borders, "default: texture borders on"
     with bpy.context.temp_override(area=a, region=r):
         bpy.ops.allset.uv_display(mode='SHELL_BORDERS')
         assert wm.allset_uv_shell_borders

@@ -15,8 +15,8 @@ views aren't cameras and the Maya Workflow Kit startup file has none, so ``rende
 
 The view is the 3D View the operator runs in, else the main window's largest 3D View (not the Tool Box column).
 
-The persp camera is linked to no collection (step 137): the kit Outliner already draws Maya's
-default ``persp`` row (``ui/outliner_sets.default_entries``, step 99), which stands for it; unlinked, it isn't a
+The persp camera is linked to no collection: the kit Outliner already draws Maya's
+startup ``persp`` row (``ui/outliner_sets.default_entries``), which stands for it; unlinked, it isn't a
 second row in Blender's Outliner, isn't selectable in the viewport, doesn't render as an object and isn't
 exported. ``scene.camera`` doesn't count as a user (it renders, follows its matrix, survives
 save / reload with ``use_fake_user``), so the object keeps a fake user like Maya's startup cameras, which every
@@ -166,7 +166,7 @@ class _Render:
         props = {"animation": self.ANIMATION}
         if self.write_still and not self.ANIMATION:
             props["write_still"] = True
-        # step 152: Maya's default light while the scene has no lights and Maya's Test Resolution, both only for
+        # the default light (like Maya) while the scene has no lights and Maya's Test Resolution, both only for
         # the duration of this render (an INVOKE render ends later: a timer waits for the render job)
         default_light.add(context.scene, ob)
         restore = render_batch.scaled(context)

@@ -5,7 +5,7 @@ Every Maya tangent type computes its own slope m (value per frame) from the keys
 plain cubic Hermite in time, i.e. Bezier handles at a third of each interval: in = (-h-/3, -m h-/3),
 out = (h+/3, m h+/3). Slope rules, key k with neighbours (t-, v-) and (t+, v+):
 
-- auto (Maya's factory type): first / last key flat; a middle key takes the central difference
+- auto (the default type in Maya): first / last key flat; a middle key takes the central difference
   m = (v+ - v-) / (t+ - t-), = 0 when the two secants s-, s+ differ in sign or m's sign differs from theirs (a zero
   secant counts as positive), else |m| <= min(3|s-|, 3|s+|);
 - spline: the central difference for a middle key, the secant to the one neighbour for an end key;

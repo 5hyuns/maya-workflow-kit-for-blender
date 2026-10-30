@@ -36,7 +36,7 @@ SLOTS = {"top": (0, 0), "persp": (1, 0), "front": (0, 1), "side": (1, 1)}
 # Blender view rotations of Maya's ortho cameras (Maya side looks from +X = Blender Right view)
 AXIS = {"top": Quaternion(), "front": Euler((math.pi / 2, 0.0, 0.0)).to_quaternion(),
         "side": Euler((math.pi / 2, 0.0, math.pi / 2)).to_quaternion()}
-# Maya 2026 factory shading of a new four view: every panel Smooth Shade All (= Blender Solid)
+# Shading of a new four view, like Maya: every panel Smooth Shade All (= Blender Solid)
 DEFAULT_SHADING = {"top": 'SOLID', "persp": 'SOLID', "front": 'SOLID', "side": 'SOLID'}
 SPLITS = (0.5001, 0.4999)            # HORIZONTAL (new on top), VERTICAL (new on the left)
 
@@ -243,7 +243,7 @@ def apply(space, data):
 
 
 def default(space, role, scene):
-    """A panel showing Maya's factory camera for ``role`` (persp = Maya's new-scene persp)."""
+    """A panel showing Maya's startup camera for ``role`` (persp = Maya's new-scene persp)."""
     from ..operators import units, view
     space.shading.type = DEFAULT_SHADING[role]
     rv3d = space.region_3d

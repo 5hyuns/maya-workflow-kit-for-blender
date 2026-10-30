@@ -478,7 +478,7 @@ MAYA_ATTR = {"location": "Translate", "rotation_euler": "Rotate", "scale": "Scal
 # the closest is the shape's render stat Primary Visibility (step 150).
 MAYA_SCALAR = {"hide_render": "Primary Visibility"}
 AXES = "XYZ"
-# Maya's default attribute name colours in the Graph Editor outliner (Translate X red,
+# Attribute name colours in the Graph Editor outliner, like Maya (Translate X red,
 # Translate Y green; Z blue by the same rule as the manipulator / theme axis colours), other attributes light grey.
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
@@ -1191,7 +1191,7 @@ _up_label = {}                                   # (row kind, fcurve pointer) ->
 
 
 def shows_upstream(space, flt=None):
-    """Graph Editor List > Show Upstream Curves (Maya factory on): upstream rows show unless an attribute filter
+    """Graph Editor List > Show Upstream Curves (on by default, like Maya): upstream rows show unless an attribute filter
     other than Driven by Driven Key is checked (Driven by Anim Curve hides them)."""
     flt = attr_filters() if flt is None else flt
     return (not _is_dope_space(space) and _wm_flag("allset_show_upstream")
@@ -1741,7 +1741,7 @@ FLAGS = (
      "them as rows)"),
     ("allset_show_pins", "Show Pins", "Toggle display of pinning buttons in the outliner"),
 )
-# Maya factory: Show Upstream Curves checked; View > Show Pins checked (Maya 2026)
+# On by default, like Maya: Show Upstream Curves checked; View > Show Pins checked
 FLAGS_ON = {"allset_show_upstream", "allset_show_pins"}
 
 

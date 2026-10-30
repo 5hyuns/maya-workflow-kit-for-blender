@@ -95,7 +95,7 @@ def _radius_set(self, value):
 
 
 class ALLSET_OT_soft_select_reset(bpy.types.Operator):
-    """Reset soft selection to Maya's factory settings (radius 5 Maya units, Volume, smooth falloff)"""
+    """Reset soft selection to the default settings, like Maya (radius 5 Maya units, Volume, smooth falloff)"""
     bl_idname = "allset.soft_select_reset"
     bl_label = "Reset Soft Selection"
     bl_options = {'REGISTER', 'UNDO'}

@@ -39,7 +39,7 @@ SIZE_ITEMS = [("CUSTOM", "Custom", "Width and height of your own")] + [
 # Maya Frame/Animation ext choices Blender can write (render.filepath patterns); the Maya label first
 EXTS = (("SINGLE", "name.ext (Single Frame)", ""), ("DOT", "name.#.ext", "."), ("PLAIN", "name#.ext", ""),
         ("UNDERSCORE", "name_#.ext", "_"))
-# Maya factory values (defaultResolution 960 x 540, imageFormat 32 = PNG, extensionPadding 4, animation off)
+# Default values like Maya (defaultResolution 960 x 540, imageFormat 32 = PNG, extensionPadding 4, animation off)
 DEFAULTS = {"size": "HD_540", "file_format": 'PNG', "padding": 4, "ext": "SINGLE"}
 
 

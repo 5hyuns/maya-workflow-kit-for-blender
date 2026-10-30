@@ -379,7 +379,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
 ### Changed
 - **Joint orientation like Maya 2025+** (#161): the Joint Tool and Skeleton > Orient Joint orient with Maya's
   auto orient secondary axis; new joints have Segment Scale Compensate on and Maya's joint radius.
-- **IK RP like Maya** (#162): a new RP handle gets Maya's default pole vector, Pole Vector X / Y / Z and Twist channels;
+- **IK RP like Maya** (#162): a new RP handle gets a pole vector like Maya, Pole Vector X / Y / Z and Twist channels;
   Constrain > Pole Vector turns the plane to the target, and straight chains bend by their preferred angle like Maya.
 - **Skin commands** (#164): Prune Small Weights, Set Max Influences, Go to Bind Pose and Mirror Skin Weights follow
   Maya 2026 (Mirror Skin Weights takes the closest surface point and writes only the selected destination vertices).
@@ -410,7 +410,7 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
 - **Rig and animation polish** (#146): Enable IK Solver shows its check mark; the first Paint Skin Weights entry picks
   the first influence in hierarchy order; importing an animation FBX sets the Time Slider to the file's range; typing a
   value in the Set Driven Key window is no longer overwritten before Key.
-- **Hotkeys, shelves and editor menus follow Maya 2026**: the Hotkey Editor lists Maya 2026's factory bindings;
+- **Hotkeys, shelves and editor menus follow Maya 2026**: the Hotkey Editor lists Maya 2026's standard hotkeys;
   shelves have the 2026 tabs (Curves, Surfaces, UV Editing) and buttons; Graph Editor and Dope Sheet menu bars and icon
   rows follow Maya 2026.
 - **Alt navigation with Emulate 3 Button Mouse** (#177): the preferences and the welcome dialog explain that Blender's
@@ -474,11 +474,11 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
   Maya. IK Spline can use an existing curve, and a cluster on curve CVs moves exactly those CVs (#129).
 - **Quaternion bones** in received rigs show Maya's Rotate X / Y / Z in the Channel Box and key with S, Shift+E and
   Auto Key (#131).
-- **Game Exporter** (#135): Maya's clip list, one FBX take per clip or one file per clip, Maya's defaults.
+- **Game Exporter** (#135): Maya's clip list, one FBX take per clip or one file per clip, the same defaults as Maya.
 - **Motion Trail Editor** (#135) with Maya's settings, and **motion paths** (#138): Attach to Motion Path with Maya's
   offset keys, Set Motion Path Key, Flow Path Object, Loft with polygon output.
 - **Preferences window and Hotkey Editor** (#121): Maya's categories with the kit's settings in Maya's pages;
-  Maya's factory hotkeys with search and rebinding.
+  Maya's standard hotkeys with search and rebinding.
 - **Component, Shape and Connection Editors** (#119) with Maya's menu bars: editable skin weights and vertex
   positions, blend shape targets, attribute connections as drivers.
 - **Reference Editor** (#116): reload, unload / load, replace, import, remove, duplicate, lock, clean up and offline
@@ -507,8 +507,8 @@ The release after audits 14–16 and the animation chain (steps 192–228). Blen
 - **Paint Skin Weights**: flood uses Maya 2026's Replace / Add / Scale / Smooth with locks (#129), the Influences
   menu has Maya's items, Alt+F and Maya's paint keys work; the Channel Box keeps showing channels while painting.
 - Reorder Deformers follows Maya's rule; Set Blend Shape Target Weight Keys keys the targets (#129).
-- **Renders match Maya's brightness** (#120): lambert-family materials render like Maya Software; F12 adds Maya's
-  default light.
+- **Renders match Maya's brightness** (#120): lambert-family materials render like Maya Software; F12 adds the default
+  light, like Maya.
 - **Names and scenes like Maya** (#117): sets, layers, characters and bookmarks number one past the highest; Ctrl+V
   pastes `pasted__` copies under a new group; new scenes have Maya's hidden startup cameras; the Outliner lists
   objects in creation order; Attribute Editor tabs stay in one row.
@@ -587,9 +587,9 @@ The release after audits 10 and 11 (steps 144–171). Blender 4.5 LTS through 5.
   with Maya's results.
 - **Skeleton / skin**: joint labelling (Left / Right / types, Label pairs for mirroring), Enable / Disable IK Handles,
   closest-distance Bind Skin like Maya (#94).
-- **Workspaces** (#81): Maya's factory workspaces (Maya Classic, Modeling, Sculpting, UV Editing, Rigging, Animation,
+- **Workspaces** (#81): Maya's standard workspaces (Maya Classic, Modeling, Sculpting, UV Editing, Rigging, Animation,
   Rendering) in Windows > Workspaces and the Status Line dropdown, Reset Current Workspace.
-- **Render and display** (#101): Maya's default light for kit renders, Render Sequence / Batch Render windows, Test
+- **Render and display** (#101): the default light (like Maya) for kit renders, Render Sequence / Batch Render windows, Test
   Resolution, Batch Render in the background, Display > Grid options.
 - **Visualize**: Create Animation Snapshot / Update Snapshot and Maya ghosting (Ghost Selected / Unghost Selected /
   Unghost All, Ghosting Editor) with Maya's frames, colours and opacity.
@@ -746,7 +746,7 @@ The first version prepared for extensions.blender.org (steps 14–117). Blender 
 - **Maya concepts**: Maya length units (21), Smooth Mesh Preview (15), visibility (16), Combine / Separate / Mirror /
   Boolean (63), editable extrude history (65), UV tools (66, 79), render and look-dev (67), FX scale (68), projects and
   references (69), playblast (70), sets (96), file import / export (102), rigging (57, 58, 110).
-- **Option windows** with Maya 2022's factory values, Save / Reset Settings and Apply (103).
+- **Option windows** with the same defaults as Maya, Save / Reset Settings and Apply (103).
 - **Listing package** (117): form fields, long description, media captions, technical
   disclosure, `docs/distribution/media/` (icon, featured image, six workflow screenshots; `tools/make_listing_media.py`).
 
@@ -787,7 +787,7 @@ First release (Blender 4.2+, built and tested on Blender 4.5.4 LTS).
   and defaults, optional Maya units.
 - **Outliner and Attribute Editor** (step 11): sidebar Outliner (DAG, shapes, rename), Attribute Editor node tabs with
   Maya template sections, Ctrl+A dock toggle, Ctrl+Shift+A / Alt+D selection keys.
-- **Shelf** (step 12): Status Line + Shelf strip, Maya factory shelves as Blender operators, user Python shelves.
+- **Shelf**: Status Line + Shelf strip, Maya's standard shelves as Blender operators, user Python shelves.
 
 ### Fixed (found by the clean-install release check, step 13)
 - Installing and enabling from the command line left the first GUI start on the Blender keymap.

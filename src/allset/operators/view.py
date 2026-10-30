@@ -685,8 +685,8 @@ def remember_persp(area, space):
 
 def ensure_persp(area, space):
     """Maya Single Perspective / Four View (#8): the single view (or the four view's top right panel) shows the
-    persp camera, never an ortho view: an ortho view gets the last persp view of this area back, else Maya's
-    default persp (Home)."""
+    persp camera, never an ortho view: an ortho view gets the last persp view of this area back, else the
+    default persp, like Maya (Home)."""
     rv3d = space.region_3d
     if rv3d is None or rv3d.view_perspective != 'ORTHO':
         return

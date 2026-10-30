@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 Hypershade window layout as Blender area splits (no bpy: tested headless; step 131).
 
-Maya's factory Hypershade is a
+Maya's standard Hypershade is a
 menu bar over five docked panels: Browser top-left, Material Viewer top-right, Create
 bottom-left, the Graph work area (node editor) between Create and the right column, Property Editor bottom-right.
 ``MAYA_RECTS`` are those panels (x, y, w, h; y down, window px); ``plan`` turns them into

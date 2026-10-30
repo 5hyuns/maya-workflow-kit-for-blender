@@ -35,7 +35,7 @@ CATEGORY = "Channel Box / Layer Editor"
 AE_CATEGORY = "Attribute Editor"
 MTK_CATEGORY = "Modeling Toolkit"
 # Channel Box pane share of the dock, Layer Editor below: about half of the dock below its header, like Maya's
-# factory screen (step 135).
+# standard screen.
 # The split is fixed: a long Channel Box scrolls inside its part.
 CB_SHARE = 0.50
 CB_SHARE_MAX = 0.62      # the Layer Editor keeps its tabs, toolbar and a few rows (step 135)

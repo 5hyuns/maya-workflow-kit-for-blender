@@ -138,7 +138,7 @@ def test_windows_bound_with_maya_titles_and_factory_values():
         rna = getattr(bpy.ops.allset, "opt_" + key).get_rna_type()
         for f in w.fields:
             assert f.name in rna.properties, (key, f.name)
-        # the default values make the expected operator call (= Maya's default command)
+        # the default values make the expected operator call (= the command Maya runs by default)
         name, mode, kw = _call(w)
         assert (name, mode) == (op, 'EXEC_DEFAULT'), (key, name, mode)
         assert kw == factory, (key, kw)

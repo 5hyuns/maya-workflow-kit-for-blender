@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner as a UIList in the 3D View sidebar (category "Outliner").
 
-Maya's default Outliner: no shapes,
+Maya Outliner as it starts: no shapes,
 DAG objects only, no auto expand; Maya transform / shape nodes;
 Blender's Outliner tree is C: a UIList is the
 way to a custom tree, without drag and drop.

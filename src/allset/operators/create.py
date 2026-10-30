@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Create menu: primitives at the origin with Maya's default size and names.
+"""Maya Create menu: primitives at the origin with the default size and names, like Maya.
 
 Maya: interactive creation is off by default, so a
 primitive appears at the origin at its default size (polyCube 1x1x1, polySphere
@@ -203,8 +203,8 @@ def _first_joint(ob, maya_naming):
 
 
 class ALLSET_OT_create(bpy.types.Operator):
-    """Create a primitive, light, camera or locator at the origin with Maya's default
-    size and name (Maya Create menu)"""
+    """Create a primitive, light, camera or locator at the origin with the default
+    size and name, like Maya (Maya Create menu)"""
     bl_idname = "allset.create"
     bl_label = "Create"
     bl_options = {'REGISTER', 'UNDO'}
@@ -213,7 +213,7 @@ class ALLSET_OT_create(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return f"Create a {KINDS[props.kind][0]} at the origin, Maya default size and name"
+        return f"Create a {KINDS[props.kind][0]} at the origin, default size and name like Maya"
 
     def execute(self, context):
         from . import interactive_create

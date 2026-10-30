@@ -31,7 +31,7 @@ def test_contents_fit_the_width():
         need = toolbox.dock_need(s)
         assert need["labels"] <= w, (s, w, need)          # the AE width rule is its own (step 142)
         u = toolbox._unit(s)
-        # the label column is half the panel: the longest Maya default channel label fits it with its margins
+        # the label column is half the panel: the longest standard channel label fits it with its margins
         longest = max(toolbox.text_px(t, s) for t in toolbox.LONG_LABELS)
         assert (w - 0.8 * u) / 2 >= longest + 0.8 * u, (s, w, longest)
         # step 142 (#78): the content column ends left of Maya's vertical tab strip

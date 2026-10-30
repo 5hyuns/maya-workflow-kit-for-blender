@@ -54,7 +54,7 @@ B = ("GLOBAL", "LOCAL", False, 2.0, False, "X", False)       # the file's settin
 
 def test_first_maya_scene_starts_from_maya_defaults():
     """Right after Maya mode came on in Blender's startup scene (not the Maya layout, nothing loaded yet) its Blender
-    settings are not the session's Maya settings: the kit's New Scene keeps the template's Maya defaults."""
+    settings are not the session's Maya settings: the kit's New Scene keeps the template's Maya settings."""
     assert not carry.carries_from_current()
     sc = bpy.context.scene
     sc.transform_orientation_slots[2].type = 'GIMBAL'

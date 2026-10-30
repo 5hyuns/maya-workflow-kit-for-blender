@@ -1,7 +1,7 @@
-"""Step 152 (#101) lane B: Maya's default light for kit renders of a scene without lights, Render Settings > Render
+"""#101 lane B: the default light (like Maya) for kit renders of a scene without lights, Render Settings > Render
 Options > Enable Default Light, Render > Test Resolution, Render > Batch Render / Cancel / Show Batch Render.
 
-Maya's default light: a white directional light of intensity 1 from
+The default light, like Maya: a white directional light of intensity 1 from
 the camera's view axis turned 25 deg up and 25 deg left, no shadows; any light node turns it off. Fresh scene, default
 cube, persp at its default direction (8x closer): expected top 76.8 / front 65.1 / side 10.0 of 255, background 0."""
 

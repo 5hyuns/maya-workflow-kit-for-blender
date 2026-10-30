@@ -5,7 +5,7 @@
   right→left zooms out.
 - ``allset.last_tool`` (Y): back to the last tool that is not Q/W/E/R/T, Maya's
   "non-sacred" tool. A timer remembers it per mode.
-- ``allset.menu_set`` (F2–F6): switch the Maya menu set (Maya default hotkeys).
+- ``allset.menu_set`` (F2–F6): switch the Maya menu set (Maya hotkeys).
 """
 
 import bpy

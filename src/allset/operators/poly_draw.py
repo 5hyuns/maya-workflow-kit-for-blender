@@ -825,7 +825,7 @@ class ALLSET_OT_append_polygon_start(bpy.types.Operator):
 
 
 class ALLSET_OT_poly_tools_reset(bpy.types.Operator):
-    """Reset the tool's options to Maya's factory values"""
+    """Reset the tool's options to their default values, like Maya"""
     bl_idname = "allset.poly_tools_reset"
     bl_label = "Reset Tool"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}

@@ -991,7 +991,7 @@ class ALLSET_OT_bake_deformation(bpy.types.Operator):
     bl_label = "Bake Deformation to Skin Weights"
     bl_options = {'REGISTER', 'UNDO'}
 
-    max_influences: IntProperty(name="Max influences", default=3, min=1, max=50)    # Maya factory value
+    max_influences: IntProperty(name="Max influences", default=3, min=1, max=50)    # default like Maya
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']

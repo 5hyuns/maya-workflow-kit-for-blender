@@ -3,7 +3,7 @@
 (back to object mode), Ctrl+B bevel (Maya polyBevel3 at once, Chamfer Vertex in vertex mode: step 139),
 Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
-Alt+D = SelectNone (object selection mode, selection cleared); Ctrl+B = BevelPolygon, a Maya default hotkey.
+Alt+D = SelectNone (object selection mode, selection cleared); Ctrl+B = BevelPolygon, a Maya hotkey.
 """
 
 import bmesh

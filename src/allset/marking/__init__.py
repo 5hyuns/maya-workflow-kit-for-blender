@@ -521,7 +521,7 @@ def _tool_later(idname):
 
 
 class SelectComponentBinding(ToolOptionsBinding):
-    """Shift+Q (Maya factory hotkey and its hold marking menu): the select tool in component mode;
+    """Shift+Q (Maya hotkey and its hold marking menu): the select tool in component mode;
     hold + LMB = the component pick mask marking menu."""
     name = "select_component"
     label = "Select Tool, Components / Pick Mask"
@@ -546,7 +546,7 @@ class SelectComponentBinding(ToolOptionsBinding):
 
 
 class SelectPolygonBinding(ToolOptionsBinding):
-    """Alt+Q (Maya factory hotkey and its hold marking menu): the select tool; hold + LMB = Vertices / Edges / Faces /
+    """Alt+Q (Maya hotkey and its hold marking menu): the select tool; hold + LMB = Vertices / Edges / Faces /
     UVs."""
     name = "select_polygon"
     label = "Select Tool / Polygon Components"

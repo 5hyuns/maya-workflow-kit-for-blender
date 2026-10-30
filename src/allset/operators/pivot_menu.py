@@ -2,8 +2,8 @@
 """Maya pivot-edit RMB marking menu actions (step 94).
 
 RMB held while editing a pivot (D / Insert) shows RMB_EMPTY's pivot-edit menu:
-Pin Component Pivot / Snap Pivot Position / Snap Pivot Orientation are Move tool options (check boxes, Maya defaults
-off / on / on), Reset Pivot (Position / Orientation) and Exit are commands.
+Pin Component Pivot / Snap Pivot Position / Snap Pivot Orientation are Move tool options (check boxes, off / on / on
+by default, like Maya), Reset Pivot (Position / Orientation) and Exit are commands.
 Object pivot edit = ``tool_settings.use_transform_data_origin`` (operators/pivot.py), component pivot edit =
 ``hold.COMPONENT`` (the 3D cursor is the pivot, step 77).
 """
@@ -11,14 +11,14 @@ Object pivot edit = ``tool_settings.use_transform_data_origin`` (operators/pivot
 import bpy
 from bpy.props import BoolProperty, EnumProperty
 
-# (option, WindowManager property, Maya default)
+# (option, WindowManager property, default like Maya)
 OPTIONS = (("PIN", "allset_pin_pivot", False), ("SNAP_POS", "allset_snap_pivot_pos", True),
            ("SNAP_ORI", "allset_snap_pivot_ori", True))
 _PROP = {o: p for o, p, _d in OPTIONS}
 
 
 def option(name, context=None):
-    """Current value of a pivot option (Maya default when the property isn't there)."""
+    """Current value of a pivot option (the default, like Maya, when the property isn't there)."""
     context = context or bpy.context
     prop = _PROP[name]
     default = next(d for o, _p, d in OPTIONS if o == name)

@@ -33,7 +33,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 
 INB = "allset_inbetweens"
 COMB = "allset_combinations"
-METHODS = (('MULTIPLY', "Multiplication", "Product of the input weights (Maya default)"),
+METHODS = (('MULTIPLY', "Multiplication", "Product of the input weights (the default, like Maya)"),
            ('LOWEST', "Lowest Weighting", "The smallest input weight"),
            ('SMOOTH', "Smooth", "Harmonic mean of the input weights, 0 when any is 0 or less"))
 METHOD_IDS = [m[0] for m in METHODS]

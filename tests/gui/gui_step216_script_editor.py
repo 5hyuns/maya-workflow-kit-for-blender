@@ -78,7 +78,7 @@ def s_options():
     se = mod(".ui.script_editor")
     prefs = mod(".preferences").get()
     check(f"Script Editor window opened ({C['se']})", w is not None and w.as_pointer() in se._WINDOWS)
-    check("Maya factory: Show Stack Trace off, Line numbers in errors on, Echo All Commands off, Show Both",
+    check("defaults: Show Stack Trace off, Line numbers in errors on, Echo All Commands off, Show Both",
           not prefs.se_stack_trace and prefs.se_line_numbers and not prefs.se_echo_all
           and prefs.se_history_output == 'BOTH')
     _info, text = se.areas(w)

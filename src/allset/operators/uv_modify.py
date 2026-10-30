@@ -166,7 +166,7 @@ def outer_cycle(island, uv, where):
     return max(cyc, key=len) if cyc else []
 
 
-# --- Map Border (Maya factory options: Square) ------------------------------------------------------------------
+# --- Map Border (default options like Maya: Square) ---------------------------------------------------------------
 
 def _square(t):
     """Point at perimeter parameter t in [0, 4) on the unit square, counter-clockwise from (0, 0)."""
@@ -259,7 +259,7 @@ def straighten(cycle, chains, pts, uv):
     return done
 
 
-# --- Layout Along (Maya factory options) ----------------------------------------------------------------------------
+# --- Layout Along (default options like Maya) -------------------------------------------------------------------------
 
 def _signed_area(island, uv):
     a = 0.0

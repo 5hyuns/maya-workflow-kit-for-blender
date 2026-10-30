@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya option windows of the Mesh Display menu (step 189): Set Vertex Normal, Average, Set to Face, Apply Color.
 
-Fields and factory values: Maya's (option vars of the perform scripts).
+Fields and default values match the Maya option windows.
 """
 
 import bpy

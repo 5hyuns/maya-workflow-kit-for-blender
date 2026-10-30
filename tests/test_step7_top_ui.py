@@ -232,7 +232,7 @@ def test_menu_items_active_or_grey():
     edit_mesh = _draw_menu(menu_sets.menu_idname("mainEditMeshMenu"))
     bevel = next(e for e in edit_mesh if e[0] in ("op", "hold") and _label(e[2]) == "Bevel")
     assert _action(bevel)[:2] == ("v3d", "allset.bevel"), _action(bevel)   # polyBevel3 at once (step 139)
-    # Section labels from Maya dividers.
+    # Section labels at Maya's dividers.
     assert ("label", "Pivot") not in file_log
     select = _draw_menu(menu_sets.menu_idname("mainSelectMenu"))
     comps = [e for e in select if e[0] == "menu" and e[2] == "Components"]
@@ -300,7 +300,7 @@ def test_topbar_draw_maya_and_blender():
     fake = types.SimpleNamespace(layout=FakeLayout())
     status_line.draw_tool_header(fake, _ctx(area=area))
     ops = [e[1] for e in fake.layout.log if e[0] == "op"]
-    # (selection masks: collapsed by default like Maya's factory Status Line, step 113)
+    # (selection masks: collapsed by default, like Maya's Status Line)
     for op in ("allset.save_scene", "allset.select_mode", "allset.status_group", "allset.snap_toggle",
                "allset.render_current_frame", "allset.render_settings", "allset.editor_toggle"):
         assert op in ops, (op, ops)

@@ -64,7 +64,7 @@ def after_selection(context):
 
 
 def synced_keys(context, node):
-    """Channels S keys on ``node`` with Sync Graph Editor on (None: every keyable channel, Maya's default)."""
+    """Channels S keys on ``node`` with Sync Graph Editor on (None: every keyable channel, the default like Maya)."""
     if not sync_graph_on():
         return None
     cb = _cb()

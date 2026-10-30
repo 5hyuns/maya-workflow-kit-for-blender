@@ -47,7 +47,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
     # Maya option window values for a multi-target constraint (step 226, operators/constrain_multi.py); a one-target
     # constraint is set up afterwards by option_windows._constraint as before
     maintain_offset: EnumProperty(name="Maintain Offset", items=(
-        ('DEFAULT', "Default", "Maya factory: on for Parent, off for Point / Orient / Scale"),
+        ('DEFAULT', "Default", "Like Maya: on for Parent, off for Point / Orient / Scale"),
         ('ON', "On", ""), ('OFF', "Off", "")), default='DEFAULT', options={'SKIP_SAVE', 'HIDDEN'})
     weight: FloatProperty(name="Weight", default=1.0, min=0.0, options={'SKIP_SAVE', 'HIDDEN'})
 
@@ -111,7 +111,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             cons = arm.pose.bones[owner].constraints       # the edit-mode round trip renews the pose bones
             con = cons[-1]
         if self.type == 'TRACK_TO':
-            con = aim(cons, con, bone=arm is not None)     # Maya's factory aim (+X at the target, +Y up)
+            con = aim(cons, con, bone=arm is not None)     # default aim like Maya (+X at the target, +Y up)
         target = getattr(con, "target", None)
         sub = getattr(con, "subtarget", "")
         results.result(self, f"{label} constraint on {owner}" +

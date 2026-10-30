@@ -571,8 +571,8 @@ def scaleConstraint(*args, **kwargs):
 
 
 def aimConstraint(*args, **kwargs):
-    """``aimConstraint``: the aim vector at the target, the up vector towards the world up vector (Maya factory
-    aim 1 0 0, up 0 1 0, world up type vector 0 1 0)."""
+    """``aimConstraint``: the aim vector at the target, the up vector towards the world up vector (defaults
+    like Maya: aim 1 0 0, up 0 1 0, world up type vector 0 1 0)."""
     return _constrain("aimConstraint", args, kwargs)
 
 

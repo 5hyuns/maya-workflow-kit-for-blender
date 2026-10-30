@@ -69,7 +69,7 @@ def store(ob, name):
 
 
 def get_label(bone):
-    """(side, type, other type, draw label) of a Bone / EditBone, Maya factory values where unset."""
+    """(side, type, other type, draw label) of a Bone / EditBone, default values (like Maya) where unset."""
     return (int(bone.get(SIDE, CENTER)), int(bone.get(TYPE, T_NONE)), str(bone.get(OTHER, OTHER_DEFAULT)),
             bool(bone.get(DRAW, False)))
 

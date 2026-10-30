@@ -122,7 +122,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     cb_hyperbolic: bpy.props.BoolProperty(
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
-    # Create > Polygon Primitives > Interactive Creation / Exit On Completion (Maya defaults off / on;
+    # Create > Polygon Primitives > Interactive Creation / Exit On Completion (off / on by default, like Maya;
     # operators/interactive_create.py)
     interactive_creation: bpy.props.BoolProperty(
         name="Interactive Creation",
@@ -372,7 +372,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default='ALL')
     hotbox_all_sets: bpy.props.BoolProperty(
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
-                                               "the current one (Maya's default)",
+                                               "the current one (on by default, like Maya)",
         default=True)
 
     # Shelf (step 12): current tab (factory file name or "USER:<name>").

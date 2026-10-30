@@ -14,7 +14,7 @@ The kit (one Blender constraint reads one target):
   S_i = w_0 + ... + w_i (Blender mixes the stack in order, so these influences give exactly the weighted average of
   the positions; all 0 = the equal average and W0 0.5 · W1 0 = target A, both Maya). Simple expressions only:
   no Python auto-run needed (``driver.is_simple_expression``).
-- Parent with Maintain Offset (Maya default) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
+- Parent with Maintain Offset (the default, like Maya) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
   helper empty holding the owner's offset from that target (point: Copy Location with offset; else Child Of the
   target with the offset as its own channels). The helpers live in the hidden collection ``.AllsetConstraintHelpers``
   (no scene: not in the Outliner, not exported, still evaluated as constraint targets) and go when their

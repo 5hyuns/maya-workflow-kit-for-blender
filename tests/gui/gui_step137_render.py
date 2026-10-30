@@ -87,7 +87,7 @@ def s_render():
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         C["ret"] = bpy.ops.allset.menu_item('INVOKE_DEFAULT', item="Render/Render Current Frame")
-    # step 152: Maya's default light exists while the render job runs (the scene has no lights)
+    # the default light (like Maya) exists while the render job runs (the scene has no lights)
     C["light_during"] = ([o.name for o in bpy.context.scene.objects if o.get("allset_default_light")],
                          bpy.app.is_job_running('RENDER'))
 

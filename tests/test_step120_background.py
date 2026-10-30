@@ -65,7 +65,7 @@ def test_cycle_every_view_per_view_colour():
     before = _theme_state()
     sh = views[0].shading
     for v in views:
-        v.shading.background_type = 'THEME'      # the user's theme background = Maya's factory starting point
+        v.shading.background_type = 'THEME'      # the user's theme background = the starting point, like Maya
     assert kb3.cycle_background(sh) == "LIGHT"
     assert all(v.shading.background_type == 'VIEWPORT' and abs(_display(v.shading) - 0.631) < 1e-4 for v in views)
     assert kb3.cycle_background(sh) == "GRADIENT"
@@ -105,7 +105,7 @@ def test_keys_alt_b_cycles_ctrl_b_bevels():
     assert [k.idname for k in alt_b] == ["allset.cycle_background"]
     assert not [k for km in kc.keymaps for k in km.keymap_items if k.idname == "allset.cycle_background" and k.ctrl]
     mesh = [k.idname for k in kc.keymaps["Mesh"].keymap_items if k.type == 'B' and k.ctrl and not k.alt]
-    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (Maya factory hotkey)
+    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (Maya hotkey)
 
 
 def test_settings_preferences_menu():

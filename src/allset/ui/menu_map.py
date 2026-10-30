@@ -21,7 +21,7 @@ time (not in the static menu data), e.g. Modify's Pivot section.
 """
 
 def _create(kind):
-    # Maya default size at the origin, Maya names (operators/create.py).
+    # Default size at the origin like Maya, Maya names (operators/create.py).
     return ("allset.create", {"kind": kind})
 
 
@@ -155,7 +155,7 @@ MAP = {
     "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
     "Edit/Paste": ("v3d", "allset.paste", {}),
     # Maya Delete Keys = every key of the selection (step 56; Time Slider RMB Delete = this frame / range); the
-    # Key menu Cut / Copy / Snap run with Maya's factory options (Time range All, step 140); option boxes and
+    # Key menu Cut / Copy / Snap run with the default options like Maya (Time range All); option boxes and
     # saved settings: operators/option_windows_edit.py
     "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Edit/Keys/Cut Keys": ("allset.time_keys", {"action": "CUT", "time_range": 'ALL'}),

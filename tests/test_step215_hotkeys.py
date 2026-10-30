@@ -1,6 +1,6 @@
 """Step 215 (#121): Maya's Hotkey Editor (ui/hotkey_editor.py, keymap/hotkey_rows.py).
 
-Rows = Maya's default hotkeys (keymap/hotkey_data.py) joined with
+Rows = Maya's standard hotkeys (keymap/hotkey_data.py) joined with
 keymap/mapping.py; a kit binding is changed on the ``keyconfigs.user`` item (Blender's keymap editor does the same),
 restored with ``KeyMap.restore_item_to_default``; the kit writes no file. Background Blender leaves the default
 keyconfig empty, so it is filled from Blender's keymap data first (rt60_dump.populate)."""

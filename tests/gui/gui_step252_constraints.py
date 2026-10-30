@@ -98,7 +98,7 @@ def s_inputs():
 def s_average():
     bpy.context.view_layer.update()
     g = group()
-    check(f"the node is Maya's factory Average ({ci().mode_of(cube(), g)})", ci().mode_of(cube(), g) == ci().AVERAGE)
+    check(f"the node is Average by default ({ci().mode_of(cube(), g)})", ci().mode_of(cube(), g) == ci().AVERAGE)
     check(f"the cube turns to the middle of 30 and 150 ({z_deg(cube()):.4f})", abs(z_deg(cube()) - 90.0) < 0.05)
     cb = import_module(MODULE + ".ui.channel_box")
     check("the blend is not a Channel Box node of its own", len(cb.constraints(cube())) == 2)

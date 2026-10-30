@@ -87,7 +87,7 @@ def s_setup():
 @step
 def s_scene():
     bpy.ops.allset.keymap_activate()
-    # Maya's factory Status Line has the input line collapsed (step 113): open it, as a user would
+    # the Status Line starts with the input line collapsed, like Maya: open it, as a user would
     bpy.ops.allset.status_group(group="INPUT")
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):

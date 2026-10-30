@@ -321,7 +321,7 @@ def open_menu(menu_name, button, origin=None):
 def hotbox_rows(context, area_type=None):
     """(rows above, cursor row sides, rows below) like Maya 2022's hotbox:
     common menus (+ Cache, Help), the 3D View's panel menus, then the menu set rows (every set when
-    Hotbox Controls > Show All Menu Sets is on, Maya's default; else the current one)."""
+    Hotbox Controls > Show All Menu Sets is on, the default like Maya; else the current one)."""
     prefs = _prefs(context)
 
     def row(names):

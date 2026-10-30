@@ -123,7 +123,7 @@ def to_linear(maya_rgb, gain):
 # --- settings -----------------------------------------------------------------------------------------------------
 
 def editor_values():
-    """The Ghosting Editor's saved values over Maya's factory ones (Ghost Selected uses them)."""
+    """The Ghosting Editor's saved values over the default ones (like Maya) (Ghost Selected uses them)."""
     from ..operators import option_windows
     values = dict(FACTORY)
     for k, v in (option_windows.saved(EDITOR_KEY) or {}).items():
@@ -387,7 +387,7 @@ def _sh():
         iface.smooth('FLOAT', 'shade')
         info.vertex_out(iface)
         info.fragment_out(0, 'VEC4', 'fragColor')
-        # Maya's default light is a headlight: lambert on |n . v| (both faces lit, the back face too)
+        # The default light (like Maya) is a headlight: lambert on |n . v| (both faces lit, the back face too)
         info.vertex_source(
             "void main() {"
             " vec3 v = ortho > 0.5 ? viewdir : normalize(eye - pos);"

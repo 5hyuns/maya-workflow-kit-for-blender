@@ -2,7 +2,7 @@
 """Maya Hypershade = its own window, laid out the Maya way (step 131, issue #25; before:
 step 67 / 105 Shader Editor + sidebar tab).
 
-Maya 2022's factory Hypershade is a
+Maya's standard Hypershade is a
 floating window: the menu bar (File / Edit / View / Create / Tabs / Graph / Window / Options / Help) over the Browser
 (top-left: toolbar, 10 swatch tabs, swatch grid), Material Viewer (top-right), Create (bottom-left: category tree +
 node list), the Graph work area (centre: graph toolbar, "Untitled_1" tab, node editor) and the Property Editor
@@ -558,7 +558,7 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
             return {'CANCELLED'}
         if act == "DELETE":
             if material_ops.is_default(cur):
-                self.report({'WARNING'}, f"{cur.name} can't be deleted (Maya's default material)")
+                self.report({'WARNING'}, f"{cur.name} can't be deleted (the default material, like Maya)")
                 return {'CANCELLED'}
             release_editors([cur])
             bpy.data.materials.remove(cur)

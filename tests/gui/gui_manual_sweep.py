@@ -2807,7 +2807,7 @@ box_all("m63_3_box_off")
 def _m63_3_off_check():
     bm = bmesh.from_edit_mesh(C["ob"].data)
     n = sum(v.select for v in bm.verts)
-    check(f"[M63-3] off (Maya's default): the marquee goes through to the back ({n} of 8)", n == 8)
+    check(f"[M63-3] off (default, like Maya): the marquee goes through to the back ({n} of 8)", n == 8)
     wm = bpy.context.window_manager
     ps = mod("operators.preselect")
     with override():

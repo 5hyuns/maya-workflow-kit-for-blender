@@ -37,7 +37,7 @@ def selected():
 
 
 def rows():
-    """The kit set rows (step 99 draws Maya's default camera / set rows before them)."""
+    """The kit set rows (Maya's startup camera / set rows are drawn before them)."""
     _a, r = outl()
     return [x for x in mod("ui.outliner_sets").REGIONS.get(r.as_pointer(), []) if x[2] in ('SET', 'MEMBER')]
 

@@ -732,7 +732,7 @@ SELECT_ALL = MarkingMenu(
     },
     options={"Freeze Transforms"})
 
-# --- Shift+S hold + LMB: KEY_TANGENT (Maya's Keyframe / Tangent marking menu, Maya default hotkey) ------------
+# --- Shift+S hold + LMB: KEY_TANGENT (Maya's Keyframe / Tangent marking menu, Maya hotkey) --------------------
 # Maya shows the same layout inside and outside the Graph Editor; the actions pick the
 # Graph Editor's selected keys or the current-time keys themselves (operators/graph_keys.py, step 70).
 
@@ -769,7 +769,7 @@ KEY_TANGENT = MarkingMenu(
         })),
     })
 
-# --- Shift+Q / Alt+Q hold + LMB (Maya factory hotkeys; step 78) -----------------------------------------------
+# --- Shift+Q / Alt+Q hold + LMB (Maya hotkeys) ----------------------------------------------------------------
 # SELECT_COMPONENT (Maya's Shift+Q hold menu) = the component pick mask; Blender's mask is the
 # mesh select mode, so only Poly Vertices / Poly Edges / Faces / All Components on / Select Objects do something.
 # SELECT_POLYGON (Maya's Alt+Q hold menu) = F9 / F10 / F11 / F12.

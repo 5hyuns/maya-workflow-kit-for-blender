@@ -11,7 +11,7 @@ Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
   borders drawn in colour, 3 px wide.
 - 9 UVEditor_ToggleTextureBorder = ``ToggleTextureBorderDisplay``: Maya's "texture
   borders" are the UV shell border edges drawn thick (Select > Texture Borders selects the same edges; step 79
-  cut_sew.py calls them that too), on in the Maya factory View menu (checked). Drawn 3 px in the
+  cut_sew.py calls them that too), on by default in the Maya View menu (checked). Drawn 3 px in the
   theme's UV wire colour, i.e. the same edge, thicker.
 - Ctrl+1 UVEditor_ToggleUVIsolateViewSelected -> ``allset.uv_isolate``.
 - Shaded (5, View > Shaded) also colours each shown face by its UV winding, like Maya's shaded UV display:
