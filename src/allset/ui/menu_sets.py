@@ -96,8 +96,8 @@ def draw_item(layout, path, label, icon_value=0, translate=True):
     """Draw one Maya menu item: its Blender action, or greyed out. An item with a "not in Blender" notice and an
     operator substitute runs through ``allset.menu_item``, whose tooltip carries the notice (step 54). So does a
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
-    enabled and runs or warns (step 101, ``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
-    (``menu_icons``, step 131), 0 = none. ``translate=False``: ``label`` is already in the interface language."""
+    enabled and runs or warns (``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
+    (``menu_icons``), 0 = none. ``translate=False``: ``label`` is already in the interface language."""
     s = menu_map.spec(path)
     # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
     # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``allset.menu_item``, which

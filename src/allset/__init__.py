@@ -18,7 +18,7 @@ no module writes Blender's preferences or files outside the extension's folders,
 
 from . import i18n, preferences, switch, welcome, operators, ui, command_line, marking, first_start, keymap
 
-# Always registered: the translations, the preferences, the Maya / Blender switch (step 60) and the opt-in (step 115).
+# Always registered: the translations, the preferences, the Maya / Blender switch and the opt-in.
 CORE = (i18n, preferences, switch, welcome)
 # "Maya mode": registered while the add-on preference ``maya_mode`` is on; switching to
 # Blender unregisters them, which takes back everything they registered.

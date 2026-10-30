@@ -45,7 +45,7 @@ from . import deformers  # noqa: E402  step 144 DEFORM: Maya Deform menu deforme
 
 classes += deformers.classes
 
-from . import default_light, render_batch, render_cameras  # noqa: E402  step 152 RENDER: default light, Test Resolution, Batch (#101)
+from . import default_light, render_batch, render_cameras  # noqa: E402  render: default light, Test Resolution, Batch (#101)
 
 classes += render_batch.classes
 
