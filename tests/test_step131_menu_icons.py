@@ -155,7 +155,7 @@ def _check_menus():
     rows = {t.split("  ")[0].replace(ms.HAIR, "").strip(): k for kind, t, k in log if kind == "op"}
     for label in ("Sphere", "Cube", "Cylinder", "Cone", "Torus", "Plane", "Polygon Disc"):
         assert rows[label].get("icon_value"), (label, rows[label])
-    assert not rows["Interactive Creation"].get("icon_value"), rows["Interactive Creation"]
+    assert not rows.get("Interactive Creation", {}).get("icon_value"), "the check item has no shelf picture"
     texts = [t for kind, t, _k in log if kind == "op"]
     assert any(t.rstrip().endswith("❒") for t in texts), "option boxes still drawn"
     # Edit Mesh: Bevel keeps its Maya hotkey and box, and gets its icon

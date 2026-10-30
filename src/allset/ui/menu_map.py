@@ -180,6 +180,8 @@ MAP = {
     "Edit/Unparent": "allset.unparent",
     # --- Create ---
     **{f"Create/Polygon Primitives/{k}": v for k, v in _PRIMS.items()},
+    "Create/Polygon Primitives/Interactive Creation": ("prop", "addon_prefs.interactive_creation", {}),
+    "Create/Polygon Primitives/Exit On Completion": ("prop", "addon_prefs.exit_on_completion", {}),
     "Create/NURBS Primitives/Sphere": _create('NURBS_SPHERE'),
     "Create/NURBS Primitives/Cylinder": _create('NURBS_CYLINDER'),
     "Create/NURBS Primitives/Plane": _create('NURBS_PLANE'),

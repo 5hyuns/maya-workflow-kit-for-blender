@@ -215,9 +215,11 @@ def test_menu_items_active_or_grey():
     assert _action(ops["Cube"]) == ("op", "allset.create", {"kind": 'CUBE'}), ops["Cube"]
     assert _action(ops["Pyramid"]) == ("op", "allset.create", {"kind": 'PYRAMID'})
     assert _action(ops["Pipe"]) == ("op", "allset.create", {"kind": 'PIPE'})          # step 190
-    grey = ops["Interactive Creation"]                                                  # still not in Blender
+    assert "Interactive Creation" not in ops, "a check item now (#225), not a greyed button"
+    nurbs = _draw_menu(next(e[1] for e in create if e[0] == "menu" and e[2] == "NURBS Primitives"))
+    grey = {_label(e[2]): e for e in nurbs if e[0] in ("op", "hold")}["Interactive Creation"]   # NURBS: still greyed
     assert grey[1] == "allset.menu_unavailable", grey
-    assert grey[3].item == "Create/Polygon Primitives/Interactive Creation"
+    assert grey[3].item == "Create/NURBS Primitives/Interactive Creation"
     assert not menu_sets.ALLSET_OT_menu_unavailable.poll(bpy.context)
     # Blender's own menu at the end of File; v3d / tool / menu kinds.
     file_log = _draw_menu(menu_sets.menu_idname("mainFileMenu"))

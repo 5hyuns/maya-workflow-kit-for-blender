@@ -120,6 +120,15 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     cb_hyperbolic: bpy.props.BoolProperty(
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
+    # Create > Polygon Primitives > Interactive Creation / Exit On Completion (Maya defaults off / on;
+    # operators/interactive_create.py)
+    interactive_creation: bpy.props.BoolProperty(
+        name="Interactive Creation",
+        description="Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size")
+    exit_on_completion: bpy.props.BoolProperty(
+        name="Exit On Completion", default=True,
+        description="Interactive Creation ends after one primitive; off, it keeps drawing primitives until Esc")
+
     # Graph Editor View > Snap Time To Selection (default off; Alt+/ toggles it;
     # step 92).
     snap_time_to_selection: bpy.props.BoolProperty(

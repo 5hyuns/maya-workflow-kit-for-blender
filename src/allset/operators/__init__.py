@@ -173,6 +173,8 @@ from . import graph_frame  # noqa: E402  step 281: Graph Editor F / A frame Maya
 classes += graph_frame.classes
 from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
 classes += poly_display.classes
+from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
+classes += interactive_create.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

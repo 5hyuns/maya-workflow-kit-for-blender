@@ -93,12 +93,11 @@ _NODE_FIELDS = {
 
 def _primitive(kind):
     def run(context, v):
-        from . import create
+        from .option_windows_prims import _create
         over = {node: v[field] for field, node in _NODE_FIELDS[kind].items() if field in v}
         ax = _AXES.get(v.get("axis", "Y"), _AXES["Y"])
         over.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2], createUVs=int(bool(v.get("create_uvs", True))))
-        create.create(context, kind, overrides=over)
-        return {'FINISHED'}
+        return _create(context, kind, over)     # at the origin, or drawn with Interactive Creation
     return run
 
 

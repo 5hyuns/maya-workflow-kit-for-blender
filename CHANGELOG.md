@@ -6,6 +6,14 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **Interactive Creation** (#225): turn on Create > Polygon Primitives > Interactive Creation and the Create menu,
+  shelf and option boxes let you draw a polygon primitive in a view, like Maya: drag to place it and size its base,
+  then drag again for its height (torus: section radius; pipe: height and thickness; helix: height and coils). A
+  click without dragging makes a default-size primitive there, a click on a later step skips it and Enter finishes
+  at once; Shift gives equal proportions in one drag, Ctrl grows a cube or plane from its centre. Perspective
+  views draw on the grid, orthographic views on their own plane. The result is the usual pCube1 with its polyCube1
+  node, one undo step each. Exit On Completion (on) ends the tool after one primitive; turn it off to draw several
+  until Esc.
 - **Hotkey Editor > Import...** (#219): read a hotkey set exported from Maya's Hotkey Editor (.mhk). Its keys
   replace the kit keys of the same commands; keys that are already Maya's stay, and commands the kit doesn't bind
   are listed in the system console. Only the key bindings are read — nothing in the file is run. Restore puts the

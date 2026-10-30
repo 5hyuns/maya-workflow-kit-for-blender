@@ -216,6 +216,10 @@ class ALLSET_OT_create(bpy.types.Operator):
         return f"Create a {KINDS[props.kind][0]} at the origin, Maya default size and name"
 
     def execute(self, context):
+        from . import interactive_create
+        if interactive_create.wanted(context, self.kind):    # Create > Polygon Primitives > Interactive Creation
+            interactive_create.start(context, self.kind)
+            return {'FINISHED'}
         ob = create(context, self.kind, _maya_naming(context))
         note = LIGHT_NOTICE if ob.type == 'LIGHT' and ob.data.type in FALLOFF_LIGHTS else ""
         note = MAYA_LIGHT_NOTICES.get(self.kind, note)
