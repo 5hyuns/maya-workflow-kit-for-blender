@@ -149,3 +149,16 @@ def test_paint_skin_weights_sections_and_channel_box():
     assert "paint_weights.draw" not in src
     ts = import_module(kit.MODULE + ".ui.tool_settings")
     assert "paint_weights.draw" in inspect.getsource(ts.draw_dock)
+
+
+def test_column_width_retina():
+    """#248: on a Retina display (pixel size 2) the column is 4 px wider than 56 x the scale, or Blender hides the
+    toolbar."""
+    from types import SimpleNamespace
+    tb = import_module(kit.MODULE + ".ui.toolbox")
+
+    def ctx(scale, pixel):
+        return SimpleNamespace(preferences=SimpleNamespace(system=SimpleNamespace(ui_scale=scale, pixel_size=pixel)))
+    assert tb.column_width(ctx(1.0, 1)) == 56
+    assert tb.column_width(ctx(1.25, 1)) == 70
+    assert tb.column_width(ctx(2.0, 2)) == 116

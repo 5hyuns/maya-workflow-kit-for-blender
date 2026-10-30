@@ -231,6 +231,7 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
 # puts the cursor on the area edge for a moment (step 99: the poll passes there), moves the edge and
 # puts the cursor back; until then the main view of that screen shows its own toolbar.
 TOOLBAR_PX = 56
+RETINA_EXTRA_PX = 4  # px more per pixel-size step above 1 (column_width)
 SHELF_PX = 64        # = tools/make_startup.py SHELF_PX
 OUTLINER_PX = 260    # Maya's narrow panel width = the template Outliner at scale 1
 TIME_SLIDER_PX = 36  # = tools/make_startup.py TIME_SLIDER_PX (the Time Slider ruler at scale 1)
@@ -246,7 +247,10 @@ _fallback = set()   # screens whose main view shows its toolbar because the colu
 
 
 def column_width(context=None):
-    return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
+    """One toolbar column at the current scale. A Retina display (pixel size 2) needs 4 px more than 56 x the scale,
+    or Blender hides the toolbar (#248: 112 px empty, 116 px shown at scale 2)."""
+    system = (context or bpy.context).preferences.system
+    return round(TOOLBAR_PX * system.ui_scale) + RETINA_EXTRA_PX * max(0, int(system.pixel_size) - 1)
 
 
 # The right tab stack (ui/maya_dock.py STACK area, #60, step 142 #78): 280 px with the Channel Box raised (a 260 px
