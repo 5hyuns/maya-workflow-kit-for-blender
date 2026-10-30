@@ -28,7 +28,8 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.cb_virtual_slider", "allset.c
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
-                      "allset.graph_axis_drag", "allset.graph_move_snap")
+                      "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
+                      "allset.graph_key_drag")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1137,6 +1138,23 @@ def patch_graph_keys_2(kd):
     for button in ("MIDDLEMOUSE", "LEFTMOUSE"):
         _add(kd, "Graph Editor", "allset.graph_move_snap", make_event(button, "CLICK_DRAG"), first=True,
              shadows=("Graph Editor",))
+    # Blender's Shift+click toggles a selected key off on the press: remember the selection so a Shift+drag from it
+    # still moves the keys (PASS_THROUGH, the toggle runs)
+    _add(kd, "Graph Editor", "allset.graph_shift_press", make_event("LEFTMOUSE", shift=True), first=True,
+         shadows=("Graph Editor",))
+    # Maya middle drag = the current key tool (move / turn tangents / scale) counted from the press; Blender's own
+    # drag starts a few px later. Passes through when no key is selected.
+    _add(kd, "Graph Editor", "allset.graph_key_drag", make_event("MIDDLEMOUSE"), first=True,
+         shadows=("Graph Editor", "View2D"))
+    # Maya w / e / r over the Graph Editor pick the key tool instead of starting a move / rotate / scale at once
+    for key, tool in (("W", 'MOVE'), ("E", 'ROTATE'), ("R", 'SCALE')):
+        kd.remove("Graph Editor", GRAPH_WER[key], type=key)
+        _add(kd, "Graph Editor", "allset.graph_key_tool", make_event(key), {"tool": tool})
+    # Maya l = value lines
+    _add(kd, "Graph Editor", "allset.graph_value_lines", make_event("L"))
+
+
+GRAPH_WER = {"W": "transform.translate", "E": "transform.rotate", "R": "transform.resize"}
 
 # --- 45. Outliner set rows (step 96) ----------------------------------------------------------------------
 # The kit draws Maya's set rows under Blender's Outliner tree (ui/outliner_sets.py); clicks / RMB on them must win

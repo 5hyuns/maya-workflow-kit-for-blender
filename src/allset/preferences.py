@@ -155,6 +155,16 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         items=(('ALWAYS', "Always", "Name every curve"), ('NEVER', "Never", "No curve names"),
                ('ACTIVE', "Active Only", "Name the selected curves")))
 
+    # Graph Editor L = value lines (zero line + the selected curves' lowest / highest value), toolbar Unconstrained
+    # drag (on = middle drags move keys in time and value; off = the first move picks one axis)
+    graph_value_lines: bpy.props.BoolProperty(
+        name="Value Lines",
+        description="Draw the zero line and the lowest / highest value of the selected curves in the Graph Editor")
+    graph_unconstrained_drag: bpy.props.BoolProperty(
+        name="Unconstrained Drag", default=True,
+        description="Middle-mouse drags in the Graph Editor move keys in time and value; off, the first move "
+                    "picks time or value")
+
     # Graph Editor depth 2 (step 198): View > Show Buffer Curves (factory off),
     # Curves > Default Tangent Weight (factory Non-weighted), Retime Tool Snap On Frame (factory off), Edit > Set Curve
     # Colors... rules (Maya curveRGBColor: attribute name -> colour; JSON list of [attribute, r, g, b]).
