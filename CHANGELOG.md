@@ -6,6 +6,8 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Added
+- **UV Editor Shaded shows flipped UVs** (#246): 5 or View > Shaded colours front-facing UV faces blue and
+  flipped (clockwise) ones red, like Maya's shaded UV display; 4 or View > Wireframe turns the faces off.
 - **Channel Box value dragging** from Tom Pilott (#224) — thank you! Left-drag a Channel Box value sideways to change
   it: Ctrl snaps to whole displayed units, Shift is 10× finer, Alt 100× finer; the wheel adjusts the value during a
   drag and Ctrl+wheel over a value steps it. Esc or right-click puts the starting values back, one drag is one undo

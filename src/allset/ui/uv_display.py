@@ -14,6 +14,9 @@ Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
   cut_sew.py calls them that too), on in the Maya factory View menu (checked). Drawn 3 px in the
   theme's UV wire colour, i.e. the same edge, thicker.
 - Ctrl+1 UVEditor_ToggleUVIsolateViewSelected -> ``allset.uv_isolate``.
+- Shaded (5, View > Shaded) also colours each shown face by its UV winding, like Maya's shaded UV display:
+  counter-clockwise (front-facing) faces blue, clockwise (flipped) faces red; Wireframe (4) turns it off
+  (``WindowManager.allset_uv_face_colors``).
 
 Shell borders follow the step-66 island rule (operators/uv_tools.islands: faces join where their UVs match at both
 ends of an edge): an edge is a border on a face's side when no other shown face shares the same UVs across it.
@@ -34,6 +37,8 @@ from ..operators import uv_arrays, uv_tools
 
 BORDER_PX = 3.0                        # shell / texture border width
 SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour (the kit's choice)
+FRONT_RGBA = (0.15, 0.35, 1.0, 0.55)   # Shaded: front-facing UV faces (the kit's choice)
+FLIPPED_RGBA = (1.0, 0.15, 0.15, 0.55)  # Shaded: flipped UV faces
 MOVE_TOOL = "builtin.move"
 
 MODES = (("WIREFRAME", "Wireframe", "Maya 4: UVs as wireframe (no shaded faces)"),
@@ -70,6 +75,18 @@ def border_segments(bm, uv, faces):
     return out
 
 
+def face_winding(bm, uv, faces):
+    """(front triangles, flipped triangles): UV triangles ((u, v) x 3 each) of ``faces``, split by the sign of each
+    face's UV area (counter-clockwise = front-facing). A face with no area counts as front-facing."""
+    front, flipped = [], []
+    for f in faces:
+        pts = [l[uv].uv for l in f.loops]
+        area = sum(a.x * b.y - b.x * a.y for a, b in zip(pts, pts[1:] + pts[:1]))
+        tris = [(pts[0][:], pts[i][:], pts[i + 1][:]) for i in range(1, len(pts) - 1)]
+        (flipped if area < 0.0 else front).extend(tris)
+    return front, flipped
+
+
 def to_region(points, p0, p1):
     """UV points (N x 2) to region pixels, given where UV (0, 0) and (1, 1) land."""
     pts = np.asarray(points, dtype=np.float32).reshape(-1, 2)
@@ -103,10 +120,41 @@ def segments_of(ob, synced):
     return pts
 
 
+
+
+def faces_of(ob, synced):
+    key = ("faces", ob.as_pointer(), synced)     # in _cache: dropped with the border segments
+    tris = _cache.get(key)
+    if tris is None:
+        bm = bmesh.from_edit_mesh(ob.data)
+        uv = bm.loops.layers.uv.active
+        if uv is None:
+            tris = (np.zeros((0, 2), np.float32),) * 2
+        else:
+            front, flipped = face_winding(bm, uv, shown_faces(bm, synced))
+            tris = tuple(np.asarray(t, np.float32).reshape(-1, 2) for t in (front, flipped))
+        _cache[key] = tris
+    return tris
+
+
+def _draw_faces(context, p0, p1):
+    synced = context.scene.tool_settings.use_uv_select_sync
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    for i, rgba in enumerate((FRONT_RGBA, FLIPPED_RGBA)):
+        pts = [faces_of(ob, synced)[i] for ob in _edit_meshes(context)]
+        pts = [t for t in pts if len(t)]
+        if not pts:
+            continue
+        shader.uniform_float("color", rgba)
+        batch_for_shader(shader, 'TRIS', {"pos": to_region(np.concatenate(pts), p0, p1).tolist()}).draw(shader)
+    gpu.state.blend_set('NONE')
+
+
 def _draw():
     context = bpy.context
     wm = context.window_manager
-    if not (wm.allset_uv_shell_borders or wm.allset_uv_texture_borders):
+    if not (wm.allset_uv_shell_borders or wm.allset_uv_texture_borders or wm.allset_uv_face_colors):
         return
     space = context.space_data
     region = context.region
@@ -120,6 +168,10 @@ def _draw():
             return
         if uv_arrays.editing_now(wm):
             return      # a UV drag runs: the borders come back when it ends (crash fix, operators/uv_arrays.py)
+        if wm.allset_uv_face_colors and space.uv_editor.show_faces:
+            _draw_faces(context, p0, p1)
+        if not (wm.allset_uv_shell_borders or wm.allset_uv_texture_borders):
+            return
         synced = context.scene.tool_settings.use_uv_select_sync
         pts = [segments_of(ob, synced) for ob in _edit_meshes(context)]
         pts = [p for p in pts if len(p)]
@@ -159,6 +211,18 @@ def redraw_uv_editors():
 
 
 def _redraw(_self, _context):
+    redraw_uv_editors()
+
+
+def _shaded_changed(self, _context):
+    """View > Shaded / Wireframe: every UV Editor shows its faces (opaque) or none."""
+    for win in bpy.context.window_manager.windows:
+        for area in win.screen.areas:
+            for space in area.spaces:
+                if space.type == 'IMAGE_EDITOR' and space.uv_editor.show_faces != self.allset_uv_face_colors:
+                    space.uv_editor.show_faces = self.allset_uv_face_colors
+                    if self.allset_uv_face_colors:
+                        space.uv_editor.uv_face_opacity = 1.0
     redraw_uv_editors()
 
 
@@ -215,8 +279,10 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
         space = context.space_data
         wm = context.window_manager
         if self.mode == 'WIREFRAME':
+            wm.allset_uv_face_colors = False
             space.uv_editor.show_faces = False
         elif self.mode == 'SHADED':
+            wm.allset_uv_face_colors = True
             space.uv_editor.show_faces = True
             space.uv_editor.uv_face_opacity = 1.0
         elif self.mode == 'IMAGE':
@@ -535,6 +601,9 @@ def register():
     wm = bpy.types.WindowManager
     wm.allset_uv_shell_borders = BoolProperty(name="Shell Borders", default=False, update=_redraw,
                                               description="Maya UV Editor: UV shell borders in colour (8)")
+    wm.allset_uv_face_colors = BoolProperty(name="Shaded", default=False, update=_shaded_changed,
+                                            description="Maya UV Editor Shaded (5): front-facing UV faces blue, "
+                                                        "flipped faces red")
     wm.allset_uv_texture_borders = BoolProperty(name="Texture Borders", default=True, update=_redraw,
                                                 description="Maya UV Editor: UV shell borders drawn thick (9)")
     wm.allset_uv_isolate = BoolProperty(name="Isolate Select", default=False,
@@ -557,7 +626,8 @@ def unregister():
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(_handle.pop(), 'WINDOW')
     wm = bpy.types.WindowManager
-    for name in ("allset_uv_filter", "allset_uv_isolate", "allset_uv_texture_borders", "allset_uv_shell_borders"):
+    for name in ("allset_uv_filter", "allset_uv_isolate", "allset_uv_texture_borders", "allset_uv_shell_borders",
+                 "allset_uv_face_colors"):
         if hasattr(wm, name):
             delattr(wm, name)
     for cls in reversed(classes):

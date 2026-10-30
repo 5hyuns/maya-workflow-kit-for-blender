@@ -367,6 +367,9 @@ MAP = {
     f"{UV}/Tools/Move UV Shell": "allset.uv_move_shell",
     f"{UV}/View/Toggle Shell Borders": ("allset.uv_display", {"mode": 'SHELL_BORDERS'}),
     f"{UV}/View/Texture Borders": _prop("window_manager.allset_uv_texture_borders"),
+    # Shaded = faces shown + coloured by UV winding, Wireframe = no faces (opacity 0 still drew fills, step 155)
+    f"{UV}/View/Shaded": _prop("window_manager.allset_uv_face_colors", True),
+    f"{UV}/View/Wireframe": _prop("window_manager.allset_uv_face_colors", False),
     f"{UV}/View/Isolate Select/View Selected": "allset.uv_isolate",
     f"{UV}/Image/Display": ("allset.uv_display", {"mode": 'IMAGE'}),
     f"{UV}/Modify/Randomize Shells": "uv.randomize_uv_transform",
@@ -404,8 +407,6 @@ MAP = {
     f"{UV}/Tools/Optimize": _uv_tool("sculpt.uv_sculpt_relax"),
     f"{UV}/Tools/Grab": _uv_tool("sculpt.uv_sculpt_grab"),
     f"{UV}/Tools/Pinch": _uv_tool("sculpt.uv_sculpt_pinch"),
-    f"{UV}/View/Wireframe": _prop(f"{_SP}.uv_editor.show_faces", False),     # step 155: opacity 0 still drew fills
-    f"{UV}/View/Shaded": _prop(f"{_SP}.uv_editor.show_faces", True),
     f"{UV}/View/UV Distortion": _prop(f"{_SP}.uv_editor.show_stretch"),
     f"{UV}/View/Grid": _prop(f"{_SP}.overlay.show_grid_background"),
     f"{UV}/View/Toolbar": _prop(f"{_SP}.show_region_toolbar"),
