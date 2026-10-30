@@ -40,6 +40,11 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   (Maya's virtual slider) or left-drag its value sideways to change it on every selected object with the same node.
   Whole-number attributes step by whole numbers, and a drag stops at the attribute's usual range (typing can go
   further). Modifier attributes can be keyed and show their key state like Translate X.
+- **Joint Tool feedback** (#230): hold the button after a click and drag to position the new joint — the bone from
+  the previous joint follows, release fixes it. While the tool runs the placed joints are drawn as joint circles
+  with bones between them (the joint the next click attaches to in green), a ghost joint and bone show where the next
+  click goes, pointing at an existing joint before the first click highlights the joint you would branch from, the
+  cursor is a crosshair over the views and the Help Line shows the Joint Tool's help.
 - **Double-click a vertex or face** selects its whole shell (the connected piece), like Maya 2026; an edge still
   selects its loop. Pick a face, then Shift+double-click its neighbour to select the whole face loop through both
   (a face further along still selects only the faces between) (#222).

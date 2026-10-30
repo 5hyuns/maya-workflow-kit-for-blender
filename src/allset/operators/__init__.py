@@ -50,6 +50,7 @@ from . import default_light, render_batch  # noqa: E402  step 152 RENDER: defaul
 classes += render_batch.classes
 
 from . import curve_draw  # noqa: E402  step 156 lane T: CV / EP Curve Tool, Three / Two Point Circular Arc
+from . import joint_preview  # noqa: E402  Joint Tool viewport feedback
 
 classes += curve_draw.classes
 
@@ -292,6 +293,7 @@ def unregister():
     modify_maya.unregister_props()
     dag.unregister_handlers()
     curve_draw.unregister_handlers()
+    joint_preview.unregister_handlers()
     auto_key.unregister_handlers()
     material.unregister_handlers()
     outliner_drag.unregister_handlers()

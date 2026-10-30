@@ -18,11 +18,11 @@ from mathutils import Matrix, Vector
 
 from .. import results
 from .. import undo_steps
-from . import naming, units
+from . import joint_preview, naming, units
 
 JOINT_BASE = "joint"
 SKELETON_BASE = "skeleton"
-STATUS = "Joint Tool: click to place joints, Enter to finish (Esc: stop)"
+STATUS = "Joint Tool: click to place, drag to position. Click a joint to branch. Enter finishes"
 AXIS_NOTE = ("Blender joints point their Y axis at the child joint; a Maya frame with another primary axis is "
              "kept with the joint (exported to FBX).")
 
@@ -106,6 +106,29 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
     eb.use_connect = (parent.tail - p).length < 1e-6
     eb.tail = p + seg.normalized() * seg.length * 0.5
     return eb.name
+
+
+def move_joint(ob, name, point, up=Vector((0.0, 0.0, 1.0)), length=1.0):
+    """Move the end joint ``name`` (just placed by ``add_joint``) to world ``point`` with the same rules: the bone
+    from its parent follows when connected, its own tail keeps half the parent segment (a root: ``length`` along
+    ``up``). A point on the parent joint itself is skipped (no zero-length bone). True when moved."""
+    eb = ob.data.edit_bones.get(name)
+    if eb is None:
+        return False
+    p = ob.matrix_world.inverted() @ Vector(point)
+    parent = eb.parent
+    if parent is None:
+        eb.head = p
+        eb.tail = p + Vector(up).normalized() * length
+        return True
+    seg = p - parent.head
+    if seg.length < 1e-6:
+        return False
+    if eb.use_connect:
+        parent.tail = p
+    eb.head = p
+    eb.tail = p + seg * 0.5
+    return True
 
 
 def finish(context, ob, names, top=None):
@@ -478,12 +501,80 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         # (``_branch_from``).
         self._names, self._ob, self._parent, self._top = [], None, None, None
         self._swallow = False
+        self._drag = None          # (joint name, area pointer, region pointer) while the button is held
+        self._cursor = False
         context.workspace.status_text_set(STATUS)
+        from .. import command_line
+        command_line.MODAL_HELP[self.bl_idname] = STATUS
+        joint_preview.start()
+        self._hover(context, event)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def _end(self, context):
         context.workspace.status_text_set(None)
+        joint_preview.stop()
+        self._set_cursor(context, False)
+        joint_preview.redraw(context.window)
+
+    def _set_cursor(self, context, on):
+        """Crosshair while the pointer is over a 3D View (where a click places a joint)."""
+        if on == self._cursor or context.window is None:
+            return
+        if on:
+            context.window.cursor_modal_set('CROSSHAIR')
+        else:
+            context.window.cursor_modal_restore()
+        self._cursor = on
+
+    def _sync_preview(self):
+        st = joint_preview.STATE
+        try:
+            st["ob"] = self._ob.name if self._ob is not None else None
+        except ReferenceError:
+            st["ob"] = None
+        st["names"] = list(self._names)
+        st["top"] = self._top
+        st["current"] = self._parent
+
+    def _hover(self, context, event):
+        """Preview state for the pointer: where a click would place the next joint, or the joint it would branch
+        from."""
+        st = joint_preview.STATE
+        st["dragging"] = self._drag is not None
+        hit = view_under(context.window, event.mouse_x, event.mouse_y) if context.window is not None else None
+        self._set_cursor(context, hit is not None)
+        if hit is None:
+            st.update(region=0, point=None, branch=None)
+        else:
+            _area, region = hit
+            coord = (event.mouse_x - region.x, event.mouse_y - region.y)
+            branch = None
+            if self._ob is None:
+                arms = [o for o in context.view_layer.objects if o.type == 'ARMATURE' and o.visible_get()]
+                scale = context.preferences.system.ui_scale or 1.0
+                if arms:
+                    found = pick_branch_joint(region, region.data, arms, coord, BRANCH_MIN_PX * scale)
+                    branch = (found[0].name, found[1]) if found else None
+            point = click_point(region, region.data, coord)
+            st.update(region=region.as_pointer(), point=tuple(point), branch=branch)
+        self._sync_preview()
+        joint_preview.redraw(context.window)
+
+    def _drag_to(self, context, event):
+        """Move the joint placed by the press with the pointer (Maya: the joint follows until release)."""
+        from .. import live_refs
+        name, area_ptr, region_ptr = self._drag
+        area = live_refs.area(area_ptr, context.window)
+        region = live_refs.region(area, region_ptr)
+        if region is None or self._ob is None:
+            return
+        rv3d = region.data
+        coord = (event.mouse_x - region.x, event.mouse_y - region.y)
+        point = click_point(region, rv3d, coord)
+        up = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+        move_joint(self._ob, name, point, up=up, length=units.maya_unit(context.scene))
+        joint_preview.redraw(context.window)
 
     def _place(self, context, event):
         hit = view_under(context.window, event.mouse_x, event.mouse_y)
@@ -492,6 +583,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         area, region = hit
         rv3d = region.data
         coord = (event.mouse_x - region.x, event.mouse_y - region.y)
+        self._drag = None
         if self._ob is None and self._branch_from(context, area, region, coord):
             return True
         point = click_point(region, rv3d, coord)
@@ -505,6 +597,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         name = add_joint(self._ob, point, self._parent, up=up, length=units.maya_unit(context.scene))
         if name != self._parent:
             self._names.append(name)
+            self._drag = (name, area.as_pointer(), region.as_pointer())
         self._parent = name
         area.tag_redraw()
         return True
@@ -553,13 +646,24 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
                 self._end(context)
                 return {'CANCELLED'}
             return self._done(context)
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+            if self._drag is not None:
+                self._drag_to(context, event)
+                return {'RUNNING_MODAL'}
+            self._hover(context, event)
+            return {'PASS_THROUGH'}
         if event.type == 'LEFTMOUSE':
             if event.value == 'PRESS' and not (event.alt or event.ctrl or event.shift or event.oskey):
                 if self._place(context, event):
                     self._swallow = True
+                    self._hover(context, event)
                     return {'RUNNING_MODAL'}
             elif event.value == 'RELEASE' and self._swallow:
                 self._swallow = False
+                if self._drag is not None:
+                    self._drag_to(context, event)
+                    self._drag = None
+                self._hover(context, event)
                 return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
 
