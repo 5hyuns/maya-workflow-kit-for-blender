@@ -1196,7 +1196,7 @@ TWINS = {
     # #123: the same Blender action from the FX / Rendering / Hypershade menus
     "Effects/Collide with Effect": "Fluids/Make Collide",
     "Toon/Reverse Surfaces": "Mesh Display/Reverse",
-    "Stereo/Create": "Create/Cameras/Stereo Camera",
+    "Stereo/Create/Stereo Camera": "Create/Cameras/Stereo Camera",
     "Hypershade/Create/Image Plane": "Create/Free Image Plane",
     "Hypershade/Window/Connection Editor...": "Windows/General Editors/Connection Editor",
     "Hypershade/Window/Connect Selected...": "Windows/General Editors/Connection Editor",

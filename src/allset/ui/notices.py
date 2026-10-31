@@ -402,8 +402,10 @@ NOTICES.update({
        for cam in ("persp", "front", "side", "top")},
     "Toon/Reverse Surfaces": (
         "Flip Normals", "Blender flips the normals of the selected meshes (Mesh > Normals > Flip)."),
-    "Stereo/Create": (
+    "Stereo/Create/Stereo Camera": (
         "Stereoscopy", "Blender stereo = a camera with Render > Stereoscopy (Views) on, no stereo rig."),
+    "Stereo/Create/Multi Stereo Rig": (
+        "Stereoscopy", "Blender stereo = a camera with Render > Stereoscopy (Views) on, no multi-camera stereo rig."),
     _HS_C + "General Utilities/Uv Chooser": ("UV Map node", "Blender picks a UV set with the UV Map node."),
     _HS_C + "Particle Utilities/Particle Sampler": (
         "Particle Info node", "Blender reads particle values in a shader with the Particle Info node."),

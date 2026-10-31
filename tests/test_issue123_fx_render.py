@@ -38,7 +38,7 @@ FX_PATHS = (
     "Effects/Flow/Create Curve Flow", "Effects/Flow/Delete Selected Flow", "Effects/Collide with Effect",
 )
 RENDER_PATHS = (
-    "Lighting/Shading/Transfer Maps...", "Toon/Reverse Surfaces", "Stereo/Create",
+    "Lighting/Shading/Transfer Maps...", "Toon/Reverse Surfaces", "Stereo/Create/Stereo Camera",
     *(f"Toon/Assign Fill Shader/{k}" for k in ("Solid Color", "Light Angle Two Tone", "Shaded Brightness Two Tone",
                                                "Shaded Brightness Three Tone", "Dark Profile", "Rim Light",
                                                "Circle Highlight")),
@@ -146,7 +146,7 @@ def test_every_new_item_is_mapped_with_a_blender_tooltip():
         if kind == "op":
             mod, name = target.split(".")
             assert hasattr(bpy.types, f"{mod.upper()}_OT_{name}") or target.split(".")[0] not in {"allset"}, target
-    for twin, source in (("Stereo/Create", "Create/Cameras/Stereo Camera"),
+    for twin, source in (("Stereo/Create/Stereo Camera", "Create/Cameras/Stereo Camera"),
                          ("Hypershade/Create/Image Plane", "Create/Free Image Plane"),
                          ("Effects/Collide with Effect", "Fluids/Make Collide")):
         assert menu_map.MAP[twin] == menu_map.MAP[source], twin
@@ -489,7 +489,7 @@ def test_toon_reverse_surfaces_flips_whole_meshes():
 def test_stereo_create_turns_stereoscopy_on():
     sc = _scene()
     sc.render.use_multiview = False
-    assert _run("Stereo/Create") == {'FINISHED'}
+    assert _run("Stereo/Create/Stereo Camera") == {'FINISHED'}
     assert sc.render.use_multiview and bpy.context.active_object.name.startswith("stereoCamera")
 
 
