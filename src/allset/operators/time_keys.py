@@ -762,8 +762,8 @@ ACTIONS = (("CUT", "Cut", "Remove keys and place on the animation clipboard"),
            ("SNAP", "Snap", "Snap keys to whole frames"),
            ("TO_KEY", "Convert to Key", "Change existing breakdowns into keys"),
            ("TO_BREAKDOWN", "Convert to Breakdown", "Change existing keys into breakdowns"),
-           ("ADD_INBETWEEN", "Add Inbetween", "Insert an inbetween at the current time (later keys move one frame)"),
-           ("REMOVE_INBETWEEN", "Remove Inbetween", "Remove an inbetween at the current time"),
+           ("ADD_INBETWEEN", "Add Inbetween", "Move every key after the current time one frame later"),
+           ("REMOVE_INBETWEEN", "Remove Inbetween", "Move every key after the current time one frame earlier"),
            ("TANGENT", "Tangent", "Set in and out tangents"))
 
 

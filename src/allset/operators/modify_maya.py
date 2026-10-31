@@ -179,7 +179,7 @@ def align_to_lead(context, axis, mode):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_align_to_lead(bpy.types.Operator):
-    """Align the selection to the last selected object on this axis (Maya Align Tool handle)"""
+    """Line the selection up with the last selected object along this axis (Maya Align Tool handle)"""
     bl_idname = "allset.align_to_lead"
     bl_label = "Align"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}

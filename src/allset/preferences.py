@@ -219,9 +219,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Maya: no warnings about redeclared MEL variables (the kit runs no MEL: kept for Maya's menu)")
     se_history_output: bpy.props.EnumProperty(
         name="History Output", default='BOTH',
-        items=(('BOTH', "Show Both", "Show both MEL and Python output in the history"),
-               ('MEL', "Show MEL Only", "Show only MEL output in the history"),
-               ('PYTHON', "Show Python Only", "Show only Python output in the history")))
+        items=(('BOTH', "Show Both", "History lists MEL and Python results"),
+               ('MEL', "Show MEL Only", "History lists MEL results only"),
+               ('PYTHON', "Show Python Only", "History lists Python results only")))
 
     # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (default off;
     # Maya Channel Box Channels menu, ui/cb_channels.py, step 158).

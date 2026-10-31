@@ -53,7 +53,7 @@ def normalize(weights, index, value, locked=()):
     unheld others are scaled to fill 1 − value, held (``locked``) ones keep theirs (Maya:
     [0.8, 0.2, 0] j1 = 0.5 → [0.5, 0.5, 0]; [0.5, 0.5, 0] j3 = 0.3 → [0.35, 0.35, 0.3]).
 
-    Delegated: value is clamped to [0, 1 − held]; when the unheld others weigh nothing the rest is shared equally by
+    Edge cases: value is clamped to [0, 1 − held]; when the unheld others weigh nothing the rest is shared equally by
     them; with no unheld other only the edited weight changes."""
     w = [float(x) for x in weights]
     value = min(max(float(value), 0.0), 1.0)

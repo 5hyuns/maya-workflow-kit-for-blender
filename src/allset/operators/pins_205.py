@@ -757,8 +757,8 @@ class ALLSET_OT_uv_pin(bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_proximity_pin(bpy.types.Operator):
-    """Rivets a transform to a deforming geometry, with the option to maintain its relative offset (Maya Constrain >
-    Proximity Pin): select the geometry, then the objects to constrain"""
+    """Keeps objects on a deforming surface at the spot nearest to each, optionally with their current offset (Maya
+    Constrain > Proximity Pin): select the geometry, then the objects to constrain"""
     bl_idname = "allset.proximity_pin"
     bl_label = "Proximity Pin"
     bl_options = {'REGISTER', 'UNDO'}
@@ -1083,7 +1083,7 @@ class ALLSET_OT_wrap_influence(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return ("Add an object to a Wrap deformer to affect the deformation" if props.action == 'ADD'
+        return ("Let this object drive the wrap deformation too" if props.action == 'ADD'
                 else "Remove wrap influence")
 
     def execute(self, context):

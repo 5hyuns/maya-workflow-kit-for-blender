@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Time Slider bookmarks as Blender timeline markers (step 107).
 
-Maya 2022 hotkeys: Alt+T CreateTimeSliderBookmark
-("Create a new Time Slider Bookmark from selection", a name dialog), Alt+Shift+T QuickCreate, ' / ; Next / Previous
-bookmark, Shift+| FrameTimeSliderBookmark ("Sets the playback range to the current Bookmark's start and end time"),
-Shift+" / Shift+: frame the next / previous one (annotations).
+Maya hotkeys: Alt+T makes a Time Slider bookmark from the selected range (a name dialog first), Alt+Shift+T makes
+one at once, ' / ; go to the next / previous bookmark, Shift+| fits the playback range to the current bookmark,
+Shift+" / Shift+: frame the next / previous one.
 
 A Maya bookmark is a time range; a Blender marker is one frame. The kit bookmark = a marker at the range start; its
 end is kept in the scene ID property ``allset_bookmarks`` {marker name: end frame} when the bookmark was made from a

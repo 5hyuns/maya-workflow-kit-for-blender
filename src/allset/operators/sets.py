@@ -115,7 +115,7 @@ def _selection(context):
 
 
 class ALLSET_OT_create_set(bpy.types.Operator):
-    """Make a set containing the selected object(s)"""
+    """New set holding the selected objects"""
     bl_idname = "allset.create_set"
     bl_label = "Set"
     bl_options = {'REGISTER', 'UNDO'}
