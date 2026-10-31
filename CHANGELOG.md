@@ -3,9 +3,20 @@
 All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 111–124 and Maya Kit before step 111). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.0] — 2026-10-31
+
+Maya 2026 marking menus, Hypershade and shelves, the Marking Menu Editor from @TMouraille, Quad Draw from
+@youngmin2k, Channel Box value dragging from Tom Pilott, and the fixes from your reports. Supported on Blender 5.2
+LTS; 5.0 and 5.1 install but are not tested.
 
 ### Added
+- **Marking Menu Editor** from @TMouraille (#239) — thank you! (Windows > Settings/Preferences > Marking Menu
+  Editor): edit the kit's marking menus in Maya's 3×3 grid plus the list under it — label, command (Blender operator,
+  Maya menu item, Python like a shelf button, submenu, or the kit's own item), option box, move, add or remove items,
+  open submenus in place; Restore Default puts a kit menu back. **Your own marking menus** (New / Duplicate) open
+  with a hotkey the Maya way: hold the key and press LMB, drag and release. Saved at once in the extension's user
+  folder, so they survive kit updates; untouched items of an edited kit menu keep following the kit. Both styles
+  (Maya Engine / Blender Pies).
 - **Render Sequence with All Render-Enabled Cameras** (#252): every camera has a Renderable check (Attribute Editor
   camera tab > Output Settings, and Render Settings > Common > Renderable Cameras), on for new cameras and for
   persp, off for top / front / side, like Maya. Render > Render Sequence ❒ > All Render-Enabled Cameras renders the
@@ -77,7 +88,7 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Time Slider middle-mouse drag** (#255): a middle-mouse click or drag on the Time Slider moves the time
   without updating the scene, like Maya: everything keeps its current pose, so S keys that pose at the new frame.
   The next ordinary time change (left-click, playback, arrow keys) shows the animation again.
-- **Interactive Creation** (#225): turn on Create > Polygon Primitives > Interactive Creation and the Create menu,
+- **Interactive Creation** (#225; the first notice change from @A2wkiller, #234 — thank you!): turn on Create > Polygon Primitives > Interactive Creation and the Create menu,
   shelf and option boxes let you draw a polygon primitive in a view, like Maya: drag to place it and size its base,
   then drag again for its height (torus: section radius; pipe: height and thickness; helix: height and coils).
   Perspective views draw on the grid; orthographic views draw on their own plane with the primitive's Axis facing
@@ -89,6 +100,12 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   replace the kit keys of the same commands; keys that are already Maya's stay, and commands the kit doesn't bind
   are listed in the system console. Only the key bindings are read — nothing in the file is run. Restore puts the
   Maya keys back.
+- **RMB marking menu over a lattice** (from @A2wkiller, #236 — thank you! #227): Lattice Point enters lattice edit
+  mode so its points can be moved, Object Mode goes back, and the usual object list follows, in object and lattice
+  edit mode, instead of Blender's own context menu.
+- **Shift+W / E / R from any editor** (#212): key Translate / Rotate / Scale from the Graph Editor, Dope Sheet,
+  Outliner, Channel Box / Attribute Editor or Time Slider; edit, paint and sculpt modes keep their own keys. The
+  Attribute Editor's Translate / Rotate / Scale fields show the Channel Box key colours.
 - **UV Editor Shaded shows flipped UVs** (#246): 5 or View > Shaded colours front-facing UV faces blue and
   flipped (clockwise) ones red, like Maya's shaded UV display; 4 or View > Wireframe turns the faces off.
 - **Channel Box value dragging** from Tom Pilott (#224) — thank you! Left-drag a Channel Box value sideways to change
@@ -145,6 +162,17 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   menu has Reset Transforms. The Shift+RMB lists have Maya's full lists (Offset Edge Loop Tool, Remesh, Retopologize,
   Transform Component, Mapping with Planar Map X / Y / Z, Polygon Display ...), and RMB in the UV Editor lists the UV
   Editor's menus like Maya.
+- **Space tap maximizes any panel** (#214): a Space tap over a panel of the four view keeps that panel alone
+  whatever editor it shows (Graph Editor, render view, Outliner), and the next tap brings the four panels back with
+  each panel's editor kept.
+- **Ctrl first, then drag a Move manipulator handle** (#215): an axis arrow moves along its axis with grid snapping,
+  and plane / centre handles move with snapping instead of starting a box select.
+- **Graph Editor tangents** (#210): Spline, Clamped, Plateau and Flat each give Maya's own slope, with handles at a
+  third of each interval, and keep their type when Blender edits the curve.
+- **Joints draw like Maya's** in the Maya layout, and marquee / lasso selection picks them.
+- **Reset Pivot Position puts an object's pivot on its centre**, like Maya: the pivot-edit RMB menu (D held) has
+  Maya's Center Position on Reset (the default) and Zero Position on Reset, which puts the pivot back on the
+  object's own origin as before. The Move / Rotate / Scale Tool Settings Reset button follows the same choice.
 - **Hypershade > Create follows Maya 2026**: Math Utilities and Math Linear Utilities create the matching Blender
   Math / Vector Math / Map Range / Mix / Clamp / Vector Rotate node with its operation set (Sum, Cross Product, Sin
   ...); Multiply Divide, Plus Minus Average, Distance Between, Vector Product and the Double Linear nodes moved there
@@ -188,7 +216,7 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   inside a chain warns and changes nothing (Blender can't put a group between two joints of one skeleton).
   Unbind Skin and Delete History remove the skin's link to the skeleton with it. Skins bound with an older version
   get the link when their skeleton is grouped.
-- **A group's pivot moves and snaps in pivot editing**: D + V (or X / C) then a drag, or a middle-mouse drag, left
+- **A group's pivot moves and snaps in pivot editing** (from @TMouraille, #253 — thank you!): D + V (or X / C) then a drag, or a middle-mouse drag, left
   a group's pivot where it was, because Blender's Affect Only Origins skips Empties. It now moves and snaps onto
   any vertex, its own children's included; the children, the group's channels and the pivot edit stay as they were.
 - **Quad Draw workflow** from @youngmin2k (#231) — thank you!
@@ -215,10 +243,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
     Relax includes All Vertices, Auto-Lock keeps its choice for the stroke, and Extend distinguishes Loop from Border.
 - **Frame Selection (F)** (from @youngmin2k, #237 — thank you!): Object and mesh component modes keep Maya's
   framing shortcut ahead of another add-on's mode-specific F menu. Turning Maya mode off restores that menu without changing its binding.
-- **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,
+- **Hiding a group from the Outliner hides its children** (from @A2wkiller, #235 — thank you, and thanks @Kevorama for the report, #223). Ctrl+H, Shift+H,
   Ctrl+Shift+H, h and Alt+H in the Outliner run Maya's visibility commands like in the viewport, and a node hidden
   with Blender's own hide (or parented under one) hides everything below it.
-- **Torn-off menus read like the menu**: the items' text starts at the left edge instead of being centred, with
+- **Torn-off menus read like the menu** (from @TMouraille, #241 — thank you!): the items' text starts at the left edge instead of being centred, with
   the hotkeys and option boxes still lined up on the right.
 - **Hypershade Delete Unused Nodes no longer crashes Blender** (#251, thanks @DAI3rd for the report and the crash
   logs). Shader Editors showing a deleted material let go of it first, and a material that only a deleted object's
@@ -228,6 +256,14 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   wireframe they pick through the mesh again.
 - **Bind Skin keeps the mesh where it is** (#230): binding to joints that are posed, or bent by an IK handle / pole
   vector, no longer moves the mesh — like Maya, the current pose is the bind pose.
+- **Other add-ons' keys no longer run before the kit's Maya keys** when both could take the same key press (#218,
+  #250). Switching between Maya and Blender stops playback first; the Maya button while Maya mode is on puts the Maya
+  keys back and opens the Maya layout.
+- **UV Shell picks show in the UV Editor** with UV Sync Selection on, instead of the faces picked before (#245).
+- **Tool Box column on Retina displays** is wide enough for the toolbar without widening it by hand (#248).
+- **Translated menu bar labels** (Japanese and others) fit instead of being cut off (#249).
+- **Channel Box**: a Shift or Ctrl click on a value (without a drag) selects like a click on the channel name, and a
+  node the Show menu hides as a type doesn't hide its children.
 - **View > Select Camera** in a view that doesn't look through a camera picks that panel's own Maya camera — persp,
   top, front or side — in scenes made with File > New Scene, instead of doing nothing (#229).
 
