@@ -362,8 +362,8 @@ PIVOT_EDIT = MarkingMenu(
     },
     items=[("Bake Pivot Orientation", _item("Modify/Bake Pivot")),  # Blender bakes the orientation
            DIVIDER,
-           ("Center Position on Reset", None),
-           ("Zero Position on Reset", None)])
+           ("Center Position on Reset", _pivot_option("RESET_CENTER")),
+           ("Zero Position on Reset", _pivot_option("RESET_ZERO"))])
 
 # --- Shift+RMB: Maya's polygon tool marking menus -------------------------------------
 

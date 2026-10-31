@@ -372,10 +372,7 @@ def draw_settings(layout, context, kind):
     row = _labelled(layout, "Pivot:")
     editing = pivot_menu.pivot_editing(context)
     row.operator("allset.pivot_toggle", text="Edit Pivot", depress=editing)
-    if context.mode == 'OBJECT':
-        row.operator("allset.reset_pivot", text="Reset")
-    else:
-        row.operator("allset.pivot_reset", text="Reset")
+    row.operator("allset.pivot_reset", text="Reset")
     col = _labelled(layout, "").column(align=True)
     for option, text in (("SNAP_POS", "Position"), ("SNAP_ORI", "Orientation"), ("PIN", "Pin Component Pivot")):
         _check_op(col, "allset.pivot_option", text, pivot_menu.option(option, context), option=option)

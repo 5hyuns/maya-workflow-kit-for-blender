@@ -80,6 +80,29 @@ def test_object_reset_pivot():
     assert not bpy.context.scene.tool_settings.use_transform_data_origin
 
 
+def test_reset_position_mode_center_or_zero():
+    """Center Position on Reset (default): the pivot goes to the bounding box centre; Zero: to the origin."""
+    reset = ("allset.pivot_option", {"option": "RESET_CENTER"}), ("allset.pivot_option", {"option": "RESET_ZERO"})
+    assert dict(e for e in menus.PIVOT_EDIT.items if e != menus.DIVIDER)["Center Position on Reset"] == reset[0]
+    assert dict(e for e in menus.PIVOT_EDIT.items if e != menus.DIVIDER)["Zero Position on Reset"] == reset[1]
+    assert draw.checked(reset[0]) is True and draw.checked(reset[1]) is False, "Center is the default"
+    for mode, expect in (("RESET_CENTER", Vector((3.0, 0.0, 0.0))), ("RESET_ZERO", Vector((0.0, 0.0, 0.0)))):
+        ob = _cube()
+        for v in ob.data.vertices:                                      # geometry centred at x = 3
+            v.co.x += 3.0
+        freeze.shift_pivot(ob, Vector((1.0, 0.0, 0.0)))
+        bpy.context.view_layer.update()
+        world = [ob.matrix_world @ v.co for v in ob.data.vertices]
+        assert bpy.ops.allset.pivot_option(option=mode) == {'FINISHED'}
+        assert draw.checked(("allset.pivot_option", {"option": mode})) is True
+        assert bpy.ops.allset.pivot_reset(orientation=False) == {'FINISHED'}
+        bpy.context.view_layer.update()
+        pivot = ob.matrix_world.translation
+        assert (pivot - expect).length < 1e-5, (mode, tuple(pivot))
+        assert all((ob.matrix_world @ v.co - w).length < 1e-5 for v, w in zip(ob.data.vertices, world))
+    bpy.ops.allset.pivot_option(option="RESET_CENTER")
+
+
 def _edit_select(ob, pred):
     bm = bmesh.from_edit_mesh(ob.data)
     for v in bm.verts:

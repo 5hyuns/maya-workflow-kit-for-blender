@@ -1245,11 +1245,6 @@ MARKING.update({
     **{f"{m}/Scene Assembly": ("Library overrides", "Blender has no scene assembly nodes: link and override "
                                "collections (File > Link) for swappable pieces.")
        for m in ("RMB_MESH", "RMB_CURVE", "RMB_LATTICE")},
-    "PIVOT_EDIT/Center Position on Reset": (
-        "Reset Pivot", "Reset Pivot puts an object pivot back on the object's origin: Object > Set Origin > Origin to "
-        "Geometry centres it."),
-    "PIVOT_EDIT/Zero Position on Reset": (
-        "Reset Pivot", "Reset Pivot already puts an object pivot back on the object's own origin."),
     "SHIFT_OBJECT/Project Curve on mesh": (
         "Shrinkwrap / Knife Project", "Blender projects a curve onto a mesh with a Shrinkwrap modifier on the curve, "
         "or cuts it in with Knife Project."),

@@ -15,11 +15,17 @@ from bpy.props import BoolProperty, EnumProperty
 OPTIONS = (("PIN", "allset_pin_pivot", False), ("SNAP_POS", "allset_snap_pivot_pos", True),
            ("SNAP_ORI", "allset_snap_pivot_ori", True))
 _PROP = {o: p for o, p, _d in OPTIONS}
+# Where Reset Pivot Position puts an object pivot: the bounding box centre (default, like Maya) or the object's
+# own origin (Zero Position on Reset). Components always go back to the selection's centre.
+RESET_MODES = ("RESET_CENTER", "RESET_ZERO")
+RESET_PROP = "allset_pivot_reset_zero"
 
 
 def option(name, context=None):
     """Current value of a pivot option (the default, like Maya, when the property isn't there)."""
     context = context or bpy.context
+    if name in RESET_MODES:
+        return getattr(context.window_manager, RESET_PROP, False) == (name == "RESET_ZERO")
     prop = _PROP[name]
     default = next(d for o, _p, d in OPTIONS if o == name)
     return bool(getattr(context.window_manager, prop, default))
@@ -43,11 +49,18 @@ class ALLSET_OT_pivot_option(bpy.types.Operator):
     option: EnumProperty(items=(("PIN", "Pin Component Pivot", "The custom component pivot stays when the selection "
                                  "changes"),
                                 ("SNAP_POS", "Snap Pivot Position", "Clicking a component puts the pivot on it"),
-                                ("SNAP_ORI", "Snap Pivot Orientation", "Clicking a component orients the pivot to it")))
+                                ("SNAP_ORI", "Snap Pivot Orientation", "Clicking a component orients the pivot to it"),
+                                ("RESET_CENTER", "Center Position on Reset", "Reset Pivot Position puts an object "
+                                 "pivot on the centre of its bounding box"),
+                                ("RESET_ZERO", "Zero Position on Reset", "Reset Pivot Position puts an object pivot "
+                                 "on the object's own origin")))
 
     def execute(self, context):
         from . import hold
         wm = context.window_manager
+        if self.option in RESET_MODES:          # a pair of radio items: picking one sets it
+            setattr(wm, RESET_PROP, self.option == "RESET_ZERO")
+            return {'FINISHED'}
         prop = _PROP[self.option]
         setattr(wm, prop, not option(self.option, context))
         if self.option != "PIN" and hold.COMPONENT.on:
@@ -56,7 +69,8 @@ class ALLSET_OT_pivot_option(bpy.types.Operator):
 
 
 class ALLSET_OT_pivot_reset(bpy.types.Operator):
-    """Put the pivot back: objects on their own origin, components on the selection's centre (Maya Reset Pivot)"""
+    """Put the pivot back: objects on their bounding box centre (or their own origin with Zero Position on Reset),
+    components on the selection's centre (Maya Reset Pivot)"""
     bl_idname = "allset.pivot_reset"
     bl_label = "Reset Pivot"
     bl_options = {'REGISTER', 'UNDO'}
@@ -71,6 +85,13 @@ class ALLSET_OT_pivot_reset(bpy.types.Operator):
             return {'FINISHED'}
         if not bpy.ops.allset.reset_pivot.poll():      # no selected object in Object Mode: no pivot to put back
             return {'CANCELLED'}
+        if self.position and not option("RESET_ZERO", context):
+            from . import freeze
+            obs = list(context.selected_objects)
+            if self.orientation:
+                bpy.ops.allset.reset_pivot(position=False, orientation=True)
+            freeze.center_pivot(context, obs)
+            return {'FINISHED'}
         return bpy.ops.allset.reset_pivot(position=self.position, orientation=self.orientation)
 
 
@@ -147,10 +168,11 @@ def register_props():
     wm = bpy.types.WindowManager
     for name, prop, default in OPTIONS:
         setattr(wm, prop, BoolProperty(name=name.replace("_", " ").title(), default=default, options={'SKIP_SAVE'}))
+    wm.allset_pivot_reset_zero = BoolProperty(name="Zero Position on Reset", default=False, options={'SKIP_SAVE'})
 
 
 def unregister_props():
     wm = bpy.types.WindowManager
-    for _name, prop, _default in OPTIONS:
+    for prop in [p for _n, p, _d in OPTIONS] + [RESET_PROP]:
         if hasattr(wm, prop):
             delattr(wm, prop)
