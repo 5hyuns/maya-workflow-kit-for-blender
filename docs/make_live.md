@@ -64,7 +64,7 @@ colour API. Unmatched labels keep their native text. Virtual camera/set rows
 only occupy free rows and never cover native objects; enlarge a short Outliner
 to see more virtual entries.
 
-Automated checks use the repository's sandbox harness in Blender 5.2.2 LTS:
+Automated checks use the repository's sandbox harness in Blender 5.2 LTS:
 
 ```text
 python tests/run.py -k make_live,step144_poly,step59_pivot_snap,enable_disable

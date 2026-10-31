@@ -1,11 +1,11 @@
-# Paint Skin Weights · 0.5.0
+# Paint Skin Weights
 
 Enable Maya mode, select a skinned mesh, and choose **Skin > Paint Skin Weights**. Like Maya, the plain menu item
 starts the tool and leaves the Channel Box as the Channel Box; the tool's settings are in **Tool Settings**: the menu's
-option box or a double-click on the paint tool opens them (Maya `ArtPaintSkinWeightsToolOptions` = `toolPropertyWindow`).
+option box or a double-click on the paint tool opens them, as in Maya.
 Q/W/E/R leave painting with the mesh still selected (Maya: the Select / Move / Rotate / Scale tool).
 
-The sections follow Maya 2024+ Tool Settings, then two Blender extras:
+The sections follow Maya 2026 Tool Settings, then two Blender extras:
 
 | Section | Contents |
 |---|---|
@@ -25,8 +25,8 @@ Skin weight layers like Maya's Skin Tools: the **Skin Tools (layers)** button in
 window (Initialize Skin Layers, Layers, Influences with the Mask, Paint / Set Weights / Mirror). Once a mesh has
 layers, Skin > Paint Skin Weights opens Skin Tools instead of this tool.
 
-Not done yet (GitHub issues): Maya's influence context menu (Select / Add / Remove Affected Verts), Maya 2024's several
-skinClusters per mesh.
+Not done yet (GitHub issues): Maya's influence context menu (Select / Add / Remove Affected Verts), several
+skinClusters per mesh (Maya 2024 and later).
 
 ## Validation
 
