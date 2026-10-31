@@ -198,10 +198,11 @@ def test_rmb_menu_lists_material_items():
     for menu in (mm.RMB_MESH, mm.RMB_CURVE):
         labels = [e[0] for e in menu.items if e != mm.DIVIDER]
         tail = labels[-4:]
-        assert tail == ["Material Attributes...", "Assign New Material...", "Assign Favorite Material",
+        assert tail == ["Material Attributes...", "Assign New Material", "Assign Favorite Material",
                         "Assign Existing Material"], (menu.name, labels)
         items = dict(e for e in menu.items if e != mm.DIVIDER)
-        assert items["Assign New Material..."][1] == {"rmb": True}
+        assert items["Assign New Material"].items == [("New Material...", ("allset.assign_new_material",
+                                                                           {"rmb": True}))]
         assert items["Assign Existing Material"] == ("menu", "ALLSET_MT_assign_existing_material_rmb")
         fav = items["Assign Favorite Material"]
         assert isinstance(fav, mm.Sub) and [k[1][1]["kind"] for k in fav.items] == [

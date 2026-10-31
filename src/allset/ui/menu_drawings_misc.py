@@ -436,21 +436,6 @@ def i_vis_turntable(cv):
     cv.fill(cv.m_ering(20, 25, 8, 4, 2.0) & (cv.y > 25), LIGHT, ol=True)
 
 
-@icon("Visualize/Ghosting Editor")
-def i_vis_ghosting_editor(cv):
-    def body(x0, y0, x1, y1):
-        for x, y in ((x0 + 3, y1 - 3), (x0 + 8, y0 + 5), (x0 + 15, y0 + 3), (x1 - 3, y1 - 3)):
-            cv.ring(x, y, 2.8, 1.2, LIGHT)
-    _ed(cv, ED_ORANGE, body)
-
-
-@icon("Visualize/Unghost All")
-def i_vis_unghost(cv):
-    for x, y in ((7, 24), (9, 10), (17, 5), (25, 24)):
-        dashed_ring(cv, x, y, 4.5, 1.2, LIGHT, n=6)
-    cv.circle(24, 12, 5, LIGHT, ol=True)
-
-
 @icon("Visualize/Update Snapshot")
 def i_vis_update_snapshot(cv):
     curved_arrow(cv, 9, 9, 6, 180, 420, w=2.0, head=4)

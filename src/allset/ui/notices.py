@@ -1046,6 +1046,12 @@ CATEGORIES.update({
         "Bloom / Glare", "Blender makes glow in the compositor (Glare node)."),
     "Hypershade/Create/Switch Utilities": (
         "Mix nodes", "Blender switches between inputs with Mix nodes (or Geometry Nodes Switch)."),
+    "Hypershade/Create/Math Utilities": (
+        "Geometry Nodes / drivers", "Blender's shader nodes have no matrix, quaternion, boolean or time math: do it "
+        "in Geometry Nodes or a driver."),
+    "Hypershade/Create/Math Linear Utilities": (
+        "Geometry Nodes / drivers", "Blender's shader nodes have no matrix, quaternion, boolean or time math: do it "
+        "in Geometry Nodes or a driver."),
     "Hypershade/Create/Create Options": (
         "Shader Editor", "Blender materials always have their output node; textures get their own Mapping node."),
     "Hypershade/Tabs": (
@@ -1177,9 +1183,6 @@ MARKING = {
     "SHIFT_VERTEX/Reorder Vertices": (
         "Sort Mesh Elements", "Blender can't set the vertex order from three picked vertices: Mesh > Sort Elements "
         "reorders them by a rule."),
-    "SHIFT_EDGE/Merge/Collapse Edges/Merge Edge Tool": (
-        "Merge / Bridge", "Blender has no tool that merges two clicked border edges: select both edges and use Merge "
-        "(At Center) or Bridge."),
     "SHIFT_FACE/Assign Invisible Faces": (
         "Delete faces / Hide", "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them "
         "(Display > Hide)."),
@@ -1191,15 +1194,6 @@ MARKING = {
     "OPT_MOVE/Axis/Live Object Axis": (
         "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
         "menu > Create) and pick it."),
-    "OPT_MOVE/Axis/Custom": (
-        "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
-        "selection."),
-    "OPT_ROTATE/Custom/Custom": (
-        "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
-        "selection."),
-    "OPT_ROTATE/Custom/Reset": (
-        "Orientation: Object", "Blender keeps saved orientations until you delete them: pick Object to go back to "
-        "the default rotate axis."),
     "OPT_SCALE/Axis/Live Object Axis": (
         "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
         "menu > Create) and pick it."),
@@ -1235,6 +1229,81 @@ MARKING.update({f"SELECT_COMPONENT/{p}": _PICK_MASK for p in (
     "Parm Points/Subdiv Mesh UVs", "Parm Points/Surface Points", "Lines/Trim Edges", "Lines/All Lines",
     "Lines/Springs", "Lines/Isoparms", "Hulls", "Pivots/Scale Pivots", "Pivots/Joint Pivots", "Pivots/All Pivots",
     "Pivots/Rotate Pivots", "Handles", "Misc./Local Rotation Axes", "Misc./Image Planes", "Misc./All Misc")})
+
+
+# Maya 2026 marking menus (tool option menus share Maya's Select / constraint submenus; Shift+RMB Polygon Display
+# lists): greyed entries and what Blender does instead.
+_TOOLS = ("OPT_MOVE", "OPT_ROTATE", "OPT_SCALE", "OPT_SELECT")
+_HIDDEN_TRI = ("Wireframe / Triangulate modifier", "Blender doesn't draw the hidden triangles of n-gons: a Triangulate "
+               "modifier shows them.")
+_BORDER = ("Select > Select Loops", "Blender doesn't highlight open border edges: select one and use Select > Select "
+           "Loops > Select Boundary Loop to see the border.")
+_VERTS = ("Edit mode", "Blender draws vertices only in edit mode (Tab).")
+_IDS = ("Indices overlay", "Blender shows element numbers with the Indices overlay (Preferences > Interface > "
+        "Developer Extras, then Overlays > Indices).")
+MARKING.update({
+    **{f"{m}/Scene Assembly": ("Library overrides", "Blender has no scene assembly nodes: link and override "
+                               "collections (File > Link) for swappable pieces.")
+       for m in ("RMB_MESH", "RMB_CURVE", "RMB_LATTICE")},
+    "PIVOT_EDIT/Center Position on Reset": (
+        "Reset Pivot", "Reset Pivot puts an object pivot back on the object's origin: Object > Set Origin > Origin to "
+        "Geometry centres it."),
+    "PIVOT_EDIT/Zero Position on Reset": (
+        "Reset Pivot", "Reset Pivot already puts an object pivot back on the object's own origin."),
+    "SHIFT_OBJECT/Project Curve on mesh": (
+        "Shrinkwrap / Knife Project", "Blender projects a curve onto a mesh with a Shrinkwrap modifier on the curve, "
+        "or cuts it in with Knife Project."),
+    "SHIFT_OBJECT/Transfer Vertex Order": (
+        "Sort Mesh Elements", "Blender can't copy another mesh's vertex order: Mesh > Sort Elements reorders vertices "
+        "by a rule."),
+    **{f"SHIFT_OBJECT/Booleans/{label}": ("Boolean modifier", "Blender's Boolean modifier does Union, Difference "
+                                          "and Intersect only: split pieces with Separate after a Difference.")
+       for label in ("Slice", "Hole Punch", "Cut Out", "Split Edges")},
+    "SHIFT_OBJECT/Polygon Display/Toggle Border Edges": _BORDER,
+    "SHIFT_EDGE/Polygon Display/Toggle Border Edges": _BORDER,
+    "SHIFT_DEFAULT/Polygon Display All/Toggle All Geometry Border Edges": _BORDER,
+    "SHIFT_OBJECT/Polygon Display/Toggle Hidden Triangles": _HIDDEN_TRI,
+    "SHIFT_EDGE/Polygon Display/Toggle Hidden Triangle Edges": _HIDDEN_TRI,
+    "SHIFT_FACE/Polygon Display/Toggle Hidden Triangles": _HIDDEN_TRI,
+    "SHIFT_DEFAULT/Polygon Display All/Toggle All Hidden Triangles": _HIDDEN_TRI,
+    "SHIFT_OBJECT/Polygon Display/Toggle Vertices": _VERTS,
+    "SHIFT_VERTEX/Polygon Display/Toggle Vertices": _VERTS,
+    "SHIFT_DEFAULT/Polygon Display All/Toggle All Vertices": _VERTS,
+    "SHIFT_VERTEX/Polygon Display/Toggle Vertex Numbers": _IDS,
+    "SHIFT_FACE/Polygon Display/Toggle Face Numbers": _IDS,
+    "CTRL_CONVERT/Selection Constraints...": (
+        "Select Loops / Linked", "Blender has no selection constraints: use Select > Select Loops or Select Linked "
+        "after picking."),
+    "OPT_MOVE/Update Triad": (
+        "Gizmo", "Blender's transform gizmo always follows the selection while you drag."),
+    "OPT_ROTATE/Free Rotate": (
+        "R R (Trackball)", "Blender rotates freely with R pressed twice (Trackball), not from the rotate gizmo's "
+        "centre."),
+    **{f"{m}/Select/Highlight Backfaces": (
+        "X-ray", "Blender pre-selects only what faces the view: turn on X-ray (Alt+Z) to reach the back.")
+       for m in _TOOLS},
+    **{f"{m}/Select/Asset Centric": (
+        "Collections", "Blender has no assets that select as one: put the objects in a collection and select it in "
+        "the Outliner.") for m in _TOOLS},
+    **{f"{m}/Select/Soft Select/Object": (
+        "Proportional Editing", "Blender's proportional editing has no object-space falloff: it works in world space "
+        "(Volume) or along the surface.") for m in _TOOLS},
+    **{f"{m}/Select/Soft Select/Global": (
+        "Proportional Editing", "Blender's proportional editing reaches only the mesh being edited: there is no "
+        "falloff across other objects.") for m in _TOOLS},
+    **{f"{m}/Select/Soft Select/Color Feedback": (
+        "Proportional circle", "Blender shows the soft selection radius as a circle while you transform, not as "
+        "vertex colours.") for m in _TOOLS},
+    **{f"{m}/Select/Automatic Camera-Based Selection": (
+        "Camera-Based Selection", "Blender has no automatic switch: turn Camera-Based Selection on or off yourself.")
+       for m in _TOOLS},
+    **{f"{m}/Selection Constraints": (
+        "Select Loops / Linked", "Blender has no selection constraints: use Select > Select Loops or Select Linked "
+        "after picking.") for m in _TOOLS},
+    **{f"{m}/Transform Constraints": (
+        "Edge Slide / snapping", "Blender has no transform constraint mode: slide along edges with G G (Edge Slide) "
+        "or snap to faces while moving.") for m in _TOOLS},
+})
 
 
 # step 206: polyWarpImage bakes a file texture from one UV set into another as a new image file

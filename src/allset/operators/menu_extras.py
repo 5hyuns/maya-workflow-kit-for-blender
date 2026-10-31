@@ -275,12 +275,17 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
     bl_label = "Planar Projection"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # Maya's Planar Map X / Y / Z (Shift+RMB Mapping submenu) project along a fixed Maya axis (Y up -> Blender Z)
+    axis: EnumProperty(items=(('NORMAL', "Faces", "Plane of the faces' average normal"), ('X', "X", ""),
+                              ('Y', "Y", ""), ('Z', "Z", "")), name="Project Along", options={'SKIP_SAVE'})
+
     @classmethod
     def poll(cls, context):
         ob = context.active_object
         return ob is not None and ob.type == 'MESH' and context.mode in {'EDIT_MESH', 'OBJECT'}
 
     def execute(self, context):
+        fixed = {'X': Vector((1, 0, 0)), 'Y': Vector((0, 0, 1)), 'Z': Vector((0, -1, 0))}.get(self.axis)
         obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
                if o.type == 'MESH']
         for ob in obs:
@@ -294,7 +299,7 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
                     bm.free()
                 continue
             layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
-            normal = sum((f.normal * f.calc_area() for f in faces), Vector())
+            normal = fixed if fixed is not None else sum((f.normal * f.calc_area() for f in faces), Vector())
             loops = [lp for f in faces for lp in f.loops]
             for lp, uv in zip(loops, planar_uvs([lp.vert.co for lp in loops], normal)):
                 lp[layer].uv = uv

@@ -70,8 +70,8 @@ Mesh/Triangulate
 """
 PRIORITY_PATHS = [p for line in PRIORITY.strip().splitlines() for p in line.split("|")]
 
-STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: items renamed in step 219)
-MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (incl. step 219 renames)
+STEP131_ICONS = 202         # menu items showing a shelf / Status Line picture (Maya 2026 shelves)
+MAYA_ICON_ITEMS = 898       # kit menu items Maya 2026 shows with an icon
 MIN_ICONS = 675             # this step: 675 of 679 (the 4 left have no exported Maya picture to follow)
 
 # Same uniqueness rule as tests/test_step131_icons.py (shelf / Status Line): enough pixels differ clearly.

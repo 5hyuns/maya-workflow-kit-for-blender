@@ -471,13 +471,14 @@ HS_NODES = {
     "Environment Textures/Env Sphere": 'ShaderNodeTexEnvironment',
     "Layered Texture": 'ShaderNodeMix',
     "General Utilities/Bump 2d": 'ShaderNodeBump', "General Utilities/Bump 3d": 'ShaderNodeBump',
-    "General Utilities/Multiply Divide": 'ShaderNodeVectorMath',
-    "General Utilities/Plus Minus Average": 'ShaderNodeVectorMath',
+    "Math Utilities/Operation/Multiply Divide": 'ShaderNodeVectorMath',
+    "Math Utilities/Operation/Plus Minus Average": 'ShaderNodeVectorMath',
     "General Utilities/Reverse": 'ShaderNodeInvert', "General Utilities/Set Range": 'ShaderNodeMapRange',
     "General Utilities/2d Placement": 'ShaderNodeMapping', "General Utilities/3d Placement": 'ShaderNodeMapping',
-    "General Utilities/Sampler Info": 'ShaderNodeNewGeometry', "General Utilities/Vector Product": 'ShaderNodeVectorMath',
-    "General Utilities/Distance Between": 'ShaderNodeVectorMath', "General Utilities/Condition": 'ShaderNodeMath',
-    "Scalar Utilities/Add Double Linear": 'ShaderNodeMath', "Scalar Utilities/Mult Double Linear": 'ShaderNodeMath',
+    "General Utilities/Sampler Info": 'ShaderNodeNewGeometry', "Math Utilities/Transformation/Vector Product": 'ShaderNodeVectorMath',
+    "Math Utilities/Transformation/Distance Between": 'ShaderNodeVectorMath', "General Utilities/Condition": 'ShaderNodeMath',
+    "Math Linear Utilities/Operation/Add Double Linear": 'ShaderNodeMath',
+    "Math Linear Utilities/Operation/Mult Double Linear": 'ShaderNodeMath',
     "Scalar Utilities/Float Constant": 'ShaderNodeValue', "Scalar Utilities/Float Math": 'ShaderNodeMath',
     "Scalar Utilities/Unit Conversion": 'ShaderNodeMath', "Scalar Utilities/Blend Two Attr": 'ShaderNodeMix',
     "Color Utilities/Blend Colors": 'ShaderNodeMix', "Color Utilities/Channels": 'ShaderNodeSeparateColor',
@@ -502,9 +503,42 @@ HS_EXTRA = {"Volumetric Materials/Volume Shader": 'VOLUME_SHADER', "Volumetric M
             "Materials/Usd Preview Surface": 'USD_PREVIEW', "Materials/Shading Map": 'SHADING_MAP'}
 
 
+# Maya 2026 Math Utilities nodes -> (Blender shader node, its operation or ""); Math Linear Utilities has the same
+# nodes as "<name> Double Linear". Matrix, quaternion and time nodes have no shader counterpart (notices).
+_M, _V = 'ShaderNodeMath', 'ShaderNodeVectorMath'
+HS_MATH = {
+    "Comparison/Equal": (_M, 'COMPARE'), "Comparison/Greater Than": (_M, 'GREATER_THAN'),
+    "Comparison/Less Than": (_M, 'LESS_THAN'), "Comparison/Max": (_M, 'MAXIMUM'), "Comparison/Min": (_M, 'MINIMUM'),
+    "Operation/Absolute": (_M, 'ABSOLUTE'), "Operation/Average": (_M, 'ADD'), "Operation/Divide": (_M, 'DIVIDE'),
+    "Operation/Inverse Lerp": ('ShaderNodeMapRange', ""), "Operation/Lerp": ('ShaderNodeMix', ""),
+    "Operation/Log": (_M, 'LOGARITHM'), "Operation/Modulo": (_M, 'MODULO'), "Operation/Multiply": (_M, 'MULTIPLY'),
+    "Operation/Power": (_M, 'POWER'), "Operation/Subtract": (_M, 'SUBTRACT'), "Operation/Sum": (_M, 'ADD'),
+    "Rounding/Ceil": (_M, 'CEIL'), "Rounding/Clamp Range": ('ShaderNodeClamp', ""), "Rounding/Floor": (_M, 'FLOOR'),
+    "Rounding/Round": (_M, 'ROUND'), "Rounding/Smooth Step": ('ShaderNodeMapRange', ""),
+    "Rounding/Truncate": (_M, 'TRUNC'),
+    "Transformation/Cross Product": (_V, 'CROSS_PRODUCT'), "Transformation/Dot Product": (_V, 'DOT_PRODUCT'),
+    "Transformation/Length": (_V, 'LENGTH'), "Transformation/Normalize": (_V, 'NORMALIZE'),
+    "Transformation/Rotate Vector": ('ShaderNodeVectorRotate', ""),
+    "Trigonometry/Acos": (_M, 'ARCCOSINE'), "Trigonometry/Asin": (_M, 'ARCSINE'), "Trigonometry/Atan": (_M, 'ARCTANGENT'),
+    "Trigonometry/Atan 2": (_M, 'ARCTAN2'), "Trigonometry/Cos": (_M, 'COSINE'), "Trigonometry/Sin": (_M, 'SINE'),
+    "Trigonometry/Tan": (_M, 'TANGENT'), "Trigonometry/Pi": ('ShaderNodeValue', ""),
+}
+
+
 def _hs_nodes():
-    return {f"{HS}/Create/{label}": ("allset.hs_node", {"node_type": node, "label": label.rsplit("/", 1)[-1]})
-            for label, node in HS_NODES.items()}
+    out = {f"{HS}/Create/{label}": ("allset.hs_node", {"node_type": node, "label": label.rsplit("/", 1)[-1]})
+           for label, node in HS_NODES.items()}
+    for label, (node, op) in HS_MATH.items():
+        group, name = label.split("/")
+        pairs = [(f"Math Utilities/{label}", name)]
+        if name != "Pi":            # no linear Pi node
+            pairs.append((f"Math Linear Utilities/{group}/{name} Double Linear", f"{name} Double Linear"))
+        for path, maya in pairs:
+            props = {"node_type": node, "label": maya}
+            if op:
+                props["operation"] = op
+            out[f"{HS}/Create/{path}"] = ("allset.hs_node", props)
+    return out
 
 
 MAP.update({

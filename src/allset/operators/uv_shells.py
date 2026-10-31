@@ -503,17 +503,18 @@ class ALLSET_OT_uv_distribute(_ShellOp, bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_uv_normalize(_ShellOp, bpy.types.Operator):
-    """Scale the selection's UVs to fill the 0-1 tile under them, u and v separately (Maya Normalize)"""
+    """Scale the UVs of the faces the selection touches to fill the 0-1 tile under them, u and v separately (Maya
+    Normalize); UVs shared with untouched faces split off"""
     bl_idname = "allset.uv_normalize"
     bl_label = "Normalize"
 
     def run(self, context, bm, uv, synced):
         faces = uv_tools.selected_faces(bm, uv, synced)
-        if faces:
-            loops = [l for f in faces for l in f.loops]
-        else:
-            loops = [l for p in selected_points(bm, uv, synced) for l in p]
-        return normalize(loops, uv)
+        if not faces:
+            # selected UVs / edges: every face using one of them, like Maya
+            touched = {l.face for p in selected_points(bm, uv, synced) for l in p}
+            faces = sorted(touched, key=lambda f: f.index)
+        return normalize([l for f in faces for l in f.loops], uv)
 
 
 @undo_steps.no_redo_panel

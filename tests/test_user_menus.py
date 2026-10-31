@@ -85,21 +85,21 @@ def test_shared_factory_submenu_edit_stays_in_its_menu():
 
 def test_list_rows_add_move_remove_and_dividers():
     _fresh()
-    n = len(mm.RMB_EMPTY.items)
-    path = um.add_item("RMB_EMPTY", "", {"label": "Hello", "type": "python", "code": "print('hi')"})
+    n = len(mm.PIVOT_EDIT.items)
+    path = um.add_item("PIVOT_EDIT", "", {"label": "Hello", "type": "python", "code": "print('hi')"})
     assert path == f"#{n}"
-    assert um.add_item("RMB_EMPTY", "", mm.DIVIDER, index=0) == "#0"
-    assert um.move_item("RMB_EMPTY", f"#{n + 1}", -1) == f"#{n}"
-    assert um.move_item("RMB_EMPTY", "#0", -1) is None            # already first
-    assert um.move_item("RMB_EMPTY", "#-1", 1) is None            # never Python's negative index
+    assert um.add_item("PIVOT_EDIT", "", mm.DIVIDER, index=0) == "#0"
+    assert um.move_item("PIVOT_EDIT", f"#{n + 1}", -1) == f"#{n}"
+    assert um.move_item("PIVOT_EDIT", "#0", -1) is None            # already first
+    assert um.move_item("PIVOT_EDIT", "#-1", 1) is None            # never Python's negative index
     um.apply()
-    items = mm.MENUS["RMB_EMPTY"].items
+    items = mm.MENUS["PIVOT_EDIT"].items
     assert items[0] == mm.DIVIDER
     assert items[n] == ("Hello", (um.PYTHON_OP, {"code": "print('hi')"}))
-    assert um.set_entry("RMB_EMPTY", f"#{n}", None)
-    assert not um.set_entry("RMB_EMPTY", "#99", None) and not um.set_entry("RMB_EMPTY", "#x", None)
+    assert um.set_entry("PIVOT_EDIT", f"#{n}", None)
+    assert not um.set_entry("PIVOT_EDIT", "#99", None) and not um.set_entry("PIVOT_EDIT", "#x", None)
     um.apply()
-    assert len(mm.MENUS["RMB_EMPTY"].items) == n + 1
+    assert len(mm.MENUS["PIVOT_EDIT"].items) == n + 1
     _fresh()
 
 

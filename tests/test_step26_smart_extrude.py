@@ -157,7 +157,7 @@ def test_duplicate_taken_back_when_not_moved():
 def test_hold_menu_check_boxes():
     for menu in (mm.OPT_MOVE, mm.OPT_ROTATE, mm.OPT_SCALE):
         for label, action in (i for i in menu.items if i != mm.DIVIDER):
-            if label in ("Smart Extrude", "Smart Duplicate", "Preserve UVs", "Preserve Children"):
+            if label in ("Shift Extrude", "Shift Duplicate", "Preserve UVs", "Preserve Children"):
                 assert engine.is_toggle(action), (menu.name, label)
                 assert engine.Layout._text(label, action).endswith("    "), "room for the box"
     prefs = preferences.get()

@@ -156,7 +156,7 @@ def s_w_shot():
     draw = import_module(MODULE + ".marking.draw")
     s = draw.ACTIVE.get("session")
     labels = [i.label for i in s.layout.items] if s else []
-    check("W + LMB opens the Move tool options with Smart Duplicate", "Smart Duplicate" in labels)
+    check("W + LMB opens the Move tool options with Shift Duplicate", "Shift Duplicate" in labels)
     shot("gui_step31_w_menu.png")
     x, y = C["w"]
     tap_esc(x, y)

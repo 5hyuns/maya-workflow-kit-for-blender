@@ -21,7 +21,7 @@ BASELINE = (464, 128)
 # Greyed marking entries whose Maya command already worked from the main menus.
 QUANT_25 = [
     "SHIFT_OBJECT/Fill Holes", "SHIFT_OBJECT/Extrude", "SHIFT_OBJECT/Quadrangulate",
-    "SHIFT_OBJECT/Booleans/Union", "SHIFT_OBJECT/Booleans/Difference",
+    "SHIFT_OBJECT/Booleans/Union", "SHIFT_OBJECT/Booleans/Difference (A - B)",
     "SHIFT_OBJECT/Booleans/Intersection",
     "SHIFT_VERTEX/Vertex Normals/Vertex Normal Edit Tool", "SHIFT_VERTEX/Detach Components",
     "SHIFT_VERTEX/Circularize Vertices", "SHIFT_EDGE/Circularize Components",
@@ -60,7 +60,8 @@ def test_greyed_counts_and_notices():
     assert not stale, stale
     for key, (substitute, line) in notices.MARKING.items():
         assert substitute and line.endswith("."), key
-    assert len(greyed) <= 75, len(greyed)
+    # Maya 2026 adds the shared Select / constraint submenus of the tool option menus and Polygon Display lists
+    assert len(greyed) <= 115, len(greyed)
 
 
 def test_item_paths_are_mapped():

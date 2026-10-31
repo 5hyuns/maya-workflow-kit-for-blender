@@ -118,13 +118,11 @@ GRAPH_ICONS = (
     ("regionSelectKeyTool", 'FULLSCREEN_ENTER', "transform.resize", "Region Tool: Scale or move keys"),
     ("retimeKeyTool", 'TIME', "allset.retime_tool", "Retime Tool: scale and ripple keys"),
     "|",
-    # the key tool w / e / r pick (what a middle drag does to the selected keys)
-    ("moveKeysTool", 'EMPTY_ARROWS', ("prop", "window_manager.allset_graph_key_tool", {"value": 'MOVE'}),
-     "Move Keys Tool"),
-    ("rotateKeysTool", 'DRIVER_ROTATIONAL_DIFFERENCE',
-     ("prop", "window_manager.allset_graph_key_tool", {"value": 'ROTATE'}), "Rotate Tool: turn the key tangents"),
-    ("scaleKeysTool", 'CON_SIZELIKE', ("prop", "window_manager.allset_graph_key_tool", {"value": 'SCALE'}),
-     "Scale Keys Tool"),
+    # Maya's curve sculpting group (the w / e / r key tools are keys and Edit > Transformation Tools items)
+    ("sculptKeyGrabTool", 'MOUSE_LMB_DRAG', None, "Grab Keys Tool"),
+    ("sculptKeySmoothTool", 'SMOOTHCURVE', "graph.smooth", "Smooth Keys"),
+    ("sculptKeySmearTool", 'MOUSE_MMB_DRAG', None, "Smear Keys Tool"),
+    ("sculptKeyReduceTool", 'MOD_DECIM', "graph.decimate", "Reduce Keys"),
     "|", "STATS", "|",
     ("frameAllButton", 'ZOOM_ALL', ("allset.graph_frame", {"mode": 'ALL'}), "Frame all"),
     ("frameRangeButton", 'PREVIEW_RANGE', "anim.scene_range_frame", "Frame playback range"),
@@ -156,10 +154,11 @@ GRAPH_ICONS = (
      "Auto load Graph Editor on selection"),
     ("OutlineEdreloadButton", 'FILE_REFRESH', ("allset.graph_list", {"action": "LOAD"}), "Load the selected objects"),
     "|",
+    # Maya's drag constraint button: on = a middle drag moves freely, off = along the first direction
+    ("switchConstrainedDragStateButton", 'MOUSE_MMB_DRAG', ("prop", "addon_prefs.graph_unconstrained_drag", {}),
+     "Unconstrained drag"),
     ("timeSnapButton", 'SNAP_ON', ("prop", "tool_settings.use_snap_anim", {}), "Time snap"),
     ("valueSnapButton", 'SNAP_INCREMENT', None, "Value snap"),
-    ("unconstrainedDragButton", 'MOUSE_MMB_DRAG', ("prop", "addon_prefs.graph_unconstrained_drag", {}),
-     "Unconstrained drag"),
     "|",
     ("graphEditorAbsoluteViewIconButton", 'FCURVE', ("prop", "space_data.use_normalization", {"value": False}),
      "Absolute view"),
@@ -266,6 +265,10 @@ NOTICES = {
                       "drag it: no tool to pick."),
     "selectTool": ("Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
     "latticeDeformKeyTool": ("Scale (S)", "Blender has no lattice for keys: scale the selected keys with S."),
+    "sculptKeyGrabTool": ("Move keys (G)", "Blender has no brush that drags keys: select keys and move them with G "
+                          "(proportional editing for a soft pull)."),
+    "sculptKeySmearTool": ("Move keys (G)", "Blender has no smear brush for keys: move the selected keys with G and "
+                           "proportional editing."),
     "valueSnapButton": ("Snap", "Blender snaps keys to frames only (Edit > Snap, time snap button)."),
     "toggleTextureBorderButton": ("Seams", "Blender draws seams in the 3D View, not texture borders here."),
     "toggleShellBorderButton": ("Select Linked", "Blender doesn't draw shell borders in the UV Editor: select a "

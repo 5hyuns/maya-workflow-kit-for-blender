@@ -136,8 +136,34 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Menus follow Maya 2026**: the Rigging menu set lists the Bifrost rigging menu and the FX set no longer lists
   Bifrost Fluids / Boss; Stereo > Create opens a submenu with Stereo Camera and Multi Stereo Rig; Select > Components
   shows the keys Multi-Component F7, Vertex F9, Edge F10, Face F11, UV F12 and UV Shell Alt+F12.
+- **Marking menus follow Maya 2026**: the Move / Rotate / Scale / Select tool option menus (q / w / e / r hold,
+  Ctrl+Shift+RMB) have Maya's Select submenu (pre-selection, Marquee, Camera-Based Selection, Clear Selection, Soft
+  Select), the Custom axis submenu (Set to Component / Point / Edge / Face / Object, Reset), Rotate / Scale Center,
+  Tweak Mode, Relative and the Shift Extrude / Shift Duplicate check boxes; the Select tool menu is Paint Select (W),
+  Lasso (E), Symmetry (N) and Select (S). The hotbox centre shows Right View and New Camera, its south zone Sets;
+  Lattice Point sits at N over a lattice; RMB over empty space puts Select All at S and Complete Tool at N; the a-hold
+  menu has Reset Transforms. The Shift+RMB lists have Maya's full lists (Offset Edge Loop Tool, Remesh, Retopologize,
+  Transform Component, Mapping with Planar Map X / Y / Z, Polygon Display ...), and RMB in the UV Editor lists the UV
+  Editor's menus like Maya.
+- **Hypershade > Create follows Maya 2026**: Math Utilities and Math Linear Utilities create the matching Blender
+  Math / Vector Math / Map Range / Mix / Clamp / Vector Rotate node with its operation set (Sum, Cross Product, Sin
+  ...); Multiply Divide, Plus Minus Average, Distance Between, Vector Product and the Double Linear nodes moved there
+  like in Maya.
+- **Graph Editor toolbar in Maya 2026 order**: the curve sculpting buttons (Smooth Keys, Reduce Keys) after the
+  Retime tool and the drag constraint button before Time snap; the w / e / r key tools stay on their keys and in
+  Edit > Transformation Tools.
+- **Animation shelf** has Maya's Ghost Selected, Unghost Selected and Open Ghosting Editor buttons; Mesh > Booleans >
+  Difference, the UV menu's Auto Seams / Cut UV Edges / Delete UVs / UV Set Editor and Visualize > Ghosting Editor /
+  Unghost All use their shelf pictures, like Maya.
 
 ### Fixed
+- **Surfaces like Maya**: Extrude (Tube) turns a profile drawn clockwise the right way round and turns it about the
+  path's start when the path doesn't start at the profile; Extrude (Distance) uses the best-fit plane of a non-planar
+  profile; Boundary / Square give each direction the mean parameter range of its two sides; Birail 1 with two
+  different curved rails follows the rails exactly.
+- **Loft > Polygons** UVs run along the curves (u) and across them (v), like Maya's Loft, instead of turned 90°.
+- **UV > Normalize** with UVs or edges selected scales every face those UVs belong to, like Maya, instead of only
+  the picked UVs.
 - **Alt+LMB tumble with Emulate 3 Button Mouse on** (#242): Blender turns Alt+left drag into a middle drag when
   that preference is on; on Windows the kit now tumbles on it anyway (a real middle drag is left alone).
 - **Panels > Tear Off / Tear Off Copy** (#255) opened nothing (an error in the console): they now open a copy of

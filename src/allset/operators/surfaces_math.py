@@ -485,12 +485,47 @@ def _unique(c):
     return c.cvs[:len(c.cvs) - c.degree] if c.periodic else c.cvs
 
 
+def _smallest_axis(P):
+    """Unit normal of the least-squares plane through the points P (eigenvector of the smallest eigenvalue of
+    their covariance; cyclic Jacobi sweeps on the symmetric 3 x 3 matrix)."""
+    m = len(P)
+    c = [sum(p[k] for p in P) / m for k in range(3)]
+    A = [[sum((p[i] - c[i]) * (p[j] - c[j]) for p in P) for j in range(3)] for i in range(3)]
+    V = [[1.0 if i == j else 0.0 for j in range(3)] for i in range(3)]
+    for _sweep in range(50):
+        off = abs(A[0][1]) + abs(A[0][2]) + abs(A[1][2])
+        if off < 1e-30:
+            break
+        for p, q in ((0, 1), (0, 2), (1, 2)):
+            if abs(A[p][q]) < 1e-300:
+                continue
+            theta = (A[q][q] - A[p][p]) / (2.0 * A[p][q])
+            t = (1.0 if theta >= 0 else -1.0) / (abs(theta) + math.sqrt(theta * theta + 1.0))
+            cs = 1.0 / math.sqrt(t * t + 1.0)
+            sn = t * cs
+            for k in range(3):          # A <- J^T A J, V <- V J
+                akp, akq = A[k][p], A[k][q]
+                A[k][p], A[k][q] = cs * akp - sn * akq, sn * akp + cs * akq
+            for k in range(3):
+                apk, aqk = A[p][k], A[q][k]
+                A[p][k], A[q][k] = cs * apk - sn * aqk, sn * apk + cs * aqk
+            for k in range(3):
+                vkp, vkq = V[k][p], V[k][q]
+                V[k][p], V[k][q] = cs * vkp - sn * vkq, sn * vkp + cs * vkq
+    i = min(range(3), key=lambda k: A[k][k])
+    return unit((V[0][i], V[1][i], V[2][i]))
+
+
 def profile_normal(profile):
-    """Maya profile normal (Newell of the CV polygon, periodic: the unique CVs); None for a straight profile."""
+    """Maya profile normal: the least-squares plane of the CVs (periodic: the unique CVs), turned like the Newell
+    normal of the CV polygon (equal for a planar profile); None for a straight profile."""
+    P = _unique(_crv(profile))
     try:
-        return newell(_unique(_crv(profile)))
+        n = newell(P)
     except ValueError:
         return None
+    fit = _smallest_axis(P)
+    return fit if dot(fit, n) >= 0.0 else mul(fit, -1.0)
 
 
 def _path_dirs(P):
@@ -511,6 +546,8 @@ def extrude_tube(profile, path, pivot=(0.0, 0.0, 0.0), at_path=False, component_
     P = pa.cvs
     dirs = _path_dirs(P)
     n_prof = profile_normal(pr)
+    if n_prof is not None and dot(n_prof, dirs[0]) < 0.0:
+        n_prof = mul(n_prof, -1.0)      # like Maya: the profile faces along the path start, whatever its CV order
     R0 = rot_between(n_prof, dirs[0]) if n_prof is not None else [r[:] for r in _I3]
     frames, acc = [], [r[:] for r in _I3]
     for j in range(len(P)):
@@ -519,16 +556,17 @@ def extrude_tube(profile, path, pivot=(0.0, 0.0, 0.0), at_path=False, component_
         frames.append(_mm(acc, R0))
     R0t = _tr(R0)
     pivot = tuple(pivot)
+    P0 = P[0]       # the profile turns about the path's start point (Maya's closest end point pivot)
     rows = []
     for q in pr.cvs:
         row = []
         for j in range(len(P)):
             if not at_path:
-                x = _mv(R0t, add(sub(P[j], P[0]), _mv(frames[j], q)))
+                x = add(P0, _mv(R0t, add(sub(P[j], P0), _mv(frames[j], sub(q, P0)))))
             elif component_pivot:
                 x = add(P[j], _mv(frames[j], sub(q, pivot)))
             else:
-                x = sub(add(P[j], _mv(frames[j], q)), pivot)
+                x = sub(add(add(P[j], _mv(frames[j], sub(q, P0))), P0), pivot)
             row.append(x)
         rows.append(row)
     return Surf(rows, pr.knots, pa.knots, pr.degree, pa.degree, pr.periodic, pa.periodic)
@@ -557,11 +595,12 @@ def extrude_distance(profile, direction=None, length=1.0):
 # --- 4.5 Birail 1 ------------------------------------------------------------------------------------------
 
 def birail1(profile, rail1, rail2, proportional=True):
-    """Maya Birail 1: U = rails (knots normalised 0..1), V = profile (normalised). Row j = the
-    profile mapped by the transform taking (profile start, profile end) onto (rail1 CV j, rail2 CV j): minimal
-    rotation of the chord, scale uniform (proportional) or along the chord only. Exact for rails whose chords stay
-    in one plane; twisted rails are an approximation. Rails with different knots are made compatible
-    (loft rule) first."""
+    """Maya Birail 1: U = rails (knots normalised 0..1), V = profile (normalised). At each rail Greville
+    parameter the profile is mapped by the transform taking (profile start, profile end) onto (rail1 point, rail2
+    point): minimal rotation of the chord, scale uniform (proportional) or along the chord only; the CV rows then
+    interpolate those mapped profiles. Exact for rails whose chords stay in one plane; twisted rails are an
+    approximation. Rails with different knots are made compatible (loft rule) first; periodic rails map their CV
+    pairs directly."""
     pr = _crv(profile)
     r1, r2 = _crv(rail1), _crv(rail2)
     knots_u, du, (c1, c2) = compatible([r1, r2])
@@ -572,8 +611,8 @@ def birail1(profile, rail1, rail2, proportional=True):
     if L0 < 1e-12:
         raise ValueError("the profile's ends meet")
     e = mul(ch0, 1.0 / L0)
-    rows = []
-    for A, B in zip(c1, c2):
+
+    def mapped(A, B):
         c = sub(B, A)
         R = rot_between(ch0, c) if norm(c) > 1e-12 else [r[:] for r in _I3]
         k = norm(c) / L0
@@ -582,8 +621,18 @@ def birail1(profile, rail1, rail2, proportional=True):
             v = sub(q, a0)
             v = mul(v, k) if proportional else add(v, mul(e, dot(v, e) * (k - 1.0)))
             row.append(add(A, _mv(R, v)))
-        rows.append(row)
+        return row
+
     periodic_u = r1.periodic and r2.periodic and knots_u == list(r1.knots)
+    if r1.periodic or r2.periodic:
+        rows = [mapped(A, B) for A, B in zip(c1, c2)]
+    else:
+        n = len(c1)
+        g = greville(knots_u, du, n)
+        at = [mapped(cm.evaluate(c1, knots_u, du, t), cm.evaluate(c2, knots_u, du, t)) for t in g]
+        M = [_basis_row(knots_u, du, n, t) for t in g]
+        cols = [cm.solve(M, [at[j][i] for j in range(n)]) for i in range(len(Q))]
+        rows = [[cols[i][j] for i in range(len(Q))] for j in range(n)]
     return Surf(rows, _normalise(knots_u), _normalise(pr.knots), du, pr.degree, periodic_u, pr.periodic)
 
 
@@ -621,11 +670,16 @@ def coons(edge_v0, edge_v1, edge_u0, edge_u1, gu, gv):
     return out
 
 
-def boundary(curves):
+def _domain(c):
+    return c.knots[-1] - c.knots[0]
+
+
+def boundary(curves, square=False):
     """Maya Boundary / Square (factory, no neighbouring surfaces): 3 or 4 curves head to tail in the order given
     (c1..c4). 4 curves: v = 0 edge = c1, u = 1 edge = c2, v = 1 edge = c3 reversed, u = 0 edge = c4 reversed.
     3 curves: v = 0 edge = c1, v = 1 edge = c2 reversed, u = 0 edge = c3 reversed, u = 1 edge collapsed to the
-    c1-end corner. Opposite sides are made compatible (loft rule), knots normalised to 0..1, CVs = Coons blend."""
+    c1-end corner. Opposite sides are made compatible (loft rule), CVs = Coons blend. Knot range of a direction =
+    the mean of its two sides' domains (0..1 and 0..2 -> 0..1.5); ``square`` (Maya Square) keeps U at 0..1."""
     cs = [_crv(c) for c in curves]
     if any(c.periodic for c in cs):
         raise ValueError("boundary curves must be open")
@@ -639,16 +693,19 @@ def boundary(curves):
         raise ValueError("boundary needs 3 or 4 curves")
     ku, du, (ev0, ev1) = compatible([sv0, sv1])
     ku = _normalise(ku)
+    span_u = 1.0 if square else (_domain(sv0) + _domain(sv1)) / 2.0
     if su1 is None:
         kv, dv = _normalise(su0.knots), su0.degree
+        span_v = _domain(su0)
         eu0 = list(su0.cvs)
         eu1 = [ev0[-1]] * len(eu0)
     else:
         kv, dv, (eu0, eu1) = compatible([su0, su1])
         kv = _normalise(kv)
-    gu = greville(ku, du, len(ev0))
+        span_v = (_domain(su0) + _domain(su1)) / 2.0
+    gu = greville(ku, du, len(ev0))          # Coons blend on the 0..1 parameters
     gv = greville(kv, dv, len(eu0))
-    return Surf(coons(ev0, ev1, eu0, eu1, gu, gv), ku, kv, du, dv)
+    return Surf(coons(ev0, ev1, eu0, eu1, gu, gv), [k * span_u for k in ku], [k * span_v for k in kv], du, dv)
 
 
 # --- 4.7 Attach --------------------------------------------------------------------------------------------------

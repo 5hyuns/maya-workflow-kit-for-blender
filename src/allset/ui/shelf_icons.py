@@ -2307,6 +2307,32 @@ def i_motion_trail_editor(cv):
     window(cv, 3, 4, 29, 28, TEAL, body, title=DARK)
 
 
+def _ghosts(cv, cx, cy, s=1.0):
+    """A figure with two fading copies trailing to its left (Maya ghosting)."""
+    for k, fade in ((2, 0.62), (1, 0.38)):
+        human(cv, cx - 6.5 * k * s, cy, s, shade(TEAL, fade), ol=False)
+    human(cv, cx, cy, s, LIGHT)
+
+
+@icon("Animation/Ghost Selected")
+def i_ghost_selected(cv):
+    _ghosts(cv, 21, 16)
+
+
+@icon("Animation/Unghost Selected")
+def i_unghost_selected(cv):
+    _ghosts(cv, 19, 15)
+    xmark(cv, 24, 24, s=4.5, col=SALMON)
+
+
+@icon("Animation/Open Ghosting Editor")
+def i_ghosting_editor(cv):
+    """The ghosting picture inside an editor window."""
+    def body(x0, y0, x1, y1):
+        _ghosts(cv, (x0 + x1) / 2 + 4, (y0 + y1) / 2 + 1, 0.6)
+    window(cv, 3, 4, 29, 28, TEAL, body, title=DARK)
+
+
 @icon("Rendering/OpenPBR Surface Material")
 def i_openpbr_surface(cv):
     """A grey shader ball like Standard Surface's, lighter, with a clear-coat band across the top."""

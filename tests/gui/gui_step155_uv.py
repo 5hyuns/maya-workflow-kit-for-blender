@@ -69,6 +69,16 @@ def s_setup():
 
 
 @step
+def s_wait_uv_window():
+    # the window opens a few ticks later when it has a remembered place (window places)
+    import sim
+    C.setdefault("wait_uv", 0)
+    if uv_window()[1] is None and C["wait_uv"] < 15:
+        C["wait_uv"] += 1
+        sim._steps.insert(0, s_wait_uv_window)
+
+
+@step
 def s_cut():
     w, a, r = uv_window()
     check(f"UV Editor window open ({C['open']})", a is not None and cube().mode == 'EDIT')

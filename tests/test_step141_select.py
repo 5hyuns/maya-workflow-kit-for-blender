@@ -170,7 +170,7 @@ def test_menu_paths_mapped():
 def test_marking_menu_entries():
     entries = {p: a for p, _l, a in mm.label_walk(mm.MENUS["CTRL_CONVERT"], "CTRL_CONVERT")}
     greyed = [p for p, a in entries.items() if mm.is_greyed(a)]
-    assert not greyed, greyed
+    assert greyed == ["CTRL_CONVERT/Selection Constraints..."], greyed     # Blender has no selection constraints
     for p in ("CTRL_CONVERT/Grow Selection/Grow Along Loop",
               "CTRL_CONVERT/Shrink Selection/Shrink Selection Along Loop", "CTRL_CONVERT/To UVs/To UV Perimeter",
               "CTRL_CONVERT/To UVs/To UVs", "CTRL_CONVERT/To Face Path", "CTRL_CONVERT/To Shell Border",

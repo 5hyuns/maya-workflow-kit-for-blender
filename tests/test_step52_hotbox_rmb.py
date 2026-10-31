@@ -25,12 +25,12 @@ MAYA_BELOW = [["Mesh", "Edit Mesh", "Mesh Tools", "Mesh Display", "Curves", "Sur
               ["Lighting/Shading", "Texturing", "Render", "Toon", "Stereo"]]
 PLUGIN = {"MASH"}
 
-# Maya 2022 RMB list over pCube1, "-" = divider.
+# Maya 2026 RMB list over pCube1, "-" = divider.
 MAYA_RMB = ["pCube1...", "-", "Select", "Select All", "Deselect All", "Select Hierarchy", "Invert Selection", "-",
             "Select Similar", "-", "Make Live", "-", "DG Traversal", "Inputs", "Outputs", "Paint", "Metadata",
-            "Actions", "UV Sets", "Color Sets", "Time Editor"]
+            "Actions", "UV Sets", "Color Sets", "Time Editor", "-", "Scene Assembly"]
 SUBMENUS = {"DG Traversal", "Inputs", "Outputs", "Paint", "Metadata", "Actions", "UV Sets", "Color Sets",
-            "Time Editor"}
+            "Time Editor", "Scene Assembly"}
 
 
 def measure(text):
@@ -90,13 +90,13 @@ def test_hotbox_rows_near_edges_stay_inside():
                        and lay.center_rect[1] < r[3] for r in rects), ("rows clear of the centre box", c)
 
 
-def test_rmb_list_is_maya_2022():
+def test_rmb_list_is_maya_2026():
     menu = mm.with_object_name(mm.RMB_MESH, "pCube1")
     got = ["-" if e == mm.DIVIDER else e[0] for e in menu.items][:len(MAYA_RMB)]
     assert got == MAYA_RMB, got
     tail = [e[0] for e in menu.items[len(MAYA_RMB):] if e != mm.DIVIDER]
-    assert tail == ["Material Attributes...", "Assign New Material...", "Assign Favorite Material",
-                    "Assign Existing Material"], tail                   # Maya 2022 RMB list end
+    assert tail == ["Material Attributes...", "Assign New Material", "Assign Favorite Material",
+                    "Assign Existing Material"], tail                   # Maya 2026 RMB list end
     actions = {e[0]: e[1] for e in menu.items if e != mm.DIVIDER}
     # a Sub or a Blender menu (step 136: UV Sets / Color Sets list the mesh's sets) — both show ▸
     assert all(isinstance(actions[n], mm.Sub) or actions[n][0] == "menu" for n in SUBMENUS), "submenus show ▸"
@@ -117,7 +117,7 @@ def test_rmb_list_under_or_beside_the_ring():
     at the press point — the marks keep working — and moves only the list: under the ring when it fits, else beside
     it in one column (step 161 side rule), else above / pushed inside. Never over the ring, always inside."""
     b = (0.0, 0.0, 1600.0, 900.0)
-    for origin in ((800.0, 600.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0), (800.0, 120.0)):
+    for origin in ((800.0, 680.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0), (800.0, 120.0)):
         s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
         assert s.center == origin and s.press == origin and s.pos == origin, (origin, "the ring stays at the press")
         rows = [it for it in s.layout.items if it.kind == "list"]
@@ -135,7 +135,7 @@ def test_rmb_list_under_or_beside_the_ring():
         assert order == [it.label for it in rows], (origin, "Maya order top-down")
         ring_bottom = min(it.rect[1] for it in boxes)
         under = all(it.rect[3] <= ring_bottom for it in rows)
-        if origin[1] == 600.0:
+        if origin[1] == 680.0:
             assert under, "room under the ring: the list hangs under it"
         if origin[1] == 450.0:
             beside_w = max(it.rect[2] for it in rows) <= min(it.rect[0] for it in boxes)

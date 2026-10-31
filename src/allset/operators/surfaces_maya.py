@@ -252,7 +252,7 @@ def _params(knots, degree, per_span):
 
 def tessellate(s, along=TESS_ALONG, across=TESS_ACROSS):
     """(vertices, triangles, per-vertex UVs) of Surf ``s`` (world space): a grid on uniform parameter steps per span,
-    UV = (normalised V, normalised U) = Maya's (across, along)."""
+    UV = (normalised U, normalised V): u along the curves, v across them, like Maya's Loft menu item."""
     us, u0, u1 = _params(s.knots_u, s.degree_u, along)
     vs, v0, v1 = _params(s.knots_v, s.degree_v, across)
     nu = len(us)
@@ -260,7 +260,7 @@ def tessellate(s, along=TESS_ALONG, across=TESS_ACROSS):
     for v in vs:
         for u in us:
             verts.append(s.point(u, v))
-            uvs.append(((v - v0) / ((v1 - v0) or 1.0), (u - u0) / ((u1 - u0) or 1.0)))
+            uvs.append(((u - u0) / ((u1 - u0) or 1.0), (v - v0) / ((v1 - v0) or 1.0)))
     tris = []
     for j in range(len(vs) - 1):
         for i in range(nu - 1):
@@ -546,7 +546,7 @@ class ALLSET_OT_surface_boundary(_SurfOp, bpy.types.Operator):
                         else "Select three or four boundary curves.")
             return {'CANCELLED'}
         try:
-            s = sm.boundary(sm.order_boundary([_crv(o) for o in obs]))
+            s = sm.boundary(sm.order_boundary([_crv(o) for o in obs]), square=self.kind == 'SQUARE')
         except ValueError as ex:
             self.report({'WARNING'}, str(ex))
             return {'CANCELLED'}

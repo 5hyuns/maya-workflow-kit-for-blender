@@ -65,7 +65,7 @@ def s_rmb_open():
     check("RMB click keeps the object menu open", s is not None and s.mode == "CLICK")
     labels = [i.label for i in s.layout.items]
     check("RMB list ends with Maya's material items",
-          labels[-4:] == ["Material Attributes...", "Assign New Material...", "Assign Favorite Material",
+          labels[-4:] == ["Material Attributes...", "Assign New Material", "Assign Favorite Material",
                           "Assign Existing Material"])
 
 

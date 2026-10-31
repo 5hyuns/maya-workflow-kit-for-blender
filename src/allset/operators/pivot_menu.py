@@ -90,7 +90,57 @@ class ALLSET_OT_pivot_exit(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_pivot_option, ALLSET_OT_pivot_reset, ALLSET_OT_pivot_exit)
+CUSTOM_AXIS = "Custom"
+_DEFAULT_AXIS = {1: 'GLOBAL', 2: 'LOCAL', 3: 'LOCAL'}     # Move = World, Rotate / Scale = Object, like Maya
+
+
+class ALLSET_OT_custom_axis(bpy.types.Operator):
+    """Maya Custom axis of the Move / Rotate / Scale tool (tool option marking menu > Custom): set it from the
+    selection or the object, use it, or reset the tool to its default axis"""
+    bl_idname = "allset.custom_axis"
+    bl_label = "Custom Axis"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    slot: bpy.props.IntProperty(min=1, max=3, default=1, options={'SKIP_SAVE'})
+    action: EnumProperty(items=(("SELECTION", "Set to Selection", "Axis from the selected components (or object)"),
+                                ("OBJECT", "Set to Object", "Axis of the active object"),
+                                ("USE", "Custom", "Use the custom axis"),
+                                ("RESET", "Reset", "Back to the tool's default axis")), options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from . import pivot
+        scene = context.scene
+        slot = scene.transform_orientation_slots[self.slot]
+        if self.action == "RESET":
+            slot.type = _DEFAULT_AXIS[self.slot]
+            return {'FINISHED'}
+        if self.action == "USE":
+            try:
+                slot.type = CUSTOM_AXIS
+            except TypeError:
+                self.report({'WARNING'}, "No custom axis is set: use Set to Component or Set To Object first.")
+                return {'CANCELLED'}
+            return {'FINISHED'}
+        window, area, region = pivot._find_view3d(context)
+        kw = {"window": window, "area": area, "region": region} if area is not None else {}
+        main = scene.transform_orientation_slots[0]
+        prev = main.type
+        try:
+            with context.temp_override(**kw):
+                bpy.ops.transform.create_orientation(name=CUSTOM_AXIS, use=True, overwrite=True)
+        except RuntimeError:
+            self.report({'WARNING'}, "Select a component or an object to take the axis from.")
+            return {'CANCELLED'}
+        custom = main.custom_orientation
+        ob = context.active_object
+        if self.action == "OBJECT" and custom is not None and ob is not None:
+            custom.matrix = ob.matrix_world.to_3x3().normalized()
+        main.type = prev
+        slot.type = CUSTOM_AXIS
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_pivot_option, ALLSET_OT_pivot_reset, ALLSET_OT_pivot_exit, ALLSET_OT_custom_axis)
 
 
 def register_props():

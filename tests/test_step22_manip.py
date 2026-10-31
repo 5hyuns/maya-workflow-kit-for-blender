@@ -101,8 +101,8 @@ def test_duplicates_only_when_it_applies():
 def test_hold_menus_toggle_smart_duplicate():
     for menu in (mm.OPT_MOVE, mm.OPT_ROTATE, mm.OPT_SCALE):
         items = dict(i for i in menu.items if i != mm.DIVIDER)
-        assert items["Smart Duplicate"] == ("allset.manip_option", {"option": 'SMART_DUPLICATE'}), menu
-        assert items["Smart Extrude"] == ("allset.manip_option", {"option": 'SMART_EXTRUDE'}), menu
+        assert items["Shift Duplicate"] == ("allset.manip_option", {"option": 'SMART_DUPLICATE'}), menu
+        assert items["Shift Extrude"] == ("allset.manip_option", {"option": 'SMART_EXTRUDE'}), menu
     prefs = preferences.get()
     assert prefs.smart_duplicate is True, "on by default"
     bpy.ops.allset.manip_option(option='SMART_DUPLICATE')

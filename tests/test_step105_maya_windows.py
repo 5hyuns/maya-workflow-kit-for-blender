@@ -41,7 +41,7 @@ def test_menu_bars_match_maya_and_are_honest():
         if path.split("/", 1)[0] in MAYA_BARS and (not menu_sets.sub_items(path, it) or path in menu_map.MAP):
             leaves[path] = path in menu_map.MAP
     print("leaves", len(leaves), "mapped", sum(leaves.values()))
-    assert len(leaves) == 249 + 21 + 59, len(leaves)
+    assert len(leaves) == 357 + 21 + 59, len(leaves)     # Hypershade / Render Settings / Script Editor
     assert not [p for p, m in leaves.items() if not m and notices.greyed_notice(p) is None]
     assert sum(leaves.values()) >= 150
     for name in ("Hypershade", "Script Editor", "Render Settings"):

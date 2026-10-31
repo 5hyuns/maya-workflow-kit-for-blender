@@ -215,6 +215,9 @@ MENU = {
     "Rigging/Human IK": "Windows/Animation Editors/HumanIK",
     "Rigging/Create Cluster": "Deform/Cluster",
     "Animation/Motion Trail Editor": "Visualize/Motion Trail Editor",     # Maya 2026 shelf (step 269)
+    "Animation/Ghost Selected": "Visualize/Ghost Selected",
+    "Animation/Unghost Selected": "Visualize/Unghost Selected",
+    "Animation/Open Ghosting Editor": "Visualize/Ghosting Editor",
     # Rendering
     "Rendering/Ambient Light": "Create/Lights/Ambient Light",
     "Rendering/Volume Light": "Create/Lights/Volume Light",

@@ -17,7 +17,7 @@ shelf = import_module(MODULE + ".ui.shelf")
 shelf_data = import_module(MODULE + ".ui.shelf_data")
 notices = import_module(MODULE + ".ui.notices")
 MAYA_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
-               "Animation": 15, "Rendering": 26, "FX": 29, "FXCaching": 10}     # Maya 2026 (step 269)
+               "Animation": 18, "Rendering": 26, "FX": 29, "FXCaching": 10}     # Maya 2026
 TABS = [s[0] for s in shelf_data.SHELVES]
 
 

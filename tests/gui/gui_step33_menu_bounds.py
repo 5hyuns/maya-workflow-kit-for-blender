@@ -71,7 +71,7 @@ def s_rmb_open():
     labels = [it.label for it in s.layout.items]
     check("menu has the material rows", "Assign Existing Material" in labels)
     check("every radial box and list row is inside the window", all_inside(rects))
-    last = next(it for it in s.layout.items if it.label == "Assign New Material...")
+    last = next(it for it in s.layout.items if it.label == "Material Attributes...")
     _area, region = view3d()
     C["new"] = (region.x + int(cx + (last.rect[0] + last.rect[2]) / 2),
                 region.y + int(cy + (last.rect[1] + last.rect[3]) / 2))
@@ -93,7 +93,7 @@ def s_rmb_pick():
 
 @step
 def s_search_open():
-    check("the moved row still runs its item (search popup open, menu closed)", not draw().ACTIVE)
+    check("the moved row still runs its item (menu closed)", not draw().ACTIVE)
 
 
 @step

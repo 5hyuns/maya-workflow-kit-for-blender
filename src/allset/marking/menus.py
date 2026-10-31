@@ -128,7 +128,7 @@ def _material_items():
         DIVIDER,
         ("Material Attributes...", ("allset.material_attributes", {"rmb": True})),
         DIVIDER,
-        ("Assign New Material...", ("allset.assign_new_material", {"rmb": True})),
+        ("Assign New Material", Sub(items=[("New Material...", ("allset.assign_new_material", {"rmb": True}))])),
         ("Assign Favorite Material", Sub(items=favorites)),
         ("Assign Existing Material", ("menu", "ALLSET_MT_assign_existing_material_rmb")),
     ]
@@ -163,7 +163,8 @@ def is_unavailable(action):
     return isinstance(action, Sub) and not isinstance(action, NodeList) and not action.radial and not action.items
 
 
-def _object_items():
+def _object_items(mesh=True):
+    """The RMB list under the ring (Maya 2026 order). ``mesh``: meshes also list Paint / UV Sets / Color Sets."""
     return [
         (OBJECT_TITLE, ("allset.object_attributes", {"rmb": True})),
         DIVIDER,
@@ -182,7 +183,7 @@ def _object_items():
         ("DG Traversal", NodeList("TRAVERSAL")),
         ("Inputs", NodeList("INPUTS")),
         ("Outputs", NodeList("OUTPUTS")),
-        ("Paint", Sub(items=[("Paint Skin Weights", ("paint.weight_paint_toggle", {}))])),
+        *([("Paint", Sub(items=[("Paint Skin Weights", ("paint.weight_paint_toggle", {}))]))] if mesh else []),
         ("Metadata", unavailable()),
         ("Actions", Sub(items=[
             ("Template", _on_object("Display/Object Display/Template")),
@@ -190,9 +191,11 @@ def _object_items():
             ("Unparent", _on_object("Edit/Unparent")),
             ("Bounding Box", ("allset.mm_bounding_box", {})),
         ])),
-        ("UV Sets", ("menu", "ALLSET_MT_uv_sets_rmb")),
-        ("Color Sets", ("menu", "ALLSET_MT_color_sets_rmb")),
+        *([("UV Sets", ("menu", "ALLSET_MT_uv_sets_rmb")),
+           ("Color Sets", ("menu", "ALLSET_MT_color_sets_rmb"))] if mesh else []),
         ("Time Editor", unavailable()),
+        DIVIDER,
+        ("Scene Assembly", unavailable()),
         *_material_items(),
     ]
 
@@ -225,19 +228,19 @@ RMB_CURVE = MarkingMenu(
         "E": ("Hull", None),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
     },
-    items=_object_items(),
+    items=_object_items(mesh=False),
     options=("Select Similar",))
 
 
-# Lattice (step 294, #227): Maya's RMB marking menu over a lattice has Lattice Point at W; the
-# list is the same object list as a mesh / curve.
+# Lattice (#227): Maya's RMB marking menu over a lattice has Lattice Point at N; the
+# list is the object list of a curve.
 RMB_LATTICE = MarkingMenu(
     "RMB_LATTICE", "Lattice", "maya",
     radial={
-        "W": ("Lattice Point", _comp('LATTICE')),
+        "N": ("Lattice Point", _comp('LATTICE')),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
     },
-    items=_object_items(),
+    items=_object_items(mesh=False),
     options=("Select Similar",))
 
 
@@ -329,11 +332,11 @@ def with_nodes(menu, nodes):
     return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
 
 
-# Nothing under the cursor: Select All / Complete Tool (Maya 2022 RMB marking menu over empty space).
+# Nothing under the cursor: Select All at S, Complete Tool at N (Maya's RMB marking menu over empty space).
 RMB_EMPTY = MarkingMenu(
     "RMB_EMPTY", "Select", "maya",
-    items=[("Select All", _item("Select/All")),
-           ("Complete Tool", None)])
+    radial={"S": ("Select All", _item("Select/All")),
+            "N": ("Complete Tool", None)})
 
 # Pivot edit (D / Insert): the menu Maya's RMB shows while a pivot is being edited.
 # Maya treats it as a state of the RMB_EMPTY menu, so it has its own kit id like RMB_CURVE. Show Orientation Handle / Bake Pivot Orientation have no Blender counterpart (greyed).
@@ -357,7 +360,10 @@ PIVOT_EDIT = MarkingMenu(
         "W": ("Show Orientation Handle", None),
         "E": ("Exit", ("allset.pivot_exit", {})),
     },
-    items=[("Bake Pivot Orientation", _item("Modify/Bake Pivot"))])  # Blender bakes the orientation
+    items=[("Bake Pivot Orientation", _item("Modify/Bake Pivot")),  # Blender bakes the orientation
+           DIVIDER,
+           ("Center Position on Reset", None),
+           ("Zero Position on Reset", None)])
 
 # --- Shift+RMB: Maya's polygon tool marking menus -------------------------------------
 
@@ -367,6 +373,68 @@ SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
     "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),   # PolygonSoftenHarden
     "NE": ("Soften Edge", ("mesh.mark_sharp", {"clear": True})),
 }, options={"Soften/Harden"})
+
+# Maya's Polygon Display submenus (Shift+RMB lists): the Display > Polygons check boxes of the 3D View.
+_PD = {
+    "Toggle Backface Culling": _item("Display/Polygons/Backface Culling"),
+    "Toggle Border Edges": None,
+    "Toggle Texture Border Edges": _item("Display/Polygons/Texture Border Edges"),
+    "Toggle Face Normals": _item("Display/Polygons/Face Normals"),
+    "Toggle Vertex Normals": _item("Display/Polygons/Vertex Normals"),
+    "Toggle Face Centers": _item("Display/Polygons/Face Centers"),
+    "Toggle Hidden Triangles": None,
+    "Toggle Hidden Triangle Edges": None,
+    "Toggle Vertices": None,
+    "Toggle Vertex Numbers": None,
+    "Toggle Face Numbers": None,
+    "Reset Polygon Display": _item("Display/Polygons/Reset Display"),
+}
+
+
+def _poly_display(*labels, radial=None):
+    return ("Polygon Display", Sub(radial=radial, items=[(label, _PD[label]) for label in labels]))
+
+
+def _culling(on):
+    return ("wm.context_set_boolean", {"data_path": "space_data.shading.show_backface_culling", "value": on})
+
+
+POLY_DISPLAY_ALL = ("Polygon Display All", Sub(items=[
+    ("Backface Culling on for All Polys", _culling(True)),
+    ("Backface Culling off for All Polys", _culling(False)),
+    ("Toggle All Geometry Border Edges", None),
+    ("Toggle All Texture Border Edges", _item("Display/Polygons/Texture Border Edges")),
+    ("Toggle All Face Normals", _item("Display/Polygons/Face Normals")),
+    ("Toggle All Vertex Normals", _item("Display/Polygons/Vertex Normals")),
+    ("Toggle All Face Centers", _item("Display/Polygons/Face Centers")),
+    ("Toggle All Hidden Triangles", None),
+    ("Toggle All Vertices", None),
+    ("Reset Display for All Polys", _item("Display/Polygons/Reset Display")),
+]))
+
+
+def _planar_axis(axis):
+    return ("allset.uv_planar", {"axis": axis})
+
+
+def _mapping():
+    """Maya's Mapping submenu (Shift+RMB object / face lists)."""
+    return ("Mapping", Sub(items=[
+        ("Planar Map X", _planar_axis('X')),
+        ("Planar Map Y", _planar_axis('Y')),
+        ("Planar Map Z", _planar_axis('Z')),
+        ("Planar Map", _item("UV/Planar")),
+        ("Cylindrical Map", _item("UV/Cylindrical")),
+        ("Spherical Map", _item("UV/Spherical")),
+        ("Automatic Map", _item("UV/Automatic")),
+        ("Camera-Based Map", _item("UV/Camera-based")),
+        ("Normal-Based Map", _item("UV/Normal-Based")),
+    ], options={"Planar Map", "Cylindrical Map", "Spherical Map", "Automatic Map", "Camera-Based Map",
+                "Normal-Based Map"}))
+
+
+TRANSFORM_COMPONENT = _item("Edit Mesh/Transform")
+CONNECT_TOOL = _item("Mesh Tools/Connect")
 
 SHIFT_OBJECT = MarkingMenu(
     "SHIFT_OBJECT", "Object Tools", "maya",
@@ -386,26 +454,48 @@ SHIFT_OBJECT = MarkingMenu(
         }, options={"Soften/Harden"})),
     },
     items=[
+        ("Offset Edge Loop Tool", _item("Mesh Tools/Offset Edge Loop")),
         ("Smooth", _mod('SUBSURF')),
+        ("Unsmooth", _item("Mesh/Unsmooth")),
         ("Subdiv Proxy", _mod('SUBSURF')),
         ("Crease Tool", CREASE),
         DIVIDER,
+        ("Project Curve on mesh", None),
+        ("Split mesh with projected curve", _item("Edit Mesh/Split Mesh with Projected Curve")),
+        DIVIDER,
         ("Mirror", "allset.mirror"),
+        _mapping(),
         DIVIDER,
         ("Triangulate", _mod('TRIANGULATE')),
         ("Quadrangulate", _item("Mesh/Quadrangulate")),
         ("Reduce", _mod('DECIMATE')),
+        ("Remesh", _item("Mesh/Remesh")),
+        ("Retopologize", _item("Mesh/Retopologize")),
+        DIVIDER,
+        ("Transfer Vertex Order", None),
         DIVIDER,
         ("Separate", "allset.separate"),
         ("Combine", "allset.combine"),
         ("Booleans", Sub(items=[("Union", _item("Mesh/Booleans/Union")),
-                                ("Difference", _item("Mesh/Booleans/Difference (A - B)")),
-                                ("Intersection", _item("Mesh/Booleans/Intersection"))],
-                         options={"Union", "Difference", "Intersection"})),
+                                ("Difference (A - B)", _item("Mesh/Booleans/Difference (A - B)")),
+                                ("Difference (B - A)", _item("Mesh/Booleans/Difference (B - A)")),
+                                ("Intersection", _item("Mesh/Booleans/Intersection")),
+                                ("Slice", None), ("Hole Punch", None), ("Cut Out", None), ("Split Edges", None)],
+                         options={"Union", "Difference (A - B)", "Difference (B - A)", "Intersection", "Slice",
+                                  "Hole Punch", "Cut Out", "Split Edges"})),
         DIVIDER,
+        ("Cleanup...", _item("Mesh/Cleanup...")),
+        ("Connect Tool", CONNECT_TOOL),
         ("Quad Draw Tool", _item("Mesh Tools/Quad Draw")),
+        DIVIDER,
+        _poly_display("Toggle Backface Culling", "Toggle Border Edges", "Toggle Texture Border Edges",
+                      "Toggle Face Normals", "Toggle Vertex Normals", "Toggle Face Centers", "Toggle Hidden Triangles",
+                      "Toggle Vertices", "Reset Polygon Display"),
     ],
-    options=['Append to Polygon Tool', 'Combine', 'Crease Tool', 'Insert Edge Loop Tool', 'Mirror', 'Multi-Cut', 'Quad Draw Tool', 'Quadrangulate', 'Reduce', 'Sculpt Tool', 'Smooth', 'Subdiv Proxy', 'Target Weld Tool'])
+    options=['Append to Polygon Tool', 'Combine', 'Connect Tool', 'Crease Tool', 'Insert Edge Loop Tool', 'Mirror',
+             'Multi-Cut', 'Offset Edge Loop Tool', 'Project Curve on mesh', 'Quad Draw Tool', 'Quadrangulate',
+             'Reduce', 'Remesh', 'Retopologize', 'Sculpt Tool', 'Smooth', 'Split mesh with projected curve',
+             'Subdiv Proxy', 'Target Weld Tool', 'Unsmooth'])
 
 SHIFT_VERTEX = MarkingMenu(
     "SHIFT_VERTEX", "Vertex Tools", "maya",
@@ -432,12 +522,19 @@ SHIFT_VERTEX = MarkingMenu(
         ("Crease Tool", CREASE),
         ("Connect Components", _item("Edit Mesh/Connect")),  # step 139
         ("Detach Components", _item("Edit Mesh/Detach")),
-        ("Connect Tool", MULTI_CUT),
+        ("Transform Component", TRANSFORM_COMPONENT),
+        ("Connect Tool", CONNECT_TOOL),
         DIVIDER,
         ("Circularize Vertices", CIRCULARIZE),
         ("Reorder Vertices", None),
+        DIVIDER,
+        ("Apply Color", _item("Mesh Display/Apply Color")),
+        DIVIDER,
+        _poly_display("Toggle Backface Culling", "Toggle Vertices", "Toggle Vertex Normals", "Toggle Vertex Numbers",
+                      "Reset Polygon Display"),
     ],
-    options=['Chamfer Vertex', 'Circularize Vertices', 'Connect Components', 'Connect Tool', 'Crease Tool', 'Extrude Vertex', 'Multi-Cut'])
+    options=['Apply Color', 'Chamfer Vertex', 'Circularize Vertices', 'Connect Components', 'Connect Tool',
+             'Crease Tool', 'Extrude Vertex', 'Multi-Cut', 'Transform Component'])
 
 SHIFT_EDGE = MarkingMenu(
     "SHIFT_EDGE", "Edge Tools", "maya",
@@ -449,10 +546,9 @@ SHIFT_EDGE = MarkingMenu(
         "N": ("Merge/Collapse Edges", Sub(radial={
             "NE": ("Merge Border Edges", "mesh.remove_doubles"),
             "S": ("Target Weld Tool", TARGET_WELD),
-            "NW": ("Merge Edge Tool", None),
             "E": ("Collapse Edge", "mesh.edge_collapse"),
             "N": ("Merge Edges To Center", MERGE_CENTER),
-        }, options={"Merge Border Edges", "Target Weld Tool", "Merge Edge Tool"})),
+        }, options={"Merge Border Edges", "Target Weld Tool"})),
         "NE": ("Flip/Spin Edge", Sub(radial={
             "N": ("Flip Triangle Edge", "mesh.edge_rotate"),
             "E": ("Spin Forward", ("mesh.edge_rotate", {"use_ccw": False})),
@@ -463,6 +559,7 @@ SHIFT_EDGE = MarkingMenu(
     },
     items=[
         ("Crease Tool", CREASE),
+        ("Offset Edge Loop Tool", _item("Mesh Tools/Offset Edge Loop")),
         ("Insert Edge Loop Tool", _item("Mesh Tools/Insert Edge Loop")),
         ("Slide Edge Tool", _item("Mesh Tools/Slide Edge")),
         ("Circularize Components", CIRCULARIZE),
@@ -474,8 +571,16 @@ SHIFT_EDGE = MarkingMenu(
         DIVIDER,
         ("Connect Components", _item("Edit Mesh/Connect")),  # step 139
         ("Detach Components", "mesh.edge_split"),
+        ("Transform Component", TRANSFORM_COMPONENT),
+        ("Connect Tool", CONNECT_TOOL),
+        DIVIDER,
+        _poly_display("Toggle Backface Culling", "Toggle Border Edges", "Toggle Texture Border Edges",
+                      "Toggle Hidden Triangle Edges", "Reset Polygon Display",
+                      radial={"S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY)}),
     ],
-    options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut', 'Slide Edge Tool'])
+    options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components',
+             'Connect Tool', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut',
+             'Offset Edge Loop Tool', 'Slide Edge Tool', 'Transform Component'])
 
 SHIFT_FACE = MarkingMenu(
     "SHIFT_FACE", "Face Tools", "maya",
@@ -495,21 +600,36 @@ SHIFT_FACE = MarkingMenu(
         "NW": ("Paint Select Faces", PAINT_SELECT),
     },
     items=[
+        DIVIDER,
         ("Smart Extrude", _item("Edit Mesh/Smart Extrude")),
         ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),
         ("Assign Invisible Faces", None),
         ("Add Divisions To Faces", "mesh.subdivide"),
         ("Circularize Components", CIRCULARIZE),
+        ("Connect Components", _item("Edit Mesh/Connect")),
+        ("Detach Components", _item("Edit Mesh/Detach")),
         ("Triangulate Faces", "mesh.quads_convert_to_tris"),
-        ("Quadrangulate Faces", "mesh.tris_convert_to_quads"),
-        DIVIDER,
+        ("Quadrangulate Faces", _item("Mesh/Quadrangulate")),
+        ("Reduce Faces", _item("Mesh/Reduce")),
+        ("Remesh", _item("Mesh/Remesh")),
         ("Bridge Faces", "mesh.bridge_edge_loops"),
         DIVIDER,
+        ("Mirror", "allset.mirror"),
         ("Extract Faces", ("mesh.separate", {"type": 'SELECTED'})),
         ("Duplicate Face", ("v3d", "mesh.duplicate_move", {})),
+        ("Transform Component", TRANSFORM_COMPONENT),
+        ("Connect Tool", CONNECT_TOOL),
         ("Target Weld Tool", TARGET_WELD),  # step 64
+        DIVIDER,
+        _mapping(),
+        DIVIDER,
+        _poly_display("Toggle Backface Culling", "Toggle Face Centers", "Toggle Face Normals", "Toggle Face Numbers",
+                      "Toggle Hidden Triangles", "Reset Polygon Display"),
     ],
-    options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces', 'Circularize Components', 'Duplicate Face', 'Extract Faces', 'Extrude Face', 'Multi-Cut', 'Poke Face', 'Smooth Faces', 'Target Weld Tool', 'Wedge Face'])
+    options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces',
+             'Circularize Components', 'Connect Components', 'Connect Tool', 'Duplicate Face', 'Extract Faces',
+             'Extrude Face', 'Mirror', 'Multi-Cut', 'Poke Face', 'Quadrangulate Faces', 'Reduce Faces', 'Remesh',
+             'Smooth Faces', 'Target Weld Tool', 'Transform Component', 'Wedge Face'])
 
 SHIFT_DEFAULT = MarkingMenu(
     "SHIFT_DEFAULT", "Create", "maya",
@@ -528,11 +648,23 @@ SHIFT_DEFAULT = MarkingMenu(
         ("Pyramid", _create('PYRAMID')),
         ("Prism", _create('PRISM')),
         ("Pipe", _create('PIPE')), ("Helix", _create('HELIX')), ("Gear", _create('GEAR')),   # step 190
+        ("Soccer Ball", _item("Create/Polygon Primitives/Soccer Ball")),
         DIVIDER,
+        ("Super Ellipse", _item("Create/Polygon Primitives/Super Ellipse")),
+        ("Spherical Harmonics", _item("Create/Polygon Primitives/Spherical Harmonics")),
+        ("Ultra Shape", _item("Create/Polygon Primitives/Ultra Shape")),
         ("Type", _create('TEXT')),
+        ("SVG", _item("Create/SVG")),
         ("Quad Draw Tool", _item("Mesh Tools/Quad Draw")),
+        DIVIDER,
+        ("Interactive Creation", _item("Create/Polygon Primitives/Interactive Creation")),
+        ("Exit On Completion", _item("Create/Polygon Primitives/Exit On Completion")),
+        DIVIDER,
+        POLY_DISPLAY_ALL,
     ],
-    options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane', 'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Sphere', 'Torus'])
+    options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane',
+             'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Soccer Ball', 'Sphere', 'Spherical Harmonics',
+             'Super Ellipse', 'Torus', 'Ultra Shape'])
 
 # --- Ctrl+RMB: CTRL_CONVERT -----------------------------------------------
 
@@ -587,11 +719,79 @@ CTRL_CONVERT = MarkingMenu(
         ("To Shell", _item(_CS + "To Shell")),
         ("To Shell Border", _item(_CS + "To Shell Border")),
         DIVIDER,
+        # Maya's tool picks a border edge and takes the whole border = Blender's edge loop select on a border edge
+        ("Select Border Edge Tool", _item(_CS + "To Edge Loop")),
+        DIVIDER,
         ("Selection Boundary", "mesh.region_to_loop"),
+        ("Selection Constraints...", None),
     ])
 
 # --- Tool options: q/w/e/r hold + LMB, Ctrl+Shift+RMB -----------------------
 # Maya manip modes -> Blender transform orientations (Object = Local, Component = Normal).
+
+def _toggle(path):
+    return ("wm.context_toggle", {"data_path": path})
+
+
+def _select_prefs():
+    """Maya's Select submenu (S) of the Move / Rotate / Scale / Select tool option menus: selection preferences."""
+    return ("Select", Sub(radial={
+        "N": ("Preselection Highlight", _toggle("window_manager.allset_mtk_nearest")),
+        "NE": ("Highlight Nearest Component", _toggle("window_manager.allset_mtk_nearest")),
+        "E": ("Highlight Backfaces", None),
+        "SE": ("Asset Centric", None),
+        "NW": ("Marquee", ("tool", "builtin.select_box", False)),
+        "W": ("Camera-Based Selection", ("allset.mm_camera_based", {})),
+        "SW": ("Clear Selection", "allset.mm_clear_selection"),
+        "S": ("Soft Select", Sub(radial={
+            "N": ("Object", None),
+            "S": ("Soft Select", _toggle("scene.allset_soft_select")),
+            "SW": ("Volume", ("allset.soft_falloff_mode", {"surface": False})),
+            "W": ("Surface", ("allset.soft_falloff_mode", {"surface": True})),
+            "NW": ("Global", None),
+            "E": ("Color Feedback", None),
+        })),
+    }, items=[("Automatic Camera-Based Selection", None)]))
+
+
+def _constraints():
+    """Maya's Selection / Transform Constraints submenus of the tool option menus (no Blender constraint modes)."""
+    return [("Selection Constraints", unavailable()), ("Transform Constraints", unavailable())]
+
+
+def _custom_axis(slot):
+    """Maya's Custom axis submenu: use it, set it from the selection (component / point / edge / face) or the
+    object, reset the tool's axis (operators/pivot_menu.py)."""
+    def ax(action):
+        return ("allset.custom_axis", {"slot": slot, "action": action})
+    return Sub(radial={
+        "E": ("Custom", ax("USE")),
+        "W": ("Set to Component", ax("SELECTION")),
+        "SW": ("Set To Point", ax("SELECTION")),
+        "S": ("Set To Edge", ax("SELECTION")),
+        "SE": ("Set To Face", ax("SELECTION")),
+        "N": ("Set To Object", ax("OBJECT")),
+        "NW": ("Reset", ax("RESET")),
+    })
+
+
+def _pivot_point(mode):
+    # Maya Rotate / Scale Center = the transform pivot point
+    return ("wm.context_set_enum", {"data_path": "scene.tool_settings.transform_pivot_point", "value": mode})
+
+
+def _center(selection=True):
+    items = [("Default", _pivot_point('MEDIAN_POINT')), ("Object", _pivot_point('INDIVIDUAL_ORIGINS')),
+             ("Manip", _pivot_point('CURSOR'))]   # the kit's edited component pivot is the 3D cursor
+    if selection:
+        items.append(("Selection", _pivot_point('BOUNDING_BOX_CENTER')))
+    return Sub(items=items)
+
+
+# Maya Tweak Mode: dragging a component moves it = Blender's Tweak tool
+TWEAK_MODE = ("tool", "builtin.select", False)
+SHIFT_EXTRUDE = ("Shift Extrude", SMART_EXTRUDE)
+SHIFT_DUPLICATE = ("Shift Duplicate", SMART_DUPLICATE)
 
 OPT_MOVE = MarkingMenu(
     "OPT_MOVE", "Move Options", "maya",
@@ -601,24 +801,29 @@ OPT_MOVE = MarkingMenu(
         "NW": ("Object", _orient('LOCAL', 1)),
         "SE": ("Keep Spacing", None),
         "N": SYMMETRY,
+        "S": _select_prefs(),
         "E": ("Snap", Sub(radial={
             "E": ("Discrete Move", _step('TRANSLATE')),
             "SE": ("Vertex", ("allset.snap_toggle", {"snap": 'POINT'})),
             "SW": ("Face Center", None),
-        })),
+        }, items=[("Relative Mode", _step('TRANSLATE', 'RELATIVE'))])),
         "SW": ("Axis", Sub(radial={
             "NW": ("Normal", _orient('NORMAL', 1)),
             "W": ("Parent", _orient('PARENT', 1)),
             "NE": ("Along Rotation Axis", _orient('GIMBAL', 1)),
             "N": ("Live Object Axis", None),
-            "SW": ("Custom", None),
+            "SW": ("Custom", _custom_axis(1)),
         })),
     },
     items=[
-        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
+        *_constraints(),
+        DIVIDER,
+        SHIFT_EXTRUDE, SHIFT_DUPLICATE,
         DIVIDER,
         ("Preserve UVs", PRESERVE_UVS),
         ("Preserve Children", PRESERVE_CHILDREN),
+        ("Tweak Mode", TWEAK_MODE),
+        ("Update Triad", None),
         DIVIDER,
         ("Move Options", TOOL_SETTINGS),
     ])
@@ -628,17 +833,24 @@ OPT_ROTATE = MarkingMenu(
     radial={
         "NW": ("Object", _orient('LOCAL', 2)),
         "W": ("World", _orient('GLOBAL', 2)),
-        "SW": ("Custom", Sub(radial={"E": ("Custom", None), "NW": ("Reset", None)})),
+        "SW": ("Custom", _custom_axis(2)),
         "SE": ("Discrete Rotate", _step('ROTATE')),  # 15 degrees, S3
         "NE": ("Component", _orient('NORMAL', 2)),
         "E": ("Gimbal", _orient('GIMBAL', 2)),
         "N": SYMMETRY,
+        "S": _select_prefs(),
     },
     items=[
-        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
+        *_constraints(),
         DIVIDER,
+        SHIFT_EXTRUDE, SHIFT_DUPLICATE,
+        DIVIDER,
+        ("Rotate Center", _center()),
+        ("Free Rotate", None),
         ("Preserve UVs", PRESERVE_UVS),
         ("Preserve Children", PRESERVE_CHILDREN),
+        ("Tweak Mode", TWEAK_MODE),
+        ("Relative", _step('ROTATE', 'RELATIVE')),
         DIVIDER,
         ("Rotate Options", TOOL_SETTINGS),
     ])
@@ -654,31 +866,36 @@ OPT_SCALE = MarkingMenu(
             "NW": ("Normal", _orient('NORMAL', 3)),
             "N": ("Live Object Axis", None),
             "NE": ("Along Rotation Axis", _orient('GIMBAL', 3)),
+            "SW": ("Custom", _custom_axis(3)),
         })),
         "E": ("Snap Scale", _step('RESIZE')),
         "SE": ("Relative", _step('RESIZE', 'RELATIVE')),
         "N": SYMMETRY,
+        "S": _select_prefs(),
     },
     items=[
-        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
+        *_constraints(),
         DIVIDER,
+        SHIFT_EXTRUDE, SHIFT_DUPLICATE,
+        DIVIDER,
+        ("Scale Center", _center(selection=False)),
+        ("Prevent Negative Scale", ("allset.prevent_negative_scale", {})),
         ("Preserve UVs", PRESERVE_UVS),
         ("Preserve Children", PRESERVE_CHILDREN),
+        ("Tweak Mode", TWEAK_MODE),
         DIVIDER,
         ("Scale Options", TOOL_SETTINGS),
-        ("Prevent Negative Scale", ("allset.prevent_negative_scale", {})),
     ])
 
 OPT_SELECT = MarkingMenu(
     "OPT_SELECT", "Select Options", "maya",
     radial={
-        "NW": ("Marquee", ("tool", "builtin.select_box", False)),
-        "NE": ("Drag", ("tool", "builtin.select", False)),
-        "E": ("Camera-Based Selection", ("allset.mm_camera_based", {})),  # marquee skips hidden components
-        "SE": ("Clear Selection", "allset.mm_clear_selection"),
         "W": ("Paint Select", ("tool", "builtin.select_circle", False)),
-        "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),
-    })
+        "E": ("Lasso", ("tool", "builtin.select_lasso", False)),
+        "N": SYMMETRY,
+        "S": _select_prefs(),
+    },
+    items=_constraints())
 
 def _qd(prop, value=None):
     """A Quad Draw setting: a check item (``value`` None) or a radio item."""
@@ -729,8 +946,9 @@ SELECT_ALL = MarkingMenu(
         "NW": ("Delete History", "allset.delete_history"),
         "NE": ("Delete Non-Deformer History", ("allset.delete_history", {"non_deformer": True})),
         "SE": ("Freeze Transforms", "allset.freeze_transform"),
+        "SW": ("Reset Transforms", _item("Modify/Reset Transformations")),
     },
-    options={"Freeze Transforms"})
+    options={"Freeze Transforms", "Reset Transforms"})
 
 # --- Shift+S hold + LMB: KEY_TANGENT (Maya's Keyframe / Tangent marking menu, Maya hotkey) --------------------
 # Maya shows the same layout inside and outside the Graph Editor; the actions pick the
@@ -859,7 +1077,7 @@ ANIMATION_WS = ("allset.hb_workspace", {"name": "Animation"})
 HB_NORTH = MarkingMenu(
     "HB_NORTH", "Panel Layouts", "maya",
     radial={
-        "N": ("Single Perspective", ("allset.hb_single", {})),          # Maya 2022 hotbox North zone
+        "N": ("Single Perspective", ("allset.hb_single", {})),          # Maya hotbox North zone
         "NE": ("Hypershade/Render/Persp", SHADING_WS),
         "SE": ("Hypershade/Outliner/Persp", SHADING_WS),
         "E": ("Hypershade/Persp", SHADING_WS),
@@ -872,20 +1090,20 @@ HB_NORTH = MarkingMenu(
 HB_SOUTH = MarkingMenu(
     "HB_SOUTH", "Panel Types", "maya",
     radial={
-        "N": ("Outliner", _pane('OUTLINER')),                              # Maya 2022 hotbox South zone
+        "N": ("Outliner", _pane('OUTLINER')),                              # Maya hotbox South zone
         "E": ("Graph Editor", _pane('FCURVES')),
         "SE": ("Dope Sheet", _pane('DOPESHEET')),
         "S": ("Hypergraph", ("allset.hypergraph", {})),   # the kit's Hypergraph: Hierarchy window
         "SW": ("Node Editor", _pane('ShaderNodeTree')),
         "W": ("Hypershade", _pane('ShaderNodeTree')),
         "NW": ("Render View", _pane('IMAGE_EDITOR')),
-        "NE": ("Set Editor", _pane('OUTLINER')),  # kit sets = Outliner rows, step 96
+        "NE": ("Sets", _pane('OUTLINER')),  # kit sets = Outliner rows
     })
 
 HB_EAST = MarkingMenu(
     "HB_EAST", "UI Elements", "maya",
     radial={
-        "N": ("Help Line", _ui('HELP_LINE')),                              # Maya 2022 hotbox East zone
+        "N": ("Help Line", _ui('HELP_LINE')),                              # Maya hotbox East zone
         "NE": ("Status Line", _ui('STATUS_LINE')),
         "E": ("Attributes", Sub(radial={
             "E": ("Channel Box", _ui('CHANNEL_BOX')),
@@ -911,14 +1129,14 @@ HB_WEST = MarkingMenu(
         "SW": ("Polygons Mask", _mask('POLYGONS')),
         "W": ("Rendering Mask", _mask('RENDERING')),
         "NW": ("Object/Components", "object.editmode_toggle"),
-    },
-    items=[("All Objects", _mask('ALL'))])
+    })
 
 HB_CENTER = MarkingMenu(
     "HB_CENTER", "Views", "maya",
     radial={
-        "N": ("Perspective View", _view('PERSP')),                         # Maya 2022 hotbox centre zone
-        "E": ("Side View", _view('RIGHT')),
+        "N": ("Perspective View", _view('PERSP')),                         # Maya hotbox centre zone
+        "E": ("Right View", _view('RIGHT')),
+        "NE": ("New Camera", ("allset.camera_from_view", {})),
         "S": ("Front View", _view('FRONT')),
         "W": ("Top View", _view('TOP')),
         "NW": ("Left View", _view('LEFT')),
@@ -939,11 +1157,8 @@ def _uvc(mode):
     return ("allset.uv_component", {"mode": mode})
 
 
-UV_OPS = [("Cut UV Edges", "allset.uv_cut"), ("Sew UV Edges", "allset.uv_sew"),
-          ("Unfold", "allset.uv_unfold"), ("Layout", "allset.uv_layout")]
-
-# RMB in the UV Editor: Maya 2026's UV Editor marking menu (polygon version, recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
-# the kit lists the commands of this step instead.
+# RMB in the UV Editor: Maya 2026's UV Editor marking menu (polygon version); the list under it is a copy of the UV
+# Editor menu bar.
 UV_EDITOR_RMB = MarkingMenu(
     "UV_EDITOR_RMB", "UV Editor", "maya",
     radial={
@@ -953,8 +1168,9 @@ UV_EDITOR_RMB = MarkingMenu(
         "W": ("Vertex", _uvc('VERTEX')),
         "NW": ("UV Shell", _uvc('SHELL')),
     },
-    items=[*UV_OPS, DIVIDER, ("Select All", ("uv.select_all", {"action": 'SELECT'})),
-           ("Pin", "uv.pin"), ("Unpin", ("uv.pin", {"clear": True}))])
+    # Maya's list = the UV Editor menu bar (without Help), each opening that menu
+    items=[(title, ("menu", f"ALLSET_MT_ed_UvEditor_{i}")) for i, title in enumerate(
+        ("Edit", "Create", "Select", "Cut/Sew", "Modify", "Tools", "View", "Image", "Textures", "UV Sets"))])
 
 # Shift+RMB in the UV Editor: Maya's UV / UV Shell tool marking menus,
 # Mapping = Maya's UV mapping submenu.
@@ -967,7 +1183,7 @@ UV_MAPPING = Sub(radial={
     "SW": ("Spherical", ("v3d", "uv.sphere_project", {})),
     "W": ("Contour Stretch", _item("UV/Contour Stretch")),
     "NW": ("Automatic", _item("UV/Automatic")),               # polyAutoProj (step 139)
-})
+}, options={"Planar", "Normal-Based", "Camera-Based", "Cylindrical", "Spherical", "Contour Stretch", "Automatic"})
 # SetMeshGrabUVTool: Maya grabs UVs from the 3D View; these menus open in the UV Editor, whose Grab tool does it.
 GRAB_UV = _item("UV Editor/Tools/Grab")
 _UV_TAIL = [("Texture Borders", ("allset.uv_display", {"mode": 'TEXTURE_BORDERS'})), DIVIDER, ("UV Editor", ("allset.uv_component", {"mode": 'OPEN'})),
@@ -985,7 +1201,8 @@ SHIFT_UV = MarkingMenu(
         "W": ("Cut UVs", "allset.uv_cut"),
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),  # step 79
     },
-    items=[("Auto Seams", _item("UV/Auto Seams")), *_UV_TAIL])
+    items=[("Auto Seams", _item("UV/Auto Seams")), *_UV_TAIL],
+    options={"3D Grab UV Tool", "Merge UVs", "3D Cut and Sew UV Tool", "Auto Seams"})
 
 SHIFT_UV_SHELL = MarkingMenu(
     "SHIFT_UV_SHELL", "UV Shell Tools", "maya",
@@ -999,7 +1216,8 @@ SHIFT_UV_SHELL = MarkingMenu(
         "W": ("Unfold", "allset.uv_unfold"),
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),  # step 79
     },
-    items=list(_UV_TAIL))
+    items=list(_UV_TAIL),
+    options={"3D Grab UV Tool", "Optimize", "Flip", "Auto Seams", "Layout", "Unfold", "3D Cut and Sew UV Tool"})
 
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,

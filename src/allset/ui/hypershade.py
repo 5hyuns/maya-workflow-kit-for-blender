@@ -510,6 +510,7 @@ class ALLSET_OT_hs_node(bpy.types.Operator):
 
     node_type: StringProperty(name="Node", options={'SKIP_SAVE'})
     label: StringProperty(name="Maya Name", options={'SKIP_SAVE'})
+    operation: StringProperty(name="Operation", options={'SKIP_SAVE'})    # Math / Vector Math nodes
 
     def execute(self, context):
         mat = current(context)
@@ -525,6 +526,8 @@ class ALLSET_OT_hs_node(bpy.types.Operator):
             return {'CANCELLED'}
         if self.label:
             node.label = self.label
+        if self.operation and hasattr(node, "operation"):
+            node.operation = self.operation
         left = min((n.location.x for n in tree.nodes if n != node), default=0.0)
         node.location = (left - 300.0, 300.0)      # left of the network, like a new upstream node
         for n in tree.nodes:

@@ -77,7 +77,9 @@ def test_icons_are_distinct_within_a_menu():
         for path, pic in rows:
             key = mi.picture(pic, 16).tobytes()
             # step 142: one menu drawing on several items = Maya shows one icon file there (the generator links them)
-            if key in seen and menu not in MAYA_SHARED and not (pic[0] == "menu" and seen[key][1] == pic):
+            # a repeated label ("#2", Maya's legacy row of the same command) shows the same icon, like Maya
+            twin = path.split("#", 1)[0] == seen.get(key, ("",))[0].split("#", 1)[0]
+            if key in seen and menu not in MAYA_SHARED and not twin and not (pic[0] == "menu" and seen[key][1] == pic):
                 raise AssertionError(f"{menu}: {path} looks like {seen[key][0]}")
             seen.setdefault(key, (path, pic))
 
