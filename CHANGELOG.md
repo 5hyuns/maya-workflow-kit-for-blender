@@ -133,6 +133,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   defaults, and Custom Polygon Display opens the full overlay popover. Blender draws normals and edge display on
   meshes in edit mode. Vertex Size... and Edge Width... open the theme preferences searched for that setting; the
   other items are greyed with a note on the closest Blender feature.
+- **Menus follow Maya 2026**: the Rigging menu set lists the Bifrost rigging menu and the FX set no longer lists
+  Bifrost Fluids / Boss; Stereo > Create opens a submenu with Stereo Camera and Multi Stereo Rig; Select > Components
+  shows the keys Multi-Component F7, Vertex F9, Edge F10, Face F11, UV F12 and UV Shell Alt+F12.
 
 ### Fixed
 - **Alt+LMB tumble with Emulate 3 Button Mouse on** (#242): Blender turns Alt+left drag into a middle drag when
