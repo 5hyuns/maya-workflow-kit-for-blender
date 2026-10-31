@@ -16,7 +16,7 @@ These changes follow Maya's [selection modifiers and F8 behavior](https://help.a
 
 Blender still represents joints as bones inside armatures. Rest editing, connected-bone translation, mixed object/bone transforms, box selection across different rigs, and custom bone-shape picking retain Blender limitations. Existing parenting, connectivity, constraints, and animation data are not converted. This is closer Maya interaction, not complete Maya rigging equivalence.
 
-Verification uses Blender 4.5.4 LTS and 5.2.2 (`python tests/integration/run.py --blender PATH`). Run `tests/integration/blender_joint_workflow.py` in a background factory session for mode/selection/modifier/keymap checks. Run `tests/integration/blender_joint_viewport.py` in a separate factory GUI session for actual viewport joint/mesh/background picking with selection priority enabled and disabled (disabled: only joint hits are the kit's); that test exits its Blender process after completion.
+Verification uses Blender 5.2 (`python tests/integration/run.py --blender PATH`). Run `tests/integration/blender_joint_workflow.py` in a background factory session for mode/selection/modifier/keymap checks. Run `tests/integration/blender_joint_viewport.py` in a separate factory GUI session for actual viewport joint/mesh/background picking with selection priority enabled and disabled (disabled: only joint hits are the kit's); that test exits its Blender process after completion.
 
 ## Leaving Paint Skin Weights
 

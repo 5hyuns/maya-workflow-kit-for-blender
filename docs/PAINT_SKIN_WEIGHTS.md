@@ -33,4 +33,4 @@ skinClusters per mesh.
 `tests/integration/blender_weight_workspace.py` (brush families, gradients, Flood maths and masks, locks,
 normalization, transfer, automatic / envelope weights, filtering, re-entry) and
 `tests/integration/blender_weight_workspace_ui.py` (every section collapsed and expanded in a Tool Settings dock) pass on
-Blender 4.5.4 and 5.2.2; `tests/gui/gui_step58_skin.py` paints through the Tool Settings influence list.
+Blender 5.2; `tests/gui/gui_step58_skin.py` paints through the Tool Settings influence list.
