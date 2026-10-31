@@ -35,7 +35,6 @@ Delete Non-Deformer History keeps all three (history.is_deformer: every kit defo
 History bakes them. The Maya names / node types / Channel Box rows join deformers.BASES / ATTRS at register.
 """
 
-import math
 
 import bpy
 from bpy.props import EnumProperty

@@ -6,9 +6,7 @@ frame 1 and 5 at frame 10. The kit is Z up (Maya Y = Blender Z, Maya Z = Blender
 kit's Channel Box the same object reads Translate (1, -3, 2), Rotate (0, 0, 28.6), Scale 1 (in display units).
 """
 
-import json
 import math
-import os
 from importlib import import_module
 from pathlib import Path
 

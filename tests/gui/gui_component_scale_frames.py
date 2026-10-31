@@ -6,7 +6,7 @@ from importlib import import_module
 
 import bmesh
 import bpy
-from mathutils import Euler, Matrix, Quaternion, Vector
+from mathutils import Euler, Quaternion, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, step, tap, view3d, win

@@ -3,7 +3,6 @@ GUI: tests/gui/gui_step144_loop.py. Every expected number below is what
 Maya gives on the same meshes (polySplitRing / polyDuplicateEdge /
 polySlideEdge), plus the Tool Settings / window defaults."""
 
-import math
 from importlib import import_module
 
 import bmesh

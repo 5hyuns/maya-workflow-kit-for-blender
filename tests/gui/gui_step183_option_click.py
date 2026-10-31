@@ -133,7 +133,6 @@ def geometry_case(label):
         press_release(*C["click"])
 
     def s_measure():
-        import numpy as np
         shot("183_menu_" + label.replace(" ", "_"))
 
     def s_check():

@@ -11,7 +11,6 @@ import time
 from importlib import import_module
 
 import bpy
-from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
 
 import kit

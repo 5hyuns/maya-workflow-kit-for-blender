@@ -4,7 +4,6 @@ Prune Membership, Point On Curve, Paint Weights windows, Deform >= 60 %, no "Ble
 """
 
 import importlib.util
-import math
 import os
 from importlib import import_module
 

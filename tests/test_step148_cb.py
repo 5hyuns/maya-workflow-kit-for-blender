@@ -1,7 +1,6 @@
 """Step 148 (#87 #85 #83 #95): Channel Box finish.
 GUI: tests/gui/gui_step148_cb.py (RMB menu, pane, AE, lattice, light at UI 1.0 / 1.25 / 1.5)."""
 
-import types
 from importlib import import_module
 
 import bpy

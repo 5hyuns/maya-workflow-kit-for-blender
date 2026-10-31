@@ -1,5 +1,5 @@
 """Both sides of a border-loop delete/tweak, clean topology, cancel and Undo."""
-import os,sys,bpy,bmesh,numpy as np
+import sys,bpy,bmesh,numpy as np
 from pathlib import Path
 from importlib import import_module
 from mathutils import Vector,Quaternion

@@ -14,7 +14,6 @@ attributes (step 129 #26; the object's visibility is ``hide_viewport``):
 An object belongs to at most one display layer, like Maya.
 """
 
-import re
 
 import bpy
 from bpy.app.handlers import persistent

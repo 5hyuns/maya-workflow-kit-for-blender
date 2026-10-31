@@ -4,7 +4,6 @@ out from under the sidebar."""
 import math
 from importlib import import_module
 
-import bpy
 from mathutils import Matrix, Quaternion, Vector
 
 import kit

@@ -3,7 +3,6 @@ Curves / Surfaces and FX buttons, Maya-style icons.
 
 """
 
-import json
 import os
 from importlib import import_module
 

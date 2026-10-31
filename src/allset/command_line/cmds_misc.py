@@ -16,7 +16,6 @@ Everything goes through the kit's own data so a script gives what the menus give
   ``_extend_shim`` (the shim's versions handle DAG objects only).
 """
 
-import math
 import re
 
 import bmesh

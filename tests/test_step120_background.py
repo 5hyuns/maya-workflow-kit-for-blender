@@ -2,7 +2,6 @@
 every view at once, per view: flat colours and the kit-drawn gradient (the kit never edits the
 user's theme), Ctrl+B stays Maya's Bevel, Windows > Settings/Preferences > Color Settings."""
 
-import json
 from importlib import import_module
 from pathlib import Path
 

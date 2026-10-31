@@ -1946,7 +1946,6 @@ class ALLSET_MT_cb_channels(bpy.types.Menu):
 
     def draw(self, context):
         from .. import preferences
-        from . import cb_channels, menu_sets
         lay = self.layout
         lay.operator("allset.cb_key_selected")
         lay.operator("allset.cb_key_all")

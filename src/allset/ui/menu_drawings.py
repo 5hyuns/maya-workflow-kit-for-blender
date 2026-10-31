@@ -17,10 +17,9 @@ import math
 
 import numpy as np
 
-from .shelf_icons import (BLACK, BLUE, DARK, GREEN, KEY, LAV, LIGHT, ORANGE, SALMON, TEAL, WHITE, YELLOW, Canvas,
-                          _hex, arrow, bezier, bone, brush, check, checker, cone, cube, curved_arrow, cv_box,
-                          cylinder, face_grid, film_strip, hgrad, lerp, link, nosign, pencil, plus, shade,
-                          sphere_colour, torus, wave_pts, xmark)
+from .shelf_icons import (BLUE, DARK, LAV, LIGHT, WHITE, YELLOW, Canvas, _hex, arrow, bezier, bone, brush, checker,
+                          cube, curved_arrow, cylinder, face_grid, film_strip, hgrad, lerp, plus, shade, sphere_colour,
+                          wave_pts, xmark)
 
 RED = _hex("#c8323a")         # Maya's action red (arrows, paint ring, prune cursor)
 PURPLE = _hex("#a548c8")      # intermediate-object balls

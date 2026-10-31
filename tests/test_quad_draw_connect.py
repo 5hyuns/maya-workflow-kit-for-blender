@@ -1,6 +1,5 @@
 """Quad Draw bridge proposals and topology-safe transactional welds."""
 from importlib import import_module
-import numpy as np
 from mathutils import Vector
 import kit
 

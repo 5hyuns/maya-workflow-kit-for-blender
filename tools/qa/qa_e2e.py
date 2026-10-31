@@ -19,7 +19,6 @@ Results: tmp/qa240/qa_b_<sandbox>.json; mismatches -> tmp/qa240/findings.jsonl.
 import hashlib
 import importlib.util
 import math
-import os
 import traceback
 from importlib import import_module
 from pathlib import Path

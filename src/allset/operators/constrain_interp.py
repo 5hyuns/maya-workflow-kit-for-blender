@@ -33,7 +33,7 @@ import math
 
 import bpy
 from bpy.app.handlers import persistent
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Quaternion, Vector
 
 NO_FLIP, AVERAGE, SHORTEST, LONGEST, CACHE = range(5)
 NAMES = ("No Flip", "Average", "Shortest", "Longest", "Cache")

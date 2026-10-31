@@ -284,7 +284,6 @@ def depth(js, name):
 
 def _screen(context, pts):
     """(a, b, ok) screen end points of segments ``pts`` (pairs) in the context region; ok = both in front."""
-    import numpy as np
     from ..operators.preselect import project
     region, rv3d = context.region, context.region_data
     xy, front = project([tuple(p) for p in pts], rv3d.perspective_matrix, region.width, region.height)
@@ -293,7 +292,6 @@ def _screen(context, pts):
 
 def screen_distance(context, ob, mouse):
     """{joint: screen distance from ``mouse`` to its drawn lines} of armature ``ob``."""
-    import numpy as np
     from ..operators.preselect import segment_distance
     js = skeleton(ob, context.scene)
     dg = context.evaluated_depsgraph_get()

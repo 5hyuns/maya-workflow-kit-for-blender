@@ -3,7 +3,7 @@ from importlib import import_module
 from types import SimpleNamespace
 
 import bpy
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler, Matrix
 
 import kit
 from test_pivot_tap_components import _cube, _world

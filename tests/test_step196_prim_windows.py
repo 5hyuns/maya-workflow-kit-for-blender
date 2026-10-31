@@ -2,8 +2,6 @@
 Maya's option windows (default values) and fill the kit's Maya
 creation node (operators/option_windows_prims.py)."""
 
-import json
-import os
 from importlib import import_module
 
 import bpy

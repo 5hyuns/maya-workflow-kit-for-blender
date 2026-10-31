@@ -5,7 +5,6 @@ edits through the Scene proxies (undoable), Auto Update and the window's classes
 from importlib import import_module
 
 import bpy
-from mathutils import Vector
 
 import kit
 

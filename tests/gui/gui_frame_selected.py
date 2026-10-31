@@ -1,7 +1,7 @@
 """F must reach Frame Selection ahead of another addon's Object/Mesh menu, then restore that menu on exit."""
 import os,sys,bpy,bmesh
 from importlib import import_module
-from mathutils import Vector,Quaternion,Matrix
+from mathutils import Vector,Quaternion
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE,setup,step,run,view3d,win,ev,tap,check

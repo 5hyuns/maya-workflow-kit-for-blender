@@ -2,7 +2,6 @@
 Suppress ..., History Output) as add-on preferences that change what the kit runner writes into the Script Editor
 history. Factory states = Maya 2022's check marks."""
 
-import json
 import os
 from importlib import import_module
 

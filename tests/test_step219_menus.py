@@ -2,8 +2,6 @@
 equal Maya's except the submenus
 the kit fills at run time from the scene."""
 
-import json
-import sys
 from importlib import import_module
 from pathlib import Path
 

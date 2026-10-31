@@ -5,7 +5,6 @@ specularRollOff 0.7, eccentricity 0.3, specularColor 0.5; phong1 cosinePower 20;
 No Decay; defaultResolution 960 x 540. Light power rule and its renders: operators/lights.py."""
 
 import math
-import os
 from importlib import import_module
 
 import bpy

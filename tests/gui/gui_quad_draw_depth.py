@@ -1,5 +1,5 @@
 """Display audit: irregular quads, close view and persisted native retopology offset."""
-import os, sys, math, json
+import os, sys, math
 from pathlib import Path
 from importlib import import_module
 import bpy, bmesh, numpy as np

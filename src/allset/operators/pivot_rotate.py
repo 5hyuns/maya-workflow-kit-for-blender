@@ -9,7 +9,7 @@ import math
 
 import bpy
 from bpy_extras import view3d_utils
-from mathutils import Matrix, Vector
+from mathutils import Matrix
 
 from . import hold, pivot
 

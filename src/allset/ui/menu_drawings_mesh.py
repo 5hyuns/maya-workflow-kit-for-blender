@@ -5,8 +5,8 @@ import math
 
 import numpy as np
 
-from .menu_drawings import RED, VCOL, icon
-from .shelf_icons import (BLACK, DARK, KEY, LIGHT, ORANGE, WHITE, arrow, brush, cube, curved_arrow, eye, face_grid, hgrad,
+from .menu_drawings import VCOL, icon
+from .shelf_icons import (DARK, KEY, LIGHT, ORANGE, WHITE, arrow, brush, cube, curved_arrow, face_grid, hgrad,
                           lerp, nosign, pencil, plus, shade, sphere_colour, sun, xmark)
 
 GREYF = shade(LIGHT, -0.12)

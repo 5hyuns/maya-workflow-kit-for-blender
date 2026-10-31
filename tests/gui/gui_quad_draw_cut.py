@@ -2,7 +2,7 @@
 import os,sys,math,bpy,bmesh,numpy as np
 from pathlib import Path
 from importlib import import_module
-from mathutils import Vector,Quaternion
+from mathutils import Quaternion
 from bpy_extras import view3d_utils
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from sim import MODULE,setup,step,run,view3d,win,ev,check,screenshot

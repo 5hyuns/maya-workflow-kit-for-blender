@@ -4,7 +4,6 @@ container in the selection makes the other meshes emitters instead of failing in
 
 import bpy
 
-import kit
 
 
 def _scene():

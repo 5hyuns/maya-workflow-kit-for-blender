@@ -5,9 +5,7 @@ keymap/mapping.py; a kit binding is changed on the ``keyconfigs.user`` item (Ble
 restored with ``KeyMap.restore_item_to_default``; the kit writes no file. Background Blender leaves the default
 keyconfig empty, so it is filled from Blender's keymap data first (rt60_dump.populate)."""
 
-import json
 import os
-import sys
 from importlib import import_module
 
 import bpy

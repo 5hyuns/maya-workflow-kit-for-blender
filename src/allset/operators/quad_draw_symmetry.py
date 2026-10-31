@@ -354,7 +354,7 @@ class Stroke:
                 start=self.original.get(v,v.co)
                 destination=self.original.get(other,other.co)
                 p=destination+self.matrix.to_3x3()@(v.co-start)
-                from . import live,quad_draw
+                from . import quad_draw
                 refs=quad_draw.reference_objects(self.context)
                 if refs:
                     try:other.co=self.point(v.co);continue
@@ -407,8 +407,7 @@ class Stroke:
         distance cap prevents side views (where both sides project to one pixel)
         from snapping distant geometry through the reference.
         """
-        from bpy_extras import view3d_utils
-        from . import quad_draw,live
+        from . import quad_draw
         self.seam_sources.clear()
         radius=quad_draw._weld_px(context)
         if radius is None or self.about=='TOPOLOGY':

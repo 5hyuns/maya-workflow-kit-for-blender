@@ -28,7 +28,6 @@ Maya also outputs neutral / neutralSwing / neutralTwist weights: the kit keeps t
 weights for it.
 """
 
-import math
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty

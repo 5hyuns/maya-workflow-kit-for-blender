@@ -1,6 +1,6 @@
 """Pixel regression: component shading survives Quad Draw save/reload and legacy viewport repair."""
 GUI_SKIP = "fails on this PC (UI scale 1.25): the sampled points land on the manipulator and the selected-face stipple; same on the PR branch"   # the GUI runner leaves it out (--include-skipped runs it)
-import os,sys,json
+import os,sys
 from pathlib import Path
 from importlib import import_module
 import bpy,bmesh,numpy as np

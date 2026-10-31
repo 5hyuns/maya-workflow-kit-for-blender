@@ -4,7 +4,6 @@ GUI: tests/gui/gui_step63_mtk.py."""
 from importlib import import_module
 
 import bpy
-from mathutils import Vector
 
 import kit
 

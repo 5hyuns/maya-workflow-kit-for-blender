@@ -18,7 +18,7 @@ from types import SimpleNamespace
 
 import bmesh
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 
 import kit
 

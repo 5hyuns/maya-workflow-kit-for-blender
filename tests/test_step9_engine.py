@@ -1,8 +1,6 @@
 """Step 9: marking menu engine logic, hotbox layout, zone menus, zone operators, keymap, prefs."""
 
-import json
 import math
-import os
 import types
 from importlib import import_module
 

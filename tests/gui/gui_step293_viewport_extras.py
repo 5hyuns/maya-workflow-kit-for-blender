@@ -2,7 +2,6 @@
 Home), its labels drawn in Blender's UI font, the Alt+B gradient behind a selected cube with its wire, the gradient
 kept per view through a save and reopen. Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
 
-import math
 import os
 import sys
 from importlib import import_module

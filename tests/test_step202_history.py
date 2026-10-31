@@ -8,7 +8,6 @@ from importlib import import_module
 
 import bmesh
 import bpy
-from mathutils import Vector
 
 import kit
 

@@ -5,12 +5,11 @@ import math
 
 import numpy as np
 
-from .menu_drawings import RED, TAN, blob, icon, prune_mark
+from .menu_drawings import RED, TAN, blob, icon
 from .menu_drawings_mesh import dashed_line, dashed_ring, hex_cube, ibeam, minus, page, vsq
-from .menu_drawings_select import CVBLUE, cv_sq
-from .shelf_icons import (BLUE, DARK, LAV, LIGHT, ORANGE, WHITE, _hex, arrow, bezier, bone, cone, cube,
-                          curved_arrow, cylinder, face_grid, hgrad, human, lerp, nosign, pencil, plus, shade, shirt,
-                          sphere_colour, torus, wave_pts)
+from .menu_drawings_select import cv_sq
+from .shelf_icons import (DARK, LAV, LIGHT, ORANGE, WHITE, _hex, arrow, bezier, bone, cone, cylinder, face_grid, hgrad,
+                          human, lerp, nosign, pencil, plus, shade, shirt, sphere_colour, wave_pts)
 
 CURVE = _hex("#4aa8d8")
 NURBS = _hex("#6a9ad0")

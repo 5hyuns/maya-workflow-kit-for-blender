@@ -48,7 +48,7 @@ import math
 import bmesh
 import bpy
 import numpy as np
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty
 from mathutils import Matrix, Vector
 
 from .. import results, undo_steps

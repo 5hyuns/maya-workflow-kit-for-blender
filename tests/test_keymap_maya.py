@@ -1,8 +1,5 @@
 """Step 2: the generated "Maya" keyconfig."""
 
-import json
-import sys
-from pathlib import Path
 
 import bpy
 

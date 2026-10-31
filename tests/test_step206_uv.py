@@ -7,7 +7,6 @@ import json
 import os
 from importlib import import_module
 
-import bmesh
 import bpy
 
 import kit

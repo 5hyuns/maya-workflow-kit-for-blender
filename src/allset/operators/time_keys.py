@@ -13,7 +13,7 @@ in pose mode (a bone's curves are the armature action's ``pose.bones["n"]...`` c
 import math
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, FloatProperty
+from bpy.props import BoolProperty, EnumProperty
 
 from .. import results
 from .. import undo_steps

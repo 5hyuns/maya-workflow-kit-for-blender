@@ -4,7 +4,6 @@ IK handle / pole vector (or a hand pose) has bent away from its rest shape doesn
 from importlib import import_module
 
 import bpy
-from mathutils import Vector
 
 import kit
 

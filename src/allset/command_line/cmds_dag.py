@@ -12,7 +12,7 @@ import bpy
 from mathutils import Matrix, Vector
 
 from .cmds_shim import (_Flags, _flatten, _object, _objects, _selection, _select_only, _is_shape_name,
-                        _long_name, _view_layer, channel_keys, set_name, shape_name_for, shape_of, type_matches,
+                        _long_name, _view_layer, channel_keys, set_name, shape_of, type_matches,
                         unique_name, _to_bu)
 
 

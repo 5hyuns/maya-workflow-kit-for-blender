@@ -19,7 +19,7 @@ from mathutils import Quaternion, Vector
 ROOT = Path(__file__).resolve().parents[2] / 'src' / 'allset'
 sys.path.insert(0, str(ROOT.parent))
 addon = importlib.import_module(ROOT.name)
-from allset.operators import joints, joint_selection, select_priority, tool_keys
+from allset.operators import joints, select_priority, tool_keys
 from allset.ui.channel_box import bone_selected
 
 bpy.utils.register_class(tool_keys.ALLSET_OT_toggle_sel_mode)

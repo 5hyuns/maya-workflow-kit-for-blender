@@ -4,7 +4,7 @@ results."""
 import math
 
 import bpy
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Matrix, Vector
 
 from bl_ext.user_default.allset.operators import constrain_interp as ci
 from bl_ext.user_default.allset.operators import constrain_multi as cm

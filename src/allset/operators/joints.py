@@ -319,7 +319,6 @@ def fix_frames(ob, frames):
     """After edit mode: Blender rebuilds each bone's matrix through its parent chain in float32 (a few 1e-6 off on
     short bones, step 244); store the remainder against the intended Maya ``frames`` {name: frame} in ``MAYA_FRAME``
     of the Bone."""
-    from mathutils import Quaternion
     if ob.mode == 'EDIT':
         return
     for name, frame in frames.items():
@@ -945,7 +944,7 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         oj = "none" if self.to_world else (self.primary + self.secondary
                                            + ({"X", "Y", "Z"} - {self.primary, self.secondary}).pop()).lower()
         skipped = []
-        n = orient(ob, names, self.world, self.children, oj, self.auto_secondary, skipped)
+        orient(ob, names, self.world, self.children, oj, self.auto_secondary, skipped)
         for name, why in skipped:
             self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning
         if skipped:

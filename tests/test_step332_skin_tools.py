@@ -9,7 +9,6 @@ from importlib import import_module
 
 import bpy
 import numpy as np
-from mathutils import Vector
 
 import kit
 

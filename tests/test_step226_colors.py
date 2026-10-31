@@ -6,8 +6,6 @@ Maya: the colorIndex palette 1-31
 useObjectColor 1 / objectColor 2, ``color -rgb 1 0 0`` -> useObjectColor 2 / wireColorRGB (``L2_wireframe_color_command``),
 override attributes all 0 / off by default (``L2_drawing_override_palette.default_attrs``)."""
 
-import json
-import os
 from importlib import import_module
 
 import bpy

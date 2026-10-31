@@ -29,7 +29,7 @@ GREY_OP = "allset.menu_unavailable"
 
 
 # Row tables live in panel_menu_data (bpy-free: menu_count / menu_consistency / notice rules walk them, step 177).
-from .panel_menu_data import (_sep, _grey, _run, _tool, _view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, SHOW_TYPES, ALL_TYPES,
+from .panel_menu_data import (_view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, ALL_TYPES,
                               _show_row, SHOW, ISOLATE, RENDERER, PANELS, PANEL_TYPES, LAYOUTS, BAR, item_path)  # noqa: F401
 
 

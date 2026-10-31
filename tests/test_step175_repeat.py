@@ -155,7 +155,6 @@ def test_keys_and_menus_point_at_the_kit_repeat():
 
 def _edit_cube_with_top_face():
     """A 1-unit cube in face mode with only its top face selected (fix #184)."""
-    import bmesh
     _clear()
     bpy.ops.mesh.primitive_cube_add(size=1)
     ob = bpy.context.active_object

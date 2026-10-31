@@ -252,7 +252,6 @@ POPUPS = {"skipped": 0}
 
 
 def _shim_popups():
-    import bpy.ops as ops_mod
     cls = type(bpy.ops.wm.call_menu)
     if getattr(cls, "_qa_shim", False):
         return

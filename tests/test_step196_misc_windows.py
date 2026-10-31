@@ -6,7 +6,6 @@ Window titles / buttons / defaults of Maya's
 option windows and the option effects."""
 
 import json
-import math
 from importlib import import_module
 
 import bmesh

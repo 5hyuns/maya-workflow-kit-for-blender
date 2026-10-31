@@ -3,11 +3,8 @@ since step 269), every
 leaf mapped or greyed with a notice, check items, icon rows, header draws swapped and restored, Curves > Infinity,
 in / out tangents, Stats fields, the Graph Editor outliner rows."""
 
-import json
-import os
 import types
 from importlib import import_module
-from pathlib import Path
 
 import bpy
 

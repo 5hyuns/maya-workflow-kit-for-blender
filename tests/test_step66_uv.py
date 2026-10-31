@@ -1,7 +1,6 @@
 """Step 66: Maya UV workflow — UV Editor entry, UV components, Cut / Sew / Unfold / Layout, Texel Density, UV marking
 menus, UV Toolkit. GUI: tests/gui/gui_step66_uv.py."""
 
-import math
 import types
 from importlib import import_module
 

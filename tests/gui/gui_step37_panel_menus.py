@@ -4,7 +4,6 @@ Wireframe, open Show (screenshots), Blender ▸ still has Blender's menus."""
 import os
 import sys
 
-import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402

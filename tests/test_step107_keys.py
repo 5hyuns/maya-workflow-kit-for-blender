@@ -1,9 +1,7 @@
 """Step 107: wrong daily keys fixed (Alt+R, Ctrl+I, F1, Alt+C, m, Ctrl+PgUp/PgDn, Ctrl+,), missing keys bound (menu
 bars, Alt+B, skin paint, sculpt, Graph Editor h / j, Time Slider bookmarks), every Maya hotkey row classified."""
 
-import json
 from importlib import import_module
-from pathlib import Path
 from types import SimpleNamespace
 
 import bpy

@@ -2,7 +2,6 @@
 Paint Skin Weights normalization (#20) and the switch to Blender in the Maya
 Workflow Kit template file (#19). GUI: tests/gui/gui_step129_*.py."""
 
-import os
 from importlib import import_module
 
 import bmesh

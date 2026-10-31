@@ -35,7 +35,7 @@ A root joint under another node (a Maya group above the skeleton) is left to Ble
 import math
 
 import bpy
-from mathutils import Euler, Matrix, Quaternion, Vector
+from mathutils import Euler, Matrix, Vector
 
 from . import fbx_rig
 

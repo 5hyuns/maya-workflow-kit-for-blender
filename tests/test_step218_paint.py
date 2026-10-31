@@ -5,11 +5,8 @@ The scene is rebuilt with Maya's vertex order (Blender index = Maya vertex id): 
 h 8 r 1 sx 20 sy 8 (caps are 20-gons, no centre vertex), rings at Maya y = 0..8 -> Blender z, joints at 0 / 4 / 8. The
 bind is not redone: the "before" weights (the same on every vertex of a ring) are written into the groups."""
 
-import math
 from importlib import import_module
 
-import bpy
-from mathutils import Vector
 
 import kit
 

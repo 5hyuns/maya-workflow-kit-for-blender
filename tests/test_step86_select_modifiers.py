@@ -3,7 +3,6 @@ Ctrl+Shift add). GUI: tests/gui/gui_step86_select_modifiers.py."""
 
 from importlib import import_module
 
-import bpy
 
 import kit
 

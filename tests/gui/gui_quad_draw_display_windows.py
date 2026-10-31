@@ -3,7 +3,7 @@ import sys,bpy
 from pathlib import Path
 from importlib import import_module
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from sim import MODULE,setup,load_maya_layout,step,run,view3d,win,check
+from sim import MODULE,setup,load_maya_layout,step,run,win,check
 mod=lambda n:import_module(MODULE+'.'+n)
 C={}
 def primary():return mod('live_refs').window(C['primary'])

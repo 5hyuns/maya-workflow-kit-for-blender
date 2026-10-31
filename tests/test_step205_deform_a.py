@@ -5,7 +5,7 @@ every "O" case must match within its tol (1e-4); "U" cases only print their resi
 from importlib import import_module
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 
 import kit
 

@@ -3,7 +3,7 @@
 from collections import defaultdict
 import bmesh
 from mathutils import Vector
-from mathutils.geometry import intersect_line_line_2d,intersect_point_line
+from mathutils.geometry import intersect_line_line_2d
 from . import mesh_tools,quad_draw_symmetry as symmetry
 
 

@@ -4,7 +4,7 @@ import math
 from importlib import import_module
 
 import bpy
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Matrix, Vector
 
 import kit
 

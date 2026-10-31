@@ -1,7 +1,7 @@
 """Surface-aware inference, collective strip snapping and scale-independent topology checks."""
 from importlib import import_module
 import numpy as np
-from mathutils import Vector,Matrix
+from mathutils import Vector
 import kit
 f=import_module(kit.MODULE+'.operators.quad_draw_fill')
 w=import_module(kit.MODULE+'.operators.quad_draw_weld')

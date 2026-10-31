@@ -10,7 +10,7 @@ import math
 from importlib import import_module
 
 import bpy
-from mathutils import Quaternion, Vector
+from mathutils import Quaternion
 
 import kit
 

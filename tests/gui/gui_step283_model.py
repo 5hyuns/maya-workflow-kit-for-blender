@@ -12,7 +12,6 @@ from importlib import import_module
 import bmesh
 import bpy
 from bpy_extras import view3d_utils
-from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, load_maya_layout, run, screenshot, setup, step, view3d, win  # noqa: E402

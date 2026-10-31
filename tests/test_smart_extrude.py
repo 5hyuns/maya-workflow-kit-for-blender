@@ -4,7 +4,7 @@ from importlib import import_module
 
 import bmesh
 import bpy
-from mathutils import Euler, Matrix, Vector
+from mathutils import Vector
 from kit import MODULE
 
 

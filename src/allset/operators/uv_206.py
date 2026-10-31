@@ -35,7 +35,7 @@ from mathutils import Vector
 
 from .. import compat, results, undo_steps
 from . import uv_tools
-from .uv_shells import _index_loops, _meshes, _poll, uv_points
+from .uv_shells import _index_loops, _meshes, _poll
 from .uv_tools import EPS, NUDGE, islands, sync
 
 NO_FACE = "No face selected. Select a face and try again."    # Maya's warning text

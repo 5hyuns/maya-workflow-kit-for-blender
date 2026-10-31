@@ -3,12 +3,11 @@
 
 import math
 
-import numpy as np
 
 from .menu_drawings import RED, blob, icon, prune_mark
-from .menu_drawings_mesh import dashed_line, hex_cube, sliders, vsq
-from .shelf_icons import (BLUE, DARK, LIGHT, ORANGE, TEAL, WHITE, YELLOW, _hex, arrow, bezier, brush, checker,
-                          curved_arrow, cylinder, face_grid, hgrad, lerp, shade, sphere_colour, wave_pts)
+from .menu_drawings_mesh import hex_cube, sliders, vsq
+from .shelf_icons import (BLUE, DARK, LIGHT, ORANGE, TEAL, WHITE, _hex, arrow, bezier, brush, checker,
+                          cylinder, face_grid, hgrad, lerp, shade, sphere_colour, wave_pts)
 
 OLIVE = _hex("#8a8262")       # Maya's selection-conversion mesh patch
 SEL_YELLOW = _hex("#f0e030")

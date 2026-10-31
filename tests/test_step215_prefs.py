@@ -4,7 +4,6 @@ Category tree = Maya 2022's (38 rows, Interface / Display / Settings /
 Security / Modules / Applications). Rows are kit add-on preferences, scene values, read-only Blender preferences (the
 kit never writes them, decisions 13 / 14) or greyed Maya controls."""
 
-import json
 import os
 from importlib import import_module
 

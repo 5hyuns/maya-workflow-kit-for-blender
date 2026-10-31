@@ -1,10 +1,7 @@
 """Step 150 lane A (#96): Maya Graph Editor View / Show items — Auto Frame, Auto Frame Time, Curve Name, Show >
 Clear Below / Subdiv Objects mapped (ui/graph_view.py); the rest greyed with a one-line notice."""
 
-import json
-import os
 from importlib import import_module
-from pathlib import Path
 
 import bpy
 

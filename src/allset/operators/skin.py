@@ -8,7 +8,6 @@ tail of a chain end, step 57); Blender's IK pulls a bone's tail, so a Maya IK ha
 constraint on the bone whose tail is J.
 """
 
-import math
 
 import bmesh
 import bpy

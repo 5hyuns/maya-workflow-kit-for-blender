@@ -1,7 +1,5 @@
 """Step 8: Maya marking menus as pies (definitions, classes, dispatch, keymap, Q/W/E/R)."""
 
-import json
-import os
 import types
 from importlib import import_module
 

@@ -3,7 +3,6 @@ the same base keys, the same layer keys set like Maya's setKeyframe -v (the valu
 translateX / rotateX / rotateY / rotateZ / scaleX at frames 1..10, then weight, mute, solo, override and the key that
 the selected layer receives."""
 
-import json
 import math
 import os
 from importlib import import_module

@@ -1,6 +1,5 @@
 """Blender --background --factory-startup --python tests/blender_weight_workspace.py"""
 import importlib
-import math
 import sys
 from pathlib import Path
 

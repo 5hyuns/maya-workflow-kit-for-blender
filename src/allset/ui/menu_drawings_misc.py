@@ -7,11 +7,11 @@ import math
 import numpy as np
 
 from .menu_drawings import FGREEN, RED, TAN, blob, icon, prune_mark
-from .menu_drawings_fx import bang, example_box, trash
-from .menu_drawings_mesh import cursor_white, dashed_line, dashed_ring, page, vsq
-from .menu_drawings_select import OLIVE, poly_ball
-from .shelf_icons import (BLUE, DARK, GREEN, KEY, LAV, LIGHT, ORANGE, TEAL, WHITE, YELLOW, _hex, arrow, bezier,
-                          brush, check, checker, curved_arrow, face_grid, hgrad, human, lerp, link, pencil, plus,
+from .menu_drawings_fx import example_box, trash
+from .menu_drawings_mesh import cursor_white, dashed_ring, page, vsq
+from .menu_drawings_select import OLIVE
+from .shelf_icons import (DARK, GREEN, KEY, LAV, LIGHT, TEAL, WHITE, YELLOW, _hex, arrow, bezier,
+                          brush, check, checker, curved_arrow, face_grid, hgrad, lerp, link, pencil, plus,
                           shade, sphere_colour, wave_pts, window, xmark)
 
 ED_ORANGE = _hex("#e0683a")     # Maya's animation editor windows

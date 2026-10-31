@@ -164,7 +164,6 @@ def _on_cancel(*_args):
 
 def _start_next():
     """Start the next camera's INVOKE render; False when the chain is over."""
-    from . import default_light
     scene = bpy.data.scenes.get(_chain["scene"])
     window = live_refs.window(_chain["window"]) or (live_refs.windows() or [None])[0]
     while _chain["jobs"]:

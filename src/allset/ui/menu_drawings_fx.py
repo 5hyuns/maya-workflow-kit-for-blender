@@ -7,9 +7,9 @@ import math
 import numpy as np
 
 from .menu_drawings import FGREEN, RED, TAN, blob, ghost_balls, icon, paint_mark, prune_mark
-from .menu_drawings_mesh import cursor_white, dashed_line, padlock, page, sliders
-from .shelf_icons import (BLUE, DARK, LIGHT, SALMON, WHITE, _hex, arrow, bezier, brush, check, cube, curved_arrow,
-                          cylinder, face_grid, hgrad, lerp, plus, shade, shirt, sphere_colour, wave_pts)
+from .menu_drawings_mesh import cursor_white, dashed_line, padlock
+from .shelf_icons import (BLUE, DARK, LIGHT, SALMON, WHITE, _hex, arrow, bezier, brush, cube, face_grid, hgrad, lerp,
+                          plus, shade, shirt, sphere_colour, wave_pts)
 
 CELL = _hex("#8fd2f2")        # Maya geometry cache frames
 STRIP = _hex("#e6e6e6")

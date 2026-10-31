@@ -9,7 +9,6 @@ The projected width must stay below the unturned width (= near height x capture 
 (numbers, exit 1 on a FAIL) and perspective_check.png (the capture unturned at the same height next to it, to look at).
 """
 
-import math
 import sys
 from pathlib import Path
 

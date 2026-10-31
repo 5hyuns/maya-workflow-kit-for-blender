@@ -12,7 +12,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 from importlib import import_module
 
 import bpy

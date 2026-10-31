@@ -31,7 +31,7 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-from . import mesh_tools, multi_cut, poly_draw, preselect, quad_draw_symmetry
+from . import multi_cut, poly_draw, preselect, quad_draw_symmetry
 from .. import results
 
 TOOL = "allset.quad_draw_tool"
@@ -1364,7 +1364,6 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def _release(self, context, mouse):
-        region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         STATE["preview"] = None
         if self._mode == 'DELETE':
@@ -1706,7 +1705,6 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
         finally:_close_symmetry(self)
 
     def _commit_geometry(self,context,mouse):
-        region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         bm = bmesh.from_edit_mesh(ob.data)
         inv = ob.matrix_world.inverted_safe()

@@ -19,9 +19,6 @@ are checked through their Blender flags only.
 
 import json
 import os
-import random
-import sys
-import traceback
 from importlib import import_module
 from pathlib import Path
 

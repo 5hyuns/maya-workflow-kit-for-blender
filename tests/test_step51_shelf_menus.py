@@ -1,8 +1,6 @@
 """Step 51: Maya option boxes in the menus (count = Maya's), kit-made shelf icons,
 shelf icon row (draw handler + gizmo pool). GUI: tests/gui/gui_step51_shelf_menus.py."""
 
-import json
-import sys
 from importlib import import_module
 from pathlib import Path
 

@@ -3,7 +3,6 @@
 from collections import OrderedDict
 import bpy
 from bpy.app.handlers import persistent
-from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 COLOR = (0., 153/255, 84/255)  # sRGB #009954, Maya's live surface wire / Outliner colour

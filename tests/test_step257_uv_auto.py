@@ -8,7 +8,6 @@ Which face goes to which plane / shell follows Maya
 
 from importlib import import_module
 
-import bmesh
 import bpy
 
 import kit

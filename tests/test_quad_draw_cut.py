@@ -1,5 +1,5 @@
 """Source-edge cut pairing, shared loops, intersecting symmetry paths and UV interpolation."""
-import math,bpy,bmesh
+import bpy,bmesh
 from importlib import import_module
 from mathutils import Vector,Matrix
 import kit

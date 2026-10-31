@@ -396,7 +396,6 @@ def option_box(context, shelf, label, action, double=False):
     menu): an option window, the tool + Tool Settings, or run + Adjust Last Operation. After a double-click the first
     click already ran the command, so a "run + settings" box takes that run back first (one result, like Maya)."""
     from ..marking.modal import run_action
-    from . import menu_sets
     path = menu_path_of(shelf, label, action)
     if double:
         take_back_run(path)
