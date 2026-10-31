@@ -141,3 +141,18 @@ def test_release_gives_blender_bones_back():
     from importlib import import_module as im
     toolbox = im(kit.MODULE + ".ui.toolbox")
     assert all(s.overlay.show_bones for s in views if not toolbox.is_toolbox(s))
+
+
+def test_drawn_spheres_match_the_per_joint_lines():
+    """The view's batch builds all spheres at once; the points equal the per-joint lines picking uses."""
+    arm, names = _chain()
+    arm.rotation_euler = (0.3, -0.2, 0.7)
+    bpy.context.view_layer.update()
+    js = mj.skeleton(arm, bpy.context.scene)
+    pts, order = mj._sphere_array(js)
+    assert order and len(pts) == len(order) * 3 * 2 * mj.SEGMENTS
+    per = 3 * 2 * mj.SEGMENTS
+    for k, n in enumerate(order):
+        ref = mj.sphere_lines(js[n].centre, js[n].frame, js[n].radius)
+        got = pts[k * per:(k + 1) * per]
+        assert max((Vector(tuple(g)) - r).length for g, r in zip(got, ref)) < 1e-5, n

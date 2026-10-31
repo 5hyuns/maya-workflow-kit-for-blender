@@ -32,6 +32,8 @@ SETTLED = "allset_bones_settled"      # screen ID prop: the kit turned Blender's
 MAYA_RADIUS = 1.0                     # Maya joint Radius default
 
 _handle = []
+_GEN = [0]          # bumped by every update that can change a drawn joint
+_CACHE = {}         # space pointer -> (key, points, colours)
 _COS = [math.cos(2.0 * math.pi * i / SEGMENTS) for i in range(SEGMENTS)]
 _SIN = [math.sin(2.0 * math.pi * i / SEGMENTS) for i in range(SEGMENTS)]
 
@@ -361,16 +363,38 @@ def region_pick(context, ob, poly):
     return min(hit)[2] if hit else None
 
 
+def _sphere_array(js):
+    """(points, joint order) of every sphere's three great circles as one float32 array of segment end points."""
+    import numpy as np
+    order = [n for n, j in js.items() if j.shape is None]
+    if not order:
+        return np.zeros((0, 3), np.float32), order
+    c = np.array([tuple(js[n].centre) for n in order], np.float64)                  # (N, 3)
+    f = np.array([[tuple(r) for r in js[n].frame] for n in order], np.float64)      # (N, 3, 3) rows
+    r = np.array([js[n].radius for n in order], np.float64)[:, None, None]
+    t = np.arange(SEGMENTS) * (2.0 * math.pi / SEGMENTS)
+    cos, sin = np.cos(t)[:, None], np.sin(t)[:, None]
+    rings = []
+    for a, b in ((0, 1), (1, 2), (0, 2)):
+        ring = c[:, None, :] + (f[:, None, :, a] * cos + f[:, None, :, b] * sin) * r      # (N, S, 3)
+        rings.append(np.stack((ring, np.roll(ring, -1, axis=1)), axis=2))              # (N, S, 2, 3)
+    pts = np.stack(rings, axis=1)                                                       # (N, 3, S, 2, 3)
+    return pts.reshape(-1, 3).astype(np.float32), order
+
+
 def view_lines(context):
-    """(points, colours) of every joint to draw in this view."""
+    """(points, colours) float32 arrays of every joint to draw in this view."""
+    import numpy as np
     space, rv3d = context.space_data, context.region_data
     scene = context.scene
     depsgraph = context.view_layer.depsgraph
     pts, cols = [], []
+    per_sphere = 3 * SEGMENTS * 2
 
     def add(segs, colour):
-        pts.extend(segs)
-        cols.extend([(*colour, 1.0)] * len(segs))
+        if segs:
+            pts.append(np.array([tuple(v) for v in segs], np.float32))
+            cols.append(np.tile(np.array((*colour, 1.0), np.float32), (len(segs), 1)))
 
     for ob in context.visible_objects:
         if ob.type != 'ARMATURE' or not ob.visible_in_viewport_get(space):
@@ -380,18 +404,70 @@ def view_lines(context):
             continue
         sel, lead = selection(ob, js)
         col = colours(js, sel, lead)
+        spheres, order = _sphere_array(js)
+        if order:
+            pts.append(spheres)
+            cols.append(np.repeat(np.array([(*col[n], 1.0) for n in order], np.float32), per_sphere, axis=0))
+        bones = []
+        bone_cols = []
         for j in js.values():
             if j.shape is not None:
                 add(shape_lines(j.shape[0], j.shape[1], depsgraph), col[j.name])
                 continue
-            add(sphere_lines(j.centre, j.frame, j.radius), col[j.name])
             for cn in j.children:
                 child = js[cn]
                 if child.shape is None:
-                    add(bone_lines(j, child), col[j.name])
+                    segs = bone_lines(j, child)
+                    bones += segs
+                    bone_cols += [col[j.name]] * len(segs)
             if j.name in sel and rv3d.is_perspective:
                 for i in range(3):
                     add([j.centre, j.centre + j.frame.col[i] * j.radius], AXIS_COLORS[i])
+        if bones:
+            pts.append(np.array([tuple(v) for v in bones], np.float32))
+            cols.append(np.array([(*c, 1.0) for c in bone_cols], np.float32))
+    if not pts:
+        return np.zeros((0, 3), np.float32), np.zeros((0, 4), np.float32)
+    return np.concatenate(pts), np.concatenate(cols)
+
+
+@bpy.app.handlers.persistent
+def _depsgraph_post(_scene, depsgraph):
+    """Drop the cached lines unless the update only touched objects that are no skeleton (a moved mesh)."""
+    try:
+        for u in depsgraph.updates:
+            ob = u.id
+            if isinstance(ob, bpy.types.Object) and ob.type not in {'ARMATURE', 'MESH', 'CURVE', 'EMPTY'}:
+                continue
+            if isinstance(ob, bpy.types.Object) and ob.type != 'ARMATURE' and not u.is_updated_geometry:
+                continue
+            _GEN[0] += 1
+            return
+    except (ReferenceError, AttributeError):
+        _GEN[0] += 1
+
+
+@bpy.app.handlers.persistent
+def _frame_post(*_args):
+    _GEN[0] += 1
+
+
+def cached_view_lines(context):
+    """``view_lines`` kept per view until a joint can have changed (any skeleton in Edit Mode: every redraw)."""
+    from ..operators import joint_preview
+    space = context.space_data
+    if context.mode == 'EDIT_ARMATURE':
+        return view_lines(context)
+    key = (_GEN[0], context.region_data.is_perspective, context.scene.frame_current, context.scene.as_pointer(),
+           context.view_layer.as_pointer(), space.local_view is not None, joint_preview.running(),
+           str(joint_preview.STATE.get("current")))
+    hit = _CACHE.get(space.as_pointer())
+    if hit is not None and hit[0] == key:
+        return hit[1], hit[2]
+    pts, cols = view_lines(context)
+    if len(_CACHE) > 32:
+        _CACHE.clear()
+    _CACHE[space.as_pointer()] = (key, pts, cols)
     return pts, cols
 
 
@@ -413,10 +489,10 @@ def _draw():
     try:
         if not is_maya_view(context.space_data, context.window.workspace):
             return
-        pts, cols = view_lines(context)
+        pts, cols = cached_view_lines(context)
     except (ReferenceError, AttributeError, KeyError, ValueError, RuntimeError):
         return
-    if not pts:
+    if not len(pts):
         return
     import gpu
     from gpu_extras.batch import batch_for_shader
@@ -429,10 +505,17 @@ def _draw():
     try:
         sh.uniform_float("viewportSize", (region.width, region.height))
         sh.uniform_float("lineWidth", LINE_PX * context.preferences.system.pixel_size)
-        batch_for_shader(sh, 'LINES', {"pos": [tuple(p) for p in pts], "color": cols}).draw(sh)
+        batch_for_shader(sh, 'LINES', {"pos": pts, "color": cols}).draw(sh)
     finally:
         gpu.state.blend_set('NONE')
         gpu.state.depth_test_set('NONE')
+
+
+def HANDLERS():
+    h = bpy.app.handlers
+    return ((h.save_pre, _save_pre), (h.save_post, _save_post), (h.depsgraph_update_post, _depsgraph_post),
+            (h.frame_change_post, _frame_post), (h.load_post, _frame_post), (h.undo_post, _frame_post),
+            (h.redo_post, _frame_post))
 
 
 def register():
@@ -440,15 +523,16 @@ def register():
         _handle.append(bpy.types.SpaceView3D.draw_handler_add(_draw, (), 'WINDOW', 'POST_VIEW'))
     if not bpy.app.timers.is_registered(_tick):
         bpy.app.timers.register(_tick, first_interval=0.2, persistent=True)
-    for lst, fn in ((bpy.app.handlers.save_pre, _save_pre), (bpy.app.handlers.save_post, _save_post)):
+    for lst, fn in HANDLERS():
         if fn not in lst:
             lst.append(fn)
 
 
 def unregister():
-    for lst, fn in ((bpy.app.handlers.save_pre, _save_pre), (bpy.app.handlers.save_post, _save_post)):
+    for lst, fn in HANDLERS():
         if fn in lst:
             lst.remove(fn)
+    _CACHE.clear()
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     while _handle:
