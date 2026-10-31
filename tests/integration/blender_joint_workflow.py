@@ -87,8 +87,16 @@ status = []
 proxy = SimpleNamespace(window=bpy.context.window, active_object=rig,
                         workspace=SimpleNamespace(status_text_set=status.append),
                         window_manager=SimpleNamespace(modal_handler_add=lambda op: None))
-state = SimpleNamespace()
-assert joints.ALLSET_OT_joint_tool.invoke(state, proxy, None) == {'RUNNING_MODAL'}
+class _ToolState(SimpleNamespace):
+    # stand-in operator instance: methods and class values come from the Joint Tool itself
+    def __getattr__(self, name):
+        value = getattr(joints.ALLSET_OT_joint_tool, name)
+        return value.__get__(self) if callable(value) and hasattr(value, '__get__') else value
+
+
+state = _ToolState()
+off_screen = SimpleNamespace(mouse_x=-10000, mouse_y=-10000)
+assert joints.ALLSET_OT_joint_tool.invoke(state, proxy, off_screen) == {'RUNNING_MODAL'}
 assert state._ob is None and state._parent is None and bpy.context.mode == 'POSE'
 state._end = lambda context: joints.ALLSET_OT_joint_tool._end(state, context)
 assert joints.ALLSET_OT_joint_tool._done(state, proxy) == {'CANCELLED'}
