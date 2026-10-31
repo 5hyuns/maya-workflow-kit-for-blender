@@ -960,7 +960,7 @@ def _identity(path):
 
 
 def zero_key(scene, obs, frame=None):
-    """Maya Zero Key Layer (section 6, ``cmds.setKeyframe(identity=True,
+    """Maya Zero Key Layer (``cmds.setKeyframe(identity=True,
     inTangentType="flat")``): an identity key on every member channel of the selected layer at ``frame`` (an existing
     key's value is overwritten, its tangents kept; a new key's in tangent is flat). Returns the number of keys, None for
     BaseAnimation."""
@@ -1004,7 +1004,7 @@ def zero_key(scene, obs, frame=None):
 
 
 def merge_down(scene, layer):
-    """Maya Merge Layers with BaseAnimation and ``layer`` selected (section 5, default options:
+    """Maya Merge Layers with BaseAnimation and ``layer`` selected (default options:
     bake every frame, delete the merged layer): each member channel of ``layer`` gets a BaseAnimation curve keyed on
     every whole frame of the object's key range with the result of Base + ``layer``; non-member channels keep their
     keys; the layer is deleted."""

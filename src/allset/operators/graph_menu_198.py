@@ -8,7 +8,7 @@
   ``curve_color_rules`` (JSON list of [attribute, r, g, b]); every curve of that attribute gets the colour unless the
   user coloured it (Change Curve Color) — the curves a rule coloured are recorded on their Action
   (``allset_rule_colors``) so removing a rule gives them Blender's automatic colour back.
-- Keys > Add Key Tool (Maya annotation "Add keys to an animation curve"): while the tool runs, a middle click
+- Keys > Add Key Tool: while the tool runs, a middle click
   in the curve area adds a key at the whole frame and the value under the mouse on the selected curves (Insert Key Tool
   keeps the curve shape instead; graph_keys.ALLSET_OT_insert_key_tool). Esc / Q W E R T end it (like the
   Retime Tool).

@@ -127,7 +127,7 @@ def test_channel_box_states():
 
 
 def test_zero_key_layer():
-    """Maya (section 6): identity keys on every member attribute at the current time, existing layer keys kept,
+    """Maya: identity keys on every member attribute at the current time, existing layer keys kept,
     the value at a key frame overwritten; nothing on BaseAnimation."""
     sc, ob, _b = _layered()
     sc.frame_set(12)
@@ -147,7 +147,7 @@ def test_zero_key_layer():
 
 
 def test_merge_layers_keeps_the_result():
-    """Maya (section 5, Base + AnimLayer1): the layer is gone, every member channel with layer keys gets a base
+    """Maya (Base + AnimLayer1): the layer is gone, every member channel with layer keys gets a base
     key on every frame 1-24 holding the result, ry keeps its 2 keys, the result is unchanged."""
     sc, ob, _b = _layered()
     before = _evaluated(sc, ob)

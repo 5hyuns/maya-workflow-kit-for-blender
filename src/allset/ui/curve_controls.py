@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Show > NURBS Curves for rig controls drawn as bone custom shapes (step 262, Issue #173).
 
 In the kit's model a Maya NURBS control is a bone with a curve custom shape. Blender draws a custom shape as part

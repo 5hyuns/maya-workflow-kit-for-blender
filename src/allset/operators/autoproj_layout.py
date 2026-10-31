@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polyAutoProjection "Into square" shell layout (UV > Automatic, default options), bpy-free.
 
 Behaviour: Maya 2026's (tests/test_step257_uv_layout.py).

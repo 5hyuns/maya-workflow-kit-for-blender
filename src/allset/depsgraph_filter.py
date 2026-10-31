@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Step 286 (#191): cheap tests on a depsgraph update, so handlers that scan the whole scene skip updates that can't
 change what they look at. Blender's ``depsgraph.updates`` per kind of edit (5.2):
 

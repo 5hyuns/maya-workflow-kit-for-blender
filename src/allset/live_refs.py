@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """UI references that outlive a timer tick (#36, step 129).
 
 A ``bpy.types.Window`` (and the Screen / Area / Region / Space reached from it) kept across timer ticks is NOT

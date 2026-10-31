@@ -1742,7 +1742,7 @@ FLAGS = (
      "and the driver's own curve"),
     ("allset_hierarchy_below", "Hierarchy Below", "Also show the keys of the listed objects' children (the kit lists "
      "them as rows)"),
-    ("allset_show_pins", "Show Pins", "Toggle display of pinning buttons in the outliner"),
+    ("allset_show_pins", "Show Pins", "Show or hide the pin buttons next to the outliner rows"),
 )
 # On by default, like Maya: Show Upstream Curves checked; View > Show Pins checked
 FLAGS_ON = {"allset_show_upstream", "allset_show_pins"}

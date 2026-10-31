@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Time Slider MMB: move the time without updating the scene.
 
 In Maya a middle-mouse click or drag on the Time Slider changes the current time but leaves every animated

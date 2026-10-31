@@ -137,7 +137,7 @@ class ALLSET_OT_create_set(bpy.types.Operator):
 
 
 class ALLSET_OT_create_quick_select_set(bpy.types.Operator):
-    """Make a set containing the selected object(s) and add it to the Quick Select Set menu"""
+    """New set of the selected objects, also listed under Edit > Quick Select Sets"""
     bl_idname = "allset.create_quick_select_set"
     bl_label = "Create Quick Select Set"
     bl_options = {'REGISTER', 'UNDO'}

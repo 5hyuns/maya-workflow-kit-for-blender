@@ -6,7 +6,7 @@ states) has check / radio items Blender's Graph Editor has no setting for. The k
 preferences (``preferences.graph_auto_frame`` / ``graph_auto_frame_time`` / ``graph_curve_names``; the kit writes no
 Blender preference, store review #40) mapped in ``editor_menu_map``:
 
-* **Auto Frame** (on by default, like Maya, "As selection changes, reframe the selected curves"): a timer compares the object
+* **Auto Frame** (on by default, like Maya: the view refits when the selection changes): a timer compares the object
   / pose-bone selection; when it changes, every Graph Editor in F-Curve mode refits its value axis to every curve it
   draws with Maya's Frame All rule (``operators/graph_frame.py``: 25 % value margins) and keeps its time range
   (step 281; Blender lists the selected objects' curves with Only Show Selected, so that frames them).
