@@ -104,7 +104,8 @@ def s_anim_shot():
 def s_open_graph():
     with bpy.context.temp_override(window=win()):
         res = bpy.ops.allset.open_editor(ui_type='FCURVES')
-    check("Graph Editor opens", res == {'FINISHED'})
+    places = import_module(MODULE + ".ui.window_places")
+    check("Graph Editor opens", res == {'FINISHED'} or places.deferred())   # may open one tick later
 
 
 @step

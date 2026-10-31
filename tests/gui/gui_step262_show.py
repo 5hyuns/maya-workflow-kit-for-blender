@@ -128,7 +128,7 @@ def s_cube_off():
     bpy.context.view_layer.objects.active = arm
     with ov():
         bpy.ops.object.mode_set(mode='POSE')
-    arm.data.bones["Bone"].select = True
+    arm.pose.bones["Bone"].select = True
     arm.data.bones.active = arm.data.bones["Bone"]
     redraw()
 
