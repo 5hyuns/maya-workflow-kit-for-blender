@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's extrude manipulator, In-View Editor and the INPUTS rows of the last extrusion
-.
+(step 65).
 
 - Visible while the active edit object's last kit extrusion is valid and its extruded faces are the selection
   (operators/extrude.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
   (ui/manipulator.py) hides meanwhile.
-- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended).
+- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended). Step 151:
   Maya's polyExtrudeFace manipulator in the faces' local frame - three
   arrows (Local Translate X red / Y green / Z blue = the normal), a cube past each cone (Local Scale X / Y / Z), three
   plane handles (two Local Translate values) and a light-blue centre square (uniform Local Scale). Every handle runs
   ``allset.extrude_drag`` with its ``handle``; release = one undo step (``extrude.set_params``). Edge / vertex
   extrusions and bevels keep the single arrow of their ``Spec.arrow``. No Blender tooltips (Maya manipulators have
   none).
-- The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows (the shelf's way).
+- The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows (the shelf's way, step 51).
   Dragging a row sideways changes the value, a click without a drag types it, Keep Faces Together toggles.
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
-  undo step, the edit itself is one) + the "only the last one" notice.
+  undo step, the edit itself is one, step 38) + the "only the last one" notice.
 """
 
 import blf
@@ -28,18 +28,18 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector, geometry
 
 from . import cb_entry, manipulator
-from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec
-from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec
+from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec (step 139)
+from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec (step 257)
 
 ROW_H = 16          # px at UI scale 1 (Maya In-View rows)
 WIDTH = 180
-GAP = (150, -6)     # box top-left from the manipulator centre on screen: right of the X / Y handles (
+GAP = (150, -6)     # box top-left from the manipulator centre on screen: right of the X / Y handles (step 151;
                     # Maya: past the manipulator, 250 px from its centre at a 100 px rotate ring)
 FLOAT_STEP = 0.01   # Maya units per px of a sideways drag
 DIV_PX = 20         # px per division
 KINDS = {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
          "keep_faces_together": "BOOL"}
-# every field of every recorded node (Channel Box text proxies: edge / vertex extrusion, bevel)
+# every field of every recorded node (Channel Box text proxies, step 139: edge / vertex extrusion, bevel)
 ALL_FIELDS = tuple(dict.fromkeys(f for spec in extrude.SPECS.values() for f in spec.fields))
 MAX_ROWS = max(len(spec.fields) for spec in extrude.SPECS.values())
 BOOL_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "BOOL"}
@@ -49,11 +49,80 @@ RANGES = {"fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "opti
 _ = bevel_maya
 BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)
-TEXT = (0.86, 0.86, 0.86, 1.0)
-HOT = (1.0, 1.0, 0.35, 1.0)        # Maya's highlighted attribute name
+TEXT = (0.62, 0.62, 0.62, 1.0)        # unselected grey-white
+LIT = (1.0, 1.0, 1.0, 1.0)            # hover pure white
+HOT = (1.0, 0.83, 0.25, 1.0)          # selected/active gold
 YELLOW = (1.0, 1.0, 0.0)
+VALUE_BG = (0.10, 0.10, 0.10, 1.0)     # dark field behind the value (Maya)
 
-_state = {"hot": 0, "handle": None}
+# Solid sensitivity fan (Maya percentage): 0% at 8 o'clock, 360-degree sweep.
+from math import radians as _radians, cos as _cos, sin as _sin
+FAN_START = _radians(210)
+FAN_SWEEP = _radians(360)
+FAN_R = 8.0
+VALUE_W = 56.0       # fixed dark value-field width (px at UI scale 1)
+# Maya's percentage control is a light-blue solid pie (0% at 8 o'clock,
+# full 360-degree clockwise sweep).
+FAN_BLUE = (0.45, 0.72, 1.0, 1.0)
+FAN_TRACK = (0.45, 0.72, 1.0, 0.45)
+
+_state = {"hot": 0, "hover": -1, "sensitivity": 1.0, "handle": None,
+          "fan_drag": False, "active_record_key": None}
+_global_mmb_timer = None
+_global_mmb_enabled = False
+_global_mmb_area_ptrs = set()
+
+
+def _sens_multiplier():
+    from . import in_view_settings as shared
+    _state["sensitivity"] = shared.get_sensitivity()
+    return 0.02 + 0.98 * _state["sensitivity"]
+
+
+def _fan_fraction_at(cx, cy, x, y):
+    """Map a point on the circular fan to 0..1, clockwise from 8 o'clock."""
+    from math import atan2, tau
+    dx, dy = x - cx, y - cy
+    if dx * dx + dy * dy < 0.25:
+        return 0.0
+    return ((FAN_START - atan2(dy, dx)) % tau) / tau
+
+
+def _event_region_xy(context, event):
+    """Convert window mouse coordinates to the invoking View3D WINDOW region.
+
+    A persistent modal operator can receive events while Blender's active
+    region context differs from the region that originally started it.
+    mouse_region_x/y may then describe the wrong region; window coordinates
+    minus Region.x/y remain tied to the modal operator's owning region.
+    """
+    region = getattr(context, "region", None)
+    if region is None:
+        return (event.mouse_region_x, event.mouse_region_y)
+    return (event.mouse_x - region.x, event.mouse_y - region.y)
+
+
+def _panel_hit(context, x, y):
+    """Return ('FAN', center), ('ROW', index), 'PANEL', or None in region pixels."""
+    _rec, lay = current_layout(context)
+    if lay is None:
+        return None
+    bx0, by0, bx1, by1 = lay["box"]
+    if not (bx0 <= x <= bx1 and by0 <= y <= by1):
+        return None
+
+    tx0, ty0, tx1, ty1 = lay["title"]
+    scale = _scale()
+    cx = tx1 - (FAN_R + 5.0 * scale)
+    cy = (ty0 + ty1) / 2.0
+    radius = FAN_R * scale
+    if (x - cx) ** 2 + (y - cy) ** 2 <= radius * radius * 1.6:
+        return ("FAN", (cx, cy))
+
+    for index, (_field, x0, y0, x1, y1) in enumerate(lay["rows"]):
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return ("ROW", index)
+    return "PANEL"
 
 
 def _scale():
@@ -127,12 +196,17 @@ def cap_frame(ob, rec):
     return mw @ centre, nw / k, k
 
 
-def layout(region, anchor, scale, fields=extrude.FIELDS):
+def layout(region, anchor, scale, fields=extrude.FIELDS, fixed_position=False):
     """Box geometry in region pixels: {"box", "title", "rows": [(field, x0, y0, x1, y1)]}."""
+    # Preserve the accepted fixed HUD footprint. Percentages are used only
+    # for the default position anchor, not panel dimensions.
     w, h = WIDTH * scale, ROW_H * scale
     n = len(fields) + 1
-    x0 = anchor[0] + GAP[0] * scale
-    top = anchor[1] + GAP[1] * scale
+    if fixed_position:
+        x0, top = anchor
+    else:
+        x0 = anchor[0] + GAP[0] * scale
+        top = anchor[1] + GAP[1] * scale
     x0 = max(4 * scale, min(x0, region.width - w - 4 * scale))
     top = max(n * h + 4 * scale, min(top, region.height - 4 * scale))
     rows = []
@@ -150,14 +224,38 @@ def anchor(context, ob, rec):
     return (p.x, p.y) if p is not None else None
 
 
+def _first_adjustable_field_index(rec):
+    """First non-boolean parameter row; bool-only tools fall back to row zero."""
+    fields = tuple(getattr(getattr(rec, "spec", None), "fields", ()) or ())
+    for index, field in enumerate(fields):
+        if field not in BOOL_FIELDS:
+            return index
+    return 0 if fields else -1
+
+
+def _sync_active_record(rec):
+    """Select the first adjustable row whenever a new operation appears."""
+    key = id(rec) if rec is not None else None
+    if key != _state.get("active_record_key"):
+        _state["active_record_key"] = key
+        # The compact Maya HUD opens ready for MMB adjustment. Do not require
+        # an initial click on a row; use the first non-boolean parameter.
+        _state["hot"] = _first_adjustable_field_index(rec) if rec is not None else 0
+        _state["hover"] = -1
+
+
 def current_layout(context):
     ob, rec = record(context)
     if rec is None or context.region is None or context.region.type != 'WINDOW' or context.region_data is None:
         return None, None
-    a = anchor(context, ob, rec)
-    if a is None:
-        return None, None
-    return rec, layout(context.region, a, _scale(), rec.spec.fields)
+    _sync_active_record(rec)
+    from . import in_view_settings as shared
+    position = shared.get_position("maya_inview_hud", context.region)
+    if position is None:
+        position = shared.default_position(context.region)
+    lay = layout(context.region, position, _scale(), rec.spec.fields,
+                 fixed_position=True)
+    return rec, lay
 
 
 def value_text(rec, field):
@@ -186,14 +284,46 @@ def _text(x, y, s, colour, size):
     blf.draw(0, s)
 
 
+def _fan_geometry(cx, cy, r, fraction):
+    points = [(cx, cy)]
+    sweep = FAN_SWEEP * max(0.0, min(1.0, fraction))
+    steps = max(2, int(round(48 * max(0.0, min(1.0, fraction)))))
+    for i in range(steps + 1):
+        # Decreasing angle draws clockwise on screen (y-up pixel space).
+        ang = FAN_START - sweep * (i / steps)
+        points.append((cx + r * _cos(ang), cy + r * _sin(ang)))
+    tris = [(0, i, i + 1) for i in range(1, len(points) - 1)]
+    return points, tris
+
+
+def _fan_track(cx, cy, r):
+    return [(cx + r * _cos(FAN_START - FAN_SWEEP * (i / 48)),
+             cy + r * _sin(FAN_START - FAN_SWEEP * (i / 48)))
+            for i in range(49)]
+
+
+def _draw_fan(cx, cy, r, fraction):
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    track = _fan_track(cx, cy, r)
+    batch = batch_for_shader(shader, 'LINE_STRIP', {"pos": track})
+    shader.uniform_float("color", FAN_TRACK)
+    batch.draw(shader)
+    points, tris = _fan_geometry(cx, cy, r, fraction)
+    batch = batch_for_shader(shader, 'TRIS', {"pos": points}, indices=tris)
+    shader.uniform_float("color", FAN_BLUE)
+    batch.draw(shader)
+
+
 def draw_box():
     """POST_PIXEL of 3D View WINDOW regions: the In-View Editor next to the extrude manipulator."""
+    from . import in_view_settings as shared
+    _state["sensitivity"] = shared.get_sensitivity()
     context = bpy.context
     rec, lay = current_layout(context)
     if rec is None:
         return
     from ..marking import draw as marking_draw
-    if marking_draw.menu_up():   # Maya's hotbox / marking menus cover the In-View Editor
+    if marking_draw.menu_up():   # Maya's hotbox / marking menus cover the In-View Editor (step 197)
         return
     s = _scale()
     size = 11 * s
@@ -205,11 +335,32 @@ def draw_box():
     blf.size(0, size)
     tw = blf.dimensions(0, rec.name)[0]
     _text((x0 + x1 - tw) / 2, y0 + 4 * s, rec.name, TEXT, size)
+    # Solid sensitivity fan at the title's right side.
+    fan_cx = x1 - (FAN_R + pad)
+    fan_cy = (y0 + y1) / 2
+    _draw_fan(fan_cx, fan_cy, FAN_R * s, _state["sensitivity"])
+    _state["fan_rect"] = (fan_cx - FAN_R * s, fan_cy - FAN_R * s,
+                          fan_cx + FAN_R * s, fan_cy + FAN_R * s)
     for i, (field, rx0, ry0, rx1, ry1) in enumerate(lay["rows"]):
-        _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], HOT if i == _state["hot"] else TEXT, size)
+        if i == _state["hot"]:
+            name_colour = HOT
+        elif i == _state["hover"]:
+            name_colour = LIT
+        else:
+            name_colour = TEXT
+        _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], name_colour, size)
         v = value_text(rec, field)
         blf.size(0, size)
-        _text(rx1 - pad - blf.dimensions(0, v)[0], ry0 + 4 * s, v, TEXT, size)
+        vw = blf.dimensions(0, v)[0]
+        vx1 = rx1 - pad
+        # Fixed-width dark value field, identical for every row.
+        vx0 = vx1 - VALUE_W * s
+        vy0 = ry0 + 3 * s
+        vy1 = ry1 - 2 * s
+        _rect(vx0, vy0 - 1 * s, vx1 + 3 * s, vy1 + 1 * s, VALUE_BG)
+        value_colour = HOT if i == _state["hot"] else TEXT
+        # Right-align the number inside the fixed field.
+        _text(vx1 - vw - 3 * s, ry0 + 4 * s, v, value_colour, size)
     gpu.state.blend_set('NONE')
 
 
@@ -232,11 +383,33 @@ class ALLSET_GT_in_view_row(bpy.types.Gizmo):
             return -1
         _f, x0, y0, x1, y1 = lay["rows"][self.row]
         if x0 <= location[0] <= x1 and y0 <= location[1] <= y1:
-            if _state["hot"] != self.row:
-                _state["hot"] = self.row
+            # Hover only lights the row white; gold is set on click/drag.
+            if _state["hover"] != self.row:
+                _state["hover"] = self.row
                 context.region.tag_redraw()
             return 0
+        if _state["hover"] == self.row:
+            _state["hover"] = -1
         return -1
+
+
+class ALLSET_GT_fan(bpy.types.Gizmo):
+    """Picking for the solid sensitivity fan (drawn by draw_box)."""
+    bl_idname = "ALLSET_GT_fan"
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        rect = _state.get("fan_rect")
+        if rect is None:
+            return -1
+        x0, y0, x1, y1 = rect
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        r = (x1 - x0) / 2
+        # Precise circular hit (the drawn pie), not the bounding square.
+        dist = ((location[0] - cx) ** 2 + (location[1] - cy) ** 2) ** 0.5
+        return 0 if dist <= r else -1
 
 
 class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
@@ -251,13 +424,16 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
         return manip_visible(context)
 
     def setup(self, context):
+        # Fan first so its title-area pick wins over any overlapping row.
+        fan = self.gizmos.new(ALLSET_GT_fan.bl_idname)
+        fan.target_set_operator(ALLSET_OT_fan_drag.bl_idname)
         for i in range(MAX_ROWS):
             gz = self.gizmos.new(ALLSET_GT_in_view_row.bl_idname)
             gz.row = i
             gz.target_set_operator(ALLSET_OT_inview_drag.bl_idname).row = i
 
 
-# --- the extrude manipulator (3D gizmo) --------------------------------------------------
+# --- the extrude manipulator (3D gizmo, step 151) --------------------------------------------------
 
 # Maya 2022 polyExtrudeFace manipulator (top face of a cube,
 # local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
@@ -330,7 +506,7 @@ def unit_px(context):
 def handles_hit(context, region, rv3d, mouse, reach):
     """True when ``mouse`` (region px) is within ``reach`` px of a shown handle of the extrude manipulator: the
     pre-selection gizmo (operators/preselect.py, a 2D test_select that would win over these 3D-picked handles)
-    declines there, like it does on the Move manipulator."""
+    declines there, like it does on the Move manipulator (step 97)."""
     ob, rec = record(context)
     frame = manip_frame(ob, rec) if rec is not None else None
     if frame is None:
@@ -490,6 +666,60 @@ def _redraw(context):
             area.tag_redraw()
 
 
+class ALLSET_OT_fan_drag(bpy.types.Operator):
+    """Drag the sensitivity fan: right raises, left lowers global drag speed"""
+    bl_idname = "allset.fan_drag"
+    bl_label = "Sensitivity"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return extrude.active(context)[1] is not None
+
+    def invoke(self, context, event):
+        _rec, lay = current_layout(context)
+        if lay is None:
+            return {'CANCELLED'}
+        _tx0, ty0, tx1, ty1 = lay["title"]
+        self._fan_cx = tx1 - (FAN_R + 5.0 * _scale())
+        self._fan_cy = (ty0 + ty1) / 2.0
+        self._start = _state["sensitivity"]
+        self._moved = False
+        # Clicking any point on the pie sets its exact percentage immediately.
+        _state["sensitivity"] = _fan_fraction_at(
+            self._fan_cx, self._fan_cy,
+            event.mouse_region_x, event.mouse_region_y)
+        from . import in_view_settings as shared
+        shared.set_sensitivity(_state["sensitivity"])
+        _redraw(context)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+            if (abs(event.mouse_region_x - self._fan_cx) > 0
+                    or abs(event.mouse_region_y - self._fan_cy) > 0):
+                self._moved = True
+            if self._moved:
+                _state["sensitivity"] = _fan_fraction_at(
+                    self._fan_cx, self._fan_cy,
+                    event.mouse_region_x, event.mouse_region_y)
+                from . import in_view_settings as shared
+                shared.set_sensitivity(_state["sensitivity"])
+                _redraw(context)
+            return {'RUNNING_MODAL'}
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            _state["sensitivity"] = self._start
+            from . import in_view_settings as shared
+            shared.set_sensitivity(_state["sensitivity"])
+            _redraw(context)
+            return {'CANCELLED'}
+        if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} and event.value == 'RELEASE':
+            _redraw(context)
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
 class ALLSET_OT_inview_drag(bpy.types.Operator):
     """In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it"""
     bl_idname = "allset.inview_drag"
@@ -506,27 +736,78 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
         ob, rec = extrude.active(context)
         if self.row >= len(rec.spec.fields):
             return {'CANCELLED'}
+        _sync_active_record(rec)
         field = rec.spec.fields[self.row]
         _state["hot"] = self.row
         if field in BOOL_FIELDS:
             extrude.set_params(context, **{field: not rec.params[field]})
             _redraw(context)
             return {'FINISHED'}
+        # LMB on the label text only activates the row (no popup, no drag).
+        # MMB, or a press on the value field, proceeds to the drag/click logic.
+        if event.type == 'LEFTMOUSE':
+            _rec, lay = current_layout(context)
+            if lay is not None and self.row < len(lay["rows"]):
+                _f, rx0, ry0, rx1, ry1 = lay["rows"][self.row]
+                mx = getattr(event, "mouse_region_x", event.mouse_x)
+                if mx < (rx0 + rx1) / 2:
+                    _redraw(context)
+                    return {'FINISHED'}
         self._ob, self._rec, self._field = ob, rec, field
         self._start = dict(rec.params)
         self._x0, self._moved = event.mouse_x, False
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
         self._unit = units.maya_unit(context.scene)
+        self._cursor_set = False
+        self._cursor_window = None
+        if self._button == 'MIDDLEMOUSE':
+            self._set_modal_cursor(context, True)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
+
+    def _set_modal_cursor(self, context, enable):
+        """Use Blender Window's modal cursor API (WindowManager has no cursor property)."""
+        if enable:
+            if self._cursor_set:
+                return
+            window = getattr(context, "window", None)
+            if window is None:
+                return
+            try:
+                window.cursor_modal_set('MOVE_X')
+            except (AttributeError, ReferenceError, RuntimeError):
+                return
+            self._cursor_window = window
+            self._cursor_set = True
+            return
+
+        if not self._cursor_set:
+            return
+        window = getattr(self, "_cursor_window", None)
+        try:
+            if window is not None:
+                window.cursor_modal_restore()
+        except (AttributeError, ReferenceError, RuntimeError):
+            pass
+        finally:
+            self._cursor_window = None
+            self._cursor_set = False
+
+    def _restore_cursor(self, context):
+        self._set_modal_cursor(context, False)
+
+    def cancel(self, context):
+        self._restore_cursor(context)
 
     def _value(self, event):
         s = _scale()
         dx = (event.mouse_x - self._x0) / s
         start = self._start[self._field]
+        mult = _sens_multiplier()
         if self._field in INT_FIELDS:
-            return max(1, int(start + round(dx / DIV_PX)))
-        step = FLOAT_STEP * (0.1 if event.ctrl else 10.0 if event.shift else 1.0)
+            return max(1, int(start + round(dx / DIV_PX * mult)))
+        # Sensitivity fan scales the drag; Ctrl/Shift still fine/coarse-tune.
+        step = FLOAT_STEP * mult * (0.1 if event.ctrl else 10.0 if event.shift else 1.0)
         return clamp(self._field, round(start + dx * step, 4))
 
     def modal(self, context, event):
@@ -542,16 +823,390 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
             if self._moved:
                 extrude.preview(self._ob, self._rec, self._start, self._unit)
                 self._rec.live = False
+            self._restore_cursor(context)
             _redraw(context)
             return {'CANCELLED'}
         if event.type == self._button and event.value == 'RELEASE':
             if self._moved:
                 extrude.set_params(context, **{self._field: self._value(event)})
-            else:
+            elif self._button == 'LEFTMOUSE':
+                # Preserve the existing LMB click-to-type behaviour.
                 bpy.ops.allset.inview_type('INVOKE_DEFAULT', row=self.row)
+            # An MMB click only activates the row; it must never open a dialog.
+            self._restore_cursor(context)
             _redraw(context)
             return {'FINISHED'}
         return {'RUNNING_MODAL'}
+
+
+def _global_mmb_running(window=None, area_ptr=None):
+    """Check whether this window/3D View already owns an MMB listener."""
+    wm = bpy.context.window_manager
+    windows = (window,) if window is not None else tuple(wm.windows)
+    found_global = False
+    for win in windows:
+        for op in getattr(win, "modal_operators", ()):
+            try:
+                op_id = op.get("bl_idname") or getattr(op, "bl_idname", "")
+                if op_id != ALLSET_OT_global_mmb.bl_idname:
+                    continue
+                found_global = True
+                op_area = op.get("owner_area", None)
+                if op_area is None:
+                    op_area = getattr(op, "owner_area", None)
+                if area_ptr is None:
+                    return True
+                if op_area is not None and int(op_area) == int(area_ptr):
+                    return True
+            except (AttributeError, ReferenceError, TypeError, ValueError):
+                continue
+    if area_ptr is not None:
+        # The Python-side set covers Blender versions where modal_operators
+        # exposes the operator id but not its RNA StringProperty via .get().
+        # If no matching modal operator remains, discard stale state and heal.
+        if not found_global:
+            _global_mmb_area_ptrs.discard(int(area_ptr))
+            return False
+        return int(area_ptr) in _global_mmb_area_ptrs
+    return found_global
+
+
+
+def _find_owner_view(window, area_ptr):
+    """Resolve the listener's original View3D area and WINDOW region safely."""
+    screen = getattr(window, "screen", None)
+    if screen is None:
+        return None, None
+    for area in screen.areas:
+        try:
+            if area.as_pointer() != area_ptr:
+                continue
+            if area.type != 'VIEW_3D':
+                return None, None
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+            return area, region
+        except (ReferenceError, AttributeError):
+            return None, None
+    return None, None
+
+
+def _mouse_in_region(event, region):
+    if region is None:
+        return False
+    return (region.x <= event.mouse_x < region.x + region.width
+            and region.y <= event.mouse_y < region.y + region.height)
+
+
+class ALLSET_OT_global_mmb(bpy.types.Operator):
+    """Per-View3D MMB listener for Maya In-View parameter editing.
+
+    Each View3D area owns one listener. It resolves the pointer against that
+    area's WINDOW region before hit-testing, so a listener started in another
+    viewport (or a different editor) cannot steal or mis-map the MMB event.
+    """
+    bl_idname = "allset.global_mmb"
+    bl_label = "Global MMB Adjust"
+    bl_options = {'INTERNAL'}
+
+    owner_area: StringProperty(options={'HIDDEN', 'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        if context.area is None or context.area.type != 'VIEW_3D':
+            return {'CANCELLED'}
+        self.owner_area = str(context.area.as_pointer())
+        _global_mmb_area_ptrs.add(int(self.owner_area))
+        self._dragging = False
+        self._fan_dragging = False
+        self._moving = False
+        self._move_start = None
+        self._move_mouse = None
+        self._cursor_set = False
+        self._cursor_window = None
+        self._cursor_shape = None
+        self._hot = _state["hot"]
+        self._region_x = context.region.x if context.region else 0
+        self._region_y = context.region.y if context.region else 0
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        self._set_cursor_shape(context, None)
+        try:
+            _global_mmb_area_ptrs.discard(int(getattr(self, "owner_area", "0")))
+        except (TypeError, ValueError):
+            pass
+
+    def _set_cursor_shape(self, context, shape):
+        """Switch modal cursor shapes without leaving a stale cursor behind."""
+        current = getattr(self, "_cursor_shape", None)
+        if current == shape:
+            return
+
+        # cursor_modal_set() restores the cursor that was active before the
+        # modal override. Restore before switching from title-hover to drag.
+        if current is not None:
+            window = getattr(self, "_cursor_window", None)
+            try:
+                if window is not None:
+                    window.cursor_modal_restore()
+            except (AttributeError, ReferenceError, RuntimeError):
+                pass
+            self._cursor_shape = None
+            self._cursor_window = None
+            self._cursor_set = False
+
+        if shape is None:
+            return
+
+        window = getattr(context, "window", None)
+        if window is None:
+            return
+        try:
+            window.cursor_modal_set(shape)
+        except (AttributeError, ReferenceError, RuntimeError, TypeError, ValueError):
+            return
+        self._cursor_window = window
+        self._cursor_shape = shape
+        self._cursor_set = True
+
+    def _set_cursor(self, context, on):
+        """Cursor used while an MMB parameter drag is active."""
+        self._set_cursor_shape(context, 'MOVE_X' if on else None)
+
+    def _set_title_cursor(self, context, on):
+        """Four-direction move cursor while hovering the compact HUD title."""
+        # Never replace the cursor belonging to an active value drag.
+        if getattr(self, "_cursor_shape", None) == 'MOVE_X':
+            return
+        self._set_cursor_shape(context, 'SCROLL_XY' if on else None)
+
+    def _begin(self, context, event, visible_record=None):
+        # The caller passes a record resolved under this listener's own
+        # View3D override; do not re-query a possibly unrelated active region.
+        ob, rec = visible_record if visible_record is not None else record(context)
+        if rec is None or self._hot < 0 or self._hot >= len(rec.spec.fields):
+            return False
+        field = rec.spec.fields[self._hot]
+        if field in BOOL_FIELDS:
+            extrude.set_params(context, **{field: not rec.params[field]})
+            _redraw(context)
+            return False
+        self._ob, self._rec, self._field = ob, rec, field
+        self._start = dict(rec.params)
+        self._x0 = event.mouse_x
+        self._unit = units.maya_unit(context.scene)
+        self._moved = False
+        self._set_cursor(context, True)
+        return True
+
+    def _value(self, event):
+        s = _scale()
+        dx = (event.mouse_x - self._x0) / s
+        start = self._start[self._field]
+        mult = _sens_multiplier()
+        if self._field in INT_FIELDS:
+            return max(1, int(start + round(dx / DIV_PX * mult)))
+        step = FLOAT_STEP * mult
+        return clamp(self._field, round(start + dx * step, 4))
+
+    def modal(self, context, event):
+        window = context.window
+        if window is None:
+            self.cancel(context)
+            return {'CANCELLED'}
+        area, region = _find_owner_view(window, int(self.owner_area))
+        if area is None or region is None:
+            self.cancel(context)
+            return {'CANCELLED'}
+
+        # The listener is per area. Ignore events outside its WINDOW region;
+        # the listener belonging to the hovered View3D (if any) handles them.
+        if (not self._dragging and not self._fan_dragging and not self._moving
+                and not _mouse_in_region(event, region)):
+            if getattr(self, "_cursor_shape", None) == 'SCROLL_XY':
+                self._set_title_cursor(context, False)
+            return {'PASS_THROUGH'}
+
+        screen = window.screen
+        mx = event.mouse_x - region.x
+        my = event.mouse_y - region.y
+        with context.temp_override(window=window, screen=screen, area=area, region=region):
+            # The title bar is the HUD's move handle. Update the cursor on every
+            # hover move, independently of the MMB drag state. The fan remains
+            # its own control and therefore keeps the normal cursor.
+            if (event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}
+                    and not self._dragging and not self._fan_dragging and not self._moving):
+                _rec, hover_layout = current_layout(context)
+                over_title = False
+                if hover_layout is not None:
+                    tx0, ty0, tx1, ty1 = hover_layout["title"]
+                    if tx0 <= mx <= tx1 and ty0 <= my <= ty1:
+                        fan_cx = tx1 - (FAN_R + 5.0 * _scale())
+                        fan_cy = (ty0 + ty1) / 2.0
+                        fan_r = FAN_R * _scale()
+                        over_fan = ((mx - fan_cx) ** 2 + (my - fan_cy) ** 2
+                                    <= fan_r * fan_r * 1.6)
+                        over_title = not over_fan
+                self._set_title_cursor(context, over_title)
+
+            # ESC/Q dismiss the Maya In-View HUD for the current operation.
+            # Keep the key available to Blender/Maya keymaps; this listener only
+            # owns HUD cleanup and must not swallow the user's cancel/tool key.
+            if event.type in {'ESC', 'Q'} and event.value == 'PRESS':
+                _ob, active_rec = extrude.active(context)
+                if self._dragging:
+                    rec = getattr(self, "_rec", None) or active_rec
+                    if rec is not None and getattr(self, "_start", None) is not None:
+                        try:
+                            extrude.preview(
+                                getattr(self, "_ob", context.edit_object),
+                                rec, self._start, getattr(self, "_unit", units.maya_unit(context.scene)))
+                            rec.live = False
+                        except (ReferenceError, RuntimeError, AttributeError):
+                            pass
+                    self._dragging = False
+                    self._set_cursor(context, False)
+                if self._fan_dragging:
+                    _state["sensitivity"] = getattr(self, "_fan_start", _state["sensitivity"])
+                    from . import in_view_settings as shared
+                    shared.set_sensitivity(_state["sensitivity"])
+                    self._fan_dragging = False
+                self._moving = False
+                # The HUD may disappear while the pointer is still over its
+                # title. Always release the hover cursor on dismissal.
+                self._set_cursor_shape(context, None)
+                if active_rec is not None:
+                    active_rec.dismissed = True
+                _redraw(context)
+                return {'PASS_THROUGH'}
+
+            if self._moving:
+                if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+                    from . import in_view_settings as shared
+                    dx = event.mouse_x - self._move_mouse[0]
+                    dy = event.mouse_y - self._move_mouse[1]
+                    lay = current_layout(context)[1]
+                    if lay is not None:
+                        scale = _scale()
+                        x0, top = self._move_start
+                        x = max(4 * scale, min(x0 + dx, region.width - WIDTH * scale - 4 * scale))
+                        panel_h = lay["box"][3] - lay["box"][1]
+                        y = max(panel_h + 4 * scale, min(top + dy, region.height - 4 * scale))
+                        shared.set_position("maya_inview_hud", x, y, region)
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+                    self._moving = False
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+                    self._moving = False
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                return {'RUNNING_MODAL'}
+
+            if self._fan_dragging:
+                if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+                    _state["sensitivity"] = _fan_fraction_at(
+                        self._fan_cx, self._fan_cy, mx, my)
+                    from . import in_view_settings as shared
+                    shared.set_sensitivity(_state["sensitivity"])
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+                    _state["sensitivity"] = self._fan_start
+                    from . import in_view_settings as shared
+                    shared.set_sensitivity(_state["sensitivity"])
+                    self._fan_dragging = False
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+                    from . import in_view_settings as shared
+                    shared.set_sensitivity(_state["sensitivity"])
+                    self._fan_dragging = False
+                    _redraw(context)
+                    return {'RUNNING_MODAL'}
+                return {'RUNNING_MODAL'}
+
+            if not self._dragging:
+                if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+                    _rec, lay = current_layout(context)
+                    if lay is not None:
+                        tx0, ty0, tx1, ty1 = lay["title"]
+                        if tx0 <= mx <= tx1 and ty0 <= my <= ty1:
+                            # The fan remains a dedicated control; the rest of
+                            # the title bar is the persistent panel move handle.
+                            fan_cx = tx1 - (FAN_R + 5.0 * _scale())
+                            fan_cy = (ty0 + ty1) / 2.0
+                            fan_r = FAN_R * _scale()
+                            if (mx - fan_cx) ** 2 + (my - fan_cy) ** 2 > fan_r * fan_r * 1.6:
+                                from . import in_view_settings as shared
+                                saved = shared.get_position("maya_inview_hud", region)
+                                self._move_start = saved or (lay["box"][0], lay["box"][3])
+                                self._move_mouse = (event.mouse_x, event.mouse_y)
+                                self._moving = True
+                                return {'RUNNING_MODAL'}
+                    return {'PASS_THROUGH'}
+                if event.type == 'MIDDLEMOUSE' and event.value == 'PRESS':
+                    hit = _panel_hit(context, mx, my)
+                    if hit and hit[0] == 'FAN':
+                        self._fan_cx, self._fan_cy = hit[1]
+                        self._fan_start = _state["sensitivity"]
+                        _state["sensitivity"] = _fan_fraction_at(
+                            self._fan_cx, self._fan_cy, mx, my)
+                        self._fan_dragging = True
+                        _redraw(context)
+                        return {'RUNNING_MODAL'}
+
+                    visible_record = record(context)
+                    if visible_record[1] is not None:
+                        _sync_active_record(visible_record[1])
+                    # Pull the active row after record synchronization. It is
+                    # -1 until a row is explicitly activated by the user.
+                    self._hot = _state["hot"]
+                    if hit and hit[0] == 'ROW':
+                        # Both label and value zones activate the same row.
+                        self._hot = hit[1]
+                        _state["hot"] = self._hot
+                    elif hit == 'PANEL':
+                        # The title area (outside the fan) has no other control:
+                        # MMB there adjusts the currently active parameter, just
+                        # like the shared Tool Parameter HUD.
+                        self._hot = _state["hot"]
+                    else:
+                        self._hot = _state["hot"]
+
+                    if self._begin(context, event, visible_record):
+                        self._dragging = True
+                        return {'RUNNING_MODAL'}
+                    if hit and hit[0] == 'ROW':
+                        _redraw(context)
+                        return {'RUNNING_MODAL'}
+                return {'PASS_THROUGH'}
+
+            if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+                if abs(event.mouse_x - self._x0) > 3 * _scale():
+                    self._moved = True
+                if self._moved:
+                    params = dict(self._start, **{self._field: self._value(event)})
+                    extrude.preview(self._ob, self._rec, params, self._unit)
+                    _redraw(context)
+                return {'RUNNING_MODAL'}
+            if event.type == 'ESC' and event.value == 'PRESS':
+                extrude.preview(self._ob, self._rec, self._start, self._unit)
+                self._rec.live = False
+                self._dragging = False
+                self._set_cursor(context, False)
+                _redraw(context)
+                return {'RUNNING_MODAL'}
+            if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+                if self._moved:
+                    extrude.set_params(context, **{self._field: self._value(event)})
+                self._dragging = False
+                self._set_cursor(context, False)
+                _redraw(context)
+                return {'RUNNING_MODAL'}
+            return {'RUNNING_MODAL'}
 
 
 class ALLSET_OT_inview_type(bpy.types.Operator):
@@ -637,6 +1292,11 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         return (p1 - p0).normalized()
 
     def invoke(self, context, event):
+        # The persistent global MMB listener is the single owner of MMB row
+        # interaction. Keep this gizmo target for LMB only; passing MMB through
+        # prevents two modal operators competing for the same drag/release.
+        if event.type == 'MIDDLEMOUSE':
+            return {'PASS_THROUGH'}
         ob, rec = extrude.active(context)
         fields = handle_fields(rec, self.handle)
         frame = manip_frame(ob, rec) if fields else None
@@ -723,7 +1383,7 @@ def cb_record(context, ob):
     if ob is None:
         return None
     if ob is not getattr(context, "edit_object", None):
-        return extrude.object_record(ob)        # a node editable in object mode (UV > Automatic)
+        return extrude.object_record(ob)        # a node editable in object mode (UV > Automatic, step 257)
     return extrude.current(ob)
 
 
@@ -780,8 +1440,8 @@ HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can b
 
 def draw_cb_node(layout, context, rec):
     """The polyExtrudeFace node in Channel Box INPUTS; the Blender notice is the node name's
-    tooltip (no Blender sentences in Maya windows). Collapsed until its name is clicked, like Maya
-   ."""
+    tooltip (step 106: no Blender sentences in Maya windows). Collapsed until its name is clicked, like Maya
+    (step 135)."""
     from . import channel_box
     lines = channel_box.as_lines(layout)
     ob = channel_box.lead(context)
@@ -798,19 +1458,72 @@ def draw_cb_node(layout, context, rec):
         split.prop(hist, f"{field}_text", text="")
 
 
-classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
+classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GT_fan, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
            ALLSET_GGT_extrude,
-           ALLSET_OT_inview_drag, ALLSET_OT_inview_type, ALLSET_OT_extrude_drag)
+           ALLSET_OT_fan_drag, ALLSET_OT_inview_drag, ALLSET_OT_global_mmb,
+           ALLSET_OT_inview_type, ALLSET_OT_extrude_drag)
 
 
 def register():
+    global _global_mmb_timer, _global_mmb_enabled
+    from . import in_view_settings as shared
+    _state["sensitivity"] = shared.get_sensitivity()
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.WindowManager.allset_history = PointerProperty(type=ALLSET_PG_history)
     _state["handle"] = bpy.types.SpaceView3D.draw_handler_add(draw_box, (), 'WINDOW', 'POST_PIXEL')
+    _global_mmb_enabled = True
+
+    def _start_global_mmb():
+        if not _global_mmb_enabled:
+            return None
+        wm = bpy.context.window_manager
+        if wm is None:
+            return 0.75
+        live_ptrs = set()
+        for window in tuple(wm.windows):
+            screen = window.screen
+            if screen is None:
+                continue
+            for area in tuple(screen.areas):
+                if area.type != 'VIEW_3D':
+                    continue
+                area_ptr = area.as_pointer()
+                live_ptrs.add(area_ptr)
+                if _global_mmb_running(window, area_ptr):
+                    continue
+                region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+                if region is None:
+                    continue
+                try:
+                    with bpy.context.temp_override(
+                        window=window, screen=screen, area=area, region=region
+                    ):
+                        bpy.ops.allset.global_mmb(
+                            'INVOKE_DEFAULT', owner_area=str(area_ptr))
+                except (RuntimeError, TypeError, ReferenceError):
+                    continue
+        _global_mmb_area_ptrs.intersection_update(live_ptrs)
+        # Keep watching: workspace changes and area splits/rebuilds can create
+        # new View3D areas after the initial registration.
+        return 0.75 if _global_mmb_enabled else None
+
+    _global_mmb_timer = _start_global_mmb
+    if not bpy.app.timers.is_registered(_global_mmb_timer):
+        bpy.app.timers.register(_global_mmb_timer, first_interval=0.1)
 
 
 def unregister():
+    global _global_mmb_timer, _global_mmb_enabled
+    _global_mmb_enabled = False
+    _global_mmb_area_ptrs.clear()
+    if _global_mmb_timer is not None:
+        try:
+            if bpy.app.timers.is_registered(_global_mmb_timer):
+                bpy.app.timers.unregister(_global_mmb_timer)
+        except (ValueError, RuntimeError):
+            pass
+        _global_mmb_timer = None
     if _state["handle"] is not None:
         bpy.types.SpaceView3D.draw_handler_remove(_state["handle"], 'WINDOW')
         _state["handle"] = None

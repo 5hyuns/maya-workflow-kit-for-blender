@@ -294,6 +294,9 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
             elif event.type == 'WINDOW_DEACTIVATE':
                 res = s.cancel()
             elif event.type == 'TIMER':
+                # Advance the delayed parent-anchor return even when the pointer is stationary.
+                if s.check_return_dwell(now):
+                    draw.redraw()
                 if s.mode == "PRESS" and keystate.is_down(self.button) is False:
                     res = s.release(*s.pos, now)  # the release went to someone else
                 elif not self._shown and s.visible(now):
