@@ -22,6 +22,7 @@ import blf
 import bmesh
 import bpy
 import gpu
+import time
 from bpy.props import FloatProperty, IntProperty, PointerProperty, StringProperty
 from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
@@ -71,6 +72,9 @@ _state = {"hot": 0, "hover": -1, "sensitivity": 1.0, "handle": None,
 _global_mmb_timer = None
 _global_mmb_enabled = False
 _global_mmb_area_ptrs = set()
+_global_mmb_idle_since = {}
+_global_mmb_expired_area_ptrs = set()
+HUD_LISTENER_IDLE_TIMEOUT = 600.0
 
 
 def _sens_multiplier():
@@ -842,32 +846,48 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
 def _global_mmb_running(window=None, area_ptr=None):
     """Check whether this window/3D View already owns an MMB listener."""
     wm = bpy.context.window_manager
+    if wm is None:
+        return False
+
     windows = (window,) if window is not None else tuple(wm.windows)
     found_global = False
+
     for win in windows:
         for op in getattr(win, "modal_operators", ()):
             try:
-                op_id = op.get("bl_idname") or getattr(op, "bl_idname", "")
-                if op_id != ALLSET_OT_global_mmb.bl_idname:
+                # Blender exposes the modal operator's class identifier here
+                # (ALLSET_OT_global_mmb), not always its RNA bl_idname.
+                # Operator instances do not support IDProperty-style .get().
+                op_id = getattr(op, "bl_idname", "")
+                if op_id not in (
+                    ALLSET_OT_global_mmb.bl_idname,
+                    ALLSET_OT_global_mmb.__name__,
+                ):
                     continue
+
                 found_global = True
-                op_area = op.get("owner_area", None)
-                if op_area is None:
-                    op_area = getattr(op, "owner_area", None)
+                op_area = getattr(op, "owner_area", None)
+
                 if area_ptr is None:
                     return True
+
                 if op_area is not None and int(op_area) == int(area_ptr):
                     return True
+
             except (AttributeError, ReferenceError, TypeError, ValueError):
                 continue
+
     if area_ptr is not None:
-        # The Python-side set covers Blender versions where modal_operators
-        # exposes the operator id but not its RNA StringProperty via .get().
-        # If no matching modal operator remains, discard stale state and heal.
+        area_ptr = int(area_ptr)
+
+        # Fallback for Blender versions that do not expose the RNA
+        # StringProperty through window.modal_operators.
         if not found_global:
-            _global_mmb_area_ptrs.discard(int(area_ptr))
+            _global_mmb_area_ptrs.discard(area_ptr)
             return False
-        return int(area_ptr) in _global_mmb_area_ptrs
+
+        return area_ptr in _global_mmb_area_ptrs
+
     return found_global
 
 
@@ -1014,9 +1034,15 @@ class ALLSET_OT_global_mmb(bpy.types.Operator):
         if window is None:
             self.cancel(context)
             return {'CANCELLED'}
-        area, region = _find_owner_view(window, int(self.owner_area))
+        area_ptr = int(self.owner_area)
+        area, region = _find_owner_view(window, area_ptr)
         if area is None or region is None:
             self.cancel(context)
+            return {'CANCELLED'}
+        if area_ptr in _global_mmb_expired_area_ptrs:
+            self.cancel(context)
+            _global_mmb_expired_area_ptrs.discard(area_ptr)
+            _global_mmb_idle_since.pop(area_ptr, None)
             return {'CANCELLED'}
 
         # The listener is per area. Ignore events outside its WINDOW region;
@@ -1480,6 +1506,8 @@ def register():
         wm = bpy.context.window_manager
         if wm is None:
             return 0.75
+
+        now = time.monotonic()
         live_ptrs = set()
         for window in tuple(wm.windows):
             screen = window.screen
@@ -1490,22 +1518,54 @@ def register():
                     continue
                 area_ptr = area.as_pointer()
                 live_ptrs.add(area_ptr)
-                if _global_mmb_running(window, area_ptr):
-                    continue
                 region = next((r for r in area.regions if r.type == 'WINDOW'), None)
                 if region is None:
                     continue
+
+                # The global MMB listener is needed only while this View3D
+                # has a valid Maya In-View HUD record. Do not create listeners
+                # merely because a View3D area exists.
+                hud_active = False
                 try:
                     with bpy.context.temp_override(
                         window=window, screen=screen, area=area, region=region
                     ):
-                        bpy.ops.allset.global_mmb(
-                            'INVOKE_DEFAULT', owner_area=str(area_ptr))
-                except (RuntimeError, TypeError, ReferenceError):
-                    continue
+                        hud_active = record(bpy.context)[1] is not None
+                except (RuntimeError, TypeError, ReferenceError, AttributeError):
+                    hud_active = False
+
+                running = _global_mmb_running(window, area_ptr)
+                if hud_active:
+                    _global_mmb_idle_since.pop(area_ptr, None)
+                    _global_mmb_expired_area_ptrs.discard(area_ptr)
+                    if not running:
+                        try:
+                            with bpy.context.temp_override(
+                                window=window, screen=screen, area=area, region=region
+                            ):
+                                bpy.ops.allset.global_mmb(
+                                    'INVOKE_DEFAULT', owner_area=str(area_ptr))
+                        except (RuntimeError, TypeError, ReferenceError):
+                            continue
+                elif running:
+                    idle_since = _global_mmb_idle_since.setdefault(area_ptr, now)
+                    if now - idle_since >= HUD_LISTENER_IDLE_TIMEOUT:
+                        # Modal operators cannot be synchronously removed from
+                        # window.modal_operators. Mark them for cancellation;
+                        # their next event performs normal cursor/state cleanup.
+                        _global_mmb_expired_area_ptrs.add(area_ptr)
+                else:
+                    _global_mmb_idle_since.pop(area_ptr, None)
+                    _global_mmb_expired_area_ptrs.discard(area_ptr)
+
+        # Remove state belonging to areas that no longer exist.
         _global_mmb_area_ptrs.intersection_update(live_ptrs)
-        # Keep watching: workspace changes and area splits/rebuilds can create
-        # new View3D areas after the initial registration.
+        for area_ptr in tuple(_global_mmb_idle_since):
+            if area_ptr not in live_ptrs:
+                _global_mmb_idle_since.pop(area_ptr, None)
+                _global_mmb_expired_area_ptrs.discard(area_ptr)
+        _global_mmb_expired_area_ptrs.intersection_update(live_ptrs)
+
         return 0.75 if _global_mmb_enabled else None
 
     _global_mmb_timer = _start_global_mmb
@@ -1517,6 +1577,8 @@ def unregister():
     global _global_mmb_timer, _global_mmb_enabled
     _global_mmb_enabled = False
     _global_mmb_area_ptrs.clear()
+    _global_mmb_idle_since.clear()
+    _global_mmb_expired_area_ptrs.clear()
     if _global_mmb_timer is not None:
         try:
             if bpy.app.timers.is_registered(_global_mmb_timer):
