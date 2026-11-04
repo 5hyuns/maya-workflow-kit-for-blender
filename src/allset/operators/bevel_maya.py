@@ -511,6 +511,21 @@ def _corner(v, f, sel):
     return ray, half, t * math.sin(half) / shared
 
 
+def _corner_reach(v, f, sel, half):
+    """An acute or right corner of face ``f`` at ``v``: its new corner (W / sin(half the angle) along the bisector) never
+    reaches past the far end of either bevelled edge: its foot on each edge (W / tan(half)) stays within the edge,
+    half of it when the edge's other end is a corner of ``f`` too. Returns the width limit for each edge (none for
+    a wider corner, where the bisector leaves the face first)."""
+    out = []
+    if math.tan(half) <= ZERO or half > math.pi / 4.0 + 1e-9:
+        return out
+    for e in [x for x in v.link_edges if x in sel and f in x.link_faces][:2]:
+        end = e.other_vert(v)
+        shared = 2 if sum(1 for x in end.link_edges if x in sel and f in x.link_faces) >= 2 else 1
+        out.append(e.calc_length() * math.tan(half) / shared)
+    return out
+
+
 def corners_of(edges):
     """{(vertex, face)} where two bevelled edges of the face meet."""
     sel = set(edges)
@@ -581,6 +596,7 @@ def slide_limit(edges, corners=None, triples=None):
         if c is not None and c[2] > ZERO:
             k = triples[v]["faces"].get(f, (None, None, 1.0))[2] if triples and v in triples else 1.0
             caps.append(c[2] / k)
+            caps += [x / k for x in _corner_reach(v, f, sel, c[1])]
     for s in set(used) | set(near):
         if s.calc_length() <= ZERO:
             continue
