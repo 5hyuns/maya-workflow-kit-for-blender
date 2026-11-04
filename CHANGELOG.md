@@ -12,6 +12,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   used to sit inside the mesh, closer to the tip). Still different from Maya: Maya widens such a tip by an amount
   that changes with the order of the mesh's edges (a mirrored mesh can give a different width), so the kit keeps
   the plain bevel width there.
+- **Bevel (Fraction) at a corner of three bevelled edges whose angles differ a lot** (#213): for example a box
+  corner where one face is skewed. Each face's new corner and the bevel width now follow an approximation of Maya's
+  corner, so the corner is closer to Maya's shape than before. This is an approximation and still differs from
+  Maya. Corners whose angles are close (such as a plain box corner) are unchanged.
 
 ## [0.11.0] — 2026-11-04
 
