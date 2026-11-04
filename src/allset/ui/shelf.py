@@ -151,10 +151,15 @@ def add_menu_item(context, path, shelf_id=None):
 
 
 def record_tooltip(b):
-    """Tooltip of a user-made button: a menu button names its Maya menu path (Maya: the item's annotation)."""
+    """Tooltip of a user-made button, including legacy and typed action records."""
     path = b.get("menu")
+    if b.get("type") == "action":
+        action = b.get("action") or {}
+        return b.get("tooltip") or f"{b.get('label', 'Shelf Button')}\n{action.get('type', 'custom action')}: {action.get('id', '')}"
+    if b.get("type") == "separator":
+        return "Shelf Separator"
     if not path:
-        return f"{b['label']}\n{b['script'][:200]}"
+        return b.get("tooltip") or f"{b.get('label', 'Shelf Button')}\n{b.get('script', '')[:200]}"
     from . import menu_map
     where = "Maya menu: " + path.split("#")[0].replace("/", " > ")
     if path not in menu_map.MAP:
@@ -304,6 +309,12 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         b = button_record(self.shelf, self.index)
         if b is not None and b.get("menu"):
             return self._run_menu(context, b)
+        if b is not None and b.get("type") == "action":
+            if self.option:
+                return {'CANCELLED'}
+            return self._run_user_action(context, b)
+        if b is not None and b.get("type") == "separator":
+            return {'CANCELLED'}
         if b is not None:
             if self.option:
                 return {'CANCELLED'}     # a script button has no double-click command (Maya: nothing more runs)
@@ -335,6 +346,49 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
                     return {'CANCELLED'}
                 return {'FINISHED'}
         return {'CANCELLED'}
+
+    def _run_user_action(self, context, button):
+        """Run a user-defined action while leaving factory and legacy button execution unchanged."""
+        action = button.get("action") or {}
+        kind = action.get("type")
+        target = action.get("id", "")
+        try:
+            if kind == "operator":
+                if "." not in target:
+                    raise RuntimeError(f"Invalid Operator ID: {target}")
+                category, name = target.split(".", 1)
+                op = getattr(getattr(bpy.ops, category), name, None)
+                if op is None:
+                    raise RuntimeError(f"Operator not found: {target}")
+                props = action.get("properties", {})
+                if not isinstance(props, dict):
+                    raise RuntimeError("Operator properties must be a JSON object")
+                return op('INVOKE_DEFAULT', **props)
+            if kind == "maya_menu":
+                return self._run_menu(context, {"label": button["label"], "menu": target})
+            if kind == "blender_menu":
+                return bpy.ops.wm.call_menu('INVOKE_DEFAULT', name=target)
+            if kind == "pie_menu":
+                return bpy.ops.wm.call_menu_pie('INVOKE_DEFAULT', name=target)
+            if kind == "tool":
+                return bpy.ops.wm.tool_set_by_id(name=target, space_type=action.get("space_type", "VIEW_3D"))
+            if kind == "ui_operator":
+                if "." not in target:
+                    raise RuntimeError(f"Invalid UI Operator ID: {target}")
+                category, name = target.split(".", 1)
+                op = getattr(getattr(bpy.ops, category), name, None)
+                if op is None:
+                    raise RuntimeError(f"UI Operator not found: {target}")
+                return op('INVOKE_DEFAULT')
+            if kind == "python":
+                ok, message = run_script(context, button["label"], action.get("code", ""))
+                if not ok:
+                    raise RuntimeError(message)
+                return {'FINISHED'}
+            raise RuntimeError(f"Unsupported Shelf action type: {kind}")
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as ex:
+            self.report({'ERROR'}, f"{button.get('label', 'Shelf Button')}: {ex}")
+            return {'CANCELLED'}
 
     def _run_menu(self, context, b):
         """A menu button: the Maya menu item run like the menu (``allset.menu_item`` rules, saved option
@@ -581,6 +635,173 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_MT_shelf_add_action(bpy.types.Menu):
+    """Maya-style visual chooser for the kind of command a Shelf Button runs."""
+    bl_idname = "ALLSET_MT_shelf_add_action"
+    bl_label = "Add Shelf Button"
+
+    def draw(self, context):
+        layout = self.layout
+        # Explicit split columns keep the submenu compact and predictable.
+        split = layout.split(factor=0.5, align=True)
+        columns = (split.column(align=True), split.column(align=True))
+        choices = (
+            ("OPERATOR", "Operator", "CONSOLE", "Run a Blender Operator and optionally set its RNA properties"),
+            ("MENU", "Menu", "LINENUMBERS_ON", "Open a Maya Workflow Kit menu item or Blender menu"),
+            ("POPUP", "Popup / UI", "WINDOW", "Open a Blender popup, pie menu, or custom UI operator"),
+            ("TOOL", "Tool", "TOOL_SETTINGS", "Activate a Blender or Maya Workflow Kit tool"),
+            ("PYTHON", "Python", "CONSOLE", "Run a custom Python command"),
+            ("LEGACY_PYTHON", "Legacy Python", "FILE_SCRIPT", "Add a legacy Shelf Python script button"),
+            ("SEPARATOR", "Separator", "REMOVE", "Insert a visual separator in the Shelf"),
+        )
+        for index, (kind, label, icon, description) in enumerate(choices):
+            column = columns[index % 2]
+            op = column.operator(ALLSET_OT_shelf_add_action.bl_idname, text=label, icon=icon)
+            op.action_type = kind
+            op.help_text = description
+
+
+class ALLSET_OT_shelf_add_action(bpy.types.Operator):
+    """Add a Shelf Button using a selected command type."""
+    bl_idname = "allset.shelf_add_action"
+    bl_label = "Add Shelf Button"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    action_type: StringProperty(options={'HIDDEN'})
+    help_text: StringProperty(options={'HIDDEN'})
+    label: StringProperty(name="Label", default="New Button")
+    icon: StringProperty(name="Icon", default="SCRIPT",
+                         description="Blender icon identifier, e.g. MOD_BEVEL or TOOL_SETTINGS")
+    tooltip: StringProperty(name="Tooltip")
+    operator_id: StringProperty(name="Operator", description="Operator identifier, e.g. mesh.bevel")
+    properties_json: StringProperty(name="Properties (JSON)", default="{}",
+                                     description="Optional Operator properties as a JSON object")
+    menu_kind: bpy.props.EnumProperty(name="Menu Type", items=(
+        ('MAYA', "Maya Menu Item", "Use a Maya Workflow Kit menu path"),
+        ('BLENDER', "Blender Menu", "Call a registered Blender Menu class"),
+        ('PIE', "Blender Pie Menu", "Call a registered Blender Pie Menu class"),
+        ('CUSTOM_UI', "Custom UI Operator", "Invoke an add-on Operator that opens its own UI"),
+    ), default='MAYA')
+    menu_id: StringProperty(name="Menu Path / ID",
+                            description="Maya menu path or Blender Menu bl_idname")
+    ui_operator_id: StringProperty(name="UI Operator ID", description="Operator that opens the custom interface")
+    tool_id: StringProperty(name="Tool ID", description="Tool identifier, e.g. builtin.move")
+    space_type: bpy.props.EnumProperty(name="Editor", items=(
+        ('VIEW_3D', "3D View", "Activate the tool in the 3D View"),
+        ('IMAGE_EDITOR', "UV Editor", "Activate the tool in the UV Editor"),
+    ), default='VIEW_3D')
+    python_code: StringProperty(name="Python", default="print('Hello')", options={'TEXTEDIT_UPDATE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        return properties.help_text or "Add a Shelf button using the selected command type."
+
+    def invoke(self, context, event):
+        if self.action_type == 'SEPARATOR':
+            return self.execute(context)
+        return context.window_manager.invoke_props_dialog(self, width=520)
+
+    def draw(self, context):
+        layout = self.layout
+        header = layout.row()
+        header.label(text=self.help_text or self.action_type.title(), icon={
+            'OPERATOR': 'CONSOLE', 'MENU': 'LINENUMBERS_ON', 'POPUP': 'WINDOW',
+            'TOOL': 'TOOL_SETTINGS', 'PYTHON': 'CONSOLE',
+            'LEGACY_PYTHON': 'FILE_SCRIPT', 'SEPARATOR': 'REMOVE'
+        }.get(self.action_type, 'SCRIPT'))
+        layout.prop(self, "label")
+        layout.prop(self, "icon")
+        layout.prop(self, "tooltip")
+        if self.action_type == 'OPERATOR':
+            layout.prop(self, "operator_id")
+            layout.prop(self, "properties_json")
+            layout.label(text="Tip: use {} to run the Operator with its default values", icon='INFO')
+        elif self.action_type == 'MENU':
+            layout.prop(self, "menu_kind", expand=True)
+            layout.prop(self, "menu_id", text="Menu")
+        elif self.action_type == 'POPUP':
+            layout.prop(self, "menu_kind", expand=True)
+            if self.menu_kind == 'CUSTOM_UI':
+                layout.prop(self, "ui_operator_id")
+            else:
+                layout.prop(self, "menu_id", text="Menu ID")
+        elif self.action_type == 'TOOL':
+            layout.prop(self, "tool_id")
+            layout.prop(self, "space_type")
+        elif self.action_type in {'PYTHON', 'LEGACY_PYTHON'}:
+            layout.prop(self, "python_code", text="")
+            if self.action_type == 'LEGACY_PYTHON':
+                layout.label(text="Creates the original legacy script button format.", icon='INFO')
+            else:
+                layout.label(text="Advanced: Python runs with the kit command-line environment.", icon='INFO')
+
+    def execute(self, context):
+        buttons = editable_buttons(current(context), create=True)
+        if buttons is None:
+            self.report({'ERROR'}, "The selected Shelf cannot accept custom buttons")
+            return {'CANCELLED'}
+        label = self.label.strip() or "New Button"
+        record = {"label": label, "icon": _valid_icon(self.icon), "tooltip": self.tooltip.strip()}
+        kind = self.action_type
+        if kind == 'SEPARATOR':
+            record.update(type="separator", action={"type": "separator"})
+        elif kind == 'OPERATOR':
+            op_id = self.operator_id.strip()
+            if "." not in op_id:
+                self.report({'ERROR'}, "Enter an Operator ID such as mesh.bevel")
+                return {'CANCELLED'}
+            try:
+                props = json.loads(self.properties_json or "{}")
+            except ValueError as exc:
+                self.report({'ERROR'}, f"Invalid properties JSON: {exc}")
+                return {'CANCELLED'}
+            if not isinstance(props, dict):
+                self.report({'ERROR'}, "Operator properties must be a JSON object")
+                return {'CANCELLED'}
+            record.update(type="action", action={"type": "operator", "id": op_id, "properties": props})
+        elif kind == 'MENU':
+            target = self.menu_id.strip()
+            if not target:
+                self.report({'ERROR'}, "Enter a menu path or ID")
+                return {'CANCELLED'}
+            action_type = {'MAYA': 'maya_menu', 'BLENDER': 'blender_menu', 'PIE': 'pie_menu',
+                           'CUSTOM_UI': 'ui_operator'}[self.menu_kind]
+            record.update(type="action", action={"type": action_type, "id": target})
+        elif kind == 'POPUP':
+            if self.menu_kind == 'CUSTOM_UI':
+                target = self.ui_operator_id.strip()
+                action_type = 'ui_operator'
+            else:
+                target = self.menu_id.strip()
+                action_type = {'MAYA': 'maya_menu', 'BLENDER': 'blender_menu', 'PIE': 'pie_menu'}[self.menu_kind]
+            if not target:
+                self.report({'ERROR'}, "Enter a registered Menu or UI Operator ID")
+                return {'CANCELLED'}
+            record.update(type="action", action={"type": action_type, "id": target, "popup": True})
+        elif kind == 'TOOL':
+            if not self.tool_id.strip():
+                self.report({'ERROR'}, "Enter a Tool ID")
+                return {'CANCELLED'}
+            record.update(type="action", action={"type": "tool", "id": self.tool_id.strip(),
+                                                   "space_type": self.space_type})
+        elif kind in {'PYTHON', 'LEGACY_PYTHON'}:
+            if not self.python_code.strip():
+                self.report({'ERROR'}, "Python command is empty")
+                return {'CANCELLED'}
+            if kind == 'LEGACY_PYTHON':
+                # Keep the original JSON shape for compatibility with existing Shelf scripts.
+                record["script"] = self.python_code
+            else:
+                record.update(type="action", action={"type": "python", "code": self.python_code})
+        else:
+            self.report({'ERROR'}, "Unsupported Shelf action type")
+            return {'CANCELLED'}
+        buttons.append(record)
+        save_user()
+        _redraw(context)
+        return {'FINISHED'}
+
+
 class ALLSET_OT_shelf_add_last_command(bpy.types.Operator):
     """Add the last command-line command as a button (Maya: drag a script to the shelf)"""
     bl_idname = "allset.shelf_add_last_command"
@@ -714,9 +935,10 @@ class ALLSET_MT_shelf_settings(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator(ALLSET_OT_shelf_new.bl_idname, icon='ADD')
+        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor")
         layout.operator(ALLSET_OT_shelf_delete.bl_idname, icon='TRASH')
         layout.separator()
-        layout.operator(ALLSET_OT_shelf_add_button.bl_idname, icon='SCRIPT')
+        layout.menu(ALLSET_MT_shelf_add_action.bl_idname, icon='ADD', text="Add Shelf Button...")
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
         buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too
         if buttons:
@@ -812,7 +1034,7 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
         if b is None:
             return ""
         rec = button_record(cur, b[0])
-        if rec is not None and rec.get("menu"):
+        if rec is not None and (rec.get("menu") or rec.get("type") in {"action", "separator"}):
             return record_tooltip(rec)
         if cur.startswith(USER_PREFIX) or rec is not None:
             return f"{b[1]} (shelf)"
@@ -1133,9 +1355,15 @@ def draw_row():
         if x > region.width:
             continue                  # another row
         shown = slot + 1
+        record = button_record(_cur, index)
+        if record and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator"):
+            cx = x + size / 2
+            dark, light = _separator_colours(base)
+            _draw_rect(cx - s, round(5 * s), max(1.0, s), size - round(2 * s), dark)
+            _draw_rect(cx, round(5 * s), max(1.0, s), size - round(2 * s), light)
+            continue
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
-        # the 2x (64 px) picture once the icon is drawn wider than 32 px (UI scale >= 1.25)
         if colour_key is None:
             tex = _user_texture(_cur, index, label, not mapped, shelf_icons.texture_size(size))
         else:
@@ -1415,7 +1643,7 @@ def unpatch_image_headers():
 classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_new, ALLSET_OT_shelf_delete, ALLSET_OT_shelf_add_button,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
-           ALLSET_OT_shelf_add_last_command,
+           ALLSET_MT_shelf_add_action, ALLSET_OT_shelf_add_action, ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
            ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab,
            ALLSET_GT_shelf_scroll, ALLSET_OT_shelf_scroll, ALLSET_GGT_shelf)
