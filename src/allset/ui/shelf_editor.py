@@ -190,6 +190,7 @@ def _load_button(context, index):
             wm.allset_se_action_id = ""
             wm.allset_se_action_code = ""
             wm.allset_se_action_kind = "ui_operator"
+            wm.allset_se_tool_space_type = "VIEW_3D"
         finally:
             _loading = False
         return
@@ -230,6 +231,7 @@ def _load_button(context, index):
                 wm.allset_se_script = action.get("code", "")
             elif kind == "tool":
                 wm.allset_se_type = "TOOL"
+                wm.allset_se_tool_space_type = action.get("space_type", "VIEW_3D")
             elif kind in {"blender_menu", "pie_menu", "ui_operator"}:
                 wm.allset_se_type = "UI"
             else:
@@ -637,7 +639,9 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             if not target:
                 self.report({'WARNING'}, "Enter a Tool ID")
                 return {'CANCELLED'}
-            record.update(type="action", action={"type": "tool", "id": target, "space_type": "VIEW_3D"})
+            space_type = wm.allset_se_tool_space_type
+            record.update(type="action", action={"type": "tool", "id": target,
+                                                   "space_type": space_type})
         elif kind == "UI":
             target = wm.allset_se_action_id.strip()
             action_kind = wm.allset_se_action_kind
@@ -911,7 +915,10 @@ def _sync_properties_list(wm):
             ("FIELD", "allset_se_action_id", "Menu / UI ID"),
         ))
     elif kind == "TOOL":
-        rows.append(("FIELD", "allset_se_action_id", "Tool ID"))
+        rows.extend((
+            ("FIELD", "allset_se_action_id", "Tool ID"),
+            ("FIELD", "allset_se_tool_space_type", "Editor"),
+        ))
 
     rows.extend((
         ("FIELD", "allset_se_tooltip", "Tooltip"),
@@ -1103,6 +1110,7 @@ _WM_PROPS = (
     "allset_se_type", "allset_se_script", "allset_se_menu", "allset_se_operator",
     "allset_se_props", "allset_se_tooltip", "allset_se_message",
     "allset_se_action_id", "allset_se_action_code", "allset_se_action_kind",
+    "allset_se_tool_space_type",
     "allset_se_items", "allset_se_items_signature", "allset_se_list_index",
     "allset_se_shelves", "allset_se_shelves_signature", "allset_se_shelves_index",
     "allset_se_properties", "allset_se_properties_signature", "allset_se_properties_index",
@@ -1136,6 +1144,15 @@ def register():
     wm.allset_se_message = StringProperty(options={'SKIP_SAVE'})
     wm.allset_se_action_id = StringProperty(name="Action ID", options={'SKIP_SAVE'})
     wm.allset_se_action_code = StringProperty(name="Action Code", options={'SKIP_SAVE'})
+    wm.allset_se_tool_space_type = EnumProperty(
+        name="Editor",
+        items=(
+            ("VIEW_3D", "3D View", "Activate the tool in the 3D View"),
+            ("IMAGE_EDITOR", "UV Editor", "Activate the tool in the UV Editor"),
+        ),
+        default="VIEW_3D",
+        options={'SKIP_SAVE'},
+    )
     wm.allset_se_action_kind = EnumProperty(
         name="UI Type",
         items=(
