@@ -2437,3 +2437,234 @@ def _upload(px, size):
 
 def clear():
     _textures.clear()
+    clear_icon_previews()
+
+
+# Shelf Editor icon browser and preview bridge.
+_ICON_PREVIEWS = None
+_ICON_PNG_PATHS = None
+_ICON_PREVIEW_FILES = {}
+_ICON_GPU_TEXTURES = {}
+
+
+def _builtin_icon_names():
+    import bpy
+    try:
+        return bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items.keys()
+    except (AttributeError, KeyError, TypeError):
+        return ()
+
+
+def _png_icon_paths(refresh=False):
+    global _ICON_PNG_PATHS
+    if _ICON_PNG_PATHS is not None and not refresh:
+        return _ICON_PNG_PATHS
+    import os
+    import bpy
+    source_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    folders = [
+        source_root,
+        os.path.join(source_root, "icons"),
+        os.path.join(source_root, "allset", "icons"),
+        os.path.join(source_root, "allset", "ui", "icons"),
+        os.path.join(os.path.dirname(source_root), "icons"),
+        os.path.join(os.path.dirname(source_root), "user_data", "icons"),
+        os.path.join(source_root, "user_data", "icons"),
+    ]
+    try:
+        package_name = __package__.split(".", 1)[0]
+        user_root = bpy.utils.extension_path_user(package_name, create=True)
+        folders.extend((os.path.join(user_root, "shelf_icons"),
+                        os.path.join(user_root, "custom_icons"),
+                        os.path.join(user_root, "icons"),
+                        os.path.join(user_root, "user_data", "icons")))
+    except (AttributeError, RuntimeError, ValueError):
+        pass
+    paths = {}
+    for folder in folders:
+        if not os.path.isdir(folder):
+            continue
+        for current, _dirs, files in os.walk(folder):
+            for filename in files:
+                if filename.lower().endswith(".png"):
+                    paths.setdefault(os.path.splitext(filename)[0].casefold(),
+                                     os.path.join(current, filename))
+    _ICON_PNG_PATHS = paths
+    return paths
+
+
+def _preview_collection():
+    global _ICON_PREVIEWS
+    if _ICON_PREVIEWS is None:
+        import bpy.utils.previews
+        _ICON_PREVIEWS = bpy.utils.previews.new()
+    return _ICON_PREVIEWS
+
+
+def _write_preview_png(key, pixels):
+    import os
+    import struct
+    import zlib
+    import binascii
+    import bpy
+    rgba = np.clip(np.asarray(pixels, dtype=np.float32) * 255.0, 0, 255).astype(np.uint8)
+    height, width, channels = rgba.shape
+    if channels != 4:
+        return None
+
+    def chunk(kind, data):
+        body = kind + data
+        return struct.pack(">I", len(data)) + body + struct.pack(">I", binascii.crc32(body) & 0xffffffff)
+
+    raw = b"".join(b"\x00" + rgba[row].tobytes() for row in range(height))
+    png = (b"\x89PNG\r\n\x1a\n"
+           + chunk(b"IHDR", struct.pack(">2I5B", width, height, 8, 6, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(raw, 6))
+           + chunk(b"IEND", b""))
+    folder = os.path.join(bpy.app.tempdir or os.path.abspath(os.path.expanduser("~")),
+                          "allset_shelf_icon_previews")
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, str(abs(hash(key))) + ".png")
+    with open(path, "wb") as stream:
+        stream.write(png)
+    _ICON_PREVIEW_FILES[key] = path
+    return path
+
+
+def _procedural_icon_parts(identifier):
+    if not str(identifier).startswith("MWK:"):
+        return None
+    key = identifier[4:]
+    if "/" not in key or key not in ICONS:
+        return None
+    shelf_name, label = key.split("/", 1)
+    return shelf_name, label
+
+
+def _icon_preview(identifier):
+    import os
+    name = str(identifier or "")
+    path = None
+    if name.startswith("PNG:"):
+        path = _png_icon_paths().get(name[4:].casefold())
+    elif name.startswith("MWK:"):
+        parts = _procedural_icon_parts(name)
+        if parts is None:
+            return None
+        path = _ICON_PREVIEW_FILES.get(name)
+        if path is None or not os.path.isfile(path):
+            shelf_name, label = parts
+            path = _write_preview_png(name, draw(label, shelf_name, greyed=False, size=32, index=None))
+    else:
+        # Accept older Shelf records containing a PNG basename, filename, or absolute path.
+        if os.path.isfile(name):
+            path = name
+        else:
+            basename = os.path.splitext(os.path.basename(name))[0].casefold()
+            path = _png_icon_paths().get(basename)
+    if not path or not os.path.isfile(path):
+        return None
+    collection = _preview_collection()
+    try:
+        preview = collection.get(name)
+        if preview is None:
+            preview = collection.load(name, path, 'IMAGE')
+        return preview
+    except (KeyError, RuntimeError, ValueError, ReferenceError):
+        return None
+
+
+def icon_names(source="ALL"):
+    import os
+    names = []
+    if source in {"ALL", "BLENDER"}:
+        names.extend(_builtin_icon_names())
+    if source in {"ALL", "PNG"}:
+        names.extend("PNG:" + os.path.splitext(os.path.basename(path))[0]
+                     for path in _png_icon_paths().values())
+    if source in {"ALL", "MWK"}:
+        names.extend("MWK:" + key for key in ICONS.keys())
+    return sorted(set(name for name in names if name and name != "NONE"), key=str.casefold)
+
+
+def icon_search(_self, _context, edit_text):
+    query = (edit_text or "").casefold()
+    return [name for name in icon_names() if query in name.casefold()][:100]
+
+
+def is_icon_name(identifier):
+    import os
+    name = str(identifier or "")
+    if name == "NONE":
+        return True
+    if name in _builtin_icon_names():
+        return True
+    if name.startswith("PNG:"):
+        return name[4:].casefold() in _png_icon_paths()
+    if name.startswith("MWK:"):
+        return _procedural_icon_parts(name) is not None
+    basename = os.path.splitext(os.path.basename(name))[0].casefold()
+    return basename in _png_icon_paths() or os.path.isfile(name)
+
+
+def icon_ui_kwargs(identifier):
+    name = str(identifier or "")
+    if name in _builtin_icon_names():
+        return {"icon": name}
+    preview = _icon_preview(name)
+    return {"icon_value": preview.icon_id} if preview is not None else {"icon": "ERROR"}
+
+
+def icon_gpu_texture(identifier, greyed=False, size=32):
+    key = (str(identifier), bool(greyed), int(size))
+    cached = _ICON_GPU_TEXTURES.get(key)
+    if cached is not None:
+        return cached
+    name = str(identifier or "")
+    if name.startswith("MWK:"):
+        parts = _procedural_icon_parts(name)
+        if parts is None:
+            return None
+        texture = globals()["texture"](parts[1], parts[0], greyed=greyed, size=size)
+        _ICON_GPU_TEXTURES[key] = texture
+        return texture
+    import os
+    path_key = name[4:] if name.startswith("PNG:") else name
+    basename = os.path.splitext(os.path.basename(path_key))[0].casefold()
+    if basename not in _png_icon_paths() and not os.path.isfile(path_key):
+        return None
+    preview = _icon_preview(name)
+    if preview is None:
+        return None
+    try:
+        width, height = tuple(preview.icon_size)[:2]
+        count = width * height * 4
+        raw = preview.icon_pixels_float
+        if raw and len(raw) >= count:
+            pixels = np.asarray(raw[:count], dtype=np.float32).reshape(height, width, 4)
+        else:
+            raw = preview.icon_pixels
+            if not raw or len(raw) < count:
+                return None
+            pixels = np.asarray(raw[:count], dtype=np.float32).reshape(height, width, 4) / 255.0
+        ys = np.minimum((np.arange(size) * height / size).astype(np.int32), height - 1)
+        xs = np.minimum((np.arange(size) * width / size).astype(np.int32), width - 1)
+        pixels = pixels[ys[:, None], xs[None, :], :].copy()
+        if greyed:
+            pixels = grey(pixels)
+        texture = _upload(pixels, size)
+        _ICON_GPU_TEXTURES[key] = texture
+        return texture
+    except (AttributeError, ReferenceError, RuntimeError, TypeError, ValueError):
+        return None
+
+
+def clear_icon_previews():
+    global _ICON_PREVIEWS, _ICON_PNG_PATHS
+    if _ICON_PREVIEWS is not None:
+        import bpy.utils.previews
+        bpy.utils.previews.remove(_ICON_PREVIEWS)
+    _ICON_PREVIEWS = None
+    _ICON_PNG_PATHS = None
+    _ICON_GPU_TEXTURES.clear()
+    _ICON_PREVIEW_FILES.clear()

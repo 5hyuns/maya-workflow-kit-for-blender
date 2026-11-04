@@ -278,7 +278,7 @@ class _Carve:
         # isolated. The previous ``piece or area`` fallback opened the entire 3D View.
         preferred = [self.piece, *self.made]
         target = _carved_piece(window, self.rect, preferred)
-        if target is None:
+        if target is None and self.kind == "marked:SHELF_EDITOR":
             print(
                 "Maya Workflow Kit: Shelf Editor carve failed for target "
                 f"{self.rect[2]} x {self.rect[3]} px; refusing full-area fallback."
@@ -290,6 +290,11 @@ class _Carve:
                     lambda: _close_later(ptr, made), first_interval=TICK_FAST
                 )
             return None
+        if target is None:
+            # Keep the established fallback behavior for all other kit windows.
+            target = _area(window, self.piece) or _area(window, self.source)
+            if target is None:
+                return None
 
         self.piece = target.as_pointer()
         _ready[self.kind] = self.piece

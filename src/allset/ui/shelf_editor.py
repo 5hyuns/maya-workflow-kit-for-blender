@@ -23,6 +23,7 @@ PROPERTY_ROW_HEIGHT = 22
 ADD_MENU_COLUMNS = 2
 
 _draft = None
+_draft_base = None
 _loading = False
 _OPERATOR_ITEMS = []
 _ICON_ITEMS = []
@@ -30,6 +31,133 @@ _ICON_ITEMS = []
 
 def _copy_document():
     return json.loads(json.dumps(shelf.user_data()))
+
+
+def _merge_button_lists(base, draft, latest):
+    """Three-way merge button sequences, including external insertions, edits and deletions."""
+    from difflib import SequenceMatcher
+
+    base = json.loads(json.dumps(base or []))
+    draft = json.loads(json.dumps(draft or []))
+    latest = json.loads(json.dumps(latest or []))
+
+    def mapping(source):
+        matched = {}
+        extras = []
+        matcher = SequenceMatcher(a=base, b=source, autojunk=False)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "equal":
+                for offset in range(i2 - i1):
+                    matched[i1 + offset] = j1 + offset
+            elif tag == "replace":
+                shared = min(i2 - i1, j2 - j1)
+                for offset in range(shared):
+                    matched[i1 + offset] = j1 + offset
+                # New entries in a replace range are retained as additions.
+                extras.extend(source[j1 + shared:j2])
+            elif tag == "insert":
+                extras.extend(source[j1:j2])
+        return matched, extras
+
+    draft_map, _draft_extras = mapping(draft)
+    live_map, live_extras = mapping(latest)
+    merged = json.loads(json.dumps(draft))
+
+    # An external deletion wins over an untouched draft entry. Apply removals back-to-front
+    # so earlier list indices remain stable.
+    remove_positions = []
+    for base_index, draft_index in draft_map.items():
+        if base_index not in live_map:
+            remove_positions.append(draft_index)
+    for index in sorted(remove_positions, reverse=True):
+        if 0 <= index < len(merged):
+            merged.pop(index)
+
+    # Adopt external edits only where the corresponding draft entry is still unchanged.
+    for base_index, live_index in live_map.items():
+        draft_index = draft_map.get(base_index)
+        if draft_index is None or draft_index >= len(draft) or live_index >= len(latest):
+            continue
+        if draft[draft_index] == base[base_index] and latest[live_index] != base[base_index]:
+            # Re-map the draft slot after any preceding external deletions.
+            shift = sum(1 for removed in remove_positions if removed < draft_index)
+            target = draft_index - shift
+            if 0 <= target < len(merged):
+                merged[target] = latest[live_index]
+
+    # Preserve external additions (Ctrl+Shift-click, gear menu, settings import).
+    merged.extend(json.loads(json.dumps(live_extras)))
+    return merged
+
+def _merge_mapping(base, draft, latest):
+    """Merge record fields; preserve live values the editor did not modify."""
+    result = json.loads(json.dumps(latest))
+    missing = object()
+    for key in set(base) | set(draft):
+        before = base.get(key, missing)
+        after = draft.get(key, missing)
+        if after == before:
+            continue
+        if after is missing:
+            result.pop(key, None)
+        else:
+            result[key] = json.loads(json.dumps(after))
+    return result
+
+
+def _merge_shelves(base_shelves, draft_shelves, latest_shelves):
+    base_by = {item.get("name"): item for item in base_shelves or []}
+    draft_by = {item.get("name"): item for item in draft_shelves or []}
+    latest_by = {item.get("name"): item for item in latest_shelves or []}
+    merged = []
+    for item in draft_shelves or []:
+        name = item.get("name")
+        before = base_by.get(name)
+        latest = latest_by.get(name)
+        if before is not None and latest is None:
+            # A Shelf deleted from the live settings UI while this editor was open stays deleted.
+            continue
+        if before is not None and latest is not None:
+            current = _merge_mapping(before, item, latest)
+            current["buttons"] = _merge_button_lists(
+                before.get("buttons", []), item.get("buttons", []), latest.get("buttons", []))
+            merged.append(current)
+        else:
+            merged.append(json.loads(json.dumps(item)))
+    for item in latest_shelves or []:
+        name = item.get("name")
+        if name not in base_by and name not in draft_by:
+            merged.append(json.loads(json.dumps(item)))
+    return merged
+
+
+def _merge_documents(base, draft, latest):
+    """Three-way merge a Shelf Editor draft with the latest shelves.json document."""
+    base, draft, latest = base or {}, draft or {}, latest or {}
+    result = json.loads(json.dumps(latest))
+    result["shelves"] = _merge_shelves(
+        base.get("shelves", []), draft.get("shelves", []), latest.get("shelves", []))
+    base_extra = base.get("extra", {}) or {}
+    draft_extra = draft.get("extra", {}) or {}
+    latest_extra = latest.get("extra", {}) or {}
+    extra = json.loads(json.dumps(latest_extra))
+    for shelf_id in set(base_extra) | set(draft_extra) | set(latest_extra):
+        before = base_extra.get(shelf_id, [])
+        after = draft_extra.get(shelf_id, [])
+        live = latest_extra.get(shelf_id, [])
+        if after != before:
+            extra[shelf_id] = _merge_button_lists(before, after, live)
+    if extra:
+        result["extra"] = extra
+    for key in set(base) | set(draft):
+        if key in {"shelves", "extra"}:
+            continue
+        if draft.get(key) != base.get(key):
+            if key in draft:
+                result[key] = json.loads(json.dumps(draft[key]))
+            else:
+                result.pop(key, None)
+    return result
 
 
 def _draft_shelves():
@@ -151,19 +279,74 @@ def menu_search(self, context, edit_text):
 
 
 def icon_search(self, context, edit_text):
-    global _ICON_ITEMS
-    if not _ICON_ITEMS:
-        try:
-            enum_items = bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items
-            _ICON_ITEMS[:] = [item.identifier for item in enum_items if item.identifier != 'NONE']
-        except (AttributeError, KeyError, TypeError):
-            _ICON_ITEMS[:] = ["SCRIPT", "CONSOLE", "MESH_CUBE", "TOOL_SETTINGS"]
-    query = (edit_text or "").lower()
-    return [item for item in _ICON_ITEMS if query in item.lower()][:100]
+    return shelf.shelf_icons.icon_search(self, context, edit_text)
 
 
 def _wm(context):
     return context.window_manager
+
+class ALLSET_OT_shelf_editor_icon_picker(bpy.types.Operator):
+    """Browse Blender, PNG, and Maya Workflow Kit shelf icons."""
+    bl_idname = "allset.shelf_editor_icon_picker"
+    bl_label = "Choose Icon"
+    bl_description = "Choose Icon"
+    bl_options = {'INTERNAL'}
+
+    query: StringProperty(name="Search Icons", options={'TEXTEDIT_UPDATE', 'SKIP_SAVE'})
+    source: EnumProperty(
+        name="Icon Source",
+        items=(
+            ("ALL", "All Icons", "Blender icons, PNG files, and Maya Workflow Kit drawings"),
+            ("BLENDER", "Blender Built-in", "Blender's built-in UI icon identifiers"),
+            ("PNG", "PNG Files", "Packaged and user Shelf PNG files"),
+            ("MWK", "Maya Workflow Kit", "Procedural icons drawn by Maya Workflow Kit"),
+        ),
+        default="ALL",
+        options={'SKIP_SAVE'},
+    )
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=680)
+
+    def draw(self, context):
+        layout = self.layout
+        header = layout.row(align=True)
+        header.prop(self, "source", expand=True)
+        layout.prop(self, "query", text="", icon='VIEWZOOM')
+        names = shelf.shelf_icons.icon_names(self.source)
+        query = self.query.casefold()
+        if query:
+            names = [name for name in names if query in name.casefold()]
+        grid = layout.grid_flow(row_major=True, columns=12, even_columns=True,
+                                even_rows=True, align=True)
+        selected = _wm(context).allset_se_icon
+        for name in names[:900]:
+            op = grid.operator(
+                ALLSET_OT_shelf_editor_icon_select.bl_idname,
+                text="",
+                emboss=(name == selected),
+                **shelf.shelf_icons.icon_ui_kwargs(name),
+            )
+            op.icon_name = name
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+
+class ALLSET_OT_shelf_editor_icon_select(bpy.types.Operator):
+    """Apply the selected icon to the current Shelf button."""
+    bl_idname = "allset.shelf_editor_icon_select"
+    bl_label = "Select Shelf Icon"
+    bl_description = "Select Shelf Icon"
+    bl_options = {'INTERNAL'}
+
+    icon_name: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        _wm(context).allset_se_icon = self.icon_name
+        _redraw(context)
+        return {'FINISHED'}
+
 
 
 def _set_message(context, message):
@@ -244,9 +427,21 @@ def _load_button(context, index):
 
 
 def _start_draft(context):
-    global _draft
-    if marked_window.find_window(context, KIND) is None or _draft is None:
+    global _draft, _draft_base
+    if _draft is None:
+        shelf.reload_user()
         _draft = _copy_document()
+        _draft_base = _copy_document()
+    elif marked_window.find_window(context, KIND) is None:
+        # Closing the native floating window must not silently discard the in-memory draft.
+        # Reconcile any Shelf changes made through the gear menu while the editor was closed.
+        shelf.reload_user()
+        latest = _copy_document()
+        if _draft != (_draft_base or latest):
+            _draft = _merge_documents(_draft_base or latest, _draft, latest)
+        else:
+            _draft = latest
+        _draft_base = latest
     wm = _wm(context)
     current = shelf.current(context)
     valid = {identifier for identifier, _label in _draft_shelves()}
@@ -262,20 +457,21 @@ def open_editor(context):
     # any user-resized dimensions on subsequent launches.
     from . import window_places
     if context.window is not None:
-        size_marker = f"{KIND}_SIZE_V3"
+        place_kind = f"marked:{KIND}"
+        size_marker = f"{place_kind}_SIZE_V3"
         if window_places.place(size_marker) is None:
             source = context.window
             width, height = 460, 460
             x = source.x + max(20, (source.width - width) // 2)
             y = source.y + max(20, (source.height - height) // 2)
-            window_places.remember(KIND, (x, y, width, height))
+            window_places.remember(place_kind, (x, y, width, height))
             window_places.remember(size_marker, (2, 0, 0, 0))
-        elif window_places.place(KIND) is None:
+        elif window_places.place(place_kind) is None:
             source = context.window
             width, height = 460, 460
             x = source.x + max(20, (source.width - width) // 2)
             y = source.y + max(20, (source.height - height) // 2)
-            window_places.remember(KIND, (x, y, width, height))
+            window_places.remember(place_kind, (x, y, width, height))
     window = marked_window.open_window(context, KIND)
     if window is None:
         return None
@@ -591,6 +787,7 @@ class ALLSET_OT_shelf_editor_create_action(bpy.types.Operator):
 
 
 class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
+    """Apply edited Shelf button properties without changing the stored action schema."""
     bl_idname = "allset.shelf_editor_apply_button"
     bl_label = "Apply Button Changes"
 
@@ -601,11 +798,21 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
         if buttons is None or not 0 <= index < len(buttons):
             self.report({'WARNING'}, "Select a custom button first")
             return {'CANCELLED'}
+
+        old = buttons[index]
+        record = dict(old)
         label = wm.allset_se_label.strip() or "Button"
-        record = {"label": label, "icon": shelf._valid_icon(wm.allset_se_icon),
-                  "tooltip": wm.allset_se_tooltip.strip()}
+        record["label"] = label
+        record["icon"] = shelf._valid_icon(wm.allset_se_icon)
+        record["tooltip"] = wm.allset_se_tooltip.strip()
         kind = wm.allset_se_type
+
         if kind == "SEPARATOR":
+            record["icon"] = "NONE"
+            record.pop("menu", None)
+            record.pop("script", None)
+            record.pop("operator", None)
+            record.pop("props", None)
             record.update(type="separator", action={"type": "separator"})
         elif kind == "MENU":
             from . import menu_map
@@ -613,7 +820,12 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             if path not in menu_map.MAP:
                 self.report({'WARNING'}, "Choose a valid Maya menu item")
                 return {'CANCELLED'}
-            record.update(type="action", action={"type": "maya_menu", "id": path})
+            record["menu"] = path
+            record["script"] = ""
+            record.pop("type", None)
+            record.pop("action", None)
+            record.pop("operator", None)
+            record.pop("props", None)
         elif kind == "OPERATOR":
             op_id = wm.allset_se_operator.strip()
             if op_id not in _operator_ids():
@@ -627,34 +839,45 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             if not isinstance(props, dict):
                 self.report({'WARNING'}, "Operator properties must be a JSON object")
                 return {'CANCELLED'}
+            record.pop("menu", None)
+            record.pop("script", None)
+            record.pop("operator", None)
+            record.pop("props", None)
             record.update(type="action", action={"type": "operator", "id": op_id, "properties": props})
-        elif kind == "PYTHON":
+        elif kind in {"SCRIPT", "PYTHON"}:
             code = wm.allset_se_script
             if not code.strip():
                 self.report({'WARNING'}, "Python command cannot be empty")
                 return {'CANCELLED'}
-            record.update(type="action", action={"type": "python", "code": code})
+            record.pop("menu", None)
+            record.pop("type", None)
+            record.pop("action", None)
+            record.pop("operator", None)
+            record.pop("props", None)
+            record["script"] = code
         elif kind == "TOOL":
             target = wm.allset_se_action_id.strip()
             if not target:
                 self.report({'WARNING'}, "Enter a Tool ID")
                 return {'CANCELLED'}
-            space_type = wm.allset_se_tool_space_type
-            record.update(type="action", action={"type": "tool", "id": target,
-                                                   "space_type": space_type})
+            record.pop("menu", None)
+            record.pop("script", None)
+            record.update(type="action", action={
+                "type": "tool", "id": target, "space_type": wm.allset_se_tool_space_type,
+            })
         elif kind == "UI":
             target = wm.allset_se_action_id.strip()
             action_kind = wm.allset_se_action_kind
             if not target or action_kind not in {"blender_menu", "pie_menu", "ui_operator"}:
                 self.report({'WARNING'}, "Enter a valid Menu or UI Operator ID")
                 return {'CANCELLED'}
+            record.pop("menu", None)
+            record.pop("script", None)
             record.update(type="action", action={"type": action_kind, "id": target})
         else:
-            code = wm.allset_se_script
-            if not code.strip():
-                self.report({'WARNING'}, "Python command cannot be empty")
-                return {'CANCELLED'}
-            record["script"] = code
+            self.report({'WARNING'}, "Unsupported Shelf button type")
+            return {'CANCELLED'}
+
         buttons[index] = record
         _set_message(context, f"Updated: {label} (not saved yet)")
         _redraw(context)
@@ -702,17 +925,21 @@ class ALLSET_OT_shelf_editor_save(bpy.types.Operator):
     bl_label = "Save Changes"
 
     def execute(self, context):
-        global _draft
+        global _draft, _draft_base
         if _draft is None:
             return {'CANCELLED'}
+        shelf.reload_user()
+        latest = _copy_document()
+        merged = _merge_documents(_draft_base or latest, _draft, latest)
         shelf._user.clear()
-        shelf._user.update(json.loads(json.dumps(_draft)))
+        shelf._user.update(merged)
         shelf.save_user()
         active = _wm(context).allset_se_shelf
         valid = {identifier for identifier, _label in shelf.shelves()}
         if active in valid:
             shelf.set_current(context, active)
         _draft = _copy_document()
+        _draft_base = _copy_document()
         _set_message(context, "Shelf changes saved")
         _redraw(context)
         return {'FINISHED'}
@@ -726,8 +953,10 @@ class ALLSET_OT_shelf_editor_cancel(bpy.types.Operator):
         return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        global _draft
+        global _draft, _draft_base
+        shelf.reload_user()
         _draft = _copy_document()
+        _draft_base = _copy_document()
         wm = _wm(context)
         valid = {identifier for identifier, _label in _draft_shelves()}
         wm.allset_se_shelf = shelf.current(context) if shelf.current(context) in valid else _draft_shelves()[0][0]
@@ -782,8 +1011,8 @@ class ALLSET_UL_shelf_editor_properties(bpy.types.UIList):
             return
         if item.row_kind == "PREVIEW":
             row = layout.row(align=True)
-            row.label(text=item.label or "SCRIPT", icon=shelf._valid_icon(data.allset_se_icon))
-            row.label(text="Icon Preview")
+            row.label(text="Icon Preview", **shelf.shelf_icons.icon_ui_kwargs(data.allset_se_icon or "SCRIPT"))
+            row.operator(ALLSET_OT_shelf_editor_icon_picker.bl_idname, text="", icon='IMAGE')
             return
         if item.field and hasattr(data, item.field):
             layout.prop(data, item.field, text=item.label)
@@ -801,11 +1030,12 @@ class ALLSET_UL_shelf_editor_contents(bpy.types.UIList):
             row.label(text="Factory", icon='LOCKED')
             return
 
+        icon_kwargs = shelf.shelf_icons.icon_ui_kwargs(item.icon if item.icon != 'NONE' else 'DOT')
         op = row.operator(
             ALLSET_OT_shelf_editor_select_button.bl_idname,
             text=item.label,
-            icon=item.icon if item.icon != 'NONE' else 'DOT',
             depress=data.allset_se_index == item.button_index,
+            **icon_kwargs,
         )
         op.index = item.button_index
         if data.allset_se_index == item.button_index:
@@ -1083,6 +1313,8 @@ class ALLSET_PT_shelf_editor(bpy.types.Panel):
 
 classes = (
     ALLSET_OT_shelf_editor_open,
+    ALLSET_OT_shelf_editor_icon_picker,
+    ALLSET_OT_shelf_editor_icon_select,
     ALLSET_OT_shelf_editor_select_shelf,
     ALLSET_OT_shelf_editor_select_button,
     ALLSET_OT_shelf_editor_add_shelf,
@@ -1124,7 +1356,7 @@ def register():
     wm.allset_se_shelf = StringProperty(options={'SKIP_SAVE'})
     wm.allset_se_index = IntProperty(default=-1, options={'SKIP_SAVE'})
     wm.allset_se_label = StringProperty(name="Label", options={'SKIP_SAVE'})
-    wm.allset_se_icon = StringProperty(name="Icon", search=icon_search, options={'SKIP_SAVE'})
+    wm.allset_se_icon = StringProperty(name="Icon", search=shelf.shelf_icons.icon_search, options={'SKIP_SAVE'})
     wm.allset_se_type = EnumProperty(
         name="Command Type",
         items=(("SCRIPT", "Legacy Python", "Legacy Python script"),
@@ -1179,8 +1411,9 @@ def register():
 
 
 def unregister():
-    global _draft
+    global _draft, _draft_base
     _draft = None
+    _draft_base = None
     marked_window.KINDS.pop(KIND, None)
     for name in _WM_PROPS:
         if hasattr(bpy.types.WindowManager, name):

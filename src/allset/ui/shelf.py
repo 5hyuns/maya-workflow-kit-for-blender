@@ -310,8 +310,6 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         if b is not None and b.get("menu"):
             return self._run_menu(context, b)
         if b is not None and b.get("type") == "action":
-            if self.option:
-                return {'CANCELLED'}
             return self._run_user_action(context, b)
         if b is not None and b.get("type") == "separator":
             return {'CANCELLED'}
@@ -348,40 +346,34 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         return {'CANCELLED'}
 
     def _run_user_action(self, context, button):
-        """Run a user-defined action while leaving factory and legacy button execution unchanged."""
+        """Run a custom Shelf action through the canonical context and undo path."""
         action = button.get("action") or {}
         kind = action.get("type")
         target = action.get("id", "")
         try:
+            from ..marking.modal import run_action
             if kind == "operator":
                 if "." not in target:
                     raise RuntimeError(f"Invalid Operator ID: {target}")
-                category, name = target.split(".", 1)
-                op = getattr(getattr(bpy.ops, category), name, None)
-                if op is None:
-                    raise RuntimeError(f"Operator not found: {target}")
-                props = action.get("properties", {})
-                if not isinstance(props, dict):
-                    raise RuntimeError("Operator properties must be a JSON object")
-                return op('INVOKE_DEFAULT', **props)
+                return run_action(context, ("v3d", target, action.get("properties", {})),
+                                  option=bool(self.option))
             if kind == "maya_menu":
-                return self._run_menu(context, {"label": button["label"], "menu": target})
+                return self._run_menu(context, {"label": button.get("label", "Shelf Button"), "menu": target})
             if kind == "blender_menu":
-                return bpy.ops.wm.call_menu('INVOKE_DEFAULT', name=target)
+                return run_action(context, ("menu", target), option=bool(self.option))
             if kind == "pie_menu":
-                return bpy.ops.wm.call_menu_pie('INVOKE_DEFAULT', name=target)
+                return run_action(context, ("pie", target), option=bool(self.option))
             if kind == "tool":
-                return bpy.ops.wm.tool_set_by_id(name=target, space_type=action.get("space_type", "VIEW_3D"))
+                return run_action(context, ("tool", target, False), option=bool(self.option))
             if kind == "ui_operator":
                 if "." not in target:
                     raise RuntimeError(f"Invalid UI Operator ID: {target}")
-                category, name = target.split(".", 1)
-                op = getattr(getattr(bpy.ops, category), name, None)
-                if op is None:
-                    raise RuntimeError(f"UI Operator not found: {target}")
-                return op('INVOKE_DEFAULT')
+                return run_action(context, ("v3d", target, {}), option=bool(self.option))
             if kind == "python":
-                ok, message = run_script(context, button["label"], action.get("code", ""))
+                code = action.get("code", "")
+                if not code.strip():
+                    raise RuntimeError("Python command is empty")
+                ok, message = run_script(context, button.get("label", "Shelf Button"), code)
                 if not ok:
                     raise RuntimeError(message)
                 return {'FINISHED'}
@@ -540,8 +532,8 @@ class ALLSET_OT_shelf_delete(bpy.types.Operator):
 
 class _ButtonProps:
     label: StringProperty(name="Label", default="Script")
-    icon: StringProperty(name="Icon", default="SCRIPT",
-                         description="Blender icon name (e.g. SCRIPT, MESH_CUBE)")
+    icon: StringProperty(name="Icon", default="SCRIPT", search=shelf_icons.icon_search,
+                         description="Blender, PNG, or Maya Workflow Kit icon identifier")
     script: StringProperty(name="Python", default="print('hello')")
     from_text: BoolProperty(name="From Text Editor",
                             description="Use the text open in a Text Editor instead of the line above")
@@ -557,8 +549,9 @@ class _ButtonProps:
 
 
 def _valid_icon(name):
-    items = bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items
-    return name if name in items else 'SCRIPT'
+    """Accept Blender built-in, PNG, and Maya Workflow Kit icon identifiers."""
+    name = str(name or "").strip()
+    return name if shelf_icons.is_icon_name(name) else 'SCRIPT'
 
 
 class ALLSET_OT_shelf_add_button(_ButtonProps, bpy.types.Operator):
@@ -599,7 +592,12 @@ class ALLSET_OT_shelf_edit_button(_ButtonProps, bpy.types.Operator):
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         b = buttons[self.index]
-        self.label, self.icon, self.script = b["label"], b["icon"], b["script"]
+        self.label = b.get("label", "Button")
+        self.icon = b.get("icon", "SCRIPT")
+        self.script = b.get("script", "")
+        action = b.get("action") or {}
+        if action.get("type") == "python":
+            self.script = action.get("code", self.script)
         return context.window_manager.invoke_props_dialog(self, width=420)
 
     def execute(self, context):
@@ -608,9 +606,11 @@ class ALLSET_OT_shelf_edit_button(_ButtonProps, bpy.types.Operator):
             return {'CANCELLED'}
         source = self._source(context)
         old = buttons[self.index]
-        new = {"label": self.label, "icon": _valid_icon(self.icon), "script": source or old["script"]}
-        if old.get("menu"):            # a menu button stays one: only its label / icon change
-            new["menu"], new["script"] = old["menu"], ""
+        new = dict(old)
+        new["label"] = self.label
+        new["icon"] = _valid_icon(self.icon)
+        if "script" in old and source:
+            new["script"] = source
         buttons[self.index] = new
         save_user()
         _redraw(context)
@@ -665,13 +665,13 @@ class ALLSET_OT_shelf_add_action(bpy.types.Operator):
     """Add a Shelf Button using a selected command type."""
     bl_idname = "allset.shelf_add_action"
     bl_label = "Add Shelf Button"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     action_type: StringProperty(options={'HIDDEN'})
     help_text: StringProperty(options={'HIDDEN'})
     label: StringProperty(name="Label", default="New Button")
-    icon: StringProperty(name="Icon", default="SCRIPT",
-                         description="Blender icon identifier, e.g. MOD_BEVEL or TOOL_SETTINGS")
+    icon: StringProperty(name="Icon", default="SCRIPT", search=shelf_icons.icon_search,
+                         description="Blender, PNG, or Maya Workflow Kit icon identifier")
     tooltip: StringProperty(name="Tooltip")
     operator_id: StringProperty(name="Operator", description="Operator identifier, e.g. mesh.bevel")
     properties_json: StringProperty(name="Properties (JSON)", default="{}",
@@ -740,9 +740,10 @@ class ALLSET_OT_shelf_add_action(bpy.types.Operator):
         if buttons is None:
             self.report({'ERROR'}, "The selected Shelf cannot accept custom buttons")
             return {'CANCELLED'}
-        label = self.label.strip() or "New Button"
-        record = {"label": label, "icon": _valid_icon(self.icon), "tooltip": self.tooltip.strip()}
         kind = self.action_type
+        label = "Separator" if kind == 'SEPARATOR' else (self.label.strip() or "New Button")
+        record = {"label": label, "icon": "NONE" if kind == 'SEPARATOR' else _valid_icon(self.icon),
+                  "tooltip": self.tooltip.strip()}
         if kind == 'SEPARATOR':
             record.update(type="separator", action={"type": "separator"})
         elif kind == 'OPERATOR':
@@ -764,9 +765,13 @@ class ALLSET_OT_shelf_add_action(bpy.types.Operator):
             if not target:
                 self.report({'ERROR'}, "Enter a menu path or ID")
                 return {'CANCELLED'}
-            action_type = {'MAYA': 'maya_menu', 'BLENDER': 'blender_menu', 'PIE': 'pie_menu',
-                           'CUSTOM_UI': 'ui_operator'}[self.menu_kind]
-            record.update(type="action", action={"type": action_type, "id": target})
+            if self.menu_kind == 'MAYA':
+                record["menu"] = target
+                record["script"] = ""
+            else:
+                action_type = {'BLENDER': 'blender_menu', 'PIE': 'pie_menu',
+                               'CUSTOM_UI': 'ui_operator'}[self.menu_kind]
+                record.update(type="action", action={"type": action_type, "id": target})
         elif kind == 'POPUP':
             if self.menu_kind == 'CUSTOM_UI':
                 target = self.ui_operator_id.strip()
@@ -777,7 +782,11 @@ class ALLSET_OT_shelf_add_action(bpy.types.Operator):
             if not target:
                 self.report({'ERROR'}, "Enter a registered Menu or UI Operator ID")
                 return {'CANCELLED'}
-            record.update(type="action", action={"type": action_type, "id": target, "popup": True})
+            if action_type == 'maya_menu':
+                record["menu"] = target
+                record["script"] = ""
+            else:
+                record.update(type="action", action={"type": action_type, "id": target, "popup": True})
         elif kind == 'TOOL':
             if not self.tool_id.strip():
                 self.report({'ERROR'}, "Enter a Tool ID")
@@ -792,7 +801,7 @@ class ALLSET_OT_shelf_add_action(bpy.types.Operator):
                 # Keep the original JSON shape for compatibility with existing Shelf scripts.
                 record["script"] = self.python_code
             else:
-                record.update(type="action", action={"type": "python", "code": self.python_code})
+                record["script"] = self.python_code
         else:
             self.report({'ERROR'}, "Unsupported Shelf action type")
             return {'CANCELLED'}
@@ -970,8 +979,15 @@ def draw_shelf(layout, context):
         if not s["buttons"]:
             row.operator(ALLSET_OT_shelf_add_button.bl_idname, text="Add Button", icon='ADD')
         for i, b in enumerate(s["buttons"]):
-            op = row.operator(ALLSET_OT_shelf_button.bl_idname, text=b["label"] if b["icon"] == 'SCRIPT' else "",
-                              icon=_valid_icon(b["icon"]))
+            if b.get("type") == "separator" or (b.get("action") or {}).get("type") == "separator":
+                row.separator(factor=0.45)
+                continue
+            icon_kwargs = shelf_icons.icon_ui_kwargs(b.get("icon", "SCRIPT"))
+            op = row.operator(
+                ALLSET_OT_shelf_button.bl_idname,
+                text=b.get("label", "Button") if b.get("icon", "SCRIPT") == 'SCRIPT' else "",
+                **icon_kwargs,
+            )
             op.shelf, op.index = cur, i
         return
     for i, _label, _action, icon in factory_buttons(cur):
@@ -1095,7 +1111,7 @@ SCROLL_RIGHT_PX = 16     # gap between the scroll bar and the area's right edge
 _row = {}      # shelf id -> first row shown
 
 
-def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX):
+def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX, separators=()):
     """[(row, x)] for ``count`` slots in a row ``width`` px wide (scroll bar excluded): Maya's flow — a slot that
     would cross the right edge starts the next row; a separator gap before it counts only inside a row."""
     out = []
@@ -1103,13 +1119,17 @@ def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX):
     limit = width - (SCROLL_PX + SCROLL_RIGHT_PX + 2) * scale
     row, x = 0, x0
     gaps = set(gaps)
+    separators = set(separators)
     for slot in range(count):
         if slot in gaps and x > x0:
             x += SEP_PX * scale
-        if x > x0 and x + ICON_PX * scale > limit:
+        is_separator = slot in separators
+        slot_width = 8 if is_separator else ICON_PX
+        pitch = 12 if is_separator else PITCH_PX
+        if x > x0 and x + slot_width * scale > limit:
             row, x = row + 1, x0
         out.append((row, x))
-        x += PITCH_PX * scale
+        x += pitch * scale
     return out
 
 
@@ -1117,8 +1137,13 @@ def _layout(region, scale):
     space = _space_of(region)
     tabs = tabs_in_window(space)
     cur, buttons = icon_buttons(bpy.context)
+    separator_slots = {
+        slot for slot, (index, _label, _colour, _mapped) in enumerate(buttons)
+        if (record := button_record(cur, index)) is not None
+        and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator")
+    }
     lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps() if tabs else (),
-                     STRIP_LEFT_PX if tabs else LEFT_PX)
+                     STRIP_LEFT_PX if tabs else LEFT_PX, separators=separator_slots)
     return cur, tabs, lay
 
 
@@ -1146,7 +1171,13 @@ def icon_rect(region, slot, scale):
     edge (not drawn, not picked)."""
     cur, tabs, lay = _layout(region, scale)
     top = round(TAB_PX * scale) if tabs else 0
-    size = min(ICON_PX * scale, region.height - top - 4)
+    cur, buttons = icon_buttons(bpy.context)
+    is_separator = False
+    if 0 <= slot < len(buttons):
+        record = button_record(cur, buttons[slot][0])
+        is_separator = bool(record and (record.get("type") == "separator"
+                               or (record.get("action") or {}).get("type") == "separator"))
+    size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
     y = (region.height - top - size) / 2
     off = getattr(region, "width", 0) + 10 ** 6
     if slot >= len(lay):           # past the last button (tests ask for empty slots)
@@ -1357,10 +1388,13 @@ def draw_row():
         shown = slot + 1
         record = button_record(_cur, index)
         if record and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator"):
+            # Keep the slot narrow, but draw a divider at nearly the full button height.
+            separator_height = min(ICON_PX * s, region.height - (TAB_PX * s if tabs else 0) - 4)
+            separator_y = (region.height - (TAB_PX * s if tabs else 0) - separator_height) / 2
             cx = x + size / 2
             dark, light = _separator_colours(base)
-            _draw_rect(cx - s, round(5 * s), max(1.0, s), size - round(2 * s), dark)
-            _draw_rect(cx, round(5 * s), max(1.0, s), size - round(2 * s), light)
+            _draw_rect(cx - s, separator_y, max(1.0, s), separator_height, dark)
+            _draw_rect(cx, separator_y, max(1.0, s), separator_height, light)
             continue
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
@@ -1413,6 +1447,12 @@ def _user_texture(shelf_id, index, label, greyed, size):
     the same command's shelf drawing, else its Status Line / Tool Box / menu drawing), else Maya's command button
     with the label's initials (Maya: the item's image, else a default command icon with a label)."""
     rec = button_record(shelf_id, index)
+    if rec:
+        chosen_icon = rec.get("icon", "SCRIPT")
+        if chosen_icon not in {"", "NONE", "SCRIPT"}:
+            custom_texture = shelf_icons.icon_gpu_texture(chosen_icon, greyed=greyed, size=size)
+            if custom_texture is not None:
+                return custom_texture
     path = rec.get("menu") if rec else None
     if path:
         from . import menu_icon_data, menu_icons
