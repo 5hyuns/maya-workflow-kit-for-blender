@@ -391,6 +391,67 @@ def _far_ends(pair, v, sel, scales=None):
     return out
 
 
+def _fan(v):
+    """[(edge, face after it)] around ``v`` in order, or None when an edge there doesn't have exactly two faces."""
+    if not v.link_edges or any(len(e.link_faces) != 2 for e in v.link_edges):
+        return None
+    e = v.link_edges[0]
+    f = e.link_faces[0]
+    out = []
+    for _ in range(len(v.link_edges)):
+        out.append((e, f))
+        nxt = next((x for x in v.link_edges if x is not e and f in x.link_faces), None)
+        if nxt is None:
+            return None
+        e = nxt
+        f = e.link_faces[0] if e.link_faces[1] is f else e.link_faces[1]
+    return out if out[0][0] is e and len({x for x, _ in out}) == len(out) else None
+
+
+def gap_merges(edges, w):
+    """Vertices where two bevelled edges in a row around the vertex have two or more unbevelled edges between them:
+    like Maya (Auto miter), all the faces of that gap meet at one new vertex. It lies on the bisector of the gap's
+    faces laid flat around the vertex (their angles there added up to ``theta``), at W from both bevelled edges in
+    that flat layout: W / sin(theta / 2) from the vertex, in the gap face that holds the bisector.
+    Returns [(target position, [the gap's faces])]."""
+    sel = set(edges)
+    out = []
+    for v in {x for e in edges for x in e.verts}:
+        if sum(1 for e in v.link_edges if e in sel) < 2:
+            continue
+        fan = _fan(v)
+        if fan is None:
+            continue
+        n = len(fan)
+        bev = [i for i, (e, _f) in enumerate(fan) if e in sel]
+        for a, b in zip(bev, bev[1:] + bev[:1]):
+            gap = [(a + k) % n for k in range(((b - a) % n) or n)]       # fan slots from edge a to edge b
+            if len(gap) < 3:                                              # fewer than two unbevelled edges between
+                continue
+            dirs, angles = [], []
+            for i in gap + [b]:
+                d = fan[i][0].other_vert(v).co - v.co
+                if d.length <= ZERO:
+                    break
+                dirs.append(d.normalized())
+            else:
+                angles = [math.acos(max(-1.0, min(1.0, p.dot(q)))) for p, q in zip(dirs, dirs[1:])]
+            theta = sum(angles)
+            if not angles or not 1e-4 < theta < 2.0 * math.pi - 1e-4 or math.sin(theta / 2.0) <= 1e-4:
+                continue
+            rest = theta / 2.0
+            for p, q, ang in zip(dirs, dirs[1:], angles):
+                if rest <= ang + 1e-12:
+                    perp = q - p * p.dot(q)
+                    if perp.length <= ZERO:
+                        break
+                    ray = p * math.cos(rest) + perp.normalized() * math.sin(rest)
+                    out.append((v.co + ray * (w / math.sin(theta / 2.0)), [fan[i][1] for i in gap]))
+                    break
+                rest -= ang
+    return out
+
+
 def strip_limits(edges, ends):
     """A lone bevelled edge whose two ends both have a slide edge near its line, the two running outwards almost
     parallel (|cos| of their angle above 0.9: a rim edge of an n-gon cap with many sides): the width is limited to
@@ -777,6 +838,7 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     pair_moves = [(c["origin"], c["ray"], c["k_ray"], c["u3"], c["k_u3"])
                   for c in list(pairs2.values()) + list(offsets.values())]
     corners = corner_moves(edges) if int(segments) == 1 else []
+    merges = [(p, {f[flay] for f in fs}) for p, fs in gap_merges(edges, w)]   # gap faces by their source id
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=bseg, profile=profile(depth), affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
@@ -831,6 +893,12 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
             best = min(made, key=gap, default=None)
             if best is not None and gap(best) < 0.5 * w:
                 best.co = origin + ray * (w * k_ray)
+    for target, sources in merges:
+        # the made vertex that every face of the gap holds
+        for x in made:
+            if x.is_valid and sources <= {f[flay] for f in x.link_faces}:
+                x.co = target
+                break
     for far, origin, unit_dir, slide in overs:
         # the made vertex on that edge's line, at or near its far vertex
         def off_line(x, origin=origin, unit_dir=unit_dir):

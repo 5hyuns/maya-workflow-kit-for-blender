@@ -3,6 +3,16 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Bevel at a tip where two bevelled edges leave two or more other edges between them** (#213): for example two
+  neighbouring edges at the tip of a pyramid. The faces on the far side now meet at one new vertex on the bisector
+  of those faces laid flat around the tip, at the bevel width from both bevelled edges, on the surface like Maya (it
+  used to sit inside the mesh, closer to the tip). Still different from Maya: Maya widens such a tip by an amount
+  that changes with the order of the mesh's edges (a mirrored mesh can give a different width), so the kit keeps
+  the plain bevel width there.
+
 ## [0.11.0] — 2026-11-04
 
 ### Added
