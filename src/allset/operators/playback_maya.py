@@ -6,10 +6,11 @@ frames: Once stops on the last frame of the range (the first frame when playing 
 playback round at either end. The decision is bpy-free (``loop_step``); stopping / turning round runs from a timer,
 outside the frame handler.
 
-Stepped Preview: every time-keyed F-curve plays as if its keys were stepped, also while scrubbing, and the curves get
-their own interpolation back when it is turned off (driver curves are left alone). Blender has no evaluation-only
-switch for this, so the kit sets the keys to Constant and keeps each key's own interpolation on the action
-(``STASH``): keys added or re-set while the preview is on are stepped too and keep the interpolation they came with.
+Stepped Preview: every time-keyed F-curve shows as if its keys were stepped, while playing and scrubbing; the keys,
+their interpolation and the Graph Editor curves stay as they are (driver curves are left alone). Blender has no
+stepped-evaluation switch, so after each frame change (and after keys change) the kit writes the value of the key
+before the current frame into each animated channel (``apply_stepped``). Kit Auto Key compares channels with these
+shown values (``curve_value``), so scrubbing keys nothing. Final renders (F12) show the curves' own values.
 """
 
 import time
@@ -123,6 +124,97 @@ LOOP_ICONS = {'CONTINUOUS': 'FILE_REFRESH', 'ONCE': 'FORWARD', 'OSCILLATE': 'ARR
 
 # --- stepped preview ----------------------------------------------------------------------------------
 
+ANIMATED = ("objects", "shape_keys", "materials", "meshes", "armatures", "curves", "cameras", "lights", "worlds",
+            "scenes", "node_groups", "textures", "lattices", "grease_pencils", "speakers", "particles")
+
+
+def active(scene=None):
+    scene = scene if scene is not None else bpy.context.scene
+    return bool(getattr(scene, "allset_stepped_preview", False))
+
+
+def _held_key(fc, t):
+    """Time of the key a stepped curve holds at ``t``: the last key before ``t``, or None where the curve's own value
+    is already that (on a key, before the first key, after the last one)."""
+    pts = fc.keyframe_points
+    lo, hi = 0, len(pts) - 1
+    if hi < 1 or t <= pts[0].co.x + 1e-6 or t >= pts[hi].co.x - 1e-6:
+        return None
+    while lo < hi - 1:             # pts[lo].co.x < t < pts[hi].co.x
+        mid = (lo + hi) // 2
+        if pts[mid].co.x <= t + 1e-6:
+            lo = mid
+        else:
+            hi = mid
+    k = pts[lo].co.x
+    return None if abs(k - t) < 1e-6 else k
+
+
+def curve_value(fc, frame, scene=None):
+    """What the curve shows at ``frame``: stepped while Enable Stepped Preview is on (Auto Key compares with this)."""
+    if active(scene):
+        k = _held_key(fc, frame)
+        if k is not None:
+            return fc.evaluate(k)
+    return fc.evaluate(frame)
+
+
+def _animated_ids():
+    for name in ANIMATED:
+        for idb in getattr(bpy.data, name, ()):
+            ad = getattr(idb, "animation_data", None)
+            if ad is not None and ad.action is not None:
+                yield idb
+
+
+def _owner(idb, path):
+    """(owner, attribute or key, is a custom property) of an F-curve data path."""
+    if path.endswith('"]'):
+        i = path.rfind('["')
+        return (idb.path_resolve(path[:i]) if i else idb), path[i + 2:-2], True
+    if "." in path:
+        head, attr = path.rsplit(".", 1)
+        return idb.path_resolve(head), attr, False
+    return idb, path, False
+
+
+def _write(idb, fc, value):
+    try:
+        owner, attr, custom = _owner(idb, fc.data_path)
+        cur = owner[attr] if custom else getattr(owner, attr)
+        arr = not isinstance(cur, (int, float, bool))
+        old = cur[fc.array_index] if arr else cur
+        if isinstance(old, bool) or not isinstance(old, (int, float)):
+            return
+        new = int(round(value)) if isinstance(old, int) else value
+        if abs(old - new) < 1e-7:
+            return
+        if arr:
+            cur[fc.array_index] = new
+        elif custom:
+            owner[attr] = new
+        else:
+            setattr(owner, attr, new)
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError, RuntimeError):
+        pass
+
+
+def apply_stepped(scene):
+    """Show every animation curve stepped at the current frame: the channels get the value of the key before it.
+    The keys themselves are not changed (Blender has no stepped-evaluation switch: the shown values are written over
+    the evaluated ones, until the next frame change)."""
+    t = scene.frame_current + scene.frame_subframe
+    for idb in _animated_ids():
+        for fc in compat.id_fcurves(idb):
+            if fc.mute or not fc.is_valid:
+                continue
+            k = _held_key(fc, t)
+            if k is not None:
+                _write(idb, fc, fc.evaluate(k))
+
+
+# Files saved by an earlier build of this preview have their keys set to Constant, with each key's own interpolation
+# kept on the action: they get it back.
 def _bags(action):
     """(key, F-curves) for each channelbag of the action."""
     return [(f"{n}.{bag.slot_handle}", bag.fcurves) for n, bag in enumerate(compat.fcurve_owners(action))]
@@ -138,46 +230,6 @@ def read_stash(action):
     for ent in action.get(STASH, ()):
         out[ent["k"]] = (list(ent["f"]), list(ent["i"]))
     return out
-
-
-def _write_stash(action, stash):
-    action[STASH] = [{"k": k, "f": f, "i": i} for k, (f, i) in stash.items()]
-
-
-def step_action(action):
-    """Step every key of the action that is not Constant yet, keeping its interpolation in the stash. True if a key
-    changed."""
-    stash = None
-    for bag_key, fcurves in _bags(action):
-        for fc in fcurves:
-            pts = fc.keyframe_points
-            moving = [k for k in pts if k.interpolation != 'CONSTANT']
-            if not moving:
-                continue
-            if stash is None:
-                stash = read_stash(action)
-            ck = _curve_key(bag_key, fc)
-            if ck not in stash:  # first time: every key of the curve, the Constant ones too
-                stash[ck] = ([k.co.x for k in pts], [INTERP.index(k.interpolation) for k in pts])
-            else:                # keys added or re-set while the preview is on
-                frames, kinds = stash[ck]
-                for k in moving:
-                    _drop(frames, kinds, k.co.x)
-                    frames.append(k.co.x)
-                    kinds.append(INTERP.index(k.interpolation))
-            for k in moving:
-                k.interpolation = 'CONSTANT'
-            fc.update()
-    if stash is None:
-        return False
-    _write_stash(action, stash)
-    return True
-
-
-def _drop(frames, kinds, frame):
-    for j in range(len(frames) - 1, -1, -1):
-        if abs(frames[j] - frame) < 1e-4:
-            del frames[j], kinds[j]
 
 
 def restore_pairs(key_frames, stash_frames):
@@ -199,6 +251,7 @@ def restore_pairs(key_frames, stash_frames):
 
 
 def restore_action(action):
+    """Give an action's keys back the interpolation an earlier build of the preview kept on it."""
     if STASH not in action:
         return
     stash = read_stash(action)
@@ -224,47 +277,70 @@ def restore_action(action):
     del action[STASH]
 
 
-def _scenes_on():
-    return any(getattr(s, "allset_stepped_preview", False) for s in bpy.data.scenes)
-
-
-def step_all():
-    changed = False
-    for action in bpy.data.actions:
-        changed = step_action(action) or changed
-    return changed
-
-
 def restore_all():
     for action in bpy.data.actions:
-        restore_action(action)
+        if STASH in action:
+            restore_action(action)
+
+
+def _redraw(context):
+    wm = context.window_manager
+    for w in (wm.windows if wm else ()):
+        for area in w.screen.areas:
+            area.tag_redraw()
 
 
 def _update_stepped(self, context):
+    restore_all()
     if self.allset_stepped_preview:
-        step_all()
-    elif not _scenes_on():
-        restore_all()
-    for w in context.window_manager.windows:
-        for area in w.screen.areas:
-            area.tag_redraw()
+        apply_stepped(self)
+    else:                                    # the curves' own values again
+        self.frame_set(self.frame_current, subframe=self.frame_subframe)
+    _redraw(context)
 
 
 _busy = []
 
 
-@persistent
-def _on_depsgraph(scene, depsgraph):
-    if _busy or not getattr(scene, "allset_stepped_preview", False) or not depsgraph.id_type_updated('ACTION'):
+def _guarded(fn, scene):
+    if _busy:
         return
     _busy.append(1)
     try:
-        step_all()
+        fn(scene)
     finally:
         _busy.clear()
 
 
+@persistent
+def _on_frame_stepped(scene, depsgraph=None):
+    if active(scene) and not (depsgraph is not None and depsgraph.mode == 'RENDER'):
+        _guarded(apply_stepped, scene)
+
+
+@persistent
+def _on_depsgraph(scene, depsgraph):
+    # keys set or edited: Blender shows the curves' own values again, step them
+    if active(scene) and depsgraph.id_type_updated('ACTION'):
+        _guarded(apply_stepped, scene)
+
+
+@persistent
+def _on_reload(*_args):
+    try:
+        restore_all()
+        scene = bpy.context.scene
+    except (AttributeError, RuntimeError):
+        return
+    if scene is not None and active(scene):
+        _guarded(apply_stepped, scene)
+
+
 classes = (ALLSET_OT_playback_loop_cycle,)
+
+_HANDLERS = (("frame_change_post", _on_frame), ("frame_change_post", _on_frame_stepped),
+             ("depsgraph_update_post", _on_depsgraph), ("load_post", _on_reload), ("undo_post", _on_reload),
+             ("redo_post", _on_reload))
 
 
 def register_props():
@@ -273,25 +349,26 @@ def register_props():
         description="What playback does at the end of the range, like Maya's Playback Looping")
     bpy.types.Scene.allset_stepped_preview = bpy.props.BoolProperty(
         name="Enable Stepped Preview", default=False, update=_update_stepped,
-        description="Play and scrub every animation curve as if its keys were stepped; the curves keep their own "
-                    "tangents for when this is off")
+        description="Play and scrub every animation curve as if its keys were stepped; the keys and their tangents "
+                    "stay as they are")
 
 
 def register_handlers():
-    bpy.app.handlers.frame_change_post.append(_on_frame)
-    bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
+    for name, fn in _HANDLERS:
+        getattr(bpy.app.handlers, name).append(fn)
+    if hasattr(bpy.data, "actions"):
+        _on_reload()
 
 
 def unregister():
-    for hs, fn in ((bpy.app.handlers.frame_change_post, _on_frame),
-                   (bpy.app.handlers.depsgraph_update_post, _on_depsgraph)):
+    for name, fn in _HANDLERS:
+        hs = getattr(bpy.app.handlers, name)
         if fn in hs:
             hs.remove(fn)
     try:
-        if hasattr(bpy.data, "scenes") and _scenes_on():
-            restore_all()
-            for s in bpy.data.scenes:
-                s.allset_stepped_preview = False
+        for sc in bpy.data.scenes:
+            if getattr(sc, "allset_stepped_preview", False):
+                sc.frame_set(sc.frame_current, subframe=sc.frame_subframe)   # the curves' own values
     except (AttributeError, RuntimeError):
         pass
     for name in ("allset_stepped_preview", "allset_playback_loop"):

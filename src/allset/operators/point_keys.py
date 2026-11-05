@@ -22,6 +22,8 @@ import bmesh
 import bpy
 from bpy.app.handlers import persistent
 
+from . import playback_maya
+
 COMPONENT_MODES = {'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_LATTICE'}
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'LATTICE'}
 _VERT_PATH = re.compile(r"^vertices\[(\d+)\]\.co$")
@@ -176,7 +178,7 @@ def key_changed_points(ob, frame, moved, eps=1e-5):
     from . import graph_key_menu
     todo = []
     for (path, index), (fc, v) in keyed_point_values(ob).items():
-        if abs(v - fc.evaluate(frame)) > eps * max(1.0, abs(v)) and moved(path, index, v):
+        if abs(v - playback_maya.curve_value(fc, frame)) > eps * max(1.0, abs(v)) and moved(path, index, v):
             todo.append((path, index, v))
     if not todo:
         return []
@@ -256,7 +258,7 @@ def apply_frame(scene):
                 continue
             co = bm.verts[i].co
             for fc in fcs:
-                co[fc.array_index] = fc.evaluate(frame)
+                co[fc.array_index] = playback_maya.curve_value(fc, frame)
             moved += 1
         if moved:
             bmesh.update_edit_mesh(me, loop_triangles=False, destructive=False)

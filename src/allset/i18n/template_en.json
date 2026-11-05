@@ -6505,7 +6505,7 @@
   },
   "Labels/operators/playback_maya": {
    "Enable Stepped Preview": "Enable Stepped Preview",
-   "Play and scrub every animation curve as if its keys were stepped; the curves keep their own tangents for when this is off": "Play and scrub every animation curve as if its keys were stepped; the curves keep their own tangents for when this is off",
+   "Play and scrub every animation curve as if its keys were stepped; the keys and their tangents stay as they are": "Play and scrub every animation curve as if its keys were stepped; the keys and their tangents stay as they are",
    "Playback Looping": "Playback Looping",
    "What playback does at the end of the range, like Maya's Playback Looping": "What playback does at the end of the range, like Maya's Playback Looping"
   },

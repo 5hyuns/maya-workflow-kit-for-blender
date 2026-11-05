@@ -17,10 +17,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   the other end; Oscillate plays forward and backward between the ends. Continuous loops as before. The setting is
   saved with the scene.
 - **Enable Stepped Preview** (Playback menu): every animation curve plays and scrubs as if its keys were stepped,
-  like Maya; turning it off gives each key its own interpolation back. Keys you add or change while it is on are
-  stepped too and get their interpolation back afterwards (a new key takes the one of the key before it). Driver
-  curves stay as they are. While it is on the Graph Editor draws the curves stepped, and a file saved then keeps
-  the preview on until you turn it off.
+  like Maya: each channel shows the value of the key before the current frame. Only what you see changes: the keys,
+  their interpolation and the Graph Editor curves stay as they are, and Auto Key doesn't key the stepped values.
+  Driver curves stay as they are; final renders (F12) show the curves' own values.
 - **Move keys on a motion trail** (Visualize > Motion Trail Editor): in the Maya layout's views, left-drag a key
   marker of a motion trail to move that key, like Maya's editable trail. A click picks the key (and, like Maya,
   replaces the object selection); Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it, and
