@@ -5807,6 +5807,14 @@
    "Frame Selection": "Frame Selection",
    "Mode": "Mode"
   },
+  "Labels/operators/graph_handle_drag": {
+   "Add": "Add",
+   "Deselect": "Deselect",
+   "Drag Tangent": "Drag Tangent",
+   "Marquee Tangents": "Marquee Tangents",
+   "Set": "Set",
+   "Toggle": "Toggle"
+  },
   "Labels/operators/graph_key_menu": {
    "Add Inbetween": "Add Inbetween",
    "Curve Command": "Curve Command",
@@ -7361,6 +7369,7 @@
    "Error messages name the script line the error happened on": "Error messages name the script line the error happened on",
    "Exit On Completion": "Exit On Completion",
    "Fast": "Fast",
+   "Fixed-length Tangents": "Fixed-length Tangents",
    "Flat": "Flat",
    "Help Line": "Help Line",
    "History Output": "History Output",
@@ -7489,6 +7498,7 @@
    "Sync Timeline Display": "Sync Timeline Display",
    "Tangent weight of new animation curves, keyed in any way (Maya Curves > Default Tangent Weight)": "Tangent weight of new animation curves, keyed in any way (Maya Curves > Default Tangent Weight)",
    "The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn in Maya's lighter grey": "The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn in Maya's lighter grey",
+   "The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end": "The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end",
    "The Time Slider shows only the keys of the channels selected in the Channel Box": "The Time Slider shows only the keys of the channels selected in the Channel Box",
    "The UV Editor's Move / Rotate / Scale tools show Maya-style handles: U / V arrows, a rotate ring, U / V scale boxes": "The UV Editor's Move / Rotate / Scale tools show Maya-style handles: U / V arrows, a rotate ring, U / V scale boxes",
    "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both": "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both",
@@ -7803,6 +7813,10 @@
    "Step": "Step",
    "Unghost All": "Unghost All",
    "Unghost Selected": "Unghost Selected"
+  },
+  "Labels/ui/graph_handles": {
+   "Tangents": "Tangents",
+   "Which tangents the Graph Editor shows (Maya View > Tangents)": "Which tangents the Graph Editor shows (Maya View > Tangents)"
   },
   "Labels/ui/graph_layers": {
    "Pick Layer Curve": "Pick Layer Curve"
@@ -8931,6 +8945,10 @@
   },
   "Tooltips/operators/graph_frame": {
    "Frame the selected keys (or every curve shown) the Maya way": "Frame the selected keys (or every curve shown) the Maya way"
+  },
+  "Tooltips/operators/graph_handle_drag": {
+   "Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)": "Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)",
+   "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)": "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)"
   },
   "Tooltips/operators/graph_key_menu": {
    "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)": "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)",

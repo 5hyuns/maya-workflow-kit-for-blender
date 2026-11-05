@@ -5920,4 +5920,12 @@ STRINGS = {
     "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed": '在 Maya 模式下用 File > New Scene / Ctrl+N 新建的场景的播放速度 (与 Maya 的 New Scene Options 相同)。不会更改当前打开的场景和 Blender 的启动文件',
     'Keyboard': '键盘',
     'The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both': 'Maya 模式使用的按键。Maya / Blender 切换快捷键 (Ctrl+Alt+Shift+M) 在两者下都可用',
+    'Deselect': '取消选择',
+    'Drag Tangent': '拖动切线',
+    'Marquee Tangents': '框选切线',
+    'Fixed-length Tangents': '固定长度切线',
+    'The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end': '曲线编辑器像 Maya 一样绘制和拖动切线控制柄：非加权切线沿其方向在屏幕上以固定长度显示，加权切线显示在其实际端点',
+    'Which tangents the Graph Editor shows (Maya View > Tangents)': '曲线编辑器显示哪些切线 (Maya 视图 > 切线)',
+    'Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)': '在曲线编辑器中选择并拖动切线控制柄 (非加权切线只改变方向)',
+    'The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)': '曲线编辑器的框选也会选择套件绘制的切线控制柄端点 (框选照常进行)',
 }

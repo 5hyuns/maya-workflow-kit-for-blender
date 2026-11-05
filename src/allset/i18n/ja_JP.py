@@ -5920,4 +5920,12 @@ STRINGS = {
     "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed": 'Maya モードの File > New Scene / Ctrl+N で作る新規シーンの再生速度です (Maya の New Scene Options と同じ)。開いているシーンと Blender のスタートアップファイルは変わりません',
     'Keyboard': 'キーボード',
     'The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both': 'Maya モードで使うキーです。Maya / Blender 切り替えのショートカット (Ctrl+Alt+Shift+M) はどちらでも使えます',
+    'Deselect': '選択解除',
+    'Drag Tangent': 'タンジェントのドラッグ',
+    'Marquee Tangents': 'タンジェントの範囲選択',
+    'Fixed-length Tangents': '固定長のタンジェント',
+    'The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end': 'グラフエディタのタンジェント ハンドルを Maya のように表示・ドラッグします: 重みなしタンジェントは向きに沿って画面上で一定の長さ、重み付きのタンジェントは実際の端に表示します',
+    'Which tangents the Graph Editor shows (Maya View > Tangents)': 'グラフエディタに表示するタンジェント (Maya の ビュー > タンジェント)',
+    'Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)': 'グラフエディタでタンジェント ハンドルを選択してドラッグします (重みなしタンジェントは向きだけが変わります)',
+    'The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)': 'グラフエディタの範囲選択で、キットが表示するタンジェント ハンドルの端も選択します (範囲選択はそのまま行われます)',
 }
