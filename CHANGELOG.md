@@ -6,6 +6,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ## [Unreleased]
 
 ### Added
+- **Graph Editor Curves > Clamp Curves and Offset Curves** work like Maya's (they showed a notice). Clamp Curves sets
+  the selected keys' values above a limit (default 0) to the limit, or with the option those below it; Offset
+  Curves moves the selected keys one frame later by default, or by any number of frames, or so the first one lands
+  on a given frame. With no key selected they act on every key of the shown curves. Tangents keep their shape; the
+  settings are in the option box (Adjust Last Operation).
 - **Playback Looping Once and Oscillate** (Playback > Playback Looping, the Time Slider's right-click menu and the
   loop button at the right end of the Range Slider, which steps Continuous → Once → Oscillate): Once stops on the
   last frame of the playback range (the first frame when playing backward), and play pressed there starts again from

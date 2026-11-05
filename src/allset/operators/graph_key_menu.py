@@ -15,7 +15,7 @@
 """
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
 from .. import undo_steps
 from . import time_keys
@@ -743,6 +743,98 @@ class ALLSET_OT_remove_keys(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _curve_keys(context):
+    """(F-curve, keys) to act on: the selected keys, else every key of the shown curves."""
+    picked = selected_keys(context)
+    if picked:
+        return picked
+    return [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
+
+
+def clamp_keys(context, limit, side):
+    """Maya Curves > Clamp Curves: key values past ``limit`` ('ABOVE' = greater, 'BELOW' = smaller) become the limit;
+    the tangents keep their shape. Count of changed keys."""
+    n = 0
+    for fc, pts in _curve_keys(context):
+        hit = False
+        for kp in pts:
+            v = kp.co.y
+            if (side == 'ABOVE' and v > limit) or (side == 'BELOW' and v < limit):
+                dy = limit - v
+                kp.co.y = limit
+                kp.handle_left.y += dy
+                kp.handle_right.y += dy
+                hit = True
+                n += 1
+        if hit:
+            fc.update()
+    return n
+
+
+def offset_keys(context, frames, mode):
+    """Maya Curves > Offset Curves: move the keys in time by ``frames`` ('RELATIVE'), or so the first of them lands
+    on frame ``frames`` ('START'). Count of moved keys."""
+    work = _curve_keys(context)
+    times = [kp.co.x for _fc, pts in work for kp in pts]
+    if not times:
+        return 0
+    dx = frames if mode == 'RELATIVE' else frames - min(times)
+    if abs(dx) < EPS:
+        return 0
+    n = 0
+    for fc, pts in work:
+        for kp in sorted(pts, key=lambda kp: kp.co.x, reverse=dx > 0):
+            time_keys._move(kp, dx)
+            n += 1
+        fc.update()
+    return n
+
+
+class ALLSET_OT_clamp_curves(bpy.types.Operator):
+    """Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's
+    Curves > Clamp Curves"""
+    bl_idname = "allset.clamp_curves"
+    bl_label = "Clamp Curves"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    limit: FloatProperty(name="Limit Value", default=0.0, description="The value the keys are clamped to")
+    side: EnumProperty(name="Clamp", default='ABOVE', items=(
+        ('ABOVE', "Above the limit", "Keys greater than the limit get the limit"),
+        ('BELOW', "Below the limit", "Keys smaller than the limit get the limit")))
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        clamp_keys(context, self.limit, self.side)
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_offset_curves(bpy.types.Operator):
+    """Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's
+    Curves > Offset Curves"""
+    bl_idname = "allset.offset_curves"
+    bl_label = "Offset Curves"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    frames: FloatProperty(name="Offset Frames", default=1.0, description="Frames to move the keys by, or the frame "
+                          "the first key moves to")
+    mode: EnumProperty(name="Offset", default='RELATIVE', items=(
+        ('RELATIVE', "By frames", "Move the keys by the offset"),
+        ('START', "To start frame", "Move the keys so the first one is on the offset frame")))
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        offset_keys(context, self.frames, self.mode)
+        _redraw(context)
+        return {'FINISHED'}
+
+
 SELECT_PRESETS = (("ALL", "All", "Curves, keys and tangents can be picked (Maya Select > All)"),
                   ("ONLY_CURVE", "Only Curve", "Only curves can be picked (Maya Select > Only Curve)"))
 
@@ -831,7 +923,8 @@ class ALLSET_OT_dope_graph_op(bpy.types.Operator):
         return res
 
 
-classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_remove_keys, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
+classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_remove_keys, ALLSET_OT_clamp_curves,
+           ALLSET_OT_offset_curves, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
 
 
 def register_bindings():

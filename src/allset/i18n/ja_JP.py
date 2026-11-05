@@ -5923,4 +5923,12 @@ STRINGS = {
     "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)": '時間でキーを削除します: スナップされていないキー、現在のフレームより前 / 後、選択したキーの範囲の外、またはその範囲のリップル削除\n(Maya の キー > キーを削除)',
     'Move Motion Trail Key': 'モーション トレイルのキーを移動',
     "Pick a key on a motion trail and drag it to move the object's location keys at that frame": 'モーション トレイル上のキーを選んでドラッグし、そのフレームのオブジェクトの位置キーを動かします',
+    "Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's\nCurves > Clamp Curves": '選択したキーの値 (選択がなければ表示中のカーブのすべてのキー) を限界値で切り詰めます (Maya の\nカーブ > カーブのクランプ)',
+    "Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's\nCurves > Offset Curves": '選択したキー (選択がなければ表示中のカーブのすべてのキー) を時間方向に動かします (Maya の\nカーブ > カーブのオフセット)',
+    'Limit Value': '限界値',
+    'Offset Frames': 'オフセット フレーム',
+    'Above the limit': '限界値より上',
+    'Below the limit': '限界値より下',
+    'By frames': 'フレーム数だけ',
+    'To start frame': '開始フレームへ',
 }

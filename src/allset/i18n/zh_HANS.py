@@ -5923,4 +5923,12 @@ STRINGS = {
     "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)": '按时间删除关键帧：未捕捉的、当前帧之前 / 之后、所选关键帧范围之外，或对该范围波纹删除\n(Maya 关键帧 > 移除关键帧)',
     'Move Motion Trail Key': '移动运动轨迹关键帧',
     "Pick a key on a motion trail and drag it to move the object's location keys at that frame": '选取运动轨迹上的关键帧并拖动，移动对象在该帧的位置关键帧',
+    "Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's\nCurves > Clamp Curves": '把选定关键帧的值 (未选择时为显示中曲线的全部关键帧) 限制在界限值 (Maya 的\n曲线 > 钳制曲线)',
+    "Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's\nCurves > Offset Curves": '在时间上移动选定关键帧 (未选择时为显示中曲线的全部关键帧) (Maya 的\n曲线 > 偏移曲线)',
+    'Limit Value': '界限值',
+    'Offset Frames': '偏移帧数',
+    'Above the limit': '高于界限',
+    'Below the limit': '低于界限',
+    'By frames': '按帧数',
+    'To start frame': '到起始帧',
 }

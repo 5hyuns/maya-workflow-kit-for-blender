@@ -152,6 +152,9 @@ def _keys_menu(ed, graph):
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
     # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
+    if graph:     # Maya Curves > Clamp / Offset Curves (operators/graph_key_menu)
+        m[f"{ed}/Curves/Clamp Curves"] = "allset.clamp_curves"
+        m[f"{ed}/Curves/Offset Curves"] = "allset.offset_curves"
     for item, mode in (("Unsnapped", "UNSNAPPED"), ("Before Current Frame", "BEFORE"),
                        ("After Current Frame", "AFTER"), ("Outside Selected Range", "OUTSIDE"),
                        ("Ripple Delete", "RIPPLE")):

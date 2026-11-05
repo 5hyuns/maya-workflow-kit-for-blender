@@ -1041,11 +1041,6 @@ NOTICES.update({
         "(Shift+H) to pick only on the selected ones."),
     "Graph Editor/View/Channel Sets": (
         "Not in Blender", "Blender's channel list has no channel sets."),
-    "Graph Editor/Curves/Offset Curves": (
-        "G with a number", "Blender moves the selected keys by a typed amount: G, then the amount, then Enter."),
-    "Graph Editor/Curves/Clamp Curves": (
-        "Limits modifier", "Blender clamps a curve's values with a Limits F-Curve modifier (Sidebar > Modifiers), "
-        "not by changing the keys."),
     "Dope Sheet/Channels/Offset Keys": (
         "G with a number", "Blender moves the selected keys by a typed number of frames: G, then the amount, then "
         "Enter."),

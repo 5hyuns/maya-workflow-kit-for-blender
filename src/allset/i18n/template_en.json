@@ -5805,16 +5805,28 @@
    "Toggle": "Toggle"
   },
   "Labels/operators/graph_key_menu": {
+   "Above the limit": "Above the limit",
    "Add Inbetween": "Add Inbetween",
+   "Below the limit": "Below the limit",
+   "By frames": "By frames",
+   "Clamp": "Clamp",
+   "Clamp Curves": "Clamp Curves",
    "Curve Command": "Curve Command",
+   "Frames to move the keys by, or the frame the first key moves to": "Frames to move the keys by, or the frame the first key moves to",
    "Inbetween": "Inbetween",
+   "Limit Value": "Limit Value",
    "Mute": "Mute",
    "Mute Key": "Mute Key",
+   "Offset": "Offset",
+   "Offset Curves": "Offset Curves",
+   "Offset Frames": "Offset Frames",
    "Preset": "Preset",
    "Remove": "Remove",
    "Remove Inbetween": "Remove Inbetween",
    "Remove Key": "Remove Key",
-   "Select Type": "Select Type"
+   "Select Type": "Select Type",
+   "The value the keys are clamped to": "The value the keys are clamped to",
+   "To start frame": "To start frame"
   },
   "Labels/operators/graph_keys": {
    "Action": "Action",
@@ -8953,7 +8965,9 @@
   "Tooltips/operators/graph_key_menu": {
    "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)": "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)",
    "Choose what a click or drag picks in the Graph Editor (Maya Select > All / Only Curve)": "Choose what a click or drag picks in the Graph Editor (Maya Select > All / Only Curve)",
+   "Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's\nCurves > Clamp Curves": "Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's\nCurves > Clamp Curves",
    "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)": "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)",
+   "Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's\nCurves > Offset Curves": "Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's\nCurves > Offset Curves",
    "Mute the selected keys: the curve holds the key's value until the next unmuted key (Maya Keys > Mute Key;\nBlender has no per-key mute: a Stepped modifier named \"Maya mute\" holds the value)": "Mute the selected keys: the curve holds the key's value until the next unmuted key (Maya Keys > Mute Key;\nBlender has no per-key mute: a Stepped modifier named \"Maya mute\" holds the value)",
    "Run this Graph Editor curve command on the curves of the selected keys (Maya Dope Sheet > Curves)": "Run this Graph Editor curve command on the curves of the selected keys (Maya Dope Sheet > Curves)"
   },
