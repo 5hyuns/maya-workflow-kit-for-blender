@@ -5937,8 +5937,4 @@ STRINGS = {
     'Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmarks to load': 'Maya 曲线图编辑器 列表 > 书签：书签命令，以及要加载的书签',
     'Bookmark name': '书签名称',
     'Load Bookmark': '加载书签',
-    'Selected keys': '选定关键帧',
-    "The keys inside the Time Slider's playback range": '时间滑块播放范围内的关键帧',
-    'The keys between the Start and End times': '开始与结束时间之间的关键帧',
-    'The selected keys (every key of the shown curves when none is selected)': '选定关键帧 (未选择时为显示中曲线的全部关键帧)',
 }
