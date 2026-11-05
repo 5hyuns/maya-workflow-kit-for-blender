@@ -162,8 +162,9 @@ def _blend_weight(st, frame):
     return w
 
 
-def stack_value(ob, path, index, frame, start):
-    """The value ``ob``'s clip tracks give one channel at ``frame`` (from ``start``), None when no clip animates it."""
+def stack_value(ob, path, index, frame, start, ev=None):
+    """The value ``ob``'s clip tracks give one channel at ``frame`` (from ``start``), None when no clip animates it;
+    ``ev(fc, action time)`` evaluates a curve (default: its own value)."""
     acc, hit = start, False
     for tr in clip_tracks(ob):
         if tr.mute:
@@ -186,7 +187,8 @@ def stack_value(ob, path, index, frame, start):
         if fc is None:
             continue
         hit = True
-        x = fc.evaluate(_action_time(pick, frame))
+        t = _action_time(pick, frame)
+        x = ev(fc, t) if ev is not None else fc.evaluate(t)
         w = _blend_weight(pick, frame) if pick.frame_start <= frame <= pick.frame_end else 1.0
         acc = (1.0 - w) * acc + w * x if pick.blend_type == 'REPLACE' else acc + w * x
     return acc if hit else None

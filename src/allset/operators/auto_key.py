@@ -146,7 +146,7 @@ def changed_layer_channels(ob, frame, scene=None):
                        for c in anim_layers.layer_curves(ob, target)):
                 continue
             value = _value(ob, *ch)
-            res = anim_layers.result(ob, ch[0], ch[1], frame, scene)
+            res = anim_layers.result(ob, ch[0], ch[1], frame, scene, playback_maya.evaluator(scene))
             if value is None or res is None:
                 continue
             if abs(value - res) > EPS * max(1.0, abs(value)):

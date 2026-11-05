@@ -33,7 +33,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - **Enable Stepped Preview** (Playback menu): every animation curve plays and scrubs as if its keys were stepped,
   like Maya: each channel shows the value of the key before the current frame. Only what you see changes: the keys,
   their interpolation and the Graph Editor curves stay as they are, and Auto Key doesn't key the stepped values.
-  Driver curves stay as they are; final renders (F12) show the curves' own values.
+  Animation layers and Trax clips step each layer's and clip's curves (and keyed layer weights) before blending
+  them. Driver curves and NLA strips the kit did not make stay as they are; final renders (F12) show the curves'
+  own values.
 - **Move keys on a motion trail** (Visualize > Motion Trail Editor): in the Maya layout's views, left-drag a key
   marker of a motion trail to move that key, like Maya's editable trail. A click picks the key (and, like Maya,
   replaces the object selection); Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it, and

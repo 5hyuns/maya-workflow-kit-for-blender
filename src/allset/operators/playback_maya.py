@@ -9,8 +9,10 @@ outside the frame handler.
 Stepped Preview: every time-keyed F-curve shows as if its keys were stepped, while playing and scrubbing; the keys,
 their interpolation and the Graph Editor curves stay as they are (driver curves are left alone). Blender has no
 stepped-evaluation switch, so after each frame change (and after keys change) the kit writes the value of the key
-before the current frame into each animated channel (``apply_stepped``). Kit Auto Key compares channels with these
-shown values (``curve_value``), so scrubbing keys nothing. Final renders (F12) show the curves' own values.
+before the current frame into each animated channel (``apply_stepped``). Objects with kit animation layers or Trax
+clips get their layer / clip result with every curve (and keyed layer weight) stepped, like Maya steps each layer's
+curves before blending them. Other NLA stacks are left to Blender. Kit Auto Key compares channels with these shown
+values (``curve_value``, ``stepped_eval``), so scrubbing keys nothing. Final renders (F12) show the curves' own values.
 """
 
 import time
@@ -159,12 +161,37 @@ def curve_value(fc, frame, scene=None):
     return fc.evaluate(frame)
 
 
+def stepped_eval(fc, t):
+    """The stepped value of ``fc`` at time ``t`` (the held key's value), whether or not the preview is on."""
+    k = _held_key(fc, t)
+    return fc.evaluate(t if k is None else k)
+
+
+def evaluator(scene=None):
+    """Curve evaluator for kit layer / clip results: stepped while the preview is on, else None (curve values)."""
+    return stepped_eval if active(scene) else None
+
+
+def _nla_mapped(ad):
+    return ad.use_tweak_mode or any(not t.mute and len(t.strips) for t in ad.nla_tracks)
+
+
+def _kit_stack(idb):
+    from . import anim_layers, trax_clips
+    return anim_layers.has_layers(idb) or bool(trax_clips.clip_tracks(idb))
+
+
 def _animated_ids():
+    """(ID, kit stack) for every ID to step: plain actions, and the IDs whose NLA tracks are kit layers / clips."""
     for name in ANIMATED:
         for idb in getattr(bpy.data, name, ()):
             ad = getattr(idb, "animation_data", None)
-            if ad is not None and ad.action is not None:
-                yield idb
+            if ad is None:
+                continue
+            if ad.nla_tracks and not ad.use_tweak_mode and _kit_stack(idb):
+                yield idb, True
+            elif ad.action is not None and not _nla_mapped(ad):
+                yield idb, False
 
 
 def _owner(idb, path):
@@ -178,19 +205,19 @@ def _owner(idb, path):
     return idb, path, False
 
 
-def _write(idb, fc, value):
+def _write(idb, path, index, value):
     try:
-        owner, attr, custom = _owner(idb, fc.data_path)
+        owner, attr, custom = _owner(idb, path)
         cur = owner[attr] if custom else getattr(owner, attr)
         arr = not isinstance(cur, (int, float, bool))
-        old = cur[fc.array_index] if arr else cur
+        old = cur[index] if arr else cur
         if isinstance(old, bool) or not isinstance(old, (int, float)):
             return
         new = int(round(value)) if isinstance(old, int) else value
         if abs(old - new) < 1e-7:
             return
         if arr:
-            cur[fc.array_index] = new
+            cur[index] = new
         elif custom:
             owner[attr] = new
         else:
@@ -204,13 +231,77 @@ def apply_stepped(scene):
     The keys themselves are not changed (Blender has no stepped-evaluation switch: the shown values are written over
     the evaluated ones, until the next frame change)."""
     t = scene.frame_current + scene.frame_subframe
-    for idb in _animated_ids():
+    for idb, stack in _animated_ids():
+        if stack:
+            _apply_stack(idb, scene, t)
+            continue
         for fc in compat.id_fcurves(idb):
             if fc.mute or not fc.is_valid:
                 continue
             k = _held_key(fc, t)
             if k is not None:
-                _write(idb, fc, fc.evaluate(k))
+                _write(idb, fc.data_path, fc.array_index, fc.evaluate(k))
+
+
+_QUAT = "rotation_quaternion"
+
+
+def _stack_channels(idb, layered):
+    """{(path, index)} of the channels the ID's layer / clip actions animate (+ the active action's without layers)."""
+    from . import anim_layers, trax_clips
+    curves = []
+    if layered:
+        for layer in anim_layers.tracks(idb):
+            curves += anim_layers.layer_curves(idb, layer)
+    for tr in trax_clips.clip_tracks(idb):
+        for st in tr.strips:
+            if st.action is not None:
+                curves += list(compat.action_fcurves(st.action, getattr(st, "action_slot", None)))
+    if not layered:
+        curves += list(compat.id_fcurves(idb))
+    return {(fc.data_path, fc.array_index) for fc in curves if not fc.mute}
+
+
+_ACTION_MODES = {'REPLACE': 'REPLACE', 'ADD': 'ADD', 'COMBINE': 'ADD'}
+
+
+def _apply_stack(idb, scene, t):
+    """Write the stepped kit layer / clip result of every channel of ``idb`` at time ``t``."""
+    from mathutils import Quaternion
+    from . import anim_layers as al, trax_clips
+    layered = al.has_layers(idb)
+    ad = idb.animation_data
+    action_fc = {} if layered else {(fc.data_path, fc.array_index): fc for fc in compat.id_fcurves(idb)
+                                    if not fc.mute and fc.is_valid}
+    chans = _stack_channels(idb, layered)
+    quats = {p for p, _i in chans if layered and p.rsplit(".", 1)[-1] == _QUAT}
+    for path in quats:
+        start = [trax_clips.stack_value(idb, path, i, t, (1.0, 0.0, 0.0, 0.0)[i], stepped_eval) for i in range(4)]
+        start = [(1.0, 0.0, 0.0, 0.0)[i] if v is None else v for i, v in enumerate(start)]
+        q = al.compose_quaternion(al._quat_layers(idb, path, t, scene, stepped_eval), Quaternion(start))
+        for i in range(4):
+            _write(idb, path, i, q[i])
+    for path, index in chans:
+        if path in quats:
+            continue
+        default = 1.0 if al.is_scale(path) else 0.0
+        below = trax_clips.stack_value(idb, path, index, t, default, stepped_eval)
+        value = default if below is None else below
+        hit = below is not None
+        if layered:
+            known = [(m, w, x) for _n, m, w, x in al._steps(idb, path, index, t, scene, stepped_eval) if x is not None]
+            if known:
+                value, hit = al.compose(known, value), True
+        else:
+            fc = action_fc.get((path, index))
+            mode = _ACTION_MODES.get(ad.action_blend_type)
+            if fc is not None and mode is not None:
+                if mode == 'ADD' and ad.action_blend_type == 'COMBINE' and al.is_scale(path):
+                    mode = 'MUL'
+                value = al.compose([(mode, ad.action_influence, stepped_eval(fc, t))], value)
+                hit = True
+        if hit:
+            _write(idb, path, index, value)
 
 
 # Files saved by an earlier build of this preview have their keys set to Constant, with each key's own interpolation
