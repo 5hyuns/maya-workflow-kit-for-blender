@@ -73,10 +73,10 @@ def s_undo():
     check(f"one undo puts the offset back ({times})", times == [1.0, 10.0, 20.0])
     gb = import_module(MODULE + ".operators.graph_bookmarks")
     with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
-        r = bpy.ops.allset.graph_bookmark(action='OBJECTS', name="")
-        C["listed"] = gb.current_objects(bpy.context, C["area"].spaces.active)[0]
-    check(f"Bookmark Current Objects ({r}): {[b['name'] for b in gb.bookmarks(bpy.context.scene)]} {C['listed']}",
-          [b["name"] for b in gb.bookmarks(bpy.context.scene)] == ["Bookmark1"] and C["listed"] == ["pCube1"])
+        r = bpy.ops.allset.graph_bookmark(action='OBJECTS')
+    names = [c.name for c in gb.bookmarks()]
+    members = [o.name for o in gb.bookmarks()[0].objects] if names else []
+    check(f"Bookmark Current Objects ({r}): {names} {members}", names == ["Bookmark"] and members == ["pCube1"])
     with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
         bpy.ops.wm.call_menu(name="ALLSET_MT_graph_bookmarks")
 
@@ -88,7 +88,7 @@ def s_menu_open():
     if shots:
         screenshot(os.path.join(shots, "gui_graph_bookmarks_menu.png"))
     with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
-        r = bpy.ops.allset.graph_bookmark(action='LOAD', index=0)
+        r = bpy.ops.allset.graph_bookmark(action='LOAD', name="Bookmark")
     check(f"loading the bookmark ({r})", r == {'FINISHED'})
 
 

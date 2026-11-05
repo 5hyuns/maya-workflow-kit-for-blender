@@ -5780,11 +5780,10 @@
    "Type": "Type"
   },
   "Labels/operators/graph_bookmarks": {
+   "Bookmark": "Bookmark",
    "Bookmark Current Objects": "Bookmark Current Objects",
    "Bookmark Selected Curves": "Bookmark Selected Curves",
-   "Bookmark name": "Bookmark name",
    "Bookmarks": "Bookmarks",
-   "Create Bookmark": "Create Bookmark",
    "Load Bookmark": "Load Bookmark",
    "Remove All Bookmarks": "Remove All Bookmarks"
   },
@@ -8965,7 +8964,7 @@
   },
   "Tooltips/operators/graph_bookmarks": {
    "Maya Graph Editor List > Bookmarks": "Maya Graph Editor List > Bookmarks",
-   "Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmarks to load": "Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmarks to load"
+   "Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmark sets to load": "Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmark sets to load"
   },
   "Tooltips/operators/graph_buffers": {
    "Exchange the selected curves with their buffer curves (Maya Curves > Swap Buffer Curve)": "Exchange the selected curves with their buffer curves (Maya Curves > Swap Buffer Curve)",
