@@ -5933,4 +5933,8 @@ STRINGS = {
     'To start frame': '到起始帧',
     'Maya Graph Editor sculpting brush: drag over the curves to grab, smooth, smear or reduce their keys (B + drag\nsideways: brush size). Esc or Q / W / E / R / T ends the tool': 'Maya 曲线图编辑器雕刻笔刷：在曲线上拖动以抓取、平滑、涂抹或精简关键帧 (B + 横向\n拖动：笔刷大小)。按 Esc 或 Q / W / E / R / T 结束工具',
     'Brush Size': '笔刷大小',
+    'Maya Graph Editor List > Bookmarks': 'Maya 曲线图编辑器 列表 > 书签',
+    'Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmarks to load': 'Maya 曲线图编辑器 列表 > 书签：书签命令，以及要加载的书签',
+    'Bookmark name': '书签名称',
+    'Load Bookmark': '加载书签',
 }

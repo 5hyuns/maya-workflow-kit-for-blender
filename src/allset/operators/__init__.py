@@ -204,6 +204,8 @@ from . import playback_maya  # noqa: E402  Playback Looping Once / Oscillate, St
 classes += playback_maya.classes
 from . import graph_sculpt  # noqa: E402  Graph Editor Sculpting Tools (Grab / Smooth / Smear / Key Reducer)
 classes += graph_sculpt.classes
+from . import graph_bookmarks  # noqa: E402  Graph Editor List > Bookmarks
+classes += graph_bookmarks.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

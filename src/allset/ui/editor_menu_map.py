@@ -152,6 +152,8 @@ def _keys_menu(ed, graph):
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
     # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
+    if graph:     # Maya List > Bookmarks (operators/graph_bookmarks)
+        m[f"{ed}/List/Bookmarks"] = ("menu", "ALLSET_MT_graph_bookmarks")
     if graph:     # Maya Sculpting Tools brushes (operators/graph_sculpt)
         for item, mode in (("Grab Tool", "GRAB"), ("Smooth Tool", "SMOOTH"), ("Smear Tool", "SMEAR"),
                            ("Key Reducer Tool", "REDUCE")):

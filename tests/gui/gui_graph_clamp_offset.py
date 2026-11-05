@@ -1,5 +1,5 @@
-"""Graph Editor Curves > Clamp Curves / Offset Curves run from the Maya menu in a real Graph Editor, and their option
-box opens the settings (Adjust Last Operation)."""
+"""Graph Editor Curves > Clamp Curves / Offset Curves run from the Maya menu in a real Graph Editor, and List >
+Bookmarks keeps and loads the listed objects there."""
 
 import os
 import sys
@@ -71,6 +71,25 @@ def s_offset():
 def s_undo():
     times = [round(kp.co.x, 3) for kp in curve().keyframe_points]
     check(f"one undo puts the offset back ({times})", times == [1.0, 10.0, 20.0])
+    gb = import_module(MODULE + ".operators.graph_bookmarks")
+    with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
+        r = bpy.ops.allset.graph_bookmark(action='OBJECTS', name="")
+        C["listed"] = gb.current_objects(bpy.context, C["area"].spaces.active)[0]
+    check(f"Bookmark Current Objects ({r}): {[b['name'] for b in gb.bookmarks(bpy.context.scene)]} {C['listed']}",
+          [b["name"] for b in gb.bookmarks(bpy.context.scene)] == ["Bookmark1"] and C["listed"] == ["pCube1"])
+    with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
+        bpy.ops.wm.call_menu(name="ALLSET_MT_graph_bookmarks")
+
+
+@step
+def s_menu_open():
+    from sim import screenshot
+    shots = os.environ.get("ALLSET_GUI_SHOTS", "")
+    if shots:
+        screenshot(os.path.join(shots, "gui_graph_bookmarks_menu.png"))
+    with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
+        r = bpy.ops.allset.graph_bookmark(action='LOAD', index=0)
+    check(f"loading the bookmark ({r})", r == {'FINISHED'})
 
 
 run()

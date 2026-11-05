@@ -655,8 +655,7 @@ def _anim_editor_categories(ed):
             "Sidebar F-Curve tab", "Blender edits key values in the sidebar (F-Curve > Active Keyframe), not in a "
             "spreadsheet."),
         f"{ed}/List": (
-            "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects); "
-            "it has no bookmarks or manual loading."),
+            "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects)."),
         f"{ed}/Show": (
             "Channel filters", "Blender filters channels by data type and by name (header filter popover); Maya's "
             "other node and attribute filters aren't there."),
