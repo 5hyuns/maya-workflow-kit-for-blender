@@ -1496,8 +1496,12 @@ def patch_motion_trail_keys(kd):
                                   (True, True, 'ADD')):
             _add(kd, km, "allset.motion_trail_key", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl), {"mode": mode},
                  first=True, shadows=(km,) + TRAIL_KEY_SHADOWS)
-    # Move tool: a middle drag anywhere moves the picked trail keys along the last used handle (passes through when
-    # no trail key is picked, so the Move tool's own middle drag runs)
+
+
+def patch_motion_trail_mmb(kd):
+    """Move tool: a middle drag anywhere moves the picked trail keys along the last used handle (passes through when
+    no trail key is picked, so the Move tool's own middle drag runs). Applied before the Channel Box virtual slider
+    patch, so the slider (highlighted channels) stays in front, like Maya."""
     _add(kd, "3D View Tool: Move", "allset.motion_trail_key", make_event("MIDDLEMOUSE"), {"button": 'MIDDLE'},
          first=True, shadows=("3D View Tool: Move",))
 
@@ -1505,7 +1509,7 @@ def patch_motion_trail_keys(kd):
 PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
+           patch_component_keys, patch_motion_trail_mmb, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
