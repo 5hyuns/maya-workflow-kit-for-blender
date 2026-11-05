@@ -190,7 +190,9 @@ def test_shift_press_selection_comes_back_for_the_drag():
 
 def test_keymap_items():
     km = kit.maya_kc().keymaps["Graph Editor"]
-    items = [(i.idname, i.type, i.value, i.shift, i.ctrl, i.alt) for i in km.keymap_items if i.active]
+    # the tangent handle picker goes first and passes through off the kit-drawn handle ends
+    items = [(i.idname, i.type, i.value, i.shift, i.ctrl, i.alt) for i in km.keymap_items if i.active
+             and i.idname != "allset.graph_handle_drag"]
     plain = lambda t, v='PRESS': [i[0] for i in items if i[1] == t and i[2] == v and not any(i[3:])]   # noqa: E731
     for key, tool in (("W", 'MOVE'), ("E", 'ROTATE'), ("R", 'SCALE')):
         assert plain(key) == ["allset.graph_key_tool"], (key, plain(key))

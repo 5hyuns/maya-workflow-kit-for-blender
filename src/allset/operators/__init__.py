@@ -181,6 +181,8 @@ from . import graph_frame  # noqa: E402  Graph Editor F / A frame Maya's rectang
 classes += graph_frame.classes
 from . import graph_scale_box  # noqa: E402  Graph Editor Scale Keys manipulator (#270)
 classes += graph_scale_box.classes
+from . import graph_handle_drag  # noqa: E402  Graph Editor tangent handles like Maya (#296)
+classes += graph_handle_drag.classes
 from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
 classes += poly_display.classes
 from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
@@ -323,6 +325,7 @@ def unregister():
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
     graph_scale_box.unregister_handlers()
+    graph_handle_drag.unregister_timers()
     graph_move.unregister_timers()
     graph_move.unregister_props()
     modify_maya.unregister_props()

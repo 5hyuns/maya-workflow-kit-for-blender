@@ -217,6 +217,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Key Size", default=11, min=0, max=24, subtype='PIXEL',
         description="Diameter of the keys in the Graph Editor, in pixels at interface scale 1 (0 = Blender's "
                     "theme size)")
+    graph_fixed_tangents: bpy.props.BoolProperty(
+        name="Fixed-length Tangents", default=True,
+        description="The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a "
+                    "fixed length on screen along its direction, a weighted one at its real end")
     graph_scale_manipulator: bpy.props.BoolProperty(
         name="Scale Keys Manipulator", default=True,
         description="With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a "

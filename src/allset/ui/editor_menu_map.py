@@ -260,9 +260,10 @@ MAP = {
     # Blender's "Only Selected Curve Keyframes" is a preference (#43): open it, don't write it
     f"{GE}/View/Keys/Always": _PREFS_ANIMATION,
     f"{GE}/View/Keys/Active Only": _PREFS_ANIMATION,
-    f"{GE}/View/Tangents/Always": _prop(f"{_SP}.use_only_selected_keyframe_handles", False),
-    f"{GE}/View/Tangents/Never": _prop(f"{_SP}.show_handles", False),
-    f"{GE}/View/Tangents/On Active Keys": _prop(f"{_SP}.use_only_selected_keyframe_handles", True),
+    # the kit's value while it draws the handles itself (ui/graph_handles.py), else the editor's own
+    f"{GE}/View/Tangents/Always": _prop(f"{_WM}.allset_graph_tangents", 'ALWAYS'),
+    f"{GE}/View/Tangents/Never": _prop(f"{_WM}.allset_graph_tangents", 'NEVER'),
+    f"{GE}/View/Tangents/On Active Keys": _prop(f"{_WM}.allset_graph_tangents", 'ACTIVE'),
     f"{GE}/View/Theme/Color Preferences": ("screen.userpref_show", {"section": 'THEMES'}),
     f"{GE}/View/Absolute View": _prop(f"{_SP}.use_normalization", False),
     f"{GE}/View/Stacked View": ("allset.graph_view_mode", {"mode": "STACKED"}),

@@ -5,6 +5,18 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [Unreleased]
 
+### Added
+- **Graph Editor tangent handles like Maya** (#296): in Maya mode the Graph Editor draws a non-weighted tangent at
+  a fixed length on screen along its direction, however steep it is and whatever the zoom, and a weighted tangent
+  at its real end. Unselected tangents are grey, selected ones white. Click a handle end to select it (Shift
+  toggles, Ctrl+Shift adds); drag it to turn a non-weighted tangent (its length in time stays a third of the way to
+  the next key, so only the angle changes) or to move a weighted one (Lock Tangent Length keeps its length). A
+  unified tangent turns both sides; an automatic one becomes unified. Middle-drag with the Move Keys tool moves the
+  selected handles, a marquee picks handle ends, Esc or right click puts a drag back, and one undo takes it back.
+  View > Tangents (Always / Never / On Active Keys) works as before. The add-on preference Fixed-length
+  Tangents (also in Windows > Settings/Preferences > Preferences > Animation, on by default) turns it off; Maya mode
+  off gives the Graph Editor its own handles back.
+
 ### Fixed
 - **Joints drawn far too large in a scene shown in metres** (#311): a joint's Radius (and Display > Animation >
   Joint Size) is a plain number in centimetres, like Maya, so a Radius 1 joint is 1 cm across whatever the scene's

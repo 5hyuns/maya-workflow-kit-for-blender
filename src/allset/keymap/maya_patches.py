@@ -31,7 +31,8 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emul
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
                       "allset.graph_key_drag", "allset.graph_scale_box",
                       "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
-                      "allset.hg_frame", "allset.marking_menu")
+                      "allset.hg_frame", "allset.marking_menu",
+                      "allset.graph_handle_drag", "allset.graph_handle_box")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1595,6 +1596,28 @@ def patch_numpad_digits(kd):
         if (km, numpad) not in taken:
             _add(kd, km, idname, make_event(numpad), props, shadows=shadows)
 
+
+# --- Graph Editor tangent handles (#296) -------------------------------------------------------------------------
+# While the kit draws a Graph Editor's tangent handles (ui/graph_handles.py) Blender's handle picking is off, so a
+# left press on a kit handle end selects / drags it (plain and Ctrl = select, Shift = toggle, Ctrl+Shift = add) and a
+# middle drag moves the selected handles; the marquee also picks the handle ends inside it. Added after every
+# other Graph Editor click item so they run first; each passes through anywhere else.
+
+def patch_graph_handles(kd):
+    for shift, ctrl, mode in ((False, False, 'SET'), (False, True, 'SET'), (True, False, 'TOGGLE'),
+                              (True, True, 'ADD')):
+        _add(kd, "Graph Editor", "allset.graph_handle_drag", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl),
+             {"button": 'LEFT', "mode": mode}, first=True, shadows=("Graph Editor", "Screen", "View2D"))
+    _add(kd, "Graph Editor", "allset.graph_handle_drag", make_event("MIDDLEMOUSE"), {"button": 'MIDDLE'},
+         first=True, shadows=("Graph Editor", "View2D"))
+    for shift, ctrl, mode in ((False, False, 'SET'), (True, False, 'XOR'), (False, True, 'SUB'),
+                              (True, True, 'ADD')):
+        _add(kd, "Graph Editor", "allset.graph_handle_box", make_event("LEFTMOUSE", "CLICK_DRAG", shift=shift,
+                                                                       ctrl=ctrl),
+             {"mode": mode}, first=True, shadows=("Graph Editor",))
+
+
+PATCHES += (patch_graph_handles,)
 
 PATCHES += (patch_numpad_digits,)
 

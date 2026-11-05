@@ -148,8 +148,10 @@ def s_check():
     # tangent handles: key 2 shows both handles, its right handle selected
     a, _r = graph()
     a.spaces.active.show_handles = True
+    mod(".operators.graph_weights").set_weighted(tx(), True)     # handles at their real ends
     kp = tx().keyframe_points[1]
     kp.select_left_handle, kp.select_right_handle = False, True
+    kp.select_control_point = False          # a picked handle of an unselected key (Maya: tangent selected)
     redraw()
 
 
