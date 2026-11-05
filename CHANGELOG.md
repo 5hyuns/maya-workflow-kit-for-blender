@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.12.0] — 2026-11-05
 
 ### Added
 - **Camera Overscan** (#313): a camera's Attribute Editor > Display Options has Overscan, like Maya. A view that
@@ -70,6 +70,19 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   View > Tangents (Always / Never / On Active Keys) works as before. The add-on preference Fixed-length
   Tangents (also in Windows > Settings/Preferences > Preferences > Animation, on by default) turns it off; Maya mode
   off gives the Graph Editor its own handles back.
+- **Universal Manipulator** (#318): Ctrl+T in Object Mode, or Modify > Transformation Tools > Universal
+  Manipulator, puts a box around the selection, like Maya. Drag a corner box to scale along the box axis closest to
+  the drag with the opposite face fixed (Ctrl: about the box centre; Shift: all axes, the opposite corner fixed),
+  drag an arrow pair on an edge to rotate about that edge's direction, a centre arrow to move along that axis and
+  the centre circle to move in the view plane. The box lengths are written beside three edges: click one, type a
+  length and press Enter to scale that axis to exactly that size. Tool Settings has Transform space (World /
+  Local), Rotate around (Pivot / Center) and Reset Tool. Each drag is one undo step. In component modes Ctrl+T
+  stays Blender's Transform tool.
+- **Tooltips follow the interface language** (#317): tooltips the kit builds when you hover a button (the panel
+  toolbar, the Graph Editor icon row, the shelf, greyed menu items, editor notices) are translated, and they are in
+  the translation template, so your own translation file can change them. A Maya submenu's tooltip is its name.
+- **Range Slider fills the timeline header** (#319): the bar grows into the free room after the playback end fields,
+  like Maya, and gives it back when the header gets narrower.
 
 ### Fixed
 - **Kit-drawn panels ignored the Blender theme** (#312): the Graph Editor / Dope Sheet list, the Time Slider ruler
@@ -88,6 +101,21 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   length unit. In a metre scene the kit drew it 1 m across, so the joints of a human-sized skeleton (for example one
   imported from FBX) covered the whole character. Scenes shown in centimetres (the kit's default) are unchanged.
   Change the size with *Display > Animation > Joint Size* or a joint's *Radius* in the Channel Box.
+- **Channel Box highlight** (#316): a clicked channel showed its highlight only after the mouse left the row. It
+  now shows at once, with the mouse still on it.
+- **Channel Box right-click menu** (#315): the Channels menu (and the Ctrl+right-click Edit menu) opens to the left
+  of the Channel Box when there is room, so it no longer covers the channel names and values.
+- **Your own translation file and text Blender translates itself** (#317): an entry such as Center Pivot in your
+  file now shows in the kit's menus, marking menus, shelf and Channel Box even where Blender has its own
+  translation (your file first, then the kit's table, then Blender's). The Channel Box's Translate / Rotate / Scale
+  X Y Z names are translatable and have Japanese and Chinese text.
+- **Graph Editor tangent buttons without the Maya icon row** (#319): the header buttons shown when Maya editor menus
+  are off use the kit's tangent curve pictures instead of Blender icons that didn't match their names.
+- **Joint Radius** (#320): a Radius typed in the Channel Box goes to every selected joint, like Maya, and the joints
+  redraw at once (Display > Animation > Joint Size too). A skeleton set to Blender's Stick or Wire display draws one
+  line per bone and no spheres.
+- **Bevel (Fraction) at an acute or right corner of two bevelled edges**: the new corner no longer slides past the
+  far end of either edge, so Fraction 1 there brings it to the edge's end.
 
 ### Changed
 - **Bevel at a tip where two bevelled edges leave two or more other edges between them** (#213): for example two
