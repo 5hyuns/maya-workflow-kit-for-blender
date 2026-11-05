@@ -991,6 +991,10 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Object Mode kit tools whose menu item picks a Blender tool in component modes (Maya Universal Manipulator).
+COMPONENT_TWIN = {"allset.universal_manip": "builtin.transform"}
+
+
 class ALLSET_OT_menu_tool(bpy.types.Operator):
     """Switch the 3D View tool (for Maya menu items that pick a tool)"""
     bl_idname = "allset.menu_tool"
@@ -1015,8 +1019,11 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
             if context.mode != 'EDIT_MESH':
                 # its own undo step: Ctrl+Z after the tool's first edit must stay in edit mode
                 bpy.ops.object.mode_set('EXEC_DEFAULT', True, mode='EDIT')
+        tool = self.tool
+        if context.mode != 'OBJECT':
+            tool = COMPONENT_TWIN.get(tool, tool)
         try:
-            bpy.ops.wm.tool_set_by_id(name=self.tool, space_type='VIEW_3D')
+            bpy.ops.wm.tool_set_by_id(name=tool, space_type='VIEW_3D')
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip())
             return {'CANCELLED'}

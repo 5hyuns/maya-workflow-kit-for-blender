@@ -274,7 +274,7 @@ MAP = {
     "Modify/Transformation Tools/Move Tool": ("tool", "builtin.move", False),
     "Modify/Transformation Tools/Rotate Tool": ("tool", "builtin.rotate", False),
     "Modify/Transformation Tools/Scale Tool": ("tool", "builtin.scale", False),
-    "Modify/Transformation Tools/Universal Manipulator": ("tool", "builtin.transform", False),
+    "Modify/Transformation Tools/Universal Manipulator": ("tool", "allset.universal_manip", False),
     "Modify/Transformation Tools/Move/Rotate/Scale Tool": ("tool", "builtin.transform", False),
     "Modify/Reset Transformations": "allset.reset_transform",
     "Modify/Freeze Transformations": "allset.freeze_transform",

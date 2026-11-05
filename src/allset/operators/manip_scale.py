@@ -39,8 +39,9 @@ import bpy
 # bl_idname of the modal, for code that waits while a transform runs (it is a transform without the TRANSFORM_OT_
 # prefix).
 MODAL_ID = "ALLSET_OT_manip_scale"
-# Modal transforms: Blender's and the kit's own drags (manipulator scale, pivot edit, component scale, live move).
-TRANSFORM_MODALS = ("TRANSFORM_OT_", MODAL_ID, "ALLSET_OT_pivot_translate", "ALLSET_OT_pivot_rotate",
+# Modal transforms: Blender's and the kit's own drags (manipulator scale, pivot edit, component scale, live move,
+# Universal Manipulator).
+TRANSFORM_MODALS = ("TRANSFORM_OT_", MODAL_ID, "ALLSET_OT_pivot_translate", "ALLSET_OT_pivot_rotate", "ALLSET_OT_um_",
                     "ALLSET_OT_component_scale", "ALLSET_OT_live_translate")
 
 MODES = (('CENTER', "Centre", "Uniform scale (centre handle)"),

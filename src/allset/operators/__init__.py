@@ -26,6 +26,7 @@ from . import live_translate
 from . import point_keys  # S on selected points keys their positions
 from . import lattice_pick  # lattice points picked where a deformer draws them
 from . import camera_overscan  # Maya camera Overscan (#313)
+from . import universal_manip  # Universal Manipulator drags (#318)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pivot_pick.classes,
@@ -174,6 +175,7 @@ from . import uv_loop_pick  # noqa: E402  UV Editor double-click: UV edge loop /
 classes += uv_loop_pick.classes
 from . import manip_scale  # noqa: E402  #200: Maya Scale manipulator centre / axis drag
 classes += manip_scale.classes
+classes += universal_manip.classes
 from . import dome_light  # noqa: E402  #201: Create > Lights > Dome Light = the World environment
 classes += dome_light.classes
 from . import graph_move  # noqa: E402  #192: Graph Editor Shift axis lock + time snap to whole frames
@@ -235,6 +237,7 @@ def register():
     material.register_props()
     lights.register_props()
     camera_overscan.register_props()
+    universal_manip.register_props()
     anim_layers.register_props()
     driven_key.register_props()
     mesh_tools.register_props()
@@ -375,6 +378,7 @@ def unregister():
     taphold.unregister_bindings()
     anim_layers.unregister_props()
     lights.unregister_props()
+    universal_manip.unregister_props()
     camera_overscan.unregister_props()
     material.unregister_props()
     uv_shell_select.unregister_props()

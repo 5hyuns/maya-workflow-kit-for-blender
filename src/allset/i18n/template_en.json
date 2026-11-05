@@ -7123,6 +7123,19 @@
    "Reset Character": "Reset Character",
    "Type Manipulator": "Type Manipulator"
   },
+  "Labels/operators/universal_manip": {
+   "Box Size": "Box Size",
+   "Center": "Center",
+   "Length": "Length",
+   "Local": "Local",
+   "Pivot": "Pivot",
+   "Reset Tool": "Reset Tool",
+   "Rotate around": "Rotate around",
+   "Transform space": "Transform space",
+   "Universal Manipulator Rotate": "Universal Manipulator Rotate",
+   "Universal Manipulator Scale": "Universal Manipulator Scale",
+   "World": "World"
+  },
   "Labels/operators/uv_206": {
    "Auto Seams": "Auto Seams",
    "Copy UVs to UV Set": "Copy UVs to UV Set",
@@ -8689,6 +8702,10 @@
    "Source clips (name, character, instances)": "Source clips (name, character, instances)",
    "Trax": "Trax"
   },
+  "Labels/ui/universal_manip": {
+   "Box around the selection: drag a corner to scale (Ctrl: about the centre, Shift: evenly), the arrows on an edge to rotate, the centre to move; click a length to type it": "Box around the selection: drag a corner to scale (Ctrl: about the centre, Shift: evenly), the arrows on an edge to rotate, the centre to move; click a length to type it",
+   "Universal Manipulator": "Universal Manipulator"
+  },
   "Labels/ui/user_workspaces": {
    "Delete Current Workspace": "Delete Current Workspace",
    "Name": "Name",
@@ -9631,6 +9648,12 @@
    "Pick a character of a type whose Type Manipulator is on": "Pick a character of a type whose Type Manipulator is on",
    "Put the picked character back (all characters with Reset All)": "Put the picked character back (all characters with Reset All)",
    "Turn the Type Manipulator on or off: click a character of the type, then move, rotate or scale it": "Turn the Type Manipulator on or off: click a character of the type, then move, rotate or scale it"
+  },
+  "Tooltips/operators/universal_manip": {
+   "Put the Universal Manipulator's settings back (Transform space World, Rotate around Pivot)": "Put the Universal Manipulator's settings back (Transform space World, Rotate around Pivot)",
+   "Rotate about this edge's direction": "Rotate about this edge's direction",
+   "Scale one box axis, the opposite face staying (Ctrl: about the centre; Shift: evenly)": "Scale one box axis, the opposite face staying (Ctrl: about the centre; Shift: evenly)",
+   "Type the box's length along this axis: the selection scales to it about the box centre": "Type the box's length along this axis: the selection scales to it about the box centre"
   },
   "Tooltips/operators/uv_206": {
    "Copy the current UV set's UVs into another UV set (Maya UV Sets > Copy UVs to UV Set > <set>)": "Copy the current UV set's UVs into another UV set (Maya UV Sets > Copy UVs to UV Set > <set>)",

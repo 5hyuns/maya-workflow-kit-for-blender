@@ -271,7 +271,9 @@ ENTRIES = {
        for rtc, sid in (("ShowModelingUI", "modelingMenuSet"), ("ShowRiggingUI", "riggingMenuSet"),
                         ("ShowAnimationUI", "animationMenuSet"), ("ShowDynamicsUI", "dynamicsMenuSet"),
                         ("ShowRenderingUI", "renderingMenuSet"))},
-    "UniversalManip": _e("KIT", (OBJ, "wm.tool_set_by_id", {"name": "builtin.transform"})),
+    "UniversalManip": _e("KIT", (OBJ, "wm.tool_set_by_id", {"name": "allset.universal_manip"}),
+                         note="kit Universal Manipulator 툴 (박스: 꼭짓점 스케일, 변 회전, 중심 이동, 길이 입력); "
+                              "컴포넌트 모드는 Blender Transform"),
     "ShowManipulators": _e("IC", (OBJ, "wm.tool_set_by_id", {"name": "builtin.transform"}),
                            note="Blender 에 Show Manipulator 툴 없음: Transform 툴"),
     "NonSacredTool": _e("KIT", (OBJ, "allset.last_tool", {}),
