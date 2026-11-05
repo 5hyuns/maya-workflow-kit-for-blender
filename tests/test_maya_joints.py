@@ -43,7 +43,7 @@ def test_drawn_radius_is_half_the_radius_times_joint_size():
     scene = bpy.context.scene
     bone = arm.data.bones[names[0]]
     bone[joints.RADIUS] = 2.0
-    k = units.maya_unit(scene)
+    k = units.radius_unit(scene)
     assert abs(mj.drawn_radius(bone, scene) - 1.0 * k) < 1e-9
     scene.allset_joint_size = 2.0
     try:
@@ -53,6 +53,25 @@ def test_drawn_radius_is_half_the_radius_times_joint_size():
         scene.allset_joint_size = 1.0
     del bone[joints.RADIUS]
     assert abs(mj.drawn_radius(bone, scene) - 0.5 * k) < 1e-9, "Radius 1 by default"
+
+
+def test_radius_stays_in_centimetres_in_a_metre_scene():
+    """The Radius is a plain number in centimetres: a metre scene doesn't draw a Radius 1 joint 1 m across."""
+    arm, names = _chain()
+    scene = bpy.context.scene
+    us = scene.unit_settings
+    before = (us.system, us.length_unit, us.scale_length)
+    bone = arm.data.bones[names[0]]
+    try:
+        for unit, scale, want in (('CENTIMETERS', 1.0, 0.005), ('METERS', 1.0, 0.005), ('CENTIMETERS', 0.01, 0.5),
+                                  ('MILLIMETERS', 1.0, 0.005)):
+            us.system, us.length_unit, us.scale_length = 'METRIC', unit, scale
+            got = mj.drawn_radius(bone, scene)
+            assert abs(got - want) < 1e-6 * want, (unit, scale, got, want)
+        us.system = 'NONE'
+        assert abs(mj.drawn_radius(bone, scene) - 0.5) < 1e-9, "no unit system: 1 BU per Radius unit"
+    finally:
+        us.system, us.length_unit, us.scale_length = before
 
 
 def test_sphere_is_three_great_circles_of_the_drawn_radius():

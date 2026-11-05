@@ -5,6 +5,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [Unreleased]
 
+### Fixed
+- **Joints drawn far too large in a scene shown in metres** (#311): a joint's Radius (and Display > Animation >
+  Joint Size) is a plain number in centimetres, like Maya, so a Radius 1 joint is 1 cm across whatever the scene's
+  length unit. In a metre scene the kit drew it 1 m across, so the joints of a human-sized skeleton (for example one
+  imported from FBX) covered the whole character. Scenes shown in centimetres (the kit's default) are unchanged.
+  Change the size with *Display > Animation > Joint Size* or a joint's *Radius* in the Channel Box.
+
 ### Changed
 - **Bevel at a tip where two bevelled edges leave two or more other edges between them** (#213): for example two
   neighbouring edges at the tip of a pyramid. The faces on the far side now meet at one new vertex on the bisector

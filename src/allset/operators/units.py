@@ -44,6 +44,18 @@ def maya_unit(scene=None):
     return _LENGTH_M.get(us.length_unit, 1.0) / (us.scale_length or 1.0)
 
 
+def radius_unit(scene=None):
+    """Blender units per unit of a Maya joint Radius (and Joint Size).
+
+    Maya keeps a joint's Radius as a plain number, not a length: it stays in centimetres whatever the scene's linear
+    unit, so in a metre scene a Radius 1 joint is still 1 cm across.
+    """
+    us = (scene or bpy.context.scene).unit_settings
+    if us.system == 'NONE':
+        return 1.0
+    return _LENGTH_M['CENTIMETERS'] / (us.scale_length or 1.0)
+
+
 def grid_scale(scene=None):
     """Viewport grid scale that puts the finest perspective grid step on one Maya unit.
 
