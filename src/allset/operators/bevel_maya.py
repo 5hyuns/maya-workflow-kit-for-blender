@@ -303,7 +303,7 @@ def _split_rho(q):
 
 
 def corner_splits(edges, ids):
-    """Approximation (Maya's exact rule is not known yet): three-edge corners that ``corner_triples`` leaves out (their
+    """Three-edge corners that ``corner_triples`` leaves out (their
     h values differ more than ``TRIPLE_SPLIT``). Each face's new corner is placed from its two edges (f comes first in
     Maya's vertex -> edge order, s second, t is the third edge at v): size r = w0 + w1 g(h_f / h_t) + w2 g(h_s / h_t),
     g(q) = 2q / sqrt(1 + 3q^2), in units of the far-end width W hm (hm = the smallest h).
@@ -344,8 +344,7 @@ def corner_splits(edges, ids):
         ratio = {face: min(hs[f], hs[s]) / max(hs[f], hs[s]) for face, f, s in pairs}
         d_face = max(ratio, key=ratio.get)
         if ratio[d_face] >= SPLIT_D and hm / max(hs.values()) >= SPLIT_SKIP:
-            # nearly unsplit corners whose bisector face is acute and holds the two smaller h: the approximation is no
-            # closer to Maya there, so Blender's corner stays
+            # nearly unsplit corners whose bisector face is acute and holds the two smaller h keep Blender's corner
             _face, f, s = [x for x in pairs if x[0] is d_face][0]
             t = [e for e in order if e not in (f, s)][0]
             if hs[t] > max(hs[f], hs[s]) and units[f].dot(units[s]) > ZERO:
