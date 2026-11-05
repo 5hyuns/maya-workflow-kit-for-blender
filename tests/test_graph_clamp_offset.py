@@ -74,3 +74,21 @@ def test_offset_without_selection_moves_shown_curves():
         assert bpy.ops.allset.offset_curves(frames=-2.5) == {'FINISHED'}
     assert _times(a, 1) == [-1.5, 2.5, 7.5]
     assert _times(b) == [-1.5, 0, 2.5, 4.5, 7.5]
+
+
+def test_time_ranges():
+    a, b = _scene()
+    sc = bpy.context.scene
+    sc.use_preview_range = True
+    sc.frame_preview_start, sc.frame_preview_end = 3, 6
+    _select(a, (1, 2, 3.5, 5, 6, 8, 10))
+    with Editor():
+        assert bpy.ops.allset.clamp_curves(limit=0.0, time_range='TIME_SLIDER') == {'FINISHED'}
+    assert _values(a) == [0, 1, 0, 0, 0, 5, 6], "only the keys in the playback range 3..6"
+    assert _values(b) == [1, 2.5, 5, 7, 10], "the curves of the selected keys only"
+    sc.use_preview_range = False
+    a, b = _scene()
+    with Editor():
+        assert bpy.ops.allset.offset_curves(frames=3, time_range='START_END', start=4, end=7) == {'FINISHED'}
+    assert _times(a) == [1, 2, 3.5, 8, 9, 10], _times(a)   # 5, 6 -> 8, 9; the old key on 8 gives way
+    assert _times(b) == [1, 2.5, 8, 10], _times(b)

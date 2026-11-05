@@ -743,19 +743,39 @@ class ALLSET_OT_remove_keys(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _curve_keys(context):
-    """(F-curve, keys) to act on: the selected keys, else every key of the shown curves."""
+TIME_RANGES = (
+    ('SELECTED', "Selected keys", "The selected keys (every key of the shown curves when none is selected)"),
+    ('TIME_SLIDER', "Time Slider", "The keys inside the Time Slider's playback range"),
+    ('START_END', "Start/End", "The keys between the Start and End times"),
+)
+
+
+def _curve_keys(context, time_range='SELECTED', start=0.0, end=0.0):
+    """(F-curve, keys) to act on: the selected keys, else every key of the shown curves; with a Time Slider or
+    Start/End range, every key in that range on the curves of the selected keys (else the shown curves)."""
     picked = selected_keys(context)
-    if picked:
-        return picked
-    return [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
+    if time_range == 'SELECTED':
+        if picked:
+            return picked
+        return [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
+    if time_range == 'TIME_SLIDER':
+        sc = context.scene
+        start, end = ((sc.frame_preview_start, sc.frame_preview_end) if sc.use_preview_range
+                      else (sc.frame_start, sc.frame_end))
+    curves = [fc for fc, _pts in picked] or editor_curves(context)
+    out = []
+    for fc in curves:
+        pts = [kp for kp in fc.keyframe_points if start - EPS <= kp.co.x <= end + EPS]
+        if pts:
+            out.append((fc, pts))
+    return out
 
 
-def clamp_keys(context, limit, side):
+def clamp_keys(context, limit, side, time_range='SELECTED', start=0.0, end=0.0):
     """Maya Curves > Clamp Curves: key values past ``limit`` ('ABOVE' = greater, 'BELOW' = smaller) become the limit;
     the tangents keep their shape. Count of changed keys."""
     n = 0
-    for fc, pts in _curve_keys(context):
+    for fc, pts in _curve_keys(context, time_range, start, end):
         hit = False
         for kp in pts:
             v = kp.co.y
@@ -771,10 +791,10 @@ def clamp_keys(context, limit, side):
     return n
 
 
-def offset_keys(context, frames, mode):
+def offset_keys(context, frames, mode, time_range='SELECTED', start=0.0, end=0.0):
     """Maya Curves > Offset Curves: move the keys in time by ``frames`` ('RELATIVE'), or so the first of them lands
     on frame ``frames`` ('START'). Count of moved keys."""
-    work = _curve_keys(context)
+    work = _curve_keys(context, time_range, start, end)
     times = [kp.co.x for _fc, pts in work for kp in pts]
     if not times:
         return 0
@@ -801,13 +821,16 @@ class ALLSET_OT_clamp_curves(bpy.types.Operator):
     side: EnumProperty(name="Clamp", default='ABOVE', items=(
         ('ABOVE', "Above the limit", "Keys greater than the limit get the limit"),
         ('BELOW', "Below the limit", "Keys smaller than the limit get the limit")))
+    time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
+    start: FloatProperty(name="Start Time", default=1.0)
+    end: FloatProperty(name="End Time", default=10.0)
 
     @classmethod
     def poll(cls, context):
         return in_key_editor(context)
 
     def execute(self, context):
-        clamp_keys(context, self.limit, self.side)
+        clamp_keys(context, self.limit, self.side, self.time_range, self.start, self.end)
         _redraw(context)
         return {'FINISHED'}
 
@@ -824,13 +847,16 @@ class ALLSET_OT_offset_curves(bpy.types.Operator):
     mode: EnumProperty(name="Offset", default='RELATIVE', items=(
         ('RELATIVE', "By frames", "Move the keys by the offset"),
         ('START', "To start frame", "Move the keys so the first one is on the offset frame")))
+    time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
+    start: FloatProperty(name="Start Time", default=1.0)
+    end: FloatProperty(name="End Time", default=10.0)
 
     @classmethod
     def poll(cls, context):
         return in_key_editor(context)
 
     def execute(self, context):
-        offset_keys(context, self.frames, self.mode)
+        offset_keys(context, self.frames, self.mode, self.time_range, self.start, self.end)
         _redraw(context)
         return {'FINISHED'}
 

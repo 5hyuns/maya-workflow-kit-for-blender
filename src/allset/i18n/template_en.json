@@ -5821,6 +5821,7 @@
    "Clamp": "Clamp",
    "Clamp Curves": "Clamp Curves",
    "Curve Command": "Curve Command",
+   "End Time": "End Time",
    "Frames to move the keys by, or the frame the first key moves to": "Frames to move the keys by, or the frame the first key moves to",
    "Inbetween": "Inbetween",
    "Limit Value": "Limit Value",
@@ -5834,7 +5835,9 @@
    "Remove Inbetween": "Remove Inbetween",
    "Remove Key": "Remove Key",
    "Select Type": "Select Type",
+   "Start Time": "Start Time",
    "The value the keys are clamped to": "The value the keys are clamped to",
+   "Time Range": "Time Range",
    "To start frame": "To start frame"
   },
   "Labels/operators/graph_keys": {

@@ -5937,4 +5937,8 @@ STRINGS = {
     'Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmarks to load': 'Maya のグラフ エディタ リスト > ブックマーク: ブックマークのコマンドと、読み込むブックマーク',
     'Bookmark name': 'ブックマーク名',
     'Load Bookmark': 'ブックマークを読み込み',
+    'Selected keys': '選択したキー',
+    "The keys inside the Time Slider's playback range": 'タイム スライダの再生範囲内のキー',
+    'The keys between the Start and End times': '開始と終了の間のキー',
+    'The selected keys (every key of the shown curves when none is selected)': '選択したキー (選択がなければ表示中のカーブのすべてのキー)',
 }
