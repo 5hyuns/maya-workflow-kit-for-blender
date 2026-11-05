@@ -632,6 +632,118 @@ class ALLSET_OT_graph_inbetween(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Keys > Remove Key ----------------------------------------------------------------------------------------
+# Maya's Remove Key items act on the curves that hold selected keys. Unsnapped / Before / After Current Frame use
+# the editor's shown curves when no key is selected; Outside Selected Range and Ripple Delete need selected keys, whose
+# earliest and latest times are the range (on every curve with a selected key).
+
+REMOVE_MODES = (
+    ("UNSNAPPED", "Unsnapped", "Delete the keys that are not on whole frames (Maya Keys > Remove Key > Unsnapped)"),
+    ("BEFORE", "Before Current Frame", "Delete the keys before the current frame (Maya Keys > Remove Key > Before "
+     "Current Frame)"),
+    ("AFTER", "After Current Frame", "Delete the keys after the current frame (Maya Keys > Remove Key > After "
+     "Current Frame)"),
+    ("OUTSIDE", "Outside Selected Range", "Delete the keys outside the selected keys' time range; a curve without a "
+     "key at an end of the range gets one there, so its shape inside stays (Maya Keys > Remove Key > Outside Selected "
+     "Range)"),
+    ("RIPPLE", "Ripple Delete", "Delete the keys inside the selected keys' time range and move the later keys back "
+     "to close the gap (Maya Keys > Remove Key > Ripple Delete)"),
+)
+RIPPLE_GAP = 0.02     # the key from the range's end lands just after the start (Blender merges keys closer than
+                      # 0.01 frame), so the curve jumps there like Maya's
+
+
+def _key_at(fc, t):
+    return next((kp for kp in fc.keyframe_points if abs(kp.co.x - t) < EPS), None)
+
+
+def _ensure_key(fc, t):
+    """A key at time ``t`` on ``fc`` holding the curve's value there (the existing one if any)."""
+    if _key_at(fc, t) is None:
+        fc.keyframe_points.insert(t, fc.evaluate(t))
+
+
+def _remove_at(fc, times):
+    """Remove the keys of ``fc`` at ``times`` (looked up again after each removal: removing a key moves the others)."""
+    for t in times:
+        kp = _key_at(fc, t)
+        if kp is not None:
+            fc.keyframe_points.remove(kp)
+    if times:
+        fc.update()
+
+
+def selected_range(context):
+    """(first, last) time of the selected keys in the editor, or None."""
+    times = [kp.co.x for _fc, pts in selected_keys(context) for kp in pts]
+    return (min(times), max(times)) if times else None
+
+
+def remove_keys(context, mode):
+    """Maya Keys > Remove Key items. Count of removed keys, or None when the mode needs selected keys and has none."""
+    picked = [fc for fc, _pts in selected_keys(context)]
+    a = b = None
+    if mode in {"OUTSIDE", "RIPPLE"}:
+        rng = selected_range(context)
+        if rng is None:
+            return None
+        a, b = rng
+    curves = picked or (editor_curves(context) if mode in {"UNSNAPPED", "BEFORE", "AFTER"} else [])
+    frame = context.scene.frame_current + context.scene.frame_subframe
+    n = 0
+    for fc in curves:
+        if mode == "UNSNAPPED":
+            gone = [kp for kp in fc.keyframe_points if abs(kp.co.x - round(kp.co.x)) > EPS]
+        elif mode == "BEFORE":
+            gone = [kp for kp in fc.keyframe_points if kp.co.x < frame - EPS]
+        elif mode == "AFTER":
+            gone = [kp for kp in fc.keyframe_points if kp.co.x > frame + EPS]
+        elif mode == "OUTSIDE":
+            _ensure_key(fc, a)
+            _ensure_key(fc, b)
+            gone = [kp for kp in fc.keyframe_points if kp.co.x < a - EPS or kp.co.x > b + EPS]
+        else:                                   # RIPPLE
+            if b - a < EPS:
+                continue
+            _ensure_key(fc, a)
+            _ensure_key(fc, b)
+            gone = [kp for kp in fc.keyframe_points if a + EPS < kp.co.x < b - EPS]
+        n += len(gone)
+        _remove_at(fc, [kp.co.x for kp in gone])
+        if mode == "RIPPLE":
+            later = sorted((kp for kp in fc.keyframe_points if kp.co.x >= b - EPS), key=lambda kp: kp.co.x)
+            for kp in later:
+                time_keys._move(kp, a - b + (RIPPLE_GAP if abs(kp.co.x - b) < EPS else 0.0))
+            fc.update()
+    return n
+
+
+class ALLSET_OT_remove_keys(bpy.types.Operator):
+    """Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple
+    delete of that range (Maya Keys > Remove Key)"""
+    bl_idname = "allset.remove_keys"
+    bl_label = "Remove Key"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    mode: EnumProperty(items=REMOVE_MODES, name="Remove", options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, props):
+        return next(d for k, _l, d in REMOVE_MODES if k == props.mode)
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        n = remove_keys(context, self.mode)
+        if n is None:
+            self.report({'WARNING'}, "Could not apply the command. No range has been selected")
+            return {'CANCELLED'}
+        _redraw(context)
+        return {'FINISHED'}
+
+
 SELECT_PRESETS = (("ALL", "All", "Curves, keys and tangents can be picked (Maya Select > All)"),
                   ("ONLY_CURVE", "Only Curve", "Only curves can be picked (Maya Select > Only Curve)"))
 
@@ -720,7 +832,7 @@ class ALLSET_OT_dope_graph_op(bpy.types.Operator):
         return res
 
 
-classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
+classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_remove_keys, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
 
 
 def register_bindings():

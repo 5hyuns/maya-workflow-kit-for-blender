@@ -150,8 +150,12 @@ def _keys_menu(ed, graph):
     if graph:
         m[f"{ed}/Keys/Insert Key Tool"] = "allset.insert_key_tool"
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
-    # the other Remove Key items are greyed with notices (ui/notices.py)
+    # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
+    for item, mode in (("Unsnapped", "UNSNAPPED"), ("Before Current Frame", "BEFORE"),
+                       ("After Current Frame", "AFTER"), ("Outside Selected Range", "OUTSIDE"),
+                       ("Ripple Delete", "RIPPLE")):
+        m[f"{ed}/Keys/Remove Key/{item}"] = ("allset.remove_keys", {"mode": mode})
     return m
 
 

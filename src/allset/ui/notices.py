@@ -1036,23 +1036,9 @@ NOTICES.update({
 
 
 # Maya 2026 editor menu items with no Blender command (Maya annotations)
-_REMOVE_KEY = {
-    "Unsnapped": ("Select Unsnapped", "Blender has no command that deletes unsnapped keys: Edit > Select Unsnapped, "
-                  "then Delete."),
-    "Before Current Frame": ("Select before the frame", "Blender deletes only selected keys: Select > Before "
-                             "Current Frame ([), then Delete."),
-    "After Current Frame": ("Select after the frame", "Blender deletes only selected keys: Select > After Current "
-                            "Frame (]), then Delete."),
-    "Outside Selected Range": ("Select, then Delete", "Blender has no delete outside a range: select the keys to "
-                               "remove, then Delete."),
-    "Ripple Delete": ("Delete, then G", "Blender has no ripple delete for keys: delete them, then move the later "
-                      "keys back with G."),
-}
 _SHAPES = ("Shape Keys filter", "Blender shows shape key channels or not (header filters > Shape Keys); it has no "
            "auto expand depth for them.")
 NOTICES.update({
-    **{f"{ed}/Keys/Remove Key/{item}": notice for ed in ("Graph Editor", "Dope Sheet")
-       for item, notice in _REMOVE_KEY.items()},
     **{f"{ed}/List/Show Animated Shapes/{item}": _SHAPES for ed in ("Graph Editor", "Dope Sheet")
        for item in ("One", "None")},
     "Graph Editor/Select/Prefer Selected Curves": (

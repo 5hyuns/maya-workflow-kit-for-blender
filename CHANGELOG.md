@@ -6,6 +6,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ## [Unreleased]
 
 ### Added
+- **Keys > Remove Key in the Graph Editor and Dope Sheet**: Unsnapped, Before Current Frame, After Current Frame,
+  Outside Selected Range and Ripple Delete now work like Maya's (they were greyed). They act on the curves of the
+  selected keys; the range is the selected keys' first to last time. Outside Selected Range adds a key at each end
+  of the range where a curve has none, so the curve keeps its shape there; Ripple Delete removes the keys inside the
+  range and moves the later keys back to close the gap. Unsnapped and Before / After Current Frame use the shown
+  curves when no key is selected.
 - **Graph Editor tangent handles like Maya** (#296): in Maya mode the Graph Editor draws a non-weighted tangent at
   a fixed length on screen along its direction, however steep it is and whatever the zoom, and a weighted tangent
   at its real end. Unselected tangents are grey, selected ones white. Click a handle end to select it (Shift
