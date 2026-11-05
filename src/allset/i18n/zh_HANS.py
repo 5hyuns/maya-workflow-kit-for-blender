@@ -5921,4 +5921,6 @@ STRINGS = {
     'Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)': '在曲线编辑器中选择并拖动切线控制柄 (非加权切线只改变方向)',
     'The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)': '曲线编辑器的框选也会选择套件绘制的切线控制柄端点 (框选照常进行)',
     "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)": '按时间删除关键帧：未捕捉的、当前帧之前 / 之后、所选关键帧范围之外，或对该范围波纹删除\n(Maya 关键帧 > 移除关键帧)',
+    'Move Motion Trail Key': '移动运动轨迹关键帧',
+    "Pick a key on a motion trail and drag it to move the object's location keys at that frame": '选取运动轨迹上的关键帧并拖动，移动对象在该帧的位置关键帧',
 }

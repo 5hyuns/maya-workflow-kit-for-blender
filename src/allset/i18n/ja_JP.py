@@ -5921,4 +5921,6 @@ STRINGS = {
     'Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)': 'グラフエディタでタンジェント ハンドルを選択してドラッグします (重みなしタンジェントは向きだけが変わります)',
     'The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)': 'グラフエディタの範囲選択で、キットが表示するタンジェント ハンドルの端も選択します (範囲選択はそのまま行われます)',
     "Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple\ndelete of that range (Maya Keys > Remove Key)": '時間でキーを削除します: スナップされていないキー、現在のフレームより前 / 後、選択したキーの範囲の外、またはその範囲のリップル削除\n(Maya の キー > キーを削除)',
+    'Move Motion Trail Key': 'モーション トレイルのキーを移動',
+    "Pick a key on a motion trail and drag it to move the object's location keys at that frame": 'モーション トレイル上のキーを選んでドラッグし、そのフレームのオブジェクトの位置キーを動かします',
 }

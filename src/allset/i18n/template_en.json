@@ -6266,6 +6266,9 @@
    "Update time range to match time slider": "Update time range to match time slider",
    "X-Ray Draw": "X-Ray Draw"
   },
+  "Labels/operators/motion_trail_edit": {
+   "Move Motion Trail Key": "Move Motion Trail Key"
+  },
   "Labels/operators/multi_cut": {
    "Exit Multi-Cut": "Exit Multi-Cut",
    "Multi-Cut": "Multi-Cut",
@@ -9134,6 +9137,9 @@
   "Tooltips/operators/motion_trail": {
    "Maya Motion Trail Editor commands": "Maya Motion Trail Editor commands",
    "Maya Motion Trail Editor: create and set up motion trails (Blender motion paths)": "Maya Motion Trail Editor: create and set up motion trails (Blender motion paths)"
+  },
+  "Tooltips/operators/motion_trail_edit": {
+   "Pick a key on a motion trail and drag it to move the object's location keys at that frame": "Pick a key on a motion trail and drag it to move the object's location keys at that frame"
   },
   "Tooltips/operators/multi_cut": {
    "Leave the Multi-Cut tool for the Select tool (Maya Esc / Q in the tool)": "Leave the Multi-Cut tool for the Select tool (Maya Esc / Q in the tool)",

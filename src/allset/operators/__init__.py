@@ -149,9 +149,9 @@ classes += controllers.classes
 from . import deformer_order  # noqa: E402  reorderDeformers, blend shape weight keys
 
 classes += deformer_order.classes
-from . import game_exporter, motion_trail  # noqa: E402
+from . import game_exporter, motion_trail, motion_trail_edit  # noqa: E402
 classes += game_exporter.classes
-classes += motion_trail.classes
+classes += motion_trail.classes + motion_trail_edit.classes
 from . import constrain_multi, control_shapes, wire_color  # noqa: E402  #136
 classes += control_shapes.classes + wire_color.classes + constrain_multi.classes
 from . import constrain_interp  # noqa: E402  #168: Maya interpType
@@ -284,9 +284,11 @@ def register():
     sweep_mesh.register()
     point_keys.register_handlers()
     type_manip.register_handlers()
+    motion_trail_edit.register_handlers()
 
 
 def unregister():
+    motion_trail_edit.unregister_handlers()
     type_manip.unregister_handlers()
     point_keys.unregister_handlers()
     autosave.unregister()

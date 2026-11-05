@@ -32,7 +32,7 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emul
                       "allset.graph_key_drag", "allset.graph_scale_box",
                       "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
                       "allset.hg_frame", "allset.marking_menu",
-                      "allset.graph_handle_drag", "allset.graph_handle_box")
+                      "allset.graph_handle_drag", "allset.graph_handle_box", "allset.motion_trail_key")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1480,6 +1480,23 @@ def patch_blender_render(kd):
     _add(kd, "Screen", "render.render", make_event("F12", ctrl=True), {"animation": True, "use_viewport": True})
 
 
+# Maya editable motion trail: a left press on a key marker of a motion path picks the key and a drag moves it
+# (operators/motion_trail_edit.py); plain = set, Shift = toggle, Ctrl = remove, Ctrl+Shift = add. In front of the
+# 3D View's and the Tweak tool's press items; passes through anywhere else.
+# the paint / sculpt / edit mode keymaps keep their own presses (the trail keys are for Object and Pose Mode only);
+# the Screen's Range Slider bar click only acts over the bar
+TRAIL_KEY_SHADOWS = ("Screen", "Image Paint", "Vertex Paint", "Weight Paint", "Sculpt", "Particle", "Curve", "Mesh",
+                     "Armature")
+
+
+def patch_motion_trail_keys(kd):
+    for km in ("3D View", "3D View Tool: Tweak"):
+        for shift, ctrl, mode in ((False, False, 'SET'), (True, False, 'TOGGLE'), (False, True, 'SUB'),
+                                  (True, True, 'ADD')):
+            _add(kd, km, "allset.motion_trail_key", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl), {"mode": mode},
+                 first=True, shadows=(km,) + TRAIL_KEY_SHADOWS)
+
+
 PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -1488,7 +1505,7 @@ PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, pa
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_uv_shell_select, patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
+           patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_motion_trail_keys, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
