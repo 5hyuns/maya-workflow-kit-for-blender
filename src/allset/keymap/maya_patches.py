@@ -1524,13 +1524,13 @@ def patch_global_set_key(kd):
 # "3D View" (tool keymaps: Maya's middle drag on the manipulator; Object Mode / Pose: the Channel Box slider), so
 # this patch runs last.
 
-EMULATED_TUMBLE_KEYMAPS = SLIDER_TOOL_KEYMAPS + ("Object Mode", "Pose", "3D View")
+EMULATED_TUMBLE_KEYMAPS = SLIDER_TOOL_KEYMAPS + ("Object Mode", "Mesh", "Pose", "3D View")
 
 
 def patch_emulated_tumble(kd):
     for km in EMULATED_TUMBLE_KEYMAPS:
         _add(kd, km, "allset.emulated_tumble", make_event("MIDDLEMOUSE"), first=True,
-             shadows=("Image Paint", "Object Mode", "Pose") if km == "3D View" else (km, "3D View"))
+             shadows=("3D View", "Image Paint", "Object Mode", "Mesh", "Pose") if km == "3D View" else (km, "3D View"))
 
 
 # --- w / e / r over the whole Graph Editor ------------------------------------------------------------------------
@@ -1548,7 +1548,7 @@ def patch_graph_key_tool_everywhere(kd):
         _add(kd, "Screen", "allset.graph_key_tool", ev, {"tool": tool}, shadows=under)
 
 
-PATCHES += (patch_weight_paint_exit, patch_global_set_key, patch_graph_key_tool_everywhere, patch_emulated_tumble)
+PATCHES += (patch_weight_paint_exit, patch_global_set_key, patch_graph_key_tool_everywhere)
 
 
 # --- Edge slide with the Move tool (#262) ----------------------------------------------------------------------
@@ -1597,6 +1597,60 @@ def patch_numpad_digits(kd):
 
 
 PATCHES += (patch_numpad_digits,)
+
+
+def patch_attribute_edit(kd):
+    """In-View attribute gestures before tool transforms, with pass-through outside an armed editor."""
+    for key, action in (('RET', 'RUN'), ('NUMPAD_ENTER', 'RUN'), ('ESC', 'CLOSE')):
+        _add(kd, 'Property Editor', 'allset.option_editor_key', make_event(key), {'action': action},
+             first=True, shadows=('Property Editor',))
+    for km in ('Property Editor', 'View2D Buttons List', 'User Interface'):
+        _add(kd, km, 'allset.attribute_field_hover', make_event('MOUSEMOVE', 'ANY', any=True),
+             first=True, shadows=(km,))
+    maps = ('3D View', 'Object Mode', 'Mesh', *SLIDER_TOOL_KEYMAPS)
+    _add(kd, 'Mesh', 'allset.cb_virtual_slider', make_event('MIDDLEMOUSE'),
+         first=True, shadows=('Mesh',))
+    for km in maps:
+        for wheel, direction in (('WHEELUPMOUSE', -1), ('WHEELDOWNMOUSE', 1)):
+            _add(kd, km, 'allset.inview_scroll', make_event(wheel), {'direction': direction},
+                 first=True, shadows=(km,))
+        for button in ('LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'):
+            for ctrl, shift in ((False, False), (True, False), (False, True), (True, True)):
+                if button == 'RIGHTMOUSE' and (ctrl or shift):
+                    continue
+                _add(kd, km, 'allset.inview_drag', make_event(button, ctrl=ctrl, shift=shift),
+                     first=True, shadows=(km,))
+        for reverse in (False, True):
+            _add(kd, km, 'allset.inview_cycle', make_event('TAB', ctrl=True, shift=reverse),
+                 {'reverse': reverse}, first=True, shadows=(km,))
+    for km in ('3D View', 'Object Mode', 'Mesh'):
+        _remove_where(kd, km, lambda item: item[0] == 'wm.tool_set_by_id', type='T')
+        _add(kd, km, 'allset.show_manipulator', make_event('T'), first=True, shadows=(km,))
+
+    # These contextual handlers deliberately share events with the editor/mode stack.
+    # Outside their own UI they pass through (Options also has a window-scoped poll).
+    # Record the handoff on both bindings so the shadow check covers every other pair.
+    views = ('Screen', '3D View', 'Object Mode', 'Object Non-modal', 'Mesh', 'Curve', 'Curves',
+             'Pose', 'Armature', 'Metaball', 'Lattice', 'Particle', 'Font', 'Sculpt',
+             'Image Paint', 'Vertex Paint', 'Weight Paint', *SLIDER_TOOL_KEYMAPS)
+    contexts = {'allset.inview_drag': views, 'allset.inview_cycle': views,
+                'allset.inview_scroll': views, 'allset.show_manipulator': views,
+                'allset.attribute_field_hover': ('Property Editor', 'View2D Buttons List', 'User Interface',
+                                                 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint'),
+                'allset.option_editor_key': ('Property Editor', 'Screen')}
+    handlers = [(km, patch.event_key(event), contexts[idname])
+                for km, idname, event, _props, _shadows in ADDED if idname in contexts]
+    for i, (km, idname, event, props, shadows) in enumerate(ADDED):
+        event_key = patch.event_key(event)
+        shared = {other for other, key, stack in handlers if km in stack and key == event_key}
+        if idname in contexts:
+            shared.update(contexts[idname])
+        ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *sorted(shared))))
+
+
+PATCHES += (patch_attribute_edit, patch_emulated_tumble)
+PASS_THROUGH_FIRST += ('allset.inview_drag', 'allset.inview_cycle', 'allset.inview_scroll',
+                       'allset.attribute_field_hover', 'allset.option_editor_key')
 
 
 def apply(data):

@@ -70,10 +70,11 @@ def record(context):
     from .toolbox import is_toolbox
     if is_toolbox(space):
         return None, None
-    ob, rec = extrude.active(context)
-    if rec is None or rec.dismissed or not rec.spec.in_view or not extrude.caps_selected(ob, rec):
+    from . import in_view_editor
+    node = in_view_editor.model_target(context)
+    if node is None or not node.spec.in_view:
         return None, None
-    return ob, rec
+    return node.ob, node.record
 
 
 def manip_visible(context):
@@ -109,13 +110,20 @@ def _pre_direction(rec):
 def cap_frame(ob, rec):
     """(world centre, world unit normal, world length of one local unit along it) of the extruded faces (edge /
     vertex extrusion: the selection it left, the mean edge / vertex normal; bevel: the bevel's vertices)."""
-    bm = bmesh.from_edit_mesh(ob.data)
-    bm.verts.ensure_lookup_table()
-    bm.faces.ensure_lookup_table()
-    verts = [bm.verts[i] for i in rec.cap_verts if i < len(bm.verts)]
+    if ob.mode == 'EDIT' and ob.data.is_editmode:
+        bm = bmesh.from_edit_mesh(ob.data)
+        bm.verts.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+        mesh_verts, mesh_faces = bm.verts, bm.faces
+    elif ob.mode == 'OBJECT' and not ob.data.is_editmode:
+        mesh_verts, mesh_faces = ob.data.vertices, ob.data.polygons
+    else:
+        return None
+    verts = [mesh_verts[i] for i in rec.cap_verts if i < len(mesh_verts)]
     if rec.spec is not extrude.FACE:
-        verts = [v for v in bm.verts if v.select] or verts
-    faces = [bm.faces[i] for i in rec.cap_faces if i < len(bm.faces)]
+        selected = rec.sel[0] if rec.sel is not None else ()
+        verts = [mesh_verts[i] for i in selected if i < len(mesh_verts)] or verts
+    faces = [mesh_faces[i] for i in rec.cap_faces if i < len(mesh_faces)]
     if not verts:
         return None
     centre = sum((v.co for v in verts), Vector()) / len(verts)
@@ -151,13 +159,9 @@ def anchor(context, ob, rec):
 
 
 def current_layout(context):
-    ob, rec = record(context)
-    if rec is None or context.region is None or context.region.type != 'WINDOW' or context.region_data is None:
-        return None, None
-    a = anchor(context, ob, rec)
-    if a is None:
-        return None, None
-    return rec, layout(context.region, a, _scale(), rec.spec.fields)
+    from . import in_view_editor
+    node, lay = in_view_editor.current_layout(context)
+    return (node.record if hasattr(node, 'record') else node), lay
 
 
 def value_text(rec, field):
@@ -187,30 +191,8 @@ def _text(x, y, s, colour, size):
 
 
 def draw_box():
-    """POST_PIXEL of 3D View WINDOW regions: the In-View Editor next to the extrude manipulator."""
-    context = bpy.context
-    rec, lay = current_layout(context)
-    if rec is None:
-        return
-    from ..marking import draw as marking_draw
-    if marking_draw.menu_up():   # Maya's hotbox / marking menus cover the In-View Editor
-        return
-    s = _scale()
-    size = 11 * s
-    pad = 5 * s
-    gpu.state.blend_set('ALPHA')
-    _rect(*lay["box"], BG)
-    _rect(*lay["title"], TITLE_BG)
-    x0, y0, x1, y1 = lay["title"]
-    blf.size(0, size)
-    tw = blf.dimensions(0, rec.name)[0]
-    _text((x0 + x1 - tw) / 2, y0 + 4 * s, rec.name, TEXT, size)
-    for i, (field, rx0, ry0, rx1, ry1) in enumerate(lay["rows"]):
-        _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], HOT if i == _state["hot"] else TEXT, size)
-        v = value_text(rec, field)
-        blf.size(0, size)
-        _text(rx1 - pad - blf.dimensions(0, v)[0], ry0 + 4 * s, v, TEXT, size)
-    gpu.state.blend_set('NONE')
+    from . import in_view_editor
+    in_view_editor.draw()
 
 
 # --- In-View picking (2D gizmos) -------------------------------------------------------------------
@@ -230,11 +212,11 @@ class ALLSET_GT_in_view_row(bpy.types.Gizmo):
         _rec, lay = current_layout(context)
         if lay is None or self.row >= len(lay["rows"]):
             return -1
+        reach = 10 * _scale()
+        if lay['box'][2]-reach <= location[0] <= lay['box'][2] and lay['box'][1] <= location[1] <= lay['box'][1]+reach:
+            return -1
         _f, x0, y0, x1, y1 = lay["rows"][self.row]
         if x0 <= location[0] <= x1 and y0 <= location[1] <= y1:
-            if _state["hot"] != self.row:
-                _state["hot"] = self.row
-                context.region.tag_redraw()
             return 0
         return -1
 
@@ -248,7 +230,8 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
 
     @classmethod
     def poll(cls, context):
-        return manip_visible(context)
+        from . import in_view_editor
+        return in_view_editor.target(context) is not None
 
     def setup(self, context):
         for i in range(MAX_ROWS):
@@ -496,62 +479,19 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
     bl_label = "In-View Editor"
     bl_options = {'INTERNAL'}
 
-    row: IntProperty(options={'SKIP_SAVE'})
-
-    @classmethod
-    def poll(cls, context):
-        return extrude.active(context)[1] is not None
+    row: IntProperty(default=-1, options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
-        ob, rec = extrude.active(context)
-        if self.row >= len(rec.spec.fields):
-            return {'CANCELLED'}
-        field = rec.spec.fields[self.row]
-        _state["hot"] = self.row
-        if field in BOOL_FIELDS:
-            extrude.set_params(context, **{field: not rec.params[field]})
-            _redraw(context)
-            return {'FINISHED'}
-        self._ob, self._rec, self._field = ob, rec, field
-        self._start = dict(rec.params)
-        self._x0, self._moved = event.mouse_x, False
-        self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
-        self._unit = units.maya_unit(context.scene)
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-
-    def _value(self, event):
-        s = _scale()
-        dx = (event.mouse_x - self._x0) / s
-        start = self._start[self._field]
-        if self._field in INT_FIELDS:
-            return max(1, int(start + round(dx / DIV_PX)))
-        step = FLOAT_STEP * (0.1 if event.ctrl else 10.0 if event.shift else 1.0)
-        return clamp(self._field, round(start + dx * step, 4))
+        from . import in_view_editor
+        return in_view_editor.invoke_drag(self, context, event)
 
     def modal(self, context, event):
-        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
-            if abs(event.mouse_x - self._x0) > 3 * _scale():
-                self._moved = True
-            if self._moved:
-                params = dict(self._start, **{self._field: self._value(event)})
-                extrude.preview(self._ob, self._rec, params, self._unit)
-                _redraw(context)
-            return {'RUNNING_MODAL'}
-        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
-            if self._moved:
-                extrude.preview(self._ob, self._rec, self._start, self._unit)
-                self._rec.live = False
-            _redraw(context)
-            return {'CANCELLED'}
-        if event.type == self._button and event.value == 'RELEASE':
-            if self._moved:
-                extrude.set_params(context, **{self._field: self._value(event)})
-            else:
-                bpy.ops.allset.inview_type('INVOKE_DEFAULT', row=self.row)
-            _redraw(context)
-            return {'FINISHED'}
-        return {'RUNNING_MODAL'}
+        from . import in_view_editor
+        return in_view_editor.modal_drag(self, context, event)
+
+    def cancel(self, context):
+        from . import in_view_editor
+        in_view_editor.finish_drag(self, context, cancel=True)
 
 
 class ALLSET_OT_inview_type(bpy.types.Operator):
@@ -562,15 +502,18 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
 
     row: IntProperty(options={'SKIP_SAVE'})
     number: FloatProperty(name="Value")
-    count: IntProperty(name="Divisions", min=1)
+    count: IntProperty(name="Divisions")
 
     @classmethod
     def poll(cls, context):
-        return extrude.active(context)[1] is not None
+        from . import node_attributes
+        return node_attributes.target(context) is not None
 
     def _field(self, context):
-        _ob, rec = extrude.active(context)
-        if rec is None or self.row >= len(rec.spec.fields):
+        from . import node_attributes
+        node = node_attributes.target(context)
+        rec = node.record if isinstance(node, node_attributes.ModelingNode) else None
+        if rec is None or not 0 <= self.row < len(rec.spec.fields):
             return rec, None
         return rec, rec.spec.fields[self.row]
 
@@ -578,11 +521,7 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
         rec, field = self._field(context)
         if field is None:
             return {'CANCELLED'}
-        if field in INT_FIELDS:
-            self.count = int(rec.params[field])
-        else:
-            self.number = float(rec.params[field])
-        return context.window_manager.invoke_props_dialog(self, title=f"{rec.name}: {rec.spec.labels[field]}")
+        return bpy.ops.allset.inview_number('INVOKE_DEFAULT', field=field)
 
     def draw(self, context):
         rec, field = self._field(context)
@@ -593,7 +532,12 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
         _rec, field = self._field(context)
         if field is None:
             return {'CANCELLED'}
-        value = self.count if field in INT_FIELDS else clamp(field, self.number)
+        from . import node_attributes
+        node = node_attributes.target(context)
+        if not node_attributes.editable(node, field):
+            return {'CANCELLED'}
+        value = self.count if node.spec.kinds[field] == 'INT' else self.number
+        value = node.descriptor(field).limit(value)
         res = extrude.set_params(context, **{field: value})
         _redraw(context)
         return res
@@ -637,7 +581,9 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         return (p1 - p0).normalized()
 
     def invoke(self, context, event):
-        ob, rec = extrude.active(context)
+        from . import in_view_editor
+        node = in_view_editor.model_target(context, fresh=True)
+        ob, rec = (node.ob, node.record) if node is not None else (None, None)
         fields = handle_fields(rec, self.handle)
         frame = manip_frame(ob, rec) if fields else None
         if frame is None:
@@ -697,6 +643,8 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
             extrude.preview(self._ob, self._rec, params, self._unit)
             if self._fields[0] in self._rec.spec.fields:
                 _state["hot"] = self._rec.spec.fields.index(self._fields[0])
+                from . import in_view_editor, node_attributes
+                in_view_editor.select(context, node_attributes.ModelingNode(self._ob, self._rec), self._fields[0])
             _redraw(context)
             return {'RUNNING_MODAL'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
@@ -722,9 +670,14 @@ def cb_record(context, ob):
     """The lead object's last extrusion for Channel Box INPUTS (any selection), or None."""
     if ob is None:
         return None
-    if ob is not getattr(context, "edit_object", None):
-        return extrude.object_record(ob)        # a node editable in object mode (UV > Automatic)
-    return extrude.current(ob)
+    rec = (extrude.object_record(ob) if ob is not getattr(context, 'edit_object', None)
+           else extrude.current(ob))
+    if rec is not None:
+        from ..operators import model_history
+        selected = model_history.selected(ob)
+        return (selected if selected is not None and not hasattr(selected, 'creation')
+                and selected.history_id != rec.history_id else rec)
+    return None
 
 
 def _lead(context):
@@ -745,7 +698,9 @@ def _text_get(field):
         rec = cb_record(bpy.context, _lead(bpy.context))
         if rec is None or field not in rec.params:
             return ""
-        return cb_entry.format_value(rec.params[field], rec.spec.kinds[field], bpy.context.scene)
+        from . import node_attributes
+        node = node_attributes.for_record(bpy.context, _lead(bpy.context), rec)
+        return node_attributes.format_value(node, field, bpy.context.scene)
     return get
 
 
@@ -755,17 +710,24 @@ def _text_set(field):
         rec = cb_record(context, _lead(context))
         if rec is None or field not in rec.params:
             return
-        try:
-            value = cb_entry.parse_entry(text, rec.params[field], rec.spec.kinds[field], context.scene)
-        except (ValueError, TypeError, SyntaxError, NameError):
-            return
-        if field in INT_FIELDS:
-            value = max(1, int(value))
-        elif field not in BOOL_FIELDS:
-            value = clamp(field, value)
-        if value != rec.params[field]:
-            extrude.set_params(context, **{field: value})
+        from . import channel_box
+        bpy.ops.allset.model_channel_entry('EXEC_DEFAULT', True,
+                                           key=channel_box.model_key(rec, field), text=text)
     return set_
+
+
+class ALLSET_OT_model_channel_entry(bpy.types.Operator):
+    """Apply typed modeling channels and compatible selected channels as one undo step"""
+    bl_idname = 'allset.model_channel_entry'
+    bl_label = 'Edit Node Attributes'
+    bl_options = {'INTERNAL', 'UNDO'}
+    key: StringProperty(options={'SKIP_SAVE'})
+    text: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from . import channel_box
+        count = channel_box.apply_entry(self.key, self.text, context)
+        return {'FINISHED'} if count else {'CANCELLED'}
 
 
 class ALLSET_PG_history(bpy.types.PropertyGroup):
@@ -775,7 +737,7 @@ class ALLSET_PG_history(bpy.types.PropertyGroup):
                        for f in ALL_FIELDS}
 
 
-HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can be changed here."
+HISTORY_TIP = "Edit this recorded modeling node and replay its downstream operations."
 
 
 def draw_cb_node(layout, context, rec):
@@ -789,16 +751,27 @@ def draw_cb_node(layout, context, rec):
     if not opened:
         return
     hist = context.window_manager.allset_history
+    from . import node_attributes
+    node = node_attributes.for_record(context, ob, rec)
     for field in rec.spec.fields:
         row = lines.row()
         if row is None:
             continue
         split = row.split(factor=0.5, align=True)
-        split.label(text=rec.spec.labels[field])
-        split.prop(hist, f"{field}_text", text="")
+        key = channel_box.model_key(rec, field)
+        split.operator('allset.cb_select_channel', text=rec.spec.labels[field], emboss=False,
+                       depress=key in channel_box.selected_channels(context)).key = key
+        values = split.row()
+        values.enabled = node_attributes.editable(node, field)
+        values.prop(hist, f"{field}_text", text="")
+    if rec.spec.kind == 'BRIDGE':
+        row = lines.row()
+        if row is not None:
+            from . import bridge_editor
+            bridge_editor.draw_controls(row.column(), node)
 
 
-classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
+classes = (ALLSET_OT_model_channel_entry, ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
            ALLSET_GGT_extrude,
            ALLSET_OT_inview_drag, ALLSET_OT_inview_type, ALLSET_OT_extrude_drag)
 

@@ -25,7 +25,9 @@ HISTORY = []                 # oldest first: {"label", "action", "path", "mark"}
 SKIP_PREFIXES = ("TRANSFORM_OT_", "VIEW3D_OT_view", "VIEW3D_OT_zoom", "VIEW3D_OT_move", "VIEW3D_OT_rotate",
                  "VIEW3D_OT_dolly", "VIEW3D_OT_navigate", "VIEW3D_OT_walk", "VIEW3D_OT_fly", "VIEW3D_OT_localview",
                  "ED_OT_", "SCREEN_OT_", "WM_OT_", "OUTLINER_OT_", "UI_OT_", "IMAGE_OT_view", "GRAPH_OT_view",
-                 "ACTION_OT_view", "ALLSET_OT_repeat", "ALLSET_OT_hotbox", "ALLSET_OT_mm_", "ALLSET_OT_smart_extrude")
+                 "ACTION_OT_view", "ALLSET_OT_repeat", "ALLSET_OT_hotbox", "ALLSET_OT_mm_", "ALLSET_OT_smart_extrude",
+                 "ALLSET_OT_inview_", "ALLSET_OT_attribute_field_", "ALLSET_OT_node_attribute_apply",
+                 "ALLSET_OT_cb_virtual_slider", "ALLSET_OT_option_editor_", "ALLSET_OT_model_channel_entry")
 NO_RECORD = {"Edit/Repeat", "Edit/Recent Commands List", "Edit/Undo", "Edit/Redo"}
 # These kit operators implement selection/display or manipulator drags, just like
 # the native operators excluded above. They are UI state, not another modeling command.
@@ -40,6 +42,9 @@ NON_COMMANDS = frozenset({
     "ALLSET_OT_component_scale", "ALLSET_OT_live_translate",
     "ALLSET_OT_pivot_translate", "ALLSET_OT_pivot_rotate", "ALLSET_OT_pivot_pick",
     "ALLSET_OT_pivot_exit", "ALLSET_OT_pivot_option", "ALLSET_OT_menu_tool", "ALLSET_OT_last_tool",
+    "ALLSET_OT_bridge_ramp", "ALLSET_OT_bridge_path",
+    "ALLSET_OT_bridge_upgrade",
+    "ALLSET_OT_history_rebind", "ALLSET_OT_history_rebind_apply",
 })
 
 

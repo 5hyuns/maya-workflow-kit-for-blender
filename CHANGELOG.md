@@ -3,6 +3,37 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Shared attribute dragging for the In-View Editor, Channel Box history and kit editor numeric fields. Pick an attribute,
+  middle-drag in the viewport, and use Ctrl / Shift or the shared slider speed to adjust it.
+- Movable, resizable In-View Editors with displayed-attribute controls, scrolling, saved layouts and context
+  attribute marking menus. T opens an editable modeling or primitive node. Bridge and Add Divisions keep editable parameters.
+- Modeless command Options editors share the numeric gestures and existing option schemas, saved settings and
+  command execution. Multiple command options can stay open together.
+- Bridge offers Linear, Smooth and editable curve paths, angular Twist, Taper, Bridge Offset, manual endpoint
+  directions, smoothing angle and a Taper Curve graph with four interpolation modes.
+- Modeling history retains multiple nodes and a primitive creation recipe across Save/Load. Earlier-node edits
+  replay downstream operations. Schema 2 keeps persistent component identities, including Extrude cap bindings
+  across Divisions changes, and migrates older recipes on editing.
+- Rebind Selection in the Attribute Editor and Channel Box chooses replacements for removed or incompatible
+  downstream targets. Enter accepts the complete replay, Esc cancels, and native Undo restores the original chain.
+
+### Fixed
+- Leaving component mode closes its In-View Editor. Reopening modeling nodes in Object Mode reads the Mesh
+  anchor safely, and mode changes cancel an active attribute drag.
+- Attribute drags commit one undo step, restore on cancel and keep G on the previous modeling command.
+- Repeated In-View display queries share a short-lived validation result while edit entry points validate afresh.
+- Bridge Type menus retain integer enum values, and cancelling a Channel Box drag after a mode change restores
+  the starting attributes and geometry.
+- Bridge coordinate previews retain their native BMesh lookup cache and update local normals. Confirming a
+  coordinate preview captures the displayed result without rebuilding its topology.
+- History input snapshots and replay hashes are reused. Inactive BMesh caches are evicted against a 256 MiB
+  estimate, with selected objects and live edits protected. Delete History releases persistent runtime records.
+- New Bridges use transported endpoint frames and twist-dependent closed-border correspondence. Existing
+  Bridges retain their saved evaluation and offer an explicit Update Bridge Evaluation action.
+
 ## [0.11.0] — 2026-11-04
 
 ### Added
