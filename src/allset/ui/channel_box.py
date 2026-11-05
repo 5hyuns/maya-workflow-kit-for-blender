@@ -1896,6 +1896,12 @@ class ALLSET_OT_cb_hover(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
+# #315: room a dock needs on its left for the Channels menu (UI units), and how far left of the dock's edge the
+# cursor goes (a Blender menu opens with about four fifths of its width left of the cursor)
+MENU_ROOM = 14
+MENU_GAP = 3
+
+
 class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
     """Maya Channel Box selection: click a channel name or field, drag over the rows to select a range
     (Ctrl toggles / adds, Shift selects from the last clicked channel)"""
@@ -1954,7 +1960,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 hit = _hover.get(self._win)
                 in_part = hit is not None or (self._cb_bottom is not None and event.mouse_y >= self._cb_bottom)
                 if in_part and not (event.shift or event.alt):
-                    return self._on_rmb(context, hit, edit=event.ctrl)
+                    return self._on_rmb(context, hit, edit=event.ctrl, y=event.mouse_y)
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
             if self._on_move(context, event):
@@ -1977,12 +1983,13 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             return False
         return self._cb_bottom <= event.mouse_y < self._rows_bottom
 
-    def _on_rmb(self, context, hit, edit=False):
+    def _on_rmb(self, context, hit, edit=False, y=0):
         """Maya: RMB in the Channel Box = the Channels menu. Blender's button
         context menu draws its C items first and a Python menu only after them (#87: the Channels items
         sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
         that isn't selected becomes the selection first, so Key Selected keys the clicked channel."""
         if edit:     # Ctrl+RMB = the Edit menu (Maya Channel Box), selection kept
+            self._menu_beside(context, y)
             bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
             return {'RUNNING_MODAL'}
         if hit is not None:
@@ -1991,8 +1998,26 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 set_selected_channels([key], context)
                 _anchor["key"] = key
                 _redraw(self._window)
+        self._menu_beside(context, y)
         bpy.ops.wm.call_menu(name=ALLSET_MT_cb_channels.__name__)
         return {'RUNNING_MODAL'}
+
+    def _menu_beside(self, context, y):
+        """#315: the Channels / Edit menu opens left of the dock, so it doesn't cover the channel names and values.
+        A Blender menu opens at the cursor (most of it left of the cursor) and Python can't place it: the cursor
+        moves just left of the dock's edge first. A dock with too little room on its left keeps the menu at the
+        cursor."""
+        if self._cb_bottom is None:
+            return
+        u = _unit(context)
+        x0, _y0, _x1, _y1 = self._rect
+        if x0 < MENU_ROOM * u:
+            return
+        window = context.window
+        x = x0 - round(MENU_GAP * u)
+        window.cursor_warp(x, y)
+        if bpy.app.use_event_simulate:   # event simulation drops the OS mouse move a warp makes
+            window.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x, y=y)
 
     def _on_press(self, context, event, hit):
         ob = lead(context)
