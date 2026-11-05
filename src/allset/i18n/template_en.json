@@ -5900,8 +5900,8 @@
   "Labels/operators/graph_sculpt": {
    "Brush": "Brush",
    "Brush Size": "Brush Size",
-   "Radius of the Graph Editor sculpting brushes, in pixels": "Radius of the Graph Editor sculpting brushes, in pixels",
-   "Sculpt Keys": "Sculpt Keys"
+   "Sculpt Keys": "Sculpt Keys",
+   "Size of the Graph Editor sculpting brushes: pixels up and down (the frames across follow)": "Size of the Graph Editor sculpting brushes: pixels up and down (the frames across follow)"
   },
   "Labels/operators/graph_weights": {
    "Lock": "Lock",

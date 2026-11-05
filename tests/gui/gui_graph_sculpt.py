@@ -124,16 +124,50 @@ def s_grab_check():
     r = region()
     dv = r.view2d.region_to_view(0, 100 - 40)[1] - r.view2d.region_to_view(0, 100)[1]
     rad = bpy.context.window_manager.allset_sculpt_keys_radius
-    w1 = gs().falloff(C["ppf"] / rad)
+    s = bpy.context.preferences.system.ui_scale
+    w1 = gs().falloff(gs().brush_distance(1, 0, rad, s))
+    reach = rad / s * gs().FRAMES_PER_PX
     check(f"Grab: the key under the brush follows the drag ({v[20]} vs {dv:.4f})", abs(v[20] - dv) < 0.02 * abs(dv))
     check(f"Grab: its neighbours move by the falloff ({v[19]} {v[21]} vs {dv * w1:.4f})",
           abs(v[19] - dv * w1) < 0.03 * abs(dv) and abs(v[21] - dv * w1) < 0.03 * abs(dv))
-    far = [f for f in v if abs(f - 20) * C["ppf"] > rad + 2 and v[f] != 0.0]
+    far = [f for f in v if abs(f - 20) > reach + 0.1 and v[f] != 0.0]
+    moved = [f for f in v if v[f] != 0.0]
+    C["moved_base"] = moved
     check(f"Grab: keys outside the brush stay ({far})", not far)
     check(f"Grab: times stay ({sorted(v) == list(range(41))})", sorted(v) == list(range(41)))
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_graph_sculpt_grab.png"))
     bpy.ops.ed.undo()
+
+
+@step
+def s_zoomed():
+    r = region()
+    with bpy.context.temp_override(window=win(), area=C["area"], region=r):
+        bpy.ops.view2d.zoom(deltax=r.width * 0.1, deltay=0.0)      # zoom in on the time axis
+    bpy.ops.ed.undo_push(message="zoom")
+
+
+@step
+def s_zoomed_grab():
+    r = region()
+    x0, _ = r.view2d.view_to_region(0, 0, clip=False)
+    x1, _ = r.view2d.view_to_region(1, 0, clip=False)
+    C["ppf2"] = x1 - x0
+    a = at(20, 0.0)
+    drag(a, (a[0], a[1] - 40))
+
+
+@step
+def s_zoomed_check():
+    v = vals()
+    moved = [f for f in v if v[f] != 0.0]
+    check(f"zoomed in ({C['ppf']:.1f} -> {C['ppf2']:.1f} px a frame): the brush spans the same frames "
+          f"({moved} vs {C['moved_base']})", C["ppf2"] > C["ppf"] * 1.2 and moved == C["moved_base"])
+    check(f"the default brush spans 3.4 frames across ({C['moved_base']})", C["moved_base"] == list(range(17, 24)))
+    bpy.ops.ed.undo()
+    with bpy.context.temp_override(window=win(), area=C["area"], region=region()):
+        bpy.ops.graph.view_all()
 
 
 @step

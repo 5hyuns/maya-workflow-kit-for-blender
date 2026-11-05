@@ -17,9 +17,15 @@ def test_falloff_shape():
     assert abs(f(0.25) - 0.9) < 1e-9 and abs(f(0.75) - 0.1) < 1e-9
     vals = [f(i / 50) for i in range(51)]
     assert all(a >= b for a, b in zip(vals, vals[1:])), "falls off steadily"
-    # one, two and three frames from the middle at 19.5 px per frame with the default radius (Maya: .82 / .37 / .03)
-    for d, want in ((19.5, 0.82), (39.0, 0.37), (58.4, 0.03)):
-        assert abs(f(d / gs.RADIUS_PX) - want) < 0.07, (d, f(d / gs.RADIUS_PX))
+    # one, two and three frames across from the middle with the default size (Maya: .83 / .37 / .03), at any zoom
+    for d, want in ((1, 0.83), (2, 0.37), (3, 0.03)):
+        u = gs.brush_distance(d, 0, gs.RADIUS_PX)
+        assert abs(f(u) - want) < 0.07, (d, f(u))
+    # one, two, three value steps of 14.6 px up (Maya: .74 / .36 / .06), four (58 px): outside
+    for d, want in ((14.6, 0.74), (29.2, 0.36), (43.8, 0.06)):
+        u = gs.brush_distance(0, d, gs.RADIUS_PX)
+        assert abs(f(u) - want) < 0.2, (d, f(u))
+    assert f(gs.brush_distance(0, 58.4, gs.RADIUS_PX)) == 0.0
 
 
 def test_smooth_and_reduce_rules():

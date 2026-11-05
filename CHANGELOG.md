@@ -15,7 +15,8 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Reducer brushes work like Maya's (they showed a notice). Drag over the curves: Grab moves the keys under the brush
   up or down with the drag, Smear drags keys along the stroke's path, Smooth pulls keys toward their neighbours, and
   Key Reducer deletes keys that lie on the line between their neighbours (a curve's first and last keys stay). The
-  brush is a circle whose pull fades out toward its edge; B + drag sideways changes its size. Brushes change key
+  brush's pull fades out toward its edge; like Maya it spans the same frames across at any zoom (about 3 frames
+  each side) and a set height on screen; B + drag sideways changes its size. Brushes change key
   values, not times; with keys selected only those change. Each stroke is one undo step; Esc or Q / W / E / R / T
   ends the tool.
 - **Graph Editor Curves > Clamp Curves and Offset Curves** work like Maya's (they showed a notice). Clamp Curves sets

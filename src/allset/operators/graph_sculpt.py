@@ -2,9 +2,10 @@
 """Maya Graph Editor Edit > Transformation Tools > Sculpting Tools: Grab, Smooth, Smear and Key Reducer brushes.
 
 The tool stays on in the Graph Editor (like the Retime Tool) until Esc or Q / W / E / R / T. A left drag is one stroke
-(one undo step); B + left drag sideways changes the brush radius. The brush is a circle on screen, its weight falls
-off smoothly from 1 in the middle to 0 at the edge (``falloff``), and it acts on the selected keys, or on every key
-of the shown curves when none is selected. Like Maya the brushes change key values only, not their times:
+(one undo step); B + left drag sideways changes the brush size. Like Maya the brush spans a number of frames across
+(the same at any zoom of the time axis) and a number of screen pixels up and down (``brush_distance``); its weight
+falls off smoothly from 1 in the middle to 0 at the edge (``falloff``), and it acts on the selected keys, or on every
+key of the shown curves when none is selected. The brushes change key values only, not their times:
 
 - Grab: the keys under the brush when the stroke starts follow the mouse up and down, each by its weight.
 - Smear: the keys under the brush at each mouse move follow that move, so a stroke drags keys along its path.
@@ -30,7 +31,9 @@ MODES = (
     ('REDUCE', "Key Reducer Tool", "Delete the keys the brush passes over that the curve can do without (Maya "
      "Sculpting Tools > Key Reducer Tool)"),
 )
-RADIUS_PX = 66.0                    # brush radius at UI scale 1
+RADIUS_PX = 50.0                    # brush height radius (screen pixels at UI scale 1)
+FRAMES_PER_PX = 3.4 / 50.0          # brush width radius = this × the height radius, in frames: like Maya the brush
+                                    # covers the same frames at any zoom of the time axis
 STRENGTH = {'GRAB': 1.0, 'SMOOTH': 1.0, 'SMEAR': 1.0, 'REDUCE': 0.1}
 SMOOTH_RATE = 0.5                   # Smooth: share of the way to the neighbours' mean per mouse move at full weight
 REDUCE_PX = 20.0                    # Key Reducer: a key within strength × this many pixels of the neighbours' line goes
@@ -95,6 +98,18 @@ def target_keys(context):
     return [(fc, d[0], d[1], list(range(len(fc.keyframe_points)))) for fc, d in zip(fcs, disp)]
 
 
+def brush_distance(dt_frames, dy_px, radius_px, ui_scale=1.0):
+    """Distance of a key from the brush middle as a share of the brush radius: ``dt_frames`` across (the radius spans
+    ``radius_px`` / ``ui_scale`` × FRAMES_PER_PX frames), ``dy_px`` up / down (the radius spans ``radius_px``
+    pixels)."""
+    r = max(radius_px, 1.0)
+    return math.hypot(dt_frames / (r / (ui_scale or 1.0) * FRAMES_PER_PX), dy_px / r)
+
+
+def _ui_scale():
+    return bpy.context.preferences.system.ui_scale or 1.0
+
+
 def _screen(region, t, v, scale, offset):
     return region.view2d.view_to_region(t, v / scale + offset, clip=False)
 
@@ -152,7 +167,8 @@ def _draw():
     from gpu_extras.batch import batch_for_shader
     x, y = _DRAW["pos"]
     r = _DRAW["radius"]
-    pts = [(x + r * math.cos(2 * math.pi * j / 48), y + r * math.sin(2 * math.pi * j / 48)) for j in range(49)]
+    rx = r / _ui_scale() * FRAMES_PER_PX * _DRAW.get("ppf", 1.0)
+    pts = [(x + rx * math.cos(2 * math.pi * j / 48), y + r * math.sin(2 * math.pi * j / 48)) for j in range(49)]
     sh = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
     sh.bind()
@@ -248,6 +264,8 @@ class ALLSET_OT_graph_sculpt(bpy.types.Operator):
         wm = context.window_manager
         _DRAW["pos"] = (x, y) if inside or self._stroke or self._resize else None
         _DRAW["radius"] = wm.allset_sculpt_keys_radius
+        v2d = region.view2d
+        _DRAW["ppf"] = v2d.view_to_region(1, 0, clip=False)[0] - v2d.view_to_region(0, 0, clip=False)[0]
         area.tag_redraw()
 
         if event.type == 'B':
@@ -285,14 +303,15 @@ class ALLSET_OT_graph_sculpt(bpy.types.Operator):
 
     def _weights(self, region, keys, x, y):
         """[(fc, index, base value, weight, scale)] of the keys under the brush at (x, y)."""
-        r = max(bpy.context.window_manager.allset_sculpt_keys_radius, 1.0)
+        r = bpy.context.window_manager.allset_sculpt_keys_radius
+        t = region.view2d.region_to_view(x, y)[0]
         out = []
         for fc, scale, off, ix in keys:
             pts = fc.keyframe_points
             for i in ix:
                 kp = pts[i]
                 sx, sy = _screen(region, kp.co.x, kp.co.y, scale, off)
-                w = falloff(math.hypot(sx - x, sy - y) / r)
+                w = falloff(brush_distance(kp.co.x - t, sy - y, r, _ui_scale()))
                 if w > 0.0:
                     out.append((fc, i, kp.co.y, w, scale))
         return out
@@ -349,7 +368,8 @@ class ALLSET_OT_graph_sculpt(bpy.types.Operator):
 
     def _reduce(self, region, x, y, k):
         st = self._stroke
-        r = max(bpy.context.window_manager.allset_sculpt_keys_radius, 1.0)
+        r = bpy.context.window_manager.allset_sculpt_keys_radius
+        t = region.view2d.region_to_view(x, y)[0]
         tol = REDUCE_PX * k * (bpy.context.preferences.system.ui_scale or 1.0)
         touched = set()
         for n, (fc, scale, off, ix) in enumerate(st["keys"]):
@@ -358,7 +378,7 @@ class ALLSET_OT_graph_sculpt(bpy.types.Operator):
                 if i <= 0 or i >= len(pts) - 1:
                     continue
                 p = _screen(region, pts[i].co.x, pts[i].co.y, scale, off)
-                if math.hypot(p[0] - x, p[1] - y) > r:
+                if brush_distance(pts[i].co.x - t, p[1] - y, r, _ui_scale()) > 1.0:
                     continue
                 p0 = _screen(region, pts[i - 1].co.x, pts[i - 1].co.y, scale, off)
                 p1 = _screen(region, pts[i + 1].co.x, pts[i + 1].co.y, scale, off)
@@ -378,7 +398,7 @@ classes = (ALLSET_OT_graph_sculpt,)
 def register_props():
     bpy.types.WindowManager.allset_sculpt_keys_radius = bpy.props.FloatProperty(
         name="Brush Size", default=0.0, min=0.0, subtype='PIXEL',
-        description="Radius of the Graph Editor sculpting brushes, in pixels")
+        description="Size of the Graph Editor sculpting brushes: pixels up and down (the frames across follow)")
 
 
 def unregister():
