@@ -1481,6 +1481,7 @@ STRINGS = {
     'Extend Surfaces': '延伸曲面',
     'Extend to creased components': '扩展到折痕组件',
     'Extra Attributes': '额外属性',
+    'Display Connector': '显示连接器',
     'Extract': '提取',
     'Extract Faces': '提取面',
     'Extract Offset': '提取偏移',

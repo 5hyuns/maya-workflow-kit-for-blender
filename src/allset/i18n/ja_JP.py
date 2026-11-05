@@ -1481,6 +1481,7 @@ STRINGS = {
     'Extend Surfaces': 'サーフェスの延長',
     'Extend to creased components': '折り目のあるコンポーネントまで拡張',
     'Extra Attributes': '追加のアトリビュート',
+    'Display Connector': 'コネクタの表示',
     'Extract': '抽出',
     'Extract Faces': 'フェースの抽出',
     'Extract Offset': 'オフセットを抽出',

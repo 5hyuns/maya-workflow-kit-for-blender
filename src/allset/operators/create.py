@@ -189,6 +189,8 @@ def _aim_rig(cam, up, k):
         roll.target, roll.track_axis, roll.lock_axis = nodes[2], 'TRACK_Y', 'LOCK_Z'
     for ob in nodes:
         ob.parent = group
+    from ..ui import camera_aim_lines
+    camera_aim_lines.mark(group)                        # Display Connector: the camera-to-aim line in the views
 
 
 class ALLSET_OT_create(bpy.types.Operator):

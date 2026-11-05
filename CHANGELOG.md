@@ -18,6 +18,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   off gives the Graph Editor its own handles back.
 
 ### Fixed
+- **Camera and Aim shows its aim line in the Maya layout** (#299): the Maya layout's views draw a thin dark blue line
+  from a Camera and Aim rig's camera to its aim node (and, for Camera, Aim and Up, to its up node), like Maya. It
+  follows either end as it moves and turns green while the rig's group is selected. Turn it off per rig with the
+  group's *Display Connector* in the Attribute Editor's Extra Attributes. Blender's relationship lines stay off in
+  these views (Maya draws no line from a child to its parent); turning them on in a view shows Blender's lines
+  there instead.
 - **Joints drawn far too large in a scene shown in metres** (#311): a joint's Radius (and Display > Animation >
   Joint Size) is a plain number in centimetres, like Maya, so a Radius 1 joint is 1 cm across whatever the scene's
   length unit. In a metre scene the kit drew it 1 m across, so the joints of a human-sized skeleton (for example one

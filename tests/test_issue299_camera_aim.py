@@ -86,3 +86,67 @@ def test_plain_camera_unchanged():
     obs = _make('CAMERA')
     assert set(obs) == {"camera1"}, set(obs)
     assert not obs["camera1"].constraints
+
+
+lines = import_module(kit.MODULE + ".ui.camera_aim_lines")
+
+
+def _segs():
+    bpy.context.view_layer.update()
+    return lines.segments(bpy.context.view_layer)
+
+
+def _close(a, b):
+    return (Vector(a) - Vector(b)).length < 1e-4
+
+
+def test_aim_line_follows_the_rig():
+    obs = _make('CAMERA_AIM')
+    cam, aim, group = obs["camera1"], obs["camera1_aim"], obs["camera1_group"]
+    for ob in obs.values():
+        ob.select_set(False)
+    segs = _segs()
+    assert len(segs) == 1, segs
+    p0, p1, col = segs[0]
+    assert _close(p0, cam.matrix_world.translation) and _close(p1, aim.matrix_world.translation)
+    assert col == lines.DORMANT
+    # kept up to date as either end moves
+    aim.location = Vector((3.0, 6.0, 2.0))
+    cam.location = Vector((-1.0, 0.0, 1.0))
+    (p0, p1, _), = _segs()
+    assert _close(p0, (-1.0, 0.0, 1.0)) and _close(p1, (3.0, 6.0, 2.0)), (p0, p1)
+    # the camera or the aim selected: still dark blue; the group selected: its selection colour
+    cam.select_set(True)
+    bpy.context.view_layer.objects.active = cam
+    assert _segs()[0][2] == lines.DORMANT
+    cam.select_set(False)
+    group.select_set(True)
+    bpy.context.view_layer.objects.active = group
+    assert _segs()[0][2] == lines.LEAD
+    bpy.context.view_layer.objects.active = aim
+    assert _segs()[0][2] == lines.SELECTED
+    # Display Connector off hides the line; a hidden aim draws no line
+    assert group[lines.CONNECTOR] is True or group[lines.CONNECTOR] == 1
+    group[lines.CONNECTOR] = False
+    assert _segs() == []
+    group[lines.CONNECTOR] = True
+    aim.hide_set(True)
+    assert _segs() == []
+
+
+def test_up_line_and_plain_cameras():
+    obs = _make('CAMERA_AIM_UP')
+    segs = _segs()
+    ends = sorted(round((p1 - p0).length, 4) for p0, p1, _ in segs)
+    assert len(segs) == 2, segs
+    up, aim = obs["camera1_up"], obs["camera1_aim"]
+    targets = {tuple(round(v, 4) for v in p1) for _, p1, _ in segs}
+    assert targets == {tuple(round(v, 4) for v in up.matrix_world.translation),
+                       tuple(round(v, 4) for v in aim.matrix_world.translation)}, (targets, ends)
+    # a plain camera or a user's own Track To (target outside the camera's group) draws nothing
+    _make('CAMERA')
+    cam = bpy.data.objects["camera1"]
+    target = bpy.data.objects.new("target", None)
+    bpy.context.scene.collection.objects.link(target)
+    cam.constraints.new('TRACK_TO').target = target
+    assert _segs() == []
