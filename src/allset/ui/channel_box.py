@@ -856,19 +856,27 @@ def _sel_set(key):
 def cell_key(path, scene=None):
     """(channel key, "NAME" / "VALUE") of a Channel Box cell from its data path (``context.property``), or None."""
     import re
-    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel)$", path or "")
+    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel|sel_on)$", path or "")
     if m and m.group(1) in MAIN_BY_KEY:
         return m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
-    m = re.match(r"^allset_creation\.([A-Za-z0-9]+)_(text|sel)$", path or "")
+    m = re.match(r"^allset_creation\.([A-Za-z0-9]+?)_(text|sel|sel_on)$", path or "")
     if m:
         return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
-    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel)$", path or "")
+    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel|sel_on)$", path or "")
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
         if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT", "BLEND"):
             return row_key(rows[i]), ("VALUE" if m.group(2) == "text" else "NAME")
     return None
+
+
+def sel_toggle(layout, owner, prop, selected, text):
+    """A Channel Box name cell: a toggle of the channel's selection, pressed (embossed) when selected. A selected
+    cell draws the twin property ``<prop>_on``: Blender keeps the button under the mouse from the last redraw
+    (with its old emboss), so the same property would show the new selection only after the mouse leaves the
+    row (#316); another property is another button."""
+    layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected)
 
 
 # --- proxies -------------------------------------------------------------------------------------
@@ -1319,6 +1327,8 @@ class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
     text: StringProperty(get=_row_get, set=_row_set)
     sel: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
                       description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
+    sel_on: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
+                         description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
 
 
 # --- the name line: click to rename (#283) ---------------------------------------------------------------
@@ -1419,9 +1429,10 @@ def _make_proxy_annotations():
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
         ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
-        ann[key + "_sel"] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
-                                         description="Select this channel: click, Ctrl toggle, Shift range, "
-                                                     "drag over the rows")
+        for suffix in ("_sel", "_sel_on"):
+            ann[key + suffix] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
+                                             description="Select this channel: click, Ctrl toggle, Shift range, "
+                                                         "drag over the rows")
     ann["lead_name"] = StringProperty(name="Name", get=_lead_name_get, set=_lead_name_set,
                                       description="The lead's name: Enter renames it")
     ann["rows"] = CollectionProperty(type=ALLSET_PG_cb_row)
@@ -2521,7 +2532,7 @@ def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     if sel_owner is not None:
         # a toggle of the channel's selection: pressed = Maya's blue name cell; the drag
         # watcher reads it from ``context.property`` (#6)
-        sub.prop(sel_owner, sel_prop, text=channel_label(key), toggle=True, emboss=selected)
+        sel_toggle(sub, sel_owner, sel_prop, selected, channel_label(key))
         return
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
                       emboss=selected)
@@ -2755,7 +2766,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         # state like Translate X
         key = row_key(row)
         sub = split.row(align=True)
-        sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
+        sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
         state = channel_state(ob, key)
         right.alert = state in _ALERT_STATES
@@ -3243,7 +3254,7 @@ def draw_blend_shape(lines, context, ob, key):
         # a target weight is a channel like Translate X: selectable name, keyed / animated state (Key Selected)
         key = row_key(row)
         sub = split.row(align=True)
-        sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
+        sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
         state = channel_state(ob, key)
         right.alert = state in _ALERT_STATES
