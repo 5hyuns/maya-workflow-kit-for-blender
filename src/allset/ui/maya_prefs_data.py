@@ -218,7 +218,7 @@ PAGES = (
         ]),
         ("Playback", [
             ("scene", "sync_mode", "Playback speed"),
-            ("missing", "Looping", "Blender playback always loops (Continuous)"),
+            ("scene", "allset_playback_loop", "Looping"),
         ]),
     ]),
     ("UNDO", "Undo", 1, "Undo: Undo Queue Settings", [

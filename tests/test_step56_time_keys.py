@@ -209,7 +209,8 @@ def test_key_menu_mapping():
     for path in ("Key/Copy Keys", "Key/Paste Keys", "Key/Cut Keys", "Edit/Keys/Copy Keys"):
         assert m[path][0] == "allset.time_keys", path
     assert m["Playback/Set Range to/Min/Max"] == ("allset.time_set_range", {"mode": "MIN_MAX"})
-    assert "Playback/Playback Looping/Once" in notices.NOTICES
+    assert m["Playback/Playback Looping/Once"] == ("prop", "scene.allset_playback_loop", {"value": "ONCE"})
+    assert "Playback/Playback Looping/Once" not in notices.NOTICES
 
 
 def test_keymap_patches():
@@ -252,8 +253,6 @@ def test_time_slider_menu_order():
     rec = Recorder()
     ts.ALLSET_MT_time_slider_looping.draw(types.SimpleNamespace(layout=rec), bpy.context)
     assert rec.texts() == ["Once", "Oscillate", "Continuous"]
-    tip = ts.ALLSET_OT_time_slider_unavailable.description(bpy.context, types.SimpleNamespace(item="Once"))
-    assert "always loops" in tip
 
 
 def test_channel_box_rmb_items():

@@ -200,6 +200,8 @@ classes += uv_toolkit_ops.classes
 
 from . import type_manip  # noqa: E402  Type Manipulator: per-character move / rotate / scale (#258)
 classes += type_manip.classes
+from . import playback_maya  # noqa: E402  Playback Looping Once / Oscillate, Stepped Preview
+classes += playback_maya.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -285,9 +287,12 @@ def register():
     point_keys.register_handlers()
     type_manip.register_handlers()
     motion_trail_edit.register_handlers()
+    playback_maya.register_props()
+    playback_maya.register_handlers()
 
 
 def unregister():
+    playback_maya.unregister()
     motion_trail_edit.unregister_handlers()
     type_manip.unregister_handlers()
     point_keys.unregister_handlers()

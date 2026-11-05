@@ -894,7 +894,9 @@ MAP.update({
     "Key/Insert Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
     "Playback/Select Next Key": ("screen.keyframe_jump", {"next": True}),
     "Playback/Select Previous Key": ("screen.keyframe_jump", {"next": False}),
-    "Playback/Playback Looping/Continuous": ("allset.menu_note", {"item": "Playback/Playback Looping/Continuous"}),
+    **{f"Playback/Playback Looping/{label}": ("prop", "scene.allset_playback_loop", {"value": value})
+       for value, label in (("CONTINUOUS", "Continuous"), ("ONCE", "Once"), ("OSCILLATE", "Oscillate"))},
+    "Playback/Enable Stepped Preview": ("prop", "scene.allset_stepped_preview", {}),
     "Visualize/Time Slider Bookmarks": "marker.add",
     # Audio: sounds are Video Sequencer sound strips
     "Audio/Import Audio...": "allset.import_audio",

@@ -41,9 +41,6 @@ NOTICES = {
         "strips."),
     "Windows/Animation Editors/Time Editor": (
         "NLA Editor", "Blender has no Time Editor: clips are actions laid out as NLA strips."),
-    # Playback: Blender playback always loops
-    **{f"Playback/Playback Looping/{kind}": (
-        "Continuous", "Blender playback always loops (no Once / Oscillate).") for kind in ("Once", "Oscillate")},
     # Sets: kit sets are collections outside the scene; Blender has no exclusive sets
     "Create/Sets/Partition": (
         "Set", "Blender has no partitions (sets whose members can't be in another set of the partition): use Create > Sets > Set."),
@@ -231,8 +228,6 @@ NOTICES.update({
     "Modify/Convert/Smooth Mesh Preview to Polygons": (
         "Apply the preview", "Blender applies the smooth preview Subsurf to the base mesh: deformers before it (skin, "
         "lattice) keep working on the denser mesh."),
-    "Playback/Playback Looping/Continuous": (
-        "Continuous", "Blender playback always loops: Continuous is already on."),
     **{f"Display/Heads Up Display/{item} Details": (
         "Statistics overlay", "Blender's Statistics overlay shows the object and selection counts.")
        for item in ("Object", "Select")},        # Maya 2026 label "Select Details"
@@ -572,7 +567,7 @@ CATEGORIES = {
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "
                   "camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting)."),
     "Playback": ("Timeline Playback popover", "Blender's playback options are in the Timeline's Playback popover; "
-                 "there is no cached-playback toggle or stepped preview."),
+                 "there is no cached-playback toggle."),
     # rendering
     "Render": ("Render properties", "Blender's render settings are in Properties > Render / Output: render "
                "diagnostics, Backburner and NURBS tessellation have no counterpart."),

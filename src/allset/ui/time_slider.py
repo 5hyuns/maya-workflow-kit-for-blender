@@ -158,9 +158,9 @@ def draw_range_slider(layout, context):
     fps = scene.render.fps / scene.render.fps_base
     row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
     row = layout.row(align=True)
-    sub = row.row(align=True)
-    sub.enabled = False   # Maya loop / once / oscillate: Blender always loops
-    sub.label(text="", icon='FILE_REFRESH')
+    from ..operators import playback_maya
+    loop = getattr(scene, "allset_playback_loop", 'CONTINUOUS')
+    row.operator("allset.playback_loop_cycle", text="", icon=playback_maya.LOOP_ICONS[loop])
     row.prop(scene, "use_audio", text="", icon='SPEAKER', invert_checkbox=True)
     row.menu("ALLSET_MT_anim_preferences", text="", icon='PREFERENCES')
 
@@ -207,8 +207,6 @@ RANGE_ARROW_COLOR = (1.0, 1.0, 1.0, 0.9)
 TIME_NOTICES = {
     "Paste Connect": "Blender pastes keys as they were copied: no connect (offset) paste.",
     "Play Every Frame, Free": "Blender never plays faster than the scene frame rate.",
-    "Once": "Blender playback always loops.",
-    "Oscillate": "Blender playback always loops.",
     "Enabled Clips": "Blender has no Time Editor clips (NLA strips instead).",
     "Sound Length": "Use the sound strip's length in the Video Sequencer.",
 }
@@ -490,9 +488,8 @@ class ALLSET_MT_time_slider_looping(bpy.types.Menu):
 
     def draw(self, context):
         lay = self.layout
-        _grey(lay, "Once")
-        _grey(lay, "Oscillate")
-        lay.label(text="Continuous", icon='CHECKMARK')
+        for value, label in (('ONCE', "Once"), ('OSCILLATE', "Oscillate"), ('CONTINUOUS', "Continuous")):
+            lay.prop_enum(context.scene, "allset_playback_loop", value, text=label)
 
 
 class ALLSET_MT_time_slider_range(bpy.types.Menu):

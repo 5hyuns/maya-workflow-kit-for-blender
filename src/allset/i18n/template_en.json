@@ -4859,7 +4859,6 @@
    "Blender particles are a particle system on a mesh: instancing = Render As Object / Collection; there are no goals, sprite wizard or collision events.": "Blender particles are a particle system on a mesh: instancing = Render As Object / Collection; there are no goals, sprite wizard or collision events.",
    "Blender particles come from a mesh: select a mesh and use Emit from Object (a particle system on it).": "Blender particles come from a mesh: select a mesh and use Emit from Object (a particle system on it).",
    "Blender picks this kind of component in the object's own edit mode (Tab), not through a pick mask: the mask only switches mesh vertex / edge / face picking.": "Blender picks this kind of component in the object's own edit mode (Tab), not through a pick mask: the mask only switches mesh vertex / edge / face picking.",
-   "Blender playback always loops (no Once / Oscillate).": "Blender playback always loops (no Once / Oscillate).",
    "Blender plays geometry caches as Alembic files in a Mesh Sequence Cache modifier: replacing, merging or editing cache frames isn't available.": "Blender plays geometry caches as Alembic files in a Mesh Sequence Cache modifier: replacing, merging or editing cache frames isn't available.",
    "Blender references are linked .blend files: Maya Workflow Kit makes them editable (library override) and prefixes the names with the namespace (ns:name).": "Blender references are linked .blend files: Maya Workflow Kit makes them editable (library override) and prefixes the names with the namespace (ns:name).",
    "Blender renders the frame range through the scene camera (without one: persp, placed where the view looks from) into the Output properties folder; Esc stops it.": "Blender renders the frame range through the scene camera (without one: persp, placed where the view looks from) into the Output properties folder; Esc stops it.",
@@ -4905,7 +4904,7 @@
    "Blender's history is the modifier stack, which has no upstream / downstream nodes to select or switch off: show / hide modifiers in Properties > Modifiers.": "Blender's history is the modifier stack, which has no upstream / downstream nodes to select or switch off: show / hide modifiers in Properties > Modifiers.",
    "Blender's offset copy is a poly curve through the moved points, not a fitted NURBS curve.": "Blender's offset copy is a poly curve through the moved points, not a fitted NURBS curve.",
    "Blender's pivot has no orientation handle: turn the pivot with a custom orientation (Orientation menu > Create).": "Blender's pivot has no orientation handle: turn the pivot with a custom orientation (Orientation menu > Create).",
-   "Blender's playback options are in the Timeline's Playback popover; there is no cached-playback toggle or stepped preview.": "Blender's playback options are in the Timeline's Playback popover; there is no cached-playback toggle or stepped preview.",
+   "Blender's playback options are in the Timeline's Playback popover; there is no cached-playback toggle.": "Blender's playback options are in the Timeline's Playback popover; there is no cached-playback toggle.",
    "Blender's render layers are View Layers (top bar, View Layer properties), with collections for overrides.": "Blender's render layers are View Layers (top bar, View Layer properties), with collections for overrides.",
    "Blender's render settings are in Properties > Render / Output: render diagnostics, Backburner and NURBS tessellation have no counterpart.": "Blender's render settings are in Properties > Render / Output: render diagnostics, Backburner and NURBS tessellation have no counterpart.",
    "Blender's scene assemblies are collection instances (Add > Collection Instance).": "Blender's scene assemblies are collection instances (Add > Collection Instance).",
@@ -6491,6 +6490,12 @@
   "Labels/operators/pivot_translate": {
    "Move Custom Pivot": "Move Custom Pivot",
    "Offset": "Offset"
+  },
+  "Labels/operators/playback_maya": {
+   "Enable Stepped Preview": "Enable Stepped Preview",
+   "Play and scrub every animation curve as if its keys were stepped; the curves keep their own tangents for when this is off": "Play and scrub every animation curve as if its keys were stepped; the curves keep their own tangents for when this is off",
+   "Playback Looping": "Playback Looping",
+   "What playback does at the end of the range, like Maya's Playback Looping": "What playback does at the end of the range, like Maya's Playback Looping"
   },
   "Labels/operators/playblast": {
    "End Time": "End Time",
@@ -8396,7 +8401,6 @@
   "Labels/ui/time_slider": {
    "A Shift-dragged Time Slider range is highlighted": "A Shift-dragged Time Slider range is highlighted",
    "Animation Preferences": "Animation Preferences",
-   "Continuous": "Continuous",
    "Hold": "Hold",
    "Keying": "Keying",
    "Keys": "Keys",
@@ -9193,6 +9197,9 @@
   },
   "Tooltips/operators/pivot_translate": {
    "Move the pivot only; hold J for discrete steps and release J to move freely": "Move the pivot only; hold J for discrete steps and release J to move freely"
+  },
+  "Tooltips/operators/playback_maya": {
+   "Playback looping: Continuous, Once, Oscillate (click for the next one)": "Playback looping: Continuous, Once, Oscillate (click for the next one)"
   },
   "Tooltips/operators/playblast": {
    "Record the playback range from the viewport and play it (Maya Playblast)": "Record the playback range from the viewport and play it (Maya Playblast)"
