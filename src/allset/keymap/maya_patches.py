@@ -1482,7 +1482,8 @@ def patch_blender_render(kd):
 
 # Maya editable motion trail: a left press on a key marker of a motion path picks the key and a drag moves it
 # (operators/motion_trail_edit.py); plain = set, Shift = toggle, Ctrl = remove, Ctrl+Shift = add. In front of the
-# 3D View's and the Tweak tool's press items; passes through anywhere else.
+# 3D View's and the Tweak tool's press items; passes through anywhere else. With the Move tool and picked keys a
+# press on the kit's trail key manipulator drags its handle.
 # the paint / sculpt / edit mode keymaps keep their own presses (the trail keys are for Object and Pose Mode only);
 # the Screen's Range Slider bar click only acts over the bar
 TRAIL_KEY_SHADOWS = ("Screen", "Image Paint", "Vertex Paint", "Weight Paint", "Sculpt", "Particle", "Curve", "Mesh",
@@ -1495,6 +1496,10 @@ def patch_motion_trail_keys(kd):
                                   (True, True, 'ADD')):
             _add(kd, km, "allset.motion_trail_key", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl), {"mode": mode},
                  first=True, shadows=(km,) + TRAIL_KEY_SHADOWS)
+    # Move tool: a middle drag anywhere moves the picked trail keys along the last used handle (passes through when
+    # no trail key is picked, so the Move tool's own middle drag runs)
+    _add(kd, "3D View Tool: Move", "allset.motion_trail_key", make_event("MIDDLEMOUSE"), {"button": 'MIDDLE'},
+         first=True, shadows=("3D View Tool: Move",))
 
 
 PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,

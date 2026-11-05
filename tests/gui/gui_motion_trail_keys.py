@@ -225,4 +225,60 @@ def s_box_selected():
     check(f"and drops the picked trail keys ({picked})", picked == [])
 
 
+
+# a mesh object's own surface in front of its key marker wins (like Maya): the click selects the mesh
+@step
+def s_mesh():
+    scene = bpy.context.scene
+    k = C["k"]
+    me = bpy.data.meshes.new("CubeMesh")
+    import bmesh
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0 * k)
+    bm.to_mesh(me)
+    bm.free()
+    cube = bpy.data.objects.new("Cube", me)
+    scene.collection.objects.link(cube)
+    for f, p in ((1, (0, 0, 6)), (10, (5, 0, 6)), (20, (10, 0, 6))):
+        cube.location = Vector(p) * k
+        cube.keyframe_insert("location", frame=f)
+    for ob in scene.objects:
+        ob.select_set(ob == cube)
+    bpy.context.view_layer.objects.active = cube
+    with bpy.context.temp_override(window=win()):
+        bpy.ops.allset.motion_trail(action='CREATE')
+    scene.frame_set(10)          # the cube sits on its key 10 marker
+    cube.select_set(False)
+    mod(".operators.motion_trail_edit").clear()
+    C["pc"] = to_window(Vector(cube.motion_path.points[10 - cube.motion_path.frame_start].co))
+    redraw()
+
+
+step(lambda: move(C["pc"]))
+step(lambda: press_at(C["pc"], 'PRESS'))
+step(lambda: press_at(C["pc"], 'RELEASE'))
+
+
+@step
+def s_mesh_won():
+    cube = bpy.data.objects["Cube"]
+    picked = mod(".operators.motion_trail_edit").picked()
+    check(f"the mesh in front of its key marker wins the click ({picked}, selected {cube.select_get()})",
+          picked == [] and cube.select_get())
+    bpy.context.scene.frame_set(1)
+    cube.select_set(False)
+    redraw()
+
+
+step(lambda: move(C["pc"]))
+step(lambda: press_at(C["pc"], 'PRESS'))
+step(lambda: press_at(C["pc"], 'RELEASE'))
+
+
+@step
+def s_mesh_away():
+    picked = mod(".operators.motion_trail_edit").picked()
+    check(f"with the mesh elsewhere the same marker is picked ({picked})", picked == [("Cube", "", 10)])
+
+
 run()

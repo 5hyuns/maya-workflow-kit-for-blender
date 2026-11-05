@@ -7,13 +7,18 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ### Added
 - **Move keys on a motion trail** (Visualize > Motion Trail Editor): in the Maya layout's views, left-drag a key
-  marker of a motion trail to move that key, like Maya's editable trail. The object's location keys at that frame
-  change so it passes through the new point in the view plane (a parent's space is taken into account; a channel
-  without a key at that frame gets one, a locked channel stays); the trail follows while you drag. Shift toggles a
-  key in the picked set, Ctrl removes it, Ctrl+Shift adds it, and all picked keys move together. Picked keys are
-  drawn in the trail's Selected Key Color. Esc or right click puts a drag back, one undo takes it back, and a click
-  off the trail selects as before. Works for object trails in Object Mode and bone trails (heads) in Pose Mode;
-  objects moved by a constraint or driver and connected or constrained bones can't be moved this way.
+  marker of a motion trail to move that key, like Maya's editable trail. A click picks the key (and, like Maya,
+  replaces the object selection); Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it, and
+  all picked keys move together. With the Move tool, picked keys get a move manipulator with world X / Y / Z arrows,
+  plane squares and a centre square: an arrow moves along that axis only, a square in that plane, the centre in the
+  view plane, and a middle drag anywhere uses the last handle you dragged (drawn yellow). The object's location
+  keys at that frame change so it passes through the new point (a parent's space is taken into account; a channel
+  with a curve but no key at that frame gets one; a channel without an animation curve and a locked channel stay);
+  the trail follows while you drag. Picked keys are drawn in the trail's Selected Key Color. Esc or right click puts
+  a move back, one undo takes it back, and a click off the trail selects as before. An object's own gizmo, or a
+  mesh's own surface in front of its key, wins over the key marker, like Maya. Works for object trails in Object
+  Mode and bone trails (heads) in Pose Mode; objects moved by a constraint or driver and connected or constrained
+  bones can't be moved this way.
 - **Keys > Remove Key in the Graph Editor and Dope Sheet**: Unsnapped, Before Current Frame, After Current Frame,
   Outside Selected Range and Ripple Delete now work like Maya's (they were greyed). They act on the curves of the
   selected keys; the range is the selected keys' first to last time. Outside Selected Range adds a key at each end

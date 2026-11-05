@@ -138,7 +138,7 @@ def test_channel_without_key_gets_one_and_restore_removes_it():
     assert _loc_keys(ob) == before
 
 
-def test_unkeyed_channel_gets_an_fcurve():
+def test_channel_without_a_curve_stays():
     _clear()
     scene = bpy.context.scene
     ob = bpy.data.objects.new("Ball", None)
@@ -148,12 +148,11 @@ def test_unkeyed_channel_gets_an_fcurve():
         ob.location.x = x
         ob.keyframe_insert("location", index=0, frame=f)
     scene.frame_set(1)
-    mv = _move([(("Ball", ""), 20)], (0, 0, 1))
+    mv = _move([(("Ball", ""), 20)], (1, 0, 1))
     keys = _loc_keys(ob)
-    assert keys.get(2) == [(20, 5.0)], keys
-    assert 1 not in keys, keys
+    assert set(keys) == {0} and keys[0][1] == (20, 11.0), keys      # like Maya: no new curve for Z
     mv.restore()
-    assert set(_loc_keys(ob)) == {0}
+    assert _loc_keys(ob)[0][1] == (20, 10.0)
     assert abs(ob.location.z - 4.0) < TOL
 
 
@@ -305,5 +304,37 @@ def test_pick_modes():
 def test_keymap_items_pass_through_first():
     assert "allset.motion_trail_key" in patches.PASS_THROUGH_FIRST
     rows = [r for r in patches.ADDED if r[1] == "allset.motion_trail_key"]
-    assert {r[0] for r in rows} == {"3D View", "3D View Tool: Tweak"}, rows
+    assert {r[0] for r in rows} == {"3D View", "3D View Tool: Tweak", "3D View Tool: Move"}, rows
+    mmb = [r for r in rows if r[0] == "3D View Tool: Move"]
+    assert len(mmb) == 1 and mmb[0][2]["type"] == "MIDDLEMOUSE" and mmb[0][3] == {"button": 'MIDDLE'}, mmb
     assert sorted(r[3]["mode"] for r in rows if r[0] == "3D View") == ['ADD', 'SET', 'SUB', 'TOGGLE'], rows
+
+
+def test_constrained_delta_axis_and_plane():
+    a = Vector((1, 2, 3))
+    # two rays looking down -Z, 2 units apart in X and 1 in Y
+    r0 = (Vector((1, 2, 10)), Vector((0, 0, -1)))
+    r1 = (Vector((3, 3, 10)), Vector((0, 0, -1)))
+    view = Vector((2, 1, 0))
+    assert (mte.constrained_delta('VIEW', a, r0, r1, view) - view).length < TOL
+    assert (mte.constrained_delta(('AXIS', 0), a, r0, r1, view) - Vector((2, 0, 0))).length < TOL
+    assert (mte.constrained_delta(('AXIS', 1), a, r0, r1, view) - Vector((0, 1, 0))).length < TOL
+    assert (mte.constrained_delta(('PLANE', 2), a, r0, r1, view) - Vector((2, 1, 0))).length < TOL
+    # a slanted ray: the X axis takes only the X part of the closest point
+    r2 = (Vector((4, 2, 10)), Vector((0, 0.3, -1)).normalized())
+    d = mte.constrained_delta(('AXIS', 0), a, r0, r2, view)
+    assert abs(d.y) < TOL and abs(d.z) < TOL and abs(d.x - 3.0) < TOL, d
+    # the XZ plane (normal Y) seen edge-on gives no move instead of a jump
+    assert mte.constrained_delta(('PLANE', 1), a, (Vector((0, 2, 10)), Vector((1, 0, 0))),
+                                 (Vector((0, 2, 11)), Vector((1, 0, 0))), view).length < TOL
+
+
+def test_plain_pick_drops_the_object_selection():
+    _clear()
+    ob = _keyed()
+    other = _keyed("Other")
+    for o in (ob, other):
+        o.select_set(True)
+    assert mte.drop_selection(bpy.context)
+    assert not ob.select_get() and not other.select_get()
+    assert not mte.drop_selection(bpy.context)      # nothing left to drop

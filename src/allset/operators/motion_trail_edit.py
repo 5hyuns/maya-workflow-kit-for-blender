@@ -1,27 +1,33 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Move keys on a motion trail, like Maya's editable motion trail (Motion Trail Editor trails).
 
-In Maya a click on a key marker of a motion trail picks that key (Shift adds more keys) and the Move tool drags it:
-the object's translate keys at that frame change so the object passes through the new world point; only the
-channels the move changes are written, a parent's space is taken into account, the other keys stay, one undo step
-undoes the drag. Frame (non-key) markers can't be picked.
+In Maya a click on a key marker of a motion trail picks that key (Shift adds more keys) and the Move tool moves it:
+its manipulator sits on the key with world axes, a drag on the key or the centre handle moves it in the view plane,
+an axis handle along that world axis, a plane handle in that plane, and a middle drag anywhere along the last used
+handle. The object's translate keys at that frame change so the object passes through the new world point; only the
+channels the move changes are written (a channel without an animation curve stays), a parent's space is taken into
+account, tangent types stay, the other keys stay, one undo step undoes the move. Frame (non-key) markers can't be
+picked, and an object's manipulator over a key marker wins.
 
 Here, in the Maya layout's 3D Views with Blender's Motion Paths overlay on, a left press on a key marker of a
 motion path (an object's path in Object Mode, a bone's head path in Pose Mode) picks the key and a drag moves the
-picked keys in the view plane at once (Blender has no gizmo for a trail key, so pick and move are one gesture).
-Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it, as for the kit's other selections. The
-location keys at the key's frame take the move, converted into the channels' space (parent, parent inverse); a
-channel without a key at that frame gets one, a locked channel stays. Owners whose location is set by a constraint or
-a driver, connected bones and bones with constraints can't be moved (a warning says why). Esc / right click puts
-everything back. A press anywhere else passes through to the normal selection (a plain one also drops the picked
-keys). The picked keys are drawn in the trail's Selected Key Color.
+picked keys in the view plane at once. A plain pick replaces the selection (the objects or bones are deselected, as
+the picked key is Maya's selection); Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it.
+With the Move tool active the kit draws a move manipulator on the picked keys (world X / Y / Z arrows, plane squares
+and a centre square, the last used handle yellow); dragging a handle moves the keys along it, and a middle drag
+anywhere in the view uses the last used handle. The location keys at the key's frame take the move, converted into
+the channels' space (parent, parent inverse); a channel with a curve but no key at that frame gets one, a channel
+without a curve and a locked channel stay. Owners whose location is set by a constraint or a driver, connected bones
+and bones with constraints can't be moved (a warning says why). Esc / right click puts everything back. A press
+anywhere else passes through to the normal selection (a plain one also drops the picked keys). The picked keys are
+drawn in the trail's Selected Key Color.
 """
 
 import time
 
 import bpy
 from bpy.props import EnumProperty
-from mathutils import Vector
+from mathutils import Vector, geometry
 
 from .. import compat
 
@@ -31,10 +37,21 @@ UPDATE_S = 1.0 / 30.0   # trail recalculation interval while dragging
 EPS = 1e-9
 
 _MODES = [('SET', "Set", ""), ('TOGGLE', "Toggle", ""), ('SUB', "Deselect", ""), ('ADD', "Add", "")]
+_BUTTONS = [('LEFT', "Left", ""), ('MIDDLE', "Middle", "")]
+
+AXIS_COLORS = ((0.9, 0.15, 0.15), (0.35, 0.85, 0.2), (0.2, 0.4, 1.0))
+CENTRE_COLOR = (0.35, 0.9, 0.9)
+ACTIVE_COLOR = (1.0, 1.0, 0.0)
+HANDLE_PX = 7.0         # how close to an arrow / the centre a press must be (UI scale 1)
+CENTRE_PX = 6.0         # half size of the centre square (UI scale 1)
+PLANE_AT = 0.3          # plane squares sit at this fraction of the arrows
+PLANE_HALF = 0.09       # their half size, as a fraction of the arrow length
+MIN_FORESHORTEN = 0.15  # an axis pointing at the viewer is not drawn
 
 # picked keys: (object name, bone name or "", frame)
 _picked = []
 _draw = []
+_last_handle = ['VIEW']     # 'VIEW', ('AXIS', i) or ('PLANE', normal i): the middle drag uses it
 
 
 # --- trail owners and key markers ---------------------------------------------------------------------------------
@@ -155,7 +172,10 @@ def pick(context, x, y):
     region, rv3d = context.region, context.region_data
     best, best_d = None, PICK_PX * ui_scale(context)
     for owner in owners(context):
+        surface = _own_surface_depth(context, owner, x, y)
         for f, co in markers(owner, context.scene):
+            if surface is not None and surface[1] < (co - surface[0]).length - 1e-4:
+                continue        # the trail's own object is under the cursor in front of the key: it wins (Maya)
             p = location_3d_to_region_2d(region, rv3d, co)
             if p is None:
                 continue
@@ -163,6 +183,23 @@ def pick(context, x, y):
             if d <= best_d:
                 best, best_d = (owner.key, f), d
     return best
+
+
+def _own_surface_depth(context, owner, x, y):
+    """(ray origin, distance) to the trail's own mesh object under region point (x, y), or None."""
+    if owner.pb is not None or owner.ob.type != 'MESH':
+        return None
+    from bpy_extras.view3d_utils import region_2d_to_origin_3d, region_2d_to_vector_3d
+    region, rv3d = context.region, context.region_data
+    o = region_2d_to_origin_3d(region, rv3d, (x, y))
+    d = region_2d_to_vector_3d(region, rv3d, (x, y))
+    try:
+        hit, loc, _n, _i, ob, _m = context.scene.ray_cast(context.evaluated_depsgraph_get(), o, d)
+    except (RuntimeError, ReferenceError, TypeError):
+        return None
+    if not hit or ob is None or ob.original != owner.ob:
+        return None
+    return o, (loc - o).length
 
 
 def is_maya_view(context):
@@ -204,6 +241,147 @@ def picked():
 
 def clear():
     _picked.clear()
+    _last_handle[0] = 'VIEW'
+
+
+def drop_selection(context):
+    """A plain pick replaces the selection: deselect the objects (Object Mode) or bones (Pose Mode)."""
+    ob = context.active_object
+    try:
+        if ob is not None and ob.mode == 'POSE':
+            if context.selected_pose_bones:
+                bpy.ops.pose.select_all(action='DESELECT')
+                return True
+        elif context.selected_objects:
+            for o in context.selected_objects:
+                o.select_set(False)
+            return True
+    except (RuntimeError, AttributeError, ReferenceError):
+        pass
+    return False
+
+
+# --- the move manipulator on the picked keys ------------------------------------------------------------------------
+
+def move_tool(context):
+    from . import preselect
+    return preselect.tool_id(context) == 'builtin.move'
+
+
+def picked_points(context):
+    """World points of the picked keys whose markers are drawn."""
+    live = {o.key: o for o in owners(context)}
+    out = []
+    for ob_name, bone, f in _picked:
+        owner = live.get((ob_name, bone))
+        if owner is None:
+            continue
+        for ff, co in markers(owner, context.scene):
+            if ff == f:
+                out.append(co)
+    return out
+
+
+def anchor(context):
+    pts = picked_points(context)
+    if not pts:
+        return None
+    return sum(pts, Vector()) / len(pts)
+
+
+def manip_layout(context, centre_w):
+    """(centre 2D, [(axis unit 2D, arrow length px) or None per world axis]) of the manipulator at ``centre_w``."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    region, rv3d = context.region, context.region_data
+    c = location_3d_to_region_2d(region, rv3d, centre_w)
+    if c is None:
+        return None
+    length = context.preferences.view.gizmo_size * ui_scale(context)
+    # world length of a small step at the anchor's depth, from the view's right axis
+    right = rv3d.view_rotation @ Vector((1, 0, 0))
+    step = max(1e-6, rv3d.view_distance * 0.01)
+    r2 = location_3d_to_region_2d(region, rv3d, centre_w + right * step)
+    full = (r2 - c).length if r2 is not None else 0.0
+    axes = []
+    for i in range(3):
+        e = Vector((0, 0, 0))
+        e[i] = step
+        p = location_3d_to_region_2d(region, rv3d, centre_w + e)
+        if p is None or full < 1e-9:
+            axes.append(None)
+            continue
+        d = p - c
+        fore = d.length / full
+        if fore < MIN_FORESHORTEN:
+            axes.append(None)
+            continue
+        axes.append((d.normalized(), length * min(1.0, fore)))
+    return c, axes
+
+
+def _segment_distance(p, a, b):
+    ab = b - a
+    t = 0.0 if ab.length_squared < 1e-12 else max(0.0, min(1.0, (p - a).dot(ab) / ab.length_squared))
+    return (p - (a + ab * t)).length
+
+
+def plane_square(c, axes, i):
+    """Centre 2D and half size of the plane handle with normal ``i`` (None when one of its axes is hidden)."""
+    j, k = [n for n in range(3) if n != i]
+    if axes[j] is None or axes[k] is None:
+        return None
+    (uj, lj), (uk, lk) = axes[j], axes[k]
+    return c + uj * (lj * PLANE_AT) + uk * (lk * PLANE_AT), PLANE_HALF * min(lj, lk)
+
+
+def manip_hit(context, x, y, centre_w):
+    """The manipulator handle under region point (x, y): 'VIEW', ('AXIS', i), ('PLANE', i) or None."""
+    lay = manip_layout(context, centre_w)
+    if lay is None:
+        return None
+    c, axes = lay
+    m = Vector((x, y))
+    ui = ui_scale(context)
+    if (m - c).length <= max(CENTRE_PX * ui, HANDLE_PX * ui):
+        return 'VIEW'
+    for i in range(3):
+        sq = plane_square(c, axes, i)
+        if sq is not None and max(abs(m.x - sq[0].x), abs(m.y - sq[0].y)) <= sq[1]:
+            return ('PLANE', i)
+    best, best_d = None, HANDLE_PX * ui
+    for i, ax in enumerate(axes):
+        if ax is None:
+            continue
+        u, length = ax
+        d = _segment_distance(m, c + u * (length * 0.2), c + u * (length * 1.1))
+        if d <= best_d:
+            best, best_d = ('AXIS', i), d
+    return best
+
+
+def constrained_delta(handle, anchor_w, ray0, ray1, view_delta=None):
+    """World move between two mouse rays ((origin, direction) each) for a handle at ``anchor_w``.
+
+    'VIEW' uses ``view_delta`` (the view-plane move); an axis handle moves along that world axis (the point of the axis
+    closest to each ray), a plane handle in the plane through the anchor."""
+    if handle == 'VIEW' or handle is None:
+        return view_delta if view_delta is not None else Vector()
+    kind, i = handle
+    e = Vector((0, 0, 0))
+    e[i] = 1.0
+    pts = []
+    for o, d in (ray0, ray1):
+        if kind == 'AXIS':
+            hit = geometry.intersect_line_line(o, o + d, anchor_w, anchor_w + e)
+            pts.append(hit[1] if hit is not None else None)
+        else:
+            pts.append(geometry.intersect_line_plane(o, o + d, anchor_w, e))
+    if pts[0] is None or pts[1] is None:
+        return Vector()
+    delta = pts[1] - pts[0]
+    if kind == 'AXIS':
+        return e * delta.dot(e)
+    return delta - e * delta.dot(e)
 
 
 # --- world move -> location channels ------------------------------------------------------------------------------
@@ -275,7 +453,6 @@ class Channel:
     def __init__(self, owner, index, frame):
         self.owner, self.index, self.frame = owner, index, frame
         self.fc = self._find()
-        self.created = False
         self.inserted = False
         self.snapshot = self._snap() if self.fc is not None else None
         self.base = None
@@ -299,18 +476,12 @@ class Channel:
         return None
 
     def ensure(self):
-        """The key at the frame (made on the first real move)."""
-        if self.fc is None:
-            holder = self.owner.holder
-            holder.keyframe_insert("location", index=self.index, frame=self.frame)
-            self.fc = self._find()
-            self.created = True
-            self.snapshot = []
+        """The key at the frame (inserted on the first real move when the curve has none there)."""
         kp = self._key()
         if kp is None:
             value = self.fc.evaluate(self.frame)
-            kp = self.fc.keyframe_points.insert(self.frame, value)
-            self.inserted = not self.created
+            self.fc.keyframe_points.insert(self.frame, value)
+            self.inserted = True
             self.fc.update()
             kp = self._key()
         if self.base is None:
@@ -318,8 +489,8 @@ class Channel:
         return kp
 
     def apply(self, dv):
-        if self.base is None and abs(dv) < EPS:
-            return
+        if self.fc is None or (self.base is None and abs(dv) < EPS):
+            return          # a channel without an animation curve stays as it is (like Maya)
         kp = self.ensure()
         y, hl, hr = self.base
         kp.co.y = y + dv
@@ -329,12 +500,6 @@ class Channel:
 
     def restore(self):
         if self.fc is None:
-            return
-        if self.created:
-            coll = self._coll()
-            if coll is not None:
-                coll.remove(self.fc)
-            self.fc = None
             return
         if self.inserted:
             kp = self._key()
@@ -412,11 +577,28 @@ class ALLSET_OT_motion_trail_key(bpy.types.Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     mode: EnumProperty(items=_MODES, options={'SKIP_SAVE'})
+    button: EnumProperty(items=_BUTTONS, options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
         if context.region is None or context.region_data is None or not is_maya_view(context):
             return {'PASS_THROUGH'}
         x, y = event.mouse_region_x, event.mouse_region_y
+        self._changed = False
+        if self.button == 'MIDDLE':
+            # Move tool: a middle drag anywhere moves the picked keys along the last used handle
+            if not _picked or not move_tool(context):
+                return {'PASS_THROUGH'}
+            centre = anchor(context)
+            if centre is None:
+                return {'PASS_THROUGH'}
+            return self._start(context, x, y, centre, _last_handle[0], 'MIDDLEMOUSE', 0)
+        if _picked and move_tool(context):
+            centre = anchor(context)
+            handle = manip_hit(context, x, y, centre) if centre is not None else None
+            if handle is not None and self.mode == 'SET':
+                _last_handle[0] = handle
+                _redraw(context)
+                return self._start(context, x, y, centre, handle, 'LEFTMOUSE', self._threshold(context))
         try:
             hit = pick(context, x, y)
         except (AttributeError, ReferenceError, RuntimeError, ValueError):
@@ -426,29 +608,55 @@ class ALLSET_OT_motion_trail_key(bpy.types.Operator):
                 _picked.clear()
                 _redraw(context)
             return {'PASS_THROUGH'}
+        entry = (hit[0][0], hit[0][1], hit[1])
+        if self.mode == 'SET' and entry not in _picked:
+            self._changed = drop_selection(context)
+            _last_handle[0] = 'VIEW'
         select(hit, self.mode)
         _redraw(context)
-        entry = (hit[0][0], hit[0][1], hit[1])
         if entry not in _picked:
-            return {'CANCELLED'}            # toggled / removed: nothing to drag
-        self._keys = [((o, b), f) for o, b, f in _picked]
-        self._entry, self._mode = entry, self.mode
-        self._region = context.region
-        self._press = (x, y)
-        self._anchor = None
+            return {'FINISHED'} if self._changed else {'CANCELLED'}     # toggled / removed: nothing to drag
+        self._entry = entry
+        centre = None
         for f, co in markers(owner_of(hit[0]), context.scene):
             if f == hit[1]:
-                self._anchor = co
+                centre = co
+        return self._start(context, x, y, centre, 'VIEW', 'LEFTMOUSE', self._threshold(context))
+
+    @staticmethod
+    def _threshold(context):
+        return max(1, context.preferences.inputs.drag_threshold_mouse) * ui_scale(context)
+
+    def _start(self, context, x, y, centre, handle, release, threshold):
+        self._keys = [((o, b), f) for o, b, f in _picked]
+        self._entry = getattr(self, "_entry", None)
+        self._region = context.region
+        self._press = (x, y)
+        self._anchor = centre
+        self._handle = handle
+        self._release = release
         self._move = None
         self._moved = False
         self._last_update = 0.0
-        self._drag_px = max(1, context.preferences.inputs.drag_threshold_mouse) * ui_scale(context)
+        self._drag_px = threshold
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
-    def _world(self, context, x, y):
+    def _ray(self, context, x, y):
+        from bpy_extras.view3d_utils import region_2d_to_origin_3d, region_2d_to_vector_3d
+        rv3d = context.region_data
+        return (region_2d_to_origin_3d(self._region, rv3d, (x, y)),
+                region_2d_to_vector_3d(self._region, rv3d, (x, y)))
+
+    def _delta(self, context, x, y):
         from bpy_extras.view3d_utils import region_2d_to_location_3d
-        return region_2d_to_location_3d(self._region, context.region_data, (x, y), self._anchor)
+        rv3d = context.region_data
+        view = (region_2d_to_location_3d(self._region, rv3d, (x, y), self._anchor)
+                - region_2d_to_location_3d(self._region, rv3d, self._press, self._anchor))
+        if self._handle == 'VIEW':
+            return view
+        return constrained_delta(self._handle, self._anchor, self._ray(context, *self._press),
+                                 self._ray(context, x, y), view)
 
     def modal(self, context, event):
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
@@ -456,7 +664,7 @@ class ALLSET_OT_motion_trail_key(bpy.types.Operator):
                 self._move.restore()
                 update_paths(context, self._move.owners())
             _redraw(context)
-            return {'CANCELLED'}
+            return {'FINISHED'} if self._changed else {'CANCELLED'}
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
             x, y = event.mouse_x - self._region.x, event.mouse_y - self._region.y
             if not self._moved and max(abs(x - self._press[0]), abs(y - self._press[1])) < self._drag_px:
@@ -468,21 +676,20 @@ class ALLSET_OT_motion_trail_key(bpy.types.Operator):
             if not self._move or self._anchor is None:
                 return {'RUNNING_MODAL'}
             self._moved = True
-            d = self._world(context, x, y) - self._world(context, *self._press)
-            self._move.apply(d)
+            self._move.apply(self._delta(context, x, y))
             now = time.perf_counter()
             if now - self._last_update >= UPDATE_S:
                 self._last_update = now
                 update_paths(context, self._move.owners())
             _redraw(context)
             return {'RUNNING_MODAL'}
-        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+        if event.type == self._release and event.value == 'RELEASE':
             if self._moved:
                 update_paths(context, self._move.owners())
-            elif self._mode == 'SET':
+            elif self._release == 'LEFTMOUSE' and self._entry is not None and self.mode == 'SET'                     and self._handle == 'VIEW' and self._entry in _picked:
                 _picked[:] = [self._entry]          # a plain click on one of several picked keys keeps only it
             _redraw(context)
-            return {'FINISHED'} if self._moved else {'CANCELLED'}
+            return {'FINISHED'} if (self._moved or self._changed) else {'CANCELLED'}
         return {'RUNNING_MODAL'}
 
 
@@ -534,6 +741,68 @@ def _draw_picked():
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader.uniform_float("color", colour)
     batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+    try:
+        if move_tool(context):
+            _draw_manip(context)
+    except (AttributeError, ReferenceError, KeyError, ValueError, RuntimeError, TypeError):
+        pass
+
+
+def _square(c, half):
+    return [(c.x - half, c.y - half), (c.x + half, c.y - half), (c.x + half, c.y + half), (c.x - half, c.y + half)]
+
+
+def _draw_manip(context):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    centre = anchor(context)
+    if centre is None:
+        return
+    lay = manip_layout(context, centre)
+    if lay is None:
+        return
+    c, axes = lay
+    ui = ui_scale(context)
+    active = _last_handle[0]
+    lines, line_cols, tris, tri_cols = [], [], [], []
+
+    def col(handle, base):
+        return (*(ACTIVE_COLOR if handle == active else base), 1.0)
+
+    for i, ax in enumerate(axes):
+        if ax is None:
+            continue
+        u, length = ax
+        k = col(('AXIS', i), AXIS_COLORS[i])
+        tip = c + u * length
+        lines += [c, tip]
+        line_cols += [k, k]
+        n = Vector((-u.y, u.x)) * (4.0 * ui)
+        base = tip - u * (12.0 * ui)
+        tris += [tip + u * (2.0 * ui), base + n, base - n]
+        tri_cols += [k, k, k]
+        sq = plane_square(c, axes, i)
+        if sq is not None:
+            kp = col(('PLANE', i), AXIS_COLORS[i])
+            a, b, cc, d = _square(sq[0], sq[1])
+            tris += [a, b, cc, a, cc, d]
+            tri_cols += [(*kp[:3], 0.45)] * 6
+    k = col('VIEW', CENTRE_COLOR)
+    sq = _square(c, CENTRE_PX * ui)
+    for a, b in zip(sq, sq[1:] + sq[:1]):
+        lines += [Vector(a), Vector(b)]
+        line_cols += [k, k]
+    gpu.state.blend_set('ALPHA')
+    try:
+        if tris:
+            sh = gpu.shader.from_builtin('SMOOTH_COLOR')
+            batch_for_shader(sh, 'TRIS', {"pos": [tuple(p) for p in tris], "color": tri_cols}).draw(sh)
+        sh = gpu.shader.from_builtin('POLYLINE_SMOOTH_COLOR')
+        sh.uniform_float("viewportSize", (context.region.width, context.region.height))
+        sh.uniform_float("lineWidth", 2.0 * ui)
+        batch_for_shader(sh, 'LINES', {"pos": [(p.x, p.y, 0.0) for p in lines], "color": line_cols}).draw(sh)
+    finally:
+        gpu.state.blend_set('NONE')
 
 
 @bpy.app.handlers.persistent
