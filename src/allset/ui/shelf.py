@@ -230,21 +230,26 @@ def _run_operator_checked(context, target, properties, option=False):
 
 
 def _run_menu_checked(context, target, option=False):
-    """Validate a registered Menu's poll before asking Blender to display it."""
+    """Validate a registered Menu and let Blender handle Menu display/polling."""
     menu_type = bpy.types.Menu.bl_rna_get_subclass_py(target)
     if menu_type is None:
         raise ShelfContextError(f"Menu {target} is not registered.")
-    try:
-        if not menu_type.poll(context):
+
+    # Blender Menu types do not all define a poll() method. In particular,
+    # built-in menus such as VIEW3D_MT_view rely on Blender's own call_menu
+    # handling and must not be rejected for lacking that optional method.
+    menu_poll = getattr(menu_type, "poll", None)
+    if callable(menu_poll):
+        try:
+            available = menu_poll(context)
+        except TypeError:
+            # Keep compatibility with custom Menu classes using poll(self).
+            available = menu_poll()
+        if not available:
             raise ShelfContextError(
                 f"Menu {target} is not available in the current editor or mode."
             )
-    except TypeError:
-        # Some custom menu classes expose a poll without a context parameter.
-        if not menu_type.poll():
-            raise ShelfContextError(
-                f"Menu {target} is not available in the current editor or mode."
-            )
+
     from ..marking.modal import run_action
     return run_action(context, ("menu", target), option=option)
 

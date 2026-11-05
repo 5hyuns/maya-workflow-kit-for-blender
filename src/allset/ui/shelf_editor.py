@@ -447,10 +447,7 @@ def action_id_search(self, context, edit_text):
     """Search Menu, Tool, or Operator identifiers for the selected command type."""
     kind = context.window_manager.allset_se_type
     if kind == "MENU":
-        # The field accepts any registered Menu ID, but the popup search is
-        # intentionally focused on MayaWorkflow Kit's own Menu classes.
-        maya_menus = [item for item in _menu_candidates() if item.startswith("ALLSET_MT_")]
-        return _filter(maya_menus, edit_text)
+        return _filter(_menu_candidates(), edit_text)
     if kind == "TOOL":
         return _filter(sorted(_KNOWN_TOOLS), edit_text)
     if kind == "OPERATOR":
@@ -731,38 +728,67 @@ def _set_message(context, message):
     _wm(context).allset_se_message = message
 
 
+def _operator_props_to_body(value):
+    """Convert stored operator properties into JSON members for the brace-wrapped editor."""
+    if isinstance(value, str):
+        parsed = json.loads(value or "{}")
+    else:
+        parsed = value if value is not None else {}
+    if not isinstance(parsed, dict):
+        raise ValueError("Stored Operator Properties must be a JSON object")
+    return ",\\n".join(
+        json.dumps(key, ensure_ascii=False) + ": " + json.dumps(item, ensure_ascii=False)
+        for key, item in parsed.items()
+    )
+
+
+def _parse_operator_props_body(value):
+    """Parse JSON object members entered in the Operator Properties field."""
+    body = (value or "").strip()
+    if not body:
+        return {}
+    parsed = json.loads("{" + body + "}")
+    if not isinstance(parsed, dict):
+        raise ValueError("Operator Properties must contain JSON object members")
+    return parsed
+
+
 def _load_button(context, index):
+    """Load one draft button into the transient editor fields.
+
+    Reset every field first so values from a previously selected button can
+    never leak into the next button's editor state.
+    """
     global _loading
     wm = _wm(context)
     shelf_id = wm.allset_se_shelf
     buttons = _draft_buttons(shelf_id) or []
-    if not 0 <= index < len(buttons):
-        _loading = True
-        try:
-            wm.allset_se_index = -1
-            wm.allset_se_label = ""
-            wm.allset_se_icon = "SCRIPT"
-            wm.allset_se_type = "PYTHON"
-            wm.allset_se_script = "import bpy\\n\\nbpy.ops.mesh.primitive_cube_add()"
-            wm.allset_se_menu = ""
-            wm.allset_se_operator = "mesh.primitive_cube_add"
-            wm.allset_se_props = "{}"
-            wm.allset_se_tooltip = ""
-            wm.allset_se_action_id = "VIEW3D_MT_view"
-            wm.allset_se_action_code = ""
-            wm.allset_se_space_type = "AUTO"
-            wm.allset_se_required_mode = "AUTO"
-            wm.allset_se_object_type = "AUTO"
-            wm.allset_se_tool_space_type = "AUTO"
-            wm.allset_se_tool_mode = "AUTO"
-        finally:
-            _loading = False
-        return
-
-    button = buttons[index]
-    action = button.get("action") or {}
     _loading = True
     try:
+        # Reset the complete transient form, not only fields used by the
+        # incoming button type. All of these properties are SKIP_SAVE data.
+        wm.allset_se_index = -1
+        wm.allset_se_label = ""
+        wm.allset_se_icon = "SCRIPT"
+        wm.allset_se_type = "PYTHON"
+        wm.allset_se_script = "import bpy\n\nbpy.ops.mesh.primitive_cube_add()"
+        wm.allset_se_menu = ""
+        wm.allset_se_operator = "mesh.primitive_cube_add"
+        wm.allset_se_props = ""
+        wm.allset_se_tooltip = ""
+        wm.allset_se_action_id = "VIEW3D_MT_view"
+        wm.allset_se_action_code = ""
+        wm.allset_se_space_type = "AUTO"
+        wm.allset_se_required_mode = "AUTO"
+        wm.allset_se_object_type = "AUTO"
+        wm.allset_se_tool_space_type = "AUTO"
+        wm.allset_se_tool_mode = "AUTO"
+
+        if not 0 <= index < len(buttons):
+            return
+
+        button = buttons[index]
+        action = button.get("action") or {}
         wm.allset_se_index = index
         wm.allset_se_label = button.get("label", "Button")
         wm.allset_se_icon = button.get("icon", "SCRIPT")
@@ -784,12 +810,12 @@ def _load_button(context, index):
         elif button.get("operator"):
             wm.allset_se_type = "OPERATOR"
             wm.allset_se_operator = button["operator"]
-            wm.allset_se_props = json.dumps(button.get("props", {}), ensure_ascii=False)
+            wm.allset_se_props = _operator_props_to_body(button.get("props", {}))
         elif button.get("type") == "action":
             kind = action.get("type", "operator")
             wm.allset_se_action_id = action.get("id", "")
             wm.allset_se_action_code = action.get("code", "")
-            wm.allset_se_props = json.dumps(action.get("properties", {}), ensure_ascii=False)
+            wm.allset_se_props = _operator_props_to_body(action.get("properties", {}))
             if kind == "operator":
                 wm.allset_se_type = "OPERATOR"
                 wm.allset_se_operator = action.get("id", "")
@@ -1132,7 +1158,6 @@ class ALLSET_OT_shelf_editor_create_action(bpy.types.Operator):
             self.label = "Add Cube"
             self.icon = "MESH_CUBE"
             self.target = "mesh.primitive_cube_add"
-            self.properties_json = '{"size": 2.0}'
         elif self.action_type == "MAYA_MENU_ITEM":
             self.label = "Create Cube"
             self.target = "Create/Polygon Primitives/Cube"
@@ -1262,13 +1287,15 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             if op_id not in _operator_ids():
                 self.report({'WARNING'}, "Choose a valid Blender Operator")
                 return {'CANCELLED'}
+            # Operator parameters are edited as JSON members between UI-supplied braces.
+            # An empty field means no explicit overrides: {}.
             try:
-                props = json.loads(wm.allset_se_props or "{}")
-            except ValueError as ex:
-                self.report({'WARNING'}, f"Operator properties are invalid JSON: {ex}")
+                props = _parse_operator_props_body(wm.allset_se_props)
+            except (TypeError, ValueError) as ex:
+                self.report({'WARNING'}, f"Operator Properties must be valid JSON: {ex}")
                 return {'CANCELLED'}
             if not isinstance(props, dict):
-                self.report({'WARNING'}, "Operator properties must be a JSON object")
+                self.report({'WARNING'}, "Operator Properties must be a JSON object, for example {}")
                 return {'CANCELLED'}
             problem = _validate_operator_properties(op_id, props)
             if problem:
@@ -1314,7 +1341,17 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             self.report({'WARNING'}, "Unsupported Shelf button type")
             return {'CANCELLED'}
 
+        # Commit the record to the draft before refreshing any transient UI.
+        # Keep the selected button index stable and immediately rebuild the
+        # visible Shelf Contents rows so the first Apply is reflected at once.
         buttons[index] = record
+
+        # The contents UIList is a cached WindowManager collection. Updating
+        # _draft alone does not guarantee that its label/icon rows are refreshed
+        # during this operator execution.
+        _sync_contents_list(wm, wm.allset_se_shelf)
+        _sync_properties_list(wm)
+
         _set_message(context, f"Updated: {label} (not saved yet)")
         _redraw(context)
         return {'FINISHED'}
@@ -1367,6 +1404,19 @@ class ALLSET_OT_shelf_editor_save(bpy.types.Operator):
 
         wm = _wm(context)
         active = wm.allset_se_shelf
+
+        # Save must commit the currently visible form into the in-memory draft
+        # first. The editor fields are transient WindowManager properties and
+        # are intentionally not written by _write_document_atomic(). Reuse the
+        # same validation and record-building path as the explicit Apply button
+        # so icons, labels, tooltips, command data and Operator properties all
+        # follow identical rules.
+        if 0 <= wm.allset_se_index < len(_draft_buttons(active) or []):
+            apply_result = bpy.ops.allset.shelf_editor_apply_button()
+            if 'CANCELLED' in apply_result:
+                _set_message(context, "Save cancelled: current button changes were not applied")
+                _redraw(context)
+                return {'CANCELLED'}
 
         # Freeze the editor state before touching the live shelf cache.  The
         # draft is deliberately independent from shelf._user, but keeping an
@@ -1461,6 +1511,7 @@ class ALLSET_OT_shelf_editor_cancel(bpy.types.Operator):
         return {'FINISHED'}
 
 
+
 class ALLSET_PG_shelf_editor_list_item(bpy.types.PropertyGroup):
     """Transient row data used by the scrollable Shelf Contents list."""
     label: StringProperty()
@@ -1495,13 +1546,7 @@ class ALLSET_UL_shelf_editor_properties(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_property, index=0, flt_flag=0):
-        if item.row_kind == "RNA_HEADER":
-            layout.label(text=item.label, icon='PROPERTIES')
-            return
         if item.row_kind == "INFO":
-            layout.label(text=item.label, icon='DOT')
-            return
-        if item.row_kind == "RNA_FOOTER":
             layout.label(text=item.label, icon='INFO')
             return
         if item.field and hasattr(data, item.field):
@@ -1609,7 +1654,7 @@ def _sync_shelves_list(wm):
 
 
 def _sync_properties_list(wm):
-    """Build the editable fields for the selected Shelf button."""
+    """Build the fixed editor fields; Operator Properties remain plain JSON."""
     rows = [
         ("FIELD", "allset_se_label", "Label"),
         ("FIELD", "allset_se_icon", "Icon"),
@@ -1634,31 +1679,12 @@ def _sync_properties_list(wm):
     elif kind == "OPERATOR":
         rows.extend((
             ("FIELD", "allset_se_operator", "Operator ID"),
-            ("FIELD", "allset_se_props", "Properties JSON"),
+            ("FIELD", "allset_se_props", "Operator Properties (JSON)"),
+            ("INFO", "", "Leave empty to use the Operator default properties."),
             ("FIELD", "allset_se_space_type", "Editor Space"),
             ("FIELD", "allset_se_required_mode", "Required Mode"),
             ("FIELD", "allset_se_object_type", "Object Type"),
         ))
-        try:
-            module, name = wm.allset_se_operator.split(".", 1)
-            rna = getattr(getattr(bpy.ops, module), name).get_rna_type()
-            rows.append(("RNA_HEADER", "", f"{rna.name} — RNA Properties"))
-            shown = 0
-            for prop in rna.properties:
-                if prop.identifier in {"rna_type", "name"} or prop.is_readonly:
-                    continue
-                rows.append(("INFO", "", f"{prop.name or prop.identifier} · {prop.type.title()}"))
-                shown += 1
-                if shown >= 8:
-                    break
-            if shown == 0:
-                rows.append(("INFO", "", "No configurable properties"))
-            rows.append((
-                "RNA_FOOTER", "",
-                "Overrides are stored as JSON; omitted properties use Operator defaults.",
-            ))
-        except (AttributeError, RuntimeError, TypeError, ValueError):
-            rows.append(("INFO", "", "Operator RNA is unavailable"))
     elif kind == "TOOL":
         rows.extend((
             ("FIELD", "allset_se_action_id", "Tool ID"),
@@ -1672,6 +1698,7 @@ def _sync_properties_list(wm):
                       wm.allset_se_action_id, rows))
     if wm.allset_se_properties_signature == signature:
         return
+
     collection = wm.allset_se_properties
     collection.clear()
     for row_kind, field, label in rows:
@@ -1679,6 +1706,7 @@ def _sync_properties_list(wm):
         item.row_kind = row_kind
         item.field = field
         item.label = label
+
     wm.allset_se_properties_signature = signature
     wm.allset_se_properties_index = 0
 
@@ -1893,7 +1921,7 @@ def register():
     wm.allset_se_script = StringProperty(name="Python", options={'SKIP_SAVE'})
     wm.allset_se_menu = StringProperty(name="Maya Menu Item", search=menu_search, options={'SKIP_SAVE'})
     wm.allset_se_operator = StringProperty(name="Blender Operator", search=operator_search, options={'SKIP_SAVE'})
-    wm.allset_se_props = StringProperty(name="Operator Properties", options={'SKIP_SAVE'})
+    wm.allset_se_props = StringProperty(name="Operator Properties", default="", options={'SKIP_SAVE'})
     wm.allset_se_tooltip = StringProperty(name="Tooltip", options={'SKIP_SAVE'})
     wm.allset_se_message = StringProperty(options={'SKIP_SAVE'})
     wm.allset_se_action_id = StringProperty(
