@@ -1,7 +1,7 @@
 """Edit Mesh > Bevel (operators/bevel_maya.py), Fraction mode: a corner where three bevelled edges meet and their
-sin(dihedral / 2) values differ a lot (a "split" corner). The kit places each face's new corner with an approximation
-(Maya's exact sizes there are not matched yet): the face whose two edges have equal angles gets its corner on its
-bisector, every other face on the line through the old corner and the point where the two edges' offset lines meet."""
+sin(dihedral / 2) values differ a lot (a "split" corner). The kit places each face's new corner like this: the face
+whose two edges have equal angles gets its corner on its bisector, every other face on the line through the old corner
+and the point where the two edges' offset lines meet."""
 
 import math
 from importlib import import_module
