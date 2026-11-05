@@ -72,6 +72,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   off gives the Graph Editor its own handles back.
 
 ### Fixed
+- **Kit-drawn panels ignored the Blender theme** (#312): the Graph Editor / Dope Sheet list, the Time Slider ruler
+  and the Range Slider kept Maya's dark greys with a light theme. They now move with the theme's editor background
+  and text colours; with Blender's default theme they look as before. Selection blue and axis colours stay.
 - **Delete Keys / Cut Keys windows from the Graph Editor and Dope Sheet**: with several keys selected on one curve
   they could delete other keys than the selected ones. They now delete exactly the selected keys.
 - **Camera and Aim shows its aim line in the Maya layout** (#299): the Maya layout's views draw a thin dark blue line

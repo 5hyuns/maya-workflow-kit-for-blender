@@ -22,6 +22,14 @@ TRACK_RGB = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 SEGMENT_RGB = (0x5d / 255, 0x5d / 255, 0x5d / 255, 1.0)
 HANDLE_RGB = (0x91 / 255, 0x91 / 255, 0x91 / 255, 1.0)
 TEXT_RGB = (0.8, 0.8, 0.8, 1.0)            # light grey of the frame numbers
+
+
+def _themed(color, field):
+    """A Range Slider colour moved with the Blender theme's Timeline colours (ui/theme_follow.py)."""
+    from . import theme_follow
+    return theme_follow.follow(color, "dopesheet_editor", field)
+
+
 MAYA_BAR_H = 23.0                          # track height
 SEG_INSET = 2.0                            # segment inside the track
 HANDLE = (13.0, 14.0)                      # handle square w, h
@@ -178,18 +186,19 @@ def draw():
     import gpu
     k = unit / MAYA_BAR_H
     gpu.state.blend_set('ALPHA')
-    _rounded(x0, y0, x1, y1, 4 * k, TRACK_RGB)
+    _rounded(x0, y0, x1, y1, 4 * k, _themed(TRACK_RGB, "back"))
     ps, pe = playback(scene)
     xs, xe = segment(bar, ps, pe)
     inset = SEG_INSET * k
-    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, SEGMENT_RGB)
+    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, _themed(SEGMENT_RGB, "back"))
     hw, hh = HANDLE[0] * k, HANDLE[1] * k
     hy0 = (y0 + y1 - hh) / 2.0
     hx0, hx1 = xs + HANDLE_INSET * k, xe - HANDLE_INSET * k - hw
-    _rounded(hx0, hy0, hx0 + hw, hy0 + hh, 3 * k, HANDLE_RGB)
-    _rounded(hx1, hy0, hx1 + hw, hy0 + hh, 3 * k, HANDLE_RGB)
+    handle = _themed(HANDLE_RGB, "back")
+    _rounded(hx0, hy0, hx0 + hw, hy0 + hh, 3 * k, handle)
+    _rounded(hx1, hy0, hx1 + hw, hy0 + hh, 3 * k, handle)
     blf.size(0, TEXT_PX * scale)
-    blf.color(0, *TEXT_RGB)
+    blf.color(0, *_themed(TEXT_RGB, "text"))
     ty = (y0 + y1) / 2.0 - TEXT_PX * scale * 0.35
     a_txt, b_txt = f"{ps:g}", f"{pe:g}"
     blf.position(0, hx0 + hw + 3 * k, ty, 0)

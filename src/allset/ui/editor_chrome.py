@@ -590,7 +590,7 @@ AXES = "XYZ"
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
 BACK = (0.267, 0.267, 0.267, 1.0)        # outliner pane #444444
-SELECT = (0.322, 0.522, 0.651, 1.0)      # selection blue #5285a6 (kit-drawn pane: fixed colours, any theme)
+SELECT = (0.322, 0.522, 0.651, 1.0)      # selection blue #5285a6 (kept with any theme)
 THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (right of the rows)
 _expanded = {}                           # node key -> bool (Maya shows attributes expanded)
 _scroll = {}                             # area pointer -> first row shown
@@ -633,11 +633,17 @@ def attr_label(fc):
     return tail.replace("_", " ").title() + (f" {AXES[idx]}" if idx < 3 and fc.array_index else "")
 
 
+def _themed(color, field, space=None):
+    """A kit list colour moved with the Blender theme (ui/theme_follow.py)."""
+    from . import theme_follow
+    return theme_follow.follow(color, theme_follow.editor_of(space or bpy.context.space_data), field)
+
+
 def attr_color(fc):
     tail = fc.data_path.rsplit(".", 1)[-1]
     if tail in MAYA_ATTR and tail != "rotation_quaternion" and fc.array_index < 3:
         return AXIS_COLOR[fc.array_index]
-    return TEXT
+    return _themed(TEXT, "text")
 
 
 def object_curves(ob):
@@ -1423,6 +1429,7 @@ PIN_OFF = (0.55, 0.55, 0.55, 1.0)
 def _draw_pin(x, y, s, pinned):
     """Maya's pin icon left of a channel row's name: an upright push-pin on a
     pinned row (head, plate, needle), a grey sideways one on the others."""
+    PIN, PIN_OFF = _themed(globals()["PIN"], "text"), _themed(globals()["PIN_OFF"], "text")
     if pinned:
         _rect(x - 2 * s, y + 1 * s, x + 2 * s, y + 6 * s, PIN)
         _rect(x - 4 * s, y, x + 4 * s, y + 1.5 * s, PIN)
@@ -1442,7 +1449,8 @@ def draw_channels():
     s = context.preferences.system.ui_scale
     pins = getattr(context.window_manager, "allset_show_pins", True)      # Maya 2026 View > Show Pins
     gpu.state.blend_set('ALPHA')
-    _rect(0, 0, region.width, top, BACK)
+    text = _themed(TEXT, "text", space)
+    _rect(0, 0, region.width, top, _themed(BACK, "back", space))
     font = 0
     blf.size(font, 12 * s)
     all_rows = rows(context, space)
@@ -1461,14 +1469,14 @@ def draw_channels():
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
         if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows, indented under their channel
-            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else TEXT))
+            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else text))
             blf.position(font, 66 * s, y - h + 6 * s, 0)
             blf.draw(font, _up_label.get((kind, fc.as_pointer()), ""))
             if pins:
                 _draw_pin(56 * s, y - h / 2, s, False)
         elif kind != "ATTR":
             sign = "−" if _expanded.get(node_key(node), True) else "+"
-            blf.color(font, *TEXT)
+            blf.color(font, *text)
             blf.position(font, 6 * s, y - h + 6 * s, 0)
             blf.draw(font, sign)
             blf.position(font, 22 * s, y - h + 6 * s, 0)
@@ -1484,7 +1492,7 @@ def draw_channels():
     if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
         span = top / len(all_rows)
         x1 = region.width - 2 * s
-        _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, THUMB)
+        _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, _themed(THUMB, "back", space))
     gpu.state.blend_set('NONE')
 
 
