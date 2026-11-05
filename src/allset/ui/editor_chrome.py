@@ -1224,7 +1224,7 @@ def listed_nodes(context, space):
     (driver) channels: Maya lists a driven-key / expression channel too. A checked Show >
     Objects > Sets / Characters lists only those nodes: kit sets as rows without channels (a Maya set row has
     none), character sets (a character is a set) with their member channels; kit sets and characters can't be
-    selected like Maya's, so every one is listed."""
+    selected like Maya's, so every one is listed. A bookmark loaded from List > Bookmarks shows its set row first."""
     from . import channel_box
     out = []
     flt = attr_filters()
@@ -1238,6 +1238,11 @@ def listed_nodes(context, space):
     if "sets" in kinds:
         from ..operators import sets
         out += [("SET", coll, []) for coll in sets.all_sets()]
+    else:
+        from ..operators import graph_bookmarks
+        bm = graph_bookmarks.loaded(context, space)
+        if bm is not None:
+            out.append(("SET", bm, []))      # the loaded bookmark's set row, its objects below (Maya)
     auto = auto_load(space)
 
     def add(kind, node, curves):

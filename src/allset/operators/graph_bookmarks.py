@@ -21,6 +21,7 @@ from . import sets
 
 TEXT = "bookmarkAnimCurves"
 CURVES = "allset_bookmark_curves"
+LOADED_MARK = "allset_bookmark"      # on the editor's kit list: the bookmark last loaded into it
 
 
 def bookmarks(scene=None):
@@ -89,6 +90,7 @@ def load(context, space, coll):
     ds = ec._ds(space)
     lst = ec.kit_list(space) or ec._new_list()
     lst[ec.LOADED] = names
+    lst[LOADED_MARK] = coll.name
     lst[ec.BONES] = []
     lst[ec.AUTO] = False
     ds.filter_collection = lst
@@ -103,6 +105,20 @@ def load(context, space, coll):
                 fc.hide = not shown
                 fc.select = shown
     return names
+
+
+def loaded(context, space):
+    """The bookmark set the editor shows, like a selected set in Maya's Graph Editor list: the one last loaded, while
+    the list still holds just its objects; else None."""
+    from ..ui import editor_chrome as ec
+    lst = ec.kit_list(space)
+    names = ec.loaded_names(space)
+    if lst is None or names is None:
+        return None
+    coll = bpy.data.collections.get(lst.get(LOADED_MARK, ""))
+    if coll is None or coll.get(sets.TEXT) != TEXT:
+        return None
+    return coll if sorted(ob.name for ob in sets.members(coll, context.scene)) == sorted(names) else None
 
 
 class ALLSET_OT_graph_bookmark(bpy.types.Operator):

@@ -92,4 +92,19 @@ def s_menu_open():
     check(f"loading the bookmark ({r})", r == {'FINISHED'})
 
 
+@step
+def s_bookmark_row():
+    from sim import screenshot
+    ec = import_module(MODULE + ".ui.editor_chrome")
+    sp = C["area"].spaces.active
+    with bpy.context.temp_override(window=win(), area=C["area"], region=region(), space_data=sp):
+        rows = ec.rows(bpy.context, sp)
+    names = [(k, n.name) for k, n, _fc in rows if k != "ATTR"][:2]
+    check(f"the loaded bookmark's set row comes first in the list ({names})",
+          names == [("SET", "Bookmark"), ("OBJECT", "pCube1")])
+    shots = os.environ.get("ALLSET_GUI_SHOTS", "")
+    if shots:
+        screenshot(os.path.join(shots, "gui_graph_bookmark_row.png"))
+
+
 run()

@@ -50,9 +50,14 @@ def test_bookmark_objects_sets_load_and_remove():
         assert [o.name for o in marks[0].objects] == ["A"] and [o.name for o in marks[1].objects] == ["B"]
         assert bpy.ops.allset.graph_bookmark(action='LOAD', name="Bookmark") == {'FINISHED'}
         assert _shown() == ["A"], "loading the bookmark lists its objects again"
+        rows = ec.listed_nodes(bpy.context, bpy.context.space_data)
+        assert [(k, n.name) for k, n, _c in rows][:2] == [("SET", "Bookmark"), ("OBJECT", "A")],             "the bookmark's set row first, its objects below (Maya lists a selected set)"
         assert not ec.auto_load(bpy.context.space_data)
         sets.select_members(bpy.context, marks[1])
         assert [o.name for o in bpy.context.selected_objects] == ["B"], "selecting the set selects its objects"
+        bpy.ops.allset.graph_list(action='LOAD')
+        rows = ec.listed_nodes(bpy.context, bpy.context.space_data)
+        assert [k for k, _n, _c in rows].count("SET") == 0, "another list: no bookmark row"
         assert bpy.ops.allset.graph_bookmark(action='REMOVE_ALL') == {'FINISHED'}
         assert gb.bookmarks() == []
 

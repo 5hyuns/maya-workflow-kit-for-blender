@@ -10,7 +10,8 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   (Bookmark, Bookmark1, ...) of the objects the Graph Editor lists; Bookmark Selected Curves makes one that remembers
   the selected curves. Bookmark sets show in the Outliner like other sets: selecting one selects its objects, so the
   Graph Editor shows them. The List > Bookmarks menu also lists them: choosing one loads it into that Graph Editor
-  (Auto Load turns off), a curve bookmark shows only its curves. Remove All Bookmarks deletes them.
+  (Auto Load turns off) with the bookmark's set row above its objects, a curve bookmark shows only its curves.
+  Remove All Bookmarks deletes them.
 - **Graph Editor Sculpting Tools** (Edit > Transformation Tools > Sculpting Tools): Grab, Smooth, Smear and Key
   Reducer brushes work like Maya's (they showed a notice). Drag over the curves: Grab moves the keys under the brush
   up or down with the drag, Smear drags keys along the stroke's path, Smooth pulls keys toward their neighbours, and
