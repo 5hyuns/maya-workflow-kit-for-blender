@@ -6,6 +6,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ## [Unreleased]
 
 ### Added
+- **Camera Overscan** (#313): a camera's Attribute Editor > Display Options has Overscan, like Maya. A view that
+  looks through the camera (Panels > Look Through Selected or the Panels camera list) fits the camera's frame to
+  the view at Overscan 1 (a new camera's value), and 1.3 / 2 leave that much room around it. Changing the value
+  updates the views that look through that camera; zooming such a view afterwards still works.
 - **Graph Editor List > Bookmarks** works like Maya's (it was greyed). Bookmark Current Objects makes a bookmark set
   (Bookmark, Bookmark1, ...) of the objects the Graph Editor lists; Bookmark Selected Curves makes one that remembers
   the selected curves. Bookmark sets show in the Outliner like other sets: selecting one selects its objects, so the

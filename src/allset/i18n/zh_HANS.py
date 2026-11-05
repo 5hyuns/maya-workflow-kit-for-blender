@@ -5936,4 +5936,6 @@ STRINGS = {
     'Maya Graph Editor List > Bookmarks': 'Maya 曲线图编辑器 列表 > 书签',
     'Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmark sets to load': 'Maya 曲线图编辑器 列表 > 书签：书签命令，以及要加载的书签集',
     'Load Bookmark': '加载书签',
+    'Overscan': '过扫描',
+    "Room around the camera's frame in a view that looks through this camera, like Maya: 1 fits the frame to the view, 1.3 makes the frame 1 / 1.3 of the view": '通过此摄像机观看的视图中摄像机框周围的空间 (与 Maya 相同)：1 使框适合视图，1.3 使框为视图的 1 / 1.3',
 }

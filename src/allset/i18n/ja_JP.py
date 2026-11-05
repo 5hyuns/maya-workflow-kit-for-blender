@@ -5936,4 +5936,6 @@ STRINGS = {
     'Maya Graph Editor List > Bookmarks': 'Maya のグラフ エディタ リスト > ブックマーク',
     'Maya Graph Editor List > Bookmarks: the bookmark commands, then the bookmark sets to load': 'Maya のグラフ エディタ リスト > ブックマーク: ブックマークのコマンドと、読み込むブックマーク セット',
     'Load Bookmark': 'ブックマークを読み込み',
+    'Overscan': 'オーバースキャン',
+    "Room around the camera's frame in a view that looks through this camera, like Maya: 1 fits the frame to the view, 1.3 makes the frame 1 / 1.3 of the view": 'このカメラを通して見るビューで、カメラの枠の周りにとる余白 (Maya と同じ): 1 で枠をビューに合わせ、1.3 で枠がビューの 1 / 1.3 になります',
 }

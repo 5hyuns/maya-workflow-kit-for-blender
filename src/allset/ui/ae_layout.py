@@ -119,6 +119,7 @@ CAMERA = [
       ("prop", "data", "show_limits", "Display Near/Far Clip"),
       ("prop", "data", "show_passepartout", "Display Film Gate Mask"),
       ("prop", "data", "passepartout_alpha", "Gate Mask Opacity"),
+      ("prop", "data", "allset_overscan", "Overscan"),
       ("prop", "data", "display_size", "Locator Scale")),
     S("Orthographic Views", False,
       ("prop", "data", "type", "Projection"),

@@ -583,6 +583,8 @@ def look_through(context, area, ob):
     space.region_3d.view_perspective = 'CAMERA'
     # Maya: navigating a view that looks through a camera moves the camera (#9)
     space.lock_camera = True
+    from ..operators import camera_overscan
+    camera_overscan.apply_later(area)      # the frame fills the view by the camera's Overscan (Maya)
 
 
 class ALLSET_OT_panel_new_persp(bpy.types.Operator):
