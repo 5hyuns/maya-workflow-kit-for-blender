@@ -27,6 +27,7 @@ object (or its parents) or edits an Action drops the cache.
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, StringProperty
+from .. import i18n
 
 GEOMETRY = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 MODES = ("Pre And Post Frames", "Pre Frames", "Post Frames", "Custom Frames", "Pre And Post Keyframes",
@@ -548,6 +549,7 @@ class ALLSET_OT_ghost(bpy.types.Operator):
                                 ("UNGHOST_ALL", "Unghost All", "")], default="GHOST", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {"GHOST": "Ghost selected objects", "UNGHOST": "Remove ghosts from selected objects",
                 "UNGHOST_ALL": "All object(s) to be unghosted."}[props.action]   # Maya's messages

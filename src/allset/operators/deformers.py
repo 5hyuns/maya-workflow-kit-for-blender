@@ -20,6 +20,7 @@ import bpy
 from mathutils import Vector
 
 from . import units
+from .. import i18n
 
 # --- names / node types --------------------------------------------------------------------------------
 
@@ -617,6 +618,7 @@ class ALLSET_OT_deformer(bpy.types.Operator):
     kind: bpy.props.EnumProperty(items=KINDS, name="Deformer", options={'HIDDEN'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return f"Maya Deform > {properties.kind.replace('_', ' ').title()}: the Blender modifier that does the same"
 

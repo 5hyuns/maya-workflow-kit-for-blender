@@ -498,6 +498,9 @@ def _menu_class(idname, label, prefix, items, submenus, top_label=None):
 
     return type(idname, (bpy.types.Menu,), {
         "bl_idname": idname, "bl_label": label, "draw": draw,
+        # the tooltip: the menu's name (a composed "Maya menu: path" would stay English: Blender translates
+        # a menu's description from its tables, and a path is in none); the docstring keeps the path
+        "bl_description": label,
         "__doc__": f"Maya menu: {prefix}"})
 
 
@@ -516,6 +519,7 @@ class ALLSET_OT_menu_unavailable(bpy.types.Operator):
         return False
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return notices.tooltip(props.item, mapped=False) or _no_equivalent(props.item)
 
@@ -538,6 +542,7 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         return True
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.item not in menu_map.MAP:
             return notices.tooltip(props.item, mapped=False) or _no_equivalent(props.item)
@@ -663,6 +668,7 @@ class ALLSET_OT_component_command(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return _op_description(props.item)
 
@@ -880,6 +886,7 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
     from_hold: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})     # run from a hold menu: close the Maya menu first
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         from ..operators import option_windows
         label = props.item.rsplit('/', 1)[-1]
@@ -957,6 +964,7 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
     item: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})       # the Maya menu path (drawn in a menu)
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         try:
             mod, name = props.op.split(".")

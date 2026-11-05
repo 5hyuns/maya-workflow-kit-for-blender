@@ -22,6 +22,7 @@ import math
 import bpy
 
 from .. import live_refs
+from .. import i18n
 
 MODES = (
     ('GRAB', "Grab Tool", "Push the keys under the brush up or down as you drag (Maya Sculpting Tools > Grab Tool)"),
@@ -203,6 +204,7 @@ class ALLSET_OT_graph_sculpt(bpy.types.Operator):
     mode: bpy.props.EnumProperty(items=MODES, name="Brush", default='GRAB', options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in MODES if k == props.mode)
 

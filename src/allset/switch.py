@@ -25,6 +25,7 @@ import bpy
 
 from . import results
 from . import live_refs
+from . import i18n
 
 WORKSPACE = "Maya-style"
 
@@ -731,6 +732,7 @@ class ALLSET_OT_switch_mode(bpy.types.Operator):
         default='TOGGLE', options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.mode == 'MAYA':
             return "Switch to Maya mode: Maya keymap, layout and menus (Ctrl+Alt+Shift+M)"

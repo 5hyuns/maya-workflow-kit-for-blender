@@ -24,6 +24,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import undo_steps
+from .. import i18n
 
 TOGGLE_KEY = "toggle_show_hide"   # option window key (operators/option_windows_display.py)
 KEPT = "allset_kept"              # hidden by h while selected: h / Shift+H bring it back
@@ -162,6 +163,7 @@ class ALLSET_OT_visibility(bpy.types.Operator):
         ('SAVED', "Saved", ""), ('INDEPENDENT', "Independent", ""), ('DEPENDENT', "Dependent", "")))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return dict((a[0], a[2]) for a in ACTIONS)[props.action]
 

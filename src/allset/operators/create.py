@@ -20,6 +20,7 @@ from bpy.props import EnumProperty
 
 from .. import results
 from . import lights, naming, prim_history, units
+from .. import i18n
 
 HALF_PI = math.pi / 2
 # Maya's Y-up "front" (looking down -Z) is Blender's front (+Y): directional lights,
@@ -203,6 +204,7 @@ class ALLSET_OT_create(bpy.types.Operator):
     kind: EnumProperty(name="Kind", items=[(k, v[0], "") for k, v in KINDS.items()])
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return f"Create a {KINDS[props.kind][0]} at the origin, default size and name like Maya"
 

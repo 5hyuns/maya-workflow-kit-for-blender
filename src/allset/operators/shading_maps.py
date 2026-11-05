@@ -14,6 +14,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from .. import results
 from . import material as _material
+from .. import i18n
 
 # kind -> (Maya node name, Blender node label)
 MAPS = {
@@ -112,6 +113,7 @@ class ALLSET_OT_ae_map(bpy.types.Operator):
     socket: _SOCKET
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         attr = _maya_attr(props.socket)
         return f"{attr}: connect a texture (Maya map button = a texture node linked to {props.socket})"

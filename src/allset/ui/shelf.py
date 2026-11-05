@@ -150,16 +150,20 @@ def add_menu_item(context, path, shelf_id=None):
     return shelf_id, dict(shelves()).get(shelf_id, shelf_id), button
 
 
+OPTIONS_TIP = i18n.mark("Double-click or Ctrl+click: options")
+
+
 def record_tooltip(b):
     """Tooltip of a user-made button: a menu button names its Maya menu path (Maya: the item's annotation)."""
     path = b.get("menu")
     if not path:
         return f"{b['label']}\n{b['script'][:200]}"
     from . import menu_map
-    where = "Maya menu: " + path.split("#")[0].replace("/", " > ")
+    where = i18n.compose("Maya menu: {path}", path=i18n.path(path.split("#")[0], i18n.tip).replace("/", " > "))
+    label = i18n.tip(b['label'])
     if path not in menu_map.MAP:
-        return f"{b['label']} (greyed: no Blender equivalent in Maya Workflow Kit)\n{where}"
-    return f"{b['label']}\n{where}\nDouble-click or Ctrl+click: options"
+        return i18n.compose("{label} (greyed: no Blender equivalent in Maya Workflow Kit)", label=label) + "\n" + where
+    return f"{label}\n{where}\n" + i18n.tip(OPTIONS_TIP)
 
 
 # --- shelves and buttons -------------------------------------------------------------------------
@@ -220,13 +224,17 @@ def button_tooltip(shelf, label, mapped):
     from . import notices
     path = shelf_map.menu_path(shelf, label)
     n = button_notice(shelf, label) if not mapped else (notices.NOTICES.get(path) if path else None)
+    name = i18n.tip(label)
     if n is None:
-        return f"{label} (Maya shelf). Double-click or Ctrl+click: options" if mapped else f"{label} (Maya shelf)"
-    substitute, line = n
-    notices.show(f"{label}: {line}")
+        text = i18n.compose("{label} (Maya shelf)", label=name)
+        return f"{text}\n" + i18n.tip(OPTIONS_TIP) if mapped else text
+    substitute, line = i18n.tip(n[0]), i18n.tip(n[1])
+    notices.show(f"{name}: {line}")
     if mapped:
-        return f"{label} (Maya shelf)  →  Blender: {substitute}\n{line}\nDouble-click or Ctrl+click: options"
-    return f"{label} (Maya shelf, greyed)  →  {substitute}\n{line}"
+        head = i18n.compose("{label} (Maya shelf)  →  Blender: {substitute}", label=name, substitute=substitute)
+        return f"{head}\n{line}\n" + i18n.tip(OPTIONS_TIP)
+    head = i18n.compose("{label} (Maya shelf, greyed)  →  {substitute}", label=name, substitute=substitute)
+    return f"{head}\n{line}"
 
 
 def current(context=None):
@@ -272,6 +280,7 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
     double: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})     # the option box of a double-click (first click ran)
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         for i, label, action, _icon in all_buttons(props.shelf):
             if i == props.index:
@@ -807,6 +816,7 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
     slot: IntProperty()
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         cur, b = slot_button(context, props.slot)
         if b is None:
@@ -1237,6 +1247,7 @@ class ALLSET_OT_shelf_tab(bpy.types.Operator):
     slot: IntProperty()
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         rects = _tab_rects.get(context.region.as_pointer()) if context.region else None
         action = rects[props.slot][4] if rects and props.slot < len(rects) else ""

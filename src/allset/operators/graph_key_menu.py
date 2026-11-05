@@ -19,6 +19,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
 from .. import undo_steps
 from . import time_keys
+from .. import i18n
 
 MUTE_NAME = "Maya mute"
 EPS = 1e-4
@@ -593,6 +594,7 @@ class ALLSET_OT_mute_key(bpy.types.Operator):
     mute: BoolProperty(name="Mute", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.mute:
             return cls.__doc__
@@ -727,6 +729,7 @@ class ALLSET_OT_remove_keys(bpy.types.Operator):
     mode: EnumProperty(items=REMOVE_MODES, name="Remove", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in REMOVE_MODES if k == props.mode)
 
@@ -871,6 +874,7 @@ class ALLSET_OT_graph_select_type(bpy.types.Operator):
     preset: EnumProperty(items=SELECT_PRESETS, name="Preset", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in SELECT_PRESETS if k == props.preset)
 

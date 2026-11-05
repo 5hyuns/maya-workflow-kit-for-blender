@@ -16,6 +16,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from . import draw_safe, input_line, menu_sets, own_draw, status_icons
+from .. import i18n
 
 # --- 3D View helpers ----------------------------------------------------------------
 
@@ -95,6 +96,7 @@ class ALLSET_OT_select_mask(bpy.types.Operator):
     group: EnumProperty(items=[(m[0], m[0].title(), m[1]) for m in OBJECT_MASKS if m[3]])
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(m[1] for m in OBJECT_MASKS if m[0] == props.group)
 
@@ -163,6 +165,7 @@ class ALLSET_OT_select_mode(bpy.types.Operator):
                               ("COMPONENT", "Component", "Select by component type (edit mode)")))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {"OBJECT": "Select by object type (Object Mode)",
                 "COMPONENT": "Select by component type (Edit Mode)"}[props.mode]
@@ -226,6 +229,7 @@ class ALLSET_OT_snap_toggle(bpy.types.Operator):
     snap: EnumProperty(items=[(s[0], s[0].title(), s[1]) for s in SNAPS if s[3]])
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(s[1] for s in SNAPS if s[0] == props.snap)
 
@@ -464,6 +468,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
                                  description="Only show the editor (Maya toolPropertyWindow), never hide it")
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(e[1] for e in EDITORS if e[0] == props.editor)
 
@@ -511,6 +516,7 @@ class ALLSET_OT_status_group(bpy.types.Operator):
     group: EnumProperty(items=[(g, g.replace("_", " ").title(), d) for g, d in GROUPS])
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         desc = next(d for g, d in GROUPS if g == props.group)
         return f"{'Show' if props.group in _collapsed else 'Hide'}: {desc}"

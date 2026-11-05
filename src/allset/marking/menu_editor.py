@@ -25,6 +25,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 from ..ui import marked_window
 from . import menus as mm
 from . import user_menus as um
+from .. import i18n
 
 KIND = "MARKING_MENU_EDITOR"
 TITLE = "Marking Menu Editor"
@@ -427,6 +428,7 @@ class ALLSET_OT_mme_menu(bpy.types.Operator):
     label: StringProperty(name="Name", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for a, _n, d in MENU_ACTIONS if a == props.action)
 
@@ -484,6 +486,7 @@ class ALLSET_OT_mme_slot(bpy.types.Operator):
     pos: StringProperty(options={'SKIP_SAVE'})      # SWAP: the other radial position
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for a, _n, d in SLOT_ACTIONS if a == props.action)
 

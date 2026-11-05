@@ -31,6 +31,7 @@ GREY_OP = "allset.menu_unavailable"
 # Row tables live in panel_menu_data (bpy-free: menu_count / menu_consistency / notice rules walk them).
 from .panel_menu_data import (_view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, ALL_TYPES,
                               _show_row, SHOW, ISOLATE, RENDERER, PANELS, PANEL_TYPES, LAYOUTS, BAR, item_path)  # noqa: F401
+from .. import i18n
 
 
 # --- state ---------------------------------------------------------------------------
@@ -441,6 +442,7 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
         return _space(context) is not None
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return TIPS.get(props.key, "Maya panel menu item for this view")
 
@@ -465,6 +467,7 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
     props: StringProperty(default="{}", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         try:
             mod, name = props.op.split(".")

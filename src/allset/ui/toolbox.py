@@ -26,6 +26,7 @@ from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 
 from .. import compat, switch
 from ..operators import tool_keys, view
+from .. import i18n
 
 # Maya 2022 Tool Box order: Select, Lasso, Paint Select, Move, Rotate, Scale.
 MAYA_TOOLS = ("builtin.select_box", "builtin.select_lasso", "builtin.select_circle",
@@ -690,6 +691,7 @@ class ALLSET_OT_quick_layout(bpy.types.Operator):
     ))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {
             "SINGLE": "Single Perspective View", "FOUR": "Four View. " + view.FOUR_VIEW_NOTE,

@@ -15,6 +15,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .. import switch
+from .. import i18n
 
 FOLDER = "workspaces"
 EXT = ".blend"
@@ -264,6 +265,7 @@ class ALLSET_OT_user_workspace(bpy.types.Operator):
     name: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, _context, props):
         return f'Switch to your saved workspace "{props.name}"'
 

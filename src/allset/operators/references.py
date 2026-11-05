@@ -25,6 +25,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from .. import results
+from .. import i18n
 
 REF = "allset_reference"            # on the namespace collection: the source path
 NODE = "allset_reference_node"      # Maya's reference node name: propRN, propRN1
@@ -423,6 +424,7 @@ class ALLSET_OT_reference_cmd(bpy.types.Operator):
                               options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next((d for k, _l, d in ACTIONS if k == props.action), "")
 
@@ -564,6 +566,7 @@ class ALLSET_OT_reference_offline(_PickRef, bpy.types.Operator):
     filter_glob: StringProperty(default="*.json", options={'HIDDEN'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return ("Export the selected reference's edits to an offline file (JSON)" if props.mode == "EXPORT" else
                 "Apply the edits of an offline file (JSON) to the selected reference")

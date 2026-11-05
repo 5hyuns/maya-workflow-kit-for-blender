@@ -27,6 +27,7 @@ from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
 from .. import results
+from .. import i18n
 
 EPS = 1e-9
 
@@ -221,6 +222,7 @@ class ALLSET_OT_snap_points(_ObjOp, bpy.types.Operator):
     count: IntProperty(name="Points", default=1, min=1, max=3)
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {1: "Point to Point: move the object so its point lands on the target point",
                 2: "2 Points to 2 Points: move and turn so two points line up",

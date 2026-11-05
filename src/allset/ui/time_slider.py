@@ -403,6 +403,7 @@ class ALLSET_OT_time_slider_unavailable(bpy.types.Operator):
         return False
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         line = TIME_NOTICES.get(props.item, "")
         if line:

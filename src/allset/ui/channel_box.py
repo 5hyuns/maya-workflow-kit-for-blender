@@ -2920,6 +2920,7 @@ class ALLSET_OT_cb_node_toggle(bpy.types.Operator):
     tip: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return props.tip or cls.__doc__
 

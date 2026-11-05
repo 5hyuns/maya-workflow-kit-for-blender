@@ -18,6 +18,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from . import sets
+from .. import i18n
 
 TEXT = "bookmarkAnimCurves"
 CURVES = "allset_bookmark_curves"
@@ -136,6 +137,7 @@ class ALLSET_OT_graph_bookmark(bpy.types.Operator):
     name: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return cls.bl_rna.properties["action"].enum_items[props.action].description
 

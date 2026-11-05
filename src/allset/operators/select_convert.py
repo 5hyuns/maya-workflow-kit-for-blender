@@ -33,6 +33,7 @@ from bpy.props import EnumProperty
 from . import uv_tools
 from .component import _MODES, select_only
 from .. import compat
+from .. import i18n
 
 KINDS = (
     ('GROW_LOOP', "Grow Along Loop", "Grow the selected region along its loops (Maya Select > Grow Along Loop)"),
@@ -445,6 +446,7 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in KINDS if k == props.kind)
 

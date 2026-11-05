@@ -217,6 +217,7 @@ class ALLSET_OT_symmetry(bpy.types.Operator):
     mode: EnumProperty(items=[(m, l, "") for m, l in MODES] + list(PARTS))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         mode = props.mode
         if mode == "OFF":

@@ -189,7 +189,8 @@ def _literals(path):
             name = _call_name(node)
             f = node.func
             if (isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) and f.value.id == "i18n"
-                    and name in ("iface", "tip", "mark") and node.args and isinstance(node.args[0], ast.Constant)):
+                    and name in ("iface", "tip", "mark", "compose") and node.args
+                    and isinstance(node.args[0], ast.Constant)):
                 out.add(node.args[0].value)
             for kw in node.keywords:
                 v = kw.value
@@ -209,14 +210,50 @@ def _literals(path):
     return out
 
 
+# Module-level tables of tooltip texts outside ui/notices.py: ``TIPS`` / ``FAILS`` = {key: text}, ``NOTICES`` =
+# {key: (substitute, line)}, ``*_ICONS`` = (key, icon, action, tooltip) rows
+_TEXT_TABLES = ("TIPS", "FAILS", "NOTICES")
+
+
+def _table_texts(path):
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    out = set()
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if any(n in _TEXT_TABLES for n in names) and isinstance(node.value, ast.Dict):
+            for v in node.value.values:
+                if _is_text(v):
+                    out.add(v.value)
+                elif isinstance(v, ast.Tuple):
+                    out.update(e.value for e in v.elts if _is_text(e))
+        elif any(n.endswith("_ICONS") for n in names) and isinstance(node.value, ast.Tuple):
+            for row in node.value.elts:
+                if isinstance(row, ast.Tuple) and len(row.elts) >= 4 and _is_text(row.elts[3]):
+                    out.add(row.elts[3].value)
+    return out
+
+
+def _template(text):
+    """A ``{name}`` format template handed to ``i18n.compose`` / ``tip``: translators keep the fields."""
+    return isinstance(text, str) and re.search(r"\{[a-z_]+\}", text) is not None and _LETTER.search(
+        re.sub(r"\{[a-z_]+\}", "", text)) is not None
+
+
 def ui():
     out = set()
+    templates = set()
     for path in sorted(PKG.rglob("*.py")):
         rel = path.relative_to(PKG).as_posix()
         if rel in _DATA or rel.startswith("i18n/") or rel.startswith("keymap/ic_"):
             continue
-        out |= _literals(path)
-    return {s for s in out if _ok(s)}
+        found = _literals(path)
+        templates |= {t for t in found if _template(t)}
+        out |= found
+        if rel != "ui/notices.py":
+            out |= _table_texts(path)
+    return {s for s in out if _ok(s)} | templates
 
 
 # Blender classes whose docstring becomes the description (tooltip)
@@ -320,7 +357,10 @@ def sections():
         rel = path.relative_to(PKG).as_posix()
         if rel in _DATA or rel.startswith("i18n/") or rel.startswith("keymap/ic_"):
             continue
-        put(f"Labels/{rel[:-3]}", _literals(path), True)
+        found = _literals(path)
+        put(f"Labels/{rel[:-3]}", {s for s in found if _ok(s) or _template(s)})
+        if rel != "ui/notices.py":
+            put(f"Labels/{rel[:-3]}", _table_texts(path), True)
     for path in files:
         rel = path.relative_to(PKG).as_posix()
         if rel.startswith("i18n/") or rel.startswith("keymap/ic_"):

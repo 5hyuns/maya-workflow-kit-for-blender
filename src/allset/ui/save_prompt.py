@@ -17,6 +17,7 @@ inside an operator. An unmodified scene runs it without asking.
 import os
 
 import bpy
+from .. import i18n
 
 TITLE_SAVED = "Save Changes"
 TITLE_UNTITLED = "Warning: Scene Not Saved"
@@ -182,6 +183,7 @@ class ALLSET_OT_save_prompt_choice(bpy.types.Operator):
     choice: bpy.props.EnumProperty(items=CHOICES, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(tip for key, _label, tip in CHOICES if key == props.choice)
 

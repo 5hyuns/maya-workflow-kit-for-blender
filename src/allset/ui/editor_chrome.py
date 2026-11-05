@@ -28,6 +28,7 @@ from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
 from . import editor_menu_data, graph_icons, graph_layers, menu_map, menu_sets
+from .. import i18n
 
 GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
 
@@ -477,6 +478,7 @@ class ALLSET_OT_editor_icon(bpy.types.Operator):
     key: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         editor, _sep, key = props.key.partition("|")
         it = _icon_spec(editor, key) if editor in ICONS else None
@@ -484,7 +486,7 @@ class ALLSET_OT_editor_icon(bpy.types.Operator):
             return ""
         s = menu_map.normalize(it[2])
         target = f"\nBlender: {s[1]}" if s and s[0] in ("op", "v3d") else ""
-        return f"Maya: {it[3]}{target}"
+        return i18n.compose("Maya: {item}", item=i18n.tip(it[3])) + target
 
     def execute(self, context):
         editor, _sep, key = self.key.partition("|")
@@ -513,12 +515,16 @@ class ALLSET_OT_editor_icon_unavailable(bpy.types.Operator):
         return False
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         editor, _sep, key = props.key.partition("|")
         it = _icon_spec(editor, key) if editor in ICONS else None
         tip = it[3] if it else key
-        sub, line = NOTICES.get(key, ("", "Not in this Blender editor."))
-        return f"Maya: {tip} (greyed)  →  {sub}\n{line}" if sub else f"Maya: {tip} (greyed)\n{line}"
+        sub, line = NOTICES.get(key, ("", i18n.mark("Not in this Blender editor.")))
+        tip, sub, line = i18n.tip(tip), i18n.tip(sub), i18n.tip(line)
+        if sub:
+            return i18n.compose("Maya: {item} (greyed)  →  {substitute}", item=tip, substitute=sub) + "\n" + line
+        return i18n.compose("Maya: {item} (greyed)", item=tip) + "\n" + line
 
     def execute(self, context):
         return {'CANCELLED'}

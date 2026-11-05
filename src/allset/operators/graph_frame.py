@@ -28,6 +28,7 @@ import math
 
 import bpy
 from bpy.props import EnumProperty
+from .. import i18n
 
 TIME_MARGIN = 0.1
 VALUE_MARGIN = 0.25
@@ -262,6 +263,7 @@ class ALLSET_OT_graph_frame(bpy.types.Operator):
         return space is not None and space.type == 'GRAPH_EDITOR' and context.area is not None
 
     @classmethod
+    @i18n.translated
     def description(cls, _context, props):
         return ("Frame the selected keys (every curve when no key is selected)" if props.mode == 'SELECTED'
                 else "Frame every curve shown")

@@ -41,6 +41,7 @@ from mathutils.bvhtree import BVHTree
 
 from .. import results
 from . import skin, units
+from .. import i18n
 
 # --- shared helpers -----------------------------------------------------------------------------------------------
 
@@ -346,6 +347,7 @@ class ALLSET_OT_skin_normalize_mode(bpy.types.Operator):
     mode: EnumProperty(name="Normalize Weights", items=skin.NORMALIZE, default="INTERACTIVE")
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {"NONE": "Maya Disable Weight Normalization: weights stay as painted and deform unnormalised",
                 "INTERACTIVE": "Maya Enable Weight Normalization: painting a joint takes weight from the others",

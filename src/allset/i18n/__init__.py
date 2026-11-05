@@ -92,6 +92,36 @@ def tip(text):
         return text
 
 
+def tip_text(text):
+    """A composed tooltip in the tooltip language: the whole text if a table has it, else line by line (each line
+    whole, else unchanged). Blender shows what an operator's ``description`` returns as it is."""
+    if not text or not isinstance(text, str):
+        return text
+    whole = tip(text)
+    if whole != text or "\n" not in text:
+        return whole
+    return "\n".join(core(line, tip) for line in text.split("\n"))
+
+
+def compose(template, **parts):
+    """``template`` (a literal with ``{name}`` fields, listed for translation) in the tooltip language, filled with
+    ``parts`` (already in the interface language)."""
+    text = tip(template)
+    try:
+        return text.format(**parts)
+    except (KeyError, IndexError, ValueError):      # a translation that broke the fields: the English template
+        return template.format(**parts)
+
+
+def translated(fn):
+    """Decorator for an operator's ``description(cls, context, props)``: its text goes through ``tip_text``."""
+    def description(cls, context, props):
+        return tip_text(fn(cls, context, props))
+    description.__name__ = fn.__name__
+    description.__doc__ = fn.__doc__
+    return description
+
+
 def core(text, fn=iface):
     """``text`` translated without its padding: leading / trailing spaces and a submenu arrow stay as they are."""
     if not text:

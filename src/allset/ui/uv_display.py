@@ -36,6 +36,7 @@ from gpu_extras.batch import batch_for_shader
 from .. import results
 from .. import compat
 from ..operators import uv_arrays, uv_tools
+from .. import i18n
 
 BORDER_PX = 3.0                        # shell / texture border width
 SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour (the kit's choice)
@@ -505,6 +506,7 @@ class ALLSET_OT_uv_isolate_edit(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in ISO_ACTIONS if k == props.action)
 

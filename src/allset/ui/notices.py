@@ -988,6 +988,7 @@ class ALLSET_OT_tip(bpy.types.Operator):
     text: bpy.props.StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return i18n.tip(props.text)
 

@@ -15,6 +15,7 @@ from bpy.props import StringProperty
 
 from .. import switch
 from . import user_workspaces
+from .. import i18n
 
 # (template name, label); None = divider
 FACTORY = (("General", "Maya Classic"), None, ("Modeling - Standard", "Modeling - Standard"),
@@ -212,6 +213,7 @@ class ALLSET_OT_maya_workspace(bpy.types.Operator):
     name: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return f"Switch to the Maya workspace {LABELS.get(props.name, props.name)}"
 

@@ -30,6 +30,7 @@ import bpy
 from bpy.props import BoolProperty, FloatProperty, StringProperty
 
 from . import anim_layers as al
+from .. import i18n
 
 EXTRACT = "_extract"
 COPY = "_copy"
@@ -474,6 +475,7 @@ class ALLSET_OT_anim_layer_key_weight(bpy.types.Operator):
     layer: StringProperty(**LAYER_PROP)
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.current:
             return "Key the layer weight"

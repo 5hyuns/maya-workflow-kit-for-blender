@@ -44,6 +44,7 @@ from bpy.props import BoolProperty
 
 from .. import compat
 from .. import results
+from .. import i18n
 
 PROP = "allset_weights"
 EDITABLE = {'FREE', 'ALIGNED'}
@@ -389,6 +390,7 @@ class ALLSET_OT_curve_weights(bpy.types.Operator):
     weighted: BoolProperty(name="Weighted", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.weighted:
             return "Make the curves' tangents weighted: their length can change (Maya Curves > Weighted Tangents)"
@@ -419,6 +421,7 @@ class ALLSET_OT_tangent_weight_lock(bpy.types.Operator):
     lock: BoolProperty(name="Lock", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.lock:
             return "Changing a tangent's angle keeps its length (Maya Tangents > Lock Tangent Length)"
