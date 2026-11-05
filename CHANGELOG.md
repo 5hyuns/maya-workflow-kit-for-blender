@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.12.0] — 2026-11-05
+## [Unreleased]
 
 ### Added
 - **Graph Editor tangent handles like Maya** (#296): in Maya mode the Graph Editor draws a non-weighted tangent at
