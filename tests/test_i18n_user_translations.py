@@ -202,3 +202,34 @@ def test_preferences_box_lists_the_files():
     labels = [v for k, v in log if k == "label"]
     assert "de_DE.json: 1 translated texts" in labels, labels
     assert any(t.startswith("fr_FR.json: could not be read") for t in labels), labels
+
+
+def test_kit_text_prefers_the_kit_and_user_tables_over_blender():
+    """#317: Blender has its own translation of some kit strings (Center Pivot, Translate X); in text the kit
+    translates itself (Maya menu items, Channel Box names) the kit's table and the user's file win; with
+    "Translate Interface" off the English text stays."""
+    locale = "ja_JP"
+    if not _usable(locale):
+        return
+    with _Language(locale):
+        blender = bpy.app.translations.pgettext_iface("Center Pivot")
+        built_in = i18n.LANGUAGES[locale]["Center Pivot"]
+        assert i18n.iface("Center Pivot") == built_in, (i18n.iface("Center Pivot"), blender)
+        assert i18n.iface("Translate Z") == i18n.LANGUAGES[locale]["Translate Z"]
+    with _Files({"ja_JP.json": {"Center Pivot": "中央にピボット (修正)", "Translate X": "移動 X (修正)"}}):
+        with _Language(locale):
+            assert i18n.iface("Center Pivot") == "中央にピボット (修正)"
+            assert i18n.iface("Translate X") == "移動 X (修正)"
+            assert i18n.core("  Center Pivot ▸") == "  中央にピボット (修正) ▸"
+            bpy.context.preferences.view.use_translate_interface = False
+            assert i18n.iface("Center Pivot") == "Center Pivot"
+
+
+def test_channel_box_names_are_translatable():
+    """#317: the Channel Box's Translate / Rotate / Scale X Y Z names are kit strings (template, ja / zh tables)."""
+    every = _tool("i18n_strings").all_strings()
+    names = [f"{k} {a}" for k in ("Translate", "Rotate", "Scale") for a in "XYZ"] + ["Visibility"]
+    for name in names:
+        assert name in every, name
+        for locale in ("ja_JP", "zh_HANS"):
+            assert name in i18n.LANGUAGES[locale], (locale, name)

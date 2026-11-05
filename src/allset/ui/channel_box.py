@@ -53,16 +53,16 @@ def cb_share(region, u):
 
 # key, label, data path, index, kind
 MAIN = (
-    ("tx", "Translate X", "location", 0, "LOC"),
-    ("ty", "Translate Y", "location", 1, "LOC"),
-    ("tz", "Translate Z", "location", 2, "LOC"),
-    ("rx", "Rotate X", "rotation_euler", 0, "ROT"),
-    ("ry", "Rotate Y", "rotation_euler", 1, "ROT"),
-    ("rz", "Rotate Z", "rotation_euler", 2, "ROT"),
-    ("sx", "Scale X", "scale", 0, "SCALE"),
-    ("sy", "Scale Y", "scale", 1, "SCALE"),
-    ("sz", "Scale Z", "scale", 2, "SCALE"),
-    ("v", "Visibility", "hide_viewport", -1, "VIS"),
+    ("tx", i18n.mark("Translate X"), "location", 0, "LOC"),
+    ("ty", i18n.mark("Translate Y"), "location", 1, "LOC"),
+    ("tz", i18n.mark("Translate Z"), "location", 2, "LOC"),
+    ("rx", i18n.mark("Rotate X"), "rotation_euler", 0, "ROT"),
+    ("ry", i18n.mark("Rotate Y"), "rotation_euler", 1, "ROT"),
+    ("rz", i18n.mark("Rotate Z"), "rotation_euler", 2, "ROT"),
+    ("sx", i18n.mark("Scale X"), "scale", 0, "SCALE"),
+    ("sy", i18n.mark("Scale Y"), "scale", 1, "SCALE"),
+    ("sz", i18n.mark("Scale Z"), "scale", 2, "SCALE"),
+    ("v", i18n.mark("Visibility"), "hide_viewport", -1, "VIS"),
 )
 MAIN_BY_KEY = {c[0]: c for c in MAIN}
 _LOCK_PROP = {"LOC": "lock_location", "ROT": "lock_rotation", "SCALE": "lock_scale"}
@@ -871,12 +871,13 @@ def cell_key(path, scene=None):
     return None
 
 
-def sel_toggle(layout, owner, prop, selected, text):
+def sel_toggle(layout, owner, prop, selected, text, translate=True):
     """A Channel Box name cell: a toggle of the channel's selection, pressed (embossed) when selected. A selected
     cell draws the twin property ``<prop>_on``: Blender keeps the button under the mouse from the last redraw
     (with its old emboss), so the same property would show the new selection only after the mouse leaves the
     row (#316); another property is another button."""
-    layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected)
+    layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected,
+                translate=translate)
 
 
 # --- proxies -------------------------------------------------------------------------------------
@@ -2557,7 +2558,11 @@ def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     if sel_owner is not None:
         # a toggle of the channel's selection: pressed = Maya's blue name cell; the drag
         # watcher reads it from ``context.property`` (#6)
-        sel_toggle(sub, sel_owner, sel_prop, selected, channel_label(key))
+        # the kit's translation (with the user's translation files) first: Blender's own table knows some of
+        # these names (Translate X) and would win over the kit's
+        label = channel_label(key)
+        sel_toggle(sub, sel_owner, sel_prop, selected, i18n.iface(label) if key in MAIN_BY_KEY else label,
+                   translate=key not in MAIN_BY_KEY)
         return
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
                       emboss=selected)

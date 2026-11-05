@@ -8,7 +8,8 @@ over the kit's (Blender looks in add-on tables only for strings it doesn't know)
 
 Text the kit composes or sizes itself (menu items with a right-aligned hotkey and the option box mark, marking
 menus, the shelf tabs, wrapped paragraphs) is translated here first with ``iface`` / ``tip`` and drawn with
-``translate=False``.
+``translate=False``. For that text the kit's tables (with the user's files over them) win over Blender's own
+translation, so a user file also changes a menu item Blender happens to know (Center Pivot).
 
 ``<locale>.py`` = ``STRINGS = {English: translation}`` (no ``bpy``: ``tools/i18n_strings.py`` reads them for its
 coverage report). Add a language by adding a module and listing it in ``LANGUAGES``.
@@ -26,14 +27,34 @@ LANGUAGES = {"ja_JP": ja_JP.STRINGS, "zh_HANS": zh_HANS.STRINGS}
 CONTEXTS = ("*", "Operator")
 ARROW = " ▸"
 _registered = []
+_own = {}          # {locale: {English: translation}}: the built-in tables with the user's files over them
+
+
+def _merged(user=None):
+    merged = {locale: dict(strings) for locale, strings in LANGUAGES.items()}
+    for locale, strings in (user or {}).items():
+        merged.setdefault(locale, {}).update(strings)
+    return merged
+
+
+def own(text, tooltip=False):
+    """The kit's translation of ``text`` in the interface language, or None (not translated, or the "Translate"
+    toggle for interface / tooltips is off)."""
+    try:
+        import bpy
+        view = bpy.context.preferences.view
+        if not (view.use_translate_tooltips if tooltip else view.use_translate_interface):
+            return None
+        strings = _own.get(bpy.app.translations.locale)
+    except (ImportError, AttributeError):
+        return None
+    return strings.get(text) if strings else None
 
 
 def table(user=None):
     """{locale: {(context, English): translation}} for ``bpy.app.translations.register``: the built-in tables with
     ``user`` ({locale: {English: translation}}, the user's translation files) over them."""
-    merged = {locale: dict(strings) for locale, strings in LANGUAGES.items()}
-    for locale, strings in (user or {}).items():
-        merged.setdefault(locale, {}).update(strings)
+    merged = _merged(user)
     return {locale: {(ctx, en): tr for en, tr in strings.items() for ctx in CONTEXTS}
             for locale, strings in merged.items()}
 
@@ -47,6 +68,9 @@ def iface(text):
     """``text`` as the interface shows it (the language and "Translate Interface" decide)."""
     if not text:
         return text
+    mine = own(text)
+    if mine is not None:
+        return mine
     try:
         import bpy
         return bpy.app.translations.pgettext_iface(text)
@@ -58,6 +82,9 @@ def tip(text):
     """``text`` as a tooltip shows it (the language and "Translate Tooltips" decide)."""
     if not text:
         return text
+    mine = own(text, tooltip=True)
+    if mine is not None:
+        return mine
     try:
         import bpy
         return bpy.app.translations.pgettext_tip(text)
@@ -146,7 +173,10 @@ def register():
     name = __package__
     if name in _registered:
         return
-    data = table(_user_tables())
+    user = _user_tables()
+    _own.clear()
+    _own.update(_merged(user))
+    data = table(user)
     try:
         bpy.app.translations.register(name, data)
     except ValueError:        # left over from a module reload: replace it
@@ -166,5 +196,6 @@ def unregister():
     for name in _registered:
         bpy.app.translations.unregister(name)
     _registered.clear()
+    _own.clear()
     from . import user_files
     user_files.LOADED.clear()
