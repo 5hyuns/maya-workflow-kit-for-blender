@@ -744,28 +744,25 @@ class ALLSET_OT_remove_keys(bpy.types.Operator):
 
 
 TIME_RANGES = (
-    ('SELECTED', "Selected keys", "The selected keys (every key of the shown curves when none is selected)"),
-    ('TIME_SLIDER', "Time Slider", "The keys inside the Time Slider's playback range"),
-    ('START_END', "Start/End", "The keys between the Start and End times"),
+    ('SELECTED', "All", "The selected keys (every key of the shown curves when none is selected)"),
+    ('TIME_SLIDER', "Playback", "Only those of them inside the Time Slider's playback range"),
+    ('START_END', "Custom", "Only those of them between the Start and End times"),
 )
 
 
 def _curve_keys(context, time_range='SELECTED', start=0.0, end=0.0):
-    """(F-curve, keys) to act on: the selected keys, else every key of the shown curves; with a Time Slider or
-    Start/End range, every key in that range on the curves of the selected keys (else the shown curves)."""
-    picked = selected_keys(context)
+    """(F-curve, keys) to act on, like Maya: the selected keys, else every key of the shown curves; a Playback or
+    Custom range keeps only those of them inside it."""
+    work = selected_keys(context) or [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
     if time_range == 'SELECTED':
-        if picked:
-            return picked
-        return [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
+        return work
     if time_range == 'TIME_SLIDER':
         sc = context.scene
         start, end = ((sc.frame_preview_start, sc.frame_preview_end) if sc.use_preview_range
                       else (sc.frame_start, sc.frame_end))
-    curves = [fc for fc, _pts in picked] or editor_curves(context)
     out = []
-    for fc in curves:
-        pts = [kp for kp in fc.keyframe_points if start - EPS <= kp.co.x <= end + EPS]
+    for fc, pts in work:
+        pts = [kp for kp in pts if start - EPS <= kp.co.x <= end + EPS]
         if pts:
             out.append((fc, pts))
     return out
@@ -819,10 +816,10 @@ class ALLSET_OT_clamp_curves(bpy.types.Operator):
 
     limit: FloatProperty(name="Limit Value", default=0.0, description="The value the keys are clamped to")
     side: EnumProperty(name="Clamp", default='ABOVE', items=(
-        ('ABOVE', "Above the limit", "Keys greater than the limit get the limit"),
-        ('BELOW', "Below the limit", "Keys smaller than the limit get the limit")))
+        ('ABOVE', "Upper Limit", "Keys greater than the limit get the limit"),
+        ('BELOW', "Lower Limit", "Keys smaller than the limit get the limit")))
     time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
-    start: FloatProperty(name="Start Time", default=1.0)
+    start: FloatProperty(name="Start Time", default=0.0)
     end: FloatProperty(name="End Time", default=10.0)
 
     @classmethod
@@ -845,10 +842,10 @@ class ALLSET_OT_offset_curves(bpy.types.Operator):
     frames: FloatProperty(name="Offset Frames", default=1.0, description="Frames to move the keys by, or the frame "
                           "the first key moves to")
     mode: EnumProperty(name="Offset", default='RELATIVE', items=(
-        ('RELATIVE', "By frames", "Move the keys by the offset"),
-        ('START', "To start frame", "Move the keys so the first one is on the offset frame")))
+        ('RELATIVE', "Offset by", "Move the keys by the offset"),
+        ('START', "Offset to", "Move the keys so the first one is on the offset frame")))
     time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
-    start: FloatProperty(name="Start Time", default=1.0)
+    start: FloatProperty(name="Start Time", default=0.0)
     end: FloatProperty(name="End Time", default=10.0)
 
     @classmethod

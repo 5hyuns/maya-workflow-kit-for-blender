@@ -92,3 +92,32 @@ def test_time_ranges():
         assert bpy.ops.allset.offset_curves(frames=3, time_range='START_END', start=4, end=7) == {'FINISHED'}
     assert _times(a) == [1, 2, 3.5, 8, 9, 10], _times(a)   # 5, 6 -> 8, 9; the old key on 8 gives way
     assert _times(b) == [1, 2.5, 8, 10], _times(b)
+
+
+def test_a_range_keeps_only_the_selected_keys_inside_it():
+    a, b = _scene()
+    sc = bpy.context.scene
+    sc.use_preview_range = True
+    sc.frame_preview_start, sc.frame_preview_end = 3, 6
+    _select(a, (3.5, 8))                          # 5 and 6 are in the range but not selected
+    with Editor():
+        assert bpy.ops.allset.clamp_curves(limit=0.0, time_range='TIME_SLIDER') == {'FINISHED'}
+    assert _values(a) == [0, 1, 0, 3, 4, 5, 6], "Playback: the selected keys inside the playback range"
+    sc.use_preview_range = False
+    a, b = _scene()
+    _select(a, (2, 5))
+    with Editor():
+        assert bpy.ops.allset.offset_curves(frames=1, time_range='START_END', start=4, end=7) == {'FINISHED'}
+    assert _times(a) == [1, 2, 3.5, 6, 8, 10], _times(a)   # only 5 moves (onto 6, which gives way)
+    with Editor():
+        assert bpy.ops.allset.offset_curves(frames=1, time_range='START_END', start=20, end=30) == {'FINISHED'}
+    assert _values(b) == [1, 2.5, 5, 7, 10], "nothing selected inside the range: nothing moves"
+
+
+def test_option_labels_like_maya():
+    ops = bpy.ops.allset.clamp_curves.get_rna_type().properties
+    assert [i.name for i in ops["time_range"].enum_items] == ["All", "Playback", "Custom"]
+    assert [i.name for i in ops["side"].enum_items] == ["Upper Limit", "Lower Limit"]
+    assert ops["start"].default == 0.0 and ops["end"].default == 10.0
+    off = bpy.ops.allset.offset_curves.get_rna_type().properties
+    assert [i.name for i in off["mode"].enum_items] == ["Offset by", "Offset to"]

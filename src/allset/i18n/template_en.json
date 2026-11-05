@@ -5813,10 +5813,7 @@
    "Toggle": "Toggle"
   },
   "Labels/operators/graph_key_menu": {
-   "Above the limit": "Above the limit",
    "Add Inbetween": "Add Inbetween",
-   "Below the limit": "Below the limit",
-   "By frames": "By frames",
    "Clamp": "Clamp",
    "Clamp Curves": "Clamp Curves",
    "Curve Command": "Curve Command",
@@ -5824,11 +5821,14 @@
    "Frames to move the keys by, or the frame the first key moves to": "Frames to move the keys by, or the frame the first key moves to",
    "Inbetween": "Inbetween",
    "Limit Value": "Limit Value",
+   "Lower Limit": "Lower Limit",
    "Mute": "Mute",
    "Mute Key": "Mute Key",
    "Offset": "Offset",
    "Offset Curves": "Offset Curves",
    "Offset Frames": "Offset Frames",
+   "Offset by": "Offset by",
+   "Offset to": "Offset to",
    "Preset": "Preset",
    "Remove": "Remove",
    "Remove Inbetween": "Remove Inbetween",
@@ -5837,7 +5837,7 @@
    "Start Time": "Start Time",
    "The value the keys are clamped to": "The value the keys are clamped to",
    "Time Range": "Time Range",
-   "To start frame": "To start frame"
+   "Upper Limit": "Upper Limit"
   },
   "Labels/operators/graph_keys": {
    "Action": "Action",
