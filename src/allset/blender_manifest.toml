@@ -26,6 +26,7 @@ license = [
 ]
 copyright = [
   "2026 5hyuns",
+  "2002 Blender Foundation (icons/blender/*.png)",
 ]
 
 [permissions]

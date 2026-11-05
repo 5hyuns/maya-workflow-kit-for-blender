@@ -992,11 +992,19 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
     tool: StringProperty(options={'SKIP_SAVE'})
     edit: BoolProperty(description="Enter mesh edit (component) mode first", options={'SKIP_SAVE'})
     item: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})       # the Maya menu path (drawn in a menu)
+    space_type: StringProperty(default='VIEW_3D', options={'SKIP_SAVE'})
+    mode: StringProperty(default="ANY", options={'SKIP_SAVE'})
+    object_type: StringProperty(default="ANY", options={'SKIP_SAVE'})
 
     def execute(self, context):
         if add_to_shelf_if_asked(self, context, self.item):
             return {'FINISHED'}
         ob = context.active_object
+        required_object_type = (self.object_type or "ANY").upper()
+        if required_object_type not in {"ANY", "AUTO"}:
+            if ob is None or ob.type != required_object_type:
+                self.report({'WARNING'}, f"This tool requires an active {required_object_type} object.")
+                return {'CANCELLED'}
         if self.edit:
             if ob is None or ob.type != 'MESH':
                 self.report({'ERROR'}, "Select a mesh first")
@@ -1007,10 +1015,36 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
             if context.mode != 'EDIT_MESH':
                 # its own undo step: Ctrl+Z after the tool's first edit must stay in edit mode
                 bpy.ops.object.mode_set('EXEC_DEFAULT', True, mode='EDIT')
+        required_mode = (self.mode or "ANY").upper()
+        if required_mode != "ANY":
+            if self.space_type == 'IMAGE_EDITOR':
+                space = context.space_data
+                current_mode = getattr(space, "mode", "") if space else ""
+            else:
+                current_mode = context.mode
+            if current_mode != required_mode:
+                self.report(
+                    {'WARNING'},
+                    f"This tool requires {required_mode} mode. "
+                    f"Switch to the required mode in the {self.space_type} editor and try again."
+                )
+                return {'CANCELLED'}
         try:
-            bpy.ops.wm.tool_set_by_id(name=self.tool, space_type='VIEW_3D')
+            target_space = self.space_type
+            if target_space in {"", "AUTO", "ANY"}:
+                target_space = context.area.type if context.area else "VIEW_3D"
+            if target_space not in {"VIEW_3D", "IMAGE_EDITOR"}:
+                self.report({'WARNING'}, f"Tool activation is not supported in {target_space}.")
+                return {'CANCELLED'}
+            result = bpy.ops.wm.tool_set_by_id(
+                name=self.tool,
+                space_type=target_space,
+            )
         except RuntimeError as ex:
-            self.report({'ERROR'}, str(ex).strip())
+            self.report({'WARNING'}, str(ex).strip())
+            return {'CANCELLED'}
+        if 'CANCELLED' in result:
+            self.report({'WARNING'}, f"Tool '{self.tool}' is not available in the current editor/mode.")
             return {'CANCELLED'}
         return {'FINISHED'}
 

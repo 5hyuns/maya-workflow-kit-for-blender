@@ -1218,7 +1218,9 @@ def normalize(value):
     if value[0] == "v3d":
         return ("v3d", value[1], dict(value[2]))
     if value[0] == "tool":
-        return ("tool", value[1], {"edit": value[2]})
+        props = dict(value[2]) if isinstance(value[2], dict) else {"edit": value[2]}
+        props.setdefault("edit", False)
+        return ("tool", value[1], props)
     if value[0] in ("menu", "pie"):
         return (value[0], value[1], {})
     if value[0] == "prop":   # a Maya check / radio item = a Blender property

@@ -24,7 +24,7 @@ from . import outliner_order  # Maya Outliner order (startup cameras first, crea
 from . import marked_window, component_editor, shape_editor, connection_editor  # #119
 from . import hotkey_editor  # #121: Maya Hotkey Editor window
 from . import maya_prefs  # #121: Maya Preferences window
-from . import trax_editor  # Maya Trax Editor
+from . import trax_editor  # Trax Editor from upstream master
 from . import window_places  # #203: kit windows reopen at their last size and place
 from . import smart_extrude
 from . import interactive_tool  # Create > Polygon Primitives > Interactive Creation tool (#225)

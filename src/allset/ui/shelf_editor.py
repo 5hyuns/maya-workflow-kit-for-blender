@@ -6,9 +6,12 @@ Only Save Changes writes the draft back; Cancel discards it.
 """
 
 import json
+import os
+import tempfile
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
+from bpy_extras.io_utils import ImportHelper
 
 from . import marked_window, shelf
 
@@ -21,20 +24,68 @@ PROPERTY_MIN_ROWS = 10
 PROPERTY_MAX_ROWS = 40
 PROPERTY_ROW_HEIGHT = 22
 ADD_MENU_COLUMNS = 2
+ICON_PICKER_PAGE_SIZE = 90
 
 _draft = None
 _draft_base = None
 _loading = False
 _OPERATOR_ITEMS = []
 _ICON_ITEMS = []
+_ICON_HISTORY = []
 
 
 def _copy_document():
     return json.loads(json.dumps(shelf.user_data()))
 
 
+
+
+
+
+
+
+
+
+
+def _write_document_atomic(document):
+    """Persist a complete shelves.json document atomically and verify the result."""
+    path = shelf.store_path()
+    folder = os.path.dirname(path)
+    os.makedirs(folder, exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", newline="\n",
+                dir=folder, prefix=".shelves-", suffix=".tmp",
+                delete=False) as stream:
+            temp_path = stream.name
+            json.dump(document, stream, indent=1, ensure_ascii=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+
+        with open(temp_path, "r", encoding="utf-8") as stream:
+            check = json.load(stream)
+        if check != document:
+            raise ValueError("Shelf data verification failed before save")
+
+        os.replace(temp_path, path)
+        temp_path = None
+
+        with open(path, "r", encoding="utf-8") as stream:
+            saved = json.load(stream)
+        if saved != document:
+            raise ValueError("Saved Shelf data does not match the draft")
+        return saved
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+
 def _merge_button_lists(base, draft, latest):
-    """Three-way merge button sequences, including external insertions, edits and deletions."""
+    """Merge button sequences while keeping the editor draft authoritative for deletions."""
     from difflib import SequenceMatcher
 
     base = json.loads(json.dumps(base or []))
@@ -44,7 +95,13 @@ def _merge_button_lists(base, draft, latest):
     def mapping(source):
         matched = {}
         extras = []
-        matcher = SequenceMatcher(a=base, b=source, autojunk=False)
+        # Button records are dictionaries, which SequenceMatcher cannot hash.
+        # Compare stable JSON signatures while keeping the original records in
+        # ``source`` for the merge result below.
+        signatures = lambda records: [json.dumps(
+            record, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            for record in records]
+        matcher = SequenceMatcher(a=signatures(base), b=signatures(source), autojunk=False)
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             if tag == "equal":
                 for offset in range(i2 - i1):
@@ -63,15 +120,18 @@ def _merge_button_lists(base, draft, latest):
     live_map, live_extras = mapping(latest)
     merged = json.loads(json.dumps(draft))
 
-    # An external deletion wins over an untouched draft entry. Apply removals back-to-front
-    # so earlier list indices remain stable.
-    remove_positions = []
-    for base_index, draft_index in draft_map.items():
-        if base_index not in live_map:
-            remove_positions.append(draft_index)
-    for index in sorted(remove_positions, reverse=True):
-        if 0 <= index < len(merged):
-            merged.pop(index)
+    # The editor draft is authoritative for records that are still present in it.
+    # In particular, do not interpret a record missing from ``latest`` as an
+    # external deletion when it is still present in ``draft``.  The live document
+    # can be stale (for example, its cache/file may have been refreshed from an
+    # older snapshot while the editor remains open).  The previous behavior
+    # removed those draft records here, which caused the first Save to silently
+    # discard buttons that were visible after "Apply to Draft".
+    #
+    # Deletions made inside Shelf Editor are already represented by their absence
+    # from ``draft`` because ``merged`` starts as a deep copy of the draft.  Thus
+    # draft-side deletions remain effective without allowing stale live data to
+    # erase still-visible draft entries.
 
     # Adopt external edits only where the corresponding draft entry is still unchanged.
     for base_index, live_index in live_map.items():
@@ -79,9 +139,9 @@ def _merge_button_lists(base, draft, latest):
         if draft_index is None or draft_index >= len(draft) or live_index >= len(latest):
             continue
         if draft[draft_index] == base[base_index] and latest[live_index] != base[base_index]:
-            # Re-map the draft slot after any preceding external deletions.
-            shift = sum(1 for removed in remove_positions if removed < draft_index)
-            target = draft_index - shift
+            # Draft entries are never removed by a stale live snapshot, so the
+            # corresponding slot keeps its original draft index.
+            target = draft_index
             if 0 <= target < len(merged):
                 merged[target] = latest[live_index]
 
@@ -267,6 +327,44 @@ def _draw_operator_rna(layout, identifier):
     box.label(text="Overrides are stored as JSON; omitted properties use Operator defaults.", icon="INFO")
 
 
+def _validate_operator_properties(identifier, values):
+    """Validate JSON overrides against the registered Blender Operator RNA schema."""
+    module, name = identifier.split(".", 1)
+    rna = getattr(getattr(bpy.ops, module), name).get_rna_type()
+    definitions = {prop.identifier: prop for prop in rna.properties
+                   if prop.identifier not in {"rna_type", "name"} and not prop.is_readonly}
+    unknown = sorted(set(values) - set(definitions))
+    if unknown:
+        return f"Unknown {rna.name} property: {', '.join(unknown)}"
+    for key, value in values.items():
+        prop = definitions[key]
+        expected = {"BOOLEAN": bool, "INT": int, "FLOAT": (int, float),
+                    "STRING": str, "ENUM": str}.get(prop.type)
+        is_array = getattr(prop, "is_array", False)
+        if is_array:
+            if not isinstance(value, (list, tuple)) or len(value) != prop.array_length:
+                return f"{key} must be an array of length {prop.array_length}"
+            if prop.type == "BOOLEAN" and any(type(item) is not bool for item in value):
+                return f"{key} must contain boolean values"
+            if prop.type == "INT" and any(type(item) is not int for item in value):
+                return f"{key} must contain integer values"
+            if prop.type == "FLOAT" and any(type(item) not in (int, float) for item in value):
+                return f"{key} must contain numeric values"
+            if prop.type not in {"BOOLEAN", "INT", "FLOAT"}:
+                return f"{key} uses an unsupported Operator property type: {prop.type.lower()}"
+            continue
+        if expected and (type(value) not in expected if isinstance(expected, tuple) else type(value) is not expected):
+            return f"{key} must be {prop.type.lower()}"
+        if prop.type == "ENUM" and value not in {item.identifier for item in prop.enum_items}:
+            return f"{key} must be one of the registered enum values"
+        if expected is None:
+            return f"{key} uses an unsupported Operator property type: {prop.type.lower()}"
+        if prop.type in {"INT", "FLOAT"} and type(value) in (int, float):
+            if value < prop.hard_min or value > prop.hard_max:
+                return f"{key} must be between {prop.hard_min:g} and {prop.hard_max:g}"
+    return ""
+
+
 def operator_search(self, context, edit_text):
     query = (edit_text or "").lower()
     return [item for item in _operator_ids() if query in item.lower()][:80]
@@ -282,8 +380,187 @@ def icon_search(self, context, edit_text):
     return shelf.shelf_icons.icon_search(self, context, edit_text)
 
 
+# Blender does not expose a Python API listing every registered Menu/Pie class or
+# every Tool, so augment the runtime subclass scan with a curated set of the
+# commonly used identifiers. A user can still type any valid ID (validated on Apply).
+_KNOWN_MENUS = (
+    "VIEW3D_MT_editor_menus", "VIEW3D_MT_view", "VIEW3D_MT_add", "VIEW3D_MT_object",
+    "VIEW3D_MT_object_relations", "VIEW3D_MT_object_constraints", "VIEW3D_MT_select_object",
+    "VIEW3D_MT_pose", "VIEW3D_MT_pose_relations", "VIEW3D_MT_armature", "VIEW3D_MT_armature_select",
+    "VIEW3D_MT_edit_mesh", "VIEW3D_MT_edit_mesh_vertices", "VIEW3D_MT_edit_mesh_edges",
+    "VIEW3D_MT_edit_mesh_faces", "VIEW3D_MT_edit_mesh_select", "VIEW3D_MT_edit_curve",
+    "VIEW3D_MT_editor_menus", "VIEW3D_MT_marker", "VIEW3D_MT_object_parent",
+    "GRAPH_MT_editor_menus", "GRAPH_MT_view", "GRAPH_MT_channel", "GRAPH_MT_key", "GRAPH_MT_marker",
+    "DOPESHEET_MT_editor_menus", "DOPESHEET_MT_view", "DOPESHEET_MT_key", "DOPESHEET_MT_marker",
+    "NLA_MT_editor_menus", "NLA_MT_view", "NLA_MT_strips", "NLA_MT_marker",
+    "IMAGE_MT_editor_menus", "IMAGE_MT_view", "IMAGE_MT_image", "IMAGE_MT_mask", "IMAGE_MT_marker",
+    "NODE_MT_editor_menus", "NODE_MT_view", "NODE_MT_node", "NODE_MT_select",
+    "OUTLINER_MT_editor_menus", "OUTLINER_MT_view", "OUTLINER_MT_object",
+    "CONSOLE_MT_editor_menus", "CONSOLE_MT_console",
+    "FILEBROWSER_MT_editor_menus", "FILEBROWSER_MT_view", "FILEBROWSER_MT_context",
+    "ASSETBROWSER_MT_editor_menus", "ASSETBROWSER_MT_view", "ASSETBROWSER_MT_asset",
+    "SEQUENCER_MT_editor_menus", "SEQUENCER_MT_view", "SEQUENCER_MT_strip",
+    "CLIP_MT_editor_menus", "CLIP_MT_view", "CLIP_MT_track", "CLIP_MT_mask",
+    "TEXT_MT_editor_menus", "TEXT_MT_view", "TEXT_MT_edit", "TEXT_MT_text",
+    "TOPBAR_MT_file", "TOPBAR_MT_edit", "TOPBAR_MT_render", "TOPBAR_MT_window", "TOPBAR_MT_help",
+)
+_KNOWN_TOOLS = (
+    "builtin.select", "builtin.select_box", "builtin.select_circle", "builtin.select_lasso",
+    "builtin.move", "builtin.rotate", "builtin.scale", "builtin.transform",
+    "builtin.cursor", "builtin.measure", "builtin.primitive_cube_add",
+    "builtin.primitive_cylinder_add", "builtin.primitive_cone_add", "builtin.primitive_uv_sphere_add",
+    "builtin.extrude_region", "builtin.bevel", "builtin.inset", "builtin.knife",
+    "builtin.poly_build", "builtin.poly_quads", "builtin.rip_region", "builtin.shrink_fatten",
+    "builtin.edge_face_add", "builtin.subdivide",
+)
+
+
+def _runtime_menu_ids():
+    """bl_idnames reachable through the Python subclass tree (broad; misses some RNA-registered bl_ui menus)."""
+    out = set()
+    def walk(cls):
+        for sub in cls.__subclasses__():
+            idn = getattr(sub, "bl_idname", None)
+            if idn:
+                out.add(idn)
+            walk(sub)
+    walk(bpy.types.Menu)
+    return out
+
+
+def _menu_candidates(extra=()):
+    try:
+        found = _runtime_menu_ids()
+    except Exception:
+        found = set()
+    found.update(_KNOWN_MENUS)
+    found.update(extra)
+    return sorted(found)
+
+
+def _filter(items, query, limit=80):
+    q = (query or "").lower()
+    return [item for item in items if q in item.lower()][:limit]
+
+
+def action_id_search(self, context, edit_text):
+    """Search Menu, Tool, or Operator identifiers for the selected command type."""
+    kind = context.window_manager.allset_se_type
+    if kind == "MENU":
+        # The field accepts any registered Menu ID, but the popup search is
+        # intentionally focused on MayaWorkflow Kit's own Menu classes.
+        maya_menus = [item for item in _menu_candidates() if item.startswith("ALLSET_MT_")]
+        return _filter(maya_menus, edit_text)
+    if kind == "TOOL":
+        return _filter(sorted(_KNOWN_TOOLS), edit_text)
+    if kind == "OPERATOR":
+        return _filter(_operator_ids(), edit_text)
+    return _filter(_menu_candidates(), edit_text)
+
+
 def _wm(context):
     return context.window_manager
+
+
+_ICON_PICKER_PAGE_KEY = "_allset_shelf_editor_icon_picker_page"
+
+
+class ALLSET_OT_shelf_editor_icon_page(bpy.types.Operator):
+    """Change the page in the currently open Shelf icon picker."""
+    bl_idname = "allset.shelf_editor_icon_page"
+    bl_label = "Change Icon Page"
+    bl_options = {'INTERNAL'}
+
+    direction: IntProperty(default=0, min=-1, max=1, options={'SKIP_SAVE'})
+    page_count: IntProperty(default=1, min=1, options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        wm = context.window_manager
+        current = int(wm.get(_ICON_PICKER_PAGE_KEY, 1))
+        wm[_ICON_PICKER_PAGE_KEY] = min(
+            max(current + int(self.direction), 1),
+            max(int(self.page_count), 1),
+        )
+        if context.area:
+            context.area.tag_redraw()
+        return {'FINISHED'}
+
+
+
+ICON_PICKER_GRID_COLUMNS = 18
+ICON_PICKER_GRID_ROWS = 20
+
+
+class ALLSET_PG_shelf_editor_icon_grid_row(bpy.types.PropertyGroup):
+    """One horizontal row of icon buttons inside the scrollable picker."""
+    icons_json: StringProperty(options={'SKIP_SAVE'})
+
+
+def _refresh_icon_picker_rows(self, context):
+    """Rebuild icon rows after the source or search query changes."""
+    if context is None:
+        return
+    wm = context.window_manager
+    collection = getattr(wm, "allset_se_icon_grid_rows", None)
+    if collection is None:
+        return
+
+    try:
+        names = shelf.shelf_icons.icon_names(self.source)
+    except (AttributeError, TypeError, ValueError):
+        names = []
+
+    query = (self.query or "").casefold()
+    if query:
+        names = [name for name in names if query in name.casefold()]
+
+    collection.clear()
+    columns = ICON_PICKER_GRID_COLUMNS
+    for start in range(0, len(names), columns):
+        item = collection.add()
+        item.icons_json = json.dumps(names[start:start + columns])
+
+    wm.allset_se_icon_grid_rows_index = 0
+
+
+class ALLSET_UL_shelf_editor_icon_grid(bpy.types.UIList):
+    """Native scrollable list with one horizontal strip of icon buttons per row."""
+    bl_idname = "ALLSET_UL_shelf_editor_icon_grid"
+
+    def draw_item(self, context, layout, data, item, icon, active_data,
+                  active_propname, index, flt_flag=0):
+        try:
+            names = json.loads(item.icons_json)
+        except (TypeError, ValueError):
+            names = []
+
+        # Use grid_flow inside each scrollable UIList row. Unlike a plain
+        # horizontal row, even_columns makes the icon cells share the full
+        # available list width instead of clustering at the left edge.
+        grid = layout.grid_flow(
+            row_major=True,
+            columns=ICON_PICKER_GRID_COLUMNS,
+            even_columns=True,
+            even_rows=True,
+            align=True,
+        )
+        grid.operator_context = 'EXEC_DEFAULT'
+        selected = _wm(context).allset_se_icon
+
+        for column in range(ICON_PICKER_GRID_COLUMNS):
+            if column < len(names):
+                icon_name = names[column]
+                op = grid.operator(
+                    ALLSET_OT_shelf_editor_icon_select.bl_idname,
+                    text="",
+                    emboss=True,
+                    depress=(icon_name == selected),
+                    **shelf.shelf_icons.icon_ui_kwargs(icon_name),
+                )
+                op.icon_name = icon_name
+            else:
+                grid.label(text="")
+
 
 class ALLSET_OT_shelf_editor_icon_picker(bpy.types.Operator):
     """Browse Blender, PNG, and Maya Workflow Kit shelf icons."""
@@ -292,7 +569,11 @@ class ALLSET_OT_shelf_editor_icon_picker(bpy.types.Operator):
     bl_description = "Choose Icon"
     bl_options = {'INTERNAL'}
 
-    query: StringProperty(name="Search Icons", options={'TEXTEDIT_UPDATE', 'SKIP_SAVE'})
+    query: StringProperty(
+        name="Search Icons",
+        update=_refresh_icon_picker_rows,
+        options={'TEXTEDIT_UPDATE', 'SKIP_SAVE'},
+    )
     source: EnumProperty(
         name="Icon Source",
         items=(
@@ -301,30 +582,100 @@ class ALLSET_OT_shelf_editor_icon_picker(bpy.types.Operator):
             ("PNG", "PNG Files", "Packaged and user Shelf PNG files"),
             ("MWK", "Maya Workflow Kit", "Procedural icons drawn by Maya Workflow Kit"),
         ),
-        default="ALL",
+        default="BLENDER",
+        update=_refresh_icon_picker_rows,
         options={'SKIP_SAVE'},
     )
+    width: IntProperty(default=640, options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=680)
+        context.window_manager[_ICON_PICKER_PAGE_KEY] = 1
+        _refresh_icon_picker_rows(self, context)
+        dpi = context.preferences.system.dpi
+        scale = context.preferences.system.ui_scale
+        self.width = min(max(int(680 * dpi / 72 * scale), 420), context.window.width - 32)
+        return context.window_manager.invoke_props_dialog(self, width=self.width)
 
     def draw(self, context):
         layout = self.layout
         header = layout.row(align=True)
-        header.prop(self, "source", expand=True)
-        layout.prop(self, "query", text="", icon='VIEWZOOM')
+        header.prop(self, "source", text="")
+        header.prop(self, "query", text="", icon='VIEWZOOM')
+        header.operator(
+            ALLSET_OT_shelf_editor_icon_file.bl_idname,
+            text="Browse PNG File…",
+            icon='FILE_FOLDER',
+        )
+        wm = _wm(context)
         names = shelf.shelf_icons.icon_names(self.source)
         query = self.query.casefold()
         if query:
             names = [name for name in names if query in name.casefold()]
-        grid = layout.grid_flow(row_major=True, columns=12, even_columns=True,
-                                even_rows=True, align=True)
+
+        history = [name for name in reversed(_ICON_HISTORY)
+                   if not query or query in name.casefold()]
+        history_box = layout.box()
+        history_box.label(text="Recently Used")
+        self._draw_icon_history_row(history_box, history[:6], context)
+
+        box = layout.box()
+        box.label(text=f"{self._source_label()} ({len(names)} icons)")
+        box.template_list(
+            ALLSET_UL_shelf_editor_icon_grid.__name__,
+            "ALLSET_SHELF_ICON_SCROLL_GRID",
+            wm,
+            "allset_se_icon_grid_rows",
+            wm,
+            "allset_se_icon_grid_rows_index",
+            rows=ICON_PICKER_GRID_ROWS,
+            maxrows=ICON_PICKER_GRID_ROWS,
+            type='DEFAULT',
+        )
+
+    def _source_label(self):
+        return {
+            "ALL": "All Icons",
+            "BLENDER": "Blender Icons",
+            "PNG": "PNG Icons",
+            "MWK": "Maya Workflow Kit Icons",
+        }[self.source]
+
+    def _draw_icon_history_row(self, layout, names, context):
+        """Draw one fixed six-cell row of recently used icon buttons."""
+        row = layout.row(align=True)
+        grid = row.grid_flow(row_major=True, columns=6,
+                             even_columns=True, even_rows=True, align=True)
+        grid.operator_context = 'EXEC_DEFAULT'
         selected = _wm(context).allset_se_icon
-        for name in names[:900]:
+        for index in range(6):
+            icon_name = names[index] if index < len(names) else None
+            if icon_name:
+                op = grid.operator(
+                    ALLSET_OT_shelf_editor_icon_select.bl_idname,
+                    text="",
+                    emboss=True,
+                    depress=(icon_name == selected),
+                    **shelf.shelf_icons.icon_ui_kwargs(icon_name),
+                )
+                op.icon_name = icon_name
+            else:
+                # Empty cells preserve the same six-column footprint.
+                grid.label(text="")
+
+    def _draw_icon_grid(self, layout, names, context):
+        # A fixed 18 x 5 page uses the available picker width more efficiently.
+        # The page size is 90, preserving the same five-row canvas height.
+        columns = 18
+        grid = layout.grid_flow(row_major=True, columns=columns,
+                                even_columns=True, even_rows=True, align=True)
+        selected = _wm(context).allset_se_icon
+        grid.operator_context = 'EXEC_DEFAULT'
+        for name in names:
             op = grid.operator(
                 ALLSET_OT_shelf_editor_icon_select.bl_idname,
                 text="",
-                emboss=(name == selected),
+                emboss=True,
+                depress=(name == selected),
                 **shelf.shelf_icons.icon_ui_kwargs(name),
             )
             op.icon_name = name
@@ -343,7 +694,34 @@ class ALLSET_OT_shelf_editor_icon_select(bpy.types.Operator):
     icon_name: StringProperty(options={'SKIP_SAVE'})
 
     def execute(self, context):
+        if self.icon_name in _ICON_HISTORY:
+            _ICON_HISTORY.remove(self.icon_name)
+        _ICON_HISTORY.append(self.icon_name)
+        del _ICON_HISTORY[:-20]
         _wm(context).allset_se_icon = self.icon_name
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_shelf_editor_icon_file(bpy.types.Operator, ImportHelper):
+    """Use any PNG file as this Shelf button's icon."""
+    bl_idname = "allset.shelf_editor_icon_file"
+    bl_label = "Choose PNG Shelf Icon"
+    bl_description = "Select a PNG file for the current Shelf button"
+    bl_options = {'INTERNAL'}
+
+    filter_glob: StringProperty(default="*.png", options={'HIDDEN'})
+
+    def execute(self, context):
+        path = os.path.abspath(bpy.path.abspath(self.filepath))
+        if not path.lower().endswith(".png") or not os.path.isfile(path):
+            self.report({'WARNING'}, "Choose an existing PNG image")
+            return {'CANCELLED'}
+        _wm(context).allset_se_icon = path
+        if path in _ICON_HISTORY:
+            _ICON_HISTORY.remove(path)
+        _ICON_HISTORY.append(path)
+        del _ICON_HISTORY[:-20]
         _redraw(context)
         return {'FINISHED'}
 
@@ -364,19 +742,23 @@ def _load_button(context, index):
             wm.allset_se_index = -1
             wm.allset_se_label = ""
             wm.allset_se_icon = "SCRIPT"
-            wm.allset_se_type = "SCRIPT"
-            wm.allset_se_script = ""
+            wm.allset_se_type = "PYTHON"
+            wm.allset_se_script = "import bpy\\n\\nbpy.ops.mesh.primitive_cube_add()"
             wm.allset_se_menu = ""
-            wm.allset_se_operator = ""
+            wm.allset_se_operator = "mesh.primitive_cube_add"
             wm.allset_se_props = "{}"
             wm.allset_se_tooltip = ""
-            wm.allset_se_action_id = ""
+            wm.allset_se_action_id = "VIEW3D_MT_view"
             wm.allset_se_action_code = ""
-            wm.allset_se_action_kind = "ui_operator"
-            wm.allset_se_tool_space_type = "VIEW_3D"
+            wm.allset_se_space_type = "AUTO"
+            wm.allset_se_required_mode = "AUTO"
+            wm.allset_se_object_type = "AUTO"
+            wm.allset_se_tool_space_type = "AUTO"
+            wm.allset_se_tool_mode = "AUTO"
         finally:
             _loading = False
         return
+
     button = buttons[index]
     action = button.get("action") or {}
     _loading = True
@@ -385,10 +767,19 @@ def _load_button(context, index):
         wm.allset_se_label = button.get("label", "Button")
         wm.allset_se_icon = button.get("icon", "SCRIPT")
         wm.allset_se_tooltip = button.get("tooltip", "")
+        wm.allset_se_space_type = action.get(
+            "space_type", button.get("space_type", "AUTO")
+        )
+        wm.allset_se_required_mode = action.get(
+            "required_mode", action.get("mode", button.get("required_mode", "AUTO"))
+        )
+        wm.allset_se_object_type = action.get(
+            "object_type", button.get("object_type", "AUTO")
+        )
         if button.get("type") == "separator" or action.get("type") == "separator":
             wm.allset_se_type = "SEPARATOR"
         elif button.get("menu"):
-            wm.allset_se_type = "MENU"
+            wm.allset_se_type = "MAYA_MENU_ITEM"
             wm.allset_se_menu = button["menu"]
         elif button.get("operator"):
             wm.allset_se_type = "OPERATOR"
@@ -396,10 +787,6 @@ def _load_button(context, index):
             wm.allset_se_props = json.dumps(button.get("props", {}), ensure_ascii=False)
         elif button.get("type") == "action":
             kind = action.get("type", "operator")
-            # This EnumProperty only describes UI subtypes; general Action types
-            # such as "operator", "python", and "tool" are not valid enum values.
-            if kind in {"blender_menu", "pie_menu", "ui_operator"}:
-                wm.allset_se_action_kind = kind
             wm.allset_se_action_id = action.get("id", "")
             wm.allset_se_action_code = action.get("code", "")
             wm.allset_se_props = json.dumps(action.get("properties", {}), ensure_ascii=False)
@@ -407,20 +794,29 @@ def _load_button(context, index):
                 wm.allset_se_type = "OPERATOR"
                 wm.allset_se_operator = action.get("id", "")
             elif kind == "maya_menu":
-                wm.allset_se_type = "MENU"
+                wm.allset_se_type = "MAYA_MENU_ITEM"
                 wm.allset_se_menu = action.get("id", "")
             elif kind == "python":
                 wm.allset_se_type = "PYTHON"
                 wm.allset_se_script = action.get("code", "")
             elif kind == "tool":
                 wm.allset_se_type = "TOOL"
-                wm.allset_se_tool_space_type = action.get("space_type", "VIEW_3D")
-            elif kind in {"blender_menu", "pie_menu", "ui_operator"}:
-                wm.allset_se_type = "UI"
+                wm.allset_se_tool_space_type = action.get("space_type", "AUTO")
+                wm.allset_se_tool_mode = action.get(
+                    "required_mode", action.get("mode", "AUTO")
+                )
+            elif kind in {"blender_menu", "pie_menu"}:
+                wm.allset_se_type = "MENU"
+            elif kind == "ui_operator":
+                # Legacy UI Operator records remain editable as ordinary Operators.
+                wm.allset_se_type = "OPERATOR"
+                wm.allset_se_operator = action.get("id", "")
             else:
                 wm.allset_se_type = "PYTHON"
+                wm.allset_se_script = action.get("code", "")
         else:
-            wm.allset_se_type = "SCRIPT"
+            # Legacy script buttons remain readable; Apply writes action.python.
+            wm.allset_se_type = "PYTHON"
             wm.allset_se_script = button.get("script", "")
     finally:
         _loading = False
@@ -440,8 +836,11 @@ def _start_draft(context):
         if _draft != (_draft_base or latest):
             _draft = _merge_documents(_draft_base or latest, _draft, latest)
         else:
-            _draft = latest
-        _draft_base = latest
+            # Independent copy: never alias _draft to the document that becomes _draft_base,
+            # otherwise a later Apply would mutate the base and the first Save's three-way
+            # merge would revert the just-applied change.
+            _draft = json.loads(json.dumps(latest))
+        _draft_base = json.loads(json.dumps(latest))
     wm = _wm(context)
     current = shelf.current(context)
     valid = {identifier for identifier, _label in _draft_shelves()}
@@ -452,23 +851,23 @@ def _start_draft(context):
 
 def open_editor(context):
     _start_draft(context)
-    # Use a compact Maya-style default independent of the source 3D View size.
+    # Use the requested 800 x 1000 Maya-style default independent of the source 3D View size.
     # A one-time marker migrates older oversized saved rectangles while preserving
     # any user-resized dimensions on subsequent launches.
     from . import window_places
     if context.window is not None:
         place_kind = f"marked:{KIND}"
-        size_marker = f"{place_kind}_SIZE_V3"
+        size_marker = f"{place_kind}_SIZE_V4"
         if window_places.place(size_marker) is None:
             source = context.window
-            width, height = 460, 460
+            width, height = 800, 1000
             x = source.x + max(20, (source.width - width) // 2)
             y = source.y + max(20, (source.height - height) // 2)
             window_places.remember(place_kind, (x, y, width, height))
             window_places.remember(size_marker, (2, 0, 0, 0))
         elif window_places.place(place_kind) is None:
             source = context.window
-            width, height = 460, 460
+            width, height = 800, 1000
             x = source.x + max(20, (source.width - width) // 2)
             y = source.y + max(20, (source.height - height) // 2)
             window_places.remember(place_kind, (x, y, width, height))
@@ -535,7 +934,17 @@ class ALLSET_OT_shelf_editor_select_button(bpy.types.Operator):
     index: IntProperty(options={'SKIP_SAVE'})
 
     def execute(self, context):
+        wm = _wm(context)
         _load_button(context, self.index)
+
+        # Keep the native UIList active row aligned with the selected editable
+        # button. Factory rows are read-only and must not retain the active-row
+        # highlight when a custom button is selected.
+        for row_index, item in enumerate(wm.allset_se_items):
+            if not item.is_factory and item.button_index == self.index:
+                wm.allset_se_list_index = row_index
+                break
+
         _redraw(context)
         return {'FINISHED'}
 
@@ -677,20 +1086,16 @@ class ALLSET_MT_shelf_editor_add_action(bpy.types.Menu):
     bl_label = "Add Shelf Button"
 
     def draw(self, context):
-        # Use content-sized flow columns instead of split(), which allocates
-        # each column a fraction of the available popup width.
-        # ui_units_x is a minimum-width hint, not a maximum-width constraint.
         flow = self.layout.column_flow(columns=ADD_MENU_COLUMNS, align=True)
         choices = (
             ("OPERATOR", "Operator", "CONSOLE", "Blender Operator"),
-            ("MENU", "Menu", "LINENUMBERS_ON", "Maya menu item"),
-            ("UI", "Popup / UI", "WINDOW", "Blender Menu, Pie Menu or UI Operator"),
+            ("MAYA_MENU_ITEM", "Maya Menu Item", "LINENUMBERS_ON", "Maya Workflow Kit menu path"),
+            ("MENU", "Menu", "MENU_PANEL", "Blender native Menu or MayaWorkflow Menu ID"),
             ("TOOL", "Tool", "TOOL_SETTINGS", "Activate a Blender Tool"),
             ("PYTHON", "Python", "CONSOLE", "Python command"),
-            ("LEGACY_PYTHON", "Legacy Script", "FILE_SCRIPT", "Legacy script button using the original Shelf script field"),
             ("SEPARATOR", "Separator", "REMOVE", "Visual separator"),
         )
-        for index, (kind, label, icon, tip) in enumerate(choices):
+        for kind, label, icon, tip in choices:
             op = flow.operator(
                 ALLSET_OT_shelf_editor_create_action.bl_idname,
                 text=label,
@@ -705,49 +1110,42 @@ class ALLSET_OT_shelf_editor_create_action(bpy.types.Operator):
     bl_idname = "allset.shelf_editor_create_action"
     bl_label = "Add Shelf Button"
     bl_description = "Create a Shelf button using the selected command type."
+
     action_type: StringProperty(options={'HIDDEN'})
     help_text: StringProperty(options={'HIDDEN'})
     label: StringProperty(name="Label", default="New Button")
     icon: StringProperty(name="Icon", default="SCRIPT", search=icon_search)
     tooltip: StringProperty(name="Tooltip")
-    target: StringProperty(name="Command / ID", search=operator_search)
-    code: StringProperty(name="Python", default="print('Hello')")
+    target: StringProperty(name="Command / ID", search=action_id_search)
+    code: StringProperty(
+        name="Python",
+        default="import bpy\\n\\nbpy.ops.mesh.primitive_cube_add()",
+    )
     properties_json: StringProperty(name="Operator Properties", default="{}")
-    ui_kind: EnumProperty(name="UI Type", items=(("blender_menu", "Menu", ""), ("pie_menu", "Pie Menu", ""), ("ui_operator", "UI Operator", "")))
 
     @classmethod
     def description(cls, context, properties):
         return properties.help_text or "Add a Shelf button using the selected command type."
 
     def invoke(self, context, event):
-        # Selecting a command type creates a draft entry immediately. Detailed
-        # values are edited in the persistent Button Properties section.
-        return self.execute(context)
-
-    def draw(self, context):
-        # Kept for compatibility if this operator is invoked externally with a
-        # properties dialog; the Shelf Editor chooser itself never opens it.
-        layout = self.layout
-        layout.label(text=self.help_text, icon={"OPERATOR":"CONSOLE", "MENU":"LINENUMBERS_ON", "UI":"WINDOW", "TOOL":"TOOL_SETTINGS", "PYTHON":"CONSOLE"}.get(self.action_type, "REMOVE"))
-        layout.prop(self, "label")
-        layout.prop(self, "icon")
-        layout.label(text=self.icon or "SCRIPT", icon=shelf._valid_icon(self.icon))
-        layout.prop(self, "tooltip")
         if self.action_type == "OPERATOR":
-            layout.prop(self, "target", text="Search Operator")
-            layout.prop(self, "properties_json")
-            _draw_operator_rna(layout, self.target)
+            self.label = "Add Cube"
+            self.icon = "MESH_CUBE"
+            self.target = "mesh.primitive_cube_add"
+            self.properties_json = '{"size": 2.0}'
+        elif self.action_type == "MAYA_MENU_ITEM":
+            self.label = "Create Cube"
+            self.target = "Create/Polygon Primitives/Cube"
         elif self.action_type == "MENU":
-            layout.prop(self, "target", text="Maya Menu Item")
-        elif self.action_type == "UI":
-            layout.prop(self, "ui_kind")
-            layout.prop(self, "target", text="Menu / UI ID")
+            self.label = "View Menu"
+            self.target = "VIEW3D_MT_view"
         elif self.action_type == "TOOL":
-            layout.prop(self, "target", text="Tool ID")
-        elif self.action_type in {"PYTHON", "LEGACY_PYTHON"}:
-            layout.prop(self, "code")
-            if self.action_type == "LEGACY_PYTHON":
-                layout.label(text="Uses the original Shelf script field for backward compatibility", icon='INFO')
+            self.label = "Move Tool"
+            self.target = "builtin.move"
+        elif self.action_type == "PYTHON":
+            self.label = "Python: Add Cube"
+            self.code = "import bpy\\n\\nbpy.ops.mesh.primitive_cube_add()"
+        return self.execute(context)
 
     def execute(self, context):
         buttons = _draft_buttons(_wm(context).allset_se_shelf, create=True)
@@ -762,20 +1160,34 @@ class ALLSET_OT_shelf_editor_create_action(bpy.types.Operator):
         }
         kind = self.action_type
         if kind == "SEPARATOR":
+            record["label"] = "Separator"
+            record["icon"] = "NONE"
             record.update(type="separator", action={"type": "separator"})
         elif kind == "OPERATOR":
-            # An empty operator ID is intentional: choose it in Button Properties.
-            record.update(type="action", action={"type": "operator", "id": "", "properties": {}})
+            record.update(type="action", action={
+                "type": "operator",
+                "id": self.target.strip() or "mesh.primitive_cube_add",
+                "properties": json.loads(self.properties_json or "{}"),
+                "space_type": "VIEW_3D",
+            })
+        elif kind == "MAYA_MENU_ITEM":
+            record["menu"] = self.target.strip() or "Create/Polygon Primitives/Cube"
+            record["space_type"] = "VIEW_3D"
         elif kind == "MENU":
-            record.update(type="action", action={"type": "maya_menu", "id": ""})
-        elif kind == "UI":
-            record.update(type="action", action={"type": self.ui_kind, "id": ""})
+            record.update(type="action", action={
+                "type": "blender_menu",
+                "id": self.target.strip() or "VIEW3D_MT_view",
+                "space_type": "VIEW_3D",
+            })
         elif kind == "TOOL":
-            record.update(type="action", action={"type": "tool", "id": "", "space_type": "VIEW_3D"})
+            record.update(type="action", action={
+                "type": "tool",
+                "id": self.target.strip() or "builtin.move",
+                "space_type": "VIEW_3D",
+            })
         elif kind == "PYTHON":
-            record.update(type="action", action={"type": "python", "code": self.code.strip() or "print('Hello')"})
-        elif kind == "LEGACY_PYTHON":
-            record["script"] = self.code.strip() or "print('Hello')"
+            code = self.code.strip() or "import bpy\\n\\nbpy.ops.mesh.primitive_cube_add()"
+            record.update(type="action", action={"type": "python", "code": code})
         else:
             return {'CANCELLED'}
 
@@ -787,7 +1199,7 @@ class ALLSET_OT_shelf_editor_create_action(bpy.types.Operator):
 
 
 class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
-    """Apply edited Shelf button properties without changing the stored action schema."""
+    """Apply edited Shelf button properties without changing unrelated button data."""
     bl_idname = "allset.shelf_editor_apply_button"
     bl_label = "Apply Button Changes"
 
@@ -806,6 +1218,7 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
         record["icon"] = shelf._valid_icon(wm.allset_se_icon)
         record["tooltip"] = wm.allset_se_tooltip.strip()
         kind = wm.allset_se_type
+        space_type = wm.allset_se_space_type
 
         if kind == "SEPARATOR":
             record["icon"] = "NONE"
@@ -813,19 +1226,37 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             record.pop("script", None)
             record.pop("operator", None)
             record.pop("props", None)
+            record.pop("space_type", None)
             record.update(type="separator", action={"type": "separator"})
-        elif kind == "MENU":
+        elif kind == "MAYA_MENU_ITEM":
             from . import menu_map
             path = wm.allset_se_menu.strip()
             if path not in menu_map.MAP:
                 self.report({'WARNING'}, "Choose a valid Maya menu item")
                 return {'CANCELLED'}
             record["menu"] = path
-            record["script"] = ""
+            record["space_type"] = space_type
+            record["required_mode"] = wm.allset_se_required_mode
+            record["object_type"] = wm.allset_se_object_type
+            record.pop("script", None)
             record.pop("type", None)
             record.pop("action", None)
             record.pop("operator", None)
             record.pop("props", None)
+        elif kind == "MENU":
+            target = wm.allset_se_action_id.strip()
+            if not target or bpy.types.Menu.bl_rna_get_subclass_py(target) is None:
+                self.report({'WARNING'}, "Choose a registered Blender or MayaWorkflow Menu ID")
+                return {'CANCELLED'}
+            record.pop("menu", None)
+            record.pop("script", None)
+            record.update(type="action", action={
+                "type": "blender_menu",
+                "id": target,
+                "space_type": space_type,
+                "required_mode": wm.allset_se_required_mode,
+                "object_type": wm.allset_se_object_type,
+            })
         elif kind == "OPERATOR":
             op_id = wm.allset_se_operator.strip()
             if op_id not in _operator_ids():
@@ -839,22 +1270,32 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             if not isinstance(props, dict):
                 self.report({'WARNING'}, "Operator properties must be a JSON object")
                 return {'CANCELLED'}
+            problem = _validate_operator_properties(op_id, props)
+            if problem:
+                self.report({'WARNING'}, problem)
+                return {'CANCELLED'}
             record.pop("menu", None)
             record.pop("script", None)
             record.pop("operator", None)
             record.pop("props", None)
-            record.update(type="action", action={"type": "operator", "id": op_id, "properties": props})
-        elif kind in {"SCRIPT", "PYTHON"}:
+            record.update(type="action", action={
+                "type": "operator",
+                "id": op_id,
+                "properties": props,
+                "space_type": space_type,
+                "required_mode": wm.allset_se_required_mode,
+                "object_type": wm.allset_se_object_type,
+            })
+        elif kind == "PYTHON":
             code = wm.allset_se_script
             if not code.strip():
                 self.report({'WARNING'}, "Python command cannot be empty")
                 return {'CANCELLED'}
             record.pop("menu", None)
-            record.pop("type", None)
-            record.pop("action", None)
+            record.pop("script", None)
             record.pop("operator", None)
             record.pop("props", None)
-            record["script"] = code
+            record.update(type="action", action={"type": "python", "code": code})
         elif kind == "TOOL":
             target = wm.allset_se_action_id.strip()
             if not target:
@@ -863,17 +1304,12 @@ class ALLSET_OT_shelf_editor_apply_button(bpy.types.Operator):
             record.pop("menu", None)
             record.pop("script", None)
             record.update(type="action", action={
-                "type": "tool", "id": target, "space_type": wm.allset_se_tool_space_type,
+                "type": "tool",
+                "id": target,
+                "space_type": wm.allset_se_tool_space_type,
+                "required_mode": wm.allset_se_tool_mode,
+                "object_type": wm.allset_se_object_type,
             })
-        elif kind == "UI":
-            target = wm.allset_se_action_id.strip()
-            action_kind = wm.allset_se_action_kind
-            if not target or action_kind not in {"blender_menu", "pie_menu", "ui_operator"}:
-                self.report({'WARNING'}, "Enter a valid Menu or UI Operator ID")
-                return {'CANCELLED'}
-            record.pop("menu", None)
-            record.pop("script", None)
-            record.update(type="action", action={"type": action_kind, "id": target})
         else:
             self.report({'WARNING'}, "Unsupported Shelf button type")
             return {'CANCELLED'}
@@ -928,20 +1364,79 @@ class ALLSET_OT_shelf_editor_save(bpy.types.Operator):
         global _draft, _draft_base
         if _draft is None:
             return {'CANCELLED'}
-        shelf.reload_user()
-        latest = _copy_document()
-        merged = _merge_documents(_draft_base or latest, _draft, latest)
-        shelf._user.clear()
-        shelf._user.update(merged)
-        shelf.save_user()
-        active = _wm(context).allset_se_shelf
+
+        wm = _wm(context)
+        active = wm.allset_se_shelf
+
+        # Freeze the editor state before touching the live shelf cache.  The
+        # draft is deliberately independent from shelf._user, but keeping an
+        # immutable snapshot here also prevents a refresh from replacing the
+        # only copy of newly added factory-shelf extras.
+        draft_snapshot = json.loads(json.dumps(_draft))
+        base_snapshot = json.loads(json.dumps(_draft_base or {}))
+
+        try:
+            # Read the latest on-disk document.  When nobody changed the file
+            # outside this editor, persist the draft verbatim; only invoke the
+            # three-way merge when a genuine external change is detected.
+            shelf.reload_user()
+            latest = _copy_document()
+            if latest == base_snapshot:
+                merged = draft_snapshot
+            else:
+                merged = _merge_documents(base_snapshot, draft_snapshot, latest)
+
+            saved = _write_document_atomic(merged)
+
+            # Verify the editor's changed factory extras survived the merge
+            # and disk round-trip before replacing the in-memory draft.
+            draft_extra = draft_snapshot.get("extra", {}) or {}
+            base_extra = base_snapshot.get("extra", {}) or {}
+            saved_extra = saved.get("extra", {}) or {}
+            for shelf_id, buttons in draft_extra.items():
+                if buttons != base_extra.get(shelf_id, []):
+                    if saved_extra.get(shelf_id, []) != merged.get("extra", {}).get(shelf_id, []):
+                        raise ValueError(
+                            f"Factory shelf '{shelf_id}' extras failed save verification"
+                        )
+
+            # Update the existing cache object in place because other shelf
+            # UI callbacks may already hold references to it.
+            shelf._user.clear()
+            shelf._user.update(saved)
+
+        except Exception as ex:
+            # Keep the editor draft and its visible list intact on failure.
+            self.report({'ERROR'}, f"Could not save Shelf data: {ex}")
+            _set_message(context, f"Save failed; draft kept: {ex}")
+            _redraw(context)
+            return {'CANCELLED'}
+
+        # Only after the verified write succeeds may the draft be replaced.
+        _draft = json.loads(json.dumps(saved))
+        _draft_base = json.loads(json.dumps(saved))
+
         valid = {identifier for identifier, _label in shelf.shelves()}
         if active in valid:
             shelf.set_current(context, active)
-        _draft = _copy_document()
-        _draft_base = _copy_document()
-        _set_message(context, "Shelf changes saved")
+
+        # Rebuild the transient UIList from the committed document now, rather
+        # than relying on a later draw to notice a stale signature.
+        _sync_shelves_list(wm)
+        _sync_contents_list(wm, active)
+        if 0 <= wm.allset_se_index < len(_draft_buttons(active) or []):
+            _load_button(context, wm.allset_se_index)
+        else:
+            _load_button(context, -1)
+
+        saved_count = len(_draft_buttons(active) or [])
+        _set_message(context, f"Shelf changes saved ({saved_count} custom button(s) on this shelf)")
+        shelf.shelf_icons.invalidate_gpu_textures()
         _redraw(context)
+        # The first save of a session needs a second redraw frame once the
+        # operator has returned (GPU texture release/create lifecycle); harmless
+        # on every later save.
+        shelf.schedule_redraw()
         return {'FINISHED'}
 
 
@@ -1009,12 +1504,16 @@ class ALLSET_UL_shelf_editor_properties(bpy.types.UIList):
         if item.row_kind == "RNA_FOOTER":
             layout.label(text=item.label, icon='INFO')
             return
-        if item.row_kind == "PREVIEW":
-            row = layout.row(align=True)
-            row.label(text="Icon Preview", **shelf.shelf_icons.icon_ui_kwargs(data.allset_se_icon or "SCRIPT"))
-            row.operator(ALLSET_OT_shelf_editor_icon_picker.bl_idname, text="", icon='IMAGE')
-            return
         if item.field and hasattr(data, item.field):
+            if item.field == "allset_se_icon":
+                row = layout.row(align=True)
+                row.prop(data, item.field, text=item.label)
+                row.operator(
+                    ALLSET_OT_shelf_editor_icon_picker.bl_idname,
+                    text="",
+                    **shelf.shelf_icons.icon_ui_kwargs(data.allset_se_icon or "SCRIPT"),
+                )
+                return
             layout.prop(data, item.field, text=item.label)
 
 
@@ -1026,7 +1525,12 @@ class ALLSET_UL_shelf_editor_contents(bpy.types.UIList):
                   active_property, index=0, flt_flag=0):
         row = layout.row(align=True)
         if item.is_factory:
-            row.label(text=item.label, icon=item.icon if item.icon != 'NONE' else 'DOT')
+            # Factory rows may carry a procedural MWK icon identifier. Blender's
+            # ``icon`` argument only accepts built-in enum identifiers, so resolve
+            # custom preview icons through the preview collection instead.
+            icon_kwargs = shelf.shelf_icons.icon_ui_kwargs(
+                item.icon if item.icon != 'NONE' else 'DOT')
+            row.label(text=item.label, **icon_kwargs)
             row.label(text="Factory", icon='LOCKED')
             return
 
@@ -1059,7 +1563,9 @@ def _sync_contents_list(wm, shelf_id):
                          shelf._valid_icon(button.get("icon", "SCRIPT")),
                          index, False))
     else:
-        for _index, label, _action, icon in _factory_rows(shelf_id):
+        for index, label, _action, icon in _factory_rows(shelf_id):
+            if shelf.shelf_icons.icon_for(label, shelf_id, index) is not None:
+                icon = f"MWK:{shelf_id}/{label}#{index}"
             rows.append((label, icon, -1, True))
         for index, button in enumerate(_draft_buttons(shelf_id) or []):
             rows.append((button.get("label", "Button"),
@@ -1067,7 +1573,9 @@ def _sync_contents_list(wm, shelf_id):
                          index, False))
 
     signature = repr((shelf_id, rows))
-    if wm.allset_se_items_signature == signature:
+    current_rows = [(item.label, item.icon, item.button_index, item.is_factory)
+                    for item in wm.allset_se_items]
+    if wm.allset_se_items_signature == signature and current_rows == rows:
         return
     collection = wm.allset_se_items
     collection.clear()
@@ -1101,21 +1609,35 @@ def _sync_shelves_list(wm):
 
 
 def _sync_properties_list(wm):
-    """Build the same Button Properties content as Scroll-Fix in a scrollable UIList."""
+    """Build the editable fields for the selected Shelf button."""
     rows = [
         ("FIELD", "allset_se_label", "Label"),
         ("FIELD", "allset_se_icon", "Icon"),
         ("FIELD", "allset_se_type", "Command Type"),
     ]
     kind = wm.allset_se_type
-    if kind == "SCRIPT":
+    if kind == "PYTHON":
         rows.append(("FIELD", "allset_se_script", "Python"))
+    elif kind == "MAYA_MENU_ITEM":
+        rows.extend((
+            ("FIELD", "allset_se_menu", "Maya Menu Item"),
+            ("FIELD", "allset_se_space_type", "Editor Space"),
+        ))
     elif kind == "MENU":
-        rows.append(("FIELD", "allset_se_menu", "Maya Menu Item"))
+        rows.extend((
+            ("FIELD", "allset_se_action_id", "Menu ID"),
+            ("INFO", "", "Blender native Menu or MayaWorkflow Menu · XXX_MT_xxx"),
+            ("FIELD", "allset_se_space_type", "Editor Space"),
+            ("FIELD", "allset_se_required_mode", "Required Mode"),
+            ("FIELD", "allset_se_object_type", "Object Type"),
+        ))
     elif kind == "OPERATOR":
         rows.extend((
-            ("FIELD", "allset_se_operator", "Search Operator"),
+            ("FIELD", "allset_se_operator", "Operator ID"),
             ("FIELD", "allset_se_props", "Properties JSON"),
+            ("FIELD", "allset_se_space_type", "Editor Space"),
+            ("FIELD", "allset_se_required_mode", "Required Mode"),
+            ("FIELD", "allset_se_object_type", "Object Type"),
         ))
         try:
             module, name = wm.allset_se_operator.split(".", 1)
@@ -1137,24 +1659,17 @@ def _sync_properties_list(wm):
             ))
         except (AttributeError, RuntimeError, TypeError, ValueError):
             rows.append(("INFO", "", "Operator RNA is unavailable"))
-    elif kind == "PYTHON":
-        rows.append(("FIELD", "allset_se_script", "Python"))
-    elif kind == "UI":
-        rows.extend((
-            ("FIELD", "allset_se_action_kind", "UI Type"),
-            ("FIELD", "allset_se_action_id", "Menu / UI ID"),
-        ))
     elif kind == "TOOL":
         rows.extend((
             ("FIELD", "allset_se_action_id", "Tool ID"),
-            ("FIELD", "allset_se_tool_space_type", "Editor"),
+            ("FIELD", "allset_se_tool_space_type", "Tool Editor"),
+            ("FIELD", "allset_se_tool_mode", "Required Mode"),
+            ("FIELD", "allset_se_object_type", "Object Type"),
         ))
 
-    rows.extend((
-        ("FIELD", "allset_se_tooltip", "Tooltip"),
-        ("PREVIEW", "", wm.allset_se_icon or "SCRIPT"),
-    ))
-    signature = repr((wm.allset_se_index, kind, wm.allset_se_operator, rows))
+    rows.append(("FIELD", "allset_se_tooltip", "Tooltip"))
+    signature = repr((wm.allset_se_index, kind, wm.allset_se_operator,
+                      wm.allset_se_action_id, rows))
     if wm.allset_se_properties_signature == signature:
         return
     collection = wm.allset_se_properties
@@ -1313,8 +1828,12 @@ class ALLSET_PT_shelf_editor(bpy.types.Panel):
 
 classes = (
     ALLSET_OT_shelf_editor_open,
+    ALLSET_OT_shelf_editor_icon_page,
+    ALLSET_PG_shelf_editor_icon_grid_row,
+    ALLSET_UL_shelf_editor_icon_grid,
     ALLSET_OT_shelf_editor_icon_picker,
     ALLSET_OT_shelf_editor_icon_select,
+    ALLSET_OT_shelf_editor_icon_file,
     ALLSET_OT_shelf_editor_select_shelf,
     ALLSET_OT_shelf_editor_select_button,
     ALLSET_OT_shelf_editor_add_shelf,
@@ -1341,11 +1860,13 @@ _WM_PROPS = (
     "allset_se_shelf", "allset_se_index", "allset_se_label", "allset_se_icon",
     "allset_se_type", "allset_se_script", "allset_se_menu", "allset_se_operator",
     "allset_se_props", "allset_se_tooltip", "allset_se_message",
-    "allset_se_action_id", "allset_se_action_code", "allset_se_action_kind",
-    "allset_se_tool_space_type",
+    "allset_se_action_id", "allset_se_action_code", "allset_se_space_type",
+    "allset_se_tool_space_type", "allset_se_tool_mode",
+    "allset_se_required_mode", "allset_se_object_type",
     "allset_se_items", "allset_se_items_signature", "allset_se_list_index",
     "allset_se_shelves", "allset_se_shelves_signature", "allset_se_shelves_index",
     "allset_se_properties", "allset_se_properties_signature", "allset_se_properties_index",
+    "allset_se_icon_grid_rows", "allset_se_icon_grid_rows_index",
 )
 
 
@@ -1359,13 +1880,14 @@ def register():
     wm.allset_se_icon = StringProperty(name="Icon", search=shelf.shelf_icons.icon_search, options={'SKIP_SAVE'})
     wm.allset_se_type = EnumProperty(
         name="Command Type",
-        items=(("SCRIPT", "Legacy Python", "Legacy Python script"),
-               ("MENU", "Maya Menu Item", "Run a Maya Workflow Kit menu command"),
-               ("OPERATOR", "Blender Operator", "Run a Blender operator"),
-               ("PYTHON", "Python Command", "Run a typed Python command"),
-               ("UI", "Popup / UI", "Open a registered menu or UI operator"),
-               ("TOOL", "Tool", "Activate a Blender Tool"),
-               ("SEPARATOR", "Separator", "Visual separator")),
+        items=(
+            ("OPERATOR", "Blender Operator", "Run a Blender Operator"),
+            ("MAYA_MENU_ITEM", "Maya Menu Item", "Run a Maya Workflow Kit menu item"),
+            ("MENU", "Menu", "Open a Blender native or MayaWorkflow Menu by Menu ID"),
+            ("TOOL", "Tool", "Activate a Blender Tool"),
+            ("PYTHON", "Python", "Run a Python command"),
+            ("SEPARATOR", "Separator", "Visual separator"),
+        ),
         options={'SKIP_SAVE'},
     )
     wm.allset_se_script = StringProperty(name="Python", options={'SKIP_SAVE'})
@@ -1374,25 +1896,121 @@ def register():
     wm.allset_se_props = StringProperty(name="Operator Properties", options={'SKIP_SAVE'})
     wm.allset_se_tooltip = StringProperty(name="Tooltip", options={'SKIP_SAVE'})
     wm.allset_se_message = StringProperty(options={'SKIP_SAVE'})
-    wm.allset_se_action_id = StringProperty(name="Action ID", options={'SKIP_SAVE'})
+    wm.allset_se_action_id = StringProperty(
+        name="Menu / Tool ID",
+        search=action_id_search,
+        description="Menu: Blender native Menu or MayaWorkflow Menu, e.g. XXX_MT_xxx",
+        options={'SKIP_SAVE'},
+    )
     wm.allset_se_action_code = StringProperty(name="Action Code", options={'SKIP_SAVE'})
+    wm.allset_se_space_type = EnumProperty(
+        name="Editor Space",
+        items=(
+            ("AUTO", "Auto", "Infer the appropriate editor from the selected action"),
+            ("ANY", "Any Editor", "Do not require a specific editor"),
+            ("VIEW_3D", "3D View", "Execute in a 3D View"),
+            ("IMAGE_EDITOR", "Image / UV Editor", "Execute in an Image or UV Editor"),
+            ("NODE_EDITOR", "Node Editor", "Execute in a Node Editor"),
+            ("GRAPH_EDITOR", "Graph Editor", "Execute in a Graph Editor"),
+            ("DOPESHEET_EDITOR", "Dope Sheet", "Execute in a Dope Sheet"),
+            ("NLA_EDITOR", "NLA Editor", "Execute in an NLA Editor"),
+            ("SEQUENCE_EDITOR", "Video Sequencer", "Execute in the Video Sequencer"),
+            ("CLIP_EDITOR", "Movie Clip Editor", "Execute in a Movie Clip Editor"),
+            ("TEXT_EDITOR", "Text Editor", "Execute in a Text Editor"),
+            ("CONSOLE", "Python Console", "Execute in the Python Console"),
+            ("OUTLINER", "Outliner", "Execute in the Outliner"),
+        ),
+        default="AUTO",
+        options={'SKIP_SAVE'},
+    )
     wm.allset_se_tool_space_type = EnumProperty(
         name="Editor",
         items=(
+            ("AUTO", "Auto", "Infer the appropriate editor from the Tool ID"),
             ("VIEW_3D", "3D View", "Activate the tool in the 3D View"),
             ("IMAGE_EDITOR", "UV Editor", "Activate the tool in the UV Editor"),
         ),
-        default="VIEW_3D",
+        default="AUTO",
         options={'SKIP_SAVE'},
     )
-    wm.allset_se_action_kind = EnumProperty(
-        name="UI Type",
+    wm.allset_se_tool_mode = EnumProperty(
+        name="Required Mode",
+        description="Infer the required mode automatically, or explicitly restrict execution",
         items=(
-            ("blender_menu", "Menu", ""),
-            ("pie_menu", "Pie Menu", ""),
-            ("ui_operator", "UI Operator", ""),
+            ("AUTO", "Auto", "Infer the mode from the Tool ID"),
+            ("ANY", "Any Mode", "Do not require a specific mode"),
+            ("OBJECT", "Object Mode", "Require Object Mode"),
+            ("EDIT_MESH", "Mesh Edit Mode", "Require Mesh Edit Mode"),
+            ("SCULPT", "Sculpt Mode", "Require Sculpt Mode"),
+            ("PAINT_VERTEX", "Vertex Paint", "Require Vertex Paint Mode"),
+            ("PAINT_WEIGHT", "Weight Paint", "Require Weight Paint Mode"),
+            ("PAINT_TEXTURE", "Texture Paint", "Require Texture Paint Mode"),
+            ("EDIT_CURVE", "Curve Edit Mode", "Require Curve Edit Mode"),
+            ("SCULPT_CURVES", "Curves Sculpt Mode", "Require Curves Sculpt Mode"),
+            ("EDIT_ARMATURE", "Armature Edit Mode", "Require Armature Edit Mode"),
+            ("POSE", "Pose Mode", "Require Pose Mode"),
+            ("EDIT_LATTICE", "Lattice Edit Mode", "Require Lattice Edit Mode"),
+            ("EDIT_METABALL", "Metaball Edit Mode", "Require Metaball Edit Mode"),
+            ("EDIT_SURFACE", "Surface Edit Mode", "Require Surface Edit Mode"),
+            ("EDIT_TEXT", "Text Edit Mode", "Require Text Edit Mode"),
+            ("PARTICLE", "Particle Edit Mode", "Require Particle Edit Mode"),
+            ("EDIT_GREASE_PENCIL", "Grease Pencil Edit Mode", "Require Grease Pencil Edit Mode"),
+            ("SCULPT_GREASE_PENCIL", "Grease Pencil Sculpt", "Require Grease Pencil Sculpt Mode"),
+            ("PAINT_GREASE_PENCIL", "Grease Pencil Draw", "Require Grease Pencil Draw Mode"),
+            ("WEIGHT_GREASE_PENCIL", "Grease Pencil Weight Paint", "Require Grease Pencil Weight Paint Mode"),
+            ("VERTEX_GREASE_PENCIL", "Grease Pencil Vertex Paint", "Require Grease Pencil Vertex Paint Mode"),
         ),
-        default="ui_operator",
+        default="AUTO",
+        options={'SKIP_SAVE'},
+    )
+    wm.allset_se_required_mode = EnumProperty(
+        name="Required Mode",
+        description="Infer the required mode from the selected action, or set a specific mode",
+        items=(
+            ("AUTO", "Auto", "Infer a compatible mode from the action"),
+            ("ANY", "Any Mode", "Do not require a specific mode"),
+            ("OBJECT", "Object Mode", "Require Object Mode"),
+            ("EDIT_MESH", "Mesh Edit Mode", "Require Mesh Edit Mode"),
+            ("SCULPT", "Sculpt Mode", "Require Sculpt Mode"),
+            ("PAINT_VERTEX", "Vertex Paint", "Require Vertex Paint Mode"),
+            ("PAINT_WEIGHT", "Weight Paint", "Require Weight Paint Mode"),
+            ("PAINT_TEXTURE", "Texture Paint", "Require Texture Paint Mode"),
+            ("EDIT_CURVE", "Curve Edit Mode", "Require Curve Edit Mode"),
+            ("SCULPT_CURVES", "Curves Sculpt Mode", "Require Curves Sculpt Mode"),
+            ("EDIT_ARMATURE", "Armature Edit Mode", "Require Armature Edit Mode"),
+            ("POSE", "Pose Mode", "Require Pose Mode"),
+            ("EDIT_LATTICE", "Lattice Edit Mode", "Require Lattice Edit Mode"),
+            ("EDIT_METABALL", "Metaball Edit Mode", "Require Metaball Edit Mode"),
+            ("EDIT_SURFACE", "Surface Edit Mode", "Require Surface Edit Mode"),
+            ("EDIT_TEXT", "Text Edit Mode", "Require Text Edit Mode"),
+            ("PARTICLE", "Particle Edit Mode", "Require Particle Edit Mode"),
+            ("EDIT_GREASE_PENCIL", "Grease Pencil Edit Mode", "Require Grease Pencil Edit Mode"),
+            ("SCULPT_GREASE_PENCIL", "Grease Pencil Sculpt", "Require Grease Pencil Sculpt Mode"),
+            ("PAINT_GREASE_PENCIL", "Grease Pencil Draw", "Require Grease Pencil Draw Mode"),
+            ("WEIGHT_GREASE_PENCIL", "Grease Pencil Weight Paint", "Require Grease Pencil Weight Paint Mode"),
+            ("VERTEX_GREASE_PENCIL", "Grease Pencil Vertex Paint", "Require Grease Pencil Vertex Paint Mode"),
+        ),
+        default="AUTO",
+        options={'SKIP_SAVE'},
+    )
+    wm.allset_se_object_type = EnumProperty(
+        name="Object Type",
+        description="Infer the compatible object type, or restrict execution to a specific type",
+        items=(
+            ("AUTO", "Auto", "Infer a compatible object type from the action"),
+            ("ANY", "Any Object", "Do not require a specific active object type"),
+            ("MESH", "Mesh", "Require an active Mesh object"),
+            ("CURVE", "Curve", "Require an active Curve object"),
+            ("SURFACE", "Surface", "Require an active Surface object"),
+            ("META", "Metaball", "Require an active Metaball object"),
+            ("FONT", "Text", "Require an active Text object"),
+            ("ARMATURE", "Armature", "Require an active Armature object"),
+            ("LATTICE", "Lattice", "Require an active Lattice object"),
+            ("GPENCIL", "Grease Pencil (Legacy)", "Require a legacy Grease Pencil object"),
+            ("GREASEPENCIL", "Grease Pencil", "Require a Grease Pencil object"),
+            ("EMPTY", "Empty", "Require an Empty object"),
+        ),
+        default="AUTO",
         options={'SKIP_SAVE'},
     )
     wm.allset_se_items = bpy.props.CollectionProperty(type=ALLSET_PG_shelf_editor_list_item,
@@ -1407,6 +2025,11 @@ def register():
                                                             options={'SKIP_SAVE'})
     wm.allset_se_properties_signature = StringProperty(options={'SKIP_SAVE'})
     wm.allset_se_properties_index = IntProperty(default=0, options={'SKIP_SAVE'})
+    wm.allset_se_icon_grid_rows = bpy.props.CollectionProperty(
+        type=ALLSET_PG_shelf_editor_icon_grid_row,
+        options={'SKIP_SAVE'},
+    )
+    wm.allset_se_icon_grid_rows_index = IntProperty(default=0, options={'SKIP_SAVE'})
     marked_window.KINDS[KIND] = ("show_properties_scene", "show_properties_data")
 
 
