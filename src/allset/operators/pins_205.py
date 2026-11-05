@@ -1120,7 +1120,7 @@ def _windows():
             maintain_offset=v["maintain_offset"], mode=v["mode"].upper(), normal_axis=v["normal_axis"],
             tangent_axis=v["tangent_axis"])
     return [
-        # Maya's UV Pin Options: factory values and labels
+        # Maya's UV Pin Options: default values and labels
         Window("uv_pin", "UV Pin Options", "Add", ("allset.uv_pin", {}),
                [F("setup", "Pin locations", "enum", "Transforms", items=("Components", "Transforms"),
                   heading="Connections"),

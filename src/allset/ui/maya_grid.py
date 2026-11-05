@@ -93,7 +93,7 @@ def styles(opts):
 
 
 def settings():
-    """The applied Maya Grid Options (Maya units, factory values until the window applied others)."""
+    """The applied Maya Grid Options (Maya units, default values until the window applied others)."""
     from ..operators import option_windows_display
     return option_windows_display.grid_settings()
 

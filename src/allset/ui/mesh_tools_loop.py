@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Insert Edge Loop, Offset Edge Loop and Slide Edge as kit tools (GitHub #31).
 
-The tools run the modals of operators/edge_loops.py; their Maya Tool Settings (fields and factory values)
+The tools run the modals of operators/edge_loops.py; their Maya Tool Settings (fields and default values)
 are drawn here, in Blender's tool header and in the kit's Tool Settings dock (ui/tool_settings.py
 kinds INSERT_EDGE_LOOP / OFFSET_EDGE_LOOP / SLIDE_EDGE). The left button keeps Blender's selection where it
 doesn't hit an edge (KEYMAP_FALLBACK), like Maya's tools that select with a click.

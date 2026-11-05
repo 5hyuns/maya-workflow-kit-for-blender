@@ -453,7 +453,7 @@ class ALLSET_OT_motion_path_key(bpy.types.Operator):
 classes = (ALLSET_OT_motion_path_attach, ALLSET_OT_motion_path_key)
 
 
-# --- option window (Maya Attach to Motion Path Options factory values) -----
+# --- option window (Maya Attach to Motion Path Options defaults) -----
 
 WINDOWS = []
 _RANGE = {"Time Slider": 'TIME_SLIDER', "Start": 'START', "Start/End": 'START_END'}

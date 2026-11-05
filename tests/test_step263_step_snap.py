@@ -1,5 +1,5 @@
 """Issue #153: Maya Step Snap Relative / Absolute per tool — Move, Rotate and Scale keep their own
-(manipMoveContext / manipRotateContext / manipScaleContext -snapRelative);
+(each tool's own Step Snap setting);
 Blender's one Absolute Grid Snap flag takes the mode of the tool whose transform starts."""
 
 from importlib import import_module

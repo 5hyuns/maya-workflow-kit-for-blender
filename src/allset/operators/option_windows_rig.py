@@ -220,8 +220,8 @@ WINDOWS = [
     # Skeleton > Create IK Handle: Tool Settings "IK Handle Tool"
     Window("ik_handle_tool", "IK Handle Tool", "Create IK Handle", None, _ik_fields(), _run_ik_handle,
            paths=("Skeleton/Create IK Handle",), missing=_IK_MISSING),
-    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (Maya
-    # 2026 factory values ikSplineHandleCtx)
+    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (defaults like
+    # Maya 2026)
     Window("ik_spline_tool", "IK Spline Handle Tool", "Create IK Spline Handle", None, [
         F("root_on_curve", "", "bool", True, text="Root on curve"),
         F("parent_curve", "", "bool", True, text="Auto parent curve"),

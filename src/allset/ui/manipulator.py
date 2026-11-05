@@ -39,7 +39,7 @@ TOOLS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale
 SLOT = {'TRANSLATE': 1, 'ROTATE': 2, 'RESIZE': 3}
 KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
 
-# Arrow length in px at gizmo_size 75 and UI scale 1: Maya's Move Y arrow at manipGlobalScale 1.5
+# Arrow length in px at gizmo_size 75 and UI scale 1: Maya's Move Y arrow at a manipulator size of 1.5
 #. Shapes are built in "arrow units" (arrow length = 1).
 ARROW_PX = 108.0
 # Shape sizes in arrow units (Maya's Move / Scale manipulators).

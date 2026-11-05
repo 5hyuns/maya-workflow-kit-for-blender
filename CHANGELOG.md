@@ -1304,7 +1304,7 @@ edge-loop tools and the Deform menu move to 0.4.0 (#30 #31 #34).
   settings kept across New / Open, FBX / OBJ / Alembic / USD round trips with Maya's axes, scale and names.
 - **Edit Mesh / UV** (#16 #68 #70): Connect, Merge, Symmetrize and Smooth give Maya's results; Ctrl+B and Ctrl+E on
   edges / vertices act at once and stay editable; UV Automatic / Contour Stretch from object mode.
-- **Maya option windows** (#32 #33 #35): 26 more windows with Maya 2022's fields and factory defaults (Create Joints,
+- **Maya option windows** (#32 #33 #35): 26 more windows with Maya 2022's fields and defaults (Create Joints,
   IK Handle, Bind / Unbind / Copy / Paint Skin Weights, Blend Shape, Parent, Cut / Copy / Paste / Delete / Snap / Scale
   Keys, Connect, Circularize, Make Hole, Insert Edge Loop, Aim / Pole Vector / Scale constraints, Duplicate Special);
   Aim aims +X with world up Y like Maya; Key > Scale Keys is new.

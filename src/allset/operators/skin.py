@@ -89,7 +89,7 @@ def joint_position(arm, joint):
     return arm.matrix_world @ (pb.tail if joint[1] == 'TAIL' else pb.head)
 
 
-# Maya IK Handle Tool factory settings: Rotate-Plane solver, solver enabled,
+# Maya IK Handle Tool default settings: Rotate-Plane solver, solver enabled,
 # weight 1. Blender's IK constraint: RP = plain IK (pole vector: Constrain > Pole Vector), SC = the chain end follows
 # the handle's rotation (``use_rotation``; the handle starts turned like the end joint so nothing jumps).
 IK_SOLVERS = (("RP", "Rotate-Plane Solver", "Maya ikRPsolver: Blender IK, the pole vector (Constrain > Pole Vector) "

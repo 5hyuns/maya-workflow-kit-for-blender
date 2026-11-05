@@ -209,8 +209,7 @@ def test_default_resolution_would_be_off():
 
 
 def test_curve_first_and_own_transform_ignored():
-    """Maya: the curve can be picked first (L8_motion_path_wrong_order); the object's own place and turn don't add
-    (mp_offset / mp_rotated_obj = mp_default)."""
+    """Maya: the curve can be picked first; the object's own place and turn don't add."""
     path, car = _scene(car_pos=(2, 1, -3), car_rot=(0, 30, 0))
     bpy.context.view_layer.objects.active = path
     car, c = _attach()

@@ -5616,7 +5616,7 @@
    "Object": "Object",
    "Offset": "Offset",
    "Offset Edge Loop": "Offset Edge Loop",
-   "Offset of a click without a drag (Maya polyDuplicateEdgeOffset)": "Offset of a click without a drag (Maya polyDuplicateEdgeOffset)",
+   "Offset of a click without a drag": "Offset of a click without a drag",
    "Side": "Side",
    "Slide": "Slide",
    "Slide Edge": "Slide Edge",
@@ -9454,7 +9454,7 @@
    "Maya Create Polygon: click to place points, Enter to make the polygon (a new polySurface object).\nBackspace removes the last point, middle-drag moves it, Esc cancels": "Maya Create Polygon: click to place points, Enter to make the polygon (a new polySurface object).\nBackspace removes the last point, middle-drag moves it, Esc cancels",
    "Maya Mesh Tools > Append to Polygon: click a border edge of the selected mesh, then points, Enter adds a face": "Maya Mesh Tools > Append to Polygon: click a border edge of the selected mesh, then points, Enter adds a face",
    "Maya Mesh Tools > Create Polygon: click points in the view, Enter makes a new polygon object": "Maya Mesh Tools > Create Polygon: click points in the view, Enter makes a new polygon object",
-   "Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw (factory values).": "Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw (factory values).",
+   "Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw.": "Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw.",
    "Reset the tool's options to their default values, like Maya": "Reset the tool's options to their default values, like Maya"
   },
   "Tooltips/operators/poly_maya": {
@@ -9600,7 +9600,7 @@
   },
   "Tooltips/operators/snap_align": {
    "Click a point on the object to move, then a point on the target: the object moves\nthere and turns so the surfaces face each other (Maya Modify > Snap Together Tool)": "Click a point on the object to move, then a point on the target: the object moves\nthere and turns so the surfaces face each other (Maya Modify > Snap Together Tool)",
-   "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, factory options)": "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, factory options)",
+   "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, default options)": "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, default options)",
    "Make the selected surface live: moves snap onto it. With nothing selected the live\nsurface is cleared (Maya Modify > Make Live)": "Make the selected surface live: moves snap onto it. With nothing selected the live\nsurface is cleared (Maya Modify > Make Live)",
    "Match the transforms of the selected objects to the last selected one\n(Maya Modify > Match Transformations)": "Match the transforms of the selected objects to the last selected one\n(Maya Modify > Match Transformations)",
    "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)": "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)",
@@ -9610,10 +9610,10 @@
    "Copy the surface patches around the selected CVs as a new surface (Maya Surfaces > Duplicate NURBS Patches)": "Copy the surface patches around the selected CVs as a new surface (Maya Surfaces > Duplicate NURBS Patches)",
    "Fill the space between three or four boundary curves (Maya Surfaces > Boundary / Square)": "Fill the space between three or four boundary curves (Maya Surfaces > Boundary / Square)",
    "Insert an isoparm at the selected CV row or column, keeping the shape (Maya Surfaces > Insert Isoparms)": "Insert an isoparm at the selected CV row or column, keeping the shape (Maya Surfaces > Insert Isoparms)",
-   "Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; factory Blend 0.5)": "Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; factory Blend 0.5)",
+   "Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; default Blend 0.5)": "Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; default Blend 0.5)",
    "Make a NURBS surface through the selected curves, in selection order (Maya Surfaces > Loft)": "Make a NURBS surface through the selected curves, in selection order (Maya Surfaces > Loft)",
    "Rebuild the surface with uniform spans (default 4 x 4 spans, cubic; Maya Surfaces > Rebuild)": "Rebuild the surface with uniform spans (default 4 x 4 spans, cubic; Maya Surfaces > Rebuild)",
-   "Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; factory U)": "Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; factory U)",
+   "Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; default U)": "Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; default U)",
    "Revolve each selected curve around an axis into a NURBS surface (Maya Surfaces > Revolve)": "Revolve each selected curve around an axis into a NURBS surface (Maya Surfaces > Revolve)",
    "Split the surface at the isoparm through the selected CV row or column (Maya Surfaces > Detach)": "Split the surface at the isoparm through the selected CV row or column (Maya Surfaces > Detach)",
    "Sweep a profile curve along two rail curves (Maya Surfaces > Birail > Birail 1 Tool: select the profile and the\ntwo rails; the kit tells them apart by where they touch)": "Sweep a profile curve along two rail curves (Maya Surfaces > Birail > Birail 1 Tool: select the profile and the\ntwo rails; the kit tells them apart by where they touch)",
@@ -9671,7 +9671,7 @@
    "Lay the selected shells out in one row along U, tallest first, scaled to fit the 0-1 square (Maya Layout\nAlong)": "Lay the selected shells out in one row along U, tallest first, scaled to fit the 0-1 square (Maya Layout\nAlong)",
    "Line up the selected border UVs between the two end ones (Maya Straighten Border; gaps of up to 5 UVs are\nfilled)": "Line up the selected border UVs between the two end ones (Maya Straighten Border; gaps of up to 5 UVs are\nfilled)",
    "Move each selected UV to the centre of its 1/256 grid cell (default 256 x 256, pixel\ncentres; Maya Match Grid)": "Move each selected UV to the centre of its 1/256 grid cell (default 256 x 256, pixel\ncentres; Maya Match Grid)",
-   "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\nfactory Square)": "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\nfactory Square)",
+   "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)": "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)",
    "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)": "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)",
    "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)": "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)"
   },

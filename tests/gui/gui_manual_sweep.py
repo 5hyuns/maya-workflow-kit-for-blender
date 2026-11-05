@@ -2691,7 +2691,7 @@ def _m63_2_components():
 
 @named("m63_2_bevel")
 def _m63_2_bevel():
-    # #16: Maya bevels at once (polyBevel3 factory values) and Esc keeps it; no Blender modal
+    # #16: Maya bevels at once (default values) and Esc keeps it; no Blender modal
     ob_b = C["bevel_ob"]
     if bpy.context.mode == 'EDIT_MESH':
         ob_b.update_from_editmode()

@@ -67,7 +67,7 @@ SECTION_MIN = 0.01
 PX_STEP = 0.1
 PX_MIN = {"thickness": 0.01, "coils": 0.5, "radius": 0.01, "section": SECTION_MIN}
 FLAT = 1e-4             # smallest size while drawing (a zero size has no faces to build)
-# size attributes a single click sets to the option-window / factory value
+# size attributes a single click sets to the option-window / default value
 SIZES = ("width", "height", "depth", "radius", "sideLength", "length", "sectionRadius", "thickness", "coils")
 STATUS = ("Interactive Creation: drag to place and size, drag again for the height, click to skip. "
           "Shift equal sides, Ctrl from the centre")
@@ -348,7 +348,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         context.workspace.status_text_set(None)
 
     def _default(self, attr):
-        """The option-window value, else the factory value, of ``attr``."""
+        """The option-window value, else the default value, of ``attr``."""
         from . import prim_history, prim_shapes
         if attr in self._over:
             return self._over[attr]

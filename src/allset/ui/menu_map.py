@@ -356,7 +356,7 @@ MAP = {
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace
     "Edit Mesh/Smart Extrude": ("v3d", "allset.smart_extrude", {}),
-    "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices
+    "Edit Mesh/Merge": "allset.merge",          # always merges two vertices
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
     "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first
     "Edit Mesh/Average Vertices": "mesh.vertices_smooth",

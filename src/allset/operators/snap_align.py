@@ -238,7 +238,7 @@ class ALLSET_OT_snap_points(_ObjOp, bpy.types.Operator):
 
 class ALLSET_OT_align_objects(bpy.types.Operator):
     """Line the selected objects up along world X at the middle of their bounding boxes
-    (Maya Modify > Snap Align Objects > Align Objects, factory options)"""
+    (Maya Modify > Snap Align Objects > Align Objects, default options)"""
     bl_idname = "allset.align_objects"
     bl_label = "Align Objects"
     bl_options = {'REGISTER', 'UNDO'}

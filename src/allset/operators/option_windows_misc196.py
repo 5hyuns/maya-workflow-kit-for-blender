@@ -144,7 +144,7 @@ _INCLUDE = ("All keyable", "From Channel Box", "All keyable except:")
 _KEEP_ORIGINAL = "Keep original (Maya keeps the input curve and makes new ones)"
 
 WINDOWS = [
-    # Create Character Set Options (factory values, window)
+    # Create Character Set Options (default values, window)
     Window("character_set", "Create Character Set Options", "Create Character Set", None, [
         FText("name", "Name:", "character1"),
         F("hierarchy", "Include:", "bool", False, text="Hierarchy below selected node"),

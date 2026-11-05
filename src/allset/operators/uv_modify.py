@@ -505,7 +505,7 @@ class ALLSET_OT_uv_stack_similar(_ModOp, bpy.types.Operator):
 @undo_steps.no_redo_panel
 class ALLSET_OT_uv_map_border(_ModOp, bpy.types.Operator):
     """Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,
-    factory Square)"""
+    default Square)"""
     bl_idname = "allset.uv_map_border"
     bl_label = "Map Border"
     empty = "Select faces of a UV shell"

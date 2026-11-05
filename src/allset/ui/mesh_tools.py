@@ -159,7 +159,7 @@ class ALLSET_TL_multi_cut(bpy.types.WorkSpaceTool):
 
 
 def draw_multi_cut(layout, s):
-    """Maya's Multi-Cut Tool Settings, Maya's order and factory values."""
+    """Maya's Multi-Cut Tool Settings, Maya's order and default values."""
     layout.prop(s, "snap_step", slider=True)
     box = layout.box()
     box.label(text="Cut / Insert Edge Loop Tool")

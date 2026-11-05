@@ -558,7 +558,7 @@ class ALLSET_OT_surface_boundary(_SurfOp, bpy.types.Operator):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_surface_attach(_SurfOp, bpy.types.Operator):
-    """Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; factory Blend 0.5)"""
+    """Join two surfaces at their nearest edges into a new surface (Maya Surfaces > Attach; default Blend 0.5)"""
     bl_idname = "allset.surface_attach"
     bl_label = "Attach Surfaces"
 
@@ -763,7 +763,7 @@ class _ObjectSurfOp(_SurfOp):
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_surface_reverse(_ObjectSurfOp, bpy.types.Operator):
-    """Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; factory U)"""
+    """Reverse the surface's U or V direction, or swap them (Maya Surfaces > Reverse Direction; default U)"""
     bl_idname = "allset.surface_reverse"
     bl_label = "Reverse Surface Direction"
 

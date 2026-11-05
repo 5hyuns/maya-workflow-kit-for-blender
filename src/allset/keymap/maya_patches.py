@@ -194,7 +194,7 @@ def patch_group(kd):
 
 
 # --- 4. Space reserved for the hotbox ---------------------------------------
-# Maya Space = hotbox (factory hotkey Space = ShowHotbox),
+# Maya Space = hotbox (Space shows the hotbox),
 # Space does nothing in other editors.
 # Playback moves to Maya's Alt+V (PlaybackToggle) and Alt+Shift+V (GoToMinFrame).
 
@@ -957,7 +957,7 @@ def patch_joints(kd):
 
 
 # --- 34. UV workflow ------------------------------------------------------------------
-# Maya UV Editor factory keys, F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
+# Maya UV Editor keys, F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
 # Ctrl+L = select_linked (IC:599), RMB = context menu (IC:614); Maya has no shell-select key there.
 UV_KM = "UV Editor"
 

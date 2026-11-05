@@ -21,7 +21,7 @@ from mathutils import Vector
 from .. import results, undo_steps
 
 AVERAGE_DISTANCE = 0.1      # Maya Average Normals Options factory distance (polyAverageNormalTol)
-SET_NORMAL = (1.0, 0.0, 0.0)  # Maya Set Vertex Normal Options factory value (polySetNormalX / Y / Z)
+SET_NORMAL = (1.0, 0.0, 0.0)  # Maya Set Vertex Normal Options default value (X / Y / Z)
 
 
 # --- pure rules (tests/test_step189_normals.py) --------------------------------------------------------------
