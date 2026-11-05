@@ -441,7 +441,7 @@ def register_props():
     bpy.types.Scene.allset_stepped_preview = bpy.props.BoolProperty(
         name="Enable Stepped Preview", default=False, update=_update_stepped,
         description="Play and scrub every animation curve as if its keys were stepped; the keys and their tangents "
-                    "stay as they are")
+                    "stay as they are. NLA strips made in Blender play smooth (animation layers and Trax clips step)")
 
 
 def register_handlers():
