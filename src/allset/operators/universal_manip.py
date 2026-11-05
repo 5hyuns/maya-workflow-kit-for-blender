@@ -495,8 +495,9 @@ class ALLSET_OT_um_size(bpy.types.Operator):
     bl_label = "Box Size"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
-    axis: EnumProperty(items=[(a, a, "") for a in 'XYZ'], default='X', options={'SKIP_SAVE'})
-    length: FloatProperty(name="Length", precision=3, step=10, options={'SKIP_SAVE'})
+    # hidden: the length is typed in the field on the box, not in Blender's redo panel
+    axis: EnumProperty(items=[(a, a, "") for a in 'XYZ'], default='X', options={'SKIP_SAVE', 'HIDDEN'})
+    length: FloatProperty(name="Length", precision=3, step=10, options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
