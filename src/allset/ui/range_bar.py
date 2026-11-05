@@ -39,6 +39,12 @@ BAR_UNITS = 18                             # ui_units_x of the placeholder label
 
 _bars = {}       # area pointer -> rectangle and range, region-local (filled while drawing)
 _handle = []
+# Like Maya the bar fills the header between the playback fields and the right-hand buttons. A header layout has no
+# stretching item, so the bar label is BAR_UNITS + the extra units here, and each draw moves the extra toward
+# the spare room it sees (the spacer after the end fields).
+_extra = {}      # area pointer -> extra ui units of the bar label
+SPARE_UNITS = 1  # room left in the spacer
+SHRINK_UNITS = 4  # step back when the spacer is gone (the header ran out of room)
 
 
 # --- pure helpers (tests/test_step73_time_slider.py) --------------------------------------------------
@@ -58,6 +64,47 @@ def bar_span(row, bg, min_w, skip=2):
         elif seen >= skip and b - a >= min_w and b < len(row):
             return a, b
     return None
+
+
+def spare_after(row, end, bg, skip=2):
+    """Width of the ``bg`` run after ``skip`` non-``bg`` runs that start at ``end`` in ``row`` (the spacer after
+    the playback end / animation end fields), 0 when there is none (or it runs to the edge)."""
+    i, n, seen = end, len(row), 0
+    while i < n:
+        j = i
+        is_bg = row[i] == bg
+        while j < n and (row[j] == bg) == is_bg:
+            j += 1
+        if not is_bg:
+            seen += 1
+        elif seen >= skip:
+            return j - i if j < n else 0
+        i = j
+    return 0
+
+
+def next_extra(extra, spare_px, unit):
+    """The bar's next extra ui units from the spare room ``spare_px`` in the header this draw."""
+    room = spare_px / unit - SPARE_UNITS
+    if spare_px <= 0:
+        return max(0, extra - SHRINK_UNITS)
+    if room >= 1 or room < 0:
+        return max(0, extra + int(room // 1))
+    return extra
+
+
+def extra_units(area):
+    return _extra.get(area.as_pointer(), 0) if area is not None else 0
+
+
+def _redraw_later(area_ptr):
+    def tick():
+        from .. import live_refs
+        a = live_refs.area(area_ptr)
+        if a is not None:
+            a.tag_redraw()
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
 
 
 def frame_x(f, x0, x1, s, e):
@@ -171,7 +218,15 @@ def draw():
     span = bar_span(row, row[2], min_w=BAR_UNITS * unit * 0.6)
     if span is None:
         _bars.pop(area.as_pointer(), None)
+        if _extra.pop(area.as_pointer(), 0):    # the bar no longer fits: start again from its base width
+            _redraw_later(area.as_pointer())
         return
+    key = area.as_pointer()
+    extra = _extra.get(key, 0)
+    grown = next_extra(extra, spare_after(row, span[1], row[2]), unit)
+    if grown != extra:
+        _extra[key] = grown
+        _redraw_later(key)
     pad = round(4 * scale)
     x0, x1 = span[0] + pad, span[1] - pad
     y0 = (region.height - unit) / 2.0
@@ -296,5 +351,6 @@ def unregister():
     while _handle:
         bpy.types.SpaceDopeSheetEditor.draw_handler_remove(_handle.pop(), 'HEADER')
     _bars.clear()
+    _extra.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

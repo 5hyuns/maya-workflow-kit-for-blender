@@ -114,6 +114,7 @@ def draw_range_slider(layout, context):
     bar = layout.row(align=True)
     bar.ui_units_x = range_bar.BAR_UNITS
     if range_bar.active(context):
+        bar.ui_units_x = range_bar.BAR_UNITS + range_bar.extra_units(context.area)
         bar.label(text="")
     else:
         a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \

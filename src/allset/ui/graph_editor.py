@@ -18,6 +18,13 @@ HANDLE_BUTTONS = (("BREAK", 'HANDLE_FREE'), ("UNIFY", 'HANDLE_ALIGNED'))
 BUFFER_NOTE = "Buffer curve = Blender ghost curve (display only; Swap Buffer Curve isn't available)"
 
 
+def _icon(kind, icon):
+    """The kit picture of the tangent (the curve shape it gives, like the Maya icon row), else Blender's icon."""
+    from . import editor_chrome, graph_icons
+    value = graph_icons.icon_value(editor_chrome.GE, "tan_" + kind.lower())
+    return {"icon_value": value} if value else {"icon": icon}
+
+
 def draw_toolbar(self, context):
     space = context.space_data
     if space is None or space.type != 'GRAPH_EDITOR' or space.mode != 'FCURVES':
@@ -29,10 +36,10 @@ def draw_toolbar(self, context):
     layout.separator()
     row = layout.row(align=True)
     for kind, icon in TANGENT_BUTTONS:
-        row.operator("allset.set_tangent", text="", icon=icon).kind = kind
+        row.operator("allset.set_tangent", text="", **_icon(kind, icon)).kind = kind
     row = layout.row(align=True)
     for kind, icon in HANDLE_BUTTONS:
-        row.operator("allset.set_tangent", text="", icon=icon).kind = kind
+        row.operator("allset.set_tangent", text="", **_icon(kind, icon)).kind = kind
     row = layout.row(align=True)
     row.operator("graph.ghost_curves_create", text="", icon='GHOST_ENABLED')
     row.operator("graph.ghost_curves_clear", text="", icon='GHOST_DISABLED')
