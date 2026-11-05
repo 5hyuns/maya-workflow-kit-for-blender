@@ -103,6 +103,26 @@ def s_settled():
     redraw()
 
 
+def violet_total(px):
+    return int((np.abs(px - VIOLET).max(axis=-1) < 0.08).sum())
+
+
+@step
+def s_octahedral_total():
+    C["sphere_px"] = violet_total(shot("before_stick"))
+    bpy.data.objects[C["arm"]].data.display_type = 'STICK'
+    redraw()
+
+
+@step
+def s_stick():
+    n = violet_total(shot("stick"))
+    check(f"Blender display type Stick: lines only, no spheres ({n} px vs {C['sphere_px']} px)",
+          0 < n < C["sphere_px"] * 0.6)
+    bpy.data.objects[C["arm"]].data.display_type = 'OCTAHEDRAL'
+    redraw()
+
+
 @step
 def s_unselected():
     px = shot("unselected")
