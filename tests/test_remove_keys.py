@@ -135,3 +135,13 @@ def test_range_commands_need_selected_keys():
     assert _run("AFTER") == {'FINISHED'}, "without selected keys the shown curves are used"
     assert _times(a) == [1, 2, 3.5, 5] and _times(a, 1) == [1, 5]
 
+
+
+def test_delete_keys_window_removes_exactly_the_selected_keys():
+    gkm = import_module(kit.MODULE + ".operators.graph_key_menu")
+    a, b = _scene()
+    _select(a, [2, 3.5, 6])
+    _select(b, [1, 10])
+    with Editor():
+        assert gkm.delete_selected(bpy.context) == 5
+    assert _times(a) == [1, 5, 8, 10] and _times(b) == [2.5, 5, 7]

@@ -72,13 +72,12 @@ def _redraw(context):
 # --- selected-key versions of the key windows ---------------------------------------------------------------
 
 def _remove(fc, pts):
+    """Remove the keyframe points ``pts`` of ``fc``: by index, last first (removing a key moves the ones after it, so
+    a point taken before the first removal can name another key afterwards)."""
     ids = {kp.as_pointer() for kp in pts}
-    while True:
-        kp = next((k for k in fc.keyframe_points if k.as_pointer() in ids), None)
-        if kp is None:
-            break
-        ids.discard(kp.as_pointer())
-        fc.keyframe_points.remove(kp)
+    idx = [i for i, kp in enumerate(fc.keyframe_points) if kp.as_pointer() in ids]
+    for i in reversed(idx):
+        fc.keyframe_points.remove(fc.keyframe_points[i])
     fc.update()
 
 
