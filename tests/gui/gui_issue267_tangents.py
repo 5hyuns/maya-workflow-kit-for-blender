@@ -80,6 +80,9 @@ def s_scene():
     prefs.snap_time_to_selection = False
     if hasattr(prefs, "graph_auto_frame"):
         prefs.graph_auto_frame = False
+    # Blender's own handles: with Fixed-length Tangents on, the kit draws and drags the handles itself
+    # (gui_issue296_graph_handles)
+    prefs.graph_fixed_tangents = False
     bpy.context.scene.tool_settings.use_snap_anim = False
     C["area"] = area
     area.ui_type = 'FCURVES'
