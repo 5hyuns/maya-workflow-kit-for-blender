@@ -5888,6 +5888,12 @@
   "Labels/operators/graph_scale_box": {
    "Scale Keys": "Scale Keys"
   },
+  "Labels/operators/graph_sculpt": {
+   "Brush": "Brush",
+   "Brush Size": "Brush Size",
+   "Radius of the Graph Editor sculpting brushes, in pixels": "Radius of the Graph Editor sculpting brushes, in pixels",
+   "Sculpt Keys": "Sculpt Keys"
+  },
   "Labels/operators/graph_weights": {
    "Lock": "Lock",
    "Tangent Length": "Tangent Length",
@@ -9001,6 +9007,9 @@
   },
   "Tooltips/operators/graph_scale_box": {
    "Scale the selected keys by dragging a side or corner of the Scale Keys box (Graph Editor, r)": "Scale the selected keys by dragging a side or corner of the Scale Keys box (Graph Editor, r)"
+  },
+  "Tooltips/operators/graph_sculpt": {
+   "Maya Graph Editor sculpting brush: drag over the curves to grab, smooth, smear or reduce their keys (B + drag\nsideways: brush size). Esc or Q / W / E / R / T ends the tool": "Maya Graph Editor sculpting brush: drag over the curves to grab, smooth, smear or reduce their keys (B + drag\nsideways: brush size). Esc or Q / W / E / R / T ends the tool"
   },
   "Tooltips/operators/graph_weights": {
    "Lock or free the length of the selected keys' tangents (Maya Tangents > Lock / Free Tangent Length)": "Lock or free the length of the selected keys' tangents (Maya Tangents > Lock / Free Tangent Length)",

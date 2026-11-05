@@ -152,6 +152,10 @@ def _keys_menu(ed, graph):
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
     # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
+    if graph:     # Maya Sculpting Tools brushes (operators/graph_sculpt)
+        for item, mode in (("Grab Tool", "GRAB"), ("Smooth Tool", "SMOOTH"), ("Smear Tool", "SMEAR"),
+                           ("Key Reducer Tool", "REDUCE")):
+            m[f"{ed}/Edit/Transformation Tools/Sculpting Tools/{item}"] = ("allset.graph_sculpt", {"mode": mode})
     if graph:     # Maya Curves > Clamp / Offset Curves (operators/graph_key_menu)
         m[f"{ed}/Curves/Clamp Curves"] = "allset.clamp_curves"
         m[f"{ed}/Curves/Offset Curves"] = "allset.offset_curves"

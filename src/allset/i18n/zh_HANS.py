@@ -5931,4 +5931,6 @@ STRINGS = {
     'Below the limit': '低于界限',
     'By frames': '按帧数',
     'To start frame': '到起始帧',
+    'Maya Graph Editor sculpting brush: drag over the curves to grab, smooth, smear or reduce their keys (B + drag\nsideways: brush size). Esc or Q / W / E / R / T ends the tool': 'Maya 曲线图编辑器雕刻笔刷：在曲线上拖动以抓取、平滑、涂抹或精简关键帧 (B + 横向\n拖动：笔刷大小)。按 Esc 或 Q / W / E / R / T 结束工具',
+    'Brush Size': '笔刷大小',
 }

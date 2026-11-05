@@ -669,10 +669,6 @@ def _anim_editor_categories(ed):
         for key in ("Curves", "Edit/Transformation Tools", "Edit/Scene Time Warp", "List"):
             m.pop(f"{ed}/{key}", None)
         m[f"{ed}/Channels/Spreadsheet..."] = m.pop(f"{ed}/Curves/Spreadsheet...")
-    else:
-        m[f"{ed}/Edit/Transformation Tools/Sculpting Tools"] = (
-            "Key menu", "Blender has no key brushes: its Graph Editor smooths and decimates the selected keys from "
-            "the Key menu instead.")
     return m
 
 

@@ -6,6 +6,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ## [Unreleased]
 
 ### Added
+- **Graph Editor Sculpting Tools** (Edit > Transformation Tools > Sculpting Tools): Grab, Smooth, Smear and Key
+  Reducer brushes work like Maya's (they showed a notice). Drag over the curves: Grab moves the keys under the brush
+  up or down with the drag, Smear drags keys along the stroke's path, Smooth pulls keys toward their neighbours, and
+  Key Reducer deletes keys that lie on the line between their neighbours (a curve's first and last keys stay). The
+  brush is a circle whose pull fades out toward its edge; B + drag sideways changes its size. Brushes change key
+  values, not times; with keys selected only those change. Each stroke is one undo step; Esc or Q / W / E / R / T
+  ends the tool.
 - **Graph Editor Curves > Clamp Curves and Offset Curves** work like Maya's (they showed a notice). Clamp Curves sets
   the selected keys' values above a limit (default 0) to the limit, or with the option those below it; Offset
   Curves moves the selected keys one frame later by default, or by any number of frames, or so the first one lands

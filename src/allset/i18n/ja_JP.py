@@ -5931,4 +5931,6 @@ STRINGS = {
     'Below the limit': '限界値より下',
     'By frames': 'フレーム数だけ',
     'To start frame': '開始フレームへ',
+    'Maya Graph Editor sculpting brush: drag over the curves to grab, smooth, smear or reduce their keys (B + drag\nsideways: brush size). Esc or Q / W / E / R / T ends the tool': 'Maya のグラフ エディタのスカルプト ブラシ: カーブの上をドラッグしてキーをつかむ / スムーズ / スミア / 削減します (B + 横\nドラッグ: ブラシのサイズ)。Esc か Q / W / E / R / T でツールを終了',
+    'Brush Size': 'ブラシのサイズ',
 }

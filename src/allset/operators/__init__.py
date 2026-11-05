@@ -202,6 +202,8 @@ from . import type_manip  # noqa: E402  Type Manipulator: per-character move / r
 classes += type_manip.classes
 from . import playback_maya  # noqa: E402  Playback Looping Once / Oscillate, Stepped Preview
 classes += playback_maya.classes
+from . import graph_sculpt  # noqa: E402  Graph Editor Sculpting Tools (Grab / Smooth / Smear / Key Reducer)
+classes += graph_sculpt.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -289,9 +291,11 @@ def register():
     motion_trail_edit.register_handlers()
     playback_maya.register_props()
     playback_maya.register_handlers()
+    graph_sculpt.register_props()
 
 
 def unregister():
+    graph_sculpt.unregister()
     playback_maya.unregister()
     motion_trail_edit.unregister_handlers()
     type_manip.unregister_handlers()
