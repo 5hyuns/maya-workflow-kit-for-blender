@@ -6,9 +6,8 @@
   object one Follow Path constraint ``motionPathN`` (Maya's node name, numbered one past the highest) with Fixed
   Position on: its Offset = Maya's ``uValue`` in fraction mode (arc-length fraction), keyed at the Time Slider start
   (0) and end (1) with Maya auto tangents (two keys = flat ends; ``driven_key.maya_auto``), constant extrapolation.
-  Maya places the object on the path without adding its own position or rotation (``mp_offset`` /
-  ``mp_rotated_obj`` = ``mp_default``), so the object's Translate (and Rotate while Follow is on) are zeroed
-  (Blender's Follow Path adds the owner's transform).
+  Maya places the object on the path without adding its own position or rotation, so the object's Translate (and
+  Rotate while Follow is on) are zeroed (Blender's Follow Path adds the owner's transform).
 - Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position is
   off by 5e-3 (0.15 deg) on the test path, so the path's splines get ``PATH_POINTS`` evaluated points (resolution
   256 on the 4-span path: within about 1e-4 of the exact arc length; rotation 1e-3 deg).
