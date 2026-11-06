@@ -470,6 +470,108 @@ class ALLSET_PT_panel_toolbar_more(bpy.types.Panel):
                 _draw_cm(col, context, menu=True)
 
 
+# --- camera list on RMB --------------------------------------------------------------------------------------
+# Maya: right-click on the camera icon at the left of the panel toolbar lists the scene's cameras; picking one looks
+# through it in that view. Blender opens its own button context menu on a right-click over a button before any keymap
+# runs, so ``allset.pt_hover`` (3D View Generic MOUSEMOVE, first; poll = tool header) remembers whether the mouse is
+# over the Select Camera button and starts ``allset.pt_camera_rmb``, a window modal (window handlers run before the
+# UI) that lives while the mouse is in that tool header and takes the right-click there.
+
+_over_camera = {}     # window pointer -> the mouse is over the Select Camera button (last move)
+_watching = set()
+
+
+def _over_camera_button(context, event):
+    """The mouse is over the toolbar's first button, Select Camera (Blender's layout can't report where it put a
+    button: its x comes from the same layout rules as the » overflow, ``toolbar_fit.starts``)."""
+    region = context.region
+    if region is None or region.type != 'TOOL_HEADER' or shown_groups(context) < 1:
+        return False
+    system = context.preferences.system
+    x0 = toolbar_fit.starts(fit_groups(), system.ui_scale, system.pixel_size)[0]
+    return x0 <= event.mouse_region_x < x0 + toolbar_fit.unit(system.ui_scale, system.pixel_size)
+
+
+class ALLSET_MT_panel_cameras(bpy.types.Menu):
+    """The scene's cameras: pick one to look through it in this view"""
+    bl_idname = "ALLSET_MT_panel_cameras"
+    bl_label = "Cameras"
+
+    def draw(self, context):
+        layout = self.layout
+        panel_menus.draw_rows(layout, context, [panel_menu_data._view("persp", 'PERSP')])
+        panel_menus._draw_camera_list(layout, context, False)
+        layout.separator()
+        panel_menus.draw_rows(layout, context, [panel_menu_data._view("top", 'TOP'),
+                                                panel_menu_data._view("front", 'FRONT'),
+                                                panel_menu_data._view("side", 'RIGHT')])
+        panel_menus._draw_camera_list(layout, context, True)
+
+
+class ALLSET_OT_pt_hover(bpy.types.Operator):
+    """Panel toolbar: watch for a right-click on the camera icon"""
+    bl_idname = "allset.pt_hover"
+    bl_label = "Panel Toolbar Hover"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        region = context.region
+        return region is not None and region.type == 'TOOL_HEADER'
+
+    def invoke(self, context, event):
+        window = context.window
+        if window is None or not maya_layout(context):
+            return {'PASS_THROUGH'}
+        ptr = window.as_pointer()
+        over = _over_camera_button(context, event)
+        _over_camera[ptr] = over
+        if over and ptr not in _watching:
+            bpy.ops.allset.pt_camera_rmb('INVOKE_DEFAULT', True)
+        return {'PASS_THROUGH'}
+
+
+class ALLSET_OT_pt_camera_rmb(bpy.types.Operator):
+    """Right-click on the panel toolbar's camera icon: the scene's cameras"""
+    bl_idname = "allset.pt_camera_rmb"
+    bl_label = "Camera List"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        region = context.region
+        if region is None or context.window is None:
+            return {'CANCELLED'}
+        self._win = context.window.as_pointer()
+        self._window = context.window
+        self._rect = (region.x, region.y, region.x + region.width, region.y + region.height)
+        _watching.add(self._win)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _inside(self, event):
+        x0, y0, x1, y1 = self._rect
+        return x0 <= event.mouse_x < x1 and y0 <= event.mouse_y < y1
+
+    def _finish(self):
+        _watching.discard(self._win)
+        _over_camera.pop(self._win, None)
+        return {'FINISHED', 'PASS_THROUGH'}
+
+    def modal(self, context, event):
+        try:
+            self._window.screen
+        except ReferenceError:
+            _watching.discard(self._win)
+            return {'CANCELLED', 'PASS_THROUGH'}
+        if event.type == 'MOUSEMOVE' and not self._inside(event):
+            return self._finish()
+        if (event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event)
+                and _over_camera.get(self._win)):
+            bpy.ops.wm.call_menu(name=ALLSET_MT_panel_cameras.bl_idname)
+            return {'RUNNING_MODAL'}
+        return {'PASS_THROUGH'}
+
+
 # --- header patch ---------------------------------------------------------------------------------------
 
 def maya_layout(context):
@@ -525,8 +627,12 @@ def unpatch_headers():
             funcs[funcs.index(fn)] = _orig.pop(key)
 
 
+CLASSES = (ALLSET_PT_panel_toolbar_more, ALLSET_MT_panel_cameras, ALLSET_OT_pt_hover, ALLSET_OT_pt_camera_rmb)
+
+
 def register():
-    bpy.utils.register_class(ALLSET_PT_panel_toolbar_more)
+    for cls in CLASSES:
+        bpy.utils.register_class(cls)
     for name, fn in GLYPHS.items():
         status_icons.EXTRA["pt_" + name] = fn
     patch_headers()
@@ -537,4 +643,7 @@ def unregister():
     for name in GLYPHS:
         status_icons.EXTRA.pop("pt_" + name, None)
     _FIRST_HIDDEN.clear()
-    bpy.utils.unregister_class(ALLSET_PT_panel_toolbar_more)
+    _over_camera.clear()
+    _watching.clear()
+    for cls in reversed(CLASSES):
+        bpy.utils.unregister_class(cls)

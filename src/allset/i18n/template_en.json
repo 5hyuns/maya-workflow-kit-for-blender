@@ -8421,7 +8421,10 @@
    "Wireframe": "Wireframe"
   },
   "Labels/ui/panel_toolbar": {
-   "More Panel Toolbar Buttons": "More Panel Toolbar Buttons"
+   "Camera List": "Camera List",
+   "Cameras": "Cameras",
+   "More Panel Toolbar Buttons": "More Panel Toolbar Buttons",
+   "Panel Toolbar Hover": "Panel Toolbar Hover"
   },
   "Labels/ui/pose_editor": {
    "Add Pose": "Add Pose",
@@ -10025,7 +10028,10 @@
    "The Maya panel menus folded into one menu (header menus collapsed)": "The Maya panel menus folded into one menu (header menus collapsed)"
   },
   "Tooltips/ui/panel_toolbar": {
-   "More panel toolbar buttons: the ones that don't fit this view's width": "More panel toolbar buttons: the ones that don't fit this view's width"
+   "More panel toolbar buttons: the ones that don't fit this view's width": "More panel toolbar buttons: the ones that don't fit this view's width",
+   "Panel toolbar: watch for a right-click on the camera icon": "Panel toolbar: watch for a right-click on the camera icon",
+   "Right-click on the panel toolbar's camera icon: the scene's cameras": "Right-click on the panel toolbar's camera icon: the scene's cameras",
+   "The scene's cameras: pick one to look through it in this view": "The scene's cameras: pick one to look through it in this view"
   },
   "Tooltips/ui/pose_editor": {
    "Maya's Pose Editor (a marked Properties Tool tab in its own window)": "Maya's Pose Editor (a marked Properties Tool tab in its own window)"

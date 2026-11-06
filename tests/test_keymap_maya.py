@@ -190,6 +190,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Object Non-modal": _VIEW3D_STACK,
            # the Maya dock is a Properties editor (Channel Box row hover / drag)
            "Property Editor": ("Window", "Screen", "Property Editor", "View2D Buttons List"),
+           # the 3D View tool header (panel toolbar camera icon hover)
+           "3D View Generic": ("Window", "Screen", "3D View Generic"),
            # Channel Box wheel scroll (the region's View2D Buttons List handler runs first)
            "View2D Buttons List": ("Window", "Screen", "View2D Buttons List", "Property Editor"),
            # 3D View edit/pose modes: the mode keymap on top of the 3D View ones (the kit adds

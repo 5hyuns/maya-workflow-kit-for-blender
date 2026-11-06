@@ -20,7 +20,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
+PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
                       "allset.select_priority", "allset.type_char_pick", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
@@ -389,8 +389,13 @@ def patch_cb_slider(kd):
     # Channel Box rows: drag over names / fields selects a range (the dock is a Properties editor;
     # ui/channel_box.ALLSET_OT_cb_hover)
     _add(kd, "Property Editor", "allset.cb_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
+    # right-click on the panel toolbar's camera icon = the scene's cameras (ui/panel_toolbar.ALLSET_OT_pt_hover; the
+    # 3D View tool header runs the "3D View Generic" keymap)
+    _add(kd, "3D View Generic", "allset.pt_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
     # Paint Skin Weights numeric labels around the brush need the pointer (ui/weight_numbers.py)
-    _add(kd, "Weight Paint", "allset.weight_numbers_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
+    # (both hover items pass the move on: the tool header's camera icon watch is in 3D View Generic)
+    _add(kd, "Weight Paint", "allset.weight_numbers_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True,
+         shadows=("3D View Generic",))
     # The Channel Box part of the dock scrolls by itself, the Layer Editor below stays (Maya's fixed split,
     # #55); passes through outside an overflowing Channel Box
     for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
