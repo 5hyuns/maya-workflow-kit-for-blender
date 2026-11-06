@@ -227,10 +227,10 @@ class ALLSET_GGT_universal_manip(GizmoGroup):
         space = context.space_data
         if space is None or space.type != 'VIEW_3D' or not space.show_gizmo or not space.show_gizmo_tool:
             return False
-        if context.mode != 'OBJECT':
+        if context.mode not in {'OBJECT', 'EDIT_MESH'}:
             return False
         tool = _active(context)
-        return tool is not None and tool.idname == um.TOOL and bool(um.selected(context))
+        return tool is not None and tool.idname == um.TOOL and um.ready(context)
 
     def setup(self, context):
         colours = mp.axis_colours()
@@ -400,16 +400,24 @@ class ALLSET_TL_universal_manip(bpy.types.WorkSpaceTool):
         draw_settings(context, layout, tool)
 
 
+class ALLSET_TL_universal_manip_mesh(ALLSET_TL_universal_manip):
+    '''Maya Universal Manipulator on mesh components (the same tool in a component mode).'''
+    bl_context_mode = 'EDIT_MESH'
+
+
 classes = (ALLSET_GT_um_handle, ALLSET_GT_um_box, ALLSET_GT_um_label, ALLSET_GGT_universal_manip)
+TOOLS = (ALLSET_TL_universal_manip, ALLSET_TL_universal_manip_mesh)
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.utils.register_tool(ALLSET_TL_universal_manip, after={"builtin.transform"})
+    for tool in TOOLS:
+        bpy.utils.register_tool(tool, after={"builtin.transform"})
 
 
 def unregister():
-    bpy.utils.unregister_tool(ALLSET_TL_universal_manip)
+    for tool in reversed(TOOLS):
+        bpy.utils.unregister_tool(tool)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

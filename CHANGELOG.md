@@ -15,6 +15,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Box INPUTS rows (Width, Segments, Depth, Limit Width, Set Border Edges To Hard, Smoothing Angle), the In-View
   Editor and a manipulator arrow that drags the Width; T brings the manipulator back. Depth works like Bevel's
   (1 round, 0 flat, -1 concave). Cutback Relaxation and Remove Isolated Arcs are listed as not available.
+- **Universal Manipulator on components** (#318): Ctrl+T in a mesh component mode (and Modify > Transformation
+  Tools > Universal Manipulator) now opens the kit's box tool around the selected vertices, edges or faces instead
+  of Blender's Transform tool. The corner boxes scale the selected components along one box axis with the
+  opposite face staying (Ctrl: about the centre, Shift: evenly), the edge arrows rotate them (Rotate around
+  Pivot = the selection's centre point, Center = the box centre), the centre handles move them, and a typed
+  length scales them to that size. Local space uses the edited object's axes. Unselected vertices and the
+  object itself stay as they are; one Ctrl+Z takes a drag back.
 
 ## [0.12.0] — 2026-11-05
 

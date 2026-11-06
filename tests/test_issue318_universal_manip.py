@@ -1,4 +1,5 @@
-"""Universal Manipulator (#318): Ctrl+T in Object Mode picks the kit's box tool (components keep Blender's Transform),
+"""Universal Manipulator (#318): Ctrl+T in Object Mode picks the kit's box tool (mesh component modes too, see
+test_issue318_component_um.py),
 Modify > Transformation Tools > Universal Manipulator too; a corner drag scales one box axis with the opposite face
 fixed (Ctrl: about the centre, Shift: evenly with the opposite corner fixed), an edge drag rotates about the edge's
 direction, a typed length scales that axis about the box centre. The GUI test tests/gui/gui_issue318_universal_manip.py
@@ -109,9 +110,9 @@ def _maya_items(km_name, etype, ctrl=False):
 
 def test_ctrl_t_menu_and_tool():
     assert ("wm.tool_set_by_id", um.TOOL) in _maya_items("Object Mode", 'T', ctrl=True)
-    assert ("wm.tool_set_by_id", "builtin.transform") in _maya_items("Mesh", 'T', ctrl=True)
+    assert ("wm.tool_set_by_id", um.TOOL) in _maya_items("Mesh", 'T', ctrl=True)      # components too (#318)
     assert menu_map.spec("Modify/Transformation Tools/Universal Manipulator")[:2] == ("tool", um.TOOL)
-    assert menu_sets.COMPONENT_TWIN[um.TOOL] == "builtin.transform"
+    assert um.TOOL not in menu_sets.COMPONENT_TWIN
     from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
     from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active
     ids = [item.idname for item, _i in ToolSelectPanelHelper._tools_flatten_with_tool_index(

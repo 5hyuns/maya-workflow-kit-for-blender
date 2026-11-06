@@ -992,7 +992,7 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
 
 
 # Object Mode kit tools whose menu item picks a Blender tool in component modes (Maya Universal Manipulator).
-COMPONENT_TWIN = {"allset.universal_manip": "builtin.transform"}
+COMPONENT_TWIN = {}       # tools a component mode swaps for another (none: the Universal Manipulator works on components too)
 
 
 class ALLSET_OT_menu_tool(bpy.types.Operator):

@@ -20,7 +20,7 @@ def _items(km_name, etype, value='PRESS', shift=False, ctrl=False, alt=False):
 
 def test_bindings():
     assert _items("3D View", 'LEFTMOUSE', ctrl=True, alt=True)[0][0] == "allset.box_zoom"
-    for km, name in (("Object Mode", "allset.universal_manip"), ("Mesh", "builtin.transform")):
+    for km, name in (("Object Mode", "allset.universal_manip"), ("Mesh", "allset.universal_manip")):   # #318: components too
         assert ("wm.tool_set_by_id", {"name": name}) in [
             (i, {k: v for k, v in p.items() if k == "name"}) for i, p in _items(km, 'T', ctrl=True)], km
         assert [i for i, _p in _items(km, 'Y')] == ["allset.last_tool"], km

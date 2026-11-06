@@ -275,7 +275,7 @@ ENTRIES = {
                         ("ShowRenderingUI", "renderingMenuSet"))},
     "UniversalManip": _e("KIT", (OBJ, "wm.tool_set_by_id", {"name": "allset.universal_manip"}),
                          note="kit Universal Manipulator 툴 (박스: 꼭짓점 스케일, 변 회전, 중심 이동, 길이 입력); "
-                              "컴포넌트 모드는 Blender Transform"),
+                              "메시 컴포넌트 모드도 같은 툴 (선택 정점의 박스)"),
     "ShowManipulators": _e("KIT", (OBJ, "allset.show_manipulator", {}),
                            note="마지막 킷 extrude / bevel 의 매니퓰레이터 + In-View Editor (오브젝트 모드면 편집 모드로), "
                                 "없으면 Transform 툴"),

@@ -13,6 +13,9 @@ Like Maya:
 - The centre arrows move along one axis, the centre circle moves in the view plane.
 - The numbers beside three edges are the box's length along each axis; click one to type a new length (the box
   centre stays where it is).
+In a mesh component mode the same box surrounds the selected vertices (edges / faces: their vertices) and the handles
+move, rotate and scale those components; Rotate around Pivot turns them about the selection's centre point. (Maya's
+own tool shows nothing for a component selection; the kit extends it so Ctrl+T scales components precisely too.)
 
 Each drag runs Blender's own resize / rotate with the box frame and the fixed point (``center_override``): on
 every mouse move from the state saved at the press, and once more on release with an undo step, so one Ctrl+Z
@@ -23,6 +26,7 @@ The maths below is free of ``bpy`` (tests call it headless); the drawing and the
 
 import math
 
+import bmesh
 import bpy
 from bpy.props import EnumProperty, FloatProperty, IntProperty, PointerProperty
 from mathutils import Matrix, Vector
@@ -181,11 +185,43 @@ def selected(context):
 
 
 def lead_object(context):
+    if context.mode == 'EDIT_MESH':
+        meshes = edit_meshes(context)
+        active = context.view_layer.objects.active
+        return active if active in meshes else (meshes[0] if meshes else None)
     sel = selected(context)
     active = context.view_layer.objects.active
     if active is not None and active in sel:
         return active
     return sel[-1] if sel else None
+
+
+def edit_meshes(context):
+    '''The meshes being edited (component mode).'''
+    obs = getattr(context, "objects_in_mode_unique_data", None)
+    if obs is None:
+        ob = getattr(context, "edit_object", None)
+        obs = [ob] if ob is not None else []
+    return [ob for ob in obs if ob.type == 'MESH']
+
+
+def component_points(context):
+    '''World positions of the selected vertices of the meshes being edited.'''
+    pts = []
+    for ob in edit_meshes(context):
+        mw = ob.matrix_world
+        bm = bmesh.from_edit_mesh(ob.data)
+        pts.extend(mw @ v.co for v in bm.verts if v.select)
+    return pts
+
+
+def ready(context):
+    '''Something the box can surround: selected objects, or selected components of the meshes being edited.'''
+    if context.mode == 'OBJECT':
+        return bool(selected(context))
+    if context.mode == 'EDIT_MESH':
+        return any(ob.data.total_vert_sel for ob in edit_meshes(context))
+    return False
 
 
 def _object_points(ob):
@@ -214,13 +250,18 @@ def frame_of(context, space):
 def box_of(context, space=None):
     """(frame 3x3, lo, hi) of the selection's box in box coordinates (world = frame @ p), or None."""
     obs = selected(context)
-    if not obs:
+    if not obs and context.mode != 'EDIT_MESH':
         return None
     if space is None:
         space = settings(context).space
     frame = frame_of(context, space)
     inv = frame.transposed()
-    pts = [inv @ p for ob in obs for p in _object_points(ob)]
+    if context.mode == 'EDIT_MESH':
+        pts = [inv @ p for p in component_points(context)]
+        if not pts:
+            return None
+    else:
+        pts = [inv @ p for ob in obs for p in _object_points(ob)]
     lo = Vector(tuple(min(p[i] for p in pts) for i in range(3)))
     hi = Vector(tuple(max(p[i] for p in pts) for i in range(3)))
     return frame, lo, hi
@@ -230,6 +271,9 @@ def rotate_pivot(context, frame, lo, hi):
     """World centre of an edge rotate: the lead object's pivot (Rotate around Pivot) or the box centre."""
     if settings(context).rotate_around == 'CENTER':
         return frame @ centre(lo, hi)
+    if context.mode == 'EDIT_MESH':
+        pts = component_points(context)           # the components' own pivot: their centre point
+        return sum(pts, Vector()) / len(pts) if pts else frame @ centre(lo, hi)
     ob = lead_object(context)
     return ob.matrix_world.translation.copy() if ob is not None else frame @ centre(lo, hi)
 
@@ -269,11 +313,34 @@ def _run(op, kwargs, final):
 
 
 def save_state(context):
+    '''What a drag changes, as it was at the press: object matrices, or the selected vertices' positions.'''
+    if context.mode == 'EDIT_MESH':
+        out = []
+        for ob in edit_meshes(context):
+            bm = bmesh.from_edit_mesh(ob.data)
+            bm.verts.ensure_lookup_table()
+            out.append(("V", ob.name, [(v.index, v.co.copy()) for v in bm.verts if v.select]))
+        return out
     return [(ob.name, ob.matrix_basis.copy()) for ob in context.selected_objects]
 
 
 def restore(state):
-    for name, m in state:
+    for item in state:
+        if item[0] == "V":
+            ob = bpy.data.objects.get(item[1])
+            if ob is None or ob.mode != 'EDIT':
+                continue
+            bm = bmesh.from_edit_mesh(ob.data)
+            bm.verts.ensure_lookup_table()
+            changed = False
+            for i, co in item[2]:
+                if i < len(bm.verts) and bm.verts[i].co != co:
+                    bm.verts[i].co = co
+                    changed = True
+            if changed:
+                bmesh.update_edit_mesh(ob.data)
+            continue
+        name, m = item
         ob = bpy.data.objects.get(name)
         if ob is not None and ob.matrix_basis != m:
             ob.matrix_basis = m
@@ -306,7 +373,7 @@ def press_xy(event, region):
 
 
 def _object_mode(context):
-    return context.mode == 'OBJECT' and bool(selected(context))
+    return ready(context)
 
 
 class _Drag:

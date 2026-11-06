@@ -860,9 +860,8 @@ def patch_key_batch(kd):
     # mode).
     _add(kd, "3D View", "allset.box_zoom", make_event("LEFTMOUSE", ctrl=True, alt=True), shadows=("Sculpt",))
     for km in ("Object Mode", "Mesh"):
-        # Universal Manipulator: the kit's box tool for objects; components keep Blender's Transform tool
-        tool = "allset.universal_manip" if km == "Object Mode" else "builtin.transform"
-        _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": tool})
+        # Universal Manipulator: the kit's box tool, for objects and for mesh components (#318)
+        _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": "allset.universal_manip"})
         _add(kd, km, "allset.last_tool", make_event("Y"))
         _add(kd, km, "allset.menu_tool", make_event("X", shift=True, ctrl=True),
              {"tool": "allset.multi_cut_tool", "edit": True})     # the kit Multi-Cut tool
