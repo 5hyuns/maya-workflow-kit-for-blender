@@ -73,6 +73,7 @@ NONKEYABLE_PROP = "allset_cb_nonkeyable"
 CUSTOM_PREFIX = "cp:"
 HISTORY_PREFIX = "ph:"   # an attribute of the creation node (polyCube1 ...): "ph:<attribute>"
 INPUT_PREFIX = "in:"     # an INPUTS row as a channel: "in:<modifier type>:<nth of that type>:<property>"
+CON_PREFIX = "cw:"       # a constraint's target weight as a channel: "cw:<constraint type>:<nth of that type>:influence"
 SHAPE_PREFIX = "sh:"     # a SHAPES row as a channel: light Intensity / Color, camera Focal Length ...
 BLEND_PREFIX = "bw:"     # a blendShape target weight in INPUTS: "bw:<target name>" (the shape key's value)
 
@@ -269,22 +270,40 @@ def shape_paths(owner, key):
 
 
 def is_input_key(key):
-    return key.startswith(INPUT_PREFIX)
+    """An INPUTS node's channel: a modifier's property or a constraint's target weight (#329)."""
+    return key.startswith(INPUT_PREFIX) or key.startswith(CON_PREFIX)
+
+
+def is_constraint_key(key):
+    return key.startswith(CON_PREFIX)
 
 
 def input_key(mod_type, nth, name):
     return f"{INPUT_PREFIX}{mod_type}:{nth}:{name}"
 
 
+def constraint_key(con_type, nth, name):
+    return f"{CON_PREFIX}{con_type}:{nth}:{name}"
+
+
 def input_parts(key):
-    """(modifier type, nth, property) of an INPUTS channel key."""
-    mod_type, nth, name = key[len(INPUT_PREFIX):].split(":", 2)
+    """(modifier / constraint type, nth, property) of an INPUTS channel key."""
+    prefix = CON_PREFIX if is_constraint_key(key) else INPUT_PREFIX
+    mod_type, nth, name = key[len(prefix):].split(":", 2)
     return mod_type, int(nth), name
 
 
 def input_owner(ob, key):
-    """The modifier holding INPUTS channel ``key`` on ``ob`` (same type at the same position, like a typed value)."""
-    if not is_input_key(key) or is_bone(ob) or not hasattr(ob, "modifiers"):
+    """The modifier (or constraint) holding INPUTS channel ``key`` on ``ob``: the same type at the same position,
+    like a typed value. A constraint weight is on an object or a joint, a modifier's property on an object."""
+    if not is_input_key(key):
+        return None
+    if is_constraint_key(key):
+        if not hasattr(ob, "constraints"):
+            return None
+        con_type, nth, name = input_parts(key)
+        return row_owner(ob, "CONSTRAINT", name, con_type, nth)
+    if is_bone(ob) or not hasattr(ob, "modifiers"):
         return None
     mod_type, nth, name = input_parts(key)
     return row_owner(ob, "INPUT", name, mod_type, nth)
@@ -362,13 +381,15 @@ def _history_set(ob, key, value):
 
 
 def row_key(row):
-    """The channel key of a Channel Box row (CUSTOM / SHAPE / INPUT), or None."""
+    """The channel key of a Channel Box row (CUSTOM / SHAPE / INPUT / CONSTRAINT / BLEND), or None."""
     if row.kind == "CUSTOM":
         return CUSTOM_PREFIX + row.name
     if row.kind == "SHAPE":
         return SHAPE_PREFIX + row.name
     if row.kind == "INPUT":
         return input_key(row.mod_type, row.nth, row.name)
+    if row.kind == "CONSTRAINT":
+        return constraint_key(row.mod_type, row.nth, row.name)
     if row.kind == "BLEND":
         return BLEND_PREFIX + row.name
     return None
@@ -683,7 +704,7 @@ def driver(ob, key):
         return ad.drivers.find(blend_path(kb.name)) if ad is not None else None
     if is_input_key(key):
         owner = input_owner(ob, key)
-        ad = ob.animation_data if owner is not None else None
+        ad = ob.id_data.animation_data if owner is not None else None
         if ad is None:
             return None
         return next((d for p, i in input_paths(owner, key)
@@ -803,7 +824,8 @@ def drawn_keys(ob):
     scene = bpy.context.scene
     rows = scene.allset_cb.rows if scene is not None and hasattr(scene, "allset_cb") else ()
     keys += history_keys(ob)
-    keys += [k for r in rows if r.kind in ("INPUT", "BLEND") for k in [row_key(r)] if has_channel(ob, k)]
+    keys += [k for r in rows if r.kind in ("INPUT", "CONSTRAINT", "BLEND") for k in [row_key(r)]
+             if has_channel(ob, k)]
     return keys
 
 
@@ -866,7 +888,7 @@ def cell_key(path, scene=None):
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
-        if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT", "BLEND"):
+        if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT", "CONSTRAINT", "BLEND"):
             return row_key(rows[i]), ("VALUE" if m.group(2) == "text" else "NAME")
     return None
 
@@ -1006,7 +1028,10 @@ def _virtual(owner, name):
 
 
 def input_label(mod, name):
-    """Channel Box label of INPUTS row ``name`` of modifier ``mod`` (a Maya attribute, else the RNA name)."""
+    """Channel Box label of INPUTS row ``name`` of modifier ``mod`` (a Maya attribute, else the RNA name); a
+    constraint's weight is named after its target (pCube1W0)."""
+    if isinstance(mod, bpy.types.Constraint) and name == "influence":
+        return weight_name(mod)
     v = _virtual(mod, name)
     if v is not None:
         return v.label
@@ -2813,9 +2838,9 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
     # icon's column, so SHAPES / INPUTS values line up under Translate X ... (Maya: one value column)
     line = layout.row(align=True)
     split = line.split(factor=0.5, align=True)
-    if kind in ("SHAPE", "INPUT") and row is not None:
-        # a SHAPES / INPUTS row is a channel: selectable name (MMB virtual slider, value drag), keyed / animated
-        # state like Translate X
+    if kind in ("SHAPE", "INPUT", "CONSTRAINT") and row is not None:
+        # a SHAPES / INPUTS row (a modifier's property, a constraint's target weight) is a channel: selectable name
+        # (MMB virtual slider, value drag), keyed / animated state like Translate X
         key = row_key(row)
         sub = split.row(align=True)
         sel_toggle(sub, row, "sel", key in selected_channels(context), label)

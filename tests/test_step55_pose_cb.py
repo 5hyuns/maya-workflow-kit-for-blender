@@ -234,7 +234,8 @@ def test_constraint_weight_rows():
     assert abs(con2.influence - 0.5) < 1e-6 and abs(pb3.constraints[0].influence - 0.5) < 1e-6
     rec = _draw_cb()
     labels = rec.texts("label")
-    assert "INPUTS" in labels and "locator1W0" in labels, labels
+    assert "INPUTS" in labels, labels
+    assert "locator1W0" in rec.texts("prop"), "the weight is a selectable channel (its name is a toggle)"
     assert "joint2_pointConstraint1" in rec.texts("operator"), "the node name is the expand button"
     blue = [kw for k, _t, kw in rec.log if k == "operator" and kw.get("depress") and _t not in
             ("Translate X", "Translate Z")]
