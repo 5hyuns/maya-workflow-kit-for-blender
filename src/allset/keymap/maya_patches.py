@@ -457,6 +457,10 @@ def patch_marking_menus(kd):
         for key, binding in TOOL_KEYS:
             kd.remove(km, "wm.tool_set_by_id", type=key)
             _add(kd, km, "allset.tap_hold", make_event(key), {"binding": binding})
+    # T: Show Manipulator Tool = the last kit operation's manipulator + In-View Editor, else the Transform tool
+    for km in ("Object Mode", "Mesh"):
+        kd.remove(km, "wm.tool_set_by_id", type="T")
+        _add(kd, km, "allset.show_manipulator", make_event("T"))
 
 
 # --- 16. Scene concepts: P / Shift+P, Shift+D, Ctrl+Shift+D, Alt+Shift+D ------------------

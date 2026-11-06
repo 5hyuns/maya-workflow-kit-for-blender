@@ -158,7 +158,8 @@ class ALLSET_TL_smart_extrude(bpy.types.WorkSpaceTool):
 
 def register():
     bpy.utils.register_class(ALLSET_GGT_smart_extrude)
-    bpy.utils.register_tool(ALLSET_TL_smart_extrude, after={'builtin.extrude_region'}, separator=True)
+    # no separator: inside a tool group it becomes a None entry that breaks Blender's tool cycling (T in edit mode)
+    bpy.utils.register_tool(ALLSET_TL_smart_extrude, after={'builtin.extrude_region'})
 
 
 def unregister():

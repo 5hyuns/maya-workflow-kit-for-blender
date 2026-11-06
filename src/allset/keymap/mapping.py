@@ -276,8 +276,9 @@ ENTRIES = {
     "UniversalManip": _e("KIT", (OBJ, "wm.tool_set_by_id", {"name": "allset.universal_manip"}),
                          note="kit Universal Manipulator 툴 (박스: 꼭짓점 스케일, 변 회전, 중심 이동, 길이 입력); "
                               "컴포넌트 모드는 Blender Transform"),
-    "ShowManipulators": _e("IC", (OBJ, "wm.tool_set_by_id", {"name": "builtin.transform"}),
-                           note="Blender 에 Show Manipulator 툴 없음: Transform 툴"),
+    "ShowManipulators": _e("KIT", (OBJ, "allset.show_manipulator", {}),
+                           note="마지막 킷 extrude / bevel 의 매니퓰레이터 + In-View Editor (오브젝트 모드면 편집 모드로), "
+                                "없으면 Transform 툴"),
     "NonSacredTool": _e("KIT", (OBJ, "allset.last_tool", {}),
                         note="Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억)"),
     "MultiCutToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "allset.multi_cut_tool"}),
