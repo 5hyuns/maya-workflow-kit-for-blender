@@ -1006,6 +1006,9 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
 
     tool: StringProperty(options={'SKIP_SAVE'})
     edit: BoolProperty(description="Enter mesh edit (component) mode first", options={'SKIP_SAVE'})
+    space_type: StringProperty(default='VIEW_3D', options={'SKIP_SAVE'})
+    mode: StringProperty(default="ANY", options={'SKIP_SAVE'})
+    object_type: StringProperty(default="ANY", options={'SKIP_SAVE'})
     item: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})       # the Maya menu path (drawn in a menu)
 
     def execute(self, context):
