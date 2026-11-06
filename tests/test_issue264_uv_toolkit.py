@@ -193,3 +193,17 @@ def test_option_windows():
     assert menu_map.MAP["UV Editor/Modify/Randomize Shells"] == "allset.uv_randomize"
     assert option_windows.find_path("UV Editor/Modify/Randomize Shells") is rnd
     assert hasattr(bpy.ops.allset, "opt_randomize_shells") and hasattr(bpy.ops.allset, "opt_straighten_uvs")
+
+
+def test_uv_grid_window_sets_the_udim_tiles():
+    """UV Editor > View > Grid ❒ = a window for the UDIM tile grid (columns across, rows up); the plain click still
+    shows / hides the grid."""
+    option_windows = import_module(kit.MODULE + ".operators.option_windows")
+    menu_map = import_module(kit.MODULE + ".ui.menu_map")
+    menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
+    w = option_windows.find_path("UV Editor/View/Grid")
+    assert w is not None and w.key == "uv_grid" and not w.click_saved
+    assert w.defaults() == {"tiles_u": 1, "tiles_v": 1}
+    assert menu_sets.option_kind("UV Editor/View/Grid") == "window"
+    assert menu_map.MAP["UV Editor/View/Grid"][0] == "prop"
+    assert bpy.ops.allset.opt_uv_grid('EXEC_DEFAULT', tiles_u=3, tiles_v=2) == {'FINISHED'}
