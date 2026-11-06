@@ -578,6 +578,12 @@ def patch_undo_visibility(kd):
 # Ctrl: along loop), D component pivot; Maya hotkeys Ctrl+E extrude, Ctrl+B bevel.
 
 CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
+# Maya Grow / Shrink Selection = the ">" / "<" characters. On a US keyboard they are Shift+. / Shift+,; keyboards
+# with a key of their own for < > (Blender's GRLESS) type "<" plain and ">" with Shift. Mesh components and UVs.
+GROW_KEYS = (make_event("PERIOD", shift=True, repeat=True), make_event("GRLESS", shift=True, repeat=True))
+SHRINK_KEYS = (make_event("COMMA", shift=True, repeat=True), make_event("GRLESS", repeat=True))
+GROW_SHRINK = (("Mesh", "mesh.select_more", "mesh.select_less"),
+               ("UV Editor", "uv.select_more", "uv.select_less"))
 
 
 def patch_mesh_components(kd):
@@ -599,8 +605,11 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "allset.extrude", make_event("E", ctrl=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="B", ctrl=True)            # bevel tool
     _add(kd, "Mesh", "allset.bevel", make_event("B", ctrl=True))
-    _add(kd, "Mesh", "mesh.select_more", make_event("PERIOD", shift=True, repeat=True))
-    _add(kd, "Mesh", "mesh.select_less", make_event("COMMA", shift=True, repeat=True))
+    for km, more, less in GROW_SHRINK:
+        for event in GROW_KEYS:
+            _add(kd, km, more, event)
+        for event in SHRINK_KEYS:
+            _add(kd, km, less, event)
     _add(kd, "Mesh", "mesh.select_next_item", make_event("PERIOD", shift=True, ctrl=True, repeat=True))
     _add(kd, "Mesh", "mesh.select_prev_item", make_event("COMMA", shift=True, ctrl=True, repeat=True))
     for key, comp in CONVERT_KEYS:

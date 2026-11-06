@@ -65,6 +65,17 @@ def test_uv_click_select():
     assert p.extend and not p.toggle
 
 
+def test_grow_shrink_keys():
+    """Grow / Shrink Selection on > / <: Shift+. / Shift+, (US) and the < > key of its own (Shift = >),
+    for mesh components and UVs; the only items on those keys there."""
+    for km, more, less in (("Mesh", "mesh.select_more", "mesh.select_less"),
+                           ("UV Editor", "uv.select_more", "uv.select_less")):
+        for idname, type, shift in ((more, "PERIOD", True), (more, "GRLESS", True),
+                                    (less, "COMMA", True), (less, "GRLESS", False)):
+            _one(km, idname, type, shift=shift)
+            assert _any_event(km, type, shift=shift) == [idname], (km, type, shift, _any_event(km, type, shift=shift))
+
+
 def test_box_select_modes():
     exact = {(False, False): "SET", (True, False): "XOR", (False, True): "SUB", (True, True): "ADD"}
     # outliner select_box has no XOR mode: Shift adds (workaround). uv / graph run the Shift box as SET and
