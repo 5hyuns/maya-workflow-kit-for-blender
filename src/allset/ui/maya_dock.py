@@ -558,6 +558,10 @@ class ALLSET_OT_dock_handle(bpy.types.Operator):
 
 
 def _float_title(context):
+    from . import editor_panels
+    editor = editor_panels.floating_editor(context)
+    if editor:
+        return editor
     r = area_role(context)
     if r in LABELS:
         return LABELS[r]
@@ -568,7 +572,10 @@ def _float_title(context):
 
 def _draw_float_menu(self, context):
     layout = self.layout
-    if area_role(context) != 'MENU':
+    from . import editor_panels
+    if editor_panels.floating_editor(context):
+        editor_panels.draw_dock_items(layout)     # a Graph Editor / Dope Sheet / UV Editor window (#319)
+    elif area_role(context) != 'MENU':
         layout.operator(ALLSET_OT_dock_back.bl_idname, text="Dock", icon='DOCUMENTS').action = 'DOCK'
     layout.operator(ALLSET_OT_dock_back.bl_idname, text="Close", icon='X').action = 'CLOSE'
 

@@ -477,7 +477,7 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
 
     def execute(self, context):
         area = context.area
-        if area is None or area.type != 'VIEW_3D':
+        if area is None:
             return {'CANCELLED'}
         mod, name = self.op.split(".")
         try:
@@ -490,18 +490,34 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
 
 
 class ALLSET_OT_panel_tear_off(bpy.types.Operator):
-    """Open a copy of this view in a new window, with the same camera and display"""
+    """Open this panel in a new window of its size (a view keeps its camera and display). Tear Off leaves a 3D """     """View in the pane, like Maya; Tear Off Copy keeps the panel there too"""
     bl_idname = "allset.panel_tear_off"
-    bl_label = "Tear Off Copy"
+    bl_label = "Tear Off"
     bl_options = {'INTERNAL'}
+
+    copy: BoolProperty(name="Copy", default=True, options={'SKIP_SAVE'},
+                       description="Keep the panel in its pane as well (Tear Off Copy)")
 
     def execute(self, context):
         area = context.area
-        if context.window is None or area is None or area.type != 'VIEW_3D':
+        if context.window is None or area is None or bpy.app.background:
             return {'CANCELLED'}
-        with context.temp_override(window=context.window, area=area, region=main_region(area)):
+        region = main_region(area)
+        if region is None:
+            return {'CANCELLED'}
+        before = set(context.window_manager.windows[:])
+        with context.temp_override(window=context.window, area=area, region=region):
             # the copy needs the invoke (exec alone is refused)
             bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
+        new = next((w for w in context.window_manager.windows if w not in before), None)
+        if new is None:
+            return {'CANCELLED'}
+        if area.type != 'VIEW_3D':
+            from . import window_places
+            # Windows > ... opens that editor where this window ends up (Maya remembers an editor window's place)
+            window_places.track(new, f"editor:{area.ui_type}")
+            if not self.copy:
+                area.ui_type = 'VIEW_3D'      # Maya fills the emptied pane with a model panel (#319)
         return {'FINISHED'}
 
 

@@ -118,7 +118,8 @@ def test_header_draw_menus_and_icons():
     chrome.draw_menus(rec, ctx, "Graph Editor")
     chrome.draw_icons(rec, ctx, "Graph Editor")
     menus = [t for kind, _i, t in rec.log if kind == "menu"]
-    assert menus[:9] == MAYA_BARS["Graph Editor"] and menus[9] == "Blender", menus
+    # a pane's bar ends with Maya's Panels menu (Tear Off... / Panel ▸, #319) and the kit's Blender menu
+    assert menus[:9] == MAYA_BARS["Graph Editor"] and menus[9:11] == ["Panels", "Blender"], menus
     ops = [i for kind, i, _ in rec.log if kind == "op"]
     assert ops.count("allset.editor_icon") >= 15 and "allset.editor_icon_unavailable" in ops
 

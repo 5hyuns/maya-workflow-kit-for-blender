@@ -87,13 +87,22 @@ _BAR = {ed: _bar_class(ed) for ed in BLENDER_MENUS}
 
 
 def draw_menu_bar(layout, context, editor):
+    from . import editor_panels
     for i, (title, _items) in enumerate(editor_menu_data.EDITORS[editor]):
         layout.menu(menu_sets.editor_menu_idname(editor, i), text=title)
+    if editor_panels.is_pane(context):
+        # Maya: an editor in a pane has the viewport's Panels menu (Panel ▸ other editors, Tear Off...); a torn-off
+        # window has none (#319)
+        layout.menu("ALLSET_MT_panel_panels", text="Panels")
     if editor in _BLENDER:
         layout.menu(_BLENDER[editor].bl_idname, text="Blender")
 
 
 def draw_menus(layout, context, editor):
+    from . import editor_panels
+    if editor_panels.floating_editor(context):
+        from . import maya_dock      # the dotted handle: Dock Bottom / Left / Right / Top, Close (#319)
+        maya_dock.draw_handle(layout)
     if context.area is None or context.area.show_menus:
         draw_menu_bar(layout.row(align=True), context, editor)
     else:
