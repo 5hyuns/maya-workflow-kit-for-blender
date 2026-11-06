@@ -290,7 +290,8 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
                     draw.ACTIVE.clear()   # the menu goes away now; the item runs on release
                 draw.redraw()
             elif event.type == 'ESC' and event.value == 'PRESS':
-                res = s.cancel()
+                res = s.escape()      # an open submenu closes first; the whole menu at the top level
+                draw.redraw()
             elif event.type == 'WINDOW_DEACTIVATE':
                 res = s.cancel()
             elif event.type == 'TIMER':

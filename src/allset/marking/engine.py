@@ -515,6 +515,8 @@ class Session:
         # menu submenu beside the row): the menus under a cascade stay drawn and hit-tested. In-place
         # radial submenus (None) replace the menu, like Maya's.
         self.openers = [None]
+        self.via = [None]             # per stack level: the item of the level below that opened it (every kind)
+        self._closed = None           # the item whose submenu Esc closed: it doesn't reopen on hover
         self.mode = "PRESS"           # "PRESS" (button held) | "CLICK" (menu stays open)
         self.pos = self.press
         self.trail = [self.press]
@@ -559,11 +561,29 @@ class Session:
             fit_ring(layout, at, self.bounds, self.edges)   # in-place radial: centre = pointer
         self.stack.append((layout, at))
         self.openers.append(item if cascade else None)
+        self.via.append(item)
         self.hover = (None, False)
 
     def _pop_to(self, level):
         del self.stack[level + 1:]
         del self.openers[level + 1:]
+        del self.via[level + 1:]
+
+    def _leave_sub(self, x, y):
+        """Back out of an in-place radial submenu: with nothing of it under the pointer and the pointer back
+        inside the ring of the menu it opened from, it closes and that menu is there again, like Maya's. Its own
+        items are looked at first, so a submenu item lying toward the parent keeps it open and the way back is an
+        empty sector. Not for a list row's cascade (hovering another row of its menu closes that). The line is the
+        ring radius less the dead zone from the parent's centre, and nearer for a submenu that opened inside the
+        ring (a click on the inner part of a box), so it never closes on the spot. Returns True when one closed."""
+        if len(self.stack) < 2 or self.openers[-1] is not None:
+            return False
+        p = self.params
+        (_parent, (px, py)), (_sub, (sx, sy)) = self.stack[-2], self.stack[-1]
+        if math.hypot(x - px, y - py) >= min(p.radius, math.hypot(sx - px, sy - py)) - p.dead:
+            return False
+        self._pop_to(len(self.stack) - 2)
+        return True
 
     def _hit_stack(self, x, y):
         """(level, item, on option box) under (x, y): the top menu first (directions included); when it has
@@ -613,6 +633,8 @@ class Session:
         ox, oy = self.press
         self.max_dist = max(self.max_dist, math.hypot(x - ox, y - oy))
         level, item, opt = self._hit_stack(x, y)
+        while item is None and self._leave_sub(x, y):
+            level, item, opt = self._hit_stack(x, y)
         if level < len(self.stack) - 1:
             if item is self.openers[level + 1]:
                 # back on the row whose cascade is open: keep it (close deeper ones)
@@ -622,7 +644,9 @@ class Session:
             self._pop_to(level)   # another row of a menu under the cascade: the cascade closes
         dx, dy = self._rel(x, y)
         self.hover = (item, opt)
-        if item is None or item.sub is None or not item.enabled:
+        if self._closed is not None and item is not self._closed:
+            self._closed = None   # the pointer left the item whose submenu Esc closed: it may open again
+        if item is None or item.sub is None or not item.enabled or item is self._closed:
             return
         # Dragging onto a submenu opens it in place (also the second stroke of a
         # zig-zag mark): radial once the pointer reaches the ring, list on hover.
@@ -666,6 +690,17 @@ class Session:
 
     def cancel(self):
         return self._cancel()
+
+    def escape(self):
+        """Esc: an open submenu closes and the menu it opened from is there again, with what it has under the
+        pointer hovered (the closed submenu doesn't reopen until the pointer leaves its item); at the top menu
+        the whole menu closes. ``None`` while the menu stays open."""
+        if len(self.stack) < 2:
+            return self._cancel()
+        self._closed = self.via[-1]
+        self._pop_to(len(self.stack) - 2)
+        self.move(*self.pos, 0.0)
+        return None
 
     def _finish(self, item, opt):
         if not item.enabled:
