@@ -103,8 +103,56 @@ def test_h_new_selection_replaces_kept():
     _vis('TOGGLE')
     _select(b)
     _vis('TOGGLE')          # hides b; a is no longer the kept selection
+    assert b.hide_viewport and a.hide_viewport, "#322: h on a new selection must not show the old one"
     _vis('TOGGLE')          # shows b only
     assert not b.hide_viewport and a.hide_viewport
+    assert b.select_get() and not a.select_get()
+
+
+def test_h_after_clicking_another_object():
+    # #322: h hides a, a click picks c (a leaves the selection), h hides c and leaves a hidden
+    a, b, c = _scene()
+    _select(a, b)
+    _vis('TOGGLE')
+    _select(c)
+    _vis('TOGGLE')
+    assert a.hide_viewport and b.hide_viewport and c.hide_viewport
+    _vis('TOGGLE')
+    assert not c.hide_viewport and a.hide_viewport and b.hide_viewport
+
+
+def _outliner_vis(ids, action='TOGGLE'):
+    with bpy.context.temp_override(selected_ids=list(ids)):
+        assert bpy.ops.allset.visibility(action=action) == {'FINISHED'}
+
+
+def test_outliner_h_hides_picked_rows():
+    # #322: h over the Outliner toggles the rows picked there, hidden ones included
+    a, b, c = _scene()
+    _select(a)
+    _vis('TOGGLE')                   # a hidden, kept
+    _select(b)
+    _outliner_vis([b])
+    assert b.hide_viewport and a.hide_viewport and not c.hide_viewport
+    _outliner_vis([b])
+    assert not b.hide_viewport and a.hide_viewport and b.select_get()
+    _outliner_vis([a, c])            # a hidden row picked with a visible one: a shows, c hides
+    assert not a.hide_viewport and c.hide_viewport
+
+
+def test_outliner_h_on_collection_row():
+    # #322: a collection row picked in the Outliner = its objects
+    a, b, c = _scene()
+    coll = bpy.data.collections.new("grp")
+    bpy.context.scene.collection.children.link(coll)
+    coll.objects.link(a)
+    coll.objects.link(b)
+    bpy.context.view_layer.update()
+    _select(c)
+    _outliner_vis([coll])
+    assert a.hide_viewport and b.hide_viewport and not c.hide_viewport
+    _outliner_vis([coll])
+    assert not a.hide_viewport and not b.hide_viewport and not c.hide_viewport
 
 
 def test_hide_show_last_and_selected():

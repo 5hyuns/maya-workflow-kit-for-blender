@@ -46,11 +46,9 @@ def _clear(objects, key):
             del ob[key]
 
 
-def _hide(objects, all_objects, kept=False):
-    """Hide ``objects``; they become the "last hidden" set (and the kept selection)."""
+def _hide(objects, all_objects):
+    """Hide ``objects``; they become the "last hidden" set."""
     _clear(all_objects, LAST)
-    if kept:
-        _clear(all_objects, KEPT)
     for ob in objects:
         ob.hide_viewport = True
         try:
@@ -58,9 +56,41 @@ def _hide(objects, all_objects, kept=False):
         except RuntimeError:
             pass
         ob[LAST] = True
-        if kept:
-            ob[KEPT] = True
     return len(objects)
+
+
+def _signature(view_layer):
+    """The visible selection as text: a kept (hidden but selected) object belongs to the selection only
+    while the visible selection is still the one left when it was hidden."""
+    return "\n".join(sorted(ob.name for ob in view_layer.objects if ob.visible_get() and ob.select_get()))
+
+
+def _kept(ob, signature):
+    value = ob.get(KEPT)
+    if value is None:
+        return False
+    return value == signature if isinstance(value, str) else True
+
+
+def _outliner_pick(context, view_layer):
+    """Objects picked in the Outliner (a collection row = its objects), or None outside the Outliner."""
+    ids = getattr(context, "selected_ids", None)
+    if not ids:
+        return None
+    in_layer = {ob.session_uid for ob in view_layer.objects}
+    out, seen = [], set()
+    for item in ids:
+        if isinstance(item, bpy.types.Object):
+            obs = (item,)
+        elif isinstance(item, bpy.types.Collection):
+            obs = item.all_objects
+        else:
+            continue
+        for ob in obs:
+            if ob.session_uid in in_layer and ob.session_uid not in seen:
+                seen.add(ob.session_uid)
+                out.append(ob)
+    return out or None
 
 
 def _show(objects, view_layer, select=True):
@@ -95,12 +125,16 @@ def _first(objects, active):
 
 
 def toggle(context, dependent=False):
-    """Maya Toggle Visibility (h) on the selection (visible selected + hidden kept). Returns the count."""
+    """Maya Toggle Visibility (h) on the selection (visible selected + hidden kept, or the rows picked in
+    the Outliner). Returns the count."""
     vl = context.view_layer
     objs = list(vl.objects)
-    selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
-    kept = [ob for ob in objs if ob.hide_viewport and KEPT in ob]
-    members = selected + [ob for ob in kept if ob not in selected]
+    members = _outliner_pick(context, vl)
+    if members is None:
+        selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
+        signature = _signature(vl)
+        kept = [ob for ob in objs if ob.hide_viewport and _kept(ob, signature)]
+        members = selected + [ob for ob in kept if ob not in selected]
     if not members:
         return 0
     if dependent:
@@ -111,10 +145,15 @@ def toggle(context, dependent=False):
     else:
         to_hide = [ob for ob in members if not ob.hide_viewport]
         to_show = [ob for ob in members if ob.hide_viewport]
+    _clear(objs, KEPT)                        # the selection is now ``members``
     if to_hide:
-        _hide(to_hide, objs, kept=True)
+        _hide(to_hide, objs)
     if to_show:                               # hidden by h while selected: they come back still selected
         _show([ob for ob in to_show if ob.hide_viewport], vl)
+    signature = _signature(vl)
+    for ob in members:                        # hidden members stay selected (Maya)
+        if ob.hide_viewport:
+            ob[KEPT] = signature
     return len(members)
 
 
