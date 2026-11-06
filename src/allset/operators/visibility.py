@@ -11,8 +11,8 @@ attribute (#26). A display layer's V uses the view-layer flag
 (``hide_set``) instead, so it never changes this attribute.
 
 A hidden object can't stay selected in Blender, so Maya's "hidden but still selected" is kept
-as an ID property on the object (``KEPT``). ``LAST`` marks what the latest hide of this
-operator hid.
+as an ID property on the object (``KEPT`` = the visible selection left at that moment, as text). ``LAST`` marks
+what the latest hide of this operator hid.
 
 Toggle Show/Hide (h) follows Maya's "Toggle Visibility Options": the toggled set is
 the selection = the visible selected objects plus the hidden-but-selected ones (``KEPT``). First Selection Independent
@@ -69,7 +69,11 @@ def _kept(ob, signature):
     value = ob.get(KEPT)
     if value is None:
         return False
-    return value == signature if isinstance(value, str) else True
+    if isinstance(value, str):
+        return value == signature
+    # a flag from a file saved by an earlier version of the kit records no selection: it belongs to the empty
+    # selection only, so h with nothing selected brings the object back and h on another object never does (#336)
+    return signature == ""
 
 
 def _outliner_pick(context, view_layer):

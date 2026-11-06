@@ -43,7 +43,11 @@ def _abc(hidden):
         if ob.name in hidden:
             ob.select_set(False)
             ob.hide_viewport = True
-            ob[visibility.KEPT] = True
+    # kept = hidden by h while these visible objects stayed selected (the mark records that selection, #322 / #336)
+    signature = visibility._signature(bpy.context.view_layer)
+    for ob in obs:
+        if ob.name in hidden:
+            ob[visibility.KEPT] = signature
     return obs
 
 

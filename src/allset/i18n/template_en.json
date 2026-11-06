@@ -8757,6 +8757,7 @@
    "Time Range": "Time Range",
    "Time Slider": "Time Slider",
    "Time Slider Menu": "Time Slider Menu",
+   "Time Slider Range All": "Time Slider Range All",
    "Time Slider Scrub": "Time Slider Scrub",
    "View": "View"
   },
@@ -10257,6 +10258,7 @@
    "Maya Time Slider menu (RMB on the Time Slider)": "Maya Time Slider menu (RMB on the Time Slider)",
    "Maya Time Slider menu, in Maya's order": "Maya Time Slider menu, in Maya's order",
    "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them": "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them",
+   "Maya Time Slider: a double-click highlights the whole visible range": "Maya Time Slider: a double-click highlights the whole visible range",
    "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)": "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)",
    "Time Slider item with no Blender equivalent (greyed)": "Time Slider item with no Blender equivalent (greyed)"
   },

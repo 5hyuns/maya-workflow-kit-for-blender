@@ -42,6 +42,9 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 - Edge bevels in centimetre scenes keep their edges (#321); a 3-segment bevel shades its strips alike (#331).
 - Marking menus: a radial submenu goes back to its parent menu (#332); G after Ctrl+G groups again (#333); a kit
   window is not written to disk while it is dragged (#334); a joint Radius confirmed with Enter redraws at once (#320).
+- Time Slider: a double-click highlights the whole visible range like Maya, and no "Toggle Channel Editability" panel
+  is left over the slider (#335). h in a scene saved by an earlier version no longer shows an old hidden object while
+  hiding the picked one (#336).
 
 ## Known differences
 
@@ -52,10 +55,10 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 
 ## Thank you
 
-Thanks for the reports and ideas: @tutulk (#303), @DAI3rd (#316), @swarnava05 (#319), @AlEuf01 (#320), @Olivier-bit
+Thanks for the reports and ideas: @tutulk (#303), @DAI3rd (#316), @swarnava05 (#319, #335), @AlEuf01 (#320), @Olivier-bit
 (#321), @river5300 (#322), @ArcticZA (#323, #329), @purple-movies (#324), @mfjooste (#325), @psokk (#327), @zzador
-(#328), @GIBBETGAMES (#330, #331, #333, #334) and @haithamcolorcolor-spec (#332). Please keep telling us what breaks
-or feels off in real work.
+(#328), @GIBBETGAMES (#330, #331, #333, #334), @haithamcolorcolor-spec (#332) and @pixelkeyblade18 (#336). Please
+keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
 goal behind it.

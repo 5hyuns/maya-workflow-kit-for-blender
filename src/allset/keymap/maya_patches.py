@@ -22,7 +22,7 @@ ADDED = []
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
                       "allset.select_priority", "allset.type_char_pick", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
-                      "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
+                      "allset.time_slider_menu", "allset.time_range_all", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
@@ -931,11 +931,17 @@ def patch_time_slider(kd):
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "allset.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)
+    # a double-click highlights the whole visible range (Maya); Blender's double-click item here toggles the
+    # channel editability and left its redo panel over the Time Slider (#335)
+    _add(kd, "Dopesheet", "allset.time_range_all", make_event("LEFTMOUSE", value="DOUBLE_CLICK"), first=True,
+         shadows=TIME_SLIDER_SHADOWS)
     # Range Slider bar: a click on the empty label in the timeline header reaches the window
     # keymaps; the operator passes through anywhere but over the bar ui/range_bar.py drew.
     # Every editor keymap that uses the click runs first (intended: only unhandled clicks get here).
     for value in ("PRESS", "DOUBLE_CLICK"):
         under = tuple(n for n in kd.keymap_names() if n != "Screen" and kd.find(n, type="LEFTMOUSE", value=value))
+        if value == "DOUBLE_CLICK":
+            under += ("Time Scrub",)   # its double-click item (the whole visible range) comes in patch_time_range
         _add(kd, "Screen", "allset.range_bar_drag", make_event("LEFTMOUSE", value=value), shadows=under)
     kd.remove("Mesh", "wm.tool_set_by_id", type="K")
     kd.remove("Dopesheet", "action.select_column", type="K")
@@ -1130,6 +1136,8 @@ def patch_time_range(kd):
     shadows = (*TIME_SLIDER_SHADOWS, "Time Scrub")
     _add(kd, "Time Scrub", "allset.time_scrub", make_event("LEFTMOUSE"), first=True, shadows=shadows)
     _add(kd, "Time Scrub", "allset.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=shadows)
+    _add(kd, "Time Scrub", "allset.time_range_all", make_event("LEFTMOUSE", value="DOUBLE_CLICK"), first=True,
+         shadows=shadows)
 
 
 # --- 41. Manipulator Ctrl+LMB, Shift+MMB = closest axis ---------------------------------------------

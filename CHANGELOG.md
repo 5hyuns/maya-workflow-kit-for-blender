@@ -66,6 +66,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Repeat Last: G after Ctrl+G groups again, like Maya; the README key table lists G / Shift+G (#333).
 - Kit windows: the place file is written once a window stands still, never while it is dragged (#334).
 - A joint Radius confirmed with Enter in the Channel Box redraws the joint at once (#320).
+- Time Slider: a double-click highlights the whole visible range like Maya instead of running Blender's channel
+  editability toggle, and the "Toggle Channel Editability" panel that toggle left over the Time Slider is closed
+  (#335).
+- h (Toggle Visibility) in a scene saved by an earlier version: an object hidden with h back then no longer comes
+  back when h hides another object (#336).
 
 ### Changed
 - Translation template: the new strings (Smart Bevel, Radius to Hierarchy, Connect Tool) are in the template and in

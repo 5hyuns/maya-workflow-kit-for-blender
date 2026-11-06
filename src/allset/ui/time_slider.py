@@ -22,6 +22,8 @@ animation end). Blender form:
   Time Slider row like Maya (``ALLSET_PT_time_slider``); other timelines keep them in the header.
 """
 
+import time
+
 import bpy
 
 from .. import results
@@ -223,6 +225,24 @@ def set_range(wm, a, b, on=True):
     wm.allset_time_range_on = on
 
 
+_LAST_PRESS = None   # (time, window x, region pointer) of the last plain Time Slider press
+
+
+def _second_press(context, event, region):
+    """True for a second plain press within the double-click time near the first: a double-click. Blender's own
+    DOUBLE_CLICK event goes to allset.time_range_all before this; simulated events never become one."""
+    global _LAST_PRESS
+    now = time.monotonic()
+    last, _LAST_PRESS = _LAST_PRESS, (now, event.mouse_x, region.as_pointer())
+    if last is None or last[2] != region.as_pointer():
+        return False
+    limit = getattr(context.preferences.inputs, "mouse_double_click_time", 350) / 1000.0
+    if now - last[0] <= limit and abs(event.mouse_x - last[1]) <= 4 * (context.preferences.system.ui_scale or 1.0):
+        _LAST_PRESS = None
+        return True
+    return False
+
+
 class ALLSET_OT_time_scrub(bpy.types.Operator):
     """Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)"""
     bl_idname = "allset.time_scrub"
@@ -251,6 +271,11 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
         if self.range:
             self._anchor = f
             set_range(wm, f, f)
+        elif not self.hold and _second_press(context, event, region):
+            # a double-click: the whole visible range; the time stays where the first click put it
+            set_range(wm, *playback_range(scene))
+            _tag(context)
+            return {'FINISHED'}
         else:
             wm.allset_time_range_on = False   # a plain click drops the highlighted range (Maya)
             self._set_frame(scene, f)
@@ -283,6 +308,45 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
             _tag(context)
             return {'CANCELLED'}
         return {'RUNNING_MODAL'}
+
+
+class ALLSET_OT_time_range_all(bpy.types.Operator):
+    """Maya Time Slider: a double-click highlights the whole visible range"""
+    bl_idname = "allset.time_range_all"
+    bl_label = "Time Slider Range All"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        global _LAST_PRESS
+        region = context.region
+        if not _is_timeline(context) or region is None or region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        _LAST_PRESS = None
+        set_range(context.window_manager, *playback_range(context.scene))
+        _tag(context)
+        return {'FINISHED'}
+
+
+# Maya's Time Slider has no Adjust Last Operation panel. Blender opens its HUD over a timeline once an operator
+# with a redo panel ran there (its own double-click toggled the channel editability, #335); the flag that keeps
+# the panel closed lives on the HUD region, which exists only after the panel was shown, so the draw handler asks
+# a timer to close it when it sees one.
+def hide_redo_panels():
+    wm = bpy.context.window_manager
+    for win, area, region in list(timeline_areas(wm)):
+        space = area.spaces.active
+        if space.show_region_hud and any(r.type == 'HUD' for r in area.regions):
+            # the flag's update fades the region out and re-initialises the area for the context's window: from a
+            # timer (no window in the context) the fade started window-less and Blender crashed when it ended
+            with bpy.context.temp_override(window=win, screen=win.screen, area=area, region=region):
+                space.show_region_hud = False
+    return None
+
+
+def _redo_panel_shown(context):
+    area = context.area
+    return (area is not None and getattr(context.space_data, "show_region_hud", False)
+            and any(r.type == 'HUD' for r in area.regions))
 
 
 RANGE_EDGE_PX = 8          # end-arrow zone of a highlighted range (x UI scale)
@@ -528,6 +592,8 @@ def _draw_range():
     wm = context.window_manager
     if not _is_timeline(context):
         return
+    if _redo_panel_shown(context) and not bpy.app.timers.is_registered(hide_redo_panels):
+        bpy.app.timers.register(hide_redo_panels, first_interval=0.0)
     region = context.region
     maya = has_slider_panel(context.space_data)
     if maya:
@@ -901,7 +967,8 @@ def _on_load(_dummy=None):
         _schedule()
 
 
-classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scrub, ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu,
+classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scrub, ALLSET_OT_time_range_all,
+           ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu,
            ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
 
 

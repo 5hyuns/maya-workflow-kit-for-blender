@@ -6213,4 +6213,7 @@ STRINGS = {
     'polySmartBevel': 'polySmartBevel',
     # Universal Manipulator on components (#318)
     'Maya Universal Manipulator on mesh components (the same tool in a component mode).': 'メッシュ コンポーネントの Maya ユニバーサル マニピュレータ (コンポーネント モードでも同じツール)。',
+    # Time Slider double-click (#335)
+    'Time Slider Range All': 'タイムスライダの全範囲',
+    'Maya Time Slider: a double-click highlights the whole visible range': 'Maya タイムスライダ: ダブルクリックで表示範囲全体をハイライト',
 }
