@@ -14,8 +14,11 @@ inside it; X-Ray Joints, X-Ray and wireframe views draw them through every surfa
 
 Here a skeleton's joints are its bones' heads (pose positions in Object / Pose Mode, edit bones in Edit Mode); in
 Object Mode a selected skeleton object counts as its root joints selected. Bones with a custom shape draw that shape
-instead. A skeleton whose Blender display type is Stick or Wire draws one line per bone and no spheres. The kit draws only in 3D Views of the Maya layout's workspaces where Blender's Bones overlay is off — the kit
-turns it off once per screen; a view whose Bones overlay is turned back on shows Blender's bones and no kit joints.
+instead. The skeleton's Blender display type picks the look: Octahedral (Blender's default for a new skeleton) draws
+Maya joints; Stick or Wire one line per bone and no spheres; B-Bone a wire box per bone (per segment, following the
+curve) and Envelope the wire head and tail spheres joined along the bone, both in the joint colours. The kit draws
+only in 3D Views of the Maya layout's workspaces where Blender's Bones overlay is off — the kit turns it off once per
+screen; a view whose Bones overlay is turned back on shows Blender's bones and no kit joints.
 """
 
 import math
@@ -32,6 +35,7 @@ LINE_PX = 1.0
 SETTLED = "allset_bones_settled"      # screen ID prop: the kit turned Blender's Bones overlay off in its 3D Views
 MAYA_RADIUS = 1.0                     # Maya joint Radius default
 STICK_TYPES = {'STICK', 'WIRE'}       # the skeleton's Blender display type: one line per bone, no spheres
+SHAPE_TYPES = {'BBONE', 'ENVELOPE'}   # display types drawn as wire versions of Blender's bone shapes
 
 _handle = []
 _GEN = [0]          # bumped by every update that can change a drawn joint
@@ -253,6 +257,69 @@ def bone_lines(parent, child):
     return pts
 
 
+def _box_lines(rings):
+    """Edges of a tube through ``rings`` (each four corners): the rings and the lines joining their corners."""
+    pts = []
+    for k, ring in enumerate(rings):
+        for i in range(4):
+            pts += (ring[i], ring[(i + 1) % 4])
+            if k:
+                pts += (rings[k - 1][i], ring[i])
+    return pts
+
+
+def bbone_lines(ob, bone):
+    """World edges of Blender's B-Bone box of ``bone`` (pose bone, or edit bone in Edit Mode): ``bbone_x`` /
+    ``bbone_z`` half sizes, one box per segment along the bent bone in Object / Pose Mode."""
+    mw = ob.matrix_world
+    data = bone.bone if isinstance(bone, bpy.types.PoseBone) else bone
+    x, z = data.bbone_x, data.bbone_z
+    corners = (Vector((x, 0.0, z)), Vector((-x, 0.0, z)), Vector((-x, 0.0, -z)), Vector((x, 0.0, -z)))
+    base = mw @ bone.matrix
+    frames = []
+    if isinstance(bone, bpy.types.PoseBone) and data.bbone_segments > 1:
+        try:
+            frames = [base @ bone.bbone_segment_matrix(i, rest=False) for i in range(data.bbone_segments + 1)]
+        except (RuntimeError, ValueError):
+            frames = []
+    if not frames:
+        frames = [base, base @ Matrix.Translation((0.0, bone.length, 0.0))]
+    return _box_lines([[f @ c for c in corners] for f in frames])
+
+
+def envelope_lines(ob, bone):
+    """World edges of Blender's Envelope shape of ``bone``: wire spheres of the head and tail radius joined by four
+    lines along the bone."""
+    mw = ob.matrix_world
+    data = bone.bone if isinstance(bone, bpy.types.PoseBone) else bone
+    s = max(mw.to_scale())
+    m = mw @ bone.matrix
+    frame = m.to_3x3().normalized()
+    head, tail = mw @ bone.head, mw @ bone.tail
+    rh, rt = data.head_radius * s, data.tail_radius * s
+    pts = sphere_lines(head, frame, rh) + sphere_lines(tail, frame, rt)
+    for axis in (frame.col[0], -frame.col[0], frame.col[2], -frame.col[2]):
+        pts += (head + axis * rh, tail + axis * rt)
+    return pts
+
+
+def own_shape_lines(ob, kind):
+    """{bone name: world edges} of every visible bone of ``ob`` drawn as Blender's ``kind`` shape (B-Bone /
+    Envelope), custom-shaped bones left out (they draw their shape)."""
+    from .. import compat
+    fn = bbone_lines if kind == 'BBONE' else envelope_lines
+    out = {}
+    if ob.mode == 'EDIT':
+        for eb in ob.data.edit_bones:
+            if not (eb.hide or _coll_hidden(eb)):
+                out[eb.name] = fn(ob, eb)
+    else:
+        for pb in ob.pose.bones:
+            if not (compat.bone_hidden(pb) or _coll_hidden(pb.bone) or pb.custom_shape is not None):
+                out[pb.name] = fn(ob, pb)
+    return out
+
+
 def shape_lines(ob, matrix, depsgraph):
     """World line segments of a custom shape's edges."""
     try:
@@ -407,18 +474,25 @@ def view_lines(context):
             continue
         sel, lead = selection(ob, js)
         col = colours(js, sel, lead)
-        stick = getattr(ob.data, "display_type", 'OCTAHEDRAL') in STICK_TYPES
-        spheres, order = _sphere_array(js) if not stick else (None, ())
+        kind = getattr(ob.data, "display_type", 'OCTAHEDRAL')
+        stick = kind in STICK_TYPES
+        own = kind in SHAPE_TYPES
+        spheres, order = _sphere_array(js) if not (stick or own) else (None, ())
         if order:
             pts.append(spheres)
             cols.append(np.repeat(np.array([(*col[n], 1.0) for n in order], np.float32), per_sphere, axis=0))
         bones = []
         bone_cols = []
+        if own:
+            for name, segs in own_shape_lines(ob, kind).items():
+                if name in col:
+                    bones += segs
+                    bone_cols += [col[name]] * len(segs)
         for j in js.values():
             if j.shape is not None:
                 add(shape_lines(j.shape[0], j.shape[1], depsgraph), col[j.name])
                 continue
-            for cn in j.children:
+            for cn in () if own else j.children:
                 child = js[cn]
                 if child.shape is None:
                     segs = [j.centre, child.centre] if stick else bone_lines(j, child)

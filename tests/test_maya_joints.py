@@ -200,3 +200,31 @@ def test_radius_edit_writes_every_selected_joint_and_redraws():
     assert mj._GEN[0] > gen, "Joint Size redraws the joints"
     bpy.context.scene.allset_joint_size = 1.0
     bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_bbone_and_envelope_display_draw_blender_shapes_as_wire():
+    """Display type B-Bone: a wire box per bone (bbone_x / bbone_z half sizes, head to tail); Envelope: the head and
+    tail spheres joined along the bone. Octahedral (a new skeleton) keeps the Maya joints."""
+    arm, names = _chain()
+    assert arm.data.display_type == 'OCTAHEDRAL', "a kit skeleton starts with Maya joints"
+    pb = arm.pose.bones[names[0]]
+    bone = pb.bone
+    box = mj.bbone_lines(arm, pb)
+    assert len(box) == 2 * (4 + 4 + 4), "two rings of four edges and four along the bone"
+    mw = arm.matrix_world
+    head, tail = mw @ pb.head, mw @ pb.tail
+    for p in box:
+        along = (p - head).dot((tail - head).normalized())
+        assert -1e-5 < along < (tail - head).length + 1e-5, "the box runs from head to tail"
+        side = (p - head) - (tail - head).normalized() * along
+        assert abs(side.length - (bone.bbone_x ** 2 + bone.bbone_z ** 2) ** 0.5) < 1e-4, "corners at bbone_x / z"
+    bone.bbone_segments = 4
+    bpy.context.view_layer.update()
+    assert len(mj.bbone_lines(arm, pb)) == 2 * (4 * 5 + 4 * 4), "one box per segment"
+    env = mj.envelope_lines(arm, pb)
+    assert len(env) == 2 * 2 * 3 * mj.SEGMENTS + 8
+    assert any(abs((p - head).length - bone.head_radius) < 1e-4 for p in env)
+    assert any(abs((p - tail).length - bone.tail_radius) < 1e-4 for p in env)
+    shapes = mj.own_shape_lines(arm, 'BBONE')
+    assert set(shapes) == set(names), "every bone, the last ones of a chain too"
+

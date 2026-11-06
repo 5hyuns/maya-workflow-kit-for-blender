@@ -1,6 +1,7 @@
 """Joints drawn like Maya's in the Maya layout (cm scene): Blender's bones are off in the layout's views, the kit draws
 dark violet wire spheres and bones; selecting the root joint turns the whole chain green (the lead's colour passed down);
-turning the view's Bones overlay back on shows Blender's bones and no kit joints. Selection follows Maya: a click hits a
+turning the view's Bones overlay back on shows Blender's bones and no kit joints. Blender's display types Stick, B-Bone
+and Envelope draw lines, wire boxes and wire envelopes instead of Maya joints. Selection follows Maya: a click hits a
 joint's wire (its centre cross in a front view selects it, the inside of its circle away from the lines selects
 nothing), a marquee touching a joint's lines picks it but keeps one joint per skeleton (the one nearest the root), and
 joints win over a mesh in the same marquee."""
@@ -119,7 +120,44 @@ def s_stick():
     n = violet_total(shot("stick"))
     check(f"Blender display type Stick: lines only, no spheres ({n} px vs {C['sphere_px']} px)",
           0 < n < C["sphere_px"] * 0.6)
-    bpy.data.objects[C["arm"]].data.display_type = 'OCTAHEDRAL'
+    arm = bpy.data.objects[C["arm"]]
+    k = mod(".operators.units").maya_unit()
+    for b in arm.data.bones:
+        b.bbone_x = b.bbone_z = 0.6 * k
+        b.head_radius = b.tail_radius = 1.5 * k
+    arm.data.display_type = 'BBONE'
+    redraw()
+
+
+def mids():
+    arm = bpy.data.objects[C["arm"]]
+    return [arm.matrix_world @ ((b.head_local + b.tail_local) / 2) for b in (arm.data.bones[n] for n in C["names"])]
+
+
+@step
+def s_bbone():
+    px = shot("bbone")
+    n = violet_total(px)
+    at_mid = [count(px, m, VIOLET, half=30) for m in mids()]
+    check(f"Blender display type B-Bone: a wire box around each bone ({at_mid} px at the bones' middles)",
+          all(c > 8 for c in at_mid))
+    check(f"B-Bone: no Maya joint spheres ({n} px vs {C['sphere_px']} px)", 0 < n < C["sphere_px"] * 0.8)
+    bpy.data.objects[C["arm"]].data.display_type = 'ENVELOPE'
+    redraw()
+
+
+@step
+def s_envelope():
+    px = shot("envelope")
+    n = violet_total(px)
+    arm = bpy.data.objects[C["arm"]]
+    tails = [arm.matrix_world @ arm.data.bones[x].tail_local for x in C["names"]]
+    at_tail = [count(px, t, VIOLET) for t in tails]
+    check(f"Blender display type Envelope: wire spheres at the bones' tails too ({at_tail} px)",
+          all(c > 20 for c in at_tail))
+    check(f"Envelope draws differently from the Maya joints ({n} px vs {C['sphere_px']} px)",
+          n > 0 and abs(n - C["sphere_px"]) > 0.05 * C["sphere_px"])
+    arm.data.display_type = 'OCTAHEDRAL'
     redraw()
 
 
