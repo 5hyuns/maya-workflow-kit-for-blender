@@ -428,6 +428,43 @@ def _runtime_menu_ids():
     return out
 
 
+def _runtime_tool_ids():
+    """Return bl_idnames exposed by registered Python WorkSpaceTool subclasses."""
+    out = set()
+    seen = set()
+
+    def walk(cls):
+        try:
+            subclasses = cls.__subclasses__()
+        except (AttributeError, TypeError):
+            return
+        for sub in subclasses:
+            if sub in seen:
+                continue
+            seen.add(sub)
+            idn = getattr(sub, "bl_idname", None)
+            if isinstance(idn, str) and idn:
+                out.add(idn)
+            walk(sub)
+
+    try:
+        walk(bpy.types.WorkSpaceTool)
+    except (AttributeError, TypeError, RuntimeError):
+        pass
+    return out
+
+
+def _tool_candidates(extra=()):
+    """Combine built-in Tool IDs with IDs from registered custom Workspace Tools."""
+    try:
+        found = _runtime_tool_ids()
+    except Exception:
+        found = set()
+    found.update(_KNOWN_TOOLS)
+    found.update(extra)
+    return sorted(found)
+
+
 def _menu_candidates(extra=()):
     try:
         found = _runtime_menu_ids()
@@ -449,7 +486,7 @@ def action_id_search(self, context, edit_text):
     if kind == "MENU":
         return _filter(_menu_candidates(), edit_text)
     if kind == "TOOL":
-        return _filter(sorted(_KNOWN_TOOLS), edit_text)
+        return _filter(_tool_candidates(), edit_text)
     if kind == "OPERATOR":
         return _filter(_operator_ids(), edit_text)
     return _filter(_menu_candidates(), edit_text)
@@ -1688,6 +1725,7 @@ def _sync_properties_list(wm):
     elif kind == "TOOL":
         rows.extend((
             ("FIELD", "allset_se_action_id", "Tool ID"),
+            ("INFO", "", "Built-in tools and registered custom Workspace Tools are searchable; other IDs can be entered manually."),
             ("FIELD", "allset_se_tool_space_type", "Tool Editor"),
             ("FIELD", "allset_se_tool_mode", "Required Mode"),
             ("FIELD", "allset_se_object_type", "Object Type"),
