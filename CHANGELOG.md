@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.13.0] — 2026-11-07
 
 ### Added
 - **Edit Mesh > Smart Bevel** (#303), Maya 2027's bevel, below Bevel in the Edit Mesh menu, in the Modeling Toolkit's
@@ -22,6 +22,59 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Pivot = the selection's centre point, Center = the box centre), the centre handles move them, and a typed
   length scales them to that size. Local space uses the edited object's axes. Unselected vertices and the
   object itself stay as they are; one Ctrl+Z takes a drag back.
+- **Modular editor windows** (#319): a Graph Editor, Dope Sheet or UV Editor pane has a Panels menu like the
+  viewport's: Panel swaps the editor, Tear Off opens the editor as its own window and leaves a 3D View in the pane,
+  Tear Off Copy opens a copy and keeps the pane. A floating editor window's handle docks it at the bottom, left,
+  right or top of the main viewport with its settings; a window moved to another monitor keeps its place there.
+- **Skeleton > HumanIK leads to Rigify** (#319): one submenu with Enable Rigify Add-on, Add Meta-Rig, Generate Rig,
+  Rig Settings, Bone Rig Type and Rig Controls.
+- **Connect Tool** (#322): Mesh Tools > Connect is an interactive tool like Maya's, with Slide / Segments / Pinch in
+  the Tool Settings, a middle-mouse drag that re-does the last connection, a HUD line, and Maya's rules for a
+  selection made before the tool (one edge connects its ring).
+- **Edit Mesh > Transform** leaves an editable Transform Component node (#321). **Edit Mesh > Extrude** with faces
+  and a curve selected extrudes along the curve and keeps the bottom of a lone face; on edges it keeps connected
+  edges together and offsets border edges out of the face (#321).
+- **Curves > Insert Knot** works on one selected curve point, keeps the curve's shape, warns without a point and
+  leaves the curve as it is when a curve end is selected (#321).
+- **UV Editor View > Grid** option box sets the UDIM tile grid; the **Light Linking** editors open on the light's
+  Light and Shadow Linking panels (#321).
+- **Mesh > Booleans keep construction history** like Maya, and Delete takes a Boolean result's hidden inputs with it,
+  in the viewport and the Outliner (#324).
+- **Panel toolbar camera list** (#325): the camera icon's right-click menu lists every camera in name order, then New
+  Perspective, New Orthographic (Front / Side / Top) and Stereo Cameras. **Alt+LMB+MMB dollies** the view like Maya,
+  in either button order (#325).
+- **Constraint weights in the Channel Box** (#329): a constraint's target weight (pCube1W0) is a channel like Maya's:
+  select it, Key Selected, Breakdown, Delete Selected and the keyed state, on objects and joints.
+- **Joint Size in Metre Scenes** preference (default 10), so metre scenes don't draw thread-thin joints (#328).
+- **Channel Box > Settings > Radius to Hierarchy** sends a typed Radius down the joint chain; B-Bone and Envelope
+  display draw wire versions of Blender's bone shapes (#320).
+- **Search and Replace Names**: Search For takes $ for a suffix and ^ for a prefix like Maya (#322). **Grow / Shrink
+  Selection** on the < > key of non-US keyboards and in the UV Editor (#322).
+- **Selection highlight in Rendered shading** (#330): the lead's green and the other selected objects' white wire draw
+  in a lit view (EEVEE, Cycles) like Maya; the IPR picture stays clean.
+- **T** shows the last extrude / bevel manipulator and In-View Editor, with no error in edit mode (#327).
+
+### Fixed
+- Channel Box: picking channels redraws only the editors that show them, so a click responds at once (#316).
+- Outliner: h hides the picked rows and never shows objects hidden before (#322).
+- Pose Mode: a box over rig controls picks every control in it, custom shapes included (#323).
+- Edge bevels keep their new edges in centimetre scenes (#321).
+- Bevel: strip edges whose faces meet at exactly the Smoothing angle are all soft, so a 3-segment bevel no longer
+  shades one strip faceted next to a smooth one (#331).
+- Marking menus: a radial submenu gives the menu it opened from back: drag back inside the ring through an empty
+  sector of the submenu, or press Esc, and the parent menu is there again, in press and click mode (#332).
+- Repeat Last: G after Ctrl+G groups again, like Maya; the README key table lists G / Shift+G (#333).
+- Kit windows: the place file is written once a window stands still, never while it is dragged (#334).
+- A joint Radius confirmed with Enter in the Channel Box redraws the joint at once (#320).
+
+### Changed
+- Translation template: the new strings (Smart Bevel, Radius to Hierarchy, Connect Tool) are in the template and in
+  the Japanese and Simplified Chinese tables.
+
+### Known differences
+- Smart Bevel is this kit's bevel geometry with Maya 2027's options: Cutback Relaxation and Remove Isolated Arcs are
+  not available, and Depth follows Bevel's Depth (1 round, 0 flat, -1 concave).
+- The Universal Manipulator on components goes beyond Maya, which shows no manipulator for a component selection.
 
 ## [0.12.0] — 2026-11-05
 
