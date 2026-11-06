@@ -150,8 +150,21 @@ def _keys_menu(ed, graph):
     if graph:
         m[f"{ed}/Keys/Insert Key Tool"] = "allset.insert_key_tool"
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
-    # the other Remove Key items are greyed with notices (ui/notices.py)
+    # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
+    if graph:     # Maya List > Bookmarks (operators/graph_bookmarks)
+        m[f"{ed}/List/Bookmarks"] = ("menu", "ALLSET_MT_graph_bookmarks")
+    if graph:     # Maya Sculpting Tools brushes (operators/graph_sculpt)
+        for item, mode in (("Grab Tool", "GRAB"), ("Smooth Tool", "SMOOTH"), ("Smear Tool", "SMEAR"),
+                           ("Key Reducer Tool", "REDUCE")):
+            m[f"{ed}/Edit/Transformation Tools/Sculpting Tools/{item}"] = ("allset.graph_sculpt", {"mode": mode})
+    if graph:     # Maya Curves > Clamp / Offset Curves (operators/graph_key_menu)
+        m[f"{ed}/Curves/Clamp Curves"] = "allset.clamp_curves"
+        m[f"{ed}/Curves/Offset Curves"] = "allset.offset_curves"
+    for item, mode in (("Unsnapped", "UNSNAPPED"), ("Before Current Frame", "BEFORE"),
+                       ("After Current Frame", "AFTER"), ("Outside Selected Range", "OUTSIDE"),
+                       ("Ripple Delete", "RIPPLE")):
+        m[f"{ed}/Keys/Remove Key/{item}"] = ("allset.remove_keys", {"mode": mode})
     return m
 
 
@@ -260,9 +273,10 @@ MAP = {
     # Blender's "Only Selected Curve Keyframes" is a preference (#43): open it, don't write it
     f"{GE}/View/Keys/Always": _PREFS_ANIMATION,
     f"{GE}/View/Keys/Active Only": _PREFS_ANIMATION,
-    f"{GE}/View/Tangents/Always": _prop(f"{_SP}.use_only_selected_keyframe_handles", False),
-    f"{GE}/View/Tangents/Never": _prop(f"{_SP}.show_handles", False),
-    f"{GE}/View/Tangents/On Active Keys": _prop(f"{_SP}.use_only_selected_keyframe_handles", True),
+    # the kit's value while it draws the handles itself (ui/graph_handles.py), else the editor's own
+    f"{GE}/View/Tangents/Always": _prop(f"{_WM}.allset_graph_tangents", 'ALWAYS'),
+    f"{GE}/View/Tangents/Never": _prop(f"{_WM}.allset_graph_tangents", 'NEVER'),
+    f"{GE}/View/Tangents/On Active Keys": _prop(f"{_WM}.allset_graph_tangents", 'ACTIVE'),
     f"{GE}/View/Theme/Color Preferences": ("screen.userpref_show", {"section": 'THEMES'}),
     f"{GE}/View/Absolute View": _prop(f"{_SP}.use_normalization", False),
     f"{GE}/View/Stacked View": ("allset.graph_view_mode", {"mode": "STACKED"}),
@@ -690,6 +704,47 @@ MAP.update({
     **_help_menu(CN, "animation/drivers/index.html"),
 })
 MAP.pop(f"{SH}/Help/Help on {SH}", None)    # Maya titles it Help on Shape Authoring
+
+
+# Trax Editor = an NLA Editor with Maya's menu bar (ui/trax_editor.py; clips: operators/trax_clips.py; literal: no
+# bpy imports)
+TX = "Trax Editor"
+
+
+def _clip(action):
+    return ("allset.trax_clip_edit", {"action": action})
+
+
+_SIDEBAR = ("wm.context_toggle", {"data_path": "space_data.show_region_ui"})
+MAP.update({
+    f"{TX}/File/Visor...": _SIDEBAR,
+    f"{TX}/Edit/Undo": "ed.undo",
+    f"{TX}/Edit/Redo": "ed.redo",
+    f"{TX}/Edit/Split": _clip("SPLIT"),
+    f"{TX}/Edit/Trim Before": _clip("TRIM_BEFORE"),
+    f"{TX}/Edit/Trim After": _clip("TRIM_AFTER"),
+    f"{TX}/Edit/Duplicate": _clip("DUPLICATE"),
+    f"{TX}/View/Frame All": "nla.view_all",
+    f"{TX}/View/Frame Selection": "nla.view_selected",
+    f"{TX}/View/Frame Playback Range": "anim.scene_range_frame",
+    f"{TX}/View/Center Current Time": "nla.view_frame",
+    f"{TX}/View/Frame All Scene Clips": "nla.view_all",
+    f"{TX}/View/Graph Anim Curves...": ("allset.open_editor", {"ui_type": 'FCURVES'}),
+    f"{TX}/Modify/Attribute Editor...": _SIDEBAR,
+    f"{TX}/Modify/Enable/Disable": _clip("ENABLE"),
+    f"{TX}/Modify/Activate/Deactivate Keys": "allset.trax_activate_keys",
+    f"{TX}/Modify/Remove Empty Tracks": ("allset.trax_tracks", {"action": "REMOVE_EMPTY"}),
+    f"{TX}/Create/Animation Clip": "allset.trax_create_clip",
+    f"{TX}/Create/Blend": _clip("BLEND"),
+    f"{TX}/Create/Character Set": "allset.character_create",
+    f"{TX}/Create/Quick Select Set...": "allset.create_quick_select_set",
+    f"{TX}/Edit/Quick Select Sets": ("menu", "ALLSET_MT_quick_select_sets"),
+    f"{TX}/Library/Insert Clip": ("menu", "ALLSET_MT_trax_insert_clip"),
+    f"{TX}/List/Auto Load Selected Characters": _prop("space_data.dopesheet.show_only_selected"),
+    **_help_menu(TX, "editors/nla/index.html"),
+    f"{TX}/Help/Help on Trax": _url(_MANUAL + "editors/nla/index.html"),
+})
+MAP.pop(f"{TX}/Help/Help on {TX}", None)    # Maya titles it Help on Trax
 
 
 # Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py);

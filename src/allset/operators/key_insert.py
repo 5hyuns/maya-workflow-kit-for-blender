@@ -19,6 +19,7 @@ from bpy.props import EnumProperty, IntProperty
 from .. import results
 from .. import undo_steps
 from . import time_keys
+from .. import i18n
 
 CHANNELS = {"TRANSLATE": ("location",),
             "ROTATE": ("rotation_euler", "rotation_quaternion", "rotation_axis_angle"),
@@ -275,6 +276,7 @@ class ALLSET_OT_insert_key(bpy.types.Operator):
     channels: EnumProperty(items=INSERT_ITEMS, name="Channels", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in INSERT_ITEMS if k == props.channels)
 

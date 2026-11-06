@@ -33,6 +33,7 @@ from bpy.props import EnumProperty
 from .. import compat, undo_steps
 from . import uv_tools
 from .component import select_only
+from .. import i18n
 
 EPS = uv_tools.EPS
 AREA_TOL = 1e-6          # Maya 2026's Select Unmapped Faces tolerance
@@ -443,6 +444,7 @@ class ALLSET_OT_uv_select_facing(_SelectOp, bpy.types.Operator):
     front: bpy.props.BoolProperty(name="Front-Facing", default=False, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return ("Select the components of front-facing UV faces (counter-clockwise winding)" if props.front else
                 "Select the components of back-facing UV faces (clockwise winding)")
@@ -596,6 +598,7 @@ class ALLSET_OT_uv_filter_faces(bpy.types.Operator):
     poll = classmethod(lambda cls, context: _poll(context))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in FILTERS if k == props.kind)
 

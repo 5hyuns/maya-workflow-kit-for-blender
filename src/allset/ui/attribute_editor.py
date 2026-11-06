@@ -570,10 +570,14 @@ def draw_extra(layout, owner, layout_id):
     if body is None:
         return
     body = section_body(body)
-    if not keys:
+    from .camera_aim_lines import CONNECTOR       # a camera rig group's Display Connector (#299)
+    connector = CONNECTOR in owner.keys()
+    if not keys and not connector:
         body.label(text="(none)")
     for k in sorted(keys):
         body.prop(owner, f'["{k}"]', text=k)
+    if connector:
+        body.prop(owner, f'["{CONNECTOR}"]', text="Display Connector")
 
 
 def draw_extrude_history(layout, context, rec):

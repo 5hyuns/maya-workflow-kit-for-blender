@@ -189,6 +189,10 @@ OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTAT
             "TRANSFORM_OT_resize": 'RESIZE', "ALLSET_OT_component_scale": 'RESIZE', 'ALLSET_OT_live_translate': 'TRANSLATE'}
 
 
+# The Rotate view ring as the active handle: a rotation about the view axis.
+VIEW_HANDLE = {"constraint_axis": (False, False, False), "orient_type": 'VIEW', "orient_axis": 'Z'}
+
+
 def handle_from_op(bl_idname, props):
     """(kind, handle) for a transform the manipulator ran; handle None = free (centre)."""
     if bl_idname == 'ALLSET_OT_pivot_translate':
@@ -225,6 +229,31 @@ def remember_last_op(since):
 
 def reset_handle(kind):
     HANDLES.pop(kind, None)
+
+
+def handle_from_gizmo(context, gz):
+    """(kind, handle) of the manipulator handle ``gz`` that a press is on, as ``handle_from_op`` gives it for a drag
+    on it; kind None when the MMB drag can't use it (the Rotate trackball, the pivot rings)."""
+    from ..ui import manipulator
+    kind = manipulator.tool_kind(context)
+    if kind is None:
+        return None, None
+    role = getattr(gz, "handle_role", None)
+    if role == 'CENTER':
+        return kind, None
+    otype = manipulator.slot_type(context.scene, kind)
+    if role == 'AXIS':
+        return kind, {"constraint_axis": tuple(a == gz.handle_axis for a in 'XYZ'), "orient_type": otype}
+    if role == 'PLANE':
+        return kind, {"constraint_axis": manipulator.PLANES[gz.handle_axis][0], "orient_type": otype}
+    if role == 'RING':        # a Rotate axis ring
+        return kind, {"constraint_axis": tuple(a == gz.handle_axis for a in 'XYZ'), "orient_type": otype,
+                      "orient_axis": gz.handle_axis}
+    # the Rotate view ring (a plain dial; the trackball dial picks its whole disc): rotate about the view axis
+    if (kind == 'ROTATE' and role is None and gz.bl_idname == "GIZMO_GT_dial_3d"
+            and 'FILL_SELECT' not in gz.draw_options):
+        return kind, dict(VIEW_HANDLE)
+    return None, None
 
 
 def finish(state, window, area, region):
@@ -365,7 +394,7 @@ class ALLSET_OT_manip_duplicate(bpy.types.Operator):
 
 
 class ALLSET_OT_manip_press(bpy.types.Operator):
-    """LMB on the manipulator: remember which handle the drag used (Maya active handle)"""
+    """LMB on the manipulator: clicking or dragging a handle makes it the active handle (Maya active handle)"""
     bl_idname = "allset.manip_press"
     bl_label = "Manipulator Press"
     bl_options = {'INTERNAL'}
@@ -374,6 +403,12 @@ class ALLSET_OT_manip_press(bpy.types.Operator):
         from . import snap_align
         snap_align.apply_active(context)       # this tool's Step Snap Relative / Absolute
         if from_xform_gizmo(context) and context.window is not None:
+            gz = next((g for g in context.gizmo_group.gizmos if g.is_highlight), None)
+            kind, handle = handle_from_gizmo(context, gz) if gz is not None else (None, None)
+            if kind is not None:
+                HANDLES[kind] = handle
+                context.area.tag_redraw()
+            # a drag then remembers what its transform registered
             watch({"kind": 'PRESS'}, context.window, context.area, context.region)
         return {'PASS_THROUGH'}
 
@@ -654,8 +689,8 @@ class ALLSET_OT_manip_size(bpy.types.Operator):
 
     # Maya's = / - keys grow / shrink the manipulator; here 1.25x steps within
     # Blender's gizmo size range 10-200 px. This scales the kit's
-    # Move / Scale manipulator only (ui/manipulator.SIZE): Blender's gizmo_size preference is never written, so
-    # Blender's own gizmos (Rotate) keep their size.
+    # Move / Rotate / Scale manipulator (ui/manipulator.SIZE): Blender's gizmo_size preference is never written, so
+    # Blender's own gizmos keep their size.
     factor: bpy.props.FloatProperty(name="Factor", default=1.25, min=0.1, max=10.0,
                                     options={'SKIP_SAVE'})
 

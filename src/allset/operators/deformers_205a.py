@@ -42,6 +42,7 @@ from mathutils import Vector
 
 from .. import results, undo_steps
 from . import deformers, units, wire_deformer
+from .. import i18n
 
 VERSION_PROP = "allset_205a_version"
 VERSION = 1
@@ -732,6 +733,7 @@ class ALLSET_OT_deformer_tss(bpy.types.Operator):
     kind: EnumProperty(items=KINDS, name="Deformer", options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return {'TENSION': "Keep the edge lengths of the deformed mesh (Maya Deform > Tension)",
                 'SOLIDIFY': "Keep a region of the deformed mesh rigid (Maya Deform > Solidify)",

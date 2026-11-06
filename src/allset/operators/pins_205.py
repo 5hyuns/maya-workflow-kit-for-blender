@@ -53,6 +53,7 @@ from mathutils import Matrix, Vector
 
 from .. import results, undo_steps
 from . import deformers, units
+from .. import i18n
 
 KIND = "allset_pin"                  # helper empty: "uvPin" | "proximityPin"
 NODE = "allset_pin_node"             # helper empty: Maya node name (uvPin1)
@@ -887,6 +888,7 @@ class ALLSET_OT_intermediate_objects(bpy.types.Operator):
     show: BoolProperty(name="Display", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return "Display intermediate objects" if props.show else "Hide intermediate objects"
 
@@ -1082,6 +1084,7 @@ class ALLSET_OT_wrap_influence(bpy.types.Operator):
                          options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return ("Let this object drive the wrap deformation too" if props.action == 'ADD'
                 else "Remove wrap influence")
@@ -1117,7 +1120,7 @@ def _windows():
             maintain_offset=v["maintain_offset"], mode=v["mode"].upper(), normal_axis=v["normal_axis"],
             tangent_axis=v["tangent_axis"])
     return [
-        # Maya's UV Pin Options: factory values and labels
+        # Maya's UV Pin Options: default values and labels
         Window("uv_pin", "UV Pin Options", "Add", ("allset.uv_pin", {}),
                [F("setup", "Pin locations", "enum", "Transforms", items=("Components", "Transforms"),
                   heading="Connections"),

@@ -15,10 +15,11 @@
 """
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
 from .. import undo_steps
 from . import time_keys
+from .. import i18n
 
 MUTE_NAME = "Maya mute"
 EPS = 1e-4
@@ -72,13 +73,12 @@ def _redraw(context):
 # --- selected-key versions of the key windows ---------------------------------------------------------------
 
 def _remove(fc, pts):
+    """Remove the keyframe points ``pts`` of ``fc``: by index, last first (removing a key moves the ones after it, so
+    a point taken before the first removal can name another key afterwards)."""
     ids = {kp.as_pointer() for kp in pts}
-    while True:
-        kp = next((k for k in fc.keyframe_points if k.as_pointer() in ids), None)
-        if kp is None:
-            break
-        ids.discard(kp.as_pointer())
-        fc.keyframe_points.remove(kp)
+    idx = [i for i, kp in enumerate(fc.keyframe_points) if kp.as_pointer() in ids]
+    for i in reversed(idx):
+        fc.keyframe_points.remove(fc.keyframe_points[i])
     fc.update()
 
 
@@ -594,6 +594,7 @@ class ALLSET_OT_mute_key(bpy.types.Operator):
     mute: BoolProperty(name="Mute", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         if props.mute:
             return cls.__doc__
@@ -632,6 +633,234 @@ class ALLSET_OT_graph_inbetween(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Keys > Remove Key ----------------------------------------------------------------------------------------
+# Maya's Remove Key items act on the curves that hold selected keys. Unsnapped / Before / After Current Frame use
+# the editor's shown curves when no key is selected; Outside Selected Range and Ripple Delete need selected keys, whose
+# earliest and latest times are the range (on every curve with a selected key).
+
+REMOVE_MODES = (
+    ("UNSNAPPED", "Unsnapped", "Delete the keys that are not on whole frames (Maya Keys > Remove Key > Unsnapped)"),
+    ("BEFORE", "Before Current Frame", "Delete the keys before the current frame (Maya Keys > Remove Key > Before "
+     "Current Frame)"),
+    ("AFTER", "After Current Frame", "Delete the keys after the current frame (Maya Keys > Remove Key > After "
+     "Current Frame)"),
+    ("OUTSIDE", "Outside Selected Range", "Delete the keys outside the selected keys' time range; a curve without a "
+     "key at an end of the range gets one there, so its shape inside stays (Maya Keys > Remove Key > Outside Selected "
+     "Range)"),
+    ("RIPPLE", "Ripple Delete", "Delete the keys inside the selected keys' time range and move the later keys back "
+     "to close the gap (Maya Keys > Remove Key > Ripple Delete)"),
+)
+RIPPLE_GAP = 0.02     # the key from the range's end lands just after the start (Blender merges keys closer than
+                      # 0.01 frame), so the curve jumps there like Maya's
+
+
+def _key_at(fc, t):
+    return next((kp for kp in fc.keyframe_points if abs(kp.co.x - t) < EPS), None)
+
+
+def _ensure_key(fc, t):
+    """A key at time ``t`` on ``fc`` holding the curve's value there (the existing one if any)."""
+    if _key_at(fc, t) is None:
+        fc.keyframe_points.insert(t, fc.evaluate(t))
+
+
+def _remove_at(fc, times):
+    """Remove the keys of ``fc`` at ``times`` (looked up again after each removal: removing a key moves the others)."""
+    for t in times:
+        kp = _key_at(fc, t)
+        if kp is not None:
+            fc.keyframe_points.remove(kp)
+    if times:
+        fc.update()
+
+
+def selected_range(context):
+    """(first, last) time of the selected keys in the editor, or None."""
+    times = [kp.co.x for _fc, pts in selected_keys(context) for kp in pts]
+    return (min(times), max(times)) if times else None
+
+
+def remove_keys(context, mode):
+    """Maya Keys > Remove Key items. Count of removed keys, or None when the mode needs selected keys and has none."""
+    picked = [fc for fc, _pts in selected_keys(context)]
+    a = b = None
+    if mode in {"OUTSIDE", "RIPPLE"}:
+        rng = selected_range(context)
+        if rng is None:
+            return None
+        a, b = rng
+    curves = picked or (editor_curves(context) if mode in {"UNSNAPPED", "BEFORE", "AFTER"} else [])
+    frame = context.scene.frame_current + context.scene.frame_subframe
+    n = 0
+    for fc in curves:
+        if mode == "UNSNAPPED":
+            gone = [kp for kp in fc.keyframe_points if abs(kp.co.x - round(kp.co.x)) > EPS]
+        elif mode == "BEFORE":
+            gone = [kp for kp in fc.keyframe_points if kp.co.x < frame - EPS]
+        elif mode == "AFTER":
+            gone = [kp for kp in fc.keyframe_points if kp.co.x > frame + EPS]
+        elif mode == "OUTSIDE":
+            _ensure_key(fc, a)
+            _ensure_key(fc, b)
+            gone = [kp for kp in fc.keyframe_points if kp.co.x < a - EPS or kp.co.x > b + EPS]
+        else:                                   # RIPPLE
+            if b - a < EPS:
+                continue
+            _ensure_key(fc, a)
+            _ensure_key(fc, b)
+            gone = [kp for kp in fc.keyframe_points if a + EPS < kp.co.x < b - EPS]
+        n += len(gone)
+        _remove_at(fc, [kp.co.x for kp in gone])
+        if mode == "RIPPLE":
+            later = sorted((kp for kp in fc.keyframe_points if kp.co.x >= b - EPS), key=lambda kp: kp.co.x)
+            for kp in later:
+                time_keys._move(kp, a - b + (RIPPLE_GAP if abs(kp.co.x - b) < EPS else 0.0))
+            fc.update()
+    return n
+
+
+class ALLSET_OT_remove_keys(bpy.types.Operator):
+    """Delete keys by time: unsnapped, before / after the current frame, outside the selected keys' range, or a ripple
+    delete of that range (Maya Keys > Remove Key)"""
+    bl_idname = "allset.remove_keys"
+    bl_label = "Remove Key"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    mode: EnumProperty(items=REMOVE_MODES, name="Remove", options={'SKIP_SAVE'})
+
+    @classmethod
+    @i18n.translated
+    def description(cls, context, props):
+        return next(d for k, _l, d in REMOVE_MODES if k == props.mode)
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        n = remove_keys(context, self.mode)
+        if n is None:
+            self.report({'WARNING'}, "Could not apply the command. No range has been selected")
+            return {'CANCELLED'}
+        _redraw(context)
+        return {'FINISHED'}
+
+
+TIME_RANGES = (
+    ('SELECTED', "All", "The selected keys (every key of the shown curves when none is selected)"),
+    ('TIME_SLIDER', "Playback", "Only those of them inside the Time Slider's playback range"),
+    ('START_END', "Custom", "Only those of them between the Start and End times"),
+)
+
+
+def _curve_keys(context, time_range='SELECTED', start=0.0, end=0.0):
+    """(F-curve, keys) to act on, like Maya: the selected keys, else every key of the shown curves; a Playback or
+    Custom range keeps only those of them inside it."""
+    work = selected_keys(context) or [(fc, list(fc.keyframe_points)) for fc in editor_curves(context)]
+    if time_range == 'SELECTED':
+        return work
+    if time_range == 'TIME_SLIDER':
+        sc = context.scene
+        start, end = ((sc.frame_preview_start, sc.frame_preview_end) if sc.use_preview_range
+                      else (sc.frame_start, sc.frame_end))
+    out = []
+    for fc, pts in work:
+        pts = [kp for kp in pts if start - EPS <= kp.co.x <= end + EPS]
+        if pts:
+            out.append((fc, pts))
+    return out
+
+
+def clamp_keys(context, limit, side, time_range='SELECTED', start=0.0, end=0.0):
+    """Maya Curves > Clamp Curves: key values past ``limit`` ('ABOVE' = greater, 'BELOW' = smaller) become the limit;
+    the tangents keep their shape. Count of changed keys."""
+    n = 0
+    for fc, pts in _curve_keys(context, time_range, start, end):
+        hit = False
+        for kp in pts:
+            v = kp.co.y
+            if (side == 'ABOVE' and v > limit) or (side == 'BELOW' and v < limit):
+                dy = limit - v
+                kp.co.y = limit
+                kp.handle_left.y += dy
+                kp.handle_right.y += dy
+                hit = True
+                n += 1
+        if hit:
+            fc.update()
+    return n
+
+
+def offset_keys(context, frames, mode, time_range='SELECTED', start=0.0, end=0.0):
+    """Maya Curves > Offset Curves: move the keys in time by ``frames`` ('RELATIVE'), or so the first of them lands
+    on frame ``frames`` ('START'). Count of moved keys."""
+    work = _curve_keys(context, time_range, start, end)
+    times = [kp.co.x for _fc, pts in work for kp in pts]
+    if not times:
+        return 0
+    dx = frames if mode == 'RELATIVE' else frames - min(times)
+    if abs(dx) < EPS:
+        return 0
+    n = 0
+    for fc, pts in work:
+        for kp in sorted(pts, key=lambda kp: kp.co.x, reverse=dx > 0):
+            time_keys._move(kp, dx)
+            n += 1
+        fc.update()
+    return n
+
+
+class ALLSET_OT_clamp_curves(bpy.types.Operator):
+    """Clamp the selected keys' values (all keys of the shown curves when none is selected) to a limit, like Maya's
+    Curves > Clamp Curves"""
+    bl_idname = "allset.clamp_curves"
+    bl_label = "Clamp Curves"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    limit: FloatProperty(name="Limit Value", default=0.0, description="The value the keys are clamped to")
+    side: EnumProperty(name="Clamp", default='ABOVE', items=(
+        ('ABOVE', "Upper Limit", "Keys greater than the limit get the limit"),
+        ('BELOW', "Lower Limit", "Keys smaller than the limit get the limit")))
+    time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
+    start: FloatProperty(name="Start Time", default=0.0)
+    end: FloatProperty(name="End Time", default=10.0)
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        clamp_keys(context, self.limit, self.side, self.time_range, self.start, self.end)
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_offset_curves(bpy.types.Operator):
+    """Move the selected keys (all keys of the shown curves when none is selected) in time, like Maya's
+    Curves > Offset Curves"""
+    bl_idname = "allset.offset_curves"
+    bl_label = "Offset Curves"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    frames: FloatProperty(name="Offset Frames", default=1.0, description="Frames to move the keys by, or the frame "
+                          "the first key moves to")
+    mode: EnumProperty(name="Offset", default='RELATIVE', items=(
+        ('RELATIVE', "Offset by", "Move the keys by the offset"),
+        ('START', "Offset to", "Move the keys so the first one is on the offset frame")))
+    time_range: EnumProperty(name="Time Range", items=TIME_RANGES, default='SELECTED')
+    start: FloatProperty(name="Start Time", default=0.0)
+    end: FloatProperty(name="End Time", default=10.0)
+
+    @classmethod
+    def poll(cls, context):
+        return in_key_editor(context)
+
+    def execute(self, context):
+        offset_keys(context, self.frames, self.mode, self.time_range, self.start, self.end)
+        _redraw(context)
+        return {'FINISHED'}
+
+
 SELECT_PRESETS = (("ALL", "All", "Curves, keys and tangents can be picked (Maya Select > All)"),
                   ("ONLY_CURVE", "Only Curve", "Only curves can be picked (Maya Select > Only Curve)"))
 
@@ -645,6 +874,7 @@ class ALLSET_OT_graph_select_type(bpy.types.Operator):
     preset: EnumProperty(items=SELECT_PRESETS, name="Preset", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in SELECT_PRESETS if k == props.preset)
 
@@ -720,7 +950,8 @@ class ALLSET_OT_dope_graph_op(bpy.types.Operator):
         return res
 
 
-classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
+classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_remove_keys, ALLSET_OT_clamp_curves,
+           ALLSET_OT_offset_curves, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
 
 
 def register_bindings():

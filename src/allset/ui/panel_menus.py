@@ -31,6 +31,7 @@ GREY_OP = "allset.menu_unavailable"
 # Row tables live in panel_menu_data (bpy-free: menu_count / menu_consistency / notice rules walk them).
 from .panel_menu_data import (_view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, ALL_TYPES,
                               _show_row, SHOW, ISOLATE, RENDERER, PANELS, PANEL_TYPES, LAYOUTS, BAR, item_path)  # noqa: F401
+from .. import i18n
 
 
 # --- state ---------------------------------------------------------------------------
@@ -63,26 +64,45 @@ def view_camera(context):
 _ORTHO_CAMERAS = (("top", (0.0, 0.0, -1.0)), ("front", (0.0, 1.0, 0.0)), ("side", (-1.0, 0.0, 0.0)))
 
 
-def panel_camera(context):
-    """Maya's camera of this panel: the camera it looks through, else the scene's startup camera of that view
-    (persp for a perspective view, top / front / side for those orthographic views), else None."""
-    cam = view_camera(context)
-    if cam is not None:
-        return cam
+def _startup_name(context):
+    """The startup camera of this view: persp for a perspective view, top / front / side for those orthographic
+    views, else None."""
     space = _space(context)
     rv3d = context.region_data or getattr(space, "region_3d", None)
     if rv3d is None:
         return None
-    from ..operators import startup_cameras
-    found = {ob.get(startup_cameras.MARK): ob for ob in startup_cameras.cameras(context.scene)}
     if rv3d.view_perspective == 'PERSP':
-        return found.get("persp")
+        return "persp"
     from mathutils import Vector
     forward = rv3d.view_rotation @ Vector((0.0, 0.0, -1.0))
     for name, axis in _ORTHO_CAMERAS:
         if forward.dot(Vector(axis)) > 0.999:
-            return found.get(name)
+            return name
     return None
+
+
+def panel_camera(context, make=False):
+    """Maya's camera of this panel: the camera it looks through, else the scene's startup camera of that view
+    (persp for a perspective view, top / front / side for those orthographic views), else None. ``make``: a scene
+    without startup cameras (one not made with File > New Scene in Maya mode) gets them first, as every Maya scene has
+    them (#297)."""
+    cam = view_camera(context)
+    if cam is not None:
+        return cam
+    name = _startup_name(context)
+    if name is None:
+        return None
+    from ..operators import startup_cameras
+    found = {ob.get(startup_cameras.MARK): ob for ob in startup_cameras.cameras(context.scene)}
+    if not found and make:
+        found = {ob.get(startup_cameras.MARK): ob
+                 for ob in startup_cameras.ensure(context.scene, context.view_layer)}
+    return found.get(name)
+
+
+def has_panel_camera(context):
+    """Select Camera has a camera to select in this view (the startup ones are made on the first use)."""
+    return view_camera(context) is not None or _startup_name(context) is not None
 
 
 def camera_locked(ob):
@@ -108,8 +128,8 @@ EXPOSURE_LAST, GAMMA_LAST, TRANSFORM_LAST = "allset_exposure_last", "allset_gamm
 RAW = 'Raw'
 
 FAILS = {
-    "SELECT_CAMERA": "This view has no camera: only scenes made with File > New Scene have Maya's persp / top / "
-                     "front / side cameras",
+    "SELECT_CAMERA": "This view has no camera: Select Camera works in a perspective view, the top / front / side "
+                     "views and a view that looks through a camera",
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
 }
@@ -336,7 +356,7 @@ def apply(context, key):
                     for name in _COPY_OVERLAY:
                         setattr(other.overlay, name, getattr(space.overlay, name))
     elif key == "SELECT_CAMERA":
-        cam = panel_camera(context)
+        cam = panel_camera(context, make=True)
         if cam is None:
             return False
         for ob in context.view_layer.objects:
@@ -422,6 +442,7 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
         return _space(context) is not None
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return TIPS.get(props.key, "Maya panel menu item for this view")
 
@@ -446,6 +467,7 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
     props: StringProperty(default="{}", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         try:
             mod, name = props.op.split(".")
@@ -557,11 +579,15 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
 
 def look_through(context, area, ob):
     space = area.spaces.active
-    space.camera = ob
+    # the view's own camera (a Maya panel's): local first, since a camera set on a view locked to the scene becomes
+    # the scene camera
     space.use_local_camera = ob != context.scene.camera
+    space.camera = ob
     space.region_3d.view_perspective = 'CAMERA'
     # Maya: navigating a view that looks through a camera moves the camera (#9)
     space.lock_camera = True
+    from ..operators import camera_overscan
+    camera_overscan.apply_later(area)      # the frame fills the view by the camera's Overscan (Maya)
 
 
 class ALLSET_OT_panel_new_persp(bpy.types.Operator):

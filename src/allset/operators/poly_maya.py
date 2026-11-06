@@ -138,7 +138,7 @@ class ALLSET_OT_circularize(bpy.types.Operator):
     bl_label = "Circularize"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # Maya Polygon Circularize Options, factory values
+    # Maya Polygon Circularize Options, default values
     normal_offset: bpy.props.FloatProperty(name="Normal Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
                                            options={'SKIP_SAVE'})
     radial_offset: bpy.props.FloatProperty(name="Radial Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
@@ -362,7 +362,7 @@ class ALLSET_OT_connect(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     # Maya Connect Components Options  and the Mesh Tools > Connect
-    # tool's Slide / Segments (:252-256); factory values
+    # tool's Slide / Segments; default values
     insert_with_edge_flow: bpy.props.BoolProperty(name="Insert with edge flow", default=False, options={'SKIP_SAVE'})
     adjust_edge_flow: bpy.props.FloatProperty(name="Adjust Edge Flow", default=1.0, soft_min=-1.0, soft_max=2.0,
                                               options={'SKIP_SAVE'})
@@ -460,7 +460,7 @@ class ALLSET_OT_make_hole(bpy.types.Operator):
 
 
 # --- Merge -------------------------------------------------------------------------------------
-# polyMergeVert with the menu's factory options (distance 0.01, alwaysMergeTwoVertices on):
+# Merge with the menu's default options (distance 0.01, always merge two vertices on):
 # vertices closer than the threshold merge to the mean of their cluster; exactly two selected vertices merge to their
 # midpoint whatever the distance (even across the mesh, then non-manifold). Edge / face selections: the threshold only.
 
@@ -543,7 +543,7 @@ class ALLSET_OT_merge(bpy.types.Operator):
 
 
 # --- Smooth ------------------------------------------------------------------------------------
-# polySmoothFace with the menu's factory options (divisions 1, continuity 1, keep border / selection border,
+# Smooth with the menu's default options (divisions 1, continuity 1, keep border / selection border,
 # OpenSubdiv "sharp edges and corners"): Catmull-Clark on the chosen faces. A vertex moves
 # only when all its faces are smoothed (mesh-border vertices along the border curve, corners stay); edges between two
 # smoothed faces get the Catmull-Clark edge point, other edges their midpoint. Unsmoothed neighbours keep the new

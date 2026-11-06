@@ -183,6 +183,7 @@ MAP = {
        if v not in ('HISTORY', 'NON_DEFORMER_HISTORY')},
     **{f"Edit/Delete All by Type/{k}": _del(v, True)
        for k, v in {**_DELETE_BY_TYPE, **_DELETE_ALL_ONLY}.items()},
+    "Edit/Delete All by Type/Clips": ("allset.trax_delete_source", {"every": True}),     # Trax clips (#287)
     "Edit/Duplicate": "allset.duplicate",                     # Maya names, in place
     "Edit/Duplicate Special": "allset.duplicate_special",
     "Edit/Duplicate with Transform": "allset.duplicate_with_transform",
@@ -203,7 +204,9 @@ MAP = {
     "Create/Lights/Spot Light": _create('SPOT_LIGHT'),
     "Create/Lights/Area Light": _create('AREA_LIGHT'),
     "Create/Lights/Dome Light": "allset.dome_light",                # #201: the World environment
-    "Create/Cameras": _create('CAMERA'),
+    "Create/Cameras/Camera": _create('CAMERA'),
+    "Create/Cameras/Camera and Aim": _create('CAMERA_AIM'),
+    "Create/Cameras/Camera, Aim and Up": _create('CAMERA_AIM_UP'),
     "Create/Curve Tools/CV Curve Tool": "allset.cv_curve_tool",            # operators/curve_draw.py
     "Create/Curve Tools/EP Curve Tool": "allset.ep_curve_tool",
     "Create/Curve Tools/Three Point Circular Arc": "allset.arc3_tool",
@@ -271,7 +274,7 @@ MAP = {
     "Modify/Transformation Tools/Move Tool": ("tool", "builtin.move", False),
     "Modify/Transformation Tools/Rotate Tool": ("tool", "builtin.rotate", False),
     "Modify/Transformation Tools/Scale Tool": ("tool", "builtin.scale", False),
-    "Modify/Transformation Tools/Universal Manipulator": ("tool", "builtin.transform", False),
+    "Modify/Transformation Tools/Universal Manipulator": ("tool", "allset.universal_manip", False),
     "Modify/Transformation Tools/Move/Rotate/Scale Tool": ("tool", "builtin.transform", False),
     "Modify/Reset Transformations": "allset.reset_transform",
     "Modify/Freeze Transformations": "allset.freeze_transform",
@@ -354,7 +357,7 @@ MAP = {
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace
     "Edit Mesh/Smart Extrude": ("v3d", "allset.smart_extrude", {}),
-    "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices
+    "Edit Mesh/Merge": "allset.merge",          # always merges two vertices
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
     "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first
     "Edit Mesh/Average Vertices": "mesh.vertices_smooth",
@@ -505,6 +508,7 @@ MAP = {
     "Playback/Set Range to/Start/End": ("allset.time_set_range", {"mode": "START_END"}),
     "Playback/Set Range to/Min/Max": ("allset.time_set_range", {"mode": "MIN_MAX"}),
     "Playback/Set Range to/Selected": ("allset.time_set_range", {"mode": "SELECTED"}),
+    "Playback/Set Range to/Enabled Clips": ("allset.trax_tracks", {"action": "RANGE"}),    # Trax clips (#287)
     "Playback/Playback Speed/Real-time": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
                                                                    "value": "FRAME_DROP"}),
     # Maya 2026 Play Every Frame, Free / Max Real-time = Blender Play Every Frame (never above the fps)
@@ -891,7 +895,9 @@ MAP.update({
     "Key/Insert Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
     "Playback/Select Next Key": ("screen.keyframe_jump", {"next": True}),
     "Playback/Select Previous Key": ("screen.keyframe_jump", {"next": False}),
-    "Playback/Playback Looping/Continuous": ("allset.menu_note", {"item": "Playback/Playback Looping/Continuous"}),
+    **{f"Playback/Playback Looping/{label}": ("prop", "scene.allset_playback_loop", {"value": value})
+       for value, label in (("CONTINUOUS", "Continuous"), ("ONCE", "Once"), ("OSCILLATE", "Oscillate"))},
+    "Playback/Enable Stepped Preview": ("prop", "scene.allset_stepped_preview", {}),
     "Visualize/Time Slider Bookmarks": "marker.add",
     # Audio: sounds are Video Sequencer sound strips
     "Audio/Import Audio...": "allset.import_audio",

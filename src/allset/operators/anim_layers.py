@@ -203,14 +203,16 @@ def remove_object(scene, ob, layer):
         bpy.data.actions.remove(act)
 
 
-def order_tracks(ob, names):
+def order_tracks(ob, names, force=False):
     """NLA tracks in the layer list order, bottom first (Blender can only move tracks by recreating them, so only the
-    kit tracks' strip settings are swapped into place: track i gets layer names[i])."""
+    kit tracks' strip settings are swapped into place: track i gets layer names[i]). The layer tracks are re-added on
+    top, so other tracks (Trax clip tracks, operators/trax_clips.py) stay below them; ``force`` re-adds them even
+    when the order is right (a clip track was just added on top)."""
     have = tracks(ob)
     want = [n for n in names if n in have]
     ad = ob.animation_data
     kit = [tr for tr in ad.nla_tracks if tr.name in have]
-    if [tr.name for tr in kit] == want:
+    if [tr.name for tr in kit] == want and not force:
         return
     data = {n: (_strip(have[n]).action, have[n].mute, strip_state(_strip(have[n]))) for n in want}
     for tr in kit:
@@ -260,13 +262,18 @@ def weight_curve(st):
     return st.fcurves.find("influence")
 
 
-def strip_weight(st, frame):
-    """The strip's weight at ``frame`` (its influence curve when keyed)."""
+def _evaluate(fc, frame):
+    return fc.evaluate(frame)
+
+
+def strip_weight(st, frame, ev=None):
+    """The strip's weight at ``frame`` (its influence curve when keyed). ``ev(fc, frame)`` evaluates a curve
+    (default: its own value; Enable Stepped Preview passes the stepped one)."""
     if not st.use_animated_influence:
         return 1.0
     fc = st.fcurves.find("influence")
     if fc is not None and len(fc.keyframe_points):
-        return fc.evaluate(frame)
+        return (ev or _evaluate)(fc, frame)
     return st.influence
 
 
@@ -443,8 +450,9 @@ def compose(steps, start):
     return acc
 
 
-def _steps(ob, path, index, frame, scene):
+def _steps(ob, path, index, frame, scene, ev=None):
     """[(layer name, mode, weight, value or None)] of the object's evaluated layers for one channel, bottom first."""
+    ev = ev or _evaluate
     info = {e.name: e for e in layers(scene)}
     out = []
     ad = ob.animation_data
@@ -453,14 +461,14 @@ def _steps(ob, path, index, frame, scene):
             continue
         st = _strip(tr)
         fc = _fcurve(st.action, path, index)
-        w = strip_weight(st, frame)
+        w = strip_weight(st, frame, ev)
         if st.blend_type == 'REPLACE':
             mode = 'REPLACE'
         elif st.blend_type == 'COMBINE' and is_scale(path):
             mode = 'MUL'
         else:
             mode = 'ADD'
-        out.append((tr.name, mode, w, fc.evaluate(frame) if fc is not None else None))
+        out.append((tr.name, mode, w, ev(fc, frame) if fc is not None else None))
     return out
 
 
@@ -625,15 +633,25 @@ def target_layer(scene, ob, path=None, index=-1):
     return name if is_member(ob, name, path, index) else BASE
 
 
-def result(ob, path, index, frame=None, scene=None):
-    """The value the layers give a channel at ``frame`` (None when no layer has a curve for it)."""
+def result(ob, path, index, frame=None, scene=None, ev=None):
+    """The value the layers give a channel at ``frame`` (None when no layer has a curve for it); ``ev`` as in
+    ``strip_weight``."""
     scene = scene or bpy.context.scene
     frame = scene.frame_current if frame is None else frame
-    steps = _steps(ob, path, max(index, 0), frame, scene)
+    steps = _steps(ob, path, max(index, 0), frame, scene, ev)
     known = [(m, w, x) for _n, m, w, x in steps if x is not None]
     if not known:
         return None
-    return compose(known, 1.0 if is_scale(path) else 0.0)
+    return compose(known, below_value(ob, path, max(index, 0), frame, ev))
+
+
+def below_value(ob, path, index, frame, ev=None):
+    """What the layer stack starts from: the Trax clips' value (their tracks sit below the layers,
+    operators/trax_clips.py), else the property's default (scale 1, else 0) like Blender's NLA."""
+    from . import trax_clips
+    default = 1.0 if is_scale(path) else 0.0
+    v = trax_clips.stack_value(ob, path, index, frame, default, ev)
+    return default if v is None else v
 
 
 def layer_curves(ob, layer):
@@ -670,7 +688,7 @@ def key(ob, path, index, frame=None, value=None, scene=None, layer=None):
         steps.append((layer, 'REPLACE' if st.blend_type == 'REPLACE' else
                       ('MUL' if is_scale(path) else 'ADD'), 1.0, None))
     # NLA starts a channel no lower strip animates from the property's default (scale 1, else 0)
-    start = value if layer == BASE else (1.0 if is_scale(path) else 0.0)
+    start = value if layer == BASE else below_value(ob, path, index, frame)
     x = solve(steps, value, layer, start)
     act = _strip(tracks(ob)[layer]).action
     fc = _fcurve(act, path, index)
@@ -694,9 +712,10 @@ def _quat_power(q, w):
     return Quaternion(axis, angle * w)
 
 
-def _quat_layers(ob, path, frame, scene):
+def _quat_layers(ob, path, frame, scene, ev=None):
     """[(layer, blend, weight, Quaternion or None)] bottom first for a quaternion channel."""
     from mathutils import Quaternion
+    ev = ev or _evaluate
     info = {e.name: e for e in layers(scene)}
     out = []
     for tr in ob.animation_data.nla_tracks:
@@ -707,8 +726,8 @@ def _quat_layers(ob, path, frame, scene):
         q = None
         if any(fcs):
             ident = (1.0, 0.0, 0.0, 0.0)
-            q = Quaternion([fc.evaluate(frame) if fc is not None else ident[i] for i, fc in enumerate(fcs)])
-        out.append((tr.name, st.blend_type, strip_weight(st, frame), q))
+            q = Quaternion([ev(fc, frame) if fc is not None else ident[i] for i, fc in enumerate(fcs)])
+        out.append((tr.name, st.blend_type, strip_weight(st, frame, ev), q))
     return out
 
 

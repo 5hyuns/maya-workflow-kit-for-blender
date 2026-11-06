@@ -25,6 +25,8 @@ from . import live
 from . import live_translate
 from . import point_keys  # S on selected points keys their positions
 from . import lattice_pick  # lattice points picked where a deformer draws them
+from . import camera_overscan  # Maya camera Overscan (#313)
+from . import universal_manip  # Universal Manipulator drags (#318)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pivot_pick.classes,
@@ -91,6 +93,10 @@ from . import character_sets  # noqa: E402  Maya Character Sets on Keying Sets
 
 classes += character_sets.classes
 
+from . import trax_clips  # noqa: E402  Maya Trax clips on the NLA (#287)
+
+classes += trax_clips.classes
+
 from . import color_sets_maya, normals_maya  # noqa: E402  Mesh Display normals and colour sets
 
 classes += normals_maya.classes + color_sets_maya.classes
@@ -145,9 +151,9 @@ classes += controllers.classes
 from . import deformer_order  # noqa: E402  reorderDeformers, blend shape weight keys
 
 classes += deformer_order.classes
-from . import game_exporter, motion_trail  # noqa: E402
+from . import game_exporter, motion_trail, motion_trail_edit  # noqa: E402
 classes += game_exporter.classes
-classes += motion_trail.classes
+classes += motion_trail.classes + motion_trail_edit.classes
 from . import constrain_multi, control_shapes, wire_color  # noqa: E402  #136
 classes += control_shapes.classes + wire_color.classes + constrain_multi.classes
 from . import constrain_interp  # noqa: E402  #168: Maya interpType
@@ -169,6 +175,7 @@ from . import uv_loop_pick  # noqa: E402  UV Editor double-click: UV edge loop /
 classes += uv_loop_pick.classes
 from . import manip_scale  # noqa: E402  #200: Maya Scale manipulator centre / axis drag
 classes += manip_scale.classes
+classes += universal_manip.classes
 from . import dome_light  # noqa: E402  #201: Create > Lights > Dome Light = the World environment
 classes += dome_light.classes
 from . import graph_move  # noqa: E402  #192: Graph Editor Shift axis lock + time snap to whole frames
@@ -177,6 +184,8 @@ from . import graph_frame  # noqa: E402  Graph Editor F / A frame Maya's rectang
 classes += graph_frame.classes
 from . import graph_scale_box  # noqa: E402  Graph Editor Scale Keys manipulator (#270)
 classes += graph_scale_box.classes
+from . import graph_handle_drag  # noqa: E402  Graph Editor tangent handles like Maya (#296)
+classes += graph_handle_drag.classes
 from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
 classes += poly_display.classes
 from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
@@ -194,6 +203,12 @@ classes += uv_toolkit_ops.classes
 
 from . import type_manip  # noqa: E402  Type Manipulator: per-character move / rotate / scale (#258)
 classes += type_manip.classes
+from . import playback_maya  # noqa: E402  Playback Looping Once / Oscillate, Stepped Preview
+classes += playback_maya.classes
+from . import graph_sculpt  # noqa: E402  Graph Editor Sculpting Tools (Grab / Smooth / Smear / Key Reducer)
+classes += graph_sculpt.classes
+from . import graph_bookmarks  # noqa: E402  Graph Editor List > Bookmarks
+classes += graph_bookmarks.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -221,6 +236,8 @@ def register():
     snap_align.register_props()
     material.register_props()
     lights.register_props()
+    camera_overscan.register_props()
+    universal_manip.register_props()
     anim_layers.register_props()
     driven_key.register_props()
     mesh_tools.register_props()
@@ -278,9 +295,16 @@ def register():
     sweep_mesh.register()
     point_keys.register_handlers()
     type_manip.register_handlers()
+    motion_trail_edit.register_handlers()
+    playback_maya.register_props()
+    playback_maya.register_handlers()
+    graph_sculpt.register_props()
 
 
 def unregister():
+    graph_sculpt.unregister()
+    playback_maya.unregister()
+    motion_trail_edit.unregister_handlers()
     type_manip.unregister_handlers()
     point_keys.unregister_handlers()
     autosave.unregister()
@@ -319,6 +343,7 @@ def unregister():
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
     graph_scale_box.unregister_handlers()
+    graph_handle_drag.unregister_timers()
     graph_move.unregister_timers()
     graph_move.unregister_props()
     modify_maya.unregister_props()
@@ -353,6 +378,8 @@ def unregister():
     taphold.unregister_bindings()
     anim_layers.unregister_props()
     lights.unregister_props()
+    universal_manip.unregister_props()
+    camera_overscan.unregister_props()
     material.unregister_props()
     uv_shell_select.unregister_props()
     uv_toolkit_ops.unregister_props()

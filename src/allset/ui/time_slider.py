@@ -114,6 +114,7 @@ def draw_range_slider(layout, context):
     bar = layout.row(align=True)
     bar.ui_units_x = range_bar.BAR_UNITS
     if range_bar.active(context):
+        bar.ui_units_x = range_bar.BAR_UNITS + range_bar.extra_units(context.area)
         bar.label(text="")
     else:
         a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \
@@ -158,9 +159,9 @@ def draw_range_slider(layout, context):
     fps = scene.render.fps / scene.render.fps_base
     row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
     row = layout.row(align=True)
-    sub = row.row(align=True)
-    sub.enabled = False   # Maya loop / once / oscillate: Blender always loops
-    sub.label(text="", icon='FILE_REFRESH')
+    from ..operators import playback_maya
+    loop = getattr(scene, "allset_playback_loop", 'CONTINUOUS')
+    row.operator("allset.playback_loop_cycle", text="", icon=playback_maya.LOOP_ICONS[loop])
     row.prop(scene, "use_audio", text="", icon='SPEAKER', invert_checkbox=True)
     row.menu("ALLSET_MT_anim_preferences", text="", icon='PREFERENCES')
 
@@ -207,8 +208,6 @@ RANGE_ARROW_COLOR = (1.0, 1.0, 1.0, 0.9)
 TIME_NOTICES = {
     "Paste Connect": "Blender pastes keys as they were copied: no connect (offset) paste.",
     "Play Every Frame, Free": "Blender never plays faster than the scene frame rate.",
-    "Once": "Blender playback always loops.",
-    "Oscillate": "Blender playback always loops.",
     "Enabled Clips": "Blender has no Time Editor clips (NLA strips instead).",
     "Sound Length": "Use the sound strip's length in the Video Sequencer.",
 }
@@ -405,6 +404,7 @@ class ALLSET_OT_time_slider_unavailable(bpy.types.Operator):
         return False
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         line = TIME_NOTICES.get(props.item, "")
         if line:
@@ -490,9 +490,8 @@ class ALLSET_MT_time_slider_looping(bpy.types.Menu):
 
     def draw(self, context):
         lay = self.layout
-        _grey(lay, "Once")
-        _grey(lay, "Oscillate")
-        lay.label(text="Continuous", icon='CHECKMARK')
+        for value, label in (('ONCE', "Once"), ('OSCILLATE', "Oscillate"), ('CONTINUOUS', "Continuous")):
+            lay.prop_enum(context.scene, "allset_playback_loop", value, text=label)
 
 
 class ALLSET_MT_time_slider_range(bpy.types.Menu):
@@ -590,6 +589,14 @@ ROWS = {"label": (1, 8), "tick": (13, 27), "current_label": (16, 23), "band": (2
 ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26), "band": (29, 31),
                   "strip": (0, 8), "bookmark": (0, 4)}
 BOOKMARK_STRIP = (0x45 / 255, 0x45 / 255, 0x45 / 255, 1.0)
+
+
+def _themed(color, field):
+    """A ruler colour moved with the Blender theme's Dope Sheet / Timeline colours (ui/theme_follow.py)."""
+    from . import theme_follow
+    return theme_follow.follow(color, "dopesheet_editor", field)
+
+
 BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # bookmark colour (Maya picks one per bookmark)
 TICK_PX = 2.0
 # Eight-pixel label row in the 32 px ruler, converted to BLF size.
@@ -694,12 +701,12 @@ def _draw_ruler(context, region):
     marks = bookmarks.markers(scene)
     rows = ROWS_BOOKMARKS if marks else ROWS
     gpu.state.blend_set('ALPHA')
-    rects([(0, 0, w, h)], RULER_BG)
+    rects([(0, 0, w, h)], _themed(RULER_BG, "back"))
     b0, b1 = _rows("band", h, rows, s)
-    rects([(0, b0, w, b1)], RULER_BAND)
+    rects([(0, b0, w, b1)], _themed(RULER_BAND, "back"))
     if marks:
         s0, s1 = _rows("strip", h, rows, s)
-        rects([(0, s0, w, s1)], BOOKMARK_STRIP)
+        rects([(0, s0, w, s1)], _themed(BOOKMARK_STRIP, "back"))
         m0, m1 = _rows("bookmark", h, rows, s)
         bars, edges = [], []
         for m in marks:
@@ -712,21 +719,21 @@ def _draw_ruler(context, region):
     tw = max(1.0, round(TICK_PX * s))
     t0, t1 = _rows("tick", h, rows, s)
     lefts = {f: round(x_of(f - 0.5)) for f in frames}
-    rects([(x, t0, x + tw, t1) for x in lefts.values()], RULER_TICK)
+    rects([(x, t0, x + tw, t1) for x in lefts.values()], _themed(RULER_TICK, "text"))
     cur = scene.frame_current
     cx0, cx1 = x_of(cur - 0.5), x_of(cur + 0.5)
-    rects([(round(cx0), 0, max(round(cx0) + 1, round(cx1)), h)], RULER_CURRENT)
+    rects([(round(cx0), 0, max(round(cx0) + 1, round(cx1)), h)], _themed(RULER_CURRENT, "text"))
     # labels: 2 px + a fifth of a frame right of the tick
     l0, _l1 = _rows("label", h, rows, s)
     # The same UI-scaled font is used for the current-frame number.
     blf.size(0, RULER_FONT_SIZE * s)
     off = 2 * s + 0.2 * pxf
-    blf.color(0, *RULER_LABEL)
+    blf.color(0, *_themed(RULER_LABEL, "text"))
     for f, x in lefts.items():
         blf.position(0, x + off, l0, 0)
         blf.draw(0, str(f))
     c0, _c1 = _rows("current_label", h, rows, s)
-    blf.color(0, *RULER_CURRENT_LABEL)
+    blf.color(0, *_themed(RULER_CURRENT_LABEL, "text"))
     blf.position(0, round(cx0) + off, c0, 0)
     blf.draw(0, str(cur))
     gpu.state.blend_set('NONE')

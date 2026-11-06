@@ -155,7 +155,7 @@ def carried_tool(prev_mode, new_mode, prev_tool, new_tool):
     if not prev_tool or not is_sacred(prev_tool):
         return None
     if prev_tool == "builtin.transform":
-        # T (Maya ShowManipulators = builtin.transform, keymap/mapping.py) doesn't survive a mode change: Maya goes
+        # T (Maya Show Manipulator Tool = builtin.transform, keymap/mapping.py) doesn't survive a mode change: Maya goes
         # back to the Select tool (row "F9 vertex (T)")
         prev_tool = "builtin.select_box"
     return None if prev_tool == new_tool else prev_tool

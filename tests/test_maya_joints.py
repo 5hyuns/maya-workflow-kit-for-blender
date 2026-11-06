@@ -43,7 +43,7 @@ def test_drawn_radius_is_half_the_radius_times_joint_size():
     scene = bpy.context.scene
     bone = arm.data.bones[names[0]]
     bone[joints.RADIUS] = 2.0
-    k = units.maya_unit(scene)
+    k = units.radius_unit(scene)
     assert abs(mj.drawn_radius(bone, scene) - 1.0 * k) < 1e-9
     scene.allset_joint_size = 2.0
     try:
@@ -53,6 +53,25 @@ def test_drawn_radius_is_half_the_radius_times_joint_size():
         scene.allset_joint_size = 1.0
     del bone[joints.RADIUS]
     assert abs(mj.drawn_radius(bone, scene) - 0.5 * k) < 1e-9, "Radius 1 by default"
+
+
+def test_radius_stays_in_centimetres_in_a_metre_scene():
+    """The Radius is a plain number in centimetres: a metre scene doesn't draw a Radius 1 joint 1 m across."""
+    arm, names = _chain()
+    scene = bpy.context.scene
+    us = scene.unit_settings
+    before = (us.system, us.length_unit, us.scale_length)
+    bone = arm.data.bones[names[0]]
+    try:
+        for unit, scale, want in (('CENTIMETERS', 1.0, 0.005), ('METERS', 1.0, 0.005), ('CENTIMETERS', 0.01, 0.5),
+                                  ('MILLIMETERS', 1.0, 0.005)):
+            us.system, us.length_unit, us.scale_length = 'METRIC', unit, scale
+            got = mj.drawn_radius(bone, scene)
+            assert abs(got - want) < 1e-6 * want, (unit, scale, got, want)
+        us.system = 'NONE'
+        assert abs(mj.drawn_radius(bone, scene) - 0.5) < 1e-9, "no unit system: 1 BU per Radius unit"
+    finally:
+        us.system, us.length_unit, us.scale_length = before
 
 
 def test_sphere_is_three_great_circles_of_the_drawn_radius():
@@ -156,3 +175,28 @@ def test_drawn_spheres_match_the_per_joint_lines():
         ref = mj.sphere_lines(js[n].centre, js[n].frame, js[n].radius)
         got = pts[k * per:(k + 1) * per]
         assert max((Vector(tuple(g)) - r).length for g, r in zip(got, ref)) < 1e-5, n
+
+
+def test_radius_edit_writes_every_selected_joint_and_redraws():
+    # like Maya's Channel Box: a Radius typed on the lead joint goes to every selected joint, and the joints redraw
+    # at once (no other update needed)
+    arm, (j1, j2, j3, j4) = _chain()
+    bpy.context.view_layer.objects.active = arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode='POSE')
+    for pb in arm.pose.bones:
+        cb.set_bone_selected(pb, pb.name in (j2, j3))
+    arm.data.bones.active = arm.data.bones[j3]
+    gen = mj._GEN[0]
+    arm.data.bones[j3].allset_joint_radius = 0.05
+    bones = arm.data.bones
+    assert abs(bones[j2].allset_joint_radius - 0.05) < 1e-6 and abs(bones[j3].allset_joint_radius - 0.05) < 1e-6
+    assert abs(bones[j1].allset_joint_radius - mj.MAYA_RADIUS) < 1e-6, "an unselected joint keeps its radius"
+    assert mj._GEN[0] > gen, "the drawn joints are rebuilt"
+    bones[j1].allset_joint_radius = 2.0                 # not selected: only that joint
+    assert abs(bones[j1].allset_joint_radius - 2.0) < 1e-6 and abs(bones[j2].allset_joint_radius - 0.05) < 1e-6
+    gen = mj._GEN[0]
+    bpy.context.scene.allset_joint_size = 0.5
+    assert mj._GEN[0] > gen, "Joint Size redraws the joints"
+    bpy.context.scene.allset_joint_size = 1.0
+    bpy.ops.object.mode_set(mode='OBJECT')

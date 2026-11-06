@@ -19,6 +19,7 @@ import bpy
 import gpu
 from bpy.props import BoolProperty, EnumProperty
 from bpy_extras import view3d_utils
+from .. import i18n
 
 SIDE, TYPE, OTHER, DRAW = "allset_side", "allset_type", "allset_other_type", "allset_draw_label"
 OTHER_DEFAULT = "jaw"          # a new joint's otherType
@@ -363,6 +364,7 @@ class ALLSET_OT_joint_label_show_all(bpy.types.Operator):
     show: BoolProperty(name="Show", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return ("Show the labels of every joint in the scene" if properties.show
                 else "Hide the labels of every joint in the scene")
@@ -462,6 +464,7 @@ class ALLSET_OT_ik_handle_enable(bpy.types.Operator):
     enable: BoolProperty(name="Enable", default=True, options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return ("Turn the IK of the selected IK handles on" if properties.enable
                 else "Turn the IK of the selected IK handles off (the joints keep their FK rotation)")

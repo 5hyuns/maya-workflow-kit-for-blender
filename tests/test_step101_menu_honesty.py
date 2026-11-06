@@ -229,7 +229,6 @@ def test_nonlinear_object_display_checker_stereo():
     assert bpy.context.scene.render.use_multiview and bpy.context.active_object.type == 'CAMERA'
     bpy.context.scene.render.use_multiview = False
     assert bpy.ops.allset.delete_sounds() == {'FINISHED'}
-    assert bpy.ops.allset.menu_note(item="Playback/Playback Looping/Continuous") == {'FINISHED'}
 
 
 def test_sculpt_tool_brush():

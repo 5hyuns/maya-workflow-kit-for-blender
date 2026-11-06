@@ -268,16 +268,17 @@ def resolve(trigger, context, picked=None):
         return ("pie", idname(name)) if name else None
     space = getattr(context, "space_data", None)
     if space is not None and space.type == 'IMAGE_EDITOR':
-        # UV Editor: Maya 2026's UV Editor RMB marking menu, Shift+RMB = UV / UV Shell tools
+        # UV Editor: Maya 2026's UV Editor RMB marking menu; Shift+RMB = its UV editing menu for the component
+        # (UVs, edges and vertices share the UV one)
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":
             return ("pie", idname("UV_EDITOR_RMB"))
         if trigger == "SHIFT_RMB":
-            ts = context.scene.tool_settings
-            from .. import compat
-            shell = not ts.use_uv_select_sync and compat.uv_island_mode(ts)
-            return ("pie", idname("SHIFT_UV_SHELL" if shell else "SHIFT_UV"))
+            from ..ui import uv_toolkit
+            comp = uv_toolkit.current_component(context)
+            name = {'SHELL': "SHIFT_UV_SHELL", 'FACE': "SHIFT_UV_FACE", 'UV_FACE': "SHIFT_UV_FACE"}.get(comp, "SHIFT_UV")
+            return ("pie", idname(name))
         return None
     if trigger == "CTRL_RMB":
         # Maya's Ctrl+RMB convert menu picks by the lead's shape type, not the mode: a mesh lead gets CTRL_CONVERT in
@@ -299,6 +300,10 @@ def resolve(trigger, context, picked=None):
         return ("pie", idname("PIVOT_EDIT"))
     if mode == 'EDIT_MESH':
         return ("pie", idname("RMB_MESH"))
+    if mode == 'SCULPT':
+        # Maya sculpts with a tool, so its RMB menu over the mesh stays the object one (its Object Mode / Vertex /
+        # Edge / Face items leave Blender's Sculpt Mode)
+        return ("pie", idname("RMB_MESH")) if ob is not None and ob.type == 'MESH' else None
     if mode in {'EDIT_CURVE', 'EDIT_SURFACE'}:
         return ("pie", idname("RMB_CURVE"))
     if mode == 'EDIT_LATTICE':
@@ -332,6 +337,19 @@ def pick_object(context, event):
     return bpy.data.objects.get(ob.name)
 
 
+def sculpt_stencil(context):
+    """True when the sculpt brush maps a texture or mask as a stencil (RMB then moves the stencil in Blender)."""
+    paint = getattr(context.tool_settings, "sculpt", None)
+    brush = getattr(paint, "brush", None)
+    if brush is None:
+        return False
+    for name in ("texture_slot", "mask_texture_slot"):
+        slot = getattr(brush, name, None)
+        if slot is not None and getattr(slot, "map_mode", "") == 'STENCIL':
+            return True
+    return False
+
+
 class ALLSET_OT_marking_menu(bpy.types.Operator):
     """Open the Maya marking menu for this trigger and context"""
     bl_idname = "allset.marking_menu"
@@ -341,6 +359,8 @@ class ALLSET_OT_marking_menu(bpy.types.Operator):
     trigger: EnumProperty(items=TRIGGERS)
 
     def invoke(self, context, event):
+        if context.mode == 'SCULPT' and sculpt_stencil(context):
+            return {'PASS_THROUGH'}     # Blender's stencil drag (brush.stencil_control) keeps RMB there
         picked = None
         if self.trigger in {"RMB", "CTRL_RMB"} and context.mode == 'OBJECT':
             picked = pick_object(context, event)
@@ -388,6 +408,9 @@ class ALLSET_OT_mm_component(bpy.types.Operator):
             target.select_set(True)
             vl.objects.active = target
         ob = context.view_layer.objects.active
+        if self.type == "NONE" and context.mode == 'SCULPT':
+            bpy.ops.object.mode_set(mode='OBJECT')     # Select leaves Sculpt Mode: the object stays selected
+            return {'FINISHED'}
         if self.type == "NONE" or ob is None:
             return {'FINISHED'}
         from ..operators import maya_errors

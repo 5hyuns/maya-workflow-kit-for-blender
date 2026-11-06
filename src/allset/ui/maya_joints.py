@@ -14,7 +14,7 @@ inside it; X-Ray Joints, X-Ray and wireframe views draw them through every surfa
 
 Here a skeleton's joints are its bones' heads (pose positions in Object / Pose Mode, edit bones in Edit Mode); in
 Object Mode a selected skeleton object counts as its root joints selected. Bones with a custom shape draw that shape
-instead. The kit draws only in 3D Views of the Maya layout's workspaces where Blender's Bones overlay is off — the kit
+instead. A skeleton whose Blender display type is Stick or Wire draws one line per bone and no spheres. The kit draws only in 3D Views of the Maya layout's workspaces where Blender's Bones overlay is off — the kit
 turns it off once per screen; a view whose Bones overlay is turned back on shows Blender's bones and no kit joints.
 """
 
@@ -31,6 +31,7 @@ SEGMENTS = 32
 LINE_PX = 1.0
 SETTLED = "allset_bones_settled"      # screen ID prop: the kit turned Blender's Bones overlay off in its 3D Views
 MAYA_RADIUS = 1.0                     # Maya joint Radius default
+STICK_TYPES = {'STICK', 'WIRE'}       # the skeleton's Blender display type: one line per bone, no spheres
 
 _handle = []
 _GEN = [0]          # bumped by every update that can change a drawn joint
@@ -102,11 +103,11 @@ def _tick():
 # --- joints ------------------------------------------------------------------------------------------------------
 
 def drawn_radius(bone, scene, arm_scale=1.0):
-    """World radius of the drawn joint sphere: 0.5 x Radius x Joint Size (Maya units -> scene)."""
+    """World radius of the drawn joint sphere: 0.5 x Radius x Joint Size, in centimetres (``units.radius_unit``)."""
     from ..operators import joints, units
     r = float(bone.get(joints.RADIUS, MAYA_RADIUS))
     size = float(getattr(scene, "allset_joint_size", 1.0) or 1.0)
-    return 0.5 * r * size * units.maya_unit(scene) * arm_scale
+    return 0.5 * r * size * units.radius_unit(scene) * arm_scale
 
 
 def _maya_q(bone):
@@ -406,7 +407,8 @@ def view_lines(context):
             continue
         sel, lead = selection(ob, js)
         col = colours(js, sel, lead)
-        spheres, order = _sphere_array(js)
+        stick = getattr(ob.data, "display_type", 'OCTAHEDRAL') in STICK_TYPES
+        spheres, order = _sphere_array(js) if not stick else (None, ())
         if order:
             pts.append(spheres)
             cols.append(np.repeat(np.array([(*col[n], 1.0) for n in order], np.float32), per_sphere, axis=0))
@@ -419,7 +421,7 @@ def view_lines(context):
             for cn in j.children:
                 child = js[cn]
                 if child.shape is None:
-                    segs = bone_lines(j, child)
+                    segs = [j.centre, child.centre] if stick else bone_lines(j, child)
                     bones += segs
                     bone_cols += [col[j.name]] * len(segs)
             if j.name in sel and rv3d.is_perspective:

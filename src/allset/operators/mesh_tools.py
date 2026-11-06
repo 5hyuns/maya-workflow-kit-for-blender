@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Target Weld, Crease Tool and Multi-Cut feel.
 
-- Target Weld (Maya polyMergeVertexContext):
+- Target Weld:
   drag a vertex (an edge in edge mode) onto another one; a dragged vertex that is selected takes every selected
   vertex with it (Maya's tool description). Merge To Target / Center.
-- Crease Tool (Maya polyCreaseCtx): MMB drag left / right = less / more crease on the selected
+- Crease Tool: MMB drag left / right = less / more crease on the selected
   edges (vertices in vertex mode), shown as Maya's value. Blender stores 0-1 with OpenSubdiv sharpness = 10 * b^2
  , so Maya value c is stored as sqrt(c / 10).
 - Multi-Cut: a kit tool (operators/multi_cut.py); its Tool Settings live here
@@ -378,8 +378,10 @@ class ALLSET_OT_target_weld(bpy.types.Operator):
                 gpu.state.line_width_set(4.0)
                 batch_for_shader(shader, 'LINES', {"pos": [dst[0][:], dst[1][:]]}).draw(shader)
             elif dst:
+                dots = gpu.shader.from_builtin('POINT_UNIFORM_COLOR')   # sized on Vulkan / Metal too
+                dots.uniform_float("color", (1.0, 0.0, 0.0, 1.0))
                 gpu.state.point_size_set(10.0)
-                batch_for_shader(shader, 'POINTS', {"pos": [dst[0][:]]}).draw(shader)
+                batch_for_shader(dots, 'POINTS', {"pos": [dst[0][:]]}).draw(dots)
         gpu.state.line_width_set(1.0)
         gpu.state.point_size_set(1.0)
         gpu.state.blend_set('NONE')

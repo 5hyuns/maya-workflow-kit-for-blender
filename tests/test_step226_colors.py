@@ -1,10 +1,9 @@
 """Lane B (Issue #136): Maya control colours — Display > Wireframe Color... and the Attribute
 Editor's Drawing Overrides (operators/wire_color.py).
 
-Maya: the colorIndex palette 1-31
-(``colorIndex_gui``), user palette 1-8 = indices 24-31 (``userDefined_gui``), ``color -ud 3`` ->
-useObjectColor 1 / objectColor 2, ``color -rgb 1 0 0`` -> useObjectColor 2 / wireColorRGB (``L2_wireframe_color_command``),
-override attributes all 0 / off by default (``L2_drawing_override_palette.default_attrs``)."""
+Maya: the colorIndex palette 1-31, user palette 1-8 = indices 24-31, user colour 3 ->
+useObjectColor 1 / objectColor 2, an RGB colour -> useObjectColor 2 / wireColorRGB,
+override attributes all 0 / off by default."""
 
 from importlib import import_module
 
@@ -17,7 +16,7 @@ wc = import_module(kit.MODULE + ".operators.wire_color")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
-# "colorIndex_gui"
+# the colorIndex palette
 MAYA_INDEX = {
     1: [0.0, 0.0, 0.0], 2: [0.25, 0.25, 0.25], 3: [0.6, 0.6, 0.6], 4: [0.608, 0.0, 0.157], 5: [0.0, 0.016, 0.376],
     6: [0.0, 0.0, 1.0], 7: [0.0, 0.275, 0.098], 8: [0.149, 0.0, 0.263], 9: [0.784, 0.0, 0.784], 10: [0.541, 0.282, 0.2],
@@ -100,7 +99,7 @@ def test_wireframe_color_on_objects():
     _select(ob)
     assert bpy.ops.allset.wireframe_color(color_type='INDEXED', cell='3') == {'FINISHED'}
     st = ob["allset_object_color"].to_dict()
-    assert st["use"] == 1 and st["index"] == 2, st            # Maya: color -ud 3 -> objectColor 2
+    assert st["use"] == 1 and st["index"] == 2, st            # Maya: user colour 3 -> objectColor 2
     assert _close(ob.color, _lin(MAYA_USER[3])), tuple(ob.color)
     assert all(s.shading.wireframe_color_type == 'THEME' for s in spaces)
     assert tuple(other.color) == (1.0, 1.0, 1.0, 1.0) and "allset_object_color" not in other

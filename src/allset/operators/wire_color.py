@@ -4,12 +4,12 @@
 Maya has two ways to colour a control's wire:
 
 1. Display > Wireframe Color...: an option menu Indexed / RGB, a palette of the 8 user colours
-   (userDefined 1-8 = colorIndex 24-31, ``userDefined_gui``), an RGB colour
+   (userDefined 1-8 = colorIndex 24-31), an RGB colour
    slider, Apply / Default / Close. Apply = ``cmds.color(userDefined=N)`` (useObjectColor 1, objectColor N - 1) or
    ``cmds.color(rgbColor=(r, g, b))`` (useObjectColor 2, wireColorRGB) on the selection; Default = ``cmds.color()``
-   (useObjectColor 0) (``L2_wireframe_color_command``; window: Maya's Wireframe Color window).
+   (useObjectColor 0) (window: Maya's Wireframe Color window).
 2. Attribute Editor > Display > Drawing Overrides: overrideEnabled, overrideRGBColors (Index / RGB), overrideColor
-   (index 0-31, 0 = default) and overrideColorRGB. Factory values all 0 / off (``L2_drawing_override_palette``).
+   (index 0-31, 0 = default) and overrideColorRGB. Default values all 0 / off.
 
 The kit keeps the Maya state as ID properties (``OBJECT_KEY`` / ``OVERRIDE_KEY``) on the object or pose bone and
 writes the Blender colour from it:
@@ -44,7 +44,7 @@ PALETTE = {
     28: (0.2549, 0.8196, 0.7255), 29: (0.2274, 0.6157, 0.8078), 30: (0.6118, 0.4196, 0.8078),
     31: (0.8078, 0.349, 0.6549),
 }
-USER_FIRST = 24          # userDefined 1 = colorIndex 24 (``userDefined_gui`` equals colorIndex 24-31)
+USER_FIRST = 24          # userDefined 1 = colorIndex 24 (user colours 1-8 = colorIndex 24-31)
 USER_COUNT = 8
 
 OBJECT_KEY = "allset_object_color"   # Maya useObjectColor / objectColor / wireColorRGB: {"use", "index", "rgb"}

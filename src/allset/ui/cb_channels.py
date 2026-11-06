@@ -21,6 +21,7 @@ from bpy.props import BoolProperty, EnumProperty
 
 from .. import results
 from .. import compat
+from .. import i18n
 
 
 def _cb():
@@ -263,6 +264,7 @@ class ALLSET_OT_cb_clipboard(bpy.types.Operator):
         return _cb().lead(context) is not None
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {"CUT": "Copy the animation curves of the selected channels, then delete them",
                 "COPY": "Copy the animation curves of the selected channels",

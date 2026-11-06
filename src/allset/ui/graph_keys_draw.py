@@ -15,7 +15,9 @@ View > Normalize (``ui/graph_layers.py``).
 Tangent handles get the same treatment where Blender shows them (View > Show Handles, Bezier segments, only around
 selected keys while "Only Selected Keyframes Handles" is on): a handle point becomes a bold ring (``HANDLE_RATIO`` of
 the key size, open in the middle so it never reads as a key) in the handle colour, a selected one a little wider in
-the selected handle colour.
+the selected handle colour. While the kit draws the handles itself (``ui/graph_handles.py``: Blender's are off) the
+handle lines are drawn too (grey, selected white, like Maya) and non-weighted handles sit at a fixed length; with
+Key Size 0 the points keep Blender's handle size.
 """
 
 import math
@@ -115,7 +117,8 @@ def handle_points(context, space):
     """(unselected, selected) arrays of tangent handle positions in Graph Editor view space (frame, value)."""
     from .graph_layers import normalization, value_factor
     empty = np.zeros((0, 2))
-    if not getattr(space, "show_handles", True):
+    from .graph_handles import shows_handles
+    if not shows_handles(space):
         return empty, empty
     curves = list(getattr(context, "visible_fcurves", None) or ())
     scene = context.scene
@@ -211,6 +214,57 @@ def _rgba(c):
     return c if len(c) == 4 else c + (1.0,)
 
 
+def blender_handle_radii(context):
+    """(ring inner, ring outer) radius in pixels of a handle point at Blender's own size (Key Size 0)."""
+    system = context.preferences.system
+    curves = context.preferences.themes[0].common.curves
+    outer = 1.4 * curves.handle_vertex_size * max(1.0, float(system.pixel_size or 1.0)) / 2.0
+    return max(0.0, outer - 1.5), outer
+
+
+def _draw_lines(shader, segments, colour, width):
+    if not len(segments):
+        return
+    gpu.state.line_width_set(width)
+    batch = batch_for_shader(shader, 'LINES', {"pos": segments.astype(np.float32)})
+    shader.uniform_float("color", colour)
+    batch.draw(shader)
+    gpu.state.line_width_set(1.0)
+
+
+def draw_kit_handles(context, region, space, size):
+    """Handle lines and points the kit draws while Blender's are off (``graph_handles``)."""
+    from . import graph_handles
+    h = graph_handles.Handles(context, space, region)
+    if not len(h):
+        return
+    if size > 0:
+        h_in, h_out, h_dot = handle_radii(context, size)
+    else:
+        h_in, h_out = blender_handle_radii(context)
+        h_dot = h_out
+    curves = context.preferences.themes[0].common.curves
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    width = max(1.0, context.preferences.system.ui_scale or 1.0)
+    for picked, colour in ((False, graph_handles.LINE_RGBA), (True, graph_handles.LINE_SEL_RGBA)):
+        m = h.selected == picked
+        seg = np.empty((int(m.sum()) * 2, 2))
+        seg[0::2], seg[1::2] = h.key_px[m], h.end_px[m]
+        _draw_lines(shader, seg, colour, width)
+    for picked, colour, outer in ((False, curves.handle_vertex, h_out), (True, curves.handle_vertex_select, h_dot)):
+        pts = h.end_px[h.selected == picked]
+        if not len(pts) or outer <= h_in:
+            continue
+        tris = rims(pts, h_in, outer, width=region.width, height=region.height)
+        if not len(tris):
+            continue
+        batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
+        shader.uniform_float("color", _rgba(colour))
+        batch.draw(shader)
+    gpu.state.blend_set('NONE')
+
+
 def draw():
     context = bpy.context
     region = context.region
@@ -218,11 +272,17 @@ def draw():
     if region is None or region.type != 'WINDOW' or space is None or space.type != 'GRAPH_EDITOR' \
             or space.mode != 'FCURVES':
         return
-    size = key_size(context)
-    if size <= 0:
-        return
-    from . import editor_chrome
+    from . import editor_chrome, graph_handles
     if not editor_chrome.enabled(context):
+        return
+    size = key_size(context)
+    kit_handles = graph_handles.owns(space)
+    if kit_handles:
+        try:
+            draw_kit_handles(context, region, space, size)
+        except (AttributeError, ReferenceError, TypeError, ValueError, IndexError):
+            pass
+    if size <= 0:
         return
     try:
         r_in, r_out = radii(context, size)
@@ -232,6 +292,8 @@ def draw():
     except (AttributeError, ReferenceError, TypeError, ValueError):
         return
     try:
+        if kit_handles:                         # drawn above already
+            raise ValueError
         h_unsel, h_sel = handle_points(context, space)
         h_in, h_out, h_dot = handle_radii(context, size)
     except (AttributeError, ReferenceError, TypeError, ValueError):

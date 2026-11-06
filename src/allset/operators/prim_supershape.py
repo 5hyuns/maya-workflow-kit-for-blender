@@ -8,7 +8,7 @@ No Maya code or data was copied.
 Rules in brief:
 
 - One node type for all three menu items; they differ only by ``shape`` (0 Super Ellipse, 1 Spherical Harmonics,
-  2 Ultra). The menu passes radius 1, 16 / 16 divisions, createUV 2 (sawtooth poles), merge on, the factory values.
+  2 Ultra). The menu passes radius 1, 16 / 16 divisions, createUV 2 (sawtooth poles), merge on, the default values.
 - Grid: n = 4 x horizontalDivisions columns around Y, R = 4 x verticalDivisions rows from the bottom pole to the
   top one. Angles are float32: latitude b_i = f32(f32(i * f32(pi / R)) - f32(pi / 2)), longitude
   t_j = f32(j * f32(2 pi / n)); Maya's around angle is phi = -t (x = cos phi, z = sin phi). The float32 angles

@@ -1,4 +1,4 @@
-"""One tool across object / component modes (Maya keeps currentCtx when the selection mode changes).
+"""One tool across object / component modes (Maya keeps the current tool when the selection mode changes).
 The rule is bpy-free; the GUI test tests/gui/gui_step174_tool_modes.py presses
 the keys."""
 
@@ -17,7 +17,7 @@ def test_sacred_tool_carries_into_the_new_mode():
     assert rule('EDIT_MESH', 'OBJECT', "builtin.rotate", "builtin.move") == "builtin.rotate"        # E in comp, F8
     assert rule('OBJECT', 'EDIT_CURVE', "builtin.scale", None) == "builtin.scale"
     assert rule('OBJECT', 'POSE', "builtin.select_box", "builtin.move") == "builtin.select_box"     # Q
-    # T = Maya ShowManipulators: after F9 Maya is in selectSuperContext
+    # T = Maya Show Manipulator Tool: after F9 Maya is in the Select tool
     assert rule('OBJECT', 'EDIT_MESH', "builtin.transform", "builtin.move") == "builtin.select_box"
     assert rule('OBJECT', 'EDIT_MESH', "builtin.transform", "builtin.select_box") is None
 

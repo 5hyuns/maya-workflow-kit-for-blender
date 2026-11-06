@@ -357,7 +357,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
     bl_label = "Create IK Spline Handle"
     bl_options = {'UNDO'}       # a click tool: Maya has no redo panel
 
-    # Maya 2026 IK Spline Handle Tool factory settings (ikSplineHandleCtx)
+    # IK Spline Handle Tool settings, defaults like Maya 2026
     root_on_curve: BoolProperty(name="Root on curve", default=True, options={'SKIP_SAVE'})
     parent_curve: BoolProperty(name="Auto parent curve", default=True, options={'SKIP_SAVE'})
     snap_curve: BoolProperty(name="Snap curve to root", default=False, options={'SKIP_SAVE'})

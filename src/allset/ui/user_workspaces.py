@@ -15,6 +15,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .. import switch
+from .. import i18n
 
 FOLDER = "workspaces"
 EXT = ".blend"
@@ -155,6 +156,7 @@ def load(window, name):
 def activate(context, window, name):
     """Show saved workspace ``name`` in ``window`` (appended from its file when the open file lacks it)."""
     from . import workspaces
+    display = workspaces.display_of(window.screen)
     ws = find(name)
     if ws is None:
         prev = window.workspace.name if window.workspace is not None else ""
@@ -165,6 +167,7 @@ def activate(context, window, name):
             ws[switch.PREV_KEY] = prev        # the way back to Blender's layout (switch.leave_layout)
     window.workspace = ws
     workspaces.apply_settings(context, ws)
+    workspaces.carry_display(display, ws)
     return ws
 
 
@@ -262,6 +265,7 @@ class ALLSET_OT_user_workspace(bpy.types.Operator):
     name: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, _context, props):
         return f'Switch to your saved workspace "{props.name}"'
 

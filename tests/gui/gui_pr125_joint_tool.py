@@ -1,7 +1,7 @@
 """PR #125 follow-up, Joint Tool branching (Maya 2022-2027):
 a joint selected before the tool starts is NOT a parent (joint1 selected, two clicks -> an unparented chain);
 the first click on an existing joint with the tool running branches from it. W finishes the placement and switches
-to the Move tool (Maya: moveSuperContext)."""
+to the Move tool."""
 
 import os
 import sys

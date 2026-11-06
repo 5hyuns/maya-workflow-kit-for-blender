@@ -15,6 +15,7 @@ from bpy.props import EnumProperty, FloatVectorProperty
 from .. import results
 from .. import undo_steps
 from . import graph_key_menu, keystate, taphold, time_keys
+from .. import i18n
 
 KEY_ACTIONS = [(k, l, d) for k, l, d in time_keys.ACTIONS if k not in {"SNAP", "TANGENT"}]
 
@@ -96,6 +97,7 @@ class ALLSET_OT_set_tangent(bpy.types.Operator):
                        name="Side", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         interp, handle = time_keys.TANGENTS[props.kind]
         blender = " + ".join(x.replace("_", " ").title() for x in (interp, handle) if x)
@@ -127,6 +129,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
     action: EnumProperty(items=KEY_ACTIONS, name="Action")
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in KEY_ACTIONS if k == props.action)
 

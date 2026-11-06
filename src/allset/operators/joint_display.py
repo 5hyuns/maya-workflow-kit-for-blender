@@ -2,7 +2,8 @@
 """Joint display with Maya's controls (Issue #165): the Channel Box Radius row, Display > Transform Display >
 Local Rotation Axes, Display > Animation > Joint Size....
 
-- Radius = the Maya joint radius the kit keeps on each bone (``joints.RADIUS``, Maya units; a joint without one reads
+- Radius = the Maya joint radius the kit keeps on each bone (``joints.RADIUS``, a plain number drawn in centimetres
+  whatever the scene unit, ``units.radius_unit``; a joint without one reads
   the default 1). It sizes the joint's click sphere (``joints.joint_sphere_radius``).
 - Joint Size = Maya's scene-wide jointDisplayScale (default 1) as ``Scene.allset_joint_size``: it scales every joint's
   click sphere. Blender draws a bone's size from its length only, so the drawn joints keep their size.
@@ -24,8 +25,37 @@ def _get_radius(bone):
     return float(bone.get(joints.RADIUS, MAYA_RADIUS))
 
 
+def radius_bones(bone, context=None):
+    """The bones a Radius edit on ``bone`` writes: like Maya's Channel Box, every selected joint when ``bone`` is
+    one of them, else ``bone`` alone."""
+    from ..ui import channel_box
+    try:
+        picked = [pb.bone for pb in channel_box.targets(context or bpy.context) if channel_box.is_bone(pb)]
+    except (AttributeError, ReferenceError, RuntimeError):
+        picked = []
+    return picked if bone in picked else [bone]
+
+
+def joints_changed():
+    """Redraw the kit joints at once (an ID property write sends no depsgraph update)."""
+    from ..ui import maya_joints
+    maya_joints._GEN[0] += 1
+    wm = bpy.context.window_manager
+    for w in (wm.windows if wm is not None else ()):
+        for a in w.screen.areas:
+            if a.type == 'VIEW_3D':
+                a.tag_redraw()
+
+
 def _set_radius(bone, value):
-    bone[joints.RADIUS] = max(0.0, float(value))
+    v = max(0.0, float(value))
+    for b in radius_bones(bone):
+        b[joints.RADIUS] = v
+    joints_changed()
+
+
+def _joint_size_update(_scene, _context):
+    joints_changed()
 
 
 class ALLSET_OT_local_rotation_axes(bpy.types.Operator):
@@ -84,7 +114,8 @@ def register_props():
         name="Radius", description="Maya joint radius (sizes the joint's click sphere)", min=0.0, soft_max=100.0,
         get=_get_radius, set=_set_radius)
     bpy.types.Scene.allset_joint_size = FloatProperty(
-        name="Joint Size", description="Maya joint display scale", default=1.0, min=0.01, max=100.0)
+        name="Joint Size", description="Maya joint display scale", default=1.0, min=0.01, max=100.0,
+        update=_joint_size_update)
 
 
 def unregister_props():

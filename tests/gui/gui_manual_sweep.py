@@ -297,7 +297,9 @@ def m70_3_a():
     v3d_g = [it.idname for km_name in ("3D View", "Object Mode", "3D View Generic")
              for it in kc.keymaps[km_name].keymap_items if it.active and it.type == 'G' and it.value == 'PRESS'
              and not (it.shift or it.ctrl or it.alt)]
-    check(f"[M70-3] 3D View G stays Repeat Last ({rep}, 3D View G items {v3d_g})", "Screen" in rep and not v3d_g)
+    # the viewport maps carry their own Repeat Last G, ahead of any mode's G menu; no other G there
+    check(f"[M70-3] 3D View G stays Repeat Last ({rep}, 3D View G items {v3d_g})",
+          "Screen" in rep and all(i == "allset.repeat_last" for i in v3d_g))
     C["garea"].ui_type = 'VIEW_3D'
 
 
@@ -2689,7 +2691,7 @@ def _m63_2_components():
 
 @named("m63_2_bevel")
 def _m63_2_bevel():
-    # #16: Maya bevels at once (polyBevel3 factory values) and Esc keeps it; no Blender modal
+    # #16: Maya bevels at once (default values) and Esc keeps it; no Blender modal
     ob_b = C["bevel_ob"]
     if bpy.context.mode == 'EDIT_MESH':
         ob_b.update_from_editmode()
@@ -5188,7 +5190,7 @@ def _m79_1_menu():
     with override():
         bpy.ops.allset.shelf_button(shelf=shelf, index=i)
     check(f"[M79-1] the {shelf} shelf button does the same ({cs_state()})", cs_state() == CS_ON)
-    # the UV Toolkit button and the UV marking menus' NW item run the same operator
+    # the UV Toolkit button runs the same operator
     rec = OpRecorder()
     panel = mod("ui.uv_toolkit").ALLSET_PT_uv_toolkit
     fake = type("P", (), {**{n: f for n, f in vars(panel).items() if callable(f) and not n.startswith("__")},
@@ -5197,11 +5199,7 @@ def _m79_1_menu():
         panel.draw(fake, bpy.context) \
             if hasattr(mod("ui.uv_toolkit"), "ALLSET_PT_uv_toolkit") else None
     tk = [x[0] for kind, t, x in rec.out if kind == "op" and t == "3D Cut and Sew Tool"]
-    mm = mod("marking.menus")
-    nw = [m.radial["NW"][1] for m in (mm.SHIFT_UV, mm.SHIFT_UV_SHELL)] if hasattr(mm, "SHIFT_UV") else \
-        [m.radial["NW"][1] for m in mm.MENUS.values() if m.radial.get("NW", (None,))[0] == "3D Cut and Sew UV Tool"]
-    check(f"[M79-1] UV Toolkit button ({tk}) and UV marking menu NW ({nw}) = allset.cut_sew_tool_set",
-          tk == ["allset.cut_sew_tool_set"] and len(nw) == 2 and set(nw) == {"allset.cut_sew_tool_set"})
+    check(f"[M79-1] UV Toolkit button ({tk}) = allset.cut_sew_tool_set", tk == ["allset.cut_sew_tool_set"])
     cs_reset(False)
     with override():
         bpy.ops.allset.cut_sew_tool_set()

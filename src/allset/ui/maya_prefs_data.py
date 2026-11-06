@@ -109,6 +109,7 @@ PAGES = (
         ("Working Units", [
             ("scene", "unit_settings.length_unit", "Linear"),
             ("scene", "unit_settings.system_rotation", "Angular"),
+            ("pref", "new_scene_time", "Time (new scenes)"),
             ("pref", "maya_units", "Maya units (1 BU = 1 cm)"),
         ]),
     ]),
@@ -125,6 +126,7 @@ PAGES = (
             ("pref", "graph_auto_frame", "Auto frame"),
             ("pref", "graph_curve_names", "Curve name"),
             ("pref", "graph_key_size", "Key size"),
+            ("pref", "graph_fixed_tangents", "Fixed-length tangents"),
             ("pref", "graph_scale_manipulator", "Scale keys manipulator"),
             ("pref", "snap_time_to_selection", "Snap time to selection"),
         ]),
@@ -216,7 +218,7 @@ PAGES = (
         ]),
         ("Playback", [
             ("scene", "sync_mode", "Playback speed"),
-            ("missing", "Looping", "Blender playback always loops (Continuous)"),
+            ("scene", "allset_playback_loop", "Looping"),
         ]),
     ]),
     ("UNDO", "Undo", 1, "Undo: Undo Queue Settings", [

@@ -29,6 +29,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .. import compat
+from . import playback_maya
 
 EPS = 1e-5
 _pending = {}       # object name -> frame the change was seen at
@@ -109,7 +110,7 @@ def changed_curves(ob, frame):
         if not isinstance(value, (int, float, bool)):
             continue
         value = float(value)
-        if abs(value - fc.evaluate(frame)) > EPS * max(1.0, abs(value)):
+        if abs(value - playback_maya.curve_value(fc, frame)) > EPS * max(1.0, abs(value)):
             out.append((fc, value))
     return out
 
@@ -145,7 +146,7 @@ def changed_layer_channels(ob, frame, scene=None):
                        for c in anim_layers.layer_curves(ob, target)):
                 continue
             value = _value(ob, *ch)
-            res = anim_layers.result(ob, ch[0], ch[1], frame, scene)
+            res = anim_layers.result(ob, ch[0], ch[1], frame, scene, playback_maya.evaluator(scene))
             if value is None or res is None:
                 continue
             if abs(value - res) > EPS * max(1.0, abs(value)):
@@ -191,7 +192,7 @@ def remember_curves(ob, frame):
     seen = _seen.setdefault(_id(ob), {})
     for fc in compat.id_fcurves(ob):
         if len(fc.keyframe_points):
-            seen[(fc.data_path, fc.array_index)] = fc.evaluate(frame)
+            seen[(fc.data_path, fc.array_index)] = playback_maya.curve_value(fc, frame)
 
 
 def remember_points(ob):

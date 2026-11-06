@@ -22,6 +22,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from .. import results
 from ..ui import menu_map
+from .. import i18n
 
 
 def target(context):
@@ -288,6 +289,7 @@ class ALLSET_OT_mm_poly(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in POLY_KINDS if k == props.kind)
 

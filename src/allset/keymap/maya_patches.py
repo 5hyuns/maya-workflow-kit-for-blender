@@ -31,7 +31,8 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emul
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
                       "allset.graph_key_drag", "allset.graph_scale_box",
                       "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
-                      "allset.hg_frame")
+                      "allset.hg_frame", "allset.marking_menu",
+                      "allset.graph_handle_drag", "allset.graph_handle_box", "allset.motion_trail_key")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -193,7 +194,7 @@ def patch_group(kd):
 
 
 # --- 4. Space reserved for the hotbox ---------------------------------------
-# Maya Space = hotbox (factory hotkey Space = ShowHotbox),
+# Maya Space = hotbox (Space shows the hotbox),
 # Space does nothing in other editors.
 # Playback moves to Maya's Alt+V (PlaybackToggle) and Alt+Shift+V (GoToMinFrame).
 
@@ -275,6 +276,11 @@ def patch_pick_walk(kd):
 def patch_camera(kd):
     kd.remove("3D View", "view3d.rotate", type="LEFTMOUSE", alt=True)       # IC:674
     _add(kd, "3D View", "allset.tumble", make_event("LEFTMOUSE", alt=True))
+    # Maya's tumble never snaps. Blender's rotate snaps to the nearest axis view when Alt is pressed during the drag
+    # and then turns a perspective view orthographic; Alt is the tumble key itself, so pressing it again mid-drag
+    # locked the persp view like a top / front / side view (#288).
+    for snap in ("AXIS_SNAP_ENABLE", "AXIS_SNAP_DISABLE"):
+        kd.remove("View3D Rotate Modal", snap)
     # Alt+RMB dolly reads the drag itself: Blender's zoom axis is a preference the kit no longer sets (#51)
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
@@ -428,6 +434,12 @@ def patch_marking_menus(kd):
         kd.remove(km, "wm.call_menu", type="RIGHTMOUSE")
         for trigger, mods in MM_EVENTS:
             _add(kd, km, "allset.marking_menu", make_event("RIGHTMOUSE", **mods), {"trigger": trigger})
+    # Sculpt Mode: Maya sculpts with a tool and keeps its RMB marking menu over the mesh (Object Mode / Vertex / Edge /
+    # Face leave Sculpt Mode); IC's sculpt context panel goes. First, so it runs before the stencil drag on the same
+    # event, which it passes through to while the brush maps a stencil.
+    kd.remove("Sculpt", "wm.call_panel", type="RIGHTMOUSE")
+    _add(kd, "Sculpt", "allset.marking_menu", make_event("RIGHTMOUSE"), {"trigger": "RMB"}, shadows=("Sculpt",),
+         first=True)
     kd.remove("3D View", "view3d.cursor3d", type="RIGHTMOUSE", shift=True)
     kd.remove("3D View", "transform.translate", type="RIGHTMOUSE", value="CLICK_DRAG", shift=True)
     for km in TOOL_KEY_KEYMAPS:
@@ -686,7 +698,8 @@ def patch_view_keys(kd):
 
 # --- 24. MMB drag = the last picked manipulator handle -------------------------------
 # Maya manipsRememberActiveHandle. A plain LMB press on the gizmo
-# remembers the handle (after the drag); the tool keymaps' MMB press (IC: free transform) uses it.
+# picks the handle (a click is enough; a drag remembers its transform); the tool keymaps' MMB press (IC: free
+# transform) uses it.
 # The Channel Box MMB slider (patch 14) stays in front.
 
 MMB_TOOLS = (("3D View Tool: Move", "transform.translate", 'TRANSLATE'),
@@ -823,7 +836,9 @@ def patch_key_batch(kd):
     # mode).
     _add(kd, "3D View", "allset.box_zoom", make_event("LEFTMOUSE", ctrl=True, alt=True), shadows=("Sculpt",))
     for km in ("Object Mode", "Mesh"):
-        _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": "builtin.transform"})
+        # Universal Manipulator: the kit's box tool for objects; components keep Blender's Transform tool
+        tool = "allset.universal_manip" if km == "Object Mode" else "builtin.transform"
+        _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": tool})
         _add(kd, km, "allset.last_tool", make_event("Y"))
         _add(kd, km, "allset.menu_tool", make_event("X", shift=True, ctrl=True),
              {"tool": "allset.multi_cut_tool", "edit": True})     # the kit Multi-Cut tool
@@ -942,7 +957,7 @@ def patch_joints(kd):
 
 
 # --- 34. UV workflow ------------------------------------------------------------------
-# Maya UV Editor factory keys, F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
+# Maya UV Editor keys, F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
 # Ctrl+L = select_linked (IC:599), RMB = context menu (IC:614); Maya has no shell-select key there.
 UV_KM = "UV Editor"
 
@@ -1444,9 +1459,14 @@ def patch_repeat(kd):
     """G = Maya repeat last, menu / shelf / marking commands too (operators/repeat_maya.py); Blender's
     screen.repeat_last only knows registered operators. Graph Editor G stays anim.scene_range_frame."""
     kd.remove("Screen", "screen.repeat_last", type="G")
+    repeat_maps = ("Screen", "3D View", "Object Mode", "Mesh")
     _add(kd, "Screen", "allset.repeat_last", make_event("G"),
-         shadows=("Graph Editor", "Dopesheet", "Grease Pencil Edit Mode"))   # their own G (frame range / grab) win
+         shadows=repeat_maps + ("Graph Editor", "Dopesheet", "Grease Pencil Edit Mode"))  # their own G wins
     # there; the Dope Sheet's g steps aside in the Timeline, so the Time Slider still repeats
+    # A mode-specific add-on G menu runs ahead of Screen's binding. Own the same
+    # viewport maps so the normal priority watcher can keep Maya Repeat first.
+    for km in repeat_maps[1:]:
+        _add(kd, km, "allset.repeat_last", make_event("G"), shadows=repeat_maps)
 
 
 # --- 51. Blender's render keys ---------------------------------------------------------------------------------------
@@ -1462,15 +1482,41 @@ def patch_blender_render(kd):
     _add(kd, "Screen", "render.render", make_event("F12", ctrl=True), {"animation": True, "use_viewport": True})
 
 
+# Maya editable motion trail: a left press on a key marker of a motion path picks the key and a drag moves it
+# (operators/motion_trail_edit.py); plain = set, Shift = toggle, Ctrl = remove, Ctrl+Shift = add. In front of the
+# 3D View's and the Tweak tool's press items; passes through anywhere else. With the Move tool and picked keys a
+# press on the kit's trail key manipulator drags its handle.
+# the paint / sculpt / edit mode keymaps keep their own presses (the trail keys are for Object and Pose Mode only);
+# the Screen's Range Slider bar click only acts over the bar
+TRAIL_KEY_SHADOWS = ("Screen", "Image Paint", "Vertex Paint", "Weight Paint", "Sculpt", "Particle", "Curve", "Mesh",
+                     "Armature")
+
+
+def patch_motion_trail_keys(kd):
+    for km in ("3D View", "3D View Tool: Tweak"):
+        for shift, ctrl, mode in ((False, False, 'SET'), (True, False, 'TOGGLE'), (False, True, 'SUB'),
+                                  (True, True, 'ADD')):
+            _add(kd, km, "allset.motion_trail_key", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl), {"mode": mode},
+                 first=True, shadows=(km,) + TRAIL_KEY_SHADOWS)
+
+
+def patch_motion_trail_mmb(kd):
+    """Move tool: a middle drag anywhere moves the picked trail keys along the last used handle (passes through when
+    no trail key is picked, so the Move tool's own middle drag runs). Applied before the Channel Box virtual slider
+    patch, so the slider (highlighted channels) stays in front, like Maya."""
+    _add(kd, "3D View Tool: Move", "allset.motion_trail_key", make_event("MIDDLEMOUSE"), {"button": 'MIDDLE'},
+         first=True, shadows=("3D View Tool: Move",))
+
+
 PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
+           patch_component_keys, patch_motion_trail_mmb, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_uv_shell_select, patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
+           patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_motion_trail_keys, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
@@ -1578,6 +1624,28 @@ def patch_numpad_digits(kd):
         if (km, numpad) not in taken:
             _add(kd, km, idname, make_event(numpad), props, shadows=shadows)
 
+
+# --- Graph Editor tangent handles (#296) -------------------------------------------------------------------------
+# While the kit draws a Graph Editor's tangent handles (ui/graph_handles.py) Blender's handle picking is off, so a
+# left press on a kit handle end selects / drags it (plain and Ctrl = select, Shift = toggle, Ctrl+Shift = add) and a
+# middle drag moves the selected handles; the marquee also picks the handle ends inside it. Added after every
+# other Graph Editor click item so they run first; each passes through anywhere else.
+
+def patch_graph_handles(kd):
+    for shift, ctrl, mode in ((False, False, 'SET'), (False, True, 'SET'), (True, False, 'TOGGLE'),
+                              (True, True, 'ADD')):
+        _add(kd, "Graph Editor", "allset.graph_handle_drag", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl),
+             {"button": 'LEFT', "mode": mode}, first=True, shadows=("Graph Editor", "Screen", "View2D"))
+    _add(kd, "Graph Editor", "allset.graph_handle_drag", make_event("MIDDLEMOUSE"), {"button": 'MIDDLE'},
+         first=True, shadows=("Graph Editor", "View2D"))
+    for shift, ctrl, mode in ((False, False, 'SET'), (True, False, 'XOR'), (False, True, 'SUB'),
+                              (True, True, 'ADD')):
+        _add(kd, "Graph Editor", "allset.graph_handle_box", make_event("LEFTMOUSE", "CLICK_DRAG", shift=shift,
+                                                                       ctrl=ctrl),
+             {"mode": mode}, first=True, shadows=("Graph Editor",))
+
+
+PATCHES += (patch_graph_handles,)
 
 PATCHES += (patch_numpad_digits,)
 

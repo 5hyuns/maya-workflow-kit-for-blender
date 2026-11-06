@@ -292,6 +292,84 @@ def corner_triples(edges, ids):
     return out
 
 
+SPLIT_D = 0.90        # the face of a split corner whose edges' h are this close sits on its bisector
+SPLIT_WEIGHTS_C = (0.41205, 0.41471, 0.1779)    # approximate split-corner sizes (see ``corner_splits``)
+SPLIT_WEIGHTS_D = (0.40481, 0.18657, 0.42296)
+SPLIT_SKIP = 0.86                              # see ``corner_splits``
+
+
+def _split_rho(q):
+    return 2.0 * q / math.sqrt(1.0 + 3.0 * q * q)
+
+
+def corner_splits(edges, ids):
+    """Three-edge corners that ``corner_triples`` leaves out (their
+    h values differ more than ``TRIPLE_SPLIT``). Each face's new corner is placed from its two edges (f comes first in
+    Maya's vertex -> edge order, s second, t is the third edge at v): size r = w0 + w1 g(h_f / h_t) + w2 g(h_s / h_t),
+    g(q) = 2q / sqrt(1 + 3q^2), in units of the far-end width W hm (hm = the smallest h).
+    - the face whose two h are closest (ratio at least ``SPLIT_D``) sits on its bisector, r / mean(h_f, h_s) from both
+      edge lines (``SPLIT_WEIGHTS_D``);
+    - every other face sits on the line from v through the point W hm / h_f, W hm / h_s from the two edge lines, r times
+      that point (``SPLIT_WEIGHTS_C``).
+    Returns {v: {"origin", "hm", "faces": {face: (offset per unit W, {edge: foot per unit W}, angle,
+    unit bisector)}}}."""
+    sel = set(edges)
+    out = {}
+    if ids is None:
+        return out
+    for v in {v for e in edges for v in e.verts}:
+        if len(v.link_edges) != 3 or any(e not in sel or len(e.link_faces) != 2 for e in v.link_edges):
+            continue
+        order = vertex_edges(v, ids)
+        if order is None:
+            continue
+        hs = {e: _half_sin(e, v) for e in order}
+        if any(h is None for h in hs.values()):
+            continue
+        hm = min(hs.values())
+        if hm / max(hs.values()) >= TRIPLE_SPLIT:
+            continue
+        units = {e: e.other_vert(v).co - v.co for e in order}
+        if any(u.length <= ZERO for u in units.values()):
+            continue
+        units = {e: u.normalized() for e, u in units.items()}
+        pairs = []
+        for i, f in enumerate(order):
+            for s in order[i + 1:]:
+                shared = set(f.link_faces).intersection(s.link_faces)
+                if len(shared) == 1:
+                    pairs.append((shared.pop(), f, s))
+        if len(pairs) != 3:
+            continue
+        ratio = {face: min(hs[f], hs[s]) / max(hs[f], hs[s]) for face, f, s in pairs}
+        d_face = max(ratio, key=ratio.get)
+        if ratio[d_face] >= SPLIT_D and hm / max(hs.values()) >= SPLIT_SKIP:
+            # nearly unsplit corners whose bisector face is acute and holds the two smaller h keep Blender's corner
+            _face, f, s = [x for x in pairs if x[0] is d_face][0]
+            t = [e for e in order if e not in (f, s)][0]
+            if hs[t] > max(hs[f], hs[s]) and units[f].dot(units[s]) > ZERO:
+                continue
+        faces = {}
+        for face, f, s in pairs:
+            t = [e for e in order if e not in (f, s)][0]
+            uf, us = units[f], units[s]
+            angle = math.acos(max(-1.0, min(1.0, uf.dot(us))))
+            sn = math.sin(angle)
+            if sn <= ZERO:
+                break
+            weights = SPLIT_WEIGHTS_D if face is d_face and ratio[face] >= SPLIT_D else SPLIT_WEIGHTS_C
+            r = weights[0] + weights[1] * _split_rho(hs[f] / hs[t]) + weights[2] * _split_rho(hs[s] / hs[t])
+            if weights is SPLIT_WEIGHTS_D:
+                offset = (uf + us).normalized() * (r / ((hs[f] + hs[s]) / 2.0) / math.sin(angle / 2.0))
+            else:
+                offset = (uf / (hs[s] * sn) + us / (hs[f] * sn)) * r
+            offset *= hm
+            faces[face] = (offset, {f: offset.dot(uf), s: offset.dot(us)}, angle, (uf + us).normalized())
+        if len(faces) == 3:
+            out[v] = {"origin": v.co.copy(), "hm": hm, "faces": faces}
+    return out
+
+
 def _flat(f):
     """Every vertex of face ``f`` lies in its plane."""
     n, c = f.normal, f.calc_center_median()
@@ -391,6 +469,67 @@ def _far_ends(pair, v, sel, scales=None):
     return out
 
 
+def _fan(v):
+    """[(edge, face after it)] around ``v`` in order, or None when an edge there doesn't have exactly two faces."""
+    if not v.link_edges or any(len(e.link_faces) != 2 for e in v.link_edges):
+        return None
+    e = v.link_edges[0]
+    f = e.link_faces[0]
+    out = []
+    for _ in range(len(v.link_edges)):
+        out.append((e, f))
+        nxt = next((x for x in v.link_edges if x is not e and f in x.link_faces), None)
+        if nxt is None:
+            return None
+        e = nxt
+        f = e.link_faces[0] if e.link_faces[1] is f else e.link_faces[1]
+    return out if out[0][0] is e and len({x for x, _ in out}) == len(out) else None
+
+
+def gap_merges(edges, w):
+    """Vertices where two bevelled edges in a row around the vertex have two or more unbevelled edges between them:
+    like Maya (Auto miter), all the faces of that gap meet at one new vertex. It lies on the bisector of the gap's
+    faces laid flat around the vertex (their angles there added up to ``theta``), at W from both bevelled edges in
+    that flat layout: W / sin(theta / 2) from the vertex, in the gap face that holds the bisector.
+    Returns [(target position, [the gap's faces])]."""
+    sel = set(edges)
+    out = []
+    for v in {x for e in edges for x in e.verts}:
+        if sum(1 for e in v.link_edges if e in sel) < 2:
+            continue
+        fan = _fan(v)
+        if fan is None:
+            continue
+        n = len(fan)
+        bev = [i for i, (e, _f) in enumerate(fan) if e in sel]
+        for a, b in zip(bev, bev[1:] + bev[:1]):
+            gap = [(a + k) % n for k in range(((b - a) % n) or n)]       # fan slots from edge a to edge b
+            if len(gap) < 3:                                              # fewer than two unbevelled edges between
+                continue
+            dirs, angles = [], []
+            for i in gap + [b]:
+                d = fan[i][0].other_vert(v).co - v.co
+                if d.length <= ZERO:
+                    break
+                dirs.append(d.normalized())
+            else:
+                angles = [math.acos(max(-1.0, min(1.0, p.dot(q)))) for p, q in zip(dirs, dirs[1:])]
+            theta = sum(angles)
+            if not angles or not 1e-4 < theta < 2.0 * math.pi - 1e-4 or math.sin(theta / 2.0) <= 1e-4:
+                continue
+            rest = theta / 2.0
+            for p, q, ang in zip(dirs, dirs[1:], angles):
+                if rest <= ang + 1e-12:
+                    perp = q - p * p.dot(q)
+                    if perp.length <= ZERO:
+                        break
+                    ray = p * math.cos(rest) + perp.normalized() * math.sin(rest)
+                    out.append((v.co + ray * (w / math.sin(theta / 2.0)), [fan[i][1] for i in gap]))
+                    break
+                rest -= ang
+    return out
+
+
 def strip_limits(edges, ends):
     """A lone bevelled edge whose two ends both have a slide edge near its line, the two running outwards almost
     parallel (|cos| of their angle above 0.9: a rim edge of an n-gon cap with many sides): the width is limited to
@@ -450,6 +589,21 @@ def _corner(v, f, sel):
     return ray, half, t * math.sin(half) / shared
 
 
+def _corner_reach(v, f, sel, half):
+    """An acute or right corner of face ``f`` at ``v``: its new corner (W / sin(half the angle) along the bisector) never
+    reaches past the far end of either bevelled edge: its foot on each edge (W / tan(half)) stays within the edge,
+    half of it when the edge's other end is a corner of ``f`` too. Returns the width limit for each edge (none for
+    a wider corner, where the bisector leaves the face first)."""
+    out = []
+    if math.tan(half) <= ZERO or half > math.pi / 4.0 + 1e-9:
+        return out
+    for e in [x for x in v.link_edges if x in sel and f in x.link_faces][:2]:
+        end = e.other_vert(v)
+        shared = 2 if sum(1 for x in end.link_edges if x in sel and f in x.link_faces) >= 2 else 1
+        out.append(e.calc_length() * math.tan(half) / shared)
+    return out
+
+
 def corners_of(edges):
     """{(vertex, face)} where two bevelled edges of the face meet."""
     sel = set(edges)
@@ -475,7 +629,7 @@ def corner_moves(edges):
     return out
 
 
-def slide_limit(edges, corners=None, triples=None):
+def slide_limit(edges, corners=None, triples=None, splits=None):
     """Maya's fraction base (a perpendicular width): the smallest of
     (a) slide edges — an edge at an end of a bevelled edge that lies in one of its faces: length x sin(angle to the
         bevelled edge) / (number of its ends a bevel slides along); at a chain end where a slide edge runs near the
@@ -484,7 +638,8 @@ def slide_limit(edges, corners=None, triples=None):
     (b) terminal edges at the end of an open chain (``terminal_moves``): length x s_phi / sin(alpha / 2) / (number of
         its ends that are such chain ends);
     (c) corners where two bevelled edges of one face meet (``_corner``): the new corner slides along the bisector
-        (at a ``corner_triples`` corner it sits k widths from the edges, so its limit is over k).
+        (at a ``corner_triples`` corner it sits k widths from the edges, so its limit is over k; at a ``corner_splits``
+        corner both limits use the placed point).
 
     #124: a cylinder cap's border ring
     has no face holding two ring edges, so Maya slides along the side / cap fan edges (length 1) — and the width is
@@ -518,8 +673,21 @@ def slide_limit(edges, corners=None, triples=None):
     for v, f in corners_of(edges):
         c = _corner(v, f, sel)
         if c is not None and c[2] > ZERO:
+            if splits and v in splits and f in splits[v]["faces"]:
+                # an approximate split corner: the same two limits, taken at the placed point
+                offset, feet, angle, _ray = splits[v]["faces"][f]
+                k = offset.length * math.sin(c[1])
+                caps.append(c[2] / k if k > ZERO else c[2])
+                if angle <= math.pi / 2.0 + 1e-9:
+                    for e in [x for x in v.link_edges if x in sel and f in x.link_faces][:2]:
+                        end = e.other_vert(v)
+                        shared = 2 if sum(1 for x in end.link_edges if x in sel and f in x.link_faces) >= 2 else 1
+                        if feet.get(e, 0.0) > ZERO:
+                            caps.append(e.calc_length() / shared / feet[e])
+                continue
             k = triples[v]["faces"].get(f, (None, None, 1.0))[2] if triples and v in triples else 1.0
             caps.append(c[2] / k)
+            caps += [x / k for x in _corner_reach(v, f, sel, c[1])]
     for s in set(used) | set(near):
         if s.calc_length() <= ZERO:
             continue
@@ -538,9 +706,9 @@ def profile(depth):
     return max(0.0, min(1.0, t * t))
 
 
-def width(edges, fraction=0.5, offset_as_fraction=True, offset=0.2, unit=1.0, corners=None, triples=None):
+def width(edges, fraction=0.5, offset_as_fraction=True, offset=0.2, unit=1.0, corners=None, triples=None, splits=None):
     if offset_as_fraction:
-        return max(0.0, min(1.0, fraction)) * slide_limit(edges, corners, triples) * FIT
+        return max(0.0, min(1.0, fraction)) * slide_limit(edges, corners, triples, splits) * FIT
     return max(0.0, offset) * unit * FIT
 
 
@@ -726,7 +894,8 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     ids = edge_ids if edge_ids is not None else maya_edge_ids(bm)
     pairs2 = corner_pairs(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
     triples = corner_triples(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
-    w = width(edges, fraction, offset_as_fraction, offset, unit, pairs2, triples)
+    splits = corner_splits(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
+    w = width(edges, fraction, offset_as_fraction, offset, unit, pairs2, triples, splits)
     if not edges or w <= 0.0:
         return []
     hard_in = input_hardness(bm, edges)
@@ -769,6 +938,7 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     # Offset As Fraction only: with an absolute Offset Maya leaves that vertex at W along the edge, as Blender does
     pairs2 = corner_pairs(edges, ids) if pairs2 else {}      # the elements were collected again
     triples = corner_triples(edges, ids) if triples else {}
+    splits = corner_splits(edges, ids) if splits else {}
     moves = [m + (None,) for m in terminal_moves(edges, pairs2)[0]] if int(segments) == 1 and offset_as_fraction else []
     # an end whose slide edge runs near the bevelled edge's line: Maya's offsets there, in both modes
     moves += end_moves(edges, pairs2)[0] if int(segments) == 1 else []
@@ -777,6 +947,7 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     pair_moves = [(c["origin"], c["ray"], c["k_ray"], c["u3"], c["k_u3"])
                   for c in list(pairs2.values()) + list(offsets.values())]
     corners = corner_moves(edges) if int(segments) == 1 else []
+    merges = [(p, {f[flay] for f in fs}) for p, fs in gap_merges(edges, w)]   # gap faces by their source id
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=bseg, profile=profile(depth), affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
@@ -831,6 +1002,24 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
             best = min(made, key=gap, default=None)
             if best is not None and gap(best) < 0.5 * w:
                 best.co = origin + ray * (w * k_ray)
+    for c in splits.values():
+        # each face's new corner = the made vertex nearest that face's bisector (where Blender puts it)
+        origin = c["origin"]
+        for offset, _feet, angle, ray in c["faces"].values():
+            k_ray = 1.0 / math.sin(angle / 2.0)
+            def gap(x, ray=ray, origin=origin, k_ray=k_ray):
+                off = x.co - origin
+                near = 0.0 < off.dot(ray) < 3.0 * w * k_ray
+                return (off - ray * off.dot(ray)).length if near else math.inf
+            best = min(made, key=gap, default=None)
+            if best is not None and gap(best) < 0.5 * w:
+                best.co = origin + offset * w
+    for target, sources in merges:
+        # the made vertex that every face of the gap holds
+        for x in made:
+            if x.is_valid and sources <= {f[flay] for f in x.link_faces}:
+                x.co = target
+                break
     for far, origin, unit_dir, slide in overs:
         # the made vertex on that edge's line, at or near its far vertex
         def off_line(x, origin=origin, unit_dir=unit_dir):
@@ -882,23 +1071,18 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     return [bm.verts[i] for i in tracked]
 
 
-def _ekey(a, b):
-    return frozenset((tuple(round(x, 7) for x in a), tuple(round(x, 7) for x in b)))
-
-
 def is_hard(e):
     """Maya hardness of a Blender edge: marked sharp, or next to a flat-shaded face."""
     return not e.smooth or not all(f.smooth for f in e.link_faces)
 
 
 def input_hardness(bm, edges):
-    """Before the bevel: {"keys": {position pair: hard}, "segments": [(a, b, hard)] for the edges around the bevelled
-    vertices and their neighbours, "smooth": any face shaded smooth}."""
-    keys = {_ekey(e.verts[0].co, e.verts[1].co): is_hard(e) for e in bm.edges}
+    """Before the bevel: hardness of segments around the picked vertices and their neighbours,
+    and whether any face is shaded smooth. Unaffected edges retain their own flags through BMesh bevel."""
     ring = {v for e in edges for v in e.verts}
     ring |= {e.other_vert(v) for v in list(ring) for e in v.link_edges}
     segs = {e for v in ring for e in v.link_edges}
-    return {"keys": keys, "segments": [(e.verts[0].co.copy(), e.verts[1].co.copy(), is_hard(e)) for e in segs],
+    return {"segments": [(e.verts[0].co.copy(), e.verts[1].co.copy(), is_hard(e)) for e in segs],
             "smooth": any(f.smooth for f in bm.faces)}
 
 
@@ -940,29 +1124,30 @@ def set_hardness(bm, hard_in, inner, touched, smoothing_angle):
     edges on smooth-shaded faces (a mesh with no smooth face before and no soft edge after stays flat)."""
     bm.normal_update()
     limit = math.radians(smoothing_angle) + 1e-9
+    redo_edges = {e for v in inner for f in v.link_faces for e in f.edges}
+    affected = redo_edges | {e for v in touched for e in v.link_edges}
     hard = {}
-    for e in bm.edges:
+    for e in affected:
         a, b = e.verts
         if len(e.link_faces) != 2:
             hard[e] = is_hard(e)
             continue
-        redo = any(v in inner for f in e.link_faces for v in f.verts)
-        old = None
-        if not redo:
-            old = hard_in["keys"].get(_ekey(a.co, b.co)) if not (a in touched or b in touched) else None
-            if old is None:
-                old = _on_segment(a.co, b.co, hard_in["segments"])
+        redo = e in redo_edges
+        old = _on_segment(a.co, b.co, hard_in["segments"]) if not redo else None
         if old is not None:
             hard[e] = old
         else:
             f0, f1 = e.link_faces
             hard[e] = f0.normal.angle(f1.normal, 0.0) > limit
     if not hard_in["smooth"] and all(hard.values()):
-        return
+        if all(is_hard(e) for e in bm.edges if e not in hard):
+            return
+    # Read old flat-face hardness before changing the face shading. Only the
+    # affected edges need a geometric decision; every other edge keeps its flags.
+    for e in bm.edges:
+        e.smooth = not hard[e] if e in hard else not is_hard(e)
     for f in bm.faces:
         f.smooth = True
-    for e, h in hard.items():
-        e.smooth = not h
 
 
 def face_uv_maps(bm, faces):

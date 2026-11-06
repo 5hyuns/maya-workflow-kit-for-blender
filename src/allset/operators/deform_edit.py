@@ -13,6 +13,7 @@ from bpy.props import EnumProperty, FloatProperty, StringProperty
 from .. import results
 from .. import undo_steps
 from . import deformers, wire_deformer
+from .. import i18n
 
 
 # --- wire ---------------------------------------------------------------------------------------------------------
@@ -135,6 +136,7 @@ class ALLSET_OT_wire_edit(bpy.types.Operator):
     node: StringProperty(name="Wire node", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return f"Maya Deform > Wire > {props.action.replace('_', ' ').title()}"
 

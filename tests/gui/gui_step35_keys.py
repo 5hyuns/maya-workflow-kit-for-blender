@@ -76,7 +76,7 @@ def s_zoom_out():
 
 @step
 def s_ctrl_t():
-    check(f"Ctrl+T -> Universal Manipulator / Transform tool ({tool()})", tool() == "builtin.transform")
+    check(f"Ctrl+T -> Universal Manipulator tool ({tool()})", tool() == "allset.universal_manip")
     ev('X', 'PRESS', ctrl=True, shift=True)
     ev('X', 'RELEASE', ctrl=True, shift=True)
 

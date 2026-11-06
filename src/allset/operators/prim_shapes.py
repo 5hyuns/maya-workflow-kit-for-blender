@@ -57,7 +57,7 @@ DEGREE = ("enum", ("Linear", "Cubic"))   # Maya degree 1 / 3 (stored as 1 / 3)
 CREATE_UVS = ("None", "Normalization Off", "Normalize", "Normalize and Preserve Aspect Ratio")
 SWEEPS = [_a("startSweep", "Start Sweep", 0.0, "angle", 0.0, 360.0), _a("endSweep", "End Sweep", 360.0, "angle", 0.0, 360.0)]
 
-# Defaults = what the Create menu builds with factory option boxes; where
+# Defaults = what the Create menu builds with default option boxes; where
 # that differs from the bare command (polyCylinder subdivisionsCaps 0 -> menu 1) the menu wins.
 NODES = {
     "polyCube": [*AXIS, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),

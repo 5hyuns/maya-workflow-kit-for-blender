@@ -308,6 +308,7 @@ class ALLSET_OT_layer_toggle(_LayerOp, bpy.types.Operator):
     attr: EnumProperty(items=(("visible", "Visible", "Maya V"), ("playback", "Playback", "Maya P")))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return ("Visibility (Maya V): show or hide the layer's objects" if props.attr == "visible" else
                 "Playback (Maya P): show the layer's objects while animation plays")
@@ -330,6 +331,7 @@ class ALLSET_OT_layer_move(_LayerOp, bpy.types.Operator):
                                    ("DOWN", "Down", "Move selection down in list")))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return f"Move selection {props.direction.lower()} in list"
 

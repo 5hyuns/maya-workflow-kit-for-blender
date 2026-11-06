@@ -110,3 +110,17 @@ def test_double_click_toggles_whole_range():
     rb.toggle_whole(scene)
     assert rb.playback(scene) == (10, 40)      # Blender keeps the preview range while it is off
     scene.use_preview_range = False
+
+
+def test_bar_fills_spare_room():
+    # the bar grows into the spacer after the end fields like Maya's Range Slider, and gives room back
+    bg, f = (0.1, 0.1, 0.1), (0.3, 0.3, 0.3)
+    row = [f] * 10 + [bg] * 100 + [f] * 20 + [bg] * 3 + [f] * 20 + [bg] * 85 + [f] * 30
+    assert rb.spare_after(row, 110, bg) == 85
+    assert rb.spare_after(row[:153] + [bg] * 30, 110, bg) == 0      # runs to the edge: no spacer seen
+    unit = 20
+    assert rb.next_extra(0, 85, unit) == 3          # 85 px = 4.25 units, one kept as room
+    assert rb.next_extra(3, 25, unit) == 3          # settled
+    assert rb.next_extra(3, 10, unit) == 2          # less than the kept room: give one back
+    assert rb.next_extra(3, 0, unit) == 0           # the header ran out of room
+    assert rb.next_extra(9, 0, unit) == 5

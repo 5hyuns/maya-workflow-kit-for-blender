@@ -46,8 +46,8 @@ TEXTURES = (('NORMALIZE', "Normalize (scale to fit)", "UVs: planar projection sc
 
 
 class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
-    """Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw (factory values)."""
-    # Create Polygon (polyCreateFacetCtx)
+    """Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw."""
+    # Create Polygon
     cp_divisions: IntProperty(name="Divisions", default=1, min=1, soft_max=10,
                               description="Each edge of the new polygon is split into this many edges")
     cp_limit_on: BoolProperty(name="Limit the number of points", default=False,
@@ -57,7 +57,7 @@ class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
     cp_keep_planar: BoolProperty(name="Keep new faces planar", default=False,
                                  description="Flatten the points onto one plane")
     cp_texture: EnumProperty(name="Texture space", items=TEXTURES, default='NORMALIZE')
-    # Append to Polygon (polyAppendFacetCtx)
+    # Append to Polygon
     ap_divisions: IntProperty(name="Divisions", default=1, min=1, soft_max=10,
                               description="Each new edge of the face is split into this many edges")
     ap_rotation_angle: FloatProperty(name="Rotation angle", default=0.0, min=-360.0, max=360.0,
@@ -69,7 +69,7 @@ class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
     ap_keep_planar: BoolProperty(name="Keep new faces planar", default=False,
                                  description="Flatten the new points onto one plane with the face's other points")
     ap_texture: EnumProperty(name="Texture space", items=TEXTURES, default='NORMALIZE')
-    # Quad Draw (nexQuadDrawCtx)
+    # Quad Draw
     qd_auto_weld: BoolProperty(name="Auto-weld", default=True,
                                description="A vertex moved this close (pixels) to another one is merged with it")
     qd_weld_px: IntProperty(name="Auto-weld distance", default=10, min=1, soft_max=50, subtype='PIXEL')

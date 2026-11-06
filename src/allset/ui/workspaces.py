@@ -15,6 +15,7 @@ from bpy.props import StringProperty
 
 from .. import switch
 from . import user_workspaces
+from .. import i18n
 
 # (template name, label); None = divider
 FACTORY = (("General", "Maya Classic"), None, ("Modeling - Standard", "Modeling - Standard"),
@@ -73,8 +74,45 @@ def apply_settings(context, ws):
             pass
 
 
+# the main view's display mode that follows a workspace switch: Maya's workspaces share one persp panel
+DISPLAY = (("shading", "type"), ("shading", "show_xray"), ("shading", "show_xray_wireframe"),
+           ("overlay", "show_xray_bone"), ("overlay", "show_wireframes"))
+
+
+def display_of(screen):
+    """{(struct, prop): value} of the main 3D View of ``screen`` (empty without one)."""
+    from .status_line import main_view3d
+    area, _region = main_view3d(screen) if screen is not None else (None, None)
+    if area is None:
+        return {}
+    space = area.spaces.active
+    return {(part, prop): getattr(getattr(space, part), prop) for part, prop in DISPLAY}
+
+
+def carry_display(display, ws):
+    """Give the main 3D View of workspace ``ws`` the display mode read by ``display_of`` (wireframe stays
+    wireframe, X-Ray Joints stays on ...)."""
+    from .status_line import main_view3d
+    if not display or not ws.screens:
+        return
+    area, _region = main_view3d(ws.screens[0])
+    if area is None:
+        return
+    space = area.spaces.active
+    for (part, prop), value in display.items():
+        struct = getattr(space, part)
+        if getattr(struct, prop) != value:
+            try:
+                setattr(struct, prop, value)
+            except (AttributeError, TypeError, ValueError):
+                pass
+    area.tag_redraw()
+
+
 def activate(context, window, template_name):
-    """Show Maya workspace ``template_name`` in ``window`` (appended from the template when the file lacks it)."""
+    """Show Maya workspace ``template_name`` in ``window`` (appended from the template when the file lacks it); its
+    main view keeps the display mode of the view shown before."""
+    display = display_of(window.screen)
     ws = find(template_name)
     if ws is None:
         prev = window.workspace.name if window.workspace is not None else ""
@@ -85,6 +123,7 @@ def activate(context, window, template_name):
             ws[switch.PREV_KEY] = prev        # the way back to Blender's layout (switch.leave_layout)
     window.workspace = ws
     apply_settings(context, ws)
+    carry_display(display, ws)
     return ws
 
 
@@ -174,6 +213,7 @@ class ALLSET_OT_maya_workspace(bpy.types.Operator):
     name: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return f"Switch to the Maya workspace {LABELS.get(props.name, props.name)}"
 

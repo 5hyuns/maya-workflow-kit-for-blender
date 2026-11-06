@@ -330,7 +330,7 @@ def rebuild(context, ob, changes):
 
 
 def create_object(context, kind, values=None, maya_naming=True, create_uvs=True):
-    """Build ``kind`` from its Maya node (factory values + ``values``) at the origin; returns the new object
+    """Build ``kind`` from its Maya node (default values + ``values``) at the origin; returns the new object
     (for nurbsSquare / nurbsCube the group empty). The node is stored for Channel Box INPUTS. Without Maya naming
     the object gets the Create menu label ("Cube", "NURBS Circle"), like Blender's own Add menu names."""
     node_type, base = KIND_NODES[kind]

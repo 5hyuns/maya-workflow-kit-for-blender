@@ -35,6 +35,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import compat, results, undo_steps
+from .. import i18n
 
 EPS = 1e-4
 PROP = "allset_rot_interp"          # owner custom property: mode key of the kit Change Rotation Interp
@@ -760,6 +761,7 @@ class ALLSET_OT_rotation_interp(bpy.types.Operator):
     mode: EnumProperty(items=MODES, name="Mode", default="NONE", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in MODES if k == props.mode)
 

@@ -14,8 +14,8 @@ The kit keeps Maya's values (``Scene.allset_motion_trail``) and drives Blender's
 Slider), Increment -> frame step, Show Key / Numbers -> keyframe highlight / numbers, Frame numbers, Trail Thickness ->
 line thickness, Draw Mode Constant / Past/Future -> custom path colour before / after the current frame. Settings
 Blender has no counterpart for (Draw When Selected, X-Ray, Alternating Frames / Velocity, Anchor Object, Local
-Position, marker sizes and colours, hiding frame markers) are greyed in the window with their reason. Moving a key on
-the trail (Maya's editable trail) is not done yet.
+Position, marker sizes and colours, hiding frame markers) are greyed in the window with their reason. Keys on a trail
+are picked and moved in the 3D View like Maya's editable trail (``motion_trail_edit``).
 """
 
 import bpy

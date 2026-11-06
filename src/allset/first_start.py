@@ -24,13 +24,25 @@ from . import app_template, preferences
 _armed = [False]
 
 
-def new_maya_scene():
-    """Replace the open file with a new untitled file in the Maya layout (not from inside an operator)."""
+def new_maya_scene(options=None):
+    """Replace the open file with a new untitled file in the Maya layout (not from inside an operator), with the
+    New Scene Options: ``options`` (the option window's values) or the saved ones and the New Scene Time."""
     _armed[0] = False      # this load is the Maya layout: the start hook must not load it again (#47)
+    from .operators import option_windows
+    if options is None:
+        options, full = option_windows.new_scene_values()
+    else:
+        full = True
+    old = bpy.context.scene
+    before = option_windows.scene_units(old) if old is not None else None
     win = _window()
     from . import switch
-    if win is not None and win.workspace is not None and not switch.is_maya_workspace(win.workspace):
-        switch.START_WORKSPACE["name"] = win.workspace.name    # shown again by a switch to Blender (#185)
+    if win is not None and win.workspace is not None:
+        # shown again by a switch to Blender (#185); from the Maya layout: the workspace before it (#307)
+        name = win.workspace.name if not switch.is_maya_workspace(win.workspace) else win.workspace.get(switch.PREV_KEY)
+        prev = bpy.data.workspaces.get(name) if isinstance(name, str) else None
+        if prev is not None and not switch.is_maya_workspace(prev):
+            switch.START_WORKSPACE["name"] = prev.name
     if win is None:
         res = bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
     else:
@@ -41,6 +53,7 @@ def new_maya_scene():
     scene = bpy.context.scene or (bpy.data.scenes[0] if bpy.data.scenes else None)
     if scene is not None:
         startup_cameras.ensure(scene, scene.view_layers[0])
+        option_windows.apply_new_scene(scene, options, full, before)
     return res
 
 

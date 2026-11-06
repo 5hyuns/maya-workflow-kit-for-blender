@@ -123,7 +123,9 @@ TOOL_HELP = {
     "builtin.move": "Move Tool: drag the manipulator. Hold X/C/V to snap to grid/curve/point. Tap D to edit the pivot; click a vertex/edge/face; D again to finish",
     "builtin.rotate": "Rotate Tool: drag a ring to rotate. Hold J to snap rotation. Tap D to edit the pivot; D again to finish",
     "builtin.scale": "Scale Tool: drag a handle to scale, the centre scales uniformly",
-    "builtin.transform": "Universal Manipulator: move, rotate and scale with one manipulator",
+    "builtin.transform": "Transform: move, rotate and scale with one manipulator",
+    "allset.universal_manip": ("Universal Manipulator: drag a corner to scale (Ctrl: about the centre, Shift: evenly), "
+                               "the edge arrows to rotate, the centre to move. Click a length to type it"),
     "allset.multi_cut_tool": ("Multi-Cut: click edges / faces to place points, Enter or right-click to cut. "
                               "Ctrl+click: edge loop, Shift: snap step, Backspace: remove the last point"),
     "builtin.loop_cut": "Insert Edge Loop: click an edge to insert a loop, drag to slide it",

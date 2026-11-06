@@ -15,6 +15,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
 from . import naming
+from .. import i18n
 
 PROP = "allset_set"
 TEXT = "allset_set_text"
@@ -186,6 +187,7 @@ class ALLSET_OT_set_edit(bpy.types.Operator):
     new_name: StringProperty(name="Name", options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {'ADD': "Add the selected objects to the set", 'REMOVE': "Remove the selected objects from the set",
                 'REMOVE_MEMBER': "Remove this object from the set", 'DELETE': "Delete the set (its objects stay)",

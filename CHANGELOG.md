@@ -3,6 +3,229 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] — 2026-11-05
+
+### Added
+- **Camera Overscan** (#313): a camera's Attribute Editor > Display Options has Overscan, like Maya. A view that
+  looks through the camera (Panels > Look Through Selected or the Panels camera list) fits the camera's frame to
+  the view at Overscan 1 (a new camera's value), and 1.3 / 2 leave that much room around it. Changing the value
+  updates the views that look through that camera; zooming such a view afterwards still works.
+- **Graph Editor List > Bookmarks** works like Maya's (it was greyed). Bookmark Current Objects makes a bookmark set
+  (Bookmark, Bookmark1, ...) of the objects the Graph Editor lists; Bookmark Selected Curves makes one that remembers
+  the selected curves. Bookmark sets show in the Outliner like other sets: selecting one selects its objects, so the
+  Graph Editor shows them. The List > Bookmarks menu also lists them: choosing one loads it into that Graph Editor
+  (Auto Load turns off) with the bookmark's set row above its objects, a curve bookmark shows only its curves.
+  Remove All Bookmarks deletes them.
+- **Graph Editor Sculpting Tools** (Edit > Transformation Tools > Sculpting Tools): Grab, Smooth, Smear and Key
+  Reducer brushes work like Maya's (they showed a notice). Drag over the curves: Grab moves the keys under the brush
+  up or down with the drag, Smear drags keys along the stroke's path, Smooth pulls keys toward their neighbours, and
+  Key Reducer deletes keys that lie on the line between their neighbours (a curve's first and last keys stay). The
+  brush's pull fades out toward its edge; like Maya it spans the same frames across at any zoom (about 3 frames
+  each side) and a set height on screen; B + drag sideways changes its size. Brushes change key
+  values, not times; with keys selected only those change. Each stroke is one undo step; Esc or Q / W / E / R / T
+  ends the tool.
+- **Graph Editor Curves > Clamp Curves and Offset Curves** work like Maya's (they showed a notice). Clamp Curves sets
+  the selected keys' values above a limit (default 0) to the limit, or with the option those below it; Offset
+  Curves moves the selected keys one frame later by default, or by any number of frames, or so the first one lands
+  on a given frame. With no key selected they act on every key of the shown curves. Like Maya's Time Range option
+  (All / Playback / Custom) they can keep only those keys inside the Time Slider's playback range or between a Start
+  and End time. Tangents keep their shape; the settings are in the option box (Adjust Last Operation).
+- **Playback Looping Once and Oscillate** (Playback > Playback Looping, the Time Slider's right-click menu and the
+  loop button at the right end of the Range Slider, which steps Continuous → Once → Oscillate): Once stops on the
+  last frame of the playback range (the first frame when playing backward), and play pressed there starts again from
+  the other end; Oscillate plays forward and backward between the ends. Continuous loops as before. The setting is
+  saved with the scene.
+- **Enable Stepped Preview** (Playback menu): every animation curve plays and scrubs as if its keys were stepped,
+  like Maya: each channel shows the value of the key before the current frame. Only what you see changes: the keys,
+  their interpolation and the Graph Editor curves stay as they are, and Auto Key doesn't key the stepped values.
+  Animation layers and Trax clips step each layer's and clip's curves (and keyed layer weights) before blending
+  them. Driver curves and NLA strips the kit did not make stay as they are; final renders (F12) show the curves'
+  own values.
+- **Move keys on a motion trail** (Visualize > Motion Trail Editor): in the Maya layout's views, left-drag a key
+  marker of a motion trail to move that key, like Maya's editable trail. A click picks the key (and, like Maya,
+  replaces the object selection); Shift toggles a key in the picked set, Ctrl removes it, Ctrl+Shift adds it, and
+  all picked keys move together. With the Move tool, picked keys get a move manipulator with world X / Y / Z arrows,
+  plane squares and a centre square: an arrow moves along that axis only, a square in that plane, the centre in the
+  view plane, and a middle drag anywhere uses the last handle you dragged (drawn yellow). The object's location
+  keys at that frame change so it passes through the new point (a parent's space is taken into account; a channel
+  with a curve but no key at that frame gets one; a channel without an animation curve and a locked channel stay);
+  the trail follows while you drag. Picked keys are drawn in the trail's Selected Key Color. Esc or right click puts
+  a move back, one undo takes it back, and a click off the trail selects as before. An object's own gizmo, or a
+  mesh's own surface in front of its key, wins over the key marker, like Maya. Works for object trails in Object
+  Mode and bone trails (heads) in Pose Mode; objects moved by a constraint or driver and connected or constrained
+  bones can't be moved this way.
+- **Keys > Remove Key in the Graph Editor and Dope Sheet**: Unsnapped, Before Current Frame, After Current Frame,
+  Outside Selected Range and Ripple Delete now work like Maya's (they were greyed). They act on the curves of the
+  selected keys; the range is the selected keys' first to last time. Outside Selected Range adds a key at each end
+  of the range where a curve has none, so the curve keeps its shape there; Ripple Delete removes the keys inside the
+  range and moves the later keys back to close the gap. Unsnapped and Before / After Current Frame use the shown
+  curves when no key is selected.
+- **Graph Editor tangent handles like Maya** (#296): in Maya mode the Graph Editor draws a non-weighted tangent at
+  a fixed length on screen along its direction, however steep it is and whatever the zoom, and a weighted tangent
+  at its real end. Unselected tangents are grey, selected ones white. Click a handle end to select it (Shift
+  toggles, Ctrl+Shift adds); drag it to turn a non-weighted tangent (its length in time stays a third of the way to
+  the next key, so only the angle changes) or to move a weighted one (Lock Tangent Length keeps its length). A
+  unified tangent turns both sides; an automatic one becomes unified. Middle-drag with the Move Keys tool moves the
+  selected handles, a marquee picks handle ends, Esc or right click puts a drag back, and one undo takes it back.
+  View > Tangents (Always / Never / On Active Keys) works as before. The add-on preference Fixed-length
+  Tangents (also in Windows > Settings/Preferences > Preferences > Animation, on by default) turns it off; Maya mode
+  off gives the Graph Editor its own handles back.
+- **Universal Manipulator** (#318): Ctrl+T in Object Mode, or Modify > Transformation Tools > Universal
+  Manipulator, puts a box around the selection, like Maya. Drag a corner box to scale along the box axis closest to
+  the drag with the opposite face fixed (Ctrl: about the box centre; Shift: all axes, the opposite corner fixed),
+  drag an arrow pair on an edge to rotate about that edge's direction, a centre arrow to move along that axis and
+  the centre circle to move in the view plane. The box lengths are written beside three edges: click one, type a
+  length and press Enter to scale that axis to exactly that size. Tool Settings has Transform space (World /
+  Local), Rotate around (Pivot / Center) and Reset Tool. Each drag is one undo step. In component modes Ctrl+T
+  stays Blender's Transform tool.
+- **Tooltips follow the interface language** (#317): tooltips the kit builds when you hover a button (the panel
+  toolbar, the Graph Editor icon row, the shelf, greyed menu items, editor notices) are translated, and they are in
+  the translation template, so your own translation file can change them. A Maya submenu's tooltip is its name.
+- **Range Slider fills the timeline header** (#319): the bar grows into the free room after the playback end fields,
+  like Maya, and gives it back when the header gets narrower.
+
+### Fixed
+- **Kit-drawn panels ignored the Blender theme** (#312): the Graph Editor / Dope Sheet list, the Time Slider ruler
+  and the Range Slider kept Maya's dark greys with a light theme. They now move with the theme's editor background
+  and text colours; with Blender's default theme they look as before. Selection blue and axis colours stay.
+- **Delete Keys / Cut Keys windows from the Graph Editor and Dope Sheet**: with several keys selected on one curve
+  they could delete other keys than the selected ones. They now delete exactly the selected keys.
+- **Camera and Aim shows its aim line in the Maya layout** (#299): the Maya layout's views draw a thin dark blue line
+  from a Camera and Aim rig's camera to its aim node (and, for Camera, Aim and Up, to its up node), like Maya. It
+  follows either end as it moves and turns green while the rig's group is selected. Turn it off per rig with the
+  group's *Display Connector* in the Attribute Editor's Extra Attributes. Blender's relationship lines stay off in
+  these views (Maya draws no line from a child to its parent); turning them on in a view shows Blender's lines
+  there instead.
+- **Joints drawn far too large in a scene shown in metres** (#311): a joint's Radius (and Display > Animation >
+  Joint Size) is a plain number in centimetres, like Maya, so a Radius 1 joint is 1 cm across whatever the scene's
+  length unit. In a metre scene the kit drew it 1 m across, so the joints of a human-sized skeleton (for example one
+  imported from FBX) covered the whole character. Scenes shown in centimetres (the kit's default) are unchanged.
+  Change the size with *Display > Animation > Joint Size* or a joint's *Radius* in the Channel Box.
+- **Channel Box highlight** (#316): a clicked channel showed its highlight only after the mouse left the row. It
+  now shows at once, with the mouse still on it.
+- **Channel Box right-click menu** (#315): the Channels menu (and the Ctrl+right-click Edit menu) opens to the left
+  of the Channel Box when there is room, so it no longer covers the channel names and values.
+- **Your own translation file and text Blender translates itself** (#317): an entry such as Center Pivot in your
+  file now shows in the kit's menus, marking menus, shelf and Channel Box even where Blender has its own
+  translation (your file first, then the kit's table, then Blender's). The Channel Box's Translate / Rotate / Scale
+  X Y Z names are translatable and have Japanese and Chinese text.
+- **Graph Editor tangent buttons without the Maya icon row** (#319): the header buttons shown when Maya editor menus
+  are off use the kit's tangent curve pictures instead of Blender icons that didn't match their names.
+- **Joint Radius** (#320): a Radius typed in the Channel Box goes to every selected joint, like Maya, and the joints
+  redraw at once (Display > Animation > Joint Size too). A skeleton set to Blender's Stick or Wire display draws one
+  line per bone and no spheres.
+- **Bevel (Fraction) at an acute or right corner of two bevelled edges**: the new corner no longer slides past the
+  far end of either edge, so Fraction 1 there brings it to the edge's end.
+
+### Changed
+- **Bevel at a tip where two bevelled edges leave two or more other edges between them** (#213): for example two
+  neighbouring edges at the tip of a pyramid. The faces on the far side now meet at one new vertex on the bisector
+  of those faces laid flat around the tip, at the bevel width from both bevelled edges, on the surface like Maya (it
+  used to sit inside the mesh, closer to the tip). Still different from Maya: Maya widens such a tip by an amount
+  that changes with the order of the mesh's edges (a mirrored mesh can give a different width), so the kit keeps
+  the plain bevel width there.
+- **Bevel (Fraction) at a corner of three bevelled edges whose angles differ a lot** (#213): for example a box
+  corner where one face is skewed. Each face's new corner and the bevel width now follow an approximation of Maya's
+  corner, so the corner is closer to Maya's shape than before. This is an approximation and still differs from
+  Maya. Corners whose angles are close (such as a plain box corner) are unchanged.
+
+## [0.11.0] — 2026-11-04
+
+### Added
+- **RMB marking menu in Sculpt Mode** (#294): RMB over the mesh while sculpting opens the same marking menu as in
+  Object Mode, like Maya. Object Mode, Vertex, Edge, Face, Multi and Select leave Sculpt Mode for that mode. A
+  brush that maps its texture as a stencil keeps RMB for moving the stencil.
+- **Drag a camera from the Outliner into a view** (#294): middle-drag a camera from the Outliner and drop it on
+  a viewport; that viewport looks through the camera as its own camera, like a Maya panel. Other objects dropped
+  on a viewport change nothing, and middle-drags inside the Outliner still parent.
+- **Your own translations** (#293): *Preferences > Add-ons > Maya Workflow Kit > Translations* writes an English
+  template of every kit text, grouped by menu, editor, marking menu, shelf and window. Copy it to
+  `<language code>.json` (for example `de_DE.json`) in the translations folder and fill in what you like: empty
+  values stay English, and a file for Japanese or Chinese corrects the built-in translation. Reload Translations
+  reads the files again; the kit follows Blender's interface language.
+- **Create > Cameras > Camera and Aim / Camera, Aim and Up** (#299): Create > Cameras opens its submenu. Camera and
+  Aim puts `camera1` and `camera1_aim` in `camera1_group`, with the camera always looking at the aim; Camera, Aim and
+  Up adds `camera1_up`, which rolls the camera. Each node moves and keys on its own, and moving the group moves the
+  whole rig, like Maya.
+- **UV Editor Shift+RMB marking menus like Maya's** (#298): Shift+RMB in the UV Editor opens the UV editing menu
+  for the component: UVs / edges / vertices (Snap, Straighten, Optimize, Align, Rotate, Layout, Unfold, Normalize),
+  UV shells or faces, with Cut / Sew / Merge, the shell arranging commands, Tools and Pinning in the list below.
+- **Time for new scenes** (#308): File > New Scene, Ctrl+N and the Status Line's new button give the new scene the
+  New Scene Time (default 24 fps), like Maya's New Scene Options. Set it in the New Scene option box, the kit's
+  Preferences window (Settings > Working Units) or the add-on preferences; Blender's own File > New and startup
+  file are not changed. "Do not reset working units" now keeps the open scene's units and frame rate.
+- **Keyboard: Maya / Blender** (#309): a Keyboard choice in the add-on preferences and the Hotkey Editor. Blender
+  uses your active Blender keymap alone while the Maya layout, menus and tools stay; Maya puts the kit's Maya keys
+  back. Ctrl+Alt+Shift+M switches Maya mode with either choice.
+- **Click a manipulator handle to make it the active handle** (#304): like Maya, a click on a Move or Scale handle
+  or a Rotate ring makes it the active handle without moving anything, drawn yellow; a middle-mouse drag anywhere
+  in the view then moves, rotates or scales along it. A click on the Move / Scale centre frees it, and a click on
+  the Rotate view ring makes the view axis the active handle.
+- **Trax Editor and animation clips** (#287): Windows > Animation Editors > Trax Editor opens Blender's NLA Editor
+  with Maya's Trax menu bar. Create > Animation Clip (with its option window: name, leave keys in timeline, time
+  range, include hierarchy / subcharacters) turns the keys of the current character set, or of the selected
+  objects and the objects below them, into a clip: a source clip (`clip1Source`) and an instance (`clip1`) on
+  its own track, with a character set for the clip's channels (`pCube1Ch`, `multiCh`). Several objects share one
+  clip. Library > Insert Clip and the sidebar's Clip Library (rename, insert at the current time, delete) reuse a
+  source clip as often as needed; Edit > Duplicate, Split, Trim Before / After, Modify > Enable/Disable,
+  Activate/Deactivate Keys, Remove Empty Tracks and Create > Blend (over the part where two clips overlap) work on
+  the selected clips; scale and cycle are the strip's own Scale and Repeat. Animation layers stay on top of the
+  clips. Playback > Set Range to > Enabled Clips and Edit > Delete All by Type > Clips work too. A clip keeps its
+  absolute values (Maya's Relative offset is not there), and two clips blend only where they overlap.
+
+### Fixed
+- **Faster local Bevel on large meshes**: a Bevel on a few edges of a big mesh no longer rebuilds the hard / soft
+  edge state of the whole mesh; untouched edges keep their own hardness.
+- **Alt+RMB dolly ignored Invert Zoom Direction** (#295): the kit's Alt+RMB drag zoom in the viewport and the UV /
+  Image Editor now follows Blender's *Preferences > Input > Invert Zoom Direction*, like Blender's own drag zoom.
+  The mouse wheel is Blender's zoom and keeps its own Invert Wheel Zoom Direction setting.
+- **= / - didn't resize the Rotate manipulator** (#283): the keys (and numpad + / -) changed only the Move and
+  Scale manipulators. The Rotate tool now has the kit's own manipulator too: X / Y / Z rings drawn and grabbed on
+  their front half, a larger view ring and a grey trackball outline (drag inside it to rotate freely), in the
+  same axis colours as Move / Scale, and it follows = / - like them. With Gimbal axes the rings follow the
+  rotation channels.
+- **Joints hidden again after switching workspaces** (#289): each workspace had its own viewport, so wireframe
+  set in General was gone in Rigging and the mesh hid the joints inside it. Switching workspaces now keeps the
+  main view's display mode (wireframe / shaded, X-Ray, X-Ray Joints, Wireframe on Shaded), like Maya's persp
+  panel.
+- **Outliner button opened a new window** (#290): in a layout without the Tool Box column (Blender's own
+  layouts, Modeling - Expert) the Tool Box Outliner button hid the Outliner and the next click opened it in a new
+  window. It now docks the Outliner back on the left of the main viewport.
+- **Alt+LMB stopped tumbling after a ViewCube click** (#288): a ViewCube face turned the persp view into an
+  orthographic side view, where the kit locks tumbling like Maya's top / front / side views, so the view stayed stuck.
+  A perspective view now stays perspective, like Maya's persp camera.
+- **Alt+LMB stopped tumbling after Alt was pressed again during a tumble** (#288): Blender's rotate snapped the view
+  to the nearest side view when Alt was pressed mid-drag and turned the persp view orthographic, so it locked like
+  a top / front / side view. Tumbling no longer snaps, like Maya.
+- **Cut edges show as borders right away** (#298): after Cut UVs the cut edge is drawn as a thick texture border at
+  once, also a single edge cut inside a UV shell that stays in one piece (UV Editor and the 3D Cut and Sew tool).
+- **Blender's tabs come back cleanly after a new scene made in Maya mode** (#307): switching to Blender after
+  File > New Scene in Maya mode no longer mixes Maya and Blender workspace tabs. A new scene that was never saved
+  drops its Maya workspaces on the switch and gets your startup workspaces (else Blender's own), showing the
+  workspace you had before Maya mode. A saved file keeps its Maya workspaces.
+- **View > Select Camera works in scenes made in Blender mode** (#297): the first Select Camera in a perspective or
+  top / front / side view gives the scene the persp / top / front / side cameras every Maya scene has (one undo
+  step) and selects the view's camera; the panel toolbar's Select Camera button is no longer greyed there.
+- **No empty strip between the Status Line and the Shelf** (#305): when the Blender window gets bigger than the
+  Maya layout (for example when it is maximized), the Status Line row stays one row high and the Shelf keeps its
+  height; the extra room goes to the viewport.
+- **Space tap kept splitting the view on high-DPI screens** (#302): at a large UI scale the kit didn't find its own
+  four view, so every Space tap split the panel under the mouse into four more. A Space tap now switches between one
+  panel and the four view at any UI scale.
+- **Hair hidden under a hidden parent** (#291): a parent hidden with Blender's own eye / H no longer hides its
+  children in Maya mode, so hair curves parented to a hidden surface mesh or rig show up as they do in Blender.
+  Maya's Hide (Visibility) and display layers still hide the whole hierarchy.
+- **Tiny vertices on Vulkan and Metal**: edit-mode vertices, the hovered-vertex highlight, the mesh tools' hovered
+  vertex and the UV shell preview's points were single pixels with the Vulkan / Metal backends and ignored the theme
+  Vertex Size. They now keep their size on every backend.
+- **Japanese Maya terms** (#286): 16 Japanese menu labels (Set Key, Render Sequence, Quad Draw, Target Weld, Center
+  Pivot, Reverse Normals, Match Translation / Rotation / Scaling, Conform, Reduce, Retopologize, Triangulate,
+  Quadrangulate and their tools) and the labels and tooltips that use them now read as in Japanese Maya.
+- G keeps the last modeling command after display, selection and component-menu changes, and reaches Repeat
+  ahead of other add-ons' viewport G menus. Recent Commands uses the same filter; cancelled menu commands stay cancelled.
+- **Look Through keeps the scene camera** (#294): Panels > Look Through Selected and the Panels camera lists no
+  longer make the camera the scene's render camera when the view had none of its own.
+
 ## [0.10.0] — 2026-11-02
 
 ### Added
@@ -1081,7 +1304,7 @@ edge-loop tools and the Deform menu move to 0.4.0 (#30 #31 #34).
   settings kept across New / Open, FBX / OBJ / Alembic / USD round trips with Maya's axes, scale and names.
 - **Edit Mesh / UV** (#16 #68 #70): Connect, Merge, Symmetrize and Smooth give Maya's results; Ctrl+B and Ctrl+E on
   edges / vertices act at once and stay editable; UV Automatic / Contour Stretch from object mode.
-- **Maya option windows** (#32 #33 #35): 26 more windows with Maya 2022's fields and factory defaults (Create Joints,
+- **Maya option windows** (#32 #33 #35): 26 more windows with Maya 2022's fields and defaults (Create Joints,
   IK Handle, Bind / Unbind / Copy / Paint Skin Weights, Blend Shape, Parent, Cut / Copy / Paste / Delete / Snap / Scale
   Keys, Connect, Circularize, Make Hole, Insert Edge Loop, Aim / Pole Vector / Scale constraints, Duplicate Special);
   Aim aims +X with world up Y like Maya; Key > Scale Keys is new.

@@ -34,6 +34,11 @@ def _redraw_tools(_self, context):
             area.tag_redraw()
 
 
+# The Time choices of Maya's New Scene Options (playback speed of a new scene).
+NEW_SCENE_TIMES = ("12 fps", "15 fps", "23.976 fps", "24 fps", "25 fps", "29.97 fps", "30 fps", "48 fps", "50 fps",
+                   "60 fps")
+
+
 class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Must equal the top-level package name: "bl_ext.<repo>.allset" as an
     # extension, "allset" as a legacy add-on.
@@ -42,6 +47,26 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Set once "Maya" was activated automatically on first enable, so later
     # starts respect a different keymap the user picked.
     keymap_auto_activated: bpy.props.BoolProperty(options={'HIDDEN'})
+
+    @_quiet
+    def _update_keymap_set(self, context):
+        if not self.maya_mode:
+            return
+        from . import switch
+        if not switch._registered[0]:
+            return
+        from . import keymap
+        keymap.sync()
+        bpy.context.window_manager.keyconfigs.update()
+        _redraw_tools(self, context)
+
+    # #309: which keys Maya mode uses. Blender = the active Blender keymap alone; layout, menus and tools stay.
+    keymap_set: bpy.props.EnumProperty(
+        name="Keyboard",
+        description="The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both",
+        items=(('MAYA', "Maya", "The kit's Maya hotkeys, marking menus and hold keys"),
+               ('BLENDER', "Blender", "Your active Blender keymap, unchanged; the Maya layout, menus and tools stay")),
+        default='MAYA', update=_update_keymap_set)
 
     # Maya mode on/off (switch.py), kept across restarts. Off after install: enabling the
     # extension changes nothing until the user opts in (welcome dialog / button / switch).
@@ -115,6 +140,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Start in Maya Layout",
         description="When Blender starts without a file in Maya mode, open a new scene in the Maya layout",
         default=False)
+    # Time (playback speed) of a new Maya scene, like Maya's New Scene Options Time (default 24 fps); the
+    # New Scene option window's Time field edits this value.
+    new_scene_time: bpy.props.EnumProperty(
+        name="New Scene Time",
+        description="Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's "
+                    "New Scene Options). The open scene and Blender's startup file are not changed",
+        items=[(t, t, "") for t in NEW_SCENE_TIMES], default="24 fps")
 
     # #63: Maya's UI doesn't come from the scene file: opening a file
     # shows the Maya layout (ui/scene_carry.py).
@@ -185,6 +217,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Key Size", default=11, min=0, max=24, subtype='PIXEL',
         description="Diameter of the keys in the Graph Editor, in pixels at interface scale 1 (0 = Blender's "
                     "theme size)")
+    graph_fixed_tangents: bpy.props.BoolProperty(
+        name="Fixed-length Tangents", default=True,
+        description="The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a "
+                    "fixed length on screen along its direction, a weighted one at its real end")
     graph_scale_manipulator: bpy.props.BoolProperty(
         name="Scale Keys Manipulator", default=True,
         description="With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a "
@@ -495,6 +531,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row(align=True)
         row.operator("allset.settings_export", icon='EXPORT')
         row.operator("allset.settings_import", icon='IMPORT')
+        from . import translations
+        translations.draw(layout)
         if not self.maya_mode:
             return
         box = layout.box()
@@ -502,7 +540,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.scale_y = 1.4
         row.operator("allset.new_maya_scene", icon='FILE_NEW')
         row.operator("allset.maya_layout_here", icon='WORKSPACE')
+        box.prop(self, "keymap_set")
         box.prop(self, "start_in_maya_layout")
+        box.prop(self, "new_scene_time")
         box.prop(self, "maya_layout_on_open")
         col = layout.column()
         col.prop(self, "lock_ortho_tumble")

@@ -17,6 +17,7 @@ from bpy.props import BoolProperty, EnumProperty
 
 from .. import results
 from .. import undo_steps
+from .. import i18n
 
 # Maya tangent -> (interpolation, handle type or None); FLAT also levels the handles.
 # (reused by the Graph Editor tangent buttons)
@@ -791,6 +792,7 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
         ('ALL', "All", "Every key of the selection (Maya Key menu, factory Time range All)")))
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return next(d for k, _l, d in ACTIONS if k == props.action)
 

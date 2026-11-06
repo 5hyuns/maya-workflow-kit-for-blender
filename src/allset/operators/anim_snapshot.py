@@ -2,7 +2,7 @@
 """Maya Visualize > Create Animation Snapshot / Update Snapshot.
 
 Maya rules (Maya 2022):
-- Visualize > Create Animation Snapshot with the factory options: Time range Start/End 1 – 10, Increment 1,
+- Visualize > Create Animation Snapshot with the default options: Time range Start/End 1 – 10, Increment 1,
   Update "Fast (update only when keyframes change)".
 - Result: a top-level group ``snapshot<N>Group`` with one child per sampled frame, ``transform<N>_<k>`` /
   ``transform<N>_Shape<k>`` (k = 1 ..), meshes in **world space** under identity transforms (a child of an animated

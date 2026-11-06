@@ -8,6 +8,7 @@ from bpy.props import (BoolProperty, EnumProperty, FloatProperty, FloatVectorPro
 
 from .. import compat
 from . import skin
+from .. import i18n
 
 # Each native operation keeps its own settings, including all scalar operator options.
 ACTIONS = {
@@ -222,6 +223,7 @@ class ALLSET_OT_weight_tool(bpy.types.Operator):
     blend: StringProperty(default='')
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return {'ASSETS': 'Browse Blender weight-paint brush assets',
                 'DRAW': 'Paint weights with the chosen blend operation',
@@ -641,6 +643,7 @@ class ALLSET_OT_weight_influence_verts(bpy.types.Operator):
                        options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return {'SET': 'Select the vertices the picked influences affect (weight above 0)',
                 'ADD': 'Add the vertices the picked influences affect to the selection',
@@ -691,6 +694,7 @@ class ALLSET_OT_weight_profile(bpy.types.Operator):
                           options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         if properties.profile == 'SQUARE':
             return "Blender brushes are round: Maya's Square profile has no Blender brush"
@@ -741,6 +745,7 @@ class ALLSET_OT_skin_paint_mode(bpy.types.Operator):
                       description='1 = next mode (Ctrl+.), -1 = previous mode (Ctrl+,), 0 = the mode above')
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         if properties.step:
             return 'Next Skin Paint Mode' if properties.step > 0 else 'Previous Skin Paint Mode'
@@ -886,6 +891,7 @@ class ALLSET_OT_weight_action(bpy.types.Operator):
     action: EnumProperty(items=[(key, label, label) for key, (label, op) in ACTIONS.items()])
 
     @classmethod
+    @i18n.translated
     def description(cls, context, properties):
         return ACTIONS.get(properties.action, ('Edit Skin Weights', ''))[0] + ': configure and apply; locked influences stay protected'
 

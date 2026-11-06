@@ -34,12 +34,10 @@ NOTICES = {
         "Rotate; the position already is the object's pivot."),
     # Animation (W3: Time Editor / Trax -> NLA; Animation Layers and Character Sets are real)
     "Windows/Animation Editors/Trax Editor": (
-        "NLA Editor", "Blender has no Trax: clips are actions laid out as NLA strips."),
+        "NLA Editor", "Blender's Trax is the NLA Editor with Maya's Trax menus: clips are actions laid out as NLA "
+        "strips."),
     "Windows/Animation Editors/Time Editor": (
         "NLA Editor", "Blender has no Time Editor: clips are actions laid out as NLA strips."),
-    # Playback: Blender playback always loops
-    **{f"Playback/Playback Looping/{kind}": (
-        "Continuous", "Blender playback always loops (no Once / Oscillate).") for kind in ("Once", "Oscillate")},
     # Sets: kit sets are collections outside the scene; Blender has no exclusive sets
     "Create/Sets/Partition": (
         "Set", "Blender has no partitions (sets whose members can't be in another set of the partition): use Create > Sets > Set."),
@@ -227,8 +225,6 @@ NOTICES.update({
     "Modify/Convert/Smooth Mesh Preview to Polygons": (
         "Apply the preview", "Blender applies the smooth preview Subsurf to the base mesh: deformers before it (skin, "
         "lattice) keep working on the denser mesh."),
-    "Playback/Playback Looping/Continuous": (
-        "Continuous", "Blender playback always loops: Continuous is already on."),
     **{f"Display/Heads Up Display/{item} Details": (
         "Statistics overlay", "Blender's Statistics overlay shows the object and selection counts.")
        for item in ("Object", "Select")},        # Maya 2026 label "Select Details"
@@ -568,7 +564,7 @@ CATEGORIES = {
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "
                   "camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting)."),
     "Playback": ("Timeline Playback popover", "Blender's playback options are in the Timeline's Playback popover; "
-                 "there is no cached-playback toggle or stepped preview."),
+                 "there is no cached-playback toggle."),
     # rendering
     "Render": ("Render properties", "Blender's render settings are in Properties > Render / Output: render "
                "diagnostics, Backburner and NURBS tessellation have no counterpart."),
@@ -656,8 +652,7 @@ def _anim_editor_categories(ed):
             "Sidebar F-Curve tab", "Blender edits key values in the sidebar (F-Curve > Active Keyframe), not in a "
             "spreadsheet."),
         f"{ed}/List": (
-            "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects); "
-            "it has no bookmarks or manual loading."),
+            "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects)."),
         f"{ed}/Show": (
             "Channel filters", "Blender filters channels by data type and by name (header filter popover); Maya's "
             "other node and attribute filters aren't there."),
@@ -670,14 +665,63 @@ def _anim_editor_categories(ed):
         for key in ("Curves", "Edit/Transformation Tools", "Edit/Scene Time Warp", "List"):
             m.pop(f"{ed}/{key}", None)
         m[f"{ed}/Channels/Spreadsheet..."] = m.pop(f"{ed}/Curves/Spreadsheet...")
-    else:
-        m[f"{ed}/Edit/Transformation Tools/Sculpting Tools"] = (
-            "Key menu", "Blender has no key brushes: its Graph Editor smooths and decimates the selected keys from "
-            "the Key menu instead.")
     return m
 
 
+_TX = "Trax Editor/"
 CATEGORIES.update({
+    # the Trax Editor's menu bar (ui/trax_editor.py; clips = NLA strips, operators/trax_clips.py)
+    _TX + "File": (
+        "Append the action", "Blender has no clip files or character maps: append or link a source clip's action "
+        "from another .blend (File > Append > Action), then Library > Insert Clip."),
+    _TX + "Edit/Cut": (
+        "Duplicate / Delete", "Blender's NLA has no clip clipboard: Edit > Duplicate places a copy, the sidebar's "
+        "Delete removes one."),
+    _TX + "Edit/Copy": (
+        "Duplicate", "Blender's NLA has no clip clipboard: Edit > Duplicate places a copy right after the clip."),
+    _TX + "Edit/Paste": (
+        "Library > Insert Clip", "Blender's NLA has no clip clipboard: Library > Insert Clip places a source clip at "
+        "the current time."),
+    _TX + "Edit/Merge": (
+        "Bake Action", "Blender merges strips by baking: Object > Animation > Bake Action, then Create > Animation "
+        "Clip of the result."),
+    _TX + "Edit/Merge Cache Clips": (
+        "Mesh Sequence Cache", "Blender has no cache clips in the NLA: geometry caches play through a Mesh Sequence "
+        "Cache modifier."),
+    _TX + "Library/Insert Clip": (
+        "Create > Animation Clip", "Blender lists source clips here once Create > Animation Clip made one."),
+    _TX + "Edit/Copy Channel Offsets": (
+        "Absolute clips", "Blender strips play their action's absolute values: there are no clip offsets to copy."),
+    _TX + "Edit/Quick Select Sets": (
+        "Create > Quick Select Set...", "Blender lists the kit's quick select sets here once Create > Quick Select "
+        "Set... made one."),
+    _TX + "Edit/Group": (
+        "Character sets", "Blender has no character summary rows in the NLA: a character set groups the objects."),
+    _TX + "Edit/Ungroup": (
+        "Character sets", "Blender has no character summary rows in the NLA: a character set groups the objects."),
+    _TX + "Edit/Set Clip Ghost Root": (
+        "Ghosting", "Blender doesn't ghost clips: Visualize > Ghost Selected shows an object's motion."),
+    _TX + "Modify/Match Clips": (
+        "Move the strip", "Blender has no clip matching: move the strip (G) so the poses meet, or blend the overlap."),
+    _TX + "Create/Constraint Clip": (
+        "Constraint influence", "Blender's NLA plays actions only: key the constraint's Influence instead."),
+    _TX + "Create/Expression Clip": (
+        "Drivers", "Blender's NLA plays actions only: use a driver for an expression."),
+    _TX + "Create/Pose": (
+        "Pose Library", "Blender keeps poses as pose assets (Pose Library), not as Trax poses."),
+    _TX + "Create/Time Warp": (
+        "Strip time", "Blender strips have no time warp curve: turn on the strip's Animated Strip Time in the "
+        "sidebar and key it."),
+    _TX + "Create/Geometry Cache": (
+        "Alembic / Mesh Cache", "Blender caches geometry with Alembic export or a Mesh Sequence Cache modifier, not "
+        "as clips."),
+    _TX + "Library/Insert Pose": (
+        "Pose Library", "Blender keeps poses as pose assets (Pose Library), not as Trax poses."),
+    _TX + "List": (
+        "Only Show Selected", "Blender lists the selected objects' tracks (List > Auto Load Selected Characters); it "
+        "has no manual character loading or bookmarks."),
+    _TX + "Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
     **_anim_editor_categories("Graph Editor"),
     **_anim_editor_categories("Dope Sheet"),
     "Graph Editor/View/Theme": (
@@ -941,6 +985,7 @@ class ALLSET_OT_tip(bpy.types.Operator):
     text: bpy.props.StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return i18n.tip(props.text)
 
@@ -979,23 +1024,9 @@ NOTICES.update({
 
 
 # Maya 2026 editor menu items with no Blender command (Maya annotations)
-_REMOVE_KEY = {
-    "Unsnapped": ("Select Unsnapped", "Blender has no command that deletes unsnapped keys: Edit > Select Unsnapped, "
-                  "then Delete."),
-    "Before Current Frame": ("Select before the frame", "Blender deletes only selected keys: Select > Before "
-                             "Current Frame ([), then Delete."),
-    "After Current Frame": ("Select after the frame", "Blender deletes only selected keys: Select > After Current "
-                            "Frame (]), then Delete."),
-    "Outside Selected Range": ("Select, then Delete", "Blender has no delete outside a range: select the keys to "
-                               "remove, then Delete."),
-    "Ripple Delete": ("Delete, then G", "Blender has no ripple delete for keys: delete them, then move the later "
-                      "keys back with G."),
-}
 _SHAPES = ("Shape Keys filter", "Blender shows shape key channels or not (header filters > Shape Keys); it has no "
            "auto expand depth for them.")
 NOTICES.update({
-    **{f"{ed}/Keys/Remove Key/{item}": notice for ed in ("Graph Editor", "Dope Sheet")
-       for item, notice in _REMOVE_KEY.items()},
     **{f"{ed}/List/Show Animated Shapes/{item}": _SHAPES for ed in ("Graph Editor", "Dope Sheet")
        for item in ("One", "None")},
     "Graph Editor/Select/Prefer Selected Curves": (
@@ -1003,11 +1034,6 @@ NOTICES.update({
         "(Shift+H) to pick only on the selected ones."),
     "Graph Editor/View/Channel Sets": (
         "Not in Blender", "Blender's channel list has no channel sets."),
-    "Graph Editor/Curves/Offset Curves": (
-        "G with a number", "Blender moves the selected keys by a typed amount: G, then the amount, then Enter."),
-    "Graph Editor/Curves/Clamp Curves": (
-        "Limits modifier", "Blender clamps a curve's values with a Limits F-Curve modifier (Sidebar > Modifiers), "
-        "not by changing the keys."),
     "Dope Sheet/Channels/Offset Keys": (
         "G with a number", "Blender moves the selected keys by a typed number of frames: G, then the amount, then "
         "Enter."),
@@ -1342,4 +1368,29 @@ NOTICES.update({
     "UV Editor/Modify/Warp Image": (
         "Cycles Bake", "Blender has no image warp between UV sets: assign the texture with the old UV Map, make the "
         "new UV Map active for an empty image and bake (Render Properties > Bake, Cycles)."),
+})
+
+
+# UV Editor Shift+RMB marking menus: greyed entries share the UV Editor menus' notices.
+_UV_MENUS = ("SHIFT_UV", "SHIFT_UV_SHELL", "SHIFT_UV_FACE")
+_UV_CONSTRAINTS = ("Select menu / Snapping", "Blender has no UV selection or transform constraints: pick with Select "
+                   "Linked / Select Split and move along edges with snapping.")
+MARKING.update({
+    **{f"{m}/Symmetrize": CATEGORIES["UV Editor/Modify/Symmetrize"] for m in ("SHIFT_UV", "SHIFT_UV_FACE")},
+    "SHIFT_UV/Measure Pixel Distance": (
+        "Sidebar UV Vertex", "Blender has no pixel ruler: the sidebar (N) Image tab shows the selected UVs' position, "
+        "so two readings give the distance."),
+    **{f"{m}/Tools/Symmetrize Tool": CATEGORIES["UV Editor/Tools/Symmetrize"] for m in _UV_MENUS},
+    **{f"{m}/Tools/Lattice Tool": (
+        "Proportional Editing", "Blender's UV Editor has no lattice tool: move UVs with proportional editing (O) for "
+        "a smooth falloff.") for m in _UV_MENUS},
+    **{f"{m}/Tools/Smear Tool": (
+        "Grab brush", "Blender's UV sculpt brushes are Grab, Relax and Pinch: Grab drags the UVs under the brush.")
+       for m in _UV_MENUS},
+    **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
+    **{f"{m}/Pinning/{label}": _UV_CONSTRAINTS for m in _UV_MENUS
+       for label in ("Selection Constraints", "Transform Constraints")},
+    **{f"SHIFT_UV_SHELL/Distribute Shells/{label}": (
+        "Distribute Shells Right", "The kit lines shells up to the right only: run Right, then rotate or move the "
+        "row.") for label in ("Left", "Up", "Down", "Towards Target")},
 })

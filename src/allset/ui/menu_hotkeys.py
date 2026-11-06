@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya hotkeys shown beside kit menu items (generated file — do not edit).
 
-Menu label path -> Maya key text, for items whose Maya command has a factory hotkey that the kit binds the
+Menu label path -> Maya key text, for items whose Maya command has a default hotkey that the kit binds the
 Maya way (keymap/mapping.py KIT / IC)."""
 
 HOTKEYS = {

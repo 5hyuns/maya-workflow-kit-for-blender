@@ -28,6 +28,7 @@ from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
 from . import editor_menu_data, graph_icons, graph_layers, menu_map, menu_sets
+from .. import i18n
 
 GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
 
@@ -57,7 +58,8 @@ def is_uv(space):
 
 BLENDER_MENUS = {GE: "GRAPH_MT_editor_menus", DS: "DOPESHEET_MT_editor_menus", UV: "IMAGE_MT_editor_menus",
                  # Hypershade / Script Editor windows
-                 "Hypershade": "NODE_MT_editor_menus", "Script Editor": "INFO_MT_editor_menus"}
+                 "Hypershade": "NODE_MT_editor_menus", "Script Editor": "INFO_MT_editor_menus",
+                 "Trax Editor": "NLA_MT_editor_menus"}
 
 
 def _blender_menu_class(editor):
@@ -476,6 +478,7 @@ class ALLSET_OT_editor_icon(bpy.types.Operator):
     key: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         editor, _sep, key = props.key.partition("|")
         it = _icon_spec(editor, key) if editor in ICONS else None
@@ -483,7 +486,7 @@ class ALLSET_OT_editor_icon(bpy.types.Operator):
             return ""
         s = menu_map.normalize(it[2])
         target = f"\nBlender: {s[1]}" if s and s[0] in ("op", "v3d") else ""
-        return f"Maya: {it[3]}{target}"
+        return i18n.compose("Maya: {item}", item=i18n.tip(it[3])) + target
 
     def execute(self, context):
         editor, _sep, key = self.key.partition("|")
@@ -512,12 +515,16 @@ class ALLSET_OT_editor_icon_unavailable(bpy.types.Operator):
         return False
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         editor, _sep, key = props.key.partition("|")
         it = _icon_spec(editor, key) if editor in ICONS else None
         tip = it[3] if it else key
-        sub, line = NOTICES.get(key, ("", "Not in this Blender editor."))
-        return f"Maya: {tip} (greyed)  →  {sub}\n{line}" if sub else f"Maya: {tip} (greyed)\n{line}"
+        sub, line = NOTICES.get(key, ("", i18n.mark("Not in this Blender editor.")))
+        tip, sub, line = i18n.tip(tip), i18n.tip(sub), i18n.tip(line)
+        if sub:
+            return i18n.compose("Maya: {item} (greyed)  →  {substitute}", item=tip, substitute=sub) + "\n" + line
+        return i18n.compose("Maya: {item} (greyed)", item=tip) + "\n" + line
 
     def execute(self, context):
         return {'CANCELLED'}
@@ -589,7 +596,7 @@ AXES = "XYZ"
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
 BACK = (0.267, 0.267, 0.267, 1.0)        # outliner pane #444444
-SELECT = (0.322, 0.522, 0.651, 1.0)      # selection blue #5285a6 (kit-drawn pane: fixed colours, any theme)
+SELECT = (0.322, 0.522, 0.651, 1.0)      # selection blue #5285a6 (kept with any theme)
 THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (right of the rows)
 _expanded = {}                           # node key -> bool (Maya shows attributes expanded)
 _scroll = {}                             # area pointer -> first row shown
@@ -632,11 +639,17 @@ def attr_label(fc):
     return tail.replace("_", " ").title() + (f" {AXES[idx]}" if idx < 3 and fc.array_index else "")
 
 
+def _themed(color, field, space=None):
+    """A kit list colour moved with the Blender theme (ui/theme_follow.py)."""
+    from . import theme_follow
+    return theme_follow.follow(color, theme_follow.editor_of(space or bpy.context.space_data), field)
+
+
 def attr_color(fc):
     tail = fc.data_path.rsplit(".", 1)[-1]
     if tail in MAYA_ATTR and tail != "rotation_quaternion" and fc.array_index < 3:
         return AXIS_COLOR[fc.array_index]
-    return TEXT
+    return _themed(TEXT, "text")
 
 
 def object_curves(ob):
@@ -1223,7 +1236,7 @@ def listed_nodes(context, space):
     (driver) channels: Maya lists a driven-key / expression channel too. A checked Show >
     Objects > Sets / Characters lists only those nodes: kit sets as rows without channels (a Maya set row has
     none), character sets (a character is a set) with their member channels; kit sets and characters can't be
-    selected like Maya's, so every one is listed."""
+    selected like Maya's, so every one is listed. A bookmark loaded from List > Bookmarks shows its set row first."""
     from . import channel_box
     out = []
     flt = attr_filters()
@@ -1237,6 +1250,11 @@ def listed_nodes(context, space):
     if "sets" in kinds:
         from ..operators import sets
         out += [("SET", coll, []) for coll in sets.all_sets()]
+    else:
+        from ..operators import graph_bookmarks
+        bm = graph_bookmarks.loaded(context, space)
+        if bm is not None:
+            out.append(("SET", bm, []))      # the loaded bookmark's set row, its objects below (Maya)
     auto = auto_load(space)
 
     def add(kind, node, curves):
@@ -1417,6 +1435,7 @@ PIN_OFF = (0.55, 0.55, 0.55, 1.0)
 def _draw_pin(x, y, s, pinned):
     """Maya's pin icon left of a channel row's name: an upright push-pin on a
     pinned row (head, plate, needle), a grey sideways one on the others."""
+    PIN, PIN_OFF = _themed(globals()["PIN"], "text"), _themed(globals()["PIN_OFF"], "text")
     if pinned:
         _rect(x - 2 * s, y + 1 * s, x + 2 * s, y + 6 * s, PIN)
         _rect(x - 4 * s, y, x + 4 * s, y + 1.5 * s, PIN)
@@ -1436,7 +1455,8 @@ def draw_channels():
     s = context.preferences.system.ui_scale
     pins = getattr(context.window_manager, "allset_show_pins", True)      # Maya 2026 View > Show Pins
     gpu.state.blend_set('ALPHA')
-    _rect(0, 0, region.width, top, BACK)
+    text = _themed(TEXT, "text", space)
+    _rect(0, 0, region.width, top, _themed(BACK, "back", space))
     font = 0
     blf.size(font, 12 * s)
     all_rows = rows(context, space)
@@ -1455,14 +1475,14 @@ def draw_channels():
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
         if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows, indented under their channel
-            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else TEXT))
+            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else text))
             blf.position(font, 66 * s, y - h + 6 * s, 0)
             blf.draw(font, _up_label.get((kind, fc.as_pointer()), ""))
             if pins:
                 _draw_pin(56 * s, y - h / 2, s, False)
         elif kind != "ATTR":
             sign = "−" if _expanded.get(node_key(node), True) else "+"
-            blf.color(font, *TEXT)
+            blf.color(font, *text)
             blf.position(font, 6 * s, y - h + 6 * s, 0)
             blf.draw(font, sign)
             blf.position(font, 22 * s, y - h + 6 * s, 0)
@@ -1478,7 +1498,7 @@ def draw_channels():
     if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
         span = top / len(all_rows)
         x1 = region.width - 2 * s
-        _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, THUMB)
+        _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, _themed(THUMB, "back", space))
     gpu.state.blend_set('NONE')
 
 

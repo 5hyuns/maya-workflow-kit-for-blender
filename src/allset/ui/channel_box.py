@@ -53,16 +53,16 @@ def cb_share(region, u):
 
 # key, label, data path, index, kind
 MAIN = (
-    ("tx", "Translate X", "location", 0, "LOC"),
-    ("ty", "Translate Y", "location", 1, "LOC"),
-    ("tz", "Translate Z", "location", 2, "LOC"),
-    ("rx", "Rotate X", "rotation_euler", 0, "ROT"),
-    ("ry", "Rotate Y", "rotation_euler", 1, "ROT"),
-    ("rz", "Rotate Z", "rotation_euler", 2, "ROT"),
-    ("sx", "Scale X", "scale", 0, "SCALE"),
-    ("sy", "Scale Y", "scale", 1, "SCALE"),
-    ("sz", "Scale Z", "scale", 2, "SCALE"),
-    ("v", "Visibility", "hide_viewport", -1, "VIS"),
+    ("tx", i18n.mark("Translate X"), "location", 0, "LOC"),
+    ("ty", i18n.mark("Translate Y"), "location", 1, "LOC"),
+    ("tz", i18n.mark("Translate Z"), "location", 2, "LOC"),
+    ("rx", i18n.mark("Rotate X"), "rotation_euler", 0, "ROT"),
+    ("ry", i18n.mark("Rotate Y"), "rotation_euler", 1, "ROT"),
+    ("rz", i18n.mark("Rotate Z"), "rotation_euler", 2, "ROT"),
+    ("sx", i18n.mark("Scale X"), "scale", 0, "SCALE"),
+    ("sy", i18n.mark("Scale Y"), "scale", 1, "SCALE"),
+    ("sz", i18n.mark("Scale Z"), "scale", 2, "SCALE"),
+    ("v", i18n.mark("Visibility"), "hide_viewport", -1, "VIS"),
 )
 MAIN_BY_KEY = {c[0]: c for c in MAIN}
 _LOCK_PROP = {"LOC": "lock_location", "ROT": "lock_rotation", "SCALE": "lock_scale"}
@@ -856,19 +856,28 @@ def _sel_set(key):
 def cell_key(path, scene=None):
     """(channel key, "NAME" / "VALUE") of a Channel Box cell from its data path (``context.property``), or None."""
     import re
-    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel)$", path or "")
+    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel|sel_on)$", path or "")
     if m and m.group(1) in MAIN_BY_KEY:
         return m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
-    m = re.match(r"^allset_creation\.([A-Za-z0-9]+)_(text|sel)$", path or "")
+    m = re.match(r"^allset_creation\.([A-Za-z0-9]+?)_(text|sel|sel_on)$", path or "")
     if m:
         return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
-    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel)$", path or "")
+    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel|sel_on)$", path or "")
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
         if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT", "BLEND"):
             return row_key(rows[i]), ("VALUE" if m.group(2) == "text" else "NAME")
     return None
+
+
+def sel_toggle(layout, owner, prop, selected, text, translate=True):
+    """A Channel Box name cell: a toggle of the channel's selection, pressed (embossed) when selected. A selected
+    cell draws the twin property ``<prop>_on``: Blender keeps the button under the mouse from the last redraw
+    (with its old emboss), so the same property would show the new selection only after the mouse leaves the
+    row (#316); another property is another button."""
+    layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected,
+                translate=translate)
 
 
 # --- proxies -------------------------------------------------------------------------------------
@@ -1319,6 +1328,8 @@ class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
     text: StringProperty(get=_row_get, set=_row_set)
     sel: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
                       description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
+    sel_on: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
+                         description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
 
 
 # --- the name line: click to rename (#283) ---------------------------------------------------------------
@@ -1419,9 +1430,10 @@ def _make_proxy_annotations():
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
         ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
-        ann[key + "_sel"] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
-                                         description="Select this channel: click, Ctrl toggle, Shift range, "
-                                                     "drag over the rows")
+        for suffix in ("_sel", "_sel_on"):
+            ann[key + suffix] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
+                                             description="Select this channel: click, Ctrl toggle, Shift range, "
+                                                         "drag over the rows")
     ann["lead_name"] = StringProperty(name="Name", get=_lead_name_get, set=_lead_name_set,
                                       description="The lead's name: Enter renames it")
     ann["rows"] = CollectionProperty(type=ALLSET_PG_cb_row)
@@ -1885,6 +1897,12 @@ class ALLSET_OT_cb_hover(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
+# #315: room a dock needs on its left for the Channels menu (UI units), and how far left of the dock's edge the
+# cursor goes (a Blender menu opens with about four fifths of its width left of the cursor)
+MENU_ROOM = 14
+MENU_GAP = 3
+
+
 class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
     """Maya Channel Box selection: click a channel name or field, drag over the rows to select a range
     (Ctrl toggles / adds, Shift selects from the last clicked channel)"""
@@ -1943,7 +1961,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 hit = _hover.get(self._win)
                 in_part = hit is not None or (self._cb_bottom is not None and event.mouse_y >= self._cb_bottom)
                 if in_part and not (event.shift or event.alt):
-                    return self._on_rmb(context, hit, edit=event.ctrl)
+                    return self._on_rmb(context, hit, edit=event.ctrl, y=event.mouse_y)
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
             if self._on_move(context, event):
@@ -1966,12 +1984,13 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             return False
         return self._cb_bottom <= event.mouse_y < self._rows_bottom
 
-    def _on_rmb(self, context, hit, edit=False):
+    def _on_rmb(self, context, hit, edit=False, y=0):
         """Maya: RMB in the Channel Box = the Channels menu. Blender's button
         context menu draws its C items first and a Python menu only after them (#87: the Channels items
         sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
         that isn't selected becomes the selection first, so Key Selected keys the clicked channel."""
         if edit:     # Ctrl+RMB = the Edit menu (Maya Channel Box), selection kept
+            self._menu_beside(context, y)
             bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
             return {'RUNNING_MODAL'}
         if hit is not None:
@@ -1980,8 +1999,26 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 set_selected_channels([key], context)
                 _anchor["key"] = key
                 _redraw(self._window)
+        self._menu_beside(context, y)
         bpy.ops.wm.call_menu(name=ALLSET_MT_cb_channels.__name__)
         return {'RUNNING_MODAL'}
+
+    def _menu_beside(self, context, y):
+        """#315: the Channels / Edit menu opens left of the dock, so it doesn't cover the channel names and values.
+        A Blender menu opens at the cursor (most of it left of the cursor) and Python can't place it: the cursor
+        moves just left of the dock's edge first. A dock with too little room on its left keeps the menu at the
+        cursor."""
+        if self._cb_bottom is None:
+            return
+        u = _unit(context)
+        x0, _y0, _x1, _y1 = self._rect
+        if x0 < MENU_ROOM * u:
+            return
+        window = context.window
+        x = x0 - round(MENU_GAP * u)
+        window.cursor_warp(x, y)
+        if bpy.app.use_event_simulate:   # event simulation drops the OS mouse move a warp makes
+            window.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x, y=y)
 
     def _on_press(self, context, event, hit):
         ob = lead(context)
@@ -2521,7 +2558,11 @@ def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     if sel_owner is not None:
         # a toggle of the channel's selection: pressed = Maya's blue name cell; the drag
         # watcher reads it from ``context.property`` (#6)
-        sub.prop(sel_owner, sel_prop, text=channel_label(key), toggle=True, emboss=selected)
+        # the kit's translation (with the user's translation files) first: Blender's own table knows some of
+        # these names (Translate X) and would win over the kit's
+        label = channel_label(key)
+        sel_toggle(sub, sel_owner, sel_prop, selected, i18n.iface(label) if key in MAIN_BY_KEY else label,
+                   translate=key not in MAIN_BY_KEY)
         return
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
                       emboss=selected)
@@ -2755,7 +2796,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         # state like Translate X
         key = row_key(row)
         sub = split.row(align=True)
-        sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
+        sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
         state = channel_state(ob, key)
         right.alert = state in _ALERT_STATES
@@ -2879,6 +2920,7 @@ class ALLSET_OT_cb_node_toggle(bpy.types.Operator):
     tip: StringProperty(options={'SKIP_SAVE'})
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return props.tip or cls.__doc__
 
@@ -3243,7 +3285,7 @@ def draw_blend_shape(lines, context, ob, key):
         # a target weight is a channel like Translate X: selectable name, keyed / animated state (Key Selected)
         key = row_key(row)
         sub = split.row(align=True)
-        sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
+        sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
         state = channel_state(ob, key)
         right.alert = state in _ALERT_STATES

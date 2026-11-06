@@ -68,8 +68,8 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
     oel_smoothing: FloatProperty(name="Smoothing angle", default=180.0, min=0.0, max=180.0, precision=4,
                                  description="New edges between faces at more than this angle are hard")
     oel_offset: FloatProperty(name="Offset", default=0.5, min=0.001, max=0.999, precision=4,
-                              description="Offset of a click without a drag (Maya polyDuplicateEdgeOffset)")
-    # Slide Edge (polySlideEdgeContext)
+                              description="Offset of a click without a drag")
+    # Slide Edge
     slide_mode: EnumProperty(name="Mode", items=SLIDE_MODES, default='RELATIVE')
     slide_snap: BoolProperty(name="Use Snapping", default=True,
                              description="Catch the slide at the snapping points")

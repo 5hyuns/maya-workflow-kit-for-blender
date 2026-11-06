@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """L1: NURBS curve shapes as bone Custom Shapes (Maya ``cmds.parent(shape=True)``)
 
-Maya gives a joint a control shape with ``cmds.parent(curveShape, joint, shape=True, relative=True)``
-(case ``L1_parent_shape_relative``): the curve
+Maya gives a joint a control shape with ``cmds.parent(curveShape, joint, shape=True, relative=True)``: the curve
 shape moves under the joint keeping its CV local values, the old transform stays without a shape. Without ``relative``
 the CVs keep their world positions and the old transform goes away. A second shape on the same
 node is added (two shapes, one control). Every kit

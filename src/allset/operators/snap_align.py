@@ -27,6 +27,7 @@ from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
 from .. import results
+from .. import i18n
 
 EPS = 1e-9
 
@@ -221,6 +222,7 @@ class ALLSET_OT_snap_points(_ObjOp, bpy.types.Operator):
     count: IntProperty(name="Points", default=1, min=1, max=3)
 
     @classmethod
+    @i18n.translated
     def description(cls, context, props):
         return {1: "Point to Point: move the object so its point lands on the target point",
                 2: "2 Points to 2 Points: move and turn so two points line up",
@@ -236,7 +238,7 @@ class ALLSET_OT_snap_points(_ObjOp, bpy.types.Operator):
 
 class ALLSET_OT_align_objects(bpy.types.Operator):
     """Line the selected objects up along world X at the middle of their bounding boxes
-    (Maya Modify > Snap Align Objects > Align Objects, factory options)"""
+    (Maya Modify > Snap Align Objects > Align Objects, default options)"""
     bl_idname = "allset.align_objects"
     bl_label = "Align Objects"
     bl_options = {'REGISTER', 'UNDO'}

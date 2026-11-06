@@ -115,10 +115,10 @@ class ALLSET_PG_creation(bpy.types.PropertyGroup):
     __annotations__ = {
         **{f"{n}_text": StringProperty(name=n, get=_text_get(n), set=_text_set(n), options={'SKIP_SAVE'})
            for n in ALL_ATTRS},
-        **{f"{n}_sel": BoolProperty(name=n, get=_sel_get(n), set=_sel_set(n), options={'SKIP_SAVE'},
+        **{f"{n}{suffix}": BoolProperty(name=n, get=_sel_get(n), set=_sel_set(n), options={'SKIP_SAVE'},
                                     description="Select this attribute: click, Ctrl toggle, Shift range, drag "
                                                 "over the rows; then middle-drag in the viewport changes it")
-           for n in ALL_ATTRS}}
+           for n in ALL_ATTRS for suffix in ("_sel", "_sel_on")}}
 
 
 def has_node(ob):
@@ -143,7 +143,7 @@ def draw_cb(layout, context, ob):
             continue
         split = row.split(factor=0.5, align=True)
         selected = channel_box.HISTORY_PREFIX + name in channel_box.selected_channels(context)
-        split.prop(props, f"{name}_sel", text=prim_shapes.spec(node["type"], name)[1], toggle=True, emboss=selected)
+        channel_box.sel_toggle(split, props, f"{name}_sel", selected, prim_shapes.spec(node["type"], name)[1])
         split.prop(props, f"{name}_text", text="")
     return True
 

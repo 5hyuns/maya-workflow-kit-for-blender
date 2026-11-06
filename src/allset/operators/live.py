@@ -4,6 +4,7 @@ from collections import OrderedDict
 import bpy
 from bpy.app.handlers import persistent
 from mathutils.bvhtree import BVHTree
+from .. import i18n
 
 COLOR = (0., 153/255, 84/255)  # sRGB #009954, Maya's live surface wire / Outliner colour
 LIMIT = 16
@@ -197,6 +198,7 @@ class ALLSET_OT_live_history(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     @classmethod
+    @i18n.translated
     def description(cls, context, _props):
         names = ', '.join(ob.name for ob in objects(context.scene))
         return ('Live: '+names+'. ' if names else '')+'Choose a previous live surface; middle-click to toggle the latest'
