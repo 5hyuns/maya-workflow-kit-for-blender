@@ -265,18 +265,16 @@ def _orient(jobs, split):
     return start
 
 
-def connect(bm, mode, edge_flow=0.0, segments=1, slide=0.5):
+def connect(bm, mode, edge_flow=0.0, segments=1, slide=0.5, pinch=0.0):
     """Maya Connect on the selection (``mode`` 'VERT' / 'EDGE' / 'FACE'). Returns the number of new edges (0 = nothing
     to connect); the new edges end up selected. Options: ``edge_flow`` = Adjust Edge Flow with Insert with
-    edge flow on (0 = off); Connect tool ``segments`` / ``slide`` (selected edges: n points per edge, centred on
-    Slide)."""
-    before = len(bm.edges)
-    per_face = {}      # face -> points (BMVert / BMEdge)
-    split = set()      # edges cut at their midpoints even without a chord (faces mode)
+    edge flow on (0 = off); Connect tool ``segments`` / ``slide`` / ``pinch`` (selected edges: n points per edge,
+    centred on Slide, pulled together by Pinch)."""
     if mode == 'FACE':
         sel = {f for f in bm.faces if f.select}
         inner = {e for f in sel for e in f.edges if len(e.link_faces) == 2 and all(x in sel for x in e.link_faces)}
         count = {f: sum(e in inner for e in f.edges) for f in sel}
+        per_face = {}      # face -> points (BMEdge)
         for f in sel:
             pts = [e for e in f.edges if e in inner]
             if len(pts) == 1:
@@ -284,23 +282,130 @@ def connect(bm, mode, edge_flow=0.0, segments=1, slide=0.5):
                 if count[other] >= 2:
                     pts.append(_opposite_edge(f, pts[0]))
             per_face[f] = pts
-        split = set(inner)
+        jobs = [(f, a, b) for f, pts in per_face.items() for a, b in _chords(f, pts)]
+        split = set(inner) | {p for _f, a, b in jobs for p in (a, b)}    # inner (and opposite) edges, midpoints
+        out = _connect(bm, jobs, split, edge_flow, 1, 0.5, 0.0)
     else:
-        if mode == 'VERT':
-            items = [v for v in bm.verts if v.select]
-        else:
-            items = [e for e in bm.edges if e.select]
-        for it in items:
-            for f in it.link_faces:
-                per_face.setdefault(f, []).append(it)
+        items = [v for v in bm.verts if v.select] if mode == 'VERT' else [e for e in bm.edges if e.select]
+        out = connect_items(bm, items, edge_flow, segments if mode == 'EDGE' else 1, slide, pinch, select=False)
+    if out["made"]:
+        _select_new(bm, out["edges"])
+    return out["made"]
+
+
+def connect_items(bm, items, edge_flow=0.0, segments=1, slide=0.5, pinch=0.0, ring_lonely=False, select=True):
+    """Connect ``items`` (BMVerts / BMEdges) across the faces they share, like Maya's Connect Tool: two points of
+    one face get a chord, an edge is cut at ``segments`` points centred on ``slide`` and pulled together by
+    ``pinch`` (%). With ``ring_lonely`` an edge that shares no chord with another item gets edge loops through its
+    ring instead (``segments`` loops), as the tool does with one edge alone. Returns ``{"made": number of new
+    edges, "edges": the chords and loops, "mids": {cut edge: its new vertices in chord order}}``; with ``select``
+    the chords and loops end up selected."""
+    per_face = {}      # face -> points (BMVert / BMEdge)
+    for it in items:
+        for f in it.link_faces:
+            pts = per_face.setdefault(f, [])
+            if it not in pts:
+                pts.append(it)
     jobs = [(f, a, b) for f, pts in per_face.items() for a, b in _chords(f, pts)]
-    for f, a, b in jobs:
-        for p in (a, b):
-            if isinstance(p, bmesh.types.BMEdge):
-                split.add(p)
-    n_pts = max(1, int(segments)) if mode == 'EDGE' else 1
-    fracs = [min(0.98, max(0.02, slide + ((k + 1) / (n_pts + 1) - 0.5))) for k in range(n_pts)] \
-        if mode == 'EDGE' else [0.5]
+    split = {p for _f, a, b in jobs for p in (a, b) if isinstance(p, bmesh.types.BMEdge)}
+    lonely = [e for e in items if ring_lonely and isinstance(e, bmesh.types.BMEdge) and e not in split]
+    out = _connect(bm, jobs, split, edge_flow, segments, slide, pinch)
+    if lonely:
+        before = len(bm.edges)
+        chords = _edge_keys(bm, out["edges"])            # the loop operators invalidate the wrappers
+        loops = _ring_loops(bm, lonely, _fractions(segments, slide, pinch))
+        out["edges"] = _edges_from_keys(bm, chords) + loops
+        out["made"] += len(bm.edges) - before
+    if select and out["made"]:
+        _select_new(bm, out["edges"])
+    return out
+
+
+def _fractions(segments, slide, pinch=0.0):
+    """Where ``segments`` points cut an edge: evenly around ``slide``, their spread scaled by Pinch (100 = all at
+    Slide, -100 = twice as far apart), kept inside the edge and in order."""
+    n = max(1, int(segments))
+    spread = max(0.02, 1.0 - pinch / 100.0)
+    out = [min(0.98, max(0.02, slide + ((k + 1) / (n + 1) - 0.5) * spread)) for k in range(n)]
+    gap = min(1e-3, 0.02 / n)
+    for k in range(1, n):
+        out[k] = max(out[k], out[k - 1] + gap)
+    return out
+
+
+def _select_new(bm, edges):
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    for e in edges:
+        if e.is_valid:
+            e.select = True
+    bm.select_flush_mode()
+
+
+def _edge_keys(bm, edges):
+    """Edges as (vertex index, vertex index) pairs: vertex indexes survive the bmesh operators that invalidate the
+    Python wrappers (vertices are only ever added)."""
+    bm.verts.index_update()
+    return [(e.verts[0].index, e.verts[1].index) for e in edges if e.is_valid]
+
+
+def _edges_from_keys(bm, keys):
+    bm.verts.ensure_lookup_table()
+    bm.verts.index_update()
+    out = []
+    for ia, ib in keys:
+        if ia < len(bm.verts) and ib < len(bm.verts):
+            va = bm.verts[ia]
+            e = next((x for x in va.link_edges if x.other_vert(va).index == ib), None)
+            if e is not None:
+                out.append(e)
+    return out
+
+
+def _ring_loops(bm, edges, fracs):
+    """Edge loops through the rings of ``edges``, one at each of ``fracs`` (from each edge's first vertex). Returns
+    the new edges. Works by vertex index: ``bmesh.ops.subdivide_edges`` invalidates the vertex wrappers."""
+    from .mesh_tools import insert_loop
+    made = []           # (vertex index, vertex index) per new edge
+    for si, fi in _edge_keys(bm, edges):
+        pieces = _edges_from_keys(bm, [(si, fi)])
+        if not pieces:
+            continue    # cut by an earlier loop
+        bm.verts.ensure_lookup_table()
+        start_co, far_co = bm.verts[si].co.copy(), bm.verts[fi].co.copy()
+        line = far_co - start_co
+        if line.length_squared < 1e-20:
+            continue
+        cur, last_i, done = pieces[0], si, 0.0
+        for t in fracs:
+            tt = (t - done) / (1.0 - done)
+            if cur.verts[0].index != last_i:
+                tt = 1.0 - tt
+            new = insert_loop(bm, cur, tt)
+            if not new:
+                break
+            made.extend(_edge_keys(bm, new))
+            done = t
+            bm.verts.ensure_lookup_table()
+            far = bm.verts[fi]
+            best = None             # the piece left between the new vertex and the far end
+            for x in far.link_edges:
+                o = x.other_vert(far)
+                u = (o.co - start_co).dot(line) / line.length_squared
+                off = (o.co - start_co - line * u).length_squared
+                if 0.0 < u < 1.0 and off < 1e-10 * line.length_squared and (best is None or u > best[0]):
+                    best = (u, x, o.index)
+            if best is None:
+                break
+            cur, last_i = best[1], best[2]
+    return _edges_from_keys(bm, made)
+
+
+def _connect(bm, jobs, split, edge_flow, segments, slide, pinch):
+    """Cut the ``split`` edges and make the chords of ``jobs`` (face, point a, point b)."""
+    before = len(bm.edges)
+    fracs = _fractions(segments, slide, pinch)
+    n_pts = len(fracs)
     start = _orient(jobs, split)
     sides = []          # per job: the vertices of a and b on the same side of the face (before any split)
     for f, a, b in jobs:
@@ -344,14 +449,7 @@ def connect(bm, mode, edge_flow=0.0, segments=1, slide=0.5):
             _nf, loop = bmesh.utils.face_split(faces[0], va, vb)
             if loop is not None:
                 new_edges.append(loop.edge)
-    made = len(bm.edges) - before
-    if made:
-        for el in (*bm.verts, *bm.edges, *bm.faces):
-            el.select = False
-        for e in new_edges:
-            e.select = True
-        bm.select_flush_mode()
-    return made
+    return {"made": len(bm.edges) - before, "edges": new_edges, "mids": mids}
 
 
 class ALLSET_OT_connect(bpy.types.Operator):

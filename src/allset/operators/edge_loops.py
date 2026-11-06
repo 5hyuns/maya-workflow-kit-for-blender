@@ -43,6 +43,9 @@ INSERT_POSITIONS = (('RELATIVE', "Relative distance from edge", "The loop cuts e
 OFFSET_POSITIONS = INSERT_POSITIONS[:2]
 SLIDE_MODES = (('RELATIVE', "Relative", "Each vertex slides the same fraction of its own side edge"),
                ('ABSOLUTE', "Absolute", "Every vertex slides the same distance"))
+CONNECT_MODES = (('SLIDE', "Slide", "A middle-drag moves the connection along the edges"),
+                 ('SEGMENTS', "Segments", "A middle-drag changes how many edges the connection makes"),
+                 ('PINCH', "Pinch", "A middle-drag pulls the connection's segments together or apart"))
 
 
 class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
@@ -77,17 +80,22 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
                                    description="Snapping points along each side edge (1 = the middle)")
     slide_snap_tolerance: FloatProperty(name="Snapping Tolerance", default=0.1, min=0.0, max=1.0, precision=4,
                                         description="How near (fraction of the edge) a snapping point catches")
-    # Connect Tool (operators/connect_tool.py)
+    # Connect Tool (operators/connect_tool.py): Maya's Tool Settings, the radio picks what a middle-drag changes
+    ct_mode: EnumProperty(name="Middle-drag changes", items=CONNECT_MODES, default='SEGMENTS',
+                          description="The value a middle-drag in the Connect Tool changes")
     ct_slide: FloatProperty(name="Slide", default=0.5, min=0.0, max=1.0, precision=4,
-                            description="Where a connection cuts an edge")
+                            description="Where a connection cuts an edge (0 = its first end, 1 = the other)")
     ct_segments: IntProperty(name="Segments", default=1, min=1, soft_max=10, max=100,
-                             description="New edges between the selected edges when the tool starts")
+                             description="New edges a connection makes between two edges (loops through a ring)")
+    ct_pinch: FloatProperty(name="Pinch", default=0.0, min=-100.0, max=100.0, precision=2,
+                            description="Pulls a connection's segments together (positive) or apart (negative)")
 
 
 SETTINGS = {'INSERT': ("iel_position", "iel_loops", "iel_edge_flow", "iel_adjust_flow", "iel_smoothing"),
             'OFFSET': ("oel_position", "oel_delete_edge", "oel_edge_flow", "oel_adjust_flow", "oel_smoothing",
                        "oel_offset"),
-            'SLIDE': ("slide_mode", "slide_snap", "slide_snap_points", "slide_snap_tolerance")}
+            'SLIDE': ("slide_mode", "slide_snap", "slide_snap_points", "slide_snap_tolerance"),
+            'CONNECT': ("ct_mode", "ct_slide", "ct_segments", "ct_pinch")}
 
 
 def settings(context=None):

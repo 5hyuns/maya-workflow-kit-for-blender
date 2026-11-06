@@ -5384,6 +5384,7 @@
   },
   "Labels/operators/connect_tool": {
    "Connect": "Connect",
+   "Connect Drag": "Connect Drag",
    "Connect Tool": "Connect Tool",
    "Connect the whole edge ring": "Connect the whole edge ring",
    "Edge": "Edge",
@@ -5631,14 +5632,17 @@
    "Insert Edge Loop": "Insert Edge Loop",
    "Insert with edge flow": "Insert with edge flow",
    "Maintain position": "Maintain position",
+   "Middle-drag changes": "Middle-drag changes",
    "Mode": "Mode",
+   "New edges a connection makes between two edges (loops through a ring)": "New edges a connection makes between two edges (loops through a ring)",
    "New edges between faces at more than this angle are hard": "New edges between faces at more than this angle are hard",
-   "New edges between the selected edges when the tool starts": "New edges between the selected edges when the tool starts",
    "Number of edge loops": "Number of edge loops",
    "Object": "Object",
    "Offset": "Offset",
    "Offset Edge Loop": "Offset Edge Loop",
    "Offset of a click without a drag": "Offset of a click without a drag",
+   "Pinch": "Pinch",
+   "Pulls a connection's segments together (positive) or apart (negative)": "Pulls a connection's segments together (positive) or apart (negative)",
    "Segments": "Segments",
    "Side": "Side",
    "Slide": "Slide",
@@ -5649,9 +5653,10 @@
    "Snapping points along each side edge (1 = the middle)": "Snapping points along each side edge (1 = the middle)",
    "The new loop follows the curvature of the surrounding surface": "The new loop follows the curvature of the surrounding surface",
    "The new loops follow the curvature of the surrounding surface": "The new loops follow the curvature of the surrounding surface",
+   "The value a middle-drag in the Connect Tool changes": "The value a middle-drag in the Connect Tool changes",
    "Use Snapping": "Use Snapping",
    "Weight": "Weight",
-   "Where a connection cuts an edge": "Where a connection cuts an edge",
+   "Where a connection cuts an edge (0 = its first end, 1 = the other)": "Where a connection cuts an edge (0 = its first end, 1 = the other)",
    "Where a loop ends inside the mesh, merge the two triangles there": "Where a loop ends inside the mesh, merge the two triangles there",
    "Where the loop cuts the clicked edge (from its first vertex)": "Where the loop cuts the clicked edge (from its first vertex)"
   },
@@ -8293,7 +8298,7 @@
   },
   "Labels/ui/mesh_tools_loop": {
    "Automatically": "Automatically",
-   "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)": "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)",
+   "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Middle-drag changes Segments (or Slide / Pinch, as picked in the Tool Settings) of the last connection. Enter / Esc ends the path (Maya Connect)": "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Middle-drag changes Segments (or Slide / Pinch, as picked in the Tool Settings) of the last connection. Enter / Esc ends the path (Maya Connect)",
    "Click an edge and drag: new edge loops on both sides of its edge loop (Maya Offset Edge Loop)": "Click an edge and drag: new edge loops on both sides of its edge loop (Maya Offset Edge Loop)",
    "Click an edge to insert an edge loop at that point; drag before releasing to slide it (Maya Insert Edge Loop)": "Click an edge to insert an edge loop at that point; drag before releasing to slide it (Maya Insert Edge Loop)",
    "Connect Tool": "Connect Tool",
@@ -9039,8 +9044,9 @@
   },
   "Tooltips/operators/connect_tool": {
    "Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)": "Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)",
-   "End the Connect Tool's path": "End the Connect Tool's path",
-   "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them": "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them"
+   "End the Connect Tool's path and keep the last connection as it is": "End the Connect Tool's path and keep the last connection as it is",
+   "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them": "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them",
+   "Middle-drag in the Connect Tool: change the value picked in its Tool Settings (Segments by default, or\nSlide / Pinch) and re-do the last connection with it; Esc / right-click puts the value back": "Middle-drag in the Connect Tool: change the value picked in its Tool Settings (Segments by default, or\nSlide / Pinch) and re-do the last connection with it; Esc / right-click puts the value back"
   },
   "Tooltips/operators/constrain_199": {
    "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive": "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive",

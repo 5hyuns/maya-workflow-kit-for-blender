@@ -271,6 +271,7 @@ def register():
     preselect.register_handlers()
     cut_sew.register_handlers()
     multi_cut.register_handlers()
+    connect_tool.register_handlers()     # the Connect Tool's HUD line
     poly_draw.register_handlers()
     quad_draw.register_handlers()
     outliner_drag.register_handlers()
@@ -306,6 +307,7 @@ def register():
 
 
 def unregister():
+    connect_tool.unregister_handlers()
     graph_sculpt.unregister()
     playback_maya.unregister()
     motion_trail_edit.unregister_handlers()

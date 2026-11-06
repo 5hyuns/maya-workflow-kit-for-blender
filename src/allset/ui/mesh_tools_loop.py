@@ -24,7 +24,8 @@ DESCRIPTIONS = {   # Maya's Description section, the kit's words
     'INSERT_EDGE_LOOP': ("To create a new path of edges across a mesh,", "click an edge and drag."),
     'OFFSET_EDGE_LOOP': ("To insert edge loops on both sides of an edge,", "click an edge and drag."),
     'SLIDE_EDGE': ("Select an edge loop or path and middle-drag", "to slide it along the neighbouring edges."),
-    'CONNECT': ("Click vertices or edges one after another to connect them;", "Ctrl+click an edge to connect its ring."),
+    'CONNECT': ("Click vertices or edges one after another to connect them;", "Ctrl+click an edge to connect its ring.",
+                "Middle-drag to change the value picked above."),
 }
 
 
@@ -163,28 +164,37 @@ class ALLSET_TL_slide_edge(bpy.types.WorkSpaceTool):
         draw_slide(layout, context, header=context.region.type == 'TOOL_HEADER')
 
 
+CONNECT_ROWS = (('SLIDE', "ct_slide"), ('SEGMENTS', "ct_segments"), ('PINCH', "ct_pinch"))
+
+
 def draw_connect(layout, context, header=False):
+    """Maya's Connect Tool settings: a radio in front of Slide / Segments / Pinch picks the value a middle-drag
+    changes."""
     s = edge_loops.settings(context)
     if header:
-        layout.prop(s, "ct_slide")
-        layout.prop(s, "ct_segments")
+        layout.prop(s, "ct_mode", text="")
+        for _mode, prop in CONNECT_ROWS:
+            layout.prop(s, prop)
         return
-    col = layout.column()
-    col.use_property_split = True
-    col.prop(s, "ct_slide")
-    col.prop(s, "ct_segments")
+    col = layout.column(align=True)
+    for mode, prop in CONNECT_ROWS:
+        row = col.row(align=True)
+        row.prop_enum(s, "ct_mode", mode, text="")
+        row.prop(s, prop)
     draw_description(layout, 'CONNECT')
 
 
 class ALLSET_TL_connect(bpy.types.WorkSpaceTool):
-    """Maya Connect Tool: click vertices / edges one after another to join them, Ctrl+click an edge = its ring."""
+    """Maya Connect Tool: click vertices / edges one after another to join them, Ctrl+click an edge = its ring,
+    middle-drag = the value picked in the Tool Settings."""
     bl_space_type = 'VIEW_3D'
     bl_context_mode = 'EDIT_MESH'
     bl_idname = connect_tool.TOOL
     bl_label = "Connect Tool"
     bl_description = ("Click a vertex or an edge, then another one on the same face to connect them; keep clicking "
-                      "to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path "
-                      "(Maya Connect)")
+                      "to continue the path. Ctrl+click an edge connects its whole ring. Middle-drag changes "
+                      "Segments (or Slide / Pinch, as picked in the Tool Settings) of the last connection. Enter / "
+                      "Esc ends the path (Maya Connect)")
     bl_icon = "ops.mesh.knife_tool"
     bl_widget = None
     bl_options = {'KEYMAP_FALLBACK'}
@@ -193,6 +203,8 @@ class ALLSET_TL_connect(bpy.types.WorkSpaceTool):
         ("allset.connect_click", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True}, None),
         ("allset.connect_click", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
          {"properties": [("ring", True)]}),
+        ("allset.connect_drag", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
+        ("allset.connect_drag", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "ctrl": True}, None),
         ("allset.connect_end", {"type": 'RET', "value": 'PRESS'}, None),
         ("allset.connect_end", {"type": 'ESC', "value": 'PRESS'}, None),
     )
