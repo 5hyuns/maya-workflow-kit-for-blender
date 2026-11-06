@@ -489,37 +489,72 @@ def _unit_or(vec, fallback):
 
 
 def edge_frame(e):
-    """Maya's local frame of an extruded edge (a -> b = the edge's vertex order): X along the edge, Z = mean of the
-    adjacent face normals (Local Translate Z / Thickness), Y = Z x X (Offset)."""
-    a, b = e.verts
+    """Maya's local frame of an extruded edge: X along the edge, Z = mean of the adjacent face normals (Local
+    Translate Z / Thickness), Y = Z x X. A border edge (one face) runs against its face's winding, so Y points out
+    of the face (Offset); an edge between faces runs a -> b (its vertex order)."""
+    a, b = _edge_ends(e)
     x = _unit_or(b.co - a.co, (1.0, 0.0, 0.0))
     z = _unit_or(sum((f.normal for f in e.link_faces), Vector()), (0.0, 0.0, 1.0))
     y = _unit_or(z.cross(x), (0.0, 1.0, 0.0))
     return x, y, z
 
 
-def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, unit=1.0, **_unused):
-    """Maya polyExtrudeEdge (Keep Faces Together off, the default for edges in Maya): every edge alone gets ``divisions``
-    quads ``(a, b, b', a')``; the new edge moves by Z * (Thickness + Local Translate Z) + Y * Offset (Maya units).
+def _edge_ends(e):
+    """(a, b) of an edge in Maya's X order: against the winding of its only face, else the vertex order."""
+    if len(e.link_faces) == 1:
+        loop = next(lp for lp in e.link_loops)
+        return loop.link_loop_next.vert, loop.vert
+    return e.verts[0], e.verts[1]
+
+
+def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, keep_faces_together=True,
+                  unit=1.0, **_unused):
+    """Maya polyExtrudeEdge: every edge gets ``divisions`` quads ``(a, b, b', a')``. Keep Faces Together on (like
+    Maya's Edit Mesh > Extrude) = connected edges share their new vertices; off = every edge alone.
+    A new vertex moves by Local Translate Z x the mean Z of its edges + Thickness x the unit mean Z + Offset out of
+    the face (border edges only, mitred at a corner; an edge between two faces gets none), in Maya units.
     The outer edges end up selected. Returns the new vertices."""
     bm.normal_update()
     edges = [e for e in edges if e.is_valid]
     k = max(1, int(divisions))
     plan = []
     for e in edges:
+        a, b = _edge_ends(e)
         _x, y, z = edge_frame(e)
-        plan.append((e.verts[0], e.verts[1], (z * (thickness + local_translate_z) + y * offset) * unit,
-                     e.link_faces[0] if e.link_faces else None))
-    new, outer = [], []
-    for a, b, d, example in plan:
-        pa, pb = a, b
-        for j in range(1, k + 1):
-            na = bm.verts.new(a.co + d * (j / k))
-            nb = bm.verts.new(b.co + d * (j / k))
-            bm.faces.new((pa, pb, nb, na), example)
-            new += [na, nb]
-            pa, pb = na, nb
-        outer.append(bm.edges.get((pa, pb)))
+        plan.append((e, a, b, y if len(e.link_faces) == 1 else None, z))
+
+    def move(zs, ys):
+        mean_z = sum(zs, Vector()) / len(zs)
+        d = mean_z * local_translate_z + _unit_or(mean_z, zs[0]) * thickness
+        if ys and offset:
+            d += _offset_dir(ys) * offset      # each border edge moves out by Offset
+        return d * unit
+
+    if keep_faces_together:
+        zs, ys = {}, {}
+        for _e, a, b, y, z in plan:
+            for v in (a, b):
+                zs.setdefault(v, []).append(z)
+                if y is not None:
+                    ys.setdefault(v, []).append(y)
+        disp = {v: move(zs[v], ys.get(v, [])) for v in zs}
+        cols = {v: [v] + [bm.verts.new(v.co + disp[v] * (j / k)) for j in range(1, k + 1)] for v in zs}
+        new = [c for col in cols.values() for c in col[1:]]
+        ends = [(cols[a], cols[b], e) for e, a, b, _y, _z in plan]
+    else:
+        new, ends = [], []
+        for e, a, b, y, z in plan:
+            d = move([z], [y] if y is not None else [])
+            ca = [a] + [bm.verts.new(a.co + d * (j / k)) for j in range(1, k + 1)]
+            cb = [b] + [bm.verts.new(b.co + d * (j / k)) for j in range(1, k + 1)]
+            new += ca[1:] + cb[1:]
+            ends.append((ca, cb, e))
+    outer = []
+    for ca, cb, e in ends:
+        example = e.link_faces[0] if e.link_faces else None
+        for j in range(k):
+            bm.faces.new((ca[j], cb[j], cb[j + 1], ca[j + 1]), example)
+        outer.append(bm.edges.get((ca[k], cb[k])))
     deselect_all(bm)
     for e in outer:
         if e is not None:
@@ -628,10 +663,12 @@ def _build_vertices(bm, params, unit):
     return extrude_vertices(bm, [v for v in bm.verts if v.select], unit=unit, **params)
 
 
-EDGE = add_spec(Spec('EDGE', "polyExtrudeEdge", ("thickness", "local_translate_z", "offset", "divisions"),
-                     {k: LABELS[k] for k in ("thickness", "local_translate_z", "offset", "divisions")},
-                     {"thickness": 0.0, "local_translate_z": 0.0, "offset": 0.0, "divisions": 1},
-                     {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT"},
+EDGE_FIELDS = ("thickness", "local_translate_z", "offset", "divisions", "keep_faces_together")
+EDGE = add_spec(Spec('EDGE', "polyExtrudeEdge", EDGE_FIELDS, {k: LABELS[k] for k in EDGE_FIELDS},
+                     {"thickness": 0.0, "local_translate_z": 0.0, "offset": 0.0, "divisions": 1,
+                      "keep_faces_together": True},
+                     {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
+                      "keep_faces_together": "BOOL"},
                      "local_translate_z", "extrude_edge_edit", _build_edges))
 VERTEX = add_spec(Spec('VERTEX', "polyExtrudeVertex", ("width", "length", "divisions"),
                        {"width": "Width", "length": "Length", "divisions": "Divisions"},

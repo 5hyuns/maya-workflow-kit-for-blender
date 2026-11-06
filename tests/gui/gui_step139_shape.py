@@ -206,7 +206,8 @@ def s_edges_extruded():
           r is not None and r.name == "polyExtrudeEdge1" and counts() == (12, 18, 8) and not mods)
     C["rows"] = in_view_rows()
     check(f"In-View rows = polyExtrudeEdge names ({C['rows'] and list(C['rows'])})",
-          C["rows"] is not None and list(C["rows"]) == ["thickness", "local_translate_z", "offset", "divisions"])
+          C["rows"] is not None and list(C["rows"]) == ["thickness", "local_translate_z", "offset", "divisions",
+                                                          "keep_faces_together"])
     if C["rows"]:
         x, y = C["rows"]["thickness"]
         ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
