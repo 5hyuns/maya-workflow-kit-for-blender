@@ -224,7 +224,6 @@ def test_menu_places():
     assert ("Smart Bevel", "Edit Mesh/Smart Bevel", 'MOD_BEVEL') in toolkit.COMPONENTS
     assert any(it[0] == "Smart Bevel" for it in mm.SHIFT_EDGE.items if it != mm.DIVIDER)
     assert any(it[0] == "Smart Bevel" for it in mm.SHIFT_FACE.items if it != mm.DIVIDER)
-    assert "Smart Bevel" in mm.SHIFT_EDGE.options
 
 
 def test_option_window_runs_from_object_mode_on_the_whole_mesh():

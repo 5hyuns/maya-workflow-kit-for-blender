@@ -611,7 +611,7 @@ SHIFT_EDGE = MarkingMenu(
     ],
     options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components',
              'Connect Tool', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut',
-             'Offset Edge Loop Tool', 'Slide Edge Tool', 'Smart Bevel', 'Transform Component'])
+             'Offset Edge Loop Tool', 'Slide Edge Tool', 'Transform Component'])
 
 SHIFT_FACE = MarkingMenu(
     "SHIFT_FACE", "Face Tools", "maya",

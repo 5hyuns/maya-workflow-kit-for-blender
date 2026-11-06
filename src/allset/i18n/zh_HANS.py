@@ -6211,4 +6211,6 @@ STRINGS = {
     'Which edges are bevelled': '要倒角的边',
     "Width in world units, ignoring the object's scale (off: in the object's own units)": '宽度以世界单位计，忽略对象缩放 (关: 用对象自身单位)',
     'polySmartBevel': 'polySmartBevel',
+    # Universal Manipulator on components (#318)
+    'Maya Universal Manipulator on mesh components (the same tool in a component mode).': '网格组件上的 Maya 通用操纵器 (组件模式中的同一工具)。',
 }

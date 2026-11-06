@@ -10279,6 +10279,9 @@
    "Maya Trax Library > Insert Clip: the source clips": "Maya Trax Library > Insert Clip: the source clips",
    "Source clips (Maya's Visor clips)": "Source clips (Maya's Visor clips)"
   },
+  "Tooltips/ui/universal_manip": {
+   "Maya Universal Manipulator on mesh components (the same tool in a component mode).": "Maya Universal Manipulator on mesh components (the same tool in a component mode)."
+  },
   "Tooltips/ui/user_workspaces": {
    "Delete the current saved workspace (Maya Windows > Workspaces > Delete Current Workspace): its file is removed\nand the window shows Maya Classic": "Delete the current saved workspace (Maya Windows > Workspaces > Delete Current Workspace): its file is removed\nand the window shows Maya Classic",
    "Save the current workspace under a name (Maya Windows > Workspaces > Save Current Workspace As): it is listed\nunder Windows > Workspaces in every scene. Only the layout is saved, in the extension's user folder": "Save the current workspace under a name (Maya Windows > Workspaces > Save Current Workspace As): it is listed\nunder Windows > Workspaces in every scene. Only the layout is saved, in the extension's user folder",

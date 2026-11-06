@@ -6211,4 +6211,6 @@ STRINGS = {
     'Which edges are bevelled': 'ベベルするエッジ',
     "Width in world units, ignoring the object's scale (off: in the object's own units)": 'ワールド単位の幅 (オブジェクトのスケールを無視。オフ: オブジェクト自身の単位)',
     'polySmartBevel': 'polySmartBevel',
+    # Universal Manipulator on components (#318)
+    'Maya Universal Manipulator on mesh components (the same tool in a component mode).': 'メッシュ コンポーネントの Maya ユニバーサル マニピュレータ (コンポーネント モードでも同じツール)。',
 }

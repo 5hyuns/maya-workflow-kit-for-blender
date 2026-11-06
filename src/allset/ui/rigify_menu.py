@@ -83,7 +83,7 @@ class ALLSET_OT_rigify_controls(bpy.types.Operator):
     def execute(self, context):
         ob = _armature(context)
         if ob.data.get("rig_id") is None:
-            self.report({'INFO'}, "This armature is not a generated Rigify rig: Generate Rig first, then its "
+            self.report({'WARNING'}, "This armature is not a generated Rigify rig: Generate Rig first, then its "
                                   "controls appear in the sidebar's Item tab")
         area = context.area if context.area is not None and context.area.type == 'VIEW_3D' else None
         if area is None:
