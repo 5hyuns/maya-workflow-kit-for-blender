@@ -200,7 +200,7 @@ def _closed(faces):
     return bool(faces) and all(sum(1 for g in e.link_faces if g in sel) == 2 for f in faces for e in f.edges)
 
 
-def _region(bm, faces):
+def _region(bm, faces, keep_bottom=False):
     edges = {e for f in faces for e in f.edges}
     closed = _closed(faces)
     ret = bmesh.ops.extrude_face_region(bm, geom=list(faces) + list(edges))
@@ -210,14 +210,15 @@ def _region(bm, faces):
         # whole closed shells: Maya keeps the old faces, turned inside out;
         # bmesh has already turned them (Blender 4.5)
         pass
-    elif gone:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
+    elif gone and not keep_bottom:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
         bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
     return caps
 
 
-def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, fallback=MAYA_Z):
+def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, fallback=MAYA_Z, keep_bottom=False):
     """Zero-length extrusion of ``faces``, ``divisions`` times. Returns (caps, levels, vectors) where
-    levels[k-1] maps a vertex key to the level-k vertex (level ``divisions`` = the caps)."""
+    levels[k-1] maps a vertex key to the level-k vertex (level ``divisions`` = the caps). ``keep_bottom``: faces
+    with no neighbours keep their original face as a bottom (Maya's extrusion along a curve)."""
     bm.verts.index_update()
     bm.faces.index_update()
     faces = [f for f in faces if f.is_valid]
@@ -237,10 +238,10 @@ def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, f
         if level == 0 and not together:
             caps = bmesh.ops.extrude_discrete_faces(bm, faces=caps)["faces"]
             gone = [f for f in faces if f.is_valid]
-            if gone:
+            if gone and not keep_bottom:
                 bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
         else:
-            caps = _region(bm, caps)
+            caps = _region(bm, caps, keep_bottom and level == 0)
         found = {}
         if together:
             for f in caps:

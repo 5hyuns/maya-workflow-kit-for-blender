@@ -11,6 +11,7 @@ the faces' first normal x k / N, Thickness the last step's direction x k / N. De
 the curve's end at once. The node is editable afterwards like any kit extrusion (In-View Editor, Channel Box INPUTS).
 """
 
+import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
@@ -101,7 +102,10 @@ def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0
     groups = _groups(faces, keep_faces_together)
     inv = matrix.inverted_safe()
     n = max(1, int(divisions))
-    caps, levels, vectors = extrude.extrude_topology(bm, faces, n, keep_faces_together, direction, fallback)
+    first = {f: f.normal.copy() for f in faces}
+    # like Maya, faces with no neighbours (a one-face plane) keep their original face as the bottom
+    caps, levels, vectors = extrude.extrude_topology(bm, faces, n, keep_faces_together, direction, fallback,
+                                                     keep_bottom=True)
     n = len(levels)
     points = [inv @ p for p in path_points(curve_ob, n)]
     member = []
@@ -113,6 +117,10 @@ def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0
     moved = place(member, points, n, taper, twist, local_translate_z, thickness, unit)
     for v, co in moved.items():
         v.co = co
+    bm.normal_update()
+    bottoms = [f for f, nrm in first.items() if f.is_valid and f.normal.dot(nrm) > 0]
+    if bottoms:              # the bottom faces away from the extrusion
+        bmesh.ops.reverse_faces(bm, faces=bottoms)
     extrude.deselect_all(bm)
     for f in caps:
         if f.is_valid:

@@ -113,3 +113,18 @@ def test_without_a_curve_it_is_the_usual_extrusion():
     curve.select_set(False)
     assert bpy.ops.allset.extrude() == {'FINISHED'}
     assert extrude.current(plane).spec is extrude.FACE
+
+
+def test_one_face_plane_keeps_its_bottom():
+    # like Maya: a lone face extruded along a curve becomes a closed box (bottom, sides, end)
+    plane, _curve = _scene([(0, 0, 0), (0, 0, 1), (0, 0, 4)])
+    assert bpy.ops.allset.extrude() == {'FINISHED'}
+    bm = bmesh.from_edit_mesh(plane.data)
+    assert (len(bm.verts), len(bm.edges), len(bm.faces)) == (8, 12, 6), (len(bm.verts), len(bm.edges), len(bm.faces))
+    bottom = [f for f in bm.faces if abs(f.calc_center_median().z) < 1e-6]
+    assert len(bottom) == 1 and bottom[0].normal.z < -0.99, [tuple(f.normal) for f in bottom]
+    assert all(e.is_manifold for e in bm.edges)
+    plane, _curve = _scene([(0, 0, 0), (0, 0, 1), (0, 0, 4)])
+    assert bpy.ops.allset.extrude(divisions=5) == {'FINISHED'}
+    bm = bmesh.from_edit_mesh(plane.data)
+    assert (len(bm.verts), len(bm.edges), len(bm.faces)) == (24, 44, 22)
