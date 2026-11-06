@@ -228,3 +228,30 @@ def test_bbone_and_envelope_display_draw_blender_shapes_as_wire():
     shapes = mj.own_shape_lines(arm, 'BBONE')
     assert set(shapes) == set(names), "every bone, the last ones of a chain too"
 
+
+def test_radius_to_hierarchy_setting_sends_the_radius_down_the_chain():
+    """Off (like Maya): the typed Radius goes to the selected joints only. Channel Box Settings > Radius to Hierarchy
+    on: the root alone selected sets the whole chain."""
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    arm, (j1, j2, j3, j4) = _chain()
+    bpy.context.view_layer.objects.active = arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode='POSE')
+    for pb in arm.pose.bones:
+        cb.set_bone_selected(pb, pb.name == j1)
+    arm.data.bones.active = arm.data.bones[j1]
+    bones = arm.data.bones
+    assert prefs.cb_radius_hierarchy is False, "off by default"
+    bones[j1].allset_joint_radius = 0.3
+    assert abs(bones[j1].allset_joint_radius - 0.3) < 1e-6
+    assert all(abs(bones[n].allset_joint_radius - mj.MAYA_RADIUS) < 1e-6 for n in (j2, j3, j4)), "selected only"
+    prefs.cb_radius_hierarchy = True
+    try:
+        bones[j1].allset_joint_radius = 0.05
+        assert all(abs(bones[n].allset_joint_radius - 0.05) < 1e-6 for n in (j1, j2, j3, j4)), "the whole chain"
+        bones[j3].allset_joint_radius = 0.2          # an unselected joint: it and the joints below it
+        assert abs(bones[j3].allset_joint_radius - 0.2) < 1e-6
+        assert abs(bones[j2].allset_joint_radius - 0.05) < 1e-6 and abs(bones[j4].allset_joint_radius - 0.05) < 1e-6
+    finally:
+        prefs.cb_radius_hierarchy = False
+        bpy.ops.object.mode_set(mode='OBJECT')

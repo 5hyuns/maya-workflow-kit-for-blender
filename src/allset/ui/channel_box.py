@@ -2409,6 +2409,8 @@ class ALLSET_MT_cb_settings(bpy.types.Menu):
         lay.label(text="Virtual slider speed")
         lay.prop(prefs, "cb_speed", expand=True)
         lay.prop(prefs, "cb_hyperbolic")
+        lay.separator()
+        lay.prop(prefs, "cb_radius_hierarchy")
 
 
 class ALLSET_MT_cb_edit(bpy.types.Menu):

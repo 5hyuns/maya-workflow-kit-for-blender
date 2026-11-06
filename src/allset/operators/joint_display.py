@@ -27,13 +27,23 @@ def _get_radius(bone):
 
 def radius_bones(bone, context=None):
     """The bones a Radius edit on ``bone`` writes: like Maya's Channel Box, every selected joint when ``bone`` is
-    one of them, else ``bone`` alone."""
+    one of them, else ``bone`` alone. With Channel Box Settings > Radius to Hierarchy on, also every joint below
+    them (a whole chain from its root)."""
+    from .. import preferences
     from ..ui import channel_box
+    context = context or bpy.context
     try:
-        picked = [pb.bone for pb in channel_box.targets(context or bpy.context) if channel_box.is_bone(pb)]
+        picked = [pb.bone for pb in channel_box.targets(context) if channel_box.is_bone(pb)]
     except (AttributeError, ReferenceError, RuntimeError):
         picked = []
-    return picked if bone in picked else [bone]
+    out = picked if bone in picked else [bone]
+    try:
+        down = bool(preferences.get(context).cb_radius_hierarchy)
+    except (AttributeError, KeyError):
+        down = False
+    if down:
+        out = list(dict.fromkeys(out + [c for b in out for c in b.children_recursive]))
+    return out
 
 
 def joints_changed():

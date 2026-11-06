@@ -290,6 +290,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     cb_sync_timeline: bpy.props.BoolProperty(
         name="Sync Timeline Display",
         description="The Time Slider shows only the keys of the channels selected in the Channel Box")
+    # Channel Box Settings > Radius to Hierarchy (default off: like Maya, a typed Radius goes to the selected joints;
+    # operators/joint_display.py)
+    cb_radius_hierarchy: bpy.props.BoolProperty(
+        name="Radius to Hierarchy",
+        description="A Radius typed in the Channel Box also goes to every joint below the selected joints "
+                    "(off: the selected joints only, like Maya)")
     # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
     # Maya Graph Editor Select menu, operators/graph_key_menu.py).
     graph_select_curve: bpy.props.BoolProperty(
