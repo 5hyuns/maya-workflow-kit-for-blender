@@ -418,19 +418,24 @@ def segments_touch(a, b, poly):
 
 
 def region_pick(context, ob, poly):
-    """Maya marquee / lasso on a skeleton: the joints whose drawn lines touch ``poly``, kept to the one closest to
-    the root (a box around a whole chain selects its top joint). Returns a joint name or None."""
+    """Maya marquee / lasso on a skeleton: the bones whose drawn lines touch ``poly``. Maya joints keep the one
+    closest to the root (a box around a whole chain selects its top joint); controls (bones with a custom shape)
+    and bones of a skeleton not drawn as Maya joints are each picked, like Maya's curve controls. Returns names."""
     js = skeleton(ob, context.scene)
     dg = context.evaluated_depsgraph_get()
-    hit = []
+    maya_drawn = getattr(ob.data, "display_type", 'OCTAHEDRAL') not in STICK_TYPES | SHAPE_TYPES
+    joints, each = [], []
     for n in js:
         pts = joint_segments(js, n, dg)
         if not pts:
             continue
         a, b, ok = _screen(context, pts)
         if ok.any() and segments_touch([tuple(v) for v in a[ok]], [tuple(v) for v in b[ok]], poly):
-            hit.append((depth(js, n), list(js).index(n), n))
-    return min(hit)[2] if hit else None
+            if maya_drawn and js[n].shape is None:
+                joints.append((depth(js, n), list(js).index(n), n))
+            else:
+                each.append(n)
+    return each + ([min(joints)[2]] if joints else [])
 
 
 def _sphere_array(js):

@@ -160,9 +160,7 @@ def apply(context, poly, mode, snap):
         if ob.type != 'ARMATURE' or ob.hide_select or not ob.visible_get() \
                 or not ob.visible_in_viewport_get(space):
             continue
-        name = maya_joints.region_pick(context, ob, poly)
-        if name is not None:
-            picks.append((ob, name))
+        picks.extend((ob, name) for name in maya_joints.region_pick(context, ob, poly))
     if not picks:
         return []
     restore(context, snap)
