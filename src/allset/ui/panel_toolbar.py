@@ -492,6 +492,18 @@ def _over_camera_button(context, event):
     return x0 <= event.mouse_region_x < x0 + toolbar_fit.unit(system.ui_scale, system.pixel_size)
 
 
+STARTUP_VIEWS = (("persp", 'PERSP'), ("top", 'TOP'), ("front", 'FRONT'), ("side", 'RIGHT'))
+
+
+def camera_rows(context):
+    """The camera list's rows like Maya: every camera of the scene once, in name order (perspective and
+    orthographic together, hidden ones too), the startup persp / top / front / side as the kit's view rows."""
+    rows = {name: panel_menu_data._view(name, view) for name, view in STARTUP_VIEWS}
+    for ob in panel_menus._cameras(context, None):
+        rows[ob.name] = ob.name
+    return [rows[name] for name in sorted(rows)]
+
+
 class ALLSET_MT_panel_cameras(bpy.types.Menu):
     """The scene's cameras: pick one to look through it in this view"""
     bl_idname = "ALLSET_MT_panel_cameras"
@@ -499,13 +511,18 @@ class ALLSET_MT_panel_cameras(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        panel_menus.draw_rows(layout, context, [panel_menu_data._view("persp", 'PERSP')])
-        panel_menus._draw_camera_list(layout, context, False)
+        for row in camera_rows(context):
+            if isinstance(row, tuple):
+                panel_menus.draw_rows(layout, context, [row])
+            else:
+                layout.operator(panel_menus.ALLSET_OT_panel_look_through.bl_idname, text=row,
+                                icon='OUTLINER_OB_CAMERA').camera = row
         layout.separator()
-        panel_menus.draw_rows(layout, context, [panel_menu_data._view("top", 'TOP'),
-                                                panel_menu_data._view("front", 'FRONT'),
-                                                panel_menu_data._view("side", 'RIGHT')])
-        panel_menus._draw_camera_list(layout, context, True)
+        layout.operator(panel_menus.ALLSET_OT_panel_new_persp.bl_idname, text="New Perspective")
+        layout.menu(panel_menus.ALLSET_MT_panel_new_ortho.bl_idname, text="New Orthographic")
+        # Blender has no stereo camera rig to look through: the Panels > Stereo notice
+        layout.operator(panel_menus.GREY_OP, text="Stereo Cameras").item = \
+            panel_menu_data.item_path("ALLSET_MT_panel_panels", "Stereo")
 
 
 class ALLSET_OT_pt_hover(bpy.types.Operator):

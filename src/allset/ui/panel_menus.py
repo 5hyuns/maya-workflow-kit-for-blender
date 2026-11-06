@@ -551,11 +551,12 @@ def _menu(idname, label, rows, doc):
 
 
 def _cameras(context, ortho):
-    """Cameras listed under Panels > Perspective / Orthographic; the startup persp / top / front / side are the
-    menus' own first rows."""
+    """Cameras listed under Panels > Perspective / Orthographic (``ortho`` None = both kinds, the panel toolbar's
+    camera list); the startup persp / top / front / side are the menus' own rows."""
     from ..operators import startup_cameras
     return [ob for ob in context.scene.objects
-            if ob.type == 'CAMERA' and (ob.data.type == 'ORTHO') == ortho and not startup_cameras.is_startup(ob)]
+            if ob.type == 'CAMERA' and (ortho is None or (ob.data.type == 'ORTHO') == ortho)
+            and not startup_cameras.is_startup(ob)]
 
 
 class ALLSET_OT_panel_look_through(bpy.types.Operator):
@@ -614,6 +615,47 @@ class ALLSET_OT_panel_new_persp(bpy.types.Operator):
         context.view_layer.objects.active = ob
         look_through(context, context.area, ob)
         return {'FINISHED'}
+
+
+class ALLSET_OT_panel_new_ortho(bpy.types.Operator):
+    """Make a new orthographic camera (front, side or top) and look through it in this view"""
+    bl_idname = "allset.panel_new_ortho"
+    bl_label = "New Orthographic Camera"
+    bl_options = {'UNDO'}
+
+    kind: EnumProperty(name="View", items=(('front', "Front", ""), ('side', "Side", ""), ('top', "Top", "")),
+                       default='front', options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'VIEW_3D'
+
+    def execute(self, context):
+        # Maya: New Orthographic > Front / Side / Top makes front1, side1, top1 ... with the settings and the place of
+        # a new scene's camera of that name, and looks through it
+        from ..operators import create, naming, startup_cameras, units
+        unit = units.maya_unit(context.scene)
+        ob = create.create(context, 'CAMERA', maya_naming=False)
+        naming.apply_maya_name(ob, self.kind)
+        ob.data.type = 'ORTHO'
+        ob.data.ortho_scale = startup_cameras.MAYA_ORTHO_WIDTH * unit
+        ob.matrix_world = startup_cameras.maya_matrix(self.kind, unit)
+        for other in context.selected_objects:
+            other.select_set(other == ob)
+        ob.select_set(True)
+        context.view_layer.objects.active = ob
+        look_through(context, context.area, ob)
+        return {'FINISHED'}
+
+
+class ALLSET_MT_panel_new_ortho(bpy.types.Menu):
+    """New orthographic camera: front, side or top (Maya New Orthographic)"""
+    bl_idname = "ALLSET_MT_panel_new_ortho"
+    bl_label = "New Orthographic"
+
+    def draw(self, context):
+        for kind, label in (('front', "Front"), ('side', "Side"), ('top', "Top")):
+            self.layout.operator(ALLSET_OT_panel_new_ortho.bl_idname, text=label).kind = kind
 
 
 def _draw_camera_list(layout, context, ortho):
@@ -692,6 +734,7 @@ _generated = [
 ]
 
 classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_tear_off, ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_persp,
+           ALLSET_OT_panel_new_ortho, ALLSET_MT_panel_new_ortho,
            ALLSET_MT_panel_perspective, ALLSET_MT_panel_orthographic, ALLSET_MT_panel_panel,
            ALLSET_MT_panel_blender, ALLSET_MT_panel_bar, *_generated)
 
