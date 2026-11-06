@@ -37,7 +37,7 @@ import bmesh
 
 from . import extrude
 
-MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (default)
+MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (default), in Maya lengths
 ZERO = 1e-6           # zero-length slide edges (a zero-length extrusion) don't limit the fraction
 FIT = 0.9999          # bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
 SMOOTHING_ANGLE = 30.0  # Edit Mesh > Bevel: new edges whose faces meet at more than this many degrees are hard
@@ -1043,9 +1043,10 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
         near.update(e.other_vert(v) for e in v.link_edges)
     # Maya merges what the bevel made onto coincident vertices (a zero-length extrusion's sides, Fraction 1): every
     # group of vertices linked by gaps within the tolerance becomes one vertex at the group's mean (Fraction 1:
-    # 0.49995 between 0.5 and 0.4999; four inner corners 0.0001 apart meet in the middle)
+    # 0.49995 between 0.5 and 0.4999; four inner corners 0.0001 apart meet in the middle). The tolerance is a Maya
+    # length: in a centimetre scene 0.0001 cm, not 0.0001 m (#321: small bevels lost their edges)
     made_set = set(made)
-    pairs = merge_groups(list(near), made_set, MERGE * 1.001)
+    pairs = merge_groups(list(near), made_set, MERGE * unit * 1.001)
     if pairs:
         bmesh.ops.weld_verts(bm, targetmap=pairs)
     for v in near:
