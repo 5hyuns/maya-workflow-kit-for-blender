@@ -8,7 +8,9 @@ gives a new window exactly the size and place of the area it copies; Python can'
 
 - while a kit window is open, a timer keeps its last rect (``Window.x / y / width / height``, screen px) per kind,
   saved in ``window_places.json`` in the extension's user folder (not in the .blend, kept across files and
-  sessions);
+  sessions). The timer only reads the window: nothing moves it back, and the file is written once the window
+  stands still, not while it is dragged or resized (a window may go to another monitor: its place there is what is
+  remembered);
 - opening that kind again carves an area of the remembered size and place out of the largest area of the window
   the command runs in (one split per tick: Blender lays areas out only between ticks), runs the opening command
   again, which copies that piece into the new window, and closes the pieces, so the main layout is as it was. A remembered rect is first fitted inside that area: the kit can only place a window over
@@ -36,6 +38,7 @@ CARVE_SLACK = 6
 
 _places = {}             # kind -> [x, y, width, height] (screen px, bottom-left origin)
 _tracked = {}            # window pointer -> kind
+_last = {}               # window pointer -> the rect the previous tick saw (another rect now = it is being moved)
 _state = {"loaded": False, "dirty": False}
 
 
@@ -337,14 +340,27 @@ def track(window, kind):
         bpy.app.timers.register(_tick, first_interval=TICK, persistent=True)
 
 
+def settled(ptr, rect):
+    """True when ``rect`` is what the previous tick saw of window ``ptr``: it is not being moved or resized now."""
+    prev = _last.get(ptr)
+    _last[ptr] = rect
+    return prev == rect
+
+
 def _tick():
+    moving = False
     for ptr, kind in list(_tracked.items()):
         w = live_refs.window(ptr)
         if w is None:
             del _tracked[ptr]          # closed: its last rect stays remembered
+            _last.pop(ptr, None)
             continue
-        remember(kind, (w.x, w.y, w.width, w.height))
-    if _state["dirty"]:
+        rect = (w.x, w.y, w.width, w.height)
+        remember(kind, rect)
+        if not settled(ptr, rect):
+            moving = True
+    # written once every tracked window stands still: no disk write while the user drags or resizes one
+    if _state["dirty"] and not moving:
         save()
     return TICK if _tracked else None
 
@@ -360,3 +376,4 @@ def unregister():
     if _state["dirty"]:
         save()
     _tracked.clear()
+    _last.clear()
