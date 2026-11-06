@@ -8,6 +8,7 @@ Maya behaviour already is Blender's (only the notice is shown).
 """
 
 import math
+import re
 
 import bmesh
 import bpy
@@ -71,6 +72,16 @@ class ALLSET_OT_prefix_hierarchy(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def replace_name(name, search, replace):
+    """Maya Search and Replace Names: "Search For" is a regular expression and its first match is replaced, so
+    ``$`` adds a suffix and ``^`` a prefix. Text that is not a valid expression is searched as plain text."""
+    try:
+        pattern = re.compile(search)
+    except re.error:
+        pattern = re.compile(re.escape(search))
+    return pattern.sub(lambda _m: replace, name, count=1)
+
+
 class ALLSET_OT_search_replace_names(bpy.types.Operator):
     """Replace text in object names: in the selected hierarchies, the selection only, or every object
     (Maya Modify > Search and Replace Names)"""
@@ -78,7 +89,8 @@ class ALLSET_OT_search_replace_names(bpy.types.Operator):
     bl_label = "Search and Replace Names"
     bl_options = {'REGISTER', 'UNDO'}
 
-    search: StringProperty(name="Search For")
+    search: StringProperty(name="Search For", description="Text to find; like Maya, $ = the end of the name "
+                           "(adds a suffix), ^ = the start (adds a prefix), . = any character")
     replace: StringProperty(name="Replace With")
     scope: EnumProperty(name="Operation", default='HIERARCHY', items=(
         ('HIERARCHY', "Hierarchy", "The selected objects and everything under them"),
@@ -100,8 +112,8 @@ class ALLSET_OT_search_replace_names(bpy.types.Operator):
             obs = _hierarchy(context.selected_objects)
         n = 0
         for ob in obs:
-            if self.search in ob.name:
-                _rename(ob, lambda name: name.replace(self.search, self.replace))
+            if replace_name(ob.name, self.search, self.replace) != ob.name:
+                _rename(ob, lambda name: replace_name(name, self.search, self.replace))
                 n += 1
         results.result(self, f"Renamed {n} object(s)")
         return {'FINISHED'}

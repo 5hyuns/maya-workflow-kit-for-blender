@@ -128,6 +128,26 @@ def test_prefix_and_search_replace_names():
     assert b.name == "R_pCube2"
 
 
+def test_search_replace_names_suffix_prefix():
+    """Like Maya, Search For is a regular expression with its first match replaced: $ adds a suffix, ^ a prefix."""
+    _clear()
+    a = _cube("arm_L")
+    b = _cube("leg_L")
+    b.parent = a
+    a.data.name = "armShape"
+    _select(a)
+    bpy.ops.allset.search_replace_names(search="$", replace="_geo", scope='HIERARCHY')
+    assert (a.name, b.name, a.data.name) == ("arm_L_geo", "leg_L_geo", "armShape_geo"), (a.name, b.name, a.data.name)
+    bpy.ops.allset.search_replace_names(search="^", replace="c_", scope='SELECTED')
+    assert (a.name, b.name) == ("c_arm_L_geo", "leg_L_geo"), (a.name, b.name)
+    bpy.ops.allset.search_replace_names(search="_L_geo$", replace="_R", scope='ALL')
+    assert (a.name, b.name) == ("c_arm_R", "leg_R"), (a.name, b.name)
+    bpy.ops.allset.search_replace_names(search="_", replace="-", scope='SELECTED')      # first match only
+    assert a.name == "c-arm_R", a.name
+    bpy.ops.allset.search_replace_names(search="arm[", replace="x", scope='SELECTED')   # not an expression: plain text
+    assert a.name == "c-arm_R", a.name
+
+
 def test_soften_harden_object_and_edges():
     _clear()
     ob = _cube()

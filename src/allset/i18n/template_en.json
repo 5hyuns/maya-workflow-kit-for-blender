@@ -6142,6 +6142,7 @@
    "Soften/Harden Edges": "Soften/Harden Edges",
    "Step": "Step",
    "Stereo Camera": "Stereo Camera",
+   "Text to find; like Maya, $ = the end of the name (adds a suffix), ^ = the start (adds a prefix), . = any character": "Text to find; like Maya, $ = the end of the name (adds a suffix), ^ = the start (adds a prefix), . = any character",
    "Type": "Type",
    "Wedge": "Wedge",
    "Wedge Angle": "Wedge Angle"
@@ -7255,6 +7256,7 @@
    "Dolly 2D": "Dolly 2D",
    "Frame": "Frame",
    "Frame in All Views": "Frame in All Views",
+   "Navigation Chord": "Navigation Chord",
    "Redo": "Redo",
    "Selected": "Selected",
    "Toggle Four Views": "Toggle Four Views",
@@ -9729,8 +9731,10 @@
    "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)": "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)",
    "Go to the default view (Maya Home)": "Go to the default view (Maya Home)",
    "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings": "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings",
+   "Track the view (Maya Alt+MMB); pressing LMB as well dollies": "Track the view (Maya Alt+MMB); pressing LMB as well dollies",
    "Tumble or track the view along one axis only (Maya Alt+Shift+drag)": "Tumble or track the view along one axis only (Maya Alt+Shift+drag)",
    "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views": "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views",
+   "Turn a running tumble / track into a dolly when the other mouse button is pressed too": "Turn a running tumble / track into a dolly when the other mouse button is pressed too",
    "Undo or redo a view change (Maya [ and ]); separate from scene undo": "Undo or redo a view change (Maya [ and ]); separate from scene undo",
    "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)": "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)"
   },
