@@ -174,6 +174,23 @@ def test_tool_item_and_user_shelf():
         assert not menu_sets.add_to_shelf_if_asked(None, bpy.context, "Marking menu x/Move Tool")
 
 
+def test_tool_shelf_button_activates_saved_tool_action():
+    with _sandbox():
+        custom = shelf.user_shelf("Custom")
+        custom["buttons"].append({
+            "label": "Move Tool",
+            "icon": "TOOL_SETTINGS",
+            "type": "action",
+            "action": {"type": "tool", "id": "builtin.move", "space_type": "VIEW_3D"},
+        })
+        shelf.save_user()
+        original = shelf._run_in_editor_space
+        shelf._run_in_editor_space = lambda context, _space, callback: callback(context)
+        try:
+            assert bpy.ops.allset.shelf_button(shelf="USER:Custom", index=0) == {'FINISHED'}
+        finally:
+            shelf._run_in_editor_space = original
+
 def test_remove_and_edit_with_the_shelf_tools():
     with _sandbox({"LEFT_CTRL", "LEFT_SHIFT"}):
         bpy.ops.allset.menu_item(item=CUBE, clicked=True)

@@ -16,7 +16,17 @@ interface texts of the kit for translators and is licensed
 GPL-3.0-or-later like the code.
 
 Icons in the user interface (shelf, Status Line, viewport toolbar) are drawn
-by code at run time; no image files ship for them.
+by code at run time. The following PNG icon previews are Blender UI assets,
+used to let the custom GPU Shelf draw the corresponding Blender icon identifiers.
+They remain under Blender's GPL-3.0-or-later license and are credited to the
+Blender Foundation (2002):
+
+  icons/blender/*.png                            Blender Foundation icon previews
+  icons/blender_svg_icons.zip                    Blender Foundation SVG icon previews from Blender 5.2.1
+
+The archive contains losslessly optimized 64 x 64 RGBA previews rasterized from
+Blender Foundation's Blender 5.2.1 SVG icon sources in release/datafiles/icons_svg/.
+The Shelf resolver extracts only requested icons into Blender's temporary cache.
 
 The package contains no Autodesk code, icons, MEL scripts, screenshots or
 other Autodesk assets.
