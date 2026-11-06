@@ -76,6 +76,28 @@ def test_grow_shrink_keys():
             assert _any_event(km, type, shift=shift) == [idname], (km, type, shift, _any_event(km, type, shift=shift))
 
 
+def _modal_items(name, type):
+    km = bpy.context.window_manager.keyconfigs.active.keymaps.get(name)
+    return [k.propvalue for k in (km.keymap_items if km else ()) if k.active and k.type == type and k.value == 'PRESS']
+
+
+def test_alt_lmb_mmb_dolly_keys():
+    """Alt+LMB tumble / Alt+MMB track start the kit's chord watcher; the second button ends Blender's tumble /
+    track (its modal maps), and disabling the kit takes those modal items back."""
+    _one("3D View", "allset.tumble", "LEFTMOUSE", alt=True)
+    _one("3D View", "allset.track_view", "MIDDLEMOUSE", alt=True)
+    assert not _kmis("3D View", "view3d.move", "MIDDLEMOUSE", alt=True)
+    assert _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE') == ["CONFIRM"]
+    assert _modal_items("View3D Move Modal", 'LEFTMOUSE') == ["CONFIRM"]
+    kit.disable()
+    try:
+        assert "CONFIRM" not in _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE')
+        assert "CONFIRM" not in _modal_items("View3D Move Modal", 'LEFTMOUSE')
+    finally:
+        kit.enable()
+    assert _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE') == ["CONFIRM"]
+
+
 def test_box_select_modes():
     exact = {(False, False): "SET", (True, False): "XOR", (False, True): "SUB", (True, True): "ADD"}
     # outliner select_box has no XOR mode: Shift adds (workaround). uv / graph run the Shift box as SET and

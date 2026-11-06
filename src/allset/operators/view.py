@@ -40,8 +40,59 @@ class ALLSET_OT_tumble(bpy.types.Operator):
         if tumble_locked(context.region_data, preferences.get(context).lock_ortho_tumble):
             return {'FINISHED'}
         camera_navigation(context)
-        bpy.ops.view3d.rotate('INVOKE_DEFAULT')
+        started = bpy.ops.view3d.rotate('INVOKE_DEFAULT')
+        if event.type == 'LEFTMOUSE' and 'RUNNING_MODAL' in started:
+            bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held='LEFTMOUSE', other='MIDDLEMOUSE')
         return {'FINISHED'}
+
+
+class ALLSET_OT_track_view(bpy.types.Operator):
+    """Track the view (Maya Alt+MMB); pressing LMB as well dollies"""
+    bl_idname = "allset.track_view"
+    bl_label = "Track"
+
+    @classmethod
+    def poll(cls, context):
+        return context.region_data is not None
+
+    def invoke(self, context, event):
+        started = bpy.ops.view3d.move('INVOKE_DEFAULT')
+        if event.type == 'MIDDLEMOUSE' and 'RUNNING_MODAL' in started:
+            bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held='MIDDLEMOUSE', other='LEFTMOUSE')
+        return {'FINISHED'}
+
+
+# --- Alt+LMB+MMB dolly (#325) ---------------------------------------------------------------------
+# Maya dollies while both the left and the middle button are held with Alt (handy on a tablet pen). Blender's tumble /
+# track modals run on; this watcher sits in front of them: the second button press starts allset.dolly and passes
+# on, and the modal keymaps end the tumble / track on that press ("View3D Rotate / Move Modal" CONFIRM items).
+NAV_MODALS = {"VIEW3D_OT_rotate", "VIEW3D_OT_move"}
+
+
+class ALLSET_OT_nav_chord(bpy.types.Operator):
+    """Turn a running tumble / track into a dolly when the other mouse button is pressed too"""
+    bl_idname = "allset.nav_chord"
+    bl_label = "Navigation Chord"
+    bl_options = {'INTERNAL'}
+
+    held: bpy.props.StringProperty(default='LEFTMOUSE', options={'SKIP_SAVE'})
+    other: bpy.props.StringProperty(default='MIDDLEMOUSE', options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        window = context.window
+        ops = getattr(window, "modal_operators", None) if window is not None else None
+        if ops is not None and not any(op.bl_idname in NAV_MODALS for op in ops):
+            return {'FINISHED', 'PASS_THROUGH'}      # the tumble / track ended some other way
+        if event.type == self.other and event.value == 'PRESS':
+            bpy.ops.allset.dolly('INVOKE_DEFAULT', chord=True)
+            return {'FINISHED', 'PASS_THROUGH'}
+        if (event.type == self.held and event.value == 'RELEASE') or                 (event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS'):
+            return {'FINISHED', 'PASS_THROUGH'}
+        return {'PASS_THROUGH'}
 
 
 def emulated_alt_drag(context):
@@ -97,6 +148,9 @@ class ALLSET_OT_dolly(bpy.types.Operator):
     bl_label = "Dolly"
     bl_options = {'GRAB_CURSOR', 'BLOCKING'}
 
+    # started from Alt+LMB+MMB: letting go of either button ends it
+    chord: bpy.props.BoolProperty(default=False, options={'HIDDEN', 'SKIP_SAVE'})
+
     @classmethod
     def poll(cls, context):
         return context.region_data is not None
@@ -111,6 +165,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
         self._d0 = rv3d.view_distance
         # the button that started it: RMB for Alt+RMB, LMB for the Dolly Tool (ui/camera_tools.py)
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'} else 'RIGHTMOUSE'
+        self._ends = {'LEFTMOUSE', 'MIDDLEMOUSE'} if self.chord else {self._button}
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -122,7 +177,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
             rv3d.view_distance = dolly_distance(self._d0, dx, dy, context.preferences.system.ui_scale or 1.0,
                                                 invert_zoom(context))
             context.area.tag_redraw()
-        elif event.type == self._button and event.value == 'RELEASE':
+        elif event.type in self._ends and event.value == 'RELEASE':
             return {'FINISHED'}
         elif event.type == 'ESC' and event.value == 'PRESS':
             rv3d.view_distance = self._d0
@@ -734,7 +789,7 @@ class ALLSET_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_tumble, ALLSET_OT_emulated_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
+classes = (ALLSET_OT_tumble, ALLSET_OT_track_view, ALLSET_OT_nav_chord, ALLSET_OT_emulated_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
            ALLSET_OT_toggle_quad_view, ALLSET_OT_view_home)
 
 

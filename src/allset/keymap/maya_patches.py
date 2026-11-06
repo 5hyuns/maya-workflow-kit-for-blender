@@ -281,6 +281,12 @@ def patch_camera(kd):
     # locked the persp view like a top / front / side view (#288).
     for snap in ("AXIS_SNAP_ENABLE", "AXIS_SNAP_DISABLE"):
         kd.remove("View3D Rotate Modal", snap)
+    # Alt+LMB+MMB = dolly, whichever button comes first (#325): the kit's tumble / track start a watcher that
+    # starts the dolly on the second button, and the tumble / track end on that press.
+    kd.remove("3D View", "view3d.move", type="MIDDLEMOUSE", alt=True)
+    _add(kd, "3D View", "allset.track_view", make_event("MIDDLEMOUSE", alt=True))
+    kd.add("View3D Rotate Modal", "CONFIRM", make_event("MIDDLEMOUSE", any=True))
+    kd.add("View3D Move Modal", "CONFIRM", make_event("LEFTMOUSE", any=True))
     # Alt+RMB dolly reads the drag itself: Blender's zoom axis is a preference the kit no longer sets (#51)
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
