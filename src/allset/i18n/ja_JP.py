@@ -6119,4 +6119,12 @@ STRINGS = {
     "Type the box's length along this axis: the selection scales to it about the box centre": 'この軸のボックスの長さを入力: 選択がボックスの中心を基準にその長さにスケールされます',
     'Universal Manipulator Rotate': 'ユニバーサルマニピュレータ 回転',
     'Universal Manipulator Scale': 'ユニバーサルマニピュレータ スケール',
+    'Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)': '接続ツールのクリック: この頂点 / エッジを同じフェースで最後にクリックしたものとつなぐ (Ctrl: エッジリング)',
+    "End the Connect Tool's path": '接続ツールのパスを終了',
+    'Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them': 'Maya メッシュツール > 接続: 選択した頂点 / エッジを接続し、続けてコンポーネントをクリックして接続',
+    'Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)': '頂点またはエッジをクリックし、同じフェースの別のものをクリックすると接続。続けてクリックするとパスが続きます。エッジを Ctrl+クリックするとリング全体を接続。Enter / Esc でパスを終了 (Maya 接続)',
+    'Where a connection cuts an edge': '接続がエッジを分割する位置',
+    'New edges between the selected edges when the tool starts': 'ツール開始時に選択エッジの間に作る新しいエッジの数',
+    'Connect the whole edge ring': 'エッジリング全体を接続',
+    'End Connect Path': '接続パスを終了',
 }

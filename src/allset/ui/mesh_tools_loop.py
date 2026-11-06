@@ -10,7 +10,7 @@ doesn't hit an edge (KEYMAP_FALLBACK), like Maya's tools that select with a clic
 import bpy
 
 from . import notices
-from ..operators import edge_loops
+from ..operators import connect_tool, edge_loops
 
 # Maya rows the kit can't honour -> (substitute, one line); keys are "Tool Settings/<tool>/<row>" (Insert Edge Loop's
 # greyed rows are in ui/tool_settings.TS_NOTICES)
@@ -24,6 +24,7 @@ DESCRIPTIONS = {   # Maya's Description section, the kit's words
     'INSERT_EDGE_LOOP': ("To create a new path of edges across a mesh,", "click an edge and drag."),
     'OFFSET_EDGE_LOOP': ("To insert edge loops on both sides of an edge,", "click an edge and drag."),
     'SLIDE_EDGE': ("Select an edge loop or path and middle-drag", "to slide it along the neighbouring edges."),
+    'CONNECT': ("Click vertices or edges one after another to connect them;", "Ctrl+click an edge to connect its ring."),
 }
 
 
@@ -162,7 +163,46 @@ class ALLSET_TL_slide_edge(bpy.types.WorkSpaceTool):
         draw_slide(layout, context, header=context.region.type == 'TOOL_HEADER')
 
 
-TOOLS = (ALLSET_TL_insert_edge_loop, ALLSET_TL_offset_edge_loop, ALLSET_TL_slide_edge)
+def draw_connect(layout, context, header=False):
+    s = edge_loops.settings(context)
+    if header:
+        layout.prop(s, "ct_slide")
+        layout.prop(s, "ct_segments")
+        return
+    col = layout.column()
+    col.use_property_split = True
+    col.prop(s, "ct_slide")
+    col.prop(s, "ct_segments")
+    draw_description(layout, 'CONNECT')
+
+
+class ALLSET_TL_connect(bpy.types.WorkSpaceTool):
+    """Maya Connect Tool: click vertices / edges one after another to join them, Ctrl+click an edge = its ring."""
+    bl_space_type = 'VIEW_3D'
+    bl_context_mode = 'EDIT_MESH'
+    bl_idname = connect_tool.TOOL
+    bl_label = "Connect Tool"
+    bl_description = ("Click a vertex or an edge, then another one on the same face to connect them; keep clicking "
+                      "to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path "
+                      "(Maya Connect)")
+    bl_icon = "ops.mesh.knife_tool"
+    bl_widget = None
+    bl_options = {'KEYMAP_FALLBACK'}
+    bl_keymap = (
+        ("allset.connect_click", {"type": 'LEFTMOUSE', "value": 'PRESS'}, None),
+        ("allset.connect_click", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True}, None),
+        ("allset.connect_click", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
+         {"properties": [("ring", True)]}),
+        ("allset.connect_end", {"type": 'RET', "value": 'PRESS'}, None),
+        ("allset.connect_end", {"type": 'ESC', "value": 'PRESS'}, None),
+    )
+
+    @staticmethod
+    def draw_settings(context, layout, tool):
+        draw_connect(layout, context, header=context.region.type == 'TOOL_HEADER')
+
+
+TOOLS = (ALLSET_TL_insert_edge_loop, ALLSET_TL_offset_edge_loop, ALLSET_TL_slide_edge, ALLSET_TL_connect)
 
 
 def register():

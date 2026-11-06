@@ -5382,6 +5382,17 @@
    "Scale": "Scale",
    "Scale Components": "Scale Components"
   },
+  "Labels/operators/connect_tool": {
+   "Connect": "Connect",
+   "Connect Tool": "Connect Tool",
+   "Connect the whole edge ring": "Connect the whole edge ring",
+   "Edge": "Edge",
+   "End Connect Path": "End Connect Path",
+   "Ring": "Ring",
+   "Segments": "Segments",
+   "Slide": "Slide",
+   "Vertex": "Vertex"
+  },
   "Labels/operators/constrain_199": {
    "Aim constraint": "Aim constraint",
    "Aim vector": "Aim vector",
@@ -5612,11 +5623,13 @@
    "Maintain position": "Maintain position",
    "Mode": "Mode",
    "New edges between faces at more than this angle are hard": "New edges between faces at more than this angle are hard",
+   "New edges between the selected edges when the tool starts": "New edges between the selected edges when the tool starts",
    "Number of edge loops": "Number of edge loops",
    "Object": "Object",
    "Offset": "Offset",
    "Offset Edge Loop": "Offset Edge Loop",
    "Offset of a click without a drag": "Offset of a click without a drag",
+   "Segments": "Segments",
    "Side": "Side",
    "Slide": "Slide",
    "Slide Edge": "Slide Edge",
@@ -5628,6 +5641,7 @@
    "The new loops follow the curvature of the surrounding surface": "The new loops follow the curvature of the surrounding surface",
    "Use Snapping": "Use Snapping",
    "Weight": "Weight",
+   "Where a connection cuts an edge": "Where a connection cuts an edge",
    "Where a loop ends inside the mesh, merge the two triangles there": "Where a loop ends inside the mesh, merge the two triangles there",
    "Where the loop cuts the clicked edge (from its first vertex)": "Where the loop cuts the clicked edge (from its first vertex)"
   },
@@ -8247,8 +8261,10 @@
   },
   "Labels/ui/mesh_tools_loop": {
    "Automatically": "Automatically",
+   "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)": "Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)",
    "Click an edge and drag: new edge loops on both sides of its edge loop (Maya Offset Edge Loop)": "Click an edge and drag: new edge loops on both sides of its edge loop (Maya Offset Edge Loop)",
    "Click an edge to insert an edge loop at that point; drag before releasing to slide it (Maya Insert Edge Loop)": "Click an edge to insert an edge loop at that point; drag before releasing to slide it (Maya Insert Edge Loop)",
+   "Connect Tool": "Connect Tool",
    "Delete edge": "Delete edge",
    "Insert Edge Loop Tool": "Insert Edge Loop Tool",
    "Loops": "Loops",
@@ -8985,6 +9001,11 @@
   "Tooltips/operators/component_scale": {
    "Scale components along one axis, stopping at zero without flipping": "Scale components along one axis, stopping at zero without flipping",
    "Stop component scaling at zero on every Scale handle; Object Mode is unaffected": "Stop component scaling at zero on every Scale handle; Object Mode is unaffected"
+  },
+  "Tooltips/operators/connect_tool": {
+   "Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)": "Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)",
+   "End the Connect Tool's path": "End the Connect Tool's path",
+   "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them": "Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them"
   },
   "Tooltips/operators/constrain_199": {
    "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive": "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive",

@@ -253,8 +253,8 @@ def _run_connect(context, v):
 
 
 def _run_connect_tool(context, v):
-    _edit_only(context)
-    return bpy.ops.allset.connect('EXEC_DEFAULT', segments=v["segments"], slide=v["slide"])
+    """Maya "Enter Tool": the values go to the tool, the selection is connected and the tool starts."""
+    return bpy.ops.allset.connect_tool_enter('EXEC_DEFAULT', segments=v["segments"], slide=v["slide"])
 
 
 def _run_circularize(context, v):

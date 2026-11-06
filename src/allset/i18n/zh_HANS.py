@@ -6119,4 +6119,12 @@ STRINGS = {
     "Type the box's length along this axis: the selection scales to it about the box centre": '输入此轴上框的长度: 选择以框中心为基准缩放到该长度',
     'Universal Manipulator Rotate': '通用操纵器 旋转',
     'Universal Manipulator Scale': '通用操纵器 缩放',
+    'Connect Tool click: join this vertex / edge to the last one clicked on the same face (Ctrl: the edge ring)': '连接工具单击：将此顶点 / 边与同一面上最后单击的连接 (Ctrl：边环)',
+    "End the Connect Tool's path": '结束连接工具的路径',
+    'Maya Mesh Tools > Connect: connect the selected vertices / edges, then click components to connect them': 'Maya 网格工具 > 连接：连接选定的顶点 / 边，然后单击组件进行连接',
+    'Click a vertex or an edge, then another one on the same face to connect them; keep clicking to continue the path. Ctrl+click an edge connects its whole ring. Enter / Esc ends the path (Maya Connect)': '单击一个顶点或边，再单击同一面上的另一个即可连接；继续单击可延续路径。Ctrl+单击边可连接整个边环。Enter / Esc 结束路径 (Maya 连接)',
+    'Where a connection cuts an edge': '连接切分边的位置',
+    'New edges between the selected edges when the tool starts': '工具开始时在选定边之间创建的新边数',
+    'Connect the whole edge ring': '连接整个边环',
+    'End Connect Path': '结束连接路径',
 }

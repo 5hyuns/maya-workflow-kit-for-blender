@@ -1043,7 +1043,7 @@ MAP.update({
 # operators/poly_maya.py, operators/rig_maya.py, menu_items.nonlinear.
 MAP.update({
     "Edit Mesh/Circularize": "allset.circularize",
-    "Mesh Tools/Connect": "allset.connect",
+    "Mesh Tools/Connect": "allset.connect_tool_enter",      # connects the selection, then the tool waits
     "Mesh Tools/Make Hole": "allset.make_hole",
     # Joint Labelling (operators/joint_labels.py): the first
     # Label Shoulder / Label Hip items are Maya's limb labels (FBIKLabelArm / Leg)

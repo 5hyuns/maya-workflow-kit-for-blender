@@ -77,6 +77,11 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
                                    description="Snapping points along each side edge (1 = the middle)")
     slide_snap_tolerance: FloatProperty(name="Snapping Tolerance", default=0.1, min=0.0, max=1.0, precision=4,
                                         description="How near (fraction of the edge) a snapping point catches")
+    # Connect Tool (operators/connect_tool.py)
+    ct_slide: FloatProperty(name="Slide", default=0.5, min=0.0, max=1.0, precision=4,
+                            description="Where a connection cuts an edge")
+    ct_segments: IntProperty(name="Segments", default=1, min=1, soft_max=10, max=100,
+                             description="New edges between the selected edges when the tool starts")
 
 
 SETTINGS = {'INSERT': ("iel_position", "iel_loops", "iel_edge_flow", "iel_adjust_flow", "iel_smoothing"),
