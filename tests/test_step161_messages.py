@@ -17,6 +17,7 @@ PKG = os.path.dirname(import_module(kit.MODULE).__file__)
 # INFO reports that stay: what the mouse does in an active tool (Maya's Help Line, = Blender's status-bar banner in
 # the kit layout) and the Script Editor's echo (its history is Blender's Info editor, which lists reports).
 HINT_REPORTS = {
+    "operators/connect_tool.py": 1,       # Connect Tool usage hint
     "operators/cut_sew.py": 1,
     "operators/graph_menu_198.py": 1,     # Add Key Tool usage hint
     "operators/quad_draw.py": 3,
