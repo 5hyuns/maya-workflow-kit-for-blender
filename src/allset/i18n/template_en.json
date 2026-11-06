@@ -7368,6 +7368,7 @@
   "Labels/preferences": {
    "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)": "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)",
    "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)": "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)",
+   "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)": "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)",
    "Active Only": "Active Only",
    "Along Normals": "Along Normals",
    "Alt+LMB does nothing in top/front/side orthographic views (Maya)": "Alt+LMB does nothing in top/front/side orthographic views (Maya)",
@@ -7497,6 +7498,7 @@
    "Project": "Project",
    "Pulse Armature Mode": "Pulse Armature Mode",
    "Python command line in the status bar": "Python command line in the status bar",
+   "Radius to Hierarchy": "Radius to Hierarchy",
    "Recommended setup": "Recommended setup",
    "Retime markers and their drags land on whole frames (Maya Retime Tool setting)": "Retime markers and their drags land on whole frames (Maya Retime Tool setting)",
    "Save a copy of the scene every few minutes into the autosave folder (the scene's own file is not touched)": "Save a copy of the scene every few minutes into the autosave folder (the scene's own file is not touched)",
