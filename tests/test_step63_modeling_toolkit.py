@@ -151,16 +151,35 @@ def test_mirror_option_box_routes_to_dialog():
     assert callable(m.run_action)
 
 
+def _visible_meshes():
+    return [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.visible_get()]
+
+
+def _evaluated_mesh(ob):
+    bpy.context.view_layer.update()
+    return ob.evaluated_get(bpy.context.evaluated_depsgraph_get()).data
+
+
+def _history(on):
+    bpy.context.window_manager.allset_construction_history = on
+
+
 def test_boolean_maya_order():
-    _clear()
-    a = _create('CUBE', 0.0)
-    b = _create('CUBE', 0.5)
-    _select(a, b, active=b)           # Maya: a first, then b
-    assert bpy.ops.allset.boolean(operation='DIFFERENCE') == {'FINISHED'}
-    meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
-    assert meshes == [a], [o.name for o in meshes]
-    xs = [(a.matrix_world @ v.co).x for v in a.data.vertices]
-    assert max(xs) <= 0.0 + 1e-4 and min(xs) >= -0.5 - 1e-4, (min(xs), max(xs))
+    for history in (True, False):
+        _clear()
+        _history(history)
+        a = _create('CUBE', 0.0)
+        b = _create('CUBE', 0.5)
+        _select(a, b, active=b)           # Maya: a first, then b
+        b_name = b.name
+        assert bpy.ops.allset.boolean(operation='DIFFERENCE') == {'FINISHED'}
+        assert _visible_meshes() == [a], [o.name for o in _visible_meshes()]
+        me = _evaluated_mesh(a)
+        xs = [(a.matrix_world @ v.co).x for v in me.vertices]
+        assert max(xs) <= 0.0 + 1e-4 and min(xs) >= -0.5 - 1e-4, (history, min(xs), max(xs))
+        if not history:               # Construction History off: applied, the operand is gone
+            assert not a.modifiers and b_name not in bpy.data.objects
+    _history(True)
 
 
 def _three_cubes():
@@ -178,31 +197,80 @@ def _three_cubes():
 
 def _area_bbox(ob):
     mw = ob.matrix_world
-    area = sum(p.area for p in ob.data.polygons) * abs(mw.determinant()) ** (2 / 3)
-    pts = [mw @ v.co for v in ob.data.vertices]
+    me = _evaluated_mesh(ob)
+    area = sum(p.area for p in me.polygons) * abs(mw.determinant()) ** (2 / 3)
+    pts = [mw @ v.co for v in me.vertices]
     box = tuple(round(f(p[i] for p in pts), 4) for f in (min, max) for i in range(3))
     return round(area, 4), box
 
 
 def test_boolean_three_objects():
-    """Maya: the first selected object against the union of the others, one result (issue #284)."""
+    """Maya: the first selected object against the union of the others, one result (issue #284), with
+    Construction History on (live modifiers, hidden inputs) and off (applied)."""
     cases = {   # operation: (result object index, area, bbox)
         'UNION': (0, 10.0, (-0.5, -0.5, -0.5, 1.0, 1.0, 0.5)),            # A u B u C
         'DIFFERENCE': (0, 2.5, (-0.5, -0.5, -0.5, 0.0, 0.0, 0.5)),        # A - (B u C)
         'DIFFERENCE_BA': (None, 8.0, (-0.5, -0.5, -0.5, 1.0, 1.0, 0.5)),  # (B u C) - A
         'INTERSECT': (0, 5.5, (-0.5, -0.5, -0.5, 0.5, 0.5, 0.5)),         # A n (B u C)
     }
-    for operation, (index, area, box) in cases.items():
-        obs = _three_cubes()
-        assert bpy.ops.allset.boolean.poll(), operation
-        assert bpy.ops.allset.boolean(operation=operation) == {'FINISHED'}, operation
-        meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
-        assert len(meshes) == 1, (operation, [o.name for o in meshes])
-        if index is not None:
-            assert meshes[0] is obs[index], operation
-        got = _area_bbox(meshes[0])
-        assert abs(got[0] - area) < 1e-3 and got[1] == box, (operation, got)
-        assert bpy.context.view_layer.objects.active is meshes[0] and meshes[0].select_get()
+    for history in (True, False):
+        _history(history)
+        for operation, (index, area, box) in cases.items():
+            obs = _three_cubes()
+            assert bpy.ops.allset.boolean.poll(), operation
+            assert bpy.ops.allset.boolean(operation=operation) == {'FINISHED'}, operation
+            meshes = _visible_meshes()
+            assert len(meshes) == 1, (history, operation, [o.name for o in meshes])
+            if index is not None:
+                assert meshes[0] is obs[index], operation
+            got = _area_bbox(meshes[0])
+            assert abs(got[0] - area) < 1e-3 and got[1] == box, (history, operation, got)
+            assert bpy.context.view_layer.objects.active is meshes[0] and meshes[0].select_get()
+            alive = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+            assert len(alive) == (3 if history else 1), (history, operation, len(alive))
+    _history(True)
+
+
+def test_boolean_history_live_and_deleted():
+    """Maya keeps a Boolean's inputs as history: the cutter stays editable (hidden, a wireframe when shown) until
+    Delete History bakes the result and removes the inputs (issue #324)."""
+    _history(True)
+    a, b, c = _three_cubes()
+    assert bpy.ops.allset.boolean(operation='DIFFERENCE') == {'FINISHED'}
+    mods = [m for m in a.modifiers if m.type == 'BOOLEAN']
+    assert len(mods) == 1 and mods[0].object is b, [m.name for m in a.modifiers]
+    assert ae.modifier_node(a, mods[0]) == ("polyCBoolOp1", "polyCBoolOp")
+    assert not b.visible_get() and not c.visible_get() and b.display_type == 'WIRE'
+    assert [m.object for m in b.modifiers if m.type == 'BOOLEAN'] == [c]
+    before = _area_bbox(a)
+    b.location.x = 2.0               # move the cutter away: A loses only C's corner
+    c.location.y = 2.0               # and C too: A is whole again
+    after = _area_bbox(a)
+    assert after != before and abs(after[0] - 6.0) < 1e-3, (before, after)
+    c.location.y = 0.5
+    b.location.x = 0.5
+    _select(a)
+    assert bpy.ops.allset.delete_history() == {'FINISHED'}
+    assert not a.modifiers
+    assert [o.name for o in bpy.context.scene.objects if o.type == 'MESH'] == [a.name]
+    got = _area_bbox(a)
+    assert abs(got[0] - 2.5) < 1e-3, got
+    # Attribute Editor: Delete on the node gives the cutter back as an ordinary object, Delete History removes it
+    for action in ('REMOVE', 'APPLY'):
+        _clear()
+        a = _create('CUBE', 0.0)
+        b = _create('CUBE', 0.5)
+        b_name = b.name
+        _select(a, b, active=b)
+        assert bpy.ops.allset.boolean(operation='DIFFERENCE') == {'FINISHED'}
+        _select(a)
+        md = [m for m in a.modifiers if m.type == 'BOOLEAN'][0]
+        assert bpy.ops.allset.ae_modifier(modifier=md.name, action=action) == {'FINISHED'}
+        assert not a.modifiers
+        if action == 'REMOVE':
+            assert b.visible_get() and b.display_type == 'TEXTURED' and not b.hide_render
+        else:
+            assert b_name not in bpy.data.objects and abs(_area_bbox(a)[0] - 4.0) < 1e-3
 
 
 def test_soft_select_maya_units():

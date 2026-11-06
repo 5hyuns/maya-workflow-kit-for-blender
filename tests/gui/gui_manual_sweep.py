@@ -2751,7 +2751,7 @@ def _m63_2_bevel():
           len(a.data.polygons) == 24)
     select_only(a, b)
     menu("Mesh/Booleans/Union")
-    meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+    meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.visible_get()]   # inputs = hidden history
     check(f"[M63-2] Boolean (Union) leaves one mesh ({[o.name for o in meshes]})", len(meshes) == 1)
     clear()
     a = create('CUBE')
@@ -2932,8 +2932,9 @@ def _m63_6_mirror():
         b.location = (0.5 * k(), 0, 0)
         select_only(a, b)    # first selected - last selected
         menu(f"Mesh/Booleans/{op} (A - B)" if op == "Difference" else f"Mesh/Booleans/{op}")   # Maya 2026 label
-        meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
-        xs = [(meshes[0].matrix_world @ v.co).x / k() for v in meshes[0].data.vertices] if meshes else [0]
+        meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.visible_get()]
+        dg = bpy.context.evaluated_depsgraph_get()    # the Boolean is a live modifier (history)
+        xs = [(meshes[0].matrix_world @ v.co).x / k() for v in meshes[0].evaluated_get(dg).data.vertices]             if meshes else [0]
         want = (-0.5, 0.0) if op == "Difference" else (0.0, 0.5)
         check(f"[M63-6] Booleans > {op}: first selected {'-' if op == 'Difference' else '&'} last ({[o.name for o in meshes]}, "
               f"x {min(xs):.2f}..{max(xs):.2f})",

@@ -313,15 +313,63 @@ class ALLSET_OT_separate(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _apply_boolean(context, base, operand, op):
-    """Apply ``base`` ``op`` ``operand`` on ``base`` (exact solver) and delete ``operand``."""
+# A Boolean input kept as history: the operand object of a kit Boolean modifier (Maya keeps the inputs of a
+# polyCBoolOp node until its history is deleted).
+BOOL_INPUT = "allset_bool_input"
+
+
+def _apply_boolean(context, base, operand, op, history=True):
+    """``base`` ``op`` ``operand`` (exact solver) on ``base``. ``history`` (Maya's Construction History on): a live
+    Boolean modifier with ``operand`` kept as a hidden, editable input; off: the modifier is applied and ``operand``
+    deleted."""
     if base.data.users > 1:
         base.data = base.data.copy()
-    mod = base.modifiers.new("Maya Boolean", 'BOOLEAN')
+    mod = base.modifiers.new("Boolean", 'BOOLEAN')   # Channel Box INPUTS / Attribute Editor: polyCBoolOpN
     mod.operation, mod.object, mod.solver = op, operand, 'EXACT'
+    if history:
+        operand[BOOL_INPUT] = True
+        operand.display_type = 'WIRE'                # drawn as a wireframe when shown again (Show / Outliner)
+        operand.hide_render = True
+        operand.select_set(False)
+        operand.hide_set(True)
+        return
     with context.temp_override(object=base, active_object=base):
         bpy.ops.object.modifier_apply(modifier=mod.name)
-    bpy.data.objects.remove(operand)
+    delete_bool_input(operand)
+
+
+def bool_inputs(ob):
+    """Objects ``ob``'s Boolean modifiers keep as kit Boolean inputs (history)."""
+    return [md.object for md in getattr(ob, "modifiers", ()) if md.type == 'BOOLEAN'
+            and md.object is not None and md.object.get(BOOL_INPUT)]
+
+
+def delete_bool_input(ob):
+    """Delete a Boolean input and, like Maya's history, the inputs it keeps itself; an input another object's
+    modifier still uses stays."""
+    inner = bool_inputs(ob)
+    data = ob.data
+    bpy.data.objects.remove(ob)
+    if data is not None and data.users == 0 and isinstance(data, bpy.types.Mesh):
+        bpy.data.meshes.remove(data)
+    for o in inner:
+        if not bool_users(o):
+            delete_bool_input(o)
+
+
+def release_bool_input(ob):
+    """A Boolean input whose node was deleted becomes an ordinary visible object again."""
+    if ob.get(BOOL_INPUT) is None or bool_users(ob):
+        return
+    del ob[BOOL_INPUT]
+    ob.display_type = 'TEXTURED'
+    ob.hide_render = False
+    ob.hide_set(False)
+
+
+def bool_users(ob):
+    return [o for o in bpy.data.objects if any(md.type == 'BOOLEAN' and md.object is ob
+                                               for md in getattr(o, "modifiers", ()))]
 
 
 def _boolean_order(context, objs):
@@ -351,17 +399,19 @@ class ALLSET_OT_boolean(bpy.types.Operator):
         return context.mode == 'OBJECT' and len(_mesh_selection(context)) >= 2
 
     def execute(self, context):
+        from . import prim_history
+        history = prim_history.history_on(context)
         first, rest = _boolean_order(context, _mesh_selection(context))
         others = rest[0]
         for ob in rest[1:]:                  # Maya: the first object against the union of the others
-            _apply_boolean(context, others, ob, 'UNION')
+            _apply_boolean(context, others, ob, 'UNION', history)
         if self.operation == 'UNION':
             base, operand, op = first, others, 'UNION'
         elif self.operation == 'DIFFERENCE_BA':
             base, operand, op = others, first, 'DIFFERENCE'
         else:
             base, operand, op = first, others, self.operation
-        _apply_boolean(context, base, operand, op)
+        _apply_boolean(context, base, operand, op, history)
         base.select_set(True)
         context.view_layer.objects.active = base
         results.result(self, f"Boolean {self.operation.title()}: {base.name}")

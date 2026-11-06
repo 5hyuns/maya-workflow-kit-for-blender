@@ -913,11 +913,20 @@ class ALLSET_OT_ae_modifier(bpy.types.Operator):
         md = ob.modifiers.get(self.modifier)
         if md is None:
             return {'CANCELLED'}
+        from ..operators import mesh_maya
+        inputs = mesh_maya.bool_inputs(ob) if md.type == 'BOOLEAN' else []
+        inputs = [o for o in inputs if o is md.object]
         if self.action == 'REMOVE':
             ob.modifiers.remove(md)
+            for o in inputs:              # a kit Boolean's hidden input comes back as an ordinary object
+                mesh_maya.release_bool_input(o)
             return {'FINISHED'}
         with context.temp_override(object=ob, active_object=ob):
-            return bpy.ops.object.modifier_apply(modifier=self.modifier)
+            done = bpy.ops.object.modifier_apply(modifier=self.modifier)
+        for o in inputs:                  # Delete History: the input goes with the node, like Maya
+            if 'FINISHED' in done and not mesh_maya.bool_users(o):
+                mesh_maya.delete_bool_input(o)
+        return done
 
 
 class ALLSET_OT_ae_add_limit(bpy.types.Operator):

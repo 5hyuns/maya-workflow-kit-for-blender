@@ -57,8 +57,14 @@ def _bake(context, ob, keep):
         for name, show in saved.items():
             ob.modifiers[name].show_viewport = show
     old = ob.data
+    from . import mesh_maya
+    inputs = [md.object for md in ob.modifiers if md.name not in keep and md.type == 'BOOLEAN'
+              and md.object is not None and md.object.get(mesh_maya.BOOL_INPUT)]
     for md in [m for m in ob.modifiers if m.name not in keep]:
         ob.modifiers.remove(md)
+    for operand in inputs:             # Maya: the Boolean's input objects go with its history
+        if not mesh_maya.bool_users(operand):
+            mesh_maya.delete_bool_input(operand)
     ob.data = mesh  # the evaluated copy has no shape keys: the mix is baked in
     name = old.name
     if old.users == 0:
