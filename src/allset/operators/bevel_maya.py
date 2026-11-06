@@ -41,6 +41,7 @@ MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (default)
 ZERO = 1e-6           # zero-length slide edges (a zero-length extrusion) don't limit the fraction
 FIT = 0.9999          # bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
 SMOOTHING_ANGLE = 30.0  # Edit Mesh > Bevel: new edges whose faces meet at more than this many degrees are hard
+ANGLE_SLACK = 1e-3      # degrees: faces meeting at the smoothing angle itself are not over it (soft edge)
 CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x 2 box)
 NEAR_LINE = 0.9       # |cos| of a slide edge's angle to the bevelled edge above this: it runs near that line
 CORNER_SPLIT = 10.93  # degrees: two-edge corners whose dihedral angles differ less than this use ``corner_pairs``
@@ -1120,11 +1121,15 @@ def profile_interior(bm, elay, strip, segments):
 
 def set_hardness(bm, hard_in, inner, touched, smoothing_angle):
     """Maya's hard edges after a bevel: an edge is decided again (hard when its two faces meet at more than
-    ``smoothing_angle`` degrees) when it is new (on no old edge) or one of its faces holds a profile point between a
-    profile's ends; every other edge, pieces of cut old edges too, keeps its old hardness. Written as Blender sharp
-    edges on smooth-shaded faces (a mesh with no smooth face before and no soft edge after stays flat)."""
+    ``smoothing_angle`` degrees, soft at that angle itself) when it is new (on no old edge) or one of its faces
+    holds a profile point between a profile's ends; every other edge, pieces of cut old edges too, keeps its old
+    hardness. Written as Blender sharp edges on smooth-shaded faces (a mesh with no smooth face before and no
+    soft edge after stays flat)."""
     bm.normal_update()
-    limit = math.radians(smoothing_angle) + 1e-9
+    # a right-angle edge in three segments puts its strip faces at the smoothing angle itself (30 degrees): not
+    # over it, so those edges are soft. The slack keeps rounding from leaving some of them hard and others soft
+    # (#331: one strip of a box shaded faceted next to a smooth one)
+    limit = math.radians(smoothing_angle + ANGLE_SLACK)
     redo_edges = {e for v in inner for f in v.link_faces for e in f.edges}
     affected = redo_edges | {e for v in touched for e in v.link_edges}
     hard = {}
