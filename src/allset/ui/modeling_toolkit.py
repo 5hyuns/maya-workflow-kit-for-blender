@@ -17,6 +17,7 @@ from . import notices
 MESH = (("Combine", "Mesh/Combine", 'AUTOMERGE_ON'), ("Separate", "Mesh/Separate", 'MOD_EXPLODE'),
         ("Smooth", "Mesh/Smooth", 'MOD_SUBSURF'), ("Boolean", "Mesh/Booleans/Union", 'MOD_BOOLEAN'))
 COMPONENTS = (("Extrude", None, 'FACESEL'), ("Bevel", "Edit Mesh/Bevel", 'MOD_BEVEL'),
+              ("Smart Bevel", "Edit Mesh/Smart Bevel", 'MOD_BEVEL'),
               ("Bridge", "Edit Mesh/Bridge", 'MOD_LATTICE'), ("Add Divisions", "Edit Mesh/Add Divisions", 'MESH_GRID'))
 TOOLS = (("Multi-Cut", "Mesh Tools/Multi-Cut", 'SCULPTMODE_HLT'), ("Target Weld", "Mesh Tools/Target Weld", 'AUTOMERGE_OFF'),
          ("Connect", "Edit Mesh/Connect", 'MOD_EDGESPLIT'), ("Quad Draw", "Mesh Tools/Quad Draw", 'MESH_DATA'))

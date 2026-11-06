@@ -594,6 +594,7 @@ SHIFT_EDGE = MarkingMenu(
         ("Slide Edge Tool", _item("Mesh Tools/Slide Edge")),
         ("Circularize Components", CIRCULARIZE),
         ("Edit Edge Flow", _item("Edit Mesh/Edit Edge Flow")),
+        ("Smart Bevel", _item("Edit Mesh/Smart Bevel")),
         DIVIDER,
         ("Add Divisions To Edge", "mesh.subdivide"),
         ("Bridge", "mesh.bridge_edge_loops"),
@@ -610,7 +611,7 @@ SHIFT_EDGE = MarkingMenu(
     ],
     options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components',
              'Connect Tool', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut',
-             'Offset Edge Loop Tool', 'Slide Edge Tool', 'Transform Component'])
+             'Offset Edge Loop Tool', 'Slide Edge Tool', 'Smart Bevel', 'Transform Component'])
 
 SHIFT_FACE = MarkingMenu(
     "SHIFT_FACE", "Face Tools", "maya",
@@ -632,6 +633,7 @@ SHIFT_FACE = MarkingMenu(
     items=[
         DIVIDER,
         ("Smart Extrude", _item("Edit Mesh/Smart Extrude")),
+        ("Smart Bevel", _item("Edit Mesh/Smart Bevel")),
         ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),
         ("Assign Invisible Faces", None),
         ("Add Divisions To Faces", "mesh.subdivide"),

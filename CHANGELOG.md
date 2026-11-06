@@ -3,6 +3,19 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Edit Mesh > Smart Bevel** (#303), Maya 2027's bevel, below Bevel in the Edit Mesh menu, in the Modeling Toolkit's
+  Components and in the Shift+RMB edge / face menus, with an option window. Width is a length in scene units, not a
+  fraction of the edges, and Limit Width keeps it below what the edges around the bevel allow, so a wide value on
+  dense geometry does not collapse edges. Filter picks the selected edges (default), every hard edge of the mesh or
+  every edge whose faces meet at the Filter Angle or more. Output: Set Border Edges to Hard, Smoothing Angle, Weld
+  Opposing / All Arcs (merge the bevel's vertices within a tolerance). It is a polySmartBevel history node: Channel
+  Box INPUTS rows (Width, Segments, Depth, Limit Width, Set Border Edges To Hard, Smoothing Angle), the In-View
+  Editor and a manipulator arrow that drags the Width; T brings the manipulator back. Depth works like Bevel's
+  (1 round, 0 flat, -1 concave). Cutback Relaxation and Remove Isolated Arcs are listed as not available.
+
 ## [0.12.0] — 2026-11-05
 
 ### Added

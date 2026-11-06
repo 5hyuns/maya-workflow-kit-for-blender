@@ -47,7 +47,7 @@ MAX_ROWS = max(len(spec.view_fields) for spec in extrude.SPECS.values())
 BOOL_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "BOOL"}
 INT_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "INT"}
 RANGES = {"random": (0.0, 1.0), "fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "optimize": (0.0, 1.0),
-          "percentage_space": (0.0, 5.0)}
+          "percentage_space": (0.0, 5.0), "width": (0.0, None)}
 _ = bevel_maya
 BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)

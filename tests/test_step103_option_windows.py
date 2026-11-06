@@ -89,7 +89,8 @@ def test_windows_registered_with_maya_titles_and_buttons():
         assert w.paths or w.match, w.key
         for p in w.paths:
             # editor menu bars (Graph Editor / Dope Sheet Edit key windows) have their own boxes
-            assert (p in menu_data.OPTION_BOXES or p in editor_menu_data.OPTION_BOXES) and p in menu_map.MAP, (w.key, p)
+            assert (p in menu_data.OPTION_BOXES or p in editor_menu_data.OPTION_BOXES
+                    or p in menu_map.EXTRA_OPTION_BOXES) and p in menu_map.MAP, (w.key, p)
     # default values, as in Maya
     d = ow._BY_KEY
     assert d["poly_plane"].defaults()["width_div"] == 10 and d["poly_sphere"].defaults()["axis_div"] == 20

@@ -31,7 +31,7 @@ _SET_MENUS = {sid: tuple(m for m in menus if m in menu_data.MENUS)
               for sid, _label, menus in menu_data.MENU_SETS}
 _ALWAYS_MENUS = tuple(n for n, m in menu_data.MENUS.items() if m[1] == ALWAYS)
 # Main menu bar option boxes + the editor menu bars'
-OPTION_BOXES = menu_data.OPTION_BOXES | editor_menu_data.OPTION_BOXES
+OPTION_BOXES = menu_data.OPTION_BOXES | editor_menu_data.OPTION_BOXES | menu_map.EXTRA_OPTION_BOXES
 
 
 def menu_idname(maya_name):

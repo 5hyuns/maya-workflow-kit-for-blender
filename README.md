@@ -169,7 +169,8 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
   **Ctrl+G** groups, Duplicate Special.
 - **Smooth Mesh Preview** on **1 / 2 / 3**, display modes on **4 / 5 / 6 / 7**.
 - Mesh tools including Combine / Separate / Mirror / Boolean, extrude with editable history, **Ctrl+B** Bevel,
-  Circularize, Connect and Make Hole, Maya's convert-selection rules.
+  Smart Bevel (Maya 2027's width in scene units, edge filters and output options), Circularize, Connect and Make
+  Hole, Maya's convert-selection rules.
 - **UV**: Cut / Sew UV Edges, 3D Cut and Sew, Unfold, Layout, UV shell selection, Maya UV Editor menus and UV Toolkit.
 
 ### Animation

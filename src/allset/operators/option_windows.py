@@ -246,6 +246,21 @@ def _run_bevel(context, v):
     return _components(context, "allset.bevel", 'EDGE', **kw)
 
 
+def _run_smart_bevel(context, v):
+    # Maya 2027 polySmartBevel with the window's values (allset.smart_bevel, editable afterwards)
+    from .smart_bevel import FILTER_KEYS
+    kw = dict(width=max(0.0, v["width"]), segments=max(1, v["segments"]), depth=max(-1.0, min(1.0, v["depth"])),
+              limit_width=v.get("limit_width", True), filter=FILTER_KEYS.get(v.get("filter"), 'SELECTED'),
+              filter_angle=max(0.0, min(180.0, v.get("filter_angle", 30.0))),
+              set_border_hard=v.get("set_border_hard", False),
+              smoothing_angle=max(0.0, min(180.0, v.get("smoothing_angle", 30.0))),
+              weld_opposing_arcs=max(0.0, v.get("weld_opposing_arcs", 0.0)),
+              weld_all_arcs=max(0.0, v.get("weld_all_arcs", 0.0)))
+    if context.mode == 'EDIT_MESH' and tuple(context.scene.tool_settings.mesh_select_mode) == (True, False, False):
+        bpy.ops.mesh.select_mode(type='EDGE')       # the window bevels edges
+    return _components(context, "allset.smart_bevel", 'EDGE', **kw)
+
+
 def _run_extrude(context, v):
     def go():
         return bpy.ops.allset.extrude('EXEC_DEFAULT', thickness=v["thickness"], offset=v["offset"],
@@ -454,6 +469,18 @@ WINDOWS = [
         F("smoothing_angle", "Smoothing angle:", "float", 30.0, lo=0.0, hi=180.0)],
         _run_bevel,
         paths=("Edit Mesh/Bevel",), missing=("Mitering / Miter Along", "Automatically fit bevel to object")),
+    Window("smart_bevel", "Smart Bevel Options", "Smart Bevel", None, [
+        F("width", "Width:", "float", 0.2, lo=0.0), F("segments", "Segments:", "int", 1, lo=1, hi=50),
+        F("depth", "Depth:", "float", 0.5, lo=-1.0, hi=1.0),
+        F("limit_width", "Limit width:", "bool", True, text="Keep the width below what the mesh allows"),
+        F("filter", "Filter:", "enum", "Selected Edges", items=("Selected Edges", "Hard Edges", "Edges by Angle")),
+        F("filter_angle", "Filter angle:", "float", 30.0, lo=0.0, hi=180.0),
+        F("set_border_hard", "Border edges:", "bool", False, text="Set Border Edges to Hard"),
+        F("smoothing_angle", "Smoothing angle:", "float", 30.0, lo=0.0, hi=180.0),
+        F("weld_opposing_arcs", "Weld opposing arcs:", "float", 0.0, lo=0.0),
+        F("weld_all_arcs", "Weld all arcs:", "float", 0.0, lo=0.0)],
+        _run_smart_bevel,
+        paths=("Edit Mesh/Smart Bevel",), missing=("Cutback Relaxation", "Remove Isolated Arcs")),
     Window("bridge", "Bridge Options", "Bridge", None, [
         F("divisions", "Divisions:", "int", 5, lo=0, hi=100), F("twist", "Twist:", "int", 0, lo=-100, hi=100)],
         lambda c, v: _components(c, "mesh.bridge_edge_loops", 'EDGE', number_cuts=v["divisions"],

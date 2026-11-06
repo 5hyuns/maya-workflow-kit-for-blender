@@ -351,6 +351,7 @@ MAP = {
     # --- Edit Mesh ---
     "Edit Mesh/Add Divisions": "mesh.subdivide",
     "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (#16)
+    "Edit Mesh/Smart Bevel": ("v3d", "allset.smart_bevel", {}),   # Maya 2027 polySmartBevel (#303)
     "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect
@@ -590,7 +591,11 @@ EXTRA = {
     "Windows/Settings/Preferences": [("Switch to Blender",)],
     # Dome Light (#201): renderers add it to Maya; here = Blender's World environment (operators/dome_light.py)
     "Create/Lights/Volume Light": [("-", ""), ("Dome Light",)],
+    # Maya 2027's Smart Bevel (#303) right below Bevel (operators/smart_bevel.py)
+    "Edit Mesh/Bevel": [("Smart Bevel",)],
 }
+# EXTRA items that have an option box (the static menu data lists the others')
+EXTRA_OPTION_BOXES = frozenset({"Edit Mesh/Smart Bevel"})
 
 # Submenus Maya builds at run time, so Maya's static menu structure has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
@@ -972,6 +977,7 @@ OBJECT_MODE = {
     "Edit Mesh/Circularize": ('ALL', 'VERT'),
     "Edit Mesh/Edit Edge Flow": ('ALL', 'EDGE'),
     "Edit Mesh/Bevel": ('ALL', 'EDGE'),
+    "Edit Mesh/Smart Bevel": ('ALL', 'EDGE'),
     "Edit Mesh/Chamfer Vertices": ('ALL', 'VERT'),
     "Edit Mesh/Bridge": "Invalid selection : polyBridgeEdge requires equal number of border edges to be selected "
                         "for source and target selection.",

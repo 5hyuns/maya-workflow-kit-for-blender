@@ -3798,6 +3798,7 @@
    "Polygon Display": "Polygon Display",
    "Reset Polygon Display": "Reset Polygon Display",
    "Slide Edge Tool": "Slide Edge Tool",
+   "Smart Bevel": "Smart Bevel",
    "Soften Edge": "Soften Edge",
    "Soften/Harden": "Soften/Harden",
    "Soften/Harden Edges": "Soften/Harden Edges",
@@ -3847,6 +3848,7 @@
    "Reset Polygon Display": "Reset Polygon Display",
    "Reverse Normals": "Reverse Normals",
    "Reverse Propagate": "Reverse Propagate",
+   "Smart Bevel": "Smart Bevel",
    "Smart Extrude": "Smart Extrude",
    "Smooth Faces": "Smooth Faces",
    "Spherical Map": "Spherical Map",
@@ -6378,6 +6380,7 @@
    "Create UVs": "Create UVs",
    "Do not reset working units": "Do not reset working units",
    "Incremental save": "Incremental save",
+   "Keep the width below what the mesh allows": "Keep the width below what the mesh allows",
    "Keep these settings for next time (Maya Edit > Save Settings)": "Keep these settings for next time (Maya Edit > Save Settings)",
    "Not in Blender:": "Not in Blender:",
    "Options": "Options",
@@ -6387,6 +6390,7 @@
    "Run with these settings and keep the window open (Maya Apply)": "Run with these settings and keep the window open (Maya Apply)",
    "Save Settings": "Save Settings",
    "Scale": "Scale",
+   "Set Border Edges to Hard": "Set Border Edges to Hard",
    "Translate": "Translate",
    "World (Ignore scaling on object)": "World (Ignore scaling on object)"
   },
@@ -6977,6 +6981,32 @@
    "Substitute Geometry": "Substitute Geometry",
    "Targets": "Targets",
    "Weight Normalization": "Weight Normalization"
+  },
+  "Labels/operators/smart_bevel": {
+   "Bevel width in scene units (not a fraction of the edges)": "Bevel width in scene units (not a fraction of the edges)",
+   "Depth": "Depth",
+   "Edges by Angle: the smallest angle (degrees) between an edge's faces that bevels it": "Edges by Angle: the smallest angle (degrees) between an edge's faces that bevels it",
+   "Faces across the bevel": "Faces across the bevel",
+   "Filter": "Filter",
+   "Filter Angle": "Filter Angle",
+   "Keep the width below what the edges around the bevel allow, so no edge collapses": "Keep the width below what the edges around the bevel allow, so no edge collapses",
+   "Limit Width": "Limit Width",
+   "Merge every vertex of the bevel within this distance (scene units, 0 = off)": "Merge every vertex of the bevel within this distance (scene units, 0 = off)",
+   "Merge the bevel's vertices that lie within this distance (scene units, 0 = off)": "Merge the bevel's vertices that lie within this distance (scene units, 0 = off)",
+   "New edges whose faces meet at more than this angle (degrees) are hard, the others soft": "New edges whose faces meet at more than this angle (degrees) are hard, the others soft",
+   "Roundness of the bevel: 1 round, 0 flat, -1 concave (Segments > 1)": "Roundness of the bevel: 1 round, 0 flat, -1 concave (Segments > 1)",
+   "Segments": "Segments",
+   "Set Border Edges To Hard": "Set Border Edges To Hard",
+   "Smart Bevel": "Smart Bevel",
+   "Smoothing Angle": "Smoothing Angle",
+   "The edges where the bevel meets the old faces are hard": "The edges where the bevel meets the old faces are hard",
+   "Weld All Arcs": "Weld All Arcs",
+   "Weld Opposing Arcs": "Weld Opposing Arcs",
+   "Which edges are bevelled": "Which edges are bevelled",
+   "Width": "Width",
+   "Width in world units, ignoring the object's scale (off: in the object's own units)": "Width in world units, ignoring the object's scale (off: in the object's own units)",
+   "World Space": "World Space",
+   "polySmartBevel": "polySmartBevel"
   },
   "Labels/operators/smart_extrude": {
    "Component": "Component",
@@ -7975,6 +8005,7 @@
    "Open the Graph Editor": "Open the Graph Editor",
    "Open the Time Editor": "Open the Time Editor",
    "Output connections": "Output connections",
+   "Panels": "Panels",
    "Pin": "Pin",
    "Pin Channel": "Pin Channel",
    "Plateau tangents": "Plateau tangents",
@@ -8017,6 +8048,13 @@
    "Unconstrained drag": "Unconstrained drag",
    "Unify tangents": "Unify tangents",
    "Value snap": "Value snap"
+  },
+  "Labels/ui/editor_panels": {
+   "Dock Bottom": "Dock Bottom",
+   "Dock Editor": "Dock Editor",
+   "Dock Left": "Dock Left",
+   "Dock Right": "Dock Right",
+   "Dock Top": "Dock Top"
   },
   "Labels/ui/file_project": {
    "Bookmarks": "Bookmarks",
@@ -8424,6 +8462,7 @@
   "Labels/ui/panel_menus": {
    "Blender": "Blender",
    "Colour management on / off (off = Blender's Raw view transform)": "Colour management on / off (off = Blender's Raw view transform)",
+   "Copy": "Copy",
    "Exposure: switch between 0 and the last exposure": "Exposure: switch between 0 and the last exposure",
    "Film gate (Blender: camera sensor frame)": "Film gate (Blender: camera sensor frame)",
    "Front": "Front",
@@ -8433,6 +8472,7 @@
    "IK handles (the empties IK constraints follow: shown or hidden in every view)": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
    "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
    "Isolate select": "Isolate select",
+   "Keep the panel in its pane as well (Tear Off Copy)": "Keep the panel in its pane as well (Tear Off Copy)",
    "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)",
    "Look Through Camera": "Look Through Camera",
    "Look through a camera first (Panels > Perspective): Blender's persp view has no camera": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
@@ -8453,7 +8493,7 @@
    "Selection highlighting in this view (the Maya selection wire, and Blender's outline where it was on)": "Selection highlighting in this view (the Maya selection wire, and Blender's outline where it was on)",
    "Side": "Side",
    "Smooth shade all": "Smooth shade all",
-   "Tear Off Copy": "Tear Off Copy",
+   "Tear Off": "Tear Off",
    "Textured": "Textured",
    "This view has no camera: Select Camera works in a perspective view, the top / front / side views and a view that looks through a camera": "This view has no camera: Select Camera works in a perspective view, the top / front / side views and a view that looks through a camera",
    "Top": "Top",
@@ -9692,6 +9732,10 @@
    "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights": "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights",
    "Maya Skin > Substitute Geometry: the selected skinned mesh takes the other selected mesh's geometry and keeps\nits skin (weights carried over by closest point)": "Maya Skin > Substitute Geometry: the selected skinned mesh takes the other selected mesh's geometry and keeps\nits skin (weights carried over by closest point)"
   },
+  "Tooltips/operators/smart_bevel": {
+   "Change the last Smart Bevel (Maya: edit the polySmartBevel node). Blender keeps no edit-mode history, so\nonly the last one can be changed": "Change the last Smart Bevel (Maya: edit the polySmartBevel node). Blender keeps no edit-mode history, so\nonly the last one can be changed",
+   "Smart Bevel (Maya 2027): bevel the selected edges, the mesh's hard edges or its edges by angle by a width\nin scene units, kept below what the edges around allow; change Width, Segments, Depth afterwards in the In-View\nEditor or Channel Box INPUTS": "Smart Bevel (Maya 2027): bevel the selected edges, the mesh's hard edges or its edges by angle by a width\nin scene units, kept below what the edges around allow; change Width, Segments, Depth afterwards in the In-View\nEditor or Channel Box INPUTS"
+  },
   "Tooltips/operators/smart_extrude": {
    "Drag a Smart Extrude handle; J snaps, type a value, Esc restores the mesh": "Drag a Smart Extrude handle; J snaps, type a value, Esc restores the mesh",
    "Smart Extrude: grow, carve and stitch intersecting faces in the same mesh": "Smart Extrude: grow, carve and stitch intersecting faces in the same mesh"
@@ -9951,6 +9995,9 @@
    "More toolbar buttons: the ones that don't fit this editor's width": "More toolbar buttons: the ones that don't fit this editor's width",
    "Scroll the Maya Graph Editor outliner by rows (positive = down the list)": "Scroll the Maya Graph Editor outliner by rows (positive = down the list)"
   },
+  "Tooltips/ui/editor_panels": {
+   "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)": "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)"
+  },
   "Tooltips/ui/ghosting": {
    "Maya Visualize ghosting: Ghost Selected / Unghost Selected / Unghost All": "Maya Visualize ghosting: Ghost Selected / Unghost Selected / Unghost All",
    "Maya's per-node ghosting attributes (ghosting, ghostingMode, ghostPreFrames ...).": "Maya's per-node ghosting attributes (ghosting, ghostingMode, ghostPreFrames ...)."
@@ -10095,7 +10142,7 @@
    "Maya Panels > Perspective: the persp view and perspective cameras": "Maya Panels > Perspective: the persp view and perspective cameras",
    "Maya panel menu item for this view": "Maya panel menu item for this view",
    "New orthographic camera: front, side or top (Maya New Orthographic)": "New orthographic camera: front, side or top (Maya New Orthographic)",
-   "Open a copy of this view in a new window, with the same camera and display": "Open a copy of this view in a new window, with the same camera and display",
+   "Open this panel in a new window of its size (a view keeps its camera and display). Tear Off leaves a 3D View in the pane, like Maya; Tear Off Copy keeps the panel there too": "Open this panel in a new window of its size (a view keeps its camera and display). Tear Off leaves a 3D View in the pane, like Maya; Tear Off Copy keeps the panel there too",
    "Run a Blender operator in this view (Maya panel menu item)": "Run a Blender operator in this view (Maya panel menu item)",
    "The Maya panel menus folded into one menu (header menus collapsed)": "The Maya panel menus folded into one menu (header menus collapsed)"
   },
