@@ -67,19 +67,30 @@ def test_kit_mappings_follow_the_renames():
 
 def test_boolean_difference_b_minus_a():
     import bpy
-    for ob in list(bpy.data.objects):
-        bpy.data.objects.remove(ob)
-    bpy.ops.mesh.primitive_cube_add(size=2)
-    a = bpy.context.active_object
-    a.name = "A"
-    bpy.ops.mesh.primitive_cube_add(size=2, location=(1, 0, 0))
-    b = bpy.context.active_object
-    b.name = "B"
-    a.select_set(True)
-    b.select_set(True)
-    bpy.context.view_layer.objects.active = b           # Maya: A first, B last (operand)
-    assert bpy.ops.allset.boolean(operation='DIFFERENCE_BA') == {'FINISHED'}
-    left = [o for o in bpy.data.objects]
-    assert [o.name for o in left] == ["B"], [o.name for o in left]
-    xs = [v.co.x + left[0].location.x for v in left[0].data.vertices]
-    assert min(xs) > 0.99 and max(xs) < 2.01        # B (0..2) minus A (-1..1) = 1..2
+    wm = bpy.context.window_manager
+    old = wm.allset_construction_history
+    try:
+        for history in (False, True):
+            wm.allset_construction_history = history
+            for ob in list(bpy.data.objects):
+                bpy.data.objects.remove(ob)
+            bpy.ops.mesh.primitive_cube_add(size=2)
+            a = bpy.context.active_object
+            a.name = "A"
+            bpy.ops.mesh.primitive_cube_add(size=2, location=(1, 0, 0))
+            b = bpy.context.active_object
+            b.name = "B"
+            a.select_set(True)
+            b.select_set(True)
+            bpy.context.view_layer.objects.active = b   # Maya: A first, B last (operand)
+            assert bpy.ops.allset.boolean(operation='DIFFERENCE_BA') == {'FINISHED'}
+            # History on keeps A as a hidden cutter; the visible result is B either way.
+            left = [o for o in bpy.data.objects if o.visible_get()]
+            assert [o.name for o in left] == ["B"], (history, [o.name for o in left])
+            if not history:
+                assert len(bpy.data.objects) == 1, [o.name for o in bpy.data.objects]
+            ev = left[0].evaluated_get(bpy.context.evaluated_depsgraph_get())
+            xs = [v.co.x + left[0].location.x for v in ev.data.vertices]
+            assert min(xs) > 0.99 and max(xs) < 2.01, (history, min(xs), max(xs))  # B (0..2) minus A (-1..1)
+    finally:
+        wm.allset_construction_history = old
