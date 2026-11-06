@@ -45,7 +45,8 @@ def test_light_linking_submenu_opens_the_light_linking_panel():
     md = m("ui.menu_data")
     win = next(it for it in md.MENUS["mainWindowMenu"][3] if it[0] == "Relationship Editors")
     assert ("Light Linking", [("Light-Centric",), ("Object-Centric",)]) in win[1]
-    props = ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'OBJECT'})
+    props = ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'OBJECT', "search": "Light Linking",
+                                    "light": True})
     for label in ("Light-Centric", "Object-Centric"):
         act = mm.MAP[f"Windows/Relationship Editors/Light Linking/{label}"]
         assert act == props, act

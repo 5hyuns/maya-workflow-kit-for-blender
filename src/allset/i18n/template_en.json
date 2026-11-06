@@ -6117,11 +6117,15 @@
    "Export Selection": "Export Selection",
    "Faces": "Faces",
    "Increment and Save": "Increment and Save",
+   "Light": "Light",
    "Open Editor": "Open Editor",
    "Outliner Display Mode": "Outliner Display Mode",
    "Planar Projection": "Planar Projection",
    "Project Along": "Project Along",
+   "Properties Search": "Properties Search",
    "Properties Tab": "Properties Tab",
+   "Show a light: the active object, or else the first selected light": "Show a light: the active object, or else the first selected light",
+   "Show only the Properties panels that match this text": "Show only the Properties panels that match this text",
    "e.g. LIBRARIES = Blender File (Maya Reference Editor)": "e.g. LIBRARIES = Blender File (Maya Reference Editor)"
   },
   "Labels/operators/menu_items": {

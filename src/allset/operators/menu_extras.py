@@ -16,7 +16,7 @@ import re
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Vector
 
 from .. import results
@@ -91,12 +91,20 @@ def sidebar_tab_later(window, category, tries=100):
     bpy.app.timers.register(tick, first_interval=0.01)
 
 
-def properties_tab_later(window, tab, tries=40):
+def properties_tab_later(window, tab, tries=40, search="", pin=None):
     """Put the new window's Properties editor on ``tab``: a Properties space made in this operator has no tab
-    list until it has drawn, so the assignment is retried from a timer (it stays OBJECT otherwise)."""
+    list until it has drawn, so the assignment is retried from a timer (it stays OBJECT otherwise). ``search``:
+    Blender's property search text (shows the matching panels only, opened); ``pin``: an ID to pin the editor to."""
     state = {"n": tries}
 
     ptr = window.as_pointer()
+    if search or pin is not None:
+        space = window.screen.areas[0].spaces.active
+        if pin is not None:
+            space.pin_id = pin
+            space.use_pin_id = True
+        if search:
+            space.search_filter = search
 
     def tick():
         window = live_refs.window(ptr)
@@ -132,6 +140,25 @@ class ALLSET_OT_open_editor(bpy.types.Operator):
     tab: StringProperty(name="Properties Tab", options={'SKIP_SAVE'})
     display_mode: StringProperty(name="Outliner Display Mode", options={'SKIP_SAVE'},
                                  description="e.g. LIBRARIES = Blender File (Maya Reference Editor)")
+    search: StringProperty(name="Properties Search", options={'SKIP_SAVE'},
+                           description="Show only the Properties panels that match this text")
+    light: BoolProperty(name="Light", options={'SKIP_SAVE'},
+                        description="Show a light: the active object, or else the first selected light")
+
+    def _light(self, context):
+        """The light to pin when ``light`` is set and the active object isn't a light (None: follow the active
+        object). Light linking lives on each light (Object Properties > Shading > Light / Shadow Linking)."""
+        if not self.light:
+            return None
+        if context.scene.render.engine not in {'BLENDER_EEVEE', 'CYCLES'}:
+            results.result(self, "Light links show in EEVEE and Cycles (Renderer menu of the viewport)")
+        active = context.active_object
+        if active is not None and active.type == 'LIGHT':
+            return None
+        light = next((ob for ob in context.selected_objects if ob.type == 'LIGHT'), None)
+        if light is None:
+            results.result(self, "Select a light: its light and shadow links are shown")
+        return light
 
     def execute(self, context):
         window = context.window
@@ -164,7 +191,7 @@ class ALLSET_OT_open_editor(bpy.types.Operator):
             else:
                 _maya_outliner(target.spaces.active)
         if self.ui_type == 'PROPERTIES' and self.tab:
-            properties_tab_later(new, self.tab)
+            properties_tab_later(new, self.tab, search=self.search, pin=self._light(context))
         if self.ui_type in {'FCURVES', 'DOPESHEET', 'UV'}:
             from ..ui import editor_chrome   # Maya editor chrome: framing, folded rows, UV Toolkit
             editor_chrome.prepare_later(new, self.ui_type)

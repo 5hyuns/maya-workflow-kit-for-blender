@@ -74,7 +74,8 @@ def test_light_links_run_blender_light_linking():
 
 
 def test_editors_open_blender_editors():
-    props = ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'OBJECT'})
+    props = ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'OBJECT', "search": "Light Linking",
+                                    "light": True})
     for path in ("Lighting/Shading/Light Linking Editor", "Windows/Relationship Editors/Light Linking/Light-Centric",
                  "Windows/Relationship Editors/Light Linking/Object-Centric"):
         assert menu_map.MAP[path] == props, path

@@ -615,6 +615,12 @@ def _props(tab):
     return ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": tab})
 
 
+# Maya's Light Linking editors: a Properties window showing only the light's Light Linking / Shadow Linking panels
+# (Object > Shading, opened by the property search), on the active light or else the first selected light
+_LIGHT_LINKS = ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'OBJECT', "search": "Light Linking",
+                                       "light": True})
+
+
 def _url(url):
     return ("wm.url_open", {"url": url})
 
@@ -730,8 +736,8 @@ MAP.update({
     "Deform/Pose Space Deformation/Create Pose Interpolator": ("allset.pose_interpolator_create", {}),
     "Windows/Rendering Editors/Render Setup": _props('VIEW_LAYER'),   # Maya 2026
     # Maya's Light Linking editors: Blender's Light Linking panel (Object Properties > Shading, active light)
-    "Windows/Relationship Editors/Light Linking/Light-Centric": _props('OBJECT'),
-    "Windows/Relationship Editors/Light Linking/Object-Centric": _props('OBJECT'),
+    "Windows/Relationship Editors/Light Linking/Light-Centric": _LIGHT_LINKS,
+    "Windows/Relationship Editors/Light Linking/Object-Centric": _LIGHT_LINKS,
     "Windows/Relationship Editors/Sets": _editor('OUTLINER'),
     "Windows/Content Browser": _editor('ASSETS'),
     # Mesh
@@ -911,7 +917,7 @@ MAP.update({
     # Rendering
     # Light / shadow linking = Blender's light linking operators: the active object is the light, the other
     # selected objects are linked (Include) or unlinked (Exclude)
-    "Lighting/Shading/Light Linking Editor": _props('OBJECT'),
+    "Lighting/Shading/Light Linking Editor": _LIGHT_LINKS,
     "Lighting/Shading/Make Light Links": ("object.light_linking_receivers_link", {"link_state": 'INCLUDE'}),
     "Lighting/Shading/Break Light Links": ("object.light_linking_receivers_link", {"link_state": 'EXCLUDE'}),
     "Lighting/Shading/Select Objects Illuminated by Light": "object.light_linking_receivers_select",
