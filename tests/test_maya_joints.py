@@ -44,6 +44,7 @@ def test_drawn_radius_is_half_the_radius_times_joint_size():
     bone = arm.data.bones[names[0]]
     bone[joints.RADIUS] = 2.0
     k = units.radius_unit(scene)
+    scene.allset_joint_size = 1.0       # set for the scene: no metre-scene default
     assert abs(mj.drawn_radius(bone, scene) - 1.0 * k) < 1e-9
     scene.allset_joint_size = 2.0
     try:
@@ -62,8 +63,10 @@ def test_radius_stays_in_centimetres_in_a_metre_scene():
     us = scene.unit_settings
     before = (us.system, us.length_unit, us.scale_length)
     bone = arm.data.bones[names[0]]
+    scene.property_unset("allset_joint_size")      # no Joint Size set for the scene
     try:
-        for unit, scale, want in (('CENTIMETERS', 1.0, 0.005), ('METERS', 1.0, 0.005), ('CENTIMETERS', 0.01, 0.5),
+        # a metre scene draws with the preference Joint Size in Metre Scenes (default 10): 10 cm, not 1 m
+        for unit, scale, want in (('CENTIMETERS', 1.0, 0.005), ('METERS', 1.0, 0.05), ('CENTIMETERS', 0.01, 0.5),
                                   ('MILLIMETERS', 1.0, 0.005)):
             us.system, us.length_unit, us.scale_length = 'METRIC', unit, scale
             got = mj.drawn_radius(bone, scene)

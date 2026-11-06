@@ -39,6 +39,11 @@ NEW_SCENE_TIMES = ("12 fps", "15 fps", "23.976 fps", "24 fps", "25 fps", "29.97 
                    "60 fps")
 
 
+def _joints_changed():
+    from .operators import joint_display
+    joint_display.joints_changed()
+
+
 class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Must equal the top-level package name: "bl_ext.<repo>.allset" as an
     # extension, "allset" as a legacy add-on.
@@ -296,6 +301,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Radius to Hierarchy",
         description="A Radius typed in the Channel Box also goes to every joint below the selected joints "
                     "(off: the selected joints only, like Maya)")
+    # Joint Size of scenes in metres (or larger units) until Display > Animation > Joint Size sets one
+    # (operators/joint_display.joint_size): a Radius is centimetres there, so 1 draws joints 1 cm across
+    metre_joint_size: bpy.props.FloatProperty(
+        name="Joint Size in Metre Scenes", default=10.0, min=0.01, max=100.0, soft_max=100.0,
+        update=lambda _self, _context: _joints_changed(),
+        description="Joint Size of scenes whose length unit is metres or larger, until Display > Animation > "
+                    "Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm "
+                    "across: 1 = like Maya)")
     # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
     # Maya Graph Editor Select menu, operators/graph_key_menu.py).
     graph_select_curve: bpy.props.BoolProperty(
@@ -568,6 +581,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_units")
         row.prop(self, "smart_duplicate")
         row.prop(self, "smart_extrude")
+        box.prop(self, "metre_joint_size")
         box.prop(self, "project_root")
         row = box.row()
         row.prop(self, "autosave_enable")

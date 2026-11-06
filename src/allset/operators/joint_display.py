@@ -103,7 +103,7 @@ class ALLSET_OT_joint_size(bpy.types.Operator):
     size: FloatProperty(name="Joint Size", default=1.0, min=0.01, max=100.0, soft_max=10.0)
 
     def invoke(self, context, event):
-        self.size = getattr(context.scene, JOINT_SIZE, 1.0)
+        self.size = joint_size(context.scene)
         return context.window_manager.invoke_props_dialog(self, width=300, confirm_text="Close")
 
     def draw(self, context):
@@ -114,6 +114,27 @@ class ALLSET_OT_joint_size(bpy.types.Operator):
         setattr(context.scene, JOINT_SIZE, self.size)
         results.result(self, f"Joint Size {self.size:g}")
         return {'FINISHED'}
+
+
+METRE_UNITS = {'METERS', 'KILOMETERS'}
+
+
+def joint_size(scene):
+    """The scene's Joint Size: the one Display > Animation > Joint Size set, else 1 (like Maya) or, in a scene whose
+    length unit is metres or larger, the add-on preference Joint Size in Metre Scenes (a Radius is centimetres
+    there, so a Radius 1 joint next to metre-sized objects would be a thread)."""
+    if scene is None:
+        return 1.0
+    if scene.is_property_set(JOINT_SIZE):
+        return float(getattr(scene, JOINT_SIZE, 1.0) or 1.0)
+    us = scene.unit_settings
+    if us.system != 'NONE' and us.length_unit in METRE_UNITS:
+        from .. import preferences
+        try:
+            return float(preferences.get(bpy.context).metre_joint_size)
+        except (AttributeError, KeyError, TypeError):
+            return 1.0
+    return 1.0
 
 
 classes = (ALLSET_OT_local_rotation_axes, ALLSET_OT_joint_size)

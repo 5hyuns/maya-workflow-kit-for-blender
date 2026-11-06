@@ -128,6 +128,7 @@ def test_radius_row_and_joint_size_scale_the_click_sphere():
     b = ob.data.bones["spine"]
     assert b.allset_joint_radius == 1.0, "Maya joint radius default"
     b.allset_joint_radius = 2.0
+    bpy.context.scene.allset_joint_size = 1.0       # set for the scene: no metre-scene default
     r2 = joints.joint_sphere_radius(ob, b)
     bpy.context.scene.allset_joint_size = 0.5
     assert abs(joints.joint_sphere_radius(ob, b) - r2 * 0.5) < 1e-9

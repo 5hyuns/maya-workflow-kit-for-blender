@@ -108,9 +108,9 @@ def _tick():
 
 def drawn_radius(bone, scene, arm_scale=1.0):
     """World radius of the drawn joint sphere: 0.5 x Radius x Joint Size, in centimetres (``units.radius_unit``)."""
-    from ..operators import joints, units
+    from ..operators import joint_display, joints, units
     r = float(bone.get(joints.RADIUS, MAYA_RADIUS))
-    size = float(getattr(scene, "allset_joint_size", 1.0) or 1.0)
+    size = joint_display.joint_size(scene)
     return 0.5 * r * size * units.radius_unit(scene) * arm_scale
 
 

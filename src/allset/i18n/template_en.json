@@ -7484,6 +7484,8 @@
    "Interactive Creation": "Interactive Creation",
    "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives": "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives",
    "Interval (minutes)": "Interval (minutes)",
+   "Joint Size in Metre Scenes": "Joint Size in Metre Scenes",
+   "Joint Size of scenes whose length unit is metres or larger, until Display > Animation > Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm across: 1 = like Maya)": "Joint Size of scenes whose length unit is metres or larger, until Display > Animation > Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm across: 1 = like Maya)",
    "Keep Maya Layout When Opening Files": "Keep Maya Layout When Opening Files",
    "Keep only the newest autosaves of each scene": "Keep only the newest autosaves of each scene",
    "Key": "Key",
