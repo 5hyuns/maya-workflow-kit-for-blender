@@ -1,6 +1,7 @@
 """In a real UI (#316): a click on a Channel Box name shows the selection highlight at once, while the mouse
 stays over that row; a click on the next row moves the highlight there; quick clicks on two rows both select.
-Checked on screenshots (the highlight is the theme's pressed-button colour)."""
+Checked on screenshots (the highlight is the theme's pressed-button colour). Picking channels (click, Ctrl+click,
+drag over the rows) redraws the Channel Box but no 3D View, so it stays quick in a heavy scene."""
 
 import os
 import sys
@@ -13,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, dock_area, dock_region, ev, find_button, run, screenshot, setup, step, win  # noqa: E402
 
 C = {}
+DRAWS = {"view3d": 0, "props": 0}
 GUI_TIMEOUT = 200
 TMP = tempfile.mkdtemp(prefix="allset316_")
 
@@ -20,6 +22,21 @@ TMP = tempfile.mkdtemp(prefix="allset316_")
 def redraw():
     for a in win().screen.areas:
         a.tag_redraw()
+
+
+def _count(kind):
+    def f():
+        DRAWS[kind] += 1
+    return f
+
+
+def reset_draws():
+    DRAWS.update(view3d=0, props=0)
+
+
+def check_draws(what):
+    check(f"{what}: the Channel Box redraws ({DRAWS['props']})", DRAWS["props"] >= 1)
+    check(f"{what}: no 3D View redraws ({DRAWS['view3d']})", DRAWS["view3d"] == 0)
 
 
 def dock():
@@ -75,6 +92,8 @@ def s_setup():
     bpy.context.view_layer.objects.active = bpy.data.objects["Cube"]
     cb().set_selected_channels([])
     dock_area('CHANNEL_BOX')
+    C["h3d"] = bpy.types.SpaceView3D.draw_handler_add(_count("view3d"), (), 'WINDOW', 'POST_PIXEL')
+    C["hpr"] = bpy.types.SpaceProperties.draw_handler_add(_count("props"), (), 'WINDOW', 'POST_PIXEL')
     redraw()
 
 
@@ -107,6 +126,7 @@ def s_hover():
 
 @step
 def s_click_tx():
+    reset_draws()
     x, y = C["tx_name"]
     ev('LEFTMOUSE', 'PRESS', x=x + 1, y=y)
     ev('LEFTMOUSE', 'RELEASE', x=x + 1, y=y)
@@ -114,7 +134,7 @@ def s_click_tx():
 
 @step
 def s_settle():
-    pass
+    check_draws("click")
 
 
 @step
@@ -136,6 +156,7 @@ def s_hover_ty():
 
 @step
 def s_click_ty():
+    reset_draws()
     x, y = C["ty_name"]
     ev('LEFTMOUSE', 'PRESS', x=x + 2, y=y)
     ev('LEFTMOUSE', 'RELEASE', x=x + 2, y=y)
@@ -143,7 +164,7 @@ def s_click_ty():
 
 @step
 def s_settle2():
-    pass
+    check_draws("click on the next row")
 
 
 @step
@@ -174,6 +195,35 @@ def s_quick2():
 def s_quick_result():
     sel = cb().selected_channels()
     check(f"a quick second Ctrl+click on the same name toggles it off ({sel})", sel == [])
+    x, y = C["tx_name"]
+    ev('MOUSEMOVE', 'NOTHING', x=x + 2, y=y)
+
+
+@step
+def s_drag():
+    # drag from Translate X down over Translate Y and the rows under it, a move per row and a few within a row
+    reset_draws()
+    x, y = C["tx_name"]
+    dy = C["ty_name"][1] - y
+    ev('LEFTMOUSE', 'PRESS', x=x + 2, y=y)
+    for k in range(1, 7):
+        ev('MOUSEMOVE', 'NOTHING', x=x + 2, y=y + dy * k // 2)
+
+
+@step
+def s_drag_end():
+    x, y = C["tx_name"]
+    dy = C["ty_name"][1] - y
+    ev('LEFTMOUSE', 'RELEASE', x=x + 2, y=y + dy * 3)
+
+
+@step
+def s_drag_result():
+    sel = cb().selected_channels()
+    check(f"a drag over the rows selects them ({sel})", sel[:2] == ["tx", "ty"] and len(sel) >= 3)
+    check_draws("drag over the rows")
+    bpy.types.SpaceView3D.draw_handler_remove(C["h3d"], 'WINDOW')
+    bpy.types.SpaceProperties.draw_handler_remove(C["hpr"], 'WINDOW')
 
 
 run()

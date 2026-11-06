@@ -64,7 +64,9 @@ def after_selection(context):
                 owners[bs.as_pointer()] = bs
         for owner in owners.values():
             for fc in compat.id_fcurves(owner):
-                fc.select = fc.as_pointer() in wanted
+                want = fc.as_pointer() in wanted
+                if fc.select != want:       # each write notifies the editors: only the curves that change
+                    fc.select = want
 
 
 def synced_keys(context, node):

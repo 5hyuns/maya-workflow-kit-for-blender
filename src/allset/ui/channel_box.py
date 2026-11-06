@@ -1647,8 +1647,7 @@ class ALLSET_OT_cb_select_channel(bpy.types.Operator):
 
     def execute(self, context):
         select_channel(self.key, self.mode, context)
-        for area in context.screen.areas if context.screen else ():
-            area.tag_redraw()
+        redraw_selection()
         return {'FINISHED'}
 
 
@@ -1871,6 +1870,23 @@ def _redraw(window):
         area.tag_redraw()
 
 
+# editors that show the channel selection: the Channel Box (dock / floating windows), the Graph Editor (Sync Graph
+# Editor selects the channels' curves) and the Time Slider (Sync Timeline Display)
+SELECTION_EDITORS = {'PROPERTIES', 'GRAPH_EDITOR', 'DOPESHEET_EDITOR'}
+
+
+def redraw_selection():
+    """Redraw what a channel selection change shows. The 3D Views, Outliner, shelf ... stay as drawn: a click or a
+    drag over the rows redraws no viewport, so picking channels stays quick in a heavy scene (#316)."""
+    try:
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type in SELECTION_EDITORS:
+                    area.tag_redraw()
+    except (AttributeError, ReferenceError):
+        pass
+
+
 def _hovered_cell(context):
     prop = getattr(context, "property", None)
     if not prop or not isinstance(prop[0], bpy.types.Scene):
@@ -1956,7 +1972,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 if self._in_empty_space(event) and selected_channels(context):
                     # Maya: a click on the empty space under the channels deselects them
                     set_selected_channels([], context)
-                    _redraw(self._window)
+                    redraw_selection()
             if event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event):
                 hit = _hover.get(self._win)
                 in_part = hit is not None or (self._cb_bottom is not None and event.mouse_y >= self._cb_bottom)
@@ -1975,7 +1991,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         if event.type == 'ESC' and event.value == 'PRESS':
             set_selected_channels(self._base)
             self._press = None
-            _redraw(self._window)
+            redraw_selection()
             return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
 
@@ -1998,7 +2014,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             if key not in selected_channels(context):
                 set_selected_channels([key], context)
                 _anchor["key"] = key
-                _redraw(self._window)
+                redraw_selection()
         self._menu_beside(context, y)
         bpy.ops.wm.call_menu(name=ALLSET_MT_cb_channels.__name__)
         return {'RUNNING_MODAL'}
@@ -2030,6 +2046,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         self._x0 = event.mouse_x
         self._field_candidate = part == 'VALUE'
         self._dragging = False
+        self._extended = None
         self._ctrl = event.ctrl
         self._base = selected_channels(context)
         self._anchor = key
@@ -2055,7 +2072,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             set_selected_channels([key], context)
             _anchor["key"] = key
         self._press = part
-        _redraw(self._window)
+        redraw_selection()
         # eaten: an embossed field would start its text edit here and swallow the drag
         return {'RUNNING_MODAL'}
 
@@ -2075,9 +2092,12 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         if cur is None or (cur == self._anchor and not self._dragging):
             return
         self._dragging = True
+        if cur == getattr(self, "_extended", None):
+            return      # the same row as the last move: nothing to select or draw again
+        self._extended = cur
         base = self._base if self._ctrl else None
         select_range(self._ob, self._anchor, cur, "ADD" if self._ctrl else "SET", base=base, context=context)
-        _redraw(self._window)
+        redraw_selection()
 
     def _on_move(self, context, event):
         dx = event.mouse_x - self._x0
@@ -2111,7 +2131,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 edit_field(context, self._key)
             except RuntimeError:
                 pass
-        _redraw(self._window)
+        redraw_selection()
         return {'RUNNING_MODAL'}
 
 
