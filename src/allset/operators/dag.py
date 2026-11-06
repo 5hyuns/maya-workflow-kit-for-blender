@@ -134,9 +134,11 @@ def delete_hierarchy(context, objects):
     from . import sweep_mesh
     sweep_mesh.release(context, obs)       # a deleted curve leaves its sweeps as plain meshes, like Maya
     datas = {ob.data for ob in obs if ob.data is not None}
+    inputs = bool_inputs_of(obs)           # a Boolean result's hidden inputs go with it, like Maya
     n = len(obs)
     for ob in reversed(obs):              # children first
         bpy.data.objects.remove(ob, do_unlink=True)
+    drop_bool_inputs(inputs)
     constrain_199.remove_helpers(helpers)
     ik_rp.drop_orphan_rotations()          # its 3+ bone chain's Copy Rotations and bone helpers too
     for h in poles:
@@ -187,6 +189,26 @@ class selected_hierarchy:
         return False
 
 
+def bool_inputs_of(objects):
+    """The kit Boolean inputs (history) that ``objects`` keep and that are not among them."""
+    from . import mesh_maya
+    keep = {ob.session_uid for ob in objects}
+    return [i for ob in objects for i in mesh_maya.bool_inputs(ob) if i.session_uid not in keep]
+
+
+def drop_bool_inputs(inputs):
+    """Delete Boolean inputs whose result is gone (with the inputs they keep themselves); an input another
+    object still uses stays."""
+    from . import mesh_maya
+    for ob in inputs:
+        try:
+            if ob.name not in bpy.data.objects or mesh_maya.bool_users(ob):
+                continue
+        except ReferenceError:            # already removed with an earlier input
+            continue
+        mesh_maya.delete_bool_input(ob)
+
+
 class ALLSET_OT_delete(bpy.types.Operator):
     """Delete the selected objects and everything below them (Maya Edit > Delete)"""
     bl_idname = "allset.delete"
@@ -224,7 +246,27 @@ class ALLSET_OT_isolate(bpy.types.Operator):
             return bpy.ops.view3d.localview(frame_selected=False)
 
 
-classes = (ALLSET_OT_delete, ALLSET_OT_isolate)
+class ALLSET_OT_outliner_delete(bpy.types.Operator):
+    """Delete the selected objects and everything below them (Maya Edit > Delete)"""
+    bl_idname = "allset.outliner_delete"
+    bl_label = "Delete"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data is not None and context.space_data.type == 'OUTLINER'
+
+    def execute(self, context):
+        picked = [i for i in getattr(context, "selected_ids", ()) or () if isinstance(i, bpy.types.Object)]
+        inputs = bool_inputs_of(hierarchy(picked))
+        result = bpy.ops.outliner.delete(hierarchy=True)
+        if 'FINISHED' not in result:
+            return result
+        drop_bool_inputs(inputs)
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_delete, ALLSET_OT_outliner_delete, ALLSET_OT_isolate)
 
 
 def register_handlers():

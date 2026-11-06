@@ -581,7 +581,7 @@ def patch_undo_visibility(kd):
         kd.remove("Object Mode", "object.delete", type=key)
         _add(kd, "Object Mode", "allset.delete", make_event(key))
         kd.remove("Outliner", "outliner.delete", type=key)
-        _add(kd, "Outliner", "outliner.delete", make_event(key), {"hierarchy": True})
+        _add(kd, "Outliner", "allset.outliner_delete", make_event(key))   # with the hierarchy
 
     _add(kd, "Object Mode", "object.select_all", make_event("I", ctrl=True, shift=True),
          {"action": 'INVERT'})
