@@ -168,8 +168,10 @@ NOTICES = {
     # Rigging (W3: HumanIK / Quick Rig -> Rigify)
     **{path: ("Rigify", "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a "
                         "meta-rig fitted to the mesh (Generate Rig).")
-       for path in ("Skeleton/HumanIK", "Skeleton/Quick Rig", "Windows/Animation Editors/HumanIK",
-                    "Windows/Animation Editors/Quick Rig")},
+       for path in ["Skeleton/Quick Rig", "Windows/Animation Editors/Quick Rig"]},     # a list: not a notice pair
+    **{path: ("Rigify", "Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate "
+                        "Rig, rig settings and controls).")
+       for path in ["Skeleton/HumanIK", "Windows/Animation Editors/HumanIK"]},
     # Scene / files (W3: Reference -> link + library override, Set Project -> relative paths)
     # Scene management (operators/project.py)
     "File/Create Reference...": (

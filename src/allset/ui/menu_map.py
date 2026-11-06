@@ -434,6 +434,8 @@ MAP = {
     # Joint Tool (click, click, Enter), option-box dialogs
     "Skeleton/Create Joints": "allset.joint_tool",
     "Skeleton/Quick Rig": "allset.quick_rig",              # Rigify (notice in ui/notices.py)
+    "Skeleton/HumanIK": ("menu", "ALLSET_MT_rigify"),      # Rigify's steps in Maya's HumanIK place (#319)
+    "Windows/Animation Editors/HumanIK": ("menu", "ALLSET_MT_rigify"),
     "Windows/Animation Editors/Quick Rig": "allset.quick_rig",
     "Skeleton/Mirror Joints": "allset.mirror_joints",
     "Skeleton/Orient Joint": "allset.orient_joint",

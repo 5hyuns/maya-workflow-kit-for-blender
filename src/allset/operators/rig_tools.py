@@ -337,6 +337,22 @@ class ALLSET_OT_blend_shape(bpy.types.Operator):
 # --- Quick Rig -> Rigify ---------------------------------------------------------------------------
 
 RIGIFY = "rigify"
+
+
+def rigify_enabled(context=None):
+    return RIGIFY in (context or bpy.context).preferences.addons
+
+
+def enable_rigify(context=None):
+    """Turn the bundled Rigify add-on on (it changes the add-on list, so callers ask first). False when Blender has
+    no Rigify."""
+    if rigify_enabled(context):
+        return True
+    import addon_utils
+    addon_utils.enable(RIGIFY, default_set=True)
+    return rigify_enabled(context)
+
+
 QUICK_RIG_TEXT = ("Blender has no Quick Rig / HumanIK. Rigify (bundled with Blender) adds a human "
                   "meta-rig: fit its guides to the mesh, then Generate Rig (no automatic fitting).")
 
@@ -348,7 +364,7 @@ class ALLSET_OT_quick_rig(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def invoke(self, context, event):
-        if RIGIFY not in context.preferences.addons:
+        if not rigify_enabled(context):
             return context.window_manager.invoke_confirm(
                 self, event, title="Enable Rigify?", confirm_text="Enable Rigify",
                 message="Quick Rig uses Rigify, an add-on bundled with Blender. Enable it (your "
@@ -356,12 +372,9 @@ class ALLSET_OT_quick_rig(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        if RIGIFY not in context.preferences.addons:
-            import addon_utils
-            addon_utils.enable(RIGIFY, default_set=True)
-            if RIGIFY not in context.preferences.addons:
-                self.report({'ERROR'}, "Rigify could not be enabled")
-                return {'CANCELLED'}
+        if not enable_rigify(context):
+            self.report({'ERROR'}, "Rigify could not be enabled")
+            return {'CANCELLED'}
         if context.mode != 'OBJECT' and context.active_object is not None:
             bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.armature_human_metarig_add()

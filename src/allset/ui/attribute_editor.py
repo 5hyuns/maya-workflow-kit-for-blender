@@ -1384,37 +1384,45 @@ class ALLSET_OT_ae_copy_tab(bpy.types.Operator):
         return ae_node(context) is not None and context.window is not None
 
     def execute(self, context):
-        from ..operators.menu_extras import open_window
         ob = ae_node(context)
         tab, pin = copy_tab_target(ob, current_tab(context, ob))
-        area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
-        new = open_window(context, area, "attribute_editor_copy") if area is not None else None
-        if new is None:
+        if open_pinned_properties(context, tab, pin, "attribute_editor_copy") is None:
             from . import window_places
             if not window_places.deferred():     # opens on a later tick (#203)
                 self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
-        target = new.screen.areas[0]
-        target.ui_type = 'PROPERTIES'
-        state = {"n": 40}
-        win_ptr, area_ptr = new.as_pointer(), target.as_pointer()
-
-        def tick():
-            target = live_refs.area(area_ptr, win_ptr)   # pointers, looked up each tick (#36)
-            if target is None:
-                return None
-            try:
-                space = target.spaces.active
-                space.pin_id = pin
-                space.use_pin_id = True
-                space.context = tab
-            except (TypeError, ReferenceError, AttributeError):
-                state["n"] -= 1
-                return 0.05 if state["n"] > 0 else None
-            target.tag_redraw()
-            return None
-        bpy.app.timers.register(tick, first_interval=0.0)
         return {'FINISHED'}
+
+
+def open_pinned_properties(context, tab, pin, kind):
+    """A new floating window with a Properties editor pinned to ``pin`` on ``tab`` (its place remembered under
+    ``kind``, ui/window_places.py). None when no window could open now."""
+    from ..operators.menu_extras import open_window
+    area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
+    new = open_window(context, area, kind) if area is not None else None
+    if new is None:
+        return None
+    target = new.screen.areas[0]
+    target.ui_type = 'PROPERTIES'
+    state = {"n": 40}
+    win_ptr, area_ptr = new.as_pointer(), target.as_pointer()
+
+    def tick():
+        target = live_refs.area(area_ptr, win_ptr)   # pointers, looked up each tick (#36)
+        if target is None:
+            return None
+        try:
+            space = target.spaces.active
+            space.pin_id = pin
+            space.use_pin_id = True
+            space.context = tab
+        except (TypeError, ReferenceError, AttributeError):
+            state["n"] -= 1
+            return 0.05 if state["n"] > 0 else None
+        target.tag_redraw()
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
+    return new
 
 
 classes = (ALLSET_OT_ae_tab, ALLSET_OT_ae_step, ALLSET_OT_ae_modifier, ALLSET_OT_ae_add_limit,

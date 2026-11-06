@@ -4789,6 +4789,7 @@
    "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a meta-rig fitted to the mesh (Generate Rig).": "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a meta-rig fitted to the mesh (Generate Rig).",
    "Blender has no HumanIK character controls: rig with armatures (Skeleton menu).": "Blender has no HumanIK character controls: rig with armatures (Skeleton menu).",
    "Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.": "Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.",
+   "Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).": "Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).",
    "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).": "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).",
    "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.": "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.",
    "Blender has no Light Editor: an Outliner window lists the scene lights; its eye and camera icons turn them off, Light Properties hold their values.": "Blender has no Light Editor: an Outliner window lists the scene lights; its eye and camera icons turn them off, Light Properties hold their values.",
@@ -8514,6 +8515,20 @@
    "Render Using": "Render Using",
    "Test Resolution": "Test Resolution"
   },
+  "Labels/ui/rigify_menu": {
+   "Add Meta-Rig": "Add Meta-Rig",
+   "Bone Rig Type...": "Bone Rig Type...",
+   "Enable Rigify": "Enable Rigify",
+   "Enable Rigify Add-on...": "Enable Rigify Add-on...",
+   "Generate Rig": "Generate Rig",
+   "Rig Controls": "Rig Controls",
+   "Rig Settings...": "Rig Settings...",
+   "Rigify": "Rigify",
+   "Rigify Properties": "Rigify Properties",
+   "Rigify Rig Controls": "Rigify Rig Controls",
+   "Rigify is bundled with Blender: it builds a rig from a meta-rig": "Rigify is bundled with Blender: it builds a rig from a meta-rig",
+   "Tab": "Tab"
+  },
   "Labels/ui/save_prompt": {
    "Save Changes": "Save Changes"
   },
@@ -10106,6 +10121,12 @@
    "Keep this image: the next render goes into a new render slot (Maya Render View Keep Image).\nBlender: Render Slots, J / Alt+J to compare": "Keep this image: the next render goes into a new render slot (Maya Render View Keep Image).\nBlender: Render Slots, J / Alt+J to compare",
    "Remove the shown image (clear this render slot) (Maya Render View Remove Image)": "Remove the shown image (clear this render slot) (Maya Render View Remove Image)",
    "Render engine of the scene (Maya Render > Render Using)": "Render engine of the scene (Maya Render > Render Using)"
+  },
+  "Tooltips/ui/rigify_menu": {
+   "Blender's Rigify in Maya's HumanIK place: meta-rig, Generate Rig, rig settings and controls": "Blender's Rigify in Maya's HumanIK place: meta-rig, Generate Rig, rig settings and controls",
+   "Enable Rigify, the rigging add-on bundled with Blender (your add-on list changes)": "Enable Rigify, the rigging add-on bundled with Blender (your add-on list changes)",
+   "Open the rig's Rigify settings (Properties > Armature) or the active bone's rig type (Properties > Bone)\nin a window pinned to the armature": "Open the rig's Rigify settings (Properties > Armature) or the active bone's rig type (Properties > Bone)\nin a window pinned to the armature",
+   "Show the generated rig's controls: the 3D View sidebar's Item tab (Rig Main Properties, Rig Layers)": "Show the generated rig's controls: the 3D View sidebar's Item tab (Rig Main Properties, Rig Layers)"
   },
   "Tooltips/ui/save_prompt": {
    "Answer Maya's Save Changes dialog": "Answer Maya's Save Changes dialog",
