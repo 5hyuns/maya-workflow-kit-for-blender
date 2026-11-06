@@ -73,8 +73,9 @@ def _norm_knots(knots):
     return [(k - a) / (b - a) for k in knots] if b > a else knots
 
 
-def write_spline(data, c, matrix_inv=None):
-    """MCurve -> a new spline in curve ``data`` (points through ``matrix_inv``: world -> object when given)."""
+def write_spline(data, c, matrix_inv=None, bezier=False):
+    """MCurve -> a new spline in curve ``data`` (points through ``matrix_inv``: world -> object when given;
+    ``bezier``: a cubic stays a Bezier spline even when its knots are uniform)."""
     def tx(v):
         v = Vector(v)
         return tuple(matrix_inv @ v) if matrix_inv is not None else tuple(v)
@@ -87,7 +88,7 @@ def write_spline(data, c, matrix_inv=None):
             p.co = (*tx(v), 1.0)
         sp.use_cyclic_u = c.periodic
         return sp
-    if c.periodic or cm.is_clamped_uniform(c.knots, c.degree):
+    if c.periodic or (cm.is_clamped_uniform(c.knots, c.degree) and not (bezier and c.degree == 3 and not c.weights)):
         unique = len(c.cvs) - c.degree if c.periodic else len(c.cvs)
         sp = data.splines.new('NURBS')
         sp.points.add(unique - 1)
@@ -461,56 +462,207 @@ def _spline_points(sp):
     return sp.points, "select"
 
 
-def knot_pairs(selected, n, cyclic):
-    """Indices to select so Blender's Subdivide inserts points: every selected point that has no selected neighbour
-    takes its next point (the previous one at the end of an open curve). ``selected``: indices of the selected
-    points of a spline with ``n`` points. Returns the indices to add (empty: nothing to insert between)."""
-    sel = set(selected)
-    add = set()
-    for i in sorted(sel):
-        nxt = (i + 1) % n if cyclic else i + 1
-        prv = (i - 1) % n if cyclic else i - 1
-        if (0 <= nxt < n and nxt in sel and nxt != i) or (0 <= prv < n and prv in sel and prv != i):
-            continue
-        if 0 <= nxt < n and nxt != i:
-            add.add(nxt)
-        elif 0 <= prv < n and prv != i:
-            add.add(prv)
-    return add
+def _domain(c):
+    """Parameter range of an open curve (Maya knot list): knots[degree - 1] .. knots[-degree]."""
+    return c.knots[c.degree - 1], c.knots[len(c.knots) - c.degree]
+
+
+def point_params(sp, c):
+    """The curve parameter each Blender point of ``sp`` stands for: a Bezier / poly point is the curve point
+    under it, a NURBS CV the parameter where it pulls most (its Greville abscissa), inside the curve range."""
+    a, b = _domain(c)
+    if sp.type == 'BEZIER':
+        return [float(i) for i in range(len(sp.bezier_points))]
+    return [min(b, max(a, _greville(c, i))) for i in range(len(sp.points))]
+
+
+def knot_targets(c, params, selected, between=False, number=1, set_to=False):
+    """Knots to insert, as sorted [(u, times)], for the points ``selected`` (indices into ``params``).
+
+    At selection: a knot at each selected point; a point where no knot can go (a curve end, or a knot that is
+    already full: Bezier / poly points) gives the middle between it and the next point instead (the one before at
+    the end). Increase by: ``number`` more; Set to: up to ``number`` in all. A knot never exceeds the degree.
+    Between selections: a knot at each selected point plus ``number`` evenly spaced between neighbouring ones.
+    """
+    a, b = _domain(c)
+    eps = 1e-9
+    deg = c.degree
+
+    def mult(u):
+        return cm.multiplicity(c.knots, u)
+
+    def open_at(u):
+        return a + eps < u < b - eps and mult(u) < deg
+
+    want = {}
+
+    def add(u, times):
+        u = round(u, 12)
+        times = min(times, deg - mult(u) - want.get(u, 0))
+        if times > 0 and a + eps < u < b - eps:
+            want[u] = want.get(u, 0) + times
+
+    sel = sorted(set(i for i in selected if 0 <= i < len(params)))
+    us = sorted({round(params[i], 12) for i in sel})
+    if between and len(us) >= 2:
+        for u in us:
+            if open_at(u) and not mult(u):
+                add(u, 1)
+        for u0, u1 in zip(us, us[1:]):
+            for k in range(1, number + 1):
+                add(u0 + (u1 - u0) * k / (number + 1), 1)
+        return sorted(want.items())
+    spots = set()
+    for i in sel:
+        u = params[i]
+        if not open_at(u):
+            j = i + 1 if i + 1 < len(params) else i - 1
+            if j < 0:
+                continue
+            u = (u + params[j]) / 2
+        spots.add(round(u, 12))
+    for u in sorted(spots):
+        add(u, max(0, number - mult(u)) if set_to else number)
+    return sorted(want.items())
+
+
+def apply_knots(c, targets):
+    """``c`` with the knots ``targets`` inserted (Boehm insertion: same shape, same parameters)."""
+    cvs, knots = c.cvs, c.knots
+    for u, times in targets:
+        cvs, knots = cm.insert_knot(cvs, knots, c.degree, u, times)
+    return MCurve(cvs, knots, c.degree)
+
+
+def _writable(c):
+    return not c.periodic and not c.weights and c.degree in (1, 3)
+
+
+def _inserted_indices(c, targets, spline_type):
+    """Indices of the Blender points at the inserted knots once ``c`` is written: Bezier anchors / poly points at
+    the knots, or (a NURBS spline, when the knots came out uniform) the CVs that pull most there."""
+    if spline_type == 'NURBS':
+        keys = [_greville(c, i) for i in range(len(c.cvs))]
+    elif c.degree == 1:
+        keys = list(c.knots)
+    else:
+        keys = sorted(set(c.knots))
+    return {min(range(len(keys)), key=lambda k: abs(keys[k] - u)) for u, _t in targets}
+
+
+def _copy_spline_look(src, dst):
+    for attr in ("resolution_u", "material_index", "use_smooth"):
+        try:
+            setattr(dst, attr, getattr(src, attr))
+        except (AttributeError, TypeError):
+            pass
 
 
 class ALLSET_OT_curve_insert_knot(bpy.types.Operator):
-    """Insert control points on the selected curve points (Maya Curves > Insert Knot): between two neighbours, or after a lone point"""
+    """Insert knots at the selected curve points without changing the curve shape (Maya Curves > Insert Knot)"""
     bl_idname = "allset.curve_insert_knot"
     bl_label = "Insert Knot"
     bl_options = {'REGISTER', 'UNDO'}
 
-    number: IntProperty(name="Number of knots to insert", default=1, min=1, max=100)
+    # Insert Knot Options: Insert location At selection / Between selections, Multiplicity Increase by / Set to
+    # (default Increase by 1), Keep original off (the curve changes in place)
+    location: EnumProperty(name="Insert location", items=(
+        ('AT', "At selection", "A knot at each selected curve point"),
+        ('BETWEEN', "Between selections", "A knot at each selected curve point and evenly spaced knots between them"),
+    ), default='AT')
+    mode: EnumProperty(name="Multiplicity", items=(
+        ('INCREASE', "Increase by", "Add this many knots at each point"),
+        ('SET', "Set to", "Make the knot count at each point this number"),
+    ), default='INCREASE')
+    number: IntProperty(name="Multiplicity", default=1, min=1, max=100,
+                        description="Knots added at each point (Between selections: knots between two points)")
+    keep_original: BoolProperty(name="Keep original", default=False,
+                                description="Leave the curve as it is and make a new curve with the knots")
 
     @classmethod
     def poll(cls, context):
         return context.mode in {'OBJECT', 'EDIT_CURVE'} and any(o.type == 'CURVE' for o in context.selected_objects)
 
+    def draw(self, context):
+        lay = self.layout
+        lay.use_property_split = True
+        lay.prop(self, "location", expand=True)
+        lay.prop(self, "mode", expand=True)
+        lay.prop(self, "number")
+        lay.prop(self, "keep_original")
+
     def execute(self, context):
         if context.mode != 'EDIT_CURVE':
             self.report({'WARNING'}, "Select curve points first (right-click a curve > Control Vertex)")
             return {'CANCELLED'}
-        found = False
+        picks = []          # (object, spline index, curve, targets)
+        found = skipped = 0
         for ob in context.objects_in_mode:
             if ob.type != 'CURVE':
                 continue
-            for sp in ob.data.splines:
+            for si, sp in enumerate(ob.data.splines):
                 pts, attr = _spline_points(sp)
                 sel = [i for i, p in enumerate(pts) if getattr(p, attr)]
                 if not sel or len(pts) < 2:
                     continue
-                found = True
-                for i in knot_pairs(sel, len(pts), sp.use_cyclic_u):
-                    setattr(pts[i], attr, True)
+                found += 1
+                c = read_spline(sp)
+                if sp.use_cyclic_u or not _writable(c):
+                    skipped += 1
+                    continue
+                targets = knot_targets(c, point_params(sp, c), sel, self.location == 'BETWEEN', self.number,
+                                       self.mode == 'SET')
+                if targets:
+                    picks.append((ob, si, c, targets))
         if not found:
-            self.report({'WARNING'}, "Select curve points first: two neighbouring points, or one point")
+            self.report({'WARNING'}, "Select curve points first: one point, or two points to insert between")
             return {'CANCELLED'}
-        return bpy.ops.curve.subdivide(number_cuts=self.number)
+        if not picks:
+            if skipped:
+                self.report({'WARNING'}, "Insert Knot works on open curves of degree 1 or 3")
+            else:
+                self.report({'WARNING'}, "No knot to insert there (a curve end, or the knots are already full)")
+            return {'CANCELLED'}
+        bpy.ops.object.mode_set(mode='OBJECT')
+        by_ob = {}
+        for ob, si, c, targets in picks:
+            by_ob.setdefault(ob, []).append((si, c, targets))
+        new_obs = []
+        for ob, items in by_ob.items():
+            data = ob.data
+            if self.keep_original:
+                data = bpy.data.curves.new(ob.data.name + "insertedKnotCurve", 'CURVE')
+                data.dimensions = ob.data.dimensions
+            for si, c, targets in sorted(items, key=lambda t: -t[0]):
+                old = ob.data.splines[si]
+                nc = apply_knots(c, targets)
+                sp = write_spline(data, nc, bezier=old.type == 'BEZIER')
+                _copy_spline_look(old, sp)
+                pts, attr = _spline_points(sp)
+                for p in pts:
+                    setattr(p, attr, False)
+                    if sp.type == 'BEZIER':
+                        p.select_left_handle = p.select_right_handle = False
+                for i in _inserted_indices(nc, targets, sp.type):
+                    if i < len(pts):
+                        setattr(pts[i], attr, True)
+                if not self.keep_original:
+                    data.splines.remove(old)
+            if self.keep_original:
+                new = bpy.data.objects.new(ob.name + "insertedKnotCurve", data)
+                new.matrix_world = ob.matrix_world
+                for coll in ob.users_collection:
+                    coll.objects.link(new)
+                naming.apply_maya_name(new, ob.name + "insertedKnotCurve")
+                new_obs.append(new)
+        if new_obs:
+            for o in context.selected_objects:
+                o.select_set(False)
+            for o in new_obs:
+                o.select_set(True)
+            context.view_layer.objects.active = new_obs[0]
+        bpy.ops.object.mode_set(mode='EDIT')
+        return {'FINISHED'}
 
 
 classes = (ALLSET_OT_curve_insert_knot, ALLSET_OT_curve_rebuild, ALLSET_OT_curve_attach, ALLSET_OT_curve_detach, ALLSET_OT_curve_cut,
