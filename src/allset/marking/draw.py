@@ -143,6 +143,22 @@ def _ring_arrow(rect, color, k, ox, oy):
     batch.draw(sh)
 
 
+def _arc(cx, cy, r, progress, color, segments=48):
+    """Draw a clockwise progress arc beginning at twelve o'clock."""
+    import math
+    progress = max(0.0, min(1.0, progress))
+    if progress <= 0.0:
+        return
+    count = max(2, int(segments * progress))
+    pts = []
+    for i in range(count + 1):
+        # Region coordinates grow upward, so subtracting the angle advances
+        # from twelve o'clock clockwise (toward the right-hand side).
+        angle = -math.pi / 2.0 - (2.0 * math.pi * progress * i / count)
+        pts.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
+    _line(pts, color, 2.5)
+
+
 def _circle(cx, cy, r, color, segments=24):
     import math
     pts = [(cx + r * math.cos(2 * math.pi * i / segments), cy + r * math.sin(2 * math.pi * i / segments))
@@ -188,17 +204,150 @@ def checked(action):
     except (ValueError, KeyError, AttributeError):
         return None
 
+def _draw_fast_gesture_path(s):
+    """GS-inspired hidden-menu preview: smoothed stroke, breadcrumb nodes and labels.
+
+    The radial menu remains hidden during a fast mark. Nodes represent the root
+    and each submenu actually entered; their captions use the submenu item label,
+    so users can inspect the route while still holding the mouse button.
+    """
+    import math
+
+    accent = (0.34, 0.70, 1.0, 0.98)
+    muted = (0.78, 0.86, 0.94, 0.78)
+    live_pos = tuple(s.pos)
+    # Render a clean straight polyline through semantic menu nodes and the live
+    # endpoint. Never render the raw freehand mouse samples or a smoothed curve.
+    route_points = [tuple(point) for point, _label in (getattr(s, "_fast_nodes", ()) or ())]
+    if not route_points:
+        route_points = [tuple(s.stack[0][1])]
+    if not route_points or route_points[-1] != live_pos:
+        route_points.append(live_pos)
+    if len(route_points) >= 2:
+        _line(route_points, (0.12, 0.22, 0.34, 0.42), 4.0)
+        _line(route_points, (0.72, 0.84, 0.96, 0.92), 2.0)
+
+    # Route nodes: root menu at gesture origin, submenu entries at their actual
+    # trigger points, plus significant trajectory corners. Rebuild every draw so
+    # labels and path follow the latest recognized target/position.
+    nodes = []
+    if getattr(s, "_fast_nodes", None):
+        nodes.extend((tuple(point), str(label), "menu") for point, label in s._fast_nodes)
+    if not nodes:
+        root_layout, root_center = s.stack[0]
+        root_label = (getattr(root_layout.sub, "label", "") or
+                      getattr(root_layout.sub, "name", "") or "MayaMarking")
+        nodes.append((tuple(root_center), root_label, "menu"))
+    if nodes:
+        root_layout, root_center = s.stack[0]
+        root_label = (getattr(root_layout.sub, "label", "") or
+                      getattr(root_layout.sub, "name", "") or "MayaMarking")
+        nodes[0] = (tuple(root_center), str(root_label), "menu")
+
+    points = list(s.trail or ())
+    active_sub = s.stack[-1][0].sub if getattr(s, "stack", None) else None
+    active_name = (getattr(active_sub, "label", "") or
+                   getattr(active_sub, "name", "") or
+                   (nodes[-1][1] if nodes else "Menu"))
+
+    # The route contains semantic menu nodes only. The current executable leaf is
+    # represented by one replaceable endpoint node, never by persistent corner labels.
+    hover = getattr(s, "hover", (None, False))
+    target_item = hover[0] if hover else None
+    if (target_item is not None
+            and getattr(target_item, "sub", None) is None
+            and getattr(target_item, "enabled", False)
+            and getattr(target_item, "label", "")):
+        nodes.append((tuple(s.pos), str(target_item.label), "target"))
+
+    # Coalesce overlapping labels while preserving the newest semantic label.
+    compact_nodes = []
+    for point, label, kind in nodes:
+        if compact_nodes and math.hypot(point[0] - compact_nodes[-1][0][0],
+                                        point[1] - compact_nodes[-1][0][1]) < 18.0:
+            compact_nodes[-1] = (point, label, kind)
+        else:
+            compact_nodes.append((point, label, kind))
+    nodes = compact_nodes
+
+    # Nodes sit on the smoothed path itself; do not connect them with a second
+    # straight polyline, which would create a chord over the curved trajectory.
+    fs = font_size()
+    for index, (point, label, kind) in enumerate(nodes):
+        active = index == len(nodes) - 1
+        px, py = point
+        radius = 5.0 if active else 3.5
+        _circle(px, py, radius + (2.0 if active else 0.0),
+                accent if active else muted, segments=20)
+        _circle(px, py, 1.5, accent if active else muted, segments=12)
+        caption = str(label)
+        width = measure(caption)
+        pad_x = max(5.0, fs * 0.45)
+        pad_y = max(3.0, fs * 0.24)
+        # Alternate label placement slightly to avoid sitting directly on the
+        # breadcrumb connector. The final node caption follows the current route.
+        lx = px + 10.0
+        ly = py + (8.0 if index % 2 == 0 else -fs - 5.0)
+        box = (lx - pad_x, ly - pad_y, lx + width + pad_x, ly + fs + pad_y * 0.5)
+        _rect(box, (0.035, 0.055, 0.075, 0.88))
+        _outline(box, accent if active else (0.42, 0.52, 0.62, 0.72), 0.0, 0.0)
+        _text(lx, ly, caption, (1.0, 1.0, 1.0, 1.0) if active else (0.82, 0.88, 0.94, 0.95))
+
+    # Current mouse position is the only live terminal node.
+    px, py = live_pos
+    _circle(px, py, 5.0, accent, segments=20)
+    _circle(px, py, 1.7, accent, segments=12)
+
+
 def draw_session(s, now):
     if not s.visible(now):
-        _line(s.trail, LINE, 2.0)  # a quick mark: only the stroke
+        # Keep the full radial menu collapsed for fast marks, but show a legible
+        # GS-inspired breadcrumb trail while the initiating button remains held.
+        _draw_fast_gesture_path(s)
         return
-    layers = s.layers()   # a list row's open cascade is drawn over the menu it hangs from
+    layers = s.layers()   # a list row's open cascade is drawn over the menu it hangs from (step 129)
     _lay, (cx, cy), _hover = layers[0]
+
+    # Maya/GS-style navigation path: keep the parent-to-child connector
+    # visible whenever the hotbox is active. The live centre-to-pointer line is
+    # handled separately below and is only shown near a navigation anchor.
+    anchor_visuals = getattr(s, "return_anchor_visuals", lambda: [])()
+    import math
+    pointer_x, pointer_y = s.pos
+    cue_radius = max(24.0, s.params.dead * 2.5)
+    near_navigation_anchor = False
+    for parent_center, child_center, highlighted in anchor_visuals:
+        px, py = parent_center
+        qx, qy = child_center
+        # This is the persistent parent/child relationship line; do not hide it
+        # when the pointer moves away.
+        _line([(px, py), (qx, qy)], (0.95, 0.95, 0.95, 0.55), 1.5)
+        if (math.hypot(pointer_x - px, pointer_y - py) <= cue_radius or
+                math.hypot(pointer_x - qx, pointer_y - qy) <= cue_radius):
+            near_navigation_anchor = True
+        ring_radius = max(16.0, s.params.dead * 1.75)
+        # Keep the anchor's neutral outline when idle. The accent ring is a
+        # state indicator and appears only after the return hit-zone is entered.
+        _circle(px, py, ring_radius, LINE, segments=32)
+        progress = getattr(s, "return_anchor_progress", lambda _center: None)(parent_center)
+        if highlighted and progress is not None:
+            _circle(px, py, ring_radius, (0.30, 0.72, 1.0, 1.0), segments=32)
+            _arc(px, py, ring_radius + 3.0, progress, (0.30, 0.72, 1.0, 1.0))
+
     _circle(cx, cy, s.params.dead, LINE)
-    _line([(cx, cy), s.pos], LINE, 1.5)
+    # The live centre-to-mouse line is normally hidden while navigating
+    # submenus. Reveal it only when the pointer approaches the parent or child
+    # centre, so it acts as a proximity cue rather than permanent clutter.
+    # Keep the original root-hotbox behaviour when there are no submenu anchors.
+    # Root-level hotbox: show the live centre-to-pointer line only while
+    # the pointer is close to the menu centre. Submenu levels use the broader
+    # parent/child anchor proximity test above.
+    root_line_radius = max(32.0, s.params.dead * 2.0)
+    near_root_center = math.hypot(pointer_x - cx, pointer_y - cy) <= root_line_radius
+    if (not anchor_visuals and near_root_center) or (anchor_visuals and near_navigation_anchor):
+        _line([(cx, cy), s.pos], LINE, 1.5)
     for lay, (cx, cy), hover in layers:
         _draw_layout(lay, cx, cy, hover)
-
 
 def _draw_layout(lay, cx, cy, hover):
     hover, hover_opt = hover

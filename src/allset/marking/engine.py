@@ -12,6 +12,8 @@ tap vs hold.
 
 import math
 
+from .gesture_recognition import GestureRecognizer
+
 from ..names import PRODUCT
 from . import menus as mm
 
@@ -498,8 +500,8 @@ class Session:
 
     def __init__(self, menu, origin, t0, measure, params=None, enabled=None, bounds=None, edges=()):
         """``bounds`` = (x0, y0, x1, y1): the visible part of the region; list
-        submenus that would cross it are moved inside. ``edges`` = area
-        border bands in region pixels (``fit_ring``)."""
+        submenus that would cross it are moved inside (step 29). ``edges`` = area
+        border bands in region pixels (step 136, ``fit_ring``)."""
         self.params = params or Params()
         self.bounds = bounds
         self.edges = tuple(edges) if bounds is not None else ()
@@ -511,8 +513,9 @@ class Session:
         self.enabled = enabled
         self.t0 = t0
         self.stack = [(root, origin)]
+        root_name = getattr(menu, "label", "") or getattr(menu, "name", "") or "MayaMarking"
         # Per stack level: the item of the level below that opened it, when it is a list row's cascade (a Qt
-        # menu submenu beside the row): the menus under a cascade stay drawn and hit-tested. In-place
+        # menu submenu beside the row, step 129): the menus under a cascade stay drawn and hit-tested. In-place
         # radial submenus (None) replace the menu, like Maya's.
         self.openers = [None]
         self.mode = "PRESS"           # "PRESS" (button held) | "CLICK" (menu stays open)
@@ -521,6 +524,35 @@ class Session:
         self.hover = (None, False)
         self.result = None
         self.max_dist = 0.0
+        # GS-style visibility lifecycle:
+        # TRACKING while mouse movement continues; UI_VISIBLE after an idle timeout.
+        # Once the UI is visible, keep it visible for the rest of this interaction.
+        self._last_move_time = self.t0
+        self._menu_show_delay = self.params.show_delay
+        self._ui_visible = False
+        # Once a fast radial mark has entered a submenu, keep the menu collapsed
+        # until release. The gesture overlay carries route/label feedback instead.
+        self._fast_marking = False
+        self._fast_nodes = [(origin, root_name)]
+        self._fast_display_trail = [origin]
+        self._fast_target_signature = None
+        # Independent, stateful gesture recognizer for the current menu level.
+        self._gesture_points = [(self.t0, origin)]  # compatibility/debug history
+        self._gesture_direction = None
+        self._gesture_recognizer = GestureRecognizer()
+        self._gesture_recognizer.reset(origin, self.t0)
+        # Set when the pointer returns to an ancestor submenu anchor. The modal
+        # operator uses this to keep the parent menu open instead of cancelling.
+        self._returned_to_anchor = False
+        # A return is committed only after the pointer stays near the same
+        # ancestor anchor for RETURN_ANCHOR_DWELL seconds.
+        self._return_candidate_level = None
+        self._return_candidate_since = None
+        self._return_pending = False
+        self._return_candidate_requires_dwell = False
+        self._return_progress = None
+        # Visible only while the pointer is near a restored parent-menu anchor.
+        self._return_preview_center = None
 
     # -- state --------------------------------------------------------------
     @property
@@ -532,8 +564,20 @@ class Session:
         return self.stack[-1][1]
 
     def visible(self, t):
-        """Draw the menu? Not during a quick stroke (mark without looking)."""
-        return self.mode == "CLICK" or len(self.stack) > 1 or t - self.t0 >= self.params.show_delay
+        """GS-style one-way visibility phase.
+
+        Keep the radial UI hidden while the pointer is actively traversing a mark.
+        Show it after the pointer has been idle for ``show_delay``; once shown,
+        never hide it again during this interaction. This avoids the old speed
+        heuristic repeatedly hiding a menu the user is trying to browse slowly.
+        """
+        if self.mode == "CLICK":
+            return True
+        if self.mode == "PRESS" and self._fast_marking:
+            return False
+        if not self._ui_visible and t - self._last_move_time >= self._menu_show_delay:
+            self._ui_visible = True
+        return self._ui_visible
 
     def _rel(self, x, y):
         return x - self.center[0], y - self.center[1]
@@ -551,6 +595,20 @@ class Session:
             out.append((lay, center, self.hover if k == top else (self.openers[k + 1], False)))
         return out
 
+    def _reset_gesture_window(self, anchor=None, t=None):
+        """Start a fresh direction window for the active menu level.
+
+        A submenu is a new gesture origin. Samples collected while traversing
+        its parent must not bias the next level's direction estimate.
+        """
+        if t is None:
+            t = self._gesture_points[-1][0] if self._gesture_points else self.t0
+        if anchor is None:
+            anchor = self.pos
+        self._gesture_points = [(t, (anchor[0], anchor[1]))]
+        self._gesture_direction = None
+        self._gesture_recognizer.reset(anchor, t)
+
     def _push(self, item, at, cascade=False):
         layout = Layout(item.sub, self.measure, self.params, self.enabled)
         if self.bounds is not None and layout.items and not layout.radial:
@@ -559,15 +617,27 @@ class Session:
             fit_ring(layout, at, self.bounds, self.edges)   # in-place radial: centre = pointer
         self.stack.append((layout, at))
         self.openers.append(item if cascade else None)
+        if self.mode == "PRESS" and not self._ui_visible and not cascade:
+            self._fast_marking = True
+            # Breadcrumbs must represent real menu centres. Do not move the
+            # visual node independently from the actual submenu anchor.
+            display_at = at
+            self._fast_nodes.append((display_at, item.label))
+            self._fast_display_trail = [point for point, _label in self._fast_nodes]
         self.hover = (None, False)
+        # A child level starts its own gesture from the point where it opened.
+        # Do not carry the parent's heading into the child-level decision.
+        self._reset_gesture_window(at)
 
     def _pop_to(self, level):
         del self.stack[level + 1:]
         del self.openers[level + 1:]
+        # Returning to an ancestor also resets direction history to that anchor.
+        self._reset_gesture_window(self.stack[-1][1])
 
     def _hit_stack(self, x, y):
         """(level, item, on option box) under (x, y): the top menu first (directions included); when it has
-        nothing there and is a cascade, the boxes / rows of the menus it hangs from (#5: dragging on
+        nothing there and is a cascade, the boxes / rows of the menus it hangs from (step 129, #5: dragging on
         down the list after passing a submenu row closed the whole menu)."""
         top = len(self.stack) - 1
         lay, (cx, cy) = self.stack[top]
@@ -580,6 +650,165 @@ class Session:
             if item is not None:
                 return level, item, opt
         return top, item, opt
+
+    def return_anchor_visuals(self):
+        """Return radial ancestor anchors and their connector segments for drawing.
+
+        Each entry is (parent_center, child_center, highlighted). The parent
+        centre remains visible while a radial submenu is open. The closest
+        ancestor anchor is highlighted only in its approach zone; the smaller
+        return zone is handled by _return_to_previous_anchor().
+        """
+        top = len(self.stack) - 1
+        if top <= 0:
+            return []
+
+        candidates = []
+        preview_radius = max(32.0, self.params.dead * 2.75)
+        for child_level in range(1, top + 1):
+            # Only radial/in-place transitions need an anchor path. List
+            # cascades already keep their parent menu visible.
+            if self.openers[child_level] is not None:
+                continue
+            parent_center = self.stack[child_level - 1][1]
+            child_center = self.stack[child_level][1]
+            distance = math.hypot(self.pos[0] - parent_center[0],
+                                  self.pos[1] - parent_center[1])
+            candidates.append((parent_center, child_center, distance))
+
+        nearest = min(range(len(candidates)), key=lambda i: candidates[i][2]) if candidates else None
+        result = []
+        for i, (parent_center, child_center, distance) in enumerate(candidates):
+            # Highlight only while this exact anchor is the active return
+            # candidate. Proximity alone is not an active state.
+            highlighted = (
+                self._return_candidate_level == child_level - 1
+                and self._return_candidate_since is not None
+                and distance <= preview_radius
+            )
+            result.append((parent_center, child_center, highlighted))
+        return result
+
+    def _has_current_level_item_near_anchor(self, level, radius):
+        """Whether a selectable item in the current menu overlaps an ancestor's return zone."""
+        if level < 0 or level >= len(self.stack) - 1:
+            return False
+        layout, (cx, cy) = self.stack[-1]
+        ax, ay = self.stack[level][1]
+        # Test the anchor centre plus points around its return-zone edge. This
+        # catches options that sit beside/behind the parent centre, not just an
+        # item whose hit target happens to cover the exact centre pixel.
+        points = [(ax, ay)]
+        sample_r = radius * 0.72
+        for i in range(8):
+            angle = (2.0 * math.pi * i) / 8.0
+            points.append((ax + math.cos(angle) * sample_r,
+                           ay + math.sin(angle) * sample_r))
+        for px, py in points:
+            item, _opt = layout.hit(px - cx, py - cy)
+            if item is not None:
+                return True
+        return False
+
+    def _reset_return_candidate(self):
+        self._return_candidate_level = None
+        self._return_candidate_since = None
+        self._return_pending = False
+        self._return_candidate_requires_dwell = False
+        self._return_progress = None
+
+    def _return_to_previous_anchor(self, x, y, t):
+        """Return to an ancestor centre; dwell only when a child item overlaps it."""
+        top = len(self.stack) - 1
+        if top <= 0 or self.openers[top] is not None:
+            self._reset_return_candidate()
+            return False
+
+        # More forgiving ancestor-anchor return zone, closer to Maya's
+        # marking-menu muscle-memory interaction. Keep a minimum pixel radius
+        # so the target remains usable even when the dead-zone setting is small.
+        radius = max(32.0, self.params.dead * 2.75)
+        # Do not treat the current submenu's own centre as a return target.
+        cx, cy = self.stack[top][1]
+        if math.hypot(x - cx, y - cy) < radius:
+            self._reset_return_candidate()
+            return False
+
+        nearest_level = None
+        nearest_distance = radius
+        for level in range(top - 1, -1, -1):
+            ax, ay = self.stack[level][1]
+            distance = math.hypot(x - ax, y - ay)
+            if distance < nearest_distance:
+                nearest_distance = distance
+                nearest_level = level
+
+        if nearest_level is None:
+            self._reset_return_candidate()
+            return False
+
+        # Prioritize the current submenu's actual hit target over navigation.
+        # If the pointer is over a selectable item, keep normal hover/selection
+        # behavior and do not start (or continue) the parent-return timer.
+        current_layout, (current_cx, current_cy) = self.stack[top]
+        # Only a pointer physically inside a drawn menu rectangle/option box
+        # should suppress anchor-return timing. Normal radial hit-testing also
+        # maps broad directional sectors to items, which can incorrectly block
+        # the return timer when the pointer is visibly between menu buttons.
+        current_item, _current_opt = current_layout.hit(
+            x - current_cx, y - current_cy, rects_only=True)
+        if current_item is not None:
+            self._reset_return_candidate()
+            return False
+
+        # Entering a different ancestor zone starts a fresh decision. If a
+        # current-level item lies in this zone, dwell is required to avoid
+        # accidentally selecting/returning while passing through it.
+        if self._return_candidate_level != nearest_level:
+            self._return_candidate_level = nearest_level
+            self._return_candidate_since = t
+            self._return_candidate_requires_dwell = self._has_current_level_item_near_anchor(
+                nearest_level, radius)
+            self._return_progress = 0.0 if self._return_candidate_requires_dwell else None
+
+        if not self._return_candidate_requires_dwell:
+            should_return = True
+        else:
+            self._return_pending = True
+            elapsed = max(0.0, t - (self._return_candidate_since or t))
+            self._return_progress = min(1.0, elapsed / 0.7)
+            should_return = elapsed >= 0.7
+
+        if not should_return:
+            return False
+
+        self._pop_to(nearest_level)
+        self._reset_return_candidate()
+        # Do not leave a completed progress ring/preview behind; the restored
+        # parent menu's normal centre ring remains visible on its own.
+        self._return_preview_center = None
+        self.hover = self._hit_stack(x, y)[1:]
+        self.mode = "CLICK"
+        self._returned_to_anchor = True
+        return True
+
+    def check_return_dwell(self, t):
+        """Advance the anchor dwell timer from modal TIMER events."""
+        if not self._return_pending:
+            return False
+        x, y = self.pos
+        return self._return_to_previous_anchor(x, y, t)
+
+    def return_anchor_progress(self, center):
+        """Progress (0..1) for the active delayed-return anchor, otherwise None."""
+        if self._return_progress is None or self._return_candidate_level is None:
+            return None
+        if self._return_candidate_level >= len(self.stack) - 1:
+            return None
+        ax, ay = self.stack[self._return_candidate_level][1]
+        if math.hypot(center[0] - ax, center[1] - ay) > 0.01:
+            return None
+        return self._return_progress
 
     def _inside_bounds(self, layout, at):
         """Shift a list submenu up / left so all its rows are inside ``bounds``."""
@@ -596,7 +825,7 @@ class Session:
         return (x, y)
 
     def _around_edges(self, layout, at):
-        """A list submenu's rows off the area border bands (``_settle_list``): a row that would overlap a
+        """A list submenu's rows off the area border bands (step 136, ``_settle_list``): a row that would overlap a
         horizontal band goes below it; when that runs the rows past the window bottom they move up (as far as the
         top allows) before wrapping into a second column."""
         x0, y0, x1, y1 = self.bounds
@@ -607,12 +836,62 @@ class Session:
         return at
 
     # -- input ----------------------------------------------------------------
+    def _update_gesture_direction(self, x, y, t):
+        """Estimate direction from local path trend plus current-level displacement."""
+        self._gesture_points.append((t, (x, y)))
+        cutoff = t - 0.12
+        while len(self._gesture_points) > 2 and self._gesture_points[1][0] < cutoff:
+            self._gesture_points.pop(0)
+        sector = self._gesture_recognizer.update(x, y, t)
+        # Map the recognizer's named compass sector to the engine's numeric sectors.
+        sector_keys = {"E": 3, "NE": 2, "N": 1, "NW": 8,
+                       "W": 7, "SW": 6, "S": 5, "SE": 4}
+        self._gesture_direction = sector_keys.get(sector, self._gesture_direction)
+        return self._gesture_direction
+
     def move(self, x, y, t):
+        self._returned_to_anchor = False
         self.pos = (x, y)
+        # The return ring is a proximity cue, not a permanent decoration.
+        # Keep it while the pointer remains around the restored anchor and hide
+        # it as soon as the pointer clearly moves away.
+        if self._return_preview_center is not None:
+            px, py = self._return_preview_center
+            preview_limit = max(24.0, self.params.dead * 2.5)
+            if math.hypot(x - px, y - py) > preview_limit:
+                self._return_preview_center = None
         self.trail.append((x, y))
-        ox, oy = self.press
+        gesture_direction = self._update_gesture_direction(x, y, t)
+        # Any pointer movement refreshes the idle deadline. The UI visibility
+        # phase itself is latched by visible(): active tracking stays hidden, and
+        # an idle timeout promotes the session to UI_VISIBLE once.
+        self._last_move_time = t
+        ox, oy = self.stack[0][1]
         self.max_dist = max(self.max_dist, math.hypot(x - ox, y - oy))
-        level, item, opt = self._hit_stack(x, y)
+        if self._return_to_previous_anchor(x, y, t):
+            return
+        # While dwelling at an ancestor anchor, do not let ordinary hover
+        # handling trigger a neighbouring item or another submenu.
+        if self._return_pending:
+            return
+        if self.mode == "PRESS" and not self._ui_visible:
+            # Quick marking is direction-only: never hit-test menu rectangles,
+            # list rows, option boxes, or parent cascade rows.
+            # The recognizer's current 8-way sector is the sole command key.
+            # Passing across the lower linear menu therefore remains an S
+            # gesture; it cannot turn into the row under the pointer.
+            level = len(self.stack) - 1
+            top_layout = self.stack[level][0]
+            gesture_key = (
+                mm.RADIALS[gesture_direction - 1]
+                if gesture_direction is not None and 1 <= gesture_direction <= 8
+                else None
+            )
+            item = top_layout.radial.get(gesture_key) if gesture_key else None
+            opt = False
+        else:
+            # Once the full menu is visible, preserve the original hit testing.
+            level, item, opt = self._hit_stack(x, y)
         if level < len(self.stack) - 1:
             if item is self.openers[level + 1]:
                 # back on the row whose cascade is open: keep it (close deeper ones)
@@ -622,15 +901,32 @@ class Session:
             self._pop_to(level)   # another row of a menu under the cascade: the cascade closes
         dx, dy = self._rel(x, y)
         self.hover = (item, opt)
+        if self.mode == "PRESS" and self._fast_marking:
+            target_signature = (
+                getattr(item, "label", None),
+                getattr(item, "key", None),
+                bool(opt),
+                bool(getattr(item, "sub", None)),
+            ) if item is not None else None
+            if target_signature != self._fast_target_signature:
+                self._fast_target_signature = target_signature
+                # A new candidate replaces the old preview path instead of leaving
+                # stale strokes from previously hovered tools on screen.
+                self._fast_display_trail = [point for point, _label in self._fast_nodes]
+            self._fast_display_trail.append((x, y))
         if item is None or item.sub is None or not item.enabled:
             return
         # Dragging onto a submenu opens it in place (also the second stroke of a
         # zig-zag mark): radial once the pointer reaches the ring, list on hover.
-        # A radial one only from its own sector: Maya-wide N / S boxes reach into the diagonal
-        # sectors, and a quick NE / NW gesture crossing them must not open the N submenu.
-        if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius \
-                and direction(dx, dy, self.params.dead) == item.key:
-            self._push(item, (x, y))
+        # A radial one only from its own sector: Maya-wide N / S boxes (step 151) reach into the diagonal
+        # sectors, and a quick NE / NW gesture crossing them must not open the N submenu (step 153).
+        if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius:
+            if self.mode == "PRESS" and not self._ui_visible:
+                direction_matches = gesture_key == item.key
+            else:
+                direction_matches = direction(dx, dy, self.params.dead) == item.key
+            if direction_matches:
+                self._push(item, (x, y))
         elif item.kind == "list" and _inside(item.rect, dx, dy):
             self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]), cascade=True)
 
@@ -638,7 +934,15 @@ class Session:
         """The button that opened the menu was released."""
         if self.mode != "PRESS":
             return self.result
+        # A fast marking gesture keeps the menu visually hidden across nested
+        # radial levels. move() has already advanced the stack from the sampled
+        # mouse path; the release point is resolved in the deepest active level,
+        # so a leaf can execute without rendering intermediate submenus.
         self.move(x, y, t)
+        if self._returned_to_anchor:
+            self._returned_to_anchor = False
+            self.mode = "CLICK"
+            return None
         item, opt = self.hover
         if len(self.stack) == 1 and self.max_dist < self.params.dead and t - self.t0 < self.params.click_time \
                 and item is None:
@@ -655,6 +959,9 @@ class Session:
     def click(self, x, y, t):
         """A button press while in click mode."""
         self.move(x, y, t)
+        if self._returned_to_anchor:
+            self._returned_to_anchor = False
+            return None
         item, opt = self.hover
         if item is None:
             return self._cancel()

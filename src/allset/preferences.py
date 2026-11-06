@@ -71,6 +71,17 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya mode on/off (switch.py), kept across restarts. Off after install: enabling the
     # extension changes nothing until the user opts in (welcome dialog / button / switch).
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
+
+    # Shared in-view HUD settings. These are hidden implementation preferences;
+    # the official visible preference layout and all existing options stay unchanged.
+    hud_drag_sensitivity: bpy.props.FloatProperty(
+        name="HUD Drag Sensitivity", default=0.30, min=0.0, max=1.0,
+        subtype='FACTOR', options={'HIDDEN'})
+    tool_hud_x: bpy.props.FloatProperty(default=-1.0, min=-1.0, max=1.0, options={'HIDDEN'})
+    tool_hud_y: bpy.props.FloatProperty(default=-1.0, min=-1.0, max=1.0, options={'HIDDEN'})
+    maya_inview_hud_x: bpy.props.FloatProperty(default=-1.0, min=-1.0, max=1.0, options={'HIDDEN'})
+    maya_inview_hud_y: bpy.props.FloatProperty(default=-1.0, min=-1.0, max=1.0, options={'HIDDEN'})
+    hud_layout_version: bpy.props.IntProperty(default=0, min=0, options={'HIDDEN'})
     # Edit-mode marquee/lasso also selects occluded components, like Maya.
     select_through: bpy.props.BoolProperty(
         name="Marquee Selects Hidden Components",
