@@ -1086,7 +1086,8 @@ class _ExtrudeProps:
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
     """Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component
-    type): change its values with the manipulator, the In-View Editor or Channel Box INPUTS"""
+    type; faces with a curve selected: along the curve): change its values with the manipulator, the In-View Editor
+    or Channel Box INPUTS"""
     bl_idname = "allset.extrude"
     bl_label = "Extrude"
     bl_options = {'REGISTER', 'UNDO'}
@@ -1113,6 +1114,12 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
             if kind != 'FACE':
                 spec = SPECS[kind]
                 if record_new(context, ob, bm, spec, _params(self, spec), unit) is not None:
+                    done += 1
+                continue
+            from . import extrude_curve
+            path = extrude_curve.path_curve(context)
+            if path is not None:          # faces + a curve selected: extrude along the curve, like Maya
+                if extrude_curve.run(context, ob, bm, path, self.divisions, unit) is not None:
                     done += 1
                 continue
             params = _params(self)

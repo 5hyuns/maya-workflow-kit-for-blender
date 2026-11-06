@@ -5685,6 +5685,16 @@
    "polyExtrudeFace": "polyExtrudeFace",
    "polyExtrudeVertex": "polyExtrudeVertex"
   },
+  "Labels/operators/extrude_curve": {
+   "Curve": "Curve",
+   "Divisions": "Divisions",
+   "Keep Faces Together": "Keep Faces Together",
+   "Local Translate Z": "Local Translate Z",
+   "Taper": "Taper",
+   "Thickness": "Thickness",
+   "Twist": "Twist",
+   "polyExtrudeFace": "polyExtrudeFace"
+  },
   "Labels/operators/file_io": {
    "Animation": "Animation",
    "Convert to / from a Maya scene: centimetres and Y up": "Convert to / from a Maya scene: centimetres and Y up",
@@ -9158,8 +9168,11 @@
    "Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,\nso only the last one can be changed": "Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,\nso only the last one can be changed",
    "Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,\nso only the last one can be changed": "Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,\nso only the last one can be changed",
    "Change the last vertex extrusion (Maya: edit the polyExtrudeVertex node). Blender keeps no edit-mode\nhistory, so only the last one can be changed": "Change the last vertex extrusion (Maya: edit the polyExtrudeVertex node). Blender keeps no edit-mode\nhistory, so only the last one can be changed",
-   "Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component\ntype): change its values with the manipulator, the In-View Editor or Channel Box INPUTS": "Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component\ntype): change its values with the manipulator, the In-View Editor or Channel Box INPUTS",
+   "Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component\ntype; faces with a curve selected: along the curve): change its values with the manipulator, the In-View Editor\nor Channel Box INPUTS": "Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component\ntype; faces with a curve selected: along the curve): change its values with the manipulator, the In-View Editor\nor Channel Box INPUTS",
    "Shared body of the edit operators (a registered operator class can't be subclassed: its poll broke).": "Shared body of the edit operators (a registered operator class can't be subclassed: its poll broke)."
+  },
+  "Tooltips/operators/extrude_curve": {
+   "Change the last extrusion along a curve (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode\nhistory, so only the last one can be changed": "Change the last extrusion along a curve (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode\nhistory, so only the last one can be changed"
   },
   "Tooltips/operators/file_io": {
    "Export the selected objects in the chosen format (Maya File > Export Selection)": "Export the selected objects in the chosen format (Maya File > Export Selection)",
