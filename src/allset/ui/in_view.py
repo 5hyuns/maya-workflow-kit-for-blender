@@ -30,6 +30,7 @@ from mathutils import Matrix, Vector, geometry
 from . import cb_entry, manipulator
 from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec
 from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec
+from ..operators import move_component  # noqa: F401  registers the polyMoveFace / Edge / Vertex specs
 
 ROW_H = 16          # px at UI scale 1 (Maya In-View rows)
 WIDTH = 180
@@ -41,10 +42,10 @@ KINDS = {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "di
          "keep_faces_together": "BOOL"}
 # every field of every recorded node (Channel Box text proxies: edge / vertex extrusion, bevel)
 ALL_FIELDS = tuple(dict.fromkeys(f for spec in extrude.SPECS.values() for f in spec.fields))
-MAX_ROWS = max(len(spec.fields) for spec in extrude.SPECS.values())
+MAX_ROWS = max(len(spec.view_fields) for spec in extrude.SPECS.values())
 BOOL_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "BOOL"}
 INT_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "INT"}
-RANGES = {"fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "optimize": (0.0, 1.0),
+RANGES = {"random": (0.0, 1.0), "fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "optimize": (0.0, 1.0),
           "percentage_space": (0.0, 5.0)}
 _ = bevel_maya
 BG = (0.22, 0.22, 0.22, 0.92)
@@ -94,7 +95,12 @@ def _pre_direction(rec):
     d = Vector()
     if pre is not None:
         pre.normal_update()
-        if rec.spec.kind == 'VERTEX':
+        component = rec.spec.component or ('VERTEX' if rec.spec.kind == 'VERTEX' else 'EDGE')
+        if component == 'FACE':
+            for f in pre.faces:
+                if f.select:
+                    d += f.normal
+        elif component == 'VERTEX':
             for v in pre.verts:
                 if v.select:
                     d += sum((f.normal for f in v.link_faces), Vector()).normalized()
@@ -157,7 +163,7 @@ def current_layout(context):
     a = anchor(context, ob, rec)
     if a is None:
         return None, None
-    return rec, layout(context.region, a, _scale(), rec.spec.fields)
+    return rec, layout(context.region, a, _scale(), rec.spec.view_fields)
 
 
 def value_text(rec, field):
@@ -293,12 +299,15 @@ AXIS_INDEX = {'X': 0, 'Y': 1, 'Z': 2}
 
 
 def handle_fields(rec, handle):
-    """The values ``handle`` drives on ``rec`` (edge / vertex extrusion, bevel: only "TZ" = their arrow field)."""
+    """The values ``handle`` drives on ``rec`` (edge / vertex extrusion, bevel: only "TZ" = their arrow field;
+    Transform Component: every handle of its fields)."""
     if rec is None or handle not in HANDLES:
         return ()
-    if rec.spec is not extrude.FACE:
+    if rec.spec is not extrude.FACE and not rec.spec.full_manip:
         return (rec.spec.arrow,) if handle == "TZ" and rec.spec.arrow is not None else ()
-    return HANDLES[handle][2]
+    fields = HANDLES[handle][2]
+    # Transform Component of vertices: no Local Scale (Maya's polyMoveVertex has none)
+    return fields if all(f in rec.spec.all_fields for f in fields) else ()
 
 
 def manip_frame(ob, rec):
@@ -504,9 +513,9 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob, rec = extrude.active(context)
-        if self.row >= len(rec.spec.fields):
+        if self.row >= len(rec.spec.view_fields):
             return {'CANCELLED'}
-        field = rec.spec.fields[self.row]
+        field = rec.spec.view_fields[self.row]
         _state["hot"] = self.row
         if field in BOOL_FIELDS:
             extrude.set_params(context, **{field: not rec.params[field]})
@@ -570,9 +579,9 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
 
     def _field(self, context):
         _ob, rec = extrude.active(context)
-        if rec is None or self.row >= len(rec.spec.fields):
+        if rec is None or self.row >= len(rec.spec.view_fields):
             return rec, None
-        return rec, rec.spec.fields[self.row]
+        return rec, rec.spec.view_fields[self.row]
 
     def invoke(self, context, event):
         rec, field = self._field(context)
@@ -695,8 +704,8 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
             params = dict(self._rec.params, **self.values(context, event))
             extrude.preview(self._ob, self._rec, params, self._unit)
-            if self._fields[0] in self._rec.spec.fields:
-                _state["hot"] = self._rec.spec.fields.index(self._fields[0])
+            if self._fields[0] in self._rec.spec.view_fields:
+                _state["hot"] = self._rec.spec.view_fields.index(self._fields[0])
             _redraw(context)
             return {'RUNNING_MODAL'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':

@@ -14,6 +14,7 @@ from . import (auto_key, undo_pairs, bookmarks, ik_fk, component, create, curve_
 from . import poly_draw, quad_draw  # Create Polygon / Append to Polygon / Quad Draw (#30)
 from . import edge_loops  # Insert / Offset Edge Loop, Slide Edge (#31)
 from . import connect_tool  # Mesh Tools > Connect tool (#322)
+from . import move_component  # Edit Mesh > Transform (Transform Component)
 from . import ik_rp  # #162: Maya ikRPsolver pole vector / twist
 from . import joint_edit  # #160: joint moves keep Maya frames, Preserve Children, Edit-mode Translate
 from . import pivot_pick
@@ -45,7 +46,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *key_batch3.classes, *bookmarks.classes, *curve_tools.classes, *curves_maya.classes,
            *poly_maya.classes, *rig_maya.classes, *loop_pick.classes,
            *select_convert.classes, *poly_draw.classes, *quad_draw.classes,
-           *edge_loops.classes, *connect_tool.classes)
+           *edge_loops.classes, *connect_tool.classes, *move_component.classes)
 
 from . import deformers  # noqa: E402  Maya Deform menu deformers + Paint Weights (#34)
 

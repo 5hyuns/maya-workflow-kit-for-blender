@@ -750,7 +750,7 @@ MAP.update({
     "Mesh/Smooth Proxy/Both Proxy and Subdiv Display": ("allset.smooth_proxy", {"action": 'BOTH'}),
     # Edit Mesh
     "Edit Mesh/Detach": "allset.detach",
-    "Edit Mesh/Transform": ("tool", "builtin.transform", True),
+    "Edit Mesh/Transform": ("v3d", "allset.transform_component", {}),   # polyMoveFace / Edge / Vertex
     "Edit Mesh/Flip": ("v3d", "transform.mirror", {"orient_type": 'LOCAL', "constraint_axis": (True, False, False)}),
     "Edit Mesh/Edit Edge Flow": "allset.edge_flow",
     "Edit Mesh/Wedge": "allset.wedge",

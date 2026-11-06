@@ -52,13 +52,17 @@ NOTICE = "Edit-mode operations have no history in Blender: only the last one can
 class Spec:
     """One kind of Maya modeling node the kit records (edge / vertex extrusion, bevel).
 
-    ``hidden`` = values ``build`` reads that show no row; ``with_object``: ``build`` also gets ``ob=``.
+    ``hidden`` = values ``build`` reads that show no row; ``view_fields`` = the In-View Editor rows (default: all); ``with_object``: ``build`` also gets ``ob=``.
     ``kinds`` = Channel Box text kind per field (cb_entry: "NONE" float, "INT", "BOOL"); ``arrow`` = the field the
     In-View manipulator arrow drags (None: no arrow); ``edit_op`` = the operator that rebuilds the node with new
     values (one undo step); ``build(bm, params, unit)`` (not FACE) -> the vertices to track."""
 
     def __init__(self, kind, node, fields, labels, defaults, kinds, arrow, edit_op, build=None, node_type=None,
-                 manip=(), in_view=True, object_check=None, pre_uv=False, hidden=(), with_object=False):
+                 manip=(), in_view=True, object_check=None, pre_uv=False, hidden=(), with_object=False,
+                 view_fields=None, component=None, full_manip=False):
+        self.view_fields = tuple(view_fields if view_fields is not None else fields)   # In-View Editor rows
+        self.component = component             # 'FACE' / 'EDGE' / 'VERTEX': where its manipulator points
+        self.full_manip = full_manip           # every Local Translate / Local Scale handle (else only its arrow)
         self.hidden = tuple(hidden)            # values build reads that have no row (an option-window setting)
         self.with_object = with_object         # build(bm, params, unit, ob=...) also gets the object
         self.pre_uv = pre_uv                   # a rerun on the same mesh also needs the same UVs (UV projections)

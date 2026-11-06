@@ -6330,6 +6330,12 @@
   "Labels/operators/motion_trail_edit": {
    "Move Motion Trail Key": "Move Motion Trail Key"
   },
+  "Labels/operators/move_component": {
+   "Random": "Random",
+   "Scale each vertex move by a random amount": "Scale each vertex move by a random amount",
+   "Transform Component": "Transform Component",
+   "polyMoveFace": "polyMoveFace"
+  },
   "Labels/operators/multi_cut": {
    "Exit Multi-Cut": "Exit Multi-Cut",
    "Multi-Cut": "Multi-Cut",
@@ -9423,6 +9429,10 @@
   },
   "Tooltips/operators/motion_trail_edit": {
    "Pick a key on a motion trail and drag it to move the object's location keys at that frame": "Pick a key on a motion trail and drag it to move the object's location keys at that frame"
+  },
+  "Tooltips/operators/move_component": {
+   "Change the last Transform Component (Maya: edit the polyMoveFace / polyMoveEdge / polyMoveVertex node).\nBlender keeps no edit-mode history, so only the last one can be changed": "Change the last Transform Component (Maya: edit the polyMoveFace / polyMoveEdge / polyMoveVertex node).\nBlender keeps no edit-mode history, so only the last one can be changed",
+   "Transform the selected faces, edges or vertices with history (Maya Edit Mesh > Transform): move, rotate and\nscale them along their normal with the manipulator, the In-View Editor or Channel Box INPUTS": "Transform the selected faces, edges or vertices with history (Maya Edit Mesh > Transform): move, rotate and\nscale them along their normal with the manipulator, the In-View Editor or Channel Box INPUTS"
   },
   "Tooltips/operators/multi_cut": {
    "Leave the Multi-Cut tool for the Select tool (Maya Esc / Q in the tool)": "Leave the Multi-Cut tool for the Select tool (Maya Esc / Q in the tool)",
