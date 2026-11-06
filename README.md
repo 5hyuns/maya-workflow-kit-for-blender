@@ -368,6 +368,7 @@ With Maya mode on. Every Maya hotkey and its Blender counterpart is listed in Ma
 | Undo / redo | Z or Ctrl+Z / Shift+Z |
 | Duplicate / with transform / special | Ctrl+D / Shift+D / Ctrl+Shift+D |
 | Group / parent / unparent | Ctrl+G / P / Shift+P |
+| Repeat last command / at the mouse | G / Shift+G |
 | Delete history | Alt+Shift+D |
 | Hide / show | Ctrl+H / Shift+H |
 | Set key / key T, R, S | S / Shift+W, Shift+E, Shift+R |
