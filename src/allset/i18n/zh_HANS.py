@@ -5112,6 +5112,8 @@ STRINGS = {
     'Panel toolbar: watch for a right-click on the camera icon': '面板工具栏：监视摄像机图标上的右键单击',
     "Right-click on the panel toolbar's camera icon: the scene's cameras": '在面板工具栏的摄像机图标上右键单击：场景的摄像机',
     "The scene's cameras: pick one to look through it in this view": '场景的摄像机：选择一个即在此视图中通过它观察',
+    'Insert control points on the selected curve points (Maya Curves > Insert Knot): between two neighbours, or after a lone point': '在选定的曲线点上插入控制点 (Maya 曲线 > 插入节点)：在两个相邻点之间，或在单独的点之后',
+    'Number of knots to insert': '要插入的节点数',
     'Channel Box: remember the channel under the mouse and watch for a drag over the rows': '通道盒：记住鼠标下的通道，并监视在行上的拖动',
     'Choose an existing center edge to establish topology correspondence': '选择一条现有的中心边来建立拓扑对应关系',
     'Choose the project folder: file dialogs open in its scenes folder, renders go to its images folder\n(Maya File > Set Project; Blender has no projects)': '选择项目文件夹：文件对话框在其 scenes 文件夹中打开，渲染输出到其 images 文件夹\n(Maya 文件 > 设置项目；Blender 没有项目)',

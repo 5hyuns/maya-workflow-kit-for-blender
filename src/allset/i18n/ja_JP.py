@@ -5112,6 +5112,8 @@ STRINGS = {
     'Panel toolbar: watch for a right-click on the camera icon': 'パネルツールバー: カメラアイコンの右クリックを監視',
     "Right-click on the panel toolbar's camera icon: the scene's cameras": 'パネルツールバーのカメラアイコンを右クリック: シーンのカメラ',
     "The scene's cameras: pick one to look through it in this view": 'シーンのカメラ: 選ぶとこのビューでそのカメラから見ます',
+    'Insert control points on the selected curve points (Maya Curves > Insert Knot): between two neighbours, or after a lone point': '選択したカーブポイントにコントロールポイントを挿入 (Maya のカーブ > ノットの挿入): 隣り合う 2 点の間、または単独の点の後ろ',
+    'Number of knots to insert': '挿入するノット数',
     'Channel Box: remember the channel under the mouse and watch for a drag over the rows': 'チャンネルボックス: マウス下のチャンネルを記憶し、行の上でのドラッグを監視',
     'Choose an existing center edge to establish topology correspondence': 'トポロジの対応を確立するため、既存の中央エッジを選択',
     'Choose the project folder: file dialogs open in its scenes folder, renders go to its images folder\n(Maya File > Set Project; Blender has no projects)': 'プロジェクトフォルダを選択: ファイルダイアログはその scenes フォルダで開き、レンダーはその images フォルダへ\n(Maya の ファイル > プロジェクトの設定。Blender にはプロジェクトがありません)',

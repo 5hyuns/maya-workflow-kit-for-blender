@@ -41,7 +41,7 @@ BY_COMMAND = {
     "CreateNURBSCircle": (_create('NURBS_CIRCLE'), 'CURVE_NCIRCLE'),
     "EPCurveTool": ("allset.ep_curve_tool", 'CURVE_NCURVE'),
     "CreateBezierCurveTool": (_create('BEZIER_CURVE'), 'CURVE_BEZCURVE'),
-    "InsertKnot": ("curve.subdivide", 'CURVE_PATH'),
+    "InsertKnot": ("allset.curve_insert_knot", 'CURVE_PATH'),
     "CreateNURBSSphere": (_create('NURBS_SPHERE'), 'SURFACE_NSPHERE'),
     "CreateNURBSCylinder": (_create('NURBS_CYLINDER'), 'SURFACE_NCYLINDER'),
     "CreateNURBSPlane": (_create('NURBS_PLANE'), 'SURFACE_NSURFACE'),

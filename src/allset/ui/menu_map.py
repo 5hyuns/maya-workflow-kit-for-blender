@@ -390,7 +390,7 @@ MAP = {
     "Mesh Display/Paint Vertex Color Tool": "paint.vertex_paint_toggle",
     # --- Curves ---
     "Curves/Open/Close": "curve.cyclic_toggle",
-    "Curves/Insert Knot": "curve.subdivide",
+    "Curves/Insert Knot": "allset.curve_insert_knot",      # operators/curves_maya.py (Blender Subdivide)
     "Curves/Smooth": "allset.curve_smooth_curves",    # Maya smoothCurve on CVs, ends kept
     "Curves/Reverse Direction": "curve.switch_direction",
     # --- Deform (Modeling, Rigging, Animation share it) ---

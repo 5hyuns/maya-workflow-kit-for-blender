@@ -454,6 +454,65 @@ class ALLSET_OT_curve_move_seam(_CurveOp, bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_curve_rebuild, ALLSET_OT_curve_attach, ALLSET_OT_curve_detach, ALLSET_OT_curve_cut,
+def _spline_points(sp):
+    """(points, select attribute) of a spline: Bezier control points or NURBS / poly points."""
+    if sp.type == 'BEZIER':
+        return sp.bezier_points, "select_control_point"
+    return sp.points, "select"
+
+
+def knot_pairs(selected, n, cyclic):
+    """Indices to select so Blender's Subdivide inserts points: every selected point that has no selected neighbour
+    takes its next point (the previous one at the end of an open curve). ``selected``: indices of the selected
+    points of a spline with ``n`` points. Returns the indices to add (empty: nothing to insert between)."""
+    sel = set(selected)
+    add = set()
+    for i in sorted(sel):
+        nxt = (i + 1) % n if cyclic else i + 1
+        prv = (i - 1) % n if cyclic else i - 1
+        if (0 <= nxt < n and nxt in sel and nxt != i) or (0 <= prv < n and prv in sel and prv != i):
+            continue
+        if 0 <= nxt < n and nxt != i:
+            add.add(nxt)
+        elif 0 <= prv < n and prv != i:
+            add.add(prv)
+    return add
+
+
+class ALLSET_OT_curve_insert_knot(bpy.types.Operator):
+    """Insert control points on the selected curve points (Maya Curves > Insert Knot): between two neighbours, or after a lone point"""
+    bl_idname = "allset.curve_insert_knot"
+    bl_label = "Insert Knot"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    number: IntProperty(name="Number of knots to insert", default=1, min=1, max=100)
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode in {'OBJECT', 'EDIT_CURVE'} and any(o.type == 'CURVE' for o in context.selected_objects)
+
+    def execute(self, context):
+        if context.mode != 'EDIT_CURVE':
+            self.report({'WARNING'}, "Select curve points first (right-click a curve > Control Vertex)")
+            return {'CANCELLED'}
+        found = False
+        for ob in context.objects_in_mode:
+            if ob.type != 'CURVE':
+                continue
+            for sp in ob.data.splines:
+                pts, attr = _spline_points(sp)
+                sel = [i for i, p in enumerate(pts) if getattr(p, attr)]
+                if not sel or len(pts) < 2:
+                    continue
+                found = True
+                for i in knot_pairs(sel, len(pts), sp.use_cyclic_u):
+                    setattr(pts[i], attr, True)
+        if not found:
+            self.report({'WARNING'}, "Select curve points first: two neighbouring points, or one point")
+            return {'CANCELLED'}
+        return bpy.ops.curve.subdivide(number_cuts=self.number)
+
+
+classes = (ALLSET_OT_curve_insert_knot, ALLSET_OT_curve_rebuild, ALLSET_OT_curve_attach, ALLSET_OT_curve_detach, ALLSET_OT_curve_cut,
            ALLSET_OT_curve_fillet, ALLSET_OT_curve_straighten, ALLSET_OT_curve_move_seam,
            ALLSET_OT_curve_smooth_curves)
