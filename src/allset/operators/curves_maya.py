@@ -479,9 +479,9 @@ def point_params(sp, c):
 def knot_targets(c, params, selected, between=False, number=1, set_to=False):
     """Knots to insert, as sorted [(u, times)], for the points ``selected`` (indices into ``params``).
 
-    At selection: a knot at each selected point; a point where no knot can go (a curve end, or a knot that is
-    already full: Bezier / poly points) gives the middle between it and the next point instead (the one before at
-    the end). Increase by: ``number`` more; Set to: up to ``number`` in all. A knot never exceeds the degree.
+    At selection: a knot at each selected point; a curve end gives none (like Maya, the curve stays as it is); a
+    knot that is already full (Bezier / poly points) gives the middle between it and the next point instead (the
+    one before at the last point). Increase by: ``number`` more; Set to: up to ``number`` in all. A knot never exceeds the degree.
     Between selections: a knot at each selected point plus ``number`` evenly spaced between neighbouring ones.
     """
     a, b = _domain(c)
@@ -493,6 +493,9 @@ def knot_targets(c, params, selected, between=False, number=1, set_to=False):
 
     def open_at(u):
         return a + eps < u < b - eps and mult(u) < deg
+
+    def at_end(u):
+        return _is_end(c, u, eps)
 
     want = {}
 
@@ -515,6 +518,8 @@ def knot_targets(c, params, selected, between=False, number=1, set_to=False):
     spots = set()
     for i in sel:
         u = params[i]
+        if at_end(u):
+            continue
         if not open_at(u):
             j = i + 1 if i + 1 < len(params) else i - 1
             if j < 0:
@@ -524,6 +529,11 @@ def knot_targets(c, params, selected, between=False, number=1, set_to=False):
     for u in sorted(spots):
         add(u, max(0, number - mult(u)) if set_to else number)
     return sorted(want.items())
+
+
+def _is_end(c, u, eps=1e-9):
+    a, b = _domain(c)
+    return u <= a + eps or u >= b - eps
 
 
 def apply_knots(c, targets):
@@ -596,7 +606,7 @@ class ALLSET_OT_curve_insert_knot(bpy.types.Operator):
             self.report({'WARNING'}, "Select curve points first (right-click a curve > Control Vertex)")
             return {'CANCELLED'}
         picks = []          # (object, spline index, curve, targets)
-        found = skipped = 0
+        found = skipped = ends = 0
         for ob in context.objects_in_mode:
             if ob.type != 'CURVE':
                 continue
@@ -610,16 +620,20 @@ class ALLSET_OT_curve_insert_knot(bpy.types.Operator):
                 if sp.use_cyclic_u or not _writable(c):
                     skipped += 1
                     continue
-                targets = knot_targets(c, point_params(sp, c), sel, self.location == 'BETWEEN', self.number,
-                                       self.mode == 'SET')
+                params = point_params(sp, c)
+                targets = knot_targets(c, params, sel, self.location == 'BETWEEN', self.number, self.mode == 'SET')
                 if targets:
                     picks.append((ob, si, c, targets))
+                elif all(_is_end(c, params[i]) for i in sel):
+                    ends += 1
         if not found:
             self.report({'WARNING'}, "Select curve points first: one point, or two points to insert between")
             return {'CANCELLED'}
         if not picks:
             if skipped:
                 self.report({'WARNING'}, "Insert Knot works on open curves of degree 1 or 3")
+            elif ends == found:
+                return {'CANCELLED'}       # only curve ends selected: nothing changes, like Maya
             else:
                 self.report({'WARNING'}, "No knot to insert there (a curve end, or the knots are already full)")
             return {'CANCELLED'}

@@ -1,7 +1,8 @@
 """#321: Curves > Insert Knot (menu and shelf) inserts knots at the selected curve points and keeps the curve shape,
 like Maya: Insert location At selection / Between selections, Multiplicity Increase by / Set to, Keep original.
-A selected NURBS CV stands for the curve point where it pulls most; a Bezier / poly point (or a curve end) gives
-the middle between it and the next point. With no curve point selected it warns and changes nothing."""
+A selected NURBS CV stands for the curve point where it pulls most; a Bezier / poly point gives the middle between
+it and the next point; a curve end changes nothing, like Maya. With no curve point selected it warns and changes
+nothing."""
 
 from importlib import import_module
 
@@ -101,9 +102,10 @@ def test_knot_targets_like_maya():
     got = kt(c, [0.2, 0.4, 0.9], [0, 1, 2], between=True)
     assert [round(u, 6) for u, _ in got] == [0.2, 0.3, 0.4, 0.65, 0.9], got
     assert kt(c, p, [0], between=True) == kt(c, p, [0]), "one point: like At selection"
-    # a curve end gives the middle towards the next point (the one before at the last point)
-    assert kt(c, [0.0, 0.5, 1.0], [0]) == [(0.25, 1)]
-    assert kt(c, [0.0, 0.5, 1.0], [2]) == [(0.75, 1)]
+    # a curve end gives no knot, like Maya
+    assert kt(c, [0.0, 0.5, 1.0], [0]) == []
+    assert kt(c, [0.0, 0.5, 1.0], [2]) == []
+    assert kt(c, [0.0, 0.5, 1.0], [0, 1]) == [(0.5, 1)]
 
 
 def test_set_to_counts_the_knots_there():
@@ -178,8 +180,12 @@ def test_bezier_and_poly_points():
     bpy.ops.curve.primitive_bezier_curve_add()
     ob = bpy.context.active_object
     before = cmaya.read_spline(ob.data.splines[0])
-    _edit(ob, {0})                          # a Bezier point: the middle of the segment after it
-    assert bpy.ops.allset.curve_insert_knot() == {'FINISHED'}
+    _edit(ob, {0})                          # a curve end: nothing changes, like Maya
+    assert bpy.ops.allset.curve_insert_knot() == {'CANCELLED'}
+    bpy.ops.object.mode_set(mode='OBJECT')
+    assert _count(ob) == 2
+    _edit(ob, {0, 1})                       # between the two ends: one knot in the middle
+    assert bpy.ops.allset.curve_insert_knot(location='BETWEEN') == {'FINISHED'}
     bpy.ops.object.mode_set(mode='OBJECT')
     assert _count(ob) == 3
     _same_shape(before, ob.data.splines[0], [0, 0, 0, 0.5, 0.5, 0.5, 1, 1, 1])
@@ -194,6 +200,16 @@ def test_bezier_and_poly_points():
     bpy.ops.object.mode_set(mode='OBJECT')
     pts = [tuple(round(x, 6) for x in p.co[:3]) for p in ob.data.splines[0].points]
     assert pts == [(0, 0, 0), (1, 0, 0), (1, 0.5, 0), (1, 1, 0)], pts
+
+
+def test_curve_end_changes_nothing():
+    for end in (0, 3):
+        ob = _curve()
+        before = [tuple(p.co) for p in ob.data.splines[0].points]
+        _edit(ob, {end})
+        assert bpy.ops.allset.curve_insert_knot() == {'CANCELLED'}
+        bpy.ops.object.mode_set(mode='OBJECT')
+        assert [tuple(p.co) for p in ob.data.splines[0].points] == before and ob.data.splines[0].type == 'NURBS'
 
 
 def test_nothing_selected_or_object_mode():
