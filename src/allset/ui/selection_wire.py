@@ -30,6 +30,11 @@ The kit draws the edges itself (POST_VIEW):
   colour of its nearest selected ancestor (Maya: group1
   (selected) -> pCube1 white, pCube2 (lead) -> pCube3 green). Without it a child in front of its selected parent hid
   the parent's wire (step-154 dogfood 09: side view, pCube2 under pCube1 in front of it) — ``highlighted``.
+- #330: Rendered shading draws the wire too. Maya highlights a selection in a lit, shadowed view as well,
+  and the Maya layout keeps Blender's outline off, so a selection in Rendered shading (EEVEE, Cycles) had no
+  highlight at all. The depth test works there: EEVEE writes the view's depth, and for an external engine
+  Blender draws a depth pass of the objects while overlays are on. The one rule (``view_draws``) is Blender's
+  own for its outline: overlays on. The IPR window's picture turns its overlays off, so it stays clean.
 """
 
 import bpy
@@ -345,10 +350,16 @@ def depth_bias(ob, depsgraph, projection, viewport):
         return 0.0
 
 
+def view_draws(space):
+    """This 3D View gets the selection wire: overlays on, in every shading mode (Solid, Material Preview and
+    Rendered alike, as Blender's own outline). A view with overlays off, like the IPR picture, draws nothing."""
+    return bool(space.overlay.show_overlays)
+
+
 def _draw():
     context = bpy.context
     space, rv3d = context.space_data, context.region_data
-    if rv3d is None or not space.overlay.show_overlays or space.shading.type == 'RENDERED':
+    if rv3d is None or not view_draws(space):
         return
     from ..operators import live
     live_obs = live_wire_objects(context)
