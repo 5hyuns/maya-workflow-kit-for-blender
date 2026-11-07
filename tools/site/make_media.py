@@ -67,24 +67,33 @@ def probe(p):
         return im.width, im.height, None
 
 def main():
-    only = set(sys.argv[1:])
+    # groups: "video" / "stills"; a group may name its items: "video:trailer,hotbox" "stills:switch_before,og"
+    only = dict(a.split(":", 1) if ":" in a else (a, "") for a in sys.argv[1:])
+    names = lambda g: set(n for n in only.get(g, "").split(",") if n)   # noqa: E731
     if not only or "video" in only:
+        want = names("video")
         for c in CLIPS:
             src = MK / "clips" / f"{c}.mp4"; stem = c.split("_", 1)[1]
+            if want and stem not in want: continue
             mp4(src, OUT / f"{stem}.mp4", 1_200_000)
             webm(src, OUT / f"{stem}.webm", 900_000)
             poster(src, stem, 0.5)
-        src = MK / "clips/00_trailer.mp4"
-        mp4(src, OUT / "trailer.mp4", 4_000_000)
-        webm(src, OUT / "trailer.webm", 3_000_000)
-        poster(src, "trailer", 0)
+        if not want or "trailer" in want:
+            src = MK / "clips/00_trailer.mp4"
+            mp4(src, OUT / "trailer.mp4", 4_000_000)
+            webm(src, OUT / "trailer.webm", 3_000_000)
+            poster(src, "trailer", 0)
     if not only or "stills" in only:
-        for n in RAW: still(n)
-        shutil.copyfile(MK / "kit/social_preview.png", OUT / "og.png")
-        master = Image.open(MK / "icon/icon_1024.png").convert("RGBA")        # icon master (link_a)
-        master.resize((256, 256), Image.LANCZOS).save(OUT / "icon-256.png", optimize=True)
-        master.resize((180, 180), Image.LANCZOS).save(OUT / "favicon-180.png", optimize=True)
-        Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
+        want = names("stills")
+        for n in RAW:
+            if not want or n in want: still(n)
+        if not want or "og" in want:
+            shutil.copyfile(MK / "kit/social_preview.png", OUT / "og.png")
+        if not want or "icons" in want:
+            master = Image.open(MK / "icon/icon_1024.png").convert("RGBA")        # icon master (link_a)
+            master.resize((256, 256), Image.LANCZOS).save(OUT / "icon-256.png", optimize=True)
+            master.resize((180, 180), Image.LANCZOS).save(OUT / "favicon-180.png", optimize=True)
+            Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
     files, total = [], 0
     for p in sorted(OUT.iterdir()):
         if p.name == "media.json" or p.name.startswith("_") or p.suffix == ".json": continue   # *.webp.json = image provenance

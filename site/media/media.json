@@ -98,7 +98,7 @@
     },
     {
       "path": "media/og.png",
-      "bytes": 280775,
+      "bytes": 288041,
       "width": 1280,
       "height": 640
     },
@@ -156,85 +156,85 @@
     },
     {
       "path": "media/shot-hero-800.webp",
-      "bytes": 39708,
+      "bytes": 44378,
       "width": 800,
       "height": 450
     },
     {
       "path": "media/shot-hero.jpg",
-      "bytes": 190134,
+      "bytes": 209301,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/shot-hero.webp",
-      "bytes": 106308,
+      "bytes": 124420,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/shot-menus_shelves-800.webp",
-      "bytes": 26756,
+      "bytes": 27296,
       "width": 800,
       "height": 450
     },
     {
       "path": "media/shot-menus_shelves.jpg",
-      "bytes": 143613,
+      "bytes": 146111,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/shot-menus_shelves.webp",
-      "bytes": 73836,
+      "bytes": 75048,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/shot-switch_before-800.webp",
-      "bytes": 24186,
+      "bytes": 27478,
       "width": 800,
       "height": 450
     },
     {
       "path": "media/shot-switch_before.jpg",
-      "bytes": 149193,
+      "bytes": 163203,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/shot-switch_before.webp",
-      "bytes": 74790,
+      "bytes": 86552,
       "width": 1600,
       "height": 900
     },
     {
       "path": "media/trailer.jpg",
-      "bytes": 92596,
+      "bytes": 96320,
       "width": 1280,
       "height": 720
     },
     {
       "path": "media/trailer.mp4",
-      "bytes": 3951743,
+      "bytes": 3570099,
       "width": 1280,
       "height": 720,
       "duration": 33.5
     },
     {
       "path": "media/trailer.webm",
-      "bytes": 2838876,
+      "bytes": 2851529,
       "width": 1280,
       "height": 720,
       "duration": 33.5
     },
     {
       "path": "media/trailer.webp",
-      "bytes": 57176,
+      "bytes": 60028,
       "width": 1280,
       "height": 720
     }
   ],
-  "total_bytes": 18757503,
+  "total_bytes": 18477617,
   "count": 37
 }

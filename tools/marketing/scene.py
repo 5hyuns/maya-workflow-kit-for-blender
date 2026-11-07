@@ -578,7 +578,10 @@ def shading(kind='MATERIAL', rotate=0.0, intensity=1.0, clip_end=None):
             ov.show_bones = False                    # bones only in the rigging shots
             ov.show_relationship_lines = False
             if hasattr(sp, "show_region_asset_shelf"):
-                sp.show_region_asset_shelf = False
+                try:
+                    sp.show_region_asset_shelf = False
+                except AttributeError:      # read-only in Blender 5.2 while the view has no asset shelf
+                    pass
             if clip_end:
                 sp.clip_end = clip_end
 
