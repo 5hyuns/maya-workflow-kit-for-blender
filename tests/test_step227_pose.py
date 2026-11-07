@@ -6,7 +6,7 @@ arm shoulder (0,0,0) -> elbow (4,0,-1) -> wrist (8,0,0), ``joint -oj xyz
 -sao yup``, interpolator on the elbow, pose ``elbowBent`` at elbow rotate (0, 0, -90); the rows are the pose's output
 weight at elbow rotations (Maya XYZ Euler degrees). The kit's weight = Maya's Linear swing ratio inside the neutral ->
 pose arc and ignores twist about the driver axis (asserted at 1e-4); outside the arc, swing in another plane and two
-poses are Maya RBF values the per-pose driver doesn't reproduce (printed as deviations)."""
+poses follow Maya's RBF, which the per-pose driver doesn't reproduce (those cases are only exercised)."""
 
 import math
 from importlib import import_module

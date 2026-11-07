@@ -20,7 +20,7 @@ Kit: shape keys + **simple-expression drivers** (no Python auto-run needed):
   weight = max(0, 1 - phi / theta0) with r = head -> tip length and theta0 = the neutral -> pose angle (inline
   constants). Twist about the twist axis doesn't move the tip, so it is ignored like Maya; inside the neutral -> pose
   arc the weight equals Maya's swing ratio exactly. Outside it (past the pose, the other side of neutral, swing in
-  another plane) and with several poses Maya's RBF differs (tests/test_step227_pose.py prints the deviations);
+  another plane) and with several poses Maya's RBF differs (tests/test_step227_pose.py covers the cases);
 - Add Shape = a shape key named after the pose on the skinned mesh, value driver ``w`` = the interpolator's
   ``["<pose>"]`` (Maya connects the output straight to the target weight). Blender shape keys evaluate before every
   modifier, so the corrective sits in front of the Armature modifier like Maya's frontOfChain blendShape.

@@ -466,7 +466,7 @@ SOCCER_NET = {1: 0, 5: 1, 8: 1, 10: 1, 2: 5, 7: 5, 15: 5, 4: 8, 13: 8, 19: 8, 3:
 # a separate shell.
 SOCCER_UV_SHIFT = {6: 1}
 # Net placement (Create UVs = Normalize Collectively and Preserve Aspect Ratio): width 1 (an edge = 2 / 31), u from
-# 0, v from 0.2 [I: Maya 0.2; centring the net would give 0.2052]; face 0's first edge points 240 degrees.
+# 0, v from 0.2 (the net is not centred); face 0's first edge points 240 degrees.
 SOCCER_UV_V0, SOCCER_ROOT_DIR = 0.2, 240.0
 
 _SOCCER_CACHE = []

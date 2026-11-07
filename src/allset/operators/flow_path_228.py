@@ -10,14 +10,13 @@ Blender construction:
 - the kit lattice deformer (``deformers.create('LATTICE')``: ``ffd1`` Lattice modifier + ``ffd1Base`` Hook
   + ``ffd1Lattice``, Front / Up / Side = lattice u / w / v), interpolation Linear;
 - the lattice gets a Curve modifier ``flow1`` on the path (Blender's Curve modifier maps curve-space X to the distance
-  along the path and offsets Y / Z in the path frame — the same placement as Maya's flow node: the lattice end points
-  match Maya to 1e-4 at frames 30 / 60 / 90) and a shape key ``flow1`` that shifts every point along the path by
+  along the path and offsets Y / Z in the path frame — the same placement as Maya's flow node) and a shape key
+  ``flow1`` that shifts every point along the path by
   the path length, its value driven by the object's Follow Path ``offset_factor`` (= Maya motionPath uValue as a
   fraction); the object's own Follow Path constraint is muted (the lattice now carries the motion);
-- deviation: Maya's ffd with Local off is a global Bernstein (Bezier) volume over the 5 x 2 x 2 points
-  (matched offline to 1e-4); Blender lattices interpolate Linear / Cardinal / Catmull-Rom / B-spline only, Linear is
-  closest (max 0.075 on the 4-unit test cylinder); beyond the path ends Blender extrapolates along
-  the end tangent, Maya differently (0.043 at frames 1 / 120).
+- difference: Maya's ffd with Local off is a global Bernstein (Bezier) volume over the 5 x 2 x 2 points; Blender
+  lattices interpolate Linear / Cardinal / Catmull-Rom / B-spline only, and Linear is the closest; beyond the path
+  ends Blender extrapolates along the end tangent, Maya differently.
 """
 
 import json

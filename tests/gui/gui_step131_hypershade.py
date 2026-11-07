@@ -112,7 +112,7 @@ def s_layout():
     C["rects"] = (r, width, height)
     print("hypershade rects", width, height, r)
     diff = layout.compare(r, width, height)
-    print("hypershade vs maya", diff)
+    print("hypershade layout difference", diff)
     hs = mod(".ui.hypershade")
     strip = hs.menu_area(w.screen)
     print("strip regions", [(rg.type, rg.x, rg.y, rg.width, rg.height) for rg in strip.regions],

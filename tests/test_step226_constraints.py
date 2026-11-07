@@ -35,7 +35,7 @@ EXPECTED = {
     # jointOrientZ 30 -> the matched ctrl t (5, 2, 1), r (0, 0, 30)
     "match": {"t": (5.0, 2.0, 1.0), "r": (0.0, 0.0, 30.0)},
 }
-DEVIATIONS = {}     # kit - Maya differences that are not faked (logged at the end)
+DEVIATIONS = {}     # slerp / nlerp differences that are not faked (logged at the end)
 
 
 def _u():
@@ -381,4 +381,4 @@ def test_unregister_leaves_no_handler():
 
 
 def test_zz_report_deviations():
-    print("STEP226 DEVIATIONS (kit - Maya, slerp vs nlerp):", {k: round(v, 5) for k, v in DEVIATIONS.items()})
+    print("constraint DEVIATIONS (slerp vs nlerp):", {k: round(v, 5) for k, v in DEVIATIONS.items()})

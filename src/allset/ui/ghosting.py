@@ -45,8 +45,8 @@ FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3,
 EDITOR_KEY = "ghosting_editor"                             # option_windows key of the Ghosting Editor
 # ACEScg (AP1) -> linear Rec.709, Bradford D60 -> D65 (the matrix OCIO's ACES configs use)
 AP1_TO_709 = ((1.70505, -0.62179, -0.08326), (-0.13026, 1.14080, -0.01055), (-0.02400, -0.12897, 1.15297))
-GHOST_GAIN = 0.34      # shaded: fitted to Maya's ghost colours (front faces)
-WIRE_GAIN = 0.78       # wireframe: fitted to Maya's wireframe ghost alpha / colour
+GHOST_GAIN = 0.34      # shaded: gives Maya's ghost colours (front faces)
+WIRE_GAIN = 0.78       # wireframe: gives Maya's wireframe ghost alpha / colour
 DEPTH_BIAS = 2e-5
 
 _geom = {}             # (object session_uid, frame) -> (tri positions, tri normals, edge positions) numpy float32

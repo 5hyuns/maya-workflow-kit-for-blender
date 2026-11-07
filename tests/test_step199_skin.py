@@ -805,7 +805,7 @@ def test_move_weights_three_influences_matches_maya():
     r = bpy.ops.allset.move_skin_weights(source="joint2", targets="joint3,joint4")
     assert r == {'FINISHED'}, r
     d = _max_diff(_rows(mesh, MOVE_NAMES), MOVE_THREE_AFTER)
-    assert d < TOL, f"Interactive move differs from Maya by {d}"
+    assert d < TOL, f"Interactive move: largest weight difference {d}"
 
 
 def test_move_weights_locked_and_post_match_maya():
@@ -1067,8 +1067,8 @@ def test_bake_deformation_with_a_deformer_matches_maya():
     src, dst = _bake_scene(BAKE_SRC_W, CLUSTER)
     bpy.ops.allset.bake_deformation(max_influences=3)
     got = _rows(dst, ["j1", "j2", "j3"])
-    # vertices 12-15 have cluster weight 0.5: Maya's bake gives them about the result of
-    # weight 1 (j2 0.999), the kit fits their real deformation (j1 0.43 / j2 0.57) -
+    # vertices 12-15 have cluster weight 0.5: Maya's bake treats them about like weight 1, the kit fits their
+    # real deformation, so they stay out of the check -
     full = [i for i in range(len(got)) if i not in (12, 13, 14, 15)]
     d = max(abs(got[i][k] - BAKE_AFTER[i][k]) for i in full for k in range(3))
     assert d < TOL, f"skin + cluster source: {d}\n{got}"

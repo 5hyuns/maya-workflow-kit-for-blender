@@ -90,7 +90,7 @@ LOCATOR_PROP = "allset_locator"
 # Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
 FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "
-                "the distance (matched to Maya at 10 units).")
+                "the distance (the same brightness as Maya at 10 units).")
 
 MAYA_CAMERA_LENS, MAYA_FILM_MM = 35.0, 36.0
 

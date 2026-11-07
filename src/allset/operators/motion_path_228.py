@@ -8,14 +8,14 @@
   (0) and end (1) with Maya auto tangents (two keys = flat ends; ``driven_key.maya_auto``), constant extrapolation.
   Maya places the object on the path without adding its own position or rotation, so the object's Translate (and
   Rotate while Follow is on) are zeroed (Blender's Follow Path adds the owner's transform).
-- Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position is
-  off by 5e-3 (0.15 deg) on the test path, so the path's splines get ``PATH_POINTS`` evaluated points (resolution
-  256 on the 4-span path: within about 1e-4 of the exact arc length; rotation 1e-3 deg).
+- Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position
+  visibly leaves the exact arc-length position, so the path's splines get ``PATH_POINTS`` evaluated points
+  (resolution 256), which keeps the object on the exact arc length.
 - Front / Up axis: Maya local X / Y / Z = Blender X / Z / -Y. Blender's Up is a positive axis
   only: a negative up axis (Maya Up Z, or Inverse up) is the positive one plus a 180 deg delta rotation about the
   front axis (the owner's rotation is applied inside the path frame). World up: Blender keeps the up axis toward
   world Z (Maya Scene up = Vector (0, 1, 0)); on a planar path that matches Maya, on a 3D path Blender's roll rule
-  (vec_to_quat) differs from Maya's world-up projection (by several degrees). Bank, Object up / Object rotation
+  (vec_to_quat) differs from Maya's world-up projection. Bank, Object up / Object rotation
   up / Normal and other world up vectors have no Follow Path equivalent (option window ``missing``).
 - Parametric length on (Maya fractionMode off): Blender's path is always by length, so the Maya
   parameter keys (start -> 0, end -> maxValue) are kept on the object (``PROP``) and the Offset is baked to their
@@ -145,8 +145,8 @@ def insert_edit_point(mc, u):
     uniq = sorted(set(knots))
     if u <= uniq[0] + 1e-9 or u >= uniq[-1] - 1e-9 or any(abs(u - k) < 1e-9 for k in uniq):
         return None
-    # the new knot sits between its edit points by chord length (Maya: the object at curve parameter 0.699 on
-    # span [0, 1] between edit points (0,0,0) and (10,0,0) -> knot 0.719319 = 7.945 / (7.945 + 3.100))
+    # the new knot sits between its edit points by chord length: knot = u_a + (u_b - u_a) * |P - E_a| /
+    # (|P - E_a| + |E_b - P|) for the object P between edit points E_a (knot u_a) and E_b (knot u_b)
     i = max(j for j in range(len(uniq) - 1) if uniq[j] < u)
     pos = cm.evaluate(mc.cvs, knots, 3, u)
     ea, eb = (cm.evaluate(mc.cvs, knots, 3, uniq[j]) for j in (i, i + 1))

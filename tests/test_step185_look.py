@@ -31,7 +31,7 @@ def test_plane_handle_shape_and_colours():
     draw, pick = m.shapes('PLANE')
     assert [t for t, _v in draw] == ['TRIS', 'LINES'], "fill first, then the rim"
     xs = [v[0] for v in draw[1][1]]
-    assert abs(min(xs) - 0.52) < 1e-6 and abs(max(xs) - 0.68) < 1e-6, "Maya 02: 0.52-0.68 arrow units"
+    assert abs(min(xs) - 0.52) < 1e-6 and abs(max(xs) - 0.68) < 1e-6, "plane handle rim at 0.52-0.68 arrow units, like Maya"
     fill = m.plane_fill((0.9, 0.0, 0.0))
     assert fill[0] > 0.9 and abs(fill[1] - m.PLANE_LIGHTEN) < 1e-6
     assert m.ACTIVE == (0xfd / 255, 1.0, 0x88 / 255) and m.CENTER_IDLE == (0x64 / 255, 0xdc / 255, 1.0)

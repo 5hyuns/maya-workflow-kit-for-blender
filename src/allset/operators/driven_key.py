@@ -340,8 +340,8 @@ def input_value(fc):
 
 def maya_slopes(points):
     """Maya 2026 auto tangent slopes of sorted (x, y) keys (module docstring 1): ends and local extremes flat,
-    else the neighbours' chord slope; the slope is limited so a handle never passes a neighbour's value [U: no
-    known case reaches the limit]."""
+    else the neighbours' chord slope; the slope is limited so a handle never passes a neighbour's value (no
+    known case reaches the limit)."""
     n = len(points)
     out = [0.0] * n
     for i in range(1, n - 1):

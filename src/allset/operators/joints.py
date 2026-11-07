@@ -409,7 +409,7 @@ RADIUS = "allset_radius"
 
 # A Joint Tool click inside a joint's drawn sphere branches from it (Maya 2026: the hit area is the drawn sphere,
 # not a fixed radius). Blender draws an octahedral bone's joint as a sphere of radius
-# JOINT_SPHERE x the bone length (a connected head: the incoming bone's tail sphere) [I: Blender's bone point shape];
+# JOINT_SPHERE x the bone length (a connected head: the incoming bone's tail sphere; Blender's bone point shape);
 # the floor is Maya's click box (select_priority.RADIUS_PX), also the whole hit area of Stick bones.
 JOINT_SPHERE = 0.05
 BRANCH_MIN_PX = 5.0
