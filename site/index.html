@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Maya Workflow Kit — for Maya users, in Blender</title>
-  <meta name="description" content="Maya Workflow Kit is a free, open-source Blender extension for Maya users: hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows, Maya navigation and scene concepts. Nothing changes until you choose Maya.">
+  <meta name="description" content="The Maya workflow in Blender 5.2 LTS: hotbox, marking menus, Channel Box, menu sets, option windows. Free, open source; nothing changes until you choose Maya.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#1e1e1e">
   <link rel="canonical" href="https://5hyuns.github.io/maya-workflow-kit-for-blender/">
@@ -16,6 +16,26 @@
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="640">
   <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Maya Workflow Kit",
+    "applicationCategory": "DesignApplication",
+    "applicationSubCategory": "Blender extension",
+    "operatingSystem": "Blender 5.2 LTS on Windows, macOS or Linux",
+    "softwareVersion": "0.13.0",
+    "softwareRequirements": "Blender 5.2 LTS",
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "isAccessibleForFree": true,
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+    "url": "https://5hyuns.github.io/maya-workflow-kit-for-blender/",
+    "downloadUrl": "https://github.com/5hyuns/maya-workflow-kit-for-blender/releases",
+    "sameAs": "https://github.com/5hyuns/maya-workflow-kit-for-blender",
+    "image": "https://5hyuns.github.io/maya-workflow-kit-for-blender/media/og.png",
+    "description": "A free, open-source Blender extension for Maya users: hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows, Maya navigation and scene concepts. Nothing changes until you choose Maya."
+  }
+  </script>
   <link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32.png">
   <link rel="apple-touch-icon" href="media/favicon-180.png">
   <link rel="preload" href="fonts/InterVariable-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -30,10 +50,11 @@
   <nav aria-label="Sections">
     <ul class="menubar__menu">
       <li><a href="#workflows">Workflows</a></li>
-      <li><a href="#choose">Going back</a></li>
+      <li><a href="#features">Menu sets</a></li>
+      <li><a href="#choose">Safe to try</a></li>
       <li><a href="#install">Install</a></li>
-      <li><a href="#setup">Setup</a></li>
-      <li><a href="#limits">Limits</a></li>
+      <li><a href="#setup">Tips</a></li>
+      <li><a href="#limits">What stays Blender</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
   </nav>
@@ -53,13 +74,13 @@
       menu sets, shelves and option windows, rebuilt on top of Blender's own tools. Installing it changes nothing
       until you choose Maya.</p>
     <div class="hero__actions">
-      <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download the zip</a>
+      <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download for Blender 5.2 LTS</a>
       <a class="btn btn--quiet" href="#tour">Watch the 30-second tour</a>
     </div>
     <p class="hero__meta"><a href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases/tag/v0.13.0" data-version>v0.13.0</a> · November 2026 · Free · GPL-3.0 · Blender 5.2 LTS · pure Python</p>
   </div>
 
-  <div class="maya" id="workflows" aria-label="Workflows">
+  <div class="maya" id="workflows" role="region" aria-label="Workflows">
     <div class="maya__shelf">
       <span class="handle" aria-hidden="true"></span>
       <div class="shelf" role="tablist" aria-label="Maya workflows" data-shelf>
@@ -90,8 +111,15 @@
 
       <aside class="channels" aria-label="What this workflow brings">
         <p class="channels__node" data-node>hotbox</p>
-        <dl class="channels__list" data-facts></dl>
-        <p class="channels__credit" data-credit></p>
+        <dl class="channels__list" data-facts>
+          <dt>Space hold</dt><dd>hotbox, every menu of the menu set</dd>
+          <dt>Space tap</dt><dd>one view or four views</dd>
+          <dt>RMB</dt><dd>marking menu over the object</dd>
+          <dt>Shift / Ctrl+RMB</dt><dd>tool and component menus</dd>
+          <dt>Positions</dt><dd>Maya's radial layout, gestures</dd>
+          <dt>Option box</dt><dd>❒ opens the option window</dd>
+        </dl>
+        <p class="channels__credit" data-credit>DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</p>
       </aside>
     </div>
   </div>
@@ -116,17 +144,17 @@
     </div>
     <div class="switcher__frame">
       <picture data-mode-shot="maya">
-        <source type="image/webp" srcset="media/shot-hero-800.webp 800w, media/shot-hero.webp 1600w" sizes="(min-width: 1100px) 56vw, 100vw">
+        <source type="image/webp" srcset="media/shot-hero-800.webp 800w, media/shot-hero.webp 1600w" sizes="(min-width: 1100px) 52vw, 100vw">
         <img src="media/shot-hero.jpg" width="1600" height="900" loading="lazy" decoding="async"
              alt="Maya mode: Blender with the Maya layout — menu bar, Status Line, Shelf, Tool Box, Outliner, Channel Box — on the DOGWALK scene.">
       </picture>
       <picture data-mode-shot="blender" hidden>
-        <source type="image/webp" srcset="media/shot-switch_before-800.webp 800w, media/shot-switch_before.webp 1600w" sizes="(min-width: 1100px) 56vw, 100vw">
+        <source type="image/webp" srcset="media/shot-switch_before-800.webp 800w, media/shot-switch_before.webp 1600w" sizes="(min-width: 1100px) 52vw, 100vw">
         <img src="media/shot-switch_before.jpg" width="1600" height="900" loading="lazy" decoding="async"
              alt="Plain Blender, as installed: Blender's own layout, keymap and theme, with the welcome dialog and the Maya&nbsp;|&nbsp;Blender switch.">
       </picture>
     </div>
-    <p class="switcher__note"><span data-mode-note>Maya mode — same file, Maya layout and keys.</span><br><span class="credit">DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</span></p>
+    <p class="switcher__note" aria-live="polite"><span data-mode-note>Maya mode — same file, Maya layout and keys.</span><br><span class="credit">DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</span></p>
   </div>
 </section>
 
@@ -234,7 +262,7 @@
   <ol class="steps">
     <li>
       <h3>Get the zip</h3>
-      <p>Download <code>maya-workflow-kit-&lt;version&gt;.zip</code> from
+      <p>Download <code>maya-workflow-kit-0.13.0.zip</code> from
         <a href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">GitHub Releases</a>.
         The extensions.blender.org listing is not live yet.</p>
     </li>
@@ -323,7 +351,7 @@
 
 <section class="close" aria-labelledby="close-title">
   <h2 id="close-title" class="close__title">The tutorial ends. Your Channel Box comes back.</h2>
-  <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download the zip</a>
+  <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download for Blender 5.2 LTS</a>
 </section>
 
 </main>

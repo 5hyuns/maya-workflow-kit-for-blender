@@ -1,7 +1,7 @@
 // Maya Workflow Kit site: the shelf (tabs swap the viewport clip, caption and Channel Box facts), the clip's
 // play / pause button, the Maya | Blender switch and the scroll-fade hints of the menu bar and the shelf.
-// Without JavaScript the first tab's poster, clip sources and markup stay readable; the Channel Box facts are
-// filled from the JSON here.
+// Without JavaScript the first tab's poster, clip sources and Channel Box rows are in the markup; the other tabs'
+// clips and facts come from the JSON at the end of the page.
 (() => {
   const data = JSON.parse(document.getElementById("workflows-data").textContent);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -142,14 +142,13 @@
       if (j !== null) { e.preventDefault(); tabs[j].focus(); }
     });
   });
-  // 1 – 6 pick a shelf tab while the shelf is on screen (not while typing)
+  // 1 – 6 pick a shelf tab while the focus is inside the Maya window (a tab, the panel, the play button)
+  const workflows = document.getElementById("workflows");
   document.addEventListener("keydown", (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey || /input|textarea|select/i.test(e.target.tagName)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || !workflows.contains(document.activeElement)) return;
     const n = Number(e.key);
     if (n >= 1 && n <= tabs.length && shelfVisible) select(tabs[n - 1], true);
   });
-
-  fillFacts(data.hotbox);
 
   // ---------------------------------------------------------------- the tour: its poster loads when the band comes near
   const tour = document.querySelector(".tour video[data-poster]");

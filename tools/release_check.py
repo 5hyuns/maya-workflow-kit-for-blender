@@ -200,8 +200,12 @@ def main(argv=None):
 
     # the product site names the current release in its hero line; a release must not leave the old one there
     version = build.manifest_value("version")
-    stamped = f">v{version}<" in (ROOT / "site" / "index.html").read_text(encoding="utf-8")
-    print("PASS" if stamped else "FAIL", f"site/index.html names the current version v{version}")
+    html = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    found = re.findall(r'(?:\bv|maya-workflow-kit-|"softwareVersion": ")(\d+\.\d+\.\d+)', html)
+    stale = sorted(set(v for v in found if v != version))
+    stamped = bool(found) and not stale
+    print("PASS" if stamped else "FAIL", f"site/index.html names only the current version v{version}"
+          + (f" (found {', '.join(stale)})" if stale else "" if found else " (no version string at all)"))
     ok &= stamped
     # ... and the menu coverage it quotes is the one tools/menu_count.py counts today
     count = subprocess.run([sys.executable, str(ROOT / "tools" / "menu_count.py")], capture_output=True, text=True,

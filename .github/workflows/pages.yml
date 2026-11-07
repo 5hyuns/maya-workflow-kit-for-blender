@@ -28,7 +28,7 @@ jobs:
       - name: Copy the public files only (no notes)
         run: |
           mkdir -p _site
-          rsync -a --exclude '.*' --exclude '*.md' site/ _site/
+          rsync -a --exclude '.*' --exclude '*.md' --exclude 'media/*.json' site/ _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
