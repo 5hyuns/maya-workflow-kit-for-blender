@@ -475,12 +475,20 @@ class ALLSET_MT_le_layers(bpy.types.Menu):
 
 
 def is_layer_button(context):
-    """The button under the mouse belongs to a display layer row (for its RMB menu)."""
+    """The button under the mouse belongs to a display layer row (for its RMB menu): one of its boxes, its
+    name / colour, or the row itself (Blender's list row button, whose property is the list's active index)."""
     op = getattr(context, "button_operator", None)
     if op is not None and op.bl_rna.identifier in ("ALLSET_OT_layer_toggle", "ALLSET_OT_layer_cycle_type"):
         return True
     ptr = getattr(context, "button_pointer", None)
-    return isinstance(ptr, bpy.types.Collection) and getattr(ptr.allset_layer, "is_layer", False)
+    if isinstance(ptr, bpy.types.Collection) and getattr(ptr.allset_layer, "is_layer", False):
+        return True
+    return is_layer_row(context)
+
+
+def is_layer_row(context):
+    prop = getattr(context, "button_prop", None)
+    return prop is not None and getattr(prop, "identifier", "") == "allset_layer_index"
 
 
 def draw_button_menu(self, context):
@@ -492,6 +500,11 @@ def draw_button_menu(self, context):
         return
     if not is_layer_button(context):
         return
+    if is_layer_row(context):
+        # the row button carries no layer: the items act on the current (highlighted) layer, named here
+        sel = active_layer(context)
+        if sel is not None:
+            self.layout.label(text=sel.name, icon='OUTLINER_COLLECTION')
     draw_layer_items(self.layout)
     self.layout.separator()
 

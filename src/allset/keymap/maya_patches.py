@@ -22,6 +22,7 @@ ADDED = []
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
                       "allset.select_priority", "allset.type_char_pick", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
+                      "allset.time_view_lock",
                       "allset.time_slider_menu", "allset.time_range_all", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
@@ -931,6 +932,13 @@ def patch_time_slider(kd):
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "allset.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)
+    # Maya's Time Slider never zooms or scrolls (the Range Slider sets what it shows): View2D's wheel zoom /
+    # scroll and Ctrl+MMB zoom are swallowed in the Timeline, passed through in the Dope Sheet
+    # (any "Dopesheet" item runs before the region's View2D keymap, so these need not be first)
+    for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
+        for mods in ({}, {"ctrl": True}, {"shift": True}):
+            _add(kd, "Dopesheet", "allset.time_view_lock", make_event(wheel, **mods), shadows=TIME_SLIDER_SHADOWS)
+    _add(kd, "Dopesheet", "allset.time_view_lock", make_event("MIDDLEMOUSE", ctrl=True), shadows=TIME_SLIDER_SHADOWS)
     # a double-click highlights the whole visible range (Maya); Blender's double-click item here toggles the
     # channel editability and left its redo panel over the Time Slider (#335)
     _add(kd, "Dopesheet", "allset.time_range_all", make_event("LEFTMOUSE", value="DOUBLE_CLICK"), first=True,

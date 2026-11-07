@@ -9,9 +9,11 @@ animation end). Blender form:
   bpy.types) is wrapped to draw ``draw_header`` below and restored on unregister.
 - Maya's animation range = scene frame_start/end; its playback range = the preview range
   (``use_preview_range`` off: playback = animation range, inner fields greyed).
-- Maya's time slider always shows the playback range: after a file load and whenever the
-  range changes, every Timeline runs ``anim.scene_range_frame`` (a msgbus subscription and
-  a load_post handler defer it to a timer).
+- Maya's time slider always shows exactly the playback range and never zooms or scrolls: every Timeline is
+  framed to the range's frame cells (``fit_timelines``, ``view2d.zoom_border``; a msgbus subscription on the
+  range and a load_post handler defer it to a timer), the WINDOW draw handler re-fits a view that drifted
+  (a resize, Blender's own view operators) and the wheel / Ctrl+MMB zoom are swallowed in the Timeline
+  (``allset.time_view_lock``). The Range Slider is the one control of what the Time Slider shows.
 - LMB on the timeline = time (Shift = red range), RMB = Maya's
   Time Slider menu, MMB = move the time without updating the scene (Maya's MMB drag).
 - The
@@ -82,6 +84,40 @@ def has_slider_panel(space, area=None):
 RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto key", "No Character Set",
                "No Anim Layer", "fps", "loop", "sound", "animation preferences")
 
+# The row's budget in ui units (one unit = 20 px at scale 1). Blender scrolls a header whose layout is wider
+# than the area, which put a scrollbar between the Time Slider and the Range Slider and pushed the end fields out
+# of sight on a short timeline; the bar label is sized so the row always fits, and the optional items at the right
+# go first when it can't (last in the tuple = dropped first).
+ROW_CORE_UNITS = 29.0        # editor-type menu, the four range fields (4 x 4.5), auto key, loop, sound, preferences, gaps
+ROW_TRANSPORT_UNITS = 14.0   # current frame field + 8 transport buttons when they sit in the header
+ROW_OPTIONAL = (("fps", 5.0), ("character_set", 6.0), ("anim_layer", 6.0))
+ROW_MIN_BAR = 8.0            # keep this much bar before dropping an optional item
+
+
+def row_plan(width_units, transport=False):
+    """(bar label units, names of the optional items shown) for a Range Slider row ``width_units`` wide."""
+    from . import range_bar
+    shown = {name for name, _units in ROW_OPTIONAL}
+    bar = width_units - ROW_CORE_UNITS - (ROW_TRANSPORT_UNITS if transport else 0.0) - sum(u for _n, u in ROW_OPTIONAL)
+    for name, units in reversed(ROW_OPTIONAL):
+        if bar >= ROW_MIN_BAR:
+            break
+        shown.discard(name)
+        bar += units
+    bar = max(float(range_bar.MIN_BAR_UNITS), min(float(range_bar.BAR_UNITS), bar))
+    return bar, shown
+
+
+def _row_plan(context):
+    region = context.region
+    unit = 20.0 * (context.preferences.system.ui_scale or 1.0)
+    width = region.width if region is not None and region.type == 'HEADER' else 0
+    if width <= 0:
+        from . import range_bar
+        return float(range_bar.BAR_UNITS), {name for name, _u in ROW_OPTIONAL}
+    space, area = context.space_data, context.area
+    return row_plan(width / unit, transport=not has_slider_panel(space, area))
+
 
 def draw_header(context, layout):
     space, area = context.space_data, context.area
@@ -101,32 +137,32 @@ def draw_header(context, layout):
 
 def draw_range_slider(layout, context):
     scene = context.scene
+    bar_units, shown = _row_plan(context)
     # animation start | playback start [range bar] playback end | animation end
+    # (the playback fields are the range that plays: ui/range_bar.py's allset_playback_start / _end)
     row = layout.row(align=True)
     row.ui_units_x = 4.5
     row.prop(scene, "frame_start", text="")
     row = layout.row(align=True)
     row.ui_units_x = 4.5
-    row.active = scene.use_preview_range
-    row.prop(scene, "frame_preview_start", text="")
+    row.prop(scene, "allset_playback_start", text="")
     # Maya's range bar. In the Maya Workflow Kit layout an empty label holds its place and
     # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
     # widget: the toggle = use the playback range (off = the whole animation range), the button frames it.
     from . import range_bar
     bar = layout.row(align=True)
-    bar.ui_units_x = range_bar.BAR_UNITS
+    bar.ui_units_x = bar_units
     if range_bar.active(context):
-        bar.ui_units_x = range_bar.BAR_UNITS + range_bar.extra_units(context.area)
+        range_bar.plan_units(context.area, bar_units)
+        bar.ui_units_x = max(float(range_bar.MIN_BAR_UNITS), bar_units + range_bar.extra_units(context.area))
         bar.label(text="")
     else:
-        a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \
-            (scene.frame_start, scene.frame_end)
+        a, b = playback_range(scene)
         bar.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
         bar.operator("anim.scene_range_frame", text=f"{a}" + " " * 40 + f"{b}")
     row = layout.row(align=True)
     row.ui_units_x = 4.5
-    row.active = scene.use_preview_range
-    row.prop(scene, "frame_preview_end", text="")
+    row.prop(scene, "allset_playback_end", text="")
     row = layout.row(align=True)
     row.ui_units_x = 4.5
     row.prop(scene, "frame_end", text="")
@@ -147,19 +183,23 @@ def draw_range_slider(layout, context):
     sel = anim_layers.selected(context.scene) if len(ls) > 1 else None
     # Maya's current character field (kit character sets = Keying Sets, operators/character_sets.py)
     ks = scene.keying_sets.active
-    sub = layout.row()
-    sub.ui_units_x = 6
-    sub.menu("ALLSET_MT_character_set_current", text=ks.bl_label if ks is not None else i18n.mark("No Character Set"),
-             icon='DOWNARROW_HLT')
+    if "character_set" in shown:
+        sub = layout.row()
+        sub.ui_units_x = 6
+        sub.menu("ALLSET_MT_character_set_current",
+                 text=ks.bl_label if ks is not None else i18n.mark("No Character Set"), icon='DOWNARROW_HLT')
     for text, on in ((sel.name if sel is not None else i18n.mark("No Anim Layer"), sel is not None),):
+        if "anim_layer" not in shown:
+            continue
         sub = layout.row()
         sub.enabled = on
         sub.ui_units_x = 6
         sub.label(text=text, icon='DOWNARROW_HLT')
-    row = layout.row()
-    row.ui_units_x = 5
-    fps = scene.render.fps / scene.render.fps_base
-    row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
+    if "fps" in shown:
+        row = layout.row()
+        row.ui_units_x = 5
+        fps = scene.render.fps / scene.render.fps_base
+        row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
     row = layout.row(align=True)
     from ..operators import playback_maya
     loop = getattr(scene, "allset_playback_loop", 'CONTINUOUS')
@@ -595,6 +635,7 @@ def _draw_range():
     if _redo_panel_shown(context) and not bpy.app.timers.is_registered(hide_redo_panels):
         bpy.app.timers.register(hide_redo_panels, first_interval=0.0)
     region = context.region
+    _check_view(context, region)
     maya = has_slider_panel(context.space_data)
     if maya:
         _draw_ruler(context, region)
@@ -929,15 +970,74 @@ def timeline_areas(wm):
                     yield win, area, region
 
 
+VIEW_TOL_PX = 0.75          # a view this close to the last fit is left alone
+_fitted = {}                # area pointer -> (target lo, hi, achieved lo, hi, region width, height)
+
+
+def view_target(scene):
+    """The frame span a Maya Time Slider shows: the playback range's frame cells (f - 0.5 .. f + 0.5)."""
+    a, b = playback_range(scene)
+    return a - 0.5, b + 0.5
+
+
+def visible_range(region):
+    v = region.view2d
+    return v.region_to_view(0, 0)[0], v.region_to_view(region.width, 0)[0]
+
+
+def fit_timeline(win, area, region, scene):
+    """Frame ``region`` (a Timeline WINDOW) to the playback range exactly; Blender's Frame Scene Range when the
+    region has no size yet. Records what was reached so ``_check_view`` only acts on a view that moved."""
+    lo, hi = view_target(scene)
+    done = False
+    gui = not bpy.app.background
+    with bpy.context.temp_override(window=win, screen=win.screen, area=area, region=region):
+        if gui and region.width >= 4 and bpy.ops.view2d.zoom_border.poll():
+            v = region.view2d
+            x0 = v.view_to_region(lo, 0, clip=False)[0]
+            x1 = v.view_to_region(hi, 0, clip=False)[0]
+            if x1 - x0 >= 2:
+                bpy.ops.view2d.zoom_border(xmin=int(round(x0)), xmax=int(round(x1)), ymin=0, ymax=region.height,
+                                           wait_for_input=False, zoom_out=False)
+                done = True
+        if not done and bpy.ops.anim.scene_range_frame.poll():
+            bpy.ops.anim.scene_range_frame()
+            done = True
+    got = visible_range(region) if gui else (lo, hi)
+    _fitted[area.as_pointer()] = (lo, hi, got[0], got[1], region.width, region.height)
+    return done
+
+
 def fit_timelines():
     wm = bpy.context.window_manager
     n = 0
     for win, area, region in list(timeline_areas(wm)):
-        with bpy.context.temp_override(window=win, screen=win.screen, area=area, region=region):
-            if bpy.ops.anim.scene_range_frame.poll():
-                bpy.ops.anim.scene_range_frame()
-                n += 1
+        if fit_timeline(win, area, region, win.scene):
+            n += 1
     return n
+
+
+def view_drifted(rec, target, cur, size, tol_px=VIEW_TOL_PX):
+    """True when a Timeline whose last fit is ``rec`` (see _fitted) must be fitted again: no fit yet, another
+    playback range or region size, or a view that moved from what the fit reached by more than ``tol_px``."""
+    if rec is None or (rec[0], rec[1]) != tuple(target) or (rec[4], rec[5]) != tuple(size):
+        return True
+    ppf = size[0] / max(target[1] - target[0], 1e-6)
+    return abs(cur[0] - rec[2]) * ppf > tol_px or abs(cur[1] - rec[3]) * ppf > tol_px
+
+
+def _check_view(context, region):
+    """Timeline WINDOW draw: schedule a fit when the view no longer shows the playback range (Blender's
+    zoom / scroll / Frame All, a resize, a new window)."""
+    area = context.area
+    if area is None or region is None or region.width < 4:
+        return
+    try:
+        if view_drifted(_fitted.get(area.as_pointer()), view_target(context.scene), visible_range(region),
+                        (region.width, region.height)):
+            _schedule()
+    except Exception:
+        pass
 
 
 def _deferred_fit():
@@ -967,8 +1067,21 @@ def _on_load(_dummy=None):
         _schedule()
 
 
+class ALLSET_OT_time_view_lock(bpy.types.Operator):
+    """Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the
+    Range Slider"""
+    bl_idname = "allset.time_view_lock"
+    bl_label = "Time Slider View"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if not _is_timeline(context):
+            return {'PASS_THROUGH'}
+        return {'FINISHED'}
+
+
 classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scrub, ALLSET_OT_time_range_all,
-           ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu,
+           ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu, ALLSET_OT_time_view_lock,
            ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
 
 
@@ -1045,6 +1158,7 @@ def unregister():
     bpy.msgbus.clear_by_owner(_OWNER)
     if bpy.app.timers.is_registered(_deferred_fit):
         bpy.app.timers.unregister(_deferred_fit)
+    _fitted.clear()
     buttons, menus = header_classes()
     if "draw_header" in _ORIGINAL:
         orig = _ORIGINAL.pop("draw_header")

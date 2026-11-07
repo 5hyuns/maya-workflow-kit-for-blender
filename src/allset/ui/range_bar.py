@@ -35,7 +35,10 @@ SEG_INSET = 2.0                            # segment inside the track
 HANDLE = (13.0, 14.0)                      # handle square w, h
 HANDLE_INSET = 5.0                         # from the segment end
 TEXT_PX = 11.0
-BAR_UNITS = 18                             # ui_units_x of the placeholder label
+BAR_UNITS = 18                             # ui_units_x of the placeholder label on a wide header
+MIN_BAR_UNITS = 4                          # the label never gets narrower than this (a short header)
+MIN_FRAME = 0                              # Blender's frame range
+MAX_FRAME = 1048574
 
 _bars = {}       # area pointer -> rectangle and range, region-local (filled while drawing)
 _handle = []
@@ -43,6 +46,7 @@ _handle = []
 # stretching item, so the bar label is BAR_UNITS + the extra units here, and each draw moves the extra toward
 # the spare room it sees (the spacer after the end fields).
 _extra = {}      # area pointer -> extra ui units of the bar label
+_planned = {}    # area pointer -> the label's base ui units this draw (time_slider.row_plan: shorter on a short header)
 SPARE_UNITS = 1  # room left in the spacer
 SHRINK_UNITS = 4  # step back when the spacer is gone (the header ran out of room)
 
@@ -83,18 +87,28 @@ def spare_after(row, end, bg, skip=2):
     return 0
 
 
-def next_extra(extra, spare_px, unit):
-    """The bar's next extra ui units from the spare room ``spare_px`` in the header this draw."""
+def next_extra(extra, spare_px, unit, floor=0):
+    """The bar's next extra ui units from the spare room ``spare_px`` in the header this draw. ``floor``: how far
+    below the base width the label may shrink (negative) when the header has no room at all."""
     room = spare_px / unit - SPARE_UNITS
     if spare_px <= 0:
-        return max(0, extra - SHRINK_UNITS)
+        return max(floor, extra - SHRINK_UNITS)
     if room >= 1 or room < 0:
-        return max(0, extra + int(room // 1))
+        return max(floor, extra + int(room // 1))
     return extra
 
 
 def extra_units(area):
     return _extra.get(area.as_pointer(), 0) if area is not None else 0
+
+
+def plan_units(area, units=None):
+    """Remember (``units`` given) or read the label's base width for ``area`` (BAR_UNITS when unknown)."""
+    if area is None:
+        return float(BAR_UNITS)
+    if units is not None:
+        _planned[area.as_pointer()] = float(units)
+    return _planned.get(area.as_pointer(), float(BAR_UNITS))
 
 
 def _redraw_later(area_ptr):
@@ -116,6 +130,31 @@ def segment(bar, ps, pe):
     """(xs, xe) of the playback range on ``bar`` = dict(x0, x1, s, e), kept on the track."""
     x0, x1 = bar["x0"], bar["x1"]
     return tuple(max(x0, min(x1, frame_x(f, x0, x1, bar["s"], bar["e"]))) for f in (ps, pe))
+
+
+def visual_segment(bar, ps, pe, handle_w, min_gap=2.0):
+    """(xs, xe) of the playback segment as drawn: ``segment`` widened to two handle zones plus ``min_gap`` so the
+    handles never overlap on a short range (start = end included), kept on the track."""
+    xs, xe = segment(bar, ps, pe)
+    need = 2.0 * handle_w + min_gap
+    if xe - xs >= need:
+        return xs, xe
+    x0, x1 = bar["x0"], bar["x1"]
+    c = (xs + xe) / 2.0
+    xs, xe = c - need / 2.0, c + need / 2.0
+    if xs < x0:
+        xs, xe = x0, min(x1, x0 + need)
+    elif xe > x1:
+        xs, xe = max(x0, x1 - need), x1
+    return xs, xe
+
+
+def label_positions(xs, xe, handle_w, wa, wb, gap):
+    """Left x of the start and end frame labels: inside the segment next to its handles when both fit there,
+    otherwise just outside the segment (a short range)."""
+    if wa + wb + 3.0 * gap <= xe - xs - 2.0 * handle_w:
+        return xs + handle_w + gap, xe - handle_w - gap - wb
+    return xs - gap - wa, xe + gap
 
 
 def zone(x, xs, xe, handle_w):
@@ -162,6 +201,29 @@ def set_playback(scene, a, b):
     else:
         scene.frame_preview_start = a
         scene.frame_preview_end = b
+
+
+# Maya's playback start / end fields: always the range that plays. With the preview range off that is the
+# animation range (Blender keeps its own preview values meanwhile, so the double-click toggle finds them again);
+# typing another number turns the preview range on with it. Start past the end pushes the end, like Blender.
+def _get_playback_start(scene):
+    return playback(scene)[0]
+
+
+def _set_playback_start(scene, value):
+    ps, pe = playback(scene)
+    if value != ps:
+        set_playback(scene, value, max(value, pe))
+
+
+def _get_playback_end(scene):
+    return playback(scene)[1]
+
+
+def _set_playback_end(scene, value):
+    ps, pe = playback(scene)
+    if value != pe:
+        set_playback(scene, min(ps, value), value)
 
 
 # --- drawing -------------------------------------------------------------------------------------------
@@ -215,7 +277,7 @@ def draw():
     row = _read_row(region, region.height // 2)
     if len(row) < 3:
         return
-    span = bar_span(row, row[2], min_w=BAR_UNITS * unit * 0.6)
+    span = bar_span(row, row[2], min_w=(plan_units(area) + min(0, extra_units(area))) * unit * 0.6)
     if span is None:
         _bars.pop(area.as_pointer(), None)
         if _extra.pop(area.as_pointer(), 0):    # the bar no longer fits: start again from its base width
@@ -223,7 +285,8 @@ def draw():
         return
     key = area.as_pointer()
     extra = _extra.get(key, 0)
-    grown = next_extra(extra, spare_after(row, span[1], row[2]), unit)
+    planned = plan_units(area)
+    grown = next_extra(extra, spare_after(row, span[1], row[2]), unit, floor=-max(0, int(planned - MIN_BAR_UNITS)))
     if grown != extra:
         _extra[key] = grown
         _redraw_later(key)
@@ -243,10 +306,11 @@ def draw():
     gpu.state.blend_set('ALPHA')
     _rounded(x0, y0, x1, y1, 4 * k, _themed(TRACK_RGB, "back"))
     ps, pe = playback(scene)
-    xs, xe = segment(bar, ps, pe)
+    hw, hh = HANDLE[0] * k, HANDLE[1] * k
+    bar["handle_w"] = (HANDLE_INSET + HANDLE[0]) * k
+    xs, xe = visual_segment(bar, ps, pe, bar["handle_w"])
     inset = SEG_INSET * k
     _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, _themed(SEGMENT_RGB, "back"))
-    hw, hh = HANDLE[0] * k, HANDLE[1] * k
     hy0 = (y0 + y1 - hh) / 2.0
     hx0, hx1 = xs + HANDLE_INSET * k, xe - HANDLE_INSET * k - hw
     handle = _themed(HANDLE_RGB, "back")
@@ -256,12 +320,13 @@ def draw():
     blf.color(0, *_themed(TEXT_RGB, "text"))
     ty = (y0 + y1) / 2.0 - TEXT_PX * scale * 0.35
     a_txt, b_txt = f"{ps:g}", f"{pe:g}"
-    blf.position(0, hx0 + hw + 3 * k, ty, 0)
+    wa, wb = blf.dimensions(0, a_txt)[0], blf.dimensions(0, b_txt)[0]
+    xa, xb = label_positions(xs, xe, bar["handle_w"], wa, wb, 3 * k)
+    blf.position(0, xa, ty, 0)
     blf.draw(0, a_txt)
-    blf.position(0, hx1 - 3 * k - blf.dimensions(0, b_txt)[0], ty, 0)
+    blf.position(0, xb, ty, 0)
     blf.draw(0, b_txt)
     gpu.state.blend_set('NONE')
-    bar["handle_w"] = (HANDLE_INSET + HANDLE[0]) * k
 
 
 # --- the drag -----------------------------------------------------------------------------------------
@@ -304,7 +369,7 @@ class ALLSET_OT_range_bar_drag(bpy.types.Operator):
             area.tag_redraw()
             return {'FINISHED'}
         ps, pe = playback(scene)
-        xs, xe = segment(bar, ps, pe)
+        xs, xe = visual_segment(bar, ps, pe, bar.get("handle_w", 18))
         kind = zone(event.mouse_x - region.x, xs, xe, bar.get("handle_w", 18))
         if kind is None:
             return {'PASS_THROUGH'}
@@ -344,13 +409,23 @@ classes = (ALLSET_OT_range_bar_drag,)
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    from bpy.props import IntProperty
+    bpy.types.Scene.allset_playback_start = IntProperty(
+        name="Playback Start", description="First frame of the playback range (Maya's Range Slider)",
+        min=MIN_FRAME, max=MAX_FRAME, get=_get_playback_start, set=_set_playback_start, options={'HIDDEN'})
+    bpy.types.Scene.allset_playback_end = IntProperty(
+        name="Playback End", description="Last frame of the playback range (Maya's Range Slider)",
+        min=MIN_FRAME, max=MAX_FRAME, get=_get_playback_end, set=_set_playback_end, options={'HIDDEN'})
     _handle.append(bpy.types.SpaceDopeSheetEditor.draw_handler_add(draw, (), 'HEADER', 'POST_PIXEL'))
 
 
 def unregister():
     while _handle:
         bpy.types.SpaceDopeSheetEditor.draw_handler_remove(_handle.pop(), 'HEADER')
+    del bpy.types.Scene.allset_playback_end
+    del bpy.types.Scene.allset_playback_start
     _bars.clear()
     _extra.clear()
+    _planned.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
