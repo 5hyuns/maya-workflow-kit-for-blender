@@ -8,7 +8,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, view3d, win  # noqa: E402
+from sim import MODULE, _steps, check, ev, run, step, setup, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -32,7 +32,11 @@ def s_setup():
 
 @step
 def s_wait():
-    pass
+    # the new window's area is marked from a timer once Blender has set it up; on a loaded machine that
+    # takes more than one tick, so wait for the mark (at most 10 more ticks)
+    if exporter() is None and C.setdefault("waits", 0) < 10:
+        C["waits"] += 1
+        _steps.insert(0, s_wait)
 
 
 @step
