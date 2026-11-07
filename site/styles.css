@@ -140,12 +140,24 @@ html { scrollbar-color: var(--rule) var(--canvas); }
 .maya__body { display: grid; grid-template-columns: minmax(0, 1fr) 17.5rem; }
 .maya__body:focus-visible { outline-offset: -3px; }
 .viewport { margin: 0; position: relative; display: flex; flex-direction: column; background: linear-gradient(180deg, var(--vp-top), var(--vp-bottom)); }
-.viewport__crop { overflow: hidden; aspect-ratio: 16 / 9; }
+.viewport__crop { overflow: hidden; aspect-ratio: 16 / 9; position: relative; }
 .viewport__media { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; transition: opacity .3s var(--ease), filter .3s var(--ease); }
 /* the feature clips are 1920 x 1080 frames with the window at (144, 22, 1632 x 918) above a caption band: show the
    window only (the page sets its own caption) — scale 1920 / 1632, centre (960, 481) moved to the middle */
 video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-origin: 50% 50%; }
 .viewport.is-swapping .viewport__media { opacity: .25; filter: blur(6px); }
+/* play / pause for the clip: a small viewport button; quiet while the clip runs, plain while it waits */
+.viewport__play {
+  position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; padding: 0; border-radius: 3px;
+  border: 1px solid var(--rule); background: rgba(43, 43, 43, .9); color: var(--text-strong); cursor: pointer;
+  display: grid; place-items: center; opacity: .92; transition: opacity .2s, border-color .2s;
+}
+.viewport__play svg { width: 16px; height: 16px; fill: currentColor; }
+.viewport__play .i-pause, .viewport.is-playing .viewport__play .i-play { display: none; }
+.viewport.is-playing .viewport__play .i-pause { display: block; }
+.viewport.is-playing .viewport__play { opacity: .55; }
+.viewport__play:hover, .viewport__play:focus-visible { opacity: 1; border-color: var(--teal); }
+.viewport.is-still .viewport__play { display: none; }
 .viewport__caption {
   padding: 10px 14px; font-size: 14px; line-height: 1.45; color: var(--text); background: var(--base);
   border-top: 1px solid var(--rule); min-height: 3.6em; flex: 1;

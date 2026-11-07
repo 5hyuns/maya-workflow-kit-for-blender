@@ -1,8 +1,13 @@
-// Maya Workflow Kit site: the shelf (tabs swap the viewport clip, caption and Channel Box facts) and the Maya | Blender
-// switch. Content stays readable without JavaScript: the first tab's facts are filled from the JSON on load.
+// Maya Workflow Kit site: the shelf (tabs swap the viewport clip, caption and Channel Box facts), the clip's
+// play / pause button, the Maya | Blender switch and the scroll-fade hints of the menu bar and the shelf.
+// Without JavaScript the first tab's poster, clip sources and markup stay readable; the Channel Box facts are
+// filled from the JSON here.
 (() => {
   const data = JSON.parse(document.getElementById("workflows-data").textContent);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const small = window.matchMedia("(max-width: 760px)");
+  const coarse = window.matchMedia("(pointer: coarse)");
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
   const tabs = [...document.querySelectorAll(".shelf__tab")];
   const panel = document.getElementById("panel");
   const viewport = panel.querySelector(".viewport");
@@ -12,7 +17,68 @@
   const node = panel.querySelector("[data-node]");
   const facts = panel.querySelector("[data-facts]");
   const credit = panel.querySelector("[data-credit]");
+  const playBtn = panel.querySelector("[data-play]");
 
+  // ---------------------------------------------------------------- the clip: what shows, what is attached, intent
+  let clip = video.dataset.clip;                       // the clip the viewport shows (at least its poster)
+  let loaded = small.matches ? null : clip;            // the clip whose sources are attached (phones get the 960 px file)
+  let wantsPlay = !reduceMotion.matches && !saveData;  // the visitor's intent: play unless they asked for less motion / data
+  let shelfVisible = false;
+  let armed = false;                                   // autoplay may start: desktops once idle, phones after a first gesture
+
+  const posterOf = (name) => `media/${name}${small.matches ? "-640" : ""}.webp`;
+  const sourcesOf = (name) => [[`media/${name}${small.matches ? "-540" : ""}.webm`, "video/webm"],
+                               [`media/${name}.mp4`, "video/mp4"]];
+
+  function attach(name) {
+    if (loaded === name) return;
+    video.replaceChildren(...sourcesOf(name).map(([src, type]) => Object.assign(document.createElement("source"), { src, type })));
+    video.load();
+    loaded = name;
+  }
+  function detach() {               // poster only, nothing on the wire
+    if (loaded === null) return;
+    video.replaceChildren();
+    video.load();
+    loaded = null;
+  }
+  function play() {
+    attach(clip);
+    const p = video.play();
+    if (p) p.catch(() => {});
+  }
+  function maybePlay() {
+    if (wantsPlay && armed && shelfVisible && !video.hidden) play();
+  }
+  function syncButton() {
+    const playing = !video.paused && !video.ended;
+    viewport.classList.toggle("is-playing", playing);
+    playBtn.setAttribute("aria-label", playing ? "Pause the clip" : "Play the clip");
+  }
+  video.addEventListener("play", syncButton);
+  video.addEventListener("pause", syncButton);
+  playBtn.addEventListener("click", () => {
+    wantsPlay = video.paused;
+    if (wantsPlay) play(); else video.pause();
+  });
+
+  // autoplay waits for the page to be idle on a desktop, and for the first scroll / touch / key on a phone
+  if (small.matches || coarse.matches) {
+    const events = ["scroll", "pointerdown", "touchstart", "keydown"];
+    const arm = () => { armed = true; events.forEach((t) => removeEventListener(t, arm)); maybePlay(); };
+    events.forEach((t) => addEventListener(t, arm, { passive: true }));
+  } else if ("requestIdleCallback" in window) {
+    requestIdleCallback(() => { armed = true; maybePlay(); }, { timeout: 2000 });
+  } else {
+    setTimeout(() => { armed = true; maybePlay(); }, 800);
+  }
+  // play only while the viewport is on screen; coming back resumes the visitor's choice
+  new IntersectionObserver(([entry]) => {
+    shelfVisible = entry.isIntersecting;
+    if (shelfVisible) maybePlay(); else video.pause();
+  }, { threshold: 0.35 }).observe(viewport);
+
+  // ---------------------------------------------------------------- the shelf
   function fillFacts(wf) {
     facts.replaceChildren(...wf.facts.flatMap(([k, v]) => {
       const dt = document.createElement("dt"); dt.textContent = k;
@@ -24,22 +90,22 @@
     caption.textContent = wf.caption;
   }
 
-  function setMedia(wf) {
+  function setMedia(wf, label) {
     if (wf.video) {
       still.hidden = true;
       video.hidden = false;
-      video.poster = `media/${wf.video}.jpg`;
-      video.replaceChildren(...["webm", "mp4"].map((ext) => {
-        const s = document.createElement("source");
-        s.src = `media/${wf.video}.${ext}`; s.type = `video/${ext}`;
-        return s;
-      }));
-      video.load();
-      playIfVisible();
+      viewport.classList.remove("is-still");
+      video.pause();
+      clip = wf.video;
+      detach();                                   // back to the poster; sources arrive when the clip plays
+      video.poster = posterOf(clip);
+      video.setAttribute("aria-label", `${label} demo clip`);
+      maybePlay();
     } else {
       video.pause();
       video.hidden = true;
       still.hidden = false;
+      viewport.classList.add("is-still");
       still.srcset = `media/shot-${wf.still}-800.webp 800w, media/shot-${wf.still}.webp 1600w`;
       still.sizes = "(min-width: 1100px) 50vw, 100vw";
       still.src = `media/shot-${wf.still}.jpg`;
@@ -57,7 +123,7 @@
     panel.setAttribute("aria-labelledby", tab.id);
     if (focus) tab.focus();
     tab.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reduceMotion.matches ? "auto" : "smooth" });
-    const swap = () => { fillFacts(wf); setMedia(wf); viewport.classList.remove("is-swapping"); };
+    const swap = () => { fillFacts(wf); setMedia(wf, tab.textContent.trim()); viewport.classList.remove("is-swapping"); };
     if (reduceMotion.matches) { swap(); return; }
     viewport.classList.add("is-swapping");
     setTimeout(swap, 180);
@@ -65,6 +131,7 @@
 
   tabs.forEach((tab, i) => {
     tab.addEventListener("click", () => select(tab, false));
+    // arrow keys move the focus along the shelf; Enter / Space (the button's click) picks the tab
     tab.addEventListener("keydown", (e) => {
       const k = e.key;
       let j = null;
@@ -72,7 +139,7 @@
       else if (k === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
       else if (k === "Home") j = 0;
       else if (k === "End") j = tabs.length - 1;
-      if (j !== null) { e.preventDefault(); select(tabs[j], true); }
+      if (j !== null) { e.preventDefault(); tabs[j].focus(); }
     });
   });
   // 1 – 6 pick a shelf tab while the shelf is on screen (not while typing)
@@ -82,21 +149,17 @@
     if (n >= 1 && n <= tabs.length && shelfVisible) select(tabs[n - 1], true);
   });
 
-  // play the viewport clip only while it is on screen (preload none until then)
-  let shelfVisible = false;
-  function playIfVisible() {
-    if (!shelfVisible || video.hidden || reduceMotion.matches) return;
-    const p = video.play();
-    if (p) p.catch(() => {});
-  }
-  new IntersectionObserver(([entry]) => {
-    shelfVisible = entry.isIntersecting;
-    if (shelfVisible) playIfVisible(); else video.pause();
-  }, { threshold: 0.35 }).observe(viewport);
-
   fillFacts(data.hotbox);
 
-  // the two horizontal scrollers (menu bar, shelf) fade the edge that hides more items
+  // ---------------------------------------------------------------- the tour: its poster loads when the band comes near
+  const tour = document.querySelector(".tour video[data-poster]");
+  if (tour) {
+    new IntersectionObserver(([entry], io) => {
+      if (entry.isIntersecting) { tour.poster = tour.dataset.poster; io.disconnect(); }
+    }, { rootMargin: "400px 0px" }).observe(tour);
+  }
+
+  // ---------------------------------------------------------------- the two horizontal scrollers fade the hidden edge
   function fades(el) {
     const max = el.scrollWidth - el.clientWidth;
     const x = el.scrollLeft;
@@ -107,7 +170,7 @@
     new ResizeObserver(() => requestAnimationFrame(() => fades(el))).observe(el);
   });
 
-  // Maya | Blender switch
+  // ---------------------------------------------------------------- Maya | Blender switch
   const opts = [...document.querySelectorAll(".switcher__opt")];
   const shots = [...document.querySelectorAll("[data-mode-shot]")];
   const note = document.querySelector("[data-mode-note]");

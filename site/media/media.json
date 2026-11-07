@@ -1,10 +1,17 @@
 {
   "files": [
     {
-      "path": "media/channel_box_keys.jpg",
-      "bytes": 101743,
-      "width": 1280,
-      "height": 720
+      "path": "media/channel_box_keys-540.webm",
+      "bytes": 260166,
+      "width": 960,
+      "height": 540,
+      "duration": 7.133
+    },
+    {
+      "path": "media/channel_box_keys-640.webp",
+      "bytes": 18252,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/channel_box_keys.mp4",
@@ -15,7 +22,7 @@
     },
     {
       "path": "media/channel_box_keys.webm",
-      "bytes": 856397,
+      "bytes": 462708,
       "width": 1280,
       "height": 720,
       "duration": 7.133
@@ -39,10 +46,17 @@
       "height": 32
     },
     {
-      "path": "media/hotbox.jpg",
-      "bytes": 119478,
-      "width": 1280,
-      "height": 720
+      "path": "media/hotbox-540.webm",
+      "bytes": 293101,
+      "width": 960,
+      "height": 540,
+      "duration": 6.433
+    },
+    {
+      "path": "media/hotbox-640.webp",
+      "bytes": 23122,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/hotbox.mp4",
@@ -53,7 +67,7 @@
     },
     {
       "path": "media/hotbox.webm",
-      "bytes": 857673,
+      "bytes": 458087,
       "width": 1280,
       "height": 720,
       "duration": 6.433
@@ -71,10 +85,17 @@
       "height": 256
     },
     {
-      "path": "media/navigation.jpg",
-      "bytes": 80281,
-      "width": 1280,
-      "height": 720
+      "path": "media/navigation-540.webm",
+      "bytes": 263958,
+      "width": 960,
+      "height": 540,
+      "duration": 7.633
+    },
+    {
+      "path": "media/navigation-640.webp",
+      "bytes": 14502,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/navigation.mp4",
@@ -85,7 +106,7 @@
     },
     {
       "path": "media/navigation.webm",
-      "bytes": 846642,
+      "bytes": 518809,
       "width": 1280,
       "height": 720,
       "duration": 7.633
@@ -103,10 +124,17 @@
       "height": 640
     },
     {
-      "path": "media/pivot_snap.jpg",
-      "bytes": 103654,
-      "width": 1280,
-      "height": 720
+      "path": "media/pivot_snap-540.webm",
+      "bytes": 277712,
+      "width": 960,
+      "height": 540,
+      "duration": 6.133
+    },
+    {
+      "path": "media/pivot_snap-640.webp",
+      "bytes": 19174,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/pivot_snap.mp4",
@@ -117,7 +145,7 @@
     },
     {
       "path": "media/pivot_snap.webm",
-      "bytes": 880283,
+      "bytes": 482209,
       "width": 1280,
       "height": 720,
       "duration": 6.133
@@ -129,10 +157,17 @@
       "height": 720
     },
     {
-      "path": "media/rigging.jpg",
-      "bytes": 76710,
-      "width": 1280,
-      "height": 720
+      "path": "media/rigging-540.webm",
+      "bytes": 266730,
+      "width": 960,
+      "height": 540,
+      "duration": 7.0
+    },
+    {
+      "path": "media/rigging-640.webp",
+      "bytes": 13552,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/rigging.mp4",
@@ -143,7 +178,7 @@
     },
     {
       "path": "media/rigging.webm",
-      "bytes": 855366,
+      "bytes": 466498,
       "width": 1280,
       "height": 720,
       "duration": 7.0
@@ -209,10 +244,10 @@
       "height": 900
     },
     {
-      "path": "media/trailer.jpg",
-      "bytes": 96320,
-      "width": 1280,
-      "height": 720
+      "path": "media/trailer-640.webp",
+      "bytes": 19430,
+      "width": 640,
+      "height": 360
     },
     {
       "path": "media/trailer.mp4",
@@ -235,6 +270,6 @@
       "height": 720
     }
   ],
-  "total_bytes": 18477617,
-  "count": 37
+  "total_bytes": 17461080,
+  "count": 42
 }

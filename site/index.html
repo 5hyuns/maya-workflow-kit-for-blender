@@ -75,12 +75,15 @@
     <div class="maya__body" id="panel" role="tabpanel" aria-labelledby="tab-hotbox" tabindex="0">
       <figure class="viewport">
         <div class="viewport__crop">
-        <video class="viewport__media" data-video muted loop playsinline preload="none" width="1280" height="720"
-               poster="media/hotbox.jpg" aria-describedby="viewport-caption">
+        <video class="viewport__media" data-video data-clip="hotbox" muted loop playsinline preload="none" width="1280" height="720"
+               poster="media/hotbox.webp" aria-label="Hotbox demo clip" aria-describedby="viewport-caption">
           <source src="media/hotbox.webm" type="video/webm">
           <source src="media/hotbox.mp4" type="video/mp4">
         </video>
         <img class="viewport__media" data-still hidden src="media/shot-menus_shelves.jpg" alt="" width="1600" height="900" decoding="async" loading="lazy">
+        <button type="button" class="viewport__play" data-play aria-label="Play the clip">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path class="i-play" d="M5 3v10l8-5z"/><path class="i-pause" d="M4 3h3v10H4zM9 3h3v10H9z"/></svg>
+        </button>
         </div>
         <figcaption class="viewport__caption" id="viewport-caption" data-caption>Hold Space for the hotbox: every menu of the current menu set. Here: Select &gt; All.</figcaption>
       </figure>
@@ -130,7 +133,8 @@
 <section class="tour" id="tour" aria-labelledby="tour-title">
   <h2 id="tour-title">The tour, in half a minute</h2>
   <figure class="tour__frame">
-    <video controls muted playsinline preload="none" poster="media/trailer.jpg" width="1280" height="720">
+    <video controls muted playsinline preload="none" data-poster="media/trailer.webp" width="1280" height="720"
+           aria-label="The 30-second tour, no sound">
       <source src="media/trailer.webm" type="video/webm">
       <source src="media/trailer.mp4" type="video/mp4">
     </video>

@@ -1,4 +1,11 @@
-"""Web copies of marketing media for site/media."""
+"""Web copies of marketing media for site/media.
+
+    python tools/site/make_media.py                       # everything
+    python tools/site/make_media.py webm:hotbox,rigging   # one group, some names
+    groups: webm (clip at 1280 and 960 wide, trailer at 1280), mp4 (x264 fallback), posters (webp at 1280 and 640),
+            stills (shot-*.jpg / .webp from the raw screenshots, og.png, icons); names = clip stems, "trailer",
+            still names, "og", "icons"
+"""
 import json, os, shutil, subprocess, sys
 from pathlib import Path
 from PIL import Image
@@ -9,9 +16,12 @@ FF, FP = str(BIN / "ffmpeg.exe"), str(BIN / "ffprobe.exe")
 MK = ROOT / "docs/distribution/marketing"
 OUT = ROOT / "site/media"
 # what site/index.html and app.js use (#41: the full lists left 32 unused files in site/media)
-CLIPS = ["01_hotbox", "03_channel_box_keys", "04_navigation", "05_pivot_snap", "06_rigging"]
+CLIPS = {"hotbox": "01_hotbox", "channel_box_keys": "03_channel_box_keys", "navigation": "04_navigation",
+         "pivot_snap": "05_pivot_snap", "rigging": "06_rigging"}
+TRAILER = "00_trailer"
 RAW = ["hero", "menus_shelves", "switch_before"]
 VF = "scale=1280:-2:flags=lanczos"
+VF_SMALL = "scale=960:-2:flags=lanczos"
 LOG = []
 
 def run(args):
@@ -27,25 +37,23 @@ def mp4(src, dst, limit, crf=22):
             LOG.append((dst.name, f"x264 crf {crf}")); return
         crf += 1
 
-def webm(src, dst, limit, crf=34):
+def webm(src, dst, limit, crf, vf=VF):
+    """VP9, constant quality, raised two steps at a time until the file is under ``limit`` bytes."""
     while True:
-        run(["-i", str(src), "-an", "-vf", VF, "-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0",
+        run(["-i", str(src), "-an", "-vf", vf, "-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0",
              "-deadline", "good", "-cpu-used", "2", "-row-mt", "1", "-pix_fmt", "yuv420p", str(dst)])
-        if dst.stat().st_size <= limit or crf >= 50:
-            LOG.append((dst.name, f"vp9 crf {crf}")); return
+        if dst.stat().st_size <= limit or crf >= 52:
+            LOG.append((dst.name, f"vp9 crf {crf} {dst.stat().st_size} B")); return
         crf += 2
 
 def poster(src, stem, t):
+    """One frame as the poster: webp at 1280 (the page's poster) and at 640 (phones)."""
     png = OUT / f"_{stem}.png"
     run(["-ss", str(t), "-i", str(src), "-frames:v", "1", "-vf", VF, str(png)])
     im = Image.open(png).convert("RGB")
-    q = 82
-    while True:
-        im.save(OUT / f"{stem}.jpg", quality=q, optimize=True, progressive=True)
-        if (OUT / f"{stem}.jpg").stat().st_size <= 150_000 or q <= 60: break
-        q -= 4
     im.save(OUT / f"{stem}.webp", quality=80, method=6)
-    LOG.append((f"{stem}.jpg", f"jpeg q{q} @ {t}s"))
+    im.resize((640, 360), Image.LANCZOS).save(OUT / f"{stem}-640.webp", quality=78, method=6)
+    LOG.append((f"{stem}.webp", f"poster @ {t}s + 640"))
     png.unlink()
 
 def still(name):
@@ -67,33 +75,31 @@ def probe(p):
         return im.width, im.height, None
 
 def main():
-    # groups: "video" / "stills"; a group may name its items: "video:trailer,hotbox" "stills:switch_before,og"
     only = dict(a.split(":", 1) if ":" in a else (a, "") for a in sys.argv[1:])
-    names = lambda g: set(n for n in only.get(g, "").split(",") if n)   # noqa: E731
-    if not only or "video" in only:
-        want = names("video")
-        for c in CLIPS:
-            src = MK / "clips" / f"{c}.mp4"; stem = c.split("_", 1)[1]
-            if want and stem not in want: continue
-            mp4(src, OUT / f"{stem}.mp4", 1_200_000)
-            webm(src, OUT / f"{stem}.webm", 900_000)
-            poster(src, stem, 0.5)
-        if not want or "trailer" in want:
-            src = MK / "clips/00_trailer.mp4"
-            mp4(src, OUT / "trailer.mp4", 4_000_000)
-            webm(src, OUT / "trailer.webm", 3_000_000)
-            poster(src, "trailer", 0)
-    if not only or "stills" in only:
-        want = names("stills")
-        for n in RAW:
-            if not want or n in want: still(n)
-        if not want or "og" in want:
-            shutil.copyfile(MK / "kit/social_preview.png", OUT / "og.png")
-        if not want or "icons" in want:
-            master = Image.open(MK / "icon/icon_1024.png").convert("RGBA")        # icon master (link_a)
-            master.resize((256, 256), Image.LANCZOS).save(OUT / "icon-256.png", optimize=True)
-            master.resize((180, 180), Image.LANCZOS).save(OUT / "favicon-180.png", optimize=True)
-            Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
+    def wanted(group, name):
+        if only and group not in only: return False
+        names = set(n for n in only.get(group, "").split(",") if n)
+        return not names or name in names
+    for stem, clip in CLIPS.items():
+        src = MK / "clips" / f"{clip}.mp4"
+        if wanted("webm", stem):
+            webm(src, OUT / f"{stem}.webm", 520_000, 38)
+            webm(src, OUT / f"{stem}-540.webm", 300_000, 36, VF_SMALL)
+        if wanted("mp4", stem): mp4(src, OUT / f"{stem}.mp4", 1_200_000)
+        if wanted("posters", stem): poster(src, stem, 0.5)
+    src = MK / "clips" / f"{TRAILER}.mp4"
+    if wanted("webm", "trailer"): webm(src, OUT / "trailer.webm", 3_000_000, 34)
+    if wanted("mp4", "trailer"): mp4(src, OUT / "trailer.mp4", 4_000_000)
+    if wanted("posters", "trailer"): poster(src, "trailer", 0)
+    for n in RAW:
+        if wanted("stills", n): still(n)
+    if wanted("stills", "og"):
+        shutil.copyfile(MK / "kit/social_preview.png", OUT / "og.png")
+    if wanted("stills", "icons"):
+        master = Image.open(MK / "icon/icon_1024.png").convert("RGBA")        # icon master (link_a)
+        master.resize((256, 256), Image.LANCZOS).save(OUT / "icon-256.png", optimize=True)
+        master.resize((180, 180), Image.LANCZOS).save(OUT / "favicon-180.png", optimize=True)
+        Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
     files, total = [], 0
     for p in sorted(OUT.iterdir()):
         if p.name == "media.json" or p.name.startswith("_") or p.suffix == ".json": continue   # *.webp.json = image provenance
