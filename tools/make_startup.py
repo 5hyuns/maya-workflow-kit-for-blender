@@ -497,6 +497,16 @@ def maya_views():
                 # theme that is view data: the view's own background colour, scene linear (#45).
                 space.shading.background_type = 'VIEWPORT'
                 space.shading.background_color = (MAYA_BG_LINEAR,) * 3
+                # The studio light, matcap and HDRI names are written as Blender's own defaults, so nothing from
+                # the machine that generates the file is named in it (an unnamed slot once picked up a local
+                # image; the generator also runs without the user's datafiles, tools/build.sandbox_env).
+                sh = space.shading
+                for kind, light, name in (('MATERIAL', None, 'forest.exr'), ('SOLID', 'MATCAP', 'basic_bright.exr'),
+                                          ('SOLID', 'STUDIO', 'Default')):
+                    sh.type = kind
+                    if light is not None:
+                        sh.light = light
+                    sh.studio_light = name
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

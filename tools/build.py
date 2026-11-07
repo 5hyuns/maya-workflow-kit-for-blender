@@ -73,9 +73,12 @@ def sandbox_env():
     """Environment that points Blender's user dirs into tmp/build_env."""
     base = ROOT / "tmp" / "build_env"
     env = os.environ.copy()
+    # datafiles too: a studio light / matcap installed on the building machine must not end up named in a
+    # file the kit ships (tools/make_startup.py writes the shading names explicitly as well)
     for var, sub in (("BLENDER_USER_CONFIG", "config"),
                      ("BLENDER_USER_SCRIPTS", "scripts"),
-                     ("BLENDER_USER_EXTENSIONS", "extensions")):
+                     ("BLENDER_USER_EXTENSIONS", "extensions"),
+                     ("BLENDER_USER_DATAFILES", "datafiles")):
         d = base / sub
         d.mkdir(parents=True, exist_ok=True)
         env[var] = str(d)

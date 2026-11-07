@@ -114,7 +114,9 @@ def test_template_is_maya_general():
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     areas = list(screen.areas)
-    width = max(a.x + a.width for a in areas)
+    # Blender 5.2 lays the areas out from a small inset at the window edge (x = 2): measure from there
+    x0 = min(a.x for a in areas)
+    width = max(a.x + a.width for a in areas) - x0
     by = {}
     for a in areas:
         sp = a.spaces.active
@@ -129,10 +131,10 @@ def test_template_is_maya_general():
     assert set(by) == {"toolbox", "view", "strip", "OUTLINER", "TIMELINE", "PROPERTIES"}, sorted(by)
     # full-width rows: Status Line + Shelf on top, Time + Range Slider at the bottom
     for key in ("strip", "TIMELINE"):
-        assert by[key].x == 0 and by[key].width == width, (key, by[key].x, by[key].width)
+        assert by[key].x == x0 and by[key].width == width, (key, by[key].x, by[key].width, x0, width)
     # left to right: Tool Box | Outliner | view | Maya tab stack (its own area)
     assert by["toolbox"].x < by["OUTLINER"].x < by["view"].x < by["PROPERTIES"].x
-    assert by["PROPERTIES"].x + by["PROPERTIES"].width == width
+    assert by["PROPERTIES"].x + by["PROPERTIES"].width == x0 + width
     assert maya_dock.role(by["PROPERTIES"]) == 'STACK' and not by["view"].spaces.active.show_region_ui
     tb = by["toolbox"].spaces.active
     assert not any(getattr(tb, n) for n in dir(tb) if n.startswith("show_object_viewport_")), \
