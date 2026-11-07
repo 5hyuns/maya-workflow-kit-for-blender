@@ -204,6 +204,23 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
 .tour__frame video { width: 100%; border-radius: 6px; border: 1px solid var(--rule); background: #000; }
 .tour__frame figcaption { margin-top: 12px; font-size: 14px; color: var(--text-muted); max-width: var(--measure); }
 
+/* ---------------------------------------------------------------- menu sets: what comes over, by discipline */
+.sets { padding: clamp(56px, 7vw, 96px) var(--pad-x) 0; border-top: 1px dotted #5a5a5a; margin-top: clamp(56px, 7vw, 96px); }
+.sets h2 { margin-bottom: 18px; }
+.sets__lede { max-width: var(--measure); margin-bottom: 28px; }
+.sets__lede strong { color: var(--text-strong); font-weight: 650; }
+.sets__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); }
+.sets__col { background: var(--panel); padding: 18px 22px 20px; }
+.sets__col h3 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.sets__col kbd {
+  font: 600 11.5px/1 "Inter", system-ui, sans-serif; color: var(--text); background: var(--base);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 4px 6px 3px; letter-spacing: .02em;
+}
+.sets__and { font-weight: 400; color: var(--text-soft); font-size: 13px; }
+.sets__col ul { list-style: none; margin: 0; padding: 0; font-size: 14px; line-height: 1.45; color: var(--text); }
+.sets__col li { padding: 4px 0 4px 16px; position: relative; }
+.sets__col li::before { content: ""; position: absolute; left: 0; top: .95em; width: 8px; height: 1px; background: var(--teal); }
+
 /* ---------------------------------------------------------------- note from the maintainer */
 .note { padding: clamp(56px, 7vw, 96px) var(--pad-x) 0; }
 .note h2 { margin-bottom: 24px; }
@@ -226,6 +243,20 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
 
 /* ---------------------------------------------------------------- limits */
 .limits > p { max-width: var(--measure); }
+.setup { max-width: var(--measure); margin-top: 18px; }
+.setup summary {
+  cursor: pointer; list-style: none; padding: 12px 16px 12px 40px; position: relative; border: 1px solid var(--rule);
+  border-radius: 4px; background: #3a3a3a; color: var(--text-strong); font-weight: 600;
+}
+.setup summary:hover { background: #424242; }
+.setup summary::-webkit-details-marker { display: none; }
+.setup summary::before {
+  content: ""; position: absolute; left: 16px; top: 50%; margin-top: -5px;
+  border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent var(--teal);
+  transition: transform .3s var(--ease);
+}
+.setup[open] summary::before { transform: rotate(90deg); }
+.setup .limits__list { margin: 6px 0 0; }
 .limits__list { margin: 18px 0 22px; padding: 0; list-style: none; max-width: var(--measure); }
 .limits__list li { padding: 12px 0 12px 22px; border-top: 1px solid var(--rule); position: relative; color: var(--text-strong); }
 .limits__list li::before { content: ""; position: absolute; left: 2px; top: 1.15em; width: 9px; height: 1px; background: var(--teal); }
@@ -265,6 +296,7 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
 @media (max-width: 1100px) {
   .hero { grid-template-columns: 1fr; min-height: 0; }
   .hero__copy { max-width: 40rem; }
+  .sets__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .choose { grid-template-columns: 1fr; }
   .switcher__toggle { align-self: flex-start; }
   .switcher__note { text-align: left; }
@@ -291,6 +323,12 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
   .menubar nav { min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
   .menubar__menu a { padding: 6px 8px; white-space: nowrap; }
   .menubar__repo { padding: 5px 8px; }
+  /* phones see the clip before the paragraph: name, tagline, the Maya window, then the rest of the copy */
+  .hero { display: flex; flex-direction: column; gap: 22px; }
+  .hero__copy { display: contents; }
+  .hero > .lockup { order: 1; } .hero__tagline { order: 2; } .maya { order: 3; margin-top: 6px; }
+  .hero__lede { order: 4; } .hero__actions { order: 5; } .hero__meta { order: 6; }
+  .sets__grid { grid-template-columns: 1fr; }
   .shelf { flex: 1 1 auto; flex-wrap: wrap; overflow: visible; }   /* six tabs in two rows, nothing hidden */
   .shelf__tab { flex: 1 1 auto; text-align: center; border-bottom: 1px solid #333; padding: 10px 8px 9px; font-size: 12px; }
   .steps { grid-template-columns: 1fr; }

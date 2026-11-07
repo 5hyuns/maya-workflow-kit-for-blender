@@ -90,7 +90,7 @@ def main():
     src = MK / "clips" / f"{TRAILER}.mp4"
     if wanted("webm", "trailer"): webm(src, OUT / "trailer.webm", 3_000_000, 34)
     if wanted("mp4", "trailer"): mp4(src, OUT / "trailer.mp4", 4_000_000)
-    if wanted("posters", "trailer"): poster(src, "trailer", 0)
+    if wanted("posters", "trailer"): poster(src, "trailer", 3.6)   # the hotbox open over the scene, not the title card
     for n in RAW:
         if wanted("stills", n): still(n)
     if wanted("stills", "og"):

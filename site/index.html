@@ -49,9 +49,9 @@
       <span class="lockup__line">for Maya users, in Blender</span>
     </h1>
     <p class="hero__tagline">The whole Maya workflow in Blender, in one install.</p>
-    <p class="hero__lede">Other tools bring one piece over: a pivot tool, a keymap, a shelf. This rebuilds the
-      set together — hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows —
-      on top of Blender's own tools. Installing it changes nothing until you choose Maya.</p>
+    <p class="hero__lede">Not just a keymap: the hotbox and marking menus, the Channel Box and Attribute Editor,
+      menu sets, shelves and option windows, rebuilt on top of Blender's own tools. Installing it changes nothing
+      until you choose Maya.</p>
     <div class="hero__actions">
       <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download the zip</a>
       <a class="btn btn--quiet" href="#tour">Watch the 30-second tour</a>
@@ -139,9 +139,78 @@
       <source src="media/trailer.mp4" type="video/mp4">
     </video>
     <figcaption>Hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click
-      switch back to plain Blender. No sound.<br><span class="credit">Scenes: DOGWALK, Rain, Pack Bot and Security Bot rigs
+      switch back to plain Blender. 33 seconds, no sound.<br><span class="credit">Scenes: DOGWALK, Rain, Pack Bot and Security Bot rigs
       (CC BY 4.0) Blender Foundation | studio.blender.org, modified.</span></figcaption>
   </figure>
+</section>
+
+<section class="sets" id="features" aria-labelledby="sets-title">
+  <h2 id="sets-title">What comes over, menu set by menu set</h2>
+  <p class="sets__lede">Maya's menus are there as menus: <strong>1,027 of the 1,900 main-menu items</strong> run a kit or
+    Blender command, and the other 873 stay in place, greyed, each with a note on what to use instead. Editor menu bars:
+    UV Editor 85 %, Graph Editor 82 %, Dope Sheet 78 %, Hypershade 58 %.</p>
+  <div class="optwin sets__win">
+    <p class="optwin__title"><span class="handle" aria-hidden="true"></span>Menu sets</p>
+    <ul class="sets__grid">
+      <li class="sets__col">
+        <h3><kbd>F2</kbd> Modeling</h3>
+        <ul>
+          <li>pCube1, centimetres and lambert1 by default</li>
+          <li>Freeze Transformations, Center Pivot, Delete History</li>
+          <li>Extrude, Bevel and Smart Bevel with history</li>
+          <li>Combine, Separate, Mirror, Boolean, Connect</li>
+          <li>Smooth Mesh Preview on 1 / 2 / 3</li>
+          <li>Modeling Toolkit, Smart Extrude, Make Live</li>
+        </ul>
+      </li>
+      <li class="sets__col">
+        <h3><kbd>F2</kbd> UV</h3>
+        <ul>
+          <li>Cut and Sew UV Edges, 3D Cut and Sew</li>
+          <li>Unfold, Layout, UV shell selection</li>
+          <li>UV Editor with Maya's menus and the UV Toolkit</li>
+          <li>UV projections with their option windows</li>
+        </ul>
+      </li>
+      <li class="sets__col">
+        <h3><kbd>F3</kbd> Rigging</h3>
+        <ul>
+          <li>Joint Tool, IK Handle, IK Spline</li>
+          <li>Bind Skin, Paint Skin Weights, Hammer weights</li>
+          <li>Set Driven Key, constraints, Cluster, Soft Modification</li>
+          <li>Joint pick-walk, Reroot, Preferred Angle</li>
+          <li>The HumanIK menu leads to Rigify</li>
+        </ul>
+      </li>
+      <li class="sets__col">
+        <h3><kbd>F4</kbd> Animation</h3>
+        <ul>
+          <li>S keys every channel; Shift+W / E / R key one</li>
+          <li>Time Slider with key ticks, Range Slider, K-drag scrub</li>
+          <li>Graph Editor with Maya's menus and tangent toolbar</li>
+          <li>Dope Sheet, Auto Key, Playblast</li>
+        </ul>
+      </li>
+      <li class="sets__col">
+        <h3><kbd>F5</kbd> FX <span class="sets__and">and</span> <kbd>F6</kbd> Rendering</h3>
+        <ul>
+          <li>Hypershade, Maya shader types, shading groups</li>
+          <li>Render Settings, Keep Image, light linking</li>
+          <li>Cloth, particles, rigid bodies and Mantaflow — Blender's own, in Maya's menus</li>
+        </ul>
+      </li>
+      <li class="sets__col">
+        <h3>Files <span class="sets__and">and</span> scripting</h3>
+        <ul>
+          <li>Maya projects: Set Project and the project folders</li>
+          <li>Ctrl+Alt+S increments and saves; Ctrl+R creates a reference</li>
+          <li>FBX, OBJ, Alembic and USD with cm / Y-up presets</li>
+          <li>Command Line and Script Editor with a small maya.cmds look-alike</li>
+          <li>Menus and tooltips in Japanese and Simplified Chinese too</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 </section>
 
 <section class="note" id="note" aria-labelledby="note-title">
@@ -187,23 +256,28 @@
 
 <section class="limits" id="setup" aria-labelledby="setup-title">
   <h2 id="setup-title">Recommended setup</h2>
-  <p>Optional. The kit leaves your theme and Blender preferences to you; Maya users usually like:</p>
-  <ul class="limits__list">
-    <li>A dark grey theme: <span class="path">Edit › Preferences › Get Extensions</span>, filter by Themes and install
-      one you like.</li>
-    <li>Navigation: Orbit Method Turntable, Orbit Around Selection off, Zoom to Mouse Position off, Auto Perspective on,
-      Zoom Method Dolly with a horizontal axis.</li>
-    <li>Undo Steps set to 256 (Blender's maximum) under System.</li>
-    <li>Region Overlap off under Interface › Editors, so side panels sit beside the viewport.</li>
-    <li>Only Insert Available under Animation › Keyframes, for Maya-like auto key.</li>
-  </ul>
+  <p>Optional. The kit leaves your theme and Blender preferences to you.</p>
+  <details class="setup">
+    <summary>The five settings Maya users usually change</summary>
+    <ul class="limits__list">
+      <li>A dark grey theme: <span class="path">Edit › Preferences › Get Extensions</span>, filter by Themes and install
+        one you like.</li>
+      <li>Navigation: Orbit Method Turntable, Orbit Around Selection off, Zoom to Mouse Position off, Auto Perspective on,
+        Zoom Method Dolly with a horizontal axis.</li>
+      <li>Undo Steps set to 256 (Blender's maximum) under System.</li>
+      <li>Region Overlap off under Interface › Editors, so side panels sit beside the viewport.</li>
+      <li>Only Insert Available under Animation › Keyframes, for Maya-like auto key.</li>
+    </ul>
+  </details>
 </section>
 
 <section class="limits" id="limits" aria-labelledby="limits-title">
-  <h2 id="limits-title">Where Blender's C++ draws the line</h2>
-  <p>Everything here is Python on top of Blender. Some of Maya lives deeper than an extension can reach, so these are
+  <h2 id="limits-title">What stays Blender</h2>
+  <p>Everything here is Python on top of Blender. A few things live deeper than an extension can reach, so they are
     not imitated:</p>
   <ul class="limits__list">
+    <li>Maya scene files: <code>.ma</code> and <code>.mb</code> don't open. Export FBX, OBJ, Alembic or USD from Maya;
+      the kit's Import has Maya presets (cm, Y-up).</li>
     <li>Blender is Z-up and has one pivot per object.</li>
     <li>Dragging over a field with the middle mouse to scrub its value.</li>
     <li>MEL. A Python Command Line with a small <code>maya.cmds</code> look-alike is there instead.</li>

@@ -21,6 +21,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -202,6 +203,15 @@ def main(argv=None):
     stamped = f">v{version}<" in (ROOT / "site" / "index.html").read_text(encoding="utf-8")
     print("PASS" if stamped else "FAIL", f"site/index.html names the current version v{version}")
     ok &= stamped
+    # ... and the menu coverage it quotes is the one tools/menu_count.py counts today
+    count = subprocess.run([sys.executable, str(ROOT / "tools" / "menu_count.py")], capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL).stdout
+    m = re.search(r"^total\s+leaves\s+(\d+)\s+working\s+(\d+)", count, re.M)
+    quoted = bool(m) and f"{int(m.group(2)):,} of the {int(m.group(1)):,} main-menu items" in \
+        (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    print("PASS" if quoted else "FAIL", "site/index.html quotes the current menu coverage"
+          + (f" ({m.group(2)} of {m.group(1)})" if m else " (menu_count.py gave no total)"))
+    ok &= quoted
 
     if args.no_shots:
         return 0 if ok else 1

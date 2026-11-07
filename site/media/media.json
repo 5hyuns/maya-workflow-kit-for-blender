@@ -245,7 +245,7 @@
     },
     {
       "path": "media/trailer-640.webp",
-      "bytes": 19430,
+      "bytes": 23520,
       "width": 640,
       "height": 360
     },
@@ -265,11 +265,11 @@
     },
     {
       "path": "media/trailer.webp",
-      "bytes": 60028,
+      "bytes": 67988,
       "width": 1280,
       "height": 720
     }
   ],
-  "total_bytes": 17461080,
+  "total_bytes": 17473130,
   "count": 42
 }
