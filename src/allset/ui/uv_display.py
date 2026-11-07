@@ -18,7 +18,7 @@ Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
   counter-clockwise (front-facing) faces blue, clockwise (flipped) faces red; Wireframe (4) turns it off
   (``WindowManager.allset_uv_face_colors``).
 
-Shell borders follow the step-66 island rule (operators/uv_tools.islands: faces join where their UVs match at both
+Shell borders follow the island rule (operators/uv_tools.islands: faces join where their UVs match at both
 ends of an edge): an edge is a border on a face's side when no other shown face shares the same UVs across it.
 A seam edge is a border too: Cut UVs marks one, and like Maya the cut edge shows as a border at once, also a
 single edge inside a shell that stays in one piece.

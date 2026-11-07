@@ -646,7 +646,7 @@ def wrap_rows(context, labels, equal=True, extra_units=None):
 
 
 def tab_window(widths, avail, current, arrows):
-    """Maya's AE tab bar is one Qt tab row that scrolls (audit 16 G1): the tabs
+    """Maya's AE tab bar is one Qt tab row that scrolls: the tabs
     [a, b) shown, ``current`` among them, as many as fit in ``avail`` px; when not all fit, ``arrows`` px are kept
     for the ◀ ▶ buttons. Returns (a, b, overflow). Pure (tests/test_step211_fix_batch.py)."""
     n = len(widths)

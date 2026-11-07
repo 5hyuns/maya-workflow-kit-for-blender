@@ -431,7 +431,7 @@ def _place(layout, center, bounds, edges):
         rx0, ry0, rx1, ry1 = min(rx0, -r), min(ry0, -r), max(rx1, r), max(ry1, r)
         h, w = ly1 - ly0, lx1 - lx0
         # Maya keeps the list in one column under the ring (it runs off a
-        # small window) and moves it when the screen ends; it never wraps into columns (step-154 dogfood G2). A
+        # small window) and moves it when the screen ends; it never wraps into columns. A
         # column that doesn't fit under the ring goes beside it (the side with no radial submenu on the way, else
         # right; moved up it would cover the ring's S boxes and the gestures), then above it; only a list taller than the window gets more columns,
         # still under the ring.

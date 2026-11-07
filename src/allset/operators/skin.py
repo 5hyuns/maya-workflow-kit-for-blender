@@ -496,7 +496,7 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
     """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy. Also stores Maya's bind pose
     (Go to Bind Pose), maxInfluences / maintainMaxInfluences / dropoffRate on the mesh."""
     for mesh in meshes:
-        mesh.pop(PAINT_SEEN, None)          # a new skin: Paint Skin Weights starts on its first influence (238)
+        mesh.pop(PAINT_SEEN, None)          # a new skin: Paint Skin Weights starts on its first influence
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     if method == "HEAT_MAP":

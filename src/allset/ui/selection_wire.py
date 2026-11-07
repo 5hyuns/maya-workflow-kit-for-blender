@@ -29,7 +29,7 @@ The kit draws the edges itself (POST_VIEW):
 - Maya highlights the whole hierarchy under a selected object: every descendant shape is drawn in the
   colour of its nearest selected ancestor (Maya: group1
   (selected) -> pCube1 white, pCube2 (lead) -> pCube3 green). Without it a child in front of its selected parent hid
-  the parent's wire (step-154 dogfood 09: side view, pCube2 under pCube1 in front of it) — ``highlighted``.
+  the parent's wire (side view, pCube2 under pCube1 in front of it) — ``highlighted``.
 - #330: Rendered shading draws the wire too. Maya highlights a selection in a lit, shadowed view as well,
   and the Maya layout keeps Blender's outline off, so a selection in Rendered shading (EEVEE, Cycles) had no
   highlight at all. The depth test works there: EEVEE writes the view's depth, and for an external engine

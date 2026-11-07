@@ -641,8 +641,7 @@ CATEGORIES = {
 
 
 def _anim_editor_categories(ed):
-    """Greyed items of the Graph Editor / Dope Sheet menu bars (Maya 2026's menus since step
-    269)."""
+    """Greyed items of the Graph Editor / Dope Sheet menu bars (Maya 2026's menus)."""
     m = {
         f"{ed}/Edit/Transformation Tools": (
             "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice or "

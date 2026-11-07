@@ -306,7 +306,7 @@ def build_tension():
 
 
 def build_sculpt():
-    """Maya sculpt (the step-205 model)."""
+    """Maya sculpt (the kit's sculpt model)."""
     ng, b, I, gout = _new_group(GROUPS["sculpt"], SCULPT_INPUTS)
     info = b.node("GeometryNodeObjectInfo", transform_space='RELATIVE')
     b.link(I["Sculptor"], info.inputs["Object"])
@@ -511,7 +511,7 @@ def kind_of(md):
 
 def partners(faces, n):
     """[[(partner, flags)]] per vertex: edge neighbours (flag 1), then face diagonals (2) / bend partners (4) — the
-    sets of the step-205 tension model (diagonals, bend_partners)."""
+    sets of the tension model (diagonals, bend_partners)."""
     nb = [set() for _ in range(n)]
     edge_faces = {}
     for fi, f in enumerate(faces):

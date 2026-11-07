@@ -161,8 +161,8 @@ def _parse_error(message, text_name=None):
     """(last line, line number in the entry or None, Maya traceback lines) of a ``text.run_script`` error report.
 
     Blender 4.5 reports ``Error: Python: Traceback (most recent call last):`` / ``File "<backslash><text>", line N,
-    in <module>`` / ... / ``ZeroDivisionError: division by zero`` / ``Location: ...bpy/ops.py:109`` (step
-    216). Frames of the entry Text become Maya's ``<maya console>`` with the line of the entry (the prepared source has one line in
+    in <module>`` / ... / ``ZeroDivisionError: division by zero`` / ``Location: ...bpy/ops.py:109``).
+    Frames of the entry Text become Maya's ``<maya console>`` with the line of the entry (the prepared source has one line in
     front); frames inside the kit (the ``cmds`` look-alike) are dropped: Maya's commands are C++ and leave none."""
     lines = [ln for ln in message.splitlines() if ln.strip() and not ln.startswith("Location:")]
     for prefix in ("Error: Python: ", "Error: "):

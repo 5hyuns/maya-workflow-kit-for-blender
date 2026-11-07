@@ -3,7 +3,7 @@
 
 Maya prints a command's result ("// Result: group1") in the Command Line result field at the bottom right and the
 Script Editor history; nothing pops up over the Help Line. Blender shows an operator's INFO report as a banner in
-the status bar (step-154 dogfood G1: "Grouped 2 object(s) into group1" with Blender's ⓘ). So kit operators report
+the status bar (for example "Grouped 2 object(s) into group1" with Blender's ⓘ). So kit operators report
 results through ``result``: the text goes to the result field (``command_line.show_result``). Warnings and errors stay
 Blender reports (Maya shows those in the Help Line / Command Line in yellow / red too). Tool usage hints (what the
 mouse does in an active tool) stay INFO reports: Maya shows those in the Help Line, which is where Blender's status

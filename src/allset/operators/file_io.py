@@ -655,13 +655,13 @@ def _write_one(context, fmt, path, op, args, maya, k, rig=(True, True)):
     if fmt == 'FBX':
         rig_fbx_maya(context, path, run, args, deform_only=rig[0])
         from . import fbx_blend, fbx_rig
-        if fbx_rig.modules() is not None:        # Maya's blendShape: in-betweens in their target's channel (235)
+        if fbx_rig.modules() is not None:        # Maya's blendShape: in-betweens in their target's channel
             obs = context.selected_objects if args.get("use_selection") else list(context.view_layer.objects)
             fbx_blend.rewrite(path, [o for o in obs if o is not None and o.type == 'MESH'])
         if fbx_rig.modules() is not None:
             sc = context.scene
             fps = sc.render.fps / (sc.render.fps_base or 1.0)
-            fbx_rig.set_time_span(path, sc.frame_start, sc.frame_end, fps)     # Maya's Time Slider range (235)
+            fbx_rig.set_time_span(path, sc.frame_start, sc.frame_end, fps)     # Maya's Time Slider range
             if rig[1]:
                 from . import fbx_skeleton
                 fbx_skeleton.rewrite_names(path)       # no FBXASC names in Maya

@@ -218,7 +218,7 @@ _sidebar_done = set()       # Graph Editor areas whose sidebar the kit already c
 
 
 def hide_sidebars(context):
-    """Maya's Graph Editor has no side panel (#105; audit 14 b04_graph_editor.png showed Blender's Active
+    """Maya's Graph Editor has no side panel (#105; a Graph Editor in a main pane showed Blender's Active
     F-Curve / "RNA Array Index" sidebar in a Graph Editor shown in a main pane). Close it once per Graph Editor area
     while the kit's editor chrome is on; N opens it again and stays open."""
     from . import editor_chrome

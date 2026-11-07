@@ -133,7 +133,7 @@ def draw_range_slider(layout, context):
 
     layout.separator_spacer()
     row = layout.row(align=True)
-    # Maya auto key (:585): Maya's key button, red while on (issue #37: Blender's record circle wasn't recognised)
+    # Maya auto key: Maya's key button, red while on (issue #37: Blender's record circle wasn't recognised)
     # The kit's own Maya Auto Key (operators/auto_key.py): keys only already keyed channels without
     # Blender's "Only Insert Available" preference.
     on = getattr(scene, "allset_auto_key", False)

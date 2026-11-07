@@ -18,8 +18,8 @@ Row forms:
                                  with get/set), with the input's map button
   ("missing", label, note)       Maya attribute Blender doesn't have: a greyed row with the note
 
-``TEMPLATE`` names the research template a section list is checked against
-(tests/test_step11_outliner_ae.py); ``None`` = no Maya template in the research.
+``TEMPLATE`` names the Maya Attribute Editor template a section list follows
+(tests/test_step11_outliner_ae.py); ``None`` = no Maya template.
 """
 
 
@@ -218,7 +218,7 @@ _RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refr
               ("socket", "IOR", "Refractive Index"))
 LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
 # blinn / phong = lambert common + Specular Shading, open (Maya 2022 Attribute Editor
-# blinn / phong tabs; not in the research templates).
+# blinn / phong tabs; not in Maya's templates).
 # Eccentricity / Cosine Power are Maya numbers converted to the Principled Roughness (operators/material.py, #71).
 BLINN = [_LAMBERT_COMMON,
          S("Specular Shading", True, ("maya", "allset_eccentricity", "Eccentricity", "Roughness"),
@@ -325,7 +325,7 @@ TYPE = [
                                "text to a mesh (Modify > Convert) and animate that.")),
 ]
 
-# (sections, research template name or None)
+# (sections, Maya template name or None)
 BY_KIND = {
     "FONT": (TYPE, None),
     "transform": (TRANSFORM, "transform"),

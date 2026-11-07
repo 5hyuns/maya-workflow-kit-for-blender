@@ -261,8 +261,8 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 
 
 # Maya's option box is a small square at the right end of the item's line.
-# A second button on a Blender menu line breaks consecutive lines into a staircase (checked again in step
-# 103 with row / split / column / grid_flow lines), so the item stays one button:
+# A second button on a Blender menu line breaks consecutive lines into a staircase (checked again
+# with row / split / column / grid_flow lines), so the item stays one button:
 # its label ends with Maya's box mark, click = the command, press and hold = "Option Box" = the option window
 # (``operators/option_windows.py``) or the command's own settings. Since #82 the hold needs no drag:
 # the pointer is put on the hold menu's "Option Box" row, so letting go runs it.

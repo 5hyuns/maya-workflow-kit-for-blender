@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rows of the Maya viewport panel menus (``ui/panel_menus.py``), the panel toolbar (``ui/panel_toolbar.py``) and the
 greyed Status Line widgets (``ui/status_line.py``) as plain data — no ``bpy`` — so ``tools/menu_count.py``,
-``tools/menu_consistency.py`` and the step-101 notice rules can walk them like the main menus (until then
+``tools/menu_consistency.py`` and the notice rules can walk them like the main menus (until then
 these 36 + 9 greyed items were outside every count).
 
 Item paths (``allset.menu_unavailable`` ``item``, ``notices.PANEL_MENU`` keys): ``Panel menu/<menu>/<sub>/<label>``,

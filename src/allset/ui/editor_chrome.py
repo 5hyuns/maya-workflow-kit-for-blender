@@ -763,8 +763,8 @@ def row_id(row):
 
 
 def listed_objects(context, space):
-    """Objects the Maya list shows as rows: the loaded list, else the selection with Auto Load (keyed or not, step
-    281), else all animated ones (also by shape keys / data-block curves); plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects, by name. Driven
+    """Objects the Maya list shows as rows: the loaded list, else the selection with Auto Load (keyed or not),
+    else all animated ones (also by shape keys / data-block curves); plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects, by name. Driven
     channels count like keyed ones (Maya lists a driven-key / expression
     channel)."""
     ds = space.dopesheet

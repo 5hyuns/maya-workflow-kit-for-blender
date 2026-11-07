@@ -7,7 +7,7 @@ positions and the Blender action (same value forms as ``ui/menu_map.py``:
 ``("menu", id)``; ``None`` = greyed out). A radial ``Sub`` is a nested marking
 menu, a list ``Sub`` a plain submenu.
 
-Kept free of Blender UI so the step-9 marking-menu engine can draw the same
+Kept free of Blender UI so the marking-menu engine can draw the same
 definitions.
 """
 

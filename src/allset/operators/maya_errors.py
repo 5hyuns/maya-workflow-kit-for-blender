@@ -2,7 +2,7 @@
 """Maya's ``// Error:`` messages for commands run on a selection they don't take (#152).
 
 Maya prints these as Errors in the Command Line / Help Line (Maya 2026,
-with the step-258 additions there). A kit operator reports one with ``op.report({'ERROR'}, text)``;
+with its later additions). A kit operator reports one with ``op.report({'ERROR'}, text)``;
 code that runs a Blender operator for a Maya menu item raises ``MayaError`` before it, which the menu item turns into
 the same Error report (``report_nested``) instead of Blender's Python error.
 """

@@ -22,7 +22,7 @@ under a blendShape), kept on the owner's mesh by a depsgraph handler (Delete His
 Jiggle: a Simulation zone steps, per frame in world space, v = x − x_prev, S = goal − x, û = S / |S|,
 F = (k + d) S − d (v·û) û, F *= fan c + fot (1 − c) with c = |F̂·n̂|, x ← goal + (x + v + F − goal) · jiggleWeight ·
 envelope · weight (the weighted point is the next state). Disable = the input; Ignore Transform = the same in object
-space (the object's motion moves nothing); Enable Only After Object Stops follows the step-205 model (the input while
+space (the object's motion moves nothing); Enable Only After Object Stops follows the same model (the input while
 the goal moves, then the spring from a point moved back by Motion Multiplier × the last goal step); Direction Bias
 is kept but changes nothing. Blender's simulation cache plays Maya's jiggle1Cache (bake folder ``//jiggle1Cache``).
 """
@@ -348,7 +348,7 @@ def build_jiggle():
     F = b.vmath('SCALE', F, scale=fac)                                                # noqa: N806
     sw = b.math('MULTIPLY', b.math('MULTIPLY', I["Jiggle Weight"], I["Envelope"]), I["Weight"])
     x_on = b.lerp(g, b.vmath('ADD', b.vmath('ADD', x, v), F), sw)                     # Enable
-    # Enable Only After Object Stops (step-205 model; Maya scales it by ~0.69)
+    # Enable Only After Object Stops (Maya scales it by about 0.69)
     moving = b.math('GREATER_THAN', b.vmath('DISTANCE', g, gp, out="Value"), 1e-9)
     F2 = b.vmath('SUBTRACT', b.vmath('SCALE', s, scale=kd), b.vmath('SCALE', v, scale=dmp))   # noqa: N806
     x_still = b.vmath('ADD', b.vmath('ADD', x, v), F2)

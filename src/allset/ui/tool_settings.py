@@ -202,7 +202,7 @@ TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scal
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
 SELECTING = ('SELECT', 'LASSO')
 # (key, title, open by default: True / False / the kinds where it starts open, kinds that have it). One order for
-# every tool (Maya's order within each tool: ts106 / ts129 widget y).
+# every tool (Maya's order within each tool).
 SECTIONS = (
     ("settings", None, True, MANIP),
     ("joint_orient", "Joint Orient Settings", False, ('TRANSLATE',)),
@@ -595,7 +595,7 @@ def edge_loop_position(context):
     return edge_loops.settings(context).iel_position
 
 
-MAYA_EDGE_LOOPS = 2     # Maya Number of edge loops (ts129 insert_edge_loop)
+MAYA_EDGE_LOOPS = 2     # Maya Number of edge loops (Insert Edge Loop Tool)
 
 
 def set_edge_loop_position(context, value):

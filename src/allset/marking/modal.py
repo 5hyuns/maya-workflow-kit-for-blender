@@ -188,7 +188,7 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
     button: EnumProperty(items=BUTTONS, options={'SKIP_SAVE'})
     # Where the button went down (region pixels). Callers pass the press position: the
     # event a nested invoke gets is the window's latest state, which may already have
-    # moved on (seen with simulated events in the step-9 GUI test).
+    # moved on (seen with simulated events in the GUI tests).
     origin: bpy.props.IntVectorProperty(size=2, default=(-1, -1), options={'SKIP_SAVE'})
 
     def invoke(self, context, event):

@@ -4,7 +4,7 @@
 Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-release via pie_tap_timeout.
 
 - ``menus.py``: the menus as data (Maya radial positions).
-- ``engine.py`` / ``draw.py`` / ``modal.py``: the step-9 marking menu engine
+- ``engine.py`` / ``draw.py`` / ``modal.py``: the marking menu engine
   (GPU, gestures, in-place submenus, option boxes) and the hotbox; the
   "Marking Menu Style" preference picks the engine (default) or the pies.
 - ``user_menus.py``: the user's edited and own menus (Marking Menu
@@ -12,7 +12,7 @@ Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-releas
 - Here: one pie ``Menu`` class per marking menu and radial submenu (plain
   ``Menu`` for list submenus), ``allset.marking_menu`` (picks the menu for a
   trigger and the context, like Maya's builders), helper operators, and the
-  Q/W/E/R "hold + LMB" bindings on the step-3 tap/hold framework; the user's
+  Q/W/E/R "hold + LMB" bindings on the tap/hold framework; the user's
   menus get their pie classes and hotkeys from ``apply_user_menus``.
 """
 
@@ -482,7 +482,7 @@ class ALLSET_OT_mm_clear_selection(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Q/W/E/R hold + LMB (step-3 tap/hold framework) -------------------------------------
+# --- Q/W/E/R hold + LMB (tap/hold framework) -------------------------------------
 
 HANDLE_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
 

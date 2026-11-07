@@ -152,8 +152,8 @@ def _circle(cx, cy, r, color, segments=24):
 
 # --- marking menu -------------------------------------------------------------------
 
-# On = filled light blue: the step-26 selection blue (0.32, 0.52, 0.65) hardly differed from the
-# empty box in the step-31 screenshot.
+# On = filled light blue: the earlier selection blue (0.32, 0.52, 0.65) hardly differed from the
+# empty box in screenshots.
 CHECK = (0.45, 0.72, 0.95, 1.0)
 
 

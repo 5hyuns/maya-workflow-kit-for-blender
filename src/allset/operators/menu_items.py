@@ -260,7 +260,7 @@ def edge_flow(bm, edges, flow=1.0):
     Hermite curve between its two ring neighbours a, b, with tangents along the circles through (a's outer
     neighbour, a, b) and (a, b, b's outer neighbour) and length = |ab|, at the vertex's own parameter; flow 0 = the
     straight line (sphere ring: Maya 0.9983, this rule
-    0.9971; the step-101 Catmull-Rom gave 0.951). Returns the number of moved vertices."""
+    0.9971; an earlier Catmull-Rom rule gave 0.951). Returns the number of moved vertices."""
     selected = set(edges)
     moves = {}
     for v in {v for e in edges for v in e.verts}:
