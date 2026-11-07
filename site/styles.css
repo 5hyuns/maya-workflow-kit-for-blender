@@ -18,6 +18,7 @@
   --text-strong: #eeeeee;
   --text: #c8c8c8;
   --text-muted: #9a9a9a;        /* 5.9:1 on --canvas */
+  --text-soft: #ababab;         /* 5.2:1 on --panel: small credits inside window fragments */
   --teal: #00bcbb;
   --yellow: #ffff00;
   --ink: #000000;
@@ -41,7 +42,7 @@ body {
 }
 ::selection { background: var(--teal); color: var(--ink); }
 a { color: var(--teal); text-underline-offset: .2em; text-decoration-thickness: 1px; }
-a:not(.btn):hover { color: #3fd6d5; }
+a:not(.btn):not(.menubar__repo):not(.skip):hover { color: #3fd6d5; }
 :focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; border-radius: 2px; }
 code, .path { font: 500 .92em/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--text-strong); }
 .path { font-family: inherit; font-weight: 600; white-space: nowrap; }
@@ -117,6 +118,11 @@ html { scrollbar-color: var(--rule) var(--canvas); }
 }
 .shelf { display: flex; overflow-x: auto; scrollbar-width: none; }
 .shelf::-webkit-scrollbar { display: none; }
+/* horizontal scrollers (menu bar, shelf) fade the edge that hides more; app.js sets data-fade */
+.menubar nav::-webkit-scrollbar { display: none; }
+[data-fade="r"] { mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
+[data-fade="l"] { mask-image: linear-gradient(90deg, transparent, #000 36px); }
+[data-fade="lr"] { mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
 .shelf__tab {
   flex: none; position: relative; border: 0; background: none; cursor: pointer;
   padding: 10px 13px 9px; color: var(--text); font: 500 12.5px/1.2 "Inter", system-ui, sans-serif; white-space: nowrap;
@@ -153,7 +159,7 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
 .channels__list dt { color: var(--teal); text-align: right; font-weight: 600; padding-right: 8px; white-space: nowrap; }
 .channels__list dd { color: var(--text-strong); padding-left: 6px; }
 .channels__list dt:nth-of-type(odd), .channels__list dt:nth-of-type(odd) + dd { background: rgba(255, 255, 255, .025); }
-.channels__credit { margin-top: auto; padding: 14px 14px 0; font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
+.channels__credit { margin-top: auto; padding: 14px 14px 0; font-size: 12px; line-height: 1.4; color: var(--text-soft); }
 
 /* ---------------------------------------------------------------- choose: Maya | Blender */
 .choose {
@@ -185,6 +191,13 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
 .tour__frame { margin: 0; max-width: 1100px; }
 .tour__frame video { width: 100%; border-radius: 6px; border: 1px solid var(--rule); background: #000; }
 .tour__frame figcaption { margin-top: 12px; font-size: 14px; color: var(--text-muted); max-width: var(--measure); }
+
+/* ---------------------------------------------------------------- note from the maintainer */
+.note { padding: clamp(56px, 7vw, 96px) var(--pad-x) 0; }
+.note h2 { margin-bottom: 24px; }
+.note__body { max-width: var(--measure); display: flex; flex-direction: column; gap: 16px; font-size: 18px; line-height: 1.6; }
+.note__body p:first-child { color: var(--text-strong); }
+.note__sign { font-size: 15px; color: var(--text-muted); }
 
 /* ---------------------------------------------------------------- install */
 .install, .limits, .faq { padding: clamp(56px, 7vw, 96px) var(--pad-x) 0; }
@@ -244,14 +257,30 @@ video.viewport__media { transform: translateY(6.43%) scale(1.1765); transform-or
   .switcher__toggle { align-self: flex-start; }
   .switcher__note { text-align: left; }
 }
-@media (max-width: 760px) {
-  body { font-size: 16px; }
-  .menubar { gap: 12px; }
-  .menubar__repo { display: none; }
-  .menubar nav { overflow-x: auto; scrollbar-width: none; }
-  .menubar__menu a { padding: 6px 8px; white-space: nowrap; }
+/* between 1101 and 1279 px the two-column hero is too narrow for a clip and a Channel Box column side by side,
+   and so is a tablet in portrait: the Channel Box drops under the viewport, its rows two pairs wide */
+@media (max-width: 1279px) and (min-width: 1101px), (max-width: 820px) {
   .maya__body { grid-template-columns: 1fr; }
   .channels { border-left: 0; border-top: 1px solid var(--rule); }
+}
+@media (max-width: 1279px) and (min-width: 1101px), (max-width: 820px) and (min-width: 600px) {
+  .channels__list { grid-template-columns: auto 1fr auto 1fr; }
+  .channels__list dt:nth-of-type(odd), .channels__list dt:nth-of-type(odd) + dd { background: none; }
+  .channels__list dt:nth-of-type(4n+1), .channels__list dt:nth-of-type(4n+1) + dd,
+  .channels__list dt:nth-of-type(4n+2), .channels__list dt:nth-of-type(4n+2) + dd { background: rgba(255, 255, 255, .025); }
+}
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .menubar { gap: 12px; background: var(--base); }
+  .menubar__brand {   /* the kit's own icon stands in for the name; the lockup is right below */
+    width: 28px; height: 28px; flex: none; font-size: 0; color: transparent;
+    background: url("media/icon-256.png") center / contain no-repeat;
+  }
+  .menubar nav { min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+  .menubar__menu a { padding: 6px 8px; white-space: nowrap; }
+  .menubar__repo { padding: 5px 8px; }
+  .shelf { flex: 1 1 auto; flex-wrap: wrap; overflow: visible; }   /* six tabs in two rows, nothing hidden */
+  .shelf__tab { flex: 1 1 auto; text-align: center; border-bottom: 1px solid #333; padding: 10px 8px 9px; font-size: 12px; }
   .steps { grid-template-columns: 1fr; }
   .steps { padding: 4px 18px 16px; }
   .steps li, .steps li + li { padding: 20px 0 6px; border-left: 0; }

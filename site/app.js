@@ -96,6 +96,17 @@
 
   fillFacts(data.hotbox);
 
+  // the two horizontal scrollers (menu bar, shelf) fade the edge that hides more items
+  function fades(el) {
+    const max = el.scrollWidth - el.clientWidth;
+    const x = el.scrollLeft;
+    el.dataset.fade = max <= 1 ? "" : x <= 1 ? "r" : x >= max - 1 ? "l" : "lr";
+  }
+  document.querySelectorAll(".menubar nav, .shelf").forEach((el) => {
+    el.addEventListener("scroll", () => fades(el), { passive: true });
+    new ResizeObserver(() => requestAnimationFrame(() => fades(el))).observe(el);
+  });
+
   // Maya | Blender switch
   const opts = [...document.querySelectorAll(".switcher__opt")];
   const shots = [...document.querySelectorAll("[data-mode-shot]")];

@@ -197,6 +197,12 @@ def main(argv=None):
         print("PASS" if good else "FAIL", name)
         ok &= good
 
+    # the product site names the current release in its hero line; a release must not leave the old one there
+    version = build.manifest_value("version")
+    stamped = f">v{version}<" in (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    print("PASS" if stamped else "FAIL", f"site/index.html names the current version v{version}")
+    ok &= stamped
+
     if args.no_shots:
         return 0 if ok else 1
     shots.mkdir(parents=True, exist_ok=True)
