@@ -37,11 +37,21 @@ def test_setup_turns_the_mode_column_off():
     assert sp.display_mode == 'VIEW_LAYER' and sp.show_restrict_column_hide is False
 
 
+def _template_time_slider(screen):
+    """The template's Time Slider: the timeline whose sidebar (the Time Slider buttons) is switched on."""
+    has_slider_panel = import_module(kit.MODULE + ".ui.time_slider").has_slider_panel
+    return next((a for a in screen.areas if a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE'
+                 and has_slider_panel(a.spaces.active)), None)
+
+
 def test_time_slider_area_and_its_fitted_height():
     bpy.ops.wm.open_mainfile(filepath=str(TEMPLATE), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
-    area = toolbox.time_slider_area(screen)
-    assert area is not None, "the General layout has the Time Slider timeline"
+    area = _template_time_slider(screen)
+    assert area is not None, "the General layout has the Time Slider timeline (sidebar on)"
+    # Blender 5.x keeps the template's timeline sidebar 1 px wide: the Time Slider buttons go to the header
+    # and the sized Time Slider lookup finds nothing (the GUI chrome test checks the same)
+    assert toolbox.time_slider_area(screen) is None
     # the generator and the fit use the same ruler height (36 px at scale 1)
     src = (ROOT / "tools" / "make_startup.py").read_text(encoding="utf-8")
     assert int(re.search(r"^TIME_SLIDER_PX = (\d+)", src, re.M).group(1)) == toolbox.TIME_SLIDER_PX
@@ -60,7 +70,7 @@ def test_fit_leaves_a_fitted_time_slider_alone():
     """At the template's own scale (1.0) the Time Slider already has 36 px + header: no move is planned."""
     bpy.ops.wm.open_mainfile(filepath=str(TEMPLATE), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
-    area = toolbox.time_slider_area(screen)
+    area = _template_time_slider(screen)
     hdr = next((r.height for r in area.regions if r.type == 'HEADER'), 0)
     if hdr == 0 or area.height <= 1:
         return            # -b loads the screen without region sizes (sizes appear after a UI load)
