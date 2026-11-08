@@ -17,16 +17,18 @@
   rotate rings; the switch puts the manipulator on world axes, where its handles drive Translate / Scale / Rotate
   instead of the Local values. Both are display states of the manipulator (``tc_state``), not node values.
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows, its title and the
-  drag-speed pie at the title's right end (the shelf's way). The selected row's name is yellow: the row under the
-  pointer, or the last one dragged, clicked or pointed at; a new node starts with its first number row. Dragging a row sideways changes the value
-  and selects the row, a click without a drag types it, Keep Faces Together toggles. Like Maya, a plain middle
-  drag anywhere in the view changes the selected row (over a row: that row; ``allset.inview_drag`` with row -1,
+  drag-speed pie at the title's right end (the shelf's way; the title and the pie only while their options are on).
+  The selected row's name is yellow: the row under the pointer, or the last one dragged, clicked or pointed at; a new
+  node starts with its first number row. Dragging a row sideways changes the value and selects the row, a click
+  without a drag types it, Keep Faces Together toggles. Like Maya, a plain middle drag anywhere in the view changes
+  the selected row (over a row: that row; ``allset.inview_drag`` with row -1,
   started by the Channel Box virtual slider's press when no channel is picked, and by a "Mesh" keymap item for the
   edit-mode tools without a middle drag); a middle click only selects, also an On / Off row. Values sit in dark
-  fields. The pie
-  (click / drag round it, empty to full clockwise from eight o'clock) slows every row drag down to 2 %; dragging
-  the title moves the box, which then keeps that offset from its place beside the manipulator / object. Both are
-  kept in the add-on preferences (``in_view_settings``).
+  fields. Two add-on preferences, off by default (``in_view_settings``): the pie (click / drag round it, empty to
+  full clockwise from eight o'clock) slows every row drag down to 2 %; dragging the title moves the box, which then
+  keeps that offset from its place beside the manipulator / object. Off, the title has no pie, rows drag at full
+  speed, a press on the title goes on to the view and the box stays at its place; the saved speed and offset are
+  kept for when an option is turned back on.
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
   undo step, the edit itself is one) + the "only the last one" notice.
 - Object mode (T, Show Manipulator Tool, #327): like Maya, the selected object's input node shows without leaving
@@ -363,9 +365,9 @@ def on_fan(lay, scale, x, y):
 
 
 def on_title(lay, scale, x, y):
-    """On the title bar, off the pie: the handle that moves the box."""
+    """On the title bar, off the pie while it is shown: the handle that moves the box."""
     x0, y0, x1, y1 = lay["title"]
-    return x0 <= x <= x1 and y0 <= y <= y1 and not on_fan(lay, scale, x, y)
+    return x0 <= x <= x1 and y0 <= y <= y1 and not (in_view_settings.pie_shown() and on_fan(lay, scale, x, y))
 
 
 def row_at(lay, x, y):
@@ -475,7 +477,8 @@ def draw_box():
     blf.size(0, size)
     tw = blf.dimensions(0, rec.name)[0]
     _text((x0 + x1 - tw) / 2, y0 + 4 * s, rec.name, TEXT, size)
-    _draw_fan(*fan_circle(lay, s), in_view_settings.get_sensitivity())
+    if in_view_settings.pie_shown():
+        _draw_fan(*fan_circle(lay, s), in_view_settings.get_sensitivity())
     for i, (field, rx0, ry0, rx1, ry1) in enumerate(lay["rows"]):
         hot = i == _state["hot"]
         _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], HOT if hot else LIT if i == _state["hover"] else TEXT,
@@ -528,6 +531,8 @@ class ALLSET_GT_in_view_title(bpy.types.Gizmo):
         pass
 
     def test_select(self, context, location):
+        if not in_view_settings.title_moves():
+            return -1
         _rec, lay = current_layout(context)
         return 0 if lay is not None and on_title(lay, _scale(), *location) else -1
 
@@ -540,6 +545,8 @@ class ALLSET_GT_in_view_fan(bpy.types.Gizmo):
         pass
 
     def test_select(self, context, location):
+        if not in_view_settings.pie_shown():
+            return -1
         _rec, lay = current_layout(context)
         return 0 if lay is not None and on_fan(lay, _scale(), *location) else -1
 
@@ -1114,7 +1121,7 @@ class ALLSET_OT_inview_fan(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return target(context)[1] is not None
+        return in_view_settings.pie_shown() and target(context)[1] is not None
 
     def invoke(self, context, event):
         _rec, lay = current_layout(context)
@@ -1152,7 +1159,7 @@ class ALLSET_OT_inview_move(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return target(context)[1] is not None
+        return in_view_settings.title_moves() and target(context)[1] is not None
 
     def invoke(self, context, event):
         self._start = in_view_settings.get_offset()

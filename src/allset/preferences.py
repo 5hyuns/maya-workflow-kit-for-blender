@@ -78,7 +78,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
 
     # In-View Editor (ui/in_view_settings.py): the drag speed set with the pie in its title (1 = full speed) and
-    # how far its title was dragged from its place beside the manipulator / object (px at UI scale 1).
+    # how far its title was dragged from its place beside the manipulator / object (px at UI scale 1). Used only
+    # while in_view_speed_pie / in_view_title_move are on; kept while they are off.
     hud_drag_sensitivity: bpy.props.FloatProperty(
         name="In-View Editor Drag Speed", default=1.0, min=0.0, max=1.0, subtype='FACTOR', options={'HIDDEN'})
     in_view_offset_x: bpy.props.FloatProperty(default=0.0, options={'HIDDEN'})
@@ -470,6 +471,19 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "there: resting the pointer on that ring for a moment goes back to that menu. The line from the "
                     "centre to the pointer shows only near a centre",
         default=False)
+    # Extra In-View Editor controls (ui/in_view_settings.py), off by default.
+    in_view_speed_pie: bpy.props.BoolProperty(
+        name="In-View Editor Speed Pie",
+        description="A pie at the right end of the In-View Editor's title sets how fast a drag changes its values: "
+                    "click or drag round it, from 2 % (empty) to full speed (full) (off: no pie, the values change "
+                    "at full speed)",
+        default=False, update=_redraw_tools)
+    in_view_title_move: bpy.props.BoolProperty(
+        name="Move In-View Editor by Title",
+        description="Dragging the In-View Editor's title moves the editor; it then keeps that offset from its place "
+                    "beside the manipulator / object and follows it (off: the editor stays at its place beside its "
+                    "object)",
+        default=False, update=_redraw_tools)
 
     # Shelf: current tab (factory file name or "USER:<name>").
     shelf_current: bpy.props.StringProperty(options={'HIDDEN'})
@@ -633,6 +647,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "mm_quick_gestures")
         row.prop(self, "mm_submenu_guides")
+        row = box.row()
+        row.prop(self, "in_view_speed_pie")
+        row.prop(self, "in_view_title_move")
         row = box.row()
         row.prop(self, "show_status_line")
         row.prop(self, "show_command_line")

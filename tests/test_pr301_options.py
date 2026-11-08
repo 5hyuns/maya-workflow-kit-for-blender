@@ -1,7 +1,9 @@
 """#301: the marking menu options Quick Gestures and Submenu Return Ring (add-on preferences, off by default; with
-them off the menus behave as before) and the In-View Editor's drag speed, title offset and middle drag (engine and
-helpers, no bpy UI). GUI: tests/gui/gui_pr301_in_view.py."""
+them off the menus behave as before), the In-View Editor's drag-speed pie and title move (add-on preferences, off by
+default: no pie, full speed, the box stays at its place) and its middle drag (engine and helpers, no bpy UI).
+GUI: tests/gui/gui_pr301_in_view.py."""
 
+import contextlib
 from importlib import import_module
 
 import kit
@@ -42,11 +44,24 @@ def _label(s):
     return s.hover[0].label if s.hover[0] is not None else None
 
 
+@contextlib.contextmanager
+def _in_view_options(pie=True, title=True):
+    """The In-View Editor's pie / title move options on for the block, off again (the default) after it."""
+    p = preferences.get()
+    p.in_view_speed_pie, p.in_view_title_move = pie, title
+    try:
+        yield p
+    finally:
+        p.in_view_speed_pie = p.in_view_title_move = False
+
+
 # --- defaults ---------------------------------------------------------------------------------------------------
 
 def test_options_off_by_default():
     p = preferences.get()
     assert p.mm_quick_gestures is False and p.mm_submenu_guides is False
+    assert p.in_view_speed_pie is False and p.in_view_title_move is False
+    assert not settings.pie_shown() and not settings.title_moves()
     assert p.hud_drag_sensitivity == 1.0 and (p.in_view_offset_x, p.in_view_offset_y) == (0.0, 0.0)
     assert engine.Params.quick_gestures is False and engine.Params.submenu_guides is False
     q = modal._params()
@@ -161,13 +176,24 @@ def test_return_ring_two_stroke_mark_still_reaches_the_item_behind_the_centre():
 
 def test_in_view_drag_speed_and_offset_settings():
     assert settings.speed() == 1.0, "full speed by default: the rows drag at their own steps"
+    p = preferences.get()
     try:
-        settings.set_sensitivity(0.0)
-        assert abs(settings.speed() - 0.02) < 1e-9
-        settings.set_sensitivity(2.0)
-        assert settings.get_sensitivity() == 1.0
-        settings.set_offset(30.0, -12.5)
-        assert settings.get_offset() == (30.0, -12.5)
+        with _in_view_options():
+            settings.set_sensitivity(0.0)
+            assert abs(settings.speed() - 0.02) < 1e-9
+            settings.set_sensitivity(2.0)
+            assert settings.get_sensitivity() == 1.0
+            settings.set_offset(30.0, -12.5)
+            assert settings.get_offset() == (30.0, -12.5)
+            settings.set_sensitivity(0.25)
+        assert settings.speed() == 1.0, "pie off: full speed whatever speed was set with it"
+        assert settings.get_offset() == (0.0, 0.0), "title move off: the box at its place"
+        assert p.hud_drag_sensitivity == 0.25 and (p.in_view_offset_x, p.in_view_offset_y) == (30.0, -12.5), \
+            "the saved speed and offset stay while the options are off"
+        with _in_view_options(pie=True, title=False):
+            assert abs(settings.speed() - (0.02 + 0.98 * 0.25)) < 1e-9 and settings.get_offset() == (0.0, 0.0)
+        with _in_view_options(pie=False, title=True):
+            assert settings.speed() == 1.0 and settings.get_offset() == (30.0, -12.5), "turned back on: kept"
     finally:
         settings.set_sensitivity(1.0)
         settings.set_offset(0.0, 0.0)
@@ -183,7 +209,9 @@ def test_in_view_pie_and_rows():
     lay = {"title": (0.0, 80.0, 180.0, 96.0), "rows": [("a", 0.0, 64.0, 180.0, 80.0), ("b", 0.0, 48.0, 180.0, 64.0)]}
     fx, fy, fr = in_view.fan_circle(lay, 1.0)
     assert (fx, fy, fr) == (167.0, 88.0, 8.0)
-    assert in_view.on_fan(lay, 1.0, fx, fy) and not in_view.on_title(lay, 1.0, fx, fy)
+    assert in_view.on_title(lay, 1.0, fx, fy), "pie off: its spot is part of the title"
+    with _in_view_options():
+        assert in_view.on_fan(lay, 1.0, fx, fy) and not in_view.on_title(lay, 1.0, fx, fy)
     assert in_view.on_title(lay, 1.0, 20.0, 90.0) and not in_view.on_title(lay, 1.0, 20.0, 70.0)
     assert in_view.row_at(lay, 20.0, 70.0) == 0 and in_view.row_at(lay, 20.0, 50.0) == 1
     assert in_view.row_at(lay, 20.0, 30.0) == -1
@@ -194,6 +222,63 @@ def test_in_view_pie_and_rows():
     class Rec:
         spec = Spec()
     assert in_view.first_number_row(Rec()) == 1, "switch rows are skipped"
+
+
+def test_in_view_pie_and_title_hit_only_while_their_options_are_on():
+    import bpy
+    lay = {"box": (0.0, 48.0, 180.0, 96.0), "title": (0.0, 80.0, 180.0, 96.0),
+           "rows": [("a", 0.0, 64.0, 180.0, 80.0), ("b", 0.0, 48.0, 180.0, 64.0)]}
+    fx, fy, _r = in_view.fan_circle(lay, 1.0)
+    title, fan = in_view.ALLSET_GT_in_view_title.test_select, in_view.ALLSET_GT_in_view_fan.test_select
+    saved = in_view.current_layout, in_view._scale, in_view.target
+    in_view.current_layout = lambda context: (None, lay)
+    in_view._scale = lambda: 1.0
+    in_view.target = lambda context: (None, object())
+    ctx = bpy.context
+    try:
+        assert fan(None, ctx, (fx, fy)) == -1 and title(None, ctx, (fx, fy)) == -1 and title(None, ctx, (20, 90)) == -1, \
+            "options off: a press on the title or the pie's spot goes on to the view"
+        assert not in_view.ALLSET_OT_inview_fan.poll(ctx) and not in_view.ALLSET_OT_inview_move.poll(ctx)
+        with _in_view_options(pie=True, title=False):
+            assert fan(None, ctx, (fx, fy)) == 0 and title(None, ctx, (20, 90)) == -1
+            assert in_view.ALLSET_OT_inview_fan.poll(ctx) and not in_view.ALLSET_OT_inview_move.poll(ctx)
+        with _in_view_options(pie=False, title=True):
+            assert fan(None, ctx, (fx, fy)) == -1 and title(None, ctx, (fx, fy)) == 0 and title(None, ctx, (20, 90)) == 0
+            assert in_view.ALLSET_OT_inview_move.poll(ctx) and not in_view.ALLSET_OT_inview_fan.poll(ctx)
+        with _in_view_options():
+            assert fan(None, ctx, (fx, fy)) == 0 and title(None, ctx, (fx, fy)) == -1 and title(None, ctx, (20, 90)) == 0
+        assert title(None, ctx, (20, 70)) == -1, "a row is no title"
+    finally:
+        in_view.current_layout, in_view._scale, in_view.target = saved
+
+
+def test_in_view_options_in_the_preferences():
+    import bpy
+    props = preferences.ALLSET_AddonPreferences.bl_rna.properties
+    for name in ("in_view_speed_pie", "in_view_title_move"):
+        prop = props[name]
+        assert prop.default is False and "off:" in prop.description, (name, prop.description)
+    assert props["in_view_speed_pie"].name == "In-View Editor Speed Pie"
+    assert props["in_view_title_move"].name == "Move In-View Editor by Title"
+
+    class Layout:                       # records the properties the preferences draw
+        drawn = []
+
+        def prop(self, _data, name, **_kw):
+            Layout.drawn.append(name)
+
+        def __getattr__(self, _name):
+            return lambda *_a, **_kw: self
+
+    class Prefs:                        # the add-on preferences in Maya mode, drawn into ``Layout``
+        layout, maya_mode = Layout(), True
+
+        def __getattr__(self, name):
+            return getattr(preferences.get(), name)
+    preferences.ALLSET_AddonPreferences.draw(Prefs(), bpy.context)
+    drawn = Layout.drawn
+    assert "in_view_speed_pie" in drawn and "in_view_title_move" in drawn, drawn
+    assert drawn.index("in_view_speed_pie") == drawn.index("mm_submenu_guides") + 1, "next to the marking menu options"
 
 
 def test_in_view_operators_and_middle_drag_binding():
