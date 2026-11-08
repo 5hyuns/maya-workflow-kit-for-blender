@@ -75,14 +75,19 @@ def _assets():
 
 
 def test_every_asset_is_kit_made_and_cc0():
+    """Every non-code file is listed in ASSETS_LICENSE.txt: the kit's own CC0 files, and the archive of Blender UI
+    icons (GPL, like Blender) for the GPU-drawn shelf, which holds no Blender logo or Development Fund mark."""
     listed = open(os.path.join(PKG, "ASSETS_LICENSE.txt"), encoding="utf-8").read()
     assets = _assets()
     assert assets == ["app_template/Maya_Workflow_Kit/splash.png", "app_template/Maya_Workflow_Kit/splash_2x.png",
                       "app_template/Maya_Workflow_Kit/startup.blend", "i18n/template_en.json",
-                      "welcome.png"], assets   # no theme
+                      "icons/blender_icons.zip", "welcome.png"], assets   # no theme
     for rel in assets:
         assert rel in listed, f"{rel} missing from ASSETS_LICENSE.txt"
     assert "CC0" in listed
+    with zipfile.ZipFile(os.path.join(PKG, "icons", "blender_icons.zip")) as zf:
+        names = {n.rsplit("/", 1)[-1].lower() for n in zf.namelist()}
+    assert not names & {"blender.png", "blender_logo_large.png", "fund.png"}, names & {"blender.png", "fund.png"}
     import tomllib
     with open(os.path.join(PKG, "blender_manifest.toml"), "rb") as fh:
         lic = tomllib.load(fh)["license"]
