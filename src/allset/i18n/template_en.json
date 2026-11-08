@@ -6598,15 +6598,19 @@
    "Format": "Format",
    "Image (JPEG sequence)": "Image (JPEG sequence)",
    "Movie (MPEG-4)": "Movie (MPEG-4)",
+   "Movie File": "Movie File",
    "Play the playblast when it is done": "Play the playblast when it is done",
    "Playblast": "Playblast",
    "Quality": "Quality",
+   "Save to File": "Save to File",
    "Scale": "Scale",
    "Start Time": "Start Time",
    "Start/End": "Start/End",
+   "The movie file (the frame range and the extension are added)": "The movie file (the frame range and the extension are added)",
    "Time Range": "Time Range",
    "Time Slider": "Time Slider",
-   "View": "View"
+   "View": "View",
+   "Write the movie to the file below instead of the temporary folder": "Write the movie to the file below instead of the temporary folder"
   },
   "Labels/operators/poly_cleanup": {
    "4-sided faces": "4-sided faces",
@@ -8539,6 +8543,10 @@
    "Weight": "Weight"
   },
   "Labels/ui/range_bar": {
+   "First frame of the playback range (Maya's Range Slider)": "First frame of the playback range (Maya's Range Slider)",
+   "Last frame of the playback range (Maya's Range Slider)": "Last frame of the playback range (Maya's Range Slider)",
+   "Playback End": "Playback End",
+   "Playback Start": "Playback Start",
    "Range Slider": "Range Slider"
   },
   "Labels/ui/reference_editor": {
@@ -8767,6 +8775,7 @@
    "Time Slider Menu": "Time Slider Menu",
    "Time Slider Range All": "Time Slider Range All",
    "Time Slider Scrub": "Time Slider Scrub",
+   "Time Slider View": "Time Slider View",
    "View": "View"
   },
   "Labels/ui/tool_settings": {
@@ -9566,7 +9575,7 @@
    "Keeps objects on a deforming surface at the spot nearest to each, optionally with their current offset (Maya\nConstrain > Proximity Pin): select the geometry, then the objects to constrain": "Keeps objects on a deforming surface at the spot nearest to each, optionally with their current offset (Maya\nConstrain > Proximity Pin): select the geometry, then the objects to constrain"
   },
   "Tooltips/operators/pivot": {
-   "Move the pivots of the selected objects onto the last selected object's pivot\n(Maya Modify > Match Transformations > Match Pivots)": "Move the pivots of the selected objects onto the last selected object's pivot\n(Maya Modify > Match Transformations > Match Pivots)",
+   "Move the pivots of the selected objects onto the pivot of the last selected object or joint\n(Maya Modify > Match Transformations > Match Pivots)": "Move the pivots of the selected objects onto the pivot of the last selected object or joint\n(Maya Modify > Match Transformations > Match Pivots)",
    "Put the custom pivot orientation into the object's rotation; the geometry stays\n(Maya Modify > Bake Pivot)": "Put the custom pivot orientation into the object's rotation; the geometry stays\n(Maya Modify > Bake Pivot)",
    "Put the pivot back on the object's own origin and reset its orientation, without moving\nthe geometry (Maya pivot edit RMB > Reset Pivot)": "Put the pivot back on the object's own origin and reset its orientation, without moving\nthe geometry (Maya pivot edit RMB > Reset Pivot)"
   },
@@ -9757,7 +9766,7 @@
    "Click a point on the object to move, then a point on the target: the object moves\nthere and turns so the surfaces face each other (Maya Modify > Snap Together Tool)": "Click a point on the object to move, then a point on the target: the object moves\nthere and turns so the surfaces face each other (Maya Modify > Snap Together Tool)",
    "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, default options)": "Line the selected objects up along world X at the middle of their bounding boxes\n(Maya Modify > Snap Align Objects > Align Objects, default options)",
    "Make the selected surface live: moves snap onto it. With nothing selected the live\nsurface is cleared (Maya Modify > Make Live)": "Make the selected surface live: moves snap onto it. With nothing selected the live\nsurface is cleared (Maya Modify > Make Live)",
-   "Match the transforms of the selected objects to the last selected one\n(Maya Modify > Match Transformations)": "Match the transforms of the selected objects to the last selected one\n(Maya Modify > Match Transformations)",
+   "Match the transforms of the selected objects, joints and controls to the last selected one\n(Maya Modify > Match Transformations)": "Match the transforms of the selected objects, joints and controls to the last selected one\n(Maya Modify > Match Transformations)",
    "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)": "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)",
    "Move (and turn) the first selected object so its points land on the last selected\nobject's points (Maya Modify > Snap Align Objects > Point to Point / 2 / 3 Points)": "Move (and turn) the first selected object so its points land on the last selected\nobject's points (Maya Modify > Snap Align Objects > Point to Point / 2 / 3 Points)"
   },
@@ -10272,6 +10281,7 @@
    "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them": "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them",
    "Maya Time Slider: a double-click highlights the whole visible range": "Maya Time Slider: a double-click highlights the whole visible range",
    "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)": "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)",
+   "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider": "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider",
    "Time Slider item with no Blender equivalent (greyed)": "Time Slider item with no Blender equivalent (greyed)"
   },
   "Tooltips/ui/tool_settings": {
