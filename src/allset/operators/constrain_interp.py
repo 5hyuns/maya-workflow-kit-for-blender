@@ -20,6 +20,9 @@ The kit (Blender constraints only blend by influence = a shortest slerp):
   handlers, like the pole helper). Frames are the Maya node frames: an object's Maya axes are its Blender X / Z /
   -Y (joints.MAYA_WORLD), a joint's are its bone's Y / Z / X (joints.JOINT_AXES); the own rotation is the node's
   rotation channels (the sign of q_Euler).
+- every weight 0: member 0 and the blend turn off too (constrain_multi.drive_group), so the node shows its own
+  rotation channels, which hold the rest position (constrain_multi.build writes the output at creation into them when
+  there is no offset; Set Rest Position later).
 - per-group state on the owner (Object / PoseBone): ``allset_interp_<group>`` (Maya enum value), ``allset_last_<group>``
   (No Flip memory), ``allset_rest_<group>`` (zero-weight output), ``allset_ooff_<group>`` (orient offset).
 - a parent constraint's offset Euler = Maya's offset Euler: the
@@ -389,7 +392,7 @@ def _remove_blend(owner, group):
         return
     h = c.target
     try:
-        c.driver_remove("influence")      # a one-target node's weight driver (constrain_multi.drive_single)
+        c.driver_remove("influence")      # the node's weight driver (constrain_multi.drive_group)
     except TypeError:
         pass
     owner.constraints.remove(c)
@@ -429,7 +432,6 @@ def set_mode(context, owner, group, mode):
     first_time = REST + group not in owner.keys()      # creation (or an older group)
     owner[INTERP + group] = mode
     _remove_blend(owner, group)
-    names = [p for p, _l in constrain_multi.weights(owner, group)]
     for i, c in enumerate(rms):
         try:
             c.driver_remove("influence")
@@ -437,10 +439,7 @@ def set_mode(context, owner, group, mode):
             pass
         c.influence = 1.0 if (i == 0 or mode != SHORTEST) else c.influence
     if mode == SHORTEST:
-        for i, c in enumerate(rms):
-            if i > 0:
-                _drive_total(c, owner, names, i)
-        constrain_multi.drive_single(owner, group)
+        constrain_multi.drive_group(owner, group)    # rotation member k >= 1: w_k / W_total
         owner.id_data.update_tag()
         context.view_layer.update()
         return
@@ -479,31 +478,10 @@ def set_mode(context, owner, group, mode):
     jo_inv = qinv(joint_orient(owner))
     owner[LAST + group] = qmul(jo_inv, out if first_time else before)
     update(owner, group)
-    constrain_multi.drive_single(owner, group)     # one target: its weight turns the computed rotation on / off
+    constrain_multi.drive_group(owner, group)      # the weights turn the computed rotation on / off
     owner.id_data.update_tag()
     context.view_layer.update()
     _state["armed"] = True
-
-
-def _drive_total(con, owner, names, k):
-    """Influence of rotation member k (>= 1) = w_k / W_total (Maya Shortest: slerp(acc, q_k, w_k / W_total))."""
-    from . import constrain_multi
-    id_ob, prefix = constrain_multi._id_and_prefix(owner)
-    fc = con.driver_add("influence")
-    d = fc.driver
-    d.type = 'SCRIPTED'
-    while d.variables:
-        d.variables.remove(d.variables[0])
-    for j, wp in enumerate(names):
-        v = d.variables.new()
-        v.name = f"w{j}"
-        v.type = 'SINGLE_PROP'
-        v.targets[0].id = id_ob
-        v.targets[0].data_path = prefix + f'["{bpy.utils.escape_identifier(wp)}"]'
-    s = "+".join(f"w{j}" for j in range(len(names)))
-    d.expression = f"w{k} / ({s}) if ({s}) > 0 else {1.0 / (k + 1)!r}"
-    for m in list(fc.modifiers):
-        fc.modifiers.remove(m)
 
 
 def update(owner, group):

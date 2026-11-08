@@ -179,11 +179,13 @@ def test_three_targets_and_channel_box_rows():
     bpy.context.view_layer.update()
     want = (b_point((-3, 4, 0)) + 2 * b_point((0, 0, 3))) / 3
     assert (o.matrix_world.translation - want).length < TOL, tuple(o.matrix_world.translation)
-    # node state: every member at once
+    # node state: every member at once; off = the own channels, which hold the rest position (the pose when the
+    # constraint was made, like Maya)
     assert bpy.ops.allset.constraint_group_enable(object=o.name, bone="", group=g) == {'FINISHED'}
     assert all(not con.enabled for con in o.constraints)
     bpy.context.view_layer.update()
-    assert (o.matrix_world.translation - b_point((0, 4, 0))).length < TOL
+    made = (b_point((1, 4.5, 0)) + b_point((-3, 4, 0)) + b_point((0, 0, 3))) / 3
+    assert (o.matrix_world.translation - made).length < TOL
     bpy.ops.allset.constraint_group_enable(object=o.name, bone="", group=g)
     assert all(con.enabled for con in o.constraints)
 

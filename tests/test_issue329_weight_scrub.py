@@ -513,14 +513,15 @@ def test_older_scenes_keep_a_keyed_influence_until_the_weight_is_keyed_again():
 
 
 def test_two_target_nodes_keep_their_weighted_average():
-    """The first target's constraints stay undriven with several targets: W0 0.5 / W1 0 = the first target, every
-    weight 0 = the equal average."""
+    """Several targets blend by the normalised weights: W0 0.5 / W1 0 = the first target, W0 1 / W1 3 = the weighted
+    average; every weight 0 = the node's own place (Maya's rest position with Maintain Offset)."""
     child, _targets, pos = _object_scene(2)
     group = multi.member(child.constraints[0], child).group
     (p0, _l0), (p1, _l1) = multi.weights(child, group)
     ad = child.animation_data
-    assert ad.drivers.find(child.constraints[0].path_from_id("influence")) is None
-    for w0, w1, y in ((0.5, 0.0, FOLLOW), (0.0, 0.0, 1.5 * FOLLOW), (1.0, 3.0, (FOLLOW + 6 * FOLLOW) / 4)):
+    fc = ad.drivers.find(child.constraints[0].path_from_id("influence"))
+    assert fc is not None and fc.driver.expression == multi.any_weight(2), fc and fc.driver.expression
+    for w0, w1, y in ((0.5, 0.0, FOLLOW), (0.0, 0.0, 0.0), (1.0, 3.0, (FOLLOW + 6 * FOLLOW) / 4)):
         child[p0], child[p1] = w0, w1
         child.update_tag()
         bpy.context.view_layer.update()
