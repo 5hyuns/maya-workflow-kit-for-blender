@@ -400,15 +400,16 @@ new chain on the next command.
 
 Bridge supports Linear, Smooth and Smooth + Curve paths between borders with matching vertex counts. Smooth paths
 expose angular Twist and Taper. Bridge Offset changes correspondence on closed borders. Automatic and manual
-endpoint directions, smoothing angle and a Taper Curve graph are available in Bridge Options and the history UI.
-In the graph, click to add or select a point, drag to move it, X to delete, and 1–4 to choose None, Linear, Smooth
+endpoint directions and smoothing angle are in Bridge Options and on the Bridge node in Channel Box INPUTS and the
+Attribute Editor, which also has a Taper Curve graph (Bridge Options too, in floating windows). In the graph, click to add or select a point, drag to move it, X to delete, and 1–4 to choose None, Linear, Smooth
 or Spline interpolation. Enter applies one undoable edit and Esc cancels. Edit Path selects the generated NURBS
 curve for normal curve editing, which updates the Bridge. Smooth centerlines use quintic endpoint interpolation.
 Offset or tilted borders and Taper can still give a different shape than Maya's Bridge.
 
 With **Option Boxes in Floating Windows** on (Preferences, off by default), command options open in floating
 windows that stay open, with the same Ctrl+mouse numeric gestures, Apply, Save Settings and Reset Settings.
-Different command options can stay open together. Commands run in the editor that opened their options. Numeric attributes share the same preview and commit rules across the Channel Box and Attribute Editor.
+Different command options can stay open together. Commands run in the editor that opened their options. Numeric
+attributes share the same preview and commit rules across the Channel Box and Attribute Editor.
 
 ---
 
