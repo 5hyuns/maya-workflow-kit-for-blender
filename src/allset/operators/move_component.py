@@ -9,10 +9,12 @@ Translate / Rotate / Scale act in world space about the pivot; Local Translate X
 Local Translate Z moves every vertex along its own normal (a vertex shared by several selected faces moves by the
 mean of their normals); Local Rotate / Local Scale act in the local frame about the pivot (faces and edges only,
 like Maya's polyMoveVertex). Random scales each vertex's move by a random amount. The menu item leaves the mesh as it
-is and shows the manipulator (Local Translate / Local Scale handles), the In-View Editor and the node in Channel Box
-INPUTS. Order: local scale, local rotate, local translate, then world scale, rotate and translate.
+is and shows the manipulator (Local Translate / Local Scale handles; faces and edges also a rotate ring and a world /
+local switch, ui/in_view.py), the In-View Editor and the node in Channel Box INPUTS. Order: local scale, local rotate,
+local translate, then world scale, rotate and translate.
 """
 
+import math
 import random as _random
 
 import bmesh
@@ -37,6 +39,18 @@ NOTHING = "Select faces, edges or vertices to transform"
 
 def _seed(index):
     return _random.Random(index * 7919 + 17).uniform(-1.0, 1.0)
+
+
+def turned(degrees, axis, angle):
+    """XYZ Euler ``degrees`` after a further turn of ``angle`` radians about ``axis`` (both in the same frame: the
+    node's local frame for Local Rotate, world for Rotate) - what the manipulator's rotate rings do. Stays close to
+    ``degrees`` (no jump of 360)."""
+    start = Euler([math.radians(d) for d in degrees], 'XYZ')
+    axis = Vector(axis)
+    if axis.length < 1e-12 or not angle:
+        return tuple(float(d) for d in degrees)
+    m = Matrix.Rotation(angle, 3, axis.normalized()) @ start.to_matrix()
+    return tuple(round(math.degrees(a), 4) for a in m.to_euler('XYZ', start))
 
 
 def _pieces(bm, component):

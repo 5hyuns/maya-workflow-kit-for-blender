@@ -5,6 +5,14 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [Unreleased]
 
+### Added
+- Edit Mesh > Transform (Transform Component) on faces or edges: the manipulator has the light-blue rotate ring and
+  the world / local switch, like Maya. Dragging the ring turns the components about the view axis by the angle the
+  mouse sweeps round the centre (Local Rotate, one undo step); a press on it also shows three rotate rings, a click
+  hides them again. The globe button at the upper right puts the manipulator on world axes, where the arrows, scale
+  cubes, centre square and rings drive Translate, Scale and Rotate instead of the local values; a new Transform
+  Component starts on local axes. Vertices keep the move and scale handles without a ring, like Maya (#321).
+
 ### Fixed
 - Modify > Match Transformations with rig controls: the last picked node is the source and every node picked before
   it receives its transform, whether it is an object or a bone. A control (an IK hand, say) picked first and a

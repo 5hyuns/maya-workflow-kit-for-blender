@@ -8200,7 +8200,8 @@
    "In-View Editor": "In-View Editor",
    "Maya Extrude Manipulator": "Maya Extrude Manipulator",
    "Maya In-View Editor": "Maya In-View Editor",
-   "Value": "Value"
+   "Value": "Value",
+   "World / Local Axes": "World / Local Axes"
   },
   "Labels/ui/input_line": {
    "Construction History": "Construction History",
@@ -10067,7 +10068,9 @@
    "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)": "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)",
    "In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it": "In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it",
    "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).": "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).",
+   "Put the Transform Component manipulator on world or local axes": "Put the Transform Component manipulator on world or local axes",
    "Row ``row`` of the In-View Editor: picking only (drawn by ``draw_box``).": "Row ``row`` of the In-View Editor: picking only (drawn by ``draw_box``).",
+   "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels": "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels",
    "Type a value of the last extrusion (In-View Editor)": "Type a value of the last extrusion (In-View Editor)"
   },
   "Tooltips/ui/input_line": {

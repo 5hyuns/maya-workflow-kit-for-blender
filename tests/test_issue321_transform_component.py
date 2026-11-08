@@ -4,11 +4,12 @@ centre of the selection's bounding box, Local Translate Z along the normals (a v
 their mean), Translate / Rotate / Scale in world space, Local Scale in the selection's frame; Random alone moves
 nothing. The manipulator, In-View Editor and Channel Box INPUTS edit it like an extrusion."""
 
+import math
 from importlib import import_module
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 import kit
 
@@ -168,3 +169,87 @@ def test_edit_again_and_object_mode():
     assert extrude.current(ob).params["local_translate_z"] == 0.5
     bpy.ops.object.mode_set(mode='OBJECT')
     assert bpy.ops.allset.transform_component() == {'CANCELLED'}, "needs components"
+
+
+def _frame_axes(ob, rec, world=False):
+    return in_view.manip_frame(ob, rec, world)[1]
+
+
+def test_ring_turns_about_the_view_axis():
+    """The light-blue ring turns the faces about the view axis through the pivot (Local Rotate in the node's frame);
+    a second turn comes on top of the first."""
+    ob = _cube(_faces((0, 0, 1)))
+    rec = _run(ob)
+    bm = bmesh.from_edit_mesh(ob.data)
+    before = {v.index: v.co.copy() for v in bm.verts if v.select}
+    axes = _frame_axes(ob, rec)
+    view = Vector((0.3, -0.5, 0.8)).normalized()
+    turn = mc.turned((0.0, 0.0, 0.0), axes.transposed() @ view, math.radians(30.0))
+    assert extrude.set_params(bpy.context, **dict(zip(in_view.LOCAL_ROT, turn))) == {'FINISHED'}
+    pivot = Vector((0, 0, 1))
+    rot = Matrix.Rotation(math.radians(30.0), 3, view)
+    bm = bmesh.from_edit_mesh(ob.data)
+    for v in bm.verts:
+        if v.index in before:
+            want = pivot + rot @ (before[v.index] - pivot)
+            assert (v.co - want).length < 1e-3, (v.index, v.co, want)
+    # a second turn about another axis comes on top of the first
+    other = Vector((1.0, 0.0, 0.0))
+    turn2 = mc.turned(turn, axes.transposed() @ other, math.radians(-20.0))
+    assert extrude.set_params(bpy.context, **dict(zip(in_view.LOCAL_ROT, turn2))) == {'FINISHED'}
+    rot2 = Matrix.Rotation(math.radians(-20.0), 3, other) @ rot
+    bm = bmesh.from_edit_mesh(ob.data)
+    for v in bm.verts:
+        if v.index in before:
+            assert (v.co - (pivot + rot2 @ (before[v.index] - pivot))).length < 1e-3, v.index
+    assert mc.turned((10.0, 20.0, 30.0), (0, 0, 0), 1.0) == (10.0, 20.0, 30.0)
+
+
+def test_world_axes_and_rings_change_what_handles_drive():
+    ob = _cube(_faces((0, 0, 1)))
+    rec = _run(ob)
+    hf = in_view.handle_fields
+    assert hf(rec, "VR") == in_view.LOCAL_ROT, "the ring drives Local Rotate"
+    assert hf(rec, "RX") == () and hf(rec, "RX", rings=True) == ("local_rotate_x",), "rotate rings after a press"
+    assert hf(rec, "PXY") and hf(rec, "PXY", rings=True) == () and hf(rec, "S", rings=True) == (), \
+        "the rotate rings replace the plane handles and the centre square"
+    assert hf(rec, "TZ", rings=True) == ("local_translate_z",), "arrows stay"
+    world = {h: hf(rec, h, world=True, rings=True) for h in ("TX", "TZ", "SY", "VR", "RZ")}
+    assert world == {"TX": ("translate_x",), "TZ": ("translate_z",), "SY": ("scale_y",),
+                     "VR": ("rotate_x", "rotate_y", "rotate_z"), "RZ": ("rotate_z",)}, world
+    assert hf(rec, "S", world=True) == ("translate_x", "translate_y", "translate_z")
+    assert in_view.handle_role("S", world=True) == 'FREE' and in_view.handle_role("S") == 'CENTER'
+    assert _frame_axes(ob, rec, world=True) == Matrix.Identity(3)
+    # edges have them too; vertices (Maya's polyMoveVertex) have neither the ring nor the switch
+    erec = _run(_cube(_edge((1, -1, 1), (1, 1, 1))))
+    assert in_view.turnable(erec) and hf(erec, "VR") == in_view.LOCAL_ROT
+    vrec = _run(_cube(_verts((1, 1, 1))))
+    assert not in_view.turnable(vrec)
+    assert hf(vrec, "VR") == () and hf(vrec, "RX", rings=True) == ()
+    assert hf(vrec, "TZ", world=True) == ("local_translate_z",), "no world axes without the switch"
+    # the extrusion manipulator keeps its handles
+    ob = _cube(_faces((0, 0, 1)))
+    assert bpy.ops.allset.extrude() == {'FINISHED'}
+    frec = extrude.current(ob)
+    assert not in_view.turnable(frec) and hf(frec, "VR") == () and hf(frec, "TZ", world=True) == ("local_translate_z",)
+
+
+def test_switch_is_a_display_state():
+    ob = _cube(_faces((0, 0, 1)))
+    rec = _run(ob, local_translate_z=0.5)
+    state = in_view.tc_state(rec)
+    assert (state["world"], state["rings"]) == (False, False), "a new node starts on local axes"
+    assert 'UNDO' not in in_view.ALLSET_OT_tc_space.bl_options, "no undo step for the switch"
+    params = dict(rec.params)
+    coords = _coords(ob)
+    assert bpy.ops.allset.tc_space() == {'FINISHED'}
+    assert in_view.flags(extrude.current(ob)) == (True, False)
+    assert extrude.current(ob).params == params and _coords(ob) == coords, "the switch changes no value"
+    assert bpy.ops.allset.tc_space() == {'FINISHED'}
+    assert in_view.flags(extrude.current(ob)) == (False, False)
+    assert bpy.ops.allset.tc_space() == {'FINISHED'}
+    state["rings"] = True
+    rec2 = _run(ob)         # Edit Mesh > Transform again: a new node, back to local axes without rings
+    assert rec2 is not rec and in_view.flags(rec2) == (False, False)
+    vrec = _run(_cube(_verts((1, 1, 1))))
+    assert vrec is not None and not bpy.ops.allset.tc_space.poll(), "vertices have no switch"
