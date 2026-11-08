@@ -815,21 +815,18 @@ def _make(window):
         layout.prop(self, "apply_now", toggle=True, text=window.apply_text)
 
     def execute(self, context):
-        from .. import undo_steps
-        def command():
-            values = values_of(window, self)
-            store(window.key, values)        # Maya keeps the option values of a command that ran
-            res = run(window, context, values)
-            if isinstance(res, str):
-                self.report({'WARNING'}, res)
-                return {'CANCELLED'}
-            _record(window, context, res)
-            return {'FINISHED'} if res is None or 'FINISHED' in res else {'CANCELLED'}
-        return undo_steps.command(window.title, command)
+        values = values_of(window, self)
+        store(window.key, values)        # Maya keeps the option values of a command that ran
+        res = run(window, context, values)
+        if isinstance(res, str):
+            self.report({'WARNING'}, res)
+            return {'CANCELLED'}
+        _record(window, context, res)
+        return {'FINISHED'} if res is None or 'FINISHED' in res else {'CANCELLED'}
 
     return type(f"ALLSET_OT_opt_{window.key}", (bpy.types.Operator,), {
         "__annotations__": ann, "bl_idname": window.idname, "bl_label": window.title,
-        "bl_description": f"Maya {window.title}", "bl_options": {'INTERNAL'},
+        "bl_description": f"Maya {window.title}", "bl_options": {'UNDO'},    # no redo panel
         "invoke": invoke, "draw": draw, "execute": execute})
 
 

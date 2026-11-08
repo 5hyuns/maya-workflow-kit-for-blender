@@ -199,7 +199,9 @@ class ALLSET_OT_option_editor_action(bpy.types.Operator):
             with context.temp_override(window=window, area=area, region=region):
                 apply_run = getattr(spec, 'apply_run', None) if self.action == 'APPLY' else None
                 if apply_run is None:
-                    result = getattr(bpy.ops.allset, 'opt_'+spec.key)('EXEC_DEFAULT', **values)
+                    # a Python operator call pushes no undo step: one step named after the command
+                    result = undo_steps.command(
+                        spec.title, lambda: getattr(bpy.ops.allset, 'opt_'+spec.key)('EXEC_DEFAULT', **values))
                 else:
                     def apply_command():
                         res = apply_run(bpy.context, values)
