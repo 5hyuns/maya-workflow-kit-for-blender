@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.14.0] — 2026-11-08
 
 ### Added
 - Edit Mesh > Transform (Transform Component) on faces or edges: the manipulator has the light-blue rotate ring and
@@ -19,10 +19,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   shelf changes made meanwhile; Discard drops them. Icons come from Blender's icons, the kit's icons or PNG files
   (from @LoongVeeng, #310 — thank you!).
 - In-View Editor: a plain middle drag anywhere in the view changes the yellow row, and a middle click picks a row
-  without changing it; a drag-speed control in the title's right end, and dragging the title moves the editor beside
-  its object. Preferences > Maya Workflow Kit has two marking menu options, both off: Quick Gestures (menus stay
-  hidden while the pointer keeps moving and a mark picks radial items by its direction) and Submenu Return Ring
-  (rest on the ring at the parent menu's centre to go back to it) (from @LoongVeeng, #301 — thank you!).
+  without changing it. Two In-View Editor options in Preferences > Maya Workflow Kit, both off: In-View Editor Speed
+  Pie (a drag-speed pie at the title's right end) and Move In-View Editor by Title (dragging the title moves the
+  editor, which then keeps that offset beside its object). Two marking menu options there, both off: Quick Gestures
+  (menus stay hidden while the pointer keeps moving and a mark picks radial items by its direction) and Submenu Return
+  Ring (rest on the ring at the parent menu's centre to go back to it) (from @LoongVeeng, #301 — thank you!).
 
 ### Fixed
 - A keyed constraint target weight now drives the constraint while you scrub, on objects and joints. S keys the
@@ -35,6 +36,17 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   locator had no effect before, keyed or not; scenes saved with such a joint get the new rule when they open. A
   one-target weight keyed by an earlier version moves its keys to the new weight the next time you type or key it in
   the Channel Box (#329).
+- Constraints with two or more targets: setting every weight to 0 puts the object or joint back at its rest
+  position, like Maya (its own place, or where the constraint put it when it was made without Maintain Offset), also
+  while scrubbing keyed weights; partly zero weights blend the others as before. A node constrained without Maintain
+  Offset keeps that pose in its own channels (keyed or driven channels keep their curves), so turning the constraint
+  off or deleting it leaves the node there (#329).
+- Time Slider: it shows exactly the playback range, and the wheel and Ctrl+middle zoom no longer change it (the Range
+  Slider sets what it shows). The Range Slider row fits the header, so no scrollbar appears between the Time Slider
+  and the Range Slider; the playback fields always show the range that plays (typing another number turns the
+  preview range on), and a one-frame range still draws two handles. A right-click on a display layer row itself opens
+  the layer menu. Playblast closes its render window and brings the player to the front, and Save to File with a
+  movie name names the movie in the result line (#319).
 - S works with the mouse over the Channel Box too (right after typing a weight, say), and over the Attribute Editor,
   the Outliner and other panels, like Maya: it keys what S over the viewport keys, the selected channels
   and the open constraint weights included. Editors with an S of their own (Graph Editor, Dope Sheet, Node and UV
