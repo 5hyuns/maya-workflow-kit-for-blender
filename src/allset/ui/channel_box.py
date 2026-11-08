@@ -1620,12 +1620,12 @@ class ALLSET_OT_cb_virtual_slider(bpy.types.Operator):
 
     def invoke(self, context, event):
         if context.mode not in {'OBJECT', 'POSE'}:
-            return {'PASS_THROUGH'}
+            return self._pass(context, event)
         if not slider_armed(context):
-            return {'PASS_THROUGH'}  # another tool was picked after the channels: its own middle drag
+            return self._pass(context, event)  # another tool was picked after the channels: its own middle drag
         pairs = slider_targets(context)
         if not pairs:
-            return {'PASS_THROUGH'}  # let the tool's MMB drag run
+            return self._pass(context, event)  # let the tool's MMB drag run
         self._starts = {(ob, key): get_value(ob, key) for ob, key in pairs}
         self._dx = self._dy = 0
         self._last = (event.mouse_x, event.mouse_y)
@@ -1653,6 +1653,13 @@ class ALLSET_OT_cb_virtual_slider(bpy.types.Operator):
         self._hyper = prefs.cb_hyperbolic
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
+
+    @staticmethod
+    def _pass(context, event):
+        """No channel to drive: the In-View Editor's row drag where the view shows one (it runs as its own modal;
+        CANCELLED ends this one without an undo step), else the event goes on to the tool's middle drag."""
+        from . import in_view
+        return {'CANCELLED'} if in_view.mmb_drag(context, event) else {'PASS_THROUGH'}
 
     def _header(self, context, text):
         if context.area:

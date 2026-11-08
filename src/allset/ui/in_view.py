@@ -19,10 +19,14 @@
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows, its title and the
   drag-speed pie at the title's right end (the shelf's way). The selected row's name is yellow, the row under the
   pointer white; a new node starts with its first number row selected. Dragging a row sideways changes the value
-  and selects the row, a click without a drag types it (an MMB click only selects it), Keep Faces Together
-  toggles. Values sit in dark fields. The pie (click / drag round it, empty to full clockwise from eight o'clock)
-  slows every row drag down to 2 %; dragging the title moves the box, which then keeps that offset from its place
-  beside the manipulator / object. Both are kept in the add-on preferences (``in_view_settings``).
+  and selects the row, a click without a drag types it, Keep Faces Together toggles. Like Maya, a plain middle
+  drag anywhere in the view changes the selected row (over a row: that row; ``allset.inview_drag`` with row -1,
+  started by the Channel Box virtual slider's press when no channel is picked, and by a "Mesh" keymap item for the
+  edit-mode tools without a middle drag); a middle click only selects, also an On / Off row. Values sit in dark
+  fields. The pie
+  (click / drag round it, empty to full clockwise from eight o'clock) slows every row drag down to 2 %; dragging
+  the title moves the box, which then keeps that offset from its place beside the manipulator / object. Both are
+  kept in the add-on preferences (``in_view_settings``).
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
   undo step, the edit itself is one) + the "only the last one" notice.
 - Object mode (T, Show Manipulator Tool, #327): like Maya, the selected object's input node shows without leaving
@@ -362,6 +366,40 @@ def on_title(lay, scale, x, y):
     """On the title bar, off the pie: the handle that moves the box."""
     x0, y0, x1, y1 = lay["title"]
     return x0 <= x <= x1 and y0 <= y <= y1 and not on_fan(lay, scale, x, y)
+
+
+def row_at(lay, x, y):
+    """Index of the row under (x, y), or -1."""
+    for i, (_f, x0, y0, x1, y1) in enumerate(lay["rows"]):
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return i
+    return -1
+
+
+def _channel_slider(context):
+    """The Channel Box virtual slider takes a middle drag here: channels picked (object / pose mode)."""
+    if context.mode not in {'OBJECT', 'POSE'}:
+        return False
+    from . import channel_box
+    return channel_box.slider_armed(context) and bool(channel_box.slider_targets(context))
+
+
+def _middle_drag_here(context, event):
+    """A plain middle press in a view that shows the In-View Editor (not the emulated Alt drag, #242)."""
+    if event.alt or event.ctrl or event.shift:
+        return False
+    from ..operators import view
+    if view.emulated_alt_drag(context):
+        return False
+    return current_layout(context)[1] is not None
+
+
+def mmb_drag(context, event):
+    """The Channel Box virtual slider's middle press when it has no channel to drive: like Maya, it drags the In-View
+    Editor's row instead while this view shows one. True when that drag started."""
+    if not _middle_drag_here(context, event):
+        return False
+    return bool({'RUNNING_MODAL', 'FINISHED'} & bpy.ops.allset.inview_drag('INVOKE_DEFAULT', row=-1))
 
 
 def field_kind(rec, field):
@@ -976,6 +1014,8 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
     bl_label = "In-View Editor"
     bl_options = {'INTERNAL'}
 
+    # row -1 = a plain middle drag anywhere in the view (keymap, like Maya): the row under the pointer, else the
+    # selected one; passes the event on where this view shows no In-View Editor or the Channel Box slider takes it
     row: IntProperty(options={'SKIP_SAVE'})
 
     @classmethod
@@ -983,11 +1023,21 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
         return target(context)[1] is not None
 
     def invoke(self, context, event):
+        middle = self.row < 0
+        if middle:
+            if not _middle_drag_here(context, event) or _channel_slider(context):
+                return {'PASS_THROUGH'}
+            _rec, lay = current_layout(context)
+            under = row_at(lay, event.mouse_region_x, event.mouse_region_y)
+            self.row = under if under >= 0 else _state["hot"]
         ob, rec = target(context)
         if rec is None or self.row >= len(rec.spec.view_fields):
             return {'CANCELLED'}
         field = rec.spec.view_fields[self.row]
         _state["hot"] = self.row
+        if field_kind(rec, field) == "BOOL" and middle:
+            _redraw(context)
+            return {'FINISHED'}
         if field_kind(rec, field) == "BOOL":
             commit(context, rec, {field: not rec.params[field]})
             _redraw(context)
@@ -995,7 +1045,8 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
         self._ob, self._rec, self._field = ob, rec, field
         self._start = dict(rec.params)
         self._x0, self._moved = event.mouse_x, False
-        self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
+        self._button = 'MIDDLEMOUSE' if middle else event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} \
+            else 'LEFTMOUSE'
         self._unit = units.maya_unit(context.scene)
         self._cursor = self._button == 'MIDDLEMOUSE'
         if self._cursor:

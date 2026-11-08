@@ -20,7 +20,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
+PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
                       "allset.select_priority", "allset.type_char_pick", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_view_lock",
                       "allset.time_slider_menu", "allset.time_range_all", "allset.outliner_set_click", "allset.outliner_set_menu",
@@ -1547,10 +1547,19 @@ def patch_motion_trail_mmb(kd):
          first=True, shadows=("3D View Tool: Move",))
 
 
+def patch_in_view_mmb(kd):
+    """Maya: while the In-View Editor shows, a plain middle drag anywhere in the view changes its selected attribute
+    (ui/in_view.py, row -1). With a Move / Rotate / Scale / Transform tool and in object mode the Channel Box virtual
+    slider item (first there) starts it when no channel is picked; with the other tools of edit mode this item does.
+    It passes the event on where no In-View Editor shows and for the emulated Alt drag (3D View, #242)."""
+    _add(kd, "Mesh", "allset.inview_drag", make_event("MIDDLEMOUSE"), {"row": -1}, shadows=("3D View",))
+
+
 PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_motion_trail_mmb, patch_cb_slider, patch_marking_menus, patch_concepts,
+           patch_component_keys, patch_motion_trail_mmb, patch_in_view_mmb, patch_cb_slider, patch_marking_menus,
+           patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
@@ -1598,7 +1607,7 @@ EMULATED_TUMBLE_KEYMAPS = SLIDER_TOOL_KEYMAPS + ("Object Mode", "Pose", "3D View
 def patch_emulated_tumble(kd):
     for km in EMULATED_TUMBLE_KEYMAPS:
         _add(kd, km, "allset.emulated_tumble", make_event("MIDDLEMOUSE"), first=True,
-             shadows=("Image Paint", "Object Mode", "Pose") if km == "3D View" else (km, "3D View"))
+             shadows=("Image Paint", "Object Mode", "Pose", "Mesh") if km == "3D View" else (km, "3D View"))
 
 
 # --- w / e / r over the whole Graph Editor ------------------------------------------------------------------------
