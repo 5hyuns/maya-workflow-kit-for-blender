@@ -70,3 +70,10 @@ def test_persistent_history_option_keeps_the_chain():
     finally:
         prefs.model_history_files = False
     assert history.read(ob) is None          # off again: a recipe in the mesh is left unused
+
+
+def test_the_field_gesture_watch_does_not_hold_back_autosave():
+    # it stays modal while the pointer rests on a kit number field: the timers that wait for no running tool skip it
+    listeners = import_module(kit.MODULE + '.modal_listeners')
+    assert 'ALLSET_OT_attribute_field_watch' in listeners.NAMES
+    assert 'ALLSET_OT_attribute_field_drag' not in listeners.NAMES
