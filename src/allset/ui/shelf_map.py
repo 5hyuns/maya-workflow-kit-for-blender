@@ -67,7 +67,7 @@ BY_COMMAND = {
     "ReducePolygon": (_mod('DECIMATE'), 'MOD_DECIM'),
     "PolyRemesh": (_mod('REMESH'), 'MOD_REMESH'),
     "PolyExtrude": (("v3d", "allset.extrude", {}), 'FACESEL'),     # polyExtrudeFace
-    "BridgeOrFill": ("mesh.bridge_edge_loops", 'MOD_LATTICE'),
+    "BridgeOrFill": (("item", "Edit Mesh/Bridge"), 'MOD_LATTICE'),     # the menu's Bridge: two loops or one filled
     "BevelPolygon": (("item", "Edit Mesh/Bevel"), 'MOD_BEVEL'),
     "PolyMerge": (("item", "Edit Mesh/Merge"), 'AUTOMERGE_OFF'),
     "MergeToCenter": (("mesh.merge", {"type": 'CENTER'}), 'PIVOT_MEDIAN'),

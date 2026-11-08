@@ -5726,6 +5726,14 @@
    "Set Project": "Set Project",
    "Write the animation (FBX, Alembic, USD)": "Write the animation (FBX, Alembic, USD)"
   },
+  "Labels/operators/fill_bridge": {
+   "Bridge": "Bridge",
+   "Divisions": "Divisions",
+   "Fill Hole": "Fill Hole",
+   "Rows of faces across the bridge (a single filled loop takes none)": "Rows of faces across the bridge (a single filled loop takes none)",
+   "Turn the second loop by this many edges before bridging": "Turn the second loop by this many edges before bridging",
+   "Twist": "Twist"
+  },
   "Labels/operators/flow_path_228": {
    "Flow Path Object": "Flow Path Object",
    "Front": "Front",
@@ -9254,6 +9262,10 @@
    "Make the folder shown in the file browser the current project (Maya file dialog: Set Project...)": "Make the folder shown in the file browser the current project (Maya file dialog: Set Project...)",
    "Maya file dialog: Files of type and the format options in the side panel, Maya's cm / Y-up presets\n(Maya File > Import / Export All / Export Selection)": "Maya file dialog: Files of type and the format options in the side panel, Maya's cm / Y-up presets\n(Maya File > Import / Export All / Export Selection)",
    "Show this folder in the file browser (Maya file dialog: project folder list)": "Show this folder in the file browser (Maya file dialog: project folder list)"
+  },
+  "Tooltips/operators/fill_bridge": {
+   "Bridge two sets of border edges or faces with faces; one closed loop of border edges is filled with a single\nface (Maya Edit Mesh > Bridge)": "Bridge two sets of border edges or faces with faces; one closed loop of border edges is filled with a single\nface (Maya Edit Mesh > Bridge)",
+   "Close every hole whose border edges are selected with one face; with nothing selected, every hole of the\nmesh (Maya Mesh > Fill Hole)": "Close every hole whose border edges are selected with one face; with nothing selected, every hole of the\nmesh (Maya Mesh > Fill Hole)"
   },
   "Tooltips/operators/flow_path_228": {
    "Make a lattice around each selected object that bends along its motion path (Maya Constrain > Motion Paths >\nFlow Path Object)": "Make a lattice around each selected object that bends along its motion path (Maya Constrain > Motion Paths >\nFlow Path Object)"

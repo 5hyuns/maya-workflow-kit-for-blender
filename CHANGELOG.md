@@ -10,6 +10,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   it receives its transform, whether it is an object or a bone. A control (an IK hand, say) picked first and a
   locator picked last now puts the control on the locator; before, the whole rig object moved. Match Pivots takes
   a control picked last as its target point (#338).
+- Mesh > Fill Hole closes every hole whose border edges are selected, whatever the number of edges around it (a
+  cylinder rim too); with nothing selected it closes every hole of the mesh. Edit Mesh > Bridge with one closed loop
+  of border edges selected fills it with a single face, like Maya; two loops bridge as before. The Shift+RMB menus,
+  the shelf button and the Modeling Toolkit run the same commands (#337).
 
 ## [0.13.0] — 2026-11-07
 

@@ -214,6 +214,8 @@ from . import graph_sculpt  # noqa: E402  Graph Editor Sculpting Tools (Grab / S
 classes += graph_sculpt.classes
 from . import graph_bookmarks  # noqa: E402  Graph Editor List > Bookmarks
 classes += graph_bookmarks.classes
+from . import fill_bridge  # noqa: E402  Mesh > Fill Hole / Edit Mesh > Bridge with Maya's selection rules (#337)
+classes += fill_bridge.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

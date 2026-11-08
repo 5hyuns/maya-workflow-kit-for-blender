@@ -483,8 +483,7 @@ WINDOWS = [
         paths=("Edit Mesh/Smart Bevel",), missing=("Cutback Relaxation", "Remove Isolated Arcs")),
     Window("bridge", "Bridge Options", "Bridge", None, [
         F("divisions", "Divisions:", "int", 5, lo=0, hi=100), F("twist", "Twist:", "int", 0, lo=-100, hi=100)],
-        lambda c, v: _components(c, "mesh.bridge_edge_loops", 'EDGE', number_cuts=v["divisions"],
-                                 twist_offset=v["twist"]),
+        lambda c, v: _components(c, "allset.bridge", 'EDGE', divisions=v["divisions"], twist=v["twist"]),
         paths=("Edit Mesh/Bridge",), missing=("Bridge type: Smooth path / curve", "Taper", "Smoothing angle")),
     Window("merge", "Merge Vertices Options", "Merge", None, [
         F("threshold", "Threshold:", "length", 0.01, lo=0.0, hi=1.0),

@@ -339,7 +339,7 @@ MAP = {
     # Maya 2026 Booleans (PolygonBooleanDifferenceBA = Difference B - A)
     "Mesh/Booleans/Difference (B - A)": ("allset.boolean", {"operation": 'DIFFERENCE_BA'}),
     "Mesh/Unsmooth": ("v3d", "mesh.unsubdivide", {}),        # UnsmoothPolygon -> Blender Un-Subdivide
-    "Mesh/Fill Hole": "mesh.fill_holes",
+    "Mesh/Fill Hole": "allset.fill_hole",     # every selected border loop, any number of edges (#337)
     "Mesh/Reduce": _mod('DECIMATE'),
     "Mesh/Remesh": _mod('REMESH'),
     "Mesh/Smooth": "allset.smooth",            # real polySmoothFace geometry
@@ -352,7 +352,7 @@ MAP = {
     "Edit Mesh/Add Divisions": "mesh.subdivide",
     "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (#16)
     "Edit Mesh/Smart Bevel": ("v3d", "allset.smart_bevel", {}),   # Maya 2027 polySmartBevel (#303)
-    "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
+    "Edit Mesh/Bridge": "allset.bridge",      # two loops bridge, one closed border loop is filled (#337)
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace
