@@ -595,7 +595,7 @@ def _autoproj_spec():
         {"planes": 6, "optimize": 1.0, "percentage_space": 0.2},
         {"planes": "INT", "optimize": "NONE", "percentage_space": "NONE"},
         None, "uv_automatic_edit", _build_autoproj, in_view=False, object_check=object_state_ok,
-        pre_uv=True))
+        object_note=note_object_state, pre_uv=True))
 
 
 AUTOPROJ = _autoproj_spec()

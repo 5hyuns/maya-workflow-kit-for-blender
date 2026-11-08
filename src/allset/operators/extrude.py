@@ -65,7 +65,8 @@ class Spec:
     def __init__(self, kind, node, fields, labels, defaults, kinds, arrow, edit_op, build=None, node_type=None,
                  manip=(), in_view=True, object_check=None, pre_uv=False, hidden=(), with_object=False,
                  view_fields=None, component=None, full_manip=False,
-                 choices=None, enabled=None, atomic=False, preview=None, prepare=None, cleanup=None):
+                 choices=None, enabled=None, atomic=False, preview=None, prepare=None, cleanup=None,
+                 object_note=None):
         self.view_fields = tuple(view_fields if view_fields is not None else fields)   # In-View Editor rows
         self.component = component             # 'FACE' / 'EDGE' / 'VERTEX': where its manipulator points
         self.full_manip = full_manip           # every Local Translate / Local Scale handle (else only its arrow)
@@ -80,6 +81,7 @@ class Spec:
         self.pre_uv = pre_uv                   # a rerun on the same mesh also needs the same UVs (UV projections)
         self.in_view = in_view                 # the In-View Editor shows it (not a UV projection)
         self.object_check = object_check       # (ob, rec) -> the object-mode mesh is still the node's result
+        self.object_note = object_note         # (ob) after an object-mode rebuild: remember what object_check reads
         self.node_type = node_type or node     # Maya node type (the AE history tab title)
         self.kind, self.node, self.fields, self.labels = kind, node, tuple(fields), dict(labels)
         self.manip = tuple(manip)              # values only the manipulator sets: not shown as rows
@@ -960,6 +962,8 @@ def run_object(ob, rec, params, unit, persist=True):
     finally:
         bm.free()
     ob.data.update()
+    if rec.spec.object_note is not None:
+        rec.spec.object_note(ob)
     if persist:
         from . import model_history
         model_history.update(ob, rec)
@@ -1163,6 +1167,8 @@ def run_from_object_mode(context, ob, rec, params, unit, persist=True):
         for o in sel:
             o.select_set(True)
         view_layer.objects.active = active_ob
+    if rec.spec.object_note is not None:
+        rec.spec.object_note(ob)
     return ok
 
 
