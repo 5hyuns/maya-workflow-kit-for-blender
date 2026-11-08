@@ -17,8 +17,8 @@
   rotate rings; the switch puts the manipulator on world axes, where its handles drive Translate / Scale / Rotate
   instead of the Local values. Both are display states of the manipulator (``tc_state``), not node values.
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows, its title and the
-  drag-speed pie at the title's right end (the shelf's way). The selected row's name is yellow, the row under the
-  pointer white; a new node starts with its first number row selected. Dragging a row sideways changes the value
+  drag-speed pie at the title's right end (the shelf's way). The selected row's name is yellow: the row under the
+  pointer, or the last one dragged, clicked or pointed at; a new node starts with its first number row. Dragging a row sideways changes the value
   and selects the row, a click without a drag types it, Keep Faces Together toggles. Like Maya, a plain middle
   drag anywhere in the view changes the selected row (over a row: that row; ``allset.inview_drag`` with row -1,
   started by the Channel Box virtual slider's press when no channel is picked, and by a "Mesh" keymap item for the
@@ -95,8 +95,8 @@ FAN_START = math.radians(210)   # an empty pie starts at eight o'clock and fills
 FAN_FILL = (0.45, 0.72, 1.0, 1.0)
 FAN_TRACK = (0.45, 0.72, 1.0, 0.45)
 
-# hot = the selected row (yellow, the one MMB drags), hover = the row under the pointer (white), node = which node
-# the rows belong to (a new one selects its first number row)
+# hot = the selected row (yellow, the one MMB drags; the row under the pointer selects itself), hover = the row under
+# the pointer, node = which node the rows belong to (a new one selects its first number row)
 _state = {"hot": 0, "hover": -1, "node": None, "handle": None}
 
 
@@ -507,7 +507,10 @@ class ALLSET_GT_in_view_row(bpy.types.Gizmo):
             return -1
         _f, x0, y0, x1, y1 = lay["rows"][self.row]
         if x0 <= location[0] <= x1 and y0 <= location[1] <= y1:
-            if _state["hover"] != self.row:        # white; a click / drag selects it (yellow)
+            if _state["hot"] != self.row or _state["hover"] != self.row:
+                # like Maya: the row under the pointer is the yellow one, and stays it after the pointer leaves
+                # (a middle drag in the view then changes it)
+                _state["hot"] = self.row
                 _state["hover"] = self.row
                 context.region.tag_redraw()
             return 0
