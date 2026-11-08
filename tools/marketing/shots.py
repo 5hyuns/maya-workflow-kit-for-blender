@@ -508,9 +508,9 @@ def s_anim():
         top = new[0]
         if hasattr(top.spaces.active, "show_region_asset_shelf"):
             try:
-        top.spaces.active.show_region_asset_shelf = False   # its 29 px header row drew stale pixels
-    except AttributeError:      # read-only in Blender 5.2 while the view has no asset shelf
-        pass
+                top.spaces.active.show_region_asset_shelf = False   # its 29 px header row drew stale pixels
+            except AttributeError:      # read-only in Blender 5.2 while the view has no asset shelf
+                pass
         bottom = min((a for a in win().screen.areas if a.type == 'VIEW_3D' and a is not top
                       and a.x == top.x and a.width == top.width), key=lambda a: a.y)
         bottom.ui_type = 'FCURVES'
