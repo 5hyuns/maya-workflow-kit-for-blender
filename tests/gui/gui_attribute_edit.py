@@ -55,7 +55,8 @@ def start():
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.context.scene.tool_settings.mesh_select_mode = (False, True, False)
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.allset.bevel('EXEC_DEFAULT', True)
+        # three segments: Depth then shapes the profile, so each Depth value is a different mesh
+        bpy.ops.allset.bevel('EXEC_DEFAULT', True, segments=3)
     C['scale'] = bpy.context.preferences.system.ui_scale
 
 

@@ -31,8 +31,16 @@ def start():
         bpy.ops.mesh.primitive_cube_add()
         C['ae_object']=bpy.context.object.name
         C['location']=bpy.context.object.location.x
+
+@step
+def open_ae():
     dock_area('ATTRIBUTE_EDITOR')
     bpy.ops.allset.ae_tab(key='T')
+
+@step
+def redraw_ae():
+    for area in win().screen.areas:
+        area.tag_redraw()
 
 step(find_button(dock,lambda path,command:path.endswith('allset_cb.tx_text'),C,'ae_field',x_frac=.45,step_px=8))
 
