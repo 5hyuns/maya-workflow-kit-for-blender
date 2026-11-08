@@ -48,6 +48,13 @@ def fail_side_edit(ob):
         raise AssertionError('The removed third-interval side must need an explicit replacement')
 
 
+def test_persistent_modeling_history_on():
+    # the tests below cover Preferences > Persistent Modeling History (off by default)
+    prefs = import_module(kit.MODULE + '.preferences').get()
+    assert not prefs.model_history_files
+    prefs.model_history_files = True
+
+
 def test_missing_component_keeps_original_mesh_and_records_pending_proposal():
     ob = side_chain()
     before, text = digest(ob), ob.data[history.KEY]

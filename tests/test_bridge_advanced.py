@@ -16,6 +16,13 @@ history = import_module(kit.MODULE+'.operators.model_history')
 nodes = import_module(kit.MODULE+'.ui.node_attributes')
 
 
+def test_persistent_modeling_history_on():
+    # the tests below cover Preferences > Persistent Modeling History (off by default)
+    prefs = import_module(kit.MODULE + '.preferences').get()
+    assert not prefs.model_history_files
+    prefs.model_history_files = True
+
+
 def test_ramp_interpolation_and_invalid_inputs():
     repeat = import_module(kit.MODULE+'.operators.repeat_maya')
     assert not repeat.repeatable('ALLSET_OT_bridge_ramp')

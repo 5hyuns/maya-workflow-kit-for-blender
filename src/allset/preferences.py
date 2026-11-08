@@ -550,6 +550,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
                                           "or edges extrudes them and transforms the new ones",
         default=True)
+    # Off by default: it keeps extra data in the user's files (operators/model_history.py).
+    model_history_files: bpy.props.BoolProperty(
+        name="Persistent Modeling History",
+        description="Every kit modeling node of a mesh (Extrude, Bevel, Bridge, Add Divisions ...) stays editable in "
+                    "the Channel Box and the Attribute Editor, also after saving and reopening the file: changing "
+                    "an earlier node replays the later ones. Keeps a hidden copy of the mesh before its first node "
+                    "in the file (off: only the newest node can be changed, until the file is closed)",
+        default=False)
 
     @_quiet
     def _update_units(self, context):
@@ -624,6 +632,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_units")
         row.prop(self, "smart_duplicate")
         row.prop(self, "smart_extrude")
+        box.prop(self, "model_history_files")
         box.prop(self, "metre_joint_size")
         box.prop(self, "project_root")
         row = box.row()

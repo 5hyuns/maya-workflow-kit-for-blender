@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya polyExtrudeFace and the terminal cache of persistent kit modeling history.
+"""Maya polyExtrudeFace and the "last kit modeling operation" history.
 
 Maya 2022: Edit Mesh > Extrude = a zero-length extrusion
 (Thickness 0, Local Translate Z 0, Offset 0, Divisions 1, Keep Faces Together on); Local Translate Z moves each face along
 its normal (a vertex shared by several extruded faces moves by the average), Thickness offsets every face plane by the
 same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides.
 
-The terminal operation keeps its input BMesh and fast preview state. ``model_history`` stores the modeling
-recipe and one native input mesh for earlier-node replay and Save/Load recovery. The record remains valid while
-the mesh matches a recorded result, including native Undo/Redo.
+Blender keeps no history in edit mode. The kit remembers the last extrusion per object:
+its node name (``polyExtrudeFaceN``), the mesh before it and the values; changing a value rebuilds the extrusion from that
+mesh (``allset.extrude_edit``), so it is one undo step and the Adjust Last Operation panel shows the same Maya names.
+The record is valid only while the mesh equals one of the states the kit made (Ctrl+Z / Ctrl+Shift+Z included).
+With Preferences > Persistent Modeling History on, ``model_history`` also keeps the recipe of every node and one
+input mesh with the mesh, so earlier nodes can be changed (the later ones replay) and the chain survives Save / Load.
 
 #70, #16: the record is one ``Spec`` per Maya node - polyExtrudeEdge / polyExtrudeVertex here (edges /
 vertices extrude at once, no drag) and polyBevel3 in operators/bevel_maya.py - each with its Maya fields, edit
@@ -48,7 +51,7 @@ MANIP_DEFAULTS = {"local_translate_x": 0.0, "local_translate_y": 0.0, "local_sca
 DEFAULTS.update(MANIP_DEFAULTS)
 # Maya world X / Z in Blender world (Y-up -> Z-up: Maya Z = Blender -Y)
 WORLD_X, MAYA_Z = Vector((1.0, 0.0, 0.0)), Vector((0.0, -1.0, 0.0))
-NOTICE = "The recorded modeling input and result must remain valid to edit this node."
+NOTICE = "Edit-mode operations have no history in Blender: only the last one can be changed here."
 
 
 class Spec:
@@ -1289,7 +1292,7 @@ def _record_bm(context, ob, bm, spec, params, unit):
             and (not spec.pre_uv or _uv_signature(old.pre) == _uv_signature(bm))):
         name = old.name
     from . import history_references, model_history, prim_history
-    recorded = prim_history.history_on(context)
+    recorded = prim_history.history_on(context) and model_history.enabled()
     node_id = (old.history_id if name and old.history_id else uuid4().hex) if recorded else None
     snapshot, input_hash = model_history.prepare_input(ob, bm) if recorded else (None, None)
     pre = bm.copy()
@@ -1408,7 +1411,7 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
                     and _pre_signature(old.pre) == _pre_signature(bm)):
                 name = old.name          # Adjust Last Operation re-runs the same extrusion
             from . import model_history, prim_history
-            recorded = prim_history.history_on(context)
+            recorded = prim_history.history_on(context) and model_history.enabled()
             node_id = (old.history_id if name and old.history_id else uuid4().hex) if recorded else None
             snapshot, input_hash = model_history.prepare_input(ob, bm) if recorded else (None, None)
             if old is not None:
@@ -1472,7 +1475,8 @@ class _ExtrudeEdit(_ExtrudeProps):
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_edit(_ExtrudeEdit, bpy.types.Operator):
-    """Change the terminal polyExtrudeFace node. Earlier nodes are editable in Channel Box and Attribute Editor"""
+    """Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,
+    so only the last one can be changed"""
     bl_idname = "allset.extrude_edit"
     bl_label = "polyExtrudeFace"          # the Adjust Last Operation title = the Maya node
     _op = "extrude_edit"
@@ -1480,7 +1484,8 @@ class ALLSET_OT_extrude_edit(_ExtrudeEdit, bpy.types.Operator):
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_edge_edit(_ExtrudeEdit, bpy.types.Operator):
-    """Change the terminal polyExtrudeEdge node"""
+    """Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,
+    so only the last one can be changed"""
     bl_idname = "allset.extrude_edge_edit"
     bl_label = "polyExtrudeEdge"
     _op = "extrude_edge_edit"
@@ -1488,7 +1493,8 @@ class ALLSET_OT_extrude_edge_edit(_ExtrudeEdit, bpy.types.Operator):
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_vertex_edit(_ExtrudeEdit, bpy.types.Operator):
-    """Change the terminal polyExtrudeVertex node"""
+    """Change the last vertex extrusion (Maya: edit the polyExtrudeVertex node). Blender keeps no edit-mode
+    history, so only the last one can be changed"""
     bl_idname = "allset.extrude_vertex_edit"
     bl_label = "polyExtrudeVertex"
     _op = "extrude_vertex_edit"

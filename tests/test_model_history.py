@@ -41,6 +41,13 @@ def digest(ob):
             else ex.mesh_coords_hash(ob.data))
 
 
+def test_persistent_modeling_history_on():
+    # the tests below cover Preferences > Persistent Modeling History (off by default)
+    prefs = import_module(kit.MODULE + '.preferences').get()
+    assert not prefs.model_history_files
+    prefs.model_history_files = True
+
+
 def test_earlier_node_replays_downstream_and_exposes_distinct_channels():
     ob = chain()
     before = digest(ob)

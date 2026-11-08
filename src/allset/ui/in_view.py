@@ -1536,7 +1536,8 @@ class ALLSET_PG_history(bpy.types.PropertyGroup):
                        for f in ALL_FIELDS}
 
 
-HISTORY_TIP = "Edit this recorded modeling node and replay its downstream operations."
+HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can be changed here."
+CHAIN_TIP = "Edit this recorded modeling node and replay its downstream operations."   # Persistent Modeling History
 
 
 def draw_cb_node(layout, context, rec):
@@ -1546,7 +1547,9 @@ def draw_cb_node(layout, context, rec):
     from . import channel_box
     lines = channel_box.as_lines(layout)
     ob = channel_box.lead(context)
-    _row, opened = channel_box.node_row(lines, ob, channel_box.history_node(rec.name), rec.name, tip=HISTORY_TIP)
+    from ..operators import model_history
+    tip = CHAIN_TIP if model_history.enabled() else HISTORY_TIP
+    _row, opened = channel_box.node_row(lines, ob, channel_box.history_node(rec.name), rec.name, tip=tip)
     if not opened:
         return
     hist = context.window_manager.allset_history

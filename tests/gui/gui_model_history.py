@@ -25,6 +25,7 @@ def viewport():
 @step
 def start():
     setup()
+    mod('preferences').get().model_history_files = True   # Persistent Modeling History (off by default)
     with viewport():
         bpy.ops.ed.undo_push(message='Start')
         bpy.ops.object.mode_set(mode='EDIT')

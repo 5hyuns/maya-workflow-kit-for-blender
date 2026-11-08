@@ -78,8 +78,18 @@ def trim_cache(protect=()):
     return total
 
 
+def enabled():
+    """Preferences > Persistent Modeling History (off by default): without it nothing is recorded or read, so a
+    mesh keeps only its newest node, for the session (a recipe already in a file stays there unused)."""
+    from .. import preferences
+    try:
+        return bool(preferences.get().model_history_files)
+    except (AttributeError, KeyError):
+        return False
+
+
 def read(ob):
-    if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH':
+    if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH' or not enabled():
         return None
     text = ob.data.get(KEY)
     if not isinstance(text, str):
@@ -237,6 +247,8 @@ def prepare_input(ob, bm):
 
 def append(ob, rec, unit):
     """Record the already successful operation. Existing unsupported edits become a new input base."""
+    if not enabled():
+        return
     from . import extrude
     data = read(ob)
     snapshot = getattr(rec, 'input_snapshot', None)

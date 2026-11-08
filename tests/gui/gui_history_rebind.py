@@ -44,6 +44,7 @@ def propose(divisions):
 @step
 def initialize():
     setup()
+    mod('preferences').get().model_history_files = True   # Persistent Modeling History (off by default)
 
 
 @step

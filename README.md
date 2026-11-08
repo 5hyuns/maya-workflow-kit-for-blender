@@ -388,14 +388,15 @@ Display > Heads Up Display > In-View Editors shows or hides the In-View Editor. 
 the next viewport middle-drag to that channel, also a channel of a modeling node in INPUTS. A completed drag is one
 undo step and Esc restores its starting value.
 
-Bridge, Add Divisions, Extrude and Bevel retain an editable modeling chain in Channel Box INPUTS and the Attribute
-Editor. Recipes and one immutable input mesh travel with the `.blend` file. Changing an earlier node replays its
-downstream steps. Component identities preserve surviving selections across topology edits, including Extrude
-caps when Divisions changes. If a target was removed, split or merged, **Rebind Selection** appears in the
-Attribute Editor and Channel Box INPUTS. Choose replacement components on the proposed input, then Enter to
-apply or Esc to cancel. The original mesh stays intact until the entire chain can replay. Other generated
-topology can require an explicit replacement. Direct mesh edits outside recorded commands start a new chain
-on the next command.
+Bridge, Add Divisions, Extrude and Bevel make editable nodes in Channel Box INPUTS and the Attribute Editor; by
+default the newest one can be changed. With **Persistent Modeling History** on (Preferences, off by default) the
+whole modeling chain stays editable: recipes and one immutable input mesh travel with the `.blend` file, and
+changing an earlier node replays its downstream steps. Component identities preserve surviving selections across
+topology edits, including Extrude caps when Divisions changes. If a target was removed, split or merged, **Rebind
+Selection** appears in the Attribute Editor and Channel Box INPUTS. Choose replacement components on the proposed
+input, then Enter to apply or Esc to cancel. The original mesh stays intact until the entire chain can replay.
+Other generated topology can require an explicit replacement. Direct mesh edits outside recorded commands start a
+new chain on the next command.
 
 Bridge supports Linear, Smooth and Smooth + Curve paths between borders with matching vertex counts. Smooth paths
 expose angular Twist and Taper. Bridge Offset changes correspondence on closed borders. Automatic and manual
