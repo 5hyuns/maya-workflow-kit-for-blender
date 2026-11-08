@@ -1062,7 +1062,7 @@ def shape_label(ob, prop):
 # Blender's ``Modifier.show_expanded``, which is the Properties editor's panel state, saved and undone), not undone,
 # not saved.
 
-_open = {"lead": None, "nodes": set()}
+_open = {"lead": None, "nodes": set(), "picked": None}
 
 
 def lead_key(ob):
@@ -1079,6 +1079,7 @@ def open_nodes(ob):
     if key != _open["lead"]:
         _open["lead"] = key
         _open["nodes"] = set()
+        _open["picked"] = None
         _scroll.clear()
     return _open["nodes"]
 
@@ -1093,6 +1094,25 @@ def set_open(ob, node, state=True):
         nodes.add(node)
     else:
         nodes.discard(node)
+
+
+def pick_node(ob, node, state=True):
+    """The user clicked INPUTS node ``node`` open (``state``) or closed: the node the Show Manipulator Tool (T)
+    shows for lead ``ob`` is the last one clicked open while it stays open, like picking an input node in Maya's
+    Channel Box."""
+    set_open(ob, node, state)
+    if state:
+        _open["picked"] = node
+    elif _open.get("picked") == node:
+        _open["picked"] = None
+
+
+def picked_node(ob):
+    """The INPUTS node key picked for lead ``ob`` (``pick_node``), or None. Reads only: another lead finds None."""
+    if ob is None or lead_key(ob) != _open["lead"]:
+        return None
+    node = _open.get("picked")
+    return node if node in _open["nodes"] else None
 
 
 def mod_node(mod):
@@ -1111,6 +1131,7 @@ def con_node(node, con):
 def reset_open():
     _open["lead"] = None
     _open["nodes"] = set()
+    _open["picked"] = None
     _scroll.clear()
 
 
@@ -2975,7 +2996,7 @@ class ALLSET_OT_cb_node_toggle(bpy.types.Operator):
         ob = lead(context)
         if ob is None or not self.node:
             return {'CANCELLED'}
-        set_open(ob, self.node, not is_open(ob, self.node))
+        pick_node(ob, self.node, not is_open(ob, self.node))
         rebuild_rows(context)
         _redraw(context.window)
         return {'FINISHED'}

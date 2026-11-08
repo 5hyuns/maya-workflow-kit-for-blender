@@ -716,6 +716,9 @@ RECORDS = {}   # object name -> Record
 # Delete History drops an object's record; Maya's undo brings the node back (redo drops it again). Delete
 # History doesn't change the mesh, so the parked record is valid again after the undo (its signature still matches).
 PARKED = {}    # object name -> Record dropped by Delete History
+# Object mode: T (Show Manipulator Tool) shows the In-View Editor / manipulator of this object's input node without
+# leaving object mode, like Maya; Q / W / E / R (``dismiss``) end it. {"ob": object name} or empty.
+SHOWN = {}
 
 
 def park(name):
@@ -762,6 +765,7 @@ def clear():
         rec.free()
     RECORDS.clear()
     PARKED.clear()
+    SHOWN.clear()
 
 
 def signature(bm, cap_verts):
@@ -807,21 +811,40 @@ def restore_pre(bm, rec):
         bpy.data.meshes.remove(me)
 
 
-def run(ob, rec, params, unit):
-    """Rebuild the extrusion of ``rec`` on ``ob`` (edit mode) with ``params``."""
-    bm = bmesh.from_edit_mesh(ob.data)
+def _rebuild(ob, rec, bm, params, unit):
+    """Put the mesh before ``rec`` into ``bm`` and run ``rec``'s node on it with ``params``; True when it made
+    something."""
     restore_pre(bm, rec)
     if rec.spec is not FACE:
         values = {k: params[k] for k in rec.spec.fields + rec.spec.hidden if k in params}
         tracked = rec.spec.build(bm, values, unit, **({"ob": ob} if rec.spec.with_object else {}))
         _store_generic(rec, bm, tracked, params)
-        bmesh.update_edit_mesh(ob.data)
         return bool(tracked)
     faces = [f for f in bm.faces if f.select]
     caps, moved = extrude(bm, faces, unit=unit, **params, **mesh_axes(ob))
     _store(rec, bm, caps, moved, params)
-    bmesh.update_edit_mesh(ob.data)
     return bool(caps)
+
+
+def run(ob, rec, params, unit):
+    """Rebuild the extrusion of ``rec`` on ``ob`` (edit mode) with ``params``."""
+    bm = bmesh.from_edit_mesh(ob.data)
+    ok = _rebuild(ob, rec, bm, params, unit)
+    bmesh.update_edit_mesh(ob.data)
+    return ok
+
+
+def run_object(ob, rec, params, unit):
+    """``run`` on an object-mode mesh without entering edit mode (an In-View Editor / manipulator drag in object
+    mode): the new state is stored, so ``object_record`` keeps finding the node."""
+    bm = bmesh.new()
+    try:
+        ok = _rebuild(ob, rec, bm, params, unit)
+        bm.to_mesh(ob.data)
+    finally:
+        bm.free()
+    ob.data.update()
+    return ok
 
 
 def mesh_axes(ob):
@@ -831,7 +854,11 @@ def mesh_axes(ob):
 
 
 def preview(ob, rec, params, unit):
-    """Show ``params`` during a drag: move the vertices when only lengths change, else rebuild."""
+    """Show ``params`` during a drag: move the vertices when only lengths change, else rebuild (object mode: always
+    rebuild)."""
+    if ob.mode != 'EDIT':
+        run_object(ob, rec, params, unit)
+        return
     if rec.spec is not FACE:
         run(ob, rec, params, unit)
         rec.live = True
@@ -994,10 +1021,13 @@ def active(context):
 
 def dismiss(context):
     """Maya: picking a tool (Q / W / E / R) after an extrusion swaps the extrude manipulator and In-View Editor for
-    that tool's manipulator; the node stays in Channel Box INPUTS (issue #80). True when one was showing."""
+    that tool's manipulator; the node stays in Channel Box INPUTS (issue #80). It also ends what T showed in object
+    mode. True when one was showing."""
+    shown = bool(SHOWN)
+    SHOWN.clear()
     _ob, rec = active(context)
     if rec is None or rec.dismissed:
-        return False
+        return shown
     rec.dismissed = True
     return True
 

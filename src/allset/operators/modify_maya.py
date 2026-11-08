@@ -140,7 +140,7 @@ class ALLSET_OT_default_manip(bpy.types.Operator):
 
 
 class ALLSET_OT_show_manipulator(bpy.types.Operator):
-    """The manipulator and In-View Editor of the last extrude / bevel, else the Default Object Manipulator of the lead object, else the Transform tool
+    """The manipulator and In-View Editor of the lead object's input node (the one picked in Channel Box INPUTS, else the newest), else the Default Object Manipulator of the lead object, else the Transform tool
     (Maya Modify > Transformation Tools > Show Manipulator Tool)"""
     bl_idname = "allset.show_manipulator"
     bl_label = "Show Manipulator Tool"
@@ -157,59 +157,28 @@ class ALLSET_OT_show_manipulator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _select_result(ob, rec):
-    """Edit mode: select what the kit operation of ``rec`` left selected (its caps / its selection)."""
-    from . import extrude
-    bm = bmesh.from_edit_mesh(ob.data)
-    for seq in (bm.verts, bm.edges, bm.faces):
-        seq.ensure_lookup_table()
-    if rec.spec is extrude.FACE:
-        faces = set(rec.cap_faces)
-        for seq in (bm.verts, bm.edges, bm.faces):
-            for e in seq:
-                e.select = False
-        for f in bm.faces:
-            if f.index in faces:
-                f.select_set(True)
-        bm.select_mode = {'FACE'}
-        ob.data.update_tag()
-        bpy.context.tool_settings.mesh_select_mode = (False, False, True)
-    elif rec.sel is not None:
-        verts, edges, faces = (set(s) for s in rec.sel)
-        for seq, keep in ((bm.verts, verts), (bm.edges, edges), (bm.faces, faces)):
-            for e in seq:
-                e.select = e.index in keep
-    bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
-
-
 def show_last_input(context):
-    """T: like Maya's Show Manipulator Tool, show the manipulator and In-View Editor of the active mesh's last kit
-    operation (extrude / bevel). Edit mode: while its result is still the selection. Object mode: the mesh goes into
-    edit mode with that result selected (the kit edits the operation from there). True when it showed one."""
+    """T: like Maya's Show Manipulator Tool, show the manipulator and In-View Editor of the active object's input
+    node. Edit mode: the last kit operation while its result is still the selection. Object mode: the object stays
+    in object mode and shows the node picked in Channel Box INPUTS, else its newest one (the last kit operation,
+    else the primitive's creation node: In-View Editor only). True when it showed one."""
     from . import extrude
     ob = context.view_layer.objects.active
-    if ob is None or ob.type != 'MESH':
+    if ob is None:
         return False
     if ob.mode == 'EDIT':
+        if ob.type != 'MESH':
+            return False
         rec = extrude.current(ob)
         if rec is None or not rec.spec.in_view or not extrude.caps_selected(ob, rec):
             return False
         rec.dismissed = False
     elif ob.mode == 'OBJECT':
-        rec = extrude.object_record(ob)
-        if rec is None or not rec.spec.in_view:
+        from ..ui import in_view
+        if not ob.select_get() or in_view.object_node(ob) is None:
             return False
-        for o in context.selected_objects:
-            if o is not ob:
-                o.select_set(False)
-        ob.select_set(True)
-        bpy.ops.object.mode_set(mode='EDIT')
-        rec = extrude.current(ob)
-        if rec is None:
-            return False
-        _select_result(ob, rec)
-        rec.dismissed = False
-        undo_steps.push("Show Manipulator Tool")
+        extrude.SHOWN.clear()
+        extrude.SHOWN["ob"] = ob.name
     else:
         return False
     for area in context.screen.areas if context.screen else ():

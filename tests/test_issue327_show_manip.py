@@ -120,17 +120,145 @@ def test_t_in_edit_mode_with_another_selection_falls_back():
     assert modify.show_last_input(bpy.context) is False       # the Transform tool instead (like Maya: no node)
 
 
-def test_t_in_object_mode_opens_the_last_extrusion():
+def _object_ctx(ob):
+    space = SimpleNamespace(type='VIEW_3D', show_region_toolbar=False, show_region_header=True,
+                            show_region_ui=False, show_object_viewport_mesh=True)
+    return SimpleNamespace(space_data=space, mode='OBJECT', active_object=ob, edit_object=None)
+
+
+def _object_shown(ob):
+    """The node the 3D View shows for ``ob`` in object mode (manipulator / In-View Editor), or None."""
+    return in_view.record(_object_ctx(ob))[1]
+
+
+def test_t_in_object_mode_stays_in_object_mode():
     ob = _cube_top_extruded()
-    caps = set(ex.current(ob).cap_faces)
+    name = ex.current(ob).name
     bpy.ops.object.mode_set(mode='OBJECT')
     for p in ob.data.polygons:
         p.select = False
+    assert _object_shown(ob) is None                          # nothing before T
     assert modify.show_last_input(bpy.context) is True
-    assert ob.mode == 'EDIT' and _shown(ob)
-    bm = bmesh.from_edit_mesh(ob.data)
-    assert {f.index for f in bm.faces if f.select} == caps
+    assert ob.mode == 'OBJECT' and bpy.context.mode == 'OBJECT'
+    rec = _object_shown(ob)
+    assert rec is not None and rec.name == name, rec
+    assert rec.spec.view_fields == ex.FIELDS                  # Thickness ... Keep Faces Together
+    assert in_view.arrow_visible(_object_ctx(ob))             # the extrude manipulator too
+    centre, _axes, _k = in_view.manip_frame(ob, rec)
+    assert abs(centre.z - 0.5) < 1e-5, centre                 # on the extruded top face
+    assert modify.show_last_input(bpy.context) is True        # T again: still shown (not a toggle)
+    assert _object_shown(ob) is rec
+
+
+def test_tool_key_ends_what_t_showed_in_object_mode():
+    ob = _cube_top_extruded()
     bpy.ops.object.mode_set(mode='OBJECT')
+    assert modify.show_last_input(bpy.context) is True
+    taphold.get_binding("tool_move").tap(bpy.context)        # W
+    assert _object_shown(ob) is None
+    other = bpy.data.objects.new("other", None)
+    bpy.context.collection.objects.link(other)
+    assert modify.show_last_input(bpy.context) is True
+    bpy.context.view_layer.objects.active = other              # another object: not shown on it
+    assert in_view.record(_object_ctx(other))[1] is None
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(False)                                       # deselected: hidden
+    assert _object_shown(ob) is None
+    ob.select_set(True)
+    assert _object_shown(ob) is not None
+
+
+def test_object_mode_edits_rerun_the_node_without_edit_mode():
+    ob = _cube_top_extruded()
+    bpy.ops.object.mode_set(mode='OBJECT')
+    assert modify.show_last_input(bpy.context) is True
+    rec = _object_shown(ob)
+    unit = ex.units.maya_unit(bpy.context.scene)
+    top = max(v.co.z for v in ob.data.vertices)
+    in_view.preview(bpy.context, ob, rec, dict(rec.params, local_translate_z=0.5), unit)   # a drag
+    assert ob.mode == 'OBJECT'
+    assert abs(max(v.co.z for v in ob.data.vertices) - (top + 0.5 * unit)) < 1e-5
+    assert ex.object_record(ob) is rec and _object_shown(ob) is rec       # still the node
+    assert in_view.commit(bpy.context, rec, {"local_translate_z": 0.25}) == {'FINISHED'}   # release
+    assert ob.mode == 'OBJECT' and bpy.context.mode == 'OBJECT'
+    assert abs(max(v.co.z for v in ob.data.vertices) - (top + 0.25 * unit)) < 1e-5
+    assert ex.object_record(ob).params["local_translate_z"] == 0.25
+
+
+def _pcube():
+    if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    prim_history = import_module(kit.MODULE + ".operators.prim_history")
+    return prim_history.create_object(bpy.context, 'CUBE')
+
+
+POLYCUBE_ROWS = ("width", "height", "depth", "subdivisionsWidth", "subdivisionsHeight", "subdivisionsDepth")
+POLYCUBE_LABELS = ("Width", "Height", "Depth", "Subdivisions Width", "Subdivisions Height", "Subdivisions Depth")
+
+
+def test_t_on_a_polycube_shows_its_in_view_editor_only():
+    ob = _pcube()
+    assert modify.show_last_input(bpy.context) is True
+    assert ob.mode == 'OBJECT'
+    node = _object_shown(ob)
+    assert node is not None and node.name == "polyCube1", node
+    assert node.spec.view_fields == POLYCUBE_ROWS
+    assert tuple(node.spec.labels[f] for f in node.spec.view_fields) == POLYCUBE_LABELS
+    assert [in_view.value_text(node, f) for f in node.spec.view_fields] == ["1"] * 6, \
+        [in_view.value_text(node, f) for f in node.spec.view_fields]
+    assert not in_view.arrow_visible(_object_ctx(ob))         # no manipulator, like Maya
+    k = node.node["unit"]
+    assert in_view.commit(bpy.context, node, {"width": 2.0}) == {'FINISHED'}
+    assert abs(ob.dimensions.x - 2.0 * k) < 1e-5 and abs(ob.dimensions.y - 1.0 * k) < 1e-5, ob.dimensions[:]
+    assert _object_shown(ob).params["width"] == 2.0
+    assert in_view.commit(bpy.context, _object_shown(ob), {"subdivisionsHeight": 0}) == {'FINISHED'}
+    assert _object_shown(ob).params["subdivisionsHeight"] == 1      # the node's own limit
+    assert len(ob.data.polygons) == 6
+
+
+def test_t_on_polycube_faces_shows_nothing():
+    ob = _pcube()
+    bpy.ops.object.mode_set(mode='EDIT')
+    bm = bmesh.from_edit_mesh(ob.data)
+    for f in bm.faces:
+        f.select_set(f.normal.z > 0.9)
+    bmesh.update_edit_mesh(ob.data)
+    assert modify.show_last_input(bpy.context) is False       # components only: no node shown, no error
+    assert ob.mode == 'EDIT'
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_the_node_picked_in_channel_box_inputs_wins():
+    cb = import_module(kit.MODULE + ".ui.channel_box")
+    ob = _pcube()
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+    bm = bmesh.from_edit_mesh(ob.data)
+    for f in bm.faces:
+        f.select_set(f.normal.z > 0.9)
+    bm.select_flush_mode()
+    bmesh.update_edit_mesh(ob.data)
+    assert bpy.ops.allset.transform_component() == {'FINISHED'}    # polyMoveFace1 leaves the mesh as it is
+    bpy.ops.object.mode_set(mode='OBJECT')
+    cb.reset_open()
+    assert modify.show_last_input(bpy.context) is True
+    assert _object_shown(ob).name == "polyMoveFace1"         # the newest input node
+    assert bpy.ops.allset.cb_node_toggle(node=cb.history_node("polyCube1")) == {'FINISHED'}   # click its name
+    node = _object_shown(ob)
+    assert node is not None and node.name == "polyCube1" and node.spec.view_fields == POLYCUBE_ROWS
+    assert not in_view.arrow_visible(_object_ctx(ob))
+    assert bpy.ops.allset.cb_node_toggle(node=cb.history_node("polyMoveFace1")) == {'FINISHED'}
+    assert _object_shown(ob).name == "polyMoveFace1"         # the last one clicked open
+    assert in_view.arrow_visible(_object_ctx(ob))
+    bpy.ops.allset.cb_node_toggle(node=cb.history_node("polyMoveFace1"))   # clicked closed: no pick
+    assert _object_shown(ob).name == "polyMoveFace1"
+    bpy.ops.allset.cb_node_toggle(node=cb.history_node("polyCube1"))       # polyCube1 closed ...
+    bpy.ops.allset.cb_node_toggle(node=cb.history_node("polyCube1"))       # ... and picked again
+    assert _object_shown(ob).name == "polyCube1"
+    cb.reset_open()                                                         # another lead / file: no pick
+    assert _object_shown(ob).name == "polyMoveFace1"
 
 
 def test_t_without_history_is_not_shown():

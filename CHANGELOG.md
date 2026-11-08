@@ -14,6 +14,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   cylinder rim too); with nothing selected it closes every hole of the mesh. Edit Mesh > Bridge with one closed loop
   of border edges selected fills it with a single face, like Maya; two loops bridge as before. The Shift+RMB menus,
   the shelf button and the Modeling Toolkit run the same commands (#337).
+- Show Manipulator Tool (T) in object mode stays in object mode, like Maya: it shows the manipulator and In-View
+  Editor of the selected object's newest input node (the last extrusion, bevel or Transform Component), or only the
+  In-View Editor for a primitive's creation node (polyCube1: Width, Height, Depth, Subdivisions Width / Height /
+  Depth), right of the object. An input node clicked open in Channel Box INPUTS is the one T shows. Dragging an
+  In-View row or a manipulator handle there rebuilds the node in one undo step; Q / W / E / R hide it again (#327).
 
 ## [0.13.0] — 2026-11-07
 

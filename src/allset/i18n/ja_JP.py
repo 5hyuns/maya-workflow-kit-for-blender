@@ -5903,7 +5903,7 @@ STRINGS = {
     'The Maya panel menus folded into one menu (header menus collapsed)': '1 つのメニューに折りたたんだ Maya パネルメニュー (ヘッダーメニューを折りたたみ)',
     'The camera values of a Blender persp / ortho view (Maya perspShape)': 'Blender の persp / ortho ビューのカメラ値 (Maya perspShape)',
     "The current (or picked) character set's attributes, like Maya's Attribute Editor of the character node": '現在の (または選んだ) キャラクタセットのアトリビュート、Maya のキャラクタノードのアトリビュートエディタと同様',
-    'The manipulator and In-View Editor of the last extrude / bevel, else the Default Object Manipulator of the lead object, else the Transform tool\n(Maya Modify > Transformation Tools > Show Manipulator Tool)': '最後の押し出し / ベベルのマニピュレータとインビューエディタ、なければリードオブジェクトの既定のオブジェクトマニピュレータ、それもなければトランスフォームツール\n(Maya 修正 > トランスフォームツール > マニピュレータ表示ツール)',
+    'The manipulator and In-View Editor of the lead object\'s input node (the one picked in Channel Box INPUTS, else the newest), else the Default Object Manipulator of the lead object, else the Transform tool\n(Maya Modify > Transformation Tools > Show Manipulator Tool)': 'リードオブジェクトの入力ノード (チャンネルボックスの入力で選んだもの、なければ最新のもの) のマニピュレータとインビューエディタ、なければリードオブジェクトの既定のオブジェクトマニピュレータ、それもなければトランスフォームツール\n(Maya 修正 > トランスフォームツール > マニピュレータ表示ツール)',
     "The object's input / output nodes with their state (Maya All Inputs... / All Outputs...)": 'オブジェクトの入力 / 出力ノードとその状態 (Maya すべての入力... / すべての出力...)',
     'The option box of the Maya menu item that was held': '長押しした Maya メニュー項目のオプションボックス',
     "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks).": 'シェルフのスクロールバーの上 (スロット 0) / 下 (スロット 1) 矢印: 選択のみ、描画は ``draw_row``。ギズモは\nイメージエディタのツールキーマップより先に処理されます (そのサンプルツールが通常のクリックを取っていたため)。',

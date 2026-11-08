@@ -5903,7 +5903,7 @@ STRINGS = {
     'The Maya panel menus folded into one menu (header menus collapsed)': '折叠为一个菜单的 Maya 面板菜单 (标题栏菜单已折叠)',
     'The camera values of a Blender persp / ortho view (Maya perspShape)': 'Blender 透视 / 正交视图的摄像机值 (Maya perspShape)',
     "The current (or picked) character set's attributes, like Maya's Attribute Editor of the character node": '当前 (或拾取的) 角色集的属性，类似 Maya 中角色节点的属性编辑器',
-    'The manipulator and In-View Editor of the last extrude / bevel, else the Default Object Manipulator of the lead object, else the Transform tool\n(Maya Modify > Transformation Tools > Show Manipulator Tool)': '最后一次挤出 / 倒角的操纵器和视图内编辑器，否则为主导对象的默认物体操纵器，再否则为变换工具\n(Maya 修改 > 变换工具 > 显示操纵器工具)',
+    'The manipulator and In-View Editor of the lead object\'s input node (the one picked in Channel Box INPUTS, else the newest), else the Default Object Manipulator of the lead object, else the Transform tool\n(Maya Modify > Transformation Tools > Show Manipulator Tool)': '主导对象的输入节点 (在通道盒的输入中选中的节点，否则为最新的节点) 的操纵器和视图内编辑器，否则为主导对象的默认物体操纵器，再否则为变换工具\n(Maya 修改 > 变换工具 > 显示操纵器工具)',
     "The object's input / output nodes with their state (Maya All Inputs... / All Outputs...)": '对象的输入 / 输出节点及其状态 (Maya 所有输入... / 所有输出...)',
     'The option box of the Maya menu item that was held': '被按住的 Maya 菜单项的选项框',
     "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks).": '工具架滚动条的向上 (槽位 0) / 向下 (槽位 1) 箭头：仅用于拾取，由 ``draw_row`` 绘制。Gizmo\n先于图像编辑器的工具键位映射处理 (其采样工具会接收普通单击)。',

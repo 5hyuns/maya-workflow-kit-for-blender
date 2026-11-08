@@ -16,6 +16,11 @@
   Dragging a row sideways changes the value, a click without a drag types it, Keep Faces Together toggles.
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
   undo step, the edit itself is one) + the "only the last one" notice.
+- Object mode (T, Show Manipulator Tool, #327): like Maya, the selected object's input node shows without leaving
+  object mode - the node picked in Channel Box INPUTS, else the newest one: the last kit operation (its manipulator
+  too, when it has one), else the primitive's creation node (polyCube1: Width ... Subdivisions Depth, In-View
+  Editor only). The box sits right of the object. Edits rebuild the node on the object-mode mesh; release = one
+  undo step.
 """
 
 import blf
@@ -27,8 +32,9 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector, geometry
 
-from . import cb_entry, manipulator
-from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec
+from . import cb_entry, creation_inputs, manipulator
+from .. import undo_steps
+from ..operators import bevel_maya, extrude, prim_history, prim_shapes, units   # bevel_maya: registers polyBevel
 from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec
 from ..operators import move_component  # noqa: F401  registers the polyMoveFace / Edge / Vertex specs
 from ..operators import extrude_curve  # noqa: F401  registers the extrusion along a curve
@@ -37,13 +43,25 @@ ROW_H = 16          # px at UI scale 1 (Maya In-View rows)
 WIDTH = 180
 GAP = (150, -6)     # box top-left from the manipulator centre on screen: right of the X / Y handles (
                     # Maya: past the manipulator, 250 px from its centre at a 100 px rotate ring)
+OBJECT_GAP = (80, 12)   # object mode: box left past the object's right edge on screen, box top above its middle
 FLOAT_STEP = 0.01   # Maya units per px of a sideways drag
+ANGLE_STEP = 1.0    # degrees per px (creation node angles)
 DIV_PX = 20         # px per division
 KINDS = {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
          "keep_faces_together": "BOOL"}
 # every field of every recorded node (Channel Box text proxies: edge / vertex extrusion, bevel)
 ALL_FIELDS = tuple(dict.fromkeys(f for spec in extrude.SPECS.values() for f in spec.fields))
-MAX_ROWS = max(len(spec.view_fields) for spec in extrude.SPECS.values())
+
+
+def creation_rows(node_type):
+    """The In-View Editor rows of a creation node: its Channel Box values without the axis / pivot / normal /
+    centre ones and the choice lists (polyCube: Width, Height, Depth, Subdivisions Width / Height / Depth)."""
+    return tuple(n for n in creation_inputs.node_rows(node_type)
+                 if n not in creation_inputs.AXIS_ATTRS and prim_history.entry_kind(node_type, n) != "ENUM")
+
+
+MAX_ROWS = max(max(len(spec.view_fields) for spec in extrude.SPECS.values()),
+               max(len(creation_rows(t)) for t in prim_shapes.NODES))
 BOOL_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "BOOL"}
 INT_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "INT"}
 RANGES = {"random": (0.0, 1.0), "fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "optimize": (0.0, 1.0),
@@ -64,8 +82,95 @@ def _scale():
 
 # --- what is shown -----------------------------------------------------------------------------------
 
+class _CreationSpec:
+    """The ``extrude.Spec`` attributes the In-View Editor reads, for a creation node type: rows only, no
+    manipulator."""
+    arrow = None
+    in_view = True
+    component = None
+    full_manip = False
+    manip = ()
+
+    def __init__(self, node_type):
+        self.node = self.node_type = node_type
+        self.view_fields = self.fields = creation_rows(node_type)
+        self.labels = {n: prim_shapes.spec(node_type, n)[1] for n in self.fields}
+        self.kinds = {n: prim_history.entry_kind(node_type, n) for n in self.fields}
+
+
+class CreationNode:
+    """A primitive's creation node (polyCube1 ...) as the In-View Editor shows it: ``name``, ``spec``, ``params``
+    (Maya units / degrees, like the Channel Box)."""
+    creation = True
+    dismissed = False
+
+    def __init__(self, ob, owner, node):
+        self.ob, self.owner, self.node = ob, owner, node
+        self.name = node["name"]
+        self.spec = _CreationSpec(node["type"])
+        self.params = prim_history.attrs(owner)
+
+    def clamp(self, field, value):
+        return prim_shapes.clamp(self.node["type"], field, value)
+
+    def apply(self, context, changes):
+        """Rebuild the shape with ``changes`` (no undo step); True when the node was still there."""
+        values = prim_history.rebuild(context, self.ob, changes)
+        if values is None:
+            return False
+        self.owner, self.node = prim_history.node_of(self.ob)
+        self.params = dict(values)
+        return True
+
+
+def is_creation(rec):
+    return getattr(rec, "creation", False)
+
+
+def object_node(ob):
+    """Object mode: the input node T shows for ``ob`` - the one picked in Channel Box INPUTS when the kit can show
+    it, else the newest: the last kit operation (``extrude.object_record``), else the creation node. None when
+    there is none."""
+    nodes = []
+    rec = extrude.object_record(ob)
+    if rec is not None and rec.spec.in_view:
+        nodes.append(rec)
+    owner, node = prim_history.node_of(ob)
+    if node is not None and creation_rows(node["type"]):
+        nodes.append(CreationNode(ob, owner, node))
+    if not nodes:
+        return None
+    from . import channel_box
+    picked = channel_box.picked_node(ob)
+    return next((n for n in nodes if picked == channel_box.history_node(n.name)), nodes[0])
+
+
+def object_shown(context):
+    """(object, node) T showed in object mode while that object is the selected active one, else (None, None)."""
+    if getattr(context, "mode", None) != 'OBJECT' or not extrude.SHOWN:
+        return None, None
+    ob = getattr(context, "active_object", None)
+    try:
+        if ob is None or ob.name != extrude.SHOWN.get("ob") or not ob.select_get():
+            return None, None
+    except (ReferenceError, RuntimeError):
+        return None, None
+    node = object_node(ob)
+    return (ob, node) if node is not None else (None, None)
+
+
+def target(context):
+    """(object, node) the In-View Editor and manipulator edit: the edit object's last kit node, or in object mode the
+    node T showed; else (None, None)."""
+    ob, rec = extrude.active(context)
+    if rec is not None:
+        return ob, rec
+    return object_shown(context)
+
+
 def record(context):
-    """(object, record) when the manipulator / In-View Editor show in this 3D View, else (None, None)."""
+    """(object, record) when the manipulator / In-View Editor show in this 3D View, else (None, None). Object mode:
+    the node T showed (a ``CreationNode`` for a creation node)."""
     space = getattr(context, "space_data", None)
     if space is None or space.type != 'VIEW_3D':
         return None, None
@@ -73,7 +178,9 @@ def record(context):
     if is_toolbox(space):
         return None, None
     ob, rec = extrude.active(context)
-    if rec is None or rec.dismissed or not rec.spec.in_view or not extrude.caps_selected(ob, rec):
+    if rec is None:
+        return object_shown(context)
+    if rec.dismissed or not rec.spec.in_view or not extrude.caps_selected(ob, rec):
         return None, None
     return ob, rec
 
@@ -115,14 +222,25 @@ def _pre_direction(rec):
 
 def cap_frame(ob, rec):
     """(world centre, world unit normal, world length of one local unit along it) of the extruded faces (edge /
-    vertex extrusion: the selection it left, the mean edge / vertex normal; bevel: the bevel's vertices)."""
-    bm = bmesh.from_edit_mesh(ob.data)
-    bm.verts.ensure_lookup_table()
-    bm.faces.ensure_lookup_table()
-    verts = [bm.verts[i] for i in rec.cap_verts if i < len(bm.verts)]
-    if rec.spec is not extrude.FACE:
-        verts = [v for v in bm.verts if v.select] or verts
-    faces = [bm.faces[i] for i in rec.cap_faces if i < len(bm.faces)]
+    vertex extrusion: the selection it left, the mean edge / vertex normal; bevel: the bevel's vertices). Object mode
+    reads the mesh data (the selection the node left = its stored one); a creation node: the object's bounds centre."""
+    if is_creation(rec):
+        corners = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+        return sum(corners, Vector()) / len(corners), Vector((0.0, 0.0, 1.0)), 1.0
+    if ob.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(ob.data)
+        bm.verts.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+        all_verts, all_faces = bm.verts, bm.faces
+        verts = [all_verts[i] for i in rec.cap_verts if i < len(all_verts)]
+        if rec.spec is not extrude.FACE:
+            verts = [v for v in all_verts if v.select] or verts
+    else:
+        all_verts, all_faces = ob.data.vertices, ob.data.polygons
+        verts = [all_verts[i] for i in rec.cap_verts if i < len(all_verts)]
+        if rec.spec is not extrude.FACE and rec.sel is not None:
+            verts = [all_verts[i] for i in rec.sel[0] if i < len(all_verts)] or verts
+    faces = [all_faces[i] for i in rec.cap_faces if i < len(all_faces)]
     if not verts:
         return None
     centre = sum((v.co for v in verts), Vector()) / len(verts)
@@ -134,12 +252,12 @@ def cap_frame(ob, rec):
     return mw @ centre, nw / k, k
 
 
-def layout(region, anchor, scale, fields=extrude.FIELDS):
+def layout(region, anchor, scale, fields=extrude.FIELDS, gap=GAP):
     """Box geometry in region pixels: {"box", "title", "rows": [(field, x0, y0, x1, y1)]}."""
     w, h = WIDTH * scale, ROW_H * scale
     n = len(fields) + 1
-    x0 = anchor[0] + GAP[0] * scale
-    top = anchor[1] + GAP[1] * scale
+    x0 = anchor[0] + gap[0] * scale
+    top = anchor[1] + gap[1] * scale
     x0 = max(4 * scale, min(x0, region.width - w - 4 * scale))
     top = max(n * h + 4 * scale, min(top, region.height - 4 * scale))
     rows = []
@@ -157,17 +275,43 @@ def anchor(context, ob, rec):
     return (p.x, p.y) if p is not None else None
 
 
+def object_anchor(context, ob):
+    """Object mode: (right edge, vertical middle) of ``ob``'s bounding box on screen, or None when it is behind the
+    view. Maya draws the In-View Editor right of the object there, manipulator or not."""
+    pts = [view3d_utils.location_3d_to_region_2d(context.region, context.region_data, ob.matrix_world @ Vector(c))
+           for c in ob.bound_box]
+    pts = [p for p in pts if p is not None]
+    if not pts:
+        return None
+    ys = [p.y for p in pts]
+    return max(p.x for p in pts), (min(ys) + max(ys)) / 2
+
+
 def current_layout(context):
     ob, rec = record(context)
     if rec is None or context.region is None or context.region.type != 'WINDOW' or context.region_data is None:
         return None, None
-    a = anchor(context, ob, rec)
+    if ob.mode == 'EDIT':
+        a, gap = anchor(context, ob, rec), GAP
+    else:
+        a, gap = object_anchor(context, ob), OBJECT_GAP
     if a is None:
         return None, None
-    return rec, layout(context.region, a, _scale(), rec.spec.view_fields)
+    return rec, layout(context.region, a, _scale(), rec.spec.view_fields, gap)
+
+
+def field_kind(rec, field):
+    """"BOOL", "INT", "ROTATION" or a number kind of row ``field`` of ``rec``."""
+    if is_creation(rec):
+        return rec.spec.kinds[field]
+    return "BOOL" if field in BOOL_FIELDS else "INT" if field in INT_FIELDS else "NONE"
 
 
 def value_text(rec, field):
+    if is_creation(rec):
+        if rec.spec.kinds[field] == "BOOL":
+            return "On" if rec.params[field] else "Off"
+        return creation_inputs.format_attr(rec.node, field, rec.params[field], bpy.context.scene)
     v = rec.params[field]
     if field in BOOL_FIELDS:
         return "On" if v else "Off"
@@ -500,6 +644,24 @@ def _redraw(context):
             area.tag_redraw()
 
 
+def preview(context, ob, rec, params, unit):
+    """Show ``params`` of node ``rec`` during a drag (no undo step)."""
+    if is_creation(rec):
+        rec.apply(context, params)
+    else:
+        extrude.preview(ob, rec, params, unit)
+
+
+def commit(context, rec, changes):
+    """Set ``changes`` on node ``rec`` as one undo step. Returns the operator result."""
+    if not is_creation(rec):
+        return extrude.set_params(context, **changes)
+    if not rec.apply(context, changes):
+        return {'CANCELLED'}
+    undo_steps.push(rec.name)
+    return {'FINISHED'}
+
+
 class ALLSET_OT_inview_drag(bpy.types.Operator):
     """In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it"""
     bl_idname = "allset.inview_drag"
@@ -510,16 +672,16 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return extrude.active(context)[1] is not None
+        return target(context)[1] is not None
 
     def invoke(self, context, event):
-        ob, rec = extrude.active(context)
-        if self.row >= len(rec.spec.view_fields):
+        ob, rec = target(context)
+        if rec is None or self.row >= len(rec.spec.view_fields):
             return {'CANCELLED'}
         field = rec.spec.view_fields[self.row]
         _state["hot"] = self.row
-        if field in BOOL_FIELDS:
-            extrude.set_params(context, **{field: not rec.params[field]})
+        if field_kind(rec, field) == "BOOL":
+            commit(context, rec, {field: not rec.params[field]})
             _redraw(context)
             return {'FINISHED'}
         self._ob, self._rec, self._field = ob, rec, field
@@ -534,10 +696,14 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
         s = _scale()
         dx = (event.mouse_x - self._x0) / s
         start = self._start[self._field]
-        if self._field in INT_FIELDS:
-            return max(1, int(start + round(dx / DIV_PX)))
-        step = FLOAT_STEP * (0.1 if event.ctrl else 10.0 if event.shift else 1.0)
-        return clamp(self._field, round(start + dx * step, 4))
+        kind = field_kind(self._rec, self._field)
+        if kind == "INT":
+            value = int(start + round(dx / DIV_PX))
+            return self._rec.clamp(self._field, value) if is_creation(self._rec) else max(1, value)
+        step = (ANGLE_STEP if kind == "ROTATION" else FLOAT_STEP) * (0.1 if event.ctrl else 10.0 if event.shift
+                                                                     else 1.0)
+        value = round(start + dx * step, 4)
+        return self._rec.clamp(self._field, value) if is_creation(self._rec) else clamp(self._field, value)
 
     def modal(self, context, event):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
@@ -545,18 +711,18 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
                 self._moved = True
             if self._moved:
                 params = dict(self._start, **{self._field: self._value(event)})
-                extrude.preview(self._ob, self._rec, params, self._unit)
+                preview(context, self._ob, self._rec, params, self._unit)
                 _redraw(context)
             return {'RUNNING_MODAL'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
             if self._moved:
-                extrude.preview(self._ob, self._rec, self._start, self._unit)
+                preview(context, self._ob, self._rec, self._start, self._unit)
                 self._rec.live = False
             _redraw(context)
             return {'CANCELLED'}
         if event.type == self._button and event.value == 'RELEASE':
             if self._moved:
-                extrude.set_params(context, **{self._field: self._value(event)})
+                commit(context, self._rec, {self._field: self._value(event)})
             else:
                 bpy.ops.allset.inview_type('INVOKE_DEFAULT', row=self.row)
             _redraw(context)
@@ -573,38 +739,44 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
     row: IntProperty(options={'SKIP_SAVE'})
     number: FloatProperty(name="Value")
     count: IntProperty(name="Divisions", min=1)
+    whole: IntProperty(name="Value")          # a creation node's whole number (its own limits)
 
     @classmethod
     def poll(cls, context):
-        return extrude.active(context)[1] is not None
+        return target(context)[1] is not None
 
     def _field(self, context):
-        _ob, rec = extrude.active(context)
+        _ob, rec = target(context)
         if rec is None or self.row >= len(rec.spec.view_fields):
             return rec, None
         return rec, rec.spec.view_fields[self.row]
+
+    @staticmethod
+    def _prop(rec, field):
+        if field_kind(rec, field) == "INT":
+            return "whole" if is_creation(rec) else "count"
+        return "number"
 
     def invoke(self, context, event):
         rec, field = self._field(context)
         if field is None:
             return {'CANCELLED'}
-        if field in INT_FIELDS:
-            self.count = int(rec.params[field])
-        else:
-            self.number = float(rec.params[field])
+        prop = self._prop(rec, field)
+        setattr(self, prop, (int if prop != "number" else float)(rec.params[field]))
         return context.window_manager.invoke_props_dialog(self, title=f"{rec.name}: {rec.spec.labels[field]}")
 
     def draw(self, context):
         rec, field = self._field(context)
         if field is not None:
-            self.layout.prop(self, "count" if field in INT_FIELDS else "number", text=rec.spec.labels[field])
+            self.layout.prop(self, self._prop(rec, field), text=rec.spec.labels[field])
 
     def execute(self, context):
-        _rec, field = self._field(context)
+        rec, field = self._field(context)
         if field is None:
             return {'CANCELLED'}
-        value = self.count if field in INT_FIELDS else clamp(field, self.number)
-        res = extrude.set_params(context, **{field: value})
+        value = getattr(self, self._prop(rec, field))
+        value = rec.clamp(field, value) if is_creation(rec) else value if field in INT_FIELDS else clamp(field, value)
+        res = commit(context, rec, {field: value})
         _redraw(context)
         return res
 
@@ -620,7 +792,7 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        rec = extrude.active(context)[1]
+        rec = target(context)[1]
         return rec is not None and rec.spec.arrow is not None and context.region_data is not None
 
     def _ray(self, context, event):
@@ -647,7 +819,7 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         return (p1 - p0).normalized()
 
     def invoke(self, context, event):
-        ob, rec = extrude.active(context)
+        ob, rec = target(context)
         fields = handle_fields(rec, self.handle)
         frame = manip_frame(ob, rec) if fields else None
         if frame is None:
