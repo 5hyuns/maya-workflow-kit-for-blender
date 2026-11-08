@@ -18,6 +18,7 @@ picture into a GPU texture for ``ui/shelf.py``'s icon row.
 """
 
 import math
+from collections import OrderedDict
 
 import numpy as np
 
@@ -2397,8 +2398,25 @@ def grey(px):
 
 # --- GPU textures -----------------------------------------------------------------------------
 
-_textures = {}
+# GPU textures are created only when a visible shelf button is first drawn. Keep a bounded
+# LRU so browsing many shelves/icons cannot retain an unbounded amount of VRAM.
+_TEXTURE_CACHE_BUDGET = 12 * 1024 * 1024  # 12 MiB (RGBA32F, including 32/64 px variants)
+_textures = OrderedDict()
 
+def _texture_cache_get(cache, key):
+    item = cache.get(key)
+    if item is None:
+        return None
+    cache.move_to_end(key)
+    return item[0]
+
+def _texture_cache_put(cache, key, texture, size, budget):
+    cache[key] = (texture, int(size) * int(size) * 16)
+    cache.move_to_end(key)
+    total = sum(item[1] for item in cache.values())
+    while cache and total > budget:
+        _old_key, (_old_texture, old_bytes) = cache.popitem(last=False)
+        total -= old_bytes
 
 def texture_size(drawn_px):
     """Texture resolution for an icon drawn ``drawn_px`` pixels wide: the 2x picture above 32 px (UI scale >= 1.25)."""
@@ -2408,9 +2426,10 @@ def texture_size(drawn_px):
 def texture(label, shelf=None, greyed=False, size=32, index=None):
     """Cached GPU texture of a button's icon (needs a GPU context: call from a draw handler)."""
     key = (label, shelf, greyed, size, index)
-    tex = _textures.get(key)
+    tex = _texture_cache_get(_textures, key)
     if tex is None:
-        tex = _textures[key] = _upload(draw(label, shelf, greyed, size, index), size)
+        tex = _upload(draw(label, shelf, greyed, size, index), size)
+        _texture_cache_put(_textures, key, tex, size, _TEXTURE_CACHE_BUDGET)
     return tex
 
 
@@ -2418,10 +2437,11 @@ def texture_of(key, make, greyed=False, size=32):
     """Cached GPU texture of another kit picture on the shelf (a menu item's drawing): ``make(n)`` gives
     the (n, n, 4) picture, top row first; ``key`` names it."""
     full = ("picture", key, greyed, size)
-    tex = _textures.get(full)
+    tex = _texture_cache_get(_textures, full)
     if tex is None:
         px = np.array(make(size), dtype=np.float32)
-        tex = _textures[full] = _upload(grey(px) if greyed else px, size)
+        tex = _upload(grey(px) if greyed else px, size)
+        _texture_cache_put(_textures, full, tex, size, _TEXTURE_CACHE_BUDGET)
     return tex
 
 
@@ -2437,3 +2457,880 @@ def _upload(px, size):
 
 def clear():
     _textures.clear()
+    clear_icon_previews()
+
+
+def invalidate_gpu_textures():
+    """Drop shelf GPU textures after the saved button records have changed."""
+    _textures.clear()
+    _ICON_GPU_TEXTURES.clear()
+
+
+# Shelf Editor icon browser and preview bridge.
+_ICON_PREVIEWS = None
+_ICON_PNG_PATHS = None
+_BUILTIN_ICON_NAMES_CACHE = None
+_ICON_PREVIEW_FILES = {}
+_ICON_GPU_TEXTURES = OrderedDict()
+_ICON_GPU_TEXTURE_CACHE_BUDGET = 8 * 1024 * 1024
+
+# CPU-side procedural pixels are shared by picker previews and Shelf GPU uploads.
+_PROCEDURAL_PIXEL_CACHE = OrderedDict()
+_PROCEDURAL_PIXEL_CACHE_BUDGET = 8 * 1024 * 1024
+# Bump when procedural icon drawings or preview rasterization change.
+_PREVIEW_CACHE_VERSION = 1
+_BUILTIN_ICON_PNG_ALIASES = {
+    # Blender's native aliases keep the Shelf's default/common IDs backed by the closest bundled glyph.
+    "SCRIPT": "FILE_FONT",
+    "MESH_CUBE": "CUBE",
+    "RGB_RED": "COLOR_RED",
+    "RGB_GREEN": "COLOR_GREEN",
+    "RGB_BLUE": "COLOR_BLUE",
+    "HANDLETYPE_FREE_VEC": "HANDLE_FREE",
+    "HANDLETYPE_ALIGNED_VEC": "HANDLE_ALIGNED",
+    "HANDLETYPE_VECTOR_VEC": "HANDLE_VECTOR",
+    "HANDLETYPE_AUTO_VEC": "HANDLE_AUTO",
+    "HANDLETYPE_AUTO_CLAMP_VEC": "HANDLE_AUTOCLAMPED",
+    "LIBRARY_DATA_INDIRECT": "LIBRARY_DATA_DIRECT",
+    "LIBRARY_DATA_OVERRIDE_NONEDITABLE": "LIBRARY_DATA_OVERRIDE",
+    "PACKAGE_INDIRECT": "PACKAGE",
+}
+
+
+def _builtin_icon_names():
+    """Return Blender's complete built-in UI icon enum, cached for this session."""
+    global _BUILTIN_ICON_NAMES_CACHE
+    if _BUILTIN_ICON_NAMES_CACHE is not None:
+        return _BUILTIN_ICON_NAMES_CACHE
+    import bpy
+    try:
+        items = bpy.types.UILayout.bl_rna.functions[
+            "prop"
+        ].parameters["icon"].enum_items
+        names = tuple(items.keys())
+    except (AttributeError, KeyError, TypeError):
+        try:
+            items = bpy.types.UILayout.bl_rna.functions[
+                "label"
+            ].parameters["icon"].enum_items
+            names = tuple(items.keys())
+        except (AttributeError, KeyError, TypeError):
+            names = ()
+    _BUILTIN_ICON_NAMES_CACHE = names
+    return names
+
+
+
+# Packed Blender SVG-derived icon previews.
+# The source package stores Blender and Blender-SVG icon PNGs in one ZIP. Individual files are
+# extracted only when a picker preview or GPU texture actually requests them.
+_BLENDER_ICON_ARCHIVE = None
+_BLENDER_ICON_ARCHIVE_HANDLE = None
+_BLENDER_ICON_ARCHIVE_INDEX = None
+_BLENDER_ICON_ARCHIVE_PATH = None
+_BLENDER_ICON_EXTRACTED = OrderedDict()
+_BLENDER_ICON_EXTRACT_LIMIT = 128
+
+
+def _blender_icon_archive_index():
+    """Return {lowercase basename: archive member} without extracting image files."""
+    global _BLENDER_ICON_ARCHIVE_INDEX, _BLENDER_ICON_ARCHIVE_PATH
+    if _BLENDER_ICON_ARCHIVE_INDEX is not None:
+        return _BLENDER_ICON_ARCHIVE_INDEX
+
+    import os
+    import zipfile
+
+    source_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    archive_path = os.path.join(source_root, "allset", "icons", "blender_icons.zip")
+    if not os.path.isfile(archive_path):
+        _BLENDER_ICON_ARCHIVE_INDEX = {}
+        return _BLENDER_ICON_ARCHIVE_INDEX
+
+    try:
+        with zipfile.ZipFile(archive_path, "r") as archive:
+            index = {}
+            # Prefer the original "blender" asset when both folders contain the
+            # same basename; Blender-SVG remains the fallback for additional icons.
+            infos = sorted(
+                (info for info in archive.infolist()
+                 if not info.is_dir() and info.filename.lower().endswith(".png")),
+                key=lambda info: (0 if info.filename.startswith("blender/") else 1,
+                                  info.filename.casefold()),
+            )
+            for info in infos:
+                key = os.path.splitext(os.path.basename(info.filename))[0].casefold()
+                index.setdefault(key, info.filename)
+            _BLENDER_ICON_ARCHIVE_INDEX = index
+        _BLENDER_ICON_ARCHIVE_PATH = archive_path
+    except (OSError, RuntimeError, zipfile.BadZipFile):
+        _BLENDER_ICON_ARCHIVE_INDEX = {}
+    return _BLENDER_ICON_ARCHIVE_INDEX
+
+
+def _blender_icon_cache_dir():
+    """Session cache for icons extracted on demand; never writes into the extension install."""
+    import os
+    import tempfile
+    import bpy
+
+    # Blender's temporary directory keeps this derived cache out of the user's
+    # persistent configuration. The packed ZIP remains the only installed source.
+    base = getattr(bpy.app, "tempdir", "") or tempfile.gettempdir()
+    folder = os.path.join(base, "allset_blender_icon_cache")
+    os.makedirs(folder, exist_ok=True)
+    return folder
+
+
+def _packed_blender_icon_path(identifier):
+    """Materialize one packed icon into the user cache, only when it is requested."""
+    import hashlib
+    import os
+    import zipfile
+
+    global _BLENDER_ICON_ARCHIVE_HANDLE
+    key = os.path.splitext(os.path.basename(str(identifier or "")))[0].casefold()
+    member = _blender_icon_archive_index().get(key)
+    archive_path = _BLENDER_ICON_ARCHIVE_PATH
+    if not member or not archive_path:
+        return None
+
+    cached = _BLENDER_ICON_EXTRACTED.get(key)
+    if cached and os.path.isfile(cached):
+        _BLENDER_ICON_EXTRACTED.move_to_end(key)
+        return cached
+
+    digest = hashlib.sha1((key + str(os.path.getmtime(archive_path))).encode("utf-8")).hexdigest()[:16]
+    path = os.path.join(_blender_icon_cache_dir(), digest + ".png")
+    if not os.path.isfile(path):
+        try:
+            archive = _BLENDER_ICON_ARCHIVE_HANDLE
+            if archive is None:
+                archive = zipfile.ZipFile(archive_path, "r")
+                _BLENDER_ICON_ARCHIVE_HANDLE = archive
+            data = archive.read(member)
+            temp_path = path + ".tmp"
+            with open(temp_path, "wb") as stream:
+                stream.write(data)
+            os.replace(temp_path, path)
+        except (OSError, RuntimeError, KeyError, zipfile.BadZipFile):
+            return None
+
+    _BLENDER_ICON_EXTRACTED[key] = path
+    _BLENDER_ICON_EXTRACTED.move_to_end(key)
+    while len(_BLENDER_ICON_EXTRACTED) > _BLENDER_ICON_EXTRACT_LIMIT:
+        _BLENDER_ICON_EXTRACTED.popitem(last=False)
+    return path
+
+
+def _builtin_gpu_icon_names():
+    """Built-in identifiers that have a real raster asset for the custom GPU shelf."""
+    png_names = _png_icon_paths()
+    packed_names = _blender_icon_archive_index()
+    return tuple(name for name in _builtin_icon_names()
+                 if (_BUILTIN_ICON_PNG_ALIASES.get(name, name).casefold() in png_names
+                     or _BUILTIN_ICON_PNG_ALIASES.get(name, name).casefold() in packed_names))
+
+
+def _png_icon_paths(refresh=False):
+    global _ICON_PNG_PATHS
+    if _ICON_PNG_PATHS is not None and not refresh:
+        return _ICON_PNG_PATHS
+    import os
+    import bpy
+    source_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    folders = [
+        source_root,
+        os.path.join(source_root, "icons"),
+        os.path.join(source_root, "allset", "icons"),
+        os.path.join(source_root, "allset", "ui", "icons"),
+        os.path.join(os.path.dirname(source_root), "icons"),
+        os.path.join(os.path.dirname(source_root), "user_data", "icons"),
+        os.path.join(source_root, "user_data", "icons"),
+        os.path.join(source_root, "user_data", "blender_icons"),
+        os.path.join(source_root, "allset", "ui", "blender_icons"),
+    ]
+    try:
+        package_name = __package__.split(".", 1)[0]
+        user_root = bpy.utils.extension_path_user(package_name, create=True)
+        folders.extend((os.path.join(user_root, "shelf_icons"),
+                        os.path.join(user_root, "custom_icons"),
+                        os.path.join(user_root, "icons"),
+                        os.path.join(user_root, "user_data", "icons")))
+    except (AttributeError, RuntimeError, ValueError):
+        pass
+    paths = {}
+    for folder in folders:
+        if not os.path.isdir(folder):
+            continue
+        for current, _dirs, files in os.walk(folder):
+            for filename in files:
+                if filename.lower().endswith(".png"):
+                    paths.setdefault(os.path.splitext(filename)[0].casefold(),
+                                     os.path.join(current, filename))
+    _ICON_PNG_PATHS = paths
+    return paths
+
+
+def _preview_collection():
+    global _ICON_PREVIEWS
+    if _ICON_PREVIEWS is None:
+        import bpy.utils.previews
+        _ICON_PREVIEWS = bpy.utils.previews.new()
+    return _ICON_PREVIEWS
+
+
+def _preview_cache_path(key):
+    """Stable per-icon preview path so procedural previews survive Blender restarts."""
+    import hashlib
+    import os
+    import bpy
+
+    digest = hashlib.sha256(
+        f"v{_PREVIEW_CACHE_VERSION}:{key}".encode("utf-8")
+    ).hexdigest()[:24]
+    try:
+        folder = bpy.utils.user_resource(
+            'CONFIG', path="allset_shelf_icon_previews", create=True
+        )
+    except (AttributeError, RuntimeError, TypeError):
+        folder = None
+    if not folder:
+        folder = os.path.join(
+            bpy.app.tempdir or os.path.abspath(os.path.expanduser("~")),
+            "allset_shelf_icon_previews",
+        )
+    os.makedirs(folder, exist_ok=True)
+    return os.path.join(folder, digest + ".png")
+
+
+def _write_preview_png(key, pixels):
+    import os
+    import struct
+    import zlib
+    import binascii
+    rgba = np.clip(np.asarray(pixels, dtype=np.float32) * 255.0, 0, 255).astype(np.uint8)
+    height, width, channels = rgba.shape
+    if channels != 4:
+        return None
+
+    def chunk(kind, data):
+        body = kind + data
+        return struct.pack(">I", len(data)) + body + struct.pack(">I", binascii.crc32(body) & 0xffffffff)
+
+    raw = b"".join(b"\x00" + rgba[row].tobytes() for row in range(height))
+    png = (b"\x89PNG\r\n\x1a\n"
+           + chunk(b"IHDR", struct.pack(">2I5B", width, height, 8, 6, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(raw, 6))
+           + chunk(b"IEND", b""))
+    path = _preview_cache_path(key)
+    temporary = path + ".tmp"
+    try:
+        with open(temporary, "wb") as stream:
+            stream.write(png)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            try:
+                os.remove(temporary)
+            except OSError:
+                pass
+    _ICON_PREVIEW_FILES[key] = path
+    return path
+
+
+def _procedural_icon_parts(identifier):
+    if not str(identifier).startswith("MWK:"):
+        return None
+    key = identifier[4:]
+    if key.startswith("tool:") or key.startswith("layout:") or key.startswith("layer:") or key.startswith("outliner:"):
+        from . import kit_icons
+        return ("kit", key) if key in kit_icons.GLYPHS else None
+    if key.startswith("status:"):
+        from . import status_icons
+        glyph = key[7:]
+        return ("status", glyph) if glyph in status_icons.GLYPHS or glyph in status_icons.EXTRA else None
+    if key.startswith("menu:"):
+        from . import menu_drawings
+        return ("menu", key[5:]) if key[5:] in menu_drawings.DRAWINGS else None
+    if "/" not in key:
+        return None
+    shelf_name, label = key.split("/", 1)
+    index = None
+    base_label, marker, suffix = label.rpartition("#")
+    if marker and suffix.isdigit():
+        label, index = base_label, int(suffix)
+    if icon_for(label, shelf_name, index) is None:
+        return None
+    return ("shelf", shelf_name, label, index)
+
+
+def _procedural_pixels(parts, size, greyed=False):
+    kind = parts[0]
+    if kind == "shelf":
+        _kind, shelf_name, label, index = parts
+        return draw(label, shelf_name, greyed=greyed, size=size, index=index)
+    if kind == "kit":
+        from . import kit_icons
+        return kit_icons.pixels(parts[1], size, greyed=greyed)
+    if kind == "menu":
+        from . import menu_drawings
+        return menu_drawings.draw(parts[1], size)
+    if kind == "status":
+        from . import status_icons
+        return status_icons.image(parts[1], size)
+    return None
+
+
+def _procedural_pixel_cache_get(identifier, size, greyed=False):
+    key = (str(identifier), int(size), bool(greyed))
+    cached = _PROCEDURAL_PIXEL_CACHE.get(key)
+    if cached is None:
+        return None
+    _PROCEDURAL_PIXEL_CACHE.move_to_end(key)
+    return cached[0]
+
+
+def _procedural_pixel_cache_put(identifier, size, pixels, greyed=False):
+    key = (str(identifier), int(size), bool(greyed))
+    pixels = np.ascontiguousarray(pixels, dtype=np.float32)
+    pixels.setflags(write=False)
+    byte_count = int(pixels.nbytes)
+    if byte_count <= _PROCEDURAL_PIXEL_CACHE_BUDGET:
+        _PROCEDURAL_PIXEL_CACHE[key] = (pixels, byte_count)
+        _PROCEDURAL_PIXEL_CACHE.move_to_end(key)
+        total = sum(item[1] for item in _PROCEDURAL_PIXEL_CACHE.values())
+        while _PROCEDURAL_PIXEL_CACHE and total > _PROCEDURAL_PIXEL_CACHE_BUDGET:
+            _old_key, (_old_pixels, old_bytes) = _PROCEDURAL_PIXEL_CACHE.popitem(last=False)
+            total -= old_bytes
+    return pixels
+
+
+def _procedural_pixels_cached(identifier, parts, size, greyed=False):
+    """Return shared, read-only CPU pixels for a procedural icon."""
+    cached = _procedural_pixel_cache_get(identifier, size, greyed)
+    if cached is not None:
+        return cached
+    pixels = _procedural_pixels(parts, int(size), greyed=greyed)
+    if pixels is None:
+        return None
+    return _procedural_pixel_cache_put(identifier, size, pixels, greyed=greyed)
+
+
+def _preview_pixels(preview, size):
+    """Read PreviewCollection pixels as top-down rows for the shelf GPU texture upload."""
+    try:
+        width, height = tuple(preview.icon_size)[:2]
+        count = width * height * 4
+        raw = preview.icon_pixels_float
+        if raw and len(raw) >= count:
+            pixels = np.asarray(raw[:count], dtype=np.float32).reshape(height, width, 4)
+        else:
+            raw = preview.icon_pixels
+            if not raw or len(raw) < count:
+                return None
+            pixels = np.asarray(raw[:count], dtype=np.float32).reshape(height, width, 4) / 255.0
+        if width != size or height != size:
+            ys = np.minimum((np.arange(size) * height / size).astype(np.int32), height - 1)
+            xs = np.minimum((np.arange(size) * width / size).astype(np.int32), width - 1)
+            pixels = pixels[ys[:, None], xs[None, :], :]
+        # ImagePreview exposes icon pixels in Blender's image-pixel order (bottom
+        # row first). Shelf _upload accepts top-down pixels and performs the one
+        # OpenGL row flip there; normalize here to avoid flipping custom PNG icons.
+        pixels = pixels[::-1]
+        return np.ascontiguousarray(pixels, dtype=np.float32)
+    except (AttributeError, ReferenceError, RuntimeError, TypeError, ValueError):
+        return None
+
+
+def _icon_preview_from_path(identifier, path):
+    """Load a known raster asset into Blender's PreviewCollection.
+
+    The path is supplied by _resolve_icon(), so this function never guesses an
+    alternate icon or silently substitutes a different glyph.
+    """
+    import os
+
+    if not path or not os.path.isfile(path):
+        return None
+
+    name = str(identifier or "")
+    collection = _preview_collection()
+    try:
+        preview = collection.get(name)
+        # A preview may already exist for this identifier. Keep it only when it
+        # points at the same source file; otherwise reload it from the resolved path.
+        if preview is not None:
+            loaded_path = getattr(preview, "filepath", "")
+            if loaded_path and os.path.normcase(os.path.abspath(loaded_path)) == os.path.normcase(os.path.abspath(path)):
+                return preview
+            try:
+                del collection[name]
+            except (KeyError, TypeError, ReferenceError):
+                pass
+        return collection.load(name, path, 'IMAGE')
+    except (KeyError, RuntimeError, ValueError, ReferenceError, TypeError):
+        return None
+
+
+def _icon_preview(identifier):
+    import os
+    name = str(identifier or "")
+    path = None
+    if name.startswith("PNG:"):
+        icon_key = name[4:].casefold()
+        path = _png_icon_paths().get(icon_key)
+        if not path or not os.path.isfile(path):
+            path = _packed_blender_icon_path(icon_key)
+    elif name.startswith("MWK:"):
+        parts = _procedural_icon_parts(name)
+        if parts is None:
+            return None
+        path = _ICON_PREVIEW_FILES.get(name)
+        if path is None or not os.path.isfile(path):
+            path = _preview_cache_path(name)
+            if not os.path.isfile(path):
+                pixels = _procedural_pixels_cached(name, parts, 32, greyed=False)
+                path = _write_preview_png(name, pixels)
+            else:
+                _ICON_PREVIEW_FILES[name] = path
+    else:
+        # Accept older Shelf records containing a PNG basename, filename, or absolute path.
+        if os.path.isfile(name):
+            path = name
+        else:
+            basename = _BUILTIN_ICON_PNG_ALIASES.get(name, os.path.splitext(os.path.basename(name))[0]).casefold()
+            path = _png_icon_paths().get(basename)
+            if not path or not os.path.isfile(path):
+                path = _packed_blender_icon_path(basename)
+    if not path or not os.path.isfile(path):
+        return None
+    collection = _preview_collection()
+    try:
+        preview = collection.get(name)
+        if preview is None:
+            preview = collection.load(name, path, 'IMAGE')
+        return preview
+    except (KeyError, RuntimeError, ValueError, ReferenceError):
+        return None
+
+
+def icon_names(source="ALL"):
+    import os
+    names = []
+    if source in {"ALL", "BLENDER"}:
+        # The picker uses Blender's complete native icon enum. The GPU Shelf
+        # renderer may still use the smaller PNG-backed subset separately.
+        names.extend(_builtin_icon_names())
+    if source in {"ALL", "PNG"}:
+        names.extend("PNG:" + os.path.splitext(os.path.basename(path))[0]
+                     for path in _png_icon_paths().values())
+        names.extend("PNG:" + name for name in _blender_icon_archive_index())
+    if source in {"ALL", "MWK"}:
+        names.extend("MWK:" + key for key in ICONS.keys())
+        from . import kit_icons, menu_drawings, status_icons
+        names.extend("MWK:" + key for key in kit_icons.GLYPHS.keys())
+        names.extend("MWK:status:" + key for key in status_icons.GLYPHS.keys())
+        names.extend("MWK:status:" + key for key in status_icons.EXTRA.keys())
+        # Menu paths often point to the same shelf, Tool Box, or Status Line
+        # drawing. List each actual drawing once instead of repeating it per path.
+        names.extend("MWK:menu:" + key for key in menu_drawings.DRAWINGS.keys())
+    return sorted(set(name for name in names if name and name != "NONE"), key=str.casefold)
+
+
+def icon_search(_self, _context, edit_text):
+    query = (edit_text or "").casefold()
+    return [name for name in icon_names() if query in name.casefold()][:100]
+
+
+def _resolve_icon(identifier):
+    """Resolve an icon identifier once into a consistent source/preview/GPU description.
+
+    ``preview_supported`` describes Blender's native UI preview path. It is deliberately
+    independent from ``gpu_supported``: a native RNA icon can be valid in a Blender UI
+    layout while having no raster asset available to the custom GPU Shelf renderer.
+    """
+    import os
+
+    name = str(identifier or "").strip()
+    result = {
+        "identifier": name,
+        "source_type": "UNKNOWN",
+        "is_valid": False,
+        "preview_supported": False,
+        "gpu_supported": False,
+        "asset_path": None,
+        "fallback_identifier": "SCRIPT",
+    }
+    if not name or name == "NONE":
+        result.update(source_type="NONE", is_valid=(name == "NONE"),
+                      preview_supported=(name == "NONE"), gpu_supported=False)
+        return result
+
+    # Blender RNA is authoritative for native icon identifiers. A matching PNG is
+    # additionally required before the icon can be sent through the custom GPU path.
+    if name in _builtin_icon_names():
+        result.update(source_type="BLENDER", is_valid=True, preview_supported=True)
+        basename = _BUILTIN_ICON_PNG_ALIASES.get(name, name).casefold()
+        path = _png_icon_paths().get(basename)
+        if not path or not os.path.isfile(path):
+            path = _packed_blender_icon_path(basename)
+        if path and os.path.isfile(path):
+            result.update(gpu_supported=True, asset_path=path)
+        return result
+
+    if name.startswith("PNG:"):
+        icon_key = name[4:].casefold()
+        path = _png_icon_paths().get(icon_key)
+        if not path or not os.path.isfile(path):
+            path = _packed_blender_icon_path(icon_key)
+        if path and os.path.isfile(path):
+            result.update(source_type="PNG", is_valid=True, preview_supported=True,
+                          gpu_supported=True, asset_path=path)
+        return result
+
+    if name.startswith("MWK:"):
+        if _procedural_icon_parts(name) is not None:
+            result.update(source_type="MWK", is_valid=True, preview_supported=True,
+                          gpu_supported=True)
+        return result
+
+    # Preserve legacy absolute image paths (including formats accepted by Blender's
+    # preview loader), as well as older bare PNG filenames.
+    if os.path.isfile(name):
+        result.update(source_type="LEGACY", is_valid=True, preview_supported=True,
+                      gpu_supported=True, asset_path=name)
+        return result
+    basename = os.path.splitext(os.path.basename(name))[0].casefold()
+    path = _png_icon_paths().get(basename)
+    if not path or not os.path.isfile(path):
+        path = _packed_blender_icon_path(basename)
+    if path and os.path.isfile(path):
+        result.update(source_type="LEGACY", is_valid=True, preview_supported=True,
+                      gpu_supported=True, asset_path=path)
+    return result
+
+
+def builtin_icon_gpu_report():
+    """Return a stable diagnostic snapshot of native identifiers and raster coverage."""
+    names = _builtin_icon_names()
+    png_paths = _png_icon_paths()
+    packed_names = _blender_icon_archive_index()
+    supported = []
+    unsupported = []
+    for name in names:
+        asset_name = _BUILTIN_ICON_PNG_ALIASES.get(name, name).casefold()
+        path = png_paths.get(asset_name)
+        if ((path and __import__("os").path.isfile(path))
+                or asset_name in packed_names):
+            supported.append(name)
+        else:
+            unsupported.append(name)
+    return {
+        "total": len(names),
+        "gpu_supported": len(supported),
+        "gpu_unsupported": len(unsupported),
+        "supported_identifiers": tuple(supported),
+        "unsupported_identifiers": tuple(unsupported),
+    }
+
+
+def resolve_icon(identifier):
+    """Public icon-recognition result used by UI, GPU rendering, and diagnostics."""
+    return _resolve_icon(identifier)
+
+
+def is_icon_name(identifier):
+    """Return whether an identifier is recognized by the icon system."""
+    return _resolve_icon(identifier)["is_valid"]
+
+
+def icon_ui_kwargs(identifier):
+    """Return native Blender UI icon arguments or a registered image preview."""
+    resolution = _resolve_icon(identifier)
+    name = resolution["identifier"]
+    if resolution["source_type"] == "NONE":
+        return {"icon": "NONE"}
+    if resolution["source_type"] == "BLENDER":
+        return {"icon": name}
+    preview = _icon_preview(name) if resolution["preview_supported"] else None
+    return {"icon_value": preview.icon_id} if preview is not None else {"icon": "ERROR"}
+
+
+def _builtin_icon_fallback(identifier, size):
+    """Draw a stable identifier mark when a native RNA icon has no bundled raster twin.
+
+    Blender exposes native icon names to UILayout, but the custom GPU Shelf cannot
+    sample Blender's private icon atlas. Keep those icons distinct and recognizable
+    by their identifier without changing the stored shelf record.
+    """
+    words = str(identifier).split("_")
+    if len(words) > 1 and words[0] == "COLORSET" and words[1].isdigit():
+        mark = "C" + words[1][-2:]
+    else:
+        mark = "".join(word[0] for word in words if word and word[0].isalnum())[:3]
+        if len(words) == 1:
+            mark = words[0][:2]
+        mark = mark.upper() or "?"
+
+    cv = Canvas(int(size))
+    cv.rect(3, 3, 29, 29, (0.30, 0.30, 0.30))
+    cv.rect(3, 3, 29, 9, (0.42, 0.42, 0.42))
+    cell = 2.0 if len(mark) <= 2 else 1.5
+    width = len(mark) * 6 * cell - 2 * cell
+    cv.text(mark, LIGHT, 16 - width / 2, 12, cell=cell)
+    return cv.result()
+
+
+def _builtin_icon_event(identifier, size):
+    """Redraw Blender's EVENT_* icon family as compact, legible keycaps."""
+    name = str(identifier or "")
+    if not name.startswith("EVENT_"):
+        return None
+    key = name[6:]
+    labels = {
+        "SHIFT": "SHIFT", "CTRL": "CTRL", "ALT": "ALT", "OS": "OS",
+        "HYPER": "HYPER", "ESC": "ESC", "TAB": "TAB", "PAGEUP": "PGUP",
+        "PAGEDOWN": "PGDN", "RETURN": "ENTER", "SPACEKEY": "SPACE",
+        "ZEROKEY": "0", "ONEKEY": "1", "TWOKEY": "2", "THREEKEY": "3",
+        "FOURKEY": "4", "FIVEKEY": "5", "SIXKEY": "6", "SEVENKEY": "7",
+        "EIGHTKEY": "8", "NINEKEY": "9", "PADASTER": "*", "PADSLASH": "/",
+        "PADMINUS": "-", "PADENTER": "ENT", "PADPLUS": "+", "PADPERIOD": ".",
+        "LEFT_ARROW": "LEFT", "DOWN_ARROW": "DOWN", "RIGHT_ARROW": "RIGHT",
+        "UP_ARROW": "UP", "TABLET_STYLUS": "PEN", "TABLET_ERASER": "ERASE",
+        "BACKSPACE": "BKSP", "DEL": "DEL", "SEMICOLON": ";", "PERIOD": ".",
+        "COMMA": ",", "QUOTE": "'", "ACCENTGRAVE": "`", "MINUS": "-",
+        "PLUS": "+", "SLASH": "/", "BACKSLASH": "\\", "EQUAL": "=",
+        "LEFTBRACKET": "[", "RIGHTBRACKET": "]", "MEDIAPLAY": "PLAY",
+        "MEDIASTOP": "STOP", "MEDIAFIRST": "FIRST", "MEDIALAST": "LAST",
+        "CAPSLOCK": "CAPS", "PAUSE": "PAUSE", "INSERT": "INS", "HOME": "HOME",
+        "END": "END", "UNKNOWN": "?", "GRLESS": "<", "APP": "APP",
+    }
+    if key.startswith("MOUSE_"):
+        label = "M" + key.split("_", 1)[1]
+    elif key.startswith("F") and key[1:].isdigit():
+        label = key
+    elif key.startswith("PAD") and key[3:].isdigit():
+        label = "N" + key[3:]
+    elif key.startswith("NDOF_BUTTON_"):
+        label = key[len("NDOF_BUTTON_"):].replace("_", "")[:5]
+    elif key.isalpha() and len(key) == 1:
+        label = key
+    else:
+        label = labels.get(key, key.replace("_", "")[:5])
+    cv = Canvas(int(size))
+    cv.rect(2, 7, 30, 25, (0.20, 0.20, 0.20))
+    cv.frame(2, 7, 30, 25, 1, LIGHT)
+    width = len(label) * 6 - 1
+    cell = 1.0
+    if width > 26:
+        label = label[:4]
+        width = len(label) * 6 - 1
+    cv.text(label, LIGHT, (32 - width) / 2, 12.5, cell=cell)
+    return cv.result()
+
+
+def _builtin_icon_procedural(identifier, size):
+    """Redraw native Blender icons that have no bundled raster twin."""
+    name = str(identifier or "")
+    event_pixels = _builtin_icon_event(name, size)
+    if event_pixels is not None:
+        return event_pixels
+    if name == "BLANK1":
+        return np.zeros((int(size), int(size), 4), dtype=np.float32)
+
+    if name.startswith("NODE_SOCKET_"):
+        socket_type = name[len("NODE_SOCKET_"):]
+        socket_colours = {
+            "FLOAT": (0.63, 0.63, 0.63), "VECTOR": (0.39, 0.39, 0.78),
+            "RGBA": (0.78, 0.15, 0.10), "SHADER": (0.25, 0.25, 0.25),
+            "BOOLEAN": (0.80, 0.25, 0.25), "INT": (0.25, 0.55, 0.80),
+            "STRING": (0.80, 0.45, 0.15), "OBJECT": (0.10, 0.55, 0.25),
+            "IMAGE": (0.55, 0.25, 0.65), "GEOMETRY": (0.10, 0.65, 0.20),
+            "COLLECTION": (0.20, 0.50, 0.30), "TEXTURE": (0.65, 0.25, 0.50),
+            "MATERIAL": (0.65, 0.20, 0.20), "ROTATION": (0.35, 0.60, 0.80),
+            "MENU": (0.55, 0.45, 0.75), "MATRIX": (0.40, 0.60, 0.65),
+            "BUNDLE": (0.25, 0.55, 0.35), "CLOSURE": (0.55, 0.35, 0.70),
+            "FONT": (0.65, 0.40, 0.25), "SCENE": (0.25, 0.45, 0.65),
+            "TEXT": (0.70, 0.40, 0.25), "MASK": (0.55, 0.25, 0.45),
+            "SOUND": (0.40, 0.35, 0.70), "INT_VECTOR": (0.30, 0.55, 0.75),
+        }
+        cv = Canvas(int(size))
+        cv.circle(16, 16, 8, DARK)
+        cv.circle(16, 16, 6, socket_colours.get(socket_type, LIGHT))
+        return cv.result()
+
+    if name.startswith("STRIP_COLOR_") or name.startswith("LAYERGROUP_COLOR_"):
+        prefix = "STRIP_COLOR_" if name.startswith("STRIP_COLOR_") else "LAYERGROUP_COLOR_"
+        try:
+            index = int(name[len(prefix):]) - 1
+            import bpy
+            theme = bpy.context.preferences.themes[0]
+            if prefix == "STRIP_COLOR_":
+                colour = tuple(theme.strip_color[index].color)
+            else:
+                colour = tuple(theme.collection_color[index].color)
+            cv = Canvas(int(size))
+            cv.rect(5, 6, 27, 26, colour, ol=True)
+            if prefix == "LAYERGROUP_COLOR_":
+                cv.line((9, 11), (23, 11), 1, LIGHT)
+                cv.line((9, 16), (23, 16), 1, LIGHT)
+                cv.line((9, 21), (23, 21), 1, LIGHT)
+            return cv.result()
+        except (AttributeError, IndexError, RuntimeError, TypeError, ValueError):
+            return None
+
+    if name.startswith("KEYTYPE_") and name.endswith("_VEC"):
+        key_type = name[len("KEYTYPE_"):-len("_VEC")]
+        colours = {
+            "KEYFRAME": (0.95, 0.75, 0.20), "BREAKDOWN": (0.25, 0.75, 0.85),
+            "EXTREME": (0.90, 0.35, 0.25), "JITTER": (0.55, 0.80, 0.30),
+            "MOVING_HOLD": (0.60, 0.45, 0.85), "GENERATED": (0.70, 0.70, 0.70),
+        }
+        cv = Canvas(int(size))
+        colour = colours.get(key_type, LIGHT)
+        cv.poly([(16, 5), (27, 16), (16, 27), (5, 16)], colour, ol=True)
+        if key_type in {"BREAKDOWN", "EXTREME", "JITTER", "MOVING_HOLD", "GENERATED"}:
+            cv.circle(16, 16, 2, DARK)
+        return cv.result()
+
+    if name.startswith("RGB_"):
+        channel = name[4:]
+        colour, letter = {
+            "RED": ((0.50, 0.0, 0.0), "R"),
+            "GREEN": ((0.0, 0.40, 0.0), "G"),
+            "BLUE": ((0.0, 0.0, 1.0), "B"),
+        }.get(channel, (LIGHT, "?"))
+        cv = Canvas(int(size))
+        cv.rect(5, 6, 27, 26, colour, ol=True)
+        cv.text(letter, LIGHT, 14, 12.5)
+        return cv.result()
+    if name.startswith("COLORSET_") and name.endswith("_VEC"):
+        try:
+            index = int(name[len("COLORSET_"):-len("_VEC")]) - 1
+            import bpy
+            sets = bpy.context.preferences.themes[0].bone_color_sets
+            colors = sets[index]
+            cv = Canvas(int(size))
+            # Blender's vector colorset preview uses the three armature theme
+            # colors as adjacent vertical strips on a transparent background.
+            cv.rect(6, 8, 13, 24, tuple(colors.normal))
+            cv.rect(13, 8, 20, 24, tuple(colors.select))
+            cv.rect(20, 8, 27, 24, tuple(colors.active))
+            return cv.result()
+        except (AttributeError, IndexError, RuntimeError, TypeError, ValueError):
+            return None
+
+    return None
+
+
+def _builtin_icon_has_redraw(identifier):
+    """Return whether this native icon has a CPU drawing for GPU Shelf use."""
+    name = str(identifier or "")
+    return (
+        name == "BLANK1" or name.startswith("EVENT_") or
+        name.startswith("NODE_SOCKET_") or name.startswith("STRIP_COLOR_") or
+        name.startswith("LAYERGROUP_COLOR_") or
+        (name.startswith("COLORSET_") and name.endswith("_VEC")) or
+        (name.startswith("KEYTYPE_") and name.endswith("_VEC")) or
+        name.startswith("RGB_")
+    )
+
+
+
+def icon_gpu_texture(identifier, greyed=False, size=32):
+    """Return a GPU texture only when the resolved source has a usable raster path.
+
+    Native Blender icons with bundled raster assets use those exact images. Other valid
+    RNA identifiers use a stable text mark because Blender does not expose its private
+    icon atlas as a GPU texture to Python.
+    """
+    name = str(identifier or "").strip()
+    key = (name, bool(greyed), int(size))
+    # A visible icon is normally drawn on every region redraw. Return its cached GPU
+    # texture before resolving identifiers or touching the filesystem again.
+    cached = _texture_cache_get(_ICON_GPU_TEXTURES, key)
+    if cached is not None:
+        return cached
+
+    resolution = _resolve_icon(name)
+    procedural_native = (resolution["source_type"] == "BLENDER" and
+                         _builtin_icon_has_redraw(name))
+    if not resolution["gpu_supported"] and resolution["source_type"] != "BLENDER":
+        return None
+
+    if resolution["source_type"] == "MWK":
+        parts = _procedural_icon_parts(name)
+        if parts is None:
+            return None
+        # MWK pictures share CPU pixels with the picker and the Shelf GPU upload.
+        # For 32 px icons, reuse the persistent PreviewCollection PNG after a restart;
+        # 64 px icons are rasterized directly to preserve their high-resolution edges.
+        def make_pixels(n):
+            pixels = _procedural_pixel_cache_get(name, n, greyed=False)
+            if pixels is not None:
+                return pixels
+            if n == 32:
+                preview = _icon_preview(name)
+                pixels = _procedural_pixel_cache_get(name, n, greyed=False)
+                if pixels is None and preview is not None:
+                    pixels = _preview_pixels(preview, n)
+                    if pixels is not None:
+                        pixels = _procedural_pixel_cache_put(name, n, pixels, greyed=False)
+                if pixels is not None:
+                    return pixels
+            return _procedural_pixels_cached(name, parts, n, greyed=False)
+
+        # texture_of owns the shared bounded GPU cache.
+        return texture_of(name, make_pixels, greyed=greyed, size=size)
+
+    if resolution["source_type"] == "BLENDER" and not resolution["gpu_supported"]:
+        pixels = _builtin_icon_procedural(name, size) if procedural_native else None
+        if pixels is None:
+            pixels = _builtin_icon_fallback(name, size)
+        if greyed:
+            pixels = grey(pixels)
+        texture = _upload(pixels, size)
+        _texture_cache_put(_ICON_GPU_TEXTURES, key, texture, size, _ICON_GPU_TEXTURE_CACHE_BUDGET)
+        return texture
+
+    # Use the exact asset selected by the resolver. This avoids a second basename/
+    # alias lookup producing a different result from the GPU support check above.
+    asset_path = resolution.get("asset_path")
+    if not asset_path:
+        return None
+    preview = _icon_preview_from_path(name, asset_path)
+    if preview is None:
+        return None
+    try:
+        pixels = _preview_pixels(preview, size)
+        if pixels is None:
+            return None
+        pixels = pixels.copy()
+        if greyed:
+            pixels = grey(pixels)
+        texture = _upload(pixels, size)
+        _texture_cache_put(_ICON_GPU_TEXTURES, key, texture, size, _ICON_GPU_TEXTURE_CACHE_BUDGET)
+        return texture
+    except (AttributeError, ReferenceError, RuntimeError, SystemError, TypeError, ValueError):
+        return None
+
+
+def clear_icon_previews():
+    global _ICON_PREVIEWS, _ICON_PNG_PATHS, _BUILTIN_ICON_NAMES_CACHE
+    global _BLENDER_ICON_ARCHIVE_HANDLE
+    if _BLENDER_ICON_ARCHIVE_HANDLE is not None:
+        try:
+            _BLENDER_ICON_ARCHIVE_HANDLE.close()
+        except (OSError, RuntimeError):
+            pass
+        _BLENDER_ICON_ARCHIVE_HANDLE = None
+    if _ICON_PREVIEWS is not None:
+        import bpy.utils.previews
+        bpy.utils.previews.remove(_ICON_PREVIEWS)
+    _ICON_PREVIEWS = None
+    _ICON_PNG_PATHS = None
+    _BUILTIN_ICON_NAMES_CACHE = None
+    _ICON_GPU_TEXTURES.clear()
+    _ICON_PREVIEW_FILES.clear()
+    _PROCEDURAL_PIXEL_CACHE.clear()

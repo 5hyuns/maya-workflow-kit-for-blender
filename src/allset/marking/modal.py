@@ -132,7 +132,13 @@ def _run_action(context, action, option, path):
     if kind == "pie":
         return bpy.ops.wm.call_menu_pie(name=target)
     if kind == "tool":
-        res = bpy.ops.allset.menu_tool(tool=target, edit=props["edit"])
+        res = bpy.ops.allset.menu_tool(
+            tool=target,
+            edit=props.get("edit", False),
+            space_type=props.get("space_type", "VIEW_3D"),
+            mode=props.get("mode", "ANY"),
+            object_type=props.get("object_type", "ANY"),
+        )
         if option:  # tool + its settings (Tool Settings window)
             bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS', show=True)
         return res

@@ -228,3 +228,55 @@ def test_template_has_marked_strip():
     assert row is not None and row.y < strip.y and not sp.show_region_tool_header
     assert row.spaces.active.mask.name == shelf.SHELF_MARKER
     assert sum(1 for a in scr.areas if a.type == 'IMAGE_EDITOR') == 2
+
+
+def test_icon_registry_recognizes_builtin_png_and_maya_icons():
+    icons = shelf.shelf_icons
+    builtin = next(iter(icons._builtin_icon_names()))
+    assert icons.is_icon_name(builtin)
+    procedural_key = next(iter(icons.ICONS))
+    assert icons.is_icon_name("MWK:" + procedural_key)
+    assert "MWK:" + procedural_key in icons.icon_names("MWK")
+    paths = icons._png_icon_paths()
+    if paths:
+        filename = next(iter(paths.values())).rsplit(os.sep, 1)[-1].rsplit(".", 1)[0]
+        assert icons.is_icon_name("PNG:" + filename)
+
+
+def test_shelf_editor_three_way_merge_preserves_concurrent_edits():
+    editor = import_module(kit.MODULE + ".ui.shelf_editor")
+    base = {
+        "shelves": [{"name": "Custom", "buttons": [
+            {"label": "Old", "icon": "SCRIPT", "script": "pass"},
+        ]}],
+        "extra": {"Polygons": [{"label": "Menu A", "menu": "Create/Polygon Primitives/Cube"}]},
+    }
+    draft = json.loads(json.dumps(base))
+    draft["shelves"][0]["buttons"][0]["label"] = "Renamed in Editor"
+    latest = json.loads(json.dumps(base))
+    latest["shelves"][0]["buttons"].append(
+        {"label": "Added from Shelf", "icon": "PNG:tool", "script": "pass"})
+    latest["shelves"].append({"name": "New from Gear", "buttons": []})
+    latest["extra"]["Polygons"].append(
+        {"label": "Menu B", "menu": "Create/Polygon Primitives/Sphere"})
+    merged = editor._merge_documents(base, draft, latest)
+    custom = next(item for item in merged["shelves"] if item["name"] == "Custom")
+    assert custom["buttons"][0]["label"] == "Renamed in Editor"
+    assert custom["buttons"][1]["label"] == "Added from Shelf"
+    assert any(item["name"] == "New from Gear" for item in merged["shelves"])
+    assert len(merged["extra"]["Polygons"]) == 2
+
+    # A live gear-menu deletion of a button / Shelf must not be resurrected.
+    base_removed = {
+        "shelves": [{"name": "Custom", "buttons": [
+            {"label": "Keep", "icon": "SCRIPT", "script": "pass"},
+            {"label": "Remove Me", "icon": "SCRIPT", "script": "pass"},
+        ]}],
+        "extra": {},
+    }
+    latest_removed = json.loads(json.dumps(base_removed))
+    latest_removed["shelves"][0]["buttons"].pop(1)
+    merged_removed = editor._merge_documents(base_removed, base_removed, latest_removed)
+    assert [b["label"] for b in merged_removed["shelves"][0]["buttons"]] == ["Keep"]
+    removed = editor._merge_documents(base, draft, {"shelves": [], "extra": {}})
+    assert removed["shelves"] == []

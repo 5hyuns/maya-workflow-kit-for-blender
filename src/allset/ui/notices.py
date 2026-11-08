@@ -25,9 +25,6 @@ NOTICES = {
                         "closest-distance weights, then paint them (Skin > Paint Skin Weights).")
        for item in ("Interactive Bind Skin", "Interactive Bind Skin Tool")},
     # Windows > Settings/Preferences
-    "Windows/Settings/Preferences/Shelf Editor": (
-        "Shelves", "The shelves are Maya's standard shelves; there is no shelf editor (right-click a Blender "
-        "button > Add to Quick Favorites keeps your own commands)."),
     "Windows/Settings/Preferences/Panel Editor": (
         "Workspaces", "Blender saves panel layouts as workspaces: drag area edges and save the file or "
         "use Windows > Workspaces."),

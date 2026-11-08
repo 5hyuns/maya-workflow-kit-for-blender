@@ -50,6 +50,210 @@ STRIP_PX = 68          # header + tool header rows at UI scale 1
 _user = {}             # cached shelves.json content
 
 
+class ShelfContextError(RuntimeError):
+    """An expected Shelf context mismatch; shown as a warning, not a traceback."""
+
+
+def _run_in_editor_space(context, space_type, callback):
+    """Run a Shelf command in a matching editor area without changing the user's layout."""
+    if not space_type or space_type in {"ANY", "AUTO"}:
+        return callback(context)
+
+    window = context.window
+    screen = context.screen
+    if window is None or screen is None:
+        if context.area is not None and context.area.type == space_type:
+            return callback(context)
+        raise ShelfContextError(f"No window is available for Editor Space {space_type}. Open the requested editor and try again.")
+
+    area = context.area if context.area is not None and context.area.type == space_type else None
+    if area is None:
+        area = next((item for item in screen.areas if item.type == space_type), None)
+    if area is None:
+        raise ShelfContextError(
+            f"No {space_type} editor is open in this window. Open the requested editor and try again."
+        )
+    region = next((item for item in area.regions if item.type == 'WINDOW'), None)
+    try:
+        with context.temp_override(
+            window=window,
+            screen=screen,
+            area=area,
+            **({"region": region} if region is not None else {}),
+        ):
+            return callback(bpy.context)
+    except (AttributeError, TypeError, RuntimeError):
+        raise
+
+
+
+
+# --- Shelf execution context validation -----------------------------------------------------------
+
+def _infer_shelf_requirements(kind, target="", menu_path=""):
+    """Infer conservative defaults from an action identifier.
+
+    AUTO deliberately resolves to ANY when the action cannot be identified safely.
+    It never changes the user's editor, mode, or active object.
+    """
+    kind = (kind or "").lower()
+    target = (target or "").strip()
+    menu_path = (menu_path or "").lower()
+    module = target.split(".", 1)[0].lower() if "." in target else ""
+    name = target.split(".", 1)[-1].lower()
+
+    if kind == "maya_menu":
+        if "graph editor" in menu_path:
+            return "GRAPH_EDITOR", "ANY", "ANY"
+        if "uv editor" in menu_path or "uv toolkit" in menu_path:
+            return "IMAGE_EDITOR", "ANY", "ANY"
+        if any(token in menu_path for token in ("hypershade", "node editor")):
+            return "NODE_EDITOR", "ANY", "ANY"
+        if any(token in menu_path for token in ("dope sheet", "timeline")):
+            return "DOPESHEET_EDITOR", "ANY", "ANY"
+        if any(token in menu_path for token in ("edit mesh", "mesh tools", "vertex", "edge", "face")):
+            return "VIEW_3D", "EDIT_MESH", "MESH"
+        if any(token in menu_path for token in ("polygon primitives", "create polygon", "create/")):
+            return "VIEW_3D", "OBJECT", "ANY"
+        return "VIEW_3D", "ANY", "ANY"
+
+    if kind in {"operator", "ui_operator"}:
+        if module == "mesh":
+            if name.startswith("primitive_") and name.endswith("_add"):
+                return "VIEW_3D", "OBJECT", "ANY"
+            return "VIEW_3D", "EDIT_MESH", "MESH"
+        if module == "curve":
+            if name.startswith("primitive_") and name.endswith("_add"):
+                return "VIEW_3D", "OBJECT", "ANY"
+            return "VIEW_3D", "EDIT_CURVE", "CURVE"
+        if module == "armature":
+            if name.endswith("_add"):
+                return "VIEW_3D", "OBJECT", "ANY"
+            return "VIEW_3D", "EDIT_ARMATURE", "ARMATURE"
+        if module == "pose":
+            return "VIEW_3D", "POSE", "ARMATURE"
+        if module == "sculpt":
+            return "VIEW_3D", "SCULPT", "MESH"
+        if module == "paint":
+            if "vertex" in name:
+                return "VIEW_3D", "PAINT_VERTEX", "MESH"
+            if "weight" in name:
+                return "VIEW_3D", "PAINT_WEIGHT", "MESH"
+            if "image" in name or "texture" in name:
+                return "VIEW_3D", "PAINT_TEXTURE", "MESH"
+            return "VIEW_3D", "ANY", "ANY"
+        if module in {"object", "transform"}:
+            return "VIEW_3D", "ANY", "ANY"
+        if module in {"image"}:
+            return "IMAGE_EDITOR", "ANY", "ANY"
+        if module in {"node"}:
+            return "NODE_EDITOR", "ANY", "ANY"
+        if module in {"graph"}:
+            return "GRAPH_EDITOR", "ANY", "ANY"
+        if module in {"sequencer"}:
+            return "SEQUENCE_EDITOR", "ANY", "ANY"
+        return "ANY", "ANY", "ANY"
+
+    if kind == "tool":
+        if "sculpt" in name or name.endswith(".draw"):
+            return "VIEW_3D", "SCULPT", "MESH"
+        if "uv" in name or "image" in name:
+            return "IMAGE_EDITOR", "ANY", "ANY"
+        return "VIEW_3D", "ANY", "ANY"
+
+    if kind == "blender_menu":
+        lowered = target.lower()
+        if "edit_mesh" in lowered or "editmesh" in lowered:
+            return "VIEW_3D", "EDIT_MESH", "MESH"
+        if "object" in lowered and target.startswith("VIEW3D_"):
+            return "VIEW_3D", "OBJECT", "ANY"
+        if target.startswith(("VIEW3D_", "VIEW3D_MT_")):
+            return "VIEW_3D", "ANY", "ANY"
+        if target.startswith(("IMAGE_", "IMAGE_MT_")):
+            return "IMAGE_EDITOR", "ANY", "ANY"
+        if target.startswith(("NODE_", "NODE_MT_")):
+            return "NODE_EDITOR", "ANY", "ANY"
+        if target.startswith(("GRAPH_", "GRAPH_MT_")):
+            return "GRAPH_EDITOR", "ANY", "ANY"
+        return "ANY", "ANY", "ANY"
+
+    return "ANY", "ANY", "ANY"
+
+
+def _resolve_shelf_requirements(kind, target="", menu_path="", editor_space="AUTO",
+                                required_mode="AUTO", object_type="AUTO"):
+    inferred = _infer_shelf_requirements(kind, target, menu_path)
+    if required_mode == "UV":
+        required_mode = "ANY"
+        if editor_space in (None, "", "AUTO"):
+            editor_space = "IMAGE_EDITOR"
+    values = (editor_space, required_mode, object_type)
+    return tuple(
+        inferred[i] if value in (None, "", "AUTO") else value
+        for i, value in enumerate(values)
+    )
+
+
+def _validate_shelf_context(context, required_mode="ANY", object_type="ANY"):
+    """Return (ok, warning); this function never changes Blender context."""
+    if object_type not in (None, "", "ANY", "AUTO"):
+        obj = context.active_object
+        if obj is None or obj.type != object_type:
+            return False, f"This action requires an active {object_type} object."
+
+    if required_mode not in (None, "", "ANY", "AUTO"):
+        current_mode = getattr(context, "mode", "OBJECT")
+        if current_mode != required_mode:
+            return False, f"This action requires {required_mode}. Switch mode and try again."
+
+    return True, ""
+
+
+def _run_operator_checked(context, target, properties, option=False):
+    """Run an Operator only after its own Blender poll accepts this context."""
+    try:
+        module, name = target.split(".", 1)
+        operator = getattr(getattr(bpy.ops, module), name)
+        if not operator.poll():
+            raise ShelfContextError(
+                f"Operator {target} is not available in the current editor, mode, or selection."
+            )
+    except ShelfContextError:
+        raise
+    except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as ex:
+        raise ShelfContextError(f"Cannot validate Operator {target}: {ex}") from ex
+
+    from ..marking.modal import run_action
+    return run_action(
+        context, (target, properties or {}), option=option
+    )
+
+
+def _run_menu_checked(context, target, option=False):
+    """Validate a registered Menu and let Blender handle Menu display/polling."""
+    menu_type = bpy.types.Menu.bl_rna_get_subclass_py(target)
+    if menu_type is None:
+        raise ShelfContextError(f"Menu {target} is not registered.")
+
+    # Blender Menu types do not all define a poll() method. In particular,
+    # built-in menus such as VIEW3D_MT_view rely on Blender's own call_menu
+    # handling and must not be rejected for lacking that optional method.
+    menu_poll = getattr(menu_type, "poll", None)
+    if callable(menu_poll):
+        try:
+            available = menu_poll(context)
+        except TypeError:
+            # Keep compatibility with custom Menu classes using poll(self).
+            available = menu_poll()
+        if not available:
+            raise ShelfContextError(
+                f"Menu {target} is not available in the current editor or mode."
+            )
+
+    from ..marking.modal import run_action
+    return run_action(context, ("menu", target), option=option)
+
+
 # --- storage -------------------------------------------------------------------------------------
 
 def _package():
@@ -154,10 +358,15 @@ OPTIONS_TIP = i18n.mark("Double-click or Ctrl+click: options")
 
 
 def record_tooltip(b):
-    """Tooltip of a user-made button: a menu button names its Maya menu path (Maya: the item's annotation)."""
+    """Tooltip of a user-made button, including legacy and typed action records."""
     path = b.get("menu")
+    if b.get("type") == "action":
+        action = b.get("action") or {}
+        return b.get("tooltip") or f"{b.get('label', 'Shelf Button')}\n{action.get('type', 'custom action')}: {action.get('id', '')}"
+    if b.get("type") == "separator":
+        return "Shelf Separator"
     if not path:
-        return f"{b['label']}\n{b['script'][:200]}"
+        return b.get("tooltip") or f"{b.get('label', 'Shelf Button')}\n{b.get('script', '')[:200]}"
     from . import menu_map
     where = i18n.compose("Maya menu: {path}", path=i18n.path(path.split("#")[0], i18n.tip).replace("/", " > "))
     label = i18n.tip(b['label'])
@@ -262,6 +471,18 @@ def run_script(context, label, script):
     return True, ""
 
 
+def _registered_operator(identifier):
+    """Return whether Blender currently has this Operator registered, including add-on namespaces."""
+    if not isinstance(identifier, str) or "." not in identifier:
+        return False
+    module, name = identifier.split(".", 1)
+    try:
+        getattr(getattr(bpy.ops, module), name).get_rna_type()
+    except (AttributeError, RuntimeError, TypeError):
+        return False
+    return True
+
+
 # --- operators -------------------------------------------------------------------------------------
 
 DOUBLE_CLICK_S = 0.35     # Blender's default double-click time (Preferences > Input)
@@ -312,7 +533,29 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
     def execute(self, context):
         b = button_record(self.shelf, self.index)
         if b is not None and b.get("menu"):
-            return self._run_menu(context, b)
+            editor_space, required_mode, object_type = _resolve_shelf_requirements(
+                "maya_menu", b.get("menu", ""),
+                menu_path=b.get("menu", ""),
+                editor_space=b.get("space_type", "AUTO"),
+                required_mode=b.get("required_mode", "AUTO"),
+                object_type=b.get("object_type", "AUTO"),
+            )
+            ok, warning = _validate_shelf_context(context, required_mode, object_type)
+            if not ok:
+                self.report({'WARNING'}, warning)
+                return {'CANCELLED'}
+            try:
+                return _run_in_editor_space(
+                    context, editor_space,
+                    lambda ctx: self._run_menu(ctx, b),
+                )
+            except ShelfContextError as ex:
+                self.report({'WARNING'}, str(ex))
+                return {'CANCELLED'}
+        if b is not None and b.get("type") == "action":
+            return self._run_user_action(context, b)
+        if b is not None and b.get("type") == "separator":
+            return {'CANCELLED'}
         if b is not None:
             if self.option:
                 return {'CANCELLED'}     # a script button has no double-click command (Maya: nothing more runs)
@@ -344,6 +587,100 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
                     return {'CANCELLED'}
                 return {'FINISHED'}
         return {'CANCELLED'}
+
+    def _run_user_action(self, context, button):
+        """Run a custom Shelf action through the canonical context and undo path."""
+        action = button.get("action") or {}
+        kind = action.get("type")
+        target = action.get("id", "")
+        menu_path = target if kind == "maya_menu" else ""
+        editor_space, required_mode, object_type = _resolve_shelf_requirements(
+            kind, target, menu_path=menu_path,
+            editor_space=action.get("space_type", "AUTO"),
+            required_mode=action.get("required_mode", action.get("mode", "AUTO")),
+            object_type=action.get("object_type", "AUTO"),
+        )
+        ok, warning = _validate_shelf_context(context, required_mode, object_type)
+        if not ok:
+            self.report({'WARNING'}, warning)
+            return {'CANCELLED'}
+        try:
+            from ..marking.modal import run_action
+            if kind == "operator":
+                if "." not in target:
+                    raise RuntimeError(f"Invalid Operator ID: {target}")
+                return _run_in_editor_space(
+                    context,
+                    editor_space,
+                    lambda ctx: _run_operator_checked(
+                        ctx, target, action.get("properties", {}),
+                        option=bool(self.option),
+                    ),
+                )
+            if kind == "maya_menu":
+                menu_button = {
+                    "label": button.get("label", "Shelf Button"),
+                    "menu": target,
+                    "space_type": editor_space,
+                    "required_mode": required_mode,
+                    "object_type": object_type,
+                }
+                return _run_in_editor_space(
+                    context, menu_button["space_type"],
+                    lambda ctx: self._run_menu(ctx, menu_button),
+                )
+            if kind == "blender_menu":
+                return _run_in_editor_space(
+                    context,
+                    editor_space,
+                    lambda ctx: _run_menu_checked(ctx, target, option=bool(self.option)),
+                )
+            if kind == "pie_menu":
+                # Legacy records remain executable; new Menu buttons use blender_menu.
+                return _run_in_editor_space(
+                    context,
+                    editor_space,
+                    lambda ctx: run_action(ctx, ("pie", target), option=bool(self.option)),
+                )
+            if kind == "tool":
+                space_type = editor_space
+                return _run_in_editor_space(
+                    context,
+                    space_type,
+                    lambda ctx: run_action(
+                        ctx,
+                        ("tool", target, {
+                            "edit": False,
+                            "space_type": space_type,
+                            "mode": required_mode,
+                            "object_type": object_type,
+                        }),
+                        option=bool(self.option),
+                    ),
+                )
+            if kind == "ui_operator":
+                if "." not in target:
+                    raise RuntimeError(f"Invalid UI Operator ID: {target}")
+                return _run_in_editor_space(
+                    context,
+                    editor_space,
+                    lambda ctx: run_action(ctx, (target, {}), option=bool(self.option)),
+                )
+            if kind == "python":
+                code = action.get("code", "")
+                if not code.strip():
+                    raise RuntimeError("Python command is empty")
+                ok, message = run_script(context, button.get("label", "Shelf Button"), code)
+                if not ok:
+                    raise RuntimeError(message)
+                return {'FINISHED'}
+            raise RuntimeError(f"Unsupported Shelf action type: {kind}")
+        except ShelfContextError as ex:
+            self.report({'WARNING'}, f"{button.get('label', 'Shelf Button')}: {ex}")
+            return {'CANCELLED'}
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as ex:
+            self.report({'ERROR'}, f"{button.get('label', 'Shelf Button')}: {ex}")
+            return {'CANCELLED'}
 
     def _run_menu(self, context, b):
         """A menu button: the Maya menu item run like the menu (``allset.menu_item`` rules, saved option
@@ -495,8 +832,8 @@ class ALLSET_OT_shelf_delete(bpy.types.Operator):
 
 class _ButtonProps:
     label: StringProperty(name="Label", default="Script")
-    icon: StringProperty(name="Icon", default="SCRIPT",
-                         description="Blender icon name (e.g. SCRIPT, MESH_CUBE)")
+    icon: StringProperty(name="Icon", default="SCRIPT", search=shelf_icons.icon_search,
+                         description="Blender, PNG, or Maya Workflow Kit icon identifier")
     script: StringProperty(name="Python", default="print('hello')")
     from_text: BoolProperty(name="From Text Editor",
                             description="Use the text open in a Text Editor instead of the line above")
@@ -512,8 +849,9 @@ class _ButtonProps:
 
 
 def _valid_icon(name):
-    items = bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items
-    return name if name in items else 'SCRIPT'
+    """Accept Blender built-in, PNG, and Maya Workflow Kit icon identifiers."""
+    name = str(name or "").strip()
+    return name if shelf_icons.is_icon_name(name) else 'SCRIPT'
 
 
 class ALLSET_OT_shelf_add_button(_ButtonProps, bpy.types.Operator):
@@ -554,7 +892,12 @@ class ALLSET_OT_shelf_edit_button(_ButtonProps, bpy.types.Operator):
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         b = buttons[self.index]
-        self.label, self.icon, self.script = b["label"], b["icon"], b["script"]
+        self.label = b.get("label", "Button")
+        self.icon = b.get("icon", "SCRIPT")
+        self.script = b.get("script", "")
+        action = b.get("action") or {}
+        if action.get("type") == "python":
+            self.script = action.get("code", self.script)
         return context.window_manager.invoke_props_dialog(self, width=420)
 
     def execute(self, context):
@@ -563,9 +906,16 @@ class ALLSET_OT_shelf_edit_button(_ButtonProps, bpy.types.Operator):
             return {'CANCELLED'}
         source = self._source(context)
         old = buttons[self.index]
-        new = {"label": self.label, "icon": _valid_icon(self.icon), "script": source or old["script"]}
-        if old.get("menu"):            # a menu button stays one: only its label / icon change
-            new["menu"], new["script"] = old["menu"], ""
+        new = dict(old)
+        new["label"] = self.label
+        new["icon"] = _valid_icon(self.icon)
+        action = dict(old.get("action") or {})
+        if action.get("type") == "python":
+            if source:
+                action["code"] = source
+            new["action"] = action
+        elif "script" in old and source:
+            new["script"] = source
         buttons[self.index] = new
         save_user()
         _redraw(context)
@@ -585,6 +935,228 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         del buttons[self.index]
+        save_user()
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class ALLSET_MT_shelf_add_action(bpy.types.Menu):
+    """Maya-style visual chooser for the kind of command a Shelf Button runs."""
+    bl_idname = "ALLSET_MT_shelf_add_action"
+    bl_label = "Add Shelf Button"
+
+    def draw(self, context):
+        layout = self.layout
+        # Explicit split columns keep the submenu compact and predictable.
+        split = layout.split(factor=0.5, align=True)
+        columns = (split.column(align=True), split.column(align=True))
+        choices = (
+            ("OPERATOR", "Operator", "CONSOLE", "Run a Blender Operator and optionally set its RNA properties"),
+            ("MENU", "Menu", "LINENUMBERS_ON", "Open a Maya Workflow Kit menu item or Blender menu"),
+            ("POPUP", "Popup / UI", "WINDOW", "Open a Blender popup, pie menu, or custom UI operator"),
+            ("TOOL", "Tool", "TOOL_SETTINGS", "Activate a Blender or Maya Workflow Kit tool"),
+            ("PYTHON", "Python", "CONSOLE", "Run a custom Python command"),
+            ("SEPARATOR", "Separator", "REMOVE", "Insert a visual separator in the Shelf"),
+        )
+        for index, (kind, label, icon, description) in enumerate(choices):
+            column = columns[index % 2]
+            op = column.operator(ALLSET_OT_shelf_add_action.bl_idname, text=label, icon=icon)
+            op.action_type = kind
+            op.help_text = description
+
+
+class ALLSET_OT_shelf_add_action(bpy.types.Operator):
+    """Add a Shelf Button using a selected command type."""
+    bl_idname = "allset.shelf_add_action"
+    bl_label = "Add Shelf Button"
+    bl_options = {'REGISTER'}
+
+    action_type: StringProperty(options={'HIDDEN'})
+    help_text: StringProperty(options={'HIDDEN'})
+    label: StringProperty(name="Label", default="New Button")
+    icon: StringProperty(name="Icon", default="SCRIPT", search=shelf_icons.icon_search,
+                         description="Blender, PNG, or Maya Workflow Kit icon identifier")
+    tooltip: StringProperty(name="Tooltip")
+    operator_id: StringProperty(name="Operator", description="Operator identifier, e.g. mesh.bevel")
+    properties_json: StringProperty(name="Properties (JSON)", default="{}",
+                                     description="Optional Operator properties as a JSON object")
+    menu_kind: bpy.props.EnumProperty(name="Menu Type", items=(
+        ('MAYA', "Maya Menu Item", "Use a Maya Workflow Kit menu path"),
+        ('BLENDER', "Blender Menu", "Call a registered Blender Menu class"),
+        ('PIE', "Blender Pie Menu", "Call a registered Blender Pie Menu class"),
+        ('CUSTOM_UI', "Custom UI Operator", "Invoke an add-on Operator that opens its own UI"),
+    ), default='MAYA')
+    menu_id: StringProperty(name="Menu Path / ID",
+                            description="Maya menu path or Blender Menu bl_idname")
+    ui_operator_id: StringProperty(name="UI Operator ID", description="Operator that opens the custom interface")
+    tool_id: StringProperty(name="Tool ID", description="Tool identifier, e.g. builtin.move")
+    space_type: bpy.props.EnumProperty(name="Editor", items=(
+        ('VIEW_3D', "3D View", "Activate the tool in the 3D View"),
+        ('IMAGE_EDITOR', "UV Editor", "Activate the tool in the UV Editor"),
+    ), default='VIEW_3D')
+    python_code: StringProperty(name="Python", default="print('Hello')", options={'TEXTEDIT_UPDATE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        return properties.help_text or "Add a Shelf button using the selected command type."
+
+    def invoke(self, context, event):
+        if self.action_type == 'SEPARATOR':
+            return self.execute(context)
+        if self.action_type == 'OPERATOR' and not self.operator_id:
+            self.operator_id = "mesh.primitive_cube_add"
+            self.properties_json = '{"size": 2.0}'
+            if self.label == "New Button":
+                self.label = "Add Cube"
+            if self.icon == "SCRIPT":
+                self.icon = "MESH_CUBE"
+        elif self.action_type == 'MENU' and not self.menu_id:
+            self.menu_id = "Create/Polygon Primitives/Cube"
+            if self.label == "New Button":
+                self.label = "Create Cube"
+        elif self.action_type == 'POPUP' and not self.menu_id and not self.ui_operator_id:
+            self.menu_kind = 'BLENDER'
+            self.menu_id = "VIEW3D_MT_view"
+            if self.label == "New Button":
+                self.label = "View Menu"
+        elif self.action_type == 'TOOL' and not self.tool_id:
+            self.tool_id = "builtin.move"
+            if self.label == "New Button":
+                self.label = "Move Tool"
+        elif self.action_type in {'PYTHON', 'LEGACY_PYTHON'} and self.python_code == "print('Hello')":
+            self.python_code = "import bpy\n\nbpy.ops.mesh.primitive_cube_add(size=2.0)"
+            if self.label == "New Button":
+                self.label = "Python: Add Cube"
+        return context.window_manager.invoke_props_dialog(self, width=520)
+
+    def draw(self, context):
+        layout = self.layout
+        header = layout.row()
+        header.label(text=self.help_text or self.action_type.title(), icon={
+            'OPERATOR': 'CONSOLE', 'MENU': 'LINENUMBERS_ON', 'POPUP': 'WINDOW',
+            'TOOL': 'TOOL_SETTINGS', 'PYTHON': 'CONSOLE',
+            'LEGACY_PYTHON': 'FILE_SCRIPT', 'SEPARATOR': 'REMOVE'
+        }.get(self.action_type, 'SCRIPT'))
+        layout.prop(self, "label")
+        layout.prop(self, "icon")
+        layout.prop(self, "tooltip")
+        if self.action_type == 'OPERATOR':
+            layout.prop(self, "operator_id")
+            layout.prop(self, "properties_json")
+            layout.label(text="Tip: use {} to run the Operator with its default values", icon='INFO')
+        elif self.action_type == 'MENU':
+            layout.prop(self, "menu_kind", expand=True)
+            layout.prop(self, "menu_id", text="Menu")
+        elif self.action_type == 'POPUP':
+            layout.prop(self, "menu_kind", expand=True)
+            if self.menu_kind == 'CUSTOM_UI':
+                layout.prop(self, "ui_operator_id")
+            else:
+                layout.prop(self, "menu_id", text="Menu ID")
+        elif self.action_type == 'TOOL':
+            layout.prop(self, "tool_id")
+            layout.prop(self, "space_type")
+        elif self.action_type in {'PYTHON', 'LEGACY_PYTHON'}:
+            layout.prop(self, "python_code", text="")
+            if self.action_type == 'LEGACY_PYTHON':
+                layout.label(text="Creates the original legacy script button format.", icon='INFO')
+            else:
+                layout.label(text="Advanced: Python runs with the kit command-line environment.", icon='INFO')
+
+    def execute(self, context):
+        buttons = editable_buttons(current(context), create=True)
+        if buttons is None:
+            self.report({'ERROR'}, "The selected Shelf cannot accept custom buttons")
+            return {'CANCELLED'}
+        kind = self.action_type
+        label = "Separator" if kind == 'SEPARATOR' else (self.label.strip() or "New Button")
+        record = {"label": label, "icon": "NONE" if kind == 'SEPARATOR' else _valid_icon(self.icon),
+                  "tooltip": self.tooltip.strip()}
+        if kind == 'SEPARATOR':
+            record.update(type="separator", action={"type": "separator"})
+        elif kind == 'OPERATOR':
+            op_id = self.operator_id.strip()
+            if "." not in op_id:
+                self.report({'ERROR'}, "Enter an Operator ID such as mesh.bevel")
+                return {'CANCELLED'}
+            if not _registered_operator(op_id):
+                self.report({'ERROR'}, "Choose a registered Blender Operator ID")
+                return {'CANCELLED'}
+            try:
+                props = json.loads(self.properties_json or "{}")
+            except ValueError as exc:
+                self.report({'ERROR'}, f"Invalid properties JSON: {exc}")
+                return {'CANCELLED'}
+            if not isinstance(props, dict):
+                self.report({'ERROR'}, "Operator properties must be a JSON object")
+                return {'CANCELLED'}
+            record.update(type="action", action={"type": "operator", "id": op_id, "properties": props})
+        elif kind == 'MENU':
+            target = self.menu_id.strip()
+            if not target:
+                self.report({'ERROR'}, "Enter a menu path or ID")
+                return {'CANCELLED'}
+            if self.menu_kind == 'MAYA':
+                from . import menu_map
+                if target not in menu_map.MAP:
+                    self.report({'ERROR'}, "Choose a valid Maya Workflow Kit menu item")
+                    return {'CANCELLED'}
+                record["menu"] = target
+                record["script"] = ""
+            else:
+                if self.menu_kind in {'BLENDER', 'PIE'} and bpy.types.Menu.bl_rna_get_subclass_py(target) is None:
+                    self.report({'ERROR'}, "Choose a registered Blender Menu ID")
+                    return {'CANCELLED'}
+                if self.menu_kind == 'CUSTOM_UI' and not _registered_operator(target):
+                    self.report({'ERROR'}, "Choose a registered Blender Operator ID")
+                    return {'CANCELLED'}
+                action_type = {'BLENDER': 'blender_menu', 'PIE': 'pie_menu',
+                               'CUSTOM_UI': 'ui_operator'}[self.menu_kind]
+                record.update(type="action", action={"type": action_type, "id": target})
+        elif kind == 'POPUP':
+            if self.menu_kind == 'CUSTOM_UI':
+                target = self.ui_operator_id.strip()
+                action_type = 'ui_operator'
+            else:
+                target = self.menu_id.strip()
+                action_type = {'MAYA': 'maya_menu', 'BLENDER': 'blender_menu', 'PIE': 'pie_menu'}[self.menu_kind]
+            if not target:
+                self.report({'ERROR'}, "Enter a registered Menu or UI Operator ID")
+                return {'CANCELLED'}
+            if action_type == 'maya_menu':
+                from . import menu_map
+                if target not in menu_map.MAP:
+                    self.report({'ERROR'}, "Choose a valid Maya Workflow Kit menu item")
+                    return {'CANCELLED'}
+                record["menu"] = target
+                record["script"] = ""
+            else:
+                if action_type in {'blender_menu', 'pie_menu'} and bpy.types.Menu.bl_rna_get_subclass_py(target) is None:
+                    self.report({'ERROR'}, "Choose a registered Blender Menu ID")
+                    return {'CANCELLED'}
+                if action_type == 'ui_operator' and not _registered_operator(target):
+                    self.report({'ERROR'}, "Choose a registered Blender Operator ID")
+                    return {'CANCELLED'}
+                record.update(type="action", action={"type": action_type, "id": target, "popup": True})
+        elif kind == 'TOOL':
+            if not self.tool_id.strip():
+                self.report({'ERROR'}, "Enter a Tool ID")
+                return {'CANCELLED'}
+            record.update(type="action", action={"type": "tool", "id": self.tool_id.strip(),
+                                                   "space_type": self.space_type})
+        elif kind in {'PYTHON', 'LEGACY_PYTHON'}:
+            if not self.python_code.strip():
+                self.report({'ERROR'}, "Python command is empty")
+                return {'CANCELLED'}
+            if kind == 'LEGACY_PYTHON':
+                # Keep the original JSON shape for compatibility with existing Shelf scripts.
+                record["script"] = self.python_code
+            else:
+                record.update(type="action", action={"type": "python", "code": self.python_code})
+        else:
+            self.report({'ERROR'}, "Unsupported Shelf action type")
+            return {'CANCELLED'}
+        buttons.append(record)
         save_user()
         _redraw(context)
         return {'FINISHED'}
@@ -693,9 +1265,43 @@ class ALLSET_OT_shelf_strip_toggle(bpy.types.Operator):
 
 
 def _redraw(context):
-    screen = context.screen
-    for area in (screen.areas if screen else ()):
-        area.tag_redraw()
+    # The shelf is drawn in the main Blender window while Shelf Editor can be
+    # open in a separate window. Tag every window so a save in the editor
+    # refreshes the actual shelf immediately, including on the first save.
+    wm = getattr(context, "window_manager", None)
+    windows = getattr(wm, "windows", ()) if wm else ()
+    for window in windows:
+        screen = getattr(window, "screen", None)
+        for area in (screen.areas if screen else ()):
+            area.tag_redraw()
+
+
+def _deferred_redraw():
+    """Force a real window redraw on a fresh frame.
+
+    Merely tagging areas with ``tag_redraw`` after the first save of a session
+    does not guarantee the main window processes the shelf draw on that frame
+    (the editor runs in a separate floating window). Re-tagging alone was
+    verified insufficient on a real machine. ``wm.redraw_timer`` with
+    DRAW_WIN_SWAP synchronously redraws every window and swaps the buffers, so
+    the rebuilt GPU textures reach the actual shelf on the first change too.
+    """
+    try:
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+    except (AttributeError, RuntimeError, SystemError):
+        # Fall back to tagging every area if the redraw operator is unavailable
+        # (e.g. a headless context).
+        wm = bpy.context.window_manager
+        for window in getattr(wm, "windows", ()):
+            for area in window.screen.areas:
+                area.tag_redraw()
+    return None
+
+
+def schedule_redraw():
+    """Force a guaranteed second redraw frame after a save (idempotent)."""
+    if not bpy.app.timers.is_registered(_deferred_redraw):
+        bpy.app.timers.register(_deferred_redraw, first_interval=0.0)
 
 
 # --- drawing --------------------------------------------------------------------------------------------
@@ -723,9 +1329,10 @@ class ALLSET_MT_shelf_settings(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator(ALLSET_OT_shelf_new.bl_idname, icon='ADD')
+        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor")
         layout.operator(ALLSET_OT_shelf_delete.bl_idname, icon='TRASH')
         layout.separator()
-        layout.operator(ALLSET_OT_shelf_add_button.bl_idname, icon='SCRIPT')
+        layout.menu(ALLSET_MT_shelf_add_action.bl_idname, icon='ADD', text="Add Shelf Button...")
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
         buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too
         if buttons:
@@ -757,13 +1364,36 @@ def draw_shelf(layout, context):
         if not s["buttons"]:
             row.operator(ALLSET_OT_shelf_add_button.bl_idname, text="Add Button", icon='ADD')
         for i, b in enumerate(s["buttons"]):
-            op = row.operator(ALLSET_OT_shelf_button.bl_idname, text=b["label"] if b["icon"] == 'SCRIPT' else "",
-                              icon=_valid_icon(b["icon"]))
+            if b.get("type") == "separator" or (b.get("action") or {}).get("type") == "separator":
+                row.separator(factor=0.45)
+                continue
+            icon_kwargs = shelf_icons.icon_ui_kwargs(b.get("icon", "SCRIPT"))
+            op = row.operator(
+                ALLSET_OT_shelf_button.bl_idname,
+                text=b.get("label", "Button") if b.get("icon", "SCRIPT") == 'SCRIPT' else "",
+                **icon_kwargs,
+            )
             op.shelf, op.index = cur, i
         return
+    # Factory shelves have immutable Maya slots plus user-added records stored
+    # in shelves.json under ``extra``. Draw both groups in slot order so buttons
+    # added by Shelf Editor are visible in the real Image Editor tool header.
     for i, _label, _action, icon in factory_buttons(cur):
         op = row.operator(ALLSET_OT_shelf_button.bl_idname, text="", icon=icon)
         op.shelf, op.index = cur, i
+
+    factory_slot_count = len(all_buttons(cur))
+    for offset, button in enumerate(factory_extras(cur) or ()):
+        if button.get("type") == "separator" or (button.get("action") or {}).get("type") == "separator":
+            row.separator(factor=0.45)
+            continue
+        icon_kwargs = shelf_icons.icon_ui_kwargs(button.get("icon", "SCRIPT"))
+        op = row.operator(
+            ALLSET_OT_shelf_button.bl_idname,
+            text=button.get("label", "Button") if button.get("icon", "SCRIPT") == 'SCRIPT' else "",
+            **icon_kwargs,
+        )
+        op.shelf, op.index = cur, factory_slot_count + offset
 
 
 def draw_shelf_tabs(layout, context):
@@ -822,7 +1452,7 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
         if b is None:
             return ""
         rec = button_record(cur, b[0])
-        if rec is not None and rec.get("menu"):
+        if rec is not None and (rec.get("menu") or rec.get("type") in {"action", "separator"}):
             return record_tooltip(rec)
         if cur.startswith(USER_PREFIX) or rec is not None:
             return f"{b[1]} (shelf)"
@@ -883,7 +1513,7 @@ SCROLL_RIGHT_PX = 16     # gap between the scroll bar and the area's right edge
 _row = {}      # shelf id -> first row shown
 
 
-def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX):
+def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX, separators=()):
     """[(row, x)] for ``count`` slots in a row ``width`` px wide (scroll bar excluded): Maya's flow — a slot that
     would cross the right edge starts the next row; a separator gap before it counts only inside a row."""
     out = []
@@ -891,13 +1521,17 @@ def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX):
     limit = width - (SCROLL_PX + SCROLL_RIGHT_PX + 2) * scale
     row, x = 0, x0
     gaps = set(gaps)
+    separators = set(separators)
     for slot in range(count):
         if slot in gaps and x > x0:
             x += SEP_PX * scale
-        if x > x0 and x + ICON_PX * scale > limit:
+        is_separator = slot in separators
+        slot_width = 8 if is_separator else ICON_PX
+        pitch = 12 if is_separator else PITCH_PX
+        if x > x0 and x + slot_width * scale > limit:
             row, x = row + 1, x0
         out.append((row, x))
-        x += PITCH_PX * scale
+        x += pitch * scale
     return out
 
 
@@ -905,8 +1539,13 @@ def _layout(region, scale):
     space = _space_of(region)
     tabs = tabs_in_window(space)
     cur, buttons = icon_buttons(bpy.context)
+    separator_slots = {
+        slot for slot, (index, _label, _colour, _mapped) in enumerate(buttons)
+        if (record := button_record(cur, index)) is not None
+        and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator")
+    }
     lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps() if tabs else (),
-                     STRIP_LEFT_PX if tabs else LEFT_PX)
+                     STRIP_LEFT_PX if tabs else LEFT_PX, separators=separator_slots)
     return cur, tabs, lay
 
 
@@ -934,7 +1573,13 @@ def icon_rect(region, slot, scale):
     edge (not drawn, not picked)."""
     cur, tabs, lay = _layout(region, scale)
     top = round(TAB_PX * scale) if tabs else 0
-    size = min(ICON_PX * scale, region.height - top - 4)
+    cur, buttons = icon_buttons(bpy.context)
+    is_separator = False
+    if 0 <= slot < len(buttons):
+        record = button_record(cur, buttons[slot][0])
+        is_separator = bool(record and (record.get("type") == "separator"
+                               or (record.get("action") or {}).get("type") == "separator"))
+    size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
     y = (region.height - top - size) / 2
     off = getattr(region, "width", 0) + 10 ** 6
     if slot >= len(lay):           # past the last button (tests ask for empty slots)
@@ -962,6 +1607,16 @@ def scroll_rects(region, scale):
     return ((x0, mid, x1, y1), (x0, y0, x1, mid))
 
 
+_SHELF_SHADERS = {}
+
+def _shelf_shader(name):
+    """Reuse built-in shaders across shelf redraws instead of resolving them for every icon/rectangle."""
+    shader = _SHELF_SHADERS.get(name)
+    if shader is None:
+        import gpu
+        shader = _SHELF_SHADERS[name] = gpu.shader.from_builtin(name)
+    return shader
+
 def _draw_rect(x, y, w, h, colour, texture=None):
     """A rectangle in region pixels (POST_PIXEL draw handler)."""
     import gpu
@@ -969,12 +1624,12 @@ def _draw_rect(x, y, w, h, colour, texture=None):
     coords = ((x, y), (x + w, y), (x + w, y + h), (x, y + h))
     gpu.state.blend_set('ALPHA')
     if texture is None:
-        sh = gpu.shader.from_builtin('UNIFORM_COLOR')
+        sh = _shelf_shader('UNIFORM_COLOR')
         batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords})
         sh.uniform_float("color", colour)
     else:
         from .. import compat
-        sh = gpu.shader.from_builtin(compat.LINEAR_IMAGE_SHADER)
+        sh = _shelf_shader(compat.LINEAR_IMAGE_SHADER)
         batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
         sh.uniform_sampler("image", texture)
     batch.draw(sh)
@@ -1143,9 +1798,18 @@ def draw_row():
         if x > region.width:
             continue                  # another row
         shown = slot + 1
+        record = button_record(_cur, index)
+        if record and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator"):
+            # Keep the slot narrow, but draw a divider at nearly the full button height.
+            separator_height = min(ICON_PX * s, region.height - (TAB_PX * s if tabs else 0) - 4)
+            separator_y = (region.height - (TAB_PX * s if tabs else 0) - separator_height) / 2
+            cx = x + size / 2
+            dark, light = _separator_colours(base)
+            _draw_rect(cx - s, separator_y, max(1.0, s), separator_height, dark)
+            _draw_rect(cx, separator_y, max(1.0, s), separator_height, light)
+            continue
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
-        # the 2x (64 px) picture once the icon is drawn wider than 32 px (UI scale >= 1.25)
         if colour_key is None:
             tex = _user_texture(_cur, index, label, not mapped, shelf_icons.texture_size(size))
         else:
@@ -1195,6 +1859,12 @@ def _user_texture(shelf_id, index, label, greyed, size):
     the same command's shelf drawing, else its Status Line / Tool Box / menu drawing), else Maya's command button
     with the label's initials (Maya: the item's image, else a default command icon with a label)."""
     rec = button_record(shelf_id, index)
+    if rec:
+        chosen_icon = rec.get("icon", "SCRIPT")
+        if chosen_icon not in {"", "NONE", "SCRIPT"}:
+            custom_texture = shelf_icons.icon_gpu_texture(chosen_icon, greyed=greyed, size=size)
+            if custom_texture is not None:
+                return custom_texture
     path = rec.get("menu") if rec else None
     if path:
         from . import menu_icon_data, menu_icons
@@ -1426,7 +2096,7 @@ def unpatch_image_headers():
 classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_new, ALLSET_OT_shelf_delete, ALLSET_OT_shelf_add_button,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
-           ALLSET_OT_shelf_add_last_command,
+           ALLSET_MT_shelf_add_action, ALLSET_OT_shelf_add_action, ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
            ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab,
            ALLSET_GT_shelf_scroll, ALLSET_OT_shelf_scroll, ALLSET_GGT_shelf)
@@ -1471,6 +2141,8 @@ def register():
 
 
 def unregister():
+    if bpy.app.timers.is_registered(_deferred_redraw):
+        bpy.app.timers.unregister(_deferred_redraw)
     if _on_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load)
     if bpy.app.timers.is_registered(_settle_later):
@@ -1478,6 +2150,7 @@ def unregister():
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(*_handle.pop())
     shelf_icons.clear()
+    _SHELF_SHADERS.clear()
     _factory_cache.clear()
     _hover.clear()
     _tab_rects.clear()

@@ -326,6 +326,7 @@ MAP = {
     "Windows/Settings/Preferences/Preferences": "allset.maya_preferences",   # kit window
     "Windows/Settings/Preferences/Hotkey Editor": "allset.hotkey_editor",   # Maya list + kit keys
     "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
+    "Windows/Settings/Preferences/Shelf Editor": "allset.shelf_editor_open",   # floating Shelf Editor
     "Windows/Settings/Preferences/Marking Menu Editor": "allset.marking_menu_editor",   # kit window
     "Windows/Settings/Preferences/Plug-in Manager": ("screen.userpref_show", {"section": 'ADDONS'}),
     "Windows/Playblast": ("v3d", "allset.playblast", {}),              # temp movie + player
@@ -1237,7 +1238,9 @@ def normalize(value):
     if value[0] == "v3d":
         return ("v3d", value[1], dict(value[2]))
     if value[0] == "tool":
-        return ("tool", value[1], {"edit": value[2]})
+        props = dict(value[2]) if isinstance(value[2], dict) else {"edit": value[2]}
+        props.setdefault("edit", False)
+        return ("tool", value[1], props)
     if value[0] in ("menu", "pie"):
         return (value[0], value[1], {})
     if value[0] == "prop":   # a Maya check / radio item = a Blender property
