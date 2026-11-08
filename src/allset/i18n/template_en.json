@@ -5726,12 +5726,7 @@
    "Write the animation (FBX, Alembic, USD)": "Write the animation (FBX, Alembic, USD)"
   },
   "Labels/operators/fill_bridge": {
-   "Bridge": "Bridge",
-   "Divisions": "Divisions",
-   "Fill Hole": "Fill Hole",
-   "Rows of faces across the bridge (a single filled loop takes none)": "Rows of faces across the bridge (a single filled loop takes none)",
-   "Turn the second loop by this many edges before bridging": "Turn the second loop by this many edges before bridging",
-   "Twist": "Twist"
+   "Fill Hole": "Fill Hole"
   },
   "Labels/operators/flow_path_228": {
    "Flow Path Object": "Flow Path Object",
@@ -6386,6 +6381,7 @@
    "Compressed save": "Compressed save",
    "Create UVs": "Create UVs",
    "Do not reset working units": "Do not reset working units",
+   "Edit Taper Curve": "Edit Taper Curve",
    "Incremental save": "Incremental save",
    "Keep the width below what the mesh allows": "Keep the width below what the mesh allows",
    "Keep these settings for next time (Maya Edit > Save Settings)": "Keep these settings for next time (Maya Edit > Save Settings)",
@@ -6610,6 +6606,27 @@
    "Time Slider": "Time Slider",
    "View": "View",
    "Write the movie to the file below instead of the temporary folder": "Write the movie to the file below instead of the temporary folder"
+  },
+  "Labels/operators/poly_attribute_nodes": {
+   "Add Divisions": "Add Divisions",
+   "Bridge": "Bridge",
+   "Bridge Faces": "Bridge Faces",
+   "Bridge Offset": "Bridge Offset",
+   "Bridge Type": "Bridge Type",
+   "Direction": "Direction",
+   "Divisions": "Divisions",
+   "Legacy Bridge Offset": "Legacy Bridge Offset",
+   "Path Curve": "Path Curve",
+   "Smoothing Angle": "Smoothing Angle",
+   "Smoothness": "Smoothness",
+   "Source": "Source",
+   "Taper": "Taper",
+   "Taper Curve": "Taper Curve",
+   "Target": "Target",
+   "Twist": "Twist",
+   "Twist of the bridging region in degrees": "Twist of the bridging region in degrees",
+   "polyBridgeEdge": "polyBridgeEdge",
+   "polySubdFace": "polySubdFace"
   },
   "Labels/operators/poly_cleanup": {
    "4-sided faces": "4-sided faces",
@@ -7462,6 +7479,7 @@
    "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)": "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)",
    "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)": "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)",
    "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)": "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)",
+   "A menu item's option box opens its options in a floating window that stays open, with Apply, Save Settings, Reset Settings and Close, and several can stay open together (off: a dialog that closes when the command runs)": "A menu item's option box opens its options in a floating window that stays open, with Apply, Save Settings, Reset Settings and Close, and several can stay open together (off: a dialog that closes when the command runs)",
    "A pie at the right end of the In-View Editor's title sets how fast a drag changes its values: click or drag round it, from 2 % (empty) to full speed (full) (off: no pie, the values change at full speed)": "A pie at the right end of the In-View Editor's title sets how fast a drag changes its values: click or drag round it, from 2 % (empty) to full speed (full) (off: no pie, the values change at full speed)",
    "A radial submenu is linked by a line to the centre of the menu it opened from, with a ring there: resting the pointer on that ring for a moment goes back to that menu. The line from the centre to the pointer shows only near a centre": "A radial submenu is linked by a line to the centre of the menu it opened from, with a ring there: resting the pointer on that ring for a moment goes back to that menu. The line from the centre to the pointer shows only near a centre",
    "Active Only": "Active Only",
@@ -7510,6 +7528,7 @@
    "Edge": "Edge",
    "Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag before any key map sees it. On Windows the kit still tumbles on Alt+LMB; elsewhere Maya's Alt+LMB tumble can't work, so turn it off for Maya navigation (Alt+MMB track and Alt+RMB dolly work either way).": "Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag before any key map sees it. On Windows the kit still tumbles on Alt+LMB; elsewhere Maya's Alt+LMB tumble can't work, so turn it off for Maya navigation (Alt+MMB track and Alt+RMB dolly work either way).",
    "Error messages name the script line the error happened on": "Error messages name the script line the error happened on",
+   "Every kit modeling node of a mesh (Extrude, Bevel, Bridge, Add Divisions ...) stays editable in the Channel Box and the Attribute Editor, also after saving and reopening the file: changing an earlier node replays the later ones. Keeps a hidden copy of the mesh before its first node in the file (off: only the newest node can be changed, until the file is closed)": "Every kit modeling node of a mesh (Extrude, Bevel, Bridge, Add Divisions ...) stays editable in the Channel Box and the Attribute Editor, also after saving and reopening the file: changing an earlier node replays the later ones. Keeps a hidden copy of the mesh before its first node in the file (off: only the newest node can be changed, until the file is closed)",
    "Exit On Completion": "Exit On Completion",
    "Fast": "Fast",
    "Fixed-length Tangents": "Fixed-length Tangents",
@@ -7532,10 +7551,12 @@
    "In the UV Editor, show the UV, edge, face or whole UV shell under the mouse in the pre-selection colour before you click": "In the UV Editor, show the UV, edge, face or whole UV shell under the mouse in the pre-selection colour before you click",
    "In-View Editor Drag Speed": "In-View Editor Drag Speed",
    "In-View Editor Speed Pie": "In-View Editor Speed Pie",
+   "In-View Editors": "In-View Editors",
    "In-View Messages": "In-View Messages",
    "Interactive Creation": "Interactive Creation",
    "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives": "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives",
    "Interval (minutes)": "Interval (minutes)",
+   "Invisible Manipulators": "Invisible Manipulators",
    "Joint Size in Metre Scenes": "Joint Size in Metre Scenes",
    "Joint Size of scenes whose length unit is metres or larger, until Display > Animation > Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm across: 1 = like Maya)": "Joint Size of scenes whose length unit is metres or larger, until Display > Animation > Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm across: 1 = like Maya)",
    "Keep Maya Layout When Opening Files": "Keep Maya Layout When Opening Files",
@@ -7548,6 +7569,7 @@
    "Linear": "Linear",
    "Lock Tumble in Ortho Views": "Lock Tumble in Ortho Views",
    "Make Blender feel like Maya": "Make Blender feel like Maya",
+   "Manipulators": "Manipulators",
    "Marking Menus": "Marking Menus",
    "Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after a pause; a hidden mark picks radial items only, by the stroke's latest direction, also in submenus, and shows the names of the menus it passed (off: the menu shows a moment after the press, like Maya)": "Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after a pause; a hidden mark picks radial items only, by the stroke's latest direction, also in submenus, and shows the names of the menus it passed (off: the menu shows a moment after the press, like Maya)",
    "Marquee Selects Hidden Components": "Marquee Selects Hidden Components",
@@ -7581,16 +7603,19 @@
    "Never": "Never",
    "New Scene Time": "New Scene Time",
    "No \"# Result:\" lines in the Script Editor history": "No \"# Result:\" lines in the Script Editor history",
+   "No Manipulators": "No Manipulators",
    "No error messages in the Script Editor history": "No error messages in the Script Editor history",
    "No info messages in the Script Editor history": "No info messages in the Script Editor history",
    "No warning messages in the Script Editor history": "No warning messages in the Script Editor history",
    "Non-weighted Tangents": "Non-weighted Tangents",
    "Number of Autosaves": "Number of Autosaves",
    "Off": "Off",
+   "Option Boxes in Floating Windows": "Option Boxes in Floating Windows",
    "Out Tangent": "Out Tangent",
    "Out tangent of new keys (Maya Tangents > Default Out Tangent)": "Out tangent of new keys (Maya Tangents > Default Out Tangent)",
    "Panel Menus": "Panel Menus",
    "Parent Mode": "Parent Mode",
+   "Persistent Modeling History": "Persistent Modeling History",
    "Pick Walk Skips Hidden Bone Collections": "Pick Walk Skips Hidden Bone Collections",
    "Plateau": "Plateau",
    "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed": "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed",
@@ -7624,6 +7649,7 @@
    "Show Stack Trace": "Show Stack Trace",
    "Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header while a skeleton is active (not part of Maya)": "Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header while a skeleton is active (not part of Maya)",
    "Show batch rendering messages in the Script Editor history (Maya; Blender's renders write their messages to the system console)": "Show batch rendering messages in the Script Editor history (Maya; Blender's renders write their messages to the system console)",
+   "Show the active modeling node's attribute editor in the viewport": "Show the active modeling node's attribute editor in the viewport",
    "Slider Speed": "Slider Speed",
    "Slow": "Slow",
    "Slowest": "Slowest",
@@ -7633,6 +7659,7 @@
    "Snap Time To Selection": "Snap Time To Selection",
    "Softly pulse the viewport header's mode button while a skeleton is selected (not part of Maya)": "Softly pulse the viewport header's mode button while a skeleton is selected (not part of Maya)",
    "Spline": "Spline",
+   "Standard Manipulators": "Standard Manipulators",
    "Start in Maya Layout": "Start in Maya Layout",
    "Status Line": "Status Line",
    "Stepped": "Stepped",
@@ -7775,6 +7802,20 @@
    "Visibility": "Visibility",
    "make a selection": "make a selection"
   },
+  "Labels/ui/attribute_fields": {
+   "Adjust Attribute Value": "Adjust Attribute Value",
+   "Attribute Field Gestures": "Attribute Field Gestures",
+   "Attribute Field Hover": "Attribute Field Hover"
+  },
+  "Labels/ui/bridge_editor": {
+   "Bridge Path Curve": "Bridge Path Curve",
+   "Bridge Taper Curve": "Bridge Taper Curve",
+   "Choose Path": "Choose Path",
+   "Curve": "Curve",
+   "Edit Path": "Edit Path",
+   "Edit Taper Curve": "Edit Taper Curve",
+   "Update Bridge Evaluation": "Update Bridge Evaluation"
+  },
   "Labels/ui/camera_tools": {
    "A camera view shows its full Attribute Editor": "A camera view shows its full Attribute Editor",
    "Camera Attribute Editor": "Camera Attribute Editor",
@@ -7837,6 +7878,7 @@
    "Lock and Hide Selected": "Lock and Hide Selected",
    "Make Selected Keyable": "Make Selected Keyable",
    "Make Selected Nonkeyable": "Make Selected Nonkeyable",
+   "Manipulators": "Manipulators",
    "Material Attributes...": "Material Attributes...",
    "Modeling Toolkit": "Modeling Toolkit",
    "Mute All": "Mute All",
@@ -8107,6 +8149,10 @@
    "Clear Below": "Clear Below",
    "Value Lines": "Value Lines"
   },
+  "Labels/ui/history_rebind": {
+   "Rebind History Selection": "Rebind History Selection",
+   "Rebind Selection": "Rebind Selection"
+  },
   "Labels/ui/hotkey_editor": {
    "All": "All",
    "Assign New Hotkey": "Assign New Hotkey",
@@ -8204,6 +8250,7 @@
   },
   "Labels/ui/in_view": {
    "Divisions": "Divisions",
+   "Edit Node Attributes": "Edit Node Attributes",
    "Extrude Manipulator": "Extrude Manipulator",
    "In-View Editor": "In-View Editor",
    "In-View Editor Drag Speed": "In-View Editor Drag Speed",
@@ -8408,8 +8455,21 @@
    "Transform Constraint": "Transform Constraint",
    "Volume": "Volume"
   },
+  "Labels/ui/node_attributes": {
+   "Edit Node Attributes": "Edit Node Attributes"
+  },
   "Labels/ui/option_click": {
    "Click Point": "Click Point"
+  },
+  "Labels/ui/option_editor": {
+   "Close": "Close",
+   "Command Options": "Command Options",
+   "Command Options Keyboard Action": "Command Options Keyboard Action",
+   "Option Window Action": "Option Window Action",
+   "Reopen command options from its menu.": "Reopen command options from its menu.",
+   "Reset Settings": "Reset Settings",
+   "Save Settings": "Save Settings",
+   "Tool": "Tool"
   },
   "Labels/ui/outliner": {
    "Expand": "Expand",
@@ -9427,7 +9487,6 @@
    "Show this folder in the file browser (Maya file dialog: project folder list)": "Show this folder in the file browser (Maya file dialog: project folder list)"
   },
   "Tooltips/operators/fill_bridge": {
-   "Bridge two sets of border edges or faces with faces; one closed loop of border edges is filled with a single\nface (Maya Edit Mesh > Bridge)": "Bridge two sets of border edges or faces with faces; one closed loop of border edges is filled with a single\nface (Maya Edit Mesh > Bridge)",
    "Close every hole whose border edges are selected with one face; with nothing selected, every hole of the\nmesh (Maya Mesh > Fill Hole)": "Close every hole whose border edges are selected with one face; with nothing selected, every hole of the\nmesh (Maya Mesh > Fill Hole)"
   },
   "Tooltips/operators/flow_path_228": {
@@ -9753,6 +9812,9 @@
   },
   "Tooltips/operators/playblast": {
    "Record the playback range from the viewport and play it (Maya Playblast)": "Record the playback range from the viewport and play it (Maya Playblast)"
+  },
+  "Tooltips/operators/poly_attribute_nodes": {
+   "Bridge two sets of border edges or faces with faces, as an editable polyBridgeEdge node; one closed loop of\nborder edges is filled with a single face (Maya Edit Mesh > Bridge)": "Bridge two sets of border edges or faces with faces, as an editable polyBridgeEdge node; one closed loop of\nborder edges is filled with a single face (Maya Edit Mesh > Bridge)"
   },
   "Tooltips/operators/poly_cleanup": {
    "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)": "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)"
@@ -10106,6 +10168,10 @@
    "Show this object in the Attribute Editor (Maya RMB marking menu row\n\"<object>...\")": "Show this object in the Attribute Editor (Maya RMB marking menu row\n\"<object>...\")",
    "Switch the dock between Channel Box / Layer Editor and Attribute Editor\n(Maya Ctrl+A)": "Switch the dock between Channel Box / Layer Editor and Attribute Editor\n(Maya Ctrl+A)"
   },
+  "Tooltips/ui/bridge_editor": {
+   "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel": "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel",
+   "Reevaluate this recorded Bridge with the current section and twist model": "Reevaluate this recorded Bridge with the current section and twist model"
+  },
   "Tooltips/ui/camera_tools": {
    "Show the camera this view looks through in the Attribute Editor (Maya View > Camera Attribute Editor)": "Show the camera this view looks through in the Attribute Editor (Maya View > Camera Attribute Editor)",
    "The camera values of a Blender persp / ortho view (Maya perspShape)": "The camera values of a Blender persp / ortho view (Maya perspShape)",
@@ -10185,6 +10251,9 @@
    "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)": "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)",
    "Show or hide the value lines: the zero value and the lowest / highest value of the selected curves (Maya l)": "Show or hide the value lines: the zero value and the lowest / highest value of the selected curves (Maya l)"
   },
+  "Tooltips/ui/history_rebind": {
+   "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel": "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel"
+  },
   "Tooltips/ui/hotkey_editor": {
    "Assign a new key to this command: press the key (with Ctrl / Alt / Shift), Esc cancels": "Assign a new key to this command: press the key (with Ctrl / Alt / Shift), Esc cancels",
    "Give this command its Maya hotkey back": "Give this command its Maya hotkey back",
@@ -10218,6 +10287,7 @@
    "Show this material in the graph and the Property Editor (Maya Hypershade swatch click)": "Show this material in the graph and the Property Editor (Maya Hypershade swatch click)"
   },
   "Tooltips/ui/in_view": {
+   "Apply typed modeling channels and compatible selected channels as one undo step": "Apply typed modeling channels and compatible selected channels as one undo step",
    "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)": "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)",
    "Drag the In-View Editor by its title to move it": "Drag the In-View Editor by its title to move it",
    "In-View Editor drag speed: click or drag round the pie (empty = slowest, full = full speed)": "In-View Editor drag speed: click or drag round the pie (empty = slowest, full = full speed)",
@@ -10297,6 +10367,9 @@
   "Tooltips/ui/modeling_toolkit": {
    "Maya soft select falloff mode: Volume (by distance) or Surface (along the connected surface)": "Maya soft select falloff mode: Volume (by distance) or Surface (along the connected surface)",
    "Reset soft selection to the default settings, like Maya (radius 5 Maya units, Volume, smooth falloff)": "Reset soft selection to the default settings, like Maya (radius 5 Maya units, Volume, smooth falloff)"
+  },
+  "Tooltips/ui/node_attributes": {
+   "Commit modeling attributes as one undoable edit from any attribute UI": "Commit modeling attributes as one undoable edit from any attribute UI"
   },
   "Tooltips/ui/notices": {
    "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line": "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line"
