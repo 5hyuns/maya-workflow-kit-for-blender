@@ -11,6 +11,7 @@ from mathutils import Euler, Matrix, Vector
 import kit
 
 c199 = import_module(kit.MODULE + ".operators.constrain_199")
+multi = import_module(kit.MODULE + ".operators.constrain_multi")
 prim = import_module(kit.MODULE + ".operators.prim_shapes")
 
 TOL = 1e-5
@@ -180,11 +181,12 @@ def test_normal_options_and_hints():
     _select(targets["smooth_sphere"], loc)
     assert bpy.ops.allset.normal_constraint(world_up_type="None", weight=0.5) == {'FINISHED'}
     con = loc.constraints[-1]
-    assert con.type == 'DAMPED_TRACK' and abs(con.influence - 0.5) < 1e-9
+    assert con.type == 'DAMPED_TRACK'
     assert c199.maya_type(con) == "normal"
     bpy.context.view_layer.update()
-    con.influence = 1.0
-    bpy.context.view_layer.update()
+    # Weight 0.5 with one target: the constraint's own weight, fully on the normal (Maya: any weight above 0)
+    prop = multi.single_weight(con)
+    assert prop is not None and abs(loc[prop] - 0.5) < 1e-9 and abs(con.influence - 1.0) < 1e-9
     n = Vector(c199.direction("normal", targets["smooth_sphere"], tuple(loc.matrix_world.translation)))
     assert (loc.matrix_world.col[0].xyz.normalized() - n).length < TOL
 

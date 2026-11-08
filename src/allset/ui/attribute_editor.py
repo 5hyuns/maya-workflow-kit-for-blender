@@ -558,7 +558,13 @@ def draw_constraint(layout, context, node, con):
         col = section_body(body)
         if hasattr(con, "enabled"):
             col.prop(con, "enabled", text="Enabled (Node State)")
-        col.prop(con, "influence", text=channel_box.weight_name(con))
+        from ..operators import constrain_multi
+        owner = constrain_multi.owner_of(con)
+        prop = constrain_multi.single_weight(con, owner)
+        if prop is not None:        # a one-target constraint's own weight (the influence follows it)
+            col.prop(owner, f'["{bpy.utils.escape_identifier(prop)}"]', text=channel_box.weight_name(con))
+        else:
+            col.prop(con, "influence", text=channel_box.weight_name(con))
         for ident in constraint_props(con):
             col.prop(con, ident, text=attr_label(context, con.bl_rna.properties[ident].name, ident))
 

@@ -1,8 +1,10 @@
 """Issue #329 in a real UI: pCube1 parent-constrains pCube2, the constraint node expanded in the Channel Box INPUTS ->
 RMB on the target weight's name (pCube1W0) selects that channel and opens the Channels menu; Key Selected (K) keys
-the constraint's influence on pCube2, and the row then shows the keyed state. Then the follow-up report: type 0 in
-the weight and press S, go to frame 10 on the Time Slider, type 1 and press S, and scrub the Time Slider — the
-weight and pCube2's evaluated position follow the keys. Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
+the weight on pCube2, and the row then shows the keyed state. Then the follow-up report: type 0 in the weight and
+press S over the viewport, go to frame 10 on the Time Slider, type 1 and press S again, and
+scrub the Time Slider — the weight follows its keys and pCube2 follows Maya's one-target rule: its
+own place at weight 0 (frame 1), fully on pCube1 for any weight above 0 (frame 2 on). Screenshots with
+ALLSET_GUI_SHOTS (or --shots)."""
 
 import os
 import re
@@ -130,8 +132,9 @@ def s_picked():
     ob = child()
     curves = list(import_module(MODULE + ".compat").id_fcurves(ob)) if ob.animation_data else []
     keyed = [(fc.data_path, [round(k.co.x) for k in fc.keyframe_points]) for fc in curves]
-    check(f"Channels > Key Selected keys the target weight at the current frame ({keyed})",
-          keyed == [(f'constraints["{ob.constraints[0].name}"].influence', [5])])
+    prop = cb().constraint_weight(ob, KEY)
+    check(f"Channels > Key Selected keys the target weight (the constraint's own weight {prop}) at the current "
+          f"frame ({keyed})", prop is not None and keyed == [(f'["{prop}"]', [5])])
     state = cb().channel_state(ob, KEY)
     check(f"the weight row reads keyed ({state})", state == 'KEYED')
     parent = bpy.data.objects["pCube1"]
@@ -221,8 +224,14 @@ def s_range():
 step(find_button(dock, _is_weight_value, C, "value", x_frac=0.72, step_px=4))
 
 
-def type_weight(text, frame):
-    """Steps: click the weight's value field, type ``text``, Enter, then S over the viewport."""
+def on_target(w):
+    """pCube2's Y for weight ``w`` (one target, like Maya): fully on pCube1 for any weight above 0, else its own."""
+    return FOLLOW if w > 1e-9 else 0.0
+
+
+def type_weight(text, frame, where):
+    """Steps: click the weight's value field, type ``text``, Enter, then S over the viewport (``where`` "view") or
+    with the mouse still over the Channel Box ("cb")."""
     def s_click():
         check(f"the weight's value field is found ({C.get('value')})", C.get("value") is not None)
         if not C.get("value"):
@@ -237,15 +246,26 @@ def type_weight(text, frame):
 
     def s_type():
         type_text(text)
+        if where == "cb":
+            tap('S')        # S while the field is being typed in: the field's, no key
 
     def s_enter():
         tap('RET')
 
     def s_typed():
-        con = child().constraints[0]
-        check(f"typing {text} at frame {frame} sets the weight ({con.influence:.3f})",
-              abs(con.influence - float(text)) < 1e-6)
-        hover_view()
+        w = cb().get_value(child(), KEY)
+        y = weight_y()
+        check(f"typing {text} at frame {frame} sets the weight ({w:.3f}; pCube2 y {y:.3f})",
+              abs(w - float(text)) < 1e-6 and abs(y - on_target(w)) < 1e-4)
+        if where == "cb":
+            fc = cb().fcurve(child(), "tx")
+            early = [round(k.co.x) for k in fc.keyframe_points] if fc is not None else []
+            check(f"S pressed while typing in the field keys nothing ({early})", frame not in early)
+        if where == "view":
+            hover_view()
+        else:
+            x, y = C["value"]       # the mouse stays over the Channel Box (the field, no longer typing)
+            ev('MOUSEMOVE', 'NOTHING', x=x + 1, y=y)
 
     def s_key():
         tap('S')
@@ -253,15 +273,20 @@ def type_weight(text, frame):
     def s_keyed():
         fc = cb().fcurve(child(), KEY)
         keys = [(round(k.co.x), round(k.co.y, 6)) for k in fc.keyframe_points] if fc is not None else None
-        check(f"S keys the open constraint node's weight at frame {frame} ({keys})",
+        over = "the viewport" if where == "view" else "the Channel Box"
+        check(f"S over {over} keys the open constraint node's weight at frame {frame} ({keys})",
               keys is not None and (frame, float(text)) in keys)
+        tx_keys = [round(k.co.x) for k in cb().fcurve(child(), "tx").keyframe_points] \
+            if cb().fcurve(child(), "tx") is not None else []
+        check(f"... and pCube2's own channels, like S over the viewport (Translate X keys {tx_keys})",
+              frame in tx_keys)
         redraw()
 
     for fn in (s_click, s_press, s_type, s_enter, s_typed, s_key, s_keyed):
         step(fn)
 
 
-type_weight("0", 1)
+type_weight("0", 1, "view")
 
 
 @step
@@ -284,7 +309,9 @@ def s_at10():
     redraw()
 
 
-type_weight("1", 10)
+type_weight("1", 10, "view")
+
+SCRUB = (1, 2, 5, 10, 3, 1)
 
 
 @step
@@ -292,7 +319,7 @@ def s_scrub_start():
     fc = cb().fcurve(child(), KEY)
     keys = [(round(k.co.x), round(k.co.y, 6)) for k in fc.keyframe_points] if fc is not None else None
     check(f"the weight's curve holds both keys ({keys})", keys == [(1, 0.0), (10, 1.0)])
-    C["scrub"] = [tx(f) for f in (1, 5, 10, 3)]
+    C["scrub"] = [tx(f) for f in SCRUB]
     x, y = C["scrub"][0]
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
 
@@ -313,30 +340,30 @@ def scrub_to(i, frame):
         sc = bpy.context.scene
         fc = cb().fcurve(child(), KEY)
         want = fc.evaluate(sc.frame_current) if fc is not None else None
-        w = child().constraints[0].influence
+        w = cb().get_value(child(), KEY)
         text = weight_row().text
         y = weight_y()
-        shot(f"gui_issue329_scrub_{frame}.png")
-        check(f"scrubbing to frame {frame} ({sc.frame_current}): the weight follows its keys (influence {w:.3f}, "
+        shot(f"gui_issue329_scrub_{i}_{frame}.png")
+        check(f"scrubbing to frame {frame} ({sc.frame_current}): the weight follows its keys (weight {w:.3f}, "
               f"Channel Box {text}, curve {want if want is None else round(want, 3)})",
               sc.frame_current == frame and want is not None and abs(w - want) < 1e-5
               and abs(float(text) - want) < 1e-3)
-        check(f"... and pCube2 moves with it (y {y:.3f}, want {FOLLOW * (want or 0):.3f})",
-              want is not None and abs(y - FOLLOW * want) < 1e-4)
+        check(f"... and pCube2 follows the one-target rule (y {y:.3f}, want {on_target(want or 0.0):.3f})",
+              want is not None and abs(y - on_target(want)) < 1e-4)
         redraw()
 
     step(s_move)
     step(s_check)
 
 
-scrub_to(1, 5)
-scrub_to(2, 10)
-scrub_to(3, 3)
+for _i, _f in enumerate(SCRUB):
+    if _i:
+        scrub_to(_i, _f)
 
 
 @step
 def s_scrub_release():
-    x, y = C["scrub"][3]
+    x, y = C["scrub"][-1]
     ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
     redraw()
 
@@ -344,8 +371,13 @@ def s_scrub_release():
 @step
 def s_scrub_done():
     sc = bpy.context.scene
-    check(f"the scrub ends at frame 3 ({sc.frame_current}) with the weight between the keys",
-          sc.frame_current == 3 and 0.05 < child().constraints[0].influence < 0.95)
+    w = cb().get_value(child(), KEY)
+    check(f"the scrub ends at frame 1 ({sc.frame_current}) with weight 0 and pCube2 at its own place "
+          f"(y {weight_y():.3f})", sc.frame_current == 1 and w == 0.0 and abs(weight_y()) < 1e-4)
+    bpy.context.scene.frame_set(2)
+    w2 = cb().get_value(child(), KEY)
+    check(f"frame 2: a small weight ({w2:.3f}) puts pCube2 fully on pCube1 (y {weight_y():.3f}), no blend",
+          0.0 < w2 < 0.2 and abs(weight_y() - FOLLOW) < 1e-4)
 
 
 run()

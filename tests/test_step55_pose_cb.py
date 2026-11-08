@@ -1,5 +1,5 @@
 """Joints = pose bones in the Channel Box, Outliner and Attribute Editor; constraint
-weight rows (``locator1W0`` = influence) and constrained channels. GUI: tests/gui/gui_step55_pose.py."""
+weight rows (``locator1W0``: any weight above 0 = on the target) and constrained channels. GUI: tests/gui/gui_step55_pose.py."""
 
 import math
 from importlib import import_module
@@ -231,7 +231,11 @@ def test_constraint_weight_rows():
     rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
     assert len(rows) == 1 and rows[0].name == "influence", [(r.kind, r.name) for r in rows]
     rows[0].text = "0.5"
-    assert abs(con2.influence - 0.5) < 1e-6 and abs(pb3.constraints[0].influence - 0.5) < 1e-6
+    key = cb.row_key(rows[0])
+    assert abs(cb.get_value(pb2, key) - 0.5) < 1e-6 and abs(cb.get_value(pb3, key) - 0.5) < 1e-6
+    bpy.context.view_layer.update()
+    # one target: any weight above 0 keeps the joint fully on it (Maya)
+    assert abs(con2.influence - 1.0) < 1e-6 and abs(pb3.constraints[0].influence - 1.0) < 1e-6
     rec = _draw_cb()
     labels = rec.texts("label")
     assert "INPUTS" in labels, labels

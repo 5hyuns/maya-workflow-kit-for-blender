@@ -11,6 +11,7 @@ from mathutils import Vector
 import kit
 
 ow = import_module(kit.MODULE + ".operators.option_windows")
+multi = import_module(kit.MODULE + ".operators.constrain_multi")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 editor_menu_data = import_module(kit.MODULE + ".ui.editor_menu_data")
@@ -210,7 +211,10 @@ def test_constraint_windows():
     _run("point_constraint", all=False, x=True, weight=0.5, maintain_offset=True)
     con = drv.constraints[-1]
     assert con.type == 'COPY_LOCATION' and con.use_x and not con.use_y and not con.use_z
-    assert abs(con.influence - 0.5) < 1e-6 and con.use_offset
+    bpy.context.view_layer.update()
+    # Weight 0.5 with one target: the constraint's own weight; any weight above 0 = fully on the target (Maya)
+    prop = multi.single_weight(con)
+    assert prop is not None and abs(drv[prop] - 0.5) < 1e-6 and abs(con.influence - 1.0) < 1e-6 and con.use_offset
     _select(tgt, drv)
     _run("orient_constraint", all=False, y=True)
     con = drv.constraints[-1]

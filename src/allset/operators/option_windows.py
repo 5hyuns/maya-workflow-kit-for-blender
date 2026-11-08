@@ -175,7 +175,7 @@ def _constraint(ctype):
             # a multi-target node: Maintain offset and Weight were applied when it was built (weights = W0, W1 ...)
             _group_axes(constrain_multi.members(mb.owner, mb.group), ctype, v)
             return res
-        con.influence = v["weight"]
+        constrain_multi.set_weight(con, v["weight"])     # Maya: any weight above 0 = fully on the target
         if ctype == 'CHILD_OF':
             if not v["maintain_offset"]:
                 con.inverse_matrix = Matrix.Identity(4)      # snap like Maya without Maintain offset

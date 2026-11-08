@@ -20,6 +20,7 @@ menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 compat = import_module(kit.MODULE + ".compat")
+multi = import_module(kit.MODULE + ".operators.constrain_multi")
 
 PATHS = {
     "joint_tool": ("Skeleton/Create Joints",), "ik_handle_tool": ("Skeleton/Create IK Handle",),
@@ -205,7 +206,11 @@ def test_aim_options():
     _run("aim_constraint", world_up_type="None", weight=0.5)
     con = cube.constraints[-1]
     assert con.type == 'DAMPED_TRACK' and con.track_axis == 'TRACK_X' and con.target == target
-    assert abs(con.influence - 0.5) < 1e-6 and len(cube.constraints) == 1
+    bpy.context.view_layer.update()
+    # Weight 0.5 with one target: the constraint's own weight, fully on the target (Maya: any weight above 0)
+    prop = multi.single_weight(con)
+    assert prop is not None and abs(cube[prop] - 0.5) < 1e-6 and abs(con.influence - 1.0) < 1e-6
+    assert len(cube.constraints) == 1
     target, cube = _aim_scene()
     _run("aim_constraint", aim_vector=(0.0, 0.0, 1.0), up_vector=(1.0, 0.0, 0.0))
     con = cube.constraints[-1]

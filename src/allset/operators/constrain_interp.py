@@ -479,7 +479,7 @@ def set_mode(context, owner, group, mode):
     jo_inv = qinv(joint_orient(owner))
     owner[LAST + group] = qmul(jo_inv, out if first_time else before)
     update(owner, group)
-    constrain_multi.drive_single(owner, group)     # one target: its weight blends the computed rotation in and out
+    constrain_multi.drive_single(owner, group)     # one target: its weight turns the computed rotation on / off
     owner.id_data.update_tag()
     context.view_layer.update()
     _state["armed"] = True

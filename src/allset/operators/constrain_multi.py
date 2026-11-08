@@ -14,10 +14,16 @@ The kit (one Blender constraint reads one target):
   S_i = w_0 + ... + w_i (Blender mixes the stack in order, so these influences give exactly the weighted average of
   the positions; all 0 = the equal average and W0 0.5 · W1 0 = target A, both Maya). Simple expressions only:
   no Python auto-run needed (``driver.is_simple_expression``).
-- One target (a joint following an object): there is nothing to average, so its weight is the influence of every
-  member (driver ``SINGLE``, clamped to 0 .. 1), like the weight of a one-target constraint on an object — keyed, it
-  blends the node in and out (0 = the joint's own channels). A one-target group saved without that driver gets it
-  when the file loads (``upgrade``).
+- One target (a joint following an object): the normalised weight w / w is 1 for any weight above 0, so like Maya
+  the node follows its target fully while the weight is above 0 and lets go only at 0 (the joint's own channels,
+  Maya's rest position): every member's influence = driver ``SINGLE``. Keyed 0 -> 1, the joint jumps onto the target
+  on the first frame after the 0 key. A one-target group saved without that driver, or with the older linear one,
+  gets it when the file loads (``upgrade``).
+- A one-target constraint outside a group (an object following one object, a joint following one joint) gets the
+  same rule once the Channel Box (or an option window) sets or keys its weight: the weight becomes an ID property of
+  the owner, ``allset_w_<constraint name>`` (min 0), and the influence follows it through ``SINGLE``
+  (``ensure_single_weight``); keys the influence already had move to the weight. Until then the influence is the
+  weight, as Blender has it.
 - Parent with Maintain Offset (the default, like Maya) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
   helper empty holding the owner's offset from that target (point: Copy Location with offset; else Child Of the
   target with the offset as its own channels). The helpers live in the hidden collection ``.AllsetConstraintHelpers``
@@ -46,7 +52,10 @@ MAYA_TYPE = {'CHILD_OF': "parentConstraint", 'COPY_LOCATION': "pointConstraint",
 TYPES = tuple(MAYA_TYPE)
 DEFAULT_OFFSET = {'CHILD_OF': True}      # default Maintain Offset: parent on, point / orient / scale off
 ROT = " R"                               # suffix of a parent group's Copy Rotation member
-SINGLE = "min(max(w0, 0.0), 1.0)"   # influence of a one-target group's members: its weight
+SINGLE = "1.0 if w0 > 0.0 else 0.0"   # influence of a one-target node: on while its weight is above 0
+# Maya constraint nodes whose one-target weight follows SINGLE (Maya normalises the weights of every type)
+STEP_NODES = ("parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint", "aimConstraint",
+              "normalConstraint", "tangentConstraint")
 _NAME = re.compile(r"^(?P<group>[^:]+):(?P<index>\d+):(?P<label>.*?)(?P<rot> R)?$")
 
 
@@ -235,8 +244,8 @@ def helper_of(con):
 
 def _drive(con, prop, owner, names, k, scale=False):
     """Driver on ``con.<prop>`` from the weight properties ``names`` (target order) — cumulative influence of member k
-    (point / orient / parent), the geometric-mean power w_k / Σw (scale), or the weight itself when the node has one
-    target (``SINGLE``)."""
+    (point / orient / parent), the geometric-mean power w_k / Σw (scale), or on / off by the weight when the node has
+    one target (``SINGLE``)."""
     id_ob, prefix = _id_and_prefix(owner)
     fc = con.driver_add(prop)
     d = fc.driver
@@ -343,7 +352,7 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
             elif i > 0:
                 _drive(c, "influence", owner, names, i)
             if len(names) == 1:
-                _drive(c, "influence", owner, names, 0)       # one target: its weight blends the node in and out
+                _drive(c, "influence", owner, names, 0)       # one target: on while its weight is above 0
             if first is None:
                 first = c
     _state["armed"] = True
@@ -380,6 +389,153 @@ def drive_single(owner, group):
                 and d.variables[0].targets[0].data_path.endswith(source)):
             continue
         _drive(c, "influence", owner, [ws[0][0]], 0)
+        n += 1
+    return n
+
+
+# --- one-target constraints outside a group: the weight as its own value ---------------------------------------------
+
+def weight_path(owner, prop):
+    """Data path of owner ID property ``prop`` on the owner's ID (pose bones: on the armature object)."""
+    _id_ob, prefix = _id_and_prefix(owner)
+    return prefix + f'["{bpy.utils.escape_identifier(prop)}"]'
+
+
+def _influence_driver(con, owner):
+    id_ob, _prefix = _id_and_prefix(owner)
+    ad = id_ob.animation_data
+    if ad is None:
+        return None
+    try:
+        return ad.drivers.find(con.path_from_id("influence"))
+    except (ValueError, AttributeError):
+        return None
+
+
+def single_weight(con, owner=None):
+    """The owner ID property holding the weight of ``con``, a one-target constraint outside a group whose influence
+    follows it (``SINGLE``), or None while the influence is the weight. Found through the influence driver, so a
+    renamed constraint keeps its weight."""
+    owner = owner if owner is not None else owner_of(con)
+    if member(con, owner) is not None:
+        return None
+    fc = _influence_driver(con, owner)
+    d = fc.driver if fc is not None else None
+    if d is None or d.expression != SINGLE or len(d.variables) != 1:
+        return None
+    t = d.variables[0].targets[0]
+    id_ob, prefix = _id_and_prefix(owner)
+    head = prefix + '["'
+    path = t.data_path
+    if t.id != id_ob or not (path.startswith(head) and path.endswith('"]')):
+        return None
+    prop = bpy.utils.unescape_identifier(path[len(head):-2])
+    return prop if prop.startswith(WEIGHT) and prop in owner.keys() else None
+
+
+def single_applies(con, owner=None):
+    """True when ``con``'s Channel Box weight follows Maya's one-target rule (``ensure_single_weight``): a Maya
+    constraint node type (``STEP_NODES``) outside a group whose influence no other driver (Set Driven Key, a
+    user's driver) feeds."""
+    owner = owner if owner is not None else owner_of(con)
+    if member(con, owner) is not None:
+        return False
+    if single_weight(con, owner) is not None:
+        return True
+    from ..ui import channel_box
+    if channel_box.maya_constraint_type(con) not in STEP_NODES:
+        return False
+    return _influence_driver(con, owner) is None
+
+
+def _companions(con, owner):
+    """Constraints that are part of ``con``'s Maya node and follow its weight: an aim's Object up turn."""
+    from . import rig_tools
+    c = owner.constraints.get(con.name + rig_tools.UP_SUFFIX)
+    return [c] if c is not None and rig_tools.is_up_companion(c) else []
+
+
+def _drop_weight(owner, prop):
+    """Remove owner ID property ``prop`` and the curves keyed on it."""
+    from .. import compat
+    id_ob, _prefix = _id_and_prefix(owner)
+    path = weight_path(owner, prop)
+    fcs = compat.id_fcurve_collection(id_ob)
+    if fcs is not None:
+        for fc in [f for f in fcs if f.data_path == path]:
+            fcs.remove(fc)
+    ad = id_ob.animation_data
+    if ad is not None:
+        for fc in [f for f in ad.drivers if f.data_path == path]:
+            ad.drivers.remove(fc)
+    if prop in owner.keys():
+        del owner[prop]
+
+
+def ensure_single_weight(con, owner=None):
+    """Give one-target constraint ``con`` its own weight (an owner ID property, min 0, like Maya) holding its
+    current influence, move the keys of the influence onto it and drive the influence by it (``SINGLE``: on while
+    the weight is above 0, like Maya). Returns the property, or None when the rule does not apply
+    (``single_applies``)."""
+    owner = owner if owner is not None else owner_of(con)
+    prop = single_weight(con, owner)
+    if prop is not None:
+        return prop
+    if not single_applies(con, owner):
+        return None
+    from .. import compat
+    id_ob, _prefix = _id_and_prefix(owner)
+    taken = {p for c in owner.constraints if c != con for p in [single_weight(c, owner)] if p is not None}
+    prop, n = WEIGHT + con.name, 1
+    while prop in taken:               # a renamed constraint still reads the weight named after its old name
+        prop, n = f"{WEIGHT}{con.name}.{n:03d}", n + 1
+    value = max(0.0, float(con.influence))
+    _drop_weight(owner, prop)          # left by a deleted constraint of the same name
+    owner[prop] = value
+    try:
+        owner.id_properties_ui(prop).update(min=0.0, soft_min=0.0)
+    except TypeError:
+        pass
+    fcs = compat.id_fcurve_collection(id_ob)
+    fc = fcs.find(con.path_from_id("influence")) if fcs is not None else None
+    if fc is not None:
+        fc.data_path = weight_path(owner, prop)     # the keys, tangents and mute state stay with the weight
+    for c in [con] + _companions(con, owner):
+        _drive(c, "influence", owner, [prop], 0)
+    _state["armed"] = True
+    id_ob.update_tag()
+    return prop
+
+
+def set_weight(con, value, owner=None):
+    """An option window's Weight on one-target constraint ``con``: its own weight (``ensure_single_weight``; any
+    weight above 0 = fully on the target, like Maya), or its influence where that rule does not apply. Weight 1 on a
+    constraint without its own weight is its influence 1 already. Returns the weight property or None."""
+    owner = owner if owner is not None else owner_of(con)
+    value = max(0.0, float(value))
+    prop = single_weight(con, owner)
+    if prop is None and value != 1.0:
+        prop = ensure_single_weight(con, owner)
+    if prop is None:
+        con.influence = value
+        return None
+    owner[prop] = value
+    owner.id_data.update_tag()
+    return prop
+
+
+def _drop_orphan_weights(owner):
+    """Remove one-target weights no constraint reads any more (its constraint was deleted, which drops the driver).
+    Returns the number removed."""
+    if getattr(owner.id_data, "library", None) is not None:      # linked data is read-only here
+        return 0
+    groups = _groups(owner)
+    read = {p for c in owner.constraints for p in [single_weight(c, owner)] if p is not None}
+    n = 0
+    for prop in [k for k in owner.keys() if k.startswith(WEIGHT)]:
+        if prop in read or any(prop.startswith(f"{WEIGHT}{g}:") for g in groups):
+            continue
+        _drop_weight(owner, prop)
         n += 1
     return n
 
@@ -430,18 +586,24 @@ def remove_group(owner, group):
 
 # --- cleanup (a deleted owner / cleared constraints leave helpers, drivers and weights behind) -----------------------
 
+def _is_owner(node):
+    """A node holding a group or a one-target weight (``ensure_single_weight``)."""
+    return any(k == GROUPS or k.startswith(WEIGHT) for k in node.keys())
+
+
 def _owners():
     for ob in bpy.data.objects:
-        if GROUPS in ob.keys():
+        if _is_owner(ob):
             yield ob
         if ob.type == 'ARMATURE' and ob.pose is not None:
             for pb in ob.pose.bones:
-                if GROUPS in pb.keys():
+                if _is_owner(pb):
                     yield pb
 
 
 def cleanup():
-    """Drop helpers whose constraint is gone and groups with no constraint left. Returns the number of removals."""
+    """Drop helpers whose constraint is gone, groups with no constraint left and one-target weights whose constraint
+    is gone. Returns the number of removals."""
     n = 0
     for h in helpers():
         owner = h.get(H_OWNER)
@@ -471,6 +633,7 @@ def cleanup():
                         ad.drivers.remove(fc)
                 remove_group(owner, group)
                 n += 1
+        n += _drop_orphan_weights(owner)
     return n
 
 

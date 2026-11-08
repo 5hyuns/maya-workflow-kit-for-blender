@@ -74,6 +74,7 @@ CUSTOM_PREFIX = "cp:"
 HISTORY_PREFIX = "ph:"   # an attribute of the creation node (polyCube1 ...): "ph:<attribute>"
 INPUT_PREFIX = "in:"     # an INPUTS row as a channel: "in:<modifier type>:<nth of that type>:<property>"
 CON_PREFIX = "cw:"       # a constraint's target weight as a channel: "cw:<constraint type>:<nth of that type>:influence"
+                         # (the influence, or the constraint's own weight once it has one: constraint_weight)
 SHAPE_PREFIX = "sh:"     # a SHAPES row as a channel: light Intensity / Color, camera Focal Length ...
 BLEND_PREFIX = "bw:"     # a blendShape target weight in INPUTS: "bw:<target name>" (the shape key's value)
 
@@ -319,6 +320,43 @@ def input_paths(owner, key):
     return [(name, -1)] if rna is not None and rna.is_animatable else []
 
 
+def constraint_weight(ob, key):
+    """The ID property of ``ob`` holding the target weight behind constraint channel ``key`` when the constraint has
+    its own weight (a one-target Maya constraint: operators/constrain_multi.ensure_single_weight), else None (the
+    constraint's influence is the weight)."""
+    if not is_constraint_key(key):
+        return None
+    con = input_owner(ob, key)
+    if con is None:
+        return None
+    from ..operators import constrain_multi
+    return constrain_multi.single_weight(con, ob)
+
+
+def _own_weight(ob, key):
+    """``constraint_weight``, after giving the constraint its own weight when Maya's one-target rule applies: a value
+    written or keyed on the weight (any weight above 0 = fully on the target, 0 = the node's own channels)."""
+    if not is_constraint_key(key):
+        return None
+    con = input_owner(ob, key)
+    if con is None:
+        return None
+    from ..operators import constrain_multi
+    return constrain_multi.ensure_single_weight(con, ob)
+
+
+def input_curve_paths(ob, key):
+    """[(data path on the node's ID, index)] of the animation behind INPUTS channel ``key`` of ``ob``."""
+    owner = input_owner(ob, key)
+    if owner is None:
+        return []
+    prop = constraint_weight(ob, key)
+    if prop is not None:
+        from ..operators import constrain_multi
+        return [(constrain_multi.weight_path(ob, prop), -1)]
+    return [(owner.path_from_id(p), i) for p, i in input_paths(owner, key)]
+
+
 def is_blend_key(key):
     return key.startswith(BLEND_PREFIX)
 
@@ -473,6 +511,9 @@ def get_value(ob, key):
     if kind == "SHAPE":
         return _row_read(shape_owner(ob, key), "SHAPE", path)
     if kind == "INPUT":
+        prop = constraint_weight(ob, key)
+        if prop is not None:
+            return ob[prop]
         return _row_read(input_owner(ob, key), "INPUT", path)
     if kind == "HISTORY":
         return _history_get(ob, key)
@@ -503,6 +544,11 @@ def set_value(ob, key, value):
         _row_write(shape_owner(ob, key), "SHAPE", path, value)
         return
     if kind == "INPUT":
+        prop = _own_weight(ob, key)
+        if prop is not None:
+            ob[prop] = max(0.0, float(value))      # a Maya weight is 0 or more
+            ob.id_data.update_tag()     # an ID property write tags nothing: the influence driver would not update
+            return
         owner = input_owner(ob, key)
         rna = owner.bl_rna.properties.get(path)
         if rna is not None and rna.type == 'INT' and not isinstance(value, bool):
@@ -544,7 +590,12 @@ def set_value(ob, key, value):
 
 
 def keyframe(ob, key, keytype='KEYFRAME'):
-    path, idx, kind = channel_path(key)
+    prop = _own_weight(ob, key)
+    if prop is not None:
+        # a one-target constraint's own weight: an ID property of the node, keyed like a custom attribute
+        path, idx, kind = f'["{bpy.utils.escape_identifier(prop)}"]', -1, "CUSTOM"
+    else:
+        path, idx, kind = channel_path(key)
     if kind == "HISTORY":
         return False
     if kind == "VIS" and is_bone(ob):
@@ -624,13 +675,13 @@ def shape_fcurves(ob, key):
 
 
 def input_fcurves(ob, key):
-    owner = input_owner(ob, key)
-    fcs = _fcurves(ob) if owner is not None else None
+    paths = input_curve_paths(ob, key)
+    fcs = _fcurves(ob) if paths else None
     if fcs is None:
         return []
     out = []
-    for p, i in input_paths(owner, key):
-        fc = fcs.find(owner.path_from_id(p), index=max(i, 0))
+    for p, i in paths:
+        fc = fcs.find(p, index=max(i, 0))
         if fc is not None:
             out.append(fc)
     return out
@@ -703,12 +754,11 @@ def driver(ob, key):
         ad = kb.id_data.animation_data if kb is not None else None
         return ad.drivers.find(blend_path(kb.name)) if ad is not None else None
     if is_input_key(key):
-        owner = input_owner(ob, key)
-        ad = ob.id_data.animation_data if owner is not None else None
+        paths = input_curve_paths(ob, key)
+        ad = ob.id_data.animation_data if paths else None
         if ad is None:
             return None
-        return next((d for p, i in input_paths(owner, key)
-                     for d in [ad.drivers.find(owner.path_from_id(p), index=max(i, 0))] if d is not None), None)
+        return next((d for p, i in paths for d in [ad.drivers.find(p, index=max(i, 0))] if d is not None), None)
     ad = ob.id_data.animation_data
     if ad is None:
         return None
@@ -1340,7 +1390,15 @@ def _row_get(self):
     if owner is None:
         return ""
     entry = _row_kind(owner, self.kind, self.name)
-    return cb_entry.format_value(_row_read(owner, self.kind, self.name), entry, bpy.context.scene)
+    return cb_entry.format_value(_row_value(ob, owner, self), entry, bpy.context.scene)
+
+
+def _row_value(ob, owner, row):
+    """A row's value on ``ob``: a constraint's target weight through its channel (the constraint's own weight once
+    it has one, else its influence), any other row's property."""
+    if row.kind == "CONSTRAINT":
+        return get_value(ob, row_key(row))
+    return _row_read(owner, row.kind, row.name)
 
 
 def apply_row_entry(row, text, context=None):
@@ -1356,12 +1414,15 @@ def apply_row_entry(row, text, context=None):
             continue
         entry = _row_kind(owner, row.kind, row.name)
         try:
-            value = cb_entry.parse_entry(text, _row_read(owner, row.kind, row.name), entry,
-                                         context.scene)
+            value = cb_entry.parse_entry(text, _row_value(ob, owner, row), entry, context.scene)
         except (ValueError, TypeError, SyntaxError):
             return count
         try:
-            _row_write(owner, row.kind, row.name, value)
+            if row.kind == "CONSTRAINT":
+                # the target weight: Maya's one-target rule gives the constraint its own weight (set_value)
+                set_value(ob, row_key(row), value)
+            else:
+                _row_write(owner, row.kind, row.name, value)
         except (TypeError, ValueError, AttributeError):
             continue
         count += 1
@@ -1537,10 +1598,14 @@ def slider_targets(context):
 
 def drag_limit(ob, key, value):
     """A dragged INPUTS value stays in the property's soft range, like Blender's own field drag (a Subdivision's
-    Levels stops at 6; typing can go to the hard limit)."""
+    Levels stops at 6; typing can go to the hard limit); a constraint's target weight stays at 0 or more."""
     if not is_input_key(key):
         return value
     owner = input_owner(ob, key)
+    if is_constraint_key(key) and owner is not None:
+        from ..operators import constrain_multi
+        if constrain_multi.single_applies(owner, ob):
+            return max(0.0, value)      # a Maya target weight: 0 or more (any weight above 0 = on the target)
     rna = owner.bl_rna.properties.get(input_parts(key)[2]) if owner is not None else None
     if rna is None or rna.type not in {'INT', 'FLOAT'}:
         return value

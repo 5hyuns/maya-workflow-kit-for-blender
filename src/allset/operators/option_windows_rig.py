@@ -129,7 +129,7 @@ def _run_blend_shape(context, v):
 
 
 def _run_aim(context, v):
-    from . import rig_tools
+    from . import constrain_multi, rig_tools
     world_up = v["world_up_type"]
     bone = context.mode == 'POSE'
     up_object = None
@@ -165,9 +165,10 @@ def _run_aim(context, v):
             con.subtarget = sub
         con = rig_tools.aim(cons, con, v["aim_vector"], v["up_vector"], world_up, bone=bone, up_object=up_object,
                             world_up_vector=v["world_up_vector"])
-    con.influence = v["weight"]
+    # Maya: any weight above 0 = fully on the target (the Object up turn follows the same weight)
+    prop = constrain_multi.set_weight(con, v["weight"], owner)
     companion = cons.get(con.name + rig_tools.UP_SUFFIX)
-    if companion is not None:
+    if companion is not None and prop is None:
         companion.influence = v["weight"]
     return res
 

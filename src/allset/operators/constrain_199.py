@@ -490,7 +490,8 @@ def add_surface_constraint(context, kind, owner, surface, aim_vector=rig_tools.A
     con.target = helper
     con = rig_tools.aim(cons, con, aim_vector, up_vector, world_up)
     con.name = f"{LABEL[kind]} {surface.name}"
-    con.influence = weight
+    from . import constrain_multi
+    constrain_multi.set_weight(con, weight, owner)      # Maya: any weight above 0 = fully on the surface's normal
     context.view_layer.update()
     update(context.evaluated_depsgraph_get())
     context.view_layer.update()

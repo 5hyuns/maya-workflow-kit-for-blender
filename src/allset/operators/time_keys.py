@@ -335,10 +335,8 @@ def _channel_filter(context, node):
     for k in cb.selected_channels(context):
         if cb.is_shape_key(k) or cb.is_blend_key(k):    # curves on the object data / Key datablock, not the node
             continue
-        if cb.is_input_key(k):      # an INPUTS channel: the modifier's property, on the object
-            owner = cb.input_owner(node, k)
-            if owner is not None:
-                allowed.update((owner.path_from_id(p), max(i, 0)) for p, i in cb.input_paths(owner, k))
+        if cb.is_input_key(k):      # an INPUTS channel: the modifier's property / the constraint's weight, on the node
+            allowed.update((p, max(i, 0)) for p, i in cb.input_curve_paths(node, k))
             continue
         try:
             path, idx, _kind = cb.channel_path(k)

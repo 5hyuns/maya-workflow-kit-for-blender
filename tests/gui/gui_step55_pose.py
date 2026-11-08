@@ -1,8 +1,8 @@
 """In a real UI, in a Maya user's hand order: a skeleton (kit Create Joints + two joints) ->
 Ctrl+Tab pose mode -> click joint2 in the view -> the Channel Box shows joint2 with Translate / Rotate /
 Scale (XYZ) -> type "+=10" in Rotate Z -> S keys it -> Lock Selected on Rotate -> rotating in the view
-does nothing; a Copy Location constraint to locator1 -> CB INPUTS weight row locator1W0 -> 0.5 ->
-influence 0.5, Translate fields blue."""
+does nothing; a Copy Location constraint to locator1 -> CB INPUTS weight row locator1W0 -> 0.5 (fully on the one
+target, like Maya), Translate fields blue."""
 
 import math
 import os
@@ -338,8 +338,12 @@ def s_w0_typed():
 
 @step
 def s_w0_applied():
-    con = arm().pose.bones["joint2"].constraints[0]
-    check(f"locator1W0 = 0.5 -> influence {con.influence:.3f}", abs(con.influence - 0.5) < 1e-6)
+    pb = arm().pose.bones["joint2"]
+    con = pb.constraints[0]
+    rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
+    w = cb().get_value(pb, cb().row_key(rows[0])) if rows else None
+    check(f"locator1W0 = 0.5 ({w}) -> fully on the one target, influence {con.influence:.3f}",
+          w is not None and abs(w - 0.5) < 1e-6 and abs(con.influence - 1.0) < 1e-6)
     check("Translate channels are constrained (drawn blue)",
           cb().constrained_keys(arm().pose.bones["joint2"]) == {"tx", "ty", "tz"})
     redraw()

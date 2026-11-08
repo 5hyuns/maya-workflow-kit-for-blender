@@ -25,7 +25,8 @@ Maya 2026 behaviour:
    posed value (posed - the other inputs' current values; Maya keys one blendWeighted input).
 3. Driven nodes besides objects / joints (Maya: any keyable attribute): a mesh's blendShape (its shape Key ID, one
    attribute per target = key block ``value``) and constraint nodes (Maya ``<target>W0`` = ``influence``, or the
-   owner's ``allset_w_<constraint>`` weight property when a multi-target constraint group keeps one).
+   owner's ``allset_w_<constraint>`` weight property when a multi-target constraint group or a one-target
+   constraint with its own weight, constrain_multi.ensure_single_weight, keeps one).
    Their values are not Channel Box channels, so posing them is held through msgbus (``_watch``), not WRITE_HOOKS.
 
 #186: Blender doesn't order a driver that writes an ID property against another driver of the same ID
@@ -205,7 +206,10 @@ def chan(node, key):
         if key != WEIGHT or owner is None:
             return None
         prop = WEIGHT_PROP + node.name
-        if prop in owner.keys():
+        if prop not in owner.keys():
+            from . import constrain_multi
+            prop = constrain_multi.single_weight(node, owner)     # a renamed one-target constraint's weight
+        if prop is not None:
             attr = f'["{_quote(prop)}"]'
             return Chan(owner.id_data, _rel_path(owner, attr), -1, owner, attr, owner)
         return Chan(owner.id_data, _rel_path(owner, f'constraints["{_quote(node.name)}"].influence'), -1, node,

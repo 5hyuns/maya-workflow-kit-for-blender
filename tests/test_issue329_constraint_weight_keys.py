@@ -1,8 +1,9 @@
 """Issue #329: a constraint's target weight (pCube1W0 under the constraint node in the Channel Box INPUTS) is a
 channel like Translate X — it can be selected, keyed with Channels > Key Selected (and Breakdown / Delete Selected),
-shows its keyed / animated state, takes typed values and a value drag within 0 .. 1, on every selected node with the
-same constraint, like Maya. Its animation is the constraint's influence curve on the object (or the armature for a
-joint), where the Graph Editor shows it."""
+shows its keyed / animated state, takes typed values and a value drag from 0 up, on every selected node with the
+same constraint, like Maya. The weight is a value of its own on the object (or the joint) whose curve sits on the
+object (or the armature for a joint), where the Graph Editor shows it; the constraint's influence follows it (any
+weight above 0 = on the target, like Maya)."""
 
 from importlib import import_module
 
@@ -12,6 +13,7 @@ import kit
 
 cb = import_module(kit.MODULE + ".ui.channel_box")
 compat = import_module(kit.MODULE + ".compat")
+multi = import_module(kit.MODULE + ".operators.constrain_multi")
 
 
 def _fresh():
@@ -79,19 +81,20 @@ def test_key_selected_keys_the_weight_on_every_selected_object():
     key = cb.row_key(_row())
     cb.set_selected_channels([key])
     assert cb.channel_state(a, key) is None
-    a.constraints[0].influence = 0.25
-    b.constraints[0].influence = 0.75
+    cb.set_value(a, key, 0.25)
+    cb.set_value(b, key, 0.75)
     assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
     for ob, v in ((a, 0.25), (b, 0.75)):
         fc = cb.fcurve(ob, key)
-        assert fc is not None and fc.data_path == f'constraints["{ob.constraints[0].name}"].influence', fc
+        prop = cb.constraint_weight(ob, key)
+        assert prop is not None and fc is not None and fc.data_path == multi.weight_path(ob, prop), fc
         assert fc in list(compat.id_fcurves(ob)), "on the constrained object"
         assert len(fc.keyframe_points) == 1 and abs(fc.keyframe_points[0].co.y - v) < 1e-6
         assert cb.channel_state(ob, key) == 'KEYED'
         assert cb.fcurve(ob, "tx") is None, "Translate stays unkeyed"
     bpy.context.scene.frame_set(10)
     assert cb.channel_state(a, key) == 'ANIMATED'
-    a.constraints[0].influence = 1.0
+    cb.set_value(a, key, 1.0)
     assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
     assert len(cb.fcurve(a, key).keyframe_points) == 2 and cb.channel_state(a, key) == 'KEYED'
     bpy.context.scene.frame_set(20)
@@ -128,7 +131,9 @@ def test_joint_constraint_weight_keys_on_the_armature():
     cb.set_selected_channels([key])
     assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
     fc = cb.fcurve(pb, key)
-    assert fc is not None and fc.data_path == con.path_from_id("influence"), fc
+    prop = cb.constraint_weight(pb, key)
+    assert prop is not None and prop in pb.keys(), "the joint's own weight"
+    assert fc is not None and fc.data_path == pb.path_from_id(f'["{prop}"]'), fc
     assert fc in list(compat.id_fcurves(arm)), "the armature object's animation"
     assert abs(fc.keyframe_points[0].co.y - 0.5) < 1e-6 and cb.channel_state(pb, key) == 'KEYED'
     assert cb.driver(pb, key) is None
@@ -143,8 +148,16 @@ def test_typed_and_dragged_weights_stay_in_range_on_every_selected_object():
     row = _row()
     key = cb.row_key(row)
     row.text = "0.3"
-    assert abs(a.constraints[0].influence - 0.3) < 1e-6 and abs(b.constraints[0].influence - 0.3) < 1e-6
-    assert abs(cb.drag_limit(a, key, 1.7) - 1.0) < 1e-6 and abs(cb.drag_limit(a, key, -0.2)) < 1e-6
+    assert abs(cb.get_value(a, key) - 0.3) < 1e-6 and abs(cb.get_value(b, key) - 0.3) < 1e-6
+    bpy.context.view_layer.update()
+    for ob in (a, b):       # one target: any weight above 0 keeps the object fully on it (Maya)
+        assert abs(ob.constraints[0].influence - 1.0) < 1e-6, ob.constraints[0].influence
+    # a Maya weight goes from 0 up (2 = still fully on the one target)
+    assert abs(cb.drag_limit(a, key, 1.7) - 1.7) < 1e-6 and abs(cb.drag_limit(a, key, -0.2)) < 1e-6
     assert cb.entry_kind(a, key) in ("FLOAT", "NONE"), cb.entry_kind(a, key)
     cb.set_value(b, key, 0.9)
-    assert abs(b.constraints[0].influence - 0.9) < 1e-6 and abs(a.constraints[0].influence - 0.3) < 1e-6
+    assert abs(cb.get_value(b, key) - 0.9) < 1e-6 and abs(cb.get_value(a, key) - 0.3) < 1e-6
+    row.text = "0"
+    bpy.context.view_layer.update()
+    for ob in (a, b):       # 0 = the object's own channels
+        assert cb.get_value(ob, key) == 0.0 and ob.constraints[0].influence < 1e-6
