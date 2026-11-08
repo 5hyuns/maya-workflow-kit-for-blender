@@ -368,7 +368,8 @@ class _SubdivideProperties:
     smoothness: FloatProperty(name='Smoothness', default=0, min=0, max=1)
 
 
-def create(context, spec, params, skip=()):
+def create(context, spec, params, skip=(), made=None):
+    """Make ``spec``'s node on every object in edit mode (not in ``skip``); ``made`` collects their names."""
     done = 0
     for ob in context.objects_in_mode_unique_data:
         if ob.type != 'MESH' or ob.name in skip:
@@ -388,6 +389,8 @@ def create(context, spec, params, skip=()):
         if record is not None and spec is BRIDGE:
             from . import display
             display.ensure_maya_normals(ob)
+        if record is not None and made is not None:
+            made.add(ob.name)
         done += record is not None
     return {'FINISHED'} if done else {'CANCELLED'}
 
@@ -425,7 +428,18 @@ class ALLSET_OT_bridge(bpy.types.Operator):
             params['bridge_offset'] = self.twist
         params['use_faces'] = bool(context.scene.tool_settings.mesh_select_mode[2])
         filled = fill_bridge.fill_single_loops(context)
-        bridged = 'FINISHED' in create(context, BRIDGE, params, skip=filled)
+        candidates = [ob for ob in context.objects_in_mode_unique_data
+                      if ob.type == 'MESH' and ob.name not in filled
+                      and any(e.select for e in bmesh.from_edit_mesh(ob.data).edges)]
+        made = set()
+        create(context, BRIDGE, params, skip=filled, made=made)
+        # a selection the node does not take (borders already joined by faces, more than two loops, two loops
+        # around the same centre ...): Blender's bridge, as before the node existed
+        rest = [ob for ob in candidates if ob.name not in made]
+        bridged = bool(made)
+        if rest:
+            others = [ob for ob in context.objects_in_mode_unique_data if ob.name in made or ob.name in filled]
+            bridged |= fill_bridge.native_bridge(rest, others, params['divisions'], params['bridge_offset'])
         if not filled and not bridged:
             self.report({'WARNING'}, fill_bridge.BRIDGE_WARNING)
             return {'CANCELLED'}

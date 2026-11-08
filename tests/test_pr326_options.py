@@ -95,3 +95,31 @@ def test_without_persistent_history_a_bridge_follows_its_path_curve():
     curve.refresh()
     assert ex.mesh_coords_hash(ob.data) != before
     assert ex.object_record(ob) is record and not record.live
+
+
+def test_bridge_keeps_blenders_bridge_where_the_node_does_not_take_the_selection():
+    # two opposite faces of a cube: their borders are already joined by the side faces, so no polyBridgeEdge node;
+    # Bridge still bridges them as before (the faces go, the cube opens)
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.mesh.primitive_cube_add()
+    ob = bpy.context.object
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type='FACE')
+    bm = bmesh.from_edit_mesh(ob.data)
+    ex.deselect_all(bm)
+    bm.faces.ensure_lookup_table()
+    a = bm.faces[0]
+    b = next(f for f in bm.faces if abs(f.normal.dot(a.normal) + 1) < 1e-6)
+    a.select_set(True)
+    b.select_set(True)
+    bm.select_flush_mode()
+    bmesh.update_edit_mesh(ob.data)
+    before = (len(bm.verts), len(bm.faces))
+    assert bpy.ops.allset.bridge() == {'FINISHED'}
+    bm = bmesh.from_edit_mesh(ob.data)
+    assert (len(bm.verts), len(bm.faces)) != before
+    rec = ex.current(ob)
+    assert rec is None or rec.spec.kind != 'BRIDGE'
+    bpy.ops.object.mode_set(mode='OBJECT')

@@ -83,6 +83,37 @@ class ALLSET_OT_fill_hole(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _counts(objects):
+    return [(len(bm.verts), len(bm.edges), len(bm.faces))
+            for bm in (bmesh.from_edit_mesh(ob.data) for ob in objects)]
+
+
+def native_bridge(objects, others, divisions, offset):
+    """Blender's Bridge Edge Loops on ``objects`` only (a selection the polyBridgeEdge node does not take, such as
+    two faces whose borders are already joined, or more than two loops); the selection of ``others`` is set aside
+    meanwhile. True when it changed a mesh."""
+    kept = {}
+    for ob in others:
+        bm = bmesh.from_edit_mesh(ob.data)
+        kept[ob] = [[e.index for e in seq if e.select] for seq in (bm.verts, bm.edges, bm.faces)]
+        for seq in (bm.faces, bm.edges, bm.verts):
+            for e in seq:
+                e.select = False
+        bmesh.update_edit_mesh(ob.data)
+    before = _counts(objects)
+    try:
+        bpy.ops.mesh.bridge_edge_loops(number_cuts=divisions, twist_offset=offset)
+    finally:
+        for ob, picked in kept.items():
+            bm = bmesh.from_edit_mesh(ob.data)
+            for seq, indices in zip((bm.verts, bm.edges, bm.faces), picked):
+                seq.ensure_lookup_table()
+                for i in indices:
+                    seq[i].select = True
+            bmesh.update_edit_mesh(ob.data)
+    return _counts(objects) != before
+
+
 def fill_single_loops(context):
     """Edit Mesh > Bridge on one closed loop of border edges: that loop is filled with a single face, without
     divisions, like Maya. Returns the names of the objects filled that way (the others are bridged)."""
