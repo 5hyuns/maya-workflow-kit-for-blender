@@ -139,7 +139,7 @@ class ALLSET_OT_graph_bookmark(bpy.types.Operator):
     @classmethod
     @i18n.translated
     def description(cls, context, props):
-        return cls.bl_rna.properties["action"].enum_items[props.action].description
+        return props.bl_rna.properties["action"].enum_items[props.action].description
 
     @classmethod
     def poll(cls, context):

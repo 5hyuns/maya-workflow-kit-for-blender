@@ -94,3 +94,15 @@ def test_menu_lists_the_bookmarks():
     gb.ALLSET_MT_graph_bookmarks.draw(types.SimpleNamespace(layout=rec), bpy.context)
     assert rec.texts() == ["Bookmark Current Objects", "Bookmark Selected Curves", "Remove All Bookmarks", "Bookmark"]
     _clear()
+
+
+def test_tooltip_names_each_action():
+    """The menu items' tooltips come from the action's own text (no error while the tooltip is built)."""
+    props = bpy.context.window_manager.operator_properties_last("allset.graph_bookmark")
+    texts = {}
+    for action in ("OBJECTS", "CURVES", "LOAD", "REMOVE_ALL"):
+        props.action = action
+        texts[action] = gb.ALLSET_OT_graph_bookmark.description(bpy.context, props)
+    assert texts["OBJECTS"].startswith("Keep the objects"), texts
+    assert texts["REMOVE_ALL"].startswith("Delete every"), texts
+    assert len(set(texts.values())) == 4, texts
