@@ -1,4 +1,5 @@
-"""#215 #212: Ctrl-first drags on the Move manipulator, Shift+W / E / R in every editor, Attribute Editor key colours.
+"""#215 #212: Ctrl-first drags on the Move manipulator, Shift+W / E / R and S in every editor, Attribute Editor key
+colours.
 GUI: tests/gui/gui_step294_keys.py."""
 
 import inspect
@@ -41,6 +42,16 @@ def test_212_shift_w_e_r_global():
              if i.idname == "allset.set_key" and i.active and i.shift and not i.ctrl and not i.alt
              and i.properties.global_key}
     assert items == {("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")}, items
+    # S too (Maya Set Key over the Channel Box, the Outliner ...): every keyable channel
+    plain = [(i.properties.channels, i.value) for i in kc.keymaps["Screen"].keymap_items
+             if i.idname == "allset.set_key" and i.active and i.type == 'S' and not i.shift and not i.ctrl
+             and not i.alt and i.properties.global_key]
+    assert plain == [("ALL", 'PRESS')], plain
+    # the Maya dock (a Properties editor) has no S of its own before "Screen"
+    hits = [i.idname for km in ("Property Editor", "View2D Buttons List") if km in kc.keymaps
+            for i in kc.keymaps[km].keymap_items if i.active and i.type == 'S' and i.value == 'PRESS'
+            and not i.shift and not i.ctrl and not i.alt and not i.oskey]
+    assert not hits, hits
     # Blender's channel protect toggle no longer takes Shift+W in the Graph Editor / Dope Sheet channel list
     for i in kc.keymaps["Animation Channels"].keymap_items:
         if i.active and i.type == 'W' and i.shift and not i.ctrl and not i.alt:
@@ -57,7 +68,8 @@ def test_212_shift_w_e_r_global():
 
 def _invoke(context, channels):
     calls = []
-    me = types.SimpleNamespace(global_key=True, execute=lambda c: calls.append(c) or {'FINISHED'})
+    me = types.SimpleNamespace(global_key=True, channels=channels,
+                               execute=lambda c: calls.append(c) or {'FINISHED'})
     return time_keys.ALLSET_OT_set_key.invoke(me, context, None), calls
 
 
@@ -65,14 +77,18 @@ def test_212_global_key_only_in_object_and_pose_mode():
     _clear()
     bpy.ops.mesh.primitive_cube_add()
     ob = bpy.context.active_object
-    assert time_keys.global_key_applies(bpy.context)
+    assert time_keys.global_key_applies(bpy.context, "TRANSLATE")
     res, calls = _invoke(bpy.context, "TRANSLATE")
     assert res == {'FINISHED'} and len(calls) == 1
     bpy.ops.object.mode_set(mode='EDIT')
     try:
-        assert not time_keys.global_key_applies(bpy.context)
+        assert not time_keys.global_key_applies(bpy.context, "TRANSLATE")
         res, calls = _invoke(bpy.context, "TRANSLATE")
         assert res == {'PASS_THROUGH'} and not calls
+        # S from any editor keys the selected points in component mode, like S over the viewport
+        assert time_keys.global_key_applies(bpy.context, "ALL")
+        res, calls = _invoke(bpy.context, "ALL")
+        assert res == {'FINISHED'} and len(calls) == 1
     finally:
         bpy.ops.object.mode_set(mode='OBJECT')
     assert not kit.fcurves(ob)

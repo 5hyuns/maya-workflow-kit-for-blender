@@ -24,6 +24,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   locator had no effect before, keyed or not; scenes saved with such a joint get the new rule when they open. A
   one-target weight keyed by an earlier version moves its keys to the new weight the next time you type or key it in
   the Channel Box (#329).
+- S works with the mouse over the Channel Box too (right after typing a weight, say), and over the Attribute Editor,
+  the Outliner and other panels, like Maya: it keys what S over the viewport keys, the selected channels
+  and the open constraint weights included. Editors with an S of their own (Graph Editor, Dope Sheet, Node and UV
+  editors) and typing in a field keep it (#329).
 - Modify > Match Transformations with rig controls: the last picked node is the source and every node picked before
   it receives its transform, whether it is an object or a bone. A control (an IK hand, say) picked first and a
   locator picked last now puts the control on the locator; before, the whole rig object moved. Match Pivots takes

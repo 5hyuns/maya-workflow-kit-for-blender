@@ -728,10 +728,14 @@ def _redraw(context):
         area.tag_redraw()
 
 
-def global_key_applies(context):
+def global_key_applies(context, channels="ALL"):
     """Shift+W / E / R from any editor key the object / pose selection; edit, paint and sculpt modes keep their
-    own keys for them."""
-    return context.mode in {'OBJECT', 'POSE'}
+    own keys for them. S from any editor also keys the selected points in component mode, like S over the
+    viewport."""
+    if context.mode in {'OBJECT', 'POSE'}:
+        return True
+    from . import point_keys
+    return channels == 'ALL' and point_keys.applies(context)
 
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
@@ -748,7 +752,9 @@ class ALLSET_OT_set_key(bpy.types.Operator):
                                                    ("ROTATE", "Rotate", "Rotate X / Y / Z (Maya Shift+E)"),
                                                    ("SCALE", "Scale", "Scale X / Y / Z (Maya Shift+R)")),
                            default="ALL", options={'SKIP_SAVE'})   # not "": Blender reads it as a separator (QA B)
-    global_key: BoolProperty(name="Global Key", description="Run from a global hotkey: only in object / pose mode",
+    global_key: BoolProperty(name="Global Key",
+                             description="Run from a global hotkey: only in object / pose mode (S also in component "
+                                         "mode)",
                              options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
@@ -756,7 +762,7 @@ class ALLSET_OT_set_key(bpy.types.Operator):
         return context.scene.keying_sets.active is not None or _cb().lead(context) is not None
 
     def invoke(self, context, _event):
-        if self.global_key and not global_key_applies(context):
+        if self.global_key and not global_key_applies(context, self.channels):
             return {'PASS_THROUGH'}
         return self.execute(context)
 

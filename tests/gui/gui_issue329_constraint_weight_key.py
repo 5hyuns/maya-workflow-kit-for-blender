@@ -1,8 +1,8 @@
 """Issue #329 in a real UI: pCube1 parent-constrains pCube2, the constraint node expanded in the Channel Box INPUTS ->
 RMB on the target weight's name (pCube1W0) selects that channel and opens the Channels menu; Key Selected (K) keys
 the weight on pCube2, and the row then shows the keyed state. Then the follow-up report: type 0 in the weight and
-press S over the viewport, go to frame 10 on the Time Slider, type 1 and press S again, and
-scrub the Time Slider — the weight follows its keys and pCube2 follows Maya's one-target rule: its
+press S over the viewport, go to frame 10 on the Time Slider, type 1 and press S with the mouse still over the
+Channel Box, and scrub the Time Slider — the weight follows its keys and pCube2 follows Maya's one-target rule: its
 own place at weight 0 (frame 1), fully on pCube1 for any weight above 0 (frame 2 on). Screenshots with
 ALLSET_GUI_SHOTS (or --shots)."""
 
@@ -309,7 +309,7 @@ def s_at10():
     redraw()
 
 
-type_weight("1", 10, "view")
+type_weight("1", 10, "cb")
 
 SCRUB = (1, 2, 5, 10, 3, 1)
 

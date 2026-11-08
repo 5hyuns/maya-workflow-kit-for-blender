@@ -7160,7 +7160,7 @@
    "Global Key": "Global Key",
    "Min/Max": "Min/Max",
    "Rotate": "Rotate",
-   "Run from a global hotkey: only in object / pose mode": "Run from a global hotkey: only in object / pose mode",
+   "Run from a global hotkey: only in object / pose mode (S also in component mode)": "Run from a global hotkey: only in object / pose mode (S also in component mode)",
    "Scale": "Scale",
    "Selected": "Selected",
    "Set Key": "Set Key",

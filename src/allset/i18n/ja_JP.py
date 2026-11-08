@@ -3539,7 +3539,7 @@ STRINGS = {
     'Rows of faces across the bridge (a single filled loop takes none)': 'ブリッジを横切るフェースの列数 (1 つのループを埋めるときは使いません)',
     'Run Command': 'コマンドを実行',
     'Run Render Diagnostics': 'レンダー診断を実行',
-    'Run from a global hotkey: only in object / pose mode': 'グローバルホットキーから実行: オブジェクト / ポーズモードのみ',
+    'Run from a global hotkey: only in object / pose mode (S also in component mode)': 'グローバルホットキーから実行: オブジェクト / ポーズモードのみ (S はコンポーネントモードでも)',
     'Run in 3D View': '3D ビューで実行',
     'Run in This View': 'このビューで実行',
     'Run with these settings and keep the window open (Maya Apply)': 'この設定で実行し、ウィンドウは開いたまま (Maya 適用)',

@@ -1586,6 +1586,9 @@ def patch_weight_paint_exit(kd):
 # Attribute Editor, Time Slider): one item each in "Screen" ({"global_key": True}: passes through outside object /
 # pose mode, so edit modes keep their own keys). IC's Animation Channels Shift+W (protect toggle) is removed; every
 # other same-event item runs first on purpose (Object Mode / Pose kit items, edit-mode, sculpt and file keys).
+# Maya's S (Set Key) too: over the Channel Box right after a typed value, the Outliner, the shelf ... it keys what S
+# over the viewport keys (also in component mode: the selected points). The editors' own S items run first (the kit's
+# 3D View / Graph Editor / Dope Sheet S, Node / Image / UV Editor scale, text typing), so they keep their meaning.
 
 def patch_global_set_key(kd):
     kd.remove("Animation Channels", "anim.channels_setting_toggle", type="W", shift=True)
@@ -1593,6 +1596,12 @@ def patch_global_set_key(kd):
         under = tuple(n for n in kd.keymap_names() if n != "Screen" and kd.find(n, type=key, shift=True))
         _add(kd, "Screen", "allset.set_key", make_event(key, shift=True), {"channels": channels, "global_key": True},
              shadows=under)
+    ev = make_event("S")
+    under = tuple(n for n in kd.keymap_names() if n != "Screen" and kd.find(n, type="S"))
+    for i, (km, idname, e, props, shadows) in enumerate(ADDED):
+        if km != "Screen" and patch.event_key(e) == patch.event_key(ev) and "Screen" not in shadows:
+            ADDED[i] = (km, idname, e, props, shadows + ("Screen",))
+    _add(kd, "Screen", "allset.set_key", ev, {"global_key": True}, shadows=under)
 
 
 # --- Alt+LMB tumble under Emulate 3 Button Mouse (#242) ------------------------------------------------------

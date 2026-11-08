@@ -3539,7 +3539,7 @@ STRINGS = {
     'Rows of faces across the bridge (a single filled loop takes none)': '桥接横向的面排数 (填充单个环时不使用)',
     'Run Command': '运行命令',
     'Run Render Diagnostics': '运行渲染诊断',
-    'Run from a global hotkey: only in object / pose mode': '从全局热键运行：仅限对象 / 姿态模式',
+    'Run from a global hotkey: only in object / pose mode (S also in component mode)': '从全局热键运行：仅限对象 / 姿态模式（S 在组件模式下也可）',
     'Run in 3D View': '在 3D 视图中运行',
     'Run in This View': '在此视图中运行',
     'Run with these settings and keep the window open (Maya Apply)': '使用这些设置运行并保持窗口打开 (Maya 应用)',

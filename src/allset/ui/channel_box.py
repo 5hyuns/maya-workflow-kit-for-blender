@@ -2113,6 +2113,9 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 in_part = hit is not None or (self._cb_bottom is not None and event.mouse_y >= self._cb_bottom)
                 if in_part and not (event.shift or event.alt):
                     return self._on_rmb(context, hit, edit=event.ctrl, y=event.mouse_y)
+            if (event.type == 'S' and event.value == 'PRESS' and self._inside(event)
+                    and not (event.shift or event.ctrl or event.alt or event.oskey)):
+                return self._set_key()
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
             if self._on_move(context, event):
@@ -2129,6 +2132,16 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             redraw_selection()
             return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
+
+    def _set_key(self):
+        """Maya S over a Channel Box cell: Set Key, like S anywhere else. Blender's button handler takes a key press
+        over a field before any key map (the "Screen" S item never sees it), so it is taken here first; typing in a
+        field never gets here (the field editor's handler runs before this one)."""
+        try:
+            res = bpy.ops.allset.set_key('INVOKE_DEFAULT', True, global_key=True)
+        except RuntimeError:       # nothing to key (no selection): the press goes on as before
+            return {'PASS_THROUGH'}
+        return {'PASS_THROUGH'} if 'PASS_THROUGH' in res else {'RUNNING_MODAL'}
 
     def _in_empty_space(self, event):
         if self._cb_bottom is None or self._rows_bottom is None:
