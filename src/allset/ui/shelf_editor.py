@@ -120,18 +120,12 @@ def _merge_button_lists(base, draft, latest):
     live_map, live_extras = mapping(latest)
     merged = json.loads(json.dumps(draft))
 
-    # The editor draft is authoritative for records that are still present in it.
-    # In particular, do not interpret a record missing from ``latest`` as an
-    # external deletion when it is still present in ``draft``.  The live document
-    # can be stale (for example, its cache/file may have been refreshed from an
-    # older snapshot while the editor remains open).  The previous behavior
-    # removed those draft records here, which caused the first Save to silently
-    # discard buttons that were visible after "Apply to Draft".
-    #
-    # Deletions made inside Shelf Editor are already represented by their absence
-    # from ``draft`` because ``merged`` starts as a deep copy of the draft.  Thus
-    # draft-side deletions remain effective without allowing stale live data to
-    # erase still-visible draft entries.
+    # Deletions made in the editor are already absent from ``merged`` (a copy of the draft). A record
+    # deleted from the live shelf while the editor was open stays deleted when the editor left it
+    # unchanged; a record edited in the editor is kept (the edit wins over the live deletion).
+    deleted_live = {draft_map[b] for b in range(len(base))
+                    if b not in live_map and b in draft_map
+                    and draft_map[b] < len(draft) and draft[draft_map[b]] == base[b]}
 
     # Adopt external edits only where the corresponding draft entry is still unchanged.
     for base_index, live_index in live_map.items():
@@ -139,12 +133,10 @@ def _merge_button_lists(base, draft, latest):
         if draft_index is None or draft_index >= len(draft) or live_index >= len(latest):
             continue
         if draft[draft_index] == base[base_index] and latest[live_index] != base[base_index]:
-            # Draft entries are never removed by a stale live snapshot, so the
-            # corresponding slot keeps its original draft index.
-            target = draft_index
-            if 0 <= target < len(merged):
-                merged[target] = latest[live_index]
+            if 0 <= draft_index < len(merged):
+                merged[draft_index] = latest[live_index]
 
+    merged = [record for index, record in enumerate(merged) if index not in deleted_live]
     # Preserve external additions (Ctrl+Shift-click, gear menu, settings import).
     merged.extend(json.loads(json.dumps(live_extras)))
     return merged
