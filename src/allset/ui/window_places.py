@@ -202,7 +202,6 @@ def _carved_piece(window, rect, preferred=()):
     return best
 
 
-
 def dupli(context, window, area):
     before = set(context.window_manager.windows[:])
     with context.temp_override(window=window, area=area):
@@ -276,41 +275,19 @@ class _Carve:
 
     def finish(self, window, ok):
         _pending.pop(self.kind, None)
-
-        # Never duplicate the source area when the requested compact area was not
-        # isolated. The previous ``piece or area`` fallback opened the entire 3D View.
-        preferred = [self.piece, *self.made]
-        target = _carved_piece(window, self.rect, preferred)
-        if target is None and self.kind == "marked:SHELF_EDITOR":
-            print(
-                "Maya Workflow Kit: Shelf Editor carve failed for target "
-                f"{self.rect[2]} x {self.rect[3]} px; refusing full-area fallback."
-            )
-            made = list(self.made)
-            ptr = self.win
-            if made:
-                bpy.app.timers.register(
-                    lambda: _close_later(ptr, made), first_interval=TICK_FAST
-                )
-            return None
-        if target is None:
-            # Keep the established fallback behavior for all other kit windows.
-            target = _area(window, self.piece) or _area(window, self.source)
-            if target is None:
-                return None
-
-        self.piece = target.as_pointer()
-        _ready[self.kind] = self.piece
-        source = _area(window, self.source) or max(
-            window.screen.areas, key=lambda a: a.width * a.height
-        )
+        if self.kind in STRICT:
+            # Only an area of the asked size will do; without one the window does not open
+            # (instead of copying the whole calling area).
+            target = _carved_piece(window, self.rect, [self.piece, *self.made])
+            _ready[self.kind] = target.as_pointer() if target is not None else None
+        else:
+            _ready[self.kind] = self.piece if ok else None
+        source = _area(window, self.source) or max(window.screen.areas, key=lambda a: a.width * a.height)
         idname, kwargs = self.call
         module, _sep, name = idname.partition("_OT_")
         op = getattr(getattr(bpy.ops, module.lower()), name)
         try:
-            with bpy.context.temp_override(
-                window=window, screen=window.screen, area=source
-            ):
+            with bpy.context.temp_override(window=window, screen=window.screen, area=source):
                 try:
                     op('EXEC_DEFAULT', **kwargs)
                 except RuntimeError:
@@ -321,10 +298,7 @@ class _Carve:
             _ready.pop(self.kind, None)
         made = list(self.made)
         ptr = self.win
-        if made:
-            bpy.app.timers.register(
-                lambda: _close_later(ptr, made), first_interval=TICK_FAST
-            )
+        bpy.app.timers.register(lambda: _close_later(ptr, made), first_interval=TICK_FAST)
         return None
 
 
@@ -345,6 +319,7 @@ def _close_later(win_ptr, made):
 
 
 TICK_FAST = 0.02
+STRICT = set()           # kinds that open nothing rather than a copy of the whole calling area (set by their modules)
 _pending = {}            # kind -> _Carve running
 _ready = {}              # kind -> pointer of the carved piece while the operator runs again (None = plain)
 _deferred = [False]
@@ -367,12 +342,12 @@ def open_at(context, area, kind):
     runs again once the piece is ready."""
     _deferred[0] = False
     window = context.window
-    if kind in _ready:                         # the second run: copy only the carved piece
+    if kind in _ready:                         # the second run: copy the carved piece
         ptr = _ready[kind]
         piece = _area(window, ptr) if ptr else None
-        if piece is None:
+        if piece is None and kind in STRICT:
             return None
-        new = dupli(context, window, piece)
+        new = dupli(context, window, piece or area)
     else:
         rect = target_in_window(kind, window, area) if kind and not bpy.app.background else None
         op = calling_operator() if rect is not None and rect != _rect(area) else None

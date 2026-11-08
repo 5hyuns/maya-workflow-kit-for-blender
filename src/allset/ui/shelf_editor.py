@@ -13,7 +13,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
 from bpy_extras.io_utils import ImportHelper
 
-from . import marked_window, shelf
+from . import marked_window, shelf, window_places
 
 KIND = "SHELF_EDITOR"
 TITLE = "Shelf Editor"
@@ -2097,6 +2097,7 @@ def register():
     )
     wm.allset_se_icon_grid_rows_index = IntProperty(default=0, options={'SKIP_SAVE'})
     marked_window.KINDS[KIND] = ("show_properties_scene", "show_properties_data")
+    window_places.STRICT.add(f"marked:{KIND}")
 
 
 def unregister():
@@ -2104,6 +2105,7 @@ def unregister():
     _draft = None
     _draft_base = None
     marked_window.KINDS.pop(KIND, None)
+    window_places.STRICT.discard(f"marked:{KIND}")
     for name in _WM_PROPS:
         if hasattr(bpy.types.WindowManager, name):
             delattr(bpy.types.WindowManager, name)
