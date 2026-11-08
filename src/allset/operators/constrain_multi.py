@@ -14,6 +14,10 @@ The kit (one Blender constraint reads one target):
   S_i = w_0 + ... + w_i (Blender mixes the stack in order, so these influences give exactly the weighted average of
   the positions; all 0 = the equal average and W0 0.5 · W1 0 = target A, both Maya). Simple expressions only:
   no Python auto-run needed (``driver.is_simple_expression``).
+- One target (a joint following an object): there is nothing to average, so its weight is the influence of every
+  member (driver ``SINGLE``, clamped to 0 .. 1), like the weight of a one-target constraint on an object — keyed, it
+  blends the node in and out (0 = the joint's own channels). A one-target group saved without that driver gets it
+  when the file loads (``upgrade``).
 - Parent with Maintain Offset (the default, like Maya) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
   helper empty holding the owner's offset from that target (point: Copy Location with offset; else Child Of the
   target with the offset as its own channels). The helpers live in the hidden collection ``.AllsetConstraintHelpers``
@@ -42,6 +46,7 @@ MAYA_TYPE = {'CHILD_OF': "parentConstraint", 'COPY_LOCATION': "pointConstraint",
 TYPES = tuple(MAYA_TYPE)
 DEFAULT_OFFSET = {'CHILD_OF': True}      # default Maintain Offset: parent on, point / orient / scale off
 ROT = " R"                               # suffix of a parent group's Copy Rotation member
+SINGLE = "min(max(w0, 0.0), 1.0)"   # influence of a one-target group's members: its weight
 _NAME = re.compile(r"^(?P<group>[^:]+):(?P<index>\d+):(?P<label>.*?)(?P<rot> R)?$")
 
 
@@ -230,7 +235,8 @@ def helper_of(con):
 
 def _drive(con, prop, owner, names, k, scale=False):
     """Driver on ``con.<prop>`` from the weight properties ``names`` (target order) — cumulative influence of member k
-    (point / orient / parent) or the geometric-mean power w_k / Σw (scale)."""
+    (point / orient / parent), the geometric-mean power w_k / Σw (scale), or the weight itself when the node has one
+    target (``SINGLE``)."""
     id_ob, prefix = _id_and_prefix(owner)
     fc = con.driver_add(prop)
     d = fc.driver
@@ -246,7 +252,10 @@ def _drive(con, prop, owner, names, k, scale=False):
         v.targets[0].data_path = prefix + f'["{bpy.utils.escape_identifier(wp)}"]'
     s = "+".join(f"w{j}" for j in range(len(used)))
     fallback = 1.0 / (len(names) if scale else k + 1)
-    d.expression = f"w{k} / ({s}) if ({s}) > 0 else {fallback!r}"
+    if len(names) == 1 and not scale:
+        d.expression = SINGLE
+    else:
+        d.expression = f"w{k} / ({s}) if ({s}) > 0 else {fallback!r}"
     for m in list(fc.modifiers):          # driver_add makes a Generator: the expression alone is the value
         fc.modifiers.remove(m)
     return fc
@@ -333,6 +342,8 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
                 _drive(c, "power", owner, names, i, scale=True)
             elif i > 0:
                 _drive(c, "influence", owner, names, i)
+            if len(names) == 1:
+                _drive(c, "influence", owner, names, 0)       # one target: its weight blends the node in and out
             if first is None:
                 first = c
     _state["armed"] = True
@@ -344,6 +355,43 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
     owner.id_data.update_tag()
     context.view_layer.update()
     return first
+
+
+def drive_single(owner, group):
+    """A node with one target: its weight drives the influence of the constraints that apply the node (``SINGLE``;
+    with an Interp Type blend, the blend instead of the rotation members it stands for). Adds only the drivers that
+    are missing or differ; returns how many it wrote."""
+    ws = weights(owner, group)
+    if len(ws) != 1:
+        return 0
+    from . import constrain_interp
+    blend = constrain_interp.blend_constraint(owner, group)
+    skip = {c.name for c in constrain_interp.rotation_members(owner, group)} if blend is not None else set()
+    id_ob, _prefix = _id_and_prefix(owner)
+    source = f'["{bpy.utils.escape_identifier(ws[0][0])}"]'
+    n = 0
+    for c in members(owner, group) + ([blend] if blend is not None else []):
+        if c.name in skip:
+            continue
+        ad = id_ob.animation_data
+        fc = ad.drivers.find(c.path_from_id("influence")) if ad is not None else None
+        d = fc.driver if fc is not None else None
+        if (d is not None and d.expression == SINGLE and len(d.variables) == 1
+                and d.variables[0].targets[0].data_path.endswith(source)):
+            continue
+        _drive(c, "influence", owner, [ws[0][0]], 0)
+        n += 1
+    return n
+
+
+def upgrade():
+    """Give one-target groups of older files their weight driver (it drove nothing before). Returns drivers written."""
+    n = 0
+    for owner in list(_owners()):
+        for group in list(_groups(owner)):
+            if members(owner, group):
+                n += drive_single(owner, group)
+    return n
 
 
 def remove_group(owner, group):
@@ -433,6 +481,7 @@ def _tick():
     _state["pending"] = False
     try:
         cleanup()
+        upgrade()
     except Exception:          # never break the timer loop
         pass
     return None
@@ -450,6 +499,11 @@ def _on_depsgraph(_scene, _depsgraph):
 @bpy.app.handlers.persistent
 def _on_load(*_args):
     _state["armed"] = bpy.data.collections.get(HELPERS) is not None or any(True for _ in _owners())
+    if _state["armed"]:
+        try:
+            upgrade()
+        except (ReferenceError, AttributeError, RuntimeError, TypeError):
+            pass
 
 
 # --- Channel Box node state (one Maya node = every member) ----------------------------------------------------------

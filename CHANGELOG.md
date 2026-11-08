@@ -14,6 +14,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Component starts on local axes. Vertices keep the move and scale handles without a ring, like Maya (#321).
 
 ### Fixed
+- A keyed constraint target weight now drives the constraint while you scrub, on objects and joints. S keys the
+  weights shown under a constraint node opened in Channel Box INPUTS (pCube1W0 ...) along with the node's channels,
+  on every selected node with that constraint; before, S keyed only Translate / Rotate / Scale / Visibility, so a
+  typed weight stayed at its last value on every frame. The weight of a joint following one object or locator now
+  blends the joint in and out (1 = on the target, 0 = its own channels), like the weight of a one-target constraint
+  on an object; before, it had no effect, keyed or not. Scenes saved with such a joint get this when they open
+  (#329).
 - Modify > Match Transformations with rig controls: the last picked node is the source and every node picked before
   it receives its transform, whether it is an object or a bone. A control (an IK hand, say) picked first and a
   locator picked last now puts the control on the locator; before, the whole rig object moved. Match Pivots takes

@@ -388,6 +388,10 @@ def _remove_blend(owner, group):
     if c is None:
         return
     h = c.target
+    try:
+        c.driver_remove("influence")      # a one-target node's weight driver (constrain_multi.drive_single)
+    except TypeError:
+        pass
     owner.constraints.remove(c)
     if h is not None and H_GROUP in h.keys():
         bpy.data.objects.remove(h, do_unlink=True)
@@ -436,6 +440,7 @@ def set_mode(context, owner, group, mode):
         for i, c in enumerate(rms):
             if i > 0:
                 _drive_total(c, owner, names, i)
+        constrain_multi.drive_single(owner, group)
         owner.id_data.update_tag()
         context.view_layer.update()
         return
@@ -474,6 +479,7 @@ def set_mode(context, owner, group, mode):
     jo_inv = qinv(joint_orient(owner))
     owner[LAST + group] = qmul(jo_inv, out if first_time else before)
     update(owner, group)
+    constrain_multi.drive_single(owner, group)     # one target: its weight blends the computed rotation in and out
     owner.id_data.update_tag()
     context.view_layer.update()
     _state["armed"] = True

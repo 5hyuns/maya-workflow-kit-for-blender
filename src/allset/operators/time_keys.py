@@ -152,13 +152,22 @@ def set_key(context, breakdown=False, channels=""):
         return point_keys.key_points(context, keytype)
     only = CHANNEL_SETS.get(channels)
     from ..ui import cb_channels
+    cb = _cb()
+    # the target weights of the constraint nodes open in the Channel Box (#329): keyed with the channels below, on
+    # every node that has the same constraint (like a typed value)
+    weights = cb.shown_weight_keys(context) if only is None else []
     count = 0
     for node in nodes(context):
         # Channel Box Sync Selection in Graph Editor on: S keys the selected channels (as in Maya)
         synced = None if only is not None else cb_channels.synced_keys(context, node)
-        for key in synced if synced is not None else keyable_channels(node):
-            if (only is None or key in only) and _cb().is_keyable(node, key):
-                count += bool(_cb().keyframe(node, key, keytype))
+        if synced is not None:
+            keys = synced
+        else:
+            keys = keyable_channels(node) + [k for k in weights if cb.has_channel(node, k)
+                                             and not cb.is_hidden(node, k) and cb.driver(node, k) is None]
+        for key in keys:
+            if (only is None or key in only) and cb.is_keyable(node, key):
+                count += bool(cb.keyframe(node, key, keytype))
     return count
 
 

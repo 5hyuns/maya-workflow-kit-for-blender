@@ -829,6 +829,23 @@ def drawn_keys(ob):
     return keys
 
 
+def shown_weight_keys(context=None):
+    """Channel keys of the constraint target weights the Channel Box shows under the lead's open constraint nodes
+    (pCube1W0 ...). Maya keys a constraint's weights with S when its node is selected; here the node sits in the
+    INPUTS of the object or joint it drives, so S keys the weights shown there along with the node's channels."""
+    ob = lead(context)
+    if ob is None:
+        return []
+    from ..operators import constrain_multi
+    out = []
+    for kind, name, mod_type, nth in wanted_rows(ob):
+        if kind == "CONSTRAINT":
+            out.append(constraint_key(mod_type, nth, name))
+        elif kind == "CUSTOM" and name.startswith(constrain_multi.WEIGHT):
+            out.append(CUSTOM_PREFIX + name)
+    return out
+
+
 def history_keys(ob):
     """Channel keys of the creation node's attributes while its INPUTS node is open (Channel Box order)."""
     if not isinstance(ob, bpy.types.Object):
