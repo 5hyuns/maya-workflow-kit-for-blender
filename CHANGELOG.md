@@ -13,6 +13,17 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   cubes, centre square and rings drive Translate, Scale and Rotate instead of the local values; a new Transform
   Component starts on local axes. Vertices keep the move and scale handles without a ring, like Maya (#321).
 
+- Windows > Settings/Preferences > Shelf Editor: a floating editor for the shelves. Add, rename, duplicate, reorder
+  and delete shelves and buttons, and edit a button's label, icon, tooltip and command (a Blender operator, a Maya menu
+  item, a menu or pie menu, a tool, a Python command, or a separator). Changes stay a draft until Save, which keeps
+  shelf changes made meanwhile; Discard drops them. Icons come from Blender's icons, the kit's icons or PNG files
+  (from @LoongVeeng, #310 — thank you!).
+- In-View Editor: a plain middle drag anywhere in the view changes the yellow row, and a middle click picks a row
+  without changing it; a drag-speed control in the title's right end, and dragging the title moves the editor beside
+  its object. Preferences > Maya Workflow Kit has two marking menu options, both off: Quick Gestures (menus stay
+  hidden while the pointer keeps moving and a mark picks radial items by its direction) and Submenu Return Ring
+  (rest on the ring at the parent menu's centre to go back to it) (from @LoongVeeng, #301 — thank you!).
+
 ### Fixed
 - A keyed constraint target weight now drives the constraint while you scrub, on objects and joints. S keys the
   weights shown under a constraint node opened in Channel Box INPUTS (pCube1W0 ...) along with the node's channels,
