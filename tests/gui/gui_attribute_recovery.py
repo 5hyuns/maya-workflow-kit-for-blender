@@ -42,7 +42,9 @@ def redraw_ae():
     for area in win().screen.areas:
         area.tag_redraw()
 
-step(find_button(dock,lambda path,command:path.endswith('allset_cb.tx_text'),C,'ae_field',x_frac=.45,step_px=8))
+# the Translate row (by its middle field), then its first field along that row
+step(find_button(dock,lambda path,command:path.endswith('allset_cb.ty_text'),C,'ae_row',x_frac=.45,step_px=8))
+step(find_button(dock,lambda path,command:path.endswith('allset_cb.tx_text'),C,'ae_field',y_from='ae_row',step_px=4))
 
 @step
 def hover_ae():
