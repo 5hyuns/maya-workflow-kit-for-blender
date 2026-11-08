@@ -45,6 +45,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Chinese punctuation (from @RIPTIDE-z, #260 — thank you!).
 
 ### Fixed
+- Nonlinear deformers (Bend, Twist, Squash, Flare, Sine, Wave) can be keyed and animated: S keys the attributes of
+  a deformer node expanded in the Channel Box INPUTS, from the deformed object or its handle, Channels > Key Selected
+  keys a picked deformer attribute, keyed attributes show their keyed colour, and Auto Key keys a keyed deformer
+  attribute when it changes (#339).
+- Graph Editor: a dragged tangent handle end stays under the mouse; before, it fell behind by up to a few pixels
+  depending on the view's zoom, and weighted handles on curves with large values could move far off.
+- Graph Editor > List > Bookmarks items show their tooltips again.
 - A keyed constraint target weight now drives the constraint while you scrub, on objects and joints. S keys the
   weights shown under a constraint node opened in Channel Box INPUTS (pCube1W0 ...) along with the node's channels,
   on every selected node with that constraint; before, S keyed only Translate / Rotate / Scale / Visibility, so a

@@ -39,6 +39,9 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 
 ## Fixed
 
+- Nonlinear deformers (Bend, Twist, Squash, Flare, Sine, Wave) can be keyed with S, Key Selected and Auto Key, and
+  play back (#339).
+- Graph Editor: a dragged tangent handle end stays under the mouse.
 - Keyed constraint target weights drive the constraint while you scrub, on objects and joints; S keys the open
   constraint's weights, also with the mouse over the Channel Box or another panel. One target follows any weight
   above 0 and 0 leaves the node on its own channels; with two or more targets, every weight 0 puts the node back on
@@ -58,8 +61,8 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 
 Thanks to @LoongVeeng for the Shelf Editor and the In-View Editor / marking menu work (#310, #301), @youngmin2k for
 the shared attribute editing and the Bridge node (#326) and @RIPTIDE-z for the Chinese translation (#260), and for the
-reports and ideas: @swarnava05 (#319), @Olivier-bit (#321), @psokk (#327), @ArcticZA (#329, #338) and @GUYVERZERO
-(#337). Please keep telling us what breaks or feels off in real work.
+reports and ideas: @swarnava05 (#319), @Olivier-bit (#321), @psokk (#327), @ArcticZA (#329, #338), @GUYVERZERO
+(#337) and @Fizkefaaz (#339). Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
 goal behind it.
