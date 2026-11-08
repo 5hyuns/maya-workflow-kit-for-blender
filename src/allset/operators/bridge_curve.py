@@ -372,6 +372,8 @@ def refresh():
                         extrude.preview(ob, record, dict(record.params), node['unit'])
                         if record.fast_preview:
                             extrude.capture_preview(ob, record)
+                        else:
+                            model_history.update(ob, record)
                         record.live = False
                     else:
                         model_history.edit(ob, node['id'], node['params'])
