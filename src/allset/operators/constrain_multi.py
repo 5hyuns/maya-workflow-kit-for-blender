@@ -17,7 +17,9 @@ The kit (one Blender constraint reads one target):
   turns every member off: the node shows its own channels, which hold its rest position (``drive_group``). Simple
   expressions only: no Python auto-run needed (``driver.is_simple_expression``).
 - Rest position: a node made without Maintain Offset gets its pose at creation (the targets' blend) written into its
-  own channels, like Maya (with Maintain Offset that pose is already its own); Set Rest Position writes them later.
+  own channels, like Maya (with Maintain Offset that pose is already its own), in the same undo step; keyed or driven
+  channels keep their curves. So turning the node off or deleting it leaves the node there, not where it was before.
+  Set Rest Position writes them later.
   Groups saved without these drivers (every weight 0 = the equal average) get them when the file loads (``upgrade``).
 - One target (a joint following an object): the normalised weight w / w is 1 for any weight above 0, so like Maya
   the node follows its target fully while the weight is above 0 and lets go only at 0 (the joint's own channels,
@@ -398,9 +400,38 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
     if len(names) > 1 and not maintain_offset:
         # Maya: the rest position (every weight 0) is the node's pose when the constraint is made, here the targets'
         # blend; the own channels hold it (what Blender shows at influence 0), like Set Rest Position
-        from .constrain_199 import bake
-        bake(context, owner, REST_CHANNELS[ctype])
+        _keep_rest(context, owner, REST_CHANNELS[ctype])
     return first
+
+
+def _animated(owner, letter):
+    """Indices of channel ``letter`` ("t" / "r" / "s", rotation: the node's rotation mode) that a key or a driver sets:
+    their curve wins over any value written there."""
+    id_ob, prefix = _id_and_prefix(owner)
+    if letter == "r":
+        name = {'QUATERNION': "rotation_quaternion", 'AXIS_ANGLE': "rotation_axis_angle"}.get(owner.rotation_mode,
+                                                                                            "rotation_euler")
+    else:
+        name = "location" if letter == "t" else "scale"
+    path = prefix + ("." if prefix else "") + name
+    from .. import compat
+    ad = id_ob.animation_data
+    fcs = list(compat.id_fcurves(id_ob)) + (list(ad.drivers) if ad is not None else [])
+    return {fc.array_index for fc in fcs if fc.data_path == path}
+
+
+def _keep_rest(context, owner, letters):
+    """Write the node's current pose into its own channels ``letters``, except the keyed or driven ones (they keep their
+    curve; a quaternion / axis-angle rotation with any curve stays whole)."""
+    from .constrain_199 import bake
+    for letter in letters:
+        busy = _animated(owner, letter)
+        if not busy:
+            bake(context, owner, letter)
+        elif letter != "r" or owner.rotation_mode not in ('QUATERNION', 'AXIS_ANGLE'):
+            free = {0, 1, 2} - busy
+            if free:
+                bake(context, owner, letter, axes=free)
 
 
 def drive_single(owner, group):

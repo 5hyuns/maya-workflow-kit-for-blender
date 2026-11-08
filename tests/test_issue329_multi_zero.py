@@ -334,6 +334,54 @@ def test_joint_point_without_offset_rests_where_it_was_made():
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def test_keyed_and_driven_channels_keep_their_curves():
+    """The rest position goes only into channels no key or driver sets: a keyed or driven axis keeps its curve."""
+    _fresh()
+    a, b = _empty("A", (2.0, 0.0, 0.0)), _empty("B", (6.0, 2.0, 0.0))
+    o = _empty("obj", (0.0, 4.0, 0.0))
+    o.keyframe_insert("location", index=0, frame=1)                  # X keyed at 0
+    fc = o.driver_add("location", 2)                                 # Z driven: 1.5
+    fc.driver.type = 'SCRIPTED'
+    fc.driver.expression = "1.5"
+    for m in list(fc.modifiers):
+        fc.modifiers.remove(m)
+    group = _constrain_object(o, [a, b], 'COPY_LOCATION')
+    assert abs(o.location.y - 1.0) < TOL, ("the free axis holds the pose at creation", tuple(o.location))
+    assert abs(o.location.x) < TOL, ("the keyed axis keeps its value", tuple(o.location))
+    keys = [tuple(k.co) for fc in compat.id_fcurves(o) for k in fc.keyframe_points]
+    assert keys == [(1.0, 0.0)], keys
+    _set_weights(o, group, [0, 0])
+    got = _object_world("obj").translation
+    assert (got - Vector((0.0, 1.0, 1.5))).length < TOL, ("keyed X, rest Y, driven Z", tuple(got))
+    # Euler rotation: a keyed axis stays, the others take the pose at creation
+    _fresh()
+    a, b = _empty("A", rot_z=40.0), _empty("B", rot_z=80.0)
+    o = _empty("obj", (0.0, 4.0, 0.0), rot_z=10.0)
+    o.rotation_euler.x = math.radians(15.0)
+    o.keyframe_insert("rotation_euler", index=2, frame=1)
+    group = _constrain_object(o, [a, b], 'COPY_ROTATION')
+    assert abs(o.rotation_euler.x) < 1e-5 and abs(math.degrees(o.rotation_euler.z) - 10.0) < 1e-4, \
+        tuple(o.rotation_euler)
+    _set_weights(o, group, [0, 0])
+    assert _angle(_object_world("obj").to_3x3(), Euler((0.0, 0.0, math.radians(10.0))).to_matrix()) < TOL_DEG
+
+
+def test_one_undo_takes_the_node_and_its_rest_position_back():
+    _fresh()
+    a, b = _empty("A", (2.0, 0.0, 0.0)), _empty("B", (6.0, 0.0, 0.0))
+    o = _empty("obj", (0.0, 4.0, 0.0))
+    for ob in bpy.context.scene.objects:
+        ob.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.ed.undo_push(message="start")
+    assert bpy.ops.allset.constrain('EXEC_DEFAULT', True, type='COPY_LOCATION') == {'FINISHED'}
+    o = bpy.data.objects["obj"]
+    assert len(o.constraints) == 2 and (o.location - Vector((4.0, 0.0, 0.0))).length < TOL, tuple(o.location)
+    bpy.ops.ed.undo()
+    o = bpy.data.objects["obj"]
+    assert not o.constraints and (o.location - Vector((0.0, 4.0, 0.0))).length < TOL, tuple(o.location)
+
+
 # --- scenes saved before this rule -----------------------------------------------------------------------------------
 
 def _old_drivers(owner, group):
