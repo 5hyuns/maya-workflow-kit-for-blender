@@ -141,8 +141,14 @@ def tabs(ob):
     if ob.data is not None:
         out.append(("S", ob.data.name, node_type(ob)))
     rec = history_record(ob)
-    if rec is not None:              # Maya: the newest history node first (CB INPUTS order)
-        out.append(("H", rec.name, rec.spec.node_type))   # polyExtrudeFace / Edge / Vertex, polyBevel3
+    if rec is not None:
+        from ..operators import model_history
+        nodes = model_history.records(ob)
+        if nodes:
+            for index, node in enumerate(reversed(nodes)):
+                out.append(('H' if index == 0 else 'H:'+node.history_id, node.name, node.spec.node_type))
+        else:
+            out.append(('H', rec.name, rec.spec.node_type))
     from ..operators import skin_tools_199
     for md in ob.modifiers:
         if display.is_preview(md):   # shape display attribute, drawn in "Smooth Mesh"
@@ -207,7 +213,11 @@ def tab_target(ob, key):
         i = int(key.split(":", 1)[1])
         return ob.material_slots[i].material if i < len(ob.material_slots) else None
     if kind == "H":
-        return history_record(ob)
+        from ..operators import model_history
+        if ':' in key:
+            return model_history.find(ob, key.split(':', 1)[1])
+        nodes = model_history.records(ob)
+        return nodes[-1] if nodes else history_record(ob)
     if kind == "CH":
         from ..operators import prim_history
         return prim_history.node_of(ob)[0]
@@ -595,10 +605,17 @@ def draw_extrude_history(layout, context, rec):
         return
     hist = context.window_manager.allset_history
     col = section_body(body).column(align=True)
+    from . import node_attributes
+    node = node_attributes.for_record(context, ae_node(context), rec)
     for field in rec.spec.fields:
         split = col.split(factor=0.42, align=True)
         split.label(text=attr_label(context, rec.spec.labels[field], field))
-        split.prop(hist, f"{field}_text", text="")
+        cell = split.row()
+        cell.enabled = node is not None and node_attributes.editable(node, field)
+        cell.prop(hist, f"{field}_text", text="")
+    if rec.spec.kind == 'BRIDGE':
+        from . import bridge_editor
+        bridge_editor.draw_controls(col, node)
 
 
 def content_width(context):
@@ -737,6 +754,8 @@ def draw(layout, context, ob):
         draw_sections(layout, context, ob, target, sections, layout_id or "data")
         if isinstance(target, (bpy.types.ID, bpy.types.PoseBone)):
             draw_extra(layout, target, layout_id or "data")
+    from . import history_rebind
+    history_rebind.draw_controls(layout, ob)
     draw_notes(layout, context, ob, key, entry)
     draw_bottom(layout, context)
 
@@ -862,6 +881,12 @@ def set_tab(context, key):
     wm = context.window_manager
     wm.allset_ae_tab = key
     wm.allset_ae_kind = _kind(key)
+    if _kind(key) == 'H':
+        from ..operators import model_history
+        ob = ae_node(context)
+        target = tab_target(ob, key) if ob is not None else None
+        if target is not None:
+            model_history.activate(ob, getattr(target, 'history_id', None) or target.name)
 
 
 class ALLSET_OT_ae_tab(bpy.types.Operator):

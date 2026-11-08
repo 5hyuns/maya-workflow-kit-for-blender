@@ -365,6 +365,9 @@ With Maya mode on. Every Maya hotkey and its Blender counterpart is listed in Ma
 | Soft select | B |
 | Smooth preview / display modes | 1 / 2 / 3 · 4 / 5 / 6 / 7 |
 | Channel Box ↔ Attribute Editor | Ctrl+A |
+| Show the selected node's editor / manipulator | T |
+| Adjust the active In-View attribute | MMB drag in the editor or viewport, Ctrl finer / Shift faster |
+| Adjust a numeric field in a kit editor | Ctrl+LMB / MMB / RMB drag on the field for fine / normal / coarse steps |
 | Menu sets | F2 Modeling · F3 Rigging · F4 Animation · F5 FX · F6 Rendering |
 | Undo / redo | Z or Ctrl+Z / Shift+Z |
 | Duplicate / with transform / special | Ctrl+D / Shift+D / Ctrl+Shift+D |
@@ -380,6 +383,31 @@ With Maya mode on. Every Maya hotkey and its Blender counterpart is listed in Ma
 | Save / increment and save | Ctrl+S / Ctrl+Alt+S |
 | Create Reference | Ctrl+R |
 | Switch Maya ↔ Blender | Ctrl+Alt+Shift+M |
+
+Display > Heads Up Display > In-View Editors shows or hides the In-View Editor. Selecting a Channel Box channel gives
+the next viewport middle-drag to that channel, also a channel of a modeling node in INPUTS. A completed drag is one
+undo step and Esc restores its starting value.
+
+Bridge, Add Divisions, Extrude and Bevel retain an editable modeling chain in Channel Box INPUTS and the Attribute
+Editor. Recipes and one immutable input mesh travel with the `.blend` file. Changing an earlier node replays its
+downstream steps. Component identities preserve surviving selections across topology edits, including Extrude
+caps when Divisions changes. If a target was removed, split or merged, **Rebind Selection** appears in the
+Attribute Editor and Channel Box INPUTS. Choose replacement components on the proposed input, then Enter to
+apply or Esc to cancel. The original mesh stays intact until the entire chain can replay. Other generated
+topology can require an explicit replacement. Direct mesh edits outside recorded commands start a new chain
+on the next command.
+
+Bridge supports Linear, Smooth and Smooth + Curve paths between borders with matching vertex counts. Smooth paths
+expose angular Twist and Taper. Bridge Offset changes correspondence on closed borders. Automatic and manual
+endpoint directions, smoothing angle and a Taper Curve graph are available in Bridge Options and the history UI.
+In the graph, click to add or select a point, drag to move it, X to delete, and 1–4 to choose None, Linear, Smooth
+or Spline interpolation. Enter applies one undoable edit and Esc cancels. Edit Path selects the generated NURBS
+curve for normal curve editing, which updates the Bridge. Smooth centerlines use quintic endpoint interpolation.
+Offset or tilted borders and Taper can still give a different shape than Maya's Bridge.
+
+Command Options open in modeless floating editors with the same Ctrl+mouse numeric gestures, Apply, Save Settings
+and Reset Settings. Different command options can stay open together. Commands run in the editor that opened their
+options. Numeric attributes share the same preview and commit rules across the Channel Box and Attribute Editor.
 
 ---
 

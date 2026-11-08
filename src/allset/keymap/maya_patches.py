@@ -1707,6 +1707,28 @@ PATCHES += (patch_graph_handles,)
 PATCHES += (patch_numpad_digits,)
 
 
+def patch_attribute_edit(kd):
+    """Ctrl + left / middle / right drag on a number field of a kit editor (Attribute Editor, Channel Box, option
+    windows) changes it in fine / normal / coarse steps, like Maya's field sliders: a mouse-move item tracks the field
+    under the pointer and passes every event on, like the kit's other hover items (which pass it on too). Enter / Esc
+    in a floating option window run or close it (they pass through everywhere else)."""
+    for key, action in (('RET', 'RUN'), ('NUMPAD_ENTER', 'RUN'), ('ESC', 'CLOSE')):
+        _add(kd, 'Property Editor', 'allset.option_editor_key', make_event(key), {'action': action},
+             first=True, shadows=('Property Editor', 'Screen'))
+    hover = make_event('MOUSEMOVE', 'ANY', any=True)
+    hover_maps = ('Property Editor', 'View2D Buttons List', 'User Interface')
+    for i, (km, idname, event, props, shadows) in enumerate(ADDED):
+        if patch.event_key(event) == patch.event_key(hover):
+            ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_maps)))
+    for km in hover_maps:
+        _add(kd, km, 'allset.attribute_field_hover', hover, first=True,
+             shadows=(*hover_maps, '3D View Generic', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint'))
+
+
+PATCHES += (patch_attribute_edit,)
+PASS_THROUGH_FIRST += ('allset.attribute_field_hover', 'allset.option_editor_key')
+
+
 def apply(data):
     """Apply all patches to IC data in place and return it."""
     ADDED.clear()

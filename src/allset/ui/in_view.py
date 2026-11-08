@@ -334,6 +334,9 @@ def current_layout(context):
     ob, rec = record(context)
     if rec is None or context.region is None or context.region.type != 'WINDOW' or context.region_data is None:
         return None, None
+    from .. import preferences
+    if not preferences.get(context).inview_editors:   # Display > Heads Up Display > In-View Editors
+        return None, None
     if ob.mode == 'EDIT':
         a, gap = anchor(context, ob, rec), GAP
     else:
@@ -379,21 +382,30 @@ def row_at(lay, x, y):
 
 
 def _channel_slider(context):
-    """The Channel Box virtual slider takes a middle drag here: channels picked (object / pose mode)."""
-    if context.mode not in {'OBJECT', 'POSE'}:
+    """The Channel Box virtual slider takes a middle drag here: channels picked (object / pose mode), or a picked
+    channel of a modeling node in Channel Box INPUTS (edit mode)."""
+    if context.mode not in {'OBJECT', 'POSE', 'EDIT_MESH'}:
         return False
     from . import channel_box
-    return channel_box.slider_armed(context) and bool(channel_box.slider_targets(context))
+    if not channel_box.slider_armed(context):
+        return False
+    pairs = channel_box.slider_targets(context)
+    if context.mode == 'EDIT_MESH':
+        pairs = [pair for pair in pairs if pair[1].startswith(channel_box.MODEL_PREFIX)]
+    return bool(pairs)
 
 
-def _middle_drag_here(context, event):
-    """A plain middle press in a view that shows the In-View Editor (not the emulated Alt drag, #242)."""
+def _plain_middle(context, event):
+    """A plain middle press (not the emulated Alt drag, #242)."""
     if event.alt or event.ctrl or event.shift:
         return False
     from ..operators import view
-    if view.emulated_alt_drag(context):
-        return False
-    return current_layout(context)[1] is not None
+    return not view.emulated_alt_drag(context)
+
+
+def _middle_drag_here(context, event):
+    """A plain middle press in a view that shows the In-View Editor."""
+    return _plain_middle(context, event) and current_layout(context)[1] is not None
 
 
 def mmb_drag(context, event):
@@ -1035,7 +1047,14 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
     def invoke(self, context, event):
         middle = self.row < 0
         if middle:
-            if not _middle_drag_here(context, event) or _channel_slider(context):
+            if _channel_slider(context):
+                if context.mode != 'EDIT_MESH' or not _plain_middle(context, event):
+                    return {'PASS_THROUGH'}
+                # edit mode, a picked channel of a modeling node in Channel Box INPUTS: the Channel Box slider
+                # (its own modal; CANCELLED ends this one without an undo step)
+                started = bpy.ops.allset.cb_virtual_slider('INVOKE_DEFAULT')
+                return {'CANCELLED'} if {'RUNNING_MODAL', 'FINISHED'} & started else {'PASS_THROUGH'}
+            if not _middle_drag_here(context, event):
                 return {'PASS_THROUGH'}
             _rec, lay = current_layout(context)
             under = row_at(lay, event.mouse_region_x, event.mouse_region_y)
@@ -1450,9 +1469,14 @@ def cb_record(context, ob):
     """The lead object's last extrusion for Channel Box INPUTS (any selection), or None."""
     if ob is None:
         return None
-    if ob is not getattr(context, "edit_object", None):
-        return extrude.object_record(ob)        # a node editable in object mode (UV > Automatic)
-    return extrude.current(ob)
+    rec = (extrude.object_record(ob) if ob is not getattr(context, 'edit_object', None)
+           else extrude.current(ob))
+    if rec is not None:
+        from ..operators import model_history
+        selected = model_history.selected(ob)
+        return (selected if selected is not None and not hasattr(selected, 'creation')
+                and selected.history_id != rec.history_id else rec)
+    return None
 
 
 def _lead(context):
@@ -1473,7 +1497,9 @@ def _text_get(field):
         rec = cb_record(bpy.context, _lead(bpy.context))
         if rec is None or field not in rec.params:
             return ""
-        return cb_entry.format_value(rec.params[field], rec.spec.kinds[field], bpy.context.scene)
+        from . import node_attributes
+        node = node_attributes.for_record(bpy.context, _lead(bpy.context), rec)
+        return node_attributes.format_value(node, field, bpy.context.scene)
     return get
 
 
@@ -1483,17 +1509,24 @@ def _text_set(field):
         rec = cb_record(context, _lead(context))
         if rec is None or field not in rec.params:
             return
-        try:
-            value = cb_entry.parse_entry(text, rec.params[field], rec.spec.kinds[field], context.scene)
-        except (ValueError, TypeError, SyntaxError, NameError):
-            return
-        if field in INT_FIELDS:
-            value = max(1, int(value))
-        elif field not in BOOL_FIELDS:
-            value = clamp(field, value)
-        if value != rec.params[field]:
-            extrude.set_params(context, **{field: value})
+        from . import channel_box
+        bpy.ops.allset.model_channel_entry('EXEC_DEFAULT', True,
+                                           key=channel_box.model_key(rec, field), text=text)
     return set_
+
+
+class ALLSET_OT_model_channel_entry(bpy.types.Operator):
+    """Apply typed modeling channels and compatible selected channels as one undo step"""
+    bl_idname = 'allset.model_channel_entry'
+    bl_label = 'Edit Node Attributes'
+    bl_options = {'INTERNAL', 'UNDO'}
+    key: StringProperty(options={'SKIP_SAVE'})
+    text: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from . import channel_box
+        count = channel_box.apply_entry(self.key, self.text, context)
+        return {'FINISHED'} if count else {'CANCELLED'}
 
 
 class ALLSET_PG_history(bpy.types.PropertyGroup):
@@ -1503,7 +1536,7 @@ class ALLSET_PG_history(bpy.types.PropertyGroup):
                        for f in ALL_FIELDS}
 
 
-HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can be changed here."
+HISTORY_TIP = "Edit this recorded modeling node and replay its downstream operations."
 
 
 def draw_cb_node(layout, context, rec):
@@ -1517,16 +1550,27 @@ def draw_cb_node(layout, context, rec):
     if not opened:
         return
     hist = context.window_manager.allset_history
+    from . import node_attributes
+    node = node_attributes.for_record(context, ob, rec)
     for field in rec.spec.fields:
         row = lines.row()
         if row is None:
             continue
         split = row.split(factor=0.5, align=True)
-        split.label(text=rec.spec.labels[field])
-        split.prop(hist, f"{field}_text", text="")
+        key = channel_box.model_key(rec, field)
+        split.operator('allset.cb_select_channel', text=rec.spec.labels[field], emboss=False,
+                       depress=key in channel_box.selected_channels(context)).key = key
+        values = split.row()
+        values.enabled = node_attributes.editable(node, field)
+        values.prop(hist, f"{field}_text", text="")
+    if rec.spec.kind == 'BRIDGE':
+        row = lines.row()
+        if row is not None:
+            from . import bridge_editor
+            bridge_editor.draw_controls(row.column(), node)
 
 
-classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GT_in_view_title, ALLSET_GT_in_view_fan,
+classes = (ALLSET_OT_model_channel_entry, ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GT_in_view_title, ALLSET_GT_in_view_fan,
            ALLSET_GGT_in_view, ALLSET_GT_extrude_handle, ALLSET_GT_tc_space, ALLSET_GGT_extrude,
            ALLSET_OT_inview_drag, ALLSET_OT_inview_fan, ALLSET_OT_inview_move, ALLSET_OT_inview_type,
            ALLSET_OT_extrude_drag, ALLSET_OT_tc_space)

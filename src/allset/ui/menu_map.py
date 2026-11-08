@@ -350,7 +350,7 @@ MAP = {
     "Mesh/Transfer Attributes": _mod('DATA_TRANSFER'),
     "Mesh/Smooth Proxy/Subdiv Proxy": _mod('SUBSURF'),
     # --- Edit Mesh ---
-    "Edit Mesh/Add Divisions": "mesh.subdivide",
+    "Edit Mesh/Add Divisions": "allset.subdivide",
     "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (#16)
     "Edit Mesh/Smart Bevel": ("v3d", "allset.smart_bevel", {}),   # Maya 2027 polySmartBevel (#303)
     "Edit Mesh/Bridge": "allset.bridge",      # two loops bridge, one closed border loop is filled (#337)
@@ -615,6 +615,7 @@ MAP.update({
     "Display/Heads Up Display/Camera Names": _kit_pref("maya_camera_names"),
     "Display/Heads Up Display/View Axis": _kit_pref("maya_view_axis"),
     "Display/Heads Up Display/ViewCube": _kit_pref("maya_viewcube"),
+    "Display/Heads Up Display/In-View Editors": _kit_pref("inview_editors"),
 })
 
 
