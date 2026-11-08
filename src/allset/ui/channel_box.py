@@ -397,8 +397,15 @@ def _own_weight(ob, key):
     return constrain_multi.ensure_single_weight(con, ob)
 
 
+def input_curve_id(ob, key):
+    """The ID whose animation holds INPUTS channel ``key`` of ``ob``: the node's own, or for a deformer a handle or
+    lattice shows (bend1 in the INPUTS of bend1Handle) the deformed object's, where the modifier is."""
+    owner = input_owner(ob, key)
+    return owner.id_data if owner is not None else None
+
+
 def input_curve_paths(ob, key):
-    """[(data path on the node's ID, index)] of the animation behind INPUTS channel ``key`` of ``ob``."""
+    """[(data path on ``input_curve_id``, index)] of the animation behind INPUTS channel ``key`` of ``ob``."""
     owner = input_owner(ob, key)
     if owner is None:
         return []
@@ -490,6 +497,8 @@ def curve_owner(ob, key):
     if is_blend_key(key):
         kb = blend_target(ob, key)
         return kb.id_data if kb is not None else None
+    if is_input_key(key):
+        return input_curve_id(ob, key)
     return shape_owner(ob, key) if is_shape_key(key) else ob.id_data
 
 
@@ -742,7 +751,7 @@ def shape_fcurves(ob, key):
 
 def input_fcurves(ob, key):
     paths = input_curve_paths(ob, key)
-    fcs = _fcurves(ob) if paths else None
+    fcs = compat.id_fcurve_collection(input_curve_id(ob, key)) if paths else None
     if fcs is None:
         return []
     out = []
@@ -821,7 +830,7 @@ def driver(ob, key):
         return ad.drivers.find(blend_path(kb.name)) if ad is not None else None
     if is_input_key(key):
         paths = input_curve_paths(ob, key)
-        ad = ob.id_data.animation_data if paths else None
+        ad = input_curve_id(ob, key).animation_data if paths else None
         if ad is None:
             return None
         return next((d for p, i in paths for d in [ad.drivers.find(p, index=max(i, 0))] if d is not None), None)
@@ -962,6 +971,19 @@ def shown_weight_keys(context=None):
         elif kind == "CUSTOM" and name.startswith(constrain_multi.WEIGHT):
             out.append(CUSTOM_PREFIX + name)
     return out
+
+
+def shown_deformer_keys(context=None):
+    """Channel keys of the attributes the Channel Box shows under the lead's open deformer nodes (bend1 Curvature, Low
+    Bound ...: operators/deformers.ATTRS). Maya's deformer attributes are keyable and S keys them on a selected
+    deformer node; here the node sits in the INPUTS of the deformed object and of its handle, so S keys the
+    attributes shown there along with the selection's own channels. A closed node stays unkeyed."""
+    ob = lead(context)
+    if ob is None or is_bone(ob):
+        return []
+    from ..operators import deformers
+    return [input_key(mod_type, nth, name) for kind, name, mod_type, nth in wanted_rows(ob)
+            if kind == "INPUT" and name.startswith(deformers.PREFIX)]
 
 
 def history_keys(ob):
@@ -2582,7 +2604,7 @@ def _act_break(self, context, ob, key):
     done = _act_delete(self, context, ob, key)
     dr = driver(ob, key)
     if dr is not None:
-        owner = curve_owner(ob, key) if is_blend_key(key) else ob.id_data
+        owner = curve_owner(ob, key) if is_blend_key(key) or is_input_key(key) else ob.id_data
         owner.animation_data.drivers.remove(dr)
         done = True
     return done

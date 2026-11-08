@@ -82,10 +82,13 @@ def new_name(base):
 
 class Attr:
     """One Maya attribute of a deformer node: ``kind`` = Channel Box entry kind (NONE / INT / BOOL / LENGTH /
-    ROTATION; LENGTH values are Blender metres, shown in display units)."""
+    ROTATION; LENGTH values are Blender metres, shown in display units). ``paths`` = [(modifier property, index)]
+    that hold the value: a key on the attribute keys them (Maya's deformer attributes are keyable), none = the
+    attribute can't be keyed."""
 
-    def __init__(self, key, label, kind, get, set_):
+    def __init__(self, key, label, kind, get, set_, paths=()):
         self.key, self.label, self.kind, self.get, self.set = key, label, kind, get, set_
+        self.paths = tuple(paths)
 
 
 def _prop(key, label, kind, prop, scale=1.0, offset=0.0):
@@ -94,7 +97,7 @@ def _prop(key, label, kind, prop, scale=1.0, offset=0.0):
 
     def set_(md, v):
         setattr(md, prop, type(getattr(md, prop))((v + offset) * scale))
-    return Attr(key, label, kind, get, set_)
+    return Attr(key, label, kind, get, set_, ((prop, -1),))
 
 
 def _limit(i):
@@ -105,7 +108,7 @@ def _limit(i):
         lim = list(md.limits)
         lim[i] = min(1.0, max(0.0, (v + 1.0) / 2.0))
         md.limits = lim
-    return get, set_
+    return get, set_, (("limits", i),)
 
 
 def _handle_scale(md):
@@ -121,7 +124,10 @@ def _handle_len(key, label, prop):
 
     def set_(md, v):
         setattr(md, prop, v * _handle_scale(md))
-    return Attr(key, label, "NONE", get, set_)
+    return Attr(key, label, "NONE", get, set_, ((prop, -1),))
+
+
+_SW_DIRECTIONS = (("use_positive_direction", -1), ("use_negative_direction", -1))
 
 
 def _sw_bidir_get(md):
@@ -172,8 +178,8 @@ ATTRS = {
     "wrap": [_ENVELOPE],
     "proximityWrap": [_ENVELOPE],
     "shrinkWrap": [_prop("offset", "Offset", "LENGTH", "offset"),
-                   Attr("bidirectional", "Bidirectional", "BOOL", _sw_bidir_get, _sw_bidir_set),
-                   Attr("reverse", "Reverse", "BOOL", _sw_reverse_get, _sw_reverse_set),
+                   Attr("bidirectional", "Bidirectional", "BOOL", _sw_bidir_get, _sw_bidir_set, _SW_DIRECTIONS),
+                   Attr("reverse", "Reverse", "BOOL", _sw_reverse_get, _sw_reverse_set, _SW_DIRECTIONS),
                    # Maya X / Y / Z = Blender X / Z / Y (Y-up -> Z-up)
                    _prop("alongX", "Along X", "BOOL", "use_project_x"),
                    _prop("alongY", "Along Y", "BOOL", "use_project_z"),
@@ -189,7 +195,7 @@ ATTRS = {
     "wave": [_handle_len("amplitude", "Amplitude", "height"), _handle_len("wavelength", "Wavelength", "width"),
              _handle_len("maxRadius", "Max Radius", "falloff_radius")],
     "textureDeformer": [_prop("strength", "Strength", "NONE", "strength"),
-                        Attr("offset", "Offset", "NONE", _tex_offset_get, _tex_offset_set)],
+                        Attr("offset", "Offset", "NONE", _tex_offset_get, _tex_offset_set, (("mid_level", -1),))],
     "curveWarp": [],
     # the wire modifier's inputs; Crossing Effect / Tension / Local Influence /
     # Scale[0] have no form in the kit wire (defaults 0 / 1 / 0 / 1 = no effect)

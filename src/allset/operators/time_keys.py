@@ -153,9 +153,10 @@ def set_key(context, breakdown=False, channels=""):
     only = CHANNEL_SETS.get(channels)
     from ..ui import cb_channels
     cb = _cb()
-    # the target weights of the constraint nodes open in the Channel Box (#329): keyed with the channels below, on
-    # every node that has the same constraint (like a typed value)
-    weights = cb.shown_weight_keys(context) if only is None else []
+    # the target weights of the constraint nodes and the attributes of the deformer nodes open in the Channel Box
+    # (#329, #339): keyed with the channels below, on every node that has the same constraint / deformer (like a typed
+    # value)
+    opened = cb.shown_weight_keys(context) + cb.shown_deformer_keys(context) if only is None else []
     count = 0
     for node in nodes(context):
         # Channel Box Sync Selection in Graph Editor on: S keys the selected channels (as in Maya)
@@ -163,7 +164,7 @@ def set_key(context, breakdown=False, channels=""):
         if synced is not None:
             keys = synced
         else:
-            keys = keyable_channels(node) + [k for k in weights if cb.has_channel(node, k)
+            keys = keyable_channels(node) + [k for k in opened if cb.has_channel(node, k)
                                              and not cb.is_hidden(node, k) and cb.driver(node, k) is None]
         for key in keys:
             if (only is None or key in only) and cb.is_keyable(node, key):

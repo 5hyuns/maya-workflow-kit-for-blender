@@ -102,7 +102,7 @@ ENTRIES = {
                      note="메뉴 · 셸프 · 마킹 명령도 반복 (Blender repeat_last 는 등록된 연산자만)"),
     "SetKey": _e("KIT", (OBJ, "allset.set_key", {}),
                   note="키 가능한 모든 채널 (가시성·커스텀 포함, Hide/Nonkeyable 제외), 포즈 모드 = 선택 본; "
-                       "활성 Keying Set 이 있으면 그것; Channel Box 에 열린 제약 노드의 가중치도; "
+                       "활성 Keying Set 이 있으면 그것; Channel Box 에 열린 제약 노드의 가중치·디포머 노드의 속성도; "
                        "어느 에디터든 (Screen: Channel Box · Outliner 위 등, 에디터 고유 S 가 먼저), 컴포넌트 모드 = 선택 점"),
     "TimeDraggerToolActivate": _e("KIT", ("Screen", "allset.tap_hold", {"binding": "time_drag"}),
                                   note="K 누른 채 LMB 드래그 = 시간 (어느 에디터든), 선택 그대로; Mesh knife K → "

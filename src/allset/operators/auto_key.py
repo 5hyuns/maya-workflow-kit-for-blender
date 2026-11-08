@@ -263,8 +263,10 @@ def key_changed(ob, frame, keyed=None):
         path, index = fc.data_path, fc.array_index
         if not moved(ob, path, index, value):
             continue
+        # a single value (a deformer's Curvature, Visibility) has a curve at index 0 but is keyed without an index
+        single = isinstance(ob.path_resolve(path), (int, float, bool))
         try:
-            ob.keyframe_insert(path, index=index, frame=frame, group=group)
+            ob.keyframe_insert(path, index=-1 if single else index, frame=frame, group=group)
             from . import graph_key_menu      # default tangents, like Maya
             graph_key_menu.after_insert(ob, path, index, frame)
             count += 1
