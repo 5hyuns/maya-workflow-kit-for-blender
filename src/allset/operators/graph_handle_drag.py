@@ -151,11 +151,12 @@ class Drag:
     """The handles one drag moves, with what they were at the press."""
 
     def __init__(self, context, handles, rows):
+        import numpy as np
         from . import graph_weights
-        region = context.region
-        v2d = region.view2d
-        x0, y0 = v2d.view_to_region(0.0, 0.0, clip=False)
-        x1, y1 = v2d.view_to_region(1.0, 1.0, clip=False)
+        from ..ui import graph_keys_draw as gk
+        # pixels per frame / per value from the exact mapping the handle ends are drawn with: View2D.view_to_region
+        # gives whole pixels, and a scale from those would leave a dragged handle end off the mouse
+        (x0, y0), (x1, y1) = gk.to_region(context.region, np.array(((0.0, 0.0), (1.0, 1.0))))
         self.px_frame = (x1 - x0) or 1.0
         self.px_value = (y1 - y0) or 1.0
         self.items = []
