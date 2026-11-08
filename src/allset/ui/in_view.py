@@ -16,8 +16,13 @@
   switch (``TURN``): dragging the ring turns the components about the view axis, a press on it also shows three
   rotate rings; the switch puts the manipulator on world axes, where its handles drive Translate / Scale / Rotate
   instead of the Local values. Both are display states of the manipulator (``tc_state``), not node values.
-- The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows (the shelf's way).
-  Dragging a row sideways changes the value, a click without a drag types it, Keep Faces Together toggles.
+- The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows, its title and the
+  drag-speed pie at the title's right end (the shelf's way). The selected row's name is yellow, the row under the
+  pointer white; a new node starts with its first number row selected. Dragging a row sideways changes the value
+  and selects the row, a click without a drag types it (an MMB click only selects it), Keep Faces Together
+  toggles. Values sit in dark fields. The pie (click / drag round it, empty to full clockwise from eight o'clock)
+  slows every row drag down to 2 %; dragging the title moves the box, which then keeps that offset from its place
+  beside the manipulator / object. Both are kept in the add-on preferences (``in_view_settings``).
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
   undo step, the edit itself is one) + the "only the last one" notice.
 - Object mode (T, Show Manipulator Tool, #327): like Maya, the selected object's input node shows without leaving
@@ -38,7 +43,7 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector, geometry
 
-from . import cb_entry, creation_inputs, manipulator
+from . import cb_entry, creation_inputs, in_view_settings, manipulator
 from .. import undo_steps
 from ..operators import bevel_maya, extrude, prim_history, prim_shapes, units   # bevel_maya: registers polyBevel
 from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec
@@ -77,9 +82,18 @@ BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)
 TEXT = (0.86, 0.86, 0.86, 1.0)
 HOT = (1.0, 1.0, 0.35, 1.0)        # Maya's highlighted attribute name
+LIT = (1.0, 1.0, 1.0, 1.0)         # the row under the pointer
+VALUE_BG = (0.10, 0.10, 0.10, 1.0)  # the dark field behind a value
 YELLOW = (1.0, 1.0, 0.0)
+VALUE_W = 56.0       # value field width, px at UI scale 1
+FAN_R = 8.0          # drag-speed pie radius, px at UI scale 1
+FAN_START = math.radians(210)   # an empty pie starts at eight o'clock and fills clockwise
+FAN_FILL = (0.45, 0.72, 1.0, 1.0)
+FAN_TRACK = (0.45, 0.72, 1.0, 0.45)
 
-_state = {"hot": 0, "handle": None}
+# hot = the selected row (yellow, the one MMB drags), hover = the row under the pointer (white), node = which node
+# the rows belong to (a new one selects its first number row)
+_state = {"hot": 0, "hover": -1, "node": None, "handle": None}
 
 
 def _scale():
@@ -293,6 +307,23 @@ def object_anchor(context, ob):
     return max(p.x for p in pts), (min(ys) + max(ys)) / 2
 
 
+def first_number_row(rec):
+    """Index of the first row that is not On / Off (a node of only switches: 0)."""
+    for i, field in enumerate(rec.spec.view_fields):
+        if field_kind(rec, field) != "BOOL":
+            return i
+    return 0
+
+
+def _sync_node(ob, rec):
+    """A node the rows didn't show before: its first number row is the selected one."""
+    key = (getattr(ob, "name", None), rec.name)
+    if key != _state["node"]:
+        _state["node"] = key
+        _state["hot"] = first_number_row(rec)
+        _state["hover"] = -1
+
+
 def current_layout(context):
     ob, rec = record(context)
     if rec is None or context.region is None or context.region.type != 'WINDOW' or context.region_data is None:
@@ -303,7 +334,34 @@ def current_layout(context):
         a, gap = object_anchor(context, ob), OBJECT_GAP
     if a is None:
         return None, None
-    return rec, layout(context.region, a, _scale(), rec.spec.view_fields, gap)
+    _sync_node(ob, rec)
+    dx, dy = in_view_settings.get_offset()
+    return rec, layout(context.region, a, _scale(), rec.spec.view_fields, (gap[0] + dx, gap[1] + dy))
+
+
+def fan_circle(lay, scale):
+    """(x, y, r) of the drag-speed pie at the right end of the title of layout ``lay``."""
+    x0, y0, x1, y1 = lay["title"]
+    return x1 - (FAN_R + 5.0) * scale, (y0 + y1) / 2, FAN_R * scale
+
+
+def fan_fraction(cx, cy, x, y):
+    """The pie's fraction (0..1) at a point: clockwise from eight o'clock."""
+    dx, dy = x - cx, y - cy
+    if dx * dx + dy * dy < 0.25:
+        return 0.0
+    return ((FAN_START - math.atan2(dy, dx)) % math.tau) / math.tau
+
+
+def on_fan(lay, scale, x, y):
+    cx, cy, r = fan_circle(lay, scale)
+    return math.hypot(x - cx, y - cy) <= r
+
+
+def on_title(lay, scale, x, y):
+    """On the title bar, off the pie: the handle that moves the box."""
+    x0, y0, x1, y1 = lay["title"]
+    return x0 <= x <= x1 and y0 <= y <= y1 and not on_fan(lay, scale, x, y)
 
 
 def field_kind(rec, field):
@@ -343,6 +401,23 @@ def _text(x, y, s, colour, size):
     blf.draw(0, s)
 
 
+def _draw_fan(cx, cy, r, fraction):
+    """The drag-speed pie: a thin full circle and the part ``fraction`` filled clockwise from eight o'clock."""
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    track = [(cx + r * math.cos(FAN_START - math.tau * i / 48), cy + r * math.sin(FAN_START - math.tau * i / 48))
+             for i in range(49)]
+    batch = batch_for_shader(shader, 'LINE_STRIP', {"pos": track})
+    shader.uniform_float("color", FAN_TRACK)
+    batch.draw(shader)
+    fraction = max(0.0, min(1.0, fraction))
+    steps = max(2, round(48 * fraction))
+    points = [(cx, cy)] + [(cx + r * math.cos(FAN_START - math.tau * fraction * i / steps),
+                            cy + r * math.sin(FAN_START - math.tau * fraction * i / steps)) for i in range(steps + 1)]
+    batch = batch_for_shader(shader, 'TRIS', {"pos": points}, indices=[(0, i, i + 1) for i in range(1, steps + 1)])
+    shader.uniform_float("color", FAN_FILL)
+    batch.draw(shader)
+
+
 def draw_box():
     """POST_PIXEL of 3D View WINDOW regions: the In-View Editor next to the extrude manipulator."""
     context = bpy.context
@@ -362,11 +437,16 @@ def draw_box():
     blf.size(0, size)
     tw = blf.dimensions(0, rec.name)[0]
     _text((x0 + x1 - tw) / 2, y0 + 4 * s, rec.name, TEXT, size)
+    _draw_fan(*fan_circle(lay, s), in_view_settings.get_sensitivity())
     for i, (field, rx0, ry0, rx1, ry1) in enumerate(lay["rows"]):
-        _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], HOT if i == _state["hot"] else TEXT, size)
+        hot = i == _state["hot"]
+        _text(rx0 + pad, ry0 + 4 * s, rec.spec.labels[field], HOT if hot else LIT if i == _state["hover"] else TEXT,
+              size)
         v = value_text(rec, field)
         blf.size(0, size)
-        _text(rx1 - pad - blf.dimensions(0, v)[0], ry0 + 4 * s, v, TEXT, size)
+        vx1 = rx1 - pad
+        _rect(vx1 - VALUE_W * s, ry0 + 2 * s, vx1 + 3 * s, ry1 - 1 * s, VALUE_BG)
+        _text(vx1 - blf.dimensions(0, v)[0], ry0 + 4 * s, v, HOT if hot else TEXT, size)
     gpu.state.blend_set('NONE')
 
 
@@ -389,11 +469,38 @@ class ALLSET_GT_in_view_row(bpy.types.Gizmo):
             return -1
         _f, x0, y0, x1, y1 = lay["rows"][self.row]
         if x0 <= location[0] <= x1 and y0 <= location[1] <= y1:
-            if _state["hot"] != self.row:
-                _state["hot"] = self.row
+            if _state["hover"] != self.row:        # white; a click / drag selects it (yellow)
+                _state["hover"] = self.row
                 context.region.tag_redraw()
             return 0
+        if _state["hover"] == self.row:
+            _state["hover"] = -1
+            context.region.tag_redraw()
         return -1
+
+
+class ALLSET_GT_in_view_title(bpy.types.Gizmo):
+    """The In-View Editor's title bar (off its pie): picking only, drawn by ``draw_box``"""
+    bl_idname = "ALLSET_GT_in_view_title"
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        _rec, lay = current_layout(context)
+        return 0 if lay is not None and on_title(lay, _scale(), *location) else -1
+
+
+class ALLSET_GT_in_view_fan(bpy.types.Gizmo):
+    """The In-View Editor's drag-speed pie: picking only, drawn by ``draw_box``"""
+    bl_idname = "ALLSET_GT_in_view_fan"
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        _rec, lay = current_layout(context)
+        return 0 if lay is not None and on_fan(lay, _scale(), *location) else -1
 
 
 class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
@@ -412,6 +519,8 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
             gz = self.gizmos.new(ALLSET_GT_in_view_row.bl_idname)
             gz.row = i
             gz.target_set_operator(ALLSET_OT_inview_drag.bl_idname).row = i
+        self.gizmos.new(ALLSET_GT_in_view_title.bl_idname).target_set_operator(ALLSET_OT_inview_move.bl_idname)
+        self.gizmos.new(ALLSET_GT_in_view_fan.bl_idname).target_set_operator(ALLSET_OT_inview_fan.bl_idname)
 
 
 # --- the extrude manipulator (3D gizmo) --------------------------------------------------
@@ -847,6 +956,20 @@ def commit(context, rec, changes):
     return {'FINISHED'}
 
 
+def _cursor(context, shape):
+    """Set (``shape``) or give back (None) a modal cursor of ``context.window``."""
+    window = getattr(context, "window", None)
+    if window is None:
+        return
+    try:
+        if shape is None:
+            window.cursor_modal_restore()
+        else:
+            window.cursor_modal_set(shape)
+    except (AttributeError, ReferenceError, RuntimeError, TypeError):
+        pass
+
+
 class ALLSET_OT_inview_drag(bpy.types.Operator):
     """In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it"""
     bl_idname = "allset.inview_drag"
@@ -874,12 +997,16 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
         self._x0, self._moved = event.mouse_x, False
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
         self._unit = units.maya_unit(context.scene)
+        self._cursor = self._button == 'MIDDLEMOUSE'
+        if self._cursor:
+            _cursor(context, 'MOVE_X')
+        _redraw(context)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def _value(self, event):
         s = _scale()
-        dx = (event.mouse_x - self._x0) / s
+        dx = (event.mouse_x - self._x0) / s * in_view_settings.speed()
         start = self._start[self._field]
         kind = field_kind(self._rec, self._field)
         if kind == "INT":
@@ -889,6 +1016,15 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
                                                                      else 1.0)
         value = round(start + dx * step, 4)
         return self._rec.clamp(self._field, value) if is_creation(self._rec) else clamp(self._field, value)
+
+    def _end(self, context):
+        if self._cursor:
+            _cursor(context, None)
+            self._cursor = False
+        _redraw(context)
+
+    def cancel(self, context):
+        self._end(context)
 
     def modal(self, context, event):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
@@ -903,13 +1039,91 @@ class ALLSET_OT_inview_drag(bpy.types.Operator):
             if self._moved:
                 preview(context, self._ob, self._rec, self._start, self._unit)
                 self._rec.live = False
-            _redraw(context)
+            self._end(context)
             return {'CANCELLED'}
         if event.type == self._button and event.value == 'RELEASE':
+            self._end(context)
             if self._moved:
                 commit(context, self._rec, {self._field: self._value(event)})
-            else:
+            elif self._button == 'LEFTMOUSE':      # an MMB click only selects the row
                 bpy.ops.allset.inview_type('INVOKE_DEFAULT', row=self.row)
+            _redraw(context)
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
+class ALLSET_OT_inview_fan(bpy.types.Operator):
+    """In-View Editor drag speed: click or drag round the pie (empty = slowest, full = full speed)"""
+    bl_idname = "allset.inview_fan"
+    bl_label = "In-View Editor Drag Speed"
+    bl_options = {'INTERNAL'}       # a setting of the editor, no undo step
+
+    @classmethod
+    def poll(cls, context):
+        return target(context)[1] is not None
+
+    def invoke(self, context, event):
+        _rec, lay = current_layout(context)
+        if lay is None:
+            return {'CANCELLED'}
+        self._cx, self._cy, _r = fan_circle(lay, _scale())
+        self._start = in_view_settings.get_sensitivity()
+        self._set(context, event)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _set(self, context, event):
+        in_view_settings.set_sensitivity(fan_fraction(self._cx, self._cy, event.mouse_region_x,
+                                                      event.mouse_region_y))
+        _redraw(context)
+
+    def modal(self, context, event):
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+            self._set(context, event)
+            return {'RUNNING_MODAL'}
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            in_view_settings.set_sensitivity(self._start)
+            _redraw(context)
+            return {'CANCELLED'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
+class ALLSET_OT_inview_move(bpy.types.Operator):
+    """Drag the In-View Editor by its title to move it"""
+    bl_idname = "allset.inview_move"
+    bl_label = "Move In-View Editor"
+    bl_options = {'INTERNAL'}       # where the box sits is no scene change: no undo step
+
+    @classmethod
+    def poll(cls, context):
+        return target(context)[1] is not None
+
+    def invoke(self, context, event):
+        self._start = in_view_settings.get_offset()
+        self._mouse = (event.mouse_x, event.mouse_y)
+        _cursor(context, 'SCROLL_XY')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        _cursor(context, None)
+
+    def modal(self, context, event):
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+            s = _scale() or 1.0
+            in_view_settings.set_offset(self._start[0] + (event.mouse_x - self._mouse[0]) / s,
+                                        self._start[1] + (event.mouse_y - self._mouse[1]) / s)
+            _redraw(context)
+            return {'RUNNING_MODAL'}
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            in_view_settings.set_offset(*self._start)
+            _cursor(context, None)
+            _redraw(context)
+            return {'CANCELLED'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            _cursor(context, None)
             _redraw(context)
             return {'FINISHED'}
         return {'RUNNING_MODAL'}
@@ -1251,9 +1465,10 @@ def draw_cb_node(layout, context, rec):
         split.prop(hist, f"{field}_text", text="")
 
 
-classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
-           ALLSET_GT_tc_space, ALLSET_GGT_extrude,
-           ALLSET_OT_inview_drag, ALLSET_OT_inview_type, ALLSET_OT_extrude_drag, ALLSET_OT_tc_space)
+classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GT_in_view_title, ALLSET_GT_in_view_fan,
+           ALLSET_GGT_in_view, ALLSET_GT_extrude_handle, ALLSET_GT_tc_space, ALLSET_GGT_extrude,
+           ALLSET_OT_inview_drag, ALLSET_OT_inview_fan, ALLSET_OT_inview_move, ALLSET_OT_inview_type,
+           ALLSET_OT_extrude_drag, ALLSET_OT_tc_space)
 
 
 def register():

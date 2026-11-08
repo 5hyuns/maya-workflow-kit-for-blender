@@ -150,6 +150,19 @@ def _circle(cx, cy, r, color, segments=24):
     _line(pts, color, 1.5)
 
 
+def _arc(cx, cy, r, progress, color, segments=48):
+    """A clockwise arc from twelve o'clock over ``progress`` (0..1) of the circle."""
+    import math
+    progress = max(0.0, min(1.0, progress))
+    if progress <= 0.0:
+        return
+    count = max(2, int(segments * progress))
+    # y is up: from +90 degrees, a falling angle runs clockwise
+    pts = [(cx + r * math.cos(math.pi / 2 - 2 * math.pi * progress * i / count),
+            cy + r * math.sin(math.pi / 2 - 2 * math.pi * progress * i / count)) for i in range(count + 1)]
+    _line(pts, color, 2.5)
+
+
 # --- marking menu -------------------------------------------------------------------
 
 # On = filled light blue: the earlier selection blue (0.32, 0.52, 0.65) hardly differed from the
@@ -188,14 +201,97 @@ def checked(action):
     except (ValueError, KeyError, AttributeError):
         return None
 
+ANCHOR = (0.95, 0.95, 0.95, 0.55)    # the line from a radial submenu to the centre it opened from
+RETURN = (0.30, 0.72, 1.0, 1.0)      # that centre's ring and arc while the pointer rests there
+ROUTE = (0.72, 0.84, 0.96, 0.92)     # Quick Gestures: a hidden mark's route and its menu names
+ROUTE_SHADE = (0.12, 0.22, 0.34, 0.42)
+ROUTE_LIVE = (0.34, 0.70, 1.0, 0.98)
+ROUTE_DIM = (0.78, 0.86, 0.94, 0.78)
+ROUTE_BG = (0.035, 0.055, 0.075, 0.88)
+ROUTE_RIM = (0.42, 0.52, 0.62, 0.72)
+ROUTE_TEXT = (0.82, 0.88, 0.94, 0.95)
+
+
+def _draw_route(s):
+    """Quick Gestures option, while a mark is hidden: a straight line through the centres of the menus the mark
+    passed (the press point, each submenu it entered) to the pointer, a dot and the name at each, and the radial
+    item it would pick at the pointer. Not the raw stroke."""
+    import math
+    points = [tuple(p) for p, _name in s.route] + [tuple(s.pos)]
+    _line(points, ROUTE_SHADE, 4.0)
+    _line(points, ROUTE, 2.0)
+    nodes = [(tuple(p), name) for p, name in s.route]
+    item = s.hover[0]
+    if item is not None and item.sub is None and item.enabled and item.label:
+        nodes.append((tuple(s.pos), item.label))
+    merged = []        # a name too near the previous one replaces it
+    for point, name in nodes:
+        if merged and math.hypot(point[0] - merged[-1][0][0], point[1] - merged[-1][0][1]) < 18.0:
+            merged[-1] = (point, name)
+        else:
+            merged.append((point, name))
+    k = ui_scale()
+    fs = font_size()
+    for i, ((px, py), name) in enumerate(merged):
+        last = i == len(merged) - 1
+        colour = ROUTE_LIVE if last else ROUTE_DIM
+        _circle(px, py, (7.0 if last else 3.5) * k, colour, segments=20)
+        _circle(px, py, 1.5 * k, colour, segments=12)
+        if not name:
+            continue
+        pad_x, pad_y = max(5.0, fs * 0.45), max(3.0, fs * 0.24)
+        lx = px + 10.0 * k
+        ly = py + (8.0 * k if i % 2 == 0 else -fs - 5.0 * k)      # alternate sides off the route line
+        box = (lx - pad_x, ly - pad_y, lx + measure(name) + pad_x, ly + fs + pad_y * 0.5)
+        _rect(box, ROUTE_BG)
+        _outline(box, ROUTE_LIVE if last else ROUTE_RIM)
+        _text(lx, ly, name, (1.0, 1.0, 1.0, 1.0) if last else ROUTE_TEXT)
+    _circle(*s.pos, 5.0 * k, ROUTE_LIVE, segments=20)
+
+
+def _draw_anchors(s, now):
+    """Submenu Return Ring option, in-place radial submenus: a line back to the centre each opened from and a ring
+    there. Resting on that centre goes back to its menu (``engine.Session._dwell_back``): the ring turns blue and
+    an arc fills clockwise until it does."""
+    resting = s.dwell_progress(now)
+    r = s.params.dead * 1.75
+    for (px, py), (qx, qy) in s.anchors():
+        _line([(px, py), (qx, qy)], ANCHOR, 1.5)
+        if resting is not None and resting[0] == (px, py):
+            _circle(px, py, r, RETURN, segments=32)
+            _arc(px, py, r + s.params.dead * 0.25, resting[1], RETURN)
+        else:
+            _circle(px, py, r, LINE, segments=32)
+
+
+def _near_centre(s, cx, cy):
+    """Submenu Return Ring option: the line from the centre to the pointer shows only near the menu's centre
+    or, in a radial submenu, near it or the centre it opened from."""
+    import math
+    x, y = s.pos
+    anchors = s.anchors()
+    if not anchors:
+        return math.hypot(x - cx, y - cy) <= max(32.0, s.params.dead * 2.0)
+    reach = max(24.0, s.params.dead * 2.5)
+    return any(math.hypot(x - px, y - py) <= reach or math.hypot(x - qx, y - qy) <= reach
+               for (px, py), (qx, qy) in anchors)
+
+
 def draw_session(s, now):
     if not s.visible(now):
-        _line(s.trail, LINE, 2.0)  # a quick mark: only the stroke
+        if s.params.quick_gestures:
+            _draw_route(s)
+        else:
+            _line(s.trail, LINE, 2.0)  # a quick mark: only the stroke
         return
     layers = s.layers()   # a list row's open cascade is drawn over the menu it hangs from
     _lay, (cx, cy), _hover = layers[0]
+    guides = s.params.submenu_guides
+    if guides:
+        _draw_anchors(s, now)
     _circle(cx, cy, s.params.dead, LINE)
-    _line([(cx, cy), s.pos], LINE, 1.5)
+    if not guides or _near_centre(s, cx, cy):
+        _line([(cx, cy), s.pos], LINE, 1.5)
     for lay, (cx, cy), hover in layers:
         _draw_layout(lay, cx, cy, hover)
 

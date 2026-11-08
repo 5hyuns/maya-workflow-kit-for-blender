@@ -14,6 +14,7 @@ import math
 
 from ..names import PRODUCT
 from . import menus as mm
+from .gesture_recognition import GestureRecognizer
 
 # Sector order for atan2 angles (0 = east, counter-clockwise, 45 degrees each).
 _SECTORS = ("E", "NE", "N", "NW", "W", "SW", "S", "SE")
@@ -38,15 +39,29 @@ class Params:
     ring_list_gap = 21.0   # ring bottom -> list top
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
+    # Options (add-on preferences, both off by default; marking/modal.py copies them in):
+    # quick_gestures (mm_quick_gestures): the menu stays hidden while the pointer keeps moving and shows after a
+    # pause of ``show_delay`` (then stays); a radial submenu entered by a hidden mark stays hidden too; a hidden mark
+    # picks radial items only, by the stroke's heading (gesture_recognition.py), and draw.py shows the names of the
+    # submenus it passed. Off: the menu shows ``show_delay`` after the press and once a submenu opens.
+    quick_gestures = False
+    # submenu_guides (mm_submenu_guides): a radial submenu is linked to the centre it opened from, with a ring there;
+    # resting within ``anchor_r`` of it for ``return_dwell`` s goes back to that menu (``Session._dwell_back``); the
+    # line from the centre to the pointer shows only near a centre.
+    submenu_guides = False
+    anchor_r = 33.0
+    return_dwell = 0.7
 
     SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
-             "ring_list_gap")
+             "ring_list_gap", "anchor_r")
+    FLAGS = ("show_delay", "click_time", "return_dwell", "quick_gestures", "submenu_guides")
 
     def scaled(self, k):
         p = Params()
         for name in self.SIZES:
             setattr(p, name, getattr(self, name) * k)
-        p.show_delay, p.click_time = self.show_delay, self.click_time
+        for name in self.FLAGS:
+            setattr(p, name, getattr(self, name))
         return p
 
 
@@ -523,6 +538,17 @@ class Session:
         self.hover = (None, False)
         self.result = None
         self.max_dist = 0.0
+        self._dwell = None            # (level, time) since the pointer rests on the centre that level opened from
+        self.time = t0                # of the last pointer event
+        # Quick Gestures option: the last pointer move, whether the menu was drawn (stays), whether a hidden mark
+        # entered a radial submenu (it stays hidden till the release), the route's menus [(centre, name)] and the
+        # heading of the stroke on the top level
+        self._last_move = t0
+        self._shown = False
+        self._fast_marking = False
+        self.route = [(origin, getattr(menu, "label", "") or "")]
+        self._gesture = GestureRecognizer()
+        self._gesture.reset(origin, t0)
 
     # -- state --------------------------------------------------------------
     @property
@@ -534,8 +560,18 @@ class Session:
         return self.stack[-1][1]
 
     def visible(self, t):
-        """Draw the menu? Not during a quick stroke (mark without looking)."""
-        return self.mode == "CLICK" or len(self.stack) > 1 or t - self.t0 >= self.params.show_delay
+        """Draw the menu? Not during a quick stroke (mark without looking). Quick Gestures option: not while the
+        pointer keeps moving - a pause of ``show_delay`` shows it for the rest of the interaction - and not after a
+        hidden mark entered a submenu."""
+        if not self.params.quick_gestures:
+            return self.mode == "CLICK" or len(self.stack) > 1 or t - self.t0 >= self.params.show_delay
+        if self.mode == "CLICK":
+            return True
+        if self._fast_marking:
+            return False
+        if not self._shown and t - self._last_move >= self.params.show_delay:
+            self._shown = True
+        return self._shown
 
     def _rel(self, x, y):
         return x - self.center[0], y - self.center[1]
@@ -563,11 +599,18 @@ class Session:
         self.openers.append(item if cascade else None)
         self.via.append(item)
         self.hover = (None, False)
+        if self.params.quick_gestures:
+            if self.mode == "PRESS" and not self._shown and not cascade:
+                self._fast_marking = True
+                self.route.append((at, item.label))
+            self._gesture.reset(at, self.time)      # the submenu's own strokes start where it opened
 
     def _pop_to(self, level):
         del self.stack[level + 1:]
         del self.openers[level + 1:]
         del self.via[level + 1:]
+        if self.params.quick_gestures:
+            self._gesture.reset(self.stack[-1][1], self.time)
 
     def _leave_sub(self, x, y):
         """Back out of an in-place radial submenu: with nothing of it under the pointer and the pointer back
@@ -583,6 +626,49 @@ class Session:
         if math.hypot(x - px, y - py) >= min(p.radius, math.hypot(sx - px, sy - py)) - p.dead:
             return False
         self._pop_to(len(self.stack) - 2)
+        return True
+
+    def _dwell_back(self, x, y, t):
+        """Back out of an in-place radial submenu whose item lies toward the menu it opened from (``_leave_sub``
+        only goes back through an empty sector): the pointer resting within ``anchor_r`` of that menu's centre,
+        off the submenu's boxes and away from its own centre, for ``return_dwell`` s closes it. A quick stroke
+        through that centre (a two-stroke mark) never rests long enough. Returns True when one closed."""
+        top = len(self.stack) - 1
+        if top < 1 or self.openers[top] is not None:
+            self._dwell = None
+            return False
+        p = self.params
+        lay, (cx, cy) = self.stack[top]
+        px, py = self.stack[top - 1][1]
+        if math.hypot(x - px, y - py) > p.anchor_r or math.hypot(x - cx, y - cy) < p.anchor_r \
+                or lay.hit(x - cx, y - cy, rects_only=True)[0] is not None:
+            self._dwell = None
+            return False
+        if self._dwell is None or self._dwell[0] != top:
+            self._dwell = (top, t)
+        if t - self._dwell[1] < p.return_dwell:
+            return False
+        self._dwell = None
+        self._pop_to(top - 1)
+        return True
+
+    def anchors(self):
+        """[(parent centre, submenu centre)] for each open in-place radial submenu, bottom first: draw.py links
+        them and rings the parent centre (the way back)."""
+        return [(self.stack[k - 1][1], self.stack[k][1]) for k in range(1, len(self.stack))
+                if self.openers[k] is None]
+
+    def dwell_progress(self, t):
+        """(parent centre, 0..1) while the pointer rests on the centre the top submenu goes back to, else None."""
+        if self._dwell is None or self._dwell[0] != len(self.stack) - 1:
+            return None
+        return self.stack[self._dwell[0] - 1][1], min(1.0, (t - self._dwell[1]) / self.params.return_dwell)
+
+    def tick(self, t):
+        """Timer: a rest on a parent centre closes the submenu without a mouse move. True while one runs."""
+        if self._dwell is None or not self.params.submenu_guides:
+            return False
+        self.move(*self.pos, t)
         return True
 
     def _hit_stack(self, x, y):
@@ -629,11 +715,27 @@ class Session:
     # -- input ----------------------------------------------------------------
     def move(self, x, y, t):
         self.pos = (x, y)
+        self.time = t
         self.trail.append((x, y))
         ox, oy = self.press
         self.max_dist = max(self.max_dist, math.hypot(x - ox, y - oy))
-        level, item, opt = self._hit_stack(x, y)
+        quick = self.params.quick_gestures and self.mode == "PRESS" and not self.visible(t)
+        heading = None
+        if self.params.quick_gestures:
+            self._last_move = t     # after visible(t): a pause before this move has shown the menu
+            heading = self._gesture.update(x, y, t)
+        if quick:
+            # a hidden mark: only the radial items, by the stroke's heading (outside the dead zone) - list rows and
+            # option boxes the stroke passes over are not picked
+            lay, (cx, cy) = self.stack[-1]
+            if math.hypot(x - cx, y - cy) < self.params.dead:
+                heading = None
+            level, item, opt = len(self.stack) - 1, lay.radial.get(heading) if heading else None, False
+        else:
+            level, item, opt = self._hit_stack(x, y)
         while item is None and self._leave_sub(x, y):
+            level, item, opt = self._hit_stack(x, y)
+        if self.params.submenu_guides and self._dwell_back(x, y, t):
             level, item, opt = self._hit_stack(x, y)
         if level < len(self.stack) - 1:
             if item is self.openers[level + 1]:
@@ -653,7 +755,7 @@ class Session:
         # A radial one only from its own sector: Maya-wide N / S boxes reach into the diagonal
         # sectors, and a quick NE / NW gesture crossing them must not open the N submenu.
         if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius \
-                and direction(dx, dy, self.params.dead) == item.key:
+                and (heading if quick else direction(dx, dy, self.params.dead)) == item.key:
             self._push(item, (x, y))
         elif item.kind == "list" and _inside(item.rect, dx, dy):
             self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]), cascade=True)
@@ -699,7 +801,7 @@ class Session:
             return self._cancel()
         self._closed = self.via[-1]
         self._pop_to(len(self.stack) - 2)
-        self.move(*self.pos, 0.0)
+        self.move(*self.pos, self.time)
         return None
 
     def _finish(self, item, opt):

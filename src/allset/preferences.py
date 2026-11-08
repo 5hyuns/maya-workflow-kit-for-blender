@@ -76,6 +76,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya mode on/off (switch.py), kept across restarts. Off after install: enabling the
     # extension changes nothing until the user opts in (welcome dialog / button / switch).
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
+
+    # In-View Editor (ui/in_view_settings.py): the drag speed set with the pie in its title (1 = full speed) and
+    # how far its title was dragged from its place beside the manipulator / object (px at UI scale 1).
+    hud_drag_sensitivity: bpy.props.FloatProperty(
+        name="In-View Editor Drag Speed", default=1.0, min=0.0, max=1.0, subtype='FACTOR', options={'HIDDEN'})
+    in_view_offset_x: bpy.props.FloatProperty(default=0.0, options={'HIDDEN'})
+    in_view_offset_y: bpy.props.FloatProperty(default=0.0, options={'HIDDEN'})
     # Edit-mode marquee/lasso also selects occluded components, like Maya.
     select_through: bpy.props.BoolProperty(
         name="Marquee Selects Hidden Components",
@@ -449,6 +456,20 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
                                                "the current one (on by default, like Maya)",
         default=True)
+    # Extra marking menu behaviour (marking/engine.Params), off by default.
+    mm_quick_gestures: bpy.props.BoolProperty(
+        name="Quick Gestures",
+        description="Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after "
+                    "a pause; a hidden mark picks radial items only, by the stroke's latest direction, also in "
+                    "submenus, and shows the names of the menus it passed (off: the menu shows a moment after the "
+                    "press, like Maya)",
+        default=False)
+    mm_submenu_guides: bpy.props.BoolProperty(
+        name="Submenu Return Ring",
+        description="A radial submenu is linked by a line to the centre of the menu it opened from, with a ring "
+                    "there: resting the pointer on that ring for a moment goes back to that menu. The line from the "
+                    "centre to the pointer shows only near a centre",
+        default=False)
 
     # Shelf: current tab (factory file name or "USER:<name>").
     shelf_current: bpy.props.StringProperty(options={'HIDDEN'})
@@ -609,6 +630,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "marking_menu_style")
         row.prop(self, "hotbox_style", text="")
         row.prop(self, "hotbox_all_sets")
+        row = box.row()
+        row.prop(self, "mm_quick_gestures")
+        row.prop(self, "mm_submenu_guides")
         row = box.row()
         row.prop(self, "show_status_line")
         row.prop(self, "show_command_line")
