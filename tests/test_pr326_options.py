@@ -1,7 +1,8 @@
 """Shared attribute editing / modeling history / Bridge (#326): the default state keeps the kit's earlier behaviour.
 
 Persistent Modeling History is a Preferences option, off by default: then a mesh keeps only its newest kit node, for
-the session, and nothing extra is written into the mesh or the file.
+the session, and nothing extra is written into the mesh or the file. Option Boxes in Floating Windows is off by
+default too (the dialog stays; tests/gui/gui_step103_option_windows.py and gui_step162_option_windows.py).
 """
 from importlib import import_module
 
@@ -36,6 +37,7 @@ def _cube_top_extruded_twice():
 def test_new_options_default_to_the_earlier_behaviour():
     prefs = preferences.get()
     assert prefs.model_history_files is False
+    assert prefs.option_boxes_floating is False        # option boxes open the kit's dialog
     assert prefs.cb_manipulators == 'STANDARD'
     assert prefs.inview_editors is True
 

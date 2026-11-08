@@ -39,6 +39,7 @@ def event(type, value, **kw):
 @step
 def start():
     setup()
+    mod('preferences').get().option_boxes_floating = True   # Option Boxes in Floating Windows (off by default)
     check('unused Options schemas are not allocated at startup', not mod('ui.option_editor')._groups)
     with main_context():
         C['objects'] = len(bpy.context.scene.objects)

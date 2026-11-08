@@ -17,6 +17,7 @@ def viewport():
 @step
 def start():
     setup()
+    mod('preferences').get().option_boxes_floating = True   # Option Boxes in Floating Windows (off by default)
     mod('preferences').get().maya_layout_on_open=False
     with viewport():
         bpy.ops.allset.opt_poly_cube('INVOKE_DEFAULT')

@@ -426,6 +426,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="In-View Messages", description="Short fading messages in the view when you group, hide, toggle "
                                              "object/component selection (F8), soft select or Make Live, like Maya",
         default=True)
+    # Off by default: option boxes open the kit's dialog (ui/option_editor.py).
+    option_boxes_floating: bpy.props.BoolProperty(
+        name="Option Boxes in Floating Windows",
+        description="A menu item's option box opens its options in a floating window that stays open, with Apply, "
+                    "Save Settings, Reset Settings and Close, and several can stay open together (off: a dialog "
+                    "that closes when the command runs)",
+        default=False)
     maya_panel_menus: bpy.props.BoolProperty(
         name="Panel Menus",
         description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
@@ -683,7 +690,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "maya_dock_colors")
         row.prop(self, "maya_uv_manipulator")
-        box.prop(self, "in_view_messages")
+        row = box.row()
+        row.prop(self, "in_view_messages")
+        row.prop(self, "option_boxes_floating")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps

@@ -5,8 +5,11 @@ Maya opens a window per command with its fields (labels right-aligned, field + s
 Reset Settings) and three buttons: the command ("Create", "Extrude", ...), Apply (run, keep the window) and Close; the
 values are kept between sessions. Fields, labels and defaults below follow Maya's windows.
 
-Each ``Window`` becomes one operator ``allset.opt_<key>`` and a modeless editor with command, Apply, Close,
-Save Settings and Reset Settings controls. ``Window.run`` maps the Maya values onto the kit or
+Each ``Window`` becomes one operator ``allset.opt_<key>`` drawn with ``invoke_props_dialog`` (confirm = the
+command's button, Blender's cancel = Close); Apply / Save Settings / Reset Settings are toggle buttons inside the
+dialog whose update callbacks act at once and spring back. With Preferences > Option Boxes in Floating Windows the
+same fields open in a floating window instead (ui/option_editor.py) with command, Apply, Close, Save Settings and
+Reset Settings buttons. ``Window.run`` maps the Maya values onto the kit or
 Blender operator. ``find(action)`` ties a window to a menu / marking menu / shelf action, so every option box of
 that action opens it, and a plain click uses the saved values once the user has applied or saved them (Maya runs a
 menu item with its option values).
@@ -792,7 +795,11 @@ def _make(window):
                     setattr(self, name, val)
                 except (TypeError, ValueError):
                     pass
-        return bpy.ops.allset.option_editor_open(key=window.key, values=json.dumps(values_of(window, self)))
+        from .. import preferences
+        if preferences.get(context).option_boxes_floating:
+            return bpy.ops.allset.option_editor_open(key=window.key, values=json.dumps(values_of(window, self)))
+        return context.window_manager.invoke_props_dialog(self, width=window.width, title=window.title,
+                                                          confirm_text=window.action)
 
     def draw(self, context):
         layout = self.layout
@@ -861,7 +868,8 @@ def draw_fields(window, layout, holder):
         elif f.kind == "curve":
             cell.prop_search(holder, f.name, bpy.data, 'objects', text=f.label.rstrip(':'))
         elif f.kind == "ramp":
-            cell.operator('allset.bridge_ramp', text='Edit Taper Curve').options = True
+            if not isinstance(holder, bpy.types.Operator):   # the graph edits the floating window's values
+                cell.operator('allset.bridge_ramp', text='Edit Taper Curve').options = True
         else:
             cell.prop(holder, f.name, text=f.label.rstrip(":"))
     if window.missing:

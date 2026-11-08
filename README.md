@@ -406,9 +406,9 @@ or Spline interpolation. Enter applies one undoable edit and Esc cancels. Edit P
 curve for normal curve editing, which updates the Bridge. Smooth centerlines use quintic endpoint interpolation.
 Offset or tilted borders and Taper can still give a different shape than Maya's Bridge.
 
-Command Options open in modeless floating editors with the same Ctrl+mouse numeric gestures, Apply, Save Settings
-and Reset Settings. Different command options can stay open together. Commands run in the editor that opened their
-options. Numeric attributes share the same preview and commit rules across the Channel Box and Attribute Editor.
+With **Option Boxes in Floating Windows** on (Preferences, off by default), command options open in floating
+windows that stay open, with the same Ctrl+mouse numeric gestures, Apply, Save Settings and Reset Settings.
+Different command options can stay open together. Commands run in the editor that opened their options. Numeric attributes share the same preview and commit rules across the Channel Box and Attribute Editor.
 
 ---
 
