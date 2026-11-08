@@ -25,6 +25,25 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   (menus stay hidden while the pointer keeps moving and a mark picks radial items by its direction) and Submenu Return
   Ring (rest on the ring at the parent menu's centre to go back to it) (from @LoongVeeng, #301 — thank you!).
 
+- Ctrl + left / middle / right drag on a number field of the Attribute Editor, the Channel Box, option windows and
+  the 3D View sidebar changes it in fine / normal / coarse steps, like Maya; Esc restores the value and a drag is
+  one undo step.
+- Channel Box INPUTS: the attributes of a modeling node (Extrude, Bevel, Bridge, Add Divisions) are channels. Click
+  a name to select it and middle-drag in the view to change it (also in component mode), type one value into every
+  selected channel and object, and lock them. The Channel Box settings menu has Standard / Invisible / No
+  Manipulators, and Display > Heads Up Display > In-View Editors shows or hides the In-View Editor.
+- Edit Mesh > Bridge makes an editable polyBridgeEdge node: Bridge Type (Linear path, Smooth path, Smooth path +
+  curve), Divisions, Twist, Taper, Bridge Offset, Direction, Smoothing Angle and a Taper Curve graph, also in Bridge
+  Options. Edit Mesh > Add Divisions makes an editable polySubdFace node.
+- Two Preferences options, both off by default: Persistent Modeling History (every modeling node of a mesh stays
+  editable, also after reopening the file; changing an earlier node replays the later ones, and Rebind Selection
+  picks new components when one is gone) and Option Boxes in Floating Windows (option boxes open in windows that
+  stay open, several at a time) (from @youngmin2k, #326 — thank you!).
+
+### Changed
+- Simplified Chinese translation: about 300 labels and tooltips corrected, with consistent terms, clearer wording and
+  Chinese punctuation (from @RIPTIDE-z, #260 — thank you!).
+
 ### Fixed
 - A keyed constraint target weight now drives the constraint while you scrub, on objects and joints. S keys the
   weights shown under a constraint node opened in Channel Box INPUTS (pCube1W0 ...) along with the node's channels,
