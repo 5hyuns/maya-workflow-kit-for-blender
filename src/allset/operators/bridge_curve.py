@@ -322,6 +322,23 @@ def changed(_scene, depsgraph):
             _revisions[data.data.session_uid] = _revisions.get(data.data.session_uid, 0)+1
 
 
+def _refresh_newest(ob, changed_curves):
+    """Without Persistent Modeling History: the object's newest kit node, when it is a Bridge along a changed path
+    curve, is rebuilt along the new curve."""
+    from . import extrude, units
+    if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH':
+        return
+    record = extrude.current(ob) if ob.mode == 'EDIT' else extrude.object_record(ob)
+    if record is None or record.spec.kind != 'BRIDGE' or record.params.get('curve_type') != 2:
+        return
+    if curve_object(ob, record.params).data.session_uid not in changed_curves:
+        return
+    extrude.preview(ob, record, dict(record.params), units.maya_unit(bpy.context.scene))
+    if record.fast_preview:
+        extrude.capture_preview(ob, record)
+    record.live = False
+
+
 def refresh():
     global _updating
     if not _dirty or _updating:
@@ -335,7 +352,13 @@ def refresh():
     try:
         for ob in tuple(bpy.data.objects):
             data = model_history.read(ob)
-            if data is None or model_history.ensure(ob) is None:
+            if data is None:
+                try:
+                    _refresh_newest(ob, changed_curves)
+                except (ValueError, ReferenceError, RuntimeError):
+                    pass
+                continue
+            if model_history.ensure(ob) is None:
                 continue
             for node in data['nodes']:
                 if node['kind'] != 'BRIDGE' or node['params'].get('curve_type') != 2:

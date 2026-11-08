@@ -77,3 +77,21 @@ def test_the_field_gesture_watch_does_not_hold_back_autosave():
     listeners = import_module(kit.MODULE + '.modal_listeners')
     assert 'ALLSET_OT_attribute_field_watch' in listeners.NAMES
     assert 'ALLSET_OT_attribute_field_drag' not in listeners.NAMES
+
+
+def test_without_persistent_history_a_bridge_follows_its_path_curve():
+    from test_bridge_paths import bridge_object
+    curve = import_module(kit.MODULE + '.operators.bridge_curve')
+    nodes = import_module(kit.MODULE + '.ui.node_attributes')
+    assert not preferences.get().model_history_files
+    ob, record = bridge_object()
+    node = nodes.target(bpy.context)
+    assert nodes.apply(bpy.context, node, dict(node.params, curve_type=2)) == {'FINISHED'}
+    path = curve.curve_object(ob, record.params)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    before = ex.mesh_coords_hash(ob.data)
+    path.data.splines[0].points[2].co.x += 1
+    curve._dirty.add(path.data.session_uid)
+    curve.refresh()
+    assert ex.mesh_coords_hash(ob.data) != before
+    assert ex.object_record(ob) is record and not record.live
