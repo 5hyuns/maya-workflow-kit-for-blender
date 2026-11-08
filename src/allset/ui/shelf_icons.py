@@ -18,6 +18,7 @@ picture into a GPU texture for ``ui/shelf.py``'s icon row.
 """
 
 import math
+import os
 from collections import OrderedDict
 
 import numpy as np
@@ -3002,7 +3003,7 @@ def builtin_icon_gpu_report():
     for name in names:
         asset_name = _BUILTIN_ICON_PNG_ALIASES.get(name, name).casefold()
         path = png_paths.get(asset_name)
-        if ((path and __import__("os").path.isfile(path))
+        if ((path and os.path.isfile(path))
                 or asset_name in packed_names):
             supported.append(name)
         else:
