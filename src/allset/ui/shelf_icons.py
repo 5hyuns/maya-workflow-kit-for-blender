@@ -2541,8 +2541,7 @@ def _blender_icon_archive_index():
     import os
     import zipfile
 
-    source_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    archive_path = os.path.join(source_root, "allset", "icons", "blender_icons.zip")
+    archive_path = os.path.join(_package_dir(), "icons", "blender_icons.zip")
     if not os.path.isfile(archive_path):
         _BLENDER_ICON_ARCHIVE_INDEX = {}
         return _BLENDER_ICON_ARCHIVE_INDEX
@@ -2568,18 +2567,27 @@ def _blender_icon_archive_index():
     return _BLENDER_ICON_ARCHIVE_INDEX
 
 
-def _blender_icon_cache_dir():
-    """Session cache for icons extracted on demand; never writes into the extension install."""
+def _package_dir():
+    """The kit's package folder (``.../allset``)."""
     import os
-    import tempfile
-    import bpy
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # Blender's temporary directory keeps this derived cache out of the user's
-    # persistent configuration. The packed ZIP remains the only installed source.
-    base = getattr(bpy.app, "tempdir", "") or tempfile.gettempdir()
-    folder = os.path.join(base, "allset_blender_icon_cache")
-    os.makedirs(folder, exist_ok=True)
+
+def _user_folder(name=None):
+    """A folder in the kit's own user data, next to ``shelves.json`` (the extension's user
+    directory); nothing is written to the user's Blender config or temp folders."""
+    import os
+    from . import shelf
+    folder = os.path.dirname(shelf.store_path())
+    if name:
+        folder = os.path.join(folder, name)
+        os.makedirs(folder, exist_ok=True)
     return folder
+
+
+def _blender_icon_cache_dir():
+    """Cache for icons extracted on demand from the packed archive."""
+    return _user_folder("blender_icon_cache")
 
 
 def _packed_blender_icon_path(identifier):
@@ -2637,27 +2645,13 @@ def _png_icon_paths(refresh=False):
     if _ICON_PNG_PATHS is not None and not refresh:
         return _ICON_PNG_PATHS
     import os
-    import bpy
-    source_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    folders = [
-        source_root,
-        os.path.join(source_root, "icons"),
-        os.path.join(source_root, "allset", "icons"),
-        os.path.join(source_root, "allset", "ui", "icons"),
-        os.path.join(os.path.dirname(source_root), "icons"),
-        os.path.join(os.path.dirname(source_root), "user_data", "icons"),
-        os.path.join(source_root, "user_data", "icons"),
-        os.path.join(source_root, "user_data", "blender_icons"),
-        os.path.join(source_root, "allset", "ui", "blender_icons"),
-    ]
+    folders = [os.path.join(_package_dir(), "icons")]
     try:
-        package_name = __package__.split(".", 1)[0]
-        user_root = bpy.utils.extension_path_user(package_name, create=True)
+        user_root = _user_folder()
         folders.extend((os.path.join(user_root, "shelf_icons"),
                         os.path.join(user_root, "custom_icons"),
-                        os.path.join(user_root, "icons"),
-                        os.path.join(user_root, "user_data", "icons")))
-    except (AttributeError, RuntimeError, ValueError):
+                        os.path.join(user_root, "icons")))
+    except (AttributeError, OSError, RuntimeError, ValueError):
         pass
     paths = {}
     for folder in folders:
@@ -2684,24 +2678,11 @@ def _preview_cache_path(key):
     """Stable per-icon preview path so procedural previews survive Blender restarts."""
     import hashlib
     import os
-    import bpy
 
     digest = hashlib.sha256(
         f"v{_PREVIEW_CACHE_VERSION}:{key}".encode("utf-8")
     ).hexdigest()[:24]
-    try:
-        folder = bpy.utils.user_resource(
-            'CONFIG', path="allset_shelf_icon_previews", create=True
-        )
-    except (AttributeError, RuntimeError, TypeError):
-        folder = None
-    if not folder:
-        folder = os.path.join(
-            bpy.app.tempdir or os.path.abspath(os.path.expanduser("~")),
-            "allset_shelf_icon_previews",
-        )
-    os.makedirs(folder, exist_ok=True)
-    return os.path.join(folder, digest + ".png")
+    return os.path.join(_user_folder("shelf_icon_previews"), digest + ".png")
 
 
 def _write_preview_png(key, pixels):

@@ -243,6 +243,22 @@ def test_icon_registry_recognizes_builtin_png_and_maya_icons():
         assert icons.is_icon_name("PNG:" + filename)
 
 
+
+def test_icon_caches_stay_in_the_kit_user_folder():
+    """Icons taken out of the packed archive and icon previews are written next to shelves.json (the extension's
+    user folder), never to Blender's config folder; PNG icons are looked up only in the kit's own folders."""
+    icons = shelf.shelf_icons
+    norm = lambda p: os.path.normcase(os.path.abspath(p))
+    user = norm(os.path.dirname(shelf.store_path()))
+    package = norm(os.path.dirname(os.path.dirname(icons.__file__)))
+    packed = icons._packed_blender_icon_path("CUBE")
+    assert packed and os.path.isfile(packed) and norm(packed).startswith(user), packed
+    assert norm(icons._preview_cache_path("test")).startswith(user)
+    config = bpy.utils.user_resource('CONFIG')
+    assert not os.path.exists(os.path.join(config, "allset_shelf_icon_previews"))
+    for path in icons._png_icon_paths(refresh=True).values():
+        assert norm(path).startswith(package) or norm(path).startswith(user), path
+
 def test_shelf_editor_three_way_merge_preserves_concurrent_edits():
     editor = import_module(kit.MODULE + ".ui.shelf_editor")
     base = {
