@@ -3,6 +3,14 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Modify > Match Transformations with rig controls: the last picked node is the source and every node picked before
+  it receives its transform, whether it is an object or a bone. A control (an IK hand, say) picked first and a
+  locator picked last now puts the control on the locator; before, the whole rig object moved. Match Pivots takes
+  a control picked last as its target point (#338).
+
 ## [0.13.0] — 2026-11-07
 
 ### Added

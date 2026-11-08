@@ -172,24 +172,44 @@ def _set_maya_frame(node, m):
         node.matrix_world = m
 
 
+def _posable(ob):
+    return ob.type == 'ARMATURE' and ob.pose is not None and ob.mode != 'EDIT'
+
+
+def picked_bones(ob):
+    """The joints / controls picked on skeleton ``ob``: its selected shown pose bones. They stay selected when another
+    object is picked after them (the pick leaves Pose mode but keeps them), so a selected skeleton with picked bones
+    stands for those bones, not for the armature object."""
+    if not _posable(ob):
+        return []
+    from .. import compat
+    return [pb for pb in ob.pose.bones if pb.select and not compat.bone_hidden(pb)]
+
+
+def lead_bone(ob):
+    """The active pose bone of skeleton ``ob`` (Pose mode, or Object mode with an active bone), else None."""
+    if not _posable(ob) or ob.data.bones.active is None:
+        return None
+    return ob.pose.bones.get(ob.data.bones.active.name)
+
+
 def match_lead(context):
-    """(lead, others) of Maya Match Transformations: the last selected node is the lead. A joint lead = the active pose
-    bone in pose mode (picking a joint enters Pose mode, the objects picked before stay selected), or the
-    active bone of an active armature in object mode."""
+    """(lead, others) of Maya Match Transformations: the last picked node is the lead, every node picked before it
+    receives. The active object is the last pick; on a skeleton its active bone (#338). The others are the selected
+    objects, a selected skeleton with picked bones standing for those bones: a control picked first and a locator
+    picked last moves the control, whether its rig is still in Pose mode or the pick left it."""
     lead = context.view_layer.objects.active
     if lead is None:
         return None, []
-    others = [ob for ob in context.selected_objects if ob is not lead]
-    if lead.type == 'ARMATURE' and lead.pose is not None:
-        pb = None
-        if lead.mode == 'POSE':
-            pb = context.active_pose_bone
-            others += [b for b in (context.selected_pose_bones or ()) if b != pb and b.id_data == lead]
-        elif lead.data.bones.active is not None:
-            pb = lead.pose.bones.get(lead.data.bones.active.name)
-        if pb is not None:
-            return pb, others
-    return lead, others
+    pb = lead_bone(lead)
+    others = []
+    for ob in context.selected_objects:
+        if ob is lead:
+            if pb is not None:
+                others += [b for b in picked_bones(ob) if b != pb]
+            continue
+        others += picked_bones(ob) or [ob]
+    return pb if pb is not None else lead, others
 
 
 def match_transform(context, translate=True, rotate=True, scale=True):
@@ -261,7 +281,7 @@ class ALLSET_OT_align_objects(bpy.types.Operator):
 
 
 class ALLSET_OT_match_transform(bpy.types.Operator):
-    """Match the transforms of the selected objects to the last selected one
+    """Match the transforms of the selected objects, joints and controls to the last selected one
     (Maya Modify > Match Transformations)"""
     bl_idname = "allset.match_transform"
     bl_label = "Match Transformations"

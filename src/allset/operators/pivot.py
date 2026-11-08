@@ -455,18 +455,23 @@ class ALLSET_OT_bake_pivot(_PivotOp, bpy.types.Operator):
 
 
 class ALLSET_OT_match_pivots(_PivotOp, bpy.types.Operator):
-    """Move the pivots of the selected objects onto the last selected object's pivot
+    """Move the pivots of the selected objects onto the pivot of the last selected object or joint
     (Maya Modify > Match Transformations > Match Pivots)"""
     bl_idname = "allset.match_pivots"
     bl_label = "Match Pivots"
 
     def execute(self, context):
-        lead = context.view_layer.objects.active
-        others = [ob for ob in _selected(context) if ob is not lead]
-        if lead is None or not others:
+        from . import snap_align
+        # the last picked node (a joint / control included) gives the point; a picked bone has no pivot of its own
+        lead, nodes = snap_align.match_lead(context)
+        others = [ob for ob in nodes if isinstance(ob, bpy.types.Object)]
+        if lead is None or not nodes:
             self.report({'WARNING'}, "Select the objects, then the target last")
             return {'CANCELLED'}
-        p = lead.matrix_world.translation.copy()
+        if not others:
+            self.report({'WARNING'}, "A joint or control has no pivot of its own to match")
+            return {'CANCELLED'}
+        p = snap_align._maya_frame(lead).translation.copy()
         for ob in freeze.parents_first(others):
             context.view_layer.update()
             match_pivot(ob, p)
