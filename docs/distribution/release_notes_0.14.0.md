@@ -53,8 +53,7 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 
 - In-View Editor: a middle drag changes values more slowly than Maya's, and the editor sits beside its object rather
   than at a fixed place in the view.
-- Bridge: a plain click makes no divisions (Maya's plain Bridge uses 5); set Divisions in the Channel Box or Bridge
-  Options.
+- Bridge: a plain click makes no divisions, unlike Maya; set Divisions in the Channel Box or Bridge Options.
 - The known differences listed in `CHANGELOG.md` still apply.
 
 ## Thank you
