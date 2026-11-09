@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Simplified Chinese (zh_HANS) translations of the kit's labels and tooltips: {English: translation}.
+"""Traditional Chinese (zh_HANT) translations of the kit's labels and tooltips: {English: translation}.
 
 Kept sorted; ``python tools/i18n_strings.py`` reports coverage and stale keys. Corrections by native
 speakers are welcome."""
