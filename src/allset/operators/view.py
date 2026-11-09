@@ -36,13 +36,7 @@ class ALLSET_OT_tumble(bpy.types.Operator):
         return context.region_data is not None
 
     def invoke(self, context, event):
-        from .. import preferences
-        if tumble_locked(context.region_data, preferences.get(context).lock_ortho_tumble):
-            return {'FINISHED'}
-        camera_navigation(context)
-        started = bpy.ops.view3d.rotate('INVOKE_DEFAULT')
-        if event.type == 'LEFTMOUSE' and 'RUNNING_MODAL' in started:
-            bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held='LEFTMOUSE', other='MIDDLEMOUSE')
+        start_tumble(context, chord=event.type == 'LEFTMOUSE')
         return {'FINISHED'}
 
 
@@ -56,17 +50,68 @@ class ALLSET_OT_track_view(bpy.types.Operator):
         return context.region_data is not None
 
     def invoke(self, context, event):
-        started = bpy.ops.view3d.move('INVOKE_DEFAULT')
-        if event.type == 'MIDDLEMOUSE' and 'RUNNING_MODAL' in started:
-            bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held='MIDDLEMOUSE', other='LEFTMOUSE')
+        start_track(context, chord=event.type == 'MIDDLEMOUSE')
         return {'FINISHED'}
 
 
-# --- Alt+LMB+MMB dolly (#325) ---------------------------------------------------------------------
-# Maya dollies while both the left and the middle button are held with Alt (handy on a tablet pen). Blender's tumble /
-# track modals run on; this watcher sits in front of them: the second button press starts allset.dolly and passes
-# on, and the modal keymaps end the tumble / track on that press ("View3D Rotate / Move Modal" CONFIRM items).
-NAV_MODALS = {"VIEW3D_OT_rotate", "VIEW3D_OT_move"}
+# --- Alt+LMB+MMB dolly (#325, #343) ------------------------------------------------------------------
+# Maya dollies while both the left and the middle button are held with Alt (handy on a tablet pen), and letting go of
+# one of them carries on with the button still held: LMB tumbles, MMB tracks. Blender's tumble / track modals run on;
+# a watcher sits in front of the running navigation and, on each press / release of these two buttons, starts the
+# navigation of the buttons now held with a new watcher in front of it, then passes the event on: the modal keymaps
+# end Blender's tumble / track / zoom on it ("View3D Rotate / Move / Zoom Modal" CONFIRM items) and the chord dolly
+# ends on either release.
+NAV_MODALS = {"VIEW3D_OT_rotate", "VIEW3D_OT_move", "VIEW3D_OT_zoom", "ALLSET_OT_dolly"}
+CHORD_BUTTONS = ('LEFTMOUSE', 'MIDDLEMOUSE')
+CHORD_MODES = {frozenset({'LEFTMOUSE'}): 'TUMBLE', frozenset({'MIDDLEMOUSE'}): 'TRACK',
+               frozenset(CHORD_BUTTONS): 'DOLLY'}
+
+
+def chord_held(held, event_type, value):
+    """The navigation buttons held after a mouse event, or None when the event does not change them (a quick
+    second press can arrive as a double click)."""
+    held = frozenset(held)
+    if event_type not in CHORD_BUTTONS:
+        return None
+    if value in {'PRESS', 'DOUBLE_CLICK'} and event_type not in held:
+        return held | {event_type}
+    if value == 'RELEASE' and event_type in held:
+        return held - {event_type}
+    return None
+
+
+def chord_mode(held):
+    """Maya's Alt navigation for the held buttons: LMB tumble, MMB track, both dolly; None once both are let go."""
+    return CHORD_MODES.get(frozenset(held))
+
+
+def start_tumble(context, chord=False):
+    """Start Blender's tumble (not in a locked ortho view); ``chord``: LMB is held, watch the middle button."""
+    from .. import preferences
+    if tumble_locked(context.region_data, preferences.get(context).lock_ortho_tumble):
+        return
+    camera_navigation(context)
+    started = bpy.ops.view3d.rotate('INVOKE_DEFAULT')
+    if chord and 'RUNNING_MODAL' in started:
+        bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held={'LEFTMOUSE'})
+
+
+def start_track(context, chord=False):
+    """Start Blender's track; ``chord``: MMB is held, watch the left button."""
+    started = bpy.ops.view3d.move('INVOKE_DEFAULT')
+    if chord and 'RUNNING_MODAL' in started:
+        bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held={'MIDDLEMOUSE'})
+
+
+def start_chord_dolly(context):
+    """Start the dolly of both buttons and watch for either release."""
+    bpy.ops.allset.dolly('INVOKE_DEFAULT', chord=True)
+    bpy.ops.allset.nav_chord('INVOKE_DEFAULT', held=set(CHORD_BUTTONS))
+
+
+CHORD_STARTS = {'TUMBLE': lambda context: start_tumble(context, chord=True),
+                'TRACK': lambda context: start_track(context, chord=True),
+                'DOLLY': start_chord_dolly}
 
 
 class ALLSET_OT_nav_chord(bpy.types.Operator):
@@ -75,8 +120,8 @@ class ALLSET_OT_nav_chord(bpy.types.Operator):
     bl_label = "Navigation Chord"
     bl_options = {'INTERNAL'}
 
-    held: bpy.props.StringProperty(default='LEFTMOUSE', options={'SKIP_SAVE'})
-    other: bpy.props.StringProperty(default='MIDDLEMOUSE', options={'SKIP_SAVE'})
+    held: bpy.props.EnumProperty(items=[(b, b, "") for b in CHORD_BUTTONS], default={'LEFTMOUSE'},
+                                 options={'ENUM_FLAG', 'SKIP_SAVE'})
 
     def invoke(self, context, event):
         context.window_manager.modal_handler_add(self)
@@ -86,13 +131,16 @@ class ALLSET_OT_nav_chord(bpy.types.Operator):
         window = context.window
         ops = getattr(window, "modal_operators", None) if window is not None else None
         if ops is not None and not any(op.bl_idname in NAV_MODALS for op in ops):
-            return {'FINISHED', 'PASS_THROUGH'}      # the tumble / track ended some other way
-        if event.type == self.other and event.value == 'PRESS':
-            bpy.ops.allset.dolly('INVOKE_DEFAULT', chord=True)
+            return {'FINISHED', 'PASS_THROUGH'}      # the navigation ended some other way
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
             return {'FINISHED', 'PASS_THROUGH'}
-        if (event.type == self.held and event.value == 'RELEASE') or                 (event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS'):
-            return {'FINISHED', 'PASS_THROUGH'}
-        return {'PASS_THROUGH'}
+        held = chord_held(self.held, event.type, event.value)
+        if held is None:
+            return {'PASS_THROUGH'}
+        mode = chord_mode(held)
+        if mode is not None:
+            CHORD_STARTS[mode](context)
+        return {'FINISHED', 'PASS_THROUGH'}
 
 
 def emulated_alt_drag(context):

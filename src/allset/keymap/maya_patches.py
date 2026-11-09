@@ -282,12 +282,20 @@ def patch_camera(kd):
     # locked the persp view like a top / front / side view (#288).
     for snap in ("AXIS_SNAP_ENABLE", "AXIS_SNAP_DISABLE"):
         kd.remove("View3D Rotate Modal", snap)
-    # Alt+LMB+MMB = dolly, whichever button comes first (#325): the kit's tumble / track start a watcher that
-    # starts the dolly on the second button, and the tumble / track end on that press.
+    # Alt+LMB+MMB = dolly, whichever button comes first (#325), and letting go of one of them carries on with the
+    # button still held (#343): the kit's tumble / track / chord dolly start a watcher that starts the next navigation
+    # on each press / release of these two buttons, and the running one ends on that event. A tumble / track the
+    # watcher starts on a release ends on the release of the button still held.
     kd.remove("3D View", "view3d.move", type="MIDDLEMOUSE", alt=True)
     _add(kd, "3D View", "allset.track_view", make_event("MIDDLEMOUSE", alt=True))
-    kd.add("View3D Rotate Modal", "CONFIRM", make_event("MIDDLEMOUSE", any=True))
-    kd.add("View3D Move Modal", "CONFIRM", make_event("LEFTMOUSE", any=True))
+    for km, other, held in (("View3D Rotate Modal", "MIDDLEMOUSE", "LEFTMOUSE"),
+                            ("View3D Move Modal", "LEFTMOUSE", "MIDDLEMOUSE")):
+        kd.add(km, "CONFIRM", make_event(other, any=True))
+        kd.add(km, "CONFIRM", make_event(other, "DOUBLE_CLICK", any=True))     # a quick second press
+        kd.add(km, "CONFIRM", make_event(held, "RELEASE", any=True))
+    # through a camera the chord dolly is Blender's zoom: it ends when either button is let go
+    for button in ("LEFTMOUSE", "MIDDLEMOUSE"):
+        kd.add("View3D Zoom Modal", "CONFIRM", make_event(button, "RELEASE", any=True))
     # Alt+RMB dolly reads the drag itself: Blender's zoom axis is a preference the kit no longer sets (#51)
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),

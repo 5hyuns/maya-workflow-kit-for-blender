@@ -76,26 +76,39 @@ def test_grow_shrink_keys():
             assert _any_event(km, type, shift=shift) == [idname], (km, type, shift, _any_event(km, type, shift=shift))
 
 
-def _modal_items(name, type):
+def _modal_items(name, type, value='PRESS'):
     km = bpy.context.window_manager.keyconfigs.active.keymaps.get(name)
-    return [k.propvalue for k in (km.keymap_items if km else ()) if k.active and k.type == type and k.value == 'PRESS']
+    return [k.propvalue for k in (km.keymap_items if km else ()) if k.active and k.type == type and k.value == value]
+
+
+# (modal keymap, button, value): the items that end Blender's tumble / track / zoom when the chord changes
+CHORD_MODAL_ITEMS = (("View3D Rotate Modal", 'MIDDLEMOUSE', 'PRESS'),
+                     ("View3D Rotate Modal", 'MIDDLEMOUSE', 'DOUBLE_CLICK'),
+                     ("View3D Rotate Modal", 'LEFTMOUSE', 'RELEASE'),
+                     ("View3D Move Modal", 'LEFTMOUSE', 'PRESS'),
+                     ("View3D Move Modal", 'LEFTMOUSE', 'DOUBLE_CLICK'),
+                     ("View3D Move Modal", 'MIDDLEMOUSE', 'RELEASE'),
+                     ("View3D Zoom Modal", 'LEFTMOUSE', 'RELEASE'),
+                     ("View3D Zoom Modal", 'MIDDLEMOUSE', 'RELEASE'))
 
 
 def test_alt_lmb_mmb_dolly_keys():
     """Alt+LMB tumble / Alt+MMB track start the kit's chord watcher; the second button ends Blender's tumble /
-    track (its modal maps), and disabling the kit takes those modal items back."""
+    track, letting go of one ends the dolly / zoom and the tumble / track started then (its modal maps), and
+    disabling the kit takes those modal items back."""
     _one("3D View", "allset.tumble", "LEFTMOUSE", alt=True)
     _one("3D View", "allset.track_view", "MIDDLEMOUSE", alt=True)
     assert not _kmis("3D View", "view3d.move", "MIDDLEMOUSE", alt=True)
-    assert _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE') == ["CONFIRM"]
-    assert _modal_items("View3D Move Modal", 'LEFTMOUSE') == ["CONFIRM"]
+    for name, type, value in CHORD_MODAL_ITEMS:
+        assert _modal_items(name, type, value) == ["CONFIRM"], (name, type, value, _modal_items(name, type, value))
     kit.disable()
     try:
-        assert "CONFIRM" not in _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE')
-        assert "CONFIRM" not in _modal_items("View3D Move Modal", 'LEFTMOUSE')
+        for name, type, value in CHORD_MODAL_ITEMS:
+            assert "CONFIRM" not in _modal_items(name, type, value), (name, type, value)
     finally:
         kit.enable()
-    assert _modal_items("View3D Rotate Modal", 'MIDDLEMOUSE') == ["CONFIRM"]
+    for name, type, value in CHORD_MODAL_ITEMS:
+        assert _modal_items(name, type, value) == ["CONFIRM"], (name, type, value)
 
 
 def test_box_select_modes():
