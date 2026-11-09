@@ -338,6 +338,7 @@ def restore(state):
                     bm.verts[i].co = co
                     changed = True
             if changed:
+                bm.normal_update()      # Preserve UVs (Blender's UV correction) projects through these normals
                 bmesh.update_edit_mesh(ob.data)
             continue
         name, m = item

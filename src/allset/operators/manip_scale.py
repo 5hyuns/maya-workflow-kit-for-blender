@@ -283,6 +283,9 @@ def restore(state):
         for i, co in coords:
             if i < n:
                 bm.verts[i].co = co
+        # normals of the put-back points: Blender's UV correction (Preserve UVs) and the Normal orientation of the
+        # next resize read them, and a cancelled drag leaves them for the next Move / Edge slide
+        bm.normal_update()
         bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
 
 

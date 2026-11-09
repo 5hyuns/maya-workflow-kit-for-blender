@@ -185,6 +185,7 @@ def _transform_components(context, kind, vals, relative):
             if v.select and not v.hide:
                 v.co = local @ v.co
                 done += 1
+        bm.normal_update()      # fresh normals for the next Move with Preserve UVs (Blender's UV correction)
         bmesh.update_edit_mesh(ob.data)
     return done
 

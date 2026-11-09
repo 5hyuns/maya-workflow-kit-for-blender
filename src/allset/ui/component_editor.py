@@ -238,6 +238,7 @@ def set_position(ob, vi, axis, value, scene):
     if ob.mode == 'EDIT':
         bm = _edit_bm(ob)
         bm.verts[vi].co[k] = v
+        bm.normal_update()      # fresh normals for the next Move with Preserve UVs (Blender's UV correction)
         bmesh.update_edit_mesh(ob.data, loop_triangles=True, destructive=False)
     else:
         ob.data.vertices[vi].co[k] = v

@@ -2,9 +2,9 @@
 """Maya's Transform Constraint for the Move tool in mesh edit mode.
 
 Edge: dragging a Move handle (or MMB anywhere) slides the selection along its edges — vertices with Blender's
-Vertex Slide, edges / faces with Edge Slide (Vertex Slide when Blender finds no edge loop to slide). Surface:
-the drag moves the selection with each point snapped to the nearest surface of the mesh. Along Normals: the drag
-moves each point along its own normal (Blender's Shrink / Fatten). Off: the Move tool as before. Ctrl+Shift+MMB slides along edges whatever the setting (Maya's quick edge slide).
+Vertex Slide, edges / faces with Edge Slide (Vertex Slide when Blender finds no edge loop to slide); the UVs follow
+the slide only with Preserve UVs on. Surface: the drag moves the selection with each point snapped to the nearest
+surface of the mesh. Along Normals: the drag moves each point along its own normal (Blender's Shrink / Fatten). Off: the Move tool as before. Ctrl+Shift+MMB slides along edges whatever the setting (Maya's quick edge slide).
 """
 import bpy
 
@@ -40,6 +40,12 @@ def vertex_only(select_mode):
     return bool(select_mode[0]) and not select_mode[1] and not select_mode[2]
 
 
+def slide_options(context):
+    """Edge / vertex slide options: the UVs follow the slide only with Preserve UVs on, like Maya (Blender's slides
+    correct UVs by default)."""
+    return {"correct_uv": bool(context.scene.tool_settings.use_transform_correct_face_attributes)}
+
+
 def slide(context, kind, release_confirm=True, axes=None):
     """Start the slide drag (INVOKE). Returns the operator result set. `axes` = (constraint_axis, orient_type,
     orient_matrix) of the Move handle being dragged: Surface then moves along that axis / plane before each point
@@ -55,14 +61,15 @@ def slide(context, kind, release_confirm=True, axes=None):
                                            snap_elements={'FACE_NEAREST'}, snap_target='CLOSEST',
                                            use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True,
                                            **extra)
+    options = slide_options(context)
     if not vertex_only(context.tool_settings.mesh_select_mode):
         try:
-            res = bpy.ops.transform.edge_slide('INVOKE_DEFAULT', release_confirm=release_confirm)
+            res = bpy.ops.transform.edge_slide('INVOKE_DEFAULT', release_confirm=release_confirm, **options)
         except RuntimeError:
             res = {'CANCELLED'}
         if res & {'RUNNING_MODAL', 'FINISHED'}:
             return res
-    return bpy.ops.transform.vert_slide('INVOKE_DEFAULT', release_confirm=release_confirm)
+    return bpy.ops.transform.vert_slide('INVOKE_DEFAULT', release_confirm=release_confirm, **options)
 
 
 class ALLSET_OT_xform_constraint(bpy.types.Operator):

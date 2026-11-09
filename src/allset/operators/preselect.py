@@ -46,6 +46,7 @@ ROTATE_RING = 1.25                  # Transform tool (Blender's gizmo): disc of 
 
 _last = []    # the live group (tests read its gizmo)
 _cache = {}   # object pointer -> MeshCache
+_held = {}    # object pointer -> edit BMesh wrapper of a cache dropped while a transform ran (see _drop_caches)
 _coordinate_session = None  # Quad Draw modal: topology is fixed until release
 
 
@@ -247,6 +248,8 @@ class MeshCache:
 
 
 def caches(context):
+    if _held and not _edit_modal_running():
+        _held.clear()
     out = []
     objects = context.selected_objects if context.mode == 'OBJECT' else context.objects_in_mode_unique_data or ()
     for ob in objects:
@@ -282,6 +285,29 @@ def invalidate(_scene=None, depsgraph=None):
                 c._sel = None
             return
     _coordinate_session=None
+    _drop_caches()
+
+
+def _edit_modal_running():
+    wm = getattr(bpy.context, "window_manager", None)
+    if wm is None:
+        return False
+    from .uv_arrays import editing_now
+    return editing_now(wm)
+
+
+def _drop_caches():
+    """Forget the caches. While a transform / mesh modal runs, the edit BMesh wrappers they held stay referenced
+    until it ends: when the last Python reference to an edit BMesh goes, Python frees the element-pointer layers
+    it added to that BMesh, which moves every loop's data in memory, and Blender's UV correction (Preserve UVs,
+    the edge / vertex slide) keeps pointers into that data for the whole drag: the slid UVs would land on
+    (0, 0) or be written into freed memory."""
+    if _edit_modal_running():
+        for ptr, c in _cache.items():
+            if c.editing and c.bm is not None:
+                _held[ptr] = c.bm
+    else:
+        _held.clear()
     _cache.clear()
 
 
@@ -581,5 +607,6 @@ def clear():
     _coordinate_session=None
     _last.clear()
     _cache.clear()
+    _held.clear()
     if invalidate in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(invalidate)
