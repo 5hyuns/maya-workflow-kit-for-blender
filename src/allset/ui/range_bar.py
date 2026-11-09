@@ -47,6 +47,8 @@ _handle = []
 # the spare room it sees (the spacer after the end fields).
 _extra = {}      # area pointer -> extra ui units of the bar label
 _planned = {}    # area pointer -> the label's base ui units this draw (time_slider.row_plan: shorter on a short header)
+_gaps = {}       # area pointer -> (header size and bar width, (span, spare)) of the last header row read
+row_reads = [0]  # header rows read so far
 SPARE_UNITS = 1  # room left in the spacer
 SHRINK_UNITS = 4  # step back when the spacer is gone (the header ran out of room)
 
@@ -266,6 +268,26 @@ def _read_row(region, y):
     return [tuple(buf[0][i][:3]) for i in range(region.width)]
 
 
+def find_gap(area, region, unit, playing):
+    """(span, spare) of the bar's gap in the header just drawn: ``bar_span`` and ``spare_after`` of one header row
+    (``row_reads[0]`` counts the reads). While playback runs the header keeps its layout, so the gap found for the
+    same header size and bar width is used again instead of reading the row every frame (a framebuffer read
+    and a scan of every pixel)."""
+    key = (region.width, region.height, unit, plan_units(area), extra_units(area))
+    got = _gaps.get(area.as_pointer())
+    if playing and got is not None and got[0] == key:
+        return got[1]
+    row_reads[0] += 1
+    row = _read_row(region, region.height // 2)
+    if len(row) < 3:
+        _gaps.pop(area.as_pointer(), None)
+        return None
+    span = bar_span(row, row[2], min_w=(key[3] + min(0, key[4])) * unit * 0.6)
+    found = (span, spare_after(row, span[1], row[2]) if span is not None else 0)
+    _gaps[area.as_pointer()] = (key, found)
+    return found
+
+
 def draw():
     """POST_PIXEL of Dope Sheet HEADER regions."""
     context = bpy.context
@@ -274,10 +296,11 @@ def draw():
         return
     scale = context.preferences.system.ui_scale or 1.0
     unit = round(20 * scale)
-    row = _read_row(region, region.height // 2)
-    if len(row) < 3:
+    screen = context.screen
+    found = find_gap(area, region, unit, screen is not None and screen.is_animation_playing)
+    if found is None:
         return
-    span = bar_span(row, row[2], min_w=(plan_units(area) + min(0, extra_units(area))) * unit * 0.6)
+    span, spare = found
     if span is None:
         _bars.pop(area.as_pointer(), None)
         if _extra.pop(area.as_pointer(), 0):    # the bar no longer fits: start again from its base width
@@ -286,7 +309,7 @@ def draw():
     key = area.as_pointer()
     extra = _extra.get(key, 0)
     planned = plan_units(area)
-    grown = next_extra(extra, spare_after(row, span[1], row[2]), unit, floor=-max(0, int(planned - MIN_BAR_UNITS)))
+    grown = next_extra(extra, spare, unit, floor=-max(0, int(planned - MIN_BAR_UNITS)))
     if grown != extra:
         _extra[key] = grown
         _redraw_later(key)
@@ -427,5 +450,6 @@ def unregister():
     _bars.clear()
     _extra.clear()
     _planned.clear()
+    _gaps.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
