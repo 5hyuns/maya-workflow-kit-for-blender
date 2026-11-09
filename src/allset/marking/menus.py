@@ -399,9 +399,9 @@ PIVOT_EDIT = MarkingMenu(
 
 SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
     "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
-    "SE": ("Harden Edge", "mesh.mark_sharp"),
+    "SE": ("Harden Edge", _item("Mesh Display/Harden Edge")),
     "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),   # PolygonSoftenHarden
-    "NE": ("Soften Edge", ("mesh.mark_sharp", {"clear": True})),
+    "NE": ("Soften Edge", _item("Mesh Display/Soften Edge")),
 }, options={"Soften/Harden"})
 
 # Maya's Polygon Display submenus (Shift+RMB lists): the Display > Polygons check boxes of the 3D View.
@@ -476,11 +476,11 @@ SHIFT_OBJECT = MarkingMenu(
         "N": ("Target Weld Tool", TARGET_WELD),
         "W": ("Multi-Cut", MULTI_CUT),
         "NW": ("Sculpt Tool", ("object.mode_set", {"mode": 'SCULPT'})),
-        "SE": ("Soften/Harden Edges", Sub(radial={  # object level
+        "SE": ("Soften/Harden Edges", Sub(radial={  # object level: the Mesh Display items, like the edge menu
             "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
-            "SE": ("Harden Edge", "object.shade_flat"),
-            "E": ("Soften/Harden", "object.shade_auto_smooth"),
-            "NE": ("Soften Edge", "object.shade_smooth"),
+            "SE": ("Harden Edge", _item("Mesh Display/Harden Edge")),
+            "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),
+            "NE": ("Soften Edge", _item("Mesh Display/Soften Edge")),
         }, options={"Soften/Harden"})),
     },
     items=[

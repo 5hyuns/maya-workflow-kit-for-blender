@@ -132,6 +132,86 @@ def soften_harden(bm, angle, edges=None):
             f.smooth = True
 
 
+# Blender's Shade Auto Smooth adds a "Smooth by Angle" Geometry Nodes modifier (pinned last in the stack) that sets
+# the edge sharpness again after every other change: it hardens each soft edge whose faces meet at more than its
+# angle, so a soft edge written into the mesh stayed hard on screen (#342). Maya's newer soften / harden wins over
+# the older one, so the command takes its place.
+SMOOTH_BY_ANGLE = "Smooth by Angle"
+
+
+def _group_name(name):
+    head, dot, tail = name.rpartition(".")
+    return head if dot and tail.isdigit() else name
+
+
+def smooth_by_angle_mods(ob):
+    """The object's Smooth by Angle modifiers, in stack order."""
+    return [md for md in ob.modifiers if md.type == 'NODES' and md.node_group is not None
+            and _group_name(md.node_group.name) == SMOOTH_BY_ANGLE]
+
+
+def smooth_by_angle_inputs(md):
+    """(Angle in radians, Ignore Sharpness) of a Smooth by Angle modifier."""
+    from .. import compat
+    values = {}
+    for item in md.node_group.interface.items_tree:
+        if getattr(item, "in_out", None) == 'INPUT' and item.name in ("Angle", "Ignore Sharpness"):
+            value = compat.gn_input_get(md, item.identifier)
+            values[item.name] = getattr(item, "default_value", None) if value is None else value
+    angle = values.get("Angle")
+    return (math.radians(30.0) if angle is None else float(angle)), bool(values.get("Ignore Sharpness", False))
+
+
+def smooth_by_angle(bm, angle, ignore):
+    """Write what a Smooth by Angle modifier shows into ``bm``: a soft edge (any edge with ``ignore``) stays soft when
+    its faces meet at ``angle`` radians or less and all of them shade smooth, else it turns hard; then every face
+    shades smooth."""
+    bm.normal_update()
+    for e in bm.edges:
+        if ignore or e.smooth:
+            e.smooth = e.calc_face_angle(0.0) <= angle and (ignore or all(f.smooth for f in e.link_faces))
+    for f in bm.faces:
+        f.smooth = True
+
+
+def _flags(bm):
+    return [e.smooth for e in bm.edges], [f.smooth for f in bm.faces]
+
+
+def _set_flags(bm, flags):
+    for e, s in zip(bm.edges, flags[0]):
+        e.smooth = s
+    for f, s in zip(bm.faces, flags[1]):
+        f.smooth = s
+
+
+def soften_harden_edit(ob, bm, angle, edges=None):
+    """Soften / harden ``edges`` (None = every edge) of the edit mesh ``bm`` so the result shows. A Smooth by Angle
+    modifier that would turn one of those edges back gives way: what it shows is written into every edge first (the
+    other edges keep their look), then it is removed."""
+    mods = [md for md in smooth_by_angle_mods(ob) if md.show_viewport]
+    if not mods:
+        soften_harden(bm, angle, edges)
+        return
+    bm.edges.index_update()
+    targets = [e.index for e in (bm.edges if edges is None else edges)]
+    before = _flags(bm)
+    soften_harden(bm, angle, edges)
+    want = _flags(bm)
+    for md in mods:
+        smooth_by_angle(bm, *smooth_by_angle_inputs(md))
+    shown = _flags(bm)
+    if all(shown[0][i] == want[0][i] for i in targets):
+        _set_flags(bm, want)          # nothing hidden: the modifier stays
+        return
+    _set_flags(bm, before)
+    for md in mods:
+        smooth_by_angle(bm, *smooth_by_angle_inputs(md))
+        ob.modifiers.remove(md)
+    bm.edges.ensure_lookup_table()
+    soften_harden(bm, angle, None if edges is None else [bm.edges[i] for i in targets])
+
+
 class ALLSET_OT_soften_harden(bpy.types.Operator):
     """Soften edges whose faces meet at less than the angle, harden the rest: the selected edges in
     component mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)"""
@@ -158,13 +238,18 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
         for ob in _meshes(context):
             if ob.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(ob.data)
-                soften_harden(bm, self.angle, None if self.whole else ([e for e in bm.edges if e.select] or None))
+                soften_harden_edit(ob, bm, self.angle,
+                                   None if self.whole else ([e for e in bm.edges if e.select] or None))
                 if self.whole:
                     for seq in (bm.verts, bm.edges, bm.faces):
                         for el in seq:
                             el.select = False
                 bmesh.update_edit_mesh(ob.data)
             else:
+                # every edge gets its new state: nothing older decides the shading any more (Blender's Shade Smooth /
+                # Shade Flat remove Smooth by Angle too)
+                for md in smooth_by_angle_mods(ob):
+                    ob.modifiers.remove(md)
                 bm = bmesh.new()
                 bm.from_mesh(ob.data)
                 soften_harden(bm, self.angle)
