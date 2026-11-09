@@ -84,6 +84,8 @@ def set_label(bone, side=None, type=None, other_type=None, draw=None):
         bone[OTHER] = str(other_type)
     if draw is not None:
         bone[DRAW] = bool(draw)
+    from ..ui import maya_joints
+    maya_joints.changed()       # an ID property write sends no depsgraph update
 
 
 SUFFIX = {CENTER: "", LEFT: " (L)", RIGHT: " (R)", NO_SIDE: " (None)"}
@@ -521,9 +523,34 @@ def _armatures(view_layer):
     return [objects[n] for n in got[1] if n in objects]
 
 
+_labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)]) kept while playback runs
+
+
+def _pose_labels(ob, playing):
+    """[(pose bone name, text, side)] of ``ob``'s joints with Draw Label on. While playback runs only the pose
+    changes, so the joints found on the first frame are used again until something is edited (every pose bone
+    was asked each frame)."""
+    from ..ui import maya_joints
+    key = (maya_joints._EDITS[0], ob.data.as_pointer(), len(ob.pose.bones))
+    got = _labelled.get(ob.as_pointer())
+    if playing and got is not None and got[0] == key:
+        return got[1]
+    out = [(pb.name, label_text(pb.bone), get_label(pb.bone)[0]) for pb in ob.pose.bones
+           if pb.bone.get(DRAW) and not pb.bone.hide]
+    if playing:
+        if len(_labelled) > 32:
+            _labelled.clear()
+        _labelled[ob.as_pointer()] = (key, out)
+    else:
+        _labelled.pop(ob.as_pointer(), None)
+    return out
+
+
 def label_points(context):
     """[(world point, text, side)] for every visible joint with Draw Label on."""
     out = []
+    screen = getattr(context, "screen", None)
+    playing = screen is not None and screen.is_animation_playing
     for ob in _armatures(context.view_layer):
         if ob is None or not ob.visible_get():
             continue
@@ -531,7 +558,9 @@ def label_points(context):
         if ob.mode == 'EDIT':
             bones = [(eb, eb.head) for eb in ob.data.edit_bones if not eb.hide and eb.get(DRAW)]
         elif ob.pose is not None:
-            bones = [(pb.bone, pb.head) for pb in ob.pose.bones if pb.bone.get(DRAW) and not pb.bone.hide]
+            pbs = ob.pose.bones
+            out += [(mw @ pbs[name].head, text, side) for name, text, side in _pose_labels(ob, playing)]
+            continue
         else:
             bones = [(b, b.head_local) for b in ob.data.bones if b.get(DRAW) and not b.hide]
         out += [(mw @ head, label_text(b), get_label(b)[0]) for b, head in bones]

@@ -446,15 +446,188 @@ def _sphere_array(js):
         return np.zeros((0, 3), np.float32), order
     c = np.array([tuple(js[n].centre) for n in order], np.float64)                  # (N, 3)
     f = np.array([[tuple(r) for r in js[n].frame] for n in order], np.float64)      # (N, 3, 3) rows
-    r = np.array([js[n].radius for n in order], np.float64)[:, None, None]
-    t = np.arange(SEGMENTS) * (2.0 * math.pi / SEGMENTS)
-    cos, sin = np.cos(t)[:, None], np.sin(t)[:, None]
-    rings = []
-    for a, b in ((0, 1), (1, 2), (0, 2)):
-        ring = c[:, None, :] + (f[:, None, :, a] * cos + f[:, None, :, b] * sin) * r      # (N, S, 3)
-        rings.append(np.stack((ring, np.roll(ring, -1, axis=1)), axis=2))              # (N, S, 2, 3)
-    pts = np.stack(rings, axis=1)                                                       # (N, 3, S, 2, 3)
-    return pts.reshape(-1, 3).astype(np.float32), order
+    r = np.array([js[n].radius for n in order], np.float64)
+    return _spheres(c, f, r), order
+
+
+def _spheres(c, f, r):
+    """Segment end points (float32) of the three great circles of spheres at centres ``c`` (N, 3) with frames ``f``
+    (N, 3, 3; columns = the joint's X, Y, Z) and radii ``r`` (N,)."""
+    import numpy as np
+    if _RING[0] is None:
+        # every end point of the three circles in the joint's own axes: (3 circles, S segments, 2 ends, xyz)
+        t = np.arange(SEGMENTS + 1) * (2.0 * math.pi / SEGMENTS)
+        unit = np.zeros((3, SEGMENTS + 1, 3))
+        for k, (a, b) in enumerate(((0, 1), (1, 2), (0, 2))):
+            unit[k, :, a], unit[k, :, b] = np.cos(t), np.sin(t)
+        _RING[0] = np.stack((unit[:, :-1], unit[:, 1:]), axis=2).reshape(-1, 3)      # (3 * S * 2, 3)
+    pts = c[:, None, :] + np.matmul(_RING[0], f.transpose(0, 2, 1)) * r[:, None, None]   # (N, 3 * S * 2, 3)
+    return pts.reshape(-1, 3).astype(np.float32)
+
+
+_RING = [None]
+
+
+def _bone_array(pc, pf, pr, cc, cr):
+    """``bone_lines`` for many bones at once: parents' centres / frames / radii (M, 3) (M, 3, 3) (M,) and children's
+    centres / radii. Returns (end points (K * 16, 3), the K bones that are drawn) — a bone whose spheres overlap
+    draws nothing."""
+    import numpy as np
+    d = cc - pc
+    length = np.linalg.norm(d, axis=1)
+    drawn = np.nonzero((length > pr + cr) & (length >= 1e-9))[0]
+    if not len(drawn):
+        return np.zeros((0, 3), np.float64), drawn
+    d, length, pc, pf, pr, cc, cr = d[drawn], length[drawn], pc[drawn], pf[drawn], pr[drawn], cc[drawn], cr[drawn]
+    u = d / length[:, None]
+    base = pc + u * pr[:, None]
+    apex = cc - u * cr[:, None]
+
+    def across(axis):
+        v = pf[:, :, axis]
+        return v - u * np.sum(v * u, axis=1)[:, None]
+
+    a = across(1)
+    flat = np.linalg.norm(a, axis=1) < 1e-6
+    if flat.any():
+        a[flat] = across(2)[flat]
+    n = np.linalg.norm(a, axis=1)[:, None]
+    a = np.divide(a, n, out=np.zeros_like(a), where=n > 0)
+    b = np.cross(u, a)
+    ar, br = a * pr[:, None], b * pr[:, None]
+    corners = np.stack((base + ar, base + br, base - ar, base - br), axis=1)            # (K, 4, 3)
+    nxt = np.roll(corners, -1, axis=1)
+    tip = np.broadcast_to(apex[:, None, :], corners.shape)
+    pts = np.stack((corners, nxt, corners, tip), axis=2)                                # (K, 4, 4, 3)
+    return pts.reshape(-1, 3), drawn
+
+
+def _joint_list(ob):
+    """What a pose doesn't change of skeleton ``ob``'s drawn joints: (joints {name: Joint, geometry left out},
+    names, their pose bone indices, parent index per joint (-1: no drawn parent), Radius values, {index: Maya frame
+    turn (3, 3)}, {index: custom shape object})."""
+    import numpy as np
+    from .. import compat
+    from ..operators import joints
+    js, names, keep, raw, turned, shaped = {}, [], [], [], {}, {}
+    for i, pb in enumerate(ob.pose.bones):
+        bone = pb.bone
+        if compat.bone_hidden(pb) or _coll_hidden(bone):
+            continue
+        name, parent = pb.name, bone.parent
+        if pb.custom_shape is not None:
+            shaped[len(keep)] = pb.custom_shape
+        q = bone.get(joints.MAYA_FRAME)
+        if q is not None:
+            turned[len(keep)] = np.array(Quaternion(q).to_matrix(), np.float64)
+        js[name] = Joint(name, parent.name if parent else None, None, None, None)
+        names.append(name)
+        keep.append(i)
+        raw.append(float(bone.get(joints.RADIUS, MAYA_RADIUS)))
+    index = {nm: j for j, nm in enumerate(names)}
+    parents = np.array([index.get(js[nm].parent, -1) for nm in names], np.intp)
+    return js, names, np.asarray(keep, np.intp), parents, np.asarray(raw, np.float64), turned, shaped
+
+
+_LISTS = {}     # skeleton object pointer -> (key, _joint_list) kept while playback runs
+_EDITS = [0]    # bumped by every change that can change a skeleton's joint list (not by a new frame)
+
+
+def joint_list(ob, playing=False):
+    """``_joint_list`` of ``ob``. While playback runs only the pose changes from frame to frame, so the list read
+    on the first frame is used again until something is edited (a depsgraph update, undo, a Radius typed)."""
+    key = (_EDITS[0], ob.data.as_pointer(), len(ob.pose.bones))
+    got = _LISTS.get(ob.as_pointer())
+    if playing and got is not None and got[0] == key:
+        return got[1]
+    out = _joint_list(ob)
+    if playing:
+        if len(_LISTS) > 32:
+            _LISTS.clear()
+        _LISTS[ob.as_pointer()] = (key, out)
+    else:
+        _LISTS.pop(ob.as_pointer(), None)
+    return out
+
+
+def _pose_arrays(ob, scene, playing=False):
+    """The visible joints of ``ob`` in Object / Pose Mode for drawing: (joints {name: Joint, geometry left out},
+    names, parent index per joint (-1: no drawn parent), centres (N, 3), frames (N, 3, 3), radii (N,), {index:
+    (custom shape, world matrix)}). The same joints, centres, frames (columns normalised) and radii as ``skeleton``,
+    but the pose matrices are read in one call and the geometry is built in arrays: playback rebuilds the joints of
+    every skeleton each frame."""
+    import numpy as np
+    from ..operators import joint_display, joints, units
+    pbs = ob.pose.bones
+    n = len(pbs)
+    mw = ob.matrix_world
+    k = 0.5 * joint_display.joint_size(scene) * units.radius_unit(scene) * max(mw.to_scale())
+    js, names, rows, parents, raw, turned, shaped = joint_list(ob, playing)
+    shapes = {j: (shape, mw @ _shape_matrix(pbs[int(rows[j])])) for j, shape in shaped.items()}
+    radii = raw * k
+    if not names:
+        return js, names, parents, np.zeros((0, 3)), np.zeros((0, 3, 3)), radii, shapes
+    mat = np.empty(n * 16, np.float32)
+    pbs.foreach_get("matrix", mat)
+    head = np.empty(n * 3, np.float32)
+    pbs.foreach_get("head", head)
+    m = mat.reshape(n, 4, 4).transpose(0, 2, 1)[rows].astype(np.float64)    # stored by columns
+    w = np.array(mw, np.float64)
+    m3 = w[:3, :3]
+    centres = head.reshape(n, 3)[rows].astype(np.float64) @ m3.T + w[:3, 3]
+    frames = m3 @ m[:, :3, :3] @ np.array(joints.JOINT_AXES, np.float64)
+    for j, q in turned.items():
+        frames[j] = frames[j] @ q
+    norms = np.linalg.norm(frames, axis=1, keepdims=True)
+    frames = np.divide(frames, norms, out=np.zeros_like(frames), where=norms > 0)
+    return js, names, parents, centres, frames, radii, shapes
+
+
+def _fast_lines(ob, scene, perspective, depsgraph, stick, playing=False):
+    """(points, colours) lists of float32 arrays of skeleton ``ob`` (Object / Pose Mode, Maya joints or sticks): the
+    same lines and colours ``view_lines`` draws per joint, built in arrays."""
+    import numpy as np
+    js, names, parents, centres, frames, radii, shapes = _pose_arrays(ob, scene, playing)
+    pts, cols = [], []
+    if not names:
+        return pts, cols
+    sel, lead = selection(ob, js)
+    col = colours(js, sel, lead)
+    rgba = np.array([(*col[nm], 1.0) for nm in names], np.float32)
+    plain = np.ones(len(names), bool)
+    plain[list(shapes)] = False
+
+    def add(segs, colour):
+        if len(segs):
+            pts.append(np.asarray(segs, np.float32).reshape(-1, 3))
+            cols.append(np.tile(np.array((*colour, 1.0), np.float32), (len(pts[-1]), 1)))
+
+    if not stick and plain.any():
+        pts.append(_spheres(centres[plain], frames[plain], radii[plain]))
+        cols.append(np.repeat(rgba[plain], 3 * SEGMENTS * 2, axis=0))
+    for j, (shape, matrix) in shapes.items():
+        add([tuple(v) for v in shape_lines(shape, matrix, depsgraph)], col[names[j]])
+    if perspective:
+        for j, nm in enumerate(names):
+            if plain[j] and nm in sel:
+                for i in range(3):
+                    add((centres[j], centres[j] + frames[j][:, i] * radii[j]), AXIS_COLORS[i])
+    child = np.nonzero(parents >= 0)[0]
+    child = child[plain[child] & plain[parents[child]]]
+    if len(child):
+        par = parents[child]
+        order = np.lexsort((child, par))           # a bone belongs to its parent joint: parent by parent
+        child, par = child[order], par[order]
+        if stick:
+            segs = np.stack((centres[par], centres[child]), axis=1).reshape(-1, 3)
+            owner = np.repeat(par, 2)
+        else:
+            segs, drawn = _bone_array(centres[par], frames[par], radii[par], centres[child], radii[child])
+            owner = np.repeat(par[drawn], 16)
+        if len(segs):
+            pts.append(segs.astype(np.float32))
+            cols.append(rgba[owner])
+    return pts, cols
 
 
 def view_lines(context):
@@ -463,6 +636,8 @@ def view_lines(context):
     space, rv3d = context.space_data, context.region_data
     scene = context.scene
     depsgraph = context.view_layer.depsgraph
+    screen = getattr(context, "screen", None)
+    playing = screen is not None and screen.is_animation_playing
     pts, cols = [], []
     per_sphere = 3 * SEGMENTS * 2
 
@@ -474,14 +649,19 @@ def view_lines(context):
     for ob in context.visible_objects:
         if ob.type != 'ARMATURE' or not ob.visible_in_viewport_get(space):
             continue
+        kind = getattr(ob.data, "display_type", 'OCTAHEDRAL')
+        stick = kind in STICK_TYPES
+        own = kind in SHAPE_TYPES
+        if ob.mode != 'EDIT' and not own:
+            p, c = _fast_lines(ob, scene, rv3d.is_perspective, depsgraph, stick, playing)
+            pts += p
+            cols += c
+            continue
         js = skeleton(ob, scene)
         if not js:
             continue
         sel, lead = selection(ob, js)
         col = colours(js, sel, lead)
-        kind = getattr(ob.data, "display_type", 'OCTAHEDRAL')
-        stick = kind in STICK_TYPES
-        own = kind in SHAPE_TYPES
         spheres, order = _sphere_array(js) if not (stick or own) else (None, ())
         if order:
             pts.append(spheres)
@@ -524,15 +704,27 @@ def _depsgraph_post(_scene, depsgraph):
                 continue
             if isinstance(ob, bpy.types.Object) and ob.type != 'ARMATURE' and not u.is_updated_geometry:
                 continue
-            _GEN[0] += 1
+            changed()
             return
     except (ReferenceError, AttributeError):
-        _GEN[0] += 1
+        changed()
+
+
+def changed():
+    """Something that can change the drawn joints other than a new frame (an edit, undo, a Radius typed)."""
+    _GEN[0] += 1
+    _EDITS[0] += 1
 
 
 @bpy.app.handlers.persistent
 def _frame_post(*_args):
     _GEN[0] += 1
+
+
+@bpy.app.handlers.persistent
+def _reload(*_args):
+    changed()
+    _LISTS.clear()
 
 
 def cached_view_lines(context):
@@ -603,8 +795,8 @@ def _draw():
 def HANDLERS():
     h = bpy.app.handlers
     return ((h.save_pre, _save_pre), (h.save_post, _save_post), (h.depsgraph_update_post, _depsgraph_post),
-            (h.frame_change_post, _frame_post), (h.load_post, _frame_post), (h.undo_post, _frame_post),
-            (h.redo_post, _frame_post))
+            (h.frame_change_post, _frame_post), (h.load_post, _reload), (h.undo_post, _reload),
+            (h.redo_post, _reload), (h.animation_playback_pre, _reload))
 
 
 def register():
@@ -622,6 +814,7 @@ def unregister():
         if fn in lst:
             lst.remove(fn)
     _CACHE.clear()
+    _LISTS.clear()
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     while _handle:

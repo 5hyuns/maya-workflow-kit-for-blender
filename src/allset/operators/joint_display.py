@@ -49,7 +49,7 @@ def radius_bones(bone, context=None):
 def joints_changed():
     """Redraw the kit joints at once (an ID property write sends no depsgraph update)."""
     from ..ui import maya_joints
-    maya_joints._GEN[0] += 1
+    maya_joints.changed()
     wm = bpy.context.window_manager
     for w in (wm.windows if wm is not None else ()):
         for a in w.screen.areas:
