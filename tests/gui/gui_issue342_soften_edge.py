@@ -2,7 +2,10 @@
 Shade Auto Smooth ("Smooth by Angle" modifier) shows hard edges. A click on Mesh Display > Soften Edge in the Maya menu
 bar shades every edge soft (the modifier is gone); Ctrl+Z brings the hard edges and the modifier back. Shift+RMB >
 Soften/Harden Edges > Soften Edge on the object does the same; in edge mode the edge marking menu's Soften Edge
-shades the selected rim edges soft and leaves the others as they were. Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
+shades the selected rim edges soft (the modifier gives way) and leaves the others as they were. There one Ctrl+Z
+brings back the edges and the modifier together (every setting, its place in the stack), the selection and component
+mode; one Shift+Z the result, in component mode; the next Ctrl+Z takes back the selection. Screenshots with
+ALLSET_GUI_SHOTS (or --shots)."""
 
 import math
 import os
@@ -85,6 +88,64 @@ def shown():
 def hard_count():
     s = shown()
     return sum(1 for v in s.values() if not v), len(s)
+
+
+def _plain(v):
+    if isinstance(v, (str, bool, int, float)) or v is None:
+        return v
+    if isinstance(v, set):
+        return tuple(sorted(v))
+    try:
+        return tuple(_plain(x) for x in v)
+    except TypeError:
+        return getattr(v, "name", repr(v))
+
+
+def modifier(md):
+    """Every setting of a modifier and a Geometry Nodes modifier's inputs."""
+    out = {"name": md.name, "type": md.type}
+    for p in md.bl_rna.properties:
+        if p.identifier in ("rna_type", "execution_time") or p.type == 'COLLECTION':
+            continue
+        v = getattr(md, p.identifier, None)
+        out[p.identifier] = getattr(v, "name", None) if p.type == 'POINTER' else _plain(v)
+    if md.type == 'NODES' and md.node_group is not None:
+        compat = mod(".compat")
+        out["inputs"] = {it.identifier: _plain(compat.gn_input_get(md, it.identifier))
+                         for it in md.node_group.interface.items_tree
+                         if getattr(it, "in_out", None) == 'INPUT'
+                         and getattr(it, "socket_type", "") != 'NodeSocketGeometry'}
+    return out
+
+
+def edge_selection():
+    o = ob()
+    if o.mode == 'EDIT':
+        return tuple(e.select for e in bmesh.from_edit_mesh(o.data).edges)
+    return tuple(e.select for e in o.data.edges)
+
+
+def state():
+    """Mode, selection, edge / face shading flags, the modifier stack with every setting, the object's custom
+    property and what the evaluated mesh shows."""
+    o = ob()
+    if o.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(o.data)
+    else:
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+    out = {"mode": bpy.context.mode,
+           "edges": tuple(e.select for e in bm.edges),
+           "verts": tuple(v.select for v in bm.verts),
+           "faces": tuple(f.select for f in bm.faces),
+           "soft": tuple(e.smooth for e in bm.edges),
+           "face_smooth": tuple(f.smooth for f in bm.faces),
+           "modifiers": [modifier(md) for md in o.modifiers],
+           "session": o.get("session"),
+           "shown": shown()}
+    if o.mode != 'EDIT':
+        bm.free()
+    return out
 
 
 def unit():
@@ -378,10 +439,16 @@ def s_edges():
     check(f"Ctrl+Z again: Smooth by Angle back ({sba()})", len(sba()) == 1 and shown() == C["before"])
     top = max(v.co.z for v in ob().data.vertices)
     with v3d_ctx():
-        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.editmode_toggle('EXEC_DEFAULT', True)          # Tab, with its undo step
+        bpy.context.scene.tool_settings.mesh_select_mode = (False, True, False)
+        C["entered"] = edge_selection()
         C["picked"] = select_edges(lambda e: all(abs(v.co.z - top) < 1e-6 for v in e.verts)
                                    and len(e.link_faces) == 2 and e.calc_face_angle(0.0) > math.radians(80.0))
+        bpy.ops.ed.undo_push(message="Select")                        # a selection is an undo step of its own
+    ob()["session"] = 1        # a change in component mode that only object-mode undo steps hold
+    ob().update_tag()
     check(f"edge mode with the top rim edges selected ({len(C['picked'])})", len(C["picked"]) == 12)
+    C["edit_before"] = state()
     C["pt"] = object_point()
     ev('MOUSEMOVE', 'NOTHING', x=C["pt"][0], y=C["pt"][1])
     redraw()
@@ -426,7 +493,70 @@ def s_edge_release():
 def s_edge_result():
     check(f"the edge marking menu ran Mesh Display > Soften Edge ({C['calls']})", C["calls"] == [ITEM])
     check("still in component mode", bpy.context.mode == 'EDIT_MESH')
+    C["edit_after"] = st = state()
+    check(f"... the Smooth by Angle modifier gave way ({sba()}), same selection",
+          not sba() and st["edges"] == C["edit_before"]["edges"])
     shot("gui_issue342_edges_edit.png")
+
+
+# --- component mode: Ctrl+Z / Shift+Z take the whole Soften Edge, in component mode ---------------------------------
+
+def press(shift, ctrl, label):
+    def s_press():
+        x, y = C["x"], C["y"]
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+        ev('Z', 'PRESS', ctrl=ctrl, shift=shift)
+        ev('Z', 'RELEASE', ctrl=ctrl, shift=shift)
+        ev('LEFT_CTRL', 'RELEASE')           # simulated modifiers stay down otherwise
+        ev('LEFT_SHIFT', 'RELEASE')
+    s_press.__name__ = f"s_{label}"
+    step(s_press)
+    step(lambda: None)                         # the kit's extra step runs from a timer
+    step(lambda: redraw())
+
+
+def expect(label, want, text):
+    def s_expect():
+        got = state()
+        diff = {k: (got[k], want()[k]) for k in got if got[k] != want()[k]}
+        check(f"{text} ({sorted(diff)})", not diff)
+        if label:
+            shot(f"gui_issue342_{label}.png")
+    step(s_expect)
+
+
+press(False, True, "edit_undo1")
+expect("edit_undo", lambda: C["edit_before"],
+       "Ctrl+Z: component mode, the rim selected, the edges and Smooth by Angle as before (settings, place)")
+press(True, False, "edit_redo1")
+expect("edit_redo", lambda: C["edit_after"], "Shift+Z: the result again, in component mode")
+press(False, True, "edit_undo2")
+expect(None, lambda: C["edit_before"], "Ctrl+Z again: the state before")
+press(False, True, "edit_undo3")
+
+
+@step
+def s_edit_undo3():
+    st = state()
+    check(f"the next Ctrl+Z takes back the selection, still in component mode ({st['mode']}, {sum(st['edges'])})",
+          st["mode"] == 'EDIT_MESH' and st["edges"] == C["entered"] and len(sba()) == 1)
+
+
+press(True, False, "edit_redo2")
+
+
+@step
+def s_edit_redo2():
+    st = state()
+    check("Shift+Z: the selection is back", st["mode"] == 'EDIT_MESH' and st["edges"] == C["edit_before"]["edges"])
+
+
+press(True, False, "edit_redo3")
+expect(None, lambda: C["edit_after"], "Shift+Z from the selection: the result, in component mode")
+
+
+@step
+def s_edge_object_mode():
     with v3d_ctx():
         bpy.ops.object.mode_set(mode='OBJECT')
     s = shown()

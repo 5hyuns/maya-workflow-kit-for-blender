@@ -185,14 +185,12 @@ def _set_flags(bm, flags):
         f.smooth = s
 
 
-def soften_harden_edit(ob, bm, angle, edges=None):
-    """Soften / harden ``edges`` (None = every edge) of the edit mesh ``bm`` so the result shows. A Smooth by Angle
-    modifier that would turn one of those edges back gives way: what it shows is written into every edge first (the
-    other edges keep their look), then it is removed."""
+def giving_way(ob, bm, angle, edges=None):
+    """The Smooth by Angle modifiers (shown in the viewport) that would turn one of ``edges`` (None = every edge)
+    back after Soften / Harden on ``bm``; empty when the result shows as it is. ``bm`` keeps its flags."""
     mods = [md for md in smooth_by_angle_mods(ob) if md.show_viewport]
     if not mods:
-        soften_harden(bm, angle, edges)
-        return
+        return []
     bm.edges.index_update()
     targets = [e.index for e in (bm.edges if edges is None else edges)]
     before = _flags(bm)
@@ -201,15 +199,28 @@ def soften_harden_edit(ob, bm, angle, edges=None):
     for md in mods:
         smooth_by_angle(bm, *smooth_by_angle_inputs(md))
     shown = _flags(bm)
-    if all(shown[0][i] == want[0][i] for i in targets):
-        _set_flags(bm, want)          # nothing hidden: the modifier stays
-        return
     _set_flags(bm, before)
-    for md in mods:
+    return [] if all(shown[0][i] == want[0][i] for i in targets) else mods
+
+
+def soften_harden_edit(ob, bm, angle, edges=None):
+    """Soften / harden ``edges`` (None = every edge) of ``bm`` (the mesh of ``ob``) so the result shows. A Smooth by
+    Angle modifier that would turn one of those edges back gives way: what it shows is written into every edge first
+    (the other edges keep their look), then it is removed."""
+    for md in giving_way(ob, bm, angle, edges):
         smooth_by_angle(bm, *smooth_by_angle_inputs(md))
         ob.modifiers.remove(md)
-    bm.edges.ensure_lookup_table()
-    soften_harden(bm, angle, None if edges is None else [bm.edges[i] for i in targets])
+    soften_harden(bm, angle, edges)
+
+
+def _picked(bm, whole):
+    return None if whole else ([e for e in bm.edges if e.select] or None)
+
+
+def _deselect(bm):
+    for seq in (bm.verts, bm.edges, bm.faces):
+        for el in seq:
+            el.select = False
 
 
 class ALLSET_OT_soften_harden(bpy.types.Operator):
@@ -217,7 +228,9 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
     component mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)"""
     bl_idname = "allset.soften_harden"
     bl_label = "Soften/Harden Edges"
-    bl_options = {'REGISTER', 'UNDO'}
+    # no UNDO: the command pushes its own undo steps (_through_object_mode), and Blender's Adjust Last Operation would
+    # take back only part of them
+    bl_options = {'REGISTER'}
 
     angle: FloatProperty(name="Angle", default=30.0, min=0.0, max=180.0,
                          description="Default 30: faces at a smaller angle shade smooth across the edge")
@@ -234,29 +247,88 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
             return context.window_manager.invoke_props_dialog(self)
         return self.execute(context)
 
+    def label(self):
+        """The undo step name: the Maya menu item this angle is."""
+        return {180.0: "Soften Edge", 0.0: "Harden Edge"}.get(round(self.angle, 4), self.bl_label)
+
     def execute(self, context):
-        for ob in _meshes(context):
-            if ob.mode == 'EDIT':
-                bm = bmesh.from_edit_mesh(ob.data)
-                soften_harden_edit(ob, bm, self.angle,
-                                   None if self.whole else ([e for e in bm.edges if e.select] or None))
-                if self.whole:
-                    for seq in (bm.verts, bm.edges, bm.faces):
-                        for el in seq:
-                            el.select = False
-                bmesh.update_edit_mesh(ob.data)
-            else:
-                # every edge gets its new state: nothing older decides the shading any more (Blender's Shade Smooth /
-                # Shade Flat remove Smooth by Angle too)
-                for md in smooth_by_angle_mods(ob):
-                    ob.modifiers.remove(md)
-                bm = bmesh.new()
-                bm.from_mesh(ob.data)
-                soften_harden(bm, self.angle)
-                bm.to_mesh(ob.data)
-                bm.free()
-                ob.data.update()
+        obs = _meshes(context)
+        edit = [ob for ob in obs if ob.mode == 'EDIT']
+        if any(self._gives_way(ob) for ob in edit):
+            if self._through_object_mode(context, edit):
+                undo_steps.mark_pushed()          # its last undo step is the command's own
+                return {'FINISHED'}
+        else:
+            for ob in obs:
+                if ob.mode == 'EDIT':
+                    bm = bmesh.from_edit_mesh(ob.data)
+                    soften_harden(bm, self.angle, _picked(bm, self.whole))
+                    if self.whole:
+                        _deselect(bm)
+                    bmesh.update_edit_mesh(ob.data)
+                else:
+                    # every edge gets its new state: nothing older decides the shading any more (Blender's Shade
+                    # Smooth / Shade Flat remove Smooth by Angle too)
+                    for md in smooth_by_angle_mods(ob):
+                        ob.modifiers.remove(md)
+                    self._mesh_edit(ob, lambda bm: soften_harden(bm, self.angle))
+        if undo_steps.depth() == 0:      # a Maya menu command pushes its step itself when it finished
+            undo_steps.push(self.label())
         return {'FINISHED'}
+
+    def _gives_way(self, ob):
+        bm = bmesh.from_edit_mesh(ob.data)
+        return bool(giving_way(ob, bm, self.angle, _picked(bm, self.whole)))
+
+    @staticmethod
+    def _mesh_edit(ob, fn):
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        fn(bm)
+        bm.to_mesh(ob.data)
+        bm.free()
+        ob.data.update()
+
+    def _through_object_mode(self, context, objects):
+        """Component mode, and a Smooth by Angle modifier has to give way. An edit-mode undo step holds only the mesh,
+        so the change runs in object mode between undo steps that hold everything: the state before (object mode,
+        then the same in edit mode), then the result (object mode) as the command's own step, and component mode
+        again. One Ctrl+Z lands on the edit-mode state before: the edges and the modifier come back together, in
+        component mode with the same selection; Shift+Z lands on the result and goes back to component mode.
+        True when the command's undo step was pushed."""
+        from . import undo_pairs
+        from ..command_line import undo_text
+        scene, label = context.scene, self.label()
+        names = [ob.name for ob in objects]
+        bpy.ops.object.mode_set(mode='OBJECT')
+        pushed = True
+        try:
+            undo_pairs.push_through(scene, label, undo_pairs.BEFORE)
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.ed.undo_push(message=label)
+            bpy.ops.object.mode_set(mode='OBJECT')
+        except RuntimeError:          # no undo here (no window): just the change
+            pushed = False
+            if context.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+        def change(ob, bm):
+            soften_harden_edit(ob, bm, self.angle, _picked(bm, self.whole))
+            if self.whole:
+                _deselect(bm)
+        for ob in objects:
+            self._mesh_edit(ob, lambda bm, ob=ob: change(ob, bm))
+        result = undo_pairs.fingerprint(names)
+        if pushed:
+            try:
+                undo_pairs.push_through(scene, label, undo_pairs.AFTER)
+                undo_text.pushed(label)
+            except RuntimeError:
+                pushed = False
+        bpy.ops.object.mode_set(mode='EDIT')
+        if pushed:
+            undo_pairs.arm(names, result)
+        return pushed
 
 
 def _meshes(context):
