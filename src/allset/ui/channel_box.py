@@ -1547,6 +1547,7 @@ def apply_row_entry(row, text, context=None):
     if row.kind == "CUSTOM":
         return apply_entry(CUSTOM_PREFIX + row.name, text, context)
     ld = lead(context)
+    autokey = auto_key.enabled(context.scene)
     count = 0
     for ob in targets(context):
         owner = row_owner(ob, row.kind, row.name, row.mod_type, row.nth, ld)
@@ -1560,7 +1561,10 @@ def apply_row_entry(row, text, context=None):
         try:
             if row.kind == "CONSTRAINT":
                 # the target weight: Maya's one-target rule gives the constraint its own weight (set_value)
-                set_value(ob, row_key(row), value)
+                key = row_key(row)
+                set_value(ob, key, value)
+                if autokey and auto_keys(ob, key, context):
+                    keyframe(ob, key)       # Auto Key: a weight that has keys is keyed, like a typed Translate X
             else:
                 _row_write(owner, row.kind, row.name, value)
         except (TypeError, ValueError, AttributeError):

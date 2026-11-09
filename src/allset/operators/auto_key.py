@@ -15,6 +15,9 @@ an object updated together with one of its Actions is not noted, so no key appea
 Like Maya, only a value that changes while Auto Key is on is keyed: the kit remembers the keyed channels' values when
 Auto Key is turned on and each time it looks at an object, and keys a channel only when its value moved since then.
 A value changed while Auto Key was off is not keyed by a later update that changes nothing (a selection change).
+A frame change shows what the curves give at the new frame, so the values noted before it are dropped then: at the
+new frame a channel is keyed once its value differs from its curve there, also when it goes back to a value it had at
+another frame (a constraint weight switched 1 -> 0 -> 1).
 
 Blender pushes a transform's undo step when the transform ends, before any Python code runs, so the keys go into a
 step of their own ("Auto Key") right after it. Like Maya, one Undo takes back the change and its keys together and one
@@ -403,6 +406,13 @@ def _on_depsgraph(scene, depsgraph):
         bpy.app.timers.register(_flush, first_interval=0.05)
 
 
+@persistent
+def _on_frame(*_args):
+    """The channels now show their curves at the new frame: that is what a change is compared with (``moved``: an
+    object not looked at since counts as moved, and ``changed_curves`` keeps only values off their curve)."""
+    _seen.clear()
+
+
 def _toggled(scene, _context):
     if enabled(scene):
         remember_all(scene)
@@ -422,7 +432,8 @@ def register_handlers():
             lst.append(fn)
 
 
-_HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("undo_post", _on_undo_redo), ("redo_post", _on_undo_redo))
+_HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("undo_post", _on_undo_redo), ("redo_post", _on_undo_redo),
+             ("frame_change_post", _on_frame))
 
 
 def unregister_handlers():
