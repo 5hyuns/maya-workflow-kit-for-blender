@@ -195,10 +195,17 @@ def lead_bone(ob):
 
 def match_lead(context):
     """(lead, others) of Maya Match Transformations: the last picked node is the lead, every node picked before it
-    receives. The active object is the last pick; on a skeleton its active bone (#338). The others are the selected
-    objects, a selected skeleton with picked bones standing for those bones: a control picked first and a locator
-    picked last moves the control, whether its rig is still in Pose mode or the pick left it."""
-    lead = context.view_layer.objects.active
+    receives (#338). In Object mode the lead is the last picked of the selected objects, however it was picked (click,
+    box, lasso, Outliner, select menus); in Pose mode the joint picked last, the rig's active bone. A skeleton lead
+    stands for its active bone. The others are the selected objects, a selected skeleton with picked bones standing
+    for those bones: a control picked first and a locator picked last moves the control, whether its rig is still in
+    Pose mode or the pick left it."""
+    from . import pick_order
+    active = context.view_layer.objects.active
+    if active is not None and active.mode == 'POSE':
+        lead = active
+    else:
+        lead = pick_order.last(context)
     if lead is None:
         return None, []
     pb = lead_bone(lead)

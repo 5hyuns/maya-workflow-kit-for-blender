@@ -337,8 +337,10 @@ def test_match_transform_to_joint():
     got = ctrl.matrix_world
     assert (got.translation - want.translation).length < TOL, tuple(got.translation)
     assert angle_between(got.to_3x3(), want.to_3x3()) < 1e-3, ctrl.rotation_euler
-    # object mode with the armature active: its active bone is the lead too
+    # object mode, the group picked first and the skeleton last: its active bone is the lead too
     ctrl.matrix_world = Matrix.Identity(4)
+    _select(ctrl)
+    bpy.context.view_layer.update()
     _select(ctrl, arm, active=arm)
     assert bpy.ops.allset.match_transform(kind='TRANSLATE') == {'FINISHED'}
     assert (ctrl.matrix_world.translation - want.translation).length < TOL

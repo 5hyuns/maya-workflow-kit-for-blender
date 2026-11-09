@@ -30,6 +30,7 @@ from . import live_translate
 from . import point_keys  # S on selected points keys their positions
 from . import lattice_pick  # lattice points picked where a deformer draws them
 from . import camera_overscan  # Maya camera Overscan (#313)
+from . import pick_order  # the order the selected objects were picked in (Match Transformations)
 from . import universal_manip  # Universal Manipulator drags (#318)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -244,6 +245,7 @@ def register():
     skin_method.register_props()
     ik_rp.register_handlers()
     snap_align.register_props()
+    pick_order.register_handlers()
     material.register_props()
     lights.register_props()
     camera_overscan.register_props()
@@ -406,6 +408,7 @@ def unregister():
     mesh_tools.unregister_props()
     driven_key.unregister_props()
     snap_align.unregister_props()
+    pick_order.unregister_handlers()
     legacy_cleanup.unregister()
     _unregister_classes()
 
