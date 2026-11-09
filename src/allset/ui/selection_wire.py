@@ -85,6 +85,32 @@ def _sh():
     return _shader[0]
 
 
+# Modifiers that only move a mesh's points: an object with no others keeps its edges from frame to frame
+DEFORM_ONLY = frozenset({'ARMATURE', 'CAST', 'CURVE', 'DISPLACE', 'HOOK', 'LAPLACIANDEFORM', 'LATTICE', 'MESH_DEFORM',
+                         'SHRINKWRAP', 'SIMPLE_DEFORM', 'SMOOTH', 'CORRECTIVE_SMOOTH', 'LAPLACIANSMOOTH',
+                         'SURFACE_DEFORM', 'WARP', 'WAVE'})
+_edges = {}     # object session_uid -> ((vertex count, edge count), edge indices) of a mesh that only deforms
+
+
+def keeps_edges(ob):
+    """A new frame only moves the evaluated mesh's points (shape keys, armature / lattice / ... modifiers): its edges
+    stay the same, so playback reads only the points again (reading the edges took several ms a frame)."""
+    return (ob.type == 'MESH' and not getattr(ob, "particle_systems", None)
+            and all(m.type in DEFORM_ONLY for m in ob.modifiers))
+
+
+def _positions(me):
+    """(N * 3,) float32 point positions of mesh ``me`` (the position attribute: one copy, not a read per vertex)."""
+    import numpy as np
+    co = np.empty(len(me.vertices) * 3, np.float32)
+    pos = me.attributes.get("position")
+    if pos is not None and pos.domain == 'POINT' and pos.data_type == 'FLOAT_VECTOR' and len(pos.data) * 3 == len(co):
+        pos.data.foreach_get("vector", co)
+    else:
+        me.vertices.foreach_get("co", co)
+    return co
+
+
 def edges_of(ob, depsgraph):
     """(vertex positions (N, 3) float32, edge indices (E, 2) int32) of the evaluated object, object space."""
     import numpy as np
@@ -96,14 +122,23 @@ def edges_of(ob, depsgraph):
     else:
         me, temp = ev.to_mesh(), True
     try:
-        co = np.empty(len(me.vertices) * 3, np.float32)
-        me.vertices.foreach_get("co", co)
-        ed = np.empty(len(me.edges) * 2, np.int32)
-        me.edges.foreach_get("vertices", ed)
+        co = _positions(me)
+        size = (len(me.vertices), len(me.edges))
+        got = _edges.get(ob.session_uid) if not temp else None
+        if got is not None and got[0] == size:
+            ed = got[1]
+        else:
+            ed = np.empty(size[1] * 2, np.int32)
+            me.edges.foreach_get("vertices", ed)
+            ed = ed.reshape(-1, 2)
+            if not temp and keeps_edges(ob):
+                _edges[ob.session_uid] = (size, ed)
+            else:
+                _edges.pop(ob.session_uid, None)
     finally:
         if temp:
             ev.to_mesh_clear()
-    return co.reshape(-1, 3), ed.reshape(-1, 2)
+    return co.reshape(-1, 3), ed
 
 
 def lattice_edges(lat):
@@ -433,11 +468,12 @@ def _remove_handler():
 @persistent
 def _on_depsgraph(_scene, depsgraph):
     """Drop the cached batch of objects whose geometry changed (edits, modifiers, shape keys)."""
-    if not _batches:
+    if not _batches and not _edges:
         return
     for update in depsgraph.updates:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
             _batches.pop(update.id.original.session_uid, None)
+            _edges.pop(update.id.original.session_uid, None)
 
 
 def time_dependent(ob):
@@ -455,17 +491,21 @@ def time_dependent(ob):
 
 @persistent
 def _on_frame(scene, _depsgraph=None):
-    """Drop the batches of time-dependent objects so the next redraw reads this frame's evaluated mesh (#91)."""
+    """Drop the batches of time-dependent objects so the next redraw reads this frame's evaluated mesh (#91); a mesh
+    that only deforms keeps its edges (``keeps_edges``)."""
     if not _batches:
         return
     for ob in scene.objects:
         if ob.session_uid in _batches and time_dependent(ob):
             del _batches[ob.session_uid]
+            if not keeps_edges(ob):
+                _edges.pop(ob.session_uid, None)
 
 
 @persistent
 def _on_reload(*_args):
     _batches.clear()
+    _edges.clear()
 
 
 _HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("frame_change_post", _on_frame), ("undo_post", _on_reload), ("redo_post", _on_reload),
@@ -485,5 +525,6 @@ def unregister():
         if fn in lst:
             lst.remove(fn)
     _batches.clear()
+    _edges.clear()
     _shader.clear()
     _times.clear()
