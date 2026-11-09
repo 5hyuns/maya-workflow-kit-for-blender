@@ -1,6 +1,6 @@
-"""Translations (#197): the kit's labels follow Blender's interface language (ja_JP, zh_HANS) and its Translate
-toggles; every dictionary key is a real kit string and the main Maya menus are fully covered; the menu texts the
-kit composes and sizes itself (hotkey column, option boxes) are built from the translated label; disabling the
+"""Translations (#197): the kit's labels follow Blender's interface language (ja_JP, zh_HANS, zh_HANT) and its
+Translate toggles; every dictionary key is a real kit string and the main Maya menus are fully covered; the menu
+texts the kit composes and sizes itself (hotkey column, option boxes) are built from the translated label; disabling the
 kit takes the translations back.
 
 The language is switched in this process only (sandbox factory preferences, never saved)."""
@@ -19,7 +19,7 @@ ms = import_module(kit.MODULE + ".ui.menu_sets")
 oc = import_module(kit.MODULE + ".ui.option_click")
 notices = import_module(kit.MODULE + ".ui.notices")
 chrome = import_module(kit.MODULE + ".ui.chrome")
-LOCALES = ("ja_JP", "zh_HANS")
+LOCALES = ("ja_JP", "zh_HANS", "zh_HANT")
 SAMPLES = ("Channel Box / Layer Editor", "Save Scene As...", "Smooth Mesh Preview to Polygons")
 
 

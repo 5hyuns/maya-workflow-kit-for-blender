@@ -1,6 +1,7 @@
-"""Translations (#197) in a real UI: with Blender's interface language set to Japanese, then Simplified Chinese, the
-Maya menu bar shows translated menu names, each sized by the label Blender actually draws (no truncation), a Maya
-menu shows translated rows with the hotkey column and option boxes, and English comes back with the language.
+"""Translations (#197) in a real UI: with Blender's interface language set to Japanese, then Simplified Chinese, then
+Traditional Chinese (#341), the Maya menu bar shows translated menu names, each sized by the label Blender actually
+draws (no truncation), a Maya menu shows translated rows with the hotkey column and option boxes, and English comes
+back with the language.
 Screenshots go to ALLSET_GUI_SHOTS when set. The language is changed in this sandbox session only (never saved).
 """
 
@@ -130,6 +131,42 @@ def s_zh_draw():
 def s_zh_check():
     bar_check('zh_HANS')
     shot("gui_step329_zh_bar")
+
+
+@step
+def s_zht():
+    set_language('zh_HANT')
+
+
+@step
+def s_zht_draw():
+    redraw()
+
+
+@step
+def s_zht_check():
+    bar_check('zh_HANT')
+    shot("gui_step329_zht_bar")
+
+
+@step
+def s_zht_menu():
+    area, region = view3d()
+    ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 3, y=region.y + region.height - 40)
+    with bpy.context.temp_override(window=win(), area=area, region=region, space_data=area.spaces.active):
+        bpy.ops.wm.call_menu(name=mod(".ui.menu_sets").menu_idname("mainEditMeshMenu"))
+
+
+@step
+def s_zht_menu_shot():
+    shot("gui_step329_zht_edit_mesh")
+
+
+@step
+def s_zht_menu_close():
+    tap('ESC')
+    area, region = view3d()
+    ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
 
 
 @step

@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "src" / "allset"
-LOCALES = ("ja_JP", "zh_HANS")
+LOCALES = ("ja_JP", "zh_HANS", "zh_HANT")
 
 # Data modules walked by their own rules (not scanned for literals).
 _DATA = {"ui/menu_data.py", "ui/editor_menu_data.py", "ui/shelf_data.py", "ui/menu_hotkeys.py", "ui/menu_icon_data.py",

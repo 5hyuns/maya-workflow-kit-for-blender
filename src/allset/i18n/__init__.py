@@ -19,9 +19,9 @@ English template ``template_en.json`` lists every string by menu / window / file
 ``reload``, and their entries go over the built-in table of that language.
 """
 
-from . import ja_JP, zh_HANS
+from . import ja_JP, zh_HANS, zh_HANT
 
-LANGUAGES = {"ja_JP": ja_JP.STRINGS, "zh_HANS": zh_HANS.STRINGS}
+LANGUAGES = {"ja_JP": ja_JP.STRINGS, "zh_HANS": zh_HANS.STRINGS, "zh_HANT": zh_HANT.STRINGS}
 # Blender's default context ("*": labels, menus, panels, properties) and its operator context (operator buttons
 # with their own text, operator names)
 CONTEXTS = ("*", "Operator")

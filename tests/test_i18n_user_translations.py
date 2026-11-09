@@ -231,5 +231,5 @@ def test_channel_box_names_are_translatable():
     names = [f"{k} {a}" for k in ("Translate", "Rotate", "Scale") for a in "XYZ"] + ["Visibility"]
     for name in names:
         assert name in every, name
-        for locale in ("ja_JP", "zh_HANS"):
+        for locale in ("ja_JP", "zh_HANS", "zh_HANT"):
             assert name in i18n.LANGUAGES[locale], (locale, name)
