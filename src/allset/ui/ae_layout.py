@@ -108,7 +108,7 @@ CAMERA = [
     S("Film Back", True,
       ("prop", "data", "sensor_width", "Horizontal Film Aperture"),
       ("prop", "data", "sensor_height", "Vertical Film Aperture"),
-      ("prop", "data", "sensor_fit", "Fit Resolution Gate"),
+      ("prop", "data", "allset_film_fit", "Fit Resolution Gate"),     # Maya Fill / Horizontal / Vertical / Overscan
       ("prop", "data", "shift_x", "Film Offset X"),
       ("prop", "data", "shift_y", "Film Offset Y")),
     S("Depth of Field", False,

@@ -19,11 +19,11 @@ import math
 import bpy
 from mathutils import Euler, Matrix
 
-from . import units
+from . import film_fit, units
 
 MARK = "allset_startup_camera"
 NAMES = ("persp", "top", "front", "side")
-MAYA_LENS, MAYA_FILM_MM, MAYA_ORTHO_WIDTH = 35.0, 36.0, 30.0
+MAYA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM, MAYA_ORTHO_WIDTH = 35.0, 36.0, 24.0, 30.0
 # Maya new-scene values (Y-up, Maya units): translate, rotate (XYZ degrees), orthographic
 MAYA = {
     "persp": ((28.0, 21.0, 28.0), (-27.938352729602, 45.0, 0.0), False),
@@ -68,7 +68,8 @@ def ensure(scene, view_layer=None):
     made = []
     for name in NAMES:
         data = bpy.data.cameras.new(f"{name}Shape")
-        data.lens, data.sensor_width = MAYA_LENS, MAYA_FILM_MM
+        data.lens, data.sensor_width, data.sensor_height = MAYA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM
+        film_fit.set_fit(data, 'FILL', scene)         # Maya's Fit Resolution Gate of a new camera
         data.clip_start, data.clip_end = clip["clip_start"], clip["clip_end"]
         if MAYA[name][2]:
             data.type = 'ORTHO'

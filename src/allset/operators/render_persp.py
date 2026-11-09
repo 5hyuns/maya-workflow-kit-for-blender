@@ -21,12 +21,12 @@ import bpy
 from bpy.props import BoolProperty
 
 from .. import results
-from . import framing, units
+from . import film_fit, framing, units
 from .key_batch import VIEW_SENSOR, camera_matrix
 
 PROP = "allset_persp"
 NAME, SHAPE = "persp", "perspShape"
-MAYA_FILM_MM = 36.0          # film back of the 35 mm camera (create.MAYA_FILM_MM)
+MAYA_FILM_MM, MAYA_FILM_H_MM = 36.0, 24.0     # film back of the 35 mm camera (create.MAYA_FILM_MM)
 STARTUP = "allset_startup_camera"
 
 
@@ -38,7 +38,8 @@ def persp_camera(create=True):
     ob = ob or next((o for o in bpy.data.objects if o.get(PROP) and o.type == 'CAMERA'), None)
     if ob is None and create:
         data = bpy.data.cameras.new(SHAPE)
-        data.sensor_width = MAYA_FILM_MM
+        data.sensor_width, data.sensor_height = MAYA_FILM_MM, MAYA_FILM_H_MM
+        film_fit.set_fit(data, 'FILL', bpy.context.scene)
         ob = bpy.data.objects.new(NAME, data)
         ob[PROP] = True
         ob.use_fake_user = True
@@ -128,6 +129,7 @@ class ALLSET_OT_render(bpy.types.Operator):
     def _render(self, context, how):
         scene = context.scene
         ob = render_camera(context) if needs_camera(scene) else scene.camera
+        film_fit.sync(scene)        # Fill / Overscan cameras fit this render's shape (Fit Resolution Gate)
         props = {"animation": self.animation}
         if self.write_still and not self.animation:
             props["write_still"] = True

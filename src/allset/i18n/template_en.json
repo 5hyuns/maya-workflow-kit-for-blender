@@ -5728,6 +5728,15 @@
   "Labels/operators/fill_bridge": {
    "Fill Hole": "Fill Hole"
   },
+  "Labels/operators/film_fit": {
+   "Blender's own fit: the render's longer side matches Horizontal Film Aperture and Vertical Film Aperture isn't used (the film gate is drawn square)": "Blender's own fit: the render's longer side matches Horizontal Film Aperture and Vertical Film Aperture isn't used (the film gate is drawn square)",
+   "Fit Resolution Gate": "Fit Resolution Gate",
+   "How the resolution gate (the render) sits on the film gate (the film back), like Maya; Blender's Sensor Fit follows": "How the resolution gate (the render) sits on the film gate (the film back), like Maya; Blender's Sensor Fit follows",
+   "The film gate fits inside the resolution gate (the render)": "The film gate fits inside the resolution gate (the render)",
+   "The resolution gate (the render) fits inside the film gate: as wide as the film gate when the render is wider than the film back, else as tall. New cameras start with it, like Maya": "The resolution gate (the render) fits inside the film gate: as wide as the film gate when the render is wider than the film back, else as tall. New cameras start with it, like Maya",
+   "The resolution gate (the render) is as tall as the film gate": "The resolution gate (the render) is as tall as the film gate",
+   "The resolution gate (the render) is as wide as the film gate": "The resolution gate (the render) is as wide as the film gate"
+  },
   "Labels/operators/flow_path_228": {
    "Flow Path Object": "Flow Path Object",
    "Front": "Front",

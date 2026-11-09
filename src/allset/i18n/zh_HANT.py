@@ -6397,4 +6397,11 @@ STRINGS = {
     'Video Sequencer': '視頻序列編輯器',
     'Weight Paint': '權重繪製',
     'Write the movie to the file below instead of the temporary folder': '將影片寫入下方的檔案，而不是臨時資料夾',
+    'Fit Resolution Gate': '適配解析度門',
+    "How the resolution gate (the render) sits on the film gate (the film back), like Maya; Blender's Sensor Fit follows": '解析度門 (算圖) 如何放在膠片門 (膠片背) 上，與 Maya 相同；Blender 的傳感器適配隨之設定',
+    'The resolution gate (the render) fits inside the film gate: as wide as the film gate when the render is wider than the film back, else as tall. New cameras start with it, like Maya': '解析度門 (算圖) 放入膠片門內：算圖比膠片背更寬時與膠片門同寬，否則同高。新建的攝影機使用此方式，與 Maya 相同',
+    'The resolution gate (the render) is as wide as the film gate': '解析度門 (算圖) 與膠片門同寬',
+    'The resolution gate (the render) is as tall as the film gate': '解析度門 (算圖) 與膠片門同高',
+    'The film gate fits inside the resolution gate (the render)': '膠片門放入解析度門 (算圖) 內',
+    "Blender's own fit: the render's longer side matches Horizontal Film Aperture and Vertical Film Aperture isn't used (the film gate is drawn square)": 'Blender 自身的適配：算圖的長邊對應水平膠片光圈，不使用垂直膠片光圈 (膠片門繪製為正方形)',
 }

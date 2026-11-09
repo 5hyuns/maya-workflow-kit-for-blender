@@ -30,6 +30,7 @@ from . import live_translate
 from . import point_keys  # S on selected points keys their positions
 from . import lattice_pick  # lattice points picked where a deformer draws them
 from . import camera_overscan  # Maya camera Overscan (#313)
+from . import film_fit  # Maya camera Fit Resolution Gate (#345)
 from . import pick_order  # the order the selected objects were picked in (Match Transformations)
 from . import universal_manip  # Universal Manipulator drags (#318)
 
@@ -249,6 +250,7 @@ def register():
     material.register_props()
     lights.register_props()
     camera_overscan.register_props()
+    film_fit.register_props()
     universal_manip.register_props()
     anim_layers.register_props()
     driven_key.register_props()
@@ -393,6 +395,7 @@ def unregister():
     anim_layers.unregister_props()
     lights.unregister_props()
     universal_manip.unregister_props()
+    film_fit.unregister_props()
     camera_overscan.unregister_props()
     material.unregister_props()
     uv_shell_select.unregister_props()

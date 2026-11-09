@@ -6298,4 +6298,11 @@ STRINGS = {
     'Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel': 'クリックで追加、ドラッグで移動、X で削除、1-4 で補間、Enter で適用、Esc でキャンセル',
     'Commit modeling attributes as one undoable edit from any attribute UI': 'どのアトリビュート UI からでも、モデリングのアトリビュートを 1 回の元に戻せる編集として確定',
     'Reevaluate this recorded Bridge with the current section and twist model': 'この記録されたブリッジを現在の断面とツイストの計算方法で評価し直す',
+    'Fit Resolution Gate': '解像度ゲートのフィット',
+    "How the resolution gate (the render) sits on the film gate (the film back), like Maya; Blender's Sensor Fit follows": '解像度ゲート (レンダー) をフィルムゲート (フィルムバック) にどう合わせるか (Maya と同じ)。Blender のセンサーフィットはこれに従います',
+    'The resolution gate (the render) fits inside the film gate: as wide as the film gate when the render is wider than the film back, else as tall. New cameras start with it, like Maya': '解像度ゲート (レンダー) をフィルムゲートの内側に収めます: レンダーがフィルムバックより横長ならフィルムゲートと同じ幅、そうでなければ同じ高さ。新しいカメラはこれで始まります (Maya と同じ)',
+    'The resolution gate (the render) is as wide as the film gate': '解像度ゲート (レンダー) の幅をフィルムゲートと同じにします',
+    'The resolution gate (the render) is as tall as the film gate': '解像度ゲート (レンダー) の高さをフィルムゲートと同じにします',
+    'The film gate fits inside the resolution gate (the render)': 'フィルムゲートを解像度ゲート (レンダー) の内側に収めます',
+    "Blender's own fit: the render's longer side matches Horizontal Film Aperture and Vertical Film Aperture isn't used (the film gate is drawn square)": 'Blender 独自のフィット: レンダーの長い辺を水平フィルムアパーチャに合わせ、垂直フィルムアパーチャは使いません (フィルムゲートは正方形で表示されます)',
 }

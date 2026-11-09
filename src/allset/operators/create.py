@@ -19,7 +19,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import results
-from . import lights, naming, prim_history, units
+from . import film_fit, lights, naming, prim_history, units
 from .. import i18n
 
 HALF_PI = math.pi / 2
@@ -92,7 +92,7 @@ FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "
                 "the distance (the same brightness as Maya at 10 units).")
 
-MAYA_CAMERA_LENS, MAYA_FILM_MM = 35.0, 36.0
+MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM = 35.0, 36.0, 24.0
 
 # Operator properties that are lengths (scaled by units.maya_unit).
 LENGTHS = {"size", "radius", "depth", "radius1", "radius2", "major_radius", "minor_radius"}
@@ -103,9 +103,10 @@ def _scale_data(ob, k):
     Blender's light sizes, kept in proportion to the Maya unit."""
     data = ob.data
     if ob.type == 'CAMERA':
-        # Maya camera: focal length 35 on a 1.417 in (36 mm) film back
+        # Maya camera: focal length 35 on a 1.417 x 0.945 in (36 x 24 mm) film back, Fit Resolution Gate Fill
         # (Blender's camera_add gives 50 mm). Camera from View (Ctrl+Shift+C) overrides the lens with the view's.
-        data.lens, data.sensor_width = MAYA_CAMERA_LENS, MAYA_FILM_MM
+        data.lens, data.sensor_width, data.sensor_height = MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM
+        film_fit.set_fit(data, 'FILL', bpy.context.scene)
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
     elif ob.type == 'LIGHT':
