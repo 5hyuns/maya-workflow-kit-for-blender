@@ -54,8 +54,18 @@ def command(label, fn):
     finally:
         _depth[0] -= 1
     if outer and not _pushed[0] and isinstance(res, set) and 'FINISHED' in res:
+        _follow_lead()
         push(label)
     return res
+
+
+def _follow_lead():
+    """A command that picked objects (Select All, the Select menu ...): the last pick is the lead, in this step."""
+    try:
+        from .operators import pick_order
+        pick_order.follow(bpy.context)
+    except (ImportError, ReferenceError, RuntimeError, AttributeError):
+        pass
 
 
 def depth():

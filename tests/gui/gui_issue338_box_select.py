@@ -2,7 +2,11 @@
 Transformations > Match All Transforms -> the cube takes the locator's transform and the locator stays; one Ctrl+Z
 puts the cube back. Then the same through the Outliner: a click on the cube's row, Shift+click on the locator's row
 (range), Match -> the cube again; a click on the locator's row, Ctrl+click on the cube's row, Match -> the locator
-takes the cube's transform. A box leaves Blender's active object alone, so the active object isn't the last pick."""
+takes the cube's transform. A box leaves Blender's active object alone, so the active object isn't the last pick.
+
+The lead is the last pick in the kit's displays too, like Maya: after the box the Channel Box shows the locator's name
+and values; with a second cube boxed after the clicked one, the selection wire draws the clicked cube white and the boxed
+one in the lead green. One Ctrl+Z takes back the box with its lead, one Shift+Z brings both back."""
 
 import math
 import os
@@ -27,6 +31,10 @@ def mod(name):
 
 def cube():
     return bpy.data.objects[C["cube"]]
+
+
+def cube2():
+    return bpy.data.objects[C["cube2"]]
 
 
 def loc():
@@ -77,15 +85,17 @@ def s_scene():
     me.from_pydata([(x * k, y * k, z * k) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)], [],
                    [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)])
     c = bpy.data.objects.new("pCube1", me)
+    c2 = bpy.data.objects.new("pCube2", me.copy())
+    c2.location = (-4.0 * k, 0.0, 0.0)
     lo = bpy.data.objects.new("locator1", None)
     lo.empty_display_type = 'PLAIN_AXES'
     lo.empty_display_size = 1.0 * k
     coll = bpy.context.scene.collection.children[0] if len(bpy.context.scene.collection.children) \
         else bpy.context.scene.collection
-    for ob in (c, lo):
+    for ob in (c, lo, c2):          # Outliner rows pCube1, locator1 next to each other (a range of two)
         coll.objects.link(ob)
     lo.matrix_world = Matrix.LocRotScale(Vector((8.0 * k, 0.0, 1.0 * k)), Euler((0.2, 0.4, 0.6)), Vector((1, 1, 1)))
-    C["cube"], C["loc"] = c.name, lo.name
+    C["cube"], C["loc"], C["cube2"] = c.name, lo.name, c2.name
     area, _region = view3d()
     rv3d = area.spaces.active.region_3d
     rv3d.view_perspective = 'PERSP'
@@ -136,6 +146,66 @@ def shift_box_locator(name, half=45):
     wait(3)
 
 
+def lead_shown(name, what):
+    """The kit's lead displays show ``name``: the active object, the Channel Box name line and Translate values (the
+    Attribute Editor reads the same lead)."""
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), screen=win().screen, area=area, region=region):
+        cb = mod(".ui.channel_box")
+        entry = mod(".ui.cb_entry")
+        active = bpy.context.view_layer.objects.active
+        lead = cb.lead(bpy.context)
+        props = bpy.context.scene.allset_cb
+        ob = bpy.data.objects[name]
+        want = [entry.format_value(cb.get_value(ob, k), cb.entry_kind(ob, k), bpy.context.scene)
+                for k in ("tx", "ty", "tz")]
+        shown = [props.tx_text, props.ty_text, props.tz_text]
+        check(f"{what}: {name} is the lead (active {active.name if active else None}, Channel Box "
+              f"{props.lead_name!r} {shown})",
+              active is not None and active.name == name and lead is not None and lead.name == name
+              and props.lead_name == name and shown == want)
+
+
+def wire_leads():
+    """{object name: drawn in the lead colour} of the kit's selection wire in the 3D View."""
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), screen=win().screen, area=area, region=region):
+        return {ob.name: lead for ob, lead in mod(".ui.selection_wire").highlighted(bpy.context)}
+
+
+def green_pixels(path, ob):
+    """Pixels in the lead green (#43ffa3) inside ``ob``'s screen box on a window screenshot."""
+    img = bpy.data.images.load(path)
+    w, h = img.size
+    px = img.pixels[:]
+    pts = [to_window(ob.matrix_world @ Vector(c)) for c in ob.bound_box]
+    x0, x1 = max(0, int(min(p.x for p in pts)) - 2), min(w - 1, int(max(p.x for p in pts)) + 2)
+    y0, y1 = max(0, int(min(p.y for p in pts)) - 2), min(h - 1, int(max(p.y for p in pts)) + 2)
+    n = 0
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            i = (y * w + x) * 4
+            r, g, b = px[i], px[i + 1], px[i + 2]
+            if g > 0.75 and g - r > 0.3 and g - b > 0.15:
+                n += 1
+    bpy.data.images.remove(img)
+    return n
+
+
+def shift_z(name):
+    def press():
+        _area, r = view3d()
+        x, y = r.x + r.width // 2, r.y + 40
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+        ev('LEFT_SHIFT', 'PRESS', shift=True)
+        ev('Z', 'PRESS', shift=True)
+        ev('Z', 'RELEASE', shift=True)
+        ev('LEFT_SHIFT', 'RELEASE')
+    press.__name__ = f"s_{name}"
+    step(press)
+    wait(3)
+
+
 def match(name):
     def run_match():
         area, region = view3d()
@@ -180,6 +250,10 @@ def s_boxed():
     check(f"Shift+drag box adds the locator ({selected()})", selected() == sorted((C["cube"], C["loc"])))
     print("GUI note: active object after the box =", active.name if active else None)
     C["active_after_box"] = active.name if active else None
+    lead_shown(C["loc"], "Shift+box")
+    leads = wire_leads()
+    check(f"Shift+box: the selection wire draws the cube (picked first) in the non-lead colour ({leads})",
+          leads.get(C["cube"]) is False)
 
 
 match("match_box")
@@ -217,6 +291,106 @@ def s_matched_again():
 
 
 ctrl_z("undo_again")
+ctrl_z("undo_box")
+
+
+@step
+def s_box_undone():
+    check(f"one Ctrl+Z after the box takes it back: the cube alone ({selected()})", selected() == [C["cube"]])
+    lead_shown(C["cube"], "Ctrl+Z after the box")
+
+
+shift_z("redo_box")
+
+
+@step
+def s_box_redone():
+    check(f"one Shift+Z brings the box back ({selected()})", selected() == sorted((C["cube"], C["loc"])))
+    lead_shown(C["loc"], "Shift+Z after the box")
+
+
+# --- the lead colour on screen: the cube clicked, a second cube boxed after it ---------------------------------------
+
+click_cube("click_cube_wire")
+
+
+def shift_box_cube2(name, half=45):
+    def press():
+        p = to_window(cube2().matrix_world.translation)
+        a = p - Vector((half, half))
+        C["box"] = (a, p + Vector((half, half)))
+        ev('MOUSEMOVE', 'NOTHING', x=int(a.x), y=int(a.y))
+        ev('LEFT_SHIFT', 'PRESS', shift=True)
+        ev('LEFTMOUSE', 'PRESS', x=int(a.x), y=int(a.y), shift=True)
+
+    def move():
+        a, b = C["box"]
+        for i in range(1, 9):
+            q = a + (b - a) * (i / 8)
+            ev('MOUSEMOVE', 'NOTHING', x=int(q.x), y=int(q.y), shift=True)
+
+    def release():
+        _a, b = C["box"]
+        ev('LEFTMOUSE', 'RELEASE', x=int(b.x), y=int(b.y), shift=True)
+        ev('LEFT_SHIFT', 'RELEASE')
+    for i, fn in enumerate((press, move, release)):
+        fn.__name__ = f"s_{name}_{i}"
+        step(fn)
+    wait(3)
+
+
+def wire_shot(name):
+    def again():
+        redraw()
+    again.__name__ = f"s_{name}_redraw"
+    step(again)
+    wait(2)
+
+    def take():
+        C[name] = os.path.join(SHOTS or bpy.app.tempdir, f"gui_issue338_{name}.png")
+        screenshot(C[name])
+    take.__name__ = f"s_{name}"
+    step(take)
+
+
+shift_box_cube2("box_cube2")
+wire_shot("wire_boxed")
+
+
+@step
+def s_wire_boxed():
+    check(f"click pCube1, Shift+box pCube2: both selected ({selected()})",
+          selected() == sorted((C["cube"], C["cube2"])))
+    lead_shown(C["cube2"], "Shift+box over a second cube")
+    leads = wire_leads()
+    check(f"the wire: pCube2 (boxed last) in the lead colour, pCube1 not ({leads})",
+          leads.get(C["cube2"]) is True and leads.get(C["cube"]) is False)
+    g1, g2 = green_pixels(C["wire_boxed"], cube()), green_pixels(C["wire_boxed"], cube2())
+    check(f"on screen: lead green on pCube2 ({g2} px), none on pCube1 ({g1} px)", g2 > 20 and g1 < 3)
+
+
+ctrl_z("undo_box_cube2")
+wire_shot("wire_undone")
+
+
+@step
+def s_wire_undone():
+    check(f"one Ctrl+Z takes the box back ({selected()})", selected() == [C["cube"]])
+    lead_shown(C["cube"], "Ctrl+Z after the box over pCube2")
+    g1, g2 = green_pixels(C["wire_undone"], cube()), green_pixels(C["wire_undone"], cube2())
+    check(f"on screen: lead green back on pCube1 ({g1} px), none on pCube2 ({g2} px)", g1 > 20 and g2 < 3)
+
+
+shift_z("redo_box_cube2")
+wire_shot("wire_redone")
+
+
+@step
+def s_wire_redone():
+    check(f"one Shift+Z brings the box back ({selected()})", selected() == sorted((C["cube"], C["cube2"])))
+    lead_shown(C["cube2"], "Shift+Z after the box over pCube2")
+    g1, g2 = green_pixels(C["wire_redone"], cube()), green_pixels(C["wire_redone"], cube2())
+    check(f"on screen: lead green on pCube2 again ({g2} px), none on pCube1 ({g1} px)", g2 > 20 and g1 < 3)
 
 
 # --- the Outliner: find the rows, then click / Shift+click / Ctrl+click ----------------------------------------------
@@ -309,6 +483,27 @@ def s_range():
           selected() == sorted((C["cube"], C["loc"])))
     print("GUI note: active object after the Outliner range =", active.name if active else None)
     C["active_after_range"] = active.name if active else None
+    lead_shown(C["loc"], "Outliner Shift+click range")
+    C["range_shot"] = os.path.join(SHOTS or bpy.app.tempdir, "gui_issue338_outliner_range.png")
+    screenshot(C["range_shot"])
+
+
+@step
+def s_range_rows():
+    # the Outliner draws the active (lead) row in its brighter active highlight, the other selected rows darker
+    img = bpy.data.images.load(C["range_shot"])
+    w = img.size[0]
+    px = img.pixels[:]
+    r = ol_region()
+    x = r.x + int(r.width * 0.85)
+
+    def light(name):
+        i = (C["rows"][C[name]] * w + x) * 4
+        return round(sum(px[i:i + 3]) / 3, 3)
+    bpy.data.images.remove(img)
+    lo, cu = light("loc"), light("cube")
+    check(f"Outliner: the locator's row (the lead) has the active highlight, brighter than the cube's ({lo} > {cu})",
+          lo > cu + 0.01)
 
 
 match("match_range")
@@ -332,6 +527,7 @@ def s_toggle():
           selected() == sorted((C["cube"], C["loc"])))
     check("the positions are back before this Match", same(cube().matrix_world, C["cube0"]) and
           same(loc().matrix_world, C["loc0"]))
+    lead_shown(C["cube"], "Outliner Ctrl+click")
 
 
 match("match_toggle")
@@ -412,10 +608,9 @@ shift_lasso_locator("lasso_locator")
 
 @step
 def s_lassoed():
-    active = bpy.context.view_layer.objects.active
-    check(f"Lasso tool ({C['tool']}): Shift+lasso adds the locator ({selected()}), the cube stays the active object "
-          f"({active.name if active else None})",
-          selected() == sorted((C["cube"], C["loc"])) and active is not None and active.name == C["cube"])
+    check(f"Lasso tool ({C['tool']}): Shift+lasso adds the locator ({selected()})",
+          selected() == sorted((C["cube"], C["loc"])))
+    lead_shown(C["loc"], "Shift+lasso")
 
 
 match("match_lasso")
@@ -528,6 +723,7 @@ def s_rig_boxed():
           loc().select_get() and selected_joints() == [C["names"][0]])
     snap = mod(".operators.snap_align")
     C["joint_before"] = snap._maya_frame(arm().pose.bones[C["names"][0]])
+    lead_shown(C["loc"], "Rig: Shift+box over the locator after the joint")
 
 
 match("match_rig")

@@ -209,6 +209,8 @@ def _finish(entry):
             objects_instead(bpy.context, poly, mode, lasso)
             picked = True
         if picked:
+            from . import pick_order
+            pick_order.follow(bpy.context)     # objects boxed after the joints: the last pick leads, in this step
             if op is not None:
                 from . import undo_pairs       # one undo with Blender's box select step before it
                 undo_pairs.push(bpy.context.scene, "Select")
@@ -252,6 +254,11 @@ def _watch():
     if not _pending:
         _track_stop()
     return _TICK if _pending else None
+
+
+def pending():
+    """A drag is waiting for its joint rules (they run once Blender's box / lasso has ended)."""
+    return bool(_pending)
 
 
 def cancel_all():

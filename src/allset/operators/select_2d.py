@@ -311,6 +311,11 @@ class ALLSET_OT_select_2d_box(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
+def click_pending():
+    """A click's Maya rule is still to be written (Outliner Ctrl+click toggle and the like)."""
+    return "click" in _PENDING
+
+
 classes = (ALLSET_OT_select_2d_click, ALLSET_OT_select_2d_box)
 
 
