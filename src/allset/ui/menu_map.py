@@ -348,7 +348,7 @@ MAP = {
     "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
     "Mesh/Mirror": "allset.mirror",                       # applied, world plane; □ = Mirror Options
     "Mesh/Transfer Attributes": _mod('DATA_TRANSFER'),
-    "Mesh/Smooth Proxy/Subdiv Proxy": _mod('SUBSURF'),
+    "Mesh/Smooth Proxy/Subdiv Proxy": ("allset.smooth_proxy", {"action": 'CREATE'}),   # same as Ctrl+Shift+~
     # --- Edit Mesh ---
     "Edit Mesh/Add Divisions": "allset.subdivide",
     "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (#16)

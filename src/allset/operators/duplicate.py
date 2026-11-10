@@ -2,11 +2,10 @@
 """Maya Duplicate (Ctrl+D), Duplicate Special (Ctrl+Shift+D) and Duplicate with
 Transform (Shift+D).
 
-Maya ``duplicateSpecial`` default options (copy,
-count 1, group under Parent, T/R = 0, S = 1) and ``shiftD``
-(``cmds.duplicate(smartTransform=True)``). Edit > Duplicate Special runs with
-the saved options (DuplicateSpecial), no dialog; Blender's Adjust Last Operation
-edits them afterwards. Maya duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
+Duplicate Special's options start like Maya's (copy, 1 copy, grouped under the parent, translate / rotate 0,
+scale 1). Edit > Duplicate Special runs with the saved options and no dialog (its option box sets them); like Maya
+it has no Adjust Last Operation panel. Shift+D repeats the move between the last copy and its source. Maya
+duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
 
 What a copy takes from the original's inputs (#347), like Maya:
 
@@ -14,6 +13,10 @@ What a copy takes from the original's inputs (#347), like Maya:
   what the original shows now (shape-key mix, skin pose, deformers and modelling modifiers baked in); it has no
   history, deformers, shape keys, animation, drivers or constraints, and its channels keep their current values, so
   nothing the original's inputs do moves it. Materials, display settings (the smooth mesh preview) and children stay.
+  Blender modifiers Maya has no match for: one switched off in the viewport stays on the copy as it is (not applied)
+  unless it reads another object; Multires stays live with its sculpt detail (the shape-key mix and the deformers
+  above it go into the base mesh, the modifiers after it stay live unless they read another object). A Subdiv Proxy
+  copy is the cage only, like copying a Maya proxy cage.
 - Duplicate Special > Duplicate input graph: the copy gets its own copies of the inputs (modifiers, shape keys,
   drivers, constraints, its creation node and copies of the animation, so it animates on its own).
 - Duplicate Special > Duplicate input connections: the copy shares the original's inputs (the same animation drives
@@ -148,45 +151,147 @@ def _history_records(new):
                 del new.data[key]
 
 
-def _bakes(new):
-    """Modifiers baked into a plain copy's points (everything but the kit's display modifiers)."""
+KEEP, DROP, BAKE = 'KEEP', 'DROP', 'BAKE'     # what a plain copy does with a modifier (_plan)
+
+
+def _reads_other(md):
+    """The modifier reads another object or collection: an Armature's skeleton, a Hook's handle, a Boolean's cutter,
+    a mirror object, an object input of Geometry Nodes ..."""
+    ids = (bpy.types.Object, bpy.types.Collection)
+
+    def points(struct):
+        for prop in struct.bl_rna.properties:
+            if prop.type == 'POINTER' and isinstance(getattr(struct, prop.identifier, None), ids):
+                return True
+        return False
+
+    if points(md):
+        return True
+    for prop in md.bl_rna.properties:             # UV Project's projectors
+        if prop.type == 'COLLECTION' and any(points(item) for item in getattr(md, prop.identifier, ())):
+            return True
+    if md.type == 'NODES' and md.node_group is not None:
+        for item in md.node_group.interface.items_tree:
+            if (getattr(item, "in_out", None) == 'INPUT'
+                    and getattr(item, "socket_type", "") in {'NodeSocketObject', 'NodeSocketCollection'}
+                    and md.get(item.identifier) is not None):
+                return True
+    return False
+
+
+def _plan(new):
+    """What a plain copy does with each of its modifiers, by name:
+
+    - KEEP: the kit's display modifiers; one switched off in the viewport (not applied, Maya has no such thing).
+    - DROP: one switched off that reads another object (a plain copy has no connections); Subdiv Proxy's Subsurf
+      (Maya's smooth side is an object of its own, so the copy is the cage).
+    - BAKE: the rest, what the view shows (Maya's history and deformers).
+
+    Multires keeps its sculpt detail only on the base mesh it was made on, so a mesh with Multires keeps Multires and
+    every modifier after it live (the ones that read another object go); the ones above it don't change the base's
+    points and faces (Blender's rule) and bake into the base."""
     from .display import is_preview
-    return [md for md in new.modifiers if not is_preview(md)]
+    from .global_keys4 import subdiv_proxy
+    proxy = subdiv_proxy(new) if new.type == 'MESH' else None
+    out = {}
+    for md in new.modifiers:
+        if is_preview(md):
+            out[md.name] = KEEP
+        elif proxy is not None and md.name == proxy.name:
+            out[md.name] = DROP
+        elif not md.show_viewport:
+            out[md.name] = DROP if _reads_other(md) else KEEP
+        else:
+            out[md.name] = BAKE
+    first = _multires_index(new)
+    if first is not None:
+        for md in list(new.modifiers)[first:]:
+            if out[md.name] == BAKE:
+                out[md.name] = DROP if _reads_other(md) else KEEP
+    return out
+
+
+def _multires_index(new):
+    if new.type != 'MESH':
+        return None
+    return next((i for i, md in enumerate(new.modifiers) if md.type == 'MULTIRES'), None)
+
+
+def _remove(new, names):
+    for name in names:
+        md = new.modifiers.get(name)
+        if md is not None:
+            new.modifiers.remove(md)
 
 
 def _needs_evaluation(new):
     if new.constraints:
         return True
     if new.type == 'MESH' or new.type in _POINT_TYPES:
-        return bool(_bakes(new)) or getattr(new.data, "shape_keys", None) is not None
+        return BAKE in _plan(new).values() or getattr(new.data, "shape_keys", None) is not None
     if new.type == 'ARMATURE' and new.pose is not None:
         return any(pb.constraints for pb in new.pose.bones)
     return False
 
 
 def _bake_mesh(context, new):
-    """The copy's mesh = what it shows now without the display modifiers; the follow of its skin goes into the
-    points (its channels stay), like Delete History."""
+    """The copy's mesh = what it shows now without the modifiers it keeps or drops (_plan); the follow of its skin
+    goes into the points (its channels stay), like Delete History."""
     from . import history, skin_follow
-    from .display import is_preview
-    if not _bakes(new) and new.data.shape_keys is None:
-        return
-    history._bake(context, new, keep={md.name for md in new.modifiers if is_preview(md)})
+    from .global_keys4 import forget_proxy
+    plan = _plan(new)
+    bake = [name for name, what in plan.items() if what == BAKE]
+    drop = [name for name, what in plan.items() if what == DROP]
+    keys = new.data.shape_keys is not None
+    if _multires_index(new) is not None:
+        if bake or keys:
+            _bake_base(context, new, bake)
+    elif bake or keys:
+        history._bake(context, new, keep={name for name, what in plan.items() if what != BAKE})
+    _remove(new, drop)
     skin_follow.detach(new, keep_shape=True)
+    forget_proxy(new)
+
+
+def _bake_base(context, new, above):
+    """Multires: the shape-key mix and the modifiers above Multires (``above``) go into the base mesh's points; the
+    sculpt detail stays valid on top of them."""
+    later = list(new.modifiers)[_multires_index(new):]
+    shown = {md.name: md.show_viewport for md in later}
+    for md in later:
+        md.show_viewport = False
+    try:
+        base = new.evaluated_get(context.evaluated_depsgraph_get()).data
+        same = (len(base.vertices), len(base.loops)) == (len(new.data.vertices), len(new.data.loops))
+        co = [0.0] * (3 * len(base.vertices))
+        base.vertices.foreach_get("co", co)
+    finally:
+        for name, show in shown.items():
+            new.modifiers[name].show_viewport = show
+    if not same:         # only when a modifier above Multires changes the faces: leave the copy's inputs live
+        return
+    if new.data.shape_keys is not None:
+        new.shape_key_clear()
+    new.data.vertices.foreach_set("co", co)
+    new.data.update()
+    _remove(new, above)
 
 
 def _bake_points(context, new):
     """Curves, surfaces and lattices: the shape-key mix and the deforming modifiers go into the points (a modifier
-    that builds new geometry can't be applied to them and stays)."""
+    that builds new geometry can't be applied to them and stays); switched-off modifiers as in _plan."""
+    plan = _plan(new)
     with context.temp_override(object=new, active_object=new, selected_objects=[new],
                                selected_editable_objects=[new]):
         if getattr(new.data, "shape_keys", None) is not None:
             bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
-        for md in _bakes(new):
-            try:
-                bpy.ops.object.modifier_apply(modifier=md.name)
-            except RuntimeError:
-                pass
+        for name, what in plan.items():
+            if what == BAKE:
+                try:
+                    bpy.ops.object.modifier_apply(modifier=name)
+                except RuntimeError:
+                    pass
+    _remove(new, [name for name, what in plan.items() if what == DROP])
 
 
 def _hold_pose(context, arm):

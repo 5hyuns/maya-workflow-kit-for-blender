@@ -487,7 +487,7 @@ SHIFT_OBJECT = MarkingMenu(
         ("Offset Edge Loop Tool", _item("Mesh Tools/Offset Edge Loop")),
         ("Smooth", _mod('SUBSURF')),
         ("Unsmooth", _item("Mesh/Unsmooth")),
-        ("Subdiv Proxy", _mod('SUBSURF')),
+        ("Subdiv Proxy", _item("Mesh/Smooth Proxy/Subdiv Proxy")),
         ("Crease Tool", CREASE),
         DIVIDER,
         ("Project Curve on mesh", None),

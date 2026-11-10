@@ -231,6 +231,8 @@ class ALLSET_OT_toggle_show(bpy.types.Operator):
 # --- Ctrl+` / Shift+~ / Ctrl+Shift+~ ----------------------------------------------------------------------
 # The kit's Subdiv Proxy is a user Subsurf (ui/menu_map.py "Mesh/Smooth Proxy/Subdiv Proxy"): the cage is the mesh,
 # the smooth mesh is the modifier. "Both" draws the cage wire over the smooth surface like smooth preview 2.
+# Subdiv Proxy records which Subsurf it made, so a plain copy can leave the smooth side out (Maya's smooth side is
+# an object of its own: copying the cage copies the cage only).
 
 PROXY_ACTIONS = (
     ('TOGGLE', "Toggle Proxy Display", "Maya Ctrl+`: cage <-> smooth"),
@@ -238,12 +240,28 @@ PROXY_ACTIONS = (
     ('CREATE', "Subdiv Proxy", "Maya Ctrl+Shift+~: add the subdivision"),
 )
 _BOTH_FLAG = "allset_proxy_wire"   # object custom prop: show_wire turned on by "both"
+PROXY_KEY = "allset_subdiv_proxy"  # object custom prop: persistent_uid of the Subsurf Subdiv Proxy made or took over
 
 
 def proxy_modifier(ob):
     """The object's proxy Subsurf: its last Subsurf that is not the kit's smooth preview."""
     mods = [m for m in ob.modifiers if m.type == 'SUBSURF' and not display.is_preview(m)]
     return mods[-1] if mods else None
+
+
+def subdiv_proxy(ob):
+    """The Subsurf that Subdiv Proxy made or took over (the proxy's smooth side), or None."""
+    uid = ob.get(PROXY_KEY)
+    if uid is None:
+        return None
+    return next((m for m in ob.modifiers if m.type == 'SUBSURF' and m.persistent_uid == uid), None)
+
+
+def forget_proxy(ob):
+    """``ob`` is a cage without its smooth side: no proxy record and no cage wire of "both"."""
+    _set_both_wire(ob, False)
+    if PROXY_KEY in ob:
+        del ob[PROXY_KEY]
 
 
 def _set_both_wire(ob, on):
@@ -267,6 +285,7 @@ def proxy_action(ob, action):
                 with bpy.context.temp_override(object=ob):
                     bpy.ops.object.modifier_move_to_index(modifier=mod.name, index=first_preview)
         mod.show_viewport = True
+        ob[PROXY_KEY] = mod.persistent_uid
         return True
     if mod is None:
         return False
