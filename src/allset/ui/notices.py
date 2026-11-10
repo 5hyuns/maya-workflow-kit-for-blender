@@ -813,8 +813,9 @@ PANEL_MENU = {
         "Timeline markers", "Blender has no camera sequencer view time: bind scene cameras to timeline markers "
         "(Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer."),
     _PM + "View/Camera Tools/2D Pan∕Zoom Tool": (
-        "Camera Shift X / Y", "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y "
-        "(Attribute Editor > Film Offset) or zoom in the camera view (wheel)."),
+        "\\ (hold) / 2D Pan/Zoom button", "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a "
+        "camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom "
+        "button shows the whole frame and brings the pan / zoom back."),
     _PM + "View/Camera Tools/Azimuth Elevation Tool": (
         "Tumble Tool / Alt+LMB", "Blender has no azimuth / elevation camera tool: tumble with Alt+LMB or the Tumble Tool."),
     _PM + "View/Camera Tools/Yaw-Pitch Tool": (
@@ -875,12 +876,6 @@ PANEL_MENU = {
         "Windows > Workspaces", "Blender saves layouts as workspaces (Windows > Workspaces, the Status Line drop-down)."),
     _PM + "Panels/Panel Editor...": (
         "Workspaces", "Blender has no panel editor: split / join areas by their corners and keep layouts as workspaces."),
-    _PT + "Bookmarks": (
-        "Look Through Selected / Undo View Change", "Blender has no camera bookmarks: keep a camera per view (Panels > "
-        "Look Through Selected) or step back with View > Undo View Change."),
-    _PT + "2D Pan∕Zoom": (
-        "Camera Shift X / Y", "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute "
-        "Editor > Film Offset)."),
     _PT + "Resolution Gate": (
         "Camera view frame (always on)", "Blender's camera view always draws the render resolution frame (Maya's "
         "resolution gate; a new Maya camera has it off, overscan 1.0): it can't be "

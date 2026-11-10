@@ -933,8 +933,9 @@ def draw_tool_header(self, context):
     area, _r = main_view3d(context.screen)
     if area is None or context.area != area:  # one Status Line, not one per 3D View
         return
-    from .shelf import strip_area
-    if strip_area(context.screen) is not None:  # drawn in the Maya strip
+    from . import panel_toolbar
+    # drawn in the Maya strip; a panel torn off the Maya layout has the panel toolbar there, like Maya
+    if panel_toolbar.maya_screen(context):
         return
     draw_status_line(self.layout, context, compact=True)
     self.layout.separator(type='LINE')

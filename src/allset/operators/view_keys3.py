@@ -276,6 +276,8 @@ class ALLSET_OT_pan_zoom_hold(bpy.types.Operator):
                                                               region.width, region.height, rv3d.view_camera_zoom)
             else:
                 rv3d.view_camera_zoom = max(-30.0, min(600.0, rv3d.view_camera_zoom + (dx + dy) * ZOOM_PER_PX))
+            from ..ui import camera_bookmarks
+            camera_bookmarks.pan_zoom_moved(rv3d)      # the panel toolbar's 2D Pan/Zoom button lights up (Maya)
             context.area.tag_redraw()
             return {'RUNNING_MODAL'}
         if event.type == 'TIMER' and self._drag is None and keystate.is_down(self._key) is False:

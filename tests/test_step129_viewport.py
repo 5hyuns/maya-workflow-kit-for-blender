@@ -15,6 +15,7 @@ sl = import_module(kit.MODULE + ".ui.status_line")
 view = import_module(kit.MODULE + ".operators.view")
 mi = import_module(kit.MODULE + ".operators.menu_items")
 maya_grid = import_module(kit.MODULE + ".ui.maya_grid")
+camera_bookmarks = import_module(kit.MODULE + ".ui.camera_bookmarks")
 
 
 def _click(ctx, key):
@@ -39,7 +40,8 @@ def _snapshot(space, cam):
     return (sh.type, sh.light, sh.color_type, sh.show_shadows, sh.show_cavity, sh.show_xray, sh.use_dof,
             ov.show_wireframes, ov.show_xray_bone, maya_grid.visible(space), tuple(cam.lock_location),
             tuple(cam.lock_rotation), cam.data.show_sensor, cam.data.show_passepartout, cam.data.show_safe_areas,
-            round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform)
+            round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform,
+            camera_bookmarks.pan_zoom_on(space.region_3d))
 
 
 def test_every_toolbar_toggle_comes_back():
@@ -55,7 +57,7 @@ def test_every_toolbar_toggle_comes_back():
     keys += [("Exposure", "set", "EXPOSURE"), ("Gamma", "set", "GAMMA"), ("Colour management", "set", "CM_ENABLE")]
     bad = []
     for label, kind, data in keys:
-        if data in ("ISOLATE", "SELECT_CAMERA"):
+        if data in ("ISOLATE", "SELECT_CAMERA", "BOOKMARK"):      # commands, not toggles
             continue
         before = _snapshot(space, cam)
         for i in range(2):

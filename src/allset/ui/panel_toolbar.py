@@ -7,7 +7,8 @@ camera, gates and grid, shading modes and lights, effects, isolate / X-ray — t
 colour management view. Blender's 3D View header mixed Maya's menus with its own editor-type button, mode selector,
 transform orientation, pivot, snapping, proportional editing, overlays and shading.
 
-In 3D Views of the Maya Workflow Kit layout (a screen with the Maya strip) the class's own draw of ``VIEW3D_HT_header`` is
+In 3D Views of the Maya Workflow Kit layout (a screen with the Maya strip, and a panel torn off it into a window of
+its own) the class's own draw of ``VIEW3D_HT_header`` is
 replaced by the Maya menu bar and the tool header's by the Maya panel toolbar (like ``editor_chrome``: only the
 class's own draw function, so UI appended by others still draws; restored on unregister). Other layouts keep
 Blender's header with the Maya menus (``panel_menus``). Icons are kit-drawn (``status_icons``), no Maya assets.
@@ -346,9 +347,9 @@ def _draw_item(row, context, item, text=""):
     if kind == "set":
         on = bool(panel_menus.state(context, data))
         sub = _flat(row, on, bool(text))
-        if data in panel_menus.CAMERA_KEYS:
+        if data in panel_menus.CAMERA_KEYS or data == "PAN_ZOOM":
             sub.enabled = panel_menus.view_camera(context) is not None
-        elif data == "SELECT_CAMERA":
+        elif data in ("SELECT_CAMERA", "BOOKMARK"):
             sub.enabled = panel_menus.has_panel_camera(context)
         op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text=text, icon_value=_icon(glyph),
                           depress=on)
@@ -470,26 +471,33 @@ class ALLSET_PT_panel_toolbar_more(bpy.types.Panel):
                 _draw_cm(col, context, menu=True)
 
 
-# --- camera list on RMB --------------------------------------------------------------------------------------
-# Maya: right-click on the camera icon at the left of the panel toolbar lists the scene's cameras; picking one looks
-# through it in that view. Blender opens its own button context menu on a right-click over a button before any keymap
-# runs, so ``allset.pt_hover`` (3D View Generic MOUSEMOVE, first; poll = tool header) remembers whether the mouse is
-# over the Select Camera button and starts ``allset.pt_camera_rmb``, a window modal (window handlers run before the
-# UI) that lives while the mouse is in that tool header and takes the right-click there.
+# --- right-click menus ----------------------------------------------------------------------------------------
+# Maya: right-click on the camera icon at the left of the panel toolbar lists the scene's cameras (picking one looks
+# through it in that view), on Bookmarks the camera's bookmarks, on 2D Pan/Zoom its 2D bookmarks
+# (ui/camera_bookmarks.py). Blender opens its own button context menu on a right-click over a button before any
+# keymap runs, so ``allset.pt_hover`` (3D View Generic MOUSEMOVE, first; poll = tool header) remembers which of these
+# buttons the mouse is over and starts ``allset.pt_camera_rmb``, a window modal (window handlers run before the
+# UI) that lives while the mouse is in that tool header and opens the button's menu on a right-click there.
 
-_over_camera = {}     # window pointer -> the mouse is over the Select Camera button (last move)
+RMB_MENUS = {"cam_select": "ALLSET_MT_panel_cameras", "bookmark": "ALLSET_MT_pt_bookmarks",
+             "pan_zoom": "ALLSET_MT_pt_pan_zoom"}
+_over_camera = {}     # window pointer -> the right-click menu of the button under the mouse ("" = none; last move)
 _watching = set()
 
 
-def _over_camera_button(context, event):
-    """The mouse is over the toolbar's first button, Select Camera (Blender's layout can't report where it put a
-    button: its x comes from the same layout rules as the » overflow, ``toolbar_fit.starts``)."""
+def _rmb_menu(context, event):
+    """The right-click menu of the first group's button under the mouse, else "" (Blender's layout can't report
+    where it put a button: its x comes from the same layout rules as the » overflow, ``toolbar_fit.starts``)."""
     region = context.region
     if region is None or region.type != 'TOOL_HEADER' or shown_groups(context) < 1:
-        return False
+        return ""
     system = context.preferences.system
     x0 = toolbar_fit.starts(fit_groups(), system.ui_scale, system.pixel_size)[0]
-    return x0 <= event.mouse_region_x < x0 + toolbar_fit.unit(system.ui_scale, system.pixel_size)
+    u = toolbar_fit.unit(system.ui_scale, system.pixel_size)
+    i = (event.mouse_region_x - x0) // u if event.mouse_region_x >= x0 else -1
+    if not 0 <= i < len(TOOLBAR[0]):
+        return ""
+    return RMB_MENUS.get(TOOLBAR[0][i][0], "")
 
 
 STARTUP_VIEWS = (("persp", 'PERSP'), ("top", 'TOP'), ("front", 'FRONT'), ("side", 'RIGHT'))
@@ -541,7 +549,7 @@ class ALLSET_OT_pt_hover(bpy.types.Operator):
         if window is None or not maya_layout(context):
             return {'PASS_THROUGH'}
         ptr = window.as_pointer()
-        over = _over_camera_button(context, event)
+        over = _rmb_menu(context, event)
         _over_camera[ptr] = over
         if over and ptr not in _watching:
             bpy.ops.allset.pt_camera_rmb('INVOKE_DEFAULT', True)
@@ -549,7 +557,7 @@ class ALLSET_OT_pt_hover(bpy.types.Operator):
 
 
 class ALLSET_OT_pt_camera_rmb(bpy.types.Operator):
-    """Right-click on the panel toolbar's camera icon: the scene's cameras"""
+    """Right-click on the panel toolbar's camera, Bookmarks or 2D Pan/Zoom icon: its menu"""
     bl_idname = "allset.pt_camera_rmb"
     bl_label = "Camera List"
     bl_options = {'INTERNAL'}
@@ -582,21 +590,42 @@ class ALLSET_OT_pt_camera_rmb(bpy.types.Operator):
             return {'CANCELLED', 'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE' and not self._inside(event):
             return self._finish()
-        if (event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event)
-                and _over_camera.get(self._win)):
-            bpy.ops.wm.call_menu(name=ALLSET_MT_panel_cameras.bl_idname)
+        menu = _over_camera.get(self._win)
+        if event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event) and menu:
+            bpy.ops.wm.call_menu(name=menu)
             return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
 
 
 # --- header patch ---------------------------------------------------------------------------------------
 
-def maya_layout(context):
-    """A 3D View of the Maya Workflow Kit layout (its screen has the Maya strip)."""
+def torn_off(context):
+    """The window is a panel torn off the Maya Workflow Kit layout (Panels > Tear Off / Tear Off Copy): a window of
+    one area that shows a Maya workspace. Like a torn-off Maya panel it keeps the panel menu bar and toolbar."""
+    window = getattr(context, "window", None)
+    if window is None:
+        return False
+    from . import ipr_window, maya_dock
+    from .. import switch
+    try:
+        if ipr_window.window() == window:        # the IPR window is a render picture, not a panel
+            return False
+        return maya_dock.is_floating(window) and switch.is_maya_workspace(window.workspace)
+    except (AttributeError, ReferenceError):
+        return False
+
+
+def maya_screen(context):
+    """The window shows the Maya Workflow Kit layout: its screen has the Maya strip, or it is a panel torn off it."""
     from .shelf import strip_area
+    return context.screen is not None and (strip_area(context.screen) is not None or torn_off(context))
+
+
+def maya_layout(context):
+    """A 3D View of the Maya Workflow Kit layout (its screen has the Maya strip, or a panel torn off it)."""
     area = context.area
-    return (area is not None and area.type == 'VIEW_3D' and context.screen is not None
-            and strip_area(context.screen) is not None and panel_menus._enabled(context))
+    return (area is not None and area.type == 'VIEW_3D' and maya_screen(context)
+            and panel_menus._enabled(context))
 
 
 def _header(self, context):

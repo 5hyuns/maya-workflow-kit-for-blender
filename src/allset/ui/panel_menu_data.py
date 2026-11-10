@@ -46,7 +46,9 @@ VIEW = [
     _run("Frame Selection", "allset.frame", selected=True),
     ("menu", "View Along Axis", "ALLSET_MT_panel_view_axis"),
     _sep(),
-    _run("Camera Attribute Editor...", "allset.camera_attribute_editor"),   # showPanelCameraEditor
+    ("menu", "Bookmarks", "ALLSET_MT_panel_bookmarks"),     # the camera's bookmarks (ui/camera_bookmarks.py)
+    _sep(),
+    _run("Camera Attribute Editor...", "allset.camera_attribute_editor"),
     ("menu", "Camera Tools", "ALLSET_MT_panel_camera_tools"),
     _sep(),
     _grey("View Sequence Time"),
@@ -210,9 +212,9 @@ TOOLBAR = (
     (("cam_select", "set", "SELECT_CAMERA", "Select Camera"),
      ("cam_lock", "set", "CAMERA_LOCK", "Lock Camera"),
      ("cam_attr", "run", ("allset.camera_attribute_editor", {}), "Camera Attributes"),
-     ("bookmark", "grey", None, "Bookmarks"),
+     ("bookmark", "set", "BOOKMARK", "Bookmarks"),          # a new camera bookmark (ui/camera_bookmarks.py)
      ("image_plane", "run", ("allset.create", {"kind": 'IMAGE_PLANE'}), "Image Plane"),
-     ("pan_zoom", "grey", None, "2D Pan/Zoom"),
+     ("pan_zoom", "set", "PAN_ZOOM", "2D Pan/Zoom"),        # the view's 2D pan / zoom off / on
      ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
     (("grid", "set", "GRID", "Grid"),
      ("film_gate", "set", "FILM_GATE", "Film Gate"),

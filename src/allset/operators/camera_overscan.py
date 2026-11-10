@@ -51,6 +51,8 @@ def apply_view(window, area):
         bpy.ops.view3d.view_center_camera()
     fac = zoom_to_fac(rv3d.view_camera_zoom) / overscan(cam)
     rv3d.view_camera_zoom = min(ZOOM_MAX, max(ZOOM_MIN, fac_to_zoom(fac)))
+    from ..ui import camera_bookmarks
+    camera_bookmarks.pan_zoom_forget(rv3d)       # the whole frame: no 2D pan / zoom left in this view
     area.tag_redraw()
     return True
 

@@ -24,6 +24,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from ..operators import view as view_ops
+from . import camera_bookmarks
 
 GREY_OP = "allset.menu_unavailable"
 
@@ -132,6 +133,8 @@ FAILS = {
                      "views and a view that looks through a camera",
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
+    "BOOKMARK": camera_bookmarks.NO_CAMERA,
+    "PAN_ZOOM": camera_bookmarks.NO_CAMERA_VIEW,
 }
 for _k in CAMERA_DATA:
     FAILS[_k] = FAILS["CAMERA_LOCK"]
@@ -148,6 +151,10 @@ TIPS = {
     "GATE_MASK": "Gate mask (Blender: passepartout)",
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
+    "BOOKMARK": "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, "
+                "Create 2D Bookmark, Edit 2D Bookmarks",
+    "PAN_ZOOM": "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ "
+                "key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks",
     "GRID": "Grid",
     "SHOW_IMAGE_PLANES": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
     "SELECTION_HILITE": "Selection highlighting in this view (the Maya selection wire, and Blender's outline "
@@ -201,6 +208,8 @@ def state(context, key):
         return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
     if key == "ISOLATE":
         return space.local_view is not None
+    if key == "PAN_ZOOM":
+        return camera_bookmarks.pan_zoom_on(context.region_data or space.region_3d)
     if key == "CM_ENABLE":
         return context.scene.view_settings.view_transform != RAW
     sh = space.shading
@@ -254,7 +263,8 @@ RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
-TOOLBAR_KEYS = ["FILM_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE"]
+TOOLBAR_KEYS = ["FILM_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
+                "BOOKMARK", "PAN_ZOOM"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
 _COPY_SHADING = ("type", "light", "color_type", "show_xray", "show_backface_culling", "show_shadows",
@@ -388,6 +398,10 @@ def apply(context, key):
             bpy.ops.allset.isolate()        # isolating a group shows its children
     elif key in ("EXPOSURE", "GAMMA", "CM_ENABLE"):
         _toggle_colour(context.scene, key)
+    elif key == "BOOKMARK":
+        return camera_bookmarks.add(context) is not None
+    elif key == "PAN_ZOOM":
+        return camera_bookmarks.toggle_pan_zoom(context)
     elif key in ("LAYOUT_SINGLE", "LAYOUT_FOUR"):
         # Issue #148: Maya's layouts = four real panels (ui/four_view.py); Single Perspective View keeps
         # the persp panel, Four View puts every panel back with its own settings
@@ -450,6 +464,14 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
         key = self.key
         if self.toggle and key in TOGGLE_OFF and state(context, key):
             key = TOGGLE_OFF[key]
+        if key == "BOOKMARK":             # a command with a result: the new bookmark's name (Maya)
+            name = camera_bookmarks.add(context)
+            if name is None:
+                self.report({'WARNING'}, FAILS[key])
+                return {'CANCELLED'}
+            from .. import results
+            results.result(self, name)
+            return {'FINISHED'}
         if not apply(context, key):
             if key in FAILS:
                 self.report({'WARNING'}, FAILS[key])

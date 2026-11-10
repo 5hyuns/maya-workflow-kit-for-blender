@@ -52,6 +52,8 @@ def snapshot():
         "selected": tuple(sorted(o.name for o in scene.objects if o.select_get())),
         "objects": len(scene.objects), "tool": tool.idname if tool else "",
         "camera_view": sp.region_3d.view_perspective,
+        "pan_zoom": mod("ui.camera_bookmarks").pan_zoom_on(sp.region_3d),
+        "bookmarks": len(getattr(cam, "allset_view_bookmarks", ())) if cam else 0,
     }
 
 
@@ -237,7 +239,7 @@ def label_of(cmd):
 def kind_of(cmd):
     if "menu_unavailable" in cmd:
         return "grey"
-    if "SELECT_CAMERA" in cmd or "panel_run" in cmd:
+    if "SELECT_CAMERA" in cmd or "BOOKMARK" in cmd or "panel_run" in cmd:
         return "command"
     return "toggle"
 

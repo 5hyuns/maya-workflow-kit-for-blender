@@ -3340,6 +3340,7 @@
    "Align Camera To Polygon": "Align Camera To Polygon",
    "Around Center of Interest": "Around Center of Interest",
    "Around Most Recent Selection": "Around Most Recent Selection",
+   "Bookmarks": "Bookmarks",
    "Camera Attribute Editor...": "Camera Attribute Editor...",
    "Camera Tools": "Camera Tools",
    "Center View of Selection": "Center View of Selection",
@@ -4782,8 +4783,6 @@
    "Blender gives the selected meshes a Fluid modifier of type Effector.": "Blender gives the selected meshes a Fluid modifier of type Effector.",
    "Blender hair = Curves objects groomed in Sculpt mode; there are no follicles or nHair dynamics (use the Hair Dynamics node group).": "Blender hair = Curves objects groomed in Sculpt mode; there are no follicles or nHair dynamics (use the Hair Dynamics node group).",
    "Blender hair is a Curves object groomed in Sculpt mode: on the selected mesh the kit adds an empty hair object (or picks its hair) and switches to it; paint follicles with the Add brush.": "Blender hair is a Curves object groomed in Sculpt mode: on the selected mesh the kit adds an empty hair object (or picks its hair) and switches to it; paint follicles with the Add brush.",
-   "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute Editor > Film Offset) or zoom in the camera view (wheel).": "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute Editor > Film Offset) or zoom in the camera view (wheel).",
-   "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute Editor > Film Offset).": "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute Editor > Film Offset).",
    "Blender has no ATOM files or After Effects Live Link: move animation with Append / Link or FBX / Alembic export.": "Blender has no ATOM files or After Effects Live Link: move animation with Append / Link or FBX / Alembic export.",
    "Blender has no Autodesk account, product research or analytics services; Blender's Help menu has the manual and bug reports.": "Blender has no Autodesk account, product research or analytics services; Blender's Help menu has the manual and bug reports.",
    "Blender has no Connect to IK/FK: drive the handle's Ik Blend from a control with Key > Set Driven Key or a driver.": "Blender has no Connect to IK/FK: drive the handle's Ik Blend from a control with Key > Set Driven Key or a driver.",
@@ -4811,7 +4810,6 @@
    "Blender has no azimuth / elevation camera tool: tumble with Alt+LMB or the Tumble Tool.": "Blender has no azimuth / elevation camera tool: tumble with Alt+LMB or the Tumble Tool.",
    "Blender has no batch render queue: Esc in the Render window stops the running render.": "Blender has no batch render queue: Esc in the Render window stops the running render.",
    "Blender has no batch render queue: the frame range renders in this session (Esc stops it); for a background render run blender -b <file> -a.": "Blender has no batch render queue: the frame range renders in this session (Esc stops it); for a background render run blender -b <file> -a.",
-   "Blender has no camera bookmarks: keep a camera per view (Panels > Look Through Selected) or step back with View > Undo View Change.": "Blender has no camera bookmarks: keep a camera per view (Panels > Look Through Selected) or step back with View > Undo View Change.",
    "Blender has no camera sequencer view time: bind scene cameras to timeline markers (Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer.": "Blender has no camera sequencer view time: bind scene cameras to timeline markers (Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer.",
    "Blender has no camera sets: bind cameras to timeline markers to switch between them.": "Blender has no camera sets: bind cameras to timeline markers to switch between them.",
    "Blender has no character mapping or redirection: retarget with Copy Transforms constraints. Character sets: Key > Create Character Set.": "Blender has no character mapping or redirection: retarget with Copy Transforms constraints. Character sets: Key > Create Character Set.",
@@ -4928,7 +4926,6 @@
    "Bone collections": "Bone collections",
    "Bridged loops": "Bridged loops",
    "Cache File properties": "Cache File properties",
-   "Camera Shift X / Y": "Camera Shift X / Y",
    "Camera view frame (always on)": "Camera view frame (always on)",
    "Cloth modifier": "Cloth modifier",
    "Cloth modifier off": "Cloth modifier off",
@@ -4981,7 +4978,6 @@
    "Line Art / Freestyle": "Line Art / Freestyle",
    "Link + Library Override": "Link + Library Override",
    "Linked data": "Linked data",
-   "Look Through Selected / Undo View Change": "Look Through Selected / Undo View Change",
    "Mantaflow fluid": "Mantaflow fluid",
    "Material Blend Setting": "Material Blend Setting",
    "Maya Workflow Kit project": "Maya Workflow Kit project",
@@ -4997,6 +4993,7 @@
    "NURBS Hulls": "NURBS Hulls",
    "NURBS cylinder": "NURBS cylinder",
    "NURBS surface edit mode": "NURBS surface edit mode",
+   "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom button shows the whole frame and brings the pan / zoom back.": "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom button shows the whole frame and brings the pan / zoom back.",
    "Object > Convert": "Object > Convert",
    "Object > Link/Transfer Data": "Object > Link/Transfer Data",
    "Object Properties > Viewport Display": "Object Properties > Viewport Display",
@@ -5072,6 +5069,7 @@
    "Windows > Workspaces": "Windows > Workspaces",
    "Wireframe / Triangulate modifier": "Wireframe / Triangulate modifier",
    "World colour or Point Light": "World colour or Point Light",
+   "\\ (hold) / 2D Pan/Zoom button": "\\ (hold) / 2D Pan/Zoom button",
    "nParticles/Create Emitter": "nParticles/Create Emitter",
    "nParticles/Create Emitter#2": "nParticles/Create Emitter#2",
    "ns: name prefix": "ns: name prefix"
@@ -7825,6 +7823,25 @@
    "Edit Taper Curve": "Edit Taper Curve",
    "Update Bridge Evaluation": "Update Bridge Evaluation"
   },
+  "Labels/ui/camera_bookmarks": {
+   "2D Bookmarks": "2D Bookmarks",
+   "2D Pan/Zoom": "2D Pan/Zoom",
+   "Apply": "Apply",
+   "Apply Bookmark": "Apply Bookmark",
+   "Bookmark Editor": "Bookmark Editor",
+   "Bookmark Editor ({camera})": "Bookmark Editor ({camera})",
+   "Bookmarks": "Bookmarks",
+   "Create 2D Bookmark": "Create 2D Bookmark",
+   "Delete": "Delete",
+   "Delete Bookmark": "Delete Bookmark",
+   "Description": "Description",
+   "Edit 2D Bookmarks...": "Edit 2D Bookmarks...",
+   "Edit Bookmarks...": "Edit Bookmarks...",
+   "Name": "Name",
+   "New 2D Bookmark": "New 2D Bookmark",
+   "New Bookmark": "New Bookmark",
+   "What this bookmark shows": "What this bookmark shows"
+  },
   "Labels/ui/camera_tools": {
    "A camera view shows its full Attribute Editor": "A camera view shows its full Attribute Editor",
    "Camera Attribute Editor": "Camera Attribute Editor",
@@ -8552,7 +8569,9 @@
    "Zero weights": "Zero weights"
   },
   "Labels/ui/panel_menus": {
+   "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks": "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks",
    "Blender": "Blender",
+   "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks": "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks",
    "Colour management on / off (off = Blender's Raw view transform)": "Colour management on / off (off = Blender's Raw view transform)",
    "Copy": "Copy",
    "Exposure: switch between 0 and the last exposure": "Exposure: switch between 0 and the last exposure",
@@ -10181,6 +10200,18 @@
    "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel": "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel",
    "Reevaluate this recorded Bridge with the current section and twist model": "Reevaluate this recorded Bridge with the current section and twist model"
   },
+  "Tooltips/ui/camera_bookmarks": {
+   "A camera bookmark: the camera's place and lens, Blender's view or a 2D pan / zoom": "A camera bookmark: the camera's place and lens, Blender's view or a 2D pan / zoom",
+   "A camera's bookmarks": "A camera's bookmarks",
+   "Bookmark this view: the camera's place and lens; a 2D bookmark keeps the view's 2D pan / zoom": "Bookmark this view: the camera's place and lens; a 2D bookmark keeps the view's 2D pan / zoom",
+   "Delete this bookmark": "Delete this bookmark",
+   "Maya's Bookmark Editor: the bookmarks of this view's camera": "Maya's Bookmark Editor: the bookmarks of this view's camera",
+   "Open the Bookmark Editor of this view's camera: its bookmarks to rename, describe, apply or delete": "Open the Bookmark Editor of this view's camera: its bookmarks to rename, describe, apply or delete",
+   "Put the view back to this bookmark": "Put the view back to this bookmark",
+   "The bookmarks of this view's camera: pick one to put the view back to it": "The bookmarks of this view's camera: pick one to put the view back to it",
+   "The camera's 2D bookmarks (right-click on the panel toolbar's 2D Pan/Zoom button)": "The camera's 2D bookmarks (right-click on the panel toolbar's 2D Pan/Zoom button)",
+   "The camera's bookmarks (right-click on the panel toolbar's Bookmarks button)": "The camera's bookmarks (right-click on the panel toolbar's Bookmarks button)"
+  },
   "Tooltips/ui/camera_tools": {
    "Show the camera this view looks through in the Attribute Editor (Maya View > Camera Attribute Editor)": "Show the camera this view looks through in the Attribute Editor (Maya View > Camera Attribute Editor)",
    "The camera values of a Blender persp / ortho view (Maya perspShape)": "The camera values of a Blender persp / ortho view (Maya perspShape)",
@@ -10413,7 +10444,7 @@
   "Tooltips/ui/panel_toolbar": {
    "More panel toolbar buttons: the ones that don't fit this view's width": "More panel toolbar buttons: the ones that don't fit this view's width",
    "Panel toolbar: watch for a right-click on the camera icon": "Panel toolbar: watch for a right-click on the camera icon",
-   "Right-click on the panel toolbar's camera icon: the scene's cameras": "Right-click on the panel toolbar's camera icon: the scene's cameras",
+   "Right-click on the panel toolbar's camera, Bookmarks or 2D Pan/Zoom icon: its menu": "Right-click on the panel toolbar's camera, Bookmarks or 2D Pan/Zoom icon: its menu",
    "The scene's cameras: pick one to look through it in this view": "The scene's cameras: pick one to look through it in this view"
   },
   "Tooltips/ui/pose_editor": {

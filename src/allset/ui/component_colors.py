@@ -397,8 +397,8 @@ def state(ob, depsgraph, faces=True, uv=False):
 
 
 def _maya_layout(context):
-    from .shelf import strip_area
-    return strip_area(context.screen) is not None
+    from .panel_toolbar import maya_screen          # the Maya layout or a panel torn off it
+    return maya_screen(context)
 
 
 def _apply_pending():
