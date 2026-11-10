@@ -195,6 +195,15 @@ def _run_ungroup(context, v):
 
 
 def _run_duplicate_special(context, v):
+    group = {"Parent": 'PARENT', "World": 'WORLD', "New group": 'NEW_GROUP'}[v["group_under"]]
+    copy = v["geometry_type"] == "Copy"          # an instance shares its data: the input options don't apply
+    graph = copy and v["input_graph"]
+    connections = copy and v["input_connections"] and not graph
+    if graph or connections:
+        # Maya: copies with their inputs take neither Smart transform nor the offsets
+        return bpy.ops.allset.duplicate_special('EXEC_DEFAULT', geometry_type='COPY', group_under=group,
+                                                copies=v["copies"], input_graph=graph,
+                                                input_connections=connections)
     if v["smart"]:
         # Smart transform: each copy repeats the transform between the last duplicate and its source (the kit's
         # Duplicate with Transform, Shift+D); the offsets below are Maya's for non-smart copies only
@@ -206,12 +215,28 @@ def _run_duplicate_special(context, v):
         return res
     k = _k(context)
     return bpy.ops.allset.duplicate_special(
-        'EXEC_DEFAULT', geometry_type=v["geometry_type"].upper(),
-        group_under={"Parent": 'PARENT', "World": 'WORLD', "New group": 'NEW_GROUP'}[v["group_under"]],
+        'EXEC_DEFAULT', geometry_type=v["geometry_type"].upper(), group_under=group,
         # Maya Y up: Maya Y -> Blender Z, Maya Z -> Blender -Y
         translate=Vector((v["translate"][0], -v["translate"][2], v["translate"][1])) * k,
         rotate=tuple(math.radians(a) for a in (v["rotate"][0], -v["rotate"][2], v["rotate"][1])),
-        scale=(v["scale"][0], v["scale"][2], v["scale"][1]), copies=v["copies"])
+        scale=(v["scale"][0], v["scale"][2], v["scale"][1]), copies=v["copies"],
+        input_graph=False, input_connections=False)
+
+
+def _duplicate_special_enabled(values, name):
+    """Maya greys Smart transform and the offsets while a copy takes its inputs, and the two input options for an
+    instance or while the other one is on."""
+    copy = values["geometry_type"] == "Copy"
+    plain = not (copy and (values["input_graph"] or values["input_connections"]))
+    if name == "smart":
+        return plain
+    if name in ("translate", "rotate", "scale"):
+        return plain and not values["smart"]
+    if name == "input_graph":
+        return copy and not values["input_connections"]
+    if name == "input_connections":
+        return copy and not values["input_graph"]
+    return True
 
 
 _PRESERVE = F("preserve", "", "bool", True, text="Preserve position")
@@ -231,10 +256,12 @@ EDIT_WINDOWS = [
         F("group_under", "Group under:", "enum", "Parent", items=("Parent", "World", "New group")),
         F("smart", "", "bool", False, text="Smart transform"),
         F("translate", "Translate:", "vec3", (0.0, 0.0, 0.0)), F("rotate", "Rotate:", "vec3", (0.0, 0.0, 0.0)),
-        F("scale", "Scale:", "vec3", (1.0, 1.0, 1.0)), F("copies", "Number of copies:", "int", 1, lo=1, hi=1000)],
+        F("scale", "Scale:", "vec3", (1.0, 1.0, 1.0)), F("copies", "Number of copies:", "int", 1, lo=1, hi=1000),
+        F("input_graph", "", "bool", False, text="Duplicate input graph"),
+        F("input_connections", "", "bool", False, text="Duplicate input connections")],
         _run_duplicate_special, paths=("Edit/Duplicate Special",),
-        missing=("Duplicate input graph", "Duplicate input connections", "Instance leaf nodes",
-                 "Assign unique name to children nodes")),
+        missing=("Instance leaf nodes", "Assign unique name to children nodes"),
+        enabled=_duplicate_special_enabled),
 ]
 
 

@@ -74,7 +74,8 @@ FIELDS = {
     "duplicate_special_maya": ("Duplicate Special Options", "Duplicate Special", [
         ("geometry_type", "Geometry type:", "Copy"), ("group_under", "Group under:", "Parent"), ("smart", "", False),
         ("translate", "Translate:", (0.0, 0.0, 0.0)), ("rotate", "Rotate:", (0.0, 0.0, 0.0)),
-        ("scale", "Scale:", (1.0, 1.0, 1.0)), ("copies", "Number of copies:", 1)]),
+        ("scale", "Scale:", (1.0, 1.0, 1.0)), ("copies", "Number of copies:", 1),
+        ("input_graph", "", False), ("input_connections", "", False)]),
     # :136-139
     "connect": ("Connect Components Options", "Connect", [("edge_flow", "", False),
                                                           ("adjust_edge_flow", "Adjust Edge Flow:", 1.0)]),

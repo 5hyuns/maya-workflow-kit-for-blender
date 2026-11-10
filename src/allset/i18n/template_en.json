@@ -5606,8 +5606,12 @@
   "Labels/operators/duplicate": {
    "Copy": "Copy",
    "Duplicate": "Duplicate",
+   "Duplicate Input Connections": "Duplicate Input Connections",
+   "Duplicate Input Graph": "Duplicate Input Graph",
    "Duplicate Special": "Duplicate Special",
    "Duplicate with Transform": "Duplicate with Transform",
+   "Each copy gets its own copies of the inputs: modifiers, shape keys, drivers, constraints and its own animation. Offsets apply to plain copies only": "Each copy gets its own copies of the inputs: modifiers, shape keys, drivers, constraints and its own animation. Offsets apply to plain copies only",
+   "Each copy shares the original's inputs: the same animation drives both. Offsets apply to plain copies only": "Each copy shares the original's inputs: the same animation drives both. Offsets apply to plain copies only",
    "Geometry Type": "Geometry Type",
    "Group Under": "Group Under",
    "Instance": "Instance",
@@ -6444,6 +6448,8 @@
   },
   "Labels/operators/option_windows_edit": {
    "Delete edge (maintain 4-sided polygons)": "Delete edge (maintain 4-sided polygons)",
+   "Duplicate input connections": "Duplicate input connections",
+   "Duplicate input graph": "Duplicate input graph",
    "Insert with edge flow": "Insert with edge flow",
    "Only scale specified keys": "Only scale specified keys",
    "Preserve position": "Preserve position",
@@ -9487,8 +9493,8 @@
   },
   "Tooltips/operators/duplicate": {
    "Duplicate and repeat the transform between the last duplicate and its source,\nso repeated use builds an array (Maya Edit > Duplicate with Transform, Shift+D)": "Duplicate and repeat the transform between the last duplicate and its source,\nso repeated use builds an array (Maya Edit > Duplicate with Transform, Shift+D)",
-   "Duplicate the selection in place with its children; copies are named the Maya way\n(pCube1 -> pCube2, pCubeShape2) and selected (Maya Edit > Duplicate, Ctrl+D)": "Duplicate the selection in place with its children; copies are named the Maya way\n(pCube1 -> pCube2, pCubeShape2) and selected (Maya Edit > Duplicate, Ctrl+D)",
-   "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them (Maya Edit > Duplicate Special)": "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them (Maya Edit > Duplicate Special)"
+   "Duplicate the selection in place with its children: the geometry as it shows now, without history,\ndeformers, shape keys or animation; copies are named the Maya way (pCube1 -> pCube2, pCubeShape2) and\nselected (Maya Edit > Duplicate, Ctrl+D)": "Duplicate the selection in place with its children: the geometry as it shows now, without history,\ndeformers, shape keys or animation; copies are named the Maya way (pCube1 -> pCube2, pCubeShape2) and\nselected (Maya Edit > Duplicate, Ctrl+D)",
+   "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them, the copies' own or shared inputs (Maya Edit > Duplicate Special)": "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them, the copies' own or shared inputs (Maya Edit > Duplicate Special)"
   },
   "Tooltips/operators/edge_loops": {
    "Click an edge and drag: an edge loop on each side of its edge loop (Maya Offset Edge Loop). Without a click:\nthe selected edges": "Click an edge and drag: an edge loop on each side of its edge loop (Maya Offset Edge Loop). Without a click:\nthe selected edges",

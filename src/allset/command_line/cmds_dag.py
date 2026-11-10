@@ -294,8 +294,10 @@ def _preorder(ob):
 
 
 def duplicate(*args, **kwargs):
-    """``duplicate`` = Ctrl+D: each root with everything under it, without its creation node, Maya names (one past
-    the highest number; a shape not named ``<base>Shape<N>`` becomes ``<copy>Shape``). Returns the copies' roots
+    """``duplicate`` = Ctrl+D: each root with everything under it, as it shows now, without its creation node,
+    deformers, shape keys or animation, Maya names (one past the highest number; a shape not named
+    ``<base>Shape<N>`` becomes ``<copy>Shape``). ``-un`` gives the copies their own copies of the inputs, ``-ic``
+    lets them share the original's (Duplicate Special's input graph / input connections). Returns the copies' roots
     and, without ``-rr``, the transforms under them; they end up selected. Maya allows the same child name
     under two parents, Blender doesn't: copied children get new numbers (pCube1 under rig1 -> pCube2)."""
     from ..operators import duplicate as dup
@@ -304,14 +306,15 @@ def duplicate(*args, **kwargs):
     name = f.get("name", "n")
     roots_only = f.get("returnRootsOnly", "rr", False)
     f.get("renameChildren", "rc", False)
-    f.get("inputConnections", "ic", False)
-    f.get("upstreamNodes", "un", False)
+    connections = f.get("inputConnections", "ic", False)
+    upstream = f.get("upstreamNodes", "un", False)
     f.done()
+    inputs = dup.INPUT_GRAPH if upstream else dup.INPUT_CONNECTIONS if connections else dup.PLAIN
     obs = _objects(args)
     out, made = [], []
     for root in dup.selected_roots(obs):
         sources = [root] + _preorder(root)
-        new = dup.copy_subtree(root)
+        new = dup.copy_subtree(root, inputs=inputs)
         copies = [new] + _preorder(new)
         for src, cp in zip(sources, copies):
             sh = shape_of(src)
