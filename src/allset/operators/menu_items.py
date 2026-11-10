@@ -294,7 +294,8 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
         so the change runs in object mode between undo steps that hold everything: the state before (object mode,
         then the same in edit mode), then the result (object mode) as the command's own step, and component mode
         again. One Ctrl+Z lands on the edit-mode state before: the edges and the modifier come back together, in
-        component mode with the same selection; Shift+Z lands on the result and goes back to component mode.
+        component mode with the same selection; Shift+Z lands on the result and goes back to component mode. Undo
+        History lists the two steps before the result as "Object Mode" and "Edit Mode", like Tab's steps.
         True when the command's undo step was pushed."""
         from . import undo_pairs
         from ..command_line import undo_text
@@ -303,9 +304,9 @@ class ALLSET_OT_soften_harden(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         pushed = True
         try:
-            undo_pairs.push_through(scene, label, undo_pairs.BEFORE)
+            undo_pairs.push_through(scene, undo_pairs.OBJECT_MODE_STEP, undo_pairs.BEFORE)
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.ed.undo_push(message=label)
+            bpy.ops.ed.undo_push(message=undo_pairs.EDIT_MODE_STEP)
             bpy.ops.object.mode_set(mode='OBJECT')
         except RuntimeError:          # no undo here (no window): just the change
             pushed = False

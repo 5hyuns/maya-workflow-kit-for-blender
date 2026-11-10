@@ -5,7 +5,11 @@ after the whole modifier stack), in object mode and on selected edges, from the 
 menus and with undo: in component mode one Ctrl+Z brings back the edges and the modifier together (and the
 selection, still in component mode), one Shift+Z the result."""
 
+import ctypes
 import math
+import os
+import sys
+import tempfile
 from importlib import import_module
 
 import bmesh
@@ -541,3 +545,80 @@ def test_plain_commands_still_one_undo_step_from_the_ui():
     bpy.ops.ed.undo()
     ob = bpy.data.objects[name]
     assert len(_sba(ob)) == 1 and _shown(ob) == shown
+
+
+# --- Edit > Undo History ----------------------------------------------------------------------------------------
+
+def _undo_steps():
+    """(name, type, active) of every undo step, oldest first, as Blender prints them (to the C stdout only)."""
+    crt = ctypes.cdll.ucrtbase
+    crt.fflush(None)
+    sys.stdout.flush()
+    fd, path = tempfile.mkstemp(suffix=".txt")
+    saved = os.dup(1)
+    try:
+        os.dup2(fd, 1)
+        bpy.context.window_manager.print_undo_steps()
+        crt.fflush(None)
+    finally:
+        os.dup2(saved, 1)
+        os.close(saved)
+        os.close(fd)
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = [ln for ln in f.read().splitlines() if "name=" in ln]
+    os.remove(path)
+    return [(ln.split("name='", 1)[1].rstrip("'"), ln.split("type='", 1)[1].split("'", 1)[0], "*" in ln[:6])
+            for ln in lines]
+
+
+def _jump(index):
+    """Click line ``index`` of Edit > Undo History; returns the kit's extra step that followed."""
+    assert bpy.ops.ed.undo_history(item=index) == {'FINISHED'}
+    return _extra()
+
+
+def test_undo_history_lines_and_where_each_one_lands():
+    """After Soften Edge in component mode Undo History lists Select, Object Mode, Edit Mode, Soften Edge (like Tab's
+    steps around the command). Each line lands on what it names: Edit Mode = the state before in component mode,
+    Soften Edge = the result in component mode, Object Mode (a jump back from the result) = the state before in object
+    mode, without going past it. Shift+Z from there: Edit Mode, then the result. Ctrl+Z keeps working one command at
+    a time. A jump forward onto Object Mode goes on to the result, like Shift+Z."""
+    undo_pairs.reset()
+    name, entered = _component_mode()
+    before = _state(name)
+    assert _menu("Mesh Display/Soften Edge") == {'FINISHED'}
+    after = _state(name)
+    steps = _undo_steps()
+    active = next(i for i, s in enumerate(steps) if s[2])
+    assert active == len(steps) - 1
+    tail = [(n, t) for n, t, _a in steps[active - 3:active + 1]]
+    assert tail == [("Select", "Edit Mesh"), ("Object Mode", "Global Undo"), ("Edit Mode", "Edit Mesh"),
+                    ("Soften Edge", "Global Undo")], tail
+    select_line, object_line, edit_line, result_line = active - 3, active - 2, active - 1, active
+    before_object = {**before, "mode": 'OBJECT'}
+
+    assert _jump(edit_line) is None
+    assert _state(name) == before, _diff(_state(name), before)
+    assert _jump(result_line) == undo_pairs.EDIT
+    assert _state(name) == after, _diff(_state(name), after)
+
+    assert _jump(object_line) is None, "a jump back onto Object Mode stays there"
+    assert _state(name) == before_object, _diff(_state(name), before_object)
+    assert len(_sba(bpy.data.objects[name])) == 1
+    assert _redo() is None, "Shift+Z: the Edit Mode line"
+    assert _state(name) == before, _diff(_state(name), before)
+    assert _redo() == undo_pairs.EDIT, "Shift+Z: the result"
+    assert _state(name) == after, _diff(_state(name), after)
+
+    assert _undo() is None and _state(name) == before, "Ctrl+Z: the state before"
+    assert _undo() == 'UNDO', "the next Ctrl+Z takes back the selection"
+    st = _state(name)
+    assert st["mode"] == 'EDIT_MESH' and st["edges"] == entered["edges"]
+
+    assert _jump(result_line) == undo_pairs.EDIT
+    assert _state(name) == after, _diff(_state(name), after)
+    assert _jump(select_line) is None
+    st = _state(name)
+    assert st["mode"] == 'EDIT_MESH' and st["edges"] == before["edges"] and len(_sba(bpy.data.objects[name])) == 1
+    assert _jump(object_line) == 'REDO', "forward onto Object Mode: on to the result, like Shift+Z"
+    assert _state(name) == after, _diff(_state(name), after)

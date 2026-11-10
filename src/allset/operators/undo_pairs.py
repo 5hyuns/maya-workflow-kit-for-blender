@@ -15,15 +15,24 @@ values); without one the pair is always taken together.
 
 Object-mode steps inside an edit-mode command (``push_through``): an edit-mode command that also changes object data
 (Soften Edge giving way to a Smooth by Angle modifier) makes that change in object mode, because an edit-mode undo
-step holds only the mesh. It pushes the object-mode state before it (``BEFORE``), the same state back in edit mode,
-and the object-mode result (``AFTER``, the command's own step), then goes back to edit mode. Ctrl+Z right after it
-lands on the edit-mode state before it (Blender reads the ``BEFORE`` step's data on the way). Each object-mode step
-carries its kind in ``Scene.allset_undo_through`` (only in that step's saved data: the value in memory goes back to 0
-right after the push and after every undo / redo). An undo / redo that lands on an ``AFTER`` step goes back to edit
-mode (the result, as the command left it); one that lands on a ``BEFORE`` step goes on in the same direction (Ctrl+Z
-to the step before the command, Shift+Z to its result). Next to a ``BEFORE`` step the edit-mode copy of the state
-before the command and the step before the command look alike: when the press started in edit mode it goes past
-that one too, so no press seems to do nothing.
+step holds only the mesh. It pushes the object-mode state before it (``BEFORE``, named "Object Mode" in Undo
+History), the same state back in edit mode ("Edit Mode"), and the object-mode result (``AFTER``, the command's own
+step, named after the command), then goes back to edit mode. Ctrl+Z right after it lands on the edit-mode state
+before it (Blender reads the ``BEFORE`` step's data on the way). Each object-mode step carries its kind in
+``Scene.allset_undo_through`` (only in that step's saved data: the value in memory goes back to 0 right after the push
+and after every undo / redo). An undo / redo that lands on an ``AFTER`` step goes back to edit mode (the result, as
+the command left it); one that lands on a ``BEFORE`` step goes on in the same direction (Ctrl+Z to the step before
+the command, Shift+Z to its result). Next to a ``BEFORE`` step the edit-mode copy of the state before the command and
+the step before the command look alike: when the press started in edit mode it goes past that one too, so no press
+seems to do nothing.
+
+Undo History can jump over several steps at once, and the undo handlers run once for the whole jump. The steps of
+one command also carry its number in ``Scene.allset_undo_through_at`` (+n in the ``BEFORE`` step, -n from the
+``AFTER`` step on; kept in memory, so the edit-mode steps read the number of the object-mode step they follow). An
+undo that lands on a ``BEFORE`` step continues only when it started on that command's "Edit Mode" step (+n), which is
+what one Ctrl+Z from there does; a jump from the result or a later step stops on the "Object Mode" line it picked, in
+object mode with the state before the command. A redo that lands on a ``BEFORE`` step can't be told from Shift+Z on
+the step before the command, so it goes on to the result.
 
 Blender reads the newest object-mode step back from memory, not from its data (only a later object-mode step tells
 what changed after it), so its kind is lost there: until the next object-mode state (``arm``), an undo from edit mode
@@ -36,6 +45,8 @@ import bpy
 from bpy.app.handlers import persistent
 
 BEFORE, AFTER = 1, 2   # Scene.allset_undo_through: an object-mode step inside an edit-mode command
+# Undo History names of the steps before an edit-mode command's object-mode result, like the steps of Tab
+OBJECT_MODE_STEP, EDIT_MODE_STEP = "Object Mode", "Edit Mode"
 EDIT = 'EDIT'          # the extra action that goes back to edit mode
 _MAX_EXTRA = 16        # extra steps one press may take
 
@@ -44,6 +55,8 @@ _marks = []            # one per user undo, newest last: the paired step id it w
 _extra = {"want": None, "running": False, "count": 0, "through": None, "busy": False}
 _before = [0]          # step id when the undo / redo started
 _start_edit = [False]  # the undo / redo started in edit mode
+_start_at = [0]        # Scene.allset_undo_through_at when the undo / redo started
+_command = [0]         # the newest command number push_through gave out
 _user_moves = [0]      # user undo / redo presses (an extra step is dropped when another press came first)
 _tail = {}             # "names", "print": the newest AFTER step's objects and what their data looked like
 
@@ -57,9 +70,21 @@ def _mark(scene, kind):
     scene.update_tag()
 
 
+def _at(scene):
+    try:
+        return int(getattr(scene, "allset_undo_through_at", 0) or 0)
+    except (AttributeError, ReferenceError, TypeError):
+        return 0
+
+
 def push_through(scene, label, kind):
     """Push the object-mode step ``label`` of an edit-mode command (``kind`` BEFORE / AFTER). Raises RuntimeError
     when Blender can't push."""
+    if kind == BEFORE:
+        _command[0] = max(_command[0], abs(_at(scene))) + 1
+        scene.allset_undo_through_at = _command[0]
+    else:
+        scene.allset_undo_through_at = -_command[0]
     _mark(scene, kind)
     try:
         bpy.ops.ed.undo_push(message=label)
@@ -230,6 +255,7 @@ def _on_pre(scene, *_args):
     _extra["busy"] = True
     _before[0] = step_id(scene)
     _start_edit[0] = _edit_mode()
+    _start_at[0] = _at(scene)
 
 
 def _through_landed(direction, scene):
@@ -243,6 +269,8 @@ def _through_landed(direction, scene):
         _want(EDIT, EDIT)
         return True
     if kind == BEFORE:
+        if direction == 'UNDO' and _start_at[0] != _at(scene):
+            return False          # an Undo History jump from the result or later: stays on the line it picked
         _want(direction, BEFORE)
         return True
     return False
@@ -301,6 +329,7 @@ _HANDLERS = (("undo_pre", _on_pre), ("redo_pre", _on_pre), ("undo_post", _on_und
 def register():
     bpy.types.Scene.allset_undo_pair_step = bpy.props.IntProperty(options={'HIDDEN'})
     bpy.types.Scene.allset_undo_through = bpy.props.IntProperty(options={'HIDDEN'})
+    bpy.types.Scene.allset_undo_through_at = bpy.props.IntProperty(options={'HIDDEN'})
     for name, fn in _HANDLERS:
         lst = getattr(bpy.app.handlers, name)
         if fn not in lst:
@@ -315,5 +344,6 @@ def unregister():
     if bpy.app.timers.is_registered(run_extra):
         bpy.app.timers.unregister(run_extra)
     reset()
+    del bpy.types.Scene.allset_undo_through_at
     del bpy.types.Scene.allset_undo_through
     del bpy.types.Scene.allset_undo_pair_step

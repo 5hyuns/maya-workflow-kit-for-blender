@@ -555,6 +555,70 @@ press(True, False, "edit_redo3")
 expect(None, lambda: C["edit_after"], "Shift+Z from the selection: the result, in component mode")
 
 
+# --- Edit > Undo History: each line lands on what it names ----------------------------------------------------------
+
+def undo_steps():
+    """(name, active) of every undo step, oldest first (Blender prints them to the C stdout only)."""
+    import ctypes
+    import tempfile
+    crt = ctypes.cdll.ucrtbase
+    crt.fflush(None)
+    sys.stdout.flush()
+    fd, path = tempfile.mkstemp(suffix=".txt")
+    saved = os.dup(1)
+    try:
+        os.dup2(fd, 1)
+        bpy.context.window_manager.print_undo_steps()
+        crt.fflush(None)
+    finally:
+        os.dup2(saved, 1)
+        os.close(saved)
+        os.close(fd)
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = [ln for ln in f.read().splitlines() if "name=" in ln]
+    os.remove(path)
+    return [(ln.split("name='", 1)[1].rstrip("'"), "*" in ln[:6]) for ln in lines]
+
+
+@step
+def s_history_lines():
+    steps = undo_steps()
+    active = next((i for i, s in enumerate(steps) if s[1]), None)
+    names = [n for n, _a in steps[active - 2:active + 1]] if active is not None else []
+    check(f"Undo History: the command's lines are Object Mode, Edit Mode, Soften Edge ({names})",
+          names == ["Object Mode", "Edit Mode", "Soften Edge"])
+    C["lines"] = (active - 2, active - 1, active) if active is not None else None
+
+
+def history(index, label):
+    def s_jump():
+        if C.get("lines"):
+            with bpy.context.temp_override(window=win()):
+                bpy.ops.ed.undo_history('INVOKE_DEFAULT', item=C["lines"][index])
+    s_jump.__name__ = f"s_{label}"
+    step(s_jump)
+    step(lambda: None)                         # the kit's extra step runs from a timer
+    step(lambda: redraw())
+
+
+history(0, "history_object_mode")
+
+
+@step
+def s_history_object_mode_check():
+    want = {**C["edit_before"], "mode": 'OBJECT'}
+    got = state()
+    diff = sorted(k for k in got if got[k] != want[k])
+    check(f"Undo History > Object Mode (from the result): the state before, in object mode ({diff})", not diff)
+    shot("gui_issue342_history_object_mode.png")
+
+
+history(1, "history_edit_mode")
+expect(None, lambda: C["edit_before"], "Undo History > Edit Mode: the state before, in component mode")
+history(2, "history_result")
+expect("history_result", lambda: C["edit_after"], "Undo History > Soften Edge: the result, in component mode")
+
+
 @step
 def s_edge_object_mode():
     with v3d_ctx():
