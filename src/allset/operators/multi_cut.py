@@ -32,7 +32,7 @@ from . import mesh_tools, preselect
 
 TOOL = "allset.multi_cut_tool"
 VERT_PX = 10.0          # a press this close to a vertex starts there
-EDGE_PX = 16.0          # Maya MT_preSelectSize (preselect.RADIUS_PX)
+EDGE_PX = 16.0          # pre-selection radius, as in preselect.RADIUS_PX
 SLICE_PX = 8.0          # a press-drag longer than this on a face / empty space = slice
 END_T = 0.001           # an edge point this close to an end is that vertex
 POINT_RGB = (1.0, 0.85, 0.1)       # Maya draws the cut points / line yellow-ish
