@@ -4,8 +4,9 @@
   deformers (Mirror, Array, a Boolean with its cutter, a Subdivision at its viewport level).
 - A modifier switched off in the viewport stays on the copy as it is, not applied; one that reads another object
   (an Armature's skeleton, a Hook's handle) is removed, since a plain copy has no connections.
-- Multires stays live on the copy with its levels and sculpt detail. The shape-key mix and the deformers above it go
-  into the base mesh; the modifiers after it stay live, except the ones that read another object.
+- Multires stays live on the copy with its levels and sculpt detail. The shape-key mix, the deformers above it and
+  the pose of the deformers after it that read another object (a skin, a Hook) go into the base mesh, so the copy
+  keeps the pose it shows; the other modifiers after it stay live.
 - Subdiv Proxy (Mesh > Smooth Proxy, Ctrl+Shift+~): the copy is the cage only, like copying a Maya proxy cage.
 """
 
@@ -225,7 +226,7 @@ def test_multires_bakes_the_shape_key_mix_and_the_deformers_above_it():
 
 def test_modifiers_after_multires_stay_live_unless_they_read_another_object():
     """Mirror after Multires stays live (baking it would rebuild the base under the sculpt); a skin after Multires
-    reads the skeleton, so it goes and the copy doesn't follow the rig."""
+    reads the skeleton, so it goes (its pose into the base) and the copy doesn't follow the rig."""
     _fresh()
     arm = _skeleton()
     ob, md = _sculpted()
@@ -266,6 +267,74 @@ def test_switched_off_multires_keeps_its_sculpt_and_what_follows():
     assert _same(_points(copy), shown)
     copy.modifiers["Multires"].show_viewport = True
     assert _same(_top_level(copy), detail)
+
+
+def _without_multires(ob):
+    """What the original shows with its Multires switched off: the base mesh under the deformers."""
+    md = next(m for m in ob.modifiers if m.type == 'MULTIRES')
+    md.show_viewport = False
+    try:
+        return _points(ob)
+    finally:
+        md.show_viewport = True
+
+
+def _base(ob):
+    return [ob.matrix_world @ v.co for v in ob.data.vertices]
+
+
+def test_posed_skin_after_multires_keeps_the_pose():
+    """A sculpt bound to a skeleton after its Multires, posed: the copy keeps the pose it shows (in its base mesh),
+    the sculpt detail and the levels, without the skin, and stays when the skeleton moves on. The whole mesh is on
+    one joint, so the posed sculpt is exactly the sculpt turned."""
+    _fresh()
+    arm = _skeleton()
+    ob, md = _sculpted()
+    group = ob.vertex_groups.new(name="joint2")
+    group.add([v.index for v in ob.data.vertices], 1.0, 'REPLACE')
+    skin = ob.modifiers.new("skinCluster1", 'ARMATURE')
+    skin.object = arm
+    arm.pose.bones["joint2"].rotation_euler.x = math.radians(50)
+    bpy.context.view_layer.update()
+    posed_base, shown, detail = _without_multires(ob), _points(ob), _top_level(ob)
+    assert not _same(posed_base, _base(ob)), "the pose moves the base"
+    copy = _copy(ob)
+    assert _names(copy) == ["Multires"], _names(copy)
+    cm = copy.modifiers["Multires"]
+    assert (cm.levels, cm.sculpt_levels, cm.total_levels) == (1, 2, 2), (cm.levels, cm.sculpt_levels, cm.total_levels)
+    assert len(copy.data.vertices) == 8
+    assert _same(_base(copy), posed_base), "the copy's base mesh holds the pose"
+    assert _same(_points(copy), shown), "the copy shows the pose the original shows"
+    assert _same(_top_level(copy), detail), "the sculpt detail is on the copy, posed"
+    arm.pose.bones["joint2"].rotation_euler.x = math.radians(-30)
+    bpy.context.view_layer.update()
+    assert not _same(_points(ob), shown), "the original follows its skeleton"
+    assert _same(_points(copy), shown), "the copy doesn't"
+
+
+def test_hook_after_multires_keeps_where_it_put_the_points():
+    _fresh()
+    ob, md = _sculpted()
+    handle = bpy.data.objects.new("cluster1Handle", None)
+    bpy.context.collection.objects.link(handle)
+    group = ob.vertex_groups.new(name="cluster1Set")
+    group.add([v.index for v in ob.data.vertices], 1.0, 'REPLACE')
+    hook = ob.modifiers.new("cluster1", 'HOOK')
+    hook.object, hook.vertex_group = handle, group.name
+    ob.modifiers.move(list(ob.modifiers).index(hook), len(ob.modifiers) - 1)   # Blender adds it above Multires
+    assert _names(ob) == ["Multires", "cluster1"], _names(ob)
+    handle.location = (0.0, 0.0, 0.5)
+    bpy.context.view_layer.update()
+    moved_base, shown, detail = _without_multires(ob), _points(ob), _top_level(ob)
+    assert not _same(moved_base, _base(ob)), "the hook moves the base"
+    copy = _copy(ob)
+    assert _names(copy) == ["Multires"], _names(copy)
+    assert _same(_base(copy), moved_base)
+    assert _same(_points(copy), shown)
+    assert _same(_top_level(copy), detail)
+    handle.location.z = 2.0
+    bpy.context.view_layer.update()
+    assert _same(_points(copy), shown), "the copy doesn't follow the handle"
 
 
 # --- Subdiv Proxy ------------------------------------------------------------------------------------------

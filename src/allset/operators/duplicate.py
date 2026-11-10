@@ -14,9 +14,10 @@ What a copy takes from the original's inputs (#347), like Maya:
   history, deformers, shape keys, animation, drivers or constraints, and its channels keep their current values, so
   nothing the original's inputs do moves it. Materials, display settings (the smooth mesh preview) and children stay.
   Blender modifiers Maya has no match for: one switched off in the viewport stays on the copy as it is (not applied)
-  unless it reads another object; Multires stays live with its sculpt detail (the shape-key mix and the deformers
-  above it go into the base mesh, the modifiers after it stay live unless they read another object). A Subdiv Proxy
-  copy is the cage only, like copying a Maya proxy cage.
+  unless it reads another object; Multires stays live with its sculpt detail (the shape-key mix, the deformers above
+  it and the pose of the deformers after it that read another object, such as a skin, go into the base mesh, so the
+  copy keeps the pose it shows; the other modifiers after it stay live). A Subdiv Proxy copy is the cage only, like
+  copying a Maya proxy cage.
 - Duplicate Special > Duplicate input graph: the copy gets its own copies of the inputs (modifiers, shape keys,
   drivers, constraints, its creation node and copies of the animation, so it animates on its own).
 - Duplicate Special > Duplicate input connections: the copy shares the original's inputs (the same animation drives
@@ -152,6 +153,11 @@ def _history_records(new):
 
 
 KEEP, DROP, BAKE = 'KEEP', 'DROP', 'BAKE'     # what a plain copy does with a modifier (_plan)
+# Modifiers that only move points (they keep the points and faces): after Multires, the ones that read another
+# object (a skin, a lattice, a hook) can pose the base mesh under the sculpt instead
+_DEFORM_ONLY = {'ARMATURE', 'CAST', 'CORRECTIVE_SMOOTH', 'CURVE', 'DISPLACE', 'HOOK', 'LAPLACIANDEFORM',
+                'LAPLACIANSMOOTH', 'LATTICE', 'MESH_CACHE', 'MESH_DEFORM', 'SHRINKWRAP', 'SIMPLE_DEFORM', 'SMOOTH',
+                'SURFACE_DEFORM', 'WARP', 'WAVE'}
 
 
 def _reads_other(md):
@@ -188,8 +194,9 @@ def _plan(new):
     - BAKE: the rest, what the view shows (Maya's history and deformers).
 
     Multires keeps its sculpt detail only on the base mesh it was made on, so a mesh with Multires keeps Multires and
-    every modifier after it live (the ones that read another object go); the ones above it don't change the base's
-    points and faces (Blender's rule) and bake into the base."""
+    every modifier after it live, except a deformer that reads another object: its pose goes into the base (BAKE,
+    acting on the base mesh) and it goes; another modifier after it that reads another object goes too. The ones
+    above Multires don't change the base's points and faces (Blender's rule) and bake into the base."""
     from .display import is_preview
     from .global_keys4 import subdiv_proxy
     proxy = subdiv_proxy(new) if new.type == 'MESH' else None
@@ -206,7 +213,7 @@ def _plan(new):
     first = _multires_index(new)
     if first is not None:
         for md in list(new.modifiers)[first:]:
-            if out[md.name] == BAKE:
+            if out[md.name] == BAKE and not (md.type in _DEFORM_ONLY and _reads_other(md)):
                 out[md.name] = DROP if _reads_other(md) else KEEP
     return out
 
@@ -253,10 +260,10 @@ def _bake_mesh(context, new):
     forget_proxy(new)
 
 
-def _bake_base(context, new, above):
-    """Multires: the shape-key mix and the modifiers above Multires (``above``) go into the base mesh's points; the
-    sculpt detail stays valid on top of them."""
-    later = list(new.modifiers)[_multires_index(new):]
+def _bake_base(context, new, bake):
+    """Multires: the shape-key mix, the modifiers above Multires and the posing deformers after it (``bake``) act on
+    the base mesh alone; their result goes into its points, so the sculpt detail stays valid on top of them."""
+    later = [md for md in list(new.modifiers)[_multires_index(new):] if md.name not in bake]
     shown = {md.name: md.show_viewport for md in later}
     for md in later:
         md.show_viewport = False
@@ -268,13 +275,14 @@ def _bake_base(context, new, above):
     finally:
         for name, show in shown.items():
             new.modifiers[name].show_viewport = show
-    if not same:         # only when a modifier above Multires changes the faces: leave the copy's inputs live
+    if not same:         # only when a modifier above Multires changes the faces: no pose, and no connections
+        _remove(new, [name for name in bake if _reads_other(new.modifiers[name])])
         return
     if new.data.shape_keys is not None:
         new.shape_key_clear()
     new.data.vertices.foreach_set("co", co)
     new.data.update()
-    _remove(new, above)
+    _remove(new, bake)
 
 
 def _bake_points(context, new):
