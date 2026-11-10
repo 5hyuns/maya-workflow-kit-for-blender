@@ -141,6 +141,11 @@ class ALLSET_OT_dome_light(bpy.types.Operator):
         return context.scene is not None and context.mode == 'OBJECT'
 
     def invoke(self, context, _event):
+        if not self.filepath:
+            from . import project
+            folder = project.texture_folder(context)     # the project's sourceimages, like Maya's texture dialogs
+            if folder:
+                self.filepath = os.path.join(folder, "")
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 

@@ -7,6 +7,9 @@ the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 
 - File > Open / Save As (Ctrl+O / Ctrl+S on a new file / Ctrl+Shift+S) and Create Reference start in
   ``<root>/scenes`` (``wm.open_mainfile`` / ``wm.save_as_mainfile`` invoked with that ``filepath``);
+- a file browser that picks a texture for an empty image slot (Image Open, Dome Light) starts in
+  ``<root>/sourceimages`` when that folder exists (``texture_folder``; the file browser side is
+  ``ui/file_project.py``);
 - a file saved inside the project renders to ``<root>/images`` (relative ``//../images/``) when its render
   output is still Blender's default (``save_pre`` gets the path being saved);
 - opening a ``.blend`` under ``<root>/scenes`` of a marked project makes it the current project.
@@ -154,6 +157,25 @@ def save_as_path(context=None):
     if current and inside(current, current_root(context)):
         return current
     return os.path.join(folder, os.path.basename(current) if current else "untitled.blend")
+
+
+def sourceimages_dir(context=None):
+    """The current project's sourceimages folder, "" when it doesn't exist (never made here)."""
+    folder = os.path.join(current_root(context), "sourceimages")
+    return folder if os.path.isdir(folder) else ""
+
+
+def texture_folder(context, start=None):
+    """Where a file browser that picks a texture for an empty image slot starts: the project's sourceimages folder,
+    like Maya. ``start`` is the path Blender opens the browser at (Image Open: the Preferences > File Paths >
+    Textures path for an empty slot, the slot image's own file otherwise); None = a kit dialog with no image yet.
+    "" (Blender's own start) when Maya mode is off, the folder is missing, the Textures path isn't the default
+    ``//`` or the slot already has an image."""
+    from .. import switch
+    textures = context.preferences.filepaths.texture_directory
+    if textures != "//" or (start is not None and start != textures) or not switch.is_on():
+        return ""
+    return sourceimages_dir(context)
 
 
 def images_relpath(blend_path, root):
