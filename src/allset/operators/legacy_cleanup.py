@@ -5,8 +5,8 @@ Older versions added a ``defaultLight`` sun (ID property ``allset_default_light`
 rendered. Renders no longer add it, so a file that still has one is cleaned once when it is loaded (the kit
 ``persp`` render camera, ID property ``allset_persp``, is still the render camera of scenes without one and stays):
 
-- every leftover ``defaultLight`` object and its light data are deleted;
-- the stored camera Renderable values of the old Render Sequence option are dropped.
+- every leftover ``defaultLight`` object and its light data are deleted (the cameras' Renderable values stay:
+  Render Sequence uses them again).
 
 Older versions also had Create > Lights > Ambient Light / Volume Light (kit point lights kept in step by handlers,
 the ambient light adding "Maya Ambient" nodes to the World), a kit Light Editor whose Isolate kept the other lights'
@@ -36,7 +36,6 @@ from bpy.app.handlers import persistent
 from .. import compat
 
 DEFAULT_LIGHT = "allset_default_light"
-RENDERABLE = "allset_renderable_on"
 # Ambient / Volume Light: ID properties on the light data, the volume light's nodes, the World's ambient nodes
 LIGHT_KIND = "allset_light_kind"
 LIGHT_INTENSITY = "allset_maya_intensity"
@@ -225,10 +224,6 @@ def clean():
         done["default_light"] += 1
     for data in [d for d in bpy.data.lights if d.get(DEFAULT_LIGHT) and d.users == 0]:
         bpy.data.lights.remove(data)
-    for cam in bpy.data.cameras:
-        if RENDERABLE in cam.keys():
-            del cam[RENDERABLE]
-            done["props"] += 1
     done["ambient_world"] = _clean_worlds()
     for light in bpy.data.lights:
         if _clean_light(light):

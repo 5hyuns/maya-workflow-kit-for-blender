@@ -193,9 +193,9 @@ def test_render_items_use_the_kit_render():
     assert m["Render/Render Current Frame"] == "allset.render"
     assert m["Render/Redo Previous Render"] == "allset.render"
     assert m["Playback/Render Current Frame"] == "allset.render"
-    assert m["Render/Render Sequence"] == ("allset.render", {"animation": True})
+    assert m["Render/Render Sequence"] == "allset.render_sequence"      # its default = allset.render(animation)
     assert m["Render/Batch Render"] == ("allset.render", {"animation": True})
-    assert shelf_map.BY_COMMAND["RenderSequence"][0] == ("allset.render", {"animation": True})
+    assert shelf_map.BY_COMMAND["RenderSequence"][0] == ("allset.render_sequence", {})
     assert shelf_map.BY_COMMAND["BatchRender"][0] == ("allset.render", {"animation": True})
     for path, action in m.items():
         if path.startswith(("Render/", "Playback/Render")):

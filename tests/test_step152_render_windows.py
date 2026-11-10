@@ -1,5 +1,6 @@
-"""Render menu option boxes: Render Sequence ❒ / Batch Render ❒ run Blender's render (no kit window, Blender has no
-render options of its own), Render Current Frame ❒ is Maya's renderer warning."""
+"""Render menu option boxes: Render Sequence ❒ opens Maya's Render Sequence window, Batch Render ❒ runs Blender's
+render (no kit window, Blender has no render options of its own), Render Current Frame ❒ is Maya's renderer
+warning."""
 
 from importlib import import_module
 
@@ -12,11 +13,11 @@ owr = import_module(kit.MODULE + ".operators.option_windows_render")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 
 
-def test_render_sequence_and_batch_boxes_are_generic():
-    assert not [w.key for w in ow.WINDOWS if w.key in ("render_sequence", "batch_render")]
-    assert not hasattr(bpy.types, "ALLSET_OT_opt_render_sequence")
-    for path in ("Render/Render Sequence", "Render/Batch Render"):
-        assert menu_sets.option_kind(path) == "generic", path
+def test_render_sequence_box_is_a_window_batch_box_is_generic():
+    assert [w.key for w in ow.WINDOWS if w.key in ("render_sequence", "batch_render")] == ["render_sequence"]
+    assert hasattr(bpy.types, "ALLSET_OT_opt_render_sequence")
+    assert menu_sets.option_kind("Render/Render Sequence") == "window"
+    assert menu_sets.option_kind("Render/Batch Render") == "generic"
 
 
 def test_render_current_frame_box_is_maya_warning():

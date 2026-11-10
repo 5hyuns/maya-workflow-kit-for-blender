@@ -115,6 +115,8 @@ CAMERA = [
       ("prop", "data", "dof.use_dof", "Depth of Field"),
       ("prop", "data", "dof.focus_distance", "Focus Distance"),
       ("prop", "data", "dof.aperture_fstop", "F Stop")),
+    S("Output Settings", False,
+      ("prop", "data", "allset_renderable", "Renderable")),     # operators/render_cameras.py
     S("Display Options", False,
       ("prop", "data", "show_limits", "Display Near/Far Clip"),
       ("prop", "data", "show_passepartout", "Display Film Gate Mask"),

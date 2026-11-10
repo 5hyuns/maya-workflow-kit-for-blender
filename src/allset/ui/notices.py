@@ -63,7 +63,8 @@ NOTICES = {
        for item in ("Render Current Frame", "Redo Previous Render")},
     "Render/Render Sequence": (
         "Render Animation", "Blender renders the frame range through the scene camera (without one: persp, placed "
-        "where the view looks from) into the Output properties folder; Esc stops it."),
+        "where the view looks from) into the Output properties folder; Esc stops it. With the option box's All "
+        "Render-Enabled Cameras every Renderable camera renders, one after another, each into its own folder."),
     "Render/Batch Render": (
         "Render Animation", "Blender has no batch render queue: the frame range renders in this session (Esc stops "
         "it); for a background render run blender -b <file> -a."),

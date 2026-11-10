@@ -87,6 +87,7 @@ it lights only its included objects.
 |---|---|
 | Render > Render Current Frame, Redo Previous Render | Render Image (the scene camera, at the Output properties size; without one: persp, placed where the view looks from) |
 | Render > Render Sequence, Batch Render | Render Animation in this Blender session (Esc stops it; without a scene camera: persp, placed where the view looks from) |
+| Render > Render Sequence ❒ > All Render-Enabled Cameras | Render Animation once per camera whose Renderable check is on (Attribute Editor camera tab > Output Settings, or the option window), one after another; with more than one camera each camera's frames go into a folder named after the camera inside the output folder. The window's Skip existing frames = Output properties > Output: Overwrite off, Placeholders on |
 | Render > Show Batch Render, Windows > Rendering Editors > Render View | The Render window |
 | Render > IPR Render Current Frame | A window with a 3D View in Rendered shading that looks where the main view looks (IPR again closes it) |
 | Render > Test Resolution | Output properties > Resolution % (10 % to 150 %) |

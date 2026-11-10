@@ -1,5 +1,5 @@
 """Files saved by older versions are tidied when they are opened (operators/legacy_cleanup.py, temporary): a
-leftover ``defaultLight`` goes (the kit render camera ``persp`` stays the scene camera: renders still use it), the old camera Renderable values are dropped; the file opens without errors and
+leftover ``defaultLight`` goes (the kit render camera ``persp`` stays the scene camera: renders still use it), the cameras' Renderable values stay (Render Sequence uses them); the file opens without errors and
 the user's own objects stay. Old Ambient / Volume Lights: the World's "Maya Ambient" nodes go (the World's own
 output linked back), the lights become plain kit point lights with their Maya intensity, a Light Editor Isolate still
 on is undone and the Illuminates by Default value is dropped. Old kit FX: the nucleus gravity (9.8 x the Maya unit)
@@ -14,6 +14,7 @@ import bpy
 import kit
 
 lc = import_module(kit.MODULE + ".operators.legacy_cleanup")
+RENDERABLE = "allset_renderable_on"      # a camera's stored Renderable value
 
 
 def _path(name):
@@ -28,11 +29,11 @@ def _old_file(name, persp_in_collection=False):
     cube = bpy.context.active_object.name
     mine = bpy.data.objects.new("shotCam", bpy.data.cameras.new("shotCamShape"))
     sc.collection.objects.link(mine)
-    mine.data[lc.RENDERABLE] = True
+    mine.data[RENDERABLE] = True
     persp = bpy.data.objects.new("persp", bpy.data.cameras.new("perspShape"))
     persp["allset_persp"] = True
     persp.use_fake_user = True
-    persp.data[lc.RENDERABLE] = False
+    persp.data[RENDERABLE] = False
     if persp_in_collection:
         sc.collection.objects.link(persp)
     sc.camera = persp
@@ -55,7 +56,8 @@ def test_old_file_is_cleaned_on_open():
     assert sc.camera == bpy.data.objects.get("persp"), "the kit render camera stays the scene camera"
     assert not [o for o in bpy.data.objects if o.get(lc.DEFAULT_LIGHT)]
     assert not [d for d in bpy.data.lights if d.get(lc.DEFAULT_LIGHT)]
-    assert not [c for c in bpy.data.cameras if lc.RENDERABLE in c.keys()]
+    assert {c.name: c.get(RENDERABLE) for c in bpy.data.cameras if RENDERABLE in c.keys()} == {
+        "shotCamShape": True, "perspShape": False}, "the Renderable values are Render Sequence's again"
     assert cube in bpy.data.objects and "shotCam" in bpy.data.objects, "the user's objects stay"
     # once cleaned there is nothing left to do
     assert not any(lc.clean().values())

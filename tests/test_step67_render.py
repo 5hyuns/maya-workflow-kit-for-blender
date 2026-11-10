@@ -77,7 +77,7 @@ def test_render_menu_restored():
     assert pos == sorted(pos), items
     assert len(items) > 15, items
     assert menu_map.MAP["Render/Render Current Frame"] == "allset.render"
-    assert menu_map.MAP["Render/Render Sequence"] == ("allset.render", {"animation": True})
+    assert menu_map.MAP["Render/Render Sequence"] == "allset.render_sequence"
     assert menu_map.MAP["Render/IPR Render Current Frame"] == "allset.ipr_toggle"
     assert menu_map.MAP["Render/Render Using"] == ("menu", "ALLSET_MT_render_using")
     paths = {p for p, _it in menu_sets.iter_items()}

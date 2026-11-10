@@ -109,7 +109,7 @@ BY_COMMAND = {
     "CreateAreaLight": (_create('AREA_LIGHT'), 'LIGHT_AREA'),
     "CreateCameraOnly": (_create('CAMERA'), 'OUTLINER_OB_CAMERA'),
     "BatchRender": (("allset.render", {"animation": True}), 'RENDER_ANIMATION'),     # Render > Batch Render
-    "RenderSequence": (("allset.render", {"animation": True}), 'RENDER_RESULT'),
+    "RenderSequence": (("allset.render_sequence", {}), 'RENDER_RESULT'),     # with the Render Sequence options
     "Art3dPaintTool": ("paint.texture_paint_toggle", 'TPAINT_HLT'),
     "ShowShadingGroupAttributeEditor": (_dock('ATTRIBUTE_EDITOR'), 'MATERIAL'),   # Edit Material Attributes
     # --- FX ---

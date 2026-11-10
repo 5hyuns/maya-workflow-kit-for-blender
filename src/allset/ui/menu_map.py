@@ -578,7 +578,8 @@ MAP = {
     "Render/Redo Previous Render": "allset.render",
     "Render/IPR Render Current Frame": "allset.ipr_toggle",
     "Render/Redo Previous IPR Render": "allset.ipr_toggle",
-    "Render/Render Sequence": ("allset.render", {"animation": True}),
+    # Render Sequence ❒ = Maya's window: Current Camera / All Render-Enabled Cameras (operators/render_cameras.py)
+    "Render/Render Sequence": "allset.render_sequence",
     "Render/Test Resolution": ("menu", "ALLSET_MT_test_resolution"),     # Blender's Resolution %
     "Render/Batch Render": ("allset.render", {"animation": True}),
     "Render/Show Batch Render": "render.view_show",

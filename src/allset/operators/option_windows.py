@@ -54,7 +54,7 @@ class F:
 
 class Window:
     def __init__(self, key, title, action, match, fields, run, paths=(), missing=(), width=440, apply_text="Apply",
-                 click_saved=True, pref_fields=None, enabled=None):
+                 click_saved=True, pref_fields=None, enabled=None, extra=None):
         self.key, self.title, self.action = key, title, action
         # field -> add-on preference that keeps its value (shown and set elsewhere too), not the saved option values
         self.pref_fields = dict(pref_fields or {})
@@ -67,6 +67,8 @@ class Window:
         self.missing = tuple(missing)   # Maya fields Blender has no equivalent for (drawn greyed, one line)
         self.width = width
         self.enabled = enabled
+        # extra(layout, context): drawn under the fields (values that live in the scene, not saved option values)
+        self.extra = extra
 
     @property
     def idname(self):
@@ -869,6 +871,8 @@ def draw_fields(window, layout, holder):
                 cell.operator('allset.bridge_ramp', text='Edit Taper Curve').options = True
         else:
             cell.prop(holder, f.name, text=f.label.rstrip(":"))
+    if window.extra is not None:
+        window.extra(layout, bpy.context)
     if window.missing:
         sub = layout.column(align=True)
         sub.enabled = False

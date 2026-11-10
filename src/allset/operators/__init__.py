@@ -207,6 +207,8 @@ classes += fx_more.classes + render_more.classes
 
 from . import render_persp  # noqa: E402  renders without a scene camera go through persp
 classes += render_persp.classes
+from . import render_cameras  # noqa: E402  Render Sequence: renderable cameras, Skip existing frames (#252)
+classes += render_cameras.classes
 
 from . import uv_toolkit_ops  # noqa: E402  UV Toolkit Align / Straighten UVs / Unfold Along / Randomize
 classes += uv_toolkit_ops.classes
@@ -240,6 +242,7 @@ def register():
     motion_path_228.register_props()
     flow_path_228.register_props()
     legacy_cleanup.register()
+    render_cameras.register_props()
     joint_edit.register()
     joint_display.register_props()
     poly_display.register_props()
@@ -413,5 +416,6 @@ def unregister():
     snap_align.unregister_props()
     pick_order.unregister_handlers()
     legacy_cleanup.unregister()
+    render_cameras.unregister_props()
     _unregister_classes()
 
