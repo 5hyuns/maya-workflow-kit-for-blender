@@ -88,20 +88,14 @@ def _sequence_enabled(values, name):
 
 
 def _draw_render_settings(layout, context):
-    """The Render Settings values the sequence uses: they belong to the scene and change at once."""
+    """The Render Settings values the sequence uses (the same rows as Render Settings > Common)."""
     from . import render_cameras
     scene = getattr(context, "scene", None)
     if scene is None:
         return
     box = layout.box()
     box.label(text="Render Settings", icon='SCENE_DATA')
-    col = box.column(heading="Renderable Cameras", align=True)
-    cams = render_cameras.candidates(scene)
-    if not cams:
-        col.label(text="(none)")
-    for ob in cams:
-        col.prop(ob.data, render_cameras.PROP, text=ob.name)
-    box.column(heading="Frame Range").prop(scene, "allset_skip_existing", text="Skip existing frames")
+    render_cameras.draw_settings(box, scene)
 
 
 WINDOWS = [

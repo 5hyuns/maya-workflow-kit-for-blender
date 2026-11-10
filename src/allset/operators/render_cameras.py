@@ -78,6 +78,19 @@ def renderable_cameras(scene):
     return [ob for ob in candidates(scene) if is_renderable(ob)]
 
 
+def draw_settings(layout, scene):
+    """Maya's Render Settings > Common values that Render Sequence uses: Skip existing frames (Frame Range) and each
+    camera's Renderable check (Renderable Cameras). They are scene data: a change applies at once."""
+    from .. import i18n
+    layout.column(heading=i18n.mark("Frame Range")).prop(scene, "allset_skip_existing", text="Skip existing frames")
+    col = layout.column(heading=i18n.mark("Renderable Cameras"), align=True)
+    cams = candidates(scene)
+    if not cams:
+        col.label(text="(none)")
+    for ob in cams:
+        col.prop(ob.data, PROP, text=ob.name)
+
+
 # --- output paths -----------------------------------------------------------------------------------------------
 
 def folder_name(name):

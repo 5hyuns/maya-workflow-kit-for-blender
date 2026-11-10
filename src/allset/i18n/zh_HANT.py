@@ -3410,6 +3410,8 @@ STRINGS = {
     'Render Sequence with All Render-Enabled Cameras renders this camera (like Maya)': '以「所有可算圖攝影機」算圖序列時會算圖此攝影機 (與 Maya 相同)',
     'Renderable': '可算圖',
     'Skip existing frames': '略過已有的格',
+    'Frame Range': '格範圍',
+    'Renderable Cameras': '可算圖攝影機',
     'Render Setup': '算圖配置',
     'Render Target': '算圖目標',
     'Render Texture Range': '算圖紋理範圍',

@@ -2,7 +2,9 @@
 Render > Render Sequence ❒ (the Maya window, All Render-Enabled Cameras on) -> Return -> one Blender render job
 after another, each renderable camera's frames in its own folder (persp, camA), the off camera not rendered, the
 output path and render camera restored. Then a second sequence cancelled during the first camera's job: the
-camera still waiting doesn't render, the settings come back. Screenshots: gui_issue252_window.png, gui_issue252_render.png."""
+camera still waiting doesn't render, the settings come back. Render Settings opens Blender's Render properties with
+Maya's Common panel (Skip existing frames, Renderable Cameras). Screenshots: gui_issue252_window.png,
+gui_issue252_render.png, gui_issue252_render_settings.png."""
 
 import os
 import shutil
@@ -200,6 +202,57 @@ def s_cancel_done():
     check("no handler or timer of the sequence left after the cancel",
           rc._on_cancel not in hs.render_cancel and rc._on_complete not in hs.render_complete and not rc.running())
     mod(".operators.option_windows").store("render_sequence", None)
+    for w in list(bpy.context.window_manager.windows[1:]):
+        with bpy.context.temp_override(window=w):
+            bpy.ops.wm.window_close()
+
+
+def _properties_render():
+    """(window, area) of a Properties editor on the Render tab in a window other than the main one."""
+    for w in bpy.context.window_manager.windows[1:]:
+        for a in w.screen.areas:
+            if a.type == 'PROPERTIES' and a.spaces.active.context == 'RENDER':
+                return w, a
+    return None, None
+
+
+@step
+def s_settings():
+    """Render Settings (the Status Line button's operator) opens Blender's Render properties with Maya's Common."""
+    cls = bpy.types.ALLSET_PT_render_common
+    C["drawn"] = 0
+    C["draw"] = draw = cls.draw
+
+    def counting(self, context):
+        C["drawn"] += 1
+        draw(self, context)
+    cls.draw = counting
+    with bpy.context.temp_override(window=win()):
+        C["rs"] = bpy.ops.allset.render_settings()
+
+
+@step
+def s_settings_shown():
+    if wait(s_settings_shown, lambda: _properties_render()[0] is not None and C["drawn"] > 0, limit=60):
+        for w in bpy.context.window_manager.windows:
+            for a in w.screen.areas:
+                a.tag_redraw()
+        return
+    w, _a = _properties_render()
+    check(f"Render Settings ({C['rs']}) opens Properties > Render with the Common panel drawn "
+          f"(window {w is not None}, panel draws {C['drawn']})", w is not None and C["drawn"] > 0)
+    shot("gui_issue252_render_settings.png", w)
+    cls = bpy.types.ALLSET_PT_render_common
+    cls.draw = C["draw"]
+    sw = mod(".switch")
+    sw.set_mode(False, layout=False)
+    try:
+        off = cls.poll(bpy.context)
+        gone = not hasattr(bpy.types, "ALLSET_PT_render_common")
+    finally:
+        sw.set_mode(True, layout=False)
+    check(f"plain Blender (Maya mode off) has no Common panel (poll {off}, unregistered {gone})", off is False and gone)
+    check("Maya mode on again: the panel is back", hasattr(bpy.types, "ALLSET_PT_render_common"))
     for w in list(bpy.context.window_manager.windows[1:]):
         with bpy.context.temp_override(window=w):
             bpy.ops.wm.window_close()

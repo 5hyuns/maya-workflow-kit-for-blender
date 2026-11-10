@@ -3410,6 +3410,8 @@ STRINGS = {
     'Render Sequence with All Render-Enabled Cameras renders this camera (like Maya)': '使用「所有可渲染摄像机」渲染序列时会渲染此摄像机 (与 Maya 相同)',
     'Renderable': '可渲染',
     'Skip existing frames': '跳过已有帧',
+    'Frame Range': '帧范围',
+    'Renderable Cameras': '可渲染摄像机',
     'Render Setup': '渲染配置',
     'Render Target': '渲染目标',
     'Render Texture Range': '渲染纹理范围',

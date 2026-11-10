@@ -6483,10 +6483,8 @@
    "Round cap": "Round cap"
   },
   "Labels/operators/option_windows_render": {
-   "(none)": "(none)",
    "All Render-Enabled Cameras": "All Render-Enabled Cameras",
-   "Render Settings": "Render Settings",
-   "Skip existing frames": "Skip existing frames"
+   "Render Settings": "Render Settings"
   },
   "Labels/operators/option_windows_rig": {
    "All": "All",
@@ -6815,13 +6813,16 @@
    "Replace Reference": "Replace Reference"
   },
   "Labels/operators/render_cameras": {
+   "(none)": "(none)",
    "All Render-Enabled Cameras": "All Render-Enabled Cameras",
    "Animation renders leave frames whose image already exists and mark the frame being rendered with an empty file, so a render can resume and several computers can share a frame range (Blender's Overwrite off, Placeholders on)": "Animation renders leave frames whose image already exists and mark the frame being rendered with an empty file, so a render can resume and several computers can share a frame range (Blender's Overwrite off, Placeholders on)",
    "Camera": "Camera",
+   "Frame Range": "Frame Range",
    "Output": "Output",
    "Render Sequence": "Render Sequence",
    "Render Sequence with All Render-Enabled Cameras renders this camera (like Maya)": "Render Sequence with All Render-Enabled Cameras renders this camera (like Maya)",
    "Renderable": "Renderable",
+   "Renderable Cameras": "Renderable Cameras",
    "Skip existing frames": "Skip existing frames"
   },
   "Labels/operators/render_more": {
@@ -8685,6 +8686,9 @@
    "The Reference Editor's row": "The Reference Editor's row",
    "The selected reference's namespace (renames its ns: nodes)": "The selected reference's namespace (renames its ns: nodes)",
    "Tool": "Tool"
+  },
+  "Labels/ui/render_settings_panel": {
+   "Common": "Common"
   },
   "Labels/ui/render_view": {
    "Keep Image": "Keep Image",

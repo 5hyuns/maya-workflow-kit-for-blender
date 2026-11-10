@@ -3410,6 +3410,8 @@ STRINGS = {
     'Render Sequence with All Render-Enabled Cameras renders this camera (like Maya)': '「レンダー可能なすべてのカメラ」でシーケンスをレンダーするとき、このカメラもレンダーします (Maya と同じ)',
     'Renderable': 'レンダー可能',
     'Skip existing frames': '既存のフレームをスキップ',
+    'Frame Range': 'フレーム範囲',
+    'Renderable Cameras': 'レンダー可能なカメラ',
     'Render Setup': 'レンダーセットアップ',
     'Render Target': 'レンダーターゲット',
     'Render Texture Range': 'テクスチャ範囲をレンダー',
