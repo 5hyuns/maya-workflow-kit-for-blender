@@ -39,7 +39,7 @@ def persp_camera(create=True):
     if ob is None and create:
         data = bpy.data.cameras.new(SHAPE)
         data.sensor_width, data.sensor_height = MAYA_FILM_MM, MAYA_FILM_H_MM
-        film_fit.set_fit(data, 'FILL', bpy.context.scene)
+        film_fit.set_fit(data, 'HORIZONTAL')       # like the persp camera of a new Maya scene
         ob = bpy.data.objects.new(NAME, data)
         ob[PROP] = True
         ob.use_fake_user = True

@@ -2,8 +2,8 @@
 
 Maya: the resolution gate is the render frame and the film gate is the film back (Horizontal x Vertical Film
 Aperture); Fit Resolution Gate places one on the other (Fill: the resolution gate fits inside the film gate,
-Horizontal / Vertical: as wide / as tall, Overscan: the film gate fits inside the resolution gate). A new camera has a
-36 x 24 mm film back and Fill.
+Horizontal / Vertical: as wide / as tall, Overscan: the film gate fits inside the resolution gate). Cameras have a
+36 x 24 mm film back; a Create > Cameras camera starts with Fill, a new scene's cameras with Horizontal.
 
 In the kit Blender's camera frame is the resolution gate (it is what renders) and Blender's sensor frame is the Film
 Gate. The kit sets Blender's Sensor Fit from the camera's Fit Resolution Gate, so the render frame has Maya's size on
@@ -312,15 +312,89 @@ def test_load_and_kit_render_set_the_fit_again():
     sc.render.resolution_percentage = 100
 
 
-def test_kit_cameras_start_with_fill():
+def _ortho_frame(data, scene):
+    """Width, height of an orthographic camera's render frame (scene units)."""
+    pts = data.view_frame(scene=scene)
+    xs, ys = [p.x for p in pts], [p.y for p in pts]
+    return max(xs) - min(xs), max(ys) - min(ys)
+
+
+def test_menu_cameras_start_with_fill():
+    """Create > Cameras > Camera / Camera and Aim / Camera, Aim and Up start with Fill, like Maya's menu."""
+    _clean()
+    _scene((1440, 1080))
+    for kind in ('CAMERA', 'CAMERA_AIM', 'CAMERA_AIM_UP'):
+        before = set(bpy.data.cameras)
+        assert bpy.ops.allset.create(kind=kind) == {'FINISHED'}
+        new = [c for c in bpy.data.cameras if c not in before]
+        assert len(new) == 1, (kind, new)
+        assert new[0].allset_film_fit == 'FILL', (kind, new[0].allset_film_fit)
+        assert new[0].sensor_fit == 'VERTICAL', kind                        # 4:3 is narrower than 3:2
+
+
+def test_new_scene_cameras_start_with_horizontal():
+    """The persp / top / front / side cameras of a new scene start with Horizontal, like Maya: the render is as
+    wide as the film back (persp) or the orthographic width (top / front / side) whatever its shape."""
     _clean()
     sc = _scene((1440, 1080))
-    for scene_cam in startup_cameras.ensure(sc, bpy.context.view_layer):
-        assert scene_cam.data.allset_film_fit == 'FILL', scene_cam.name
-        assert (scene_cam.data.sensor_width, scene_cam.data.sensor_height) == (36.0, 24.0)
-        assert scene_cam.data.sensor_fit == 'VERTICAL', scene_cam.name        # 4:3 is narrower than 3:2
+    made = startup_cameras.ensure(sc, bpy.context.view_layer)
+    assert [c.name for c in made] == ["persp", "top", "front", "side"]
+    unit = startup_cameras.units.maya_unit(sc)
+    for res, persp_mm, ortho_wh in (((1440, 1080), (36.0, 27.0), (30.0, 22.5)),
+                                    ((1080, 1080), (36.0, 36.0), (30.0, 30.0)),
+                                    ((1080, 1920), (36.0, 64.0), (30.0, 160.0 / 3.0)),
+                                    ((1920, 1080), (36.0, 20.25), (30.0, 16.875))):
+        _scene(res)
+        sync(sc)
+        for scene_cam in made:
+            data = scene_cam.data
+            assert data.allset_film_fit == 'HORIZONTAL', (res, scene_cam.name, data.allset_film_fit)
+            assert data.sensor_fit == 'HORIZONTAL', (res, scene_cam.name)
+            assert (data.sensor_width, data.sensor_height) == (36.0, 24.0)
+            if data.type == 'PERSP':
+                got, _c = frame_mm(data, sc)
+                assert _close(got, persp_mm, 0.01), (res, scene_cam.name, got, persp_mm)
+            else:
+                w, h = _ortho_frame(data, sc)
+                assert _close((w / unit, h / unit), ortho_wh, 0.01), (res, scene_cam.name, (w, h), ortho_wh)
+
+
+def test_render_persp_command_and_panel_cameras_start_with_horizontal():
+    """The persp camera the kit makes for a render, the camera command and Panels > Perspective / Orthographic >
+    New start with Horizontal, like a new scene's cameras."""
+    _clean()
+    sc = _scene((1440, 1080))
     persp = render_persp.persp_camera(create=True)
-    assert persp.data.allset_film_fit == 'FILL'
+    assert persp.data.allset_film_fit == 'HORIZONTAL' and persp.data.sensor_fit == 'HORIZONTAL'
+    cmds = import_module(kit.MODULE + ".command_line.cmds_shim")
+    shape = cmds.camera()[1]
+    data = next(o for o in bpy.data.objects if o.type == 'CAMERA' and o.data.name == shape).data
+    assert data.allset_film_fit == 'HORIZONTAL', data.allset_film_fit
+    assert _close(frame_mm(data, sc)[0], (36.0, 27.0), 0.01)
+    win = bpy.context.window_manager.windows[0]
+    area = next(a for a in win.screen.areas if a.type == 'VIEW_3D')
+    region = next(r for r in area.regions if r.type == 'WINDOW')
+    with bpy.context.temp_override(window=win, area=area, region=region):
+        assert bpy.ops.allset.panel_new_persp() == {'FINISHED'}
+        new_persp = bpy.context.view_layer.objects.active
+        assert bpy.ops.allset.panel_new_ortho(kind='top') == {'FINISHED'}
+        new_top = bpy.context.view_layer.objects.active
+    for ob in (new_persp, new_top):
+        assert ob.data.allset_film_fit == 'HORIZONTAL', (ob.name, ob.data.allset_film_fit)
+
+
+def test_older_cameras_keep_auto():
+    """A camera from before the kit had Fit Resolution Gate keeps Blender's Auto: loads, undo and kit renders
+    don't change it."""
+    _clean()
+    sc = _scene((1440, 1080))
+    old = bpy.data.cameras.new("oldShape")
+    old.sensor_width = 36.0
+    assert old.allset_film_fit == 'AUTO'
+    ff._on_load()
+    ff._on_undo()
+    sync(sc)
+    assert old.sensor_fit == 'AUTO' and old.allset_film_fit == 'AUTO'
 
 
 def test_attribute_editor_row():

@@ -1091,9 +1091,10 @@ def listHistory(*args, **kwargs):
 
 
 def camera(*args, **kwargs):
-    """``camera`` = Create > Camera (``create.KINDS['CAMERA']``: camera1 / cameraShape1, a 35 mm lens on 36 mm
-    film, level like Maya's); selected; returns [transform, shape]."""
-    from ..operators import create
+    """``camera`` = Create > Camera (``create.KINDS['CAMERA']``: camera1 / cameraShape1, a 35 mm lens on 36 x 24 mm
+    film, level like Maya's) with Fit Resolution Gate Horizontal, like Maya's ``camera`` command (the menu's camera
+    starts with Fill); selected; returns [transform, shape]."""
+    from ..operators import create, film_fit
     f = _Flags("camera", kwargs)
     focal = f.get("focalLength", "fl")
     near = f.get("nearClipPlane", "ncp")
@@ -1107,6 +1108,7 @@ def camera(*args, **kwargs):
     context = bpy.context
     ob = create.create(context, 'CAMERA')
     data = ob.data
+    film_fit.set_fit(data, 'HORIZONTAL')
     k = _shim.linear_factor()
     if focal is not None:
         data.lens = float(focal)

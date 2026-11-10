@@ -5,7 +5,9 @@ Maya draws two gates in a view that looks through a camera: the film gate is the
 Film Aperture), the resolution gate is the render frame (the render's width : height) and is what renders. Fit
 Resolution Gate places the resolution gate on the film gate: Fill fits it inside the film gate (as wide as the film
 gate when the render is wider than the film back, else as tall), Horizontal makes it as wide, Vertical as tall, and
-Overscan fits the film gate inside it. A new Maya camera has a 36 x 24 mm film back and Fill.
+Overscan fits the film gate inside it. Maya cameras have a 36 x 24 mm film back; a camera made with Create > Cameras
+starts with Fill, the persp / top / front / side cameras of a new scene and the ``camera`` command start with
+Horizontal.
 
 Blender renders the camera frame by Sensor Fit: Horizontal / Vertical match the frame's width / height to Sensor
 Width / Height; Auto matches the frame's longer side to Sensor Width and doesn't use Sensor Height (the sensor frame a
@@ -32,9 +34,10 @@ SIDES = ('HORIZONTAL', 'VERTICAL')
 # item names Blender / the kit's tables already translate; the tooltips are marked for the translation tables
 FITS = [
     ('FILL', "Fill", i18n.mark("The resolution gate (the render) fits inside the film gate: as wide as the film gate "
-                               "when the render is wider than the film back, else as tall. New cameras start with "
-                               "it, like Maya"), 0),
-    ('HORIZONTAL', "Horizontal", i18n.mark("The resolution gate (the render) is as wide as the film gate"), 1),
+                               "when the render is wider than the film back, else as tall. Cameras made with "
+                               "Create > Cameras start with it, like Maya"), 0),
+    ('HORIZONTAL', "Horizontal", i18n.mark("The resolution gate (the render) is as wide as the film gate. The persp, "
+                                           "top, front and side cameras of a new scene start with it, like Maya"), 1),
     ('VERTICAL', "Vertical", i18n.mark("The resolution gate (the render) is as tall as the film gate"), 2),
     ('OVERSCAN', "Overscan", i18n.mark("The film gate fits inside the resolution gate (the render)"), 3),
     ('AUTO', "Auto", i18n.mark("Blender's own fit: the render's longer side matches Horizontal Film Aperture and "

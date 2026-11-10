@@ -621,8 +621,9 @@ class ALLSET_OT_panel_new_persp(bpy.types.Operator):
     def execute(self, context):
         # Maya 2026 behaviour (#193): New makes persp1, persp2 ... with the camera settings and the place
         # of a new scene's persp (35 mm, translate 28 21 28 aimed at the origin), selects it and looks through it
-        from ..operators import create, naming, startup_cameras, units
+        from ..operators import create, film_fit, naming, startup_cameras, units
         ob = create.create(context, 'CAMERA', maya_naming=False)
+        film_fit.set_fit(ob.data, 'HORIZONTAL')       # the Fit Resolution Gate of a new scene's persp
         naming.apply_maya_name(ob, "persp")
         ob.matrix_world = startup_cameras.maya_matrix("persp", units.maya_unit(context.scene))
         for other in context.selected_objects:
@@ -649,9 +650,10 @@ class ALLSET_OT_panel_new_ortho(bpy.types.Operator):
     def execute(self, context):
         # Maya: New Orthographic > Front / Side / Top makes front1, side1, top1 ... with the settings and the place of
         # a new scene's camera of that name, and looks through it
-        from ..operators import create, naming, startup_cameras, units
+        from ..operators import create, film_fit, naming, startup_cameras, units
         unit = units.maya_unit(context.scene)
         ob = create.create(context, 'CAMERA', maya_naming=False)
+        film_fit.set_fit(ob.data, 'HORIZONTAL')
         naming.apply_maya_name(ob, self.kind)
         ob.data.type = 'ORTHO'
         ob.data.ortho_scale = startup_cameras.MAYA_ORTHO_WIDTH * unit

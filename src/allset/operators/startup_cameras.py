@@ -69,7 +69,7 @@ def ensure(scene, view_layer=None):
     for name in NAMES:
         data = bpy.data.cameras.new(f"{name}Shape")
         data.lens, data.sensor_width, data.sensor_height = MAYA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM
-        film_fit.set_fit(data, 'FILL', scene)         # Maya's Fit Resolution Gate of a new camera
+        film_fit.set_fit(data, 'HORIZONTAL', scene)   # Fit Resolution Gate of a new scene's cameras in Maya
         data.clip_start, data.clip_end = clip["clip_start"], clip["clip_end"]
         if MAYA[name][2]:
             data.type = 'ORTHO'
