@@ -33,7 +33,8 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.graph_key_drag", "allset.graph_scale_box",
                       "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
                       "allset.hg_frame", "allset.marking_menu",
-                      "allset.graph_handle_drag", "allset.graph_handle_box", "allset.motion_trail_key")
+                      "allset.graph_handle_drag", "allset.graph_handle_box", "allset.motion_trail_key",
+                      "allset.nav_2d")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -305,6 +306,12 @@ def patch_camera(kd):
     # preference involved.
     kd.remove("Image", "image.view_zoom", type="RIGHTMOUSE", alt=True)
     _add(kd, "Image", "allset.dolly_2d", make_event("RIGHTMOUSE", alt=True), shadows=("View2D",))  # Image runs first
+    # Graph Editor / Dope Sheet: Alt+LMB+MMB zooms like Alt+RMB, whichever button comes first, and letting go of
+    # one carries on with the other (#325). The kit's modal runs the whole Alt+LMB / Alt+MMB drag there (it pans
+    # like View2D's pan); its poll keeps View2D's own pan in every other editor and the Time Slider.
+    for button in ("LEFTMOUSE", "MIDDLEMOUSE"):
+        _add(kd, "View2D", "allset.nav_2d", make_event(button, alt=True), first=True,
+             shadows=("View2D", "View2D Buttons List"))
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);

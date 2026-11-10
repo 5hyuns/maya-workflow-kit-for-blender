@@ -2983,6 +2983,8 @@ STRINGS = {
     'Paint on View Plane': 'ビュー平面にペイント',
     'Paint operation': 'ペイント操作',
     'Painting': 'ペイント',
+    'Pan / Zoom 2D View': '2D ビューのパン / ズーム',
+    'Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)': 'グラフエディタ / ドープシートを Alt+MMB でパン、Alt+LMB+MMB でズーム (Maya)',
     'Panel': 'パネル',
     'Panel Editor...': 'パネルエディタ...',
     'Panel Handle': 'パネルのハンドル',

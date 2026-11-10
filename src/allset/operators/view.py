@@ -290,6 +290,148 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
+# --- Alt+LMB+MMB zoom in the Graph Editor / Dope Sheet (#325) ---------------------------------------
+# Maya's animation editors zoom like Alt+RMB while Alt+LMB and Alt+MMB are held together, whichever button comes
+# first. Letting go of LMB carries on with the MMB pan; letting go of MMB leaves LMB alone, which holds the view
+# still there (Maya's Alt+LMB does nothing in these editors) until MMB is pressed again (zoom) or LMB is let go.
+# Blender's view2d.pan / view2d.zoom only end on the release of the button that started them, so one kit modal runs
+# the whole drag: Alt+LMB / Alt+MMB start it where View2D's pan did, and each mouse step goes through those
+# operators' exec: the pan by the step, the zoom by Blender's drag rule (1 % of the shown range per px on each axis,
+# Invert Zoom Direction and Zoom to Mouse Position read from the preferences, like Alt+RMB there).
+NAV2D_ZOOM_PER_PX = 0.01
+V2D_CLIPPED = 12000            # what View2D.view_to_region(clip=True) gives outside the shown range
+
+
+def nav2d_editor(area, region, space):
+    """True where the chord applies: the main region of the Graph Editor (also Drivers) and the Dope Sheet, not the
+    Time Slider (a Timeline: Maya's never zooms or pans)."""
+    if area is None or region is None or region.type != 'WINDOW':
+        return False
+    if area.type == 'GRAPH_EDITOR':
+        return True
+    return area.type == 'DOPESHEET_EDITOR' and getattr(space, "ui_mode", "") != 'TIMELINE'
+
+
+def nav2d_mode(held, lmb_pans=True):
+    """The Alt drag of the held buttons: both = zoom, MMB = pan, LMB = pan while ``lmb_pans`` (a drag started with
+    Alt+LMB alone, which pans as before) else hold the view still; None once both are let go."""
+    held = frozenset(held)
+    if held == frozenset(CHORD_BUTTONS):
+        return 'ZOOM'
+    if held == {'MIDDLEMOUSE'}:
+        return 'PAN'
+    if held == {'LEFTMOUSE'}:
+        return 'PAN' if lmb_pans else 'HOLD'
+    return None
+
+
+def nav2d_zoom_delta(dpx, dpy, size_x, size_y, invert=False):
+    """view2d.zoom deltax / deltay (view units taken off each side) for a drag step of (dpx, dpy) px over a shown
+    range of size_x by size_y: Blender's drag zoom, right / up = in (reversed with ``invert``)."""
+    dx = NAV2D_ZOOM_PER_PX * dpx * size_x
+    dy = NAV2D_ZOOM_PER_PX * dpy * size_y
+    return (-dx, -dy) if invert else (dx, dy)
+
+
+def view2d_range(region):
+    """(xmin, ymin, xmax, ymax) of the view range a View2D region shows, in view units. Blender fits that range
+    into the region less its scroll bars, so the edges are found with the region's clip test."""
+    v2d = region.view2d
+    cx, cy = v2d.region_to_view(region.width * 0.5, region.height * 0.5)
+    lo = v2d.region_to_view(-region.width, -region.height)
+    hi = v2d.region_to_view(2.0 * region.width, 2.0 * region.height)
+
+    def edge(inside, outside, axis):
+        for _ in range(40):
+            mid = (inside + outside) * 0.5
+            p = (mid, cy) if axis == 0 else (cx, mid)
+            if v2d.view_to_region(p[0], p[1], clip=True)[axis] == V2D_CLIPPED:
+                outside = mid
+            else:
+                inside = mid
+        return inside
+    return edge(cx, lo[0], 0), edge(cy, lo[1], 1), edge(cx, hi[0], 0), edge(cy, hi[1], 1)
+
+
+class ALLSET_OT_nav_2d(bpy.types.Operator):
+    """Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)"""
+    bl_idname = "allset.nav_2d"
+    bl_label = "Pan / Zoom 2D View"
+    bl_options = {'GRAB_CURSOR', 'BLOCKING', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return nav2d_editor(context.area, context.region, context.space_data)
+
+    def invoke(self, context, event):
+        if event.type not in CHORD_BUTTONS:
+            return {'PASS_THROUGH'}
+        self._held = frozenset({event.type})
+        self._lmb_pans = True
+        self._mode = nav2d_mode(self._held)
+        self._last = (event.mouse_x, event.mouse_y)
+        self._anchor = None
+        self._carry = [0.0, 0.0]
+        context.window.cursor_modal_set('SCROLL_XY')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _end(self, context):
+        context.window.cursor_modal_restore()
+        return {'FINISHED'}
+
+    def _zoom(self, context, dpx, dpy):
+        region = context.region
+        v2d = region.view2d
+        x0, y0, x1, y1 = view2d_range(region)
+        zx, zy = nav2d_zoom_delta(dpx, dpy, x1 - x0, y1 - y0, invert_zoom(context))
+        anchor = self._anchor if context.preferences.inputs.use_zoom_to_mouse else None
+        before = v2d.region_to_view(*anchor) if anchor else None
+        bpy.ops.view2d.zoom('EXEC_DEFAULT', deltax=zx, deltay=zy)
+        if before is None:
+            return
+        # Zoom to Mouse Position: pan the point under the mouse at the zoom's start back under it (view2d.pan
+        # moves by whole px of the region's width / height; the rest carries over to the next step)
+        after = v2d.region_to_view(*anchor)
+        x0, y0, x1, y1 = view2d_range(region)
+        for i, (a, b, size, px) in enumerate(((before[0], after[0], x1 - x0, region.width),
+                                              (before[1], after[1], y1 - y0, region.height))):
+            if size > 0.0 and px > 0:
+                self._carry[i] += (a - b) * px / size
+        step = [int(c) for c in self._carry]
+        self._carry = [c - s for c, s in zip(self._carry, step)]
+        if step[0] or step[1]:
+            bpy.ops.view2d.pan('EXEC_DEFAULT', deltax=step[0], deltay=step[1])
+
+    def modal(self, context, event):
+        held = chord_held(self._held, event.type, event.value)
+        if held is not None:
+            self._held = held
+            mode = nav2d_mode(held, self._lmb_pans)
+            if mode is None:
+                return self._end(context)
+            if mode == 'ZOOM':
+                self._lmb_pans = False          # from now on LMB alone holds the view still, like Maya
+                if self._mode != 'ZOOM':
+                    self._anchor = (event.mouse_region_x, event.mouse_region_y)
+                    self._carry = [0.0, 0.0]
+            self._mode = mode
+            self._last = (event.mouse_x, event.mouse_y)
+            return {'RUNNING_MODAL'}
+        if event.type == 'MOUSEMOVE':
+            dpx, dpy = event.mouse_x - self._last[0], event.mouse_y - self._last[1]
+            self._last = (event.mouse_x, event.mouse_y)
+            if dpx or dpy:
+                if self._mode == 'PAN':
+                    bpy.ops.view2d.pan('EXEC_DEFAULT', deltax=-dpx, deltay=-dpy)
+                elif self._mode == 'ZOOM':
+                    self._zoom(context, dpx, dpy)
+            return {'RUNNING_MODAL'}
+        if event.type == 'ESC' and event.value == 'PRESS':
+            return self._end(context)
+        return {'RUNNING_MODAL'}
+
+
 # --- Alt+Shift drag: tumble / track locked to one axis ---------------------
 # Maya : the first dominant drag direction (horizontal or
 # vertical) is kept for the whole drag.
@@ -837,7 +979,7 @@ class ALLSET_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_tumble, ALLSET_OT_track_view, ALLSET_OT_nav_chord, ALLSET_OT_emulated_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
+classes = (ALLSET_OT_tumble, ALLSET_OT_track_view, ALLSET_OT_nav_chord, ALLSET_OT_emulated_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_nav_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
            ALLSET_OT_toggle_quad_view, ALLSET_OT_view_home)
 
 

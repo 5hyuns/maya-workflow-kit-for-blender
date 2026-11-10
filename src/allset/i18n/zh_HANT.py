@@ -2983,6 +2983,8 @@ STRINGS = {
     'Paint on View Plane': '在視圖平面上繪製',
     'Paint operation': '繪製操作',
     'Painting': '繪製',
+    'Pan / Zoom 2D View': '平移 / 縮放 2D 視圖',
+    'Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)': '用 Alt+MMB 平移曲線編輯器 / 攝影表，用 Alt+LMB+MMB 縮放 (Maya)',
     'Panel': '面板',
     'Panel Editor...': '面板編輯器...',
     'Panel Handle': '面板手柄',
