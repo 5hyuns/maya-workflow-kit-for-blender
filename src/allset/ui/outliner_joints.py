@@ -231,8 +231,9 @@ def draw():
     space, region = context.space_data, context.region
     if region is None or space is None:
         return
-    from .maya_outliner import is_maya_outliner
-    if not is_maya_outliner(space):
+    from .maya_outliner import shows_dag_only
+    if not shows_dag_only(space):      # Shapes on: Blender's rows show the joints themselves
+        SEEN.pop(region.as_pointer(), None)
         return
     SEEN[region.as_pointer()] = []
     from ..operators import live
