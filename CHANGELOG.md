@@ -3,6 +3,145 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] — 2026-11-12
+
+### Added
+- Traditional Chinese translation: the kit's menus, marking menus, shelves and tooltips follow Blender's Traditional
+  Chinese (繁體中文) interface language (from @yoyomaimai, #341 — thank you!).
+- Render > Render Sequence opens its option window again. All Render-Enabled Cameras renders the frame range once per
+  camera whose Renderable check is on, one after another, and with more than one camera each camera's frames go into a
+  folder named after the camera; Esc stops the camera that is rendering and the ones still waiting, and the render
+  camera and output path come back afterwards. Current Camera and Alternate Output File Location work too. Renderable
+  is set per camera in the Attribute Editor (camera tab > Output Settings), in the window's camera list or in Render
+  Settings > Common > Renderable Cameras; persp is on and top / front / side are off, like Maya, cameras you create are
+  on (Panels > Orthographic > New cameras off), and choices saved with 0.8.0 come back. In Maya mode Render Settings
+  has a Common panel right under Render Engine, like Maya's, with Frame Range > Skip existing frames (Blender's
+  Overwrite off + Placeholders on) and Renderable Cameras (#252).
+- Modify > Match Transformations: all five items open option windows, like Maya. Match All Transforms has Translate /
+  Rotate / Scale and Match bounding box size, Match Translation / Rotation / Scaling have All or X / Y / Z (Scaling
+  also Match bounding box size), and Match Pivots has Rotate / Scale and Orientation. A checked channel takes the
+  value a full match gives it and the others stay, and a plain menu click runs with the saved options (#350).
+- Texture file browsers start in the project's sourceimages folder in Maya mode, like Maya: the Image Texture node's
+  Open button (Hypershade, Shader Editor), the Attribute Editor File row, the Image Editor's Open, Dome Light and any
+  other Open button that loads an image into an empty slot. Blender's own start folder stays when the project has no
+  sourceimages folder (none is made), when Preferences > File Paths > Textures was changed, or when the slot already
+  has an image (#349).
+- Alt+LMB+MMB zooms the Graph Editor, Dope Sheet, Node Editor, NLA and UV Editor the way their Alt+RMB does, like
+  Maya: hold Alt and press the left and the middle button together, either one first. In the Graph Editor, Dope Sheet
+  and NLA, letting go of the left button carries on panning with the middle one; in all of them, pressing a let-go
+  button again zooms again. Alt+LMB and Alt+MMB alone still pan (#325).
+- Viewport panel toolbar: a click on Bookmarks bookmarks the view's camera (cameraView1, cameraView2 ...); its
+  right-click menu and the new View > Bookmarks list them (picking one puts the view back), Create 2D Bookmark keeps
+  the 2D pan / zoom, and Edit Bookmarks... opens a Bookmark Editor (name, description, apply, delete, new). The 2D
+  Pan/Zoom button works in every view: off shows the view without its 2D pan / zoom (a camera's whole frame), on
+  brings it back, and its right-click menu lists the 2D bookmarks (#346).
+- View > Camera Tools > 2D Pan/Zoom Tool is a tool, like Maya: a left or middle drag pans the picture (Mode 2D Zoom in
+  Tool Settings zooms instead, Zoom scale sets the rate) and Ctrl+drag zooms into a box; picking the tool doesn't
+  turn 2D Pan/Zoom on by itself (#346).
+
+### Changed
+- The `\` key (2D Pan/Zoom) works like Maya in every view, not only in views that look through a camera: a tap turns
+  the view's 2D Pan/Zoom on or off; with `\` held a middle drag pans the picture with the mouse and a right drag zooms
+  it (right / down in, left / up out), and a left drag does nothing. Before, `\` + left drag panned and `\` + middle
+  drag zoomed. Blender's persp, top, front and side views are moved by the kit and come back exactly when 2D Pan/Zoom
+  is turned off; the camera itself never moves, and a camera view's vertical 2D pan now follows the mouse one to one
+  (#346).
+- Edit > Duplicate (Ctrl+D), Shift+D, Smart Duplicate and `cmds.duplicate` make a plain copy, like Maya: the geometry
+  as it shows at the current frame (shape-key mix, skin pose and deformers baked in), without history, deformers,
+  shape keys, keys, drivers or constraints, so animating the original no longer moves the copy. Keyed channels keep
+  their current values; materials, the smooth mesh preview and children stay, and a child hidden with Hide is copied
+  the same way and stays hidden. Particle systems (hair) and Collision are not copied, and Cloth is baked at the
+  current frame. A few Blender modifiers stay on the copy: one switched off in the viewport stays as it is (one that
+  reads another object, such as an Armature or a Hook, is left out), Multires keeps its levels and sculpt detail (a
+  posed sculpt keeps its pose), and a Geometry Nodes modifier you set up stays live with its inputs and the modifiers
+  after it. A Subdiv Proxy copy is the cage only, like copying a Maya proxy cage, and Mesh > Smooth Proxy > Subdiv
+  Proxy (also in the Shift+RMB menu) makes the same proxy as Ctrl+Shift+~, on every selected mesh, turning a
+  Subdivision modifier already there into the proxy. Duplicate Special's option box adds Duplicate input graph (each
+  copy gets its own copies of the inputs and of the animation) and Duplicate input connections (each copy shares the
+  original's inputs, as Ctrl+D did before); both keep every modifier, hair included. `cmds.duplicate` takes
+  upstreamNodes / inputConnections (#347).
+- The last picked object leads, like Maya, also when a box, lasso, Outliner range, Select All or a Select menu item
+  adds objects without making them active: Modify > Match Transformations and Match Pivots take it as the source, and
+  in Maya mode (Object mode) it becomes the active object, so the Channel Box, the Attribute Editor and the green
+  selection wire show it; one Undo takes back the selection with its lead (#338).
+- New cameras start with the fit Maya gives them: cameras made with Create > Cameras start with Fit Resolution Gate
+  Fill on their 36 x 24 mm film back; the persp / top / front / side cameras of a new scene, the persp camera used to
+  render a scene without a camera, `cmds.camera` and Panels > New cameras start with Horizontal, so their render is as
+  wide as the film back whatever the render shape. Cameras made before keep Blender's Auto fit, so their render
+  doesn't change; pick their Fit Resolution Gate in the Attribute Editor to change it (#345).
+- Create Camera From View (Ctrl+Shift+C, and a new row in the panel's View menu) copies the camera the view looks
+  through instead of making a new camera1, like Maya: fit, film back, focal length or orthographic width, Overscan,
+  clip planes, film offset and Renderable, at the same place; the persp / top / front / side views copy their own
+  camera with what the view shows. The copy is named after that camera (persp1, top1 ...), the view looks through it,
+  the selection stays, and one Ctrl+Z takes it back (the view then shows what it showed before). Panels > Orthographic
+  has New > Front / Back / Right / Left / Top / Bottom (front1 ..., 30 units wide), and the view's label names the
+  camera it looks through.
+- Component mode D / Insert (pivot editing) keeps the Move, Rotate or Scale tool and its manipulator, which shows the
+  pivot handles at the pivot, like Maya: the arrows, planes and centre move the pivot, the small rings turn its axes,
+  a click on empty space puts it back on the selection with world axes, and middle drags move it too. With any other
+  tool (the Select tool and the Universal Manipulator included) D and Insert do nothing, like Maya, and Shift+drag on
+  a handle no longer extrudes while the pivot is edited. A placed component pivot moves with the components: a Move
+  drag (soft selection included) takes it along, Rotate and Scale work about it and leave it in place, Undo / Redo
+  take it back and forward with the move, and Pin Component Pivot keeps it where it is. A pivot edit left on ends
+  when another file is opened (File > Open / New / Revert), so the next file keeps its own pivot point and selection
+  modes (#351).
+- The Maya Outliner is drawn by the kit as a Maya tree: the startup cameras first, then the objects in creation order,
+  each joint as a row under its parent joint (no skeleton or Pose rows in between), an object parented to a joint
+  under that joint, and the sets after the last row. A click picks a row (Ctrl adds, Shift picks a range) and a left
+  drag picks the rows it passes; a middle drag parents a row onto another (onto a joint: under that joint, kept in
+  place; a root joint moves its skeleton; onto a set: adds to it; onto empty space: to the world); double-click or
+  Enter renames; the arrow keys pick-walk; F (Reveal Selected) opens the rows down to the selection; Delete deletes
+  the picked rows and what is under them; the right-click menu has Shapes, Reveal Selected, Hide In Outliner, Sets,
+  Display and Show (on a set row, the set's menu). Rows have an eye column, and a closed row that holds the selection
+  is highlighted: like Maya, picking in the viewport doesn't open the tree. Display > Shapes adds the shape rows
+  (pCube1 > pCubeShape1). Blender's own Outliner rows come back when the Outliner leaves Maya mode and when the kit is
+  switched off, and a saved file opens in plain Blender as usual (#348).
+- Alt+RMB in the Node Editor zooms with a left / right drag only, and in the UV Editor it zooms in with a drag right
+  or down and out with a drag left or up, like Maya (#325).
+- Render > Render Sequence (the menu item and the Rendering shelf button) runs with the options saved in its option
+  window, like Maya. Options saved there with 0.8.0 (the camera, All Render-Enabled Cameras, Alternate Output File
+  Location) are used again, so open its option box once to check them (#252).
+
+### Fixed
+- Alt+LMB+MMB dolly in the viewport: letting go of one button carries on with the one still held, like Maya: the
+  middle button goes back to the track, the left one to the tumble, as often as the other button is pressed again,
+  also when looking through a camera (#343).
+- Playback in Maya mode is faster: the Maya-style joints are built in arrays each frame and what a pose doesn't change
+  is read once per playback, the Range Slider no longer reads the screen on every frame, and a selected skinned
+  character's selection wire reads only its moving points (#344).
+- Camera gates match the render frame, like Maya: the Film Gate is the camera's film back (Horizontal x Vertical Film
+  Aperture) and sits on the Resolution Gate (the render frame) the way Maya places it. Attribute Editor > Film Back >
+  Fit Resolution Gate has Fill, Horizontal, Vertical and Overscan, and the kit sets Blender's Sensor Fit from it again
+  when the render size, pixel aspect or film back changes (#345).
+- Mesh Display > Soften Edge, Harden Edge and Soften/Harden Edges show their result on meshes with history: they take
+  the place of a Smooth by Angle modifier that would turn the result back (on an object it is removed, like Blender's
+  Shade Smooth; on selected edges its look is kept on the other edges), and the Shift+RMB Soften/Harden Edges items on
+  objects and edges run the same commands. In component mode one Ctrl+Z brings back the edges and the modifier (its
+  settings and place in the stack) with the selection, Shift+Z brings the result back, and Edit > Undo History lists
+  the steps as Object Mode, Edit Mode, Soften Edge. They no longer open Adjust Last Operation; the angle is in
+  Soften/Harden Edges' option box (#342).
+- Edge slides with the Move tool's Transform Constraint keep the UV layout in place (the slid UVs no longer jump to
+  the corner of the UV space), and the UVs follow an edge slide only with Preserve UVs on. With Preserve UVs on, Scale
+  tool and Universal Manipulator drags, the Input Line and the Component Editor give the right UVs, also after a
+  cancelled drag (#340).
+- Auto Key keys a changed constraint target weight that already has keys, like Maya: typed or dragged in the Channel
+  Box (a one-target weight typed there is keyed right away, in the same undo step) or changed in the Attribute Editor,
+  also when it goes back to a value it had on another frame (1 -> 0 -> 1) (#329).
+- Outliner: joints show as rows of the Maya Outliner, and Display > Shapes no longer turns it into Blender's
+  Outliner (#348).
+- Panels > Tear Off / Tear Off Copy: the torn-off view shows the panel menu bar and the panel toolbar like the docked
+  panel, without a second Status Line row (#346).
+- A click on the option box of a Maya menu item opened from the Space hotbox opens its options instead of running the
+  command, in submenus too (#350).
+- The UV Editor button on the UV Editing shelf opens the UV Editor window, like Windows > Modeling Editors > UV
+  Editor, instead of turning the shelf into a UV Editor; a shelf left showing the UV Editor is a shelf again when the
+  file opens (#352).
+- UV Unfold no longer freezes Blender on dense meshes: a 15 000-face shell took over a minute and a 65 000-face one
+  more than 15 minutes, now a few seconds. Unfold, Layout and Unstack with several meshes in Edit Mode no longer tear
+  a face picked in another mesh off its shell. With UV Sync Selection off, UV > Sew UV Edges, Merge UVs, Cut UV Edges,
+  Delete UVs, Split UVs and Auto Seams, run from outside the UV Editor with no UV picked, use the 3D View selection,
+  like Maya; before, they did nothing, and Auto Seams cut every shell of the mesh (#354).
+
 ## [0.14.0] — 2026-11-08
 
 ### Added

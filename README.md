@@ -97,9 +97,9 @@ one-line note saying why and what to use instead.
 - **Alt+B** cycles the background of every 3D view through Maya's solid background colours.
 - The kit uses your own Blender theme; see [Recommended setup](#recommended-setup) for a Maya-like look.
 - **Languages**: the kit's menus, marking menus, shelves and tooltips follow Blender's *Preferences > Interface >
-  Language* — Japanese (日本語) and Simplified Chinese (简体中文) so far, with Blender's *Translate* switches for
-  interface and tooltips. Corrections from native speakers are welcome. To add your own language, see
-  [Translations](#translations).
+  Language* — Japanese (日本語), Simplified Chinese (简体中文) and Traditional Chinese (繁體中文) so far, with Blender's
+  *Translate* switches for interface and tooltips. Corrections from native speakers are welcome. To add your own
+  language, see [Translations](#translations).
 
 ### Navigation & selection
 
@@ -268,7 +268,7 @@ Maya Workflow Kit is not on extensions.blender.org yet. Once it is, install it f
 
 ### Option 2 — Install the zip from disk
 
-1. Get `maya-workflow-kit-<version>.zip` (current version: 0.14.0) from
+1. Get `maya-workflow-kit-<version>.zip` (current version: 0.15.0) from
    [GitHub Releases](https://github.com/5hyuns/maya-workflow-kit-for-blender/releases) — or build it as in option 3.
 2. In Blender: *Edit > Preferences > Get Extensions > ▾ (top-right menu) > Install from Disk…* and pick the zip — or
    drag the zip onto the Blender window.
@@ -452,8 +452,8 @@ them.
 ## Translations
 
 The kit's texts follow Blender's *Preferences > Interface > Language* and its *Translate* switches (Blender keeps one
-language for its whole interface, so the kit has no language setting of its own). Japanese and Simplified Chinese
-are built in. To translate the kit into another language, or to correct a built-in translation:
+language for its whole interface, so the kit has no language setting of its own). Japanese, Simplified Chinese and
+Traditional Chinese are built in. To translate the kit into another language, or to correct a built-in translation:
 
 1. In *Preferences > Add-ons > Maya Workflow Kit > Translations*, click **Write Template** and then
    **Open Translations Folder**.
