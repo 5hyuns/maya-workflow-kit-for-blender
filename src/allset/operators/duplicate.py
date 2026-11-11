@@ -16,8 +16,10 @@ What a copy takes from the original's inputs (#347), like Maya:
   Blender modifiers Maya has no match for: one switched off in the viewport stays on the copy as it is (not applied)
   unless it reads another object; Multires stays live with its sculpt detail (the shape-key mix, the deformers above
   it and the pose of the deformers after it that read another object, such as a skin, go into the base mesh, so the
-  copy keeps the pose it shows; the other modifiers after it stay live). A Subdiv Proxy copy is the cage only, like
-  copying a Maya proxy cage.
+  copy keeps the pose it shows; the other modifiers after it stay live). A Geometry Nodes modifier the user set up
+  stays live with its inputs (values, attribute inputs, the objects it reads), and so do the modifiers after it; what
+  comes before it is baked, so the node tree gets the same geometry. The kit's own node modifiers (Maya deformers such
+  as the wire) are baked. A Subdiv Proxy copy is the cage only, like copying a Maya proxy cage.
 - Duplicate Special > Duplicate input graph: the copy gets its own copies of the inputs (modifiers, shape keys,
   drivers, constraints, its creation node and copies of the animation, so it animates on its own).
 - Duplicate Special > Duplicate input connections: the copy shares the original's inputs (the same animation drives
@@ -177,12 +179,27 @@ def _reads_other(md):
         if prop.type == 'COLLECTION' and any(points(item) for item in getattr(md, prop.identifier, ())):
             return True
     if md.type == 'NODES' and md.node_group is not None:
+        from .. import compat
         for item in md.node_group.interface.items_tree:
             if (getattr(item, "in_out", None) == 'INPUT'
                     and getattr(item, "socket_type", "") in {'NodeSocketObject', 'NodeSocketCollection'}
-                    and md.get(item.identifier) is not None):
+                    and compat.gn_input_get(md, item.identifier) is not None):
                 return True
     return False
+
+
+def _user_nodes(md):
+    """A Geometry Nodes modifier the user set up: a node group that isn't one of the kit's own (the kit's node
+    groups, for Maya deformers and display, have names starting with ".Allset")."""
+    return (md.type == 'NODES' and md.node_group is not None
+            and not md.node_group.name.lower().startswith(".allset"))
+
+
+def _live_from(new):
+    """Index of the first user Geometry Nodes modifier shown in the viewport (len of the stack when none): it and
+    the modifiers after it stay live on a plain copy."""
+    mods = list(new.modifiers)
+    return next((i for i, md in enumerate(mods) if md.show_viewport and _user_nodes(md)), len(mods))
 
 
 def _plan(new):
@@ -196,23 +213,31 @@ def _plan(new):
     Multires keeps its sculpt detail only on the base mesh it was made on, so a mesh with Multires keeps Multires and
     every modifier after it live, except a deformer that reads another object: its pose goes into the base (BAKE,
     acting on the base mesh) and it goes; another modifier after it that reads another object goes too. The ones
-    above Multires don't change the base's points and faces (Blender's rule) and bake into the base."""
+    above Multires don't change the base's points and faces (Blender's rule) and bake into the base.
+
+    A Geometry Nodes modifier the user set up (Maya has no such thing) is a procedural setup that baking would lose:
+    it stays live with its inputs (values, attribute inputs, the objects it reads), switched off or not. The first
+    one shown in the viewport and every modifier after it stay live (KEEP); the ones before it bake, so the node tree
+    gets the same geometry as on the original. The kit's own node modifiers (Maya deformers) bake like the others."""
     from .display import is_preview
     from .global_keys4 import subdiv_proxy
     proxy = subdiv_proxy(new) if new.type == 'MESH' else None
+    live = _live_from(new)
     out = {}
-    for md in new.modifiers:
+    for i, md in enumerate(new.modifiers):
         if is_preview(md):
             out[md.name] = KEEP
         elif proxy is not None and md.name == proxy.name:
             out[md.name] = DROP
         elif not md.show_viewport:
-            out[md.name] = DROP if _reads_other(md) else KEEP
+            out[md.name] = KEEP if _user_nodes(md) or not _reads_other(md) else DROP
+        elif i >= live:
+            out[md.name] = KEEP
         else:
             out[md.name] = BAKE
     first = _multires_index(new)
     if first is not None:
-        for md in list(new.modifiers)[first:]:
+        for md in list(new.modifiers)[first:live]:
             if out[md.name] == BAKE and not (md.type in _DEFORM_ONLY and _reads_other(md)):
                 out[md.name] = DROP if _reads_other(md) else KEEP
     return out
