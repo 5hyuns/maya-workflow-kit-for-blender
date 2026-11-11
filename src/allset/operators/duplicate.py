@@ -351,23 +351,61 @@ def _hold_place(context, new):
     new.matrix_world = mw
 
 
+class _evaluated:
+    """While plain copies are made, the ones that need their evaluated result (``copies``) are evaluated like their
+    originals (same inputs still). A copy the view layer leaves out (switched off in the viewport by Hide, in a
+    collection switched off or excluded, in another scene's collection) is shown and linked into the scene's
+    collection meanwhile, then put back: a hidden child's copy is made like a shown child's and stays hidden."""
+
+    def __init__(self, context, copies):
+        self.context, self.copies, self.shown, self.linked = context, copies, [], []
+
+    def __enter__(self):
+        if not self.copies:
+            return self
+        view_layer = self.context.view_layer
+        view_layer.update()
+        dg = self.context.evaluated_depsgraph_get()
+        left_out = [new for new in self.copies if not new.evaluated_get(dg).is_evaluated]
+        if left_out:
+            coll = self.context.scene.collection
+            for new in left_out:
+                if new.hide_viewport:
+                    new.hide_viewport = False
+                    self.shown.append(new)
+                if new.name not in coll.objects:
+                    coll.objects.link(new)
+                    self.linked.append(new)
+            view_layer.update()
+        return self
+
+    def __exit__(self, *_exc):
+        coll = self.context.scene.collection
+        for new in self.linked:
+            coll.objects.unlink(new)
+        for new in self.shown:
+            new.hide_viewport = True
+        if self.shown or self.linked:
+            self.context.view_layer.update()      # update handlers see the copies hidden again
+        return False
+
+
 def _plain(context, copies):
     """Maya Duplicate: each copy is the node itself, as the original shows now, with nothing that drives it."""
-    if any(_needs_evaluation(new) for new in copies):
-        context.view_layer.update()            # the copies evaluate like their originals (same inputs still)
-    for new in copies:                          # parents first
-        if new.type == 'MESH':
-            _bake_mesh(context, new)
-        elif new.type in _POINT_TYPES:
-            _bake_points(context, new)
-        elif new.type == 'ARMATURE' and new.pose is not None:
-            _hold_pose(context, new)
-        _hold_place(context, new)
-        for idb in _anim_ids(new):             # the channels keep the values they have now
-            if idb.animation_data is not None:
-                idb.animation_data_clear()
-        _drop_creation_node(new)               # also on a baked mesh
-        _history_records(new)
+    with _evaluated(context, [new for new in copies if _needs_evaluation(new)]):
+        for new in copies:                      # parents first
+            if new.type == 'MESH':
+                _bake_mesh(context, new)
+            elif new.type in _POINT_TYPES:
+                _bake_points(context, new)
+            elif new.type == 'ARMATURE' and new.pose is not None:
+                _hold_pose(context, new)
+            _hold_place(context, new)
+            for idb in _anim_ids(new):         # the channels keep the values they have now
+                if idb.animation_data is not None:
+                    idb.animation_data_clear()
+            _drop_creation_node(new)           # also on a baked mesh
+            _history_records(new)
 
 
 def offset_channels(ob, k, translate, rotate, scale):
