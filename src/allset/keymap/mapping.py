@@ -379,8 +379,10 @@ ENTRIES = {
     "CopySelected": _e("IC", (V3D, "view3d.copybuffer", {}), note="선택 오브젝트를 Blender 클립보드로"),
     "PasteSelected": _e("KIT", (OBJ, "allset.paste", {}),
                         note="Blender 붙여넣기 + 첫 오브젝트가 lead (Channel Box); Maya 의 pasted_ 접두사는 없음 (이름이 비면 원래 이름)"),
-    "outlinerPanel:OutlinerRenameSelectedItem": _e("IC", ("Outliner", "outliner.item_rename", {}), note="활성 행 이름 바꾸기"),
-    "outlinerPanel:OutlinerRevealSelected": _e("IC", ("Outliner", "outliner.show_active", {}), note="선택 항목까지 펼치고 보이기"),
+    "outlinerPanel:OutlinerRenameSelectedItem": _e("KIT", ("Outliner", "allset.outliner_tree_rename", {}),
+                                                   note="Enter: 선택 행 이름 바꾸기 (킷 트리; 더블클릭 도)"),
+    "outlinerPanel:OutlinerRevealSelected": _e("KIT", ("Outliner", "allset.outliner_tree_reveal", {}),
+                                               note="f: 선택 위의 행을 펼치고 그리로 스크롤 (킷 트리)"),
     # --- Graph Editor key batch (operators/graph_keys.py) ---
     "graphEditor:GraphEditorFrameCenterView": _e("KIT", ("Graph Editor", "allset.graph_center_time", {}),
                                                  note="현재 시간을 가운데로 (가로만, 확대 그대로)"),

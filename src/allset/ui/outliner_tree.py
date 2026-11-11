@@ -59,7 +59,9 @@ WHEEL_ROWS = 3
 
 EXPANDED = set()          # ('O', object session_uid) / ('B', armature session_uid, bone name)
 SCROLL = {}               # area pointer -> first shown row
+HOVER = {}                # area pointer -> row under the mouse (drawn lighter, like Blender's Outliner)
 SEEN = {}                 # region pointer -> [(kind, label, row on screen, depth)] of the last draw (tests read it)
+DRAWN = {}                # region pointer -> [(y0, y1, Row)] of the last draw: where each shown row is
 STATS = {"builds": 0, "draws": 0}
 _state = {"expand": 0, "camera": ""}
 _cache = {}               # (structure, expand, scene, view layer, options) -> head rows
@@ -253,8 +255,11 @@ def build(scene, view_layer, opts, expand_all=False):
             got = bones[ob] = _Bones(ob, opts.sort_alpha)
         return got
 
+    hidden = "allset_hidden_in_outliner"      # Maya Hide In Outliner (outliner_tree_edit.HIDDEN)
     kids, bone_kids, roots = {}, {}, []
     for ob in layer:
+        if ob.get(hidden):
+            continue
         p = ob.parent
         if p is None or p not in in_layer:
             roots.append(ob)
@@ -276,7 +281,8 @@ def build(scene, view_layer, opts, expand_all=False):
             return below
         if match is not None and not match(label) and not below:
             return []
-        return [Row(kind, ob_name, sub, 0 if flat else depth, has and not flat, is_open, label, icon, key, top)]             + below
+        row = Row(kind, ob_name, sub, 0 if flat else depth, has and not flat, is_open, label, icon, key, top)
+        return [row] + below
 
     def visit_bone(ob, b, name, depth, extra=(), top=False):
         child_names = b.kids.get(name, ())
@@ -408,7 +414,19 @@ def _pose_or_edit_bone(ob, name):
     return pb, None
 
 
-def row_state(context, row, live_objects, selected_set=None):
+def visible_signature(context):
+    """The visible selection as text (``visibility._signature``) from the context's selection."""
+    return "\n".join(sorted(o.name for o in context.selected_objects if o.visible_get()))
+
+
+def _kept(ob, signature):
+    """A hidden object that still counts as selected (Maya: hidden by h while selected, or picked hidden in the
+    Outliner; ``visibility.KEPT``)."""
+    from ..operators import visibility
+    return ob.hide_viewport and visibility.KEPT in ob and visibility._kept(ob, signature)
+
+
+def row_state(context, row, live_objects, selected_set=None, signature=None):
     """(selected, active, hidden, live) of a row."""
     vl = context.view_layer
     kind = row.kind
@@ -422,6 +440,8 @@ def row_state(context, row, live_objects, selected_set=None):
             hidden = not ob.visible_get()
         except RuntimeError:            # not in the view layer
             sel, hidden = False, True
+        if not sel and kind != 'SHAPE' and unselectable(ob):
+            sel = is_picked(ob, visible_signature(context) if signature is None else signature)
         act = sel and vl.objects.active == ob and kind != 'SHAPE'
         return sel, act, hidden, ob in live_objects
     if kind == 'JOINT':
@@ -578,6 +598,53 @@ def _triangle(tris, tcol, cx, cy, r, down, rgba):
 
 ICON_RGB = (0.741, 0.741, 0.741)      # kit icon grey
 JOINT_RGB = (0.282, 0.667, 0.710)     # kit icon teal
+CHILD_SELECTED = 0.33                 # share of the selection highlight on a row with a selected node below it
+
+
+def _eye(tris, tcol, lines, lcol, cx, cy, u, shown, rgba):
+    """An eye (open: outline + pupil; closed: the lower lid only)."""
+    rx, ry = 0.36 * u, 0.2 * u
+    n = 12
+    upper = [(cx - rx + 2 * rx * i / n, cy + ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
+    lower = [(cx - rx + 2 * rx * i / n, cy - ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
+    for pts in ((upper, lower) if shown else (lower,)):
+        for i in range(n):
+            lines.extend((pts[i], pts[i + 1]))
+            lcol.extend((rgba,) * 2)
+    if shown:
+        r = 0.1 * u
+        pts = [(cx + r * math.cos(2 * math.pi * i / 10), cy + r * math.sin(2 * math.pi * i / 10)) for i in range(10)]
+        for i in range(10):
+            tris.extend(((cx, cy), pts[i], pts[(i + 1) % 10]))
+            tcol.extend((rgba,) * 3)
+
+
+def eye_x(region, u, n, first):
+    """Centre x of the visibility column (Display > Visibility Column), left of the scrollbar."""
+    bar = scrollbar(region, u, n, first)
+    right = bar[0] if bar is not None else region.width
+    return right - 0.9 * u
+
+
+def eye_state(row):
+    """True / False = shown / hidden for an object or joint row, None for rows without an eye."""
+    from .outliner_tree_edit import eye_state as state
+    return state(row)
+
+
+def selected_ancestors(context, limit=2000):
+    """Expanded-state keys of the rows that have a selected object or picked joint below them."""
+    from .outliner_tree_edit import ancestor_keys, selected_items
+    items = selected_items(context)
+    if len(items) > limit:
+        return set()
+    out, cache = set(), {}
+    for ob, bone in items:
+        try:
+            out.update(ancestor_keys(ob, bone, cache))
+        except (AttributeError, ReferenceError):
+            pass
+    return out
 
 
 def draw():
@@ -589,6 +656,11 @@ def draw():
         _draw(context, space, region, area)
     except ReferenceError:
         pass
+    except Exception:                  # a broken draw prints once, not at every redraw
+        if not _state.get("draw_error"):
+            _state["draw_error"] = True
+            import traceback
+            traceback.print_exc()
 
 
 def _draw(context, space, region, area):
@@ -613,8 +685,15 @@ def _draw(context, space, region, area):
     act_text = tuple(th.active_object)[:3]
     live_objects = set(live.objects(context.scene))
     selected_set = set(context.selected_objects)
+    signature = visible_signature(context)
+    # Maya: a row with a selected node somewhere below it gets a dim highlight (collapsed or not)
+    back = tuple(th.space.back)[:3]
+    child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
+    above = selected_ancestors(context)
+    eyes = space.show_restrict_column_hide
+    ex = eye_x(region, u, n, first) if eyes else 0.0
     tris, tcol, lines, lcol, textures, names = [], [], [], [], [], []
-    seen = []
+    seen, drawn = [], []
     r_icon = 0.36 * u
     for k in range(first, last):
         row = rows[k]
@@ -622,9 +701,17 @@ def _draw(context, space, region, area):
         y1 = region.height - j * u
         y0 = y1 - u
         cy = (y0 + y1) / 2.0
-        sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set)
+        sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set, signature)
         if sel:
             _quad(tris, tcol, 0, y0, region.width, y1, act_rgba if act else sel_rgba)
+        elif row.key is not None and row.key in above:
+            _quad(tris, tcol, 0, y0, region.width, y1, child_rgba)
+        if HOVER.get(area.as_pointer()) == k:
+            _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
+        if eyes:
+            shown = eye_state(row)
+            if shown is not None:
+                _eye(tris, tcol, lines, lcol, ex, cy, u, shown, (*text, 0.9 if shown else 0.45))
         x = row.depth * u
         alpha = 0.5 if hidden and not sel else 1.0
         if row.kids:
@@ -646,6 +733,7 @@ def _draw(context, space, region, area):
             rgb = text_hi if sel else text
         names.append((x + 2.25 * u, cy, row.label, (*rgb, alpha)))
         seen.append((row.kind, row.label, j, row.depth))
+        drawn.append((y0, y1, row))
     bar = scrollbar(region, u, n, first)
     if bar is not None:
         x0, x1, b0, b1 = bar
@@ -668,8 +756,10 @@ def _draw(context, space, region, area):
         blf.draw(0, label)
     gpu.state.blend_set('NONE')
     SEEN[region.as_pointer()] = seen
-    while len(SEEN) > 32:
-        del SEEN[next(iter(SEEN))]
+    DRAWN[region.as_pointer()] = drawn
+    for d in (SEEN, DRAWN):
+        while len(d) > 32:
+            del d[next(iter(d))]
 
 
 def redraw_outliners(context=None):
@@ -699,11 +789,62 @@ def _object_mode(context, clear):
             pass
 
 
+def _keep_hidden(context, obs, replace):
+    """Objects Blender can't select (hidden, or selection-locked like a live surface) stay picked when their row is
+    picked: a hidden one gets the visibility module's kept mark for the visible selection left now, so h / Shift+H
+    act on it like on Maya's hidden-but-selected nodes, and every one is remembered with that visible selection
+    (``picked``: Delete, the live list). ``replace`` drops every other pick first."""
+    from ..operators import visibility
+    if replace:
+        visibility._clear(list(context.view_layer.objects), visibility.KEPT)
+    signature = visible_signature(context)
+    names = set() if replace or _state.get("picks", ("", set()))[0] != signature else set(_state["picks"][1])
+    for ob in obs:
+        if ob.hide_viewport:
+            ob[visibility.KEPT] = signature
+        names.add(ob.name)
+    _state["picks"] = (signature, names)
+
+
+def _drop_kept(obs):
+    from ..operators import visibility
+    visibility._clear(obs, visibility.KEPT)
+    sig, names = _state.get("picks", ("", set()))
+    _state["picks"] = (sig, names - {ob.name for ob in obs})
+
+
+def unselectable(ob):
+    """Blender can't select this object (hidden or selection-locked): its row is picked through ``_keep_hidden``."""
+    try:
+        return not ob.visible_get() or ob.hide_select
+    except RuntimeError:
+        return True
+
+
+def is_picked(ob, signature):
+    """An unselectable object picked in the Outliner while the visible selection is still ``signature``."""
+    if _kept(ob, signature):
+        return True
+    sig, names = _state.get("picks", ("", set()))
+    return sig == signature and ob.name in names
+
+
+def picked_unselectable(context):
+    """The unselectable objects picked in a kit Outliner tree (Blender's Outliner keeps such rows highlighted; the
+    kit's tree keeps them here while the visible selection stays the same)."""
+    signature = visible_signature(context)
+    sig, names = _state.get("picks", ("", set()))
+    if sig != signature:
+        return []
+    return [ob for ob in (bpy.data.objects.get(n) for n in sorted(names)) if ob is not None]
+
+
 def deselect_all(context):
     """Maya: a click on empty Outliner space selects nothing."""
     _object_mode(context, True)
     for ob in context.selected_objects:
         _select(ob, False)
+    _keep_hidden(context, (), True)
     _state["camera"] = ""
 
 
@@ -720,7 +861,9 @@ def active_row(context, rows):
     for i, r in enumerate(rows):
         if r.ob != ob.name:
             continue
-        if (bone is not None and r.kind == 'JOINT' and r.sub == bone) or (bone is None and r.kind == 'OBJECT'):
+        if bone is not None and r.kind == 'JOINT' and r.sub == bone:
+            return i
+        if bone is None and (r.kind == 'OBJECT' or (r.kind == 'JOINT' and r.top)):   # a kit skeleton = its root row
             return i
     return None
 
@@ -738,7 +881,17 @@ def _pick_joint(context, ob, name, add):
 
 def select_row(context, rows, index, mode, anchor=None):
     """Maya Outliner selection of row ``index``: 'REPLACE' (click), 'TOGGLE' (Ctrl), 'RANGE' (Shift, from
-    ``anchor``), 'RANGE_ADD' (Ctrl+Shift)."""
+    ``anchor``), 'RANGE_ADD' (Ctrl+Shift). The pick order (``operators/pick_order``: Maya's selection list, the
+    last pick leads) is brought up to date before and after, like after one of Blender's own Outliner clicks."""
+    from ..operators import pick_order
+    pick_order.ordered(context)
+    try:
+        _select_row(context, rows, index, mode, anchor)
+    finally:
+        pick_order.ordered(context)
+
+
+def _select_row(context, rows, index, mode, anchor=None):
     from ..operators import sets
     row = rows[index]
     vl = context.view_layer
@@ -768,7 +921,12 @@ def select_row(context, rows, index, mode, anchor=None):
             sets.select_members(context, coll, {'TOGGLE': 'TOGGLE', 'RANGE': 'ADD', 'RANGE_ADD': 'ADD'}.get(
                 mode, 'REPLACE'))
         return
-    if kind == 'JOINT':
+    ranged = mode in ('RANGE', 'RANGE_ADD') and anchor is not None and 0 <= anchor < len(rows)
+    span = rows[min(anchor, index):max(anchor, index) + 1] if ranged else ()
+    # a range over joints of one skeleton picks those joints; a range that also holds other rows picks objects (a
+    # joint row then stands for its skeleton: Blender can't pick joints and objects together)
+    joints_only = ranged and all(r.kind == 'JOINT' and r.ob == row.ob for r in span)
+    if kind == 'JOINT' and (not ranged or joints_only):
         ob = bpy.data.objects.get(row.ob)
         if ob is None or ob.type != 'ARMATURE':
             return
@@ -779,9 +937,8 @@ def select_row(context, rows, index, mode, anchor=None):
             except (RuntimeError, KeyError):
                 pass
             return
-        if mode in ('RANGE', 'RANGE_ADD') and anchor is not None and 0 <= anchor < len(rows):
-            lo, hi = sorted((anchor, index))
-            names = [r.sub for r in rows[lo:hi + 1] if r.kind == 'JOINT' and r.ob == row.ob and r.sub != row.sub]
+        if ranged:
+            names = [r.sub for r in span if r.sub != row.sub]
             add = mode == 'RANGE_ADD'
             for name in names:
                 add = _pick_joint(context, ob, name, add) or add
@@ -794,27 +951,50 @@ def select_row(context, rows, index, mode, anchor=None):
     if ob is None:
         return
     _object_mode(context, mode in ('REPLACE', 'RANGE'))
+    hidden = unselectable(ob)
     if mode == 'TOGGLE':
+        if hidden:          # a hidden / locked row: picked / unpicked through the kept mark
+            if is_picked(ob, visible_signature(context)):
+                _drop_kept([ob])
+            else:
+                _keep_hidden(context, [ob], False)
+                vl.objects.active = ob
+            return
+        kept = picked_unselectable(context)
         if _select(ob, not ob.select_get()) and ob.select_get():
             vl.objects.active = ob
+        _keep_hidden(context, kept, False)          # the visible selection changed: hidden picks stay picked
         return
-    if mode in ('RANGE', 'RANGE_ADD') and anchor is not None and 0 <= anchor < len(rows):
+    if ranged:
         if mode == 'RANGE':
             for o in context.selected_objects:
                 _select(o, False)
-        lo, hi = sorted((anchor, index))
-        for r in rows[lo:hi + 1]:
-            if r.kind in ('OBJECT', 'SHAPE', 'MEMBER'):
+        else:
+            kept = picked_unselectable(context)
+        picked_hidden = []
+        for r in span:
+            if r.kind in ('OBJECT', 'SHAPE', 'MEMBER', 'JOINT'):
                 o = bpy.data.objects.get(r.ob)
-                if o is not None:
+                if o is None:
+                    continue
+                if unselectable(o):
+                    picked_hidden.append(o)
+                else:
                     _select(o)
-        if ob.select_get():
+        _keep_hidden(context, picked_hidden + (kept if mode == 'RANGE_ADD' else []), mode == 'RANGE')
+        if ob.select_get() or hidden:
             vl.objects.active = ob
         return
     if mode != 'RANGE_ADD':
         for o in context.selected_objects:
             if o != ob:
                 _select(o, False)
+    if hidden:
+        _keep_hidden(context, [ob], mode != 'RANGE_ADD')
+        vl.objects.active = ob
+        return
+    if mode != 'RANGE_ADD':
+        _keep_hidden(context, (), True)
     if _select(ob):
         vl.objects.active = ob
 
@@ -832,9 +1012,27 @@ def click_mode(event):
     return 'TOGGLE' if event.ctrl else 'RANGE' if event.shift else 'REPLACE'
 
 
+_click = {"key": None, "time": 0.0}
+
+
+def is_double_click(context, key, now=None):
+    """True when this press on row ``key`` follows a press on the same row within the double-click time (the kit
+    times it: simulated events carry no double-click, and the press item takes both presses)."""
+    import time
+    now = time.monotonic() if now is None else now
+    limit = context.preferences.inputs.mouse_double_click_time / 1000.0
+    double = _click["key"] == key and now - _click["time"] <= limit
+    _click.update(key=None if double else key, time=0.0 if double else now)
+    return double
+
+
+DRAG_ROWS = 0.5        # x row height the mouse moves before a press becomes a drag over rows
+
+
 class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
-    """Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it
-    (Shift: with everything below), empty space to select nothing"""
+    """Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click
+    its arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to
+    select nothing"""
     bl_idname = "allset.outliner_tree_click"
     bl_label = "Outliner Select"
     bl_options = {'REGISTER', 'UNDO'}
@@ -847,12 +1045,16 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         area, region, space = context.area, context.region, context.space_data
         u = unit(context.preferences)
         rows = rows_for(context, space)
+        n = len(rows)
         x, y = event.mouse_region_x, event.mouse_region_y
-        bar = scrollbar(region, u, len(rows), first_row(area, region, len(rows), u))
+        first = first_row(area, region, n, u)
+        bar = scrollbar(region, u, n, first)
+        self.scrolling = False
         if bar is not None and bar[0] - 2 <= x <= region.width:
-            return self._start_scroll(context, event, bar, len(rows), u)
-        k = row_index_at(area, region, y, u, len(rows))
+            return self._start_scroll(context, event, bar, n, u)
+        k = row_index_at(area, region, y, u, n)
         if k is None:
+            _click.update(key=None, time=0.0)
             if event.shift or event.ctrl:
                 return {'CANCELLED'}
             deselect_all(context)
@@ -860,14 +1062,60 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             return {'FINISHED'}
         row = rows[k]
         x0 = row.depth * u
+        on_eye = space.show_restrict_column_hide and abs(x - eye_x(region, u, n, first)) <= 0.55 * u
+        if on_eye and eye_state(row) is not None:
+            from .outliner_tree_edit import toggle_eye
+            _click.update(key=None, time=0.0)
+            done = toggle_eye(context, row)
+            redraw_outliners(context)
+            return {'FINISHED'} if done else {'CANCELLED'}
         if row.kids and x0 <= x < x0 + 1.1 * u:
+            _click.update(key=None, time=0.0)
             keys = subtree_keys(context, space, row) if event.shift else [row.key]
             set_expanded(keys, not row.open)
             redraw_outliners(context)
             return {'CANCELLED'}           # view only: no undo step (the press is still taken)
-        select_row(context, rows, k, click_mode(event), anchor=active_row(context, rows))
+        key = (row.kind, row.ob, row.sub)
+        # Blender sends a fast second press as DOUBLE_CLICK; simulated events never do, so the kit times presses too
+        double = event.value == 'DOUBLE_CLICK' or is_double_click(context, key)
+        if double and not (event.shift or event.ctrl):
+            _click.update(key=None, time=0.0)
+            bpy.ops.allset.outliner_tree_rename('INVOKE_DEFAULT')
+            return {'CANCELLED'}           # the first press made the selection (and its undo step)
+        self.mode = click_mode(event)
+        self.anchor = k if self.mode in ('REPLACE', 'TOGGLE') else active_row(context, rows)
+        select_row(context, rows, k, self.mode, anchor=self.anchor)
         redraw_outliners(context)
-        return {'FINISHED'}
+        # Maya: dragging over rows selects them (from the pressed row)
+        self.press_y, self.last, self.dragging, self.u = y, k, False, u
+        self.pressed = k
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _drag(self, context, event):
+        area, region, space = context.area, context.region, context.space_data
+        u = self.u
+        y = event.mouse_region_y
+        if not self.dragging and abs(y - self.press_y) < DRAG_ROWS * u:
+            return
+        self.dragging = True
+        rows = rows_for(context, space)
+        n = len(rows)
+        if y >= region.height and SCROLL.get(area.as_pointer(), 0) > 0:      # past the top / bottom: scroll
+            SCROLL[area.as_pointer()] -= 1
+        elif y < 0:
+            SCROLL[area.as_pointer()] = SCROLL.get(area.as_pointer(), 0) + 1
+        first = first_row(area, region, n, u)
+        yy = min(max(y, 0), region.height - 1)
+        k = row_index_at(area, region, yy, u, n)
+        if k is None:
+            k = n - 1 if yy < region.height / 2 else first
+        if k == self.last or n == 0:
+            return
+        self.last = k
+        mode = 'RANGE_ADD' if self.mode in ('TOGGLE', 'RANGE_ADD') else 'RANGE'
+        select_row(context, rows, k, mode, anchor=self.pressed)
+        redraw_outliners(context)
 
     # the scrollbar: drag the thumb, a click above / below it pages
     def _start_scroll(self, context, event, bar, n, u):
@@ -881,11 +1129,18 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             first_row(area, region, n, u)
             area.tag_redraw()
             return {'CANCELLED'}
+        self.scrolling = True
         self.grab = (y, SCROLL.get(key, 0), n, u, b1 - b0)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
+        if not self.scrolling:
+            if event.type == 'MOUSEMOVE':
+                self._drag(context, event)
+            elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE' or event.type == 'ESC':
+                return {'FINISHED'}
+            return {'RUNNING_MODAL'}
         if event.type == 'MOUSEMOVE':
             y0, first0, n, u, thumb = self.grab
             region, area = context.region, context.area
@@ -897,6 +1152,27 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE' or event.type in ('ESC', 'RIGHTMOUSE'):
             return {'CANCELLED'}           # view only: no undo step
         return {'RUNNING_MODAL'}
+
+
+class ALLSET_OT_outliner_tree_hover(bpy.types.Operator):
+    """Light up the Outliner row under the mouse"""
+    bl_idname = "allset.outliner_tree_hover"
+    bl_label = "Outliner Hover"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region is not None and context.region.type == 'WINDOW'
+
+    def invoke(self, context, event):
+        if _poll(context):
+            area, region = context.area, context.region
+            rows = rows_for(context, context.space_data)
+            k = row_index_at(area, region, event.mouse_region_y, unit(context.preferences), len(rows))
+            if HOVER.get(area.as_pointer()) != k:
+                HOVER[area.as_pointer()] = k
+                area.tag_redraw()
+        return {'PASS_THROUGH'}
 
 
 class ALLSET_OT_outliner_tree_scroll(bpy.types.Operator):
@@ -932,7 +1208,7 @@ class ALLSET_OT_outliner_tree_scroll(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_scroll)
+classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_hover, ALLSET_OT_outliner_tree_scroll)
 
 
 def register():
@@ -963,6 +1239,8 @@ def unregister():
         _handle[0] = None
     _cache.clear()
     SEEN.clear()
+    DRAWN.clear()
     SCROLL.clear()
+    HOVER.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

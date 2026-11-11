@@ -56,9 +56,11 @@ def test_outliner_rows_keep_dag_order():
     a, b, c, d = obs
     c.parent = a
     d.parent = a
-    for ob in obs:
-        ob.allset_expanded = True
-    rows = [r[1] for r in outliner.dag_rows(scene, False) if r[1].startswith("qa")]
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    tree.set_expanded([('O', ob.session_uid) for ob in obs], True)
+    bpy.context.view_layer.update()
+    rows = [r.label for r in tree.build(scene, bpy.context.view_layer, tree.default_options())
+            if r.label.startswith("qa")]
     assert rows == ["qaA", "qaC", "qaD", "qaB"], rows
     bpy.data.batch_remove(obs)
 

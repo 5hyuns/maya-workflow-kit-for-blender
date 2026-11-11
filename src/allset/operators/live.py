@@ -177,8 +177,12 @@ def selected(context, outliner=False):
     if result and not outliner and getattr(context.area, 'type', '') != 'OUTLINER':
         return result
     result.extend(o for o in getattr(context, 'selected_ids', ()) if isinstance(o, bpy.types.Object))
+    from ..ui import outliner_tree
     for area in context.screen.areas if context.screen else ():
         if area.type != 'OUTLINER':
+            continue
+        if outliner_tree.is_tree(area.spaces.active):         # the kit's rows: its picks of locked objects
+            result.extend(outliner_tree.picked_unselectable(context))
             continue
         region = next((r for r in area.regions if r.type == 'WINDOW'), None)
         if region:

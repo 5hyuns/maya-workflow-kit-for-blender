@@ -216,10 +216,12 @@ def test_live_wire_color_and_panel_visibility_rules():
     ctx.space_data.overlay.show_wireframes = False
     ctx.space_data.shading.type = 'WIREFRAME'
     assert wire.live_wire_objects(ctx) == [ob]
-    labels = import_module(kit.MODULE+'.ui.outliner_joints')
-    assert labels.label(ob) == ob.name
+    tree = import_module(kit.MODULE+'.ui.outliner_tree')
+    bpy.context.view_layer.update()
+    row = next(r for r in tree.build(scene, bpy.context.view_layer, tree.default_options()) if r.ob == ob.name)
+    assert tree.row_state(bpy.context, row, set(live.objects(scene)))[3], "the Outliner row is drawn in live green"
     live.set_objects(scene, [])
-    assert labels.label(ob) is None
+    assert not tree.row_state(bpy.context, row, set(live.objects(scene)))[3]
 
 
 def test_move_object_projects_only_to_live_and_preserves_reference():

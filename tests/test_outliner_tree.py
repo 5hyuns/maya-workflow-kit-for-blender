@@ -326,9 +326,14 @@ def test_select_rows_like_maya():
     s, a, hidden, live = tree.row_state(bpy.context, rows[m], set())
     assert s and a, (s, a)
     # a range of joints from the active joint
-    tree.select_row(bpy.context, rows, k, 'REPLACE')
-    tree.select_row(bpy.context, rows, m, 'RANGE', anchor=tree.active_row(bpy.context, rows))
-    assert _picked(sk) == {j3, j4}, f"range rows j3, pCylinder1, j4 pick the joints ({_picked(sk)})"
+    j = rows.index(_row(rows, j2))
+    tree.select_row(bpy.context, rows, j, 'REPLACE')
+    tree.select_row(bpy.context, rows, k, 'RANGE', anchor=tree.active_row(bpy.context, rows))
+    assert _picked(sk) == {j2, j3}, f"range rows j2, j3 pick the joints ({_picked(sk)})"
+    # a range that also holds an object row picks objects (the skeleton stands for its joints)
+    tree.select_row(bpy.context, rows, m, 'RANGE', anchor=k)
+    picked = {o.name for o in bpy.context.selected_objects}
+    assert sk.mode == 'OBJECT' and picked == {sk.name, "pCylinder1"}, (sk.mode, picked)
     # back to objects: the skeleton leaves Pose / Edit Mode
     tree.select_row(bpy.context, rows, i, 'REPLACE')
     assert sk.mode == 'OBJECT' and [o.name for o in bpy.context.selected_objects] == ["pCube1"]
@@ -349,3 +354,23 @@ def test_disabled_tree_draws_nothing():
     tree.ENABLED = False
     area, sp = _outliner()
     assert not tree.wants_tree(sp) and not tree.is_tree(sp)
+
+
+def test_tree_picks_set_the_lead():
+    """#338: the last row picked in the tree is the lead (Match Transformations, Channel Box, selection wire)."""
+    _on()
+    _clear()
+    a, b, c = _mesh("pA1"), _mesh("pB1"), _mesh("pC1")
+    pick_order = import_module(kit.MODULE + ".operators.pick_order")
+    rows = _rows()
+    i = {r.label: k for k, r in enumerate(rows)}
+    tree.select_row(bpy.context, rows, i["pA1"], 'REPLACE')
+    tree.select_row(bpy.context, rows, i["pB1"], 'TOGGLE')
+    assert [o.name for o in pick_order.ordered(bpy.context)] == ["pA1", "pB1"]
+    assert pick_order.last(bpy.context) == b and bpy.context.view_layer.objects.active == b, "Ctrl-pick B: B leads"
+    tree.select_row(bpy.context, rows, i["pA1"], 'TOGGLE')
+    tree.select_row(bpy.context, rows, i["pA1"], 'TOGGLE')
+    assert pick_order.last(bpy.context) == a, "A picked again last: A leads"
+    tree.select_row(bpy.context, rows, i["pC1"], 'REPLACE')
+    tree.select_row(bpy.context, rows, i["pA1"], 'RANGE', anchor=tree.active_row(bpy.context, rows))
+    assert pick_order.last(bpy.context) == a and {o.name for o in bpy.context.selected_objects} == {"pA1", "pB1", "pC1"}

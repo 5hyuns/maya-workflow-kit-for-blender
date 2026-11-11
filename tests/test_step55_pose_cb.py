@@ -283,35 +283,39 @@ def test_virtual_slider_targets_joints():
 
 
 def test_outliner_joint_rows_and_click():
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    tree_edit = import_module(kit.MODULE + ".ui.outliner_tree_edit")
     arm = _skeleton()
     _mode('OBJECT')
-    wm = bpy.context.window_manager
-    outliner.rebuild(force=True)
-    rows = [(r.kind, r.label, r.depth, r.has_children) for r in wm.allset_outliner_rows]
-    assert rows == [('OBJECT', "skeleton1", 0, True)], rows
-    arm.allset_expanded = True
-    arm.data.bones["joint1"].allset_expanded = True
-    outliner.rebuild(force=True)
-    rows = [(r.kind, r.label, r.depth) for r in wm.allset_outliner_rows]
-    assert rows == [('OBJECT', "skeleton1", 0), ('JOINT', "joint1", 1), ('JOINT', "joint2", 2)], rows
-    bpy.ops.allset.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
-    bpy.ops.allset.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
-    rows = [r.label for r in wm.allset_outliner_rows]
-    assert rows == ["skeleton1", "joint1", "joint2", "joint3"], rows
-    assert outliner.icon_for(wm.allset_outliner_rows[2], arm) == 'BONE_DATA'
+    tree.EXPANDED.clear()
+
+    def rows():
+        bpy.context.view_layer.update()
+        return [r for r in tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options())
+                if r.kind != 'CAMERA']
+    got = [(r.kind, r.label, r.depth, r.kids) for r in rows()]
+    assert got == [('JOINT', "joint1", 0, True)], f"the skeleton's row is its root joint (Maya) ({got})"
+    tree.set_expanded([('B', arm.session_uid, "joint1")], True)
+    got = [(r.kind, r.label, r.depth) for r in rows()]
+    assert got == [('JOINT', "joint1", 0), ('JOINT', "joint2", 1)], got
+    area = next(a for a in bpy.data.screens["Layout"].areas if a.type == 'OUTLINER')
+    tree.set_expanded(tree.subtree_keys(bpy.context, area.spaces.active, rows()[0]), True)
+    rs = rows()
+    assert [r.label for r in rs] == ["joint1", "joint2", "joint3"], [r.label for r in rs]
+    assert rs[1].icon == 'JOINT'
     # click joint2: pose mode + that joint
-    assert bpy.ops.allset.outliner_select(index=2, mode='REPLACE') == {'FINISHED'}
+    tree.select_row(bpy.context, rs, 1, 'REPLACE')
     assert arm.mode == 'POSE' and cb.lead() == arm.pose.bones["joint2"]
-    assert wm.allset_outliner_index == 2
-    bpy.ops.allset.outliner_select(index=3, mode='TOGGLE')
+    assert tree.active_row(bpy.context, rs) == 1
+    tree.select_row(bpy.context, rs, 2, 'TOGGLE')
     assert [pb.name for pb in cb.targets()] == ["joint3", "joint2"]
-    bpy.ops.allset.outliner_select(index=1, mode='RANGE')
+    tree.select_row(bpy.context, rs, 0, 'RANGE', anchor=tree.active_row(bpy.context, rs))
     assert {pb.name for pb in cb.targets()} == {"joint1", "joint2", "joint3"}
-    wm.allset_outliner_rows[3].label = "wrist"            # rename = bone name
+    assert tree_edit.rename(('JOINT', arm.name, "joint3"), "wrist") == "wrist"     # rename = bone name
     assert "wrist" in arm.data.bones
-    # an object row leaves pose mode
-    bpy.ops.allset.outliner_select(index=0, mode='REPLACE')
-    assert arm.mode == 'OBJECT' and cb.lead() == arm
+    # empty space leaves pose mode with nothing picked
+    tree.deselect_all(bpy.context)
+    assert arm.mode == 'OBJECT' and not bpy.context.selected_objects
 
 
 def test_attribute_editor_joint_tabs():

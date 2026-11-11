@@ -35,10 +35,23 @@ def _scene():
     return scene
 
 
+def _space():
+    """The Layout screen's Outliner, set up as a Maya Outliner (creation order, no shapes)."""
+    area = next(a for a in bpy.data.screens["Layout"].areas if a.type == 'OUTLINER')
+    sp = area.spaces.active
+    sp.use_sort_alpha = False
+    sp.use_filter_object_content = False
+    sp.use_filter_children = True
+    return sp
+
+
 def _rows_ok():
-    wm, sc = bpy.context.window_manager, bpy.context.scene
-    want = outliner.dag_rows(sc, wm.allset_outliner_shapes)
-    have = [(r.kind, r.object, r.depth, r.has_children, r.bone) for r in wm.allset_outliner_rows]
+    """The kit Outliner tree's cached rows are the rows a fresh build gives (nothing stale)."""
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    sp = _space()
+    have = tree.rows_for(bpy.context, sp)
+    want = tree.build(bpy.context.scene, bpy.context.view_layer, tree.options(sp)) + \
+        tree.tail_rows(bpy.context.scene, tree.options(sp))
     return want == have
 
 
@@ -67,21 +80,26 @@ class Counter:
 
 
 def _walkers():
-    return Counter((outliner, "dag_rows"), (dag, "sync"), (symmetry, "edit_meshes"))
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    return Counter((tree, "build"), (dag, "sync"), (symmetry, "edit_meshes"))
 
 
 def test_move_and_select_walk_nothing():
     _scene()
     c0, c1 = bpy.data.objects["c0"], bpy.data.objects["c1"]
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    tree.rows_for(bpy.context, _space())          # the rows a drawn tree holds
     with _walkers() as cnt:
         for i in range(10):
             c0.location.x = i * 0.1
             bpy.context.view_layer.update()
+            tree.rows_for(bpy.context, _space())  # what each redraw asks for
         for o in (c0, c1, c0):
             o.select_set(not o.select_get())
             bpy.context.view_layer.update()
+            tree.rows_for(bpy.context, _space())
     # selection: DAG visibility still runs (hide_set is a Scene-only update too)
-    assert cnt.n["outliner.dag_rows"] == 0 and cnt.n["symmetry.edit_meshes"] == 0, cnt.n
+    assert cnt.n["outliner_tree.build"] == 0 and cnt.n["symmetry.edit_meshes"] == 0, cnt.n
     assert cnt.n["dag.sync"] <= 3, cnt.n
     assert _rows_ok()
 
@@ -115,14 +133,15 @@ def test_edit_mode_bone_add_and_undo():
     scene = _scene()
     arm = bpy.data.objects.new("rig", bpy.data.armatures.new("rig"))
     scene.collection.objects.link(arm)
-    arm.allset_expanded = True
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    tree.set_expanded([('O', arm.session_uid)], True)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.mode_set(mode='EDIT')
     eb = arm.data.edit_bones.new("joint1")
     eb.head, eb.tail = (0, 0, 0), (0, 0, 1)
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.view_layer.update()
-    assert any(r.bone == "joint1" for r in bpy.context.window_manager.allset_outliner_rows), "bone row missing"
+    assert any(r.sub == "joint1" for r in tree.rows_for(bpy.context, _space())), "bone row missing"
     assert _rows_ok()
     bpy.ops.ed.undo_push(message="before add")
     bpy.ops.mesh.primitive_cube_add()

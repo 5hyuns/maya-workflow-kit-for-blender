@@ -260,7 +260,12 @@ def _draw_drop():
         return
     i, where = op.zone
     h = op.row_h
-    _x, top = region.view2d.view_to_region(0, -i * h, clip=False)
+    if op.tree:
+        if i is None:
+            return
+        _y0, top = op.tree_rect
+    else:
+        _x, top = region.view2d.view_to_region(0, -i * h, clip=False)
     w = region.width
     if where == 'ON':
         _rect(2, top - h + 1, w - 3, top - 1)
@@ -291,10 +296,16 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         sp, r = context.space_data, context.region
-        return (context.mode == 'OBJECT' and sp is not None and sp.type == 'OUTLINER'
-                and r is not None and r.type == 'WINDOW')
+        if sp is None or sp.type != 'OUTLINER' or r is None or r.type != 'WINDOW':
+            return False
+        from ..ui import outliner_tree
+        return context.mode == 'OBJECT' or (outliner_tree.is_tree(sp) and context.mode in ('POSE', 'EDIT_ARMATURE'))
 
     def invoke(self, context, event):
+        from ..ui import outliner_tree
+        self.tree = outliner_tree.is_tree(context.space_data)
+        if self.tree:
+            return self._invoke_tree(context, event)
         selected = {ob.name for ob in context.selected_objects}
         ob = _first_object(hit_ids(context))
         if ob is None:
@@ -313,14 +324,62 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
+    def _invoke_tree(self, context, event):
+        """The kit-drawn Maya Outliner: rows come from its row model."""
+        from ..ui import outliner_tree as tree
+        from ..ui import outliner_tree_edit as edit
+        rows = tree.rows_for(context, context.space_data)
+        u = tree.unit(context.preferences)
+        k = tree.row_index_at(context.area, context.region, event.mouse_region_y, u, len(rows))
+        row = rows[k] if k is not None else None
+        if row is None or row.kind not in ('OBJECT', 'JOINT', 'MEMBER'):
+            return {'PASS_THROUGH'}
+        picked = tree.row_state(context, row, set())[0]
+        if picked and row.kind == 'JOINT' and not (row.top and context.mode == 'OBJECT'):
+            items = [(o, b) for o, b in edit.selected_items(context) if b is not None and o.name == row.ob]
+            self.rows = [('JOINT', o.name, b) for o, b in items] or [('JOINT', row.ob, row.sub)]
+        elif picked:
+            self.rows = [('OBJECT', o.name, "") for o in context.selected_objects]
+        else:
+            self.rows = [(row.kind if row.kind != 'MEMBER' else 'OBJECT', row.ob, row.sub)]
+        self.pressed = row.ob if row.kind != 'JOINT' or row.top else ""
+        self.dragged = [r[1] for r in self.rows if r[0] == 'OBJECT']
+        self.start = (event.mouse_region_x, event.mouse_region_y)
+        self.scale = context.preferences.system.ui_scale or 1.0
+        self.row_h = u
+        self.region_ptr = context.region.as_pointer()
+        self.dragging = False
+        self.outside = False
+        self.zone = (None, 'ON')
+        self.tree_rect = (0, 0)
+        _draw["op"] = self
+        _add_draw()
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _tree_zone(self, context, y):
+        from ..ui import outliner_tree as tree
+        rows = tree.rows_for(context, context.space_data)
+        u = self.row_h
+        k = tree.row_index_at(context.area, context.region, y, u, len(rows))
+        if k is None:
+            return None, 'ON'
+        y0, y1 = tree.row_rect(context.area, context.region, k, u, len(rows))
+        self.tree_rect = (y0, y1)
+        f = (y1 - y) / float(u)
+        return k, ('BEFORE' if f < EDGE else 'AFTER' if f > 1.0 - EDGE else 'ON')
+
     def _update(self, context, event):
         x, y = event.mouse_region_x, event.mouse_region_y
         if not self.dragging and math.hypot(x - self.start[0], y - self.start[1]) >= DRAG_PX * self.scale:
             self.dragging = True
         self.outside = not _inside(context.region, event)
         if self.dragging:
-            _vx, vy = context.region.view2d.region_to_view(x, y)
-            self.zone = zone(vy, self.row_h)
+            if self.tree:
+                self.zone = self._tree_zone(context, y)
+            else:
+                _vx, vy = context.region.view2d.region_to_view(x, y)
+                self.zone = zone(vy, self.row_h)
         context.region.tag_redraw()
 
     def _end(self, context):
@@ -341,6 +400,8 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
                 return {'CANCELLED'}
             if not _inside(context.region, event):
                 return self.drop_on_view(context, event)
+            if self.tree:
+                return self.drop_tree(context)
             return self.drop(context, _first_object(hit_ids(context)))
         return {'RUNNING_MODAL'}
 
@@ -360,6 +421,20 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
         panel_menus.look_through(context, area, ob)
         area.tag_redraw()
         return {'FINISHED'}
+
+    def drop_tree(self, context):
+        from ..ui import outliner_tree as tree
+        from ..ui import outliner_tree_edit as edit
+        k, where = self.zone
+        rows = tree.rows_for(context, context.space_data)
+        target = rows[k] if k is not None and 0 <= k < len(rows) else None
+        if target is not None and (target.kind, target.ob, target.sub) in self.rows and where == 'ON':
+            return {'CANCELLED'}
+        changed, msg = edit.drop(context, self.rows, target, where)
+        if msg:
+            self.report({'WARNING'}, msg)
+        tree.redraw_outliners(context)
+        return {'FINISHED'} if changed else {'CANCELLED'}
 
     def drop(self, context, target):
         where = self.zone[1]

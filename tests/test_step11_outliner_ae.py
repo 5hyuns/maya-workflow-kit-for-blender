@@ -1,4 +1,4 @@
-"""Maya Outliner (UIList rows) and Attribute Editor (node tabs, template sections).
+"""Maya Outliner (the kit-drawn tree's rows) and Attribute Editor (node tabs, template sections).
 
 """
 
@@ -10,6 +10,8 @@ import bpy
 import kit
 
 outliner = import_module(kit.MODULE + ".ui.outliner")
+tree = import_module(kit.MODULE + ".ui.outliner_tree")
+tree_edit = import_module(kit.MODULE + ".ui.outliner_tree_edit")
 ae = import_module(kit.MODULE + ".ui.attribute_editor")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
@@ -65,7 +67,7 @@ def _fresh():
     wm = bpy.context.window_manager
     wm.allset_ae_tab = ""
     wm.allset_ae_kind = "S"
-    wm.allset_outliner_shapes = False
+    tree.EXPANDED.clear()
 
 
 def _mesh(name, parent=None):
@@ -82,9 +84,18 @@ def _empty(name, parent=None):
     return ob
 
 
-def _rows():
-    outliner.rebuild(bpy.context, force=True)
-    return [(r.kind, r.label, r.depth) for r in bpy.context.window_manager.allset_outliner_rows]
+def _tree_rows(shapes=False):
+    bpy.context.view_layer.update()
+    return [r for r in tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options(shapes=shapes))
+            if r.kind != 'CAMERA']
+
+
+def _rows(shapes=False):
+    return [(r.kind, r.label, r.depth) for r in _tree_rows(shapes)]
+
+
+def _open(*obs):
+    tree.set_expanded([('O', ob.session_uid) for ob in obs], True)
 
 
 def _select(objs, active=None):
@@ -111,87 +122,78 @@ def _scene():
 def test_outliner_dag_order_and_collapse():
     grp, a, b, c, d = _scene()
     assert _rows() == [('OBJECT', "group1", 0), ('OBJECT', "pPlane1", 0)]   # autoExpand 0
-    grp.allset_expanded = True
+    _open(grp)
     assert _rows() == [('OBJECT', "group1", 0), ('OBJECT', "pCube1", 1), ('OBJECT', "pSphere1", 1),
                        ('OBJECT', "pPlane1", 0)]
-    rows = bpy.context.window_manager.allset_outliner_rows
-    assert rows[0].has_children and rows[1].has_children and not rows[2].has_children
+    rows = _tree_rows()
+    assert rows[0].kids and rows[1].kids and not rows[2].kids
 
 
 def test_outliner_expand_recursive_and_shapes():
     grp, a, b, c, d = _scene()
-    outliner.rebuild(bpy.context, force=True)
-    bpy.ops.allset.outliner_expand(name="group1", recursive=True)
-    assert a.allset_expanded and c.allset_expanded
+    row = _tree_rows()[0]
+    area = next(x for x in bpy.data.screens["Layout"].areas if x.type == 'OUTLINER')
+    tree.set_expanded(tree.subtree_keys(bpy.context, area.spaces.active, row), True)    # Shift+click the arrow
+    assert ('O', a.session_uid) in tree.EXPANDED and ('O', c.session_uid) in tree.EXPANDED
     assert [r[1] for r in _rows()] == ["group1", "pCube1", "pCone1", "pSphere1", "pPlane1"]
-    bpy.context.window_manager.allset_outliner_shapes = True
-    d.allset_expanded = True
-    rows = _rows()
+    _open(d)
+    rows = _rows(shapes=True)
     assert ('SHAPE', "pCube1Shape", 2) in rows, rows
     i = rows.index(('OBJECT', "pCube1", 1))
     assert rows[i + 1] == ('SHAPE', "pCube1Shape", 2)          # shape first under its transform
     assert ('SHAPE', "pPlane1Shape", 1) in rows
     assert not any(r[1] == "group1" and r[0] == 'SHAPE' for r in rows)  # empty: no shape
-    bpy.ops.allset.outliner_expand(name="group1")             # collapse
+    tree.set_expanded([('O', grp.session_uid)], False)          # collapse
     assert [r[1] for r in _rows()][:2] == ["group1", "pPlane1"]
 
 
 def test_outliner_rebuild_skips_when_unchanged():
     _scene()
-    assert outliner.rebuild(bpy.context, force=True)
-    assert not outliner.rebuild(bpy.context)
+    area = next(x for x in bpy.data.screens["Layout"].areas if x.type == 'OUTLINER')
+    tree._cache.clear()
+    n = tree.STATS["builds"]
+    tree.rows_for(bpy.context, area.spaces.active)
+    tree.rows_for(bpy.context, area.spaces.active)
+    assert tree.STATS["builds"] == n + 1
     _mesh("pTorus1")
-    assert outliner.rebuild(bpy.context)
+    outliner._bump()                     # the depsgraph handler's job after an add
+    tree.rows_for(bpy.context, area.spaces.active)
+    assert tree.STATS["builds"] == n + 2
 
 
 def test_outliner_rename_through_label():
     grp, a, b, c, d = _scene()
-    wm = bpy.context.window_manager
-    wm.allset_outliner_shapes = True
-    d.allset_expanded = True
-    outliner.rebuild(bpy.context, force=True)
-    rows = wm.allset_outliner_rows
-    obj_row = next(r for r in rows if r.kind == 'OBJECT' and r.object == "pPlane1")
-    obj_row.label = "floor"
-    assert d.name == "floor" and obj_row.object == "floor"
-    outliner.rebuild(bpy.context)
-    shape_row = next(r for r in rows if r.kind == 'SHAPE' and r.object == "floor")
-    shape_row.label = "floorShape1"
+    assert tree_edit.rename(('OBJECT', "pPlane1", ""), "floor") == "floor"
+    assert d.name == "floor"
+    assert tree_edit.rename(('SHAPE', "floor", d.data.name), "floorShape1") == "floorShape1"
     assert d.data.name == "floorShape1"
 
 
 def test_outliner_selection_modes():
     grp, a, b, c, d = _scene()
-    grp.allset_expanded = True
-    outliner.rebuild(bpy.context, force=True)
-    wm = bpy.context.window_manager
-    names = [r.object for r in wm.allset_outliner_rows]     # group1 pCube1 pSphere1 pPlane1
-    wm.allset_outliner_index = names.index("pCube1")        # row click = replace
+    _open(grp)
+    rows = _tree_rows()
+    names = [r.label for r in rows]                        # group1 pCube1 pSphere1 pPlane1
+    tree.select_row(bpy.context, rows, names.index("pCube1"), 'REPLACE')     # row click = replace
     assert bpy.context.selected_objects == [a] and bpy.context.view_layer.objects.active is a
-    assert wm.allset_outliner_index == names.index("pCube1")
-    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
+    assert tree.active_row(bpy.context, rows) == names.index("pCube1")
+    tree.select_row(bpy.context, rows, names.index("pPlane1"), 'TOGGLE')
     assert set(bpy.context.selected_objects) == {a, d}
-    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
+    tree.select_row(bpy.context, rows, names.index("pPlane1"), 'TOGGLE')
     assert set(bpy.context.selected_objects) == {a}
     _select([grp], grp)
-    bpy.ops.allset.outliner_select(index=names.index("pSphere1"), mode='RANGE')
+    tree.select_row(bpy.context, rows, names.index("pSphere1"), 'RANGE', anchor=tree.active_row(bpy.context, rows))
     assert set(bpy.context.selected_objects) == {grp, a, b}
-    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='REPLACE')
+    tree.select_row(bpy.context, rows, names.index("pPlane1"), 'REPLACE')
     assert bpy.context.selected_objects == [d]
 
 
-def test_outliner_list_draws():
+def test_outliner_row_icons():
     grp, a, b, c, d = _scene()
-    bpy.context.window_manager.allset_outliner_shapes = True
-    a.allset_expanded = grp.allset_expanded = True
-    outliner.rebuild(bpy.context, force=True)
-    ul = outliner.ALLSET_UL_outliner
-    lay = FakeLayout()
-    for i, row in enumerate(bpy.context.window_manager.allset_outliner_rows):
-        ul.draw_item(None, bpy.context, lay, None, row, 0, None, "", i)
-    icons = [e for e in lay.log if e[0] == "op" and e[1] == "allset.outliner_select"]
-    assert len(icons) == len(bpy.context.window_manager.allset_outliner_rows)
-    assert outliner.icon_for(bpy.context.window_manager.allset_outliner_rows[0], grp) == 'OUTLINER_OB_EMPTY'
+    _open(grp, a)
+    rows = _tree_rows(shapes=True)
+    assert rows[0].icon == 'GROUP' and next(r for r in rows if r.label == "pCube1").icon == 'MESH'
+    assert all(r.icon for r in rows)
 
 
 # --- Attribute Editor ----------------------------------------------------------------------------

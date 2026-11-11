@@ -114,14 +114,19 @@ def test_child_joint_translate_unchanged():
 
 def test_outliner_label_is_root_joint():
     ob, _k = _skeleton()
-    ol = import_module(kit.MODULE + ".ui.outliner_joints")
-    assert ol.label(ob) == "joint1"
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+
+    def top():
+        bpy.context.view_layer.update()
+        return [(r.kind, r.label) for r in tree.build(bpy.context.scene, bpy.context.view_layer,
+                                                      tree.default_options()) if r.depth == 0 and r.kind != 'CAMERA']
+    assert ('JOINT', "joint1") in top() and ('OBJECT', ob.name) not in top(), top()
     cube = bpy.data.objects.new("pCube1", bpy.data.meshes.new("pCubeShape1"))
     bpy.context.scene.collection.objects.link(cube)
-    assert ol.label(cube) is None
+    assert ('OBJECT', "pCube1") in top()
     # a renamed root joint renames the row
     ob.data.bones["joint1"].name = "hip"
-    assert ol.label(ob) == "hip"
+    assert ('JOINT', "hip") in top(), top()
 
 
 # --- 3. Orient Joint output -------------------------------------------------------------------------------------------

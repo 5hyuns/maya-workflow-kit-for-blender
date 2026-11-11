@@ -603,7 +603,8 @@ def patch_undo_visibility(kd):
         kd.remove("Object Mode", "object.delete", type=key)
         _add(kd, "Object Mode", "allset.delete", make_event(key))
         kd.remove("Outliner", "outliner.delete", type=key)
-        _add(kd, "Outliner", "allset.outliner_delete", make_event(key))   # with the hierarchy
+        # with the hierarchy; the kit tree's own Delete item comes first (patch_outliner_tree)
+        _add(kd, "Outliner", "allset.outliner_delete", make_event(key), shadows=("Outliner",))
 
     _add(kd, "Object Mode", "object.select_all", make_event("I", ctrl=True, shift=True),
          {"action": 'INVERT'})
@@ -1296,6 +1297,47 @@ def patch_outliner_sets(kd):
     _add(kd, "Outliner", "allset.outliner_set_menu", make_event("RIGHTMOUSE"), first=True, shadows=("Outliner",))
 
 
+# --- 45b. Maya Outliner tree (#348) -------------------------------------------------------------------------
+# A Maya Outliner shows the kit's own rows (ui/outliner_tree.py: joints as rows under their parent joint) with
+# Blender's rows hidden, so Blender's Outliner items (item_activate / item_rename / show_active / select_walk /
+# delete / context menus / scroll) would act on nothing there. The kit's items go first and pass through in every
+# other Outliner. Maya's Outliner keys: Enter = rename, f = Reveal Selected, the arrows = pick walk (Up = parent,
+# Down = child, Left / Right = siblings). A fast second press arrives as DOUBLE_CLICK (rename).
+# allset.outliner_delete (below, Blender-row Outliners) runs after the tree's Delete item.
+
+OUTLINER_TREE_ITEMS = ("allset.outliner_tree_click", "allset.outliner_tree_menu", "allset.outliner_tree_rename",
+                       "allset.outliner_tree_reveal", "allset.outliner_tree_walk", "allset.outliner_tree_delete",
+                       "allset.outliner_tree_scroll", "allset.outliner_tree_hover")
+
+
+def patch_outliner_tree(kd):
+    sh = ("Outliner",)
+    # the row under the mouse lights up (always passes through: Blender's own highlight_update follows)
+    _add(kd, "Outliner", "allset.outliner_tree_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True,
+         shadows=sh)
+    # (the Hypergraph's items in "View2D Buttons List" poll False outside its window; F2 stays Maya's menu set key)
+    for value in ("PRESS", "DOUBLE_CLICK"):
+        _add(kd, "Outliner", "allset.outliner_tree_click", make_event("LEFTMOUSE", value, any=True), first=True,
+             shadows=sh + ("View2D Buttons List",))
+    _add(kd, "Outliner", "allset.outliner_tree_menu", make_event("RIGHTMOUSE"), first=True, shadows=sh)
+    _add(kd, "Outliner", "allset.outliner_tree_rename", make_event("RET"), first=True, shadows=sh + ("Screen",))
+    for key in ("F", "PERIOD"):
+        _add(kd, "Outliner", "allset.outliner_tree_reveal", make_event(key), first=True,
+             shadows=sh + ("View2D Buttons List",))
+    for key, direction in PICK_WALK_KEYS:
+        _add(kd, "Outliner", "allset.outliner_tree_walk", make_event(key, repeat=True), {"direction": direction},
+             first=True, shadows=sh)
+    for key in ("DEL", "BACK_SPACE"):
+        _add(kd, "Outliner", "allset.outliner_tree_delete", make_event(key), first=True, shadows=sh)
+    for key, page in (("PAGE_DOWN", 1), ("PAGE_UP", -1)):
+        _add(kd, "Outliner", "allset.outliner_tree_scroll", make_event(key, repeat=True), {"page": page},
+             first=True, shadows=sh + ("View2D Buttons List",))
+    # the wheel over the Outliner's rows goes to "View2D" (like the Graph Editor's channel region)
+    for wheel, rows in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):
+        _add(kd, "View2D", "allset.outliner_tree_scroll", make_event(wheel), {"rows": rows}, first=True,
+             shadows=("View2D", "View2D Buttons List"))
+
+
 # --- 46. Render slots ----------------------------------------------------------------------------------
 # Keep Image = a Blender render slot (ui/render_view.py), compared with J / Alt+J like Blender
 # ($S\presets\keyconfig\keymap_data\blender_default.py:2009-2011); IC's Image keymap has no J, so the kit's tip
@@ -1588,7 +1630,7 @@ PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, pa
            patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_motion_trail_keys, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
-           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
+           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_outliner_tree, patch_render_slots,
            patch_graph_outliner, patch_shelf_scroll, patch_script_editor, patch_key_batch_3,
            patch_menu_shortcuts, patch_repeat, patch_blender_render)
 
@@ -1748,6 +1790,7 @@ def patch_attribute_edit(kd):
 
 PATCHES += (patch_attribute_edit,)
 PASS_THROUGH_FIRST += ('allset.attribute_field_hover', 'allset.option_editor_key')
+PASS_THROUGH_FIRST += OUTLINER_TREE_ITEMS
 
 
 def apply(data):

@@ -8432,6 +8432,7 @@
    "Objects": "Objects",
    "Shapes": "Shapes",
    "Show": "Show",
+   "Show All": "Show All",
    "Sort Alphabetically": "Sort Alphabetically",
    "Visibility Column": "Visibility Column"
   },
@@ -8584,8 +8585,35 @@
    "Show Set Members": "Show Set Members"
   },
   "Labels/ui/outliner_tree": {
+   "Outliner Hover": "Outliner Hover",
    "Outliner Scroll": "Outliner Scroll",
    "Outliner Select": "Outliner Select"
+  },
+  "Labels/ui/outliner_tree_edit": {
+   "Add Selection to Set": "Add Selection to Set",
+   "Create Quick Select Set...": "Create Quick Select Set...",
+   "Create Set": "Create Set",
+   "Delete": "Delete",
+   "Display": "Display",
+   "Down": "Down",
+   "Hide": "Hide",
+   "Hide In Outliner": "Hide In Outliner",
+   "Left": "Left",
+   "Name": "Name",
+   "Outliner": "Outliner",
+   "Outliner Menu": "Outliner Menu",
+   "Pick Walk": "Pick Walk",
+   "Remove Selection from Set": "Remove Selection from Set",
+   "Rename": "Rename",
+   "Reveal Selected": "Reveal Selected",
+   "Right": "Right",
+   "Sets": "Sets",
+   "Shapes": "Shapes",
+   "Show": "Show",
+   "Show All": "Show All",
+   "The row's name: Enter renames it": "The row's name: Enter renames it",
+   "Unhide": "Unhide",
+   "Up": "Up"
   },
   "Labels/ui/paint_weights": {
    "Accumulate strokes": "Accumulate strokes",
@@ -10500,8 +10528,20 @@
    "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)": "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)"
   },
   "Tooltips/ui/outliner_tree": {
-   "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing": "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing",
+   "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing": "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing",
+   "Light up the Outliner row under the mouse": "Light up the Outliner row under the mouse",
    "Scroll the Maya Outliner rows": "Scroll the Maya Outliner rows"
+  },
+  "Tooltips/ui/outliner_tree_edit": {
+   "Delete the selection and everything below it (Maya Edit > Delete)": "Delete the selection and everything below it (Maya Edit > Delete)",
+   "Hide the selected objects from the Outliner (they stay in the scene), or show them in it again": "Hide the selected objects from the Outliner (they stay in the scene), or show them in it again",
+   "Maya's Outliner right-click menu (the same on every row and on empty space)": "Maya's Outliner right-click menu (the same on every row and on empty space)",
+   "Maya's Outliner right-click menu; on a set row, the set's menu": "Maya's Outliner right-click menu; on a set row, the set's menu",
+   "Open the rows above the selection and scroll to it (Maya Reveal Selected)": "Open the rows above the selection and scroll to it (Maya Reveal Selected)",
+   "Pick walk from the selection, like Maya's Outliner arrow keys: Up = parent, Down = child, Left / Right =\nprevious / next sibling": "Pick walk from the selection, like Maya's Outliner arrow keys: Up = parent, Down = child, Left / Right =\nprevious / next sibling",
+   "Rename the row: double-click its name, or Enter for the selected row": "Rename the row: double-click its name, or Enter for the selected row",
+   "Show every object type in this Outliner (Maya Show > Show All)": "Show every object type in this Outliner (Maya Show > Show All)",
+   "The Outliner row name field (opened by allset.outliner_tree_rename only)": "The Outliner row name field (opened by allset.outliner_tree_rename only)"
   },
   "Tooltips/ui/panel_menus": {
    "Blender's own 3D View menus (View, Select, Add, Object ...)": "Blender's own 3D View menus (View, Select, Add, Object ...)",

@@ -348,6 +348,23 @@ def s_play_stop():
         bpy.ops.screen.animation_cancel(restore_frame=True)
     check(f"playback ran ({playing}, {frames} frames) and the Outliner tree drew {draws} times (no per-frame "
           f"Python work)", playing and frames > 5 and draws == 0)
+    # drawing cost: 1000 objects, the Outliner redrawn (only the visible rows are drawn; the rows come from the cache)
+    coll = bpy.context.scene.collection
+    me = bpy.data.meshes.new("pConeShape")
+    for i in range(940):
+        coll.objects.link(bpy.data.objects.new(f"pCone{i + 1}", me))
+    area, region = outliner()
+    import time
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.wm.redraw_timer(type='DRAW', iterations=2)        # the first draw builds the rows
+        b0 = tree().STATS["builds"]
+        t0 = time.perf_counter()
+        bpy.ops.wm.redraw_timer(type='DRAW', iterations=20)
+        ms = (time.perf_counter() - t0) * 1000 / 20
+    builds = tree().STATS["builds"] - b0
+    print(f"TREE348 outliner redraw {ms:.2f} ms per draw, {region.height // tree().unit()} rows shown, "
+          f"{len(rows())} rows")
+    check(f"a redraw with 1000 objects costs {ms:.2f} ms and builds no rows ({builds})", ms < 12.0 and builds == 0)
     for km, k in TEMP_ITEMS:
         km.keymap_items.remove(k)
     TEMP_ITEMS.clear()

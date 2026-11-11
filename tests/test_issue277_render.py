@@ -16,7 +16,7 @@ units = import_module(kit.MODULE + ".operators.units")
 framing = import_module(kit.MODULE + ".operators.framing")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
-outliner_sets = import_module(kit.MODULE + ".ui.outliner_sets")
+outliner_tree = import_module(kit.MODULE + ".ui.outliner_tree")
 
 
 def _clear():
@@ -87,7 +87,10 @@ def test_persp_made_on_demand_matches_view_and_is_reused():
     assert abs(ob.data.clip_start - clip["clip_start"]) < 1e-6 and abs(ob.data.clip_end - clip["clip_end"]) < 1e-3
     # no second Outliner row: linked to no collection, kept by a fake user
     assert not ob.users_collection and ob.name not in sc.objects and ob.use_fake_user
-    assert ('CAMERA', "persp", "") in outliner_sets.default_entries()
+    bpy.context.view_layer.update()
+    rows = outliner_tree.build(sc, bpy.context.view_layer, outliner_tree.default_options())
+    persp_rows = [r.label for r in rows if r.label == "persp"]
+    assert persp_rows == ["persp"] and rows[0].kind == 'CAMERA', "one persp row: the Outliner's drawn startup camera"
     rv3d.view_distance = 20.0
     space.lens = 50.0
     again = rp.render_camera(bpy.context)

@@ -86,9 +86,15 @@ class ALLSET_MT_outliner_show(bpy.types.Menu):
 
     def draw(self, context):
         sp, lay = context.space_data, self.layout
-        lay.prop(sp, "use_filter_object", text="Objects")
-        col = lay.column()
-        col.active = sp.use_filter_object
+        from . import outliner_tree
+        if outliner_tree.is_tree(sp):
+            # the kit tree hides Blender's rows with Objects off: Maya's Show All turns every type back on
+            lay.operator("allset.outliner_tree_show_all", text="Show All")
+            col = lay.column()
+        else:
+            lay.prop(sp, "use_filter_object", text="Objects")
+            col = lay.column()
+            col.active = sp.use_filter_object
         for prop, label in (("use_filter_object_mesh", "Geometry"), ("use_filter_object_armature", "Joints"),
                             ("use_filter_object_empty", "Groups / Locators"), ("use_filter_object_light", "Lights"),
                             ("use_filter_object_camera", "Cameras"), ("use_filter_object_others", "Others")):

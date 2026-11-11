@@ -78,6 +78,14 @@ def _kept(ob, signature):
 
 def _outliner_pick(context, view_layer):
     """Objects picked in the Outliner (a collection row = its objects), or None outside the Outliner."""
+    from ..ui import outliner_tree
+    if outliner_tree.is_tree(getattr(context, "space_data", None)):
+        # the kit's rows: the visible selection and the selection-locked rows picked there (hidden ones are kept)
+        locked = [ob for ob in outliner_tree.picked_unselectable(context) if not ob.hide_viewport]
+        if not locked:
+            return None
+        sel = [ob for ob in view_layer.objects if ob is not None and ob.visible_get() and ob.select_get()]
+        return sel + [ob for ob in locked if ob not in sel]
     ids = getattr(context, "selected_ids", None)
     if not ids:
         return None
