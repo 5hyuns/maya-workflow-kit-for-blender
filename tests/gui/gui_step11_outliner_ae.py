@@ -142,15 +142,16 @@ def s_back():
     check("Ctrl+A again -> Channel Box, in the same floating window",
           bpy.context.window_manager.allset_dock == 'CHANNEL_BOX' and len(fl) == 1
           and md.role(fl[0].screen.areas[0]) == 'CHANNEL_BOX')
-    wm = bpy.context.window_manager
-    wm.allset_outliner_shapes = True
-    bpy.data.objects["group1"].allset_expanded = True
-    bpy.data.objects["Cube"].allset_expanded = True
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    tree.set_expanded([('O', bpy.data.objects[n].session_uid) for n in ("group1", "Cube")], True)
     redraw()
 
 
 def _after_outliner_tab():
-    rows = [(r.kind, r.object, r.depth) for r in bpy.context.window_manager.allset_outliner_rows]
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    bpy.context.view_layer.update()
+    rows = [(r.kind, r.ob, r.depth) for r in tree.build(bpy.context.scene, bpy.context.view_layer,
+                                                        tree.default_options(shapes=True))]
     i = rows.index(('OBJECT', "Cube", 1)) if ('OBJECT', "Cube", 1) in rows else -1
     check(f"Outliner: Cube under group1, its shape row next ({rows})",
           i > 0 and rows[i - 1][1] == "group1" and rows[i + 1] == ('SHAPE', "Cube", 2))

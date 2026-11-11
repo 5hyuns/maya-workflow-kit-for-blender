@@ -149,7 +149,9 @@ def s_watch_check():
     check(f"for {WATCH * 0.4:.0f} s after the duplicate nothing changes by itself: {changes} changes "
           f"(first {seen[0]}, last {seen[-1]})", changes == 0)
     links, selected, active = seen[-1]
-    shown = mod("ui.outliner_order").display_order([n for n in links if bpy.data.objects[n].parent is None])
+    tree = mod("ui.outliner_tree")
+    shown = [r.label for r in tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options())
+             if r.depth == 0 and r.kind == 'OBJECT']
     check(f"the Outliner lists the copy after the original ({shown})",
           shown.index("pCube1") < shown.index("pCube2"))
     check(f"the copy is the selection and the lead ({selected}, {active})",

@@ -68,24 +68,16 @@ def s_scene():
     redraw()
 
 
-def finder(i):
-    def s_hover():
-        x, y = row_xy(i)
-        ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
-
-    def s_hit():
-        od = import_module(MODULE + ".operators.outliner_drag")
-        a, r = outl()
-        with bpy.context.temp_override(window=win(), area=a, region=r):
-            o = od._first_object(od.hit_ids(bpy.context))
-        if o is not None:
-            C["rows"][o.name] = i
-    return [s_hover, s_hit]
-
-
-for _i in range(4):
-    for _s in finder(_i):
-        step(_s)
+@step
+def s_find_rows():
+    """Row index of each object in the kit Outliner tree (the startup camera rows come first)."""
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    a, r = outl()
+    with bpy.context.temp_override(window=win(), area=a, region=r):
+        rows = tree.rows_for(bpy.context, a.spaces.active)
+    for k, row in enumerate(rows):
+        if row.kind == 'OBJECT' and row.ob in NAMES:
+            C["rows"][row.ob] = k
 
 
 @step

@@ -1,5 +1,5 @@
 """Maya object sets — Create > Sets > Set / Quick Select Set, members, select, add / remove, delete, rename,
-save / reload, the sidebar Outliner SET rows, the Outliner overlay helpers, menu mapping."""
+save / reload, the Outliner tree's SET rows, menu mapping."""
 
 import os
 import tempfile
@@ -10,8 +10,8 @@ import bpy
 import kit
 
 sets = import_module(kit.MODULE + ".operators.sets")
-outliner = import_module(kit.MODULE + ".ui.outliner")
-outliner_sets = import_module(kit.MODULE + ".ui.outliner_sets")
+tree = import_module(kit.MODULE + ".ui.outliner_tree")
+tree_edit = import_module(kit.MODULE + ".ui.outliner_tree_edit")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
@@ -139,33 +139,34 @@ def test_save_and_reload_keeps_sets():
     assert all(o.name in bpy.context.scene.objects for o in got[0].objects)
 
 
-def test_sidebar_outliner_set_rows():
+def test_outliner_set_rows():
     a, b, c = _scene()
     coll = sets.create("", [a, b])
-    outliner.rebuild(bpy.context, force=True)
-    rows = bpy.context.window_manager.allset_outliner_rows
-    kinds = [(r.kind, r.object) for r in rows]
-    assert kinds[-1] == ('SET', "set1") and all(k == 'OBJECT' for k, _n in kinds[:-1]), "sets after the DAG rows"
-    assert rows[-1].label == "set1"
+    bpy.context.view_layer.update()
+    head = tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options())
+    rows = head + tree.tail_rows(bpy.context.scene, tree.default_options())
+    kinds = [(r.kind, r.label) for r in rows]
+    assert kinds[-1] == ('SET', "set1") and kinds[-3:-1] == [('DEFAULT_SET', "defaultLightSet"),
+                                                          ('DEFAULT_SET', "defaultObjectSet")], kinds
+    assert all(k in ('CAMERA', 'OBJECT') for k, _n in kinds[:-3]), "sets after the DAG rows"
     _select([c])
-    outliner.select_rows(bpy.context, rows, len(rows) - 1, 'REPLACE')
+    tree.select_row(bpy.context, rows, len(rows) - 1, 'REPLACE')
     assert _selected() == {"pCube1", "pCube2"}
-    rows[-1].label = "renamed"
+    assert tree_edit.rename(('SET', "set1", ""), "renamed") == "renamed"
     assert sets.get("renamed") is coll
 
 
-def test_overlay_helpers():
-    full = 5
-    assert outliner_sets.first_empty(lambda k: k >= full, 0, 20) == 5
-    assert outliner_sets.first_empty(lambda k: k >= full, 0, 3) is None, "list fills the region -> pinned"
-    assert outliner_sets.first_empty(lambda k: True, 2, 9) == 2
+def test_set_rows_expand():
     a, b, c = _scene()
     s1 = sets.create("", [a, b])
     sets.create("", [])
-    assert outliner_sets.entries(bpy.context.scene) == [('SET', "set1", ""), ('SET', "set2", "")]
-    s1.allset_expanded = True
-    assert outliner_sets.entries(bpy.context.scene) == [('SET', "set1", ""), ('MEMBER', "set1", "pCube1"),
-                                                        ('MEMBER', "set1", "pCube2"), ('SET', "set2", "")]
+    opts = tree.default_options()
+    assert [(r.kind, r.label) for r in tree.tail_rows(bpy.context.scene, opts)][2:] == [('SET', "set1"),
+                                                                                       ('SET', "set2")]
+    tree.set_expanded([('S', "set1")], True)
+    assert s1.allset_expanded
+    assert [(r.kind, r.ob, r.sub) for r in tree.tail_rows(bpy.context.scene, opts)][2:] == [
+        ('SET', "set1", ""), ('MEMBER', "pCube1", "set1"), ('MEMBER', "pCube2", "set1"), ('SET', "set2", "")]
 
 
 def test_keymap_items_first_in_outliner():
@@ -174,6 +175,8 @@ def test_keymap_items_first_in_outliner():
     if km is None:
         return
     ids = [it.idname for it in km.keymap_items]
-    assert "allset.outliner_set_click" in ids and "allset.outliner_set_menu" in ids
-    lmb = [it.idname for it in km.keymap_items if it.type == 'LEFTMOUSE' and it.value == 'CLICK']
-    assert lmb[0] == "allset.outliner_set_click"
+    assert "allset.outliner_tree_click" in ids and "allset.outliner_tree_menu" in ids
+    lmb = [it.idname for it in km.keymap_items if it.type == 'LEFTMOUSE' and it.value == 'PRESS']
+    assert lmb[0] == "allset.outliner_tree_click", lmb
+    rmb = [it.idname for it in km.keymap_items if it.type == 'RIGHTMOUSE']
+    assert rmb[0] == "allset.outliner_tree_menu", rmb

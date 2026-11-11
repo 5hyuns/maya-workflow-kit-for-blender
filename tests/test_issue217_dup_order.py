@@ -1,7 +1,7 @@
 """#217: a duplicated object carries its original's creation-order number (an ID property copy). The Outliner order
 sync then saw two objects with the same number, linked them one way, read them back the other way and relinked
 every 0.25 s for ever: the rows swapped, the selection flickered and the Move manipulator could not be dragged.
-A copy now counts as a new node (Maya: a duplicate goes last among its siblings) and the sync settles."""
+A copy now counts as a new node (Maya: a duplicate goes last among its siblings) and the numbering settles."""
 
 from importlib import import_module
 
@@ -43,8 +43,11 @@ def _dup(ob, coll, name):
 
 
 def _shown(coll):
-    oo = m("ui.outliner_order")
-    return oo.display_order([o.name for o in coll.objects if o.parent is None], True)
+    """The top rows of the kit's Outliner tree (Maya order)."""
+    tree = m("ui.outliner_tree")
+    bpy.context.view_layer.update()
+    return [r.label for r in tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options())
+            if r.depth == 0 and r.kind == 'OBJECT']
 
 
 def test_duplicate_gets_its_own_number_and_goes_last():
@@ -74,8 +77,8 @@ def test_sync_settles_after_a_duplicate():
         o.select_set(o is b)
     vl.objects.active = b
     oo.sync(sc, vl, rotate=True)
-    relinks = [oo.sync(sc, vl, rotate=True) for _i in range(8)]
-    assert not any(relinks), f"the 0.25 s sync keeps relinking: {relinks}"
+    rewrites = [oo.sync(sc, vl, rotate=True) for _i in range(8)]
+    assert not any(rewrites), f"the 0.25 s numbering keeps rewriting: {rewrites}"
     assert _shown(coll)[-2:] == ["pCube1", "pCube2"], _shown(coll)
     assert b.select_get() and not a.select_get() and vl.objects.active == b
 

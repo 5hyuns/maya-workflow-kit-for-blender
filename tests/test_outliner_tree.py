@@ -214,8 +214,6 @@ def test_switching_hides_blender_rows_and_brings_them_back():
         maya_outliner.setup(sp)
         assert tree.is_tree(sp) and not sp.use_filter_object, "a Maya Outliner shows the kit tree"
         assert maya_outliner.is_maya_outliner(sp)
-        assert not maya_outliner.shows_dag_only(sp) and not maya_outliner.shapes_shown(sp), \
-            "the old row painters and the Shapes reveal leave a kit tree alone"
         tree._on_save_pre()
         assert sp.use_filter_object, "a saved file shows Blender's rows without the kit"
         tree._on_save_post()

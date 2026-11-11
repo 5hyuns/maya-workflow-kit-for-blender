@@ -23,7 +23,7 @@ ADDED = []
 PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shell_hover", "allset.emulated_tumble", "allset.cb_virtual_slider", "allset.cb_hover", "allset.pt_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_release", "allset.manip_press",
                       "allset.select_priority", "allset.type_char_pick", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_view_lock",
-                      "allset.time_slider_menu", "allset.time_range_all", "allset.outliner_set_click", "allset.outliner_set_menu",
+                      "allset.time_slider_menu", "allset.time_range_all", 
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
@@ -1286,17 +1286,6 @@ def patch_graph_keys_2(kd):
 
 GRAPH_WER = {"W": "transform.translate", "E": "transform.rotate", "R": "transform.resize"}
 
-# --- 45. Outliner set rows ----------------------------------------------------------------------
-# The kit draws Maya's set rows under Blender's Outliner tree (ui/outliner_sets.py); clicks / RMB on them must win
-# over Blender's item_activate (LMB CLICK, any modifier) and context menus (RMB PRESS) in the same keymap, so these
-# go first and pass through off the set rows.
-
-def patch_outliner_sets(kd):
-    _add(kd, "Outliner", "allset.outliner_set_click", make_event("LEFTMOUSE", "CLICK", any=True), first=True,
-         shadows=("Outliner",))
-    _add(kd, "Outliner", "allset.outliner_set_menu", make_event("RIGHTMOUSE"), first=True, shadows=("Outliner",))
-
-
 # --- 45b. Maya Outliner tree (#348) -------------------------------------------------------------------------
 # A Maya Outliner shows the kit's own rows (ui/outliner_tree.py: joints as rows under their parent joint) with
 # Blender's rows hidden, so Blender's Outliner items (item_activate / item_rename / show_active / select_walk /
@@ -1630,7 +1619,7 @@ PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, pa
            patch_toolbox_guard, patch_type_char_pick, patch_select_priority, patch_motion_trail_keys, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
-           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_outliner_tree, patch_render_slots,
+           patch_global_keys_4, patch_graph_keys_2, patch_outliner_tree, patch_render_slots,
            patch_graph_outliner, patch_shelf_scroll, patch_script_editor, patch_key_batch_3,
            patch_menu_shortcuts, patch_repeat, patch_blender_render)
 

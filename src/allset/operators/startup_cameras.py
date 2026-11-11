@@ -6,10 +6,9 @@ Maya 2022: a new scene's top DAG nodes are persp, top, front, side
 Outliner lists them in that order and greys them (hidden). ``cmds.delete("persp")`` fails with "Non-deletable node
 'persp' cannot be deleted.".
 
-Blender's Outliner is C: Python can't put rows above its object rows, so the kit-drawn camera rows
-(ui/outliner_sets.py) followed the user's objects. Real hidden cameras linked before any user object are Blender rows
-in Maya's order once the Maya Outliner lists objects unsorted (``use_sort_alpha`` off, ui/maya_outliner.setup);
-selecting one in the Outliner makes it the lead like Maya (Channel Box shows ``persp``, Visibility off). They don't
+The kit's Outliner tree (ui/outliner_tree.py) lists them first (creation order numbers below every other object)
+and draws rows for the ones a scene has no object for; selecting one in the Outliner makes it the lead like Maya
+(Channel Box shows ``persp``, Visibility off). They don't
 render (``hide_render``), aren't drawn (``hide_viewport`` = Maya Visibility) and the kit's exports leave them out
 (``excluded``). Only a kit new Maya scene gets them; other files keep the drawn rows.
 """
@@ -54,7 +53,7 @@ def cameras(scene=None):
 
 
 def names(scene):
-    """Names of the startup cameras the scene really has (ui/outliner_sets.py draws the others)."""
+    """Names of the startup cameras the scene really has (the Outliner tree draws rows for the others)."""
     return {ob.get(MARK) for ob in scene.objects if is_startup(ob)}
 
 

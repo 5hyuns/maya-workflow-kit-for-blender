@@ -8558,27 +8558,7 @@
    "Save Settings": "Save Settings",
    "Tool": "Tool"
   },
-  "Labels/ui/outliner": {
-   "Expand": "Expand",
-   "Expanded": "Expanded",
-   "Expanded in the Maya Outliner": "Expanded in the Maya Outliner",
-   "Joint": "Joint",
-   "Joint expanded in the Maya Outliner": "Joint expanded in the Maya Outliner",
-   "Name": "Name",
-   "Object": "Object",
-   "Outliner Select": "Outliner Select",
-   "Range": "Range",
-   "Refresh": "Refresh",
-   "Replace": "Replace",
-   "Set": "Set",
-   "Shape": "Shape",
-   "Shapes": "Shapes",
-   "Show shape nodes (object data) under their transforms (Maya Display > Shapes)": "Show shape nodes (object data) under their transforms (Maya Display > Shapes)",
-   "Toggle": "Toggle"
-  },
   "Labels/ui/outliner_sets": {
-   "Outliner Set Click": "Outliner Set Click",
-   "Outliner Set Menu": "Outliner Set Menu",
    "Remove From Current Set": "Remove From Current Set",
    "Select Set Members": "Select Set Members",
    "Set": "Set",
@@ -10517,15 +10497,8 @@
   "Tooltips/ui/option_click": {
    "Where the last click went (called with INVOKE from inside an EXEC operator: the window's latest event)": "Where the last click went (called with INVOKE from inside an EXEC operator: the window's latest event)"
   },
-  "Tooltips/ui/outliner": {
-   "Expand / collapse (Shift: with all descendants)": "Expand / collapse (Shift: with all descendants)",
-   "Rebuild the Outliner rows": "Rebuild the Outliner rows",
-   "Select (Ctrl: toggle, Shift: range), like Maya's Outliner": "Select (Ctrl: toggle, Shift: range), like Maya's Outliner"
-  },
   "Tooltips/ui/outliner_sets": {
-   "Maya Outliner set / set member RMB menu": "Maya Outliner set / set member RMB menu",
-   "Outliner set row: click = select the set's members (Ctrl toggle, Shift add), triangle = show members": "Outliner set row: click = select the set's members (Ctrl toggle, Shift add), triangle = show members",
-   "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)": "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)"
+   "Maya Outliner set / set member RMB menu": "Maya Outliner set / set member RMB menu"
   },
   "Tooltips/ui/outliner_tree": {
    "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing": "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing",

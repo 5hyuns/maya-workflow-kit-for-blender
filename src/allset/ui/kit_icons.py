@@ -14,7 +14,7 @@ exact pixel size the icon is shown at, so nothing is resampled:
   buttons, e.g. the embossed quick layout buttons).
 
 Button / row icons reach layouts as ``bpy.utils.previews`` images (``icon_value``), one per (glyph, pixel size);
-the Outliner rows (``outliner_sets``) draw ``pixels`` as GPU textures. The Tool Box tools are Blender vector icons
+the Outliner rows (``outliner_tree``) draw ``pixels`` as GPU textures. The Tool Box tools are Blender vector icons
 instead (``Geo`` -> ``bpy.app.icons.new_triangles``): Blender draws a preview icon in a toolbar button at the small
 button size, a vector icon at the toolbar's tool size. They reach Blender's toolbar through
 ``ToolSelectPanelHelper``'s icon cache under kit-only names (``tool_icon_name``); unregister removes the names and

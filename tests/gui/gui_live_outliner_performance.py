@@ -1,4 +1,4 @@
-"""Twenty live labels stay identifiable without the former ~265ms redraw scan."""
+"""Twenty live rows in the kit's Outliner tree: drawn green, and a redraw stays cheap (no row scan)."""
 import os
 import statistics
 import sys
@@ -55,19 +55,23 @@ def s_baseline():
 
 @step
 def s_measure():
-    labels = import_module(MODULE+'.ui.outliner_joints')
+    tree = import_module(MODULE+'.ui.outliner_tree')
+    live = import_module(MODULE+'.operators.live')
     cold = []
     for _ in range(3):
-        labels._rows.clear()
+        tree._cache.clear()
         cold.append(redraw(1))
     warm = statistics.median(redraw(6) for _ in range(3))
-    _, region = outliner()
-    names = {name for name, _label in labels.SEEN.get(region.as_pointer(), ())}
-    check('all twenty similar live names remain correctly identified', names == C['names'])
-    check(f'unchanged live labels redraw without the full search ({warm:.2f}ms, baseline {C["baseline"]:.2f}ms)',
+    area, region = outliner()
+    lives = set(live.objects(bpy.context.scene))
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        rows = tree.rows_for(bpy.context, area.spaces.active)
+    names = {row.ob for row in rows if row.kind == 'OBJECT' and tree.row_state(bpy.context, row, lives)[3]}
+    check('all twenty similar live rows are drawn live', names == C['names'])
+    check(f'live rows redraw cheaply ({warm:.2f}ms, baseline {C["baseline"]:.2f}ms)',
           warm < max(20, C['baseline']*8))
-    check(f'uncached row matching avoids the old 265ms stall ({statistics.median(cold):.2f}ms)',
-          statistics.median(cold) < max(150, C['baseline']*25))      # well under the old stall on a slower machine
+    check(f'a redraw that rebuilds the rows stays cheap ({statistics.median(cold):.2f}ms)',
+          statistics.median(cold) < max(150, C['baseline']*25))
 
 
 run()

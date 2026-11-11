@@ -1,17 +1,21 @@
-"""In a real UI: Outliner drags parent the Maya way — LMB drop (Blender's drag, redone), MMB drag onto /
-between / empty space, selection kept, reorder, undo; screenshot of the MMB drop highlight."""
+"""In a real UI: drags in an Outliner with Blender's own rows parent the Maya way — LMB drop (Blender's drag,
+redone), MMB drag onto / between / empty space, selection kept, reorder, undo; screenshot of the MMB drop highlight.
+(The Maya layout's Outliner draws the kit's rows: its drags and the Maya row order are in gui_outliner_tree_edit.
+Blender's rows keep Blender's order, so rows are found by name here.)"""
 
 import math
 import os
 import sys
+from importlib import import_module
 
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, step, setup, screenshot, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 WORLD = {"A": (1, 0, 0), "B": (0, 2, 0), "C": (0, 0, 3), "D": (0, -2, 0)}
+ROWS = []          # object names of rows 0-4, read by the last rows_check
 
 
 def outl():
@@ -26,6 +30,11 @@ def row_xy(i, frac=0.5):
     _x, y = r.view2d.view_to_region(0, -(i + frac) * h, clip=False)
     # on the row's (one-letter) name: from ~2.25 units without the mode column (it was ~3.25 with it)
     return r.x + int(2.5 * h), r.y + int(y)
+
+
+def at(name, frac=0.5):
+    """Position of ``name``'s row as the last rows_check read it."""
+    return lambda: row_xy(ROWS.index(name), frac)
 
 
 def empty_xy():
@@ -46,7 +55,8 @@ def world_kept(n):
 
 
 def rows_check(expected, label):
-    """Steps: hover each of rows 0-4 (one tick), then hit-test it like the kit does (selection put back)."""
+    """Steps: hover each of rows 0-4 (one tick), then hit-test it like the kit does (selection put back); the rows
+    shown must be ``expected`` (in any order: Blender's rows keep Blender's order)."""
     got = []
 
     def mover(i):
@@ -72,7 +82,8 @@ def rows_check(expected, label):
 
     @step
     def s_check():
-        check(f"{label} ({got})", got[:len(expected)] == expected)
+        ROWS[:] = got
+        check(f"{label} ({got})", sorted(n for n in got if n) == sorted(expected))
 
 
 def redraw():
@@ -94,6 +105,9 @@ def s_setup():
 @step
 def s_scene():
     bpy.ops.allset.keymap_activate()
+    tree = import_module(MODULE + ".ui.outliner_tree")        # Blender's own rows in this Outliner
+    tree.ENABLED = False
+    tree.show_all()
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
     col = bpy.context.scene.collection.children[0]
@@ -107,7 +121,7 @@ def s_scene():
     redraw()
 
 
-rows_check(["A", "B", "C", "D", None], "rows (creation order) A B C D")
+rows_check(["A", "B", "C", "D"], "rows A B C D")
 
 
 def drag(button, src, dst, shift=False):
@@ -136,7 +150,7 @@ def add(steps):
 
 
 # 1. LMB drop B onto A (Blender's drag) -> Maya parenting, one undo step
-add(drag('LEFTMOUSE', lambda: row_xy(1), lambda: row_xy(0)))
+add(drag('LEFTMOUSE', at("B"), at("A")))
 
 
 @step
@@ -176,7 +190,7 @@ rows_check(["A", "C", "D"], "rows after parenting: A C D")
 
 
 # 2. MMB drag C (not selected) onto A: only C moves, selection stays D
-_mmb = drag('MIDDLEMOUSE', lambda: row_xy(1), lambda: row_xy(0))
+_mmb = drag('MIDDLEMOUSE', at("C"), at("A"))
 add(_mmb[:-1])
 
 
@@ -218,7 +232,7 @@ rows_check(["A", "B", "C", "D"], "rows with A open: A B C D")
 
 
 # 3. MMB drag B onto empty space -> world
-add(drag('MIDDLEMOUSE', lambda: row_xy(1), empty_xy))
+add(drag('MIDDLEMOUSE', at("B"), empty_xy))
 
 
 @step
@@ -228,13 +242,18 @@ def s_empty_check():
     redraw()
 
 
-# rows: A, C (child), D, B — the Maya Outliner is unsorted (creation order) and Maya lists an unparented node last
-# among the world's nodes (ui/outliner_order.py)
-rows_check(["A", "C", "D", "B"], "rows: A C D B (unparented B last)")
+rows_check(["A", "B", "C", "D"], "rows: A, C (its child), B, D")
 
 
-# 4. MMB drag D between the top edge and A (top quarter of row 0) -> D drawn first
-add(drag('MIDDLEMOUSE', lambda: row_xy(2), lambda: row_xy(0, 0.1)))
+@step
+def s_last_check():
+    order = {n: ob(n).get("allset_dag_order") for n in WORLD}
+    check(f"B unparented: last among the world's nodes (Maya creation order {order})",
+          order["B"] is not None and all(order["B"] > order[n] for n in ("A", "D")))
+
+
+# 4. MMB drag D between A and the row above it (top quarter of A's row) -> D before A
+add(drag('MIDDLEMOUSE', at("D"), at("A", 0.1)))
 
 
 @step
@@ -242,13 +261,15 @@ def s_order_check():
     check("reorder kept A in the world and in place, C its child, selection D",
           ob("A").parent is None and world_kept("A") and ob("C").parent == ob("A") and world_kept("C")
           and ob("D").parent is None and [o.name for o in bpy.context.selected_objects] == ["D"])
+    order = {n: ob(n).get("allset_dag_order") for n in WORLD}
+    check(f"D now comes before A in the Maya order ({order})", order["D"] < order["A"])
     redraw()
 
 
-rows_check(["D", "A", "C", "B"], "rows after the drag: D A C B")
+rows_check(["A", "B", "C", "D"], "rows after the drag: A, C, B, D")
 
 # 5. LMB drop C (Maya child of the rotated, scaled A) onto empty space -> parent_clear redone: world kept
-add(drag('LEFTMOUSE', lambda: row_xy(2), empty_xy))
+add(drag('LEFTMOUSE', at("C"), empty_xy))
 
 
 @step
@@ -273,8 +294,8 @@ def s_cycle_setup():
     redraw()
 
 
-rows_check(["D", "A", "C", "B"], "rows before the cycle drag: D A C B")
-add(drag('MIDDLEMOUSE', lambda: row_xy(1), lambda: row_xy(2)))
+rows_check(["A", "B", "C", "D"], "rows before the cycle drag: A, C, B, D")
+add(drag('MIDDLEMOUSE', at("A"), at("C")))
 
 
 @step

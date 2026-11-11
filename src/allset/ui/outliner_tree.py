@@ -38,8 +38,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import IntProperty
 
-# The kit tree replaces Blender's rows in Maya Outliners (off: Blender's rows with the kit's drawn extras).
-ENABLED = False
+# The kit tree replaces Blender's rows in Maya Outliners (tests switch it off to see Blender's rows).
+ENABLED = True
 
 Row = namedtuple("Row", "kind ob sub depth kids open label icon key top", defaults=(False,))
 # kind: 'CAMERA' (a startup camera the scene has no object for), 'OBJECT', 'JOINT', 'SHAPE', 'DEFAULT_SET', 'SET',

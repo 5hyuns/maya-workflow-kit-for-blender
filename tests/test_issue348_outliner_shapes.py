@@ -1,7 +1,6 @@
-"""#348: Display > Shapes keeps the Maya Outliner (menu bar, dock handle, Shapes item), the root-joint label is
-drawn only while Shapes is off, a plain Blender Outliner never gets the Maya header, and a joint picked while Shapes
-is on is revealed in the Outliner tree (one-shot, on a selection change only).
-GUI: tests/gui/gui_issue348_outliner.py."""
+"""#348: Display > Shapes keeps the Maya Outliner (menu bar, dock handle, Shapes item) and its kit-drawn rows, a
+plain Blender Outliner never gets the Maya header, and the layout's Outliners start as kit trees with Shapes off.
+The rows themselves: tests/test_outliner_tree.py; GUI: tests/gui/gui_issue348_outliner.py."""
 
 from importlib import import_module
 from pathlib import Path
@@ -12,6 +11,7 @@ import bpy
 import kit
 
 maya_outliner = import_module(kit.MODULE + ".ui.maya_outliner")
+outliner_tree = import_module(kit.MODULE + ".ui.outliner_tree")
 
 
 class Recorder:
@@ -67,18 +67,15 @@ def test_shapes_on_keeps_the_maya_outliner():
     saved = _filters(sp)
     try:
         maya_outliner.setup(sp)
-        assert maya_outliner.is_maya_outliner(sp), "a Maya Outliner (Shapes off)"
-        assert maya_outliner.shows_dag_only(sp), "Shapes off: DAG rows only (the root-joint label is drawn)"
+        assert maya_outliner.is_maya_outliner(sp) and outliner_tree.is_tree(sp), "a Maya Outliner (Shapes off)"
         sp.use_filter_object_content = True                      # Display > Shapes on
         assert maya_outliner.is_maya_outliner(sp), "Shapes on is still a Maya Outliner (menu bar stays)"
-        assert not maya_outliner.shows_dag_only(sp), "Shapes on: Blender's rows show the bones, no root-joint label"
-        assert maya_outliner.shapes_shown(sp)
+        assert outliner_tree.is_tree(sp), "Shapes on: still the kit's rows (shape rows added)"
         rec = _header(area)
         assert rec.texts("menu") == ["Display", "Show", "Help"], rec.log
         assert "filter_text" in rec.props(), "search field"
         sp.use_filter_object_content = False                     # Display > Shapes off again, same place
-        assert maya_outliner.is_maya_outliner(sp) and maya_outliner.shows_dag_only(sp)
-        assert not maya_outliner.shapes_shown(sp)
+        assert maya_outliner.is_maya_outliner(sp) and outliner_tree.is_tree(sp)
         assert _header(area).texts("menu") == ["Display", "Show", "Help"]
     finally:
         _restore(sp, saved)
@@ -104,8 +101,7 @@ def test_plain_blender_outliners_keep_blender_header():
     try:
         # the factory Outliner: collections, object contents, mode column and render toggle on
         assert not maya_outliner.is_maya_outliner(sp), _filters(sp)
-        assert not maya_outliner.shows_dag_only(sp)
-        assert not maya_outliner.shapes_shown(sp)
+        assert not outliner_tree.is_tree(sp)
         sp.use_filter_collection = False                         # the user hides collection rows only
         assert not maya_outliner.is_maya_outliner(sp), "a Blender Outliner without collection rows stays Blender's"
         sp.show_mode_column = False
@@ -129,71 +125,6 @@ def test_template_outliners_start_without_shapes():
     assert outliners
     for sp in outliners:
         assert not sp.use_filter_object_content, "Maya Outliner starts with Shapes off"
-        assert maya_outliner.is_maya_outliner(sp) and maya_outliner.shows_dag_only(sp)
+        assert maya_outliner.is_maya_outliner(sp) and outliner_tree.is_tree(sp), "the kit draws the rows"
+    outliner_tree.show_all()
     bpy.ops.wm.read_homefile(use_factory_startup=True)
-
-
-def _skeleton():
-    arm = bpy.data.armatures.new("skeleton348")
-    ob = bpy.data.objects.new("skeleton348", arm)
-    bpy.context.scene.collection.objects.link(ob)
-    for o in bpy.context.view_layer.objects:
-        o.select_set(o == ob)
-    bpy.context.view_layer.objects.active = ob
-    bpy.ops.object.mode_set(mode='EDIT')
-    prev = None
-    for i in range(3):
-        b = arm.edit_bones.new(f"joint{i + 1}")
-        b.head, b.tail = (0, 0, i), (0, 0, i + 1)
-        if prev:
-            b.parent, b.use_connect = prev, True
-        prev = b
-    bpy.ops.object.mode_set(mode='POSE')
-    return ob
-
-
-def test_picked_joint_and_one_shot_reveal():
-    ob = _skeleton()
-    try:
-        pose = ob.pose.bones
-        for pb in pose:
-            pb.select = False
-        assert maya_outliner.picked_joint(bpy.context.view_layer) is None, "nothing picked"
-        pose["joint3"].select = True
-        ob.data.bones.active = ob.data.bones["joint3"]
-        assert maya_outliner.picked_joint(bpy.context.view_layer) == (ob.name, 'POSE', "joint3")
-        if bpy.app.timers.is_registered(maya_outliner._reveal):
-            bpy.app.timers.unregister(maya_outliner._reveal)
-        maya_outliner._last["key"] = None
-        maya_outliner._on_depsgraph(bpy.context.scene, None)
-        assert bpy.app.timers.is_registered(maya_outliner._reveal), "a new pick schedules one reveal"
-        bpy.app.timers.unregister(maya_outliner._reveal)
-        maya_outliner._on_depsgraph(bpy.context.scene, None)
-        assert not bpy.app.timers.is_registered(maya_outliner._reveal), "the same pick again: nothing to do"
-        assert maya_outliner.reveal(bpy.context) == 0, "no window Outliner with Shapes on in background mode"
-        pose["joint3"].select = False
-        assert maya_outliner.picked_joint(bpy.context.view_layer) is None, "active joint deselected: nothing picked"
-        bpy.ops.object.mode_set(mode='EDIT')
-        eb = ob.data.edit_bones["joint2"]
-        for e in ob.data.edit_bones:
-            e.select = e.select_head = e.select_tail = False
-        eb.select = True
-        ob.data.edit_bones.active = eb
-        assert maya_outliner.picked_joint(bpy.context.view_layer) == (ob.name, 'EDIT', "joint2")
-        bpy.ops.object.mode_set(mode='OBJECT')
-        assert maya_outliner.picked_joint(bpy.context.view_layer) is None, "Object Mode: the object is picked, not a joint"
-    finally:
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.data.objects.remove(ob)
-
-
-def test_handler_follows_register():
-    assert maya_outliner._on_depsgraph in bpy.app.handlers.depsgraph_update_post
-    kit.disable()
-    try:
-        assert not any(getattr(f, "__module__", "") == maya_outliner.__name__
-                   for f in bpy.app.handlers.depsgraph_update_post), "handler removed"
-        assert not bpy.app.timers.is_registered(maya_outliner._reveal)
-    finally:
-        kit.enable()

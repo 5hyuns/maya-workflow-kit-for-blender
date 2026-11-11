@@ -146,10 +146,27 @@ def test_paste_names_group_and_selection():
 # --- (3) startup cameras first in the Outliner ----------------------------------------------------------------
 
 def _shown(coll):
-    """The top rows Blender's Outliner shows for ``coll``'s link order (its qsort rotation, ui/outliner_order.py)."""
-    oo = m("ui.outliner_order")
-    top = [o.name for o in coll.objects if o.parent is None]
-    return oo.display_order(top, oo.rotates_small_lists())
+    """The top rows of the kit's Outliner tree (Maya order)."""
+    return _tree_top()
+
+def _tree_top(parent=None):
+    """Names of the kit Outliner tree's rows under ``parent`` (None: the top rows), in Maya order."""
+    tree = m("ui.outliner_tree")
+    bpy.context.view_layer.update()
+    keys = [('O', parent.session_uid)] if parent is not None else []
+    tree.set_expanded(keys, True)
+    rows = tree.build(bpy.context.scene, bpy.context.view_layer, tree.default_options())
+    if parent is None:
+        return [r.label for r in rows if r.depth == 0 and r.kind == 'OBJECT']
+    i = next(k for k, r in enumerate(rows) if r.kind == 'OBJECT' and r.ob == parent.name)
+    out = []
+    for r in rows[i + 1:]:
+        if r.depth <= rows[i].depth:
+            break
+        if r.depth == rows[i].depth + 1:
+            out.append(r.label)
+    return out
+
 
 
 def _maya_scene():
@@ -184,10 +201,11 @@ def test_startup_cameras_lead_the_dag_and_stay_hidden():
     assert (top.matrix_world.to_3x3() @ Vector((0, 0, -1)) - Vector((0, 0, -1))).length < 1e-6, "top looks down"
     front = cams[2]
     assert (front.matrix_world.to_3x3() @ Vector((0, 0, -1)) - Vector((0, 1, 0))).length < 1e-6, "front looks +Y"
-    # the Outliner draws only the cameras the scene doesn't have
-    os_ = m("ui.outliner_sets")
-    assert [e[1] for e in os_.default_entries(sc)] == ["defaultLightSet", "defaultObjectSet"]
-    assert [e[1] for e in os_.default_entries()][:4] == ["persp", "top", "front", "side"]
+    # the Outliner draws rows only for the cameras the scene doesn't have
+    tree = m("ui.outliner_tree")
+    rows = tree.build(sc, bpy.context.view_layer, tree.default_options())
+    assert not any(r.kind == 'CAMERA' for r in rows), "real startup cameras: no drawn camera rows"
+    assert [r.label for r in tree.tail_rows(sc, tree.default_options())][:2] == ["defaultLightSet", "defaultObjectSet"]
 
 
 def test_startup_cameras_cant_be_deleted_and_stay_out_of_exports():
@@ -242,20 +260,9 @@ def test_nhair_modify_curves_boxes_open_the_curves_windows():
     assert m("ui.menu_sets").option_kind("nHair/Modify Curves/Bend") == "window"
 
 
-# --- (3b) Outliner order compensation (ui/outliner_order.py) ----------------------------------------------------
+# --- (3b) Outliner order: creation order numbers (ui/outliner_order.py) ----------------------------------------------
 
-def test_outliner_rotation_rule_is_inverted():
-    oo = m("ui.outliner_order")
-    for n in range(0, 14):
-        want = list(range(n))
-        assert oo.display_order(oo.base_for(want)) == want, n
-    # in the GUI (4.5, Windows): linked persp top front side pCube1 pSphere1 -> shown from top
-    assert oo.display_order(["p", "t", "f", "s", "c", "y"]) == ["t", "f", "s", "c", "y", "p"]
-    assert oo.display_order(list("abcdefghi")) == list("abcdefghi"), "9 and more: Blender's quicksort keeps them"
-    assert oo.base_for(["a", "b"], rotate=False) == ["a", "b"]
-
-
-def test_outliner_sync_keeps_creation_order_children_and_state():
+def test_outliner_order_keeps_creation_order_children_and_state():
     sc, coll = _maya_scene()
     oo = m("ui.outliner_order")
     stc = m("operators.startup_cameras")
@@ -268,20 +275,19 @@ def test_outliner_sync_keeps_creation_order_children_and_state():
         k.parent = grp
     _select([b])
     a.hide_set(True)
-    m("operators.sets").create(objects=[a])            # a kit set is a collection outside the scene: still synced
-    oo.sync(sc, bpy.context.view_layer, rotate=True)
+    m("operators.sets").create(objects=[a])            # a kit set is a collection outside the scene
     links = [o.name for o in coll.objects]
-    top = [n for n in links if bpy.data.objects[n].parent is None]
-    assert oo.display_order(top) == ["persp", "top", "front", "side", "pCube1", "pCube2", "group1"], links
-    under = [n for n in links if bpy.data.objects[n].parent == grp]
-    assert under == ["pCube3", "pCube4", "pCube5"], links       # child lists draw in link order (not rotated)
+    oo.sync(sc, bpy.context.view_layer, rotate=True)
+    assert [o.name for o in coll.objects] == links, "numbering never relinks"
+    assert _tree_top() == ["persp", "top", "front", "side", "pCube1", "pCube2", "group1"], _tree_top()
+    assert _tree_top(grp) == ["pCube3", "pCube4", "pCube5"], _tree_top(grp)
     assert b.select_get() and bpy.context.view_layer.objects.active == b and a.hide_get(), "state kept"
     assert oo.sync(sc, bpy.context.view_layer, rotate=True) is False, "nothing to do the second time"
-    # a second collection: left alone (Blender's base order crosses collections)
     other = bpy.data.collections.new("other")
     sc.collection.children.link(other)
     _cube("pCube9", other)
-    assert oo.sync(sc, bpy.context.view_layer, rotate=True) is False
+    assert oo.sync(sc, bpy.context.view_layer, rotate=True) is True, "a new object in another collection: numbered"
+    assert _tree_top()[-1] == "pCube9"
 
 
 def test_reparent_goes_last_and_mmb_place_keeps_order():
@@ -293,8 +299,7 @@ def test_reparent_goes_last_and_mmb_place_keeps_order():
     oo.sync(sc, bpy.context.view_layer, rotate=True)
 
     def shown(parent=None):
-        links = [o.name for o in coll.objects if o.parent == parent]
-        return oo.display_order(links) if parent is None else links
+        return _tree_top(parent)
     assert shown() == ["pCube1", "pCube2", "pCube3", "pCube4"]
     parenting.parent_maya([b], a)                    # Maya: P puts pCube2 under pCube1
     parenting.unparent([b])                          # ... and back to the world: last among the world's nodes

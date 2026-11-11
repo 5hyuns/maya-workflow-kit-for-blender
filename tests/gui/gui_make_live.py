@@ -49,6 +49,21 @@ def green(image):
             & (np.abs(image[..., 2]-84/255) < .08))
 
 
+def live_rows(region):
+    """[(object name, label)] of the live rows the kit Outliner tree drew last."""
+    tree = mod('ui.outliner_tree')
+    lives = set(mod('operators.live').objects(bpy.context.scene))
+    return [(row.ob, row.label) for _y0, _y1, row in tree.DRAWN.get(region.as_pointer(), [])
+            if row.kind == 'OBJECT' and tree.row_state(bpy.context, row, lives)[3]]
+
+
+def show_row(ob):
+    """Scroll the kit Outliner tree to ``ob``'s row (rows above it opened), like the Outliner's Reveal."""
+    oa, region = outliner()
+    with bpy.context.temp_override(window=win(), area=oa, region=region):
+        mod('ui.outliner_tree_edit').reveal(bpy.context, oa, region, oa.spaces.active, [(ob, None)])
+
+
 @step
 def s_setup():
     mouse = setup()
@@ -78,10 +93,7 @@ def s_setup():
 def s_wait():
     # A small Outliner at larger UI scales may scroll to the virtual camera rows.
     # Frame the reference before checking its visible label, without selecting it.
-    oa, region = outliner()
-    bpy.context.view_layer.objects.active = reference()
-    with bpy.context.temp_override(window=win(), area=oa, region=region):
-        bpy.ops.outliner.show_active()
+    show_row(reference())
     for a in win().screen.areas:
         a.tag_redraw()
 
@@ -93,8 +105,8 @@ def s_live():
     check('status field displays the live object name', bpy.context.scene.allset_live_text == 'LiveReference')
     image = shot('make_live_wire_and_outliner')
     a, r = outliner()
-    seen = mod('ui.outliner_joints').SEEN.get(r.as_pointer(), [])
-    check('native Outliner row is identified without replacing its tree', ('LiveReference', 'LiveReference') in seen)
+    seen = live_rows(r)
+    check(f'the live row is drawn live in the Outliner ({seen})', ('LiveReference', 'LiveReference') in seen)
     crop = green(image[r.y:r.y+r.height, r.x:r.x+r.width])
     ys, xs = np.nonzero(crop)
     check('Outliner name renders the requested dark green', len(xs) > 12)
@@ -151,7 +163,7 @@ def s_wireframe():
 
 @step
 def s_manage():
-    check('restricted object remains addressable by native Outliner selection',
+    check('a selection-locked live row stays addressable through its Outliner pick',
           reference() in mod('operators.live').selected(bpy.context, outliner=True))
     with override():
         bpy.ops.allset.live_list('EXEC_DEFAULT', True, action='REMOVE')
@@ -231,7 +243,7 @@ def s_middle_undo():
 def s_search_rename():
     oa, region = outliner()
     image = shot('make_live_search_renamed')
-    seen = mod('ui.outliner_joints').SEEN.get(region.as_pointer(), [])
+    seen = live_rows(region)
     check('renamed live row keeps green while filtered in Outliner', (C['name'], C['name']) in seen and
           green(image[region.y:region.y+region.height, region.x:region.x+region.width]).sum() > 12)
     oa.spaces.active.filter_text = ''
@@ -242,8 +254,8 @@ def s_search_rename():
         parent = bpy.data.objects.new('Reference Parent', None)
         bpy.context.scene.collection.objects.link(parent)
         reference().parent = parent
-    with bpy.context.temp_override(window=win(), area=oa, region=region):
-        bpy.ops.outliner.show_hierarchy()
+    tree = mod('ui.outliner_tree')
+    tree.set_expanded([('O', bpy.data.objects['Reference Parent'].session_uid)], True)
 
 
 @step
@@ -257,17 +269,14 @@ def s_scroll():
 
 @step
 def s_frame_live_after_scroll():
-    oa, region = outliner()
-    bpy.context.view_layer.objects.active = reference()
-    with bpy.context.temp_override(window=win(), area=oa, region=region):
-        bpy.ops.outliner.show_active()
+    show_row(reference())
 
 
 @step
 def s_scrolled():
     oa, region = outliner()
     image = shot('make_live_hierarchy_scrolled')
-    seen = mod('ui.outliner_joints').SEEN.get(region.as_pointer(), [])
+    seen = live_rows(region)
     check('live name keeps green after hierarchy expansion and scrolling', (C['name'], C['name']) in seen and
           green(image[region.y:region.y+region.height, region.x:region.x+region.width]).sum() > 12)
 

@@ -73,21 +73,22 @@ def s_scene():
     redraw()
 
 
-for _i in range(3):            # ui/outliner_order.py relinks from its 0.25 s timer
+for _i in range(3):            # ui/outliner_order.py numbers new objects from its 0.25 s timer
     step(redraw)
 
 
 @step
 def s_order_check():
     _a, reg = outl()
-    rows = mod("ui.outliner_sets").REGIONS.get(reg.as_pointer(), [])
+    rows = [(y0, y1, row.kind, row.ob) for y0, y1, row in mod("ui.outliner_tree").DRAWN.get(reg.as_pointer(), [])
+            if row.kind in ('CAMERA', 'DEFAULT_SET', 'SET')]
     kinds = [r[2] for r in rows]
-    check(f"drawn rows: no camera rows, default sets then the kit set ({[r[3] for r in rows]})",
+    check(f"rows without objects: no camera rows, default sets then the kit set ({[r[3] for r in rows]})",
           'CAMERA' not in kinds and kinds[:3] == ['DEFAULT_SET', 'DEFAULT_SET', 'SET'])
-    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
+    u = mod("ui.outliner_tree").unit(bpy.context.preferences)
     if rows:
         k = round((reg.height - rows[0][1]) / u)
-        check(f"the default sets follow 6 Blender rows (4 cameras + 2 objects; first drawn row = row {k})", k == 6)
+        check(f"the default sets follow 6 rows (4 cameras + 2 objects; first set row = row {k})", k == 6)
     shot("outliner")
     C["u"], C["seen"] = u, []
 

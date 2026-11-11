@@ -717,7 +717,7 @@ def text_units(context, text, pad):
 # raised tab in the panel colour, lowered tabs and the strip darker). Blender can't lay a button out rotated, so the
 # strip is drawn here
 # (POST_PIXEL, blf rotation) in a column the panel content keeps clear of (``content_layout``), and a click on it goes
-# to ``ALLSET_OT_dock_strip_click`` (first in "View2D Buttons List", like ui/outliner_sets.py's rows). Chosen over
+# to ``ALLSET_OT_dock_strip_click`` (first in "View2D Buttons List"). Chosen over
 # a width that follows the raised tab with horizontal tabs: the tab row alone needed 466 px at UI scale 1.
 STRIP_PX = 18          # strip width at UI scale 1 (Blender's UI font is a little taller)
 STRIP_GAP_PX = 6       # between the content and the strip

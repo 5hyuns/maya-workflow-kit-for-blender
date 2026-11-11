@@ -246,9 +246,7 @@ class ALLSET_MT_quick_select_sets(bpy.types.Menu):
 
 
 def _refresh(context):
-    """Redraw Outliners and rebuild the sidebar Outliner rows."""
-    from ..ui import outliner
-    outliner.rebuild(context)
+    """Redraw the Outliners (the kit tree draws the set rows) and the 3D Views."""
     for win in context.window_manager.windows:
         for area in win.screen.areas:
             if area.type in {'OUTLINER', 'VIEW_3D'}:

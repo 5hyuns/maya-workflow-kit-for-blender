@@ -1,4 +1,4 @@
-"""Live labels with the native restriction columns from the user's Maya layout."""
+"""Live rows of the kit's Outliner tree with the restriction columns switched on in the user's Maya layout."""
 import os
 import sys
 from importlib import import_module
@@ -19,9 +19,12 @@ def outliner():
 
 def inspect(name):
     area, region = outliner()
-    labels = import_module(MODULE+'.ui.outliner_joints')
-    seen = {ob for ob, _label in labels.SEEN.get(region.as_pointer(), ())}
-    check(name+': both actual pCube names are identified', seen == C['names'])
+    tree = import_module(MODULE+'.ui.outliner_tree')
+    live = import_module(MODULE+'.operators.live')
+    lives = set(live.objects(bpy.context.scene))
+    seen = {row.ob for _y0, _y1, row in tree.DRAWN.get(region.as_pointer(), ())
+            if row.kind == 'OBJECT' and tree.row_state(bpy.context, row, lives)[3]}
+    check(name+': both live pCube rows are drawn live', seen == C['names'])
     path = os.path.join(os.environ.get('ALLSET_GUI_SHOTS', bpy.app.tempdir), name+'.png')
     screenshot(path)
     image = bpy.data.images.load(path, check_existing=False)
@@ -32,7 +35,7 @@ def inspect(name):
     crop = data.reshape(h, w, 4)[region.y:region.y+region.height, region.x:region.x+region.width, :3]
     green = ((crop[..., 0] < .09) & (np.abs(crop[..., 1]-.6) < .08)
              & (np.abs(crop[..., 2]-84/255) < .08))
-    check(name+': visible native Outliner names render dark green', int(green.sum()) > 30)
+    check(name+': the live rows render dark green', int(green.sum()) > 30)
 
 
 @step

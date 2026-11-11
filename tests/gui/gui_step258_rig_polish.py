@@ -34,6 +34,14 @@ def redraw_all():
         area.tag_redraw()
 
 
+def skeleton_rows():
+    """[(skeleton object, root joint)] of the top joint rows the kit Outliner tree drew last."""
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    _a, r = outliner()
+    return [(row.ob, row.label) for _y0, _y1, row in tree.DRAWN.get(r.as_pointer(), []) if row.kind == 'JOINT'
+            and row.top] if r is not None else None
+
+
 @step
 def s_setup():
     setup()
@@ -67,9 +75,7 @@ def s_check_pose():
     shot("258_pose")
     ob = bpy.data.objects.get("skeleton1")
     check(f"skeleton in pose mode ({ob.mode if ob else None})", ob is not None and ob.mode == 'POSE')
-    ol = import_module(MODULE + ".ui.outliner_joints")
-    _a, r = outliner()
-    seen = ol.SEEN.get(r.as_pointer()) if r is not None else None
+    seen = skeleton_rows()
     check(f"Outliner row of skeleton1 reads joint1 ({seen})", seen == [("skeleton1", "joint1")])
     c = bpy.context.scene.allset_cb
     shown = (c.tx_text, c.ty_text, c.tz_text)
@@ -103,9 +109,7 @@ def s_check_hint():
     # panel side margins (~1 unit each side) and the tab strip on the right
     room = r.width - md.strip_px(scale) - 20 * scale * 2
     check(f"hint '{cb.POSE_HINT}' {w:.0f} px fits the dock {room:.0f} px (scale {scale})", w <= room)
-    ol = import_module(MODULE + ".ui.outliner_joints")
-    _a, orr = outliner()
-    seen = ol.SEEN.get(orr.as_pointer()) if orr is not None else None
+    seen = skeleton_rows()
     check(f"Object Mode: the Outliner row still reads joint1 ({seen})", seen == [("skeleton1", "joint1")])
 
 
@@ -130,9 +134,7 @@ def s_wait3():
 @step
 def s_check_two():
     shot("258_two")
-    ol = import_module(MODULE + ".ui.outliner_joints")
-    _a, orr = outliner()
-    seen = sorted(ol.SEEN.get(orr.as_pointer()) or [])
+    seen = sorted(skeleton_rows() or [])
     check(f"two skeletons: rows read joint1 and joint4 ({seen})",
           seen == [("skeleton1", "joint1"), ("skeleton2", "joint4")])
 

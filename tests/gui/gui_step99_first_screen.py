@@ -43,8 +43,16 @@ def outl():
 
 
 def rows():
+    """The drawn-only rows of the kit's Outliner tree (startup cameras without objects, default sets, sets):
+    [(y0, y1, kind, name, member)]."""
     _a, r = outl()
-    return mod("ui.outliner_sets").REGIONS.get(r.as_pointer(), [])
+    out = []
+    for y0, y1, row in mod("ui.outliner_tree").DRAWN.get(r.as_pointer(), []):
+        if row.kind in ('CAMERA', 'DEFAULT_SET', 'SET'):
+            out.append((y0, y1, row.kind, row.ob, ""))
+        elif row.kind == 'MEMBER':
+            out.append((y0, y1, row.kind, row.sub, row.ob))
+    return out
 
 
 def column():
@@ -62,7 +70,7 @@ def tab():
 
 def click_row(row):
     _a, r = outl()
-    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
+    u = mod("ui.outliner_tree").unit(bpy.context.preferences)
     x, y = r.x + int(4 * u), r.y + int((row[0] + row[1]) / 2)
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     ev('LEFTMOUSE', 'PRESS', x=x, y=y)
@@ -103,12 +111,12 @@ def s_toolbox():
           abs(outl_area.width - wo) <= 2)
     r = rows()
     names = [(x[2], x[3]) for x in r]
-    # persp / top / front / side are Maya's startup cameras = Blender's first four rows; the kit draws the
-    # default sets right under them
+    # persp / top / front / side are Maya's startup cameras = the first four rows; the default sets right
+    # under them
     want_rows = [('DEFAULT_SET', "defaultLightSet"), ('DEFAULT_SET', "defaultObjectSet")]
     check(f"Outliner draws Maya's startup sets ({names})", names == want_rows)
     _a, reg = outl()
-    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
+    u = mod("ui.outliner_tree").unit(bpy.context.preferences)
     cams = [o.name for o in mod("operators.startup_cameras").cameras(bpy.context.scene)]
     check(f"persp / top / front / side are the first four rows, the sets under them (cameras {cams}, y1 "
           f"{r and r[0][1]} of {reg.height})",
@@ -162,8 +170,8 @@ def s_tab_check():
 def s_rows_after():
     r = rows()
     kinds = [x[2] for x in r]
-    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
-    check(f"with objects the default rows follow Blender's DAG rows ({kinds})",
+    u = mod("ui.outliner_tree").unit(bpy.context.preferences)
+    check(f"with objects the default rows follow the DAG rows ({kinds})",
           kinds[:2] == ['DEFAULT_SET'] * 2 and abs(r[0][1] - (outl()[1].height - 6 * u)) <= u)
     shot("s99_cube_selected")
     C["light"] = next(o.name for o in bpy.context.scene.objects if o.type == 'LIGHT')
@@ -175,8 +183,8 @@ def s_lightset():
     sel = sorted(o.name for o in bpy.context.selected_objects)
     check(f"defaultLightSet selects the lights ({sel})", sel == [C["light"]])
     h = outl()[1].height
-    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
-    click_row((h - u, h))                     # Blender's first row = the startup persp camera
+    u = mod("ui.outliner_tree").unit(bpy.context.preferences)
+    click_row((h - u, h))                     # the first row = the startup persp camera
 
 
 @step
