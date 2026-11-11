@@ -227,6 +227,16 @@ def s_settings():
         C["drawn"] += 1
         draw(self, context)
     cls.draw = counting
+    # each Renderable row reads its check while the panel draws, from the startup cameras found once for the draw
+    # (the interface reads the rows once more after the draw; those reads look at the objects themselves)
+    rc = mod(".operators.render_cameras")
+    C["reads"] = reads = {"in_draw": 0, "outside": 0}
+    C["default"] = default = rc.default_renderable
+
+    def counted(cam):
+        reads["in_draw" if rc._drawing else "outside"] += 1
+        return default(cam)
+    rc.default_renderable = counted
     with bpy.context.temp_override(window=win()):
         C["rs"] = bpy.ops.allset.render_settings()
 
@@ -244,6 +254,13 @@ def s_settings_shown():
     shot("gui_issue252_render_settings.png", w)
     cls = bpy.types.ALLSET_PT_render_common
     cls.draw = C["draw"]
+    rc = mod(".operators.render_cameras")
+    rc.default_renderable = C["default"]
+    unset = sum(rc.STORE not in ob.data for ob in rc.candidates(bpy.context.scene))
+    reads = C["reads"]
+    check(f"each Renderable row without a value of its own reads it in the draw from the startup cameras found once "
+          f"({unset} rows, {C['drawn']} draws, reads in the draw {reads['in_draw']}, after it {reads['outside']})",
+          unset > 0 and reads["in_draw"] >= unset * C["drawn"] and not rc._drawing)
     sw = mod(".switch")
     sw.set_mode(False, layout=False)
     try:

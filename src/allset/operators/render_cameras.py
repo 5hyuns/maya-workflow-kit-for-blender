@@ -31,15 +31,23 @@ _BAD = '<>:"/\\|?*'
 _INTERVAL = 0.25
 # the running sequence: jobs still waiting [(camera name, output path)], what to put back, flags from the handlers
 _run = {"jobs": [], "restore": None, "scene": "", "window": 0, "cancelled": False, "completed": False, "done": 0}
+# while the Renderable rows draw: the startup top / front / side cameras' data, found once for all the rows
+_drawing = []
 
 
 # --- renderable cameras -----------------------------------------------------------------------------------------
 
+def _startup_data():
+    """Pointers of the startup top / front / side cameras' data (one pass over the objects)."""
+    from . import startup_cameras
+    return {ob.data.as_pointer() for ob in bpy.data.objects
+            if ob.type == 'CAMERA' and ob.data is not None and startup_cameras.is_startup(ob)
+            and ob.get(startup_cameras.MARK) != "persp"}
+
+
 def default_renderable(cam):
     """Renderable of a camera never set: on, except the startup top / front / side cameras."""
-    from . import startup_cameras
-    return not any(ob.data == cam and startup_cameras.is_startup(ob) and ob.get(startup_cameras.MARK) != "persp"
-                   for ob in bpy.data.objects if ob.type == 'CAMERA')
+    return cam.as_pointer() not in (_drawing[-1] if _drawing else _startup_data())
 
 
 def _renderable_get(cam):
@@ -87,8 +95,12 @@ def draw_settings(layout, scene):
     cams = candidates(scene)
     if not cams:
         col.label(text="(none)")
-    for ob in cams:
-        col.prop(ob.data, PROP, text=ob.name)
+    _drawing.append(_startup_data())       # each row reads its check while it is made
+    try:
+        for ob in cams:
+            col.prop(ob.data, PROP, text=ob.name)
+    finally:
+        _drawing.pop()
 
 
 # --- output paths -----------------------------------------------------------------------------------------------

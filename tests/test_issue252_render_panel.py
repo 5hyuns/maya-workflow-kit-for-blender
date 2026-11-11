@@ -105,6 +105,42 @@ def test_startup_cameras_listed_in_maya_order():
     assert names == ["persp", "top", "front", "side", "shotCam"], names
 
 
+class _Reading(_Rec):
+    """A layout whose prop() reads the value, as the interface does when it makes the row."""
+
+    def prop(self, data, name, **kw):
+        self.seen.append((data, name, kw.get("text"), getattr(data, name)))
+
+
+def test_rows_show_each_renderable_check_with_one_pass_over_the_objects():
+    """The startup top / front / side cameras are off unless set, the others on; the rows find the startup cameras
+    once per draw, not once per camera."""
+    _clear()
+    rc = import_module(kit.MODULE + ".operators.render_cameras")
+    startup = import_module(kit.MODULE + ".operators.startup_cameras")
+    startup.ensure(bpy.context.scene)
+    _camera("shotCam")
+    _camera("offCam").data.allset_renderable = False
+    for i in range(50):
+        bpy.context.scene.collection.objects.link(bpy.data.objects.new(f"locator{i}", None))
+    passes, real = [], rc._startup_data
+    rc._startup_data = lambda: passes.append(1) or real()
+    try:
+        seen = []
+        _panel().draw(types.SimpleNamespace(layout=_Reading(seen)), bpy.context)
+    finally:
+        rc._startup_data = real
+    rows = [(text, value) for _data, name, text, value in seen if name == "allset_renderable"]
+    assert rows == [("persp", True), ("top", False), ("front", False), ("side", False), ("offCam", False),
+                    ("shotCam", True)], rows
+    assert len(passes) == 1, f"{len(passes)} passes over the objects for {len(rows)} rows"
+    # outside a draw each check looks at the objects as they are now
+    top = next(ob for ob in startup.cameras(bpy.context.scene) if ob.get(startup.MARK) == "top")
+    assert not top.data.allset_renderable
+    del top[startup.MARK]
+    assert top.data.allset_renderable, "no longer a startup camera: on like any camera"
+
+
 def test_disable_removes_the_panel():
     kit.disable()
     try:
