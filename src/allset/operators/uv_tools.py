@@ -131,16 +131,34 @@ def target_islands(bm, uv, synced, fallback=True):
     return chosen or (every if fallback else [])
 
 
-def picked_anywhere(context):
+def picked_anywhere(context, synced=None):
     """True when some UV / face is selected in any mesh in edit mode: then the commands that work on "the selected
     shells, all when none are selected" leave the other meshes alone."""
-    synced = sync(context)
+    synced = sync(context) if synced is None else synced
     for ob in _edit_meshes(context):
         bm = bmesh.from_edit_mesh(ob.data)
         uv = bm.loops.layers.uv.active
         if uv is not None and _picked_faces(bm, uv, synced):
             return True
     return False
+
+
+def _in_uv_editor(context):
+    from ..ui import shelf          # the Status Line / Shelf strips are Image Editors too, never the UV Editor
+    area = getattr(context, "area", None)
+    return area is not None and area.ui_type == 'UV' and not shelf.is_kit_row(area.spaces.active)
+
+
+def mesh_selection_wanted(context):
+    """True when a UV edge / UV command reads the mesh selection (else the per-corner UV selection). Maya has one
+    component selection for the viewport and the UV Editor: with UV Sync Selection off, a command run outside the
+    UV Editor and outside the kit's UV component mode (the main UV menu or the hotbox in the 3D View) takes the
+    edges / vertices the 3D View shows selected when no UV is picked."""
+    if sync(context):
+        return True
+    if in_uv_mode(context.scene) or _in_uv_editor(context):
+        return False
+    return not picked_anywhere(context, synced=False)
 
 
 def _island_loops(island):
@@ -244,37 +262,47 @@ def sew(bm, uv, edges):
 # --- Unfold / Layout (Blender operators with the selection set up) -----------------------------------
 
 def _with_faces(context, ob, faces, call):
-    """Run ``call`` with UV sync on and exactly ``faces`` selected (Blender's unwrap / pack use that), then put the
-    selection and sync back."""
+    """Run ``call`` with UV sync on and exactly ``faces`` of ``ob`` selected (Blender's unwrap / pack use that), then put
+    the selection and sync back. Those Blender operators work on every mesh in edit mode: the other meshes have
+    nothing selected meanwhile (their picked faces were unwrapped / packed on their own, tearing them off their
+    shells)."""
     ts = context.scene.tool_settings
-    bm = bmesh.from_edit_mesh(ob.data)
     old_sync = ts.use_uv_select_sync
-    for seq in (bm.verts, bm.edges, bm.faces):
-        seq.index_update()
-    old = [[el.index for el in seq if el.select] for seq in (bm.verts, bm.edges, bm.faces)]
     old_mode = tuple(ts.mesh_select_mode)
+    others = [o for o in _edit_meshes(context) if o.data.as_pointer() != ob.data.as_pointer()]
+    saved = []
+    for o in [ob] + others:
+        bm = bmesh.from_edit_mesh(o.data)
+        for seq in (bm.verts, bm.edges, bm.faces):
+            seq.index_update()
+        saved.append((o, [[el.index for el in seq if el.select] for seq in (bm.verts, bm.edges, bm.faces)]))
     want = {f.index for f in faces}
     ts.use_uv_select_sync = True
-    for f in bm.faces:
-        f.select_set(False)
-    for f in bm.faces:
-        if f.index in want:
-            f.select_set(True)
-    bmesh.update_edit_mesh(ob.data)
+    for o in [ob] + others:
+        bm = bmesh.from_edit_mesh(o.data)
+        for f in bm.faces:
+            f.select_set(False)
+        if o is ob:
+            for f in bm.faces:
+                if f.index in want:
+                    f.select_set(True)
+        bmesh.update_edit_mesh(o.data)
     try:
         return call()
     finally:
-        bm = bmesh.from_edit_mesh(ob.data)
-        for seq, keep in zip((bm.verts, bm.edges, bm.faces), old):
-            seq.ensure_lookup_table()
-            for el in seq:
-                el.select = False
-            for i in keep:
-                if i < len(seq):
-                    seq[i].select = True
+        for o, old in saved:
+            bm = bmesh.from_edit_mesh(o.data)
+            for seq, keep in zip((bm.verts, bm.edges, bm.faces), old):
+                seq.ensure_lookup_table()
+                for el in seq:
+                    el.select = False
+                for i in keep:
+                    if i < len(seq):
+                        seq[i].select = True
         ts.mesh_select_mode = old_mode
         ts.use_uv_select_sync = old_sync
-        bmesh.update_edit_mesh(ob.data)
+        for o, _old in saved:
+            bmesh.update_edit_mesh(o.data)
 
 
 def mark_shell_borders(bm, uv, faces):
@@ -320,13 +348,20 @@ def unfold(context, ob, fallback=True):
 
 
 def _point_mean(island, uv):
-    """Mean of the shell's UV positions, each UV (vertex + coordinate) once."""
-    pts = []
+    """Mean of the shell's UV positions, each UV (vertex + coordinate) once. A vertex's UVs are compared only
+    with that vertex's own UVs: comparing with every UV of the shell froze Blender for minutes on dense shells."""
+    by_vert = {}
+    total = Vector((0.0, 0.0))
+    n = 0
     for loop in _island_loops(island):
         p = loop[uv].uv
-        if not any(v is loop.vert and _same(q, p) for v, q in pts):
-            pts.append((loop.vert, p.copy()))
-    return sum((q for _v, q in pts), Vector((0.0, 0.0))) / max(len(pts), 1)
+        seen = by_vert.setdefault(loop.vert, [])
+        if not any(_same(q, p) for q in seen):
+            q = p.copy()
+            seen.append(q)
+            total += q
+            n += 1
+    return total / max(n, 1)
 
 
 def layout(context, ob, padding_px, map_size, fallback=True):
@@ -739,10 +774,11 @@ class ALLSET_OT_uv_cut(bpy.types.Operator):
 
     def execute(self, context):
         done = 0
+        mesh = self.mesh_select or mesh_selection_wanted(context)
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.verify()
-            edges = selected_edges(bm, uv, sync(context) or self.mesh_select)
+            edges = selected_edges(bm, uv, mesh)
             if edges:
                 cut(bm, uv, edges)
                 bmesh.update_edit_mesh(ob.data)
@@ -766,10 +802,11 @@ class ALLSET_OT_uv_sew(bpy.types.Operator):
 
     def execute(self, context):
         done = 0
+        mesh = self.mesh_select or mesh_selection_wanted(context)
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.verify()
-            edges = selected_edges(bm, uv, sync(context) or self.mesh_select)
+            edges = selected_edges(bm, uv, mesh)
             if edges:
                 done += sew(bm, uv, edges)
                 bmesh.update_edit_mesh(ob.data)

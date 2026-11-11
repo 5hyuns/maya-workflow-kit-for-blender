@@ -653,9 +653,15 @@ class ALLSET_OT_uv_merge(_ShellOp, bpy.types.Operator):
     empty = "Select UVs to merge"
 
     distance: FloatProperty(name="Threshold", default=0.01, min=0.0, soft_max=1.0, options={'SKIP_SAVE'})
+    _mesh = False
+
+    def execute(self, context):
+        # from the main UV menu with UV Sync Selection off: the vertices the 3D View shows selected
+        self._mesh = uv_tools.mesh_selection_wanted(context)
+        return super().execute(context)
 
     def run(self, context, bm, uv, synced):
-        pts = selected_points(bm, uv, synced)
+        pts = selected_points(bm, uv, synced or self._mesh)
         if not pts:
             return 0
         merge_points(pts, uv, self.distance)
