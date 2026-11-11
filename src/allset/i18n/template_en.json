@@ -6455,6 +6455,24 @@
    "Preserve position": "Preserve position",
    "Smart transform": "Smart transform"
   },
+  "Labels/operators/option_windows_match": {
+   "All": "All",
+   "Match All Transforms Options": "Match All Transforms Options",
+   "Match Pivots Options": "Match Pivots Options",
+   "Match Rotation Options": "Match Rotation Options",
+   "Match Scaling Options": "Match Scaling Options",
+   "Match Translation Options": "Match Translation Options",
+   "Match bounding box size": "Match bounding box size",
+   "Orientation": "Orientation",
+   "Pivots": "Pivots",
+   "Rotate": "Rotate",
+   "Rotation": "Rotation",
+   "Scale": "Scale",
+   "Scaling": "Scaling",
+   "Transforms": "Transforms",
+   "Translate": "Translate",
+   "Translation": "Translation"
+  },
   "Labels/operators/option_windows_mesh_display": {
    "Bake alpha": "Bake alpha",
    "Bake shading group lighting": "Bake shading group lighting",
@@ -6565,11 +6583,16 @@
    "Wrap Influence": "Wrap Influence"
   },
   "Labels/operators/pivot": {
+   "Also turn the objects to the last selected one's orientation; their geometry and children stay where they are": "Also turn the objects to the last selected one's orientation; their geometry and children stay where they are",
    "Bake Pivot": "Bake Pivot",
    "Match Pivots": "Match Pivots",
+   "Match the rotate pivot": "Match the rotate pivot",
+   "Match the scale pivot": "Match the scale pivot",
    "Orientation": "Orientation",
    "Position": "Position",
-   "Reset Pivot": "Reset Pivot"
+   "Reset Pivot": "Reset Pivot",
+   "Rotate": "Rotate",
+   "Scale": "Scale"
   },
   "Labels/operators/pivot_menu": {
    "Center Position on Reset": "Center Position on Reset",
@@ -7084,10 +7107,12 @@
    "Align Mode": "Align Mode",
    "Align Objects": "Align Objects",
    "All Transforms": "All Transforms",
+   "Axes": "Axes",
    "First live surface (legacy script compatibility)": "First live surface (legacy script compatibility)",
    "Live Surface": "Live Surface",
    "Make Live": "Make Live",
    "Match Transformations": "Match Transformations",
+   "Match bounding box size": "Match bounding box size",
    "Max": "Max",
    "Mid": "Mid",
    "Min": "Min",
@@ -7098,6 +7123,7 @@
    "Rotate": "Rotate",
    "Rotation": "Rotation",
    "Scale": "Scale",
+   "Scale so the bounding box gets the size of the last selected object's": "Scale so the bounding box gets the size of the last selected object's",
    "Scaling": "Scaling",
    "Set Orientation": "Set Orientation",
    "Snap Points": "Snap Points",
@@ -7105,6 +7131,7 @@
    "Status Line magnet: while something is live, turn Make Live off": "Status Line magnet: while something is live, turn Make Live off",
    "Step Snap": "Step Snap",
    "Toggle": "Toggle",
+   "Translate": "Translate",
    "Translation": "Translation",
    "World X": "World X",
    "World Y": "World Y",

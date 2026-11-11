@@ -598,6 +598,8 @@ def _extend():
     WINDOWS.extend(option_windows_uv.WINDOWS)    # UV Editor Straighten UVs / Randomize Shells
     from . import option_windows_trax
     WINDOWS.extend(option_windows_trax.WINDOWS)    # Trax Editor Create Clip
+    from . import option_windows_match
+    WINDOWS.extend(option_windows_match.WINDOWS)    # Modify > Match Transformations
 
 
 _extend()

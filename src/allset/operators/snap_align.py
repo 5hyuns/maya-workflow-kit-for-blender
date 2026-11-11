@@ -22,7 +22,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
+from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty, IntProperty, PointerProperty
 from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
@@ -219,14 +219,58 @@ def match_lead(context):
     return pb if pb is not None else lead, others
 
 
-def match_transform(context, translate=True, rotate=True, scale=True):
+_CHANNELS = {"t": ("tx", "ty", "tz"), "r": ("rx", "ry", "rz"), "s": ("sx", "sy", "sz")}
+_RAW = {"t": ("location",), "r": ("rotation_euler", "rotation_quaternion", "rotation_axis_angle"), "s": ("scale",)}
+
+
+def box_size(node):
+    """Size of ``node``'s own bounding box along its local X / Y / Z (object space, before its scale); None for a
+    node without geometry (a joint, an empty)."""
+    if not isinstance(node, bpy.types.Object) or node.data is None:
+        return None
+    corners = [Vector(c) for c in node.bound_box]
+    size = Vector([max(c[i] for c in corners) - min(c[i] for c in corners) for i in range(3)])
+    return size if size.length > 1e-9 else None
+
+
+def _box_scale(scale, size, lead_size):
+    """Match bounding box size: each scale axis grows by the lead's box size over the node's on that axis (an axis
+    where either box is flat keeps the scale)."""
+    if size is None or lead_size is None:
+        return scale
+    return Vector([s * (lb / b) if b > 1e-9 and lb > 1e-9 else s for s, b, lb in zip(scale, size, lead_size)])
+
+
+def match_transform(context, translate=True, rotate=True, scale=True, axes=None, box=False):
+    """Maya Match Transformations: the nodes picked before the lead take its translation / rotation / scale.
+    ``axes`` (X, Y, Z) keeps only those channels of the matched transforms, like Maya's Match Translation / Rotation /
+    Scaling options: a checked Translate / Rotate / Scale channel takes the value the full match gives it, the others
+    stay. ``box`` (Match bounding box size) scales each matched scale axis by the lead's bounding box size over the
+    node's, so both boxes end up the same size. The transforms not matched keep their channels as they are (under a
+    turned, non-uniformly scaled parent a world matrix can't hold them unchanged)."""
     lead, others = match_lead(context)
     if lead is None or not others:
         return 0
+    from ..ui import channel_box
     lt, lr, ls = _maya_frame(lead).decompose()
+    lead_size = box_size(lead) if box and scale else None
     for node in others:
+        raw, kept = {}, {}
+        for kind, on in (("t", translate), ("r", rotate), ("s", scale)):
+            if not on:
+                raw.update({prop: tuple(getattr(node, prop)) for prop in _RAW[kind] if hasattr(node, prop)})
+            elif axes is not None:
+                kept.update({key: channel_box.get_value(node, key)
+                             for key, use in zip(_CHANNELS[kind], axes) if not use})
         t, r, s = _maya_frame(node).decompose()
-        _set_maya_frame(node, Matrix.LocRotScale(lt if translate else t, lr if rotate else r, ls if scale else s))
+        target_s = ls if scale else s
+        if lead_size is not None:
+            target_s = _box_scale(target_s, box_size(node), lead_size)
+        _set_maya_frame(node, Matrix.LocRotScale(lt if translate else t, lr if rotate else r, target_s))
+        for prop, value in raw.items():
+            setattr(node, prop, value)
+        for key, value in kept.items():
+            channel_box.set_value(node, key, value)
         if isinstance(node, bpy.types.PoseBone):
             context.view_layer.update()      # the next bone's frame may hang below this one
     return len(others)
@@ -296,14 +340,45 @@ class ALLSET_OT_match_transform(bpy.types.Operator):
 
     kind: EnumProperty(items=(('ALL', "All Transforms", ""), ('TRANSLATE', "Translation", ""),
                               ('ROTATE', "Rotation", ""), ('SCALE', "Scaling", "")), default='ALL')
+    # Match All Transforms: which transforms (Maya's option window, all on by default)
+    translate: BoolProperty(name="Translate", default=True)
+    rotate: BoolProperty(name="Rotate", default=True)
+    scale: BoolProperty(name="Scale", default=True)
+    # Match Translation / Rotation / Scaling: which X / Y / Z channels
+    axes: BoolVectorProperty(name="Axes", size=3, default=(True, True, True), subtype='XYZ')
+    box: BoolProperty(name="Match bounding box size", default=False,
+                      description="Scale so the bounding box gets the size of the last selected object's")
 
     @classmethod
     def poll(cls, context):
         return context.mode in ('OBJECT', 'POSE')
 
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        if self.kind == 'ALL':
+            col = layout.column(heading="Transforms")
+            col.prop(self, "translate")
+            col.prop(self, "rotate")
+            col.prop(self, "scale")
+        else:
+            layout.row().prop(self, "axes", toggle=True)
+        if self.kind in ('ALL', 'SCALE'):
+            row = layout.row()
+            row.enabled = self.kind == 'SCALE' or self.scale
+            row.prop(self, "box")
+
     def execute(self, context):
         k = self.kind
-        n = match_transform(context, k in ('ALL', 'TRANSLATE'), k in ('ALL', 'ROTATE'), k in ('ALL', 'SCALE'))
+        if k == 'ALL':
+            t, r, s, axes = self.translate, self.rotate, self.scale, None
+        else:
+            t, r, s, axes = k == 'TRANSLATE', k == 'ROTATE', k == 'SCALE', tuple(self.axes)
+        if not (t or r or s) or (axes is not None and not any(axes)):
+            return {'CANCELLED'}      # nothing checked: Maya runs nothing
+        n = match_transform(context, t, r, s, axes=None if axes == (True, True, True) else axes,
+                            box=self.box and s)
         if not n:
             self.report({'WARNING'}, "Select the objects, then the target last")
             return {'CANCELLED'}

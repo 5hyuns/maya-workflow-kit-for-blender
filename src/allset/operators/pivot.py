@@ -166,6 +166,17 @@ def match_pivot(ob, world_point):
     return True
 
 
+def match_pivot_orient(ob, world_rotation):
+    """Maya Match Pivots > Orientation: ``ob`` turns about its pivot to ``world_rotation`` (a Quaternion) while its
+    geometry and children stay where they are (its Rotate channels take the new orientation, like Bake Pivot).
+    Returns True if it turned."""
+    turn = ob.matrix_world.to_quaternion().inverted() @ world_rotation
+    if turn.angle < 1e-6:
+        return False
+    ob[PROP] = tuple(turn)
+    return bake_pivot(ob)
+
+
 # --- the "Maya Pivot" transform orientation (Move and Rotate Custom axes) --------------------
 
 def _find_view3d(context):
@@ -460,8 +471,19 @@ class ALLSET_OT_match_pivots(_PivotOp, bpy.types.Operator):
     bl_idname = "allset.match_pivots"
     bl_label = "Match Pivots"
 
+    # Maya's Pivots options: Rotate and Scale on, Orientation off. The kit has one pivot for both, so either one
+    # moves it
+    rotate_pivot: BoolProperty(name="Rotate", default=True, description="Match the rotate pivot")
+    scale_pivot: BoolProperty(name="Scale", default=True, description="Match the scale pivot")
+    orientation: BoolProperty(name="Orientation", default=False,
+                              description="Also turn the objects to the last selected one's orientation; their "
+                                          "geometry and children stay where they are")
+
     def execute(self, context):
         from . import snap_align
+        position = self.rotate_pivot or self.scale_pivot
+        if not (position or self.orientation):
+            return {'CANCELLED'}      # nothing checked: Maya runs nothing
         # the last picked node (a joint / control included) gives the point; a picked bone has no pivot of its own
         lead, nodes = snap_align.match_lead(context)
         others = [ob for ob in nodes if isinstance(ob, bpy.types.Object)]
@@ -471,10 +493,19 @@ class ALLSET_OT_match_pivots(_PivotOp, bpy.types.Operator):
         if not others:
             self.report({'WARNING'}, "A joint or control has no pivot of its own to match")
             return {'CANCELLED'}
-        p = snap_align._maya_frame(lead).translation.copy()
+        frame = snap_align._maya_frame(lead)
+        p = frame.translation.copy()
+        turn = frame.to_quaternion()
+        turned = False
         for ob in freeze.parents_first(others):
             context.view_layer.update()
-            match_pivot(ob, p)
+            if position:
+                match_pivot(ob, p)
+            if self.orientation:
+                context.view_layer.update()
+                turned = match_pivot_orient(ob, turn) or turned
+        if turned:
+            leave_custom_orientation(context.scene, 'LOCAL')   # like Bake Pivot: the axes are the object's again
         if _watch["running"]:
             process(context)
         return {'FINISHED'}
