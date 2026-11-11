@@ -99,12 +99,17 @@ def fit_of(data):
     return data.sensor_fit if data.sensor_fit in SIDES else 'AUTO'
 
 
+def _set_state(data, state):
+    # The state property exists only while Maya mode is on; a new Maya scene can be made with it off (the start-up
+    # layout), and then Blender's Sensor Fit alone carries the fit.
+    if getattr(data, STATE, state) != state:
+        setattr(data, STATE, state)
+
+
 def _write(data, mode, side):
     if data.sensor_fit != side:
         data.sensor_fit = side
-    state = f"{mode}_{side}" if mode in DYNAMIC else 'NONE'
-    if getattr(data, STATE) != state:
-        setattr(data, STATE, state)
+    _set_state(data, f"{mode}_{side}" if mode in DYNAMIC else 'NONE')
 
 
 def set_fit(data, fit, scene=None):
@@ -117,8 +122,7 @@ def set_fit(data, fit, scene=None):
     elif fit in SIDES:
         _write(data, fit, fit)
     else:
-        if getattr(data, STATE) != 'NONE':
-            setattr(data, STATE, 'NONE')
+        _set_state(data, 'NONE')
         if data.sensor_fit != 'AUTO':
             data.sensor_fit = 'AUTO'
 
