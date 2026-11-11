@@ -35,14 +35,21 @@ def is_maya_outliner(space):
     return not space.use_filter_object_content or not (space.show_mode_column or space.show_restrict_column_render)
 
 
+def _kit_tree(space):
+    from . import outliner_tree
+    return outliner_tree.is_tree(space)
+
+
 def shows_dag_only(space):
-    """A Maya Outliner with Shapes off: one row per object, the rows the kit draws names and sets over."""
-    return is_maya_outliner(space) and not space.use_filter_object_content
+    """A Maya Outliner with Blender's rows, Shapes off: one row per object, the rows the kit draws names and sets
+    over."""
+    return is_maya_outliner(space) and not space.use_filter_object_content and not _kit_tree(space)
 
 
 def shapes_shown(space):
-    """A Maya Outliner with Display > Shapes on: Blender's rows list the joints under their skeleton."""
-    return is_maya_outliner(space) and space.use_filter_object_content
+    """A Maya Outliner with Blender's rows and Display > Shapes on: Blender's rows list the joints under their
+    skeleton."""
+    return is_maya_outliner(space) and space.use_filter_object_content and not _kit_tree(space)
 
 
 def setup(space):
@@ -55,6 +62,8 @@ def setup(space):
     space.show_restrict_column_hide = False
     space.show_mode_column = False      # Maya has no mode column (Blender shows it in edit mode)
     space.use_sort_alpha = False        # Maya lists the DAG in creation order, startup cameras first
+    from . import outliner_tree         # the kit draws the rows (joints under their skeleton, #348)
+    outliner_tree.hide_rows(space)
 
 
 class ALLSET_MT_outliner_display(bpy.types.Menu):

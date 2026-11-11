@@ -142,6 +142,10 @@ def draw():
     space, region = context.space_data, context.region
     if region is None or not _is_maya(space):
         return
+    from . import outliner_tree
+    if outliner_tree.is_tree(space):        # the kit tree draws these rows itself
+        REGIONS.pop(region.as_pointer(), None)
+        return
     found = default_entries(context.scene) + entries(context.scene)
     key = region.as_pointer()
     import blf

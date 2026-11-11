@@ -92,9 +92,10 @@ def _blocked(context):
     return False
 
 
-def number_new(objects, rotate=True):
-    """Give objects without ``allset_dag_order`` the next numbers in link order (Blender appends new objects, so link
-    order is creation order; the rotated rows of an unsynced scene are Blender's sort, not the user's).
+def numbers(objects):
+    """[(object, creation order number)]: ``allset_dag_order``, and for objects without one the next numbers in link
+    order (Blender appends new objects, so link order is creation order; the rotated rows of an unsynced scene are
+    Blender's sort, not the user's). Writes nothing (the kit Outliner tree orders rows while drawing).
 
     A duplicate carries its original's number (Blender copies ID properties, #217): of the objects sharing a number
     the oldest ID (lowest ``session_uid``) keeps it and the others count as new — Maya puts a duplicate last among its
@@ -105,11 +106,21 @@ def number_new(objects, rotate=True):
         if n is not None and (n not in holder or ob.session_uid < holder[n].session_uid):
             holder[n] = ob
     top = max(-1, max(holder, default=-1))
+    out = []
     for ob in objects:
         n = ob.get(ORDER)
         if n is None or holder[n] is not ob:
             top += 1
-            ob[ORDER] = top
+            n = top
+        out.append((ob, n))
+    return out
+
+
+def number_new(objects, rotate=True):
+    """Write ``numbers`` into the objects that have none (or share their original's, a duplicate)."""
+    for ob, n in numbers(objects):
+        if ob.get(ORDER) != n:
+            ob[ORDER] = n
 
 
 def to_end(objects, scene):

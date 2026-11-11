@@ -21,6 +21,7 @@ from . import ghosting  # Maya ghosting (Visualize)
 from . import reference_editor  # Maya Reference Editor window
 from . import outliner_joints  # kit skeleton rows read their root joint (#155)
 from . import outliner_order  # Maya Outliner order (startup cameras first, creation order)
+from . import outliner_tree  # the kit-drawn Maya Outliner tree (#348)
 from . import marked_window, component_editor, shape_editor, connection_editor  # #119
 from . import hotkey_editor  # #121: Maya Hotkey Editor window
 from . import maya_prefs  # #121: Maya Preferences window
@@ -43,7 +44,7 @@ from . import camera_bookmarks  # panel toolbar Bookmarks / 2D Pan/Zoom, View > 
 from . import render_settings_panel  # Render Settings > Common in Maya mode (#252)
 
 _modules = (window_places, status_icons, kit_icons, notices, input_line, cb_points, channel_box, cb_channels, creation_inputs, layer_editor, attribute_editor, outliner, menu_sets, workspaces, rigify_menu, file_project, status_line, shelf,
-            time_slider, panel_menus, panel_toolbar, camera_bookmarks, camera_tools, interactive_tool, universal_manip, maya_grid, view_furniture, selection_wire, maya_joints, camera_aim_lines, component_colors, ghosting, toolbox, dock_tabs, maya_outliner, outliner_joints, outliner_sets, outliner_order,
+            time_slider, panel_menus, panel_toolbar, camera_bookmarks, camera_tools, interactive_tool, universal_manip, maya_grid, view_furniture, selection_wire, maya_joints, camera_aim_lines, component_colors, ghosting, toolbox, dock_tabs, maya_outliner, outliner_joints, outliner_sets, outliner_order, outliner_tree,
             paint_weights, weight_numbers, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, uv_display, uv_shell_preview, uv_hud, uv_manipulator, hypershade, hs_drag, render_view, render_settings_panel, graph_editor, graph_units, graph_view, graph_keys_draw, graph_handles, editor_panels, editor_chrome, script_editor, reference_editor, marked_window, component_editor, shape_editor, connection_editor, hypergraph, hotkey_editor, maya_prefs, skin_tools, ipr_window,
             view_message, range_bar, tool_settings, maya_dock, soft_overlay, save_prompt, scene_carry, armature_mode_pulse, smart_extrude, trax_editor, shelf_editor,
             node_attributes, attribute_fields, option_editor, bridge_editor, history_rebind)
