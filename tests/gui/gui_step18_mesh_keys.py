@@ -142,16 +142,17 @@ def s_beveled():
     check(f"Ctrl+B on the extruded cap: Maya inset, same face count ({C['faces']} -> {len(bm().faces)})",
           len(bm().faces) == C["faces"])
     ts().transform_pivot_point = 'MEDIAN_POINT'
-    C["tool"] = tool_id()
+    C["tool"] = "builtin.move"          # like Maya the pivot is edited with the Move / Rotate / Scale tools
     C["cursor"] = bpy.context.scene.cursor.location.copy()
     centre()
+    tap('W')
     ev('D', 'PRESS')
 
 
 @step
 def s_d_held():
-    check(f"D held in edit mode: cursor tool ({tool_id()}) and cursor pivot",
-          tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
+    check(f"D held in edit mode: the Move tool stays ({tool_id()}), cursor pivot",
+          tool_id() == "builtin.move" and ts().transform_pivot_point == 'CURSOR')
     C["cursor"] = bpy.context.scene.cursor.location.copy()
     # while editing the pivot a click on a vertex, edge or face places it there (Maya custom pivot editing):
     # click the cube corner nearest to the viewer
@@ -177,7 +178,7 @@ def s_d_release():
 
 @step
 def s_d_released():
-    check(f"D released: previous tool back ({tool_id()}), placed pivot kept",
+    check(f"D released: the tool stays ({tool_id()}), placed pivot kept",
           tool_id() == C["tool"] and ts().transform_pivot_point == 'CURSOR')
     tap('D')
 
@@ -186,7 +187,7 @@ def s_d_released():
 def s_d_tap():
     # a D tap keeps the pivot edit on (Maya custom pivot editing) ...
     check(f"D tap: pivot editing stays on ({tool_id()}, {ts().transform_pivot_point})",
-          tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
+          tool_id() == "builtin.move" and ts().transform_pivot_point == 'CURSOR')
     tap('D')
 
 

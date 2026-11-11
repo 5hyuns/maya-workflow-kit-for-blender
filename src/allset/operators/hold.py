@@ -13,7 +13,6 @@ A short, unused D press latches pivot editing until D / Insert is pressed again.
 import bpy
 import time
 
-from .. import live_refs
 from . import keystate
 
 
@@ -173,50 +172,19 @@ def component_pivot_after(saved, moved):
 
 # --- component pivot edit: D hold and Insert toggle in mesh edit mode ----------
 
-CURSOR_TOOL = "builtin.cursor"
-CURSOR_OP = "view3d.cursor3d"
-# Maya Move tool snapPivotOri True: a click on a component orients the pivot too =
-# the cursor tool's "Geometry" orientation (axes along the clicked surface).
-PIVOT_CURSOR_ORIENTATION = 'GEOM'
 EDIT_MODE = 'EDIT_MESH'
+# Like Maya, the component pivot is edited with the Move / Rotate / Scale tools: the tool stays and its manipulator
+# shows the pivot handles (ui/manipulator.pivot_edit). With the Select tool D / Insert do nothing.
+PIVOT_TOOLS = ("builtin.move", "builtin.rotate", "builtin.scale")
 
 
-def _active_tool(context):
-    tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
-    return tool.idname if tool is not None else None
-
-
-def _set_cursor_orientation(context, value):
-    """Set the edit-mode cursor tool's orientation option; returns the previous value (None if the cursor
-    tool isn't the active edit-mode tool)."""
+def pivot_tool(context):
+    """True when the active edit-mode tool edits the component pivot with D / Insert."""
     try:
         tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
-        if tool is None or tool.idname != CURSOR_TOOL:
-            return None
-        props = tool.operator_properties(CURSOR_OP)
-        old = props.orientation
-        props.orientation = value
-        return old
-    except (AttributeError, RuntimeError, TypeError):
-        return None
-
-
-def cursor_orientation(context):
-    """The cursor tool orientation for the Maya Snap Pivot Orientation option (default on = GEOM)."""
-    from .pivot_menu import option
-    return PIVOT_CURSOR_ORIENTATION if option("SNAP_ORI", context) else 'NONE'
-
-
-def apply_cursor_options(context):
-    """Snap Pivot Orientation / Position -> the active cursor tool's orientation / surface projection."""
-    from .pivot_menu import option
-    _set_cursor_orientation(context, cursor_orientation(context))
-    try:
-        tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
-        if tool is not None and tool.idname == CURSOR_TOOL:
-            tool.operator_properties(CURSOR_OP).use_depth = option("SNAP_POS", context)
-    except (AttributeError, RuntimeError, TypeError):
-        pass
+    except (AttributeError, TypeError):
+        return False
+    return tool is not None and tool.idname in PIVOT_TOOLS
 
 
 def selection_signature(context):
@@ -303,25 +271,24 @@ def _restore_selection_flags(flags):
 
 
 class ComponentPivotEdit:
-    """One edit-mode pivot edit: the 3D cursor is the pivot, the cursor tool places it, a
-    changed cursor rotation becomes the "Maya Pivot" Move orientation (as in object mode)."""
+    """One edit-mode pivot edit: the 3D cursor is the pivot. The Move / Rotate / Scale tool stays and its manipulator
+    shows the pivot handles (moving and turning the cursor) like Maya's; a changed cursor rotation becomes the
+    "Maya Pivot" Move orientation (as in object mode). A placed pivot then follows Move drags of the components
+    (operators/pivot_follow.py)."""
 
     def __init__(self):
         self.on = False
         self.toggled = False          # started by Insert: stays on until Insert / D / leaving edit mode
-        self.pending_tool = None      # tool to bring back on the next mesh edit mode entry
         self.custom = False           # a placed custom pivot is in use (pivot point CURSOR after finish)
         self.sel_sig = None           # the selection it was placed for (Pin Component Pivot off: reset on change)
-        self.cursors = set()          # 3D views whose hidden cursor this edit shows
         self.outside = None           # (pivot point, Move / Rotate orientation types) before the component pivot
         self.turned_axes = False      # this component pivot set the "Maya Pivot" axes
 
     def start(self, context, toggled=False):
+        """Begin editing the pivot (D / Insert check ``pivot_tool`` first). The 3D cursor stays hidden in the Maya
+        layout views: the manipulator shows the pivot."""
         ts = context.scene.tool_settings
-        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
         cursor = context.scene.cursor
-        self.area_ptr = live_refs.pointer(context.area)   # a pointer: the timer may run after its window closed (#36)
-        self.tool = tool.idname if tool and tool.idname != CURSOR_TOOL else "builtin.select_box"
         self.pivot = ts.transform_pivot_point
         if not self.custom or self.outside is None:
             from . import pivot
@@ -336,25 +303,19 @@ class ComponentPivotEdit:
         self.rotation = cursor.matrix.to_3x3()
         self.select_mode = tuple(ts.mesh_select_mode)
         self.selection = _selection_flags(context)
-        self.on, self.toggled, self.pending_tool = True, toggled, None
+        self.on, self.toggled = True, toggled
         ts.transform_pivot_point = 'CURSOR'
-        ts.mesh_select_mode = (True, True, True)
+        ts.mesh_select_mode = (True, True, True)      # a click places the pivot on a vertex, edge or face
         _restore_selection_flags(self.selection)      # switching select modes grows the selection: keep it as it was
-        # the pivot is the 3D cursor: the Maya layout hides it (Maya has none, #59), show it while it is edited
-        self.cursors |= show_cursors()
-        _tool_set(context, CURSOR_TOOL, self.area_ptr)
-        # tool options belong to the tool: set the orientation once the cursor tool is the active one
-        self.orientation = _set_cursor_orientation(context, cursor_orientation(context))
-        apply_cursor_options(context)
         self.custom = False
+        from . import pivot_follow
+        pivot_follow.clear()
         _redraw()
 
     def finish(self, context):
         if not self.on:
             return
         self.on = self.toggled = False
-        hide_cursors(self.cursors)
-        self.cursors = set()
         ts = context.scene.tool_settings
         cursor = context.scene.cursor
         moved = (cursor.location - self.location).length > 1e-6
@@ -366,18 +327,16 @@ class ComponentPivotEdit:
         ts.transform_pivot_point = component_pivot_after(self.pivot, moved or rotated)
         self.custom = ts.transform_pivot_point == 'CURSOR'
         self.sel_sig = selection_signature(context) if self.custom else None
-        if self.orientation is not None and _active_tool(context) == CURSOR_TOOL:
-            _set_cursor_orientation(context, self.orientation)
         if rotated:
             from . import pivot
             pivot.set_custom_orientation(context, rot)
             self.turned_axes = True
         if not moved and not rotated:
             cursor.matrix = self.previous_cursor
-        if context.mode == EDIT_MODE:
-            _tool_set(context, self.tool, self.area_ptr)
-        else:
-            self.pending_tool = self.tool     # a tool can only be set in its own mode
+        if self.custom:
+            from . import pivot_follow
+            pivot_follow.snapshot(context)
+            watch_component()         # Pin off: a new selection drops the pivot; Move drags take it along
         _redraw()
 
     def reset(self, context, position=True, orientation=True):
@@ -401,12 +360,14 @@ class ComponentPivotEdit:
         elif position and self.custom:
             context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
             self.custom, self.sel_sig = False, None
+            from . import pivot_follow
+            pivot_follow.clear()
         _redraw()
 
     def leave_edit(self, context):
         """Out of component mode a custom component pivot no longer applies (Maya's object manipulator sits on the
         object pivot): the pivot point and the Move / Rotate axes go back to what they were before it was placed."""
-        from . import pivot
+        from . import pivot, pivot_follow
         scene = context.scene
         ts = scene.tool_settings
         saved, slots = self.outside if self.outside is not None else ('MEDIAN_POINT', {})
@@ -422,16 +383,14 @@ class ComponentPivotEdit:
                 except TypeError:
                     slot.type = 'GLOBAL'
         self.custom, self.sel_sig, self.outside, self.turned_axes = False, None, None, False
+        pivot_follow.clear()
         _redraw()
 
     def tick(self, context):
-        """Timer: close a toggled session that left edit mode; restore its tool when edit mode is back; drop an
-        unpinned custom pivot when the selection changes (Maya Pin Component Pivot off)."""
+        """Timer: close a toggled session that left edit mode; drop an unpinned custom pivot when the selection
+        changes (Maya Pin Component Pivot off); let a placed pivot follow a finished Move drag."""
         if self.on and context.mode != EDIT_MODE:
             self.finish(context)
-        elif self.pending_tool and context.mode == EDIT_MODE:
-            tool, self.pending_tool = self.pending_tool, None
-            _tool_set(context, tool, 0)
         if self.custom and not self.on:
             from .pivot_menu import option
             ts = context.scene.tool_settings
@@ -443,60 +402,12 @@ class ComponentPivotEdit:
                 ts.transform_pivot_point = 'BOUNDING_BOX_CENTER'
                 self.custom, self.sel_sig = False, None
                 _redraw()
-
-
-def _view3d_spaces(screens=None):
-    for screen in bpy.data.screens if screens is None else screens:
-        for area in screen.areas:
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    yield space
-
-
-def show_cursors(screens=None):
-    """Show the 3D cursor in every 3D View that hides it (the Maya layout views, #59); returns their space
-    pointers for ``hide_cursors``. Spaces are looked up afresh from ``bpy.data.screens`` (default) every time: no
-    reference is kept across a closed window (#36)."""
-    shown = set()
-    for space in _view3d_spaces(screens):
-        if not space.overlay.show_cursor:
-            space.overlay.show_cursor = True
-            shown.add(space.as_pointer())
-    return shown
-
-
-def hide_cursors(pointers, screens=None):
-    """Hide the cursor again in the views ``show_cursors`` showed (views that showed it before stay as they were)."""
-    if not pointers:
-        return
-    for space in _view3d_spaces(screens):
-        if space.as_pointer() in pointers:
-            space.overlay.show_cursor = False
-
-
-def _view3d_area(context):
-    screen = getattr(context, "screen", None)
-    areas = [a for a in screen.areas if a.type == 'VIEW_3D'] if screen is not None else []
-    return max(areas, key=lambda a: a.width * a.height) if areas else None
-
-
-def _tool_set(context, idname, area_ptr):
-    area = live_refs.area(area_ptr)
-    if area is None or area.type != 'VIEW_3D':
-        area = _view3d_area(context)
-    try:
-        if area is not None:
-            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
-            with context.temp_override(area=area, region=region):
-                bpy.ops.wm.tool_set_by_id(name=idname)
-        else:
-            bpy.ops.wm.tool_set_by_id(name=idname, space_type='VIEW_3D')
-    except (RuntimeError, ReferenceError, TypeError):   # area gone or tool unavailable
-        pass
+        from . import pivot_follow
+        pivot_follow.update(context)
 
 
 COMPONENT = ComponentPivotEdit()
-_TICK = 0.25
+_TICK = 0.1
 
 
 def _component_tick():
@@ -504,7 +415,7 @@ def _component_tick():
         COMPONENT.tick(bpy.context)
     except (AttributeError, ReferenceError, RuntimeError):
         pass
-    return _TICK if (COMPONENT.on or COMPONENT.pending_tool or COMPONENT.custom) else None
+    return _TICK if (COMPONENT.on or COMPONENT.custom) else None
 
 
 def watch_component():
@@ -513,15 +424,17 @@ def watch_component():
 
 
 def unregister_component():
-    if bpy.app.timers.is_registered(_component_tick):
-        bpy.app.timers.unregister(_component_tick)
     if COMPONENT.on:
         try:
             COMPONENT.finish(bpy.context)
         except (AttributeError, ReferenceError, RuntimeError):
             pass
+    if bpy.app.timers.is_registered(_component_tick):     # after finish(): a placed pivot starts the timer
+        bpy.app.timers.unregister(_component_tick)
     COMPONENT.on = COMPONENT.toggled = COMPONENT.custom = False
-    COMPONENT.pending_tool = COMPONENT.sel_sig = None
+    COMPONENT.sel_sig = None
+    from . import pivot_follow
+    pivot_follow.clear()
 
 
 GROUPS = {"snap": SnapGroup(), "pivot": PivotGroup(), "component_pivot": ComponentPivotGroup(),
@@ -624,6 +537,8 @@ class ALLSET_OT_hold(bpy.types.Operator):
             if COMPONENT.on:          # D while the Insert pivot edit is on: leave it (Maya D tap toggles)
                 COMPONENT.finish(context)
                 return {'FINISHED'}
+            if not pivot_tool(context):     # Maya: the Select tool has no pivot edit, D does nothing
+                return {'FINISHED'}
             COMPONENT.start(context)
         elif self.name == "pivot" and self._ts.use_transform_data_origin:
             toggle_object_pivot(self._ts)
@@ -695,10 +610,10 @@ class ALLSET_OT_pivot_toggle(bpy.types.Operator):
             preserve_children_set(not preserve_children_set(None))
             _redraw()
             return {'FINISHED'}
-        if context.mode == EDIT_MODE:     # Maya component mode Insert: the 3D cursor pivot edit
+        if context.mode == EDIT_MODE:     # Maya component mode Insert: the component pivot edit (3D cursor)
             if COMPONENT.on:
                 COMPONENT.finish(context)
-            else:
+            elif pivot_tool(context):     # Move / Rotate / Scale only, like Maya
                 COMPONENT.start(context, toggled=True)
                 watch_component()
             return {'FINISHED'}

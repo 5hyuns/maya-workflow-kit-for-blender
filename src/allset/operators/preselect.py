@@ -385,7 +385,7 @@ def _handles_block(context, region, rv3d, mouse, cs):
     if kind == 'ROTATE':     # the kit's rings: inside the view ring (the trackball and every ring)
         ring = length_px * manipulator.ROTATE_RING_R * manipulator.VIEW_RING
         return math.hypot(mouse[0] - c2.x, mouse[1] - c2.y) <= ring + 3.0 * scale
-    if context.mode == 'OBJECT' and pivot_picking(context):
+    if pivot_picking(context):          # the pivot orientation rings (object or component pivot)
         cached = manipulator.PIVOT_RING_CACHE.get(region.as_pointer())
         for xy in cached[1] if cached is not None else ():
             distances, _t = segment_distance(mouse, xy, np.roll(xy, -1, axis=0))

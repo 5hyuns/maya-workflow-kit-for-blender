@@ -6,6 +6,13 @@ and using the mouse keeps the existing temporary workflow: releasing **D** exits
 A tap is an unused press shorter than 0.3 seconds.
 Choosing a transform tool (**Q / W / E / R**) also finishes a tapped pivot edit.
 
+In mesh Edit Mode the pivot is edited with the Move, Rotate or Scale tool, like
+Maya (with the Select tool **D / Insert** do nothing). The tool stays and its
+manipulator shows the pivot handles: the arrows, planes and centre move the
+pivot, the small rings turn its axes, and the components stay where they are.
+Clicking empty space puts the pivot back on the centre of the selection with
+world axes.
+
 While editing, click a visible vertex, edge or face to place and align the pivot.
 Vertices use their exact position, edges their midpoint, and faces their median
 centre. Vertex and edge hits take priority near their screen positions.
@@ -18,15 +25,25 @@ The manipulator handles retain priority on their own pixels.
 
 Mesh Edit Mode temporarily enables vertex, edge and face picking together and
 restores the original selection mode and selection on exit. Picking leaves the selected
-components and world geometry intact. The existing cursor tool can also drag the component pivot.
-The resulting custom pivot remains available for transforms.
+components and world geometry intact. The resulting custom pivot remains available for transforms.
 Object Mode preserves transform channels, world geometry and child positions.
 
 The picked orientation is shared by **Move (W)** and **Rotate (E)**. With Rotate
 active in Object Mode, **D / Insert** temporarily shows the pivot move/orientation
 handles so the rotation rings do not intercept component picks. Finishing pivot
 editing restores the normal Rotate rings at the picked pivot, using its new axes.
-In mesh Edit Mode, finishing restores the previous tool, including Rotate.
+In mesh Edit Mode, Rotate and Scale also show the pivot move/orientation handles
+while editing, and the tool stays when editing ends.
+
+## The component pivot follows the components
+
+Like Maya with Pin Component Pivot off, a placed component pivot moves with the
+components: drag them with the Move manipulator (soft selection included) and
+the pivot moves by the same amount, so it keeps its offset. Rotate and Scale turn
+and scale the components about the pivot and leave it in place, and a typed move
+leaves it too. Undo and Redo take the pivot back and forward together with the
+move. With Pin Component Pivot on, the pivot stays where it is; with it off, a
+new selection drops the custom pivot.
 
 In Object Mode, the pivot orientation rings and move arrows use the same custom
 frame. Dragging a ring rotates the arrows immediately, including after a component

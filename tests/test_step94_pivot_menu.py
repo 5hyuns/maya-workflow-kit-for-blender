@@ -154,19 +154,23 @@ def test_component_reset_and_pin():
     assert not hold.COMPONENT.custom
 
 
-def test_snap_options_drive_the_cursor_tool():
+def test_snap_options_toggle_during_a_component_edit():
+    """The RMB Snap Pivot Position / Orientation check boxes only switch the options the next component click reads
+    (operators/pivot_pick.apply_component); the Move tool and the edit stay."""
     ob = _cube()
     bpy.ops.object.mode_set(mode='EDIT')
     wm = bpy.context.window_manager
-    bpy.ops.wm.tool_set_by_id(name=hold.CURSOR_TOOL, space_type='VIEW_3D')
-    hold.apply_cursor_options(bpy.context)
+    bpy.ops.wm.tool_set_by_id(name="builtin.move", space_type='VIEW_3D')
+    bpy.ops.allset.pivot_toggle()
+    assert hold.COMPONENT.on
+    assert bpy.ops.allset.pivot_option(option='SNAP_POS') == {'FINISHED'}
+    assert bpy.ops.allset.pivot_option(option='SNAP_ORI') == {'FINISHED'}
+    assert not wm.allset_snap_pivot_pos and not wm.allset_snap_pivot_ori
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
-    props = tool.operator_properties(hold.CURSOR_OP)
-    assert props.orientation == 'GEOM' and props.use_depth
-    wm.allset_snap_pivot_ori = False
-    wm.allset_snap_pivot_pos = False
-    hold.apply_cursor_options(bpy.context)
-    assert props.orientation == 'NONE' and not props.use_depth
-    wm.allset_snap_pivot_ori = wm.allset_snap_pivot_pos = True
+    assert hold.COMPONENT.on and tool.idname == "builtin.move"
+    bpy.ops.allset.pivot_option(option='SNAP_POS')
+    bpy.ops.allset.pivot_option(option='SNAP_ORI')
+    assert wm.allset_snap_pivot_pos and wm.allset_snap_pivot_ori
+    bpy.ops.allset.pivot_toggle()
     bpy.ops.object.mode_set(mode='OBJECT')
     del ob

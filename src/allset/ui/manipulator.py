@@ -277,11 +277,30 @@ def pivot_frame(context, kind):
         pts, act = _edit_points(context)
     else:
         pts, act = _object_points(context)
-    center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+    center = follow_centre(context, center_of(pts, act, scene.tool_settings.transform_pivot_point,
+                                              scene.cursor.location))
     if pivot_edit(context) and context.active_object is not None:
         from ..operators import pivot
-        return center, pivot.axes_for(context.active_object), pivot.ORIENT_NAME
+        return center, pivot_axes(context), pivot.ORIENT_NAME
     return center, axes_of(context, otype, context.region_data), otype
+
+
+def follow_centre(context, center):
+    """``center`` plus the offset of a Move drag a placed component pivot has not followed yet (it moves with the
+    components, operators/pivot_follow.py): the manipulator goes along with them during the drag."""
+    if center is None or context.mode != 'EDIT_MESH':
+        return center
+    from ..operators import pivot_follow
+    offset = pivot_follow.pending(context)
+    return center if offset is None else center + offset
+
+
+def pivot_axes(context):
+    """World axes of the pivot being edited: the lead object's pivot, or the component pivot (the 3D cursor)."""
+    if context.mode == 'EDIT_MESH':
+        return context.scene.cursor.matrix.to_3x3().normalized()
+    from ..operators import pivot
+    return pivot.axes_for(context.active_object)
 
 
 def _edit_normal_axes(context):
@@ -397,13 +416,20 @@ def tool_kind(context):
     tool = active_tool(context)
     if tool is None or tool.widget != GROUP:
         return None
-    if tool.idname == 'builtin.rotate' and pivot_edit(context):
-        return 'TRANSLATE'
+    if pivot_edit(context) and (tool.idname == 'builtin.rotate'
+                                or (tool.idname == 'builtin.scale' and context.mode == 'EDIT_MESH')):
+        return 'TRANSLATE'      # like Maya: Rotate (and Scale on components) edit the pivot with the Move handles
     return TOOLS.get(tool.idname)
 
 
 def pivot_edit(context):
-    return context.mode == 'OBJECT' and context.scene.tool_settings.use_transform_data_origin
+    """A pivot is being edited (D / Insert): the object pivot (Affect Only Origins) or the component pivot."""
+    if context.mode == 'OBJECT':
+        return context.scene.tool_settings.use_transform_data_origin
+    if context.mode == 'EDIT_MESH':
+        from ..operators import hold
+        return hold.COMPONENT.on
+    return False
 
 
 def _has_selection(context):
@@ -800,7 +826,7 @@ class ALLSET_GGT_xform(GizmoGroup):
             rings = gimbal_axes(context.view_layer.objects.active)
         if pivot and context.active_object is not None:
             from ..operators import pivot as pivot_ops
-            frame, otype = pivot_ops.axes_for(context.active_object), pivot_ops.ORIENT_NAME
+            frame, otype = pivot_axes(context), pivot_ops.ORIENT_NAME
         from ..operators import component_scale
         scale_drag = component_scale.DRAG if kind == 'RESIZE' else None
         if scale_drag is not None:
@@ -817,7 +843,8 @@ class ALLSET_GGT_xform(GizmoGroup):
             pts, act = _edit_points(context)
         else:
             pts, act = _object_points(context)
-        center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+        center = follow_centre(context, center_of(pts, act, scene.tool_settings.transform_pivot_point,
+                                                  scene.cursor.location))
         if scale_drag is not None:
             center = scale_drag._centre
         hide = center is None

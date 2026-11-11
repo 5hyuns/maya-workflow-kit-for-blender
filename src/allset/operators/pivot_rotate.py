@@ -4,6 +4,8 @@
 Maya's combined custom-pivot manipulator edits a frame, not the object's rotation.
 Keeping this as pivot metadata avoids a delayed origin-transform rewrite and keeps
 geometry, children and transform channels unchanged throughout the gesture.
+In mesh edit mode the component pivot is the 3D cursor: the ring turns the cursor only
+(releasing D / Insert turns it into the "Maya Pivot" axes, operators/hold.py).
 """
 import math
 
@@ -25,10 +27,20 @@ class ALLSET_OT_pivot_rotate(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return (pivot.pivot_mode(context) and context.active_object is not None
-                and bool(context.selected_objects))
+        return ((pivot.pivot_mode(context) and context.active_object is not None
+                 and bool(context.selected_objects))
+                or (context.mode == hold.EDIT_MODE and hold.COMPONENT.on))
 
     def _capture(self, context):
+        self._component = context.mode == hold.EDIT_MODE
+        self._step_held, self._baseline_step = hold.step_state(context.tool_settings, 'ROTATE')
+        if self._component:
+            cursor = context.scene.cursor
+            self._cursor = cursor.matrix.copy()
+            self._frame = cursor.matrix.to_3x3().normalized()
+            self._axis = self._frame.col['XYZ'.index(self.axis)].normalized()
+            self._origin = cursor.location.copy()
+            return
         self._frame = pivot.axes_for(context.active_object)
         self._axis = self._frame.col['XYZ'.index(self.axis)].normalized()
         self._origin = context.active_object.matrix_world.translation.copy()
@@ -37,7 +49,6 @@ class ALLSET_OT_pivot_rotate(bpy.types.Operator):
         self._slot_types = tuple(slot.type for slot in context.scene.transform_orientation_slots)
         orientation = pivot._orientation(context.scene)
         self._previous_axes = orientation.matrix.copy() if orientation is not None else None
-        self._step_held, self._baseline_step = hold.step_state(context.tool_settings, 'ROTATE')
 
     def _drag_value(self, context, event):
         angle = self._drag_angle
@@ -50,6 +61,10 @@ class ALLSET_OT_pivot_rotate(bpy.types.Operator):
     def _apply(self, context, angle):
         self.angle = angle
         delta = Matrix.Rotation(angle, 3, self._axis)
+        if self._component:
+            context.scene.cursor.matrix = Matrix.Translation(self._origin) @ (delta @ self._frame).to_4x4()
+            hold._redraw()
+            return
         for name, (_saved, frame) in self._objects.items():
             ob = bpy.data.objects.get(name)
             if ob is not None:
@@ -58,6 +73,10 @@ class ALLSET_OT_pivot_rotate(bpy.types.Operator):
         hold._redraw()
 
     def _restore(self, context):
+        if self._component:
+            context.scene.cursor.matrix = self._cursor
+            hold._redraw()
+            return
         for name, (saved, _frame) in self._objects.items():
             ob = bpy.data.objects.get(name)
             if ob is None:

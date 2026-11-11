@@ -480,7 +480,8 @@ def m77_2_insert():
 @step
 def m77_2_d():
     on = mod("operators.hold").COMPONENT.on
-    check(f"[M77-2] Insert turns the pivot edit on ({on}, {tool_id()})", on and tool_id() == "builtin.cursor")
+    check(f"[M77-2] Insert turns the pivot edit on, the Move tool stays ({on}, {tool_id()})",
+          on and tool_id() == "builtin.move")
     tap('D')
 
 
@@ -2037,8 +2038,8 @@ def _m76_2_ik():
         view3d()[1].data.view_distance = C.pop("m76_view")
 
 
-# --- [M77-1] F9 + Insert: cursor tool, "Pivot edit on", click / drag the pivot, Insert again ----------------------
-# --- [M77-3] Insert on + F8 / Tab leaves it; back in edit mode the old tool; W menu World ------------------------
+# --- [M77-1] F9 + Insert: the Move tool stays, "Pivot edit on", click / drag the pivot, Insert again --------------
+# --- [M77-3] Insert on + F8 / Tab leaves it; back in edit mode the Move tool; W menu World -----------------------
 
 def cursor():
     return bpy.context.scene.cursor
@@ -2074,8 +2075,8 @@ def _m77_1_insert():
 
 @named("m77_1_insert_check")
 def _m77_1_insert_check():
-    check(f"[M77-1] Insert: the toolbar shows the cursor tool ({tool_id()}), pivot = cursor ({ts().transform_pivot_point})",
-          tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
+    check(f"[M77-1] Insert: the toolbar keeps the Move tool ({tool_id()}), pivot = cursor ({ts().transform_pivot_point})",
+          tool_id() == "builtin.move" and ts().transform_pivot_point == 'CURSOR')
     # the Help Line text is the operator's report ("Pivot edit on", operators/hold.py ALLSET_OT_pivot_toggle):
     # Python can't read reports (RNA looks Operator.report up before the class), so the state stands for it
     check("[M77-1] pivot edit on (its report says 'Pivot edit on')", mod("operators.hold").COMPONENT.on)
@@ -2085,7 +2086,25 @@ def _m77_1_insert_check():
     rv3d = view3d()[0].spaces.active.region_3d
     C["m77_view"] = (rv3d.view_location.copy(), rv3d.view_distance)
     rv3d.view_location, rv3d.view_distance = (0, 0, 0), 6 * k()
-    C["face_p"] = screen(Vector((0.5 * k(), 0.0, 0.0)))
+
+
+@named("m77_1_pick")
+def _m77_1_pick():
+    # the Move manipulator stays while the pivot is edited and owns its pixels (its X arrow covers the face centre):
+    # click the first point of the face that picks a component there (the view changed one step before: redrawn)
+    pre = mod("operators.preselect")
+    _area, region = view3d()
+    C["face_p"] = screen(Vector((0.5 * k(), -0.3 * k(), -0.3 * k())))
+    with override():
+        for y in (-0.3, -0.4, 0.3, -0.15, 0.4):
+            for z in (-0.3, -0.4, 0.3, -0.15, 0.4):
+                p = screen(Vector((0.5 * k(), y * k(), z * k())))
+                if pre.pick(bpy.context, region, region.data, (round(p.x - region.x), round(p.y - region.y))):
+                    C["face_p"] = p
+                    break
+            else:
+                continue
+            break
     click_at(C["face_p"])
 
 
@@ -2120,7 +2139,7 @@ def _m77_1_off():
     with override():
         centre, frame, _o = mod("ui.manipulator").pivot_frame(bpy.context, 'TRANSLATE')
     zx = abs(Vector(frame.col[2]).x) if hasattr(frame, "col") else 0
-    check(f"[M77-1] Insert again: the Move tool back ({tool_id()}), manipulator at the pivot ({cm(centre)} cm), "
+    check(f"[M77-1] Insert again: the Move tool ({tool_id()}), manipulator at the pivot ({cm(centre)} cm), "
           f"face-normal axes ({slot})",
           tool_id() == "builtin.move" and (centre - C["pivot"]).length < 1e-6 and slot == "Maya Pivot")
     hover()
@@ -2129,7 +2148,7 @@ def _m77_1_off():
 
 @named("m77_3_f8")
 def _m77_3_f8():
-    check("[M77-3] (Insert on)", tool_id() == "builtin.cursor")
+    check("[M77-3] (Insert on)", mod("operators.hold").COMPONENT.on and tool_id() == "builtin.move")
     hover()
     tap('F8')
 

@@ -7,6 +7,7 @@ https://help.autodesk.com/cloudhelp/2026/ENU/Maya-Basics/files/GUID-150B390E-840
 Click: position + orientation; Shift: position only; Ctrl: orientation only;
 Ctrl+Shift: aim the active pivot axis. Picking changes the pivot, never the mesh
 selection. The existing pre-selection cache supplies occlusion-aware V/E/F hits.
+In component mode a click on empty space resets the pivot (selection centre, World axes).
 """
 
 import bpy
@@ -133,6 +134,11 @@ class ALLSET_OT_pivot_pick(bpy.types.Operator):
             return {'PASS_THROUGH'}
         target = preselect.pick(context, region, rv3d, mouse)
         if target is None:
+            if (context.mode == 'EDIT_MESH' and hold.COMPONENT.on
+                    and not preselect._extrude_block(context, region, rv3d, mouse)):
+                # Maya: a click on empty space puts the component pivot back on the selection (World axes)
+                hold.COMPONENT.reset(context)
+                return {'FINISHED'}
             return {'CANCELLED'}
         for ob, cache in cs:
             if ob.as_pointer() == target[0]:

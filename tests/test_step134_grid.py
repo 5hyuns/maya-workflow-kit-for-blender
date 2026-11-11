@@ -49,29 +49,9 @@ def test_template_views_hide_the_cursor():
         bpy.ops.wm.read_homefile()
 
 
-def test_component_pivot_shows_only_hidden_cursors():
-    views = _views()
-    assert len(views) >= 1
-    hidden, kept = views[0], views[1:]
-    for sp in views:
-        sp.overlay.show_cursor = True
-    hidden.overlay.show_cursor = False
-    try:
-        shown = hold.show_cursors()
-        assert shown == {hidden.as_pointer()}, shown
-        assert all(sp.overlay.show_cursor for sp in views)
-        assert hold.show_cursors() == set()          # nothing left hidden: a second start adds nothing
-        hold.hide_cursors(shown)
-        assert not hidden.overlay.show_cursor
-        assert all(sp.overlay.show_cursor for sp in kept)   # views that showed it before keep it
-        hold.hide_cursors(set())                       # nothing to do
-    finally:
-        for sp in views:
-            sp.overlay.show_cursor = True
-
-
-def test_component_edit_restores_the_cursor():
-    """start() / finish() of the D / Insert pivot edit: the cursor shows during the edit, hidden again after."""
+def test_component_edit_keeps_the_cursor_hidden():
+    """start() / finish() of the D / Insert pivot edit: the views that hide Blender's 3D cursor keep it hidden (Maya
+    has none; the manipulator shows the component pivot while it is edited)."""
     views = _views()
     for sp in views:
         sp.overlay.show_cursor = False
@@ -80,10 +60,9 @@ def test_component_edit_restores_the_cursor():
     comp = hold.ComponentPivotEdit()
     try:
         comp.start(bpy.context, toggled=True)
-        assert comp.on and all(sp.overlay.show_cursor for sp in views)
+        assert comp.on and not any(sp.overlay.show_cursor for sp in views)
         comp.finish(bpy.context)
         assert not comp.on and not any(sp.overlay.show_cursor for sp in views)
-        assert comp.cursors == set()
     finally:
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')

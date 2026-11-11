@@ -176,9 +176,6 @@ def _carry():
     _mode[0] = mode
     if workspace is None:
         return None
-    from . import hold
-    if hold.COMPONENT.on or hold.COMPONENT.pending_tool:     # the D / Insert pivot edit sets its own tool
-        return None
     current = _tool_of(workspace, mode)
     seen = _seen.get(mode)
     if (seen is not None and seen != current) or (seen is None and current and not is_sacred(current)):

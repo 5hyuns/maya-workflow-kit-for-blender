@@ -16,6 +16,8 @@ class ALLSET_OT_pivot_translate(bpy.types.Operator):
 
     constraint_axis: bpy.props.BoolVectorProperty(size=3, default=(False, False, False), options={'HIDDEN', 'SKIP_SAVE'})
     value: bpy.props.FloatVectorProperty(name="Offset", size=3, subtype='TRANSLATION', options={'HIDDEN', 'SKIP_SAVE'})
+    # the event type of the button whose release ends the drag (a middle drag moves the pivot too)
+    button: bpy.props.StringProperty(default='LEFTMOUSE', options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
@@ -104,7 +106,7 @@ class ALLSET_OT_pivot_translate(bpy.types.Operator):
             return {'CANCELLED'}
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             return {'FINISHED'}
-        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+        if event.type == self.button and event.value == 'RELEASE':
             return {'FINISHED'}
         if event.type == 'D':
             return {'RUNNING_MODAL'}

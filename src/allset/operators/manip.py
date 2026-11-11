@@ -41,6 +41,23 @@ def from_xform_gizmo(context):
     return group is not None and group.bl_idname in XFORM_GROUPS
 
 
+def component_pivot_edit(context):
+    """D / Insert edit the component pivot: the Move / Rotate / Scale tool stays, and like Maya its drags move the
+    pivot, never the components."""
+    from . import hold
+    return context.mode == hold.EDIT_MODE and hold.COMPONENT.on
+
+
+def move_pivot(axes, button):
+    """Start a pivot drag (operators/pivot_translate.py) along ``axes`` (constraint), ended by ``button``'s release."""
+    try:
+        res = bpy.ops.allset.pivot_translate('INVOKE_DEFAULT', constraint_axis=tuple(bool(a) for a in axes),
+                                             button=button)
+    except RuntimeError:
+        return {'PASS_THROUGH'}
+    return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
+
+
 def _edit_meshes(context):
     return [ob for ob in context.objects_in_mode_unique_data if ob.type == 'MESH']
 
@@ -52,7 +69,7 @@ def _selected_coords(ob):
 
 def kind(context):
     """'DUPLICATE', 'EXTRUDE' or None for a Shift+press on the manipulator."""
-    if not from_xform_gizmo(context):
+    if not from_xform_gizmo(context) or component_pivot_edit(context):
         return None
     if context.mode == 'OBJECT':
         if context.selected_objects and _pref(context, "smart_duplicate"):
@@ -430,6 +447,10 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         return context.area is not None and context.area.type == 'VIEW_3D'
 
     def invoke(self, context, _event):
+        if component_pivot_edit(context):
+            # Maya: a middle drag while the pivot is edited moves the pivot along the active handle (any tool)
+            handle = HANDLES.get('TRANSLATE') or {}
+            return move_pivot(handle.get("constraint_axis", (False, False, False)), 'MIDDLEMOUSE')
         from . import snap_align
         snap_align.apply_tool(context.scene.tool_settings, self.mode)   # per-tool Step Snap
         kwargs = {"release_confirm": True}
@@ -618,7 +639,8 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
         return context.area is not None and context.area.type == 'VIEW_3D' and context.region_data is not None
 
     def invoke(self, context, event):
-        dirs, otype = axis_dirs(context, self.mode)
+        self._pivot = component_pivot_edit(context)
+        dirs, otype = axis_dirs(context, 'TRANSLATE' if self._pivot else self.mode)
         if dirs is None:
             return {'PASS_THROUGH'}
         self._dirs, self._otype = dirs, otype
@@ -635,6 +657,9 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
             i = pick_axis(drag, self._dirs)
             if i is None:
                 return {'CANCELLED'}
+            if self._pivot:      # the pivot is edited: its axis moves the pivot (Maya)
+                move_pivot(tuple(k == i for k in range(3)), 'MIDDLEMOUSE')
+                return {'FINISHED'}
             op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
             try:
                 # launched from this MOUSEMOVE: release_confirm can't see the MMB, so the transform is

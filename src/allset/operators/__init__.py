@@ -18,6 +18,7 @@ from . import move_component  # Edit Mesh > Transform (Transform Component)
 from . import extrude_curve  # Edit Mesh > Extrude of faces along a selected curve
 from . import ik_rp  # #162: Maya ikRPsolver pole vector / twist
 from . import joint_edit  # #160: joint moves keep Maya frames, Preserve Children, Edit-mode Translate
+from . import pivot_follow  # a placed component pivot moves with the components (#351)
 from . import pivot_pick
 from . import pivot_rotate
 from . import pivot_translate
@@ -279,6 +280,7 @@ def register():
     symmetry.register_handler()
     soft_select.register_handlers()
     pivot.register_handler()
+    pivot_follow.register_handlers()
     project.register_handlers()
     autosave.register()
     preselect.register_handlers()
@@ -378,6 +380,7 @@ def unregister():
     multi_cut.unregister_handlers()
     cut_sew.unregister_handlers()
     project.unregister_handlers()
+    pivot_follow.unregister_handlers()
     pivot.unregister_handler()
     soft_select.unregister_handlers()
     symmetry.unregister_handler()

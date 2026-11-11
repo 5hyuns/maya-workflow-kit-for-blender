@@ -56,15 +56,12 @@ class ALLSET_OT_pivot_option(bpy.types.Operator):
                                  "on the object's own origin")))
 
     def execute(self, context):
-        from . import hold
         wm = context.window_manager
         if self.option in RESET_MODES:          # a pair of radio items: picking one sets it
             setattr(wm, RESET_PROP, self.option == "RESET_ZERO")
             return {'FINISHED'}
         prop = _PROP[self.option]
-        setattr(wm, prop, not option(self.option, context))
-        if self.option != "PIN" and hold.COMPONENT.on:
-            hold.apply_cursor_options(context)
+        setattr(wm, prop, not option(self.option, context))     # read by pivot_pick on the next click
         return {'FINISHED'}
 
 

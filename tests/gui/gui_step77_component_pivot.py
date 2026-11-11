@@ -1,7 +1,7 @@
-"""In a real UI: Maya Insert in component mode — F9, W, Insert = cursor tool + cursor pivot,
-a click on a side face places and orients the pivot ("Maya Pivot" Move axis), a drag moves it, Insert again
-= Move tool back with the pivot kept; Insert on + F8 out of edit mode closes it, the tool comes back in
-edit mode."""
+"""In a real UI: Maya Insert in component mode — F9, W, Insert = the Move tool stays (its manipulator shows the
+pivot handles) + cursor pivot, a click on a side face places and orients the pivot ("Maya Pivot" Move axis), a drag
+moves it, Insert again = pivot kept; Insert on + F8 out of edit mode closes it, the Move tool is still there in edit
+mode."""
 
 import os
 import sys
@@ -91,13 +91,16 @@ def s_insert_on():
 
 @step
 def s_insert_check():
-    check(f"Insert: cursor tool ({tool_id()}) and cursor pivot ({ts().transform_pivot_point})",
-          tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
+    check(f"Insert: the Move tool stays ({tool_id()}), cursor pivot ({ts().transform_pivot_point})",
+          tool_id() == "builtin.move" and ts().transform_pivot_point == 'CURSOR')
     ob = bpy.context.edit_object
     bm = bmesh.from_edit_mesh(ob.data)
     C['world'] = [ob.matrix_world @ v.co for v in bm.verts]
     C['selection'] = tuple(tuple(e.index for e in elements if e.select) for elements in (bm.verts, bm.edges, bm.faces))
-    click(screen_xy(Vector((1.0, -0.3, 0.2))))          # the +X side face
+    # a close view: the manipulator (now shown while the pivot is edited) owns its own pixels on a small cube
+    rv3d = view3d()[0].spaces.active.region_3d
+    rv3d.view_location, rv3d.view_distance = (0, 0, 0), 6
+    click(screen_xy(Vector((1.0, -0.7, -0.6))))          # the +X side face, away from the handles
 
 
 @step
@@ -110,7 +113,7 @@ def s_clicked():
     check(f"the pivot turns to the face (cursor Z = {tuple(round(v, 2) for v in normal)})",
           abs(normal.x) > 0.9)
     shot("gui_step77_insert_on.png")
-    xy = screen_xy(Vector((1.0, 0.3, -0.3)))
+    xy = screen_xy(Vector((1.0, -0.45, -0.8)))
     hover(xy)
     ev('LEFTMOUSE', 'PRESS', x=xy[0], y=xy[1])
     C["drag"] = xy
@@ -144,7 +147,7 @@ def s_dragged():
 
 @step
 def s_insert_off():
-    check(f"Insert again: Move tool back ({tool_id()}), placed pivot kept ({ts().transform_pivot_point})",
+    check(f"Insert again: Move tool ({tool_id()}), placed pivot kept ({ts().transform_pivot_point})",
           tool_id() == "builtin.move" and ts().transform_pivot_point == 'CURSOR')
     check(f"the turned pivot is the Move axis ({move_slot()})", move_slot() == "Maya Pivot")
     shot("gui_step77_insert_off.png")
@@ -153,7 +156,9 @@ def s_insert_off():
 
 @step
 def s_insert_again():
-    check(f"Insert on again ({tool_id()})", tool_id() == "builtin.cursor")
+    from importlib import import_module
+    on = import_module(MODULE + ".operators.hold").COMPONENT.on
+    check(f"Insert on again ({tool_id()}, {on})", on and tool_id() == "builtin.move")
     tap('F8')
 
 
@@ -176,7 +181,7 @@ def s_back():
 
 @step
 def s_back_check():
-    check(f"back in edit mode: the Move tool returns ({tool_id()})",
+    check(f"back in edit mode: the Move tool is there ({tool_id()})",
           bpy.context.mode == 'EDIT_MESH' and tool_id() == "builtin.move")
 
 

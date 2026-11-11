@@ -31,12 +31,13 @@ def _edit_cube():
     sc.cursor.rotation_euler = (0, 0, 0)
     sc.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
     sc.transform_orientation_slots[pivot.MOVE_SLOT].type = 'GLOBAL'
+    bpy.ops.wm.tool_set_by_id(name="builtin.move", space_type='VIEW_3D')    # the pivot is edited with Move
     return sc
 
 
-def _cursor_orientation():
-    tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=True)
-    return tool.operator_properties(hold.CURSOR_OP).orientation
+def _tool_id():
+    tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
+    return tool.idname if tool is not None else None
 
 
 def test_insert_is_bound_in_mesh_and_object_mode():
@@ -60,17 +61,16 @@ def test_turned():
 
 def test_insert_toggles_the_cursor_pivot_edit():
     sc = _edit_cube()
-    before = _cursor_orientation()
     assert bpy.ops.allset.pivot_toggle() == {'FINISHED'}
     assert hold.COMPONENT.on and hold.COMPONENT.toggled
     assert sc.tool_settings.transform_pivot_point == 'CURSOR'
-    assert _cursor_orientation() == 'GEOM', "Maya snapPivotOri: component click orients the pivot"
+    assert _tool_id() == "builtin.move", "the Move tool and its manipulator stay (like Maya)"
     assert not sc.tool_settings.use_transform_data_origin, "edit mode doesn't use Affect Only Origins"
     sc.cursor.location = (0.5, 0.0, 1.0)                      # the user placed the pivot
     bpy.ops.allset.pivot_toggle()
     assert not hold.COMPONENT.on
     assert sc.tool_settings.transform_pivot_point == 'CURSOR', "a placed pivot stays"
-    assert _cursor_orientation() == before
+    assert _tool_id() == "builtin.move"
     assert sc.transform_orientation_slots[pivot.MOVE_SLOT].type == 'GLOBAL', "not turned: axis kept"
     # tap on / off without moving: the custom pivot goes back to the bbox centre
     bpy.ops.allset.pivot_toggle()
@@ -82,7 +82,7 @@ def test_turned_cursor_becomes_maya_pivot_orientation():
     sc = _edit_cube()
     bpy.ops.allset.pivot_toggle()
     sc.cursor.location = (0.0, 0.0, 1.0)
-    sc.cursor.rotation_euler = (0.4, 0.0, 0.0)                # cursor tool GEOM on a tilted face
+    sc.cursor.rotation_euler = (0.4, 0.0, 0.0)                # a ring turned the pivot / a tilted face was picked
     bpy.ops.allset.pivot_toggle()
     slot = sc.transform_orientation_slots[pivot.MOVE_SLOT]
     assert slot.type == pivot.ORIENT_NAME, slot.type
@@ -99,10 +99,9 @@ def test_leaving_edit_mode_closes_the_toggle():
     hold.COMPONENT.tick(bpy.context)
     assert not hold.COMPONENT.on
     assert sc.tool_settings.transform_pivot_point != 'CURSOR'
-    assert hold.COMPONENT.pending_tool is not None, "the tool comes back in edit mode"
     bpy.ops.object.mode_set(mode='EDIT')
     hold.COMPONENT.tick(bpy.context)
-    assert hold.COMPONENT.pending_tool is None
+    assert not hold.COMPONENT.on and _tool_id() == "builtin.move", "the tool never changed"
 
 
 def test_object_mode_insert_unchanged():
