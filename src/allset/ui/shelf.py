@@ -1198,6 +1198,11 @@ def is_shelf_row(space):
     return space is not None and space.type == 'IMAGE_EDITOR' and mask is not None and mask.name == SHELF_MARKER
 
 
+def is_kit_row(space):
+    """The Status Line strip or the Shelf row: kit chrome in an Image Editor, never an editor of its own."""
+    return is_strip(space) or is_shelf_row(space)
+
+
 def strip_area(screen):
     for area in (screen.areas if screen else ()):
         if area.type == 'IMAGE_EDITOR' and is_strip(area.spaces.active):
@@ -2107,11 +2112,17 @@ _handle = []
 
 def settle_rows():
     """Shelf rows of files made by older versions: switch the image navigation gizmo off (it sat, undrawn, under the
-    scroll bar and took its clicks). Run from a timer / load_post, never from drawing."""
+    scroll bar and took its clicks); a strip or shelf row an older shelf UV Editor button switched to the UV Editor
+    goes back to showing the strip. Run from a timer / load_post, never from drawing."""
     for window in bpy.context.window_manager.windows:
         for area in window.screen.areas:
             space = area.spaces.active
-            if area.type == 'IMAGE_EDITOR' and is_shelf_row(space) and space.show_gizmo_navigate:
+            if area.type != 'IMAGE_EDITOR' or not is_kit_row(space):
+                continue
+            if space.mode != 'VIEW':
+                space.mode = 'VIEW'
+                area.tag_redraw()
+            if is_shelf_row(space) and space.show_gizmo_navigate:
                 space.show_gizmo_navigate = False
 
 

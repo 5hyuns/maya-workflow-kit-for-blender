@@ -77,7 +77,7 @@ BY_COMMAND = {
     "MultiCutTool": (("tool", "allset.multi_cut_tool", True), 'SCULPTMODE_HLT'),
     "MergeVertexTool": (("tool", "allset.target_weld_tool", True), 'AUTOMERGE_OFF'),   # Target Weld
     "QuadDrawTool": ("allset.quad_draw_start", 'MESH_DATA'),        # #30
-    "TextureViewWindow": (("allset.hb_pane", {"ui_type": 'UV'}), 'UV'),
+    "TextureViewWindow": (("allset.open_editor", {"ui_type": 'UV'}), 'UV'),    # = Windows > UV Editor
     "SetCutSewUVTool": ("allset.cut_sew_tool_set", 'UV_EDGESEL'),
     # --- Sculpting ---
     "SetMeshSculptTool": (("object.mode_set", {"mode": 'SCULPT'}), 'SCULPTMODE_HLT'),

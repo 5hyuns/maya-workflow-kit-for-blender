@@ -560,6 +560,9 @@ class ALLSET_OT_hb_pane(bpy.types.Operator):
     def execute(self, context):
         if context.area is None:
             return {'CANCELLED'}
+        from ..ui import shelf
+        if shelf.is_kit_row(context.area.spaces.active):
+            return {'CANCELLED'}        # the Status Line / Shelf strip is not a panel
         try:
             context.area.ui_type = self.ui_type
         except TypeError:

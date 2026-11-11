@@ -891,9 +891,10 @@ UV_SELECT_MODES = {'UV': 'VERTEX', 'UV_EDGE': 'EDGE', 'UV_FACE': 'FACE'}
 
 
 def find_uv_editor(context):
+    from ..ui import shelf          # the Status Line / Shelf strips are Image Editors too, never the UV Editor
     for win in context.window_manager.windows:
         for area in win.screen.areas:
-            if area.ui_type == 'UV':
+            if area.ui_type == 'UV' and not shelf.is_kit_row(area.spaces.active):
                 return win, area
     return None, None
 
