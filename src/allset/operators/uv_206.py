@@ -414,12 +414,15 @@ class _UVOp:
     bl_options = {'REGISTER', 'UNDO'}
     poll = classmethod(lambda cls, context: _poll(context))
     empty = "Select UVs"
+    # a main UV menu command: with UV Sync Selection off it can take the 3D View selection
+    # (uv_tools.mesh_selection_wanted)
+    reads_3d = False
 
     def run(self, context, bm, uv, synced, uv_mode):
         raise NotImplementedError
 
     def execute(self, context):
-        synced = sync(context)
+        synced = sync(context) or (self.reads_3d and uv_tools.mesh_selection_wanted(context))
         uv_mode = context.scene.tool_settings.uv_select_mode
         done = 0
         for ob in _meshes(context):
@@ -464,6 +467,7 @@ class ALLSET_OT_uv_split(_UVOp, bpy.types.Operator):
     bl_idname = "allset.uv_split"
     bl_label = "Split"
     empty = "Select UVs, edges or faces"
+    reads_3d = True
 
     def run(self, context, bm, uv, synced, uv_mode):
         edges = split_edges(bm, uv, synced, uv_mode)
@@ -495,6 +499,7 @@ class ALLSET_OT_uv_auto_seams(_UVOp, bpy.types.Operator):
     bl_idname = "allset.uv_auto_seams"
     bl_label = "Auto Seams"
     empty = "No seams needed: every shell can already be unfolded"
+    reads_3d = True
 
     def run(self, context, bm, uv, synced, uv_mode):
         shown = [f for f in bm.faces if not f.hide and (synced or f.select)]

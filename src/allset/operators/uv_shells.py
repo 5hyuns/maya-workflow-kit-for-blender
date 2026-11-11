@@ -398,6 +398,9 @@ class _ShellOp:
     # "the selected shells, all when none are selected" counts the selection of every mesh in edit mode: a mesh
     # with nothing picked is left alone while another mesh has a pick
     _fallback = True
+    # a main UV menu command: with UV Sync Selection off it can take the 3D View selection
+    # (uv_tools.mesh_selection_wanted)
+    reads_3d = False
 
     poll = classmethod(lambda cls, context: _poll(context))
 
@@ -406,7 +409,7 @@ class _ShellOp:
 
     def execute(self, context):
         done = 0
-        synced = sync(context)
+        synced = sync(context) or (self.reads_3d and uv_tools.mesh_selection_wanted(context))
         self._fallback = not uv_tools.picked_anywhere(context)
         for ob in _meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
@@ -598,6 +601,7 @@ class ALLSET_OT_uv_delete(_ShellOp, bpy.types.Operator):
     bl_idname = "allset.uv_delete"
     bl_label = "Delete UVs"
     empty = "Select UVs, edges or faces"
+    reads_3d = True
 
     def run(self, context, bm, uv, synced):
         return delete_uvs(delete_faces(bm, uv, synced, context.scene.tool_settings.uv_select_mode), uv)
@@ -653,15 +657,10 @@ class ALLSET_OT_uv_merge(_ShellOp, bpy.types.Operator):
     empty = "Select UVs to merge"
 
     distance: FloatProperty(name="Threshold", default=0.01, min=0.0, soft_max=1.0, options={'SKIP_SAVE'})
-    _mesh = False
-
-    def execute(self, context):
-        # from the main UV menu with UV Sync Selection off: the vertices the 3D View shows selected
-        self._mesh = uv_tools.mesh_selection_wanted(context)
-        return super().execute(context)
+    reads_3d = True
 
     def run(self, context, bm, uv, synced):
-        pts = selected_points(bm, uv, synced or self._mesh)
+        pts = selected_points(bm, uv, synced)
         if not pts:
             return 0
         merge_points(pts, uv, self.distance)

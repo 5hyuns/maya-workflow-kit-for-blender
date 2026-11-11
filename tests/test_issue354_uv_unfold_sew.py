@@ -219,3 +219,90 @@ def test_uv_mode_keeps_the_uv_selection():
     assert sum(e.seam for e in _bm(ob)[0].edges) == seams
     assert _shells(ob) == 2
     bpy.ops.allset.uv_component(mode='EDGE')
+
+
+# --- the other main UV menu commands that read a selection: Delete UVs, Split UVs, Auto Seams --------------------
+
+def _pick_top_face(ob):
+    bm, _uv = _bm(ob)
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    bpy.context.scene.tool_settings.mesh_select_mode = (False, False, True)
+    bm.select_mode = {'FACE'}
+    _top(bm).select_set(True)
+    bmesh.update_edit_mesh(ob.data)
+    return _top(bm).index
+
+
+def test_main_menu_delete_and_split_with_sync_off():
+    for sync in (True, False):
+        # Delete UVs: the face picked in the 3D View loses its UVs (they collapse to 0, 0)
+        ob, _idx = _cube_apart(sync)
+        top = _pick_top_face(ob)
+        assert bpy.ops.allset.menu_item(item="UV/Delete UVs") == {'FINISHED'}
+        bm, uv = _bm(ob)
+        assert all(lp[uv].uv.length < 1e-9 for lp in bm.faces[top].loops), sync
+        assert sum(all(lp[uv].uv.length < 1e-9 for lp in f.loops) for f in bm.faces) == 1, sync
+        # Split UVs: the edge picked in the 3D View (inside a shell) is cut there
+        ob, _idx = _cube_apart(sync)
+        bm, _uv = _bm(ob)
+        inner = next(e for e in bm.edges if not e.seam and all(f is not _top(bm) for f in e.link_faces))
+        for el in (*bm.verts, *bm.edges):
+            el.select = False
+        inner.select = True
+        for v in inner.verts:
+            v.select = True
+        bm.select_mode = {'EDGE'}
+        bmesh.update_edit_mesh(ob.data)
+        assert bpy.ops.allset.menu_item(item="UV/Split UVs") == {'FINISHED'}
+        bm, _uv = _bm(ob)
+        assert bm.edges[inner.index].seam, sync
+        assert sum(e.seam for e in bm.edges) == 5, sync        # the top face's 4 + the picked one
+
+
+def _two_closed_cubes(sync):
+    """One mesh, two cubes with one closed UV shell each (a UV per vertex); every face of the first cube picked in
+    the 3D View, face select mode."""
+    _clear()
+    from mathutils import Matrix
+    me = bpy.data.meshes.new("two")
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    bmesh.ops.create_cube(bm, size=1.0, matrix=Matrix.Translation((3.0, 0.0, 0.0)))
+    uv = bm.loops.layers.uv.new("UVMap")
+    for f in bm.faces:
+        for lp in f.loops:
+            co = lp.vert.co
+            lp[uv].uv = (co.x * 0.1 + co.z * 0.03, co.y * 0.1 + co.z * 0.05)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new("two", me)
+    bpy.context.collection.objects.link(ob)
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    ts = bpy.context.scene.tool_settings
+    ts.use_uv_select_sync = sync
+    ts.mesh_select_mode = (False, False, True)
+    bm, _uv = _bm(ob)
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    for f in bm.faces:
+        for lp in f.loops:
+            lp.uv_select_vert = lp.uv_select_edge = False
+        if f.calc_center_median().x < 1.5:
+            f.select_set(True)
+    bmesh.update_edit_mesh(ob.data)
+    return ob
+
+
+def test_main_menu_auto_seams_takes_the_3d_view_faces_with_sync_off():
+    """Auto Seams on the cube picked in the 3D View: seams on that cube only, with UV Sync on or off."""
+    for sync in (True, False):
+        ob = _two_closed_cubes(sync)
+        assert _shells(ob) == 2
+        assert bpy.ops.allset.menu_item(item="UV/Auto Seams") == {'FINISHED'}
+        bm, _uv = _bm(ob)
+        seams = [e for e in bm.edges if e.seam]
+        assert seams, sync
+        assert all(max(v.co.x for v in e.verts) < 1.5 for e in seams), sync     # none on the second cube
