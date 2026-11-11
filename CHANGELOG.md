@@ -85,17 +85,20 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   take it back and forward with the move, and Pin Component Pivot keeps it where it is. A pivot edit left on ends
   when another file is opened (File > Open / New / Revert), so the next file keeps its own pivot point and selection
   modes (#351).
-- The Maya Outliner is drawn by the kit as a Maya tree: the startup cameras first, then the objects in creation order,
-  each joint as a row under its parent joint (no skeleton or Pose rows in between), an object parented to a joint
-  under that joint, and the sets after the last row. A click picks a row (Ctrl adds, Shift picks a range) and a left
-  drag picks the rows it passes; a middle drag parents a row onto another (onto a joint: under that joint, kept in
-  place; a root joint moves its skeleton; onto a set: adds to it; onto empty space: to the world); double-click or
-  Enter renames; the arrow keys pick-walk; F (Reveal Selected) opens the rows down to the selection; Delete deletes
-  the picked rows and what is under them; the right-click menu has Shapes, Reveal Selected, Hide In Outliner, Sets,
-  Display and Show (on a set row, the set's menu). Rows have an eye column, and a closed row that holds the selection
-  is highlighted: like Maya, picking in the viewport doesn't open the tree. Display > Shapes adds the shape rows
-  (pCube1 > pCubeShape1). Blender's own Outliner rows come back when the Outliner leaves Maya mode and when the kit is
-  switched off, and a saved file opens in plain Blender as usual (#348).
+- The Maya Outliner (the kit's Outliner in the Maya layout, Windows > Outliner or docked) is drawn by the kit as a
+  Maya tree: the startup cameras first, then the objects in creation order, each joint as a row under its parent joint
+  (no skeleton or Pose rows in between), an object parented to a joint under that joint, and the sets after the last
+  row. A click picks a row (Ctrl adds or removes, Shift picks a range) and a left drag picks the rows it passes (it no
+  longer parents: the middle drag does, like Maya); a middle drag parents a row onto another (onto a joint: under that
+  joint, kept in place; a joint moves only within its skeleton and a root joint moves the whole skeleton; between two
+  rows: placed there; onto a set: adds to it; onto empty space: to the world); double-click or Enter renames; the
+  arrow keys pick-walk; F (Reveal Selected) opens the rows down to the selection; Delete or Backspace deletes the
+  picked rows with everything below them; the right-click menu has Shapes, Reveal Selected, Hide In Outliner, Sets,
+  Display and Show (on a set row: the set's menu). Display > Visibility Column adds an eye column, and the rows above
+  the selection get a light highlight, so a closed row shows that it holds the selection: like Maya, picking in the
+  viewport doesn't open the tree. Display > Shapes adds the shape rows (pCube1 > pCubeShape1), and the search field
+  keeps the matching rows and the rows above them. Blender's own Outliner rows come back when Maya mode is switched
+  off and when the kit is disabled, and a saved file opens in plain Blender as usual (#348).
 - Alt+RMB in the Node Editor zooms with a left / right drag only, and in the UV Editor it zooms in with a drag right
   or down and out with a drag left or up, like Maya (#325).
 - Render > Render Sequence (the menu item and the Rendering shelf button) runs with the options saved in its option

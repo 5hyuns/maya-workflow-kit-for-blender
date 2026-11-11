@@ -38,7 +38,8 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
   side cameras of a new scene; older cameras keep Blender's Auto fit (#345).
 - The Maya Outliner is a Maya tree drawn by the kit: joints are rows under their parent joint (#348 — the joints
   couldn't be seen before), objects in creation order, sets last; click / Ctrl / Shift picks, a left drag selects,
-  a middle drag parents, double-click or Enter renames, F reveals the selection, and the right-click menu is Maya's.
+  a middle drag parents, double-click or Enter renames, F reveals the selection, and the right-click menu has Shapes,
+  Reveal Selected, Hide In Outliner, Sets, Display and Show.
 - Create Camera From View (Ctrl+Shift+C, panel View menu) copies the camera the view looks through, the view looks
   through the copy and the selection stays; Panels > Orthographic has New > Front / Back / Right / Left / Top / Bottom.
 - Component mode D / Insert keeps the Move / Rotate / Scale manipulator with pivot handles (with other tools, the
@@ -68,8 +69,8 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 - Component pivot: Undo doesn't yet take back an edit of the pivot alone (moving it with D); Maya's Undo does.
 - Duplicate input graph: the copy's deformers still use the original's skeleton, lattice or cluster handles; Maya
   copies those too.
-- Outliner: Blender edits joints in Pose Mode, so a joint and a mesh can't be picked together; picking a mesh row
-  after a joint keeps the whole skeleton selected with it (what Bind Skin needs).
+- Outliner: Blender edits joints in Pose Mode, so a joint and a mesh can't be picked together; Ctrl+clicking a mesh
+  row after a joint keeps the whole skeleton selected with it (what Bind Skin needs).
 - Saving the scene while Render Sequence renders several cameras saves the camera and output folder of the camera
   being rendered; save before or after the sequence.
 - 2D Pan/Zoom in Blender's own persp view: it has no film offset, so the kit turns the view about its eye and narrows
