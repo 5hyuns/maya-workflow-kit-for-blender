@@ -2993,7 +2993,7 @@ STRINGS = {
     'Paint operation': '绘制操作',
     'Painting': '绘制',
     'Pan / Zoom 2D View': '平移 / 缩放 2D 视图',
-    'Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)': '用 Alt+MMB 平移曲线编辑器 / 摄影表，用 Alt+LMB+MMB 缩放 (Maya)',
+    'Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)': '用 Alt+MMB 平移 2D 编辑器，用 Alt+LMB+MMB 缩放 (Maya)',
     'Panel': '面板',
     'Panel Editor...': '面板编辑器...',
     'Panel Handle': '面板手柄',

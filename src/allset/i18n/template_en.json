@@ -10191,7 +10191,7 @@
    "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)": "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)",
    "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)": "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)",
    "Go to the default view (Maya Home)": "Go to the default view (Maya Home)",
-   "Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)": "Pan the Graph Editor / Dope Sheet with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)",
+   "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)": "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)",
    "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings": "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings",
    "Track the view (Maya Alt+MMB); pressing LMB as well dollies": "Track the view (Maya Alt+MMB); pressing LMB as well dollies",
    "Tumble or track the view along one axis only (Maya Alt+Shift+drag)": "Tumble or track the view along one axis only (Maya Alt+Shift+drag)",

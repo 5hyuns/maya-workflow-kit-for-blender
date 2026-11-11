@@ -301,17 +301,23 @@ def patch_camera(kd):
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
          shadows=("Image Paint", "Vertex Paint", "Sculpt"))     # their Alt+RMB stencil control stays, as before
-    # UV / Image Editor: the same left / right dolly instead of IC image.view_zoom (Zoom Axis preference).
-    # Graph Editor / Dope Sheet keep View2D view2d.zoom: it zooms each axis by its own drag (right = in), no
-    # preference involved.
+    # UV / Image Editor: a dolly instead of IC image.view_zoom (Zoom Axis preference): right / down = in, left / up
+    # = out. Graph Editor / Dope Sheet / NLA keep View2D view2d.zoom: it zooms each axis by its own drag (right = in;
+    # their rows never zoom), no preference involved.
     kd.remove("Image", "image.view_zoom", type="RIGHTMOUSE", alt=True)
     _add(kd, "Image", "allset.dolly_2d", make_event("RIGHTMOUSE", alt=True), shadows=("View2D",))  # Image runs first
-    # Graph Editor / Dope Sheet: Alt+LMB+MMB zooms like Alt+RMB, whichever button comes first, and letting go of
-    # one carries on with the other (#325). The kit's modal runs the whole Alt+LMB / Alt+MMB drag there (it pans
-    # like View2D's pan); its poll keeps View2D's own pan in every other editor and the Time Slider.
+    # 2D editors: Alt+LMB+MMB zooms like Alt+RMB, whichever button comes first (#325). The kit's modal runs the whole
+    # Alt+LMB / Alt+MMB drag (it pans like the pan it sits in front of): in View2D for the Graph Editor, Dope Sheet,
+    # NLA and Node Editor, in "Image" for the UV / Image Editor. Its poll keeps the editor's own pan in every other
+    # editor, the Time Slider and the kit's rows.
     for button in ("LEFTMOUSE", "MIDDLEMOUSE"):
         _add(kd, "View2D", "allset.nav_2d", make_event(button, alt=True), first=True,
              shadows=("View2D", "View2D Buttons List"))
+        _add(kd, "Image", "allset.nav_2d", make_event(button, alt=True), first=True, shadows=("Image", "View2D"))
+    # Node Editor Alt+RMB: zoom by the left / right drag only (Blender's view2d.zoom reads the Zoom Axis preference
+    # there); the item passes Alt+RMB on to view2d.zoom in the other View2D editors
+    _add(kd, "View2D", "allset.nav_2d", make_event("RIGHTMOUSE", alt=True), first=True,
+         shadows=("View2D", "View2D Buttons List"))
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);

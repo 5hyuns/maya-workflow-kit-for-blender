@@ -22,7 +22,7 @@ def test_modes_of_the_held_buttons():
 
 
 def _area(type, ui_mode=None):
-    return SimpleNamespace(type=type), SimpleNamespace(ui_mode=ui_mode)
+    return SimpleNamespace(type=type), SimpleNamespace(type=type, ui_mode=ui_mode, mask=None)
 
 
 def test_editors_it_applies_to():
@@ -31,8 +31,8 @@ def test_editors_it_applies_to():
                                 (_area('DOPESHEET_EDITOR', 'DOPESHEET'), True),
                                 (_area('DOPESHEET_EDITOR', 'ACTION'), True),
                                 (_area('DOPESHEET_EDITOR', 'TIMELINE'), False),     # the Time Slider
-                                (_area('NLA_EDITOR'), False), (_area('IMAGE_EDITOR', 'UV'), False),
-                                (_area('NODE_EDITOR'), False), (_area('OUTLINER'), False),
+                                (_area('NLA_EDITOR'), True), (_area('IMAGE_EDITOR', 'UV'), True),
+                                (_area('NODE_EDITOR'), True), (_area('OUTLINER'), False),
                                 (_area('SEQUENCE_EDITOR'), False)):
         assert view.nav2d_editor(area, window, space) is want, (area.type, space.ui_mode)
     area, space = _area('GRAPH_EDITOR', 'FCURVES')
@@ -51,11 +51,15 @@ class _Op(SimpleNamespace):
     """Stand-in for the running operator: the modal's state plus recorders for its zoom / end."""
 
     def __init__(self, first):
-        super().__init__(_held=frozenset({first}), _lmb_pans=True, _mode=view.nav2d_mode({first}), _last=(0, 0),
-                         _anchor=None, _carry=[0.0, 0.0], zooms=[], ended=0)
+        super().__init__(_held=frozenset({first}), _lmb_pans=True, _mmb_pans=True, _pan_on=True,
+                         _mode=view.nav2d_mode({first}), _last=(0, 0), _anchor=None, _carry=[0.0, 0.0], zooms=[],
+                         pans=[], ended=0)
 
     def _zoom(self, context, dx, dy):
         self.zooms.append((dx, dy))
+
+    def _pan(self, context, dx, dy):
+        self.pans.append((dx, dy))
 
     def _end(self, context):
         self.ended += 1
