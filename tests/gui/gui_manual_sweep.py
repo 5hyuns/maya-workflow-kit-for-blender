@@ -2365,7 +2365,7 @@ def _m78_4_side_check():
     C["persp"] = False
 
 
-# --- [M78-5] Ctrl+Shift+C = camera1 from the view (Look Through = the same picture); ortho view -> ortho camera ------
+# --- [M78-5] Ctrl+Shift+C = a copy of the view's camera (persp1, the same picture); ortho view -> ortho camera ------
 
 @named("m78_5_persp")
 def _m78_5_persp():
@@ -2395,7 +2395,7 @@ def _m78_5_persp_check():
         fov_cam = 2 * math.atan(cam.data.sensor_width / (2 * cam.data.lens))
         check(f"[M78-5] Ctrl+Shift+C = {cam.name} at the view (matrix error {err:.1e}), same field of view "
               f"({math.degrees(fov_cam):.2f} vs {math.degrees(fov_view):.2f} deg)",
-              cam.name == "camera1" and err < 1e-4 and abs(fov_cam - fov_view) < 1e-4)
+              cam.name == "persp1" and err < 1e-4 and abs(fov_cam - fov_view) < 1e-4)
     else:
         check(f"[M78-5] Ctrl+Shift+C makes one camera ({[o.name for o in cams]})", False)
     region.data.view_perspective = 'ORTHO'
@@ -2406,9 +2406,11 @@ def _m78_5_persp_check():
 
 @named("m78_5_ortho_check")
 def _m78_5_ortho_check():
-    cam = bpy.context.view_layer.objects.active
-    check(f"[M78-5] from an ortho view: an orthographic camera ({cam and cam.name}, {cam and cam.data.type})",
-          cam is not None and cam.type == 'CAMERA' and cam.data.type == 'ORTHO')
+    # the selection stays (like Maya): the copy is the camera that wasn't there before
+    new = [o for o in bpy.context.scene.objects if o.type == 'CAMERA' and o.name != "persp1"]
+    cam = new[0] if len(new) == 1 else None
+    check(f"[M78-5] from an ortho view: an orthographic camera ({[o.name for o in new]}, {cam and cam.data.type})",
+          cam is not None and cam.data.type == 'ORTHO')
     region = view3d()[1]
     region.data.view_perspective = 'PERSP'
 
