@@ -21,6 +21,7 @@ Item forms (one tuple per row):
 import json
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from ..operators import view as view_ops
@@ -479,6 +480,10 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# rows that change the scene: one undo step named after the command (a Python operator call makes none)
+UNDO_RUNS = {"allset.camera_from_view"}
+
+
 class ALLSET_OT_panel_run(bpy.types.Operator):
     """Run a Blender operator in this view (Maya panel menu item)"""
     bl_idname = "allset.panel_run"
@@ -502,9 +507,17 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
         if area is None:
             return {'CANCELLED'}
         mod, name = self.op.split(".")
-        try:
+        op = getattr(getattr(bpy.ops, mod), name)
+
+        def call():
             with context.temp_override(window=context.window, area=area, region=main_region(area)):
-                getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT', **json.loads(self.props))
+                return op('INVOKE_DEFAULT', **json.loads(self.props))
+        try:
+            if self.op in UNDO_RUNS:
+                from .. import undo_steps
+                undo_steps.command(op.get_rna_type().name, call)
+            else:
+                call()
         except RuntimeError as ex:  # poll failed etc.
             self.report({'WARNING'}, str(ex).strip())
             return {'CANCELLED'}
@@ -616,8 +629,18 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# what each view showed before a kit Look Through (RegionView3D pointer -> perspective, camera name, local camera):
+# when Ctrl+Z removes the camera a view looks through, the view goes back to it (session only)
+_before_look = {}
+
+
 def look_through(context, area, ob):
     space = area.spaces.active
+    rv3d = space.region_3d
+    if rv3d is not None:
+        old = space.camera if space.use_local_camera else context.scene.camera
+        _before_look[rv3d.as_pointer()] = (rv3d.view_perspective, old.name if old is not None else "",
+                                           space.use_local_camera)
     # the view's own camera (a Maya panel's): local first, since a camera set on a view locked to the scene becomes
     # the scene camera
     space.use_local_camera = ob != context.scene.camera
@@ -627,6 +650,38 @@ def look_through(context, area, ob):
     space.lock_camera = True
     from ..operators import camera_overscan
     camera_overscan.apply_later(area)      # the frame fills the view by the camera's Overscan (Maya)
+
+
+def restore_camera_less(window_manager):
+    """Views left looking through no camera (Ctrl+Z took away the camera they looked through) show again what they
+    showed before that Look Through: that camera, else the persp / orthographic view."""
+    for window in window_manager.windows:
+        scene = window.scene
+        for area in window.screen.areas:
+            if area.type != 'VIEW_3D':
+                continue
+            space = area.spaces.active
+            rv3d = space.region_3d
+            if rv3d is None or rv3d.view_perspective != 'CAMERA':
+                continue
+            if (space.camera if space.use_local_camera else scene.camera) is not None:
+                continue
+            perspective, name, local = _before_look.pop(rv3d.as_pointer(), ('PERSP', "", False))
+            cam = scene.objects.get(name) if name else None
+            if perspective == 'CAMERA' and cam is not None:
+                space.use_local_camera = local
+                space.camera = cam
+            else:
+                rv3d.view_perspective = 'ORTHO' if perspective == 'ORTHO' else 'PERSP'
+            area.tag_redraw()
+
+
+@persistent
+def _on_undo(*_args):
+    try:
+        restore_camera_less(bpy.context.window_manager)
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
 
 
 class ALLSET_OT_panel_new_persp(bpy.types.Operator):
@@ -656,13 +711,17 @@ class ALLSET_OT_panel_new_persp(bpy.types.Operator):
         return {'FINISHED'}
 
 
+ORTHO_SIDES = (('front', "Front"), ('back', "Back"), ('right', "Right"), ('left', "Left"), ('top', "Top"),
+               ('bottom', "Bottom"))
+
+
 class ALLSET_OT_panel_new_ortho(bpy.types.Operator):
-    """Make a new orthographic camera (front, side or top) and look through it in this view"""
+    """Make a new orthographic camera that looks from one side and look through it in this view"""
     bl_idname = "allset.panel_new_ortho"
     bl_label = "New Orthographic Camera"
     bl_options = {'UNDO'}
 
-    kind: EnumProperty(name="View", items=(('front', "Front", ""), ('side', "Side", ""), ('top', "Top", "")),
+    kind: EnumProperty(name="View", items=[(k, label, "") for k, label in (*ORTHO_SIDES, ('side', "Side"))],
                        default='front', options={'SKIP_SAVE'})
 
     @classmethod
@@ -670,8 +729,8 @@ class ALLSET_OT_panel_new_ortho(bpy.types.Operator):
         return context.area is not None and context.area.type == 'VIEW_3D'
 
     def execute(self, context):
-        # Maya: New Orthographic > Front / Side / Top makes front1, side1, top1 ... with the settings and the place of
-        # a new scene's camera of that name, and looks through it
+        # Maya: New makes front1, back1, right1 ... (side1 from the panel toolbar's list) 30 units wide, 1000.1 units
+        # out on that side looking at the origin, not renderable; it selects it and looks through it
         from ..operators import create, film_fit, naming, startup_cameras, units
         unit = units.maya_unit(context.scene)
         ob = create.create(context, 'CAMERA', maya_naming=False)
@@ -679,6 +738,7 @@ class ALLSET_OT_panel_new_ortho(bpy.types.Operator):
         naming.apply_maya_name(ob, self.kind)
         ob.data.type = 'ORTHO'
         ob.data.ortho_scale = startup_cameras.MAYA_ORTHO_WIDTH * unit
+        ob.data.allset_renderable = False
         ob.matrix_world = startup_cameras.maya_matrix(self.kind, unit)
         for other in context.selected_objects:
             other.select_set(other == ob)
@@ -695,6 +755,16 @@ class ALLSET_MT_panel_new_ortho(bpy.types.Menu):
 
     def draw(self, context):
         for kind, label in (('front', "Front"), ('side', "Side"), ('top', "Top")):
+            self.layout.operator(ALLSET_OT_panel_new_ortho.bl_idname, text=label).kind = kind
+
+
+class ALLSET_MT_panel_ortho_new(bpy.types.Menu):
+    """New orthographic camera looking from one side (Maya Panels > Orthographic > New)"""
+    bl_idname = "ALLSET_MT_panel_ortho_new"
+    bl_label = "New"
+
+    def draw(self, context):
+        for kind, label in ORTHO_SIDES:
             self.layout.operator(ALLSET_OT_panel_new_ortho.bl_idname, text=label).kind = kind
 
 
@@ -724,6 +794,8 @@ class ALLSET_MT_panel_orthographic(bpy.types.Menu):
     def draw(self, context):
         draw_rows(self.layout, context, [_view("top", 'TOP'), _view("front", 'FRONT'), _view("side", 'RIGHT')])
         _draw_camera_list(self.layout, context, True)
+        self.layout.separator()
+        self.layout.menu(ALLSET_MT_panel_ortho_new.bl_idname, text="New")      # Maya: New > six sides under the list
 
 
 class ALLSET_MT_panel_panel(bpy.types.Menu):
@@ -774,7 +846,7 @@ _generated = [
 ]
 
 classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_tear_off, ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_persp,
-           ALLSET_OT_panel_new_ortho, ALLSET_MT_panel_new_ortho,
+           ALLSET_OT_panel_new_ortho, ALLSET_MT_panel_new_ortho, ALLSET_MT_panel_ortho_new,
            ALLSET_MT_panel_perspective, ALLSET_MT_panel_orthographic, ALLSET_MT_panel_panel,
            ALLSET_MT_panel_blender, ALLSET_MT_panel_bar, *_generated)
 
@@ -817,9 +889,13 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     patch_header()
+    bpy.app.handlers.undo_post.append(_on_undo)
 
 
 def unregister():
+    if _on_undo in bpy.app.handlers.undo_post:
+        bpy.app.handlers.undo_post.remove(_on_undo)
+    _before_look.clear()
     unpatch_header()
     from . import curve_controls
     try:

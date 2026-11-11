@@ -31,6 +31,13 @@ MAYA = {
     "front": ((0.0, 0.0, 1000.1), (0.0, 0.0, 0.0), True),
     "side": ((1000.1, 0.0, 0.0), (0.0, 90.0, 0.0), True),
 }
+# the other sides Panels > Orthographic > New makes a camera for (same distance out, looking at the origin)
+SIDES = {
+    "back": ((0.0, 0.0, -1000.1), (0.0, 180.0, 0.0)),
+    "right": ((1000.1, 0.0, 0.0), (0.0, 90.0, 0.0)),
+    "left": ((-1000.1, 0.0, 0.0), (0.0, -90.0, 0.0)),
+    "bottom": ((0.0, -1000.1, 0.0), (90.0, 0.0, 0.0)),
+}
 # Maya Y-up world -> Blender Z-up world: (x, y, z) -> (x, -z, y). Both cameras look down local -Z with +Y up.
 Y_UP_TO_Z_UP = Matrix.Rotation(math.radians(90.0), 4, 'X')
 
@@ -52,7 +59,8 @@ def names(scene):
 
 
 def maya_matrix(name, unit):
-    t, r, _ortho = MAYA[name]
+    """Blender world matrix of Maya's camera ``name`` (a startup camera or one of ``SIDES``) for Maya unit ``unit``."""
+    t, r = MAYA[name][:2] if name in MAYA else SIDES[name]
     m = Euler(tuple(math.radians(a) for a in r), 'XYZ').to_matrix().to_4x4()
     m.translation = [c * unit for c in t]
     return Y_UP_TO_Z_UP @ m

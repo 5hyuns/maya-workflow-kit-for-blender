@@ -5,7 +5,8 @@ the view.
 - Shift+G = Maya's Repeat Last at the mouse position:
   the point on the
   ground plane under the mouse, then the last action again, then the (new) selection moved there.
-- Ctrl+Shift+C = Maya's View > Create Camera from View hotkey.
+- Ctrl+Shift+C = Maya's View > Create Camera From View hotkey: a copy of the view's camera
+  (``operators/camera_copy.py``).
 """
 
 import bpy
@@ -90,32 +91,25 @@ def camera_matrix(view_matrix):
 
 
 class ALLSET_OT_camera_from_view(bpy.types.Operator):
-    """Create a camera that matches this view (Maya Ctrl+Shift+C, Create Camera from View)"""
+    """Copy this view's camera and look through the copy (Maya View > Create Camera From View, Ctrl+Shift+C)"""
     bl_idname = "allset.camera_from_view"
-    bl_label = "Create Camera from View"
+    bl_label = "Create Camera From View"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return context.area is not None and context.area.type == 'VIEW_3D' and context.region_data is not None
+        return context.area is not None and context.area.type == 'VIEW_3D'
 
     def execute(self, context):
-        space, rv3d = context.space_data, context.region_data
-        ob = create.create(context, 'CAMERA', create._maya_naming(context))
-        ob.matrix_world = camera_matrix(rv3d.view_matrix)
-        cam = ob.data
-        if rv3d.is_perspective:
-            cam.type = 'PERSP'
-            cam.lens = space.lens * cam.sensor_width / VIEW_SENSOR
-        else:
-            # Blender's ortho view width = view distance x VIEW_SENSOR / lens (same params as above)
-            cam.type = 'ORTHO'
-            cam.ortho_scale = rv3d.view_distance * VIEW_SENSOR / space.lens
-        for other in context.selected_objects:
-            if other != ob:
-                other.select_set(False)
-        ob.select_set(True)
-        context.view_layer.objects.active = ob
+        from ..ui import panel_menus
+        from . import camera_copy
+        area = context.area
+        space = area.spaces.active
+        rv3d = context.region_data or space.region_3d
+        if rv3d is None:
+            return {'CANCELLED'}
+        ob = camera_copy.make(context, space, rv3d, panel_menus.view_camera(context), create._maya_naming(context))
+        panel_menus.look_through(context, area, ob)
         results.result(self, f"Created {ob.name} from the view")
         return {'FINISHED'}
 

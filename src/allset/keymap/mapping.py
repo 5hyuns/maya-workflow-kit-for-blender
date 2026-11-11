@@ -331,7 +331,7 @@ ENTRIES = {
     "PolySpinEdgeForward": _e("KIT", ("Mesh", "mesh.edge_rotate", {"use_ccw": False}), note="Edit Mesh > Spin Edge Forward 와 같음"),
     "RepeatLastActionAtMousePosition": _e("KIT", (V3D, "allset.repeat_at_mouse", {}),
                                           note="마지막 동작 반복 → 선택을 마우스 아래 바닥 (Z=0) 으로"),
-    "CreateCameraFromView": _e("KIT", (OBJ, "allset.camera_from_view", {}), note="뷰와 같은 camera1 (렌즈·직교 크기), 뷰는 그대로"),
+    "CreateCameraFromView": _e("KIT", (OBJ, "allset.camera_from_view", {}), note="뷰 카메라 복사 persp1 (설정·자리), 패널이 새 카메라로 봄, 선택 그대로"),
     # --- insert / nudge / select keys (operators/key_insert.py) ---
     "InsertKey": _e("KIT", ("Screen", "allset.insert_key", {"channels": "ALL"}),
                     note="곡선 모양 그대로 현재 시간 키: Graph Editor 선택 곡선 → 보이는 곡선, 그 밖 = 선택 노드 곡선"),

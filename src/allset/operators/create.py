@@ -104,7 +104,7 @@ def _scale_data(ob, k):
     data = ob.data
     if ob.type == 'CAMERA':
         # Maya camera: focal length 35 on a 1.417 x 0.945 in (36 x 24 mm) film back, Fit Resolution Gate Fill
-        # (Blender's camera_add gives 50 mm). Camera from View (Ctrl+Shift+C) overrides the lens with the view's.
+        # (Blender's camera_add gives 50 mm).
         data.lens, data.sensor_width, data.sensor_height = MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM
         film_fit.set_fit(data, 'FILL', bpy.context.scene)
         data.display_size *= k

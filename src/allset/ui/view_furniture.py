@@ -145,6 +145,11 @@ def hit_face(faces, x, y):
     return None
 
 
+def label_camera(space, scene):
+    """The camera a view looks through: its own camera (a kit Look Through), else the scene camera."""
+    return space.camera if space.use_local_camera else scene.camera
+
+
 def label_for(perspective, side_view, view_dir, camera_name=None):
     """Maya camera label of a view: camera name, "top -Y" ... for side views, else "persp"."""
     if perspective == 'CAMERA' and camera_name:
@@ -535,7 +540,7 @@ def _draw_hud():
     _cube, label, origin = layout(_bounds(context), s, 0.0)
     gpu.state.blend_set('ALPHA')
     if prefs.maya_camera_names:
-        cam = context.scene.camera
+        cam = label_camera(space, context.scene)
         d = rv3d.view_rotation @ Vector((0.0, 0.0, -1.0))
         text = label_for(rv3d.view_perspective, rv3d.is_orthographic_side_view, tuple(d),
                          cam.name if cam else None)

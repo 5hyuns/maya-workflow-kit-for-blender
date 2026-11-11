@@ -33,6 +33,8 @@ VIEW = [
     ("set", "SELECT_CAMERA", "Select Camera"),
     ("set", "CAMERA_LOCK", "Lock Camera"),
     _sep(),
+    _run("Create Camera From View", "allset.camera_from_view"),    # a copy of the view's camera (Ctrl+Shift+C)
+    _sep(),
     _run("Undo View Change", "allset.view_history", direction='UNDO'),
     _run("Redo View Change", "allset.view_history", direction='REDO'),
     _sep("Tumble Behaviour"),

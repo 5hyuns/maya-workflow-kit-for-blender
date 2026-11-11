@@ -3345,6 +3345,7 @@
    "Camera Tools": "Camera Tools",
    "Center View of Selection": "Center View of Selection",
    "Change View": "Change View",
+   "Create Camera From View": "Create Camera From View",
    "Default View": "Default View",
    "Frame All": "Frame All",
    "Frame Selection": "Frame Selection",
@@ -6067,7 +6068,7 @@
    "Weight": "Weight"
   },
   "Labels/operators/key_batch": {
-   "Create Camera from View": "Create Camera from View",
+   "Create Camera From View": "Create Camera From View",
    "Repeat Last at Mouse Position": "Repeat Last at Mouse Position"
   },
   "Labels/operators/key_batch3": {
@@ -8627,7 +8628,6 @@
    "Copy": "Copy",
    "Exposure: switch between 0 and the last exposure": "Exposure: switch between 0 and the last exposure",
    "Film gate (Blender: camera sensor frame)": "Film gate (Blender: camera sensor frame)",
-   "Front": "Front",
    "Gamma: switch between 1 and the last gamma": "Gamma: switch between 1 and the last gamma",
    "Gate mask (Blender: passepartout)": "Gate mask (Blender: passepartout)",
    "Grid": "Grid",
@@ -8653,12 +8653,10 @@
    "Select camera: the camera this view looks through": "Select camera: the camera this view looks through",
    "Select the objects to isolate": "Select the objects to isolate",
    "Selection highlighting in this view (the Maya selection wire, and Blender's outline where it was on)": "Selection highlighting in this view (the Maya selection wire, and Blender's outline where it was on)",
-   "Side": "Side",
    "Smooth shade all": "Smooth shade all",
    "Tear Off": "Tear Off",
    "Textured": "Textured",
    "This view has no camera: Select Camera works in a perspective view, the top / front / side views and a view that looks through a camera": "This view has no camera: Select Camera works in a perspective view, the top / front / side views and a view that looks through a camera",
-   "Top": "Top",
    "Tumble around the center of interest: Orbit Around Selection off (opens Preferences > Navigation; the kit doesn't change preferences)": "Tumble around the center of interest: Orbit Around Selection off (opens Preferences > Navigation; the kit doesn't change preferences)",
    "Tumble around the selection: Blender's Orbit Around Selection preference (opens Preferences > Navigation; the kit doesn't change preferences)": "Tumble around the selection: Blender's Orbit Around Selection preference (opens Preferences > Navigation; the kit doesn't change preferences)",
    "Use all lights": "Use all lights",
@@ -9720,7 +9718,7 @@
    "Walk the joint selection through the skeleton (Maya arrow keys)": "Walk the joint selection through the skeleton (Maya arrow keys)"
   },
   "Tooltips/operators/key_batch": {
-   "Create a camera that matches this view (Maya Ctrl+Shift+C, Create Camera from View)": "Create a camera that matches this view (Maya Ctrl+Shift+C, Create Camera from View)",
+   "Copy this view's camera and look through the copy (Maya View > Create Camera From View, Ctrl+Shift+C)": "Copy this view's camera and look through the copy (Maya View > Create Camera From View, Ctrl+Shift+C)",
    "Repeat the last action and move the result to the mouse position (Maya Shift+G)": "Repeat the last action and move the result to the mouse position (Maya Shift+G)"
   },
   "Tooltips/operators/key_batch3": {
@@ -10488,12 +10486,13 @@
   "Tooltips/ui/panel_menus": {
    "Blender's own 3D View menus (View, Select, Add, Object ...)": "Blender's own 3D View menus (View, Select, Add, Object ...)",
    "Look through this camera in this view": "Look through this camera in this view",
-   "Make a new orthographic camera (front, side or top) and look through it in this view": "Make a new orthographic camera (front, side or top) and look through it in this view",
+   "Make a new orthographic camera that looks from one side and look through it in this view": "Make a new orthographic camera that looks from one side and look through it in this view",
    "Make a new perspective camera and look through it in this view": "Make a new perspective camera and look through it in this view",
    "Maya Panels > Orthographic: top, front, side and orthographic cameras": "Maya Panels > Orthographic: top, front, side and orthographic cameras",
    "Maya Panels > Panel: turn this pane into another editor": "Maya Panels > Panel: turn this pane into another editor",
    "Maya Panels > Perspective: the persp view and perspective cameras": "Maya Panels > Perspective: the persp view and perspective cameras",
    "Maya panel menu item for this view": "Maya panel menu item for this view",
+   "New orthographic camera looking from one side (Maya Panels > Orthographic > New)": "New orthographic camera looking from one side (Maya Panels > Orthographic > New)",
    "New orthographic camera: front, side or top (Maya New Orthographic)": "New orthographic camera: front, side or top (Maya New Orthographic)",
    "Open this panel in a new window of its size (a view keeps its camera and display). Tear Off leaves a 3D View in the pane, like Maya; Tear Off Copy keeps the panel there too": "Open this panel in a new window of its size (a view keeps its camera and display). Tear Off leaves a 3D View in the pane, like Maya; Tear Off Copy keeps the panel there too",
    "Run a Blender operator in this view (Maya panel menu item)": "Run a Blender operator in this view (Maya panel menu item)",
