@@ -6358,4 +6358,7 @@ STRINGS = {
     'Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)': 'ボックスをドラッグして、その範囲に画面を 2D でズームします。カメラは動きません (Maya 2D パン/ズーム ツール、Ctrl+ドラッグ)',
     'Drag to pan the picture in 2D (2D Pan) or to zoom it (2D Zoom); the camera stays (Maya 2D Pan/Zoom Tool)': 'ドラッグで画面を 2D でパン (2D パン) またはズーム (2D ズーム) します。カメラは動きません (Maya 2D パン/ズーム ツール)',
     'Tap: 2D Pan/Zoom on / off. Hold: middle drag pans, right drag zooms the picture in 2D (Maya \\)': 'タップ: 2D パン/ズームのオン / オフ。ホールド: 中ドラッグでパン、右ドラッグで画面を 2D ズーム (Maya \\)',
+    'Outliner Scroll': 'アウトライナのスクロール',
+    'Scroll the Maya Outliner rows': 'Maya アウトライナの行をスクロール',
+    'Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing': '行をクリックで選択 (Ctrl で切り替え、Shift で範囲、Ctrl+Shift で範囲を追加)、矢印で展開\n(Shift: 下の階層すべて)、空白部分のクリックで選択解除',
 }

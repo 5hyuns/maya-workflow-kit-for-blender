@@ -6457,4 +6457,7 @@ STRINGS = {
     'Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)': '拖出一個框，以 2D 方式將畫面縮放到框內；攝影機不動 (Maya 2D 平移/縮放工具，Ctrl+拖曳)',
     'Drag to pan the picture in 2D (2D Pan) or to zoom it (2D Zoom); the camera stays (Maya 2D Pan/Zoom Tool)': '拖曳以 2D 方式平移畫面 (2D 平移) 或縮放畫面 (2D 縮放)；攝影機不動 (Maya 2D 平移/縮放工具)',
     'Tap: 2D Pan/Zoom on / off. Hold: middle drag pans, right drag zooms the picture in 2D (Maya \\)': '輕按：開啟 / 關閉 2D 平移/縮放。按住：中鍵拖曳平移，右鍵拖曳以 2D 方式縮放畫面 (Maya \\)',
+    'Outliner Scroll': '大綱視圖捲動',
+    'Scroll the Maya Outliner rows': '捲動 Maya 大綱視圖的行',
+    'Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing': '單擊行將其選中 (Ctrl 切換，Shift 選擇範圍，Ctrl+Shift 加入範圍)，單擊箭頭展開\n(Shift：連同下面的全部)，單擊空白處取消選擇',
 }
