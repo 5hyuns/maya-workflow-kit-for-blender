@@ -17,7 +17,7 @@ from sim import MODULE, check, dock_area, ev, run, scale, screenshot, setup, ste
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 toolbox = import_module(MODULE + ".ui.toolbox")
 ki = import_module(MODULE + ".ui.kit_icons")
-osets = import_module(MODULE + ".ui.outliner_sets")
+otree = import_module(MODULE + ".ui.outliner_tree")
 TEAL = np.array(ki.TEAL)
 LIGHT = np.array(ki.LIGHT)
 C = {}
@@ -119,14 +119,14 @@ def s_check():
     # Outliner default rows: the set ring has a teal flag, the cameras a grey body
     outl = next(a for a in win().screen.areas if a.type == 'OUTLINER')
     reg = next(rg for rg in outl.regions if rg.type == 'WINDOW')
-    rows = osets.REGIONS.get(reg.as_pointer(), [])
-    u = osets.unit(bpy.context.preferences)
+    # the kit's Maya Outliner tree draws a row's icon 1.5 units right of its indent, at the row's middle
+    rows = otree.rows_for(bpy.context, outl.spaces.active)
+    u = otree.unit(bpy.context.preferences)
     n_small = ki.size_for("outliner:SET", scale())
-    sets_ = [rw for rw in rows if rw[2] == 'DEFAULT_SET']
-    if sets_:
-        y0, y1 = sets_[0][0], sets_[0][1]
-        lead = u if outl.spaces.active.show_mode_column else 0   # no mode column in the Maya Outliner
-        cxi = reg.x + round(lead + 1.5 * u)
+    k = next((i for i, rw in enumerate(rows) if rw.kind == 'DEFAULT_SET'), None)
+    if k is not None:
+        y0, y1 = otree.row_rect(outl, reg, k, u, len(rows))
+        cxi = reg.x + round(rows[k].depth * u + 1.5 * u)
         cyi = reg.y + round((y0 + y1) / 2)
         crop = px[cyi - n_small // 2 - 1:cyi + n_small // 2 + 1, cxi - n_small // 2 - 1:cxi + n_small // 2 + 1]
         t = near(crop, TEAL, 0.06)
