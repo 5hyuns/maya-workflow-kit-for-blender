@@ -60,7 +60,9 @@ def test_new_maya_scene_layout():
     assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'PROPERTIES', 'VIEW_3D',
                      'VIEW_3D'], types
     outliners = [a.spaces.active for a in scr.areas if a.type == 'OUTLINER']
-    assert outliners[0].use_filter_object and not outliners[0].use_filter_object_content, "DAG-only Outliner"
+    # DAG-only Maya Outliner: the kit draws its rows (Blender's object rows hidden while the kit runs)
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    assert tree.is_tree(outliners[0]) and not outliners[0].use_filter_object_content, "DAG-only Outliner"
     v3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height).spaces.active
     # no sidebar (the Maya panels are their own areas); the Tool Box column replaces the toolbar;
     # the tool header row is Maya's panel toolbar

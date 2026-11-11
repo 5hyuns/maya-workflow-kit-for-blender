@@ -21,10 +21,12 @@ def test_template_outliner_is_maya_dag():
     path = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
-    outliners = [a.spaces.active for a in screen.areas if a.type == 'OUTLINER'
-                 and a.spaces.active.use_filter_object]
+    outliners = [a.spaces.active for a in screen.areas if a.type == 'OUTLINER']
     assert len(outliners) == 1, len(outliners)
     so = outliners[0]
+    # a Maya Outliner: after loading, the kit draws its rows (Blender's object rows hidden; saving puts them back)
+    tree = import_module(kit.MODULE + ".ui.outliner_tree")
+    assert tree.is_tree(so) and not so.use_filter_object
     assert not so.use_filter_collection, "no collection rows (Maya DAG from the world)"
     assert not so.show_restrict_column_render
     assert not so.use_filter_object_content and so.use_filter_children

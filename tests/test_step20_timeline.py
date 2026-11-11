@@ -27,7 +27,10 @@ def test_stepping_keys():
     # the pies that took . and , before the Frames keymap is reached are gone
     assert _kmis("3D View", "PERIOD") == [] and _kmis("3D View", "COMMA") == []
     assert _kmis("Image", "PERIOD") == []
-    assert [k.idname for k in _kmis("Outliner", "PERIOD")] == ["outliner.show_active"], "kept"
+    # Blender's . (Show Active) stays for Blender-row Outliners; the kit tree's Reveal Selected goes first and passes
+    # the key through outside the tree
+    assert [k.idname for k in _kmis("Outliner", "PERIOD")] == ["allset.outliner_tree_reveal",
+                                                               "outliner.show_active"], "kept"
 
 
 def _buttons():
