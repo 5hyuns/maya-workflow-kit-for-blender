@@ -134,6 +134,8 @@ def _run_action(context, action, option, path):
     if kind == "prop":     # a Maya check / radio item
         return menu_sets.set_prop(context, target, props)
     if kind == "menu":
+        from ..ui import option_click
+        option_click.forget_called(context)       # opened at a pointer the kit doesn't note: no ❒ zone
         return bpy.ops.wm.call_menu(name=target)
     if kind == "pie":
         return bpy.ops.wm.call_menu_pie(name=target)
@@ -421,9 +423,12 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
             pane_tap(context)
         return {'FINISHED'}
 
-    def _open_pressed(self, context):
+    def _open_pressed(self, context, event):
         key = self._pressed[0]
         self._cleanup(context)
+        # the menu opens at the pointer: note where, for its option boxes (ui/option_click.py)
+        from ..ui import option_click
+        option_click.note_called(context, getattr(getattr(bpy.types, key, None), "bl_label", key), event.mouse_x)
         self._open_label(key)
         return {'FINISHED'}
 
@@ -444,11 +449,11 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
                 # drags away opens it at once, for a press-drag-release onto a row (the kit's earlier behaviour).
                 if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
                     if engine.menu_drag(self._pressed[1], (x, y), draw.ui_scale()):
-                        return self._open_pressed(context)
+                        return self._open_pressed(context, event)
                     return {'RUNNING_MODAL'}
                 if event.type == self._pressed[2] and event.value == 'RELEASE':
                     if self._layout.label_at(x, y) == self._pressed[0]:
-                        return self._open_pressed(context)
+                        return self._open_pressed(context, event)
                     self._pressed = None          # released elsewhere: nothing
                     return {'RUNNING_MODAL'}
             if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
