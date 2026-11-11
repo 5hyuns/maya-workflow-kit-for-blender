@@ -423,6 +423,26 @@ def watch_component():
         bpy.app.timers.register(_component_tick, first_interval=_TICK)
 
 
+def forget_component(context=None):
+    """File > Open / New / Revert (load_pre): a running pivot edit and a placed pivot belong to the file they were made
+    in. They end there first — that file gets its own pivot point, select mode and Move / Rotate axes back, so the
+    Maya tool settings the kit carries to the next file (ui/scene_carry.py, the selection masks) are the user's, not
+    the edit's — then the kit forgets them: nothing of them reaches the next file. The operators package registers
+    before ui, so this load_pre runs before the carry reads the scene."""
+    context = context or bpy.context
+    try:
+        if COMPONENT.on:
+            COMPONENT.finish(context)
+        if COMPONENT.custom:
+            COMPONENT.leave_edit(context)
+    except (AttributeError, ReferenceError, RuntimeError, TypeError):
+        pass
+    if bpy.app.timers.is_registered(_component_tick):
+        bpy.app.timers.unregister(_component_tick)
+    COMPONENT.__dict__.clear()
+    COMPONENT.__init__()
+
+
 def unregister_component():
     if COMPONENT.on:
         try:

@@ -202,6 +202,7 @@ def test_rotate_scale_and_typed_moves_leave_the_pivot():
         if v.select:
             v.co.x += 2.0
     bmesh.update_edit_mesh(ob.data)
+    bpy.context.view_layer.update()            # the UI evaluates the edit before the next action
     assert follow().update(bpy.context, None) is None
     bpy.ops.transform.translate(value=(0.0, 0.0, 1.0))
     follow().update(bpy.context, "TRANSFORM_OT_translate")
