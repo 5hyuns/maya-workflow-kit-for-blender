@@ -357,8 +357,9 @@ ENTRIES = {
     "STRSTweakModeOn": _e("KIT", (V3D, "allset.tweak_hold", {}),
                           note="누르는 동안 Blender Tweak 툴 (클릭-드래그 = 그 자리 이동), 놓으면 원래 툴"),
     "TogglePanZoomPress": _e("KIT", (V3D, "allset.pan_zoom_hold", {}),
-                             note="카메라 뷰에서 누르는 동안 LMB 팬 / MMB 줌 (camera view offset / zoom, 렌더 그대로)"),
-    "TogglePanZoomRelease": _e("KIT", note="놓기 = pan_zoom_hold 모달이 끝냄 (누름 행의 항목)"),
+                             note="탭 (0.25 초 안) = 2D Pan/Zoom 켬/끔, 누르는 동안 MMB 팬 / RMB 줌 / LMB 없음, 모든 뷰 "
+                                  "(카메라 뷰 offset / zoom, Blender 뷰는 킷이 뷰를 움직임)"),
+    "TogglePanZoomRelease": _e("KIT", note="놓기 = pan_zoom_hold 모달이 탭 판정 후 끝냄 (누름 행의 항목)"),
     # --- global key batch 4 (operators/global_keys4.py) ---
     "CutSelected": _e("KIT", (OBJ, "allset.cut", {}), note="선택 (+ 그 아래 계층) 을 클립보드로 복사 후 삭제, Ctrl+V 로 되돌림 (Outliner 도)"),
     "WalkContext_Command": _e("KIT", (V3D, "view3d.walk", {}), note="Blender Walk 모달 (클릭 / Enter = 끝, ESC = 취소); IC Alt+X X-ray 제거"),

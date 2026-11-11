@@ -9,10 +9,11 @@ and on again without moving the camera; its right-click menu lists the 2D bookma
 
 Blender: a bookmark is kept on the panel's camera object (``Object.allset_view_bookmarks``, saved with the file): the
 camera's place and lens when the view looks through a camera, else the view itself (place, turn, distance, lens) on
-the startup camera that view stands for (persp / top / front / side). Blender's 2D pan / zoom is each view's camera
-view zoom and offset (``RegionView3D.view_camera_zoom`` / ``view_camera_offset``, the \\ key hold), so the button
-works per view: off fits the camera frame to the view (by the camera's Overscan) and remembers the 2D pan / zoom, on
-brings it back. It lights up when the \\ key or a 2D bookmark moves the camera view; a new session starts with it off.
+the startup camera that view stands for (persp / top / front / side). The 2D Pan/Zoom button is the view's 2D Pan/Zoom
+(operators/pan_zoom.py, the \\ key): off shows the view without its 2D pan / zoom (a camera view: the whole camera
+frame, fitted by the camera's Overscan), on brings it back. It lights up when the \\ key, the 2D Pan/Zoom Tool or a 2D
+bookmark moves the view; a new session starts with it off. A 2D bookmark keeps a camera view's 2D pan / zoom
+(``RegionView3D.view_camera_zoom`` / ``view_camera_offset``).
 """
 
 import bpy
@@ -20,13 +21,14 @@ from bpy.props import BoolProperty, CollectionProperty, FloatProperty, FloatVect
 from mathutils import Matrix
 
 from .. import i18n, results
-from ..operators.view_keys3 import NOTICE as NO_CAMERA_VIEW   # 2D pan / zoom needs a camera view in Blender
+from ..operators import pan_zoom
 
 PROP, INDEX = "allset_view_bookmarks", "allset_view_bookmark_index"
 BASE = "cameraView"                 # Maya's bookmark names: cameraView1, cameraView2 ...
 PAN_ZOOM = i18n.mark("2D Pan/Zoom")
 NO_CAMERA = ("This view has no camera to keep bookmarks on: look through a camera, or use the persp / top / front / "
              "side view")
+NO_CAMERA_VIEW = "2D bookmarks keep a camera view's 2D pan / zoom: look through a camera first"
 
 
 # --- the view -------------------------------------------------------------------------------------------------------
@@ -167,61 +169,31 @@ def remove(ob, name):
     return True
 
 
-# --- 2D Pan/Zoom (per view) -----------------------------------------------------------------------------------------
-
-# RegionView3D pointer -> {"on": the view shows a 2D pan / zoom, "memo": (zoom, offset) it had when turned off}
-_pan_zoom = {}
-
+# --- 2D Pan/Zoom (per view: operators/pan_zoom.py) -----------------------------------------------------------------
 
 def pan_zoom_on(rv3d):
-    st = _pan_zoom.get(rv3d.as_pointer()) if rv3d is not None else None
-    return bool(st and st["on"])
+    return pan_zoom.is_on(rv3d)
 
 
 def pan_zoom_moved(rv3d):
-    """The \\ key (or a 2D bookmark) moved this camera view: its 2D Pan/Zoom is on."""
-    if rv3d is not None:
-        _pan_zoom[rv3d.as_pointer()] = {"on": True, "memo": None}
+    """A 2D bookmark moved this camera view: its 2D Pan/Zoom is on."""
+    pan_zoom.mark_on(rv3d)
 
 
 def pan_zoom_forget(rv3d):
     """The camera frame was fitted to the view again (another camera, Overscan): no 2D pan / zoom to bring back."""
-    if rv3d is not None:
-        _pan_zoom.pop(rv3d.as_pointer(), None)
-
-
-def _fit(context, rv3d):
-    """The whole camera frame in the view (fitted by the camera's Overscan)."""
-    from ..operators import camera_overscan
-    window, area = getattr(context, "window", None), getattr(context, "area", None)
-    done = False
-    if window is not None and area is not None and getattr(area, "type", None) == 'VIEW_3D':
-        try:
-            done = camera_overscan.apply_view(window, area)
-        except (RuntimeError, ReferenceError, AttributeError, TypeError):    # a view Blender can't fit now
-            done = False
-    if not done:                # no window (background): at least no pan
-        rv3d.view_camera_offset = (0.0, 0.0)
+    pan_zoom.forget(rv3d)
 
 
 def toggle_pan_zoom(context):
-    """The 2D Pan/Zoom button: off = the whole camera frame (the pan / zoom remembered), on = the pan / zoom back.
-    False when the view doesn't look through a camera."""
-    rv3d = _rv3d(context)
-    if rv3d is None or camera_view(context) is None:
+    """The 2D Pan/Zoom button: off = the view without its 2D pan / zoom (a camera view: the whole camera frame), on =
+    the 2D pan / zoom back. False without a view."""
+    rv3d, space = _rv3d(context), _space(context)
+    if rv3d is None:
         return False
-    key = rv3d.as_pointer()
-    st = _pan_zoom.get(key)
-    if st and st["on"]:
-        memo = (rv3d.view_camera_zoom, tuple(rv3d.view_camera_offset))
-        _fit(context, rv3d)
-        _pan_zoom[key] = {"on": False, "memo": memo}
-    else:
-        if st and st["memo"] is not None:
-            rv3d.view_camera_zoom, rv3d.view_camera_offset = st["memo"]
-        _pan_zoom[key] = {"on": True, "memo": None}
+    done = pan_zoom.toggle(space, rv3d, (getattr(context, "window", None), getattr(context, "area", None)))
     _redraw(context)
-    return True
+    return done
 
 
 # --- data -----------------------------------------------------------------------------------------------------------
@@ -443,6 +415,6 @@ def unregister():
     for name in (INDEX, PROP):
         if hasattr(bpy.types.Object, name):
             delattr(bpy.types.Object, name)
-    _pan_zoom.clear()
+    pan_zoom.clear()
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

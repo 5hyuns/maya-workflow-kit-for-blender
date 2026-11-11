@@ -10,6 +10,9 @@
   shows the view's camera values (Focal Length in millimetres, near / far clip) — Maya's perspShape.
 - View > Camera Tools > Tumble / Track / Dolly Tool = Maya's camera tools: tools whose LMB drag tumbles / tracks /
   dollies the view (like Alt+LMB / Alt+MMB / Alt+RMB) until another tool is picked (Q / W / E / R).
+- View > Camera Tools > 2D Pan/Zoom Tool = Maya's 2D Pan/Zoom Tool: LMB / MMB drag pans the view's picture in 2D
+  (Mode 2D Pan) or zooms it (Mode 2D Zoom, Zoom scale = the rate), Ctrl+LMB drag a box zooms into it; the camera
+  doesn't move (operators/pan_zoom.py). RMB keeps the marking menu, Alt+drags keep moving the camera.
 """
 
 import bpy
@@ -17,6 +20,7 @@ from bpy.props import FloatProperty
 from mathutils import Matrix, Vector
 
 TUMBLE_TOOL, TRACK_TOOL, DOLLY_TOOL = "allset.tumble_tool", "allset.track_tool", "allset.dolly_tool"
+PAN_ZOOM_TOOL = "allset.pan_zoom_tool"
 MAYA_FILM_MM = 36.0       # 35 mm camera film back (create.MAYA_FILM_MM)
 
 
@@ -179,6 +183,40 @@ def _tool_class(idname, label, description, icon, op, mode):
 
 
 TOOLS = [_tool_class(*t, mode) for mode in ('OBJECT', 'EDIT_MESH') for t in _TOOLS]
+
+
+class _PanZoomTool:
+    bl_space_type = 'VIEW_3D'
+    bl_idname = PAN_ZOOM_TOOL
+    bl_label = "2D Pan/Zoom Tool"
+    bl_description = ("Drag to pan the picture in 2D (Mode 2D Zoom: to zoom it), Ctrl+drag a box to zoom into it; "
+                      "the camera stays (Maya 2D Pan/Zoom Tool)")
+    bl_icon = "ops.transform.resize.cage"
+    bl_widget = None
+    bl_cursor = 'SCROLL_XY'           # a four-way arrow, like Maya's
+    bl_keymap = (
+        ("allset.pan_zoom_drag", {"type": 'LEFTMOUSE', "value": 'PRESS'}, None),
+        ("allset.pan_zoom_drag", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True}, None),
+        ("allset.pan_zoom_drag", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
+        ("allset.pan_zoom_box", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True}, None),
+    )
+
+    @staticmethod
+    def draw_settings(context, layout, tool):
+        props = tool.operator_properties("allset.pan_zoom_drag")
+        layout.prop(props, "zoom_scale")
+        layout.prop(props, "mode", expand=True)
+
+
+class ALLSET_TL_pan_zoom_object(_PanZoomTool, bpy.types.WorkSpaceTool):
+    bl_context_mode = 'OBJECT'
+
+
+class ALLSET_TL_pan_zoom_edit_mesh(_PanZoomTool, bpy.types.WorkSpaceTool):
+    bl_context_mode = 'EDIT_MESH'
+
+
+PAN_ZOOM_TOOLS = (ALLSET_TL_pan_zoom_object, ALLSET_TL_pan_zoom_edit_mesh)
 classes = (ALLSET_OT_center_view_selection, ALLSET_PT_persp_camera, ALLSET_OT_camera_attribute_editor, ALLSET_OT_track)
 
 
@@ -190,9 +228,13 @@ def register():
         get=_persp_focal_get, set=_persp_focal_set, min=2.5, max=3500.0, precision=1)
     for i, tool in enumerate(TOOLS):
         bpy.utils.register_tool(tool, after={"builtin.measure"}, separator=(i % len(_TOOLS) == 0))
+    for tool in PAN_ZOOM_TOOLS:          # after the Dolly Tool, like Maya's Camera Tools menu
+        bpy.utils.register_tool(tool, after={DOLLY_TOOL})
 
 
 def unregister():
+    for tool in reversed(PAN_ZOOM_TOOLS):
+        bpy.utils.unregister_tool(tool)
     for tool in reversed(TOOLS):
         bpy.utils.unregister_tool(tool)
     del bpy.types.WindowManager.allset_persp_focal

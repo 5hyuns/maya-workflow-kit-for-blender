@@ -66,7 +66,7 @@ CAMERA_TOOLS = [
     _tool("Tumble Tool", "allset.tumble_tool"), _tool("Track Tool", "allset.track_tool"),
     _tool("Dolly Tool", "allset.dolly_tool"),
     _run("Zoom Tool", "view3d.zoom_border"),
-    _grey("2D Pan/Zoom Tool"),
+    _tool("2D Pan/Zoom Tool", "allset.pan_zoom_tool"),   # drag pans / zooms the picture in 2D (operators/pan_zoom.py)
     _tool("Grease Pencil Tool", "builtin.annotate"),     # the panel toolbar's Grease Pencil button (Annotate)
     _sep(),
     _run("Roll Tool", "view3d.view_roll", type='ANGLE', angle=0.2618),

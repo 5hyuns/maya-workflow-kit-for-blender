@@ -9,7 +9,8 @@ Workflow Kit layout keeps the panel menu bar and toolbar.
   view itself); View > Bookmarks and the button's right-click menu list them, picking one puts the view back (with
   undo for a camera), a locked camera stays. A 2D bookmark keeps the camera view's 2D pan / zoom.
 - 2D Pan/Zoom: per view; off shows the whole camera frame and remembers the 2D pan / zoom, on brings it back; the \\
-  key (2D pan / zoom hold) turns it on; a view that doesn't look through a camera has none.
+  key (2D pan / zoom) turns it on. Blender's own views have it too (tests/test_step405_panzoom.py); 2D bookmarks
+  need a camera view.
 """
 
 import math
@@ -242,9 +243,10 @@ def test_persp_view_bookmark_keeps_the_view_on_the_startup_camera():
     assert cb.apply(ctx, *cb.find(ctx, name)) is None
     assert _close(rv3d.view_location, want[0]) and _close(rv3d.view_rotation, want[1])
     assert abs(rv3d.view_distance - want[2]) < 1e-5 and abs(space.lens - 50.0) < 1e-5
-    # no 2D bookmark and no 2D Pan/Zoom without a camera view
+    # no 2D bookmark without a camera view; the 2D Pan/Zoom button works in every view (like Maya)
     assert cb.add(ctx, pan_zoom=True) is None
-    assert not cb.toggle_pan_zoom(ctx) and not pm.apply(ctx, "PAN_ZOOM")
+    assert cb.toggle_pan_zoom(ctx) and pm.state(ctx, "PAN_ZOOM") is True
+    assert pm.apply(ctx, "PAN_ZOOM") and pm.state(ctx, "PAN_ZOOM") is False
 
 
 def test_menus_list_the_bookmarks_like_maya():
@@ -338,8 +340,14 @@ def test_pan_zoom_off_shows_the_frame_and_on_brings_it_back():
 
 def test_pan_zoom_hold_turns_the_button_on():
     import inspect
-    vk3 = import_module(kit.MODULE + ".operators.view_keys3")
-    src = inspect.getsource(vk3.ALLSET_OT_pan_zoom_hold.modal)
-    assert "pan_zoom_moved(rv3d)" in src
+    pz = import_module(kit.MODULE + ".operators.pan_zoom")
+    space = _space()
+    _camera_view(space)
+    rv3d = space.region_3d
+    cb.pan_zoom_forget(rv3d)
+    assert not cb.pan_zoom_on(rv3d)
+    assert pz.pan(space, rv3d, 10, 0, (800, 600)) and cb.pan_zoom_on(rv3d)       # a \\ drag lights the button
+    space.region_3d.view_perspective = 'PERSP'
+    pz.clear()
     co = import_module(kit.MODULE + ".operators.camera_overscan")
     assert "pan_zoom_forget(rv3d)" in inspect.getsource(co.apply_view)

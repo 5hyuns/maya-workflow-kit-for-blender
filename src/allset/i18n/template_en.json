@@ -4994,7 +4994,6 @@
    "NURBS Hulls": "NURBS Hulls",
    "NURBS cylinder": "NURBS cylinder",
    "NURBS surface edit mode": "NURBS surface edit mode",
-   "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom button shows the whole frame and brings the pan / zoom back.": "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom button shows the whole frame and brings the pan / zoom back.",
    "Object > Convert": "Object > Convert",
    "Object > Link/Transfer Data": "Object > Link/Transfer Data",
    "Object Properties > Viewport Display": "Object Properties > Viewport Display",
@@ -5070,7 +5069,6 @@
    "Windows > Workspaces": "Windows > Workspaces",
    "Wireframe / Triangulate modifier": "Wireframe / Triangulate modifier",
    "World colour or Point Light": "World colour or Point Light",
-   "\\ (hold) / 2D Pan/Zoom button": "\\ (hold) / 2D Pan/Zoom button",
    "nParticles/Create Emitter": "nParticles/Create Emitter",
    "nParticles/Create Emitter#2": "nParticles/Create Emitter#2",
    "ns: name prefix": "ns: name prefix"
@@ -6550,6 +6548,15 @@
    "Outliner Drag": "Outliner Drag",
    "Parent": "Parent"
   },
+  "Labels/operators/pan_zoom": {
+   "2D Box Zoom": "2D Box Zoom",
+   "2D Pan": "2D Pan",
+   "2D Pan/Zoom": "2D Pan/Zoom",
+   "2D Zoom": "2D Zoom",
+   "How fast a 2D Zoom drag zooms": "How fast a 2D Zoom drag zooms",
+   "Mode": "Mode",
+   "Zoom scale": "Zoom scale"
+  },
   "Labels/operators/parenting": {
    "Keep the children where they are (Maya Parent Options; off = keep their local values)": "Keep the children where they are (Maya Parent Options; off = keep their local values)",
    "Keep the objects where they are (Maya Unparent Options; off = keep their local values)": "Keep the objects where they are (Maya Unparent Options; off = keep their local values)",
@@ -7435,7 +7442,6 @@
    "With Children": "With Children"
   },
   "Labels/operators/view_keys3": {
-   "2D Pan/Zoom (hold)": "2D Pan/Zoom (hold)",
    "Camera Mode Toggle": "Camera Mode Toggle",
    "Cycle Display Mode": "Cycle Display Mode",
    "Move One Pixel": "Move One Pixel",
@@ -7895,9 +7901,11 @@
    "What this bookmark shows": "What this bookmark shows"
   },
   "Labels/ui/camera_tools": {
+   "2D Pan/Zoom Tool": "2D Pan/Zoom Tool",
    "A camera view shows its full Attribute Editor": "A camera view shows its full Attribute Editor",
    "Camera Attribute Editor": "Camera Attribute Editor",
    "Center View of Selection": "Center View of Selection",
+   "Drag to pan the picture in 2D (Mode 2D Zoom: to zoom it), Ctrl+drag a box to zoom into it; the camera stays (Maya 2D Pan/Zoom Tool)": "Drag to pan the picture in 2D (Mode 2D Zoom: to zoom it), Ctrl+drag a box to zoom into it; the camera stays (Maya 2D Pan/Zoom Tool)",
    "Far Clip Plane": "Far Clip Plane",
    "Focal Length": "Focal Length",
    "Focal length of this view in mm (36 mm film back)": "Focal length of this view in mm (36 mm film back)",
@@ -8575,6 +8583,10 @@
    "Set": "Set",
    "Show Set Members": "Show Set Members"
   },
+  "Labels/ui/outliner_tree": {
+   "Outliner Scroll": "Outliner Scroll",
+   "Outliner Select": "Outliner Select"
+  },
   "Labels/ui/paint_weights": {
    "Accumulate strokes": "Accumulate strokes",
    "Blend mode": "Blend mode",
@@ -8621,7 +8633,7 @@
    "Zero weights": "Zero weights"
   },
   "Labels/ui/panel_menus": {
-   "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks": "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks",
+   "2D Pan/Zoom: off shows the view without its 2D pan / zoom (a camera view: the camera's whole frame), on brings it back; the camera doesn't move. Tap \\ to switch it; hold \\ and middle-drag to pan, right-drag to zoom. Right-click: the 2D bookmarks": "2D Pan/Zoom: off shows the view without its 2D pan / zoom (a camera view: the camera's whole frame), on brings it back; the camera doesn't move. Tap \\ to switch it; hold \\ and middle-drag to pan, right-drag to zoom. Right-click: the 2D bookmarks",
    "Blender": "Blender",
    "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks": "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks",
    "Colour management on / off (off = Blender's Raw view transform)": "Colour management on / off (off = Blender's Raw view transform)",
@@ -9853,6 +9865,11 @@
    "Maya Outliner middle-drag: drop onto an item = parent under it, between items = move there,\nonto empty space = to the world (kept in place)": "Maya Outliner middle-drag: drop onto an item = parent under it, between items = move there,\nonto empty space = to the world (kept in place)",
    "Parent / unparent objects keeping them in place (an Outliner drop redone the Maya way)": "Parent / unparent objects keeping them in place (an Outliner drop redone the Maya way)"
   },
+  "Tooltips/operators/pan_zoom": {
+   "Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)": "Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)",
+   "Drag to pan the picture in 2D (2D Pan) or to zoom it (2D Zoom); the camera stays (Maya 2D Pan/Zoom Tool)": "Drag to pan the picture in 2D (2D Pan) or to zoom it (2D Zoom); the camera stays (Maya 2D Pan/Zoom Tool)",
+   "Tap: 2D Pan/Zoom on / off. Hold: middle drag pans, right drag zooms the picture in 2D (Maya \\)": "Tap: 2D Pan/Zoom on / off. Hold: middle drag pans, right drag zooms the picture in 2D (Maya \\)"
+  },
   "Tooltips/operators/parenting": {
    "Move the selected objects to the world, keeping them in place\n(Maya Edit > Unparent, Shift+P)": "Move the selected objects to the world, keeping them in place\n(Maya Edit > Unparent, Shift+P)",
    "Parent the selected objects under the last selected one, keeping them in place\n(Maya Edit > Parent, P)": "Parent the selected objects under the last selected one, keeping them in place\n(Maya Edit > Parent, P)"
@@ -10199,7 +10216,6 @@
    "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)": "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)"
   },
   "Tooltips/operators/view_keys3": {
-   "2D pan / zoom while held: LMB drag pans, MMB drag zooms the camera view, the camera stays (Maya \\)": "2D pan / zoom while held: LMB drag pans, MMB drag zooms the camera view, the camera stays (Maya \\)",
    "Cycle the view's display: X-ray joints / joints, curves and meshes / meshes only (Maya Alt+A)": "Cycle the view's display: X-ray joints / joints, curves and meshes / meshes only (Maya Alt+A)",
    "Move the selection one pixel in the view plane (Maya Alt+arrow keys)": "Move the selection one pixel in the view plane (Maya Alt+arrow keys)",
    "Switch the view's camera between perspective and orthographic, keeping the view (Maya Alt+P)": "Switch the view's camera between perspective and orthographic, keeping the view (Maya Alt+P)",
@@ -10482,6 +10498,10 @@
    "Maya Outliner set / set member RMB menu": "Maya Outliner set / set member RMB menu",
    "Outliner set row: click = select the set's members (Ctrl toggle, Shift add), triangle = show members": "Outliner set row: click = select the set's members (Ctrl toggle, Shift add), triangle = show members",
    "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)": "Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)"
+  },
+  "Tooltips/ui/outliner_tree": {
+   "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing": "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add the range), its arrow to expand it\n(Shift: with everything below), empty space to select nothing",
+   "Scroll the Maya Outliner rows": "Scroll the Maya Outliner rows"
   },
   "Tooltips/ui/panel_menus": {
    "Blender's own 3D View menus (View, Select, Add, Object ...)": "Blender's own 3D View menus (View, Select, Add, Object ...)",

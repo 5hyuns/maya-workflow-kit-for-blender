@@ -1,5 +1,5 @@
 """In a real UI (Maya Workflow Kit layout): Alt+A cycles X-ray joints / everything / meshes only, Alt+P toggles
-persp / ortho, Alt+Right moves the cube one pixel, ` held = Tweak tool then back to Move, \\ held + LMB drag pans
+persp / ortho, Alt+Right moves the cube one pixel, ` held = Tweak tool then back to Move, \\ held + MMB drag pans
 the camera view."""
 
 import os
@@ -162,7 +162,7 @@ def s_pan_start():
     C["off0"] = tuple(view3d()[1].data.view_camera_offset)
     ev('BACK_SLASH', 'PRESS')
     _a, r = view3d()
-    ev('LEFTMOUSE', 'PRESS', x=r.x + r.width // 2, y=r.y + r.height // 2)
+    ev('MIDDLEMOUSE', 'PRESS', x=r.x + r.width // 2, y=r.y + r.height // 2)
 
 
 @step
@@ -175,14 +175,14 @@ def s_pan_move():
 @step
 def s_pan_end():
     _a, r = view3d()
-    ev('LEFTMOUSE', 'RELEASE', x=r.x + r.width // 2 + 80, y=r.y + r.height // 2)
+    ev('MIDDLEMOUSE', 'RELEASE', x=r.x + r.width // 2 + 80, y=r.y + r.height // 2)
     ev('BACK_SLASH', 'RELEASE')
 
 
 @step
 def s_pan_check():
     off = tuple(view3d()[1].data.view_camera_offset)
-    check(f"\\ + LMB drag right pans the camera view ({C['off0']} -> {off}), the camera stays",
+    check(f"\\ + MMB drag right pans the camera view ({C['off0']} -> {off}), the camera stays",
           off[0] < C["off0"][0] - 1e-4 and abs(off[1] - C["off0"][1]) < 1e-6
           and abs(bpy.data.objects["camera1"].location.x) < 1e-9)
     if SHOTS:

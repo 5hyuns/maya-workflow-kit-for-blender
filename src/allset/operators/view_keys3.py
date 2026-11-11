@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya view keys, batch 3: Alt+A cycle display, Alt+P camera persp / ortho, Alt+arrows 1-pixel move,
-` hold = tweak mode, \\ hold = 2D pan / zoom.
+` hold = tweak mode (the \\ 2D Pan/Zoom key: operators/pan_zoom.py).
 
 Maya-style hotkeys: Alt+A display cycle,
-CameraModeToggle (orthographic / perspective), Alt+arrow pixel move, ` tweak mode,
-\\ 2D pan / zoom.
+CameraModeToggle (orthographic / perspective), Alt+arrow pixel move, ` tweak mode.
 """
 
 import math
@@ -210,80 +209,4 @@ class ALLSET_OT_tweak_hold(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
-# --- \ hold: 2D pan / zoom -------------------------------------------------------------------------------
-# Blender's camera view offset / zoom move the camera view without touching the render, like Maya's film-back
-# 2D Pan/Zoom; a user view has none.
-ZOOM_PER_PX = 0.25          # view_camera_zoom units per pixel of MMB drag
-NOTICE = "2D Pan/Zoom: look through a camera (Blender pans / zooms the camera view only)"
-
-
-def camera_offset_after(offset, dx, dy, region_w, region_h, zoom):
-    """view_camera_offset after an LMB drag of (dx, dy) px: the camera frame follows the mouse."""
-    # view_camera_offset is in camera-frame units (1 = frame width at zoom factor 1); zoom factor = (sqrt2 + z/50)^2 / 4
-    factor = ((math.sqrt(2.0) + zoom / 50.0) ** 2) / 4.0
-    scale = 2.0 * factor * max(region_w, region_h)
-    return offset[0] - dx / scale, offset[1] - dy / scale
-
-
-class ALLSET_OT_pan_zoom_hold(bpy.types.Operator):
-    """2D pan / zoom while held: LMB drag pans, MMB drag zooms the camera view, the camera stays (Maya \\)"""
-    bl_idname = "allset.pan_zoom_hold"
-    bl_label = "2D Pan/Zoom (hold)"
-    bl_options = {'INTERNAL'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.area is not None and context.area.type == 'VIEW_3D' and context.region_data is not None
-
-    def invoke(self, context, event):
-        if event.value != 'PRESS':
-            return {'CANCELLED'}
-        rv3d = context.region_data
-        if rv3d.view_perspective != 'CAMERA':
-            from ..ui import notices
-            notices.show(NOTICE)
-            return {'CANCELLED'}
-        self._key, self._rv3d, self._region = event.type, rv3d, context.region
-        self._drag, self._last = None, None
-        self._timer = context.window_manager.event_timer_add(POLL, window=context.window)
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-
-    def _finish(self, context):
-        context.window_manager.event_timer_remove(self._timer)
-        return {'FINISHED'}
-
-    def modal(self, context, event):
-        if event.type == self._key:
-            if event.value == 'RELEASE' and self._drag is None:
-                return self._finish(context)
-            return {'RUNNING_MODAL'}
-        if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'}:
-            if event.value == 'PRESS':
-                self._drag, self._last = event.type, (event.mouse_x, event.mouse_y)
-                return {'RUNNING_MODAL'}
-            if event.value == 'RELEASE' and self._drag == event.type:
-                self._drag = None
-                if keystate.is_down(self._key) is False:
-                    return self._finish(context)
-                return {'RUNNING_MODAL'}
-        if event.type == 'MOUSEMOVE' and self._drag is not None:
-            dx, dy = event.mouse_x - self._last[0], event.mouse_y - self._last[1]
-            self._last = (event.mouse_x, event.mouse_y)
-            rv3d, region = self._rv3d, self._region
-            if self._drag == 'LEFTMOUSE':
-                rv3d.view_camera_offset = camera_offset_after(tuple(rv3d.view_camera_offset), dx, dy,
-                                                              region.width, region.height, rv3d.view_camera_zoom)
-            else:
-                rv3d.view_camera_zoom = max(-30.0, min(600.0, rv3d.view_camera_zoom + (dx + dy) * ZOOM_PER_PX))
-            from ..ui import camera_bookmarks
-            camera_bookmarks.pan_zoom_moved(rv3d)      # the panel toolbar's 2D Pan/Zoom button lights up (Maya)
-            context.area.tag_redraw()
-            return {'RUNNING_MODAL'}
-        if event.type == 'TIMER' and self._drag is None and keystate.is_down(self._key) is False:
-            return self._finish(context)
-        return {'RUNNING_MODAL'} if self._drag is not None else {'PASS_THROUGH'}
-
-
-classes = (ALLSET_OT_cycle_display, ALLSET_OT_camera_mode_toggle, ALLSET_OT_pixel_move, ALLSET_OT_tweak_hold,
-           ALLSET_OT_pan_zoom_hold)
+classes = (ALLSET_OT_cycle_display, ALLSET_OT_camera_mode_toggle, ALLSET_OT_pixel_move, ALLSET_OT_tweak_hold)

@@ -197,6 +197,8 @@ from . import graph_scale_box  # noqa: E402  Graph Editor Scale Keys manipulator
 classes += graph_scale_box.classes
 from . import graph_handle_drag  # noqa: E402  Graph Editor tangent handles like Maya (#296)
 classes += graph_handle_drag.classes
+from . import pan_zoom  # noqa: E402  Maya 2D Pan/Zoom: the \ key and the 2D Pan/Zoom Tool's drags
+classes += pan_zoom.classes
 from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
 classes += poly_display.classes
 from . import interactive_create  # noqa: E402  Create > Polygon Primitives > Interactive Creation (#225)
@@ -389,6 +391,7 @@ def unregister():
     preselect.clear()
     units.unregister_handler()
     duplicate.PAIRS.clear()
+    pan_zoom.clear()
     view.unregister_timer()
     hold.unregister_cleanup()
     joint_labels.unregister_bindings()

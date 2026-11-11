@@ -813,10 +813,6 @@ PANEL_MENU = {
     _PM + "View/View Sequence Time": (
         "Timeline markers", "Blender has no camera sequencer view time: bind scene cameras to timeline markers "
         "(Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer."),
-    _PM + "View/Camera Tools/2D Pan∕Zoom Tool": (
-        "\\ (hold) / 2D Pan/Zoom button", "No 2D Pan/Zoom tool in the kit: hold \\ in a view that looks through a "
-        "camera and drag (LMB pans, MMB zooms the camera view; the camera stays). The panel toolbar's 2D Pan/Zoom "
-        "button shows the whole frame and brings the pan / zoom back."),
     _PM + "View/Camera Tools/Azimuth Elevation Tool": (
         "Tumble Tool / Alt+LMB", "Blender has no azimuth / elevation camera tool: tumble with Alt+LMB or the Tumble Tool."),
     _PM + "View/Camera Tools/Yaw-Pitch Tool": (

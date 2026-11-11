@@ -49,11 +49,14 @@ def test_ortho_scale_keeps_the_width():
 
 
 def test_camera_offset_follows_the_mouse():
-    a = vk.camera_offset_after((0.0, 0.0), 100, 0, 1000, 500, 0.0)
-    b = vk.camera_offset_after((0.0, 0.0), -100, 0, 1000, 500, 0.0)
+    pz = import_module(kit.MODULE + ".operators.pan_zoom")
+    a = pz.camera_pan((0.0, 0.0), 0.0, 100, 0, 1000, 500)
+    b = pz.camera_pan((0.0, 0.0), 0.0, -100, 0, 1000, 500)
     assert a[0] < 0 < b[0] and a[1] == 0 and abs(a[0] + b[0]) < 1e-12
-    near = vk.camera_offset_after((0.0, 0.0), 100, 0, 1000, 500, 100.0)      # zoomed in: smaller step
+    near = pz.camera_pan((0.0, 0.0), 100.0, 100, 0, 1000, 500)      # zoomed in: smaller step
     assert abs(near[0]) < abs(a[0])
+    up = pz.camera_pan((0.0, 0.0), 0.0, 0, 100, 1000, 500)           # vertical: by the view's height
+    assert abs(up[1] - 2 * a[0]) < 1e-12
 
 
 def test_keymap_items():

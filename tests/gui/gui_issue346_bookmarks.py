@@ -1,7 +1,7 @@
 """#346: the viewport panel toolbar's Bookmarks and 2D Pan/Zoom buttons in a real UI (Maya Workflow Kit layout, a view
 that looks through a camera).
 
-\\ + LMB drag pans the camera view and lights the 2D Pan/Zoom button; a click on the button shows the whole camera
+\\ + MMB drag pans the camera view and lights the 2D Pan/Zoom button; a click on the button shows the whole camera
 frame (the camera stays), a second click brings the pan back. A click on Bookmarks makes cameraView1 on the camera;
 after the camera moved, a right-click on Bookmarks opens the camera's bookmarks and picking cameraView1 puts the
 camera back. A right-click on 2D Pan/Zoom opens the 2D bookmarks menu. Shots with ``--shots``."""
@@ -104,7 +104,7 @@ def s_pan_start():
     C["off0"] = tuple(rv3d().view_camera_offset)
     C["loc0"] = tuple(cam().location)
     ev('BACK_SLASH', 'PRESS')
-    ev('LEFTMOUSE', 'PRESS', x=C["mid"][0], y=C["mid"][1])
+    ev('MIDDLEMOUSE', 'PRESS', x=C["mid"][0], y=C["mid"][1])
 
 
 @step
@@ -115,14 +115,14 @@ def s_pan_move():
 
 @step
 def s_pan_end():
-    ev('LEFTMOUSE', 'RELEASE', x=C["mid"][0] + 80, y=C["mid"][1])
+    ev('MIDDLEMOUSE', 'RELEASE', x=C["mid"][0] + 80, y=C["mid"][1])
     ev('BACK_SLASH', 'RELEASE')
 
 
 @step
 def s_pan_check():
     C["off1"] = tuple(rv3d().view_camera_offset)
-    check(f"\\ + LMB drag pans the camera view ({C['off0']} -> {C['off1']})", abs(C["off1"][0] - C["off0"][0]) > 1e-4)
+    check(f"\\ + MMB drag pans the camera view ({C['off0']} -> {C['off1']})", abs(C["off1"][0] - C["off0"][0]) > 1e-4)
     check("... and lights the 2D Pan/Zoom button", mod("ui.camera_bookmarks").pan_zoom_on(rv3d()))
     redraw()
     if SHOTS:

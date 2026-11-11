@@ -135,7 +135,6 @@ FAILS = {
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
     "BOOKMARK": camera_bookmarks.NO_CAMERA,
-    "PAN_ZOOM": camera_bookmarks.NO_CAMERA_VIEW,
 }
 for _k in CAMERA_DATA:
     FAILS[_k] = FAILS["CAMERA_LOCK"]
@@ -154,8 +153,9 @@ TIPS = {
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
     "BOOKMARK": "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, "
                 "Create 2D Bookmark, Edit 2D Bookmarks",
-    "PAN_ZOOM": "2D Pan/Zoom: off shows the camera's whole frame, on brings this view's 2D pan / zoom back (the \\ "
-                "key pans / zooms it); the camera doesn't move. Right-click: the 2D bookmarks",
+    "PAN_ZOOM": "2D Pan/Zoom: off shows the view without its 2D pan / zoom (a camera view: the camera's whole frame), "
+                "on brings it back; the camera doesn't move. Tap \\ to switch it; hold \\ and middle-drag to pan, "
+                "right-drag to zoom. Right-click: the 2D bookmarks",
     "GRID": "Grid",
     "SHOW_IMAGE_PLANES": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
     "SELECTION_HILITE": "Selection highlighting in this view (the Maya selection wire, and Blender's outline "
