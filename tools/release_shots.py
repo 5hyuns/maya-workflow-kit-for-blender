@@ -191,10 +191,9 @@ def s_ae_hist_shot():
     shot("06_attribute_editor_history.png")
     with v3d_override():
         bpy.ops.allset.ae_toggle()
-    wm = bpy.context.window_manager
-    wm.allset_outliner_shapes = True
-    bpy.data.objects["group1"].allset_expanded = True
-    bpy.data.objects["pCube1"].allset_expanded = True
+    # open group1 > pCube1 in the kit's Maya Outliner tree
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    tree.set_expanded([('O', bpy.data.objects[n].session_uid) for n in ("group1", "pCube1")], True)
     bpy.ops.allset.shelf_select(shelf="Rigging")
     redraw()
 
