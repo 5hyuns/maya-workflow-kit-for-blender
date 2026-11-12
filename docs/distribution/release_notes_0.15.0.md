@@ -10,6 +10,7 @@ Install it over 0.14.0 (or 0.8.0 – 0.13.0) as usual; shelves, hotkeys, scenes 
 (Removing the kit before installing deletes them: use Export Settings first.)
 Supported: Blender 5.2 LTS. Other versions are not tested: the extension still installs on Blender 5.0 and 5.1,
 but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
+Blender 5.3 support is in progress.
 
 ## New
 
