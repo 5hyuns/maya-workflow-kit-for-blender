@@ -651,6 +651,10 @@ def set_value(ob, key, value):
     elif kind == "VIS":
         if is_bone(ob):
             compat.set_bone_hidden(ob, not value)
+            from . import layer_joints
+            from ..operators import dag
+            layer_joints.bump()          # Maya: the joints and objects below a hidden joint are hidden too
+            dag.sync()
         else:
             ob.hide_viewport = not value
     elif _non_euler_rot(ob, kind):

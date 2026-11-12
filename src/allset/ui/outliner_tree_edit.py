@@ -454,24 +454,23 @@ def toggle_eye(context, row):
     if ob is None:
         return False
     if row.kind == 'JOINT':
-        # Maya: a joint's visibility hides everything below it too (Blender hides one bone at a time)
+        # Maya: a joint's Visibility hides everything below it too, without changing the children's own Visibility
+        # (ui/layer_joints.state); the eye sets this joint only
         from .. import compat
+        from . import layer_joints
         if ob.mode == 'EDIT':
             eb = ob.data.edit_bones.get(row.sub)
             if eb is None:
                 return False
-            state = not eb.hide
-            for b in (eb, *eb.children_recursive):
-                b.hide = state
-            return True
-        pb = ob.pose.bones.get(row.sub) if ob.pose is not None else None
-        if pb is None:
-            return False
-        state = not compat.bone_hidden(pb)
-        for b in (pb.bone, *pb.bone.children_recursive):
-            q = ob.pose.bones.get(b.name)
-            if q is not None:
-                compat.set_bone_hidden(q, state)
+            eb.hide = not eb.hide
+        else:
+            pb = ob.pose.bones.get(row.sub) if ob.pose is not None else None
+            if pb is None:
+                return False
+            compat.set_bone_hidden(pb, not compat.bone_hidden(pb))
+        layer_joints.bump()
+        from ..operators import dag
+        dag.sync(context.scene, context.view_layer)       # objects under the joints follow them
         return True
     if row.kind in ('OBJECT', 'MEMBER', 'SHAPE'):
         ob.hide_viewport = not ob.hide_viewport

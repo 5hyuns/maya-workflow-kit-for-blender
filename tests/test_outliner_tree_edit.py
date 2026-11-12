@@ -182,9 +182,11 @@ def test_hide_in_outliner_and_eye_column():
     assert edit.eye_state(root) is True
     edit.toggle_eye(bpy.context, root)
     assert sk.pose.bones[names[0]].hide and edit.eye_state(root) is False
-    assert all(sk.pose.bones[n].hide for n in names), "the joints below go with it (Maya)"
+    layer_joints = import_module(kit.MODULE + ".ui.layer_joints")
+    assert all(layer_joints.hidden(sk, n) for n in names), "the joints below are hidden with it (Maya)"
+    assert not any(sk.pose.bones[n].hide for n in names[1:]), "their own Visibility stays on (Maya)"
     edit.toggle_eye(bpy.context, root)
-    assert not any(sk.pose.bones[n].hide for n in names)
+    assert not any(sk.pose.bones[n].hide for n in names) and not layer_joints.state(sk)
     assert edit.eye_state(_row(rows, "persp")) is None
 
 

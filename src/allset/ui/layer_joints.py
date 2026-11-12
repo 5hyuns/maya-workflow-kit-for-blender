@@ -6,12 +6,15 @@ only (one node, one layer: adding it to another layer moves it). The layer's sta
 a hidden layer hides the member joint, every joint below it and the objects under them; Template draws them grey,
 Reference black, and neither can be picked. The bone from the member's parent joint stays (a bone belongs to its
 parent joint). A parent's Template or Reference wins over a child's Normal layer, and a hidden parent hides a child
-whose own layer is visible. Skinned surfaces are not members and keep deforming.
+whose own layer is visible. Skinned surfaces are not members and keep deforming. A joint's own Visibility works the
+same way: off, it hides every joint and object below it, whose own Visibility stays as it was.
 
 Here a joint's layer is ``PoseBone.allset_display_layer`` (the layer collection: a renamed joint or layer keeps it, a
 duplicated skeleton copies it, undo takes it back, a deleted layer leaves None). A layer never writes the joint's own
 flags (``PoseBone.hide`` is its Visibility channel): ``state(ob)`` = {joint name: HIDDEN / TEMPLATE / REFERENCE} of
-every joint a layer reaches, kept per skeleton until a layer, a membership, the skeleton, playback or undo changes it.
+every joint a layer reaches and every joint below a joint whose Visibility is off (a bone the panel Show > NURBS
+Curves filter hid is no Visibility), kept per skeleton until a layer, a membership, a Visibility, the skeleton,
+playback or undo changes it.
 The kit's joint drawing, joint picking, Outliner rows and parent rule (``operators/dag.py``) read it; Blender's own
 bone drawing (a view with the Bones overlay on) and Blender's bone operators don't know it.
 """
@@ -29,6 +32,7 @@ HIDDEN, TEMPLATE, REFERENCE = "HIDDEN", "TEMPLATE", "REFERENCE"
 # drawn colour of a joint in a Template / Reference layer: grey and black lines, like Maya
 COLOURS = {TEMPLATE: (0x78 / 255, 0x78 / 255, 0x78 / 255), REFERENCE: (0.0, 0.0, 0.0)}
 _EMPTY = types.MappingProxyType({})
+SHOW_FILTER = "allset_hidden_by_curves"   # ui/curve_controls.MARK: hidden by a Show filter, not by its Visibility
 _REV = [0]          # bumped by every change that can change a skeleton's layer state
 _STATES = {}        # skeleton object pointer -> (key, state)
 _ROOTS = {}         # kit skeleton object pointer -> (key, first root joint name)
@@ -112,17 +116,34 @@ def set_playing(on):
         bump()
 
 
+def _own_hidden(ob, bones, editing):
+    """Joints whose own Visibility is off (Edit Mode: the edit bones' hide)."""
+    import numpy as np
+    seq = bones if editing else ob.pose.bones
+    flags = np.zeros(len(seq), bool)
+    seq.foreach_get("hide", flags)
+    if not flags.any():
+        return []
+    return [b.name for i, b in enumerate(seq) if flags[i] and (editing or not b.get(SHOW_FILTER))]
+
+
 def _compute(ob):
     pose = ob.pose
     if pose is None or not hasattr(bpy.types.PoseBone, PROP):
         return _EMPTY
-    found = [(pb.name, coll) for pb in pose.bones if (coll := getattr(pb, PROP)) is not None]
-    if not found:
-        return _EMPTY
     data = ob.data
-    bones = data.edit_bones if data.is_editmode else data.bones
+    editing = data.is_editmode
+    bones = data.edit_bones if editing else data.bones
+    found = [(pb.name, coll) for pb in pose.bones if (coll := getattr(pb, PROP)) is not None]
+    own = _own_hidden(ob, bones, editing)
+    if not found and not own:
+        return _EMPTY
     playing = _PLAYING[0]
     ranked = []
+    for name in own:
+        b = bones.get(name)
+        if b is not None:
+            ranked.append((-1, name, b, True, None))      # a joint's own Visibility: it and everything below
     for name, coll in found:
         st = getattr(coll, "allset_layer", None)
         b = bones.get(name)

@@ -5,7 +5,8 @@ shown and pickable, the skeleton object is not hidden and no joint's own Visibil
 joints can't be picked; a parent's layer wins over a child's. Add moves a joint between layers, Remove / Empty / Delete
 give it back, Select Objects picks the member joints. A kit skeleton picked as a whole stands for its root joints;
 older files whose layer holds a skeleton object keep working. Membership survives renames, save / reload, a
-duplicated skeleton and undo."""
+duplicated skeleton and undo. A joint's own Visibility off hides the joints and objects below it the same way, without
+changing their own Visibility (the Outliner eye and the Channel Box set that joint only)."""
 
 import os
 from importlib import import_module
@@ -436,3 +437,53 @@ def test_m_the_state_is_kept_until_something_changes():
         lj.state(arm)
     per = (time.perf_counter() - t) / 1000
     assert per < 2e-4, f"a kept state costs {per * 1e3:.3f} ms"
+
+
+def test_n_a_joints_visibility_hides_what_is_below_it():
+    _clear()
+    arm, (j1, j2, j3) = _chain()
+    on3 = _empty("loc3", arm, j3)
+    pb2 = arm.pose.bones[j2]
+    cb.set_value(pb2, "v", False)                     # the Channel Box Visibility of joint2
+    _upd()
+    assert pb2.hide and not arm.pose.bones[j3].hide, "only joint2's own Visibility changes"
+    assert dict(lj.state(arm)) == {j2: HIDDEN, j3: HIDDEN}, dict(lj.state(arm))
+    assert not on3.visible_get() and not on3.hide_viewport, "an object below is hidden, its own Visibility kept"
+    assert [pb.name for pb in js.root_joints(arm)] == [j1]
+    assert js.pick(_front_view(), arm, (100, 90), 6) is None, "a joint below a hidden one is not picked"
+    cb.set_value(pb2, "v", True)
+    _upd()
+    assert not lj.state(arm) and on3.visible_get() and dag.MARK not in on3
+    # the kit Outliner eye sets the clicked joint only
+    edit = import_module(kit.MODULE + ".ui.outliner_tree_edit")
+    row = ot.Row('JOINT', arm.name, j1, 0, True, True, j1, 'JOINT', None, True)
+    assert edit.toggle_eye(bpy.context, row)
+    assert arm.pose.bones[j1].hide and not pb2.hide and not arm.pose.bones[j3].hide
+    assert dict(lj.state(arm)) == {j1: HIDDEN, j2: HIDDEN, j3: HIDDEN} and not on3.visible_get()
+    assert _row_hidden(arm, j3) and edit.eye_state(ot.Row('JOINT', arm.name, j3, 2, False, False, j3, 'JOINT',
+                                                          None, False)) is True
+    edit.toggle_eye(bpy.context, row)
+    assert not lj.state(arm) and on3.visible_get()
+    # Blender's own hide (pose.hide) works the same way
+    _pose_pick(arm, j2)
+    bpy.ops.pose.hide(unselected=False)
+    _upd()
+    assert pb2.hide and lj.hidden(arm, j3)
+    bpy.ops.pose.reveal()
+    _upd()
+    assert not lj.state(arm)
+
+
+def test_o_a_show_filter_hides_no_children():
+    """Show > NURBS Curves hides curve controls with their bone's hide flag: that is no Visibility, the joints below
+    stay shown."""
+    _clear()
+    arm, (j1, j2, j3) = _chain()
+    curve = bpy.data.objects.new("ctrlShape", bpy.data.curves.new("ctrlShape", 'CURVE'))
+    arm.pose.bones[j2].custom_shape = curve
+    cc = import_module(kit.MODULE + ".ui.curve_controls")
+    cc.show(bpy.context.scene, False)
+    _upd()
+    assert arm.pose.bones[j2].hide and not lj.hidden(arm, j3), dict(lj.state(arm))
+    cc.show(bpy.context.scene, True)
+    assert not arm.pose.bones[j2].hide
