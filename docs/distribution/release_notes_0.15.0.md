@@ -62,7 +62,7 @@ but they may have problems. For Blender 4.5 LTS keep using 0.6.2.
 - The option box works in menus opened from the Space hotbox (#350).
 - The UV Editing shelf's UV Editor button opens the UV Editor window (#352).
 - UV Unfold no longer freezes Blender on dense meshes, and UV > Sew UV Edges, Merge UVs, Cut UV Edges, Delete UVs,
-  Split UVs and Auto Seams use the 3D View selection when UV Sync Selection is off (#354).
+  Split UVs and Auto Seams use the 3D View selection when UV Sync Selection is off and no UV is picked (#354).
 
 ## Known differences
 
