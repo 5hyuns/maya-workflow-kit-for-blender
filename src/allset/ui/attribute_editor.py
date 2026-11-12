@@ -847,7 +847,8 @@ BOTTOM = (("allset.ae_select", "Select"), ("allset.ae_load", "Load Attributes"),
 
 
 def draw_bottom(layout, context=None):
-    """Maya's bottom buttons: Select, Load Attributes, Copy Tab (wrapped when the dock is too narrow)."""
+    """Maya's bottom buttons: Select, Load Attributes, Copy Tab (wrapped when the dock is too narrow); under them
+    the kit's way to Blender's whole modifier stack (Add Modifier included)."""
     layout.separator()
     col = layout.column(align=True)
     groups = wrap_rows(context, [t for _o, t in BOTTOM]) if context is not None else [list(range(len(BOTTOM)))]
@@ -855,6 +856,7 @@ def draw_bottom(layout, context=None):
         row = col.row(align=True)
         for i in idx:
             row.operator(BOTTOM[i][0], text=BOTTOM[i][1])
+    col.operator("allset.ae_blender_modifiers", text="Blender Modifiers...")
 
 
 def draw_shading_group(layout, key, mat):
@@ -1425,6 +1427,38 @@ class ALLSET_OT_ae_copy_tab(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# object types with a modifier stack (Blender's Properties shows the Modifiers tab for them)
+MODIFIER_TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'LATTICE', 'GREASEPENCIL', 'CURVES', 'POINTCLOUD', 'VOLUME'}
+
+
+def modifier_owner(ob):
+    """The object whose modifier stack the button opens: the AE node's object (a joint's skeleton has none)."""
+    if isinstance(ob, bpy.types.Object) and ob.type in MODIFIER_TYPES:
+        return ob
+    return None
+
+
+class ALLSET_OT_ae_blender_modifiers(bpy.types.Operator):
+    """Open Blender's modifier stack of this object in a floating window: every modifier with its settings, the
+    order and Add Modifier. Each modifier is also a history node in Channel Box INPUTS and an Attribute Editor tab"""
+    bl_idname = "allset.ae_blender_modifiers"
+    bl_label = "Blender Modifiers"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.window is not None and modifier_owner(ae_node(context)) is not None
+
+    def execute(self, context):
+        ob = modifier_owner(ae_node(context))
+        if open_pinned_properties(context, 'MODIFIER', ob, "attribute_editor_modifiers") is None:
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open a new window")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 def open_pinned_properties(context, tab, pin, kind):
     """A new floating window with a Properties editor pinned to ``pin`` on ``tab`` (its place remembered under
     ``kind``, ui/window_places.py). None when no window could open now."""
@@ -1459,7 +1493,7 @@ def open_pinned_properties(context, tab, pin, kind):
 classes = (ALLSET_OT_ae_tab, ALLSET_OT_ae_step, ALLSET_OT_ae_modifier, ALLSET_OT_ae_add_limit,
            ALLSET_OT_ae_select, ALLSET_OT_ae_toggle, ALLSET_OT_dock_show, ALLSET_OT_object_attributes,
            ALLSET_OT_ae_focus, ALLSET_OT_ae_show_types, ALLSET_OT_ae_hide_type, ALLSET_OT_ae_load,
-           ALLSET_OT_ae_copy_tab, ALLSET_OT_ae_show_node) + MENUS
+           ALLSET_OT_ae_copy_tab, ALLSET_OT_ae_blender_modifiers, ALLSET_OT_ae_show_node) + MENUS
 
 
 def register():

@@ -432,6 +432,15 @@ Yes — switch to Blender, follow along with Blender's own keys, and switch back
 Supported: Blender 5.2 LTS. Other versions are not tested. The extension still installs on 5.0 and 5.1, but they
 may have problems. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.2 are added once they are tested.
 
+**Where are Blender's modifiers?**
+In Maya mode they work like Maya's construction history. Every modifier on the selected object is a history node
+under INPUTS in the Channel Box and a tab in the Attribute Editor, with a Maya node name (e.g. `polyBevel1`), its
+settings and its Node State. Right-click the object › Inputs › All Inputs... lists the stack with the node states and
+moves deformers up or down, like Maya's list of input operations. Maya menus that make history nodes (Deform,
+Mesh › Reduce / Remesh / Triangulate ...) add the matching modifier, and Edit › Delete by Type › History
+(Alt+Shift+D) bakes them. **Blender Modifiers...** at the bottom of the Attribute Editor opens the object's whole
+Blender modifier stack in a floating window, Add Modifier included.
+
 **Does it open Maya `.ma` / `.mb` files?**
 No. Export FBX (or OBJ, Alembic, USD) from Maya; the kit's Import uses Maya presets (cm, Y-up).
 
