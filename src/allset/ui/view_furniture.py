@@ -321,14 +321,14 @@ def _cube_here(context):
 
 _shader = []
 def _face_label(name, poly, facing, u2, size, alpha):
-    """The face's name in Blender's UI font, centred on the projected face, along its text axis and never
-    upside down."""
+    """``_text`` arguments of the face's name in Blender's UI font, centred on the projected face, along its text axis
+    and never upside down."""
     cx = sum(p[0] for p in poly) / 4
     cy = sum(p[1] for p in poly) / 4
     ang = math.atan2(u2[1], u2[0])
     if math.cos(ang) < 0:
         ang += math.pi
-    _text(name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (.16, .16, .16, min(1.0, alpha * 1.5)), ang)
+    return name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (.16, .16, .16, min(1.0, alpha * 1.5)), ang
 
 
 def _arc_arrow(centre, radius, start, end, length, half_width):
@@ -437,8 +437,8 @@ def _draw_controls(context, centre, size, hover):
         _lines(points, colour, 1.5 * _scale(), context.region)
 
 
-_batches = {}        # (kind, geometry) -> GPU batch: the ViewCube, the axis triad and the controls redraw the same shapes
-_faces = {}          # (rotation, centre, size) -> ``faces_2d``
+_batches = {}        # (kind, geometry) -> GPU batch: the ViewCube controls redraw the same shapes
+_plans = {}          # (what, view rotation, place, size, ...) -> the ViewCube's / axis triad's draw steps
 
 
 def _cached_batch(key, build):
@@ -450,14 +450,14 @@ def _cached_batch(key, build):
     return batch
 
 
-def _cube_faces(q, centre, size):
-    """``faces_2d``, kept for a view that keeps its rotation and size (every redraw while playback runs)."""
-    key = (tuple(q), tuple(centre), size)
-    got = _faces.get(key)
+def _plan(key, build):
+    """Draw steps of ``key``, built once: a view keeps its rotation and size from redraw to redraw (every frame
+    while playback runs), so the ViewCube's faces and the triad are worked out and uploaded once."""
+    got = _plans.get(key)
     if got is None:
-        if len(_faces) > 32:
-            _faces.clear()
-        got = _faces[key] = faces_2d(q, centre, size)
+        if len(_plans) > 32:
+            _plans.clear()
+        got = _plans[key] = build()
     return got
 
 
@@ -466,6 +466,7 @@ def _sh():
         import gpu
         _shader.append(gpu.shader.from_builtin('UNIFORM_COLOR'))
         _shader.append(gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR'))
+        _shader.append(gpu.shader.from_builtin('SMOOTH_COLOR'))
     return _shader
 
 
@@ -477,40 +478,35 @@ def _fill(poly, colour):
     batch.draw(sh)
 
 
-def _fill_cube_face(poly, name, facing, alpha):
+def _cube_face_batch(poly, name, facing, alpha):
     """World-up lighting: bright upper face, darker underside, smooth sides."""
-    import gpu
     from gpu_extras.batch import batch_for_shader
-    shaders = _sh()
-    if len(shaders) == 2:
-        shaders.append(gpu.shader.from_builtin('SMOOTH_COLOR'))
-    shader = shaders[2]
-
-    def build():
-        normal, u, v = FACES[name]
-        colours = []
-        for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-            height = .5 + .5 * (normal[2] + u[2] * su + v[2] * sv)
-            shade = (.77 + .22 * height) * (.92 + .08 * facing)
-            colours.append((shade, shade, shade, alpha))
-        return batch_for_shader(shader, 'TRI_FAN', {'pos': poly, 'color': colours})
-
-    batch = _cached_batch(("face", tuple(map(tuple, poly)), name, facing, alpha), build)
-    shader.bind()
-    batch.draw(shader)
+    normal, u, v = FACES[name]
+    colours = []
+    for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        height = .5 + .5 * (normal[2] + u[2] * su + v[2] * sv)
+        shade = (.77 + .22 * height) * (.92 + .08 * facing)
+        colours.append((shade, shade, shade, alpha))
+    return batch_for_shader(_sh()[2], 'TRI_FAN', {'pos': poly, 'color': colours})
 
 
-def _lines(points, colour, width, region, loop=False):
+def _strip_batch(points):
     from gpu_extras.batch import batch_for_shader
+    return batch_for_shader(_sh()[1], 'LINE_STRIP', {"pos": [(x, y, 0.0) for x, y in points]})
+
+
+def _draw_strip(batch, colour, width, region):
     sh = _sh()[1]
-    pts = list(points) + ([points[0]] if loop else [])
-    batch = _cached_batch(("strip", tuple(map(tuple, pts))),
-                          lambda: batch_for_shader(sh, 'LINE_STRIP', {"pos": [(x, y, 0.0) for x, y in pts]}))
     sh.bind()
     sh.uniform_float("viewportSize", (region.width, region.height))
     sh.uniform_float("lineWidth", width)
     sh.uniform_float("color", colour)
     batch.draw(sh)
+
+
+def _lines(points, colour, width, region, loop=False):
+    pts = list(points) + ([points[0]] if loop else [])
+    _draw_strip(_cached_batch(("strip", tuple(map(tuple, pts))), lambda: _strip_batch(pts)), colour, width, region)
 
 
 def _text(s, x, y, px, colour, angle=0.0, centre=True):
@@ -531,26 +527,57 @@ def _text(s, x, y, px, colour, angle=0.0, centre=True):
         blf.disable(fid, blf.ROTATION)
 
 
+def _cube_plan(q, centre, size, hover, alpha):
+    """(faces, [(face fill, face outline, label or None)]) of the ViewCube seen with rotation ``q``."""
+    from gpu_extras.batch import batch_for_shader
+    faces = faces_2d(q, centre, size)
+    steps = []
+    for name, poly, facing, u2, _v2 in faces:
+        if name == hover:
+            fill = (batch_for_shader(_sh()[0], 'TRI_FAN', {"pos": poly}), (0.55, 0.75, 0.95, alpha))
+        else:
+            fill = (_cube_face_batch(poly, name, facing, alpha), None)
+        label = _face_label(name, poly, facing, u2, size, alpha) if facing > 0.28 else None
+        steps.append((fill, _strip_batch(list(poly) + [poly[0]]), label))
+    return faces, steps
+
+
 def draw_cube(context, hover=None, alpha=0.5):
+    import gpu
     region, rv3d = context.region, context.region_data
     s = _scale()
     size = cube_size(region.width, region.height, s)
     centre, _label, _triad = layout(_bounds(context), s, size)
     q = _cube_rotation(rv3d)
-    faces = _cube_faces(q, centre, size)
-    for name, poly, facing, u2, _v2 in faces:
-        import gpu
+    faces, steps = _plan(("cube", tuple(q), centre, size, hover, alpha),
+                         lambda: _cube_plan(q, centre, size, hover, alpha))
+    shaders = _sh()
+    for (batch, colour), outline, label in steps:
         gpu.state.blend_set('ALPHA')
-        if name == hover:
-            _fill(poly, (0.55, 0.75, 0.95, alpha))
+        if colour is not None:                 # the face under the mouse
+            shaders[0].uniform_float("color", colour)
+            batch.draw(shaders[0])
         else:
-            _fill_cube_face(poly, name, facing, alpha)
-        _lines(poly, (0.418, 0.418, 0.418, alpha), 1.95, region, loop=True)
-        if facing > 0.28:
-            _face_label(name, poly, facing, u2, size, alpha)
+            shaders[2].bind()
+            batch.draw(shaders[2])
+        _draw_strip(outline, (0.418, 0.418, 0.418, alpha), 1.95, region)
+        if label is not None:
+            _text(*label)
     if hover is not None:
         _draw_controls(context, centre, size, hover)
     return faces
+
+
+def _triad_plan(q, origin, s, colours):
+    """[(line, colour, letter ``_text`` arguments)] of the axis triad seen with rotation ``q``."""
+    steps = []
+    for i, end, _depth in triad(q, origin, TRIAD_LEN * s):
+        rgb = colours[i]
+        dx, dy = end[0] - origin[0], end[1] - origin[1]
+        n = math.hypot(dx, dy) or 1.0
+        steps.append((_strip_batch((origin, end)), (*rgb, 1.0),
+                      ("xyz"[i], end[0] + dx / n * 5 * s, end[1] + dy / n * 5 * s, round(10 * s), (*rgb, 1.0))))
+    return steps
 
 
 def _draw_hud():
@@ -579,14 +606,13 @@ def _draw_hud():
         _text(text, label[0] - w / 2, label[1], round(LABEL_PX * s), (*LABEL_RGB, 1.0), centre=False)
     if prefs.maya_view_axis:
         ui = context.preferences.themes[0].user_interface
-        colours = (ui.axis_x, ui.axis_y, ui.axis_z)
-        for i, end, _depth in triad(rv3d.view_rotation, origin, TRIAD_LEN * s):
-            rgb = tuple(colours[i])[:3]
+        colours = tuple(tuple(c)[:3] for c in (ui.axis_x, ui.axis_y, ui.axis_z))
+        q = rv3d.view_rotation
+        for line, colour, letter in _plan(("triad", tuple(q), origin, s, colours),
+                                          lambda: _triad_plan(q, origin, s, colours)):
             gpu.state.blend_set('ALPHA')
-            _lines((origin, end), (*rgb, 1.0), 1.0, region)
-            dx, dy = end[0] - origin[0], end[1] - origin[1]
-            n = math.hypot(dx, dy) or 1.0
-            _text("xyz"[i], end[0] + dx / n * 5 * s, end[1] + dy / n * 5 * s, round(10 * s), (*rgb, 1.0))
+            _draw_strip(line, colour, 1.0, region)
+            _text(*letter)
     gpu.state.blend_set('NONE')
 
 
@@ -904,6 +930,6 @@ def unregister():
     _ACTIVE["region"] = None
     _shader.clear()
     _batches.clear()
-    _faces.clear()
+    _plans.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
