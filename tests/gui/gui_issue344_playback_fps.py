@@ -4,7 +4,9 @@ about 88k triangles in 32 objects, keyed over 300 frames) plays in Solid / MatCa
 is off. At scene rate 30 both modes keep 30 frames/s; at scene rate 1000 (as fast as the PC draws) the rates are
 printed and Maya mode keeps a loose 40 % of Blender mode's rate (other programs on the PC move the numbers). While
 Maya mode plays, the Range Slider does not read its header row every frame, each skeleton's joint list is read once,
-and the selected skinned character's wire keeps its edges (only its points are read again)."""
+and the selected skinned character's wire keeps its edges (only its points are read again). Last, every bone becomes a
+control with a circle shape and Maya mode plays in four views: the shape is read once, and each skeleton's lines are
+built once a frame for all four views."""
 
 import math
 import os
@@ -140,10 +142,11 @@ def flow():
     rb = import_module(MODULE + ".ui.range_bar")
     mj = import_module(MODULE + ".ui.maya_joints")
     wire = import_module(MODULE + ".ui.selection_wire")
-    lists, drawn = [], []
-    real_list, real_lines = mj._joint_list, mj._fast_lines
+    lists, drawn, reads = [], [], []
+    real_list, real_parts, real_read = mj._joint_list, mj._parts, mj._read_widget
     mj._joint_list = lambda ob: lists.append(ob.name) or real_list(ob)     # counts the joint list reads
-    mj._fast_lines = lambda ob, *a, **k: drawn.append(ob.name) or real_lines(ob, *a, **k)   # skeletons drawn
+    mj._parts = lambda ob, *a, **k: drawn.append(ob.name) or real_parts(ob, *a, **k)   # skeleton lines built
+    mj._read_widget = lambda shape, dg: reads.append(shape.name) or real_read(shape, dg)   # control shapes read
     rates = {}
 
     def play(fps, mode, select=None):
@@ -160,6 +163,7 @@ def flow():
         _frames.clear()
         lists.clear()
         drawn.clear()
+        reads.clear()
         play.reads = rb.row_reads[0]
         t0 = time.perf_counter()
         yield WINDOW
@@ -183,7 +187,7 @@ def flow():
                     check(f"Maya mode at {fps} fps: the Range Slider bar is drawn ({play.bars}) and reads its header "
                           f"row a few times, not every frame ({play.reads} reads in {play.frames} frames)",
                           play.bars >= 1 and play.reads <= 3 and play.frames > 20)
-                    check(f"... both skeletons are drawn every frame ({len(drawn)} draws) and their joint lists are "
+                    check(f"... both skeletons are built every frame ({len(drawn)} builds) and their joint lists are "
                           f"read once, not every frame ({len(lists)} reads)",
                           len(drawn) >= 2 * play.frames and len(lists) <= 4)
                 if SHOTS and fps == 30 and _rep == 0:
@@ -199,7 +203,35 @@ def flow():
             if SHOTS:
                 sim.screenshot(os.path.join(SHOTS, "issue344_maya_selected.png"))
         yield 0.5
-    mj._joint_list, mj._fast_lines = real_list, real_lines
+    # every bone a control with a 32-point circle shape (kept in an excluded collection, like rig generators do),
+    # Maya mode in four views
+    widgets = bpy.data.collections.new("widgets")
+    bpy.context.scene.collection.children.link(widgets)
+    bpy.context.view_layer.layer_collection.children["widgets"].exclude = True
+    me = bpy.data.meshes.new("WGT_circle")
+    me.from_pydata([(0.1 * math.cos(2 * math.pi * i / 32), 0.0, 0.1 * math.sin(2 * math.pi * i / 32))
+                    for i in range(32)], [(i, (i + 1) % 32) for i in range(32)], [])
+    wgt = bpy.data.objects.new("WGT_circle", me)
+    widgets.objects.link(wgt)
+    for c in range(2):
+        for pb in bpy.data.objects[f"rig{c}"].pose.bones:
+            pb.custom_shape = wgt
+    sw.set_mode(True, layout=True)
+    yield 2.5
+    with _override():
+        bpy.ops.screen.region_quadview()
+    yield 0.5
+    yield from play(1000, "maya")
+    rates[(1000, "maya", "quad")] = [play.rate]
+    check(f"controls in four views: the circle shape is read once ({len(reads)} reads), each skeleton is built once a "
+          f"frame for all four views ({len(drawn)} builds in {play.frames} frames)",
+          len(reads) <= 2 and play.frames > 20 and 2 * play.frames - 4 <= len(drawn) <= 2 * play.frames + 4)
+    if SHOTS:
+        sim.screenshot(os.path.join(SHOTS, "issue344_maya_controls_quad.png"))
+    with _override():
+        bpy.ops.screen.region_quadview()
+    yield 0.5
+    mj._joint_list, mj._parts, mj._read_widget = real_list, real_parts, real_read
     best ={k: max(v) for k, v in rates.items()}
     check(f"scene rate 30: Blender mode {best[(30, 'blender')]:.1f}, Maya mode {best[(30, 'maya')]:.1f} frames/s "
           f"(both keep 30)", best[(30, 'blender')] >= 28.5 and best[(30, 'maya')] >= 28.5)
@@ -207,6 +239,7 @@ def flow():
     bs, ms = best[(1000, 'blender', 'body0')], best[(1000, 'maya', 'body0')]
     check(f"as fast as it draws: Blender mode {b:.0f}, Maya mode {m:.0f} frames/s ({m / b:.0%}); a character "
           f"selected: {bs:.0f}, {ms:.0f} ({ms / bs:.0%}); Maya mode keeps at least 40 %", m >= 0.4 * b and ms >= 0.4 * bs)
+    print(f"PLAYBACK controls in four views: {best[(1000, 'maya', 'quad')]:.0f} frames/s", flush=True)
     bpy.app.handlers.frame_change_post.remove(_count)
 
 
