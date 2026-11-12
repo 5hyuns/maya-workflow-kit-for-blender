@@ -21,7 +21,7 @@ Y-up view direction ("top -Y", "front -Z"): they name Maya's cameras, not axes.
 import math
 
 import bpy
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 
 # --- Maya sizes and colours -----------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view
@@ -711,8 +711,44 @@ def _remove_handler():
 
 # --- ViewCube gizmo -------------------------------------------------------------------------
 
+# Dragging the ViewCube tumbles the view like Maya: the same way round as Alt+LMB, CUBE_TUMBLE_RATIO times as far
+# for the same mouse distance (a 60 px drag turns the view about 35 degrees where Alt+LMB turns it 24), and nothing
+# snaps on release. A press that doesn't move past Blender's drag threshold is a click on the face.
+CUBE_TUMBLE_RATIO = 35.36 / 24.0
+
+
+def tumble_rate(context):
+    """Radians per pixel of a ViewCube drag: Blender's turntable sensitivity (the speed of Alt+LMB) x the ratio."""
+    prefs = context.preferences
+    return prefs.inputs.view_rotate_sensitivity_turntable / (prefs.system.ui_scale or 1.0) * CUBE_TUMBLE_RATIO
+
+
+def turntable(q, dx, dy, rate):
+    """``q`` (a view rotation) turned by a drag of (dx, dy) px: around the world Z axis by dx and around the view's
+    own X axis by dy, the way Blender's turntable Alt+LMB turns it (sideways reversed while the view is upside
+    down)."""
+    reverse = -1.0 if (q @ Vector((0.0, 1.0, 0.0))).z < 0.0 else 1.0
+    x_axis = q @ Vector((1.0, 0.0, 0.0))
+    turned = Quaternion((0.0, 0.0, 1.0), -dx * rate * reverse) @ Quaternion(x_axis, dy * rate) @ q
+    turned.normalize()
+    return turned
+
+
+def _drag_threshold(context):
+    prefs = context.preferences
+    return max(1.0, prefs.inputs.drag_threshold_mouse * (prefs.system.ui_scale or 1.0))
+
+
+def _tumble_locked(context):
+    """Maya's top / front / side views don't tumble (the kit's ortho lock, as for Alt+LMB)."""
+    from ..operators import view
+    p = _prefs()
+    return view.tumble_locked(context.region_data, getattr(p, "lock_ortho_tumble", True))
+
+
 class ALLSET_OT_view_cube_face(bpy.types.Operator):
     """Look at the view from this side; a perspective view stays perspective, like Maya's persp camera"""
+    # a drag from a face tumbles the view instead (invoke / modal)
     bl_idname = 'allset.view_cube_face'
     bl_label = 'ViewCube Face'
     bl_options = {'INTERNAL'}
@@ -730,6 +766,59 @@ class ALLSET_OT_view_cube_face(bpy.types.Operator):
         if previous == 'PERSP' and rv.view_perspective == 'ORTHO':
             rv.view_perspective = 'PERSP'
         return result
+
+    def invoke(self, context, event):
+        rv = context.region_data
+        if rv is None or event.type != 'LEFTMOUSE' or event.value != 'PRESS':
+            return self.execute(context)
+        self._start = self._last = (event.mouse_x, event.mouse_y)
+        self._dragging = self._locked = False
+        self._before = None
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _begin_drag(self, context):
+        rv = context.region_data
+        self._dragging = True
+        if _tumble_locked(context):
+            self._locked = True
+            return
+        self._locked = False
+        self._before = (rv.view_perspective, rv.view_rotation.copy())
+        if rv.view_perspective == 'CAMERA':      # the free view from the visible camera orientation (as the roll)
+            visible = _cube_rotation(rv)
+            rv.view_perspective = 'PERSP'
+            rv.view_rotation = visible
+
+    def modal(self, context, event):
+        rv = context.region_data
+        if rv is None:
+            return {'CANCELLED'}
+        if event.type == 'MOUSEMOVE':
+            x, y = event.mouse_x, event.mouse_y
+            if not self._dragging:
+                if math.hypot(x - self._start[0], y - self._start[1]) < _drag_threshold(context):
+                    return {'RUNNING_MODAL'}
+                self._begin_drag(context)
+                self._last = self._start            # the whole drag counts, from the press
+            if not self._locked:
+                rv.view_rotation = turntable(rv.view_rotation, x - self._last[0], y - self._last[1],
+                                             tumble_rate(context))
+                context.area.tag_redraw()
+            self._last = (x, y)
+            return {'RUNNING_MODAL'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            if self._dragging:
+                return {'FINISHED'}                 # a drag: no snap to a face
+            return self.execute(context)
+        if event.type in {'ESC', 'RIGHTMOUSE'}:
+            if self._before is not None:
+                rv.view_rotation = self._before[1]
+                if self._before[0] == 'CAMERA':
+                    rv.view_perspective = 'CAMERA'
+                context.area.tag_redraw()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
 
 
 class ALLSET_OT_view_cube_control(bpy.types.Operator):
