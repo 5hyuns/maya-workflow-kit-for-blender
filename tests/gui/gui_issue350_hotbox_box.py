@@ -6,7 +6,7 @@
 2. Clicks in a menu opened from the hotbox: Edit Mesh > Bevel and Create > Polygon Primitives > Cube - a click on the
    ❒ = ``allset.menu_option_box``, a click on the label = the command alone, Shift+click on the label = the option box.
 3. Press and hold Edit Mesh > Bevel in a menu opened from the hotbox = the option box (the hold menu's row).
-Runs at the session's UI scale (1.25 here; ``ALLSET_GUI_UI_SCALE=0.8`` = 1.0).
+Runs at the session's UI scale (e.g. 1.25; ``ALLSET_GUI_UI_SCALE=0.8`` = 1.0).
 """
 
 import os

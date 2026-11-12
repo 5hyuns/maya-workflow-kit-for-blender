@@ -183,7 +183,7 @@ def s_cancel():
     rc = mod(".operators.render_cameras")
     C["job_running"] = bpy.app.is_job_running('RENDER')
     # Blender's render_cancel call of a cancelled render job (Esc reaches Blender from the OS keyboard only, which
-    # simulated events skip; the key itself is in docs/manual_checks.md)
+    # simulated events skip)
     rc._on_cancel()
 
 

@@ -204,8 +204,7 @@ def _view_context(objects):
 
 def test_playback_frame_builds_no_joint_objects_and_stays_in_budget():
     """Two 65-joint skeletons, a new pose every frame: the view's lines are built from arrays (no per-joint
-    ``skeleton`` call) and stay far under a frame's time (budget loose for slow machines: 12 ms, about 2.5 ms
-    here; it was about 7 ms)."""
+    ``skeleton`` call) and stay far under a frame's time (budget loose for slow machines: 12 ms)."""
     _clear()
     rigs = [_rig(0.0, 65)[0], _rig(3.0, 65)[0]]
     ctx = _view_context(rigs)
@@ -290,7 +289,7 @@ def test_joint_labels_follow_playback_and_edits():
 
 
 def test_playing_joint_lines_cost_little():
-    """Two 65-joint skeletons while playing: about 1.7 ms a frame here (loose budget 8 ms)."""
+    """Two 65-joint skeletons while playing (loose budget 8 ms)."""
     _clear()
     rigs = [_rig(0.0, 65)[0], _rig(3.0, 65)[0]]
     _animate(*rigs)
