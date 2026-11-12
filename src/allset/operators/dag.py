@@ -9,9 +9,10 @@ Isolate Select take the selected nodes with everything below them.
 Blender: a parent's ``hide_viewport`` / ``hide_set`` never hides its children and
 ``object.delete`` leaves the children, unparented. So:
 
-- ``sync``: an object whose ancestor is hidden (own Visibility = ``hide_viewport``, or its display layer's V) gets the
-  view-layer flag (``hide_set``) marked ``MARK``; its own ``hide_viewport`` (Maya's Visibility channel) stays as it
-  was. Objects the kit did not hide that way are never touched (a layer's or Blender's own ``hide_set`` stays).
+- ``sync``: an object whose ancestor is hidden (own Visibility = ``hide_viewport``, or its display layer's V; for an
+  object under a joint also the joint's display layer, ``ui/layer_joints.py``) gets the view-layer flag
+  (``hide_set``) marked ``MARK``; its own ``hide_viewport`` (Maya's Visibility channel) stays as it was. Objects the
+  kit did not hide that way are never touched (a layer's or Blender's own ``hide_set`` stays).
   Run from a depsgraph handler (only writes on change, so it settles) and right after kit visibility edits.
 - ``hierarchy``: the selection with all descendants, for Delete (``allset.delete``), Export Selection
   (``selected_hierarchy``) and Isolate Select (``allset.isolate``).
@@ -53,11 +54,12 @@ def hidden_self(ob, scene, view_layer=None):
 
 
 def hidden_by_ancestor(ob, scene, view_layer=None):
-    p = ob.parent
+    from ..ui import layer_joints
+    child, p = ob, ob.parent
     while p is not None:
-        if hidden_self(p, scene, view_layer):
+        if hidden_self(p, scene, view_layer) or layer_joints.hidden_under(child):
             return True
-        p = p.parent
+        child, p = p, p.parent
     return False
 
 

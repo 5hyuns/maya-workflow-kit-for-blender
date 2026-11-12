@@ -28,10 +28,13 @@ def _collection_hidden(bone):
 
 
 def root_joints(ob):
-    """Pose bones of the skeleton's top joints: shown bones with no shown ancestor, in bone order."""
+    """Pose bones of the skeleton's top joints: shown bones with no shown ancestor, in bone order (a display layer
+    hides a joint with everything below it)."""
+    from ..ui import layer_joints
+    layered = layer_joints.state(ob)
     out = []
     for pb in ob.pose.bones:
-        if compat.bone_hidden(pb) or _collection_hidden(pb.bone):
+        if compat.bone_hidden(pb) or _collection_hidden(pb.bone) or layered.get(pb.name) == layer_joints.HIDDEN:
             continue
         up = pb.bone.parent
         while up is not None and (up.hide or _collection_hidden(up)):
@@ -72,17 +75,20 @@ def select_roots_if_empty(ob):
 
 
 def pick(context, ob, mouse, radius):
-    """Pick a visible, selectable joint, preferring its head over the connecting shaft."""
+    """Pick a visible, selectable joint, preferring its head over the connecting shaft (a joint a display layer hides
+    or makes Template / Reference can't be picked)."""
     from .select_priority import BONE_WIDTH, bone_width
+    from ..ui import layer_joints
     editing = ob.mode == 'EDIT'
     bones = ob.data.edit_bones if editing else ob.pose.bones
+    layered = layer_joints.state(ob)
     candidates = []
     persp = np.asarray(context.region_data.perspective_matrix, dtype=np.float64)
     region = context.region
     for item in bones:
         bone = item if editing else item.bone
         hidden = bone.hide if editing else compat.bone_hidden(item)
-        if (hidden or bone.hide_select or (bone.collections and
+        if (hidden or bone.hide_select or item.name in layered or (bone.collections and
                 not any(c.is_visible_effectively for c in bone.collections))):
             continue
         points = np.asarray([ob.matrix_world @ item.head, ob.matrix_world @ item.tail])

@@ -12,6 +12,10 @@ attributes (#26; the object's visibility is ``hide_viewport``):
                   (the member's own display type / selectability are kept in ``OWN`` and put back)
   P (playback) -> off: members hidden (view-layer flag) while animation plays
 An object belongs to at most one display layer, like Maya.
+
+A joint picked in a view is a member of its own (``ui/layer_joints.py``): the layer's state reaches the joint and
+everything below it through the kit's joint drawing and picking, never through the skeleton object; a kit skeleton
+picked as a whole stands for its root joints. Layers of older files that hold a skeleton object keep it.
 """
 
 
@@ -19,8 +23,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 
-from .. import i18n
-from . import chrome
+from .. import compat, i18n
+from . import chrome, layer_joints
 from ..operators import naming
 
 ROOT_NAME = "Display Layers"
@@ -146,17 +150,88 @@ def apply_object(ob, layer):
 def apply_layer(coll):
     for ob in coll.objects:
         apply_object(ob, coll)
+    layer_joints.bump()             # member joints and the joints below them (kit drawing / picking)
     from ..operators import dag
     dag.sync()                      # a hidden layer hides its members' children too (Maya)
 
 
-def new_layer(scene, objects=()):
+def selected_nodes(context):
+    """The selection as Maya nodes for a display layer: (objects, {skeleton: [joint names]}, skeletons picked as a
+    whole). A joint picked in a view is a node (Pose Mode, or Edit Mode with the Move tool; in Object Mode the joints
+    still picked on a skeleton selected with other objects). A kit skeleton picked as a whole stands for its root
+    joints (Maya's top node of a skeleton is its root joint); another skeleton (a Rigify rig) is an object."""
+    from ..operators import joint_selection
+    from . import outliner_tree
+    from .channel_box import bone_selected
+    objects, joints, whole = [], {}, []
+    for ob in context.selected_objects:
+        if ob.type != 'ARMATURE' or ob.pose is None:
+            objects.append(ob)
+            continue
+        pbs = ob.pose.bones
+        if ob.mode == 'EDIT':
+            names = [eb.name for eb in joint_selection._edit_picked(ob) if eb.name in pbs]
+        else:
+            names = [pb.name for pb in pbs if bone_selected(pb) and not compat.bone_hidden(pb)
+                     and not joint_selection._collection_hidden(pb.bone)]
+        if not names and ob.mode != 'EDIT':
+            bones = outliner_tree._Bones(ob)
+            if outliner_tree.is_kit_skeleton(ob, bones):
+                names = [n for n in bones.roots if n in pbs]
+                whole.append(ob)
+        if names:
+            joints[ob] = names
+        else:
+            objects.append(ob)
+    return objects, joints, whole
+
+
+def add_nodes(scene, coll, objects=(), joints=None, whole=()):
+    """``add_objects`` for the objects; the joints move into ``coll`` (from any other layer). A kit skeleton picked
+    as a whole is its root joints: an older file's layer holding the skeleton object lets it go."""
+    add_objects(scene, coll, objects)
+    if not joints:
+        return
+    for ob in whole:
+        old = layer_of(ob, scene)
+        if old is not None:
+            old.objects.unlink(ob)
+            apply_object(ob, None)
+    for ob, names in joints.items():
+        for n in names:
+            pb = ob.pose.bones.get(n)
+            if pb is not None:
+                layer_joints.set_layer(pb, coll)
+    _joints_changed()
+
+
+def remove_nodes(scene, coll, objects=(), joints=None, whole=()):
+    """``remove_objects`` for the objects; the joints of ``coll`` leave it (a skeleton picked as a whole: its root
+    joints, and the skeleton object when an older file's layer holds it)."""
+    remove_objects(scene, coll, [*objects, *(ob for ob in whole if ob.name in coll.objects)])
+    if not joints:
+        return
+    for ob, names in joints.items():
+        for n in names:
+            pb = ob.pose.bones.get(n)
+            if pb is not None and layer_joints.layer_of(pb) == coll:
+                layer_joints.set_layer(pb, None)
+    _joints_changed()
+
+
+def _joints_changed():
+    layer_joints.bump()
+    from ..operators import dag
+    dag.sync()                      # objects under the joints follow them (Maya)
+
+
+def new_layer(scene, objects=(), joints=None, whole=()):
     top = max((c.allset_layer.order for c in layers(scene)), default=0)
     coll = bpy.data.collections.new(next_layer_name())
     root(scene, create=True).children.link(coll)
     coll.allset_layer.is_layer = True
     coll.allset_layer.order = top + 1
-    add_objects(scene, coll, objects)
+    add_nodes(scene, coll, objects, joints, whole)
     return coll
 
 
@@ -177,8 +252,13 @@ def remove_objects(scene, coll, objects):
             apply_object(ob, None)
 
 
-def delete_layer(scene, coll):
+def empty_layer(scene, coll):
     remove_objects(scene, coll, list(coll.objects))
+    remove_nodes(scene, coll, joints=layer_joints.members(coll, scene))
+
+
+def delete_layer(scene, coll):
+    empty_layer(scene, coll)
     bpy.data.collections.remove(coll)
 
 
@@ -196,12 +276,17 @@ _hidden_for_playback = []
 @persistent
 def on_playback_pre(scene, *_args):
     _hidden_for_playback.clear()
+    joints = False
     for coll in layers(scene):
         st = coll.allset_layer
         if st.visible and not st.playback:
             for ob in coll.objects:
                 _layer_hide(ob, True)
                 _hidden_for_playback.append(ob.name)
+            joints = joints or bool(layer_joints.members(coll, scene))
+    layer_joints.set_playing(True)  # member joints of a layer with Playback off: hidden while playing
+    if joints:
+        _playback_dag(scene)
 
 
 @persistent
@@ -211,6 +296,18 @@ def on_playback_post(scene, *_args):
         if ob is not None:
             _layer_hide(ob, False)
     _hidden_for_playback.clear()
+    layer_joints.set_playing(False)
+    if layer_joints.has_members(scene):
+        _playback_dag(scene)
+
+
+def _playback_dag(scene):
+    """Objects under joints of a layer with Playback off follow them."""
+    from ..operators import dag
+    try:
+        dag.sync(scene)
+    except (ReferenceError, RuntimeError, AttributeError):
+        pass
 
 
 # --- operators -----------------------------------------------------------------------------------
@@ -227,8 +324,8 @@ class ALLSET_OT_layer_new(_LayerOp, bpy.types.Operator):
     selected: BoolProperty(name="Assign Selected", default=False)
 
     def execute(self, context):
-        objs = list(context.selected_objects) if self.selected else []
-        coll = new_layer(context.scene, objs)
+        nodes = selected_nodes(context) if self.selected else ((), None, ())
+        coll = new_layer(context.scene, *nodes)
         context.scene.allset_layer_index = layers(context.scene).index(coll)
         return {'FINISHED'}
 
@@ -246,8 +343,8 @@ class ALLSET_OT_layer_assign(_LayerOp, bpy.types.Operator):
 
     def execute(self, context):
         coll = active_layer(context)
-        fn = remove_objects if self.remove else add_objects
-        fn(context.scene, coll, list(context.selected_objects))
+        fn = remove_nodes if self.remove else add_nodes
+        fn(context.scene, coll, *selected_nodes(context))
         return {'FINISHED'}
 
 
@@ -262,9 +359,44 @@ class ALLSET_OT_layer_select(_LayerOp, bpy.types.Operator):
 
     def execute(self, context):
         coll = active_layer(context)
+        joints = layer_joints.members(coll, context.scene)
+        if joints:
+            select_members(context, coll, joints)
+            return {'FINISHED'}
         for ob in context.view_layer.objects:
             ob.select_set(ob.name in coll.objects and not ob.hide_select)
         return {'FINISHED'}
+
+
+def select_members(context, coll, joints):
+    """Maya Select Objects of a layer with member joints: only the members are picked (not the joints below them),
+    also in a Template or Reference layer. Joints alone: Pose Mode on their skeletons, the last member the lead;
+    with objects the skeletons are selected in Object Mode with the member joints picked on them."""
+    from ..operators import joint_selection
+    from .channel_box import set_bone_selected
+    joint_selection.leave(context, clear_selection=True)
+    view_layer = context.view_layer
+    objects = [ob for ob in view_layer.objects if ob.name in coll.objects and not ob.hide_select]
+    for ob in view_layer.objects:
+        if ob.select_get():
+            ob.select_set(False)
+    last = None
+    for ob in (*objects, *joints):
+        try:
+            ob.select_set(True)
+            last = ob
+        except RuntimeError:           # not in the view layer / hidden
+            continue
+    for arm, names in joints.items():
+        for pb in arm.pose.bones:
+            set_bone_selected(pb, pb.name in names)
+        arm.data.bones.active = arm.data.bones.get(names[-1])
+    view_layer.objects.active = last
+    if not objects and last is not None and last.type == 'ARMATURE':
+        try:
+            bpy.ops.object.mode_set(mode='POSE')    # every selected skeleton (several: multi-object Pose Mode)
+        except RuntimeError:                         # a skeleton an older layer hides: the joints stay picked
+            pass
 
 
 class ALLSET_OT_layer_delete(_LayerOp, bpy.types.Operator):
@@ -356,8 +488,7 @@ class ALLSET_OT_layer_empty(_LayerOp, bpy.types.Operator):
         return active_layer(context) is not None
 
     def execute(self, context):
-        coll = active_layer(context)
-        remove_objects(context.scene, coll, list(coll.objects))
+        empty_layer(context.scene, active_layer(context))
         return {'FINISHED'}
 
 
@@ -810,6 +941,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Collection.allset_layer = PointerProperty(type=ALLSET_PG_layer)
+    layer_joints.register()
     bpy.types.Scene.allset_layer_index = IntProperty(options={'HIDDEN'})
     bpy.types.WindowManager.allset_le_tab = EnumProperty(name="Layer Editor Tab", items=TABS,
                                                            options={'SKIP_SAVE'})
@@ -824,6 +956,7 @@ def unregister():
     bpy.app.handlers.animation_playback_pre.remove(on_playback_pre)
     del bpy.types.WindowManager.allset_le_tab
     del bpy.types.Scene.allset_layer_index
+    layer_joints.unregister()
     del bpy.types.Collection.allset_layer
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

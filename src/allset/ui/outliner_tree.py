@@ -453,6 +453,8 @@ def row_state(context, row, live_objects, selected_set=None, signature=None):
         except RuntimeError:
             ob_hidden = True
         pb, eb = _pose_or_edit_bone(ob, row.sub)
+        from . import layer_joints
+        ob_hidden = ob_hidden or layer_joints.hidden(ob, row.sub)     # hidden by a display layer
         if eb is not None:
             sel = bool(eb.select_head or eb.select) and ob.mode == 'EDIT'
             act = sel and ob.data.edit_bones.active == eb

@@ -77,10 +77,12 @@ def pick_joint(context, ob, mouse, radius):
     depsgraph = context.evaluated_depsgraph_get()
     persp = np.asarray(context.region_data.perspective_matrix, dtype=np.float64)
     region = context.region
+    from ..ui import layer_joints
+    layered = layer_joints.state(ob)       # hidden / Template / Reference by a display layer: not picked
     candidates = []
     for pb in ob.pose.bones:
         bone = pb.bone
-        if (compat.bone_hidden(pb) or bone.hide_select or (bone.collections and
+        if (compat.bone_hidden(pb) or bone.hide_select or pb.name in layered or (bone.collections and
                 not any(c.is_visible_effectively for c in bone.collections))):
             continue
         if pb.custom_shape is not None:
@@ -144,9 +146,12 @@ def _segments(ob, kind, depsgraph):
         # a bone with a Custom Shape is drawn as that shape's wire, not the octahedron
         a, b, reach = [], [], []
         shapes = control_shapes.shows_custom_shapes(ob)
+        from ..ui import layer_joints
+        layered = layer_joints.state(ob)   # a joint a display layer hides or makes Template / Reference is no hit
         for pb in ob.pose.bones:
             bone = pb.bone
-            if compat.bone_hidden(pb) or (len(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)):
+            if compat.bone_hidden(pb) or pb.name in layered or (
+                    len(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)):
                 continue
             if shapes and pb.custom_shape is not None:
                 sa, sb = control_shapes.shape_segments(ob, pb, depsgraph)
