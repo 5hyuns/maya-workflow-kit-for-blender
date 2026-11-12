@@ -269,13 +269,72 @@ class ALLSET_OT_reset_transform(_SelectedObjectsOp, bpy.types.Operator):
         return {'FINISHED'}
 
 
+COMPONENT_MODES = {'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_LATTICE'}
+
+
+def selected_points(ob):
+    """Local coordinates of the selected points (vertices, CVs, lattice points) of ``ob``'s data, read in object
+    mode (the edit data has been written back)."""
+    data = ob.data
+    if ob.type == 'MESH':
+        return [v.co.copy() for v in data.vertices if v.select and not v.hide]
+    if ob.type in ('CURVE', 'SURFACE'):
+        pts = []
+        for spline in data.splines:
+            pts += [Vector(p.co) for p in spline.bezier_points if p.select_control_point]
+            pts += [Vector(p.co[:3]) for p in spline.points if p.select]
+        return pts
+    if ob.type == 'LATTICE':
+        return [Vector(p.co_deform) for p in data.points if p.select]
+    return []
+
+
+def center_pivot_components(context):
+    """Maya Center Pivot in component mode: each object whose components are selected gets its pivot on the centre
+    of their bounding box; with no component selected every edited object centres on its whole bounding box. Ends
+    in object mode with those objects selected, as Maya does. Returns the objects."""
+    from . import hold
+    if hold.COMPONENT.on:
+        hold.COMPONENT.finish(context)
+    edited = [ob for ob in context.objects_in_mode if ob.type in BAKE_TYPES]
+    active = context.view_layer.objects.active
+    bpy.ops.object.mode_set(mode='OBJECT')
+    if hold.COMPONENT.custom:
+        hold.COMPONENT.leave_edit(context)      # a component pivot ends with component mode
+    picked = {ob: selected_points(ob) for ob in edited}
+    targets = [ob for ob in edited if picked[ob]] or edited
+    for ob in parents_first(targets):
+        context.view_layer.update()
+        pts = picked[ob]
+        c = _bbox_center(pts) if pts else local_center(ob)
+        if c is not None and c.length >= EPS:
+            shift_pivot(ob, c)
+    for ob in context.selected_objects:
+        ob.select_set(False)
+    for ob in targets:
+        ob.select_set(True)
+    if targets and active not in targets:
+        context.view_layer.objects.active = targets[0]
+    return targets
+
+
 class ALLSET_OT_center_pivot(_SelectedObjectsOp, bpy.types.Operator):
     """Move the pivot (origin) to the centre of the bounding box without moving the
     geometry or changing translate (Maya Modify > Center Pivot)"""
+    # In component mode the box is the selected components' (center_pivot_components).
     bl_idname = "allset.center_pivot"
     bl_label = "Center Pivot"
 
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' or context.mode in COMPONENT_MODES
+
     def execute(self, context):
+        if context.mode in COMPONENT_MODES:
+            if not center_pivot_components(context):
+                self.report({'WARNING'}, "Nothing selected")
+                return {'CANCELLED'}
+            return {'FINISHED'}
         obs = self.objects(context)
         if not obs:
             return {'CANCELLED'}
