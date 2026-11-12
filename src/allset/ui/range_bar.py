@@ -238,22 +238,31 @@ def active(context):
             and time_slider.has_slider_panel(space))
 
 
+_shapes = {}     # (x0, y0, x1, y1, r) -> GPU batch of that rounded rectangle (the bar redraws the same ones)
+
+
 def _rounded(x0, y0, x1, y1, r, colour):
     import math
     import gpu
-    from gpu_extras.batch import batch_for_shader
-    r = max(0.0, min(r, (x1 - x0) / 2.0, (y1 - y0) / 2.0))
-    pts = []
-    for cx, cy, a0 in ((x1 - r, y1 - r, 0.0), (x0 + r, y1 - r, 90.0), (x0 + r, y0 + r, 180.0),
-                       (x1 - r, y0 + r, 270.0)):
-        for i in range(5):
-            a = math.radians(a0 + 22.5 * i)
-            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-    verts = [((x0 + x1) / 2.0, (y0 + y1) / 2.0)] + pts
-    n = len(pts)
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    batch = batch_for_shader(shader, 'TRIS', {"pos": verts},
-                             indices=[(0, 1 + i, 1 + (i + 1) % n) for i in range(n)])
+    key = (x0, y0, x1, y1, r)
+    batch = _shapes.get(key)
+    if batch is None:
+        from gpu_extras.batch import batch_for_shader
+        r = max(0.0, min(r, (x1 - x0) / 2.0, (y1 - y0) / 2.0))
+        pts = []
+        for cx, cy, a0 in ((x1 - r, y1 - r, 0.0), (x0 + r, y1 - r, 90.0), (x0 + r, y0 + r, 180.0),
+                           (x1 - r, y0 + r, 270.0)):
+            for i in range(5):
+                a = math.radians(a0 + 22.5 * i)
+                pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+        verts = [((x0 + x1) / 2.0, (y0 + y1) / 2.0)] + pts
+        n = len(pts)
+        batch = batch_for_shader(shader, 'TRIS', {"pos": verts},
+                                 indices=[(0, 1 + i, 1 + (i + 1) % n) for i in range(n)])
+        if len(_shapes) > 64:
+            _shapes.clear()
+        _shapes[key] = batch
     shader.uniform_float("color", colour)
     batch.draw(shader)
 
@@ -451,5 +460,6 @@ def unregister():
     _extra.clear()
     _planned.clear()
     _gaps.clear()
+    _shapes.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

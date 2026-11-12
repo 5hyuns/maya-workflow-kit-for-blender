@@ -265,10 +265,17 @@ def apply_frame(scene):
     return moved
 
 
+def _editing_meshes():
+    """Can a mesh be in Edit Mode? Blender keeps every object in Edit Mode in the active object's mode, so outside
+    mesh Edit Mode a frame change has no keyed vertices to move and skips the look through every object."""
+    mode = getattr(bpy.context, "mode", None)
+    return mode is None or mode == 'EDIT_MESH'
+
+
 @persistent
 def _on_frame(scene, _depsgraph=None):
     from . import anim_snapshot
-    if getattr(anim_snapshot, "_busy", False):
+    if getattr(anim_snapshot, "_busy", False) or not _editing_meshes():
         return
     try:
         apply_frame(scene)

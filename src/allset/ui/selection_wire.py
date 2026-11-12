@@ -396,6 +396,9 @@ def _draw():
     space, rv3d = context.space_data, context.region_data
     if rv3d is None or not view_draws(space):
         return
+    if (not context.selected_objects and space.shading.type != 'WIREFRAME'
+            and not space.overlay.show_wireframes):
+        return              # no selected wire, no dormant wire, no Make Live wire
     from ..operators import live
     live_obs = live_wire_objects(context)
     obs = highlighted(context) if _enabled() else []

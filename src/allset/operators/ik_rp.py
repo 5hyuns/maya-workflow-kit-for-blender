@@ -317,10 +317,20 @@ def rp_handles():
 
 _busy = []
 _count = [-1, 0]           # (last object count seen, the one before): drop orphaned 3+ bone pieces after a removal
+_found = [None, []]        # (scene structure version and object count, ``rp_handles``) of the last look
 
 
-@persistent
-def _on_update(*_args):
+def _handles(fresh):
+    """``rp_handles``; a frame change (``fresh`` False) uses the last look again while no object was added, removed
+    or renamed (the scene structure version), so playback doesn't look through every object each frame."""
+    from ..ui.outliner import structure_version
+    key = (structure_version(), len(bpy.data.objects))
+    if fresh or _found[0] != key:
+        _found[0], _found[1] = key, rp_handles()
+    return _found[1]
+
+
+def _update(fresh):
     if _busy:
         return
     _busy.append(1)
@@ -331,12 +341,22 @@ def _on_update(*_args):
             if count < _count[1]:
                 drop_orphan_rotations()    # a handle deleted some other way than the kit's Delete
             _count[1] = count
-        for handle in rp_handles():
+        for handle in _handles(fresh):
             update_handle(handle)
     except (ReferenceError, AttributeError, RuntimeError):
-        pass
+        _found[0] = None
     finally:
         _busy.clear()
+
+
+@persistent
+def _on_update(*_args):
+    _update(True)
+
+
+@persistent
+def _on_frame(*_args):
+    _update(False)
 
 
 def set_pole_object(handle, target):
@@ -359,16 +379,17 @@ def helpers_of(objs):
 
 
 def register_handlers():
-    for hs in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.frame_change_post):
-        if _on_update not in hs:
-            hs.append(_on_update)
+    for hs, fn in ((bpy.app.handlers.depsgraph_update_post, _on_update), (bpy.app.handlers.frame_change_post, _on_frame)):
+        if fn not in hs:
+            hs.append(fn)
 
 
 def unregister_handlers():
-    for hs in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.frame_change_post):
-        if _on_update in hs:
-            hs.remove(_on_update)
+    for hs, fn in ((bpy.app.handlers.depsgraph_update_post, _on_update), (bpy.app.handlers.frame_change_post, _on_frame)):
+        if fn in hs:
+            hs.remove(fn)
     _solvers.clear()
+    _found[0], _found[1] = None, []
 
 
 # --- #181: 3+ bone chains bend like Maya ------------------------------------------------------------------

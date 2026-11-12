@@ -437,6 +437,30 @@ def _draw_controls(context, centre, size, hover):
         _lines(points, colour, 1.5 * _scale(), context.region)
 
 
+_batches = {}        # (kind, geometry) -> GPU batch: the ViewCube, the axis triad and the controls redraw the same shapes
+_faces = {}          # (rotation, centre, size) -> ``faces_2d``
+
+
+def _cached_batch(key, build):
+    batch = _batches.get(key)
+    if batch is None:
+        if len(_batches) > 128:
+            _batches.clear()
+        batch = _batches[key] = build()
+    return batch
+
+
+def _cube_faces(q, centre, size):
+    """``faces_2d``, kept for a view that keeps its rotation and size (every redraw while playback runs)."""
+    key = (tuple(q), tuple(centre), size)
+    got = _faces.get(key)
+    if got is None:
+        if len(_faces) > 32:
+            _faces.clear()
+        got = _faces[key] = faces_2d(q, centre, size)
+    return got
+
+
 def _sh():
     if not _shader:
         import gpu
@@ -448,7 +472,7 @@ def _sh():
 def _fill(poly, colour):
     from gpu_extras.batch import batch_for_shader
     sh = _sh()[0]
-    batch = batch_for_shader(sh, 'TRI_FAN', {"pos": poly})
+    batch = _cached_batch(("fan", tuple(map(tuple, poly))), lambda: batch_for_shader(sh, 'TRI_FAN', {"pos": poly}))
     sh.uniform_float("color", colour)
     batch.draw(sh)
 
@@ -460,14 +484,18 @@ def _fill_cube_face(poly, name, facing, alpha):
     shaders = _sh()
     if len(shaders) == 2:
         shaders.append(gpu.shader.from_builtin('SMOOTH_COLOR'))
-    normal, u, v = FACES[name]
-    colours = []
-    for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-        height = .5 + .5 * (normal[2] + u[2] * su + v[2] * sv)
-        shade = (.77 + .22 * height) * (.92 + .08 * facing)
-        colours.append((shade, shade, shade, alpha))
     shader = shaders[2]
-    batch = batch_for_shader(shader, 'TRI_FAN', {'pos': poly, 'color': colours})
+
+    def build():
+        normal, u, v = FACES[name]
+        colours = []
+        for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            height = .5 + .5 * (normal[2] + u[2] * su + v[2] * sv)
+            shade = (.77 + .22 * height) * (.92 + .08 * facing)
+            colours.append((shade, shade, shade, alpha))
+        return batch_for_shader(shader, 'TRI_FAN', {'pos': poly, 'color': colours})
+
+    batch = _cached_batch(("face", tuple(map(tuple, poly)), name, facing, alpha), build)
     shader.bind()
     batch.draw(shader)
 
@@ -476,7 +504,8 @@ def _lines(points, colour, width, region, loop=False):
     from gpu_extras.batch import batch_for_shader
     sh = _sh()[1]
     pts = list(points) + ([points[0]] if loop else [])
-    batch = batch_for_shader(sh, 'LINE_STRIP', {"pos": [(x, y, 0.0) for x, y in pts]})
+    batch = _cached_batch(("strip", tuple(map(tuple, pts))),
+                          lambda: batch_for_shader(sh, 'LINE_STRIP', {"pos": [(x, y, 0.0) for x, y in pts]}))
     sh.bind()
     sh.uniform_float("viewportSize", (region.width, region.height))
     sh.uniform_float("lineWidth", width)
@@ -508,7 +537,7 @@ def draw_cube(context, hover=None, alpha=0.5):
     size = cube_size(region.width, region.height, s)
     centre, _label, _triad = layout(_bounds(context), s, size)
     q = _cube_rotation(rv3d)
-    faces = faces_2d(q, centre, size)
+    faces = _cube_faces(q, centre, size)
     for name, poly, facing, u2, _v2 in faces:
         import gpu
         gpu.state.blend_set('ALPHA')
@@ -874,5 +903,7 @@ def unregister():
     _show_strips()
     _ACTIVE["region"] = None
     _shader.clear()
+    _batches.clear()
+    _faces.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
