@@ -535,8 +535,10 @@ def _pose_labels(ob, playing):
     got = _labelled.get(ob.as_pointer())
     if playing and got is not None and got[0] == key:
         return got[1]
+    from ..ui import layer_joints
+    hidden = layer_joints.state(ob)        # hidden by a display layer or a hidden joint above: no label
     out = [(pb.name, label_text(pb.bone), get_label(pb.bone)[0]) for pb in ob.pose.bones
-           if pb.bone.get(DRAW) and not pb.bone.hide]
+           if pb.bone.get(DRAW) and not pb.bone.hide and hidden.get(pb.name) != layer_joints.HIDDEN]
     if playing:
         if len(_labelled) > 32:
             _labelled.clear()
@@ -548,6 +550,7 @@ def _pose_labels(ob, playing):
 
 def label_points(context):
     """[(world point, text, side)] for every visible joint with Draw Label on."""
+    from ..ui import layer_joints
     out = []
     screen = getattr(context, "screen", None)
     playing = screen is not None and screen.is_animation_playing
@@ -556,7 +559,9 @@ def label_points(context):
             continue
         mw = ob.matrix_world
         if ob.mode == 'EDIT':
-            bones = [(eb, eb.head) for eb in ob.data.edit_bones if not eb.hide and eb.get(DRAW)]
+            hidden = layer_joints.state(ob)
+            bones = [(eb, eb.head) for eb in ob.data.edit_bones
+                     if not eb.hide and eb.get(DRAW) and hidden.get(eb.name) != layer_joints.HIDDEN]
         elif ob.pose is not None:
             pbs = ob.pose.bones
             out += [(mw @ pbs[name].head, text, side) for name, text, side in _pose_labels(ob, playing)]

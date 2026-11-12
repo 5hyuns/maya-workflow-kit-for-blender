@@ -106,6 +106,8 @@ def _reference(ob, perspective, stick=False):
         cols.extend([(*colour, 1.0)] * len(segs))
 
     for n, j in js.items():
+        if j.state == "HIDDEN":
+            continue        # below a hidden joint (or in a hidden display layer): only its parent's bone to it
         if j.shape is not None:
             add(mj.shape_lines(j.shape[0], j.shape[1], dg), col[n])
             continue
@@ -138,8 +140,9 @@ def _same(a, b, what):
 
 
 def _busy_rig():
-    """A posed, turned, scaled skeleton with a hidden joint, a joint in a hidden bone collection, a joint turned off
-    its bone (Maya joint frame) and a control with a custom shape."""
+    """A posed, turned, scaled skeleton with a hidden joint (the joints below it are hidden with it, like Maya), a
+    joint in a hidden bone collection, a joint turned off its bone (Maya joint frame) and a control with a custom
+    shape."""
     _clear()
     arm, names = _rig(count=14)
     arm.location = (0.5, -1.0, 0.25)
@@ -447,9 +450,12 @@ def _circle(name, n=12, r=1.0):
 def _control_rig():
     """``_busy_rig`` with more controls: a circle shared by two controls (one following a hidden joint, moved /
     turned / scaled, not by the bone length; one scaled by its bone length), a curve control, a control following
-    a turned joint, and a control in a hidden bone collection (not drawn)."""
+    a turned joint, and a control in a hidden bone collection (not drawn). The hidden joint is the one above the
+    first control here (that control is hidden with it, like Maya), so the other controls are drawn."""
     arm, names = _busy_rig()
     pbs = arm.pose.bones
+    compat.set_bone_hidden(pbs[names[4]], False)
+    compat.set_bone_hidden(pbs[names[8]], True)
     circle = _circle("ctrl_circle")
     cu = bpy.data.curves.new("ctrl_curve", 'CURVE')
     cu.dimensions = '3D'
@@ -462,7 +468,7 @@ def _control_rig():
     bpy.context.scene.collection.objects.link(curve)
     pb = pbs[names[10]]
     pb.custom_shape = circle
-    pb.custom_shape_transform = pbs[names[4]]
+    pb.custom_shape_transform = pbs[names[8]]
     pb.custom_shape_translation = (0.1, -0.2, 0.05)
     pb.custom_shape_rotation_euler = (0.4, -0.7, 1.2)
     pb.custom_shape_scale_xyz = (1.5, 0.6, 2.0)
@@ -607,11 +613,11 @@ def _reference_own(ob, perspective, kind):
         cols.extend([(*colour, 1.0)] * len(segs))
 
     for n, j in js.items():
-        if j.shape is not None:
+        if j.shape is not None and j.state != "HIDDEN":
             add(mj.shape_lines(j.shape[0], j.shape[1], dg), col[n])
     if perspective:
         for n, j in js.items():
-            if j.shape is None and n in sel:
+            if j.shape is None and n in sel and j.state != "HIDDEN":
                 for i in range(3):
                     add([j.centre, j.centre + j.frame.col[i] * j.radius], mj.AXIS_COLORS[i])
     for n, segs in mj.own_shape_lines(ob, kind).items():

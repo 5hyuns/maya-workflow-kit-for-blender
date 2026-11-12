@@ -8,9 +8,12 @@ the bone on the parent's sphere, turned with the parent's axes, its corners on t
 child's sphere. A joint without children draws no bone.
 
 Colours follow the selection: unselected joints dark violet, selected ones white, the lead (last selected) green; a
-joint below a selected one takes that joint's colour, and a bone takes its parent joint's colour. Selected joints in a
-perspective view also show short local axes (X red, Y green, Z blue). A shaded surface hides the joints behind or
-inside it; X-Ray Joints, X-Ray and wireframe views draw them through every surface.
+joint below a selected one takes that joint's colour, and a bone takes its parent joint's colour. A joint in a Template
+display layer draws grey and in a Reference layer black (unless it is selected itself); a joint a display layer hides,
+or one below a joint whose Visibility is off, is not drawn, but the bone from its shown parent joint stays (it belongs
+to the parent). Joints a layer hides or makes Template / Reference, and joints Blender can't select, are never picked.
+Selected joints in a perspective view also show short local axes (X red, Y green, Z blue). A shaded surface hides the
+joints behind or inside it; X-Ray Joints, X-Ray and wireframe views draw them through every surface.
 
 Here a skeleton's joints are its bones' heads (pose positions in Object / Pose Mode, edit bones in Edit Mode); in
 Object Mode a selected skeleton object counts as its root joints selected. Bones with a custom shape draw that shape
@@ -37,6 +40,7 @@ MAYA_RADIUS = 1.0                     # Maya joint Radius default
 STICK_TYPES = {'STICK', 'WIRE'}       # the skeleton's Blender display type: one line per bone, no spheres
 SHAPE_TYPES = {'BBONE', 'ENVELOPE'}   # display types drawn as wire versions of Blender's bone shapes
 
+_HIDDEN = "HIDDEN"                    # ui/layer_joints.HIDDEN
 _handle = []
 _GEN = [0]          # bumped by every update that can change a drawn joint
 _CACHE = {}         # space pointer -> (key, points, colours)
@@ -121,19 +125,24 @@ def _maya_q(bone):
 
 
 class Joint:
-    __slots__ = ("name", "parent", "centre", "frame", "radius", "shape", "children")
+    __slots__ = ("name", "parent", "centre", "frame", "radius", "shape", "children", "state")
 
-    def __init__(self, name, parent, centre, frame, radius, shape=None):
+    def __init__(self, name, parent, centre, frame, radius, shape=None, state=None):
         self.name, self.parent, self.centre, self.frame, self.radius = name, parent, centre, frame, radius
         self.shape = shape          # (custom shape object, world matrix) or None
         self.children = []
+        self.state = state          # ui/layer_joints: HIDDEN (not drawn) / TEMPLATE / REFERENCE, None = normal
 
 
 def skeleton(ob, scene):
-    """{name: Joint} of armature object ``ob`` in world space (visible joints only)."""
+    """{name: Joint} of armature object ``ob`` in world space: the joints not hidden by their own flags, with their
+    display layer state (a joint a layer hides is kept for its parent's bone, ``joint_segments`` draws nothing for
+    it)."""
     from .. import compat
     from ..operators import joints
     from ..operators.joint_edit import local_frame
+    from . import layer_joints
+    layered = layer_joints.state(ob)
     mw = ob.matrix_world
     m3 = mw.to_3x3()
     s = max(mw.to_scale())
@@ -144,7 +153,7 @@ def skeleton(ob, scene):
                 continue
             frame = (m3 @ local_frame(eb)).normalized()
             out[eb.name] = Joint(eb.name, eb.parent.name if eb.parent else None, mw @ eb.head, frame,
-                                 drawn_radius(eb, scene, s))
+                                 drawn_radius(eb, scene, s), state=layered.get(eb.name))
     else:
         for pb in ob.pose.bones:
             bone = pb.bone
@@ -157,7 +166,7 @@ def skeleton(ob, scene):
             if pb.custom_shape is not None:
                 shape = (pb.custom_shape, mw @ _shape_matrix(pb))
             out[pb.name] = Joint(pb.name, bone.parent.name if bone.parent else None, mw @ pb.head, frame,
-                                 drawn_radius(bone, scene, s), shape)
+                                 drawn_radius(bone, scene, s), shape, layered.get(pb.name))
     for j in out.values():
         if j.parent in out:
             out[j.parent].children.append(j.name)
@@ -203,7 +212,9 @@ def selection(ob, joints_):
 
 
 def colours(joints_, sel, lead):
-    """{name: colour}: own selection first, else the nearest selected joint above it, else unselected."""
+    """{name: colour}: own selection first, else its Template / Reference layer colour, else the nearest selected
+    joint above it, else unselected."""
+    from .layer_joints import COLOURS
     out = {}
 
     def colour(name):
@@ -213,6 +224,8 @@ def colours(joints_, sel, lead):
             c = LEAD
         elif name in sel:
             c = SELECTED
+        elif joints_[name].state in COLOURS:
+            c = COLOURS[joints_[name].state]
         else:
             p = joints_[name].parent
             c = colour(p) if p in joints_ else UNSELECTED
@@ -307,15 +320,18 @@ def own_shape_lines(ob, kind):
     """{bone name: world edges} of every visible bone of ``ob`` drawn as Blender's ``kind`` shape (B-Bone /
     Envelope), custom-shaped bones left out (they draw their shape)."""
     from .. import compat
+    from . import layer_joints
+    layered = layer_joints.state(ob)       # hidden by a display layer or a hidden joint above: nothing drawn
     fn = bbone_lines if kind == 'BBONE' else envelope_lines
     out = {}
     if ob.mode == 'EDIT':
         for eb in ob.data.edit_bones:
-            if not (eb.hide or _coll_hidden(eb)):
+            if not (eb.hide or _coll_hidden(eb) or layered.get(eb.name) == _HIDDEN):
                 out[eb.name] = fn(ob, eb)
     else:
         for pb in ob.pose.bones:
-            if not (compat.bone_hidden(pb) or _coll_hidden(pb.bone) or pb.custom_shape is not None):
+            if not (compat.bone_hidden(pb) or _coll_hidden(pb.bone) or pb.custom_shape is not None
+                    or layered.get(pb.name) == _HIDDEN):
                 out[pb.name] = fn(ob, pb)
     return out
 
@@ -336,8 +352,10 @@ def shape_lines(ob, matrix, depsgraph):
 
 def joint_segments(js, name, depsgraph=None):
     """World line segments drawn for joint ``name``: its sphere and its bones to the children (a bone belongs to
-    its parent joint), or its custom shape. Flat list of end points."""
+    its parent joint), or its custom shape; nothing for a joint a display layer hides. Flat list of end points."""
     j = js[name]
+    if j.state == _HIDDEN:
+        return []
     if j.shape is not None:
         return shape_lines(j.shape[0], j.shape[1], depsgraph) if depsgraph is not None else []
     pts = sphere_lines(j.centre, j.frame, j.radius)
@@ -362,13 +380,24 @@ def _screen(context, pts):
     return xy[0::2], xy[1::2], front[0::2] & front[1::2]
 
 
+def _unpickable(ob, js):
+    """Joints of ``js`` that can't be picked: hidden / Template / Reference by a display layer, or Blender's
+    unselectable bones."""
+    bones = ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones
+    return {n for n, j in js.items() if j.state is not None or (n in bones and bones[n].hide_select)}
+
+
 def screen_distance(context, ob, mouse):
-    """{joint: screen distance from ``mouse`` to its drawn lines} of armature ``ob``."""
+    """{joint: screen distance from ``mouse`` to its drawn lines} of armature ``ob``, for the joints that can be
+    picked."""
     from ..operators.preselect import segment_distance
     js = skeleton(ob, context.scene)
     dg = context.evaluated_depsgraph_get()
+    skip = _unpickable(ob, js)
     out = {}
     for n in js:
+        if n in skip:
+            continue
         pts = joint_segments(js, n, dg)
         if not pts:
             continue
@@ -420,12 +449,16 @@ def segments_touch(a, b, poly):
 def region_pick(context, ob, poly):
     """Maya marquee / lasso on a skeleton: the bones whose drawn lines touch ``poly``. Maya joints keep the one
     closest to the root (a box around a whole chain selects its top joint); controls (bones with a custom shape)
-    and bones of a skeleton not drawn as Maya joints are each picked, like Maya's curve controls. Returns names."""
+    and bones of a skeleton not drawn as Maya joints are each picked, like Maya's curve controls. Joints that can't be
+    picked (``_unpickable``) are left out. Returns names."""
     js = skeleton(ob, context.scene)
     dg = context.evaluated_depsgraph_get()
     maya_drawn = getattr(ob.data, "display_type", 'OCTAHEDRAL') not in STICK_TYPES | SHAPE_TYPES
+    skip = _unpickable(ob, js)
     joints, each = [], []
     for n in js:
+        if n in skip:
+            continue
         pts = joint_segments(js, n, dg)
         if not pts:
             continue
@@ -441,7 +474,7 @@ def region_pick(context, ob, poly):
 def _sphere_array(js):
     """(points, joint order) of every sphere's three great circles as one float32 array of segment end points."""
     import numpy as np
-    order = [n for n, j in js.items() if j.shape is None]
+    order = [n for n, j in js.items() if j.shape is None and j.state != _HIDDEN]
     if not order:
         return np.zeros((0, 3), np.float32), order
     c = np.array([tuple(js[n].centre) for n in order], np.float64)                  # (N, 3)
@@ -505,7 +538,7 @@ def _bone_array(pc, pf, pr, cc, cr):
 class JointList:
     """What a pose doesn't change of a skeleton's drawn joints (Object / Pose Mode)."""
     __slots__ = ("js", "names", "rows", "parents", "raw", "turned", "shaped", "plain", "ctrl", "ctrl_src",
-                 "ctrl_len", "ctrl_shapes", "bone_par", "bone_child", "widgets", "bone_rows")
+                 "ctrl_len", "ctrl_shapes", "bone_par", "bone_child", "widgets", "bone_rows", "shown", "tint")
 
 
 def _joint_list(ob):
@@ -516,6 +549,8 @@ def _joint_list(ob):
     import numpy as np
     from .. import compat
     from ..operators import joints
+    from . import layer_joints
+    layered = layer_joints.state(ob)
     pbs = ob.pose.bones
     js, names, keep, raw, turned, shaped, src, blen = {}, [], [], [], {}, {}, [], []
     for i, pb in enumerate(pbs):
@@ -532,7 +567,7 @@ def _joint_list(ob):
         q = bone.get(joints.MAYA_FRAME)
         if q is not None:
             turned[len(keep)] = np.array(Quaternion(q).to_matrix(), np.float64)
-        js[name] = Joint(name, parent.name if parent else None, None, None, None)
+        js[name] = Joint(name, parent.name if parent else None, None, None, None, state=layered.get(name))
         names.append(name)
         keep.append(i)
         raw.append(float(bone.get(joints.RADIUS, MAYA_RADIUS)))
@@ -547,8 +582,12 @@ def _joint_list(ob):
     jl.ctrl_src = np.asarray(src, np.intp)
     jl.ctrl_len = np.asarray(blen, np.float64)
     jl.ctrl_shapes = list(shaped.values())
+    # a joint a display layer hides draws nothing, but the bone from its shown parent stays (the parent's)
+    jl.shown = np.array([js[nm].state != layer_joints.HIDDEN for nm in names], bool)
+    jl.tint = {j: (*layer_joints.COLOURS[js[nm].state], 1.0) for j, nm in enumerate(names)
+               if js[nm].state in layer_joints.COLOURS}
     child = np.nonzero(jl.parents >= 0)[0]
-    child = child[jl.plain[child] & jl.plain[jl.parents[child]]]
+    child = child[jl.plain[child] & jl.plain[jl.parents[child]] & jl.shown[jl.parents[child]]]
     par = jl.parents[child]
     order = np.lexsort((child, par))           # a bone belongs to its parent joint: parent by parent
     jl.bone_child, jl.bone_par = child[order], par[order]
@@ -646,7 +685,10 @@ def _joint_rgba(jl, sel, lead):
     """(N, 4) colour of every joint (``colours``); nothing selected: all unselected."""
     import numpy as np
     if not sel:
-        return np.tile(np.array((*UNSELECTED, 1.0), np.float32), (len(jl.names), 1))
+        rgba = np.tile(np.array((*UNSELECTED, 1.0), np.float32), (len(jl.names), 1))
+        for j, c in jl.tint.items():           # Template / Reference layer colour
+            rgba[j] = c
+        return rgba
     col = colours(jl.js, sel, lead)
     return np.array([(*col[nm], 1.0) for nm in jl.names], np.float32)
 
@@ -761,7 +803,11 @@ def _control_lines(ob, jl, w, allm, rgba, depsgraph):
     lin = a @ (_euler_xyz(got["custom_shape_rotation_euler"]) * scale[:, None, :])
     off = (a @ got["custom_shape_translation"][:, :, None])[:, :, 0] + src[:, :3, 3] @ w[:3, :3].T + w[:3, 3]
     pts = np.einsum('kij,kj->ki', lin[owner], p) + off[owner]
-    return pts.astype(np.float32), np.repeat(rgba[jl.ctrl], counts, axis=0)
+    cols = np.repeat(rgba[jl.ctrl], counts, axis=0)
+    if not jl.shown.all():                     # controls a display layer hides draw nothing
+        keep = jl.shown[jl.ctrl][owner]
+        pts, cols = pts[keep], cols[keep]
+    return pts.astype(np.float32), cols
 
 
 def _box_array(frames, corners):
@@ -783,7 +829,7 @@ def _own_lines(ob, jl, w, allm, rgba, kind):
     """(points, colours) of Blender's B-Bone / Envelope ``kind`` shape of every drawn joint without a custom shape
     (``bbone_lines`` / ``envelope_lines`` in joint order), or None."""
     import numpy as np
-    plain = np.nonzero(jl.plain)[0]
+    plain = np.nonzero(jl.plain & jl.shown)[0]
     if not len(plain):
         return None
     pbs, bones = ob.pose.bones, ob.data.bones
@@ -870,7 +916,7 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False):
     w, allm, centres, frames, radii = _pose_read(ob, scene, jl)
     sel, lead = _joint_selection(ob, jl)
     rgba = _joint_rgba(jl, sel, lead)
-    plain = jl.plain
+    plain = jl.plain & jl.shown                # spheres / axes: joints with no custom shape that are shown
     if not (stick or own) and plain.any():
         before[0].append(_spheres(centres[plain], frames[plain], radii[plain]))
         before[1].append(np.repeat(rgba[plain], 3 * SEGMENTS * 2, axis=0))
@@ -931,10 +977,12 @@ def _joint_parts(ob, scene, depsgraph, kind):
     bones, bone_cols = [], []
     if own:
         for name, segs in own_shape_lines(ob, kind).items():
-            if name in col:
+            if name in col and js[name].state != _HIDDEN:
                 bones += segs
                 bone_cols += [col[name]] * len(segs)
     for j in js.values():
+        if j.state == _HIDDEN:
+            continue                           # hidden by a display layer: only its parent's bone to it stays
         if j.shape is not None:
             add(before, shape_lines(j.shape[0], j.shape[1], depsgraph), col[j.name])
             continue

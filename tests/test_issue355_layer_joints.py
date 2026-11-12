@@ -487,3 +487,99 @@ def test_o_a_show_filter_hides_no_children():
     assert arm.pose.bones[j2].hide and not lj.hidden(arm, j3), dict(lj.state(arm))
     cc.show(bpy.context.scene, True)
     assert not arm.pose.bones[j2].hide
+
+
+def _drawn(arm):
+    """(points (N, 3), colours (N, 4)) the kit draws for skeleton ``arm`` (Maya joints)."""
+    import numpy as np
+    mj = import_module(kit.MODULE + ".ui.maya_joints")
+    pts, cols = mj._fast_lines(arm, bpy.context.scene, False, bpy.context.evaluated_depsgraph_get(), False)
+    if not pts:
+        return np.zeros((0, 3)), np.zeros((0, 4))
+    return np.concatenate(pts).astype(float), np.concatenate(cols).astype(float)
+
+
+def _on_sphere(pts, centre, r):
+    """Indices of the drawn points on the sphere of radius ``r`` around ``centre``."""
+    import numpy as np
+    d = np.linalg.norm(pts - np.array(tuple(centre)), axis=1)
+    return np.nonzero(np.abs(d - r) < max(1e-6, 1e-3 * r))[0]
+
+
+def test_p_hidden_template_and_reference_joints_are_drawn_like_maya():
+    import numpy as np
+    mj = import_module(kit.MODULE + ".ui.maya_joints")
+    _clear()
+    arm, (j1, j2, j3) = _chain()
+    scene = bpy.context.scene
+    js = mj.skeleton(arm, scene)
+    r = js[j1].radius
+    centres = [js[n].centre.copy() for n in (j1, j2, j3)]
+    pts, _cols = _drawn(arm)
+    whole = [len(_on_sphere(pts, c, r)) for c in centres]
+    assert all(n >= 3 * mj.SEGMENTS * 2 for n in whole), whole
+    _pose_pick(arm, j2)
+    coll = _new_layer_from_selected()
+    _deselect()
+    coll.allset_layer.visible = False
+    js = mj.skeleton(arm, scene)
+    assert js[j2].state == HIDDEN and js[j3].state == HIDDEN and js[j1].state is None
+    assert mj.joint_segments(js, j2) == [] and mj.joint_segments(js, j3) == []
+    assert len(mj.joint_segments(js, j1)) == len(mj.sphere_lines(js[j1].centre, js[j1].frame, r)) + \
+        len(mj.bone_lines(js[j1], js[j2])), "joint1 keeps its bone to the hidden joint2"
+    pts, _cols = _drawn(arm)
+    assert len(pts) == sum(len(mj.joint_segments(js, n)) for n in js), "the array lines = the per-joint lines"
+    on = [len(_on_sphere(pts, c, r)) for c in centres]
+    assert on[0] == whole[0] and on[1] < 10 and on[2] == 0, (on, whole)   # joint2: only the bone's tip touches it
+    # Template / Reference: grey / black, joint1 stays violet; a selected joint keeps its selection colour
+    coll.allset_layer.visible = True
+    for kind in (TEMPLATE, REFERENCE):
+        coll.allset_layer.display_type = kind
+        pts, cols = _drawn(arm)
+        want = np.array((*lj.COLOURS[kind], 1.0))
+        for c in centres[1:]:
+            got = cols[_on_sphere(pts, c, r)]
+            assert len(got) >= 3 * mj.SEGMENTS * 2 and np.allclose(got[:3 * mj.SEGMENTS * 2], want, atol=1e-3), kind
+        got = cols[_on_sphere(pts, centres[0], r)]
+        assert np.allclose(got[:3 * mj.SEGMENTS * 2], (*mj.UNSELECTED, 1.0), atol=1e-3), kind
+    _pose_pick(arm, j3)
+    pts, cols = _drawn(arm)
+    got = cols[_on_sphere(pts, centres[2], r)]
+    assert np.allclose(got[:3 * mj.SEGMENTS * 2], (*mj.LEAD, 1.0), atol=1e-3), "the picked joint shows as picked"
+    _deselect()
+    # Maya-drawn views: a click and a marquee skip what can't be picked
+    ctx = _front_view()
+    assert mj.pick(ctx, arm, (100, 90), 6) is None and mj.pick(ctx, arm, (100, 50), 6) == j1
+    box = [(60, 40), (140, 40), (140, 100), (60, 100)]
+    assert mj.region_pick(ctx, arm, box) == [j1]
+    coll.allset_layer.display_type = 'NORMAL'
+    assert mj.pick(ctx, arm, (100, 90), 6) == j3
+    arm.data.bones[j1].hide_select = True               # Blender's unselectable bone: the box takes the next joint
+    assert mj.region_pick(ctx, arm, box) == [j2] and mj.pick(ctx, arm, (100, 50), 6) != j1
+    arm.data.bones[j1].hide_select = False
+    # Edit Mode (the Move tool on an unskinned skeleton) draws the same way
+    coll.allset_layer.visible = False
+    bpy.context.view_layer.objects.active = arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    js_edit = mj.skeleton(arm, scene)
+    assert js_edit[j2].state == HIDDEN and mj.joint_segments(js_edit, j3) == []
+    pts, _cols = _drawn(arm)
+    assert len(pts) == sum(len(mj.joint_segments(js_edit, n)) for n in js_edit)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_q_labels_of_hidden_joints_are_not_drawn():
+    jl_mod = import_module(kit.MODULE + ".operators.joint_labels")
+    _clear()
+    arm, (j1, j2, j3) = _chain()
+    for n in (j1, j3):
+        arm.data.bones[n][jl_mod.DRAW] = True
+    ctx = SimpleNamespace(view_layer=bpy.context.view_layer)
+    assert len(jl_mod.label_points(ctx)) == 2
+    _pose_pick(arm, j2)
+    coll = _new_layer_from_selected()
+    coll.allset_layer.visible = False
+    assert len(jl_mod.label_points(ctx)) == 1, "joint3's label goes with the hidden layer"
+    coll.allset_layer.visible = True
+    assert len(jl_mod.label_points(ctx)) == 2
