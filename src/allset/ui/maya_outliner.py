@@ -54,6 +54,9 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
         lay.separator()
         # Maya Display > Shapes: a shape row (pCubeShape1) under each transform
         lay.prop(sp, "use_filter_object_content", text="Shapes")
+        lay.separator()
+        # Blender's collections have no Maya counterpart: this Outliner shows them with Blender's own rows
+        lay.operator("allset.outliner_collections", text="Blender Collections").show = True
 
 
 class ALLSET_MT_outliner_show(bpy.types.Menu):
@@ -84,9 +87,48 @@ class ALLSET_MT_outliner_help(bpy.types.Menu):
         self.layout.operator("wm.url_open", text="Help on Outliner").url = HELP_URL
 
 
+def is_collection_view(space):
+    """A Maya Outliner switched to Blender Collections: View Layer mode with collection rows and no mode column (the
+    kit's setup; Blender's Outliner shows the mode column)."""
+    return (space is not None and space.type == 'OUTLINER' and space.display_mode == 'VIEW_LAYER'
+            and space.use_filter_collection and not space.show_mode_column)
+
+
+class ALLSET_OT_outliner_collections(bpy.types.Operator):
+    """Show Blender's collections in this Outliner with Blender's own rows and header; Maya Outliner goes back to the
+    Maya Outliner"""
+    bl_idname = "allset.outliner_collections"
+    bl_label = "Blender Collections"
+    bl_options = {'INTERNAL'}
+
+    show: bpy.props.BoolProperty(default=True, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        space = context.space_data
+        return space is not None and space.type == 'OUTLINER'
+
+    def execute(self, context):
+        space = context.space_data
+        if self.show:
+            space.display_mode = 'VIEW_LAYER'
+            space.use_filter_collection = True
+            space.use_filter_object = True      # Blender's rows: collections with their objects
+            space.show_mode_column = False
+        else:
+            space.use_filter_collection = False
+            from . import outliner_tree         # the kit draws the Maya rows again
+            outliner_tree.hide_rows(space)
+        if context.area is not None:
+            context.area.tag_redraw()
+        return {'FINISHED'}
+
+
 def _draw(self, context):
     space = context.space_data
     if not is_maya_outliner(space):
+        if is_collection_view(space):           # back to the Maya Outliner (first: a narrow header clips the end)
+            self.layout.operator("allset.outliner_collections", text="Maya Outliner").show = False
         return own_draw.original("OUTLINER_HT_header", _draw)(self, context)
     layout = self.layout
     from . import maya_dock      # Maya's dotted handle: tear the Outliner off / dock it back
@@ -95,7 +137,8 @@ def _draw(self, context):
     layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
 
 
-classes = (ALLSET_MT_outliner_display, ALLSET_MT_outliner_show, ALLSET_MT_outliner_help)
+classes = (ALLSET_MT_outliner_display, ALLSET_MT_outliner_show, ALLSET_MT_outliner_help,
+           ALLSET_OT_outliner_collections)
 
 
 def register():

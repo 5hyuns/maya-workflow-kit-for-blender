@@ -8441,10 +8441,12 @@
    "Grid": "Grid"
   },
   "Labels/ui/maya_outliner": {
+   "Blender Collections": "Blender Collections",
    "Children (DAG Hierarchy)": "Children (DAG Hierarchy)",
    "Display": "Display",
    "Help": "Help",
    "Help on Outliner": "Help on Outliner",
+   "Maya Outliner": "Maya Outliner",
    "Objects": "Objects",
    "Shapes": "Shapes",
    "Show": "Show",
@@ -10478,7 +10480,8 @@
   },
   "Tooltips/ui/maya_outliner": {
    "Maya Outliner Display menu": "Maya Outliner Display menu",
-   "Maya Outliner Show menu: object type filters": "Maya Outliner Show menu: object type filters"
+   "Maya Outliner Show menu: object type filters": "Maya Outliner Show menu: object type filters",
+   "Show Blender's collections in this Outliner with Blender's own rows and header; Maya Outliner goes back to the\nMaya Outliner": "Show Blender's collections in this Outliner with Blender's own rows and header; Maya Outliner goes back to the\nMaya Outliner"
   },
   "Tooltips/ui/maya_prefs": {
    "Keep the changes and close the window (Maya's Save; Blender's Auto-Save Preferences or File > Save\nPreferences keeps the kit's settings)": "Keep the changes and close the window (Maya's Save; Blender's Auto-Save Preferences or File > Save\nPreferences keeps the kit's settings)",

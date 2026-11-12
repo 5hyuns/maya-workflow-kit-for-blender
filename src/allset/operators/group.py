@@ -36,14 +36,40 @@ def set_parent_keep_world(child, parent):
     child.matrix_world = world
 
 
+def scene_collections(view_layer):
+    """The collections of ``view_layer`` that hold its objects: the scene collection and every collection below it
+    that isn't excluded (a kit set or the Display Layers collections are not among them)."""
+    out, stack = [], [view_layer.layer_collection]
+    while stack:
+        lc = stack.pop()
+        if lc.exclude:
+            continue
+        out.append(lc.collection)
+        stack.extend(reversed(list(lc.children)))
+    return out
+
+
+def group_collection(context, objects):
+    """Where a new group goes: the collection its members share (the first member's order decides between several),
+    else the active collection (Blender has collections, Maya doesn't: the group stays with its members)."""
+    usable = scene_collections(context.view_layer)
+    usable_set = set(usable)
+    if objects:
+        shared = set(objects[0].users_collection)
+        for ob in objects[1:]:
+            shared &= set(ob.users_collection)
+        for coll in objects[0].users_collection:
+            if coll in shared and coll in usable_set:
+                return coll
+    active = context.collection
+    return active if active in usable_set else context.scene.collection
+
+
 def make_group(context, objects):
     """Create a Maya-style group over ``objects``. Returns the new Empty."""
     objects = list(objects)
     parent = common_parent(objects) if objects else None
-    if objects and objects[0].users_collection:
-        collection = objects[0].users_collection[0]
-    else:
-        collection = context.collection
+    collection = group_collection(context, objects)
 
     grp = bpy.data.objects.new(next_group_name(o.name for o in bpy.data.objects), None)
     grp.empty_display_type = 'PLAIN_AXES'

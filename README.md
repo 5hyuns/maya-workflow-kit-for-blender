@@ -441,6 +441,16 @@ Mesh › Reduce / Remesh / Triangulate ...) add the matching modifier, and Edit 
 (Alt+Shift+D) bakes them. **Blender Modifiers...** at the bottom of the Attribute Editor opens the object's whole
 Blender modifier stack in a floating window, Add Modifier included.
 
+**Are Maya groups supported? What happens to Blender collections?**
+Yes: **Ctrl+G** (Edit › Group) makes a Maya group — a transform (a Blender Empty) named `group1`, `group2` ... with
+its pivot at the origin and the selected objects under it where they were; Edit › Ungroup and the Group / Ungroup
+options work too, and the Outliner shows the group with its children like Maya's DAG. A new group goes into the
+collection its members share, else into the active collection. Maya has no collections, so the Maya Outliner shows
+only the DAG: objects of a hidden collection stay listed, objects of a collection excluded from the view layer are not
+shown, and new objects go into the active collection. **Display › Blender Collections** in the Outliner shows the
+collections with Blender's own rows and header; **Maya Outliner** in that header goes back. The kit also keeps Display
+Layers, sets and references in collections of its own.
+
 **Does it open Maya `.ma` / `.mb` files?**
 No. Export FBX (or OBJ, Alembic, USD) from Maya; the kit's Import uses Maya presets (cm, Y-up).
 
