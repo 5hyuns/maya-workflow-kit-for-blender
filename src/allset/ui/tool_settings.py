@@ -759,6 +759,9 @@ def draw_dock(layout, context):
     draw_head(layout, context, tool)
     kind = KIND_OF.get(tool.idname)
     if kind is None:
+        from . import blue_pencil
+        if tool.idname in blue_pencil.TOOL_IDS:     # Maya's Blue Pencil tools and ghosts
+            blue_pencil.draw_settings(layout, context, tool.idname)
         return    # Blender's own tool panels follow (dock_tabs hides them only for tools with Maya sections)
     for key, title, is_open in sections(kind):
         header, body = layout.panel(f"allset_ts_{kind.lower()}_{key}", default_closed=not is_open)

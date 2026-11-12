@@ -409,6 +409,19 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Component Colors", description="Mesh edit mode shows Maya's component colors: light blue edges, "
                                               "purple / yellow vertices, orange edges and stippled faces",
         default=True, update=_update_selection_wire)
+    # Maya Blue Pencil ghosts (ui/blue_pencil.py): the drawings of the nearest annotation frames, fading
+    bp_ghost_previous: bpy.props.BoolProperty(
+        name="Ghost Previous", description="Show the drawings of the Blue Pencil frames before the current one, "
+                                           "fading with distance", default=True, update=_update_selection_wire)
+    bp_ghost_previous_frames: bpy.props.IntProperty(
+        name="Previous Frames", description="How many Blue Pencil frames before the current one are ghosted",
+        default=3, min=1, max=10, update=_update_selection_wire)
+    bp_ghost_next: bpy.props.BoolProperty(
+        name="Ghost Next", description="Show the drawings of the Blue Pencil frames after the current one, "
+                                       "fading with distance", default=True, update=_update_selection_wire)
+    bp_ghost_next_frames: bpy.props.IntProperty(
+        name="Next Frames", description="How many Blue Pencil frames after the current one are ghosted",
+        default=3, min=1, max=10, update=_update_selection_wire)
     # Maya-style Move / Rotate / Scale handles in the UV Editor (off = Blender's own UV gizmos)
     maya_uv_manipulator: bpy.props.BoolProperty(
         name="UV Manipulator", description="The UV Editor's Move / Rotate / Scale tools show Maya-style handles: "

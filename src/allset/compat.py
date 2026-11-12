@@ -267,6 +267,17 @@ LINEAR_IMAGE_SHADER = 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB'
 
 
 # --- Unified paint settings -----------------------------------------------------------------
+def scene_annotation(scene):
+    """The scene's annotation data (the 3D View's Annotate tool): ``Scene.annotation`` (5.2), else the older
+    ``Scene.grease_pencil`` when it still holds annotation data."""
+    gp = getattr(scene, "annotation", None)
+    if gp is None:
+        gp = getattr(scene, "grease_pencil", None)
+        if gp is not None and not hasattr(gp, "layers"):
+            gp = None
+    return gp
+
+
 # 5.0+: each paint mode has its own unified paint settings (``tool_settings.weight_paint.unified_paint_settings``)
 # and the scene size is ``unprojected_size``, a diameter (5.0.1 / 5.2.3: "Diameter of brush in Blender
 # units", #90).

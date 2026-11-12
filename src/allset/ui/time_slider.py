@@ -640,6 +640,8 @@ def _draw_range():
     if maya:
         _draw_ruler(context, region)
     _draw_keys(context, region, maya)
+    if maya:
+        _draw_blue_pencil(context, region)
     if not getattr(wm, "allset_time_range_on", False):
         return
     import gpu
@@ -957,6 +959,41 @@ def _draw_keys(context, region, maya=False):
         if tris:
             shader.uniform_float("color", colour)
             batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+
+
+def blue_pencil_marks(region, frames, y0, scale):
+    """Triangles (x, y) of Maya's Blue Pencil frame marks: one per frame, its upright edge ``MARK_GAP`` right of the
+    frame's tick, standing on ``y0`` (the ticks' bottom end)."""
+    from . import blue_pencil as bp
+    w, h, gap = bp.MARK_W * scale, bp.MARK_H * scale, bp.MARK_GAP * scale
+    tris = []
+    for f in frames:
+        x = round(region.view2d.view_to_region(f - 0.5, 0, clip=False)[0]) + gap
+        if x + w < 0 or x > region.width:
+            continue
+        tris += [(x, y0), (x + w, y0), (x, y0 + h)]
+    return tris
+
+
+def _draw_blue_pencil(context, region):
+    """Maya Time Slider: a light blue triangle on every Blue Pencil (annotation) frame (ui/blue_pencil.py)."""
+    from . import blue_pencil as bp
+    frames = bp.frame_numbers(context.scene)
+    if not frames:
+        return
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    from ..operators import bookmarks
+    s = context.preferences.system.ui_scale or 1.0
+    rows = ROWS_BOOKMARKS if bookmarks.markers(context.scene) else ROWS
+    y0 = _rows("tick", region.height, rows, s)[0]
+    k = min(region.height / MAYA_RULER_H, s)
+    tris = blue_pencil_marks(region, frames, y0, k)
+    if not tris:
+        return
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    shader.uniform_float("color", bp.FRAME_RGB)
+    batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
 
 
 # --- timeline view = playback range -------------------------------------------------------

@@ -674,6 +674,12 @@ def patch_key_stepping(kd):
     _add(kd, "Frames", "screen.keyframe_jump", make_event("COMMA"), {"next": False}, shadows=keep)
     _add(kd, "Frames", "screen.frame_offset", make_event("PERIOD", alt=True, repeat=True), {"delta": 1})
     _add(kd, "Frames", "screen.frame_offset", make_event("COMMA", alt=True, repeat=True), {"delta": -1})
+    # Maya Previous / Next Blue Pencil Frame = Alt+< / Alt+> (the < > characters as for Grow / Shrink: Shift+, /
+    # Shift+. on a US keyboard, a < > key of its own types < plain and > with Shift)
+    for event, forward in ((make_event("COMMA", shift=True, alt=True), False), (make_event("GRLESS", alt=True), False),
+                           (make_event("PERIOD", shift=True, alt=True), True),
+                           (make_event("GRLESS", shift=True, alt=True), True)):
+        _add(kd, "Frames", "allset.blue_pencil_frame", event, {"next": forward})
 
 
 # --- 21. Shift+drag a manipulator = Smart Duplicate -----------------------------------

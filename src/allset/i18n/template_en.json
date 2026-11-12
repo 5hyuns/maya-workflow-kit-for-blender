@@ -7598,11 +7598,15 @@
    "Fast": "Fast",
    "Fixed-length Tangents": "Fixed-length Tangents",
    "Flat": "Flat",
+   "Ghost Next": "Ghost Next",
+   "Ghost Previous": "Ghost Previous",
    "Help Line": "Help Line",
    "History Output": "History Output",
    "Hotbox Style": "Hotbox Style",
    "Hotbox shows the menus of every menu set, not only the current one (on by default, like Maya)": "Hotbox shows the menus of every menu set, not only the current one (on by default, like Maya)",
    "How Maya marking menus are shown": "How Maya marking menus are shown",
+   "How many Blue Pencil frames after the current one are ghosted": "How many Blue Pencil frames after the current one are ghosted",
+   "How many Blue Pencil frames before the current one are ghosted": "How many Blue Pencil frames before the current one are ghosted",
    "How many autosaves of each scene are kept when Limit Autosaves is on": "How many autosaves of each scene are kept when Limit Autosaves is on",
    "Hyperbolic": "Hyperbolic",
    "In Maya mode, a file opened in another layout is shown in the Maya layout (its own Maya layout workspace when it has one). The file's other workspaces stay": "In Maya mode, a file opened in another layout is shown in the Maya layout (its own Maya layout workspace when it has one). The file's other workspaces stay",
@@ -7667,6 +7671,7 @@
    "Navigation widget in the top right of the 3D View": "Navigation widget in the top right of the 3D View",
    "Never": "Never",
    "New Scene Time": "New Scene Time",
+   "Next Frames": "Next Frames",
    "No \"# Result:\" lines in the Script Editor history": "No \"# Result:\" lines in the Script Editor history",
    "No Manipulators": "No Manipulators",
    "No error messages in the Script Editor history": "No error messages in the Script Editor history",
@@ -7687,6 +7692,7 @@
    "Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size": "Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size",
    "Pre-selection Highlight": "Pre-selection Highlight",
    "Prevent Negative Scale": "Prevent Negative Scale",
+   "Previous Frames": "Previous Frames",
    "Project": "Project",
    "Pulse Armature Mode": "Pulse Armature Mode",
    "Python command line in the status bar": "Python command line in the status bar",
@@ -7715,6 +7721,8 @@
    "Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header while a skeleton is active (not part of Maya)": "Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header while a skeleton is active (not part of Maya)",
    "Show batch rendering messages in the Script Editor history (Maya; Blender's renders write their messages to the system console)": "Show batch rendering messages in the Script Editor history (Maya; Blender's renders write their messages to the system console)",
    "Show the active modeling node's attribute editor in the viewport": "Show the active modeling node's attribute editor in the viewport",
+   "Show the drawings of the Blue Pencil frames after the current one, fading with distance": "Show the drawings of the Blue Pencil frames after the current one, fading with distance",
+   "Show the drawings of the Blue Pencil frames before the current one, fading with distance": "Show the drawings of the Blue Pencil frames before the current one, fading with distance",
    "Slider Speed": "Slider Speed",
    "Slow": "Slow",
    "Slowest": "Slowest",
@@ -7871,6 +7879,12 @@
    "Adjust Attribute Value": "Adjust Attribute Value",
    "Attribute Field Gestures": "Attribute Field Gestures",
    "Attribute Field Hover": "Attribute Field Hover"
+  },
+  "Labels/ui/blue_pencil": {
+   "Blue Pencil": "Blue Pencil",
+   "Blue Pencil Frame": "Blue Pencil Frame",
+   "Frames": "Frames",
+   "Next": "Next"
   },
   "Labels/ui/bridge_editor": {
    "Bridge Path Curve": "Bridge Path Curve",
@@ -10275,6 +10289,9 @@
    "Show this node in the Attribute Editor": "Show this node in the Attribute Editor",
    "Show this object in the Attribute Editor (Maya RMB marking menu row\n\"<object>...\")": "Show this object in the Attribute Editor (Maya RMB marking menu row\n\"<object>...\")",
    "Switch the dock between Channel Box / Layer Editor and Attribute Editor\n(Maya Ctrl+A)": "Switch the dock between Channel Box / Layer Editor and Attribute Editor\n(Maya Ctrl+A)"
+  },
+  "Tooltips/ui/blue_pencil": {
+   "Go to the next or previous Blue Pencil (annotation) frame (Maya Next / Previous Blue Pencil Frame)": "Go to the next or previous Blue Pencil (annotation) frame (Maya Next / Previous Blue Pencil Frame)"
   },
   "Tooltips/ui/bridge_editor": {
    "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel": "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel",
