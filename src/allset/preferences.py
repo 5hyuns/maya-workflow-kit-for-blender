@@ -455,6 +455,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Viewport Shading Controls",
         description="Show Blender's shading modes and settings at the right of the Maya viewport toolbar",
         default=True, update=_update_selection_wire)
+    show_view_cube_buttons: bpy.props.BoolProperty(
+        name="Camera / Projection Buttons",
+        description="Show the Camera View and Perspective/Orthographic buttons under the ViewCube",
+        default=True, update=_update_selection_wire)
     def _update_outliner(self, context):
         for window in context.window_manager.windows:
             for area in window.screen.areas:
@@ -696,6 +700,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_top_bar")
         row.prop(self, "maya_panel_menus")
         row.prop(self, "show_viewport_shading")
+        row.prop(self, "show_view_cube_buttons")
         row.prop(self, "menu_set", text="")
         row = box.row()
         row.prop(self, "marking_menu_style")
