@@ -385,6 +385,74 @@ def depth_bias(ob, depsgraph, projection, viewport):
         return 0.0
 
 
+_PAIRS = [(i, j) for i in range(8) for j in range(i + 1, 8)]     # every two corners of a bound box
+ARRAY_FROM = 8      # from this many objects on ``depth_biases`` computes in arrays (fewer: one by one is quicker)
+_NO_BOX = [0.0] * 24
+_NO_MATRIX = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+
+
+def depth_biases(objects, depsgraph, projection, viewport):
+    """``depth_bias`` of each of ``objects`` (a list of floats): the same rule, computed for many objects at once in
+    arrays (hundreds of selected objects took tens of milliseconds a redraw one by one)."""
+    import math
+    import numpy as np
+    n = len(objects)
+    if n < ARRAY_FROM:
+        return [depth_bias(ob, depsgraph, projection, viewport) for ob in objects]
+    width, height = viewport
+    if not all(math.isfinite(v) and v > 0 for v in (width, height)):
+        return [0.0] * n
+    ok = np.ones(n, bool)
+    boxes, mats = [], []
+    for k, ob in enumerate(objects):
+        # plain lists: reading Blender's arrays into numpy one object at a time costs several times more
+        try:
+            box = [v for corner in ob.evaluated_get(depsgraph).bound_box for v in corner]
+            mat = [v for row in ob.matrix_world for v in row]
+        except (AttributeError, TypeError, ValueError, OverflowError, RuntimeError, ReferenceError):
+            box = mat = None
+        if box is None or len(box) != 24 or len(mat) != 16:
+            ok[k] = False
+            box, mat = _NO_BOX, _NO_MATRIX
+        boxes.extend(box)
+        mats.extend(mat)
+    corners = np.array(boxes, np.float64).reshape(n, 8, 3)
+    worlds = np.array(mats, np.float64).reshape(n, 4, 4)
+    with np.errstate(all='ignore'):
+        ok &= np.isfinite(corners).all(axis=(1, 2)) & np.isfinite(worlds).all(axis=(1, 2))
+        clip = np.einsum('nij,nkj->nki', np.array(projection, np.float64) @ worlds,
+                         np.concatenate((corners, np.ones((n, 8, 1))), axis=2))
+        w, z = clip[..., 3], clip[..., 2]
+        # behind the eye, intersecting a clip plane, or unstable
+        ok &= np.isfinite(clip).all(axis=(1, 2)) & (w > 1e-8).all(1) & (z > -w).all(1) & (z < w).all(1)
+        xs, ys, depths = clip[..., 0] / w, clip[..., 1] / w, z / w
+        ok &= np.isfinite(xs).all(1) & np.isfinite(ys).all(1) & np.isfinite(depths).all(1)
+        span = depths.max(1) - depths.min(1)
+        pixels = np.maximum(np.maximum(1.0, (xs.max(1) - xs.min(1)) * width * 0.5),
+                            (ys.max(1) - ys.min(1)) * height * 0.5)
+        ok &= np.isfinite(span) & np.isfinite(pixels) & (span > 0.0)
+        bias = np.minimum(np.minimum(DEPTH_BIAS, span * DEPTH_BIAS_MAX_SPAN), span * DEPTH_BIAS_PIXELS / pixels)
+        # a thin box viewed obliquely: cap against the projected separation along each thin axis
+        sizes = corners.max(1) - corners.min(1)
+        lengths = np.sqrt(((worlds[:, :3, :3] * sizes[:, None, :]) ** 2).sum(axis=1))
+        ok &= np.isfinite(lengths).all(1)
+        longest = lengths.max(1)
+        a = np.array([p[0] for p in _PAIRS])
+        b = np.array([p[1] for p in _PAIRS])
+        sep = np.abs(depths[:, a] - depths[:, b])
+        for axis in range(3):
+            thin = (lengths[:, axis] > 0.0) & (lengths[:, axis] < longest * DEPTH_BIAS_THIN_RATIO)
+            others = [i for i in range(3) if i != axis]
+            along = ((corners[:, a, axis] != corners[:, b, axis])
+                     & (corners[:, a, others[0]] == corners[:, b, others[0]])
+                     & (corners[:, a, others[1]] == corners[:, b, others[1]]))
+            found = along.any(1)
+            ok &= ~(thin & ~found)
+            least = np.where(along, sep, np.inf).min(1)
+            bias = np.where(thin & found, np.minimum(bias, least * DEPTH_BIAS_THIN_SPAN), bias)
+    return np.where(ok, bias, 0.0).tolist()
+
+
 def view_draws(space):
     """This 3D View gets the selection wire: overlays on, in every shading mode (Solid, Material Preview and
     Rendered alike, as Blender's own outline). A view with overlays off, like the IPR picture, draws nothing."""
@@ -430,12 +498,13 @@ def _draw():
                 if batch is not None:
                     sh.uniform_float("mvp", pm @ ob.matrix_world)
                     batch.draw(sh)
-        for ob, is_lead in obs:
+        region = context.region
+        biases = [DEPTH_BIAS] * len(obs) if xray else depth_biases(
+            [ob for ob, _lead in obs], depsgraph, pm, (region.width, region.height))
+        for (ob, is_lead), bias in zip(obs, biases):
             batch = _batch(ob, depsgraph)
             if batch is None:
                 continue
-            region = context.region
-            bias = DEPTH_BIAS if xray else depth_bias(ob, depsgraph, pm, (region.width, region.height))
             sh.uniform_float("bias", bias)
             sh.uniform_float("mvp", pm @ ob.matrix_world)
             sh.uniform_float("color", lead if is_lead else other)

@@ -78,6 +78,18 @@ def measure(text):
     return blf.dimensions(0, text)[0]
 
 
+# While ``extent`` sizes the picture: [x0, y0, x1, y1] of everything the primitives below would draw (in the
+# coordinates the menu draws in), and they draw nothing.
+_BOUNDS = [None]
+
+
+def _grow(points, pad):
+    b = _BOUNDS[0]
+    for x, y in points:
+        b[0], b[1] = min(b[0], x - pad), min(b[1], y - pad)
+        b[2], b[3] = max(b[2], x + pad), max(b[3], y + pad)
+
+
 def _sh():
     global _shader
     if _shader is None:
@@ -87,6 +99,9 @@ def _sh():
 
 def _rect(r, color, ox=0.0, oy=0.0):
     x0, y0, x1, y1 = r[0] + ox, r[1] + oy, r[2] + ox, r[3] + oy
+    if _BOUNDS[0] is not None:
+        _grow(((x0, y0), (x1, y1)), 1.0)
+        return
     sh = _sh()
     batch = batch_for_shader(sh, 'TRI_FAN', {"pos": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))})
     sh.uniform_float("color", color)
@@ -95,6 +110,9 @@ def _rect(r, color, ox=0.0, oy=0.0):
 
 def _outline(r, color, ox=0.0, oy=0.0):
     x0, y0, x1, y1 = r[0] + ox, r[1] + oy, r[2] + ox, r[3] + oy
+    if _BOUNDS[0] is not None:
+        _grow(((x0, y0), (x1, y1)), 1.0)
+        return
     sh = _sh()
     batch = batch_for_shader(sh, 'LINE_LOOP', {"pos": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))})
     sh.uniform_float("color", color)
@@ -103,6 +121,9 @@ def _outline(r, color, ox=0.0, oy=0.0):
 
 def _line(points, color, width=1.0):
     if len(points) < 2:
+        return
+    if _BOUNDS[0] is not None:
+        _grow(points, width + 1.0)
         return
     gpu.state.line_width_set(width)
     sh = _sh()
@@ -113,6 +134,10 @@ def _line(points, color, width=1.0):
 
 
 def _text(x, y, s, color):
+    if _BOUNDS[0] is not None:
+        k = font_size()
+        _grow(((x, y - 0.5 * k), (x + measure(s) + 0.5 * k, y + 1.5 * k)), 1.0)
+        return
     s = i18n.core(s)
     blf.size(0, font_size())
     arrow = s.endswith(ARROW)
@@ -136,6 +161,9 @@ def _ring_arrow(rect, color, k, ox, oy):
     box's right side, 7 px tall, tip on the box's vertical centre."""
     x1 = rect[2] + ox
     yc = (rect[1] + rect[3]) / 2 + oy
+    if _BOUNDS[0] is not None:
+        _grow(((x1 - 13 * k, yc - 3.5 * k), (x1 - 9 * k, yc + 3.5 * k)), 1.0)
+        return
     sh = _sh()
     batch = batch_for_shader(sh, 'TRIS', {"pos": ((x1 - 13 * k, yc - 3.5 * k), (x1 - 13 * k, yc + 3.5 * k),
                                                   (x1 - 9 * k, yc))})
@@ -277,8 +305,9 @@ def _near_centre(s, cx, cy):
                for (px, py), (qx, qy) in anchors)
 
 
-def draw_session(s, now):
-    if not s.visible(now):
+def draw_session(s, now, shown=None):
+    """``shown``: draw the menu (True) or a hidden mark's stroke / route (False) whatever ``s.visible`` says."""
+    if not (s.visible(now) if shown is None else shown):
         if s.params.quick_gestures:
             _draw_route(s)
         else:
@@ -395,6 +424,7 @@ _window = {"ptr": None}     # the last window drawn into (redraw after ACTIVE is
 def activate(window, region, **state):
     """Start drawing ``state`` (session / hotbox ...) for ``region`` over all of ``window``."""
     ACTIVE.clear()
+    _LAST[0] = None
     ACTIVE.update(state, region=region.as_pointer(), window=window.as_pointer(), origin=(region.x, region.y))
     _window["ptr"] = window.as_pointer()
     _draw_last()
@@ -486,13 +516,53 @@ def menu_up():
     return bool(ACTIVE)
 
 
+_LAST = [None]      # window-pixel bounds of the picture at the last ``redraw`` (None: unknown)
+EXTENT_PAD = 4.0    # px around the picture's bounds (anti-aliased edges)
+
+
+def extent():
+    """Window-pixel bounds (x0, y0, x1, y1) of what the open menu draws now: the same drawing code run without
+    drawing. A marking menu counts its menu and a hidden mark's stroke / route both (it can turn visible before the
+    next redraw). None: nothing open or nothing drawn."""
+    if not ACTIVE or "origin" not in ACTIVE:
+        return None
+    inf = float("inf")
+    _BOUNDS[0] = [inf, inf, -inf, -inf]
+    try:
+        if "hotbox" in ACTIVE:
+            draw_hotbox(ACTIVE, None)
+        if "session" in ACTIVE:
+            now = time.monotonic()
+            draw_session(ACTIVE["session"], now, shown=True)
+            draw_session(ACTIVE["session"], now, shown=False)
+        b = _BOUNDS[0]
+    finally:
+        _BOUNDS[0] = None
+    if b[0] > b[2]:
+        return None
+    ox, oy = ACTIVE["origin"]
+    pad = EXTENT_PAD * ui_scale()
+    return (b[0] + ox - pad, b[1] + oy - pad, b[2] + ox + pad, b[3] + oy + pad)
+
+
 def redraw():
-    """Redraw every editor of the menu's window (the picture spans regions)."""
+    """Redraw the editors of the menu's window that the picture covers now or covered at the last redraw (the
+    picture spans regions; an editor it never reaches keeps its pixels, every editor when that isn't known)."""
     ptr = ACTIVE.get("window", _window["ptr"])
+    try:
+        now = extent()
+    except Exception:         # never let a sizing error keep the menu from drawing
+        traceback.print_exc()
+        now = None
+    boxes = [b for b in (now, _LAST[0]) if b is not None]
+    everything = now is None and ACTIVE or not boxes
+    _LAST[0] = now
     for window in bpy.context.window_manager.windows:
         if window.as_pointer() == ptr and window.screen:
             for area in window.screen.areas:
-                area.tag_redraw()
+                rect = (area.x, area.y, area.x + area.width, area.y + area.height)
+                if everything or any(_overlaps(rect, b) for b in boxes):
+                    area.tag_redraw()
 
 
 def _callback():
