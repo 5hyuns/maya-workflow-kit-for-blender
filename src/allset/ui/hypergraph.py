@@ -110,9 +110,10 @@ def frame(area, region, scene, selected_only=False, context=None):
 
 
 def layer_colour(ob, scene):
-    """RGB of the object's display layer colour tag (theme collection colour), None when it has none."""
-    from . import layer_editor
-    coll = layer_editor.layer_of(ob, scene)
+    """RGB of the object's display layer colour tag (theme collection colour), None when it has none. A kit skeleton
+    (its node stands for its root joint, like the kit Outliner's top row) takes its root joint's layer."""
+    from . import layer_editor, layer_joints
+    coll = layer_editor.layer_of(ob, scene) or layer_joints.root_layer(ob)
     tag = getattr(coll, "color_tag", 'NONE') if coll is not None else 'NONE'
     if not tag or tag == 'NONE':
         return None

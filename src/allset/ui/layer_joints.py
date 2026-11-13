@@ -127,6 +127,16 @@ def _own_hidden(ob, bones, editing):
     return [b.name for i, b in enumerate(seq) if flags[i] and (editing or not b.get(SHOW_FILTER))]
 
 
+def _object_kind(ob):
+    """TEMPLATE / REFERENCE of the skeleton object itself: its own display layer (older files) or one above it."""
+    from . import layer_editor
+    try:
+        scene = bpy.context.scene
+        return ob.get(layer_editor.INHERITED) or (layer_editor.display_kind(ob, scene) if scene else None)
+    except (AttributeError, ReferenceError):
+        return None
+
+
 def _compute(ob):
     pose = ob.pose
     if pose is None or not hasattr(bpy.types.PoseBone, PROP):
@@ -136,7 +146,8 @@ def _compute(ob):
     bones = data.edit_bones if editing else data.bones
     found = [(pb.name, coll) for pb in pose.bones if (coll := getattr(pb, PROP)) is not None]
     own = _own_hidden(ob, bones, editing)
-    if not found and not own:
+    whole = _object_kind(ob)
+    if not found and not own and whole is None:
         return _EMPTY
     playing = _PLAYING[0]
     ranked = []
@@ -157,10 +168,12 @@ def _compute(ob):
         while p is not None:
             depth, p = depth + 1, p.parent
         ranked.append((depth, name, b, hidden, kind))
-    if not ranked:
+    if not ranked and whole is None:
         return _EMPTY
     ranked.sort(key=lambda r: (r[0], r[1]))     # members nearer the root first: their Template / Reference wins
     out = {}
+    if whole is not None:                       # the skeleton object is above every joint: its type wins
+        out = {b.name: whole for b in bones}
     for _depth, name, b, hidden, kind in ranked:
         names = (name, *(c.name for c in b.children_recursive))
         if hidden:
@@ -170,6 +183,15 @@ def _compute(ob):
             for n in names:
                 out.setdefault(n, kind)
     return out
+
+
+def kind_under(ob):
+    """TEMPLATE / REFERENCE of the joint object ``ob`` hangs from (``parent_joint``), else None."""
+    name = parent_joint(ob)
+    if name is None:
+        return None
+    kind = state(ob.parent).get(name)
+    return kind if kind in COLOURS else None
 
 
 def _key(ob):
@@ -229,6 +251,15 @@ def _first_root(ob):
     from . import outliner_tree
     bones = outliner_tree._Bones(ob)
     return bones.roots[0] if outliner_tree.is_kit_skeleton(ob, bones) else None
+
+
+def root_layer(ob):
+    """The display layer of a kit skeleton's first root joint (the joint its object stands for), else None."""
+    if ob is None or ob.type != 'ARMATURE' or ob.pose is None or not hasattr(bpy.types.PoseBone, PROP):
+        return None
+    root = _cached(_ROOTS, ob, _first_root)
+    pb = ob.pose.bones.get(root) if root else None
+    return layer_of(pb) if pb is not None else None
 
 
 def hidden_under(ob):

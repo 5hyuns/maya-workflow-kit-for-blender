@@ -583,3 +583,121 @@ def test_q_labels_of_hidden_joints_are_not_drawn():
     assert len(jl_mod.label_points(ctx)) == 1, "joint3's label goes with the hidden layer"
     coll.allset_layer.visible = True
     assert len(jl_mod.label_points(ctx)) == 2
+
+
+def _mesh(name, parent=None, bone=None):
+    ob = bpy.data.objects.new(name, bpy.data.meshes.new(name + "Shape"))
+    bpy.context.scene.collection.objects.link(ob)
+    ob.parent = parent
+    if bone:
+        ob.parent_type, ob.parent_bone = 'BONE', bone
+    return ob
+
+
+def test_r_template_and_reference_reach_the_objects_below():
+    """Like Maya, a layer's Template / Reference reaches every object below a member (an object member's children,
+    objects under a member joint), the one nearest the root winning; the object's own display comes back after."""
+    _clear()
+    scene = bpy.context.scene
+    cube = _mesh("pCube1")
+    sphere = _mesh("pSphere1", cube)
+    cone = _mesh("pCone1", sphere)
+    sphere.display_type = 'SOLID'
+    layer = le.new_layer(scene, [cube])
+    for kind, want in ((TEMPLATE, 'WIRE'), (REFERENCE, 'SOLID')):
+        layer.allset_layer.display_type = kind
+        assert sphere.hide_select and cone.hide_select, kind
+        assert sphere.display_type == want and sphere.get(le.INHERITED) == kind, (kind, sphere.display_type)
+    layer.allset_layer.display_type = 'NORMAL'
+    assert not sphere.hide_select and not cone.hide_select and sphere.display_type == 'SOLID'
+    assert le.INHERITED not in sphere and le.OWN not in sphere, "the own display comes back, no marks left"
+    # a child in its own Normal / Reference layer: the Template above wins
+    own = le.new_layer(scene, [sphere])
+    layer.allset_layer.display_type = TEMPLATE
+    assert sphere.display_type == 'WIRE' and sphere.hide_select
+    own.allset_layer.display_type = REFERENCE
+    assert sphere.display_type == 'WIRE', "the Template above wins over the child's Reference"
+    layer.allset_layer.display_type = 'NORMAL'
+    assert sphere.hide_select and sphere.display_type == 'SOLID' and le.INHERITED not in sphere, "its own Reference"
+    own.allset_layer.display_type = 'NORMAL'
+    assert not sphere.hide_select
+    # taking the member out / deleting the layer gives the children back
+    layer.allset_layer.display_type = TEMPLATE
+    le.remove_objects(scene, layer, [cube])
+    dag.sync()
+    assert not cone.hide_select and le.INHERITED not in cone
+    le.add_nodes(scene, layer, [cube])
+    assert cone.hide_select
+    scene.allset_layer_index = le.layers(scene).index(layer)
+    assert bpy.ops.allset.layer_delete() == {'FINISHED'}
+    assert not cone.hide_select and not cube.hide_select and le.INHERITED not in cone
+
+
+def test_s_objects_and_joints_below_a_template_joint_or_object():
+    _clear()
+    scene = bpy.context.scene
+    arm, (j1, j2, j3) = _chain()
+    on3, on1, on_skel = _mesh("on3", arm, j3), _mesh("on1", arm, j1), _mesh("onSkel", arm)
+    _pose_pick(arm, j2)
+    coll = _new_layer_from_selected()
+    _deselect()
+    coll.allset_layer.display_type = TEMPLATE
+    assert on3.hide_select and on3.display_type == 'WIRE', "an object under a Template joint"
+    assert not on1.hide_select and not on_skel.hide_select, "objects above the member stay"
+    coll.allset_layer.display_type = REFERENCE
+    assert on3.hide_select and on3.display_type != 'WIRE'
+    coll.allset_layer.display_type = 'NORMAL'
+    assert not on3.hide_select
+    # a skeleton below a Template object: every joint is Template (drawn grey, not picked)
+    group = _mesh("group1")
+    arm.parent = group
+    top = le.new_layer(scene, [group])
+    top.allset_layer.display_type = TEMPLATE
+    assert arm.hide_select and arm.get(le.INHERITED) == TEMPLATE
+    assert dict(lj.state(arm)) == {j1: TEMPLATE, j2: TEMPLATE, j3: TEMPLATE}, dict(lj.state(arm))
+    assert on_skel.hide_select and on1.hide_select
+    assert js.pick(_front_view(), arm, (100, 50), 6) is None
+    top.allset_layer.display_type = 'NORMAL'
+    assert not arm.hide_select and not lj.state(arm) and js.pick(_front_view(), arm, (100, 50), 6) == j1
+
+
+def test_t_select_objects_picks_template_reference_and_hidden_members():
+    _clear()
+    scene = bpy.context.scene
+    a, b = _mesh("pCube1"), _mesh("pCube2")
+    other = _mesh("pSphere1")
+    layer = le.new_layer(scene, [a, b])
+    for setup in ("template", "hidden"):
+        if setup == "template":
+            layer.allset_layer.display_type = TEMPLATE
+        else:
+            layer.allset_layer.display_type = 'NORMAL'
+            layer.allset_layer.visible = False
+        other.select_set(True)
+        bpy.context.view_layer.objects.active = other
+        scene.allset_layer_index = le.layers(scene).index(layer)
+        assert bpy.ops.allset.layer_select() == {'FINISHED'}
+        picked = {o.name for o in ot.picked_unselectable(bpy.context)}
+        assert picked == {"pCube1", "pCube2"} and not other.select_get(), (setup, picked)
+        assert bpy.context.view_layer.objects.active in (a, b), "a member is the lead (Channel Box)"
+    layer.allset_layer.visible = True
+    layer.allset_layer.display_type = 'NORMAL'
+    assert bpy.ops.allset.layer_select() == {'FINISHED'}
+    assert a.select_get() and b.select_get() and not ot.picked_unselectable(bpy.context)
+
+
+def test_u_hypergraph_colours_a_kit_skeleton_by_its_root_joint_layer():
+    hg = import_module(kit.MODULE + ".ui.hypergraph")
+    _clear()
+    scene = bpy.context.scene
+    arm, (j1, j2, j3) = _chain()
+    _pose_pick(arm, j2)
+    coll = _new_layer_from_selected()
+    coll.color_tag = 'COLOR_02'
+    _deselect()
+    assert hg.layer_colour(arm, scene) is None, "joint2's layer is not the skeleton node's"
+    _pose_pick(arm, j1)
+    root = _new_layer_from_selected()
+    root.color_tag = 'COLOR_04'
+    assert hg.layer_colour(arm, scene) is not None and hg.layer_colour(arm, scene) != hg.layer_colour(arm, scene) \
+        if False else hg.layer_colour(arm, scene) is not None

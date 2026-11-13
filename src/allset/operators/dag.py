@@ -12,7 +12,10 @@ Blender: a parent's ``hide_viewport`` / ``hide_set`` never hides its children an
 - ``sync``: an object whose ancestor is hidden (own Visibility = ``hide_viewport``, or its display layer's V; for an
   object under a joint also the joint's display layer, ``ui/layer_joints.py``) gets the view-layer flag
   (``hide_set``) marked ``MARK``; its own ``hide_viewport`` (Maya's Visibility channel) stays as it was. Objects the
-  kit did not hide that way are never touched (a layer's or Blender's own ``hide_set`` stays).
+  kit did not hide that way are never touched (a layer's or Blender's own ``hide_set`` stays). A display layer's
+  Template / Reference reaches every object below a member the same way (Maya: isTemplated / the drawing override
+  are inherited): such objects are marked ``layer_editor.INHERITED`` and drawn / locked like a member, the one
+  nearest the root winning.
   Run from a depsgraph handler (only writes on change, so it settles) and right after kit visibility edits.
 - ``hierarchy``: the selection with all descendants, for Delete (``allset.delete``), Export Selection
   (``selected_hierarchy``) and Isolate Select (``allset.isolate``).
@@ -63,8 +66,56 @@ def hidden_by_ancestor(ob, scene, view_layer=None):
     return False
 
 
+def inherited_display(ob, scene, members=None):
+    """TEMPLATE / REFERENCE that ``ob`` takes from a node above it: an ancestor object in such a display layer, or the
+    joint it hangs from (``layer_joints.kind_under``); the one nearest the root wins. ``members`` = {object name:
+    layer} (``layer_editor.layer_of`` when None)."""
+    from ..ui import layer_editor, layer_joints
+    kind = None
+    child, p = ob, ob.parent
+    while p is not None:
+        joint = layer_joints.kind_under(child)
+        if joint is not None:
+            kind = joint
+        coll = members.get(p.name) if members is not None else layer_editor.layer_of(p, scene)
+        own = coll.allset_layer.display_type if coll is not None else "NORMAL"
+        if own != "NORMAL":
+            kind = own
+        child, p = p, p.parent
+    return kind
+
+
+def sync_display(scene):
+    """Template / Reference inherited from a layer above (``INHERITED``), only written on change. Returns the number
+    of changes."""
+    from ..ui import layer_editor, layer_joints
+    ls = layer_editor.layers(scene)
+    active = any(c.allset_layer.display_type != "NORMAL" for c in ls)
+    members = {o.name: c for c in ls for o in c.objects} if active else {}
+    changed, skeletons = 0, False
+    for ob in scene.objects:
+        mark = ob.get(layer_editor.INHERITED)
+        if not active and mark is None:
+            continue
+        kind = inherited_display(ob, scene, members) if active else None
+        if kind != mark:
+            if kind is None:
+                del ob[layer_editor.INHERITED]
+            else:
+                ob[layer_editor.INHERITED] = kind
+            coll = members.get(ob.name)
+            own = coll.allset_layer.display_type if coll is not None else "NORMAL"
+            layer_editor.apply_display(ob, kind or (None if own == "NORMAL" else own))
+            changed += 1
+            skeletons = skeletons or ob.type == 'ARMATURE'
+    if skeletons:
+        layer_joints.bump()        # the joints of a skeleton below a Template / Reference node take it too
+    return changed
+
+
 def sync(scene=None, view_layer=None):
-    """Hide / show descendants of hidden nodes (view-layer flag + ``MARK``). Returns the number of changes."""
+    """Hide / show descendants of hidden nodes (view-layer flag + ``MARK``), then the inherited Template / Reference
+    (``sync_display``). Returns the number of changes."""
     scene = scene or bpy.context.scene
     if scene is None:
         return 0
@@ -88,7 +139,7 @@ def sync(scene=None, view_layer=None):
                 ob[MARK] = True
         elif MARK in ob:
             del ob[MARK]
-    return changed
+    return changed + sync_display(scene)
 
 
 _busy = []
@@ -279,9 +330,17 @@ def register_handlers():
 
 
 def release_all():
-    """Disable: show again what only the kit's parent rule hid (the objects' own flags stay)."""
+    """Disable: show again what only the kit's parent rule hid and give inherited Template / Reference objects their
+    own display (the objects' own flags stay)."""
+    from ..ui import layer_editor
     for scene in bpy.data.scenes:
         for ob in scene.objects:
+            if layer_editor.INHERITED in ob:
+                del ob[layer_editor.INHERITED]
+                try:
+                    layer_editor.apply_display(ob, layer_editor.display_kind(ob, scene))
+                except (AttributeError, ReferenceError):       # the layer settings are gone already
+                    layer_editor._restore_display(ob)
             if MARK not in ob:
                 continue
             for vl in scene.view_layers:

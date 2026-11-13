@@ -11,7 +11,8 @@ attributes (#26; the object's visibility is ``hide_viewport``):
   T (template) -> unselectable, wireframe; R (reference) -> unselectable
                   (the member's own display type / selectability are kept in ``OWN`` and put back)
   P (playback) -> off: members hidden (view-layer flag) while animation plays
-An object belongs to at most one display layer, like Maya.
+An object belongs to at most one display layer, like Maya. Like V, T and R reach every object below a member
+(``operators/dag.py`` marks those with ``INHERITED``); a Template or Reference above wins over the object's own layer.
 
 A joint picked in a view is a member of its own (``ui/layer_joints.py``): the layer's state reaches the joint and
 everything below it through the kit's joint drawing and picking, never through the skeleton object; a kit skeleton
@@ -102,6 +103,7 @@ def next_layer_name():
 
 
 OWN = "allset_layer_own"   # the member's own display_type / hide_select while a layer overrides them
+INHERITED = "allset_layer_inherited"   # TEMPLATE / REFERENCE an object takes from a layer above it
 
 
 def _layer_hide(ob, hidden):
@@ -117,8 +119,10 @@ def _layer_hide(ob, hidden):
 def _override_display(ob, display_type, unselectable):
     if OWN not in ob:
         ob[OWN] = {"display_type": ob.display_type, "hide_select": bool(ob.hide_select)}
-    ob.display_type = display_type
-    ob.hide_select = unselectable
+    if ob.display_type != display_type:
+        ob.display_type = display_type
+    if ob.hide_select != unselectable:
+        ob.hide_select = unselectable
 
 
 def _restore_display(ob):
@@ -130,21 +134,34 @@ def _restore_display(ob):
     del ob[OWN]
 
 
+def display_kind(ob, scene):
+    """TEMPLATE / REFERENCE of the object's own display layer, None for no layer or a Normal one."""
+    coll = layer_of(ob, scene)
+    kind = coll.allset_layer.display_type if coll is not None else "NORMAL"
+    return None if kind == "NORMAL" else kind
+
+
+def apply_display(ob, kind):
+    """Template (wireframe, unselectable), Reference (unselectable) or, for None, the object's own display."""
+    if kind is None:
+        _restore_display(ob)
+        return
+    own = ob.get(OWN)
+    own_type = own.get("display_type", ob.display_type) if own is not None else ob.display_type
+    _override_display(ob, 'WIRE' if kind == "TEMPLATE" else own_type, True)
+
+
 def apply_object(ob, layer):
     """Apply a layer's state to one member (None = back to the object's own state). Maya: a display layer is an
-    override (drawOverride) that never changes the node's own attributes (#26)."""
+    override (drawOverride) that never changes the node's own attributes (#26). A Template / Reference from a layer
+    above (``INHERITED``) wins over the member's own layer."""
     if layer is None:
         _layer_hide(ob, False)
-        _restore_display(ob)
+        apply_display(ob, ob.get(INHERITED))
         return
     st = layer.allset_layer
     _layer_hide(ob, not st.visible)
-    if st.display_type == "NORMAL":
-        _restore_display(ob)
-    else:
-        own = ob.get(OWN)
-        own_type = own.get("display_type", ob.display_type) if own is not None else ob.display_type
-        _override_display(ob, 'WIRE' if st.display_type == "TEMPLATE" else own_type, True)
+    apply_display(ob, ob.get(INHERITED) or (None if st.display_type == "NORMAL" else st.display_type))
 
 
 def apply_layer(coll):
@@ -190,39 +207,35 @@ def add_nodes(scene, coll, objects=(), joints=None, whole=()):
     """``add_objects`` for the objects; the joints move into ``coll`` (from any other layer). A kit skeleton picked
     as a whole is its root joints: an older file's layer holding the skeleton object lets it go."""
     add_objects(scene, coll, objects)
-    if not joints:
-        return
-    for ob in whole:
+    for ob in whole if joints else ():
         old = layer_of(ob, scene)
         if old is not None:
             old.objects.unlink(ob)
             apply_object(ob, None)
-    for ob, names in joints.items():
+    for ob, names in (joints or {}).items():
         for n in names:
             pb = ob.pose.bones.get(n)
             if pb is not None:
                 layer_joints.set_layer(pb, coll)
-    _joints_changed()
+    _members_changed()
 
 
 def remove_nodes(scene, coll, objects=(), joints=None, whole=()):
     """``remove_objects`` for the objects; the joints of ``coll`` leave it (a skeleton picked as a whole: its root
     joints, and the skeleton object when an older file's layer holds it)."""
     remove_objects(scene, coll, [*objects, *(ob for ob in whole if ob.name in coll.objects)])
-    if not joints:
-        return
-    for ob, names in joints.items():
+    for ob, names in (joints or {}).items():
         for n in names:
             pb = ob.pose.bones.get(n)
             if pb is not None and layer_joints.layer_of(pb) == coll:
                 layer_joints.set_layer(pb, None)
-    _joints_changed()
+    _members_changed()
 
 
-def _joints_changed():
+def _members_changed():
     layer_joints.bump()
     from ..operators import dag
-    dag.sync()                      # objects under the joints follow them (Maya)
+    dag.sync()                      # what is below the members follows them (Maya)
 
 
 def new_layer(scene, objects=(), joints=None, whole=()):
@@ -359,29 +372,28 @@ class ALLSET_OT_layer_select(_LayerOp, bpy.types.Operator):
 
     def execute(self, context):
         coll = active_layer(context)
-        joints = layer_joints.members(coll, context.scene)
-        if joints:
-            select_members(context, coll, joints)
-            return {'FINISHED'}
-        for ob in context.view_layer.objects:
-            ob.select_set(ob.name in coll.objects and not ob.hide_select)
+        select_members(context, coll, layer_joints.members(coll, context.scene))
         return {'FINISHED'}
 
 
 def select_members(context, coll, joints):
-    """Maya Select Objects of a layer with member joints: only the members are picked (not the joints below them),
-    also in a Template or Reference layer. Joints alone: Pose Mode on their skeletons, the last member the lead;
-    with objects the skeletons are selected in Object Mode with the member joints picked on them."""
+    """Maya Select Objects: only the members are picked (not what is below them), also in a Template or Reference
+    layer or a hidden one. Objects Blender can't select (Template / Reference, hidden) stay picked the way the kit
+    Outliner keeps them (``outliner_tree._keep_hidden``). Member joints alone: Pose Mode on their skeletons, the last
+    member the lead; with objects the skeletons are selected in Object Mode with the member joints picked on them."""
     from ..operators import joint_selection
+    from . import outliner_tree
     from .channel_box import set_bone_selected
-    joint_selection.leave(context, clear_selection=True)
+    if joints or context.mode != 'OBJECT':
+        joint_selection.leave(context, clear_selection=True)
     view_layer = context.view_layer
-    objects = [ob for ob in view_layer.objects if ob.name in coll.objects and not ob.hide_select]
+    objects = [ob for ob in view_layer.objects if ob.name in coll.objects]
+    locked = [ob for ob in objects if outliner_tree.unselectable(ob)]
     for ob in view_layer.objects:
         if ob.select_get():
             ob.select_set(False)
     last = None
-    for ob in (*objects, *joints):
+    for ob in (*(o for o in objects if o not in locked), *joints):
         try:
             ob.select_set(True)
             last = ob
@@ -391,7 +403,8 @@ def select_members(context, coll, joints):
         for pb in arm.pose.bones:
             set_bone_selected(pb, pb.name in names)
         arm.data.bones.active = arm.data.bones.get(names[-1])
-    view_layer.objects.active = last
+    view_layer.objects.active = last if last is not None else (locked[-1] if locked else None)
+    outliner_tree._keep_hidden(context, locked, replace=True)
     if not objects and last is not None and last.type == 'ARMATURE':
         try:
             bpy.ops.object.mode_set(mode='POSE')    # every selected skeleton (several: multi-object Pose Mode)
