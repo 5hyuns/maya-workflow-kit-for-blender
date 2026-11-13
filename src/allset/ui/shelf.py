@@ -1338,29 +1338,23 @@ class ALLSET_MT_shelf_tabs(bpy.types.Menu):
 
 
 class ALLSET_MT_shelf_settings(bpy.types.Menu):
-    """Maya shelf menu: new/delete shelf, add/edit/delete buttons"""
+    """Maya shelf menu: editor, shelf navigation and shelf management"""
     bl_idname = "ALLSET_MT_shelf_settings"
     bl_label = "Shelf"
 
     def draw(self, context):
         layout = self.layout
+        layout.operator_context = 'INVOKE_DEFAULT'
+        layout.emboss = 'PULLDOWN_MENU'
+        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor...")
+        layout.separator()
+        layout.menu(ALLSET_MT_shelf_tabs.bl_idname, text="Navigate Shelves")
+        layout.separator()
         layout.operator(ALLSET_OT_shelf_new.bl_idname, icon='ADD')
-        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor")
         layout.operator(ALLSET_OT_shelf_delete.bl_idname, icon='TRASH')
         layout.separator()
         layout.menu(ALLSET_MT_shelf_add_action.bl_idname, icon='ADD', text="Add Shelf Button...")
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
-        buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too
-        if buttons:
-            layout.separator()
-            for i, b in enumerate(buttons):
-                row = layout.row()
-                row.operator(ALLSET_OT_shelf_edit_button.bl_idname, text=f"Edit {b['label']}",
-                             icon='GREASEPENCIL').index = i
-            layout.separator()
-            for i, b in enumerate(buttons):
-                layout.operator(ALLSET_OT_shelf_remove_button.bl_idname, text=f"Delete {b['label']}",
-                                icon='X').index = i
 
 
 def draw_shelf(layout, context):
@@ -1998,15 +1992,33 @@ class ALLSET_OT_shelf_tab(bpy.types.Operator):
         if not rects or self.slot >= len(rects):
             return {'CANCELLED'}
         action = rects[self.slot][4]
+        if action in {"menu", "gear"} and event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            # Open after release so the opening click cannot choose a menu item.
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         _hover.pop(context.region.as_pointer(), None)
         if action == "menu":
             bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_tabs.bl_idname)
         elif action == "gear":
-            bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_settings.bl_idname)
+            # Popovers have no last-item memory that could put Delete Shelf under the cursor.
+            context.window_manager.popover(ALLSET_MT_shelf_settings.draw, ui_units_x=14)
         else:
             set_current(context, action)
             _redraw(context)
         return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type in {'ESC', 'RIGHTMOUSE', 'WINDOW_DEACTIVATE'}:
+            return {'CANCELLED'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            rects = _tab_rects.get(context.region.as_pointer()) if context.region else None
+            if not rects or self.slot >= len(rects):
+                return {'CANCELLED'}
+            x0, y0, x1, y1, _ = rects[self.slot]
+            if not (x0 <= event.mouse_region_x <= x1 and y0 <= event.mouse_region_y <= y1):
+                return {'CANCELLED'}
+            return self.invoke(context, event)
+        return {'RUNNING_MODAL'}
 
 
 TAB_SLOTS = 24
