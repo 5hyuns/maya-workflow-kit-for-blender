@@ -206,14 +206,19 @@ class _Bones:
         self.names = set(index)
 
 
-def is_kit_skeleton(ob, bones):
-    """A skeleton the kit named (``skeleton<N>``) with a root joint: Maya's root joint is its top node, so the
-    skeleton gets no row of its own."""
+def kit_skeleton_name(ob):
+    """``ob`` is an armature named like a skeleton the kit made (``skeleton<N>``, ``skeleton<N>.001``)."""
     from ..operators import joints
-    if ob.type != 'ARMATURE' or not ob.name.startswith(joints.SKELETON_BASE) or not bones.roots:
+    if ob.type != 'ARMATURE' or not ob.name.startswith(joints.SKELETON_BASE):
         return False
     tail = ob.name[len(joints.SKELETON_BASE):].split(".")[0]
     return not tail or tail.isdigit()
+
+
+def is_kit_skeleton(ob, bones):
+    """A skeleton the kit named (``skeleton<N>``) with a root joint: Maya's root joint is its top node, so the
+    skeleton gets no row of its own."""
+    return kit_skeleton_name(ob) and bool(bones.roots)
 
 
 def _matcher(opts):
@@ -406,6 +411,37 @@ def set_expanded(keys, state):
 
 # --- row state (drawn per visible row) ------------------------------------------------------------------------------
 
+_by_name = {"key": None, "objects": {}}
+
+
+def object_names():
+    """{name: object} of the file's objects for the rows being drawn: Blender finds a name by walking every object
+    of the file (a quarter of a millisecond per row in a file of 5,000 objects), so the names are mapped once while
+    the file's names and its number of objects stay the same (``outliner.structure_version``, the object count; a
+    selection change keeps them). Read it once per redraw and look rows up with ``object_named``, which checks what it
+    finds."""
+    from .outliner import structure_version
+    objects = bpy.data.objects
+    key = (structure_version(), len(objects))
+    if _by_name["key"] != key:
+        # the first object of a name wins, like ``get`` (a linked object can share a local object's name)
+        _by_name["objects"] = dict(zip(reversed(objects.keys()), reversed(objects.values())))
+        _by_name["key"] = key
+    return _by_name["objects"]
+
+
+def object_named(name, names=None):
+    """``bpy.data.objects.get(name)``, from ``names`` (``object_names()``) when the object found there still carries
+    the name."""
+    ob = (object_names() if names is None else names).get(name)
+    try:
+        if ob is not None and ob.name == name:
+            return ob
+    except ReferenceError:
+        pass
+    return bpy.data.objects.get(name)
+
+
 def _pose_or_edit_bone(ob, name):
     if ob.mode == 'EDIT':
         eb = ob.data.edit_bones.get(name)
@@ -426,12 +462,12 @@ def _kept(ob, signature):
     return ob.hide_viewport and visibility.KEPT in ob and visibility._kept(ob, signature)
 
 
-def row_state(context, row, live_objects, selected_set=None, signature=None):
-    """(selected, active, hidden, live) of a row."""
+def row_state(context, row, live_objects, selected_set=None, signature=None, names=None):
+    """(selected, active, hidden, live) of a row (``names``: ``object_names()`` read for the redraw)."""
     vl = context.view_layer
     kind = row.kind
     if kind in ('OBJECT', 'SHAPE', 'MEMBER'):
-        ob = bpy.data.objects.get(row.ob)
+        ob = object_named(row.ob, names)
         if ob is None:
             return False, False, False, False
         posed = ob.type == 'ARMATURE' and ob.mode in ('POSE', 'EDIT') and kind == 'OBJECT'
@@ -441,11 +477,15 @@ def row_state(context, row, live_objects, selected_set=None, signature=None):
         except RuntimeError:            # not in the view layer
             sel, hidden = False, True
         if not sel and kind != 'SHAPE' and unselectable(ob):
-            sel = is_picked(ob, visible_signature(context) if signature is None else signature)
+            if signature is None:
+                signature = visible_signature(context)
+            elif callable(signature):
+                signature = signature()
+            sel = is_picked(ob, signature)
         act = sel and vl.objects.active == ob and kind != 'SHAPE'
         return sel, act, hidden, ob in live_objects
     if kind == 'JOINT':
-        ob = bpy.data.objects.get(row.ob)
+        ob = object_named(row.ob, names)
         if ob is None or ob.type != 'ARMATURE':
             return False, False, False, False
         try:
@@ -478,7 +518,7 @@ def row_state(context, row, live_objects, selected_set=None, signature=None):
         return hl, False, not hl, False
     selected = selected_set if selected_set is not None else set(context.selected_objects)
     if kind == 'DEFAULT_SET':
-        mem = default_set_members(row.ob, context.scene)
+        mem = _default_set_members(row.ob, context.scene)
         return bool(mem) and set(mem) == selected, False, False, False
     if kind == 'SET':
         from ..operators import sets
@@ -493,6 +533,22 @@ def default_set_members(name, scene):
     if name == "defaultLightSet":
         return [ob for ob in scene.objects if ob.type == 'LIGHT']
     return []
+
+
+_lights = {"key": None, "members": []}
+
+
+def _default_set_members(name, scene):
+    """``default_set_members`` for the drawn set rows: the scene's lights are listed again only when objects may
+    have come or gone (an object's type never changes)."""
+    if name != "defaultLightSet":
+        return default_set_members(name, scene)
+    from .outliner import objects_version, structure_version
+    key = (objects_version(), structure_version(), scene.as_pointer(), len(scene.objects))
+    if _lights["key"] != key:
+        _lights["members"] = default_set_members(name, scene)
+        _lights["key"] = key
+    return list(_lights["members"])
 
 
 # --- geometry ------------------------------------------------------------------------------------------------------
@@ -628,25 +684,19 @@ def eye_x(region, u, n, first):
     return right - 0.9 * u
 
 
-def eye_state(row):
+def eye_state(row, names=None):
     """True / False = shown / hidden for an object or joint row, None for rows without an eye."""
     from .outliner_tree_edit import eye_state as state
-    return state(row)
+    return state(row, names)
 
 
 def selected_ancestors(context, limit=2000):
     """Expanded-state keys of the rows that have a selected object or picked joint below them."""
-    from .outliner_tree_edit import ancestor_keys, selected_items
+    from .outliner_tree_edit import ancestors_of, selected_items
     items = selected_items(context)
     if len(items) > limit:
         return set()
-    out, cache = set(), {}
-    for ob, bone in items:
-        try:
-            out.update(ancestor_keys(ob, bone, cache))
-        except (AttributeError, ReferenceError):
-            pass
-    return out
+    return ancestors_of(items)
 
 
 def draw():
@@ -687,11 +737,17 @@ def _draw(context, space, region, area):
     act_text = tuple(th.active_object)[:3]
     live_objects = set(live.objects(context.scene))
     selected_set = set(context.selected_objects)
-    signature = visible_signature(context)
+    sig = []
+
+    def signature():
+        if not sig:
+            sig.append(visible_signature(context))
+        return sig[0]
     # Maya: a row with a selected node somewhere below it gets a dim highlight (collapsed or not)
     back = tuple(th.space.back)[:3]
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
+    by_name = object_names()
     eyes = space.show_restrict_column_hide
     ex = eye_x(region, u, n, first) if eyes else 0.0
     tris, tcol, lines, lcol, textures, names = [], [], [], [], [], []
@@ -703,7 +759,7 @@ def _draw(context, space, region, area):
         y1 = region.height - j * u
         y0 = y1 - u
         cy = (y0 + y1) / 2.0
-        sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set, signature)
+        sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set, signature, by_name)
         if sel:
             _quad(tris, tcol, 0, y0, region.width, y1, act_rgba if act else sel_rgba)
         elif row.key is not None and row.key in above:
@@ -711,7 +767,7 @@ def _draw(context, space, region, area):
         if HOVER.get(area.as_pointer()) == k:
             _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
         if eyes:
-            shown = eye_state(row)
+            shown = eye_state(row, by_name)
             if shown is not None:
                 _eye(tris, tcol, lines, lcol, ex, cy, u, shown, (*text, 0.9 if shown else 0.45))
         x = row.depth * u

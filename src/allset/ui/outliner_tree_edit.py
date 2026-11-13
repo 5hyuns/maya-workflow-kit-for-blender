@@ -161,6 +161,58 @@ def ancestor_keys(ob, bone=None, cache=None):
         keys += _bone_keys(ob, bone)
         if not _kit_skeleton(ob, cache):
             keys.append(('O', ob.session_uid))
+    return keys + _object_chain(ob, cache)
+
+
+def ancestors_of(items, cache=None):
+    """The set of ``ancestor_keys`` of every (object, joint) of ``items``, each object's own chain read once and a
+    joint's parents only up to a joint already walked (hundreds of picked joints share their parents); an item whose
+    keys can't be read adds none, as with ``ancestor_keys``."""
+    cache = {} if cache is None else cache
+    out, chains, walked = set(), {}, {}
+    for ob, bone in items:
+        try:
+            keys, names = [], ()
+            if bone:
+                done = walked.get(ob.as_pointer(), ())
+                names = _bone_parents_until(ob, bone, done)
+                uid = ob.session_uid
+                keys += [('B', uid, n) for n in names]
+                if not _kit_skeleton(ob, cache):
+                    keys.append(('O', uid))
+            ptr = ob.as_pointer()
+            chain = chains.get(ptr)
+            if chain is None:
+                chain = chains[ptr] = _object_chain(ob, cache)
+            keys += chain
+        except (AttributeError, ReferenceError):
+            continue
+        out.update(keys)
+        if names:
+            walked.setdefault(ob.as_pointer(), set()).update(names)
+    return out
+
+
+def _bone_parents_until(ob, name, done):
+    """Names of the joints above joint ``name`` of skeleton ``ob``, upward, stopping before one in ``done`` (its own
+    parents were walked already)."""
+    data = ob.data
+    coll = data.edit_bones if data.is_editmode else data.bones
+    b = coll.get(name)
+    out = []
+    p = b.parent if b is not None else None
+    while p is not None:
+        n = p.name
+        if n in done:
+            break
+        out.append(n)
+        p = p.parent
+    return out
+
+
+def _object_chain(ob, cache):
+    """Expanded keys of the rows above object ``ob`` itself (its parents, joints it hangs under)."""
+    keys = []
     p, child = ob.parent, ob
     while p is not None:
         if child.parent_type == 'BONE' and p.type == 'ARMATURE' and child.parent_bone:
@@ -187,8 +239,8 @@ def _info(ob, cache):
 
 
 def _kit_skeleton(ob, cache=None):
-    if ob is None or ob.type != 'ARMATURE':
-        return False
+    if ob is None or ob.type != 'ARMATURE' or not tree.kit_skeleton_name(ob):
+        return False             # any other armature: no need to read its joints
     return tree.is_kit_skeleton(ob, _info(ob, {} if cache is None else cache))
 
 
@@ -480,9 +532,10 @@ def toggle_eye(context, row):
     return False
 
 
-def eye_state(row):
-    """True / False = shown / hidden for rows with an eye, None for rows without."""
-    ob = bpy.data.objects.get(row.ob) if row.kind in ('OBJECT', 'JOINT', 'MEMBER') else None
+def eye_state(row, names=None):
+    """True / False = shown / hidden for rows with an eye, None for rows without (``names``:
+    ``outliner_tree.object_names()`` read for the redraw)."""
+    ob = tree.object_named(row.ob, names) if row.kind in ('OBJECT', 'JOINT', 'MEMBER') else None
     if ob is None:
         return None
     if row.kind == 'JOINT':
