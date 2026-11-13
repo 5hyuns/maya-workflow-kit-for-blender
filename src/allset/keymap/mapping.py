@@ -93,7 +93,8 @@ ENTRIES = {
 
     # --- IC already matches ---
     "Duplicate": _e("KIT", (OBJ, "allset.duplicate", {}),
-                    note="제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고)"),
+                    note="제자리, 자식 포함, pCube2/pCubeShape2; 고른 조인트 (Pose / 조인트 Edit) = 아래 조인트까지 "
+                         "같은 부모 밑에, 다음 joint 번호 (컴포넌트 모드: Maya처럼 복제 없음 + 경고)"),
     "FrameSelectedWithoutChildren": _e("KIT", (V3D, "allset.frame", {"selected": True}),
                                        note="여백 0.95, 사이드바 밑 제외, 선택 없으면 전체"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "allset.tap_hold", {"binding": "select_all"}),

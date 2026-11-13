@@ -457,10 +457,15 @@ class ALLSET_OT_duplicate(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        return context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'}
 
     def execute(self, context):
-        if not duplicate(context):
+        if context.mode != 'OBJECT':
+            from . import joint_duplicate          # picked joints (Pose Mode, joint Edit Mode)
+            made = joint_duplicate.duplicate(context)
+        else:
+            made = duplicate(context)
+        if not made:
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
         return {'FINISHED'}

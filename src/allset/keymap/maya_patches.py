@@ -500,6 +500,11 @@ def patch_concepts(kd):
     # duplicate_move would name the copy pCube1.001 and start a move.
     kd.remove("Object Mode", "object.duplicate_move", type="D", ctrl=True)
     _add(kd, "Object Mode", "allset.duplicate", make_event("D", ctrl=True))
+    # picked joints (Pose Mode, joint Edit Mode with the Move tool): Maya Duplicate copies each picked joint with its
+    # subtree in place; IC armature.duplicate_move dropped a picked connected joint and started a move
+    kd.remove("Armature", "armature.duplicate_move", type="D", ctrl=True)
+    for km in ("Pose", "Armature"):
+        _add(kd, km, "allset.duplicate", make_event("D", ctrl=True))
     # Component mode Ctrl+D (#17): Maya's Duplicate there copies nothing ("No object(s) to duplicate");
     # IC mesh.duplicate_move copied the faces inside the mesh.
     kd.remove("Mesh", "mesh.duplicate_move", type="D", ctrl=True)
