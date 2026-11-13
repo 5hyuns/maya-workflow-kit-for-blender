@@ -1877,6 +1877,22 @@ def _separators(region, s, count, plan=None):
     return out
 
 
+CHECKED_COLOUR = (0.32, 0.52, 0.65, 1.0)   # Maya's highlight blue (#5285A6)
+
+
+def _checked(context, record):
+    """A user button's optional "checked" kit preference (``"select_through"``, or ``"not select_through"``; a
+    leading ``prefs.`` is accepted) is on: frame it like Maya's checked shelf icons. Unknown names count as off."""
+    name = (record.get("checked") if record else None) or ""
+    negate = name.startswith("not ")
+    name = name.removeprefix("not ").strip().removeprefix("prefs.")
+    if not name.isidentifier() or name.startswith("_"):
+        return False
+    from .. import preferences
+    value = getattr(preferences.get(context), name, None)
+    return value is not None and bool(value) != negate
+
+
 def draw_row():
     """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons; the tab strip when the row has
     no header). The gizmos only pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor
@@ -1910,6 +1926,8 @@ def draw_row():
             _draw_rect(cx - s, separator_y, max(1.0, s), separator_height, dark)
             _draw_rect(cx, separator_y, max(1.0, s), separator_height, light)
             continue
+        if _checked(context, button_record(_cur, index)):
+            _draw_rect(x - 2, y - 2, size + 4, size + 4, CHECKED_COLOUR)
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
         if colour_key is None:
