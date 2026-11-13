@@ -849,6 +849,30 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
 
     def setup(self, context):
         self.gizmos.new(ALLSET_GT_view_cube.bl_idname)
+        self.camera_button = self.gizmos.new('GIZMO_GT_button_2d')
+        self.projection_button = self.gizmos.new('GIZMO_GT_button_2d')
+        for button, operator in ((self.camera_button, 'view3d.view_camera'),
+                                 (self.projection_button, 'view3d.view_persportho')):
+            button.draw_options = {'OUTLINE', 'BACKDROP'}
+            button.show_drag = False
+            button.color = (0.0, 0.0, 0.0)
+            button.alpha = 0.0
+            button.color_highlight = (0.5, 0.5, 0.5)
+            button.alpha_highlight = 0.5
+            button.target_set_operator(operator)
+
+    def draw_prepare(self, context):
+        s = _scale()
+        region, rv = context.region, context.region_data
+        size = cube_size(region.width, region.height, s)
+        centre, _label, _triad = layout(_bounds(context), s, size)
+        for i, button in enumerate((self.camera_button, self.projection_button)):
+            button.hide = not _cube_here(context)
+            button.scale_basis = 14 * s
+            button.matrix_basis.translation = (centre[0] + size * .5,
+                                                centre[1] - size * .8 - (18 + 30 * i) * s, 0)
+        self.camera_button.icon = 'VIEW_CAMERA' if rv.view_perspective == 'CAMERA' else 'VIEW_CAMERA_UNSELECTED'
+        self.projection_button.icon = 'VIEW_PERSPECTIVE' if rv.is_perspective else 'VIEW_ORTHO'
 
 
 classes = (ALLSET_OT_view_cube_face, ALLSET_OT_view_cube_control, ALLSET_MT_view_cube, ALLSET_GT_view_cube, ALLSET_GGT_view_cube)
