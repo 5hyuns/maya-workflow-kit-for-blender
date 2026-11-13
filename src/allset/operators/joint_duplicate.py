@@ -11,7 +11,8 @@ bone picked in Pose Mode, or in Edit Mode with the Move tool (``joint_selection`
 and its subtree are selected there, the head of a connected bone without its parent's tail, so Blender's own Duplicate
 dropped the picked bone and copied its children only). Blender's Duplicate does the copying (bone settings,
 bone collections, pose channels with their constraints, custom shapes and display layer) once the selection is the
-subtrees of the topmost picked joints; the copies then get Maya joint names (Blender bone names are unique in a
+subtrees of the topmost picked joints; the copies take their joints' current pose (Blender copies the rest only),
+then get Maya joint names (Blender bone names are unique in a
 skeleton, so the copies below the top one take the next numbers too) and the top copies sort last among their
 siblings, like a new node.
 """
@@ -77,6 +78,22 @@ def _select_subtrees(ob, tops):
             top.parent.select_tail = True
 
 
+POSE_CHANNELS = ("rotation_mode", "location", "rotation_quaternion", "rotation_euler", "rotation_axis_angle", "scale")
+
+
+def _copy_pose(sources):
+    """The copies stand where their joints stand now: their channels take the sources' current values (the keys
+    stay with the sources, like Maya)."""
+    for ob, pairs in sources.items():
+        pbs = ob.pose.bones
+        for copy, src in pairs.items():
+            a, b = pbs.get(src), pbs.get(copy)
+            if a is None or b is None:
+                continue
+            for prop in POSE_CHANNELS:
+                setattr(b, prop, getattr(a, prop))
+
+
 def duplicate(context):
     """Maya Duplicate of the picked joints. Returns the names of the copies of the picked joints (empty: nothing
     picked)."""
@@ -99,6 +116,7 @@ def duplicate(context):
     with context.temp_override(active_object=active, edit_object=active):
         bpy.ops.armature.duplicate()
     taken = set()
+    sources = {}                                   # skeleton -> {copy: source}
     for ob, names in picked.items():
         ebs = ob.data.edit_bones
         new = [eb for eb in ebs if eb.name not in before[ob]]
@@ -111,30 +129,33 @@ def duplicate(context):
             taken.add(name)
             src = eb.get(SOURCE)
             eb.name = name
+            sources.setdefault(ob, {})[name] = src
             if src in tops:
                 joints.stamp_last(eb)              # a new node: last among its siblings
         for eb in ebs:
             if SOURCE in eb:
                 del eb[SOURCE]
         made[ob] = [copy_of[n].name for n in names if n in copy_of]
-    for ob, copies in made.items():
-        ebs = ob.data.edit_bones
-        for eb in ebs:
-            eb.select = eb.select_head = eb.select_tail = False
-        for n in copies:
-            joint_selection._pick_shape(ebs[n], True, False)
-        if copies:
-            ebs.active = ebs[copies[-1]]
-    if start != 'EDIT_ARMATURE':
-        bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.object.mode_set(mode='POSE')
+    _copy_pose(sources)
+    if start == 'EDIT_ARMATURE':
+        bpy.ops.object.mode_set(mode='EDIT')
+        for ob, copies in made.items():
+            ebs = ob.data.edit_bones
+            for eb in ebs:
+                eb.select = eb.select_head = eb.select_tail = False
+            for n in copies:
+                joint_selection._pick_shape(ebs[n], True, False)
+            if copies:
+                ebs.active = ebs[copies[-1]]
+        joint_selection.sync_joint_pivot(context)
+    else:
         from ..ui.channel_box import set_bone_selected
         for ob, copies in made.items():
             for pb in ob.pose.bones:
                 set_bone_selected(pb, pb.name in copies)
             if copies:
                 ob.data.bones.active = ob.data.bones[copies[-1]]
-    else:
-        joint_selection.sync_joint_pivot(context)
     from ..ui import layer_joints
     layer_joints.bump()
     return [n for copies in made.values() for n in copies]

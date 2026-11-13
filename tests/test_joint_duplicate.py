@@ -148,3 +148,22 @@ def test_nothing_picked_warns():
     js.clear(bpy.context)
     assert bpy.ops.allset.duplicate() == {'CANCELLED'}
     assert len(arm.data.bones) == 3
+
+
+def test_a_posed_joint_is_copied_where_it_stands():
+    """Maya: the copy takes the joint's current values (here a key's), not its rest; the keys stay with the source."""
+    arm, (j1, j2, j3), _layers = _chain()
+    bpy.context.scene.frame_set(10)                    # joint2 keyed at 0.7 rad
+    _pose_pick(arm, j2)
+    assert bpy.ops.allset.duplicate() == {'FINISHED'}
+    bpy.context.view_layer.update()
+    pbs = arm.pose.bones
+    for src, copy in ((j2, "joint4"), (j3, "joint5")):
+        a = arm.matrix_world @ pbs[src].matrix
+        b = arm.matrix_world @ pbs[copy].matrix
+        assert max(abs(a[i][k] - b[i][k]) for i in range(4) for k in range(4)) < 1e-5, (src, copy)
+    assert abs(pbs["joint4"].rotation_euler.z - 0.7) < 1e-5
+    bpy.context.scene.frame_set(1)
+    bpy.context.view_layer.update()
+    assert abs(pbs["joint4"].rotation_euler.z - 0.7) < 1e-5 and abs(pbs[j2].rotation_euler.z) < 1e-5, \
+        "no keys on the copy"
