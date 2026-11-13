@@ -921,8 +921,25 @@ def attr_filters():
 
 
 def _selected_objects(context):
-    return list(_memo_get(("selected", context.scene.as_pointer()),
-                          lambda: [ob for ob in context.scene.objects if ob.select_get()]))
+    return list(_memo_get(("selected", context.scene.as_pointer()), lambda: _scene_selection(context)))
+
+
+def _scene_selection(context):
+    """``[ob for ob in context.scene.objects if ob.select_get()]``. ``select_get`` reads the object's base in the
+    context view layer, so the selected ones are that view layer's selected bases (one pass in C, no Python call per
+    object); the scene's walk only puts them in its order and stops at the last one."""
+    view_layer = getattr(context, "view_layer", None)
+    if view_layer is None:
+        return [ob for ob in context.scene.objects if ob.select_get()]
+    picked = set(view_layer.objects.selected)
+    out = []
+    if picked:
+        for ob in context.scene.objects:
+            if ob in picked:
+                out.append(ob)
+                if len(out) == len(picked):
+                    break
+    return out
 
 
 def _descendants(obs):
@@ -984,31 +1001,41 @@ def row_objects(context, space):
     IkHandles keeps the IK handles (kit IK handles = IK constraint targets, operators/by_type.py), Sets / Characters
     alone list no objects (their nodes come from ``listed_nodes``)."""
     names = loaded_names(space)
+    in_scene = False     # every object of ``obs`` is known to be in the scene (the selection is)
     if names is not None:
         obs = [ob for ob in (bpy.data.objects.get(n) for n in names) if ob is not None]
     elif auto_load(space):
         obs = _selected_objects(context)
+        in_scene = True
     else:
         obs = None
     if obs is not None and _is_dope_space(space) and _wm_flag("allset_hierarchy_below"):
         # Maya shows the descendants' keys in the object's own rows without listing them; Blender's C Dope Sheet
         # list can't merge another object's keys into a row, so the kit lists the descendants
-        obs = obs + [o for o in _descendants(obs) if o not in obs]
+        below = [o for o in _descendants(obs) if o not in obs]
+        obs = obs + below
+        in_scene = in_scene and not below
     kinds = _object_kinds()
     if "ik" in kinds:
         from ..operators import by_type
         handles = by_type.ik_handles(context.scene)
-        obs = handles if obs is None else [o for o in obs if o in handles]
+        if obs is None:
+            obs, in_scene = handles, False
+        else:
+            obs = [o for o in obs if o in handles]
     elif kinds:
         obs = []
     flt = attr_filters()
     if flt and _is_dope_space(space):
         # Blender's Dope Sheet channel list can't drop single channels (fc.hide is Graph Editor only, drivers are
         # no Dope Sheet channels): the attribute filters keep the objects with a matching attribute
-        obs = [o for o in (context.scene.objects if obs is None else obs) if _has_attr(o, flt)]
-    if obs is not None:
-        in_scene = set(context.scene.objects)
-        obs = [o for o in obs if o in in_scene]
+        if obs is None:
+            obs, in_scene = [o for o in context.scene.objects if _has_attr(o, flt)], True
+        else:
+            obs = [o for o in obs if _has_attr(o, flt)]
+    if obs is not None and not in_scene:
+        scene_obs = set(context.scene.objects)
+        obs = [o for o in obs if o in scene_obs]
     return obs
 
 
@@ -1046,8 +1073,11 @@ def drawn_objects(context, space):
         extra += [owner for owner, _fc in upstream_curves(context, space) if isinstance(owner, bpy.types.Object)]
     if _object_kinds() & {"sets", "characters"}:
         extra += _character_members(context)
-    in_scene = set(context.scene.objects)
-    return obs + [o for o in dict.fromkeys(extra) if o not in obs and o in in_scene]
+    extra = [o for o in dict.fromkeys(extra) if o not in obs]
+    if extra:
+        in_scene = set(context.scene.objects)
+        extra = [o for o in extra if o in in_scene]
+    return obs + extra
 
 
 def needs_kit_list(context, space):

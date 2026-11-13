@@ -169,6 +169,60 @@ def test_pose_objects_match_a_walk_over_the_view_layer():
     _object_mode()
 
 
+def test_skeleton_list_survives_picks_and_renames():
+    """The view layer's skeleton list is found again only when objects may have come or gone: picking joints or
+    objects (a click) and renaming keep it, a new skeleton is found."""
+    _clear()
+    _plain(50)
+    a = _skeleton("rigA", 3)
+    b = _skeleton("rigB", 3)
+    bpy.context.view_layer.update()
+    vl = bpy.context.view_layer
+    _pose(a, b)
+    assert cb.pose_objects() == _walk_pose_objects() == [a, b]
+    kept = cb._skeletons[vl.as_pointer()][1]
+    for step in range(3):
+        _pick(a, {"b1"} if step % 2 else {"b0", "b2"}, "b0")
+        bpy.data.objects["plain3"].select_set(bool(step % 2))
+        a.name = f"rigA{step}"
+        vl.update()
+        assert cb.pose_objects() == _walk_pose_objects() == [a, b]
+        assert cb._skeletons[vl.as_pointer()][1] is kept, "a pick or a rename looked through every object again"
+    _object_mode()
+    c = _skeleton("rigC", 3)
+    vl.update()
+    _pose(c, a)
+    assert cb.pose_objects() == _walk_pose_objects() == [c, a]
+    _object_mode()
+
+
+def test_value_fields_are_read_once_per_draw():
+    """Blender reads a value field two or three times per redraw: inside one Channel Box draw the text is made once;
+    outside a draw (and in the next draw) every read follows the values."""
+    _clear()
+    ob = bpy.data.objects.new("pCube1", None)
+    bpy.context.scene.collection.objects.link(ob)
+    bpy.context.view_layer.objects.active = ob
+    ob.location.x = 1.5
+    bpy.context.view_layer.update()
+    scene = bpy.context.scene
+    want = scene.allset_cb.tx_text
+    with _Count(cb, "get_value") as reads:
+        cb._drawing_lead[:] = [ob]          # = ALLSET_PT_channel_box.body while it draws
+        getattr(cb, "_field_texts", {}).clear()
+        try:
+            texts = [scene.allset_cb.tx_text for _ in range(3)]
+        finally:
+            cb._drawing_lead.clear()
+    assert texts == [want] * 3
+    assert reads.calls == 1, f"one draw formatted the same field {reads.calls} times"
+    cb.region_drawn()
+    ob.location.x = 2.25
+    with _Count(cb, "get_value") as reads:
+        assert scene.allset_cb.tx_text == scene.allset_cb.tx_text != want
+    assert reads.calls == 2, "a read outside a draw is not kept"
+
+
 def test_lead_cost_does_not_grow_with_the_scene():
     """The value fields' getters ask for the lead with no picked active joint: no list of every picked joint and no
     walk over the 6,000 objects per call."""

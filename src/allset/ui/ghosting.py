@@ -496,7 +496,9 @@ def _on_depsgraph(scene, depsgraph):
     """Drop the ghosts of objects that moved / changed shape (and of their ghosted descendants); an Action edit drops
     every ghost (any key change can move any ghost)."""
     from ..operators import anim_snapshot
-    if depsgraph is not None and (depsgraph.id_type_updated('SCENE') or depsgraph.id_type_updated('COLLECTION')):
+    # the scene's objects come or go only with a Collection flag (link / unlink, also to and from the scene's own
+    # collection, add, delete, duplicate); a selection flags the Scene alone and keeps the answer
+    if depsgraph is not None and depsgraph.id_type_updated('COLLECTION'):
         _any_ghost.clear()
     if anim_snapshot._busy or not _geom:
         return

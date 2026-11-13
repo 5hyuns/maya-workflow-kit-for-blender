@@ -191,6 +191,53 @@ def test_list_follows_the_selection_between_passes():
     assert attrs == ["Translate X", "Rotate Y"], attrs
 
 
+def test_auto_load_selection_does_not_ask_every_object():
+    """Auto Load lists the selected objects in the scene's order (Graph Editor timer, 4 times a second): the same
+    objects as asking every object of the scene whether it is selected, without that walk in a big scene. Objects
+    of an excluded collection and objects of no view layer count as not selected."""
+    _clear()
+    scene, vl = bpy.context.scene, bpy.context.view_layer
+    groups = [bpy.data.collections.new(f"grp{i}") for i in range(3)]
+    scene.collection.children.link(groups[0])
+    groups[0].children.link(groups[1])
+    scene.collection.children.link(groups[2])
+    obs = []
+    for i in range(6000):
+        ob = bpy.data.objects.new(f"node{i:04d}", None)
+        (scene.collection if i % 4 == 0 else groups[i % 3]).objects.link(ob)
+        obs.append(ob)
+    vl.update()
+    for i in (5997, 3, 1501, 2002, 4001, 9):
+        obs[i].select_set(True)
+    vl.layer_collection.children["grp2"].exclude = True       # 4001 loses its view layer entry: not selected
+    vl.update()
+
+    def walk():
+        return [ob for ob in scene.objects if ob.select_get()]
+    want = walk()
+    assert [o.name for o in want] != sorted(o.name for o in want), "the scene's order is not the name order"
+    assert chrome._selected_objects(bpy.context) == want
+    obs[5997].select_set(False)
+    obs[0].select_set(True)
+    sp = _space()
+    with _pass():
+        assert chrome._selected_objects(bpy.context) == walk()
+        assert set(walk()) == {obs[0], obs[3], obs[9], obs[1501], obs[2002]}
+        assert set(chrome.drawn_objects(bpy.context, sp)) == set(walk())
+        assert not chrome.needs_kit_list(bpy.context, sp)
+    for o in list(vl.objects.selected):
+        o.select_set(False)
+    assert chrome._selected_objects(bpy.context) == walk() == []
+    # asking 6,000 objects one by one took about 9 ms per call
+    obs[12].select_set(True)
+    t = time.perf_counter()
+    for _ in range(40):
+        assert chrome._selected_objects(bpy.context) == [obs[12]]
+    ms = 1000 * (time.perf_counter() - t)
+    print(f"40 Auto Load lists among 6,000 objects: {ms:.1f} ms")
+    assert ms < 40, f"40 Auto Load lists took {ms:.1f} ms"
+
+
 # --- Stats fields ---------------------------------------------------------------------------------------------------
 
 def _keyed(keys=7):

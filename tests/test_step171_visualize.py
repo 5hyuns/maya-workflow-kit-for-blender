@@ -354,6 +354,48 @@ def test_ghost_colours():
     assert abs(lin[0] - 1.02) < 0.01 and abs(lin[1] - 0.652) < 0.01
 
 
+def _walk_ghosting(scene):
+    return any(ob.allset_ghost.enabled for ob in scene.objects)
+
+
+def test_ghost_check_survives_selection_and_follows_objects():
+    """"Does any object ghost?" is read from every object of the scene only when objects come or go or a ghost
+    setting changes: a click (a selection) keeps the answer; linking, unlinking, deleting and toggling change it."""
+    _clear()
+    scene = bpy.context.scene
+    cubes = [_cube(f"pCube{i}") for i in range(1, 4)]
+    bpy.context.view_layer.update()
+    assert ghosting._ghosting_in(scene) is False
+    _select(cubes[0])
+    bpy.ops.allset.ghost(action="GHOST")
+    bpy.context.view_layer.update()
+    assert ghosting._ghosting_in(scene) is True
+    key = scene.as_pointer()
+    for ob in (cubes[1], cubes[2], cubes[0]):
+        _select(ob)                                   # a click: the update holds the Scene only
+        bpy.context.view_layer.update()
+        assert key in ghosting._any_ghost, "a selection made the next redraw look through every object"
+        assert ghosting._ghosting_in(scene) is _walk_ghosting(scene) is True
+    # the ghosted object leaves the scene (unlinked from the scene's own collection), comes back, is deleted
+    scene.collection.objects.unlink(cubes[0])
+    bpy.context.view_layer.update()
+    assert ghosting._ghosting_in(scene) is _walk_ghosting(scene) is False
+    scene.collection.objects.link(cubes[0])
+    bpy.context.view_layer.update()
+    assert ghosting._ghosting_in(scene) is _walk_ghosting(scene) is True
+    coll = bpy.data.collections.new("ghostGroup")
+    scene.collection.children.link(coll)
+    extra = _cube("pCube9")
+    scene.collection.objects.unlink(extra)
+    extra.allset_ghost.enabled = True
+    coll.objects.link(extra)                          # a ghosted object linked through a collection
+    bpy.data.objects.remove(cubes[0])
+    bpy.context.view_layer.update()
+    assert ghosting._ghosting_in(scene) is _walk_ghosting(scene) is True
+    extra.allset_ghost.enabled = False                # a setting change
+    assert ghosting._ghosting_in(scene) is _walk_ghosting(scene) is False
+
+
 # --- windows / menus -----------------------------------------------------------------------------------------------
 
 def test_option_windows_have_maya_defaults():

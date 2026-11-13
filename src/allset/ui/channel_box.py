@@ -178,9 +178,10 @@ def placing_joints(context=None):
 # --- scene facts kept between redraws -------------------------------------------------------------------------------
 # The Channel Box asks who the lead is and what drives it many times per redraw (every value field's getter, the
 # rename button's poll, the "+N" count, the 10 Hz value watch), so the two answers that need a walk over every object
-# of the scene are kept: which objects are skeletons, and which kit deformers a handle drives. They are found again
-# after any depsgraph update that is not a pure move (adding, removing or linking objects and every modifier edit send
-# the Scene in the update), an undo / redo and a file load (``_generation``). A kept answer is checked on use: Blender
+# of the scene are kept: which objects are skeletons, and which kit deformers a handle drives. The skeletons are found
+# again when objects may have come or gone (``outliner.objects_version``), the deformers after any depsgraph update
+# that is not a pure move (adding, removing or linking objects and every modifier edit send the Scene in the update),
+# an undo / redo and a file load (``_generation``). A kept answer is checked on use: Blender
 # hands out one Python object per ID and makes it raise ReferenceError once the ID is removed, and a kept modifier is
 # looked up by name on its object again (``bpy.data.objects.get`` would walk the whole list).
 
@@ -199,14 +200,17 @@ def _on_reload(*_args):
 
 
 _RELOAD_HANDLERS = ("load_post", "undo_post", "redo_post")
-_skeletons = {}     # view layer pointer -> (generation, its armature objects in its object order)
+_skeletons = {}     # view layer pointer -> (objects version, its armature objects in its object order)
 
 
 def layer_armatures(view_layer):
-    """The armature objects of ``view_layer`` in its object order (an object never changes its type)."""
+    """The armature objects of ``view_layer`` in its object order (an object never changes its type). Kept until
+    objects may have come or gone (``outliner.objects_version``: a selection, a rename or a move keeps the list)."""
+    from .outliner import objects_version
+    version = objects_version()
     vkey = view_layer.as_pointer()
     got = _skeletons.get(vkey)
-    if got is not None and got[0] == _generation[0]:
+    if got is not None and got[0] == version:
         try:
             for ob in got[1]:
                 ob.as_pointer()
@@ -216,7 +220,7 @@ def layer_armatures(view_layer):
     obs = [o for o in view_layer.objects if o.type == 'ARMATURE']
     if len(_skeletons) > 8:
         _skeletons.clear()
-    _skeletons[vkey] = (_generation[0], tuple(obs))
+    _skeletons[vkey] = (version, tuple(obs))
     return obs
 
 
@@ -254,6 +258,19 @@ _drawing_lead = []     # [the lead] while the Channel Box draws (ALLSET_PT_chann
 # [dock region pointer, _generation, the lead] from the Channel Box's draw until that region has drawn: Blender reads
 # every value field again after the panel's draw returns (it ends and draws the block), each read asking for the lead
 _field_lead = []
+# channel key -> the text of its value field, for the reads of one Channel Box draw (the same span as the lead above:
+# Blender reads each field two or three times per redraw, and nothing can change a value while a region draws)
+_field_texts = {}
+
+
+def _in_draw():
+    """True inside the span of one Channel Box draw (``field_lead``'s draw-time lead)."""
+    if _drawing_lead:
+        return True
+    if _field_lead and _field_lead[1] == _generation[0]:
+        region = getattr(bpy.context, "region", None)
+        return region is not None and region.as_pointer() == _field_lead[0]
+    return False
 
 
 def field_lead():
@@ -262,16 +279,19 @@ def field_lead():
     another region, after a scene change) finds it again."""
     if _drawing_lead:
         return _drawing_lead[0]
-    if _field_lead and _field_lead[1] == _generation[0]:
-        region = getattr(bpy.context, "region", None)
-        if region is not None and region.as_pointer() == _field_lead[0]:
-            return _field_lead[2]
+    if _in_draw():
+        return _field_lead[2]
     return lead()
+
+
+def _end_field_reads():
+    _field_lead.clear()
+    _field_texts.clear()
 
 
 def region_drawn():
     """A Properties region finished drawing (ui/maya_dock.py's POST_PIXEL callback): the draw-time lead ends."""
-    _field_lead.clear()
+    _end_field_reads()
 
 
 def lead(context=None):
@@ -1336,10 +1356,19 @@ def apply_entry(key, text, context=None):
 
 def _text_get(key):
     def get(_self):
+        drawing = _in_draw()
+        if drawing:
+            text = _field_texts.get(key)
+            if text is not None:
+                return text
         ob = field_lead()
         if ob is None or not has_channel(ob, key):
-            return ""
-        return cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
+            text = ""
+        else:
+            text = cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
+        if drawing:
+            _field_texts[key] = text
+        return text
     return get
 
 
@@ -3342,7 +3371,7 @@ def _transforming():
 def _poll_transform_values():
     """Refresh displayed transform channels even during modal gizmo movements."""
     global _transform_snapshot
-    _field_lead.clear()     # timers run between redraws: a draw-time lead never outlives one
+    _end_field_reads()      # timers run between redraws: a draw-time lead never outlives one
     try:
         ob = lead()
         if ob is None:
@@ -3972,6 +4001,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         (``field_lead``). While a move runs the rows' key states are kept (``row_state``)."""
         _drawing_lead[:] = [lead(context)]
         _drawing_sigs.clear()
+        _field_texts.clear()
         region, area = context.region, context.area
         if region is not None and region.type == 'WINDOW' and area is not None and area.type == 'PROPERTIES':
             _field_lead[:] = [region.as_pointer(), _generation[0], _drawing_lead[0]]
@@ -4181,7 +4211,7 @@ def unregister():
         bpy.app.handlers.depsgraph_update_post.remove(_on_scene_change)
     _skeletons.clear()
     _driven.clear()
-    _field_lead.clear()
+    _end_field_reads()
     del bpy.types.WindowManager.allset_cb_selected
     del bpy.types.Scene.allset_cb
     for cls in reversed(classes):
