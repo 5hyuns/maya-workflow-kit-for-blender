@@ -945,7 +945,14 @@ class ALLSET_OT_shelf_editor_open(bpy.types.Operator):
     bl_idname = "allset.shelf_editor_open"
     bl_label = "Shelf Editor"
 
+    shelf_id: StringProperty(options={'SKIP_SAVE'})
+    index: IntProperty(default=-1, options={'SKIP_SAVE'})
+
     def execute(self, context):
+        if self.shelf_id and _draft is not None \
+                and _draft_buttons(self.shelf_id) != shelf.editable_buttons(self.shelf_id):
+            self.report({'WARNING'}, "Save or cancel pending shelf edits before editing this button")
+            return {'CANCELLED'}
         if open_editor(context) is None:
             # A compact editor area may need to be carved across timer ticks.
             # In that case the opening operator is intentionally re-run later;
@@ -955,6 +962,10 @@ class ALLSET_OT_shelf_editor_open(bpy.types.Operator):
                 return {'FINISHED'}
             self.report({'ERROR'}, "Could not open the Shelf Editor window")
             return {'CANCELLED'}
+        if self.shelf_id:
+            bpy.ops.allset.shelf_editor_select_shelf(shelf_id=self.shelf_id)
+            _sync_contents_list(_wm(context), self.shelf_id)
+            bpy.ops.allset.shelf_editor_select_button(index=self.index)
         return {'FINISHED'}
 
 

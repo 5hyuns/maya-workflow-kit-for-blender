@@ -940,9 +940,14 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     index: IntProperty()
+    shelf: StringProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        self.shelf = self.shelf or current(context)
+        return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        buttons = editable_buttons(current(context)) or []
+        buttons = editable_buttons(self.shelf or current(context)) or []
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         del buttons[self.index]
@@ -1445,6 +1450,42 @@ def _record_mapped(b):
 def slot_button(context, slot):
     cur, buttons = icon_buttons(context)
     return (cur, buttons[slot]) if 0 <= slot < len(buttons) else (cur, None)
+
+
+class ALLSET_OT_shelf_button_menu(bpy.types.Operator):
+    """Open the actions for the shelf button under the pointer"""
+    bl_idname = "allset.shelf_button_menu"
+    bl_label = "Shelf Button Menu"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if not is_shelf_row(getattr(context, "space_data", None)) or context.region is None \
+                or context.region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        cur, buttons = icon_buttons(context)
+        scale = context.preferences.system.ui_scale or 1.0
+        for slot, button in enumerate(buttons):
+            x, y, size = icon_rect(context.region, slot, scale)
+            if x <= event.mouse_region_x < x + size and y <= event.mouse_region_y < y + size:
+                index = button[0]
+                record = button_record(cur, index)
+                editable_index = index if cur.startswith(USER_PREFIX) else index - len(all_buttons(cur))
+
+                def draw(menu, _context):
+                    layout = menu.layout
+                    layout.operator_context = 'INVOKE_DEFAULT'
+                    op = layout.operator(ALLSET_OT_shelf_button.bl_idname, text="Open")
+                    op.shelf, op.index = cur, index
+                    row = layout.column()
+                    row.enabled = record is not None
+                    op = row.operator("allset.shelf_editor_open", text="Edit")
+                    op.shelf_id, op.index = cur, editable_index
+                    op = row.operator(ALLSET_OT_shelf_remove_button.bl_idname, text="Delete")
+                    op.shelf, op.index = cur, editable_index
+
+                context.window_manager.popover(draw, ui_units_x=10)
+                return {'FINISHED'}
+        return {'PASS_THROUGH'}
 
 
 class ALLSET_OT_shelf_slot(bpy.types.Operator):
@@ -2176,6 +2217,7 @@ classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
            ALLSET_MT_shelf_add_action, ALLSET_OT_shelf_add_action, ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
+           ALLSET_OT_shelf_button_menu,
            ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab,
            ALLSET_GT_shelf_scroll, ALLSET_OT_shelf_scroll, ALLSET_GGT_shelf)
 
