@@ -110,6 +110,7 @@ def enter_layout(window):
         # nothing appended twice (#19); the user's workspace is remembered for the way back (#185)
         if window.workspace is not None:
             own[BLENDER_PREV_KEY] = window.workspace.name
+        _prepare_layout(window, own)
         window.workspace = own
         return own
     prev = window.workspace.name
@@ -118,7 +119,31 @@ def enter_layout(window):
         return None
     ws[PREV_KEY] = prev
     ws.name = WORKSPACE
+    _prepare_layout(window, ws, fresh=True)
     return ws
+
+
+def _prepare_layout(window, ws, fresh=False):
+    """Restore and fit the destination before the event loop presents its first frame."""
+    if bpy.app.background or not _registered[0] or not ws.screens:
+        return
+    from .ui import outliner_tree, shelf, toolbox, viewport_settings
+    screen = ws.screens[0]
+    if fresh:
+        toolbox._state.pop(screen.name, None)  # a deleted workspace may have used this name
+    previous = None
+    # Re-entering the screen updates area rectangles after area_move without drawing a frame.
+    for _ in range(4):
+        with bpy.context.temp_override(window=window, screen=screen):
+            if previous is None:
+                shelf.settle_rows()
+                outliner_tree.hide_all()
+                viewport_settings.sample()
+            sizes = tuple((a.x, a.y, a.width, a.height) for a in screen.areas)
+            if sizes == previous:
+                break
+            previous = sizes
+            toolbox.fit_columns(start_fit=False)
 
 
 TEMPLATE_KEY = "allset_template"      # the template workspace a Maya workspace was made from
