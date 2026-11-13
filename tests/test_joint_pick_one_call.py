@@ -466,3 +466,38 @@ def test_a_marquee_over_a_long_chain_walks_no_parents_per_joint():
     finally:
         bpy.data.objects.remove(ob)
         _reset()
+
+
+def test_putting_back_the_selection_reads_only_the_selected_objects():
+    """A marquee from Object Mode that hit joints puts back the selection it started from: the objects Blender's box
+    selected are found among the selected ones, so in a scene of thousands of objects it costs what was selected
+    (the same objects end selected)."""
+    _scene()
+    import time
+    scene = bpy.context.scene
+    many = []
+    for i in range(20000):
+        ob = bpy.data.objects.new(f"empty{i:05d}", None)
+        scene.collection.objects.link(ob)
+        many.append(ob)
+    try:
+        bpy.context.view_layer.update()
+        best = None
+        for _rep in range(3):
+            _reset()
+            obs = scene.objects
+            obs["rigC"].select_set(True)
+            bpy.context.view_layer.objects.active = obs["rigC"]
+            snap = jm.snapshot(_Ctx(_space()))
+            obs["box"].select_set(True)                 # Blender's box picked a mesh and two empties
+            many[10].select_set(True)
+            many[17000].select_set(True)
+            t = time.perf_counter()
+            jm.restore(_Ctx(_space()), snap)
+            dt = time.perf_counter() - t
+            best = dt if best is None else min(best, dt)
+            assert sorted(o.name for o in bpy.context.view_layer.objects.selected) == ["rigC"]
+        assert best < 0.002, f"putting the selection back took {1000 * best:.2f} ms with 20000 objects"
+    finally:
+        bpy.data.batch_remove(many)
+        _reset()
