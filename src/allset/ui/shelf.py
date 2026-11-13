@@ -1425,10 +1425,10 @@ def draw_shelf_tabs(layout, context):
 _factory_cache = {}
 
 
-def icon_buttons(context):
-    """(shelf id, [(button index, label, shelf colour key, mapped)]) of the current shelf, in Maya order
-    (greyed buttons keep their slot)."""
-    cur = current(context)
+def icon_buttons(context, cur=None):
+    """(shelf id, [(button index, label, shelf colour key, mapped)]) of the current shelf (``cur``: the current shelf
+    id already read), in Maya order (greyed buttons keep their slot)."""
+    cur = current(context) if cur is None else cur
     if cur.startswith(USER_PREFIX):
         s = user_shelf(cur[len(USER_PREFIX):]) or {"buttons": []}
         return cur, [(i, b["label"], None, _record_mapped(b)) for i, b in enumerate(s["buttons"])]
@@ -1516,8 +1516,8 @@ def tabs_in_window(space):
     return space is not None and is_shelf_row(space) and not space.show_region_header
 
 
-def _gaps():
-    cur = current(bpy.context)
+def _gaps(cur=None):
+    cur = current(bpy.context) if cur is None else cur
     return () if cur.startswith(USER_PREFIX) else shelf_data.GAPS.get(cur, ())
 
 
@@ -1556,26 +1556,41 @@ def _is_separator(record):
                             or (record.get("action") or {}).get("type") == "separator"))
 
 
-def _plan(region, scale):
-    """(shelf id, tabs in the window, [(row, x)] per slot, buttons) of the current shelf in ``region``: read once and
-    used for every slot of one redraw or one pick."""
+def _separator_slots(cur, buttons):
+    """Slots of ``buttons`` (``icon_buttons``) that are separators: only user-made buttons can be, so the stored
+    records are read once (the Maya slots of a factory shelf have none)."""
+    records = editable_buttons(cur) or []
+    if not records:
+        return frozenset()
+    first = 0 if cur.startswith(USER_PREFIX) else factory_count(cur)
+    out = set()
+    for slot, (index, _label, _colour, _mapped) in enumerate(buttons):
+        k = index - first
+        if 0 <= k < len(records) and _is_separator(records[k]):
+            out.add(slot)
+    return frozenset(out)
+
+
+def _plan(region, scale, cur=None):
+    """(shelf id, tabs in the window, [(row, x)] per slot, buttons, separator slots) of the current shelf in
+    ``region`` (``cur``: the current shelf id already read): read once and used for every slot of one redraw or one
+    pick."""
     space = _space_of(region)
     tabs = tabs_in_window(space)
-    cur, buttons = icon_buttons(bpy.context)
-    separator_slots = {slot for slot, (index, _label, _colour, _mapped) in enumerate(buttons)
-                       if _is_separator(button_record(cur, index))}
-    lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps() if tabs else (),
+    cur, buttons = icon_buttons(bpy.context, cur)
+    separator_slots = _separator_slots(cur, buttons)
+    lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps(cur) if tabs else (),
                      STRIP_LEFT_PX if tabs else LEFT_PX, separators=separator_slots)
-    return cur, tabs, lay, buttons
+    return cur, tabs, lay, buttons, separator_slots
 
 
 def _layout(region, scale):
     return _plan(region, scale)[:3]
 
 
-def rows_of(region, scale):
-    """(rows, first row shown) of the current shelf in ``region``."""
-    cur, _tabs, lay = _layout(region, scale)
+def rows_of(region, scale, plan=None):
+    """(rows, first row shown) of the current shelf in ``region`` (``plan``: a ``_plan`` already read)."""
+    cur, _tabs, lay = plan[:3] if plan is not None else _layout(region, scale)
     rows = (lay[-1][0] + 1) if lay else 1
     first = max(0, min(_row.get(cur, 0), rows - 1))
     return rows, first
@@ -1597,14 +1612,14 @@ def icon_rect(region, slot, scale):
     edge (not drawn, not picked)."""
     cur, tabs, lay = _layout(region, scale)
     _cur, buttons = icon_buttons(bpy.context)
-    return _plan_rect((cur, tabs, lay, buttons), region, slot, scale)
+    return _plan_rect((cur, tabs, lay, buttons, _separator_slots(cur, buttons)), region, slot, scale)
 
 
 def _plan_rect(plan, region, slot, scale):
     """``icon_rect`` from a layout ``_plan`` already read."""
-    cur, tabs, lay, buttons = plan
+    cur, tabs, lay, buttons, separators = plan
     top = round(TAB_PX * scale) if tabs else 0
-    is_separator = 0 <= slot < len(buttons) and _is_separator(button_record(cur, buttons[slot][0]))
+    is_separator = 0 <= slot < len(buttons) and slot in separators
     size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
     y = (region.height - top - size) / 2
     off = getattr(region, "width", 0) + 10 ** 6
@@ -1617,12 +1632,13 @@ def _plan_rect(plan, region, slot, scale):
     return x, y, size
 
 
-def scroll_rects(region, scale):
-    """(up, down) rects (x0, y0, x1, y1) of the scroll bar's arrows, or () when every button fits in one row."""
-    rows, _first = rows_of(region, scale)
+def scroll_rects(region, scale, plan=None):
+    """(up, down) rects (x0, y0, x1, y1) of the scroll bar's arrows, or () when every button fits in one row
+    (``plan``: a ``_plan`` already read)."""
+    rows, _first = rows_of(region, scale, plan)
     if rows <= 1:
         return ()
-    tabs = tabs_in_window(_space_of(region))
+    tabs = plan[1] if plan is not None else tabs_in_window(_space_of(region))
     top = round(TAB_PX * scale) if tabs else 0
     # off the area's top-right corner: Blender's split / join action zone there takes the click before any region
     # (with --debug-handlers only "Screen Editing" sees the press)
@@ -1643,20 +1659,40 @@ def _shelf_shader(name):
         shader = _SHELF_SHADERS[name] = gpu.shader.from_builtin(name)
     return shader
 
+_SHELF_BATCHES = {}     # (shader, primitive, points) -> GPU batch: the row redraws the same rectangles every time
+
+
+def _shelf_batch(name, prim, coords, tex_coords=None):
+    """The GPU batch of ``coords`` for built-in shader ``name``, made once and drawn again on later redraws (the
+    row redraws on every frame and selection change with the same shapes)."""
+    key = (name, prim, coords)
+    batch = _SHELF_BATCHES.get(key)
+    if batch is None:
+        from gpu_extras.batch import batch_for_shader
+        attrs = {"pos": coords} if tex_coords is None else {"pos": coords, "texCoord": tex_coords}
+        batch = batch_for_shader(_shelf_shader(name), prim, attrs)
+        if len(_SHELF_BATCHES) > 1024:
+            _SHELF_BATCHES.clear()
+        _SHELF_BATCHES[key] = batch
+    return batch
+
+
+_TEX_COORDS = ((0, 0), (1, 0), (1, 1), (0, 1))
+
+
 def _draw_rect(x, y, w, h, colour, texture=None):
     """A rectangle in region pixels (POST_PIXEL draw handler)."""
     import gpu
-    from gpu_extras.batch import batch_for_shader
     coords = ((x, y), (x + w, y), (x + w, y + h), (x, y + h))
     gpu.state.blend_set('ALPHA')
     if texture is None:
         sh = _shelf_shader('UNIFORM_COLOR')
-        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords})
+        batch = _shelf_batch('UNIFORM_COLOR', 'TRI_FAN', coords)
         sh.uniform_float("color", colour)
     else:
         from .. import compat
         sh = _shelf_shader(compat.LINEAR_IMAGE_SHADER)
-        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
+        batch = _shelf_batch(compat.LINEAR_IMAGE_SHADER, 'TRI_FAN', coords, _TEX_COORDS)
         sh.uniform_sampler("image", texture)
     batch.draw(sh)
     gpu.state.blend_set('NONE')
@@ -1716,8 +1752,9 @@ _hover = {}   # region pointer -> slot under the mouse (set by the gizmos' test_
 _tab_rects = {}   # region pointer -> [(x0, y0, x1, y1, action)] of the tab strip, drawn last ("menu", "gear", shelf id)
 
 
-def tab_rects(context, region):
-    """Rects of the shelf menu glyph, the editor gear and the tabs in region pixels, left to right."""
+def tab_rects(context, region, tabs=None):
+    """Rects of the shelf menu glyph, the editor gear and the tabs in region pixels, left to right (``tabs``: the
+    ``shelves()`` list already read)."""
     import blf
     s = context.preferences.system.ui_scale or 1.0
     h = region.height
@@ -1726,7 +1763,7 @@ def tab_rects(context, region):
            (round(14 * s), round(4 * s), round(32 * s), h - th - round(4 * s), "gear")]
     blf.size(0, TAB_FONT_PX * s)
     x = TAB_LEFT_PX * s
-    for shelf_id, label in shelves():
+    for shelf_id, label in (shelves() if tabs is None else tabs):
         w = blf.dimensions(0, label)[0] + 2 * TAB_PAD_PX * s
         out.append((round(x), h - th, round(x + w), h, shelf_id))
         x += w + round(2 * s)
@@ -1741,7 +1778,7 @@ def _text(x, y, text, colour, size):
     blf.draw(0, text)
 
 
-def _draw_tabs(context, region, base):
+def _draw_tabs(context, region, base, cur=None):
     """The shelf tab strip: #373737 strip, flat tabs, the current one
     in the row colour with light text, the others dim; the shelf menu glyph left of the tabs, the shelf editor gear
     left of the icons."""
@@ -1750,9 +1787,10 @@ def _draw_tabs(context, region, base):
     th = round(TAB_PX * s)
     dim = (base[0] * (1 - TAB_DIM), base[1] * (1 - TAB_DIM), base[2] * (1 - TAB_DIM), 1.0)
     _draw_rect(0, h - th, region.width, th, dim)
-    rects = _tab_rects[region.as_pointer()] = tab_rects(context, region)
-    cur = current(context)
-    labels = dict(shelves())
+    tabs = shelves()
+    rects = _tab_rects[region.as_pointer()] = tab_rects(context, region, tabs)
+    cur = current(context) if cur is None else cur
+    labels = dict(tabs)
     hover = _hover.get(region.as_pointer())
     text_on, text_off, grey = _text_colours(context)
     for x0, y0, x1, y1, action in rects:
@@ -1796,7 +1834,7 @@ def _separators(region, s, count, plan=None):
     """x of each Maya separator before ``count`` drawn icons."""
     out = []
     plan = plan or _plan(region, s)
-    for g in _gaps():
+    for g in _gaps(plan[0]):
         if g < count:
             x, _y, size = _plan_rect(plan, region, g, s)
             out.append(x - (PITCH_PX - ICON_PX + SEP_PX) * s / 2)
@@ -1815,10 +1853,11 @@ def draw_row():
     base = _theme_colour(context)
     _draw_rect(0, 0, region.width, region.height, base)
     tabs = tabs_in_window(context.space_data)
+    cur = current(context)          # read once for the whole redraw
     if tabs:
-        _draw_tabs(context, region, base)
-    plan = _plan(region, s)
-    _cur, buttons = plan[0], plan[3]
+        _draw_tabs(context, region, base, cur)
+    plan = _plan(region, s, cur)
+    _cur, buttons, separators = plan[0], plan[3], plan[4]
     hover = _hover.get(region.as_pointer())
     shown = 0
     for slot, (index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
@@ -1826,7 +1865,7 @@ def draw_row():
         if x > region.width:
             continue                  # another row
         shown = slot + 1
-        if _is_separator(button_record(_cur, index)):
+        if slot in separators:
             # Keep the slot narrow, but draw a divider at nearly the full button height.
             separator_height = min(ICON_PX * s, region.height - (TAB_PX * s if tabs else 0) - 4)
             separator_y = (region.height - (TAB_PX * s if tabs else 0) - separator_height) / 2
@@ -1848,29 +1887,29 @@ def draw_row():
         for x in _separators(region, s, shown, plan):   # Maya: a raised vertical rule in a 12 px gap
             _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, dark)
             _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, light)
-    _draw_scroll_bar(region, s, base)
+    _draw_scroll_bar(region, s, base, plan)
 
 
 def _triangle(cx, cy, half, up, colour):
     import gpu
-    from gpu_extras.batch import batch_for_shader
     pts = ((cx - half, cy - half / 2), (cx + half, cy - half / 2), (cx, cy + half / 2)) if up else \
         ((cx - half, cy + half / 2), (cx + half, cy + half / 2), (cx, cy - half / 2))
-    sh = gpu.shader.from_builtin('UNIFORM_COLOR')
-    batch = batch_for_shader(sh, 'TRIS', {"pos": pts})
+    sh = _shelf_shader('UNIFORM_COLOR')
+    batch = _shelf_batch('UNIFORM_COLOR', 'TRIS', pts)
     gpu.state.blend_set('ALPHA')
     sh.uniform_float("color", colour)
     batch.draw(sh)
     gpu.state.blend_set('NONE')
 
 
-def _draw_scroll_bar(region, s, base):
+def _draw_scroll_bar(region, s, base, plan=None):
     """The shelf scroll bar (12 px, ▲ / ▼) while the shelf has more than one row; an
-    arrow is dimmed at its end."""
-    rects = scroll_rects(region, s)
+    arrow is dimmed at its end (``plan``: the redraw's ``_plan``)."""
+    plan = plan or _plan(region, s)
+    rects = scroll_rects(region, s, plan)
     if not rects:
         return
-    rows, first = rows_of(region, s)
+    rows, first = rows_of(region, s, plan)
     up, down = rects
     _draw_rect(up[0], down[1], up[2] - up[0], up[3] - down[1], tuple(max(0.0, c - 0.06) for c in base[:3]) + (1.0,))
     hover = _hover.get(region.as_pointer())
@@ -2183,6 +2222,7 @@ def unregister():
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(*_handle.pop())
     shelf_icons.clear()
+    _SHELF_BATCHES.clear()
     _SHELF_SHADERS.clear()
     _factory_cache.clear()
     _hover.clear()
