@@ -207,6 +207,9 @@ def test_select_and_render_columns():
     assert tree.column_state(_row(rows, "persp"), 'SELECT') is None
     shape = tree.Row('SHAPE', "pCube1", cube.data.name, 1, False, False, cube.data.name, 'SHAPE', None)
     assert tree.column_state(shape, 'RENDER') is None
+    icons = import_module(kit.MODULE + ".ui.blender_restrict_icons").CELLS
+    heights = {k[0] for k in icons}
+    assert 20 in heights and len(icons) == 6 * len(heights), "Blender's 3 icons x on/off at every captured height"
 
 
 def test_delete_objects_and_joints():

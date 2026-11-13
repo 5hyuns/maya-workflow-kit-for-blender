@@ -605,29 +605,11 @@ JOINT_RGB = (0.282, 0.667, 0.710)     # kit icon teal
 CHILD_SELECTED = 0.33                 # share of the selection highlight on a row with a selected node below it
 
 
-def _eye(tris, tcol, lines, lcol, cx, cy, u, shown, rgba):
-    """An eye (open: outline + pupil; closed: the lower lid only)."""
-    rx, ry = 0.36 * u, 0.2 * u
-    n = 12
-    upper = [(cx - rx + 2 * rx * i / n, cy + ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
-    lower = [(cx - rx + 2 * rx * i / n, cy - ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
-    for pts in ((upper, lower) if shown else (lower,)):
-        for i in range(n):
-            lines.extend((pts[i], pts[i + 1]))
-            lcol.extend((rgba,) * 2)
-    if shown:
-        r = 0.1 * u
-        pts = [(cx + r * math.cos(2 * math.pi * i / 10), cy + r * math.sin(2 * math.pi * i / 10)) for i in range(10)]
-        for i in range(10):
-            tris.extend(((cx, cy), pts[i], pts[(i + 1) % 10]))
-            tcol.extend((rgba,) * 3)
-
-
 def eye_x(region, u, n, first):
-    """Centre x of the visibility column (Display > Visibility Column), left of the scrollbar."""
+    """Centre x of the last restriction column, left of the scrollbar."""
     bar = scrollbar(region, u, n, first)
     right = bar[0] if bar is not None else region.width
-    return right - 0.9 * u
+    return right - u        # where Blender centres its last restriction column
 
 
 def eye_state(row):
@@ -636,31 +618,40 @@ def eye_state(row):
     return state(row)
 
 
-def _shape(tris, tcol, lines, lcol, pts, filled, rgba):
-    """A convex outline, filled (fan) or not."""
-    for i, p in enumerate(pts):
-        lines.extend((p, pts[(i + 1) % len(pts)]))
-        lcol.extend((rgba,) * 2)
-    if filled:
-        for i in range(1, len(pts) - 1):
-            tris.extend((pts[0], pts[i], pts[i + 1]))
-            tcol.extend((rgba,) * 3)
+_restrict_textures = {}
 
 
-def _arrow(tris, tcol, lines, lcol, cx, cy, u, on, rgba):
-    """Blender's selectable arrow (filled: selectable)."""
-    _shape(tris, tcol, lines, lcol, [(cx - 0.18 * u, cy + 0.32 * u), (cx - 0.18 * u, cy - 0.16 * u),
-                                     (cx + 0.2 * u, cy + 0.02 * u)], on, rgba)
-    lines.extend(((cx - 0.02 * u, cy - 0.04 * u), (cx + 0.1 * u, cy - 0.3 * u)))
-    lcol.extend((rgba,) * 2)
+def restrict_texture(u, col, on, rgb):
+    """(size, GPU texture) of Blender's own column icon for row height ``u`` (``blender_restrict_icons``: captured
+    from Blender's Outliner at that height; the nearest one for a height not captured), in the theme text colour."""
+    from .blender_restrict_icons import CELLS
+    have = min({k[0] for k in CELLS}, key=lambda k: (abs(k - u), k))
+    key = (have, col, on, rgb)
+    hit = _restrict_textures.get(key)
+    if hit is None:
+        import base64
+        import zlib
+        import gpu
+        import numpy as np
+        cov = np.frombuffer(zlib.decompress(base64.b64decode(CELLS[(have, col, on)])), np.uint8)
+        px = np.empty((have, have, 4), np.float32)
+        px[..., :3] = rgb
+        px[..., 3] = cov.reshape(have, have)[::-1] / 255.0        # stored top row first
+        buf = gpu.types.Buffer('FLOAT', have * have * 4, px.ravel().tolist())
+        hit = _restrict_textures[key] = (have, gpu.types.GPUTexture((have, have), format='RGBA32F', data=buf))
+    return hit
 
 
-def _camera(tris, tcol, lines, lcol, cx, cy, u, on, rgba):
-    """Blender's render camera (filled: renders)."""
-    _shape(tris, tcol, lines, lcol, [(cx - 0.32 * u, cy - 0.17 * u), (cx + 0.1 * u, cy - 0.17 * u),
-                                     (cx + 0.1 * u, cy + 0.17 * u), (cx - 0.32 * u, cy + 0.17 * u)], on, rgba)
-    _shape(tris, tcol, lines, lcol, [(cx + 0.1 * u, cy), (cx + 0.32 * u, cy - 0.15 * u),
-                                     (cx + 0.32 * u, cy + 0.15 * u)], on, rgba)
+def _draw_restrict(icons, rgb, u):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    sh = gpu.shader.from_builtin('IMAGE')
+    for col, on, x0, y0 in icons:
+        _n, tex = restrict_texture(u, col, on, rgb)
+        coords = ((x0, y0), (x0 + u, y0), (x0 + u, y0 + u), (x0, y0 + u))
+        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
+        sh.uniform_sampler("image", tex)
+        batch.draw(sh)
 
 
 # Blender's restriction columns, left to right (Display menu); EYE is the kit's visibility (hide_viewport)
@@ -742,7 +733,7 @@ def _draw(context, space, region, area):
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
     cols = column_xs(space, region, u, n, first)
-    tris, tcol, lines, lcol, textures, names = [], [], [], [], [], []
+    tris, tcol, lines, lcol, textures, names, icons = [], [], [], [], [], [], []
     seen, drawn = [], []
     r_icon = 0.36 * u
     for k in range(first, last):
@@ -761,8 +752,7 @@ def _draw(context, space, region, area):
         for col, cx in cols.items():
             on = column_state(row, col)
             if on is not None:
-                draw_col = _eye if col == 'EYE' else _arrow if col == 'SELECT' else _camera
-                draw_col(tris, tcol, lines, lcol, cx, cy, u, on, (*text, 0.9 if on else 0.45))
+                icons.append((col, on, int(cx) - u // 2, y0))
         x = row.depth * u
         alpha = 0.5 if hidden and not sel else 1.0
         if row.kids:
@@ -799,6 +789,7 @@ def _draw(context, space, region, area):
     for name, cx, cy, greyed in textures:
         size = kit_icons.size_for(name, prefs.system.ui_scale)
         kit_icons.draw_texture(name, math.floor(cx - size / 2), math.floor(cy - size / 2), size, greyed)
+    _draw_restrict(icons, text, u)
     blf.size(0, _font_size(prefs))
     dy = 0.32 * blf.dimensions(0, "Xg")[1] + 1
     for x, cy, label, rgba in names:
