@@ -312,7 +312,11 @@ def border_loops(a, shown):
 
 def border_points(a, shown):
     """float32 (2N x 2) UV line points of the shell borders (uv_display.segments_of)."""
-    b = border_loops(a, shown)
+    return side_points(a, border_loops(a, shown))
+
+
+def side_points(a, b):
+    """float32 (2N x 2) UV line points of the edge sides of loops ``b``."""
     pts = np.empty((2 * len(b), 2), np.float32)
     pts[0::2] = a.uv[b]
     pts[1::2] = a.uv[a.corner_next[b]]

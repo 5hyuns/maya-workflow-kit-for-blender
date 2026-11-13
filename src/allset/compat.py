@@ -6,6 +6,8 @@ last version for Blender 4.5, and the 4.5 paths are gone). Every check of "which
 feature code calls these helpers and stays the same on every version.
 """
 
+from operator import attrgetter
+
 import bpy
 
 VERSION = tuple(bpy.app.version[:2])
@@ -151,6 +153,11 @@ def uv_edge_selected(loop, uv):
     return loop.uv_select_edge
 
 
+def uv_edge_selected_reader():
+    """``uv_edge_selected`` as one getter for ``map`` over many loops (no Python call per loop)."""
+    return attrgetter("uv_select_edge")
+
+
 def set_uv_vert_selected(loop, uv, value):
     loop.uv_select_vert = value
 
@@ -166,6 +173,12 @@ def set_uv_face_selected(face, uv, value):
         loop.uv_select_vert = value
         loop.uv_select_edge = value
     face.uv_select = value
+
+
+def uv_selection_on_loops(bm, synced):
+    """The UV Editor shows the per-loop UV selection (``uv_edge_selected``) rather than the mesh selection: always
+    with UV Sync Selection off, and with it on while 5.x keeps a UV selection of its own (``uv_select_sync_valid``)."""
+    return not synced or getattr(bm, "uv_select_sync_valid", False)
 
 
 def uv_sync_from_mesh(bm):

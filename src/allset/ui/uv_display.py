@@ -22,9 +22,13 @@ Shell borders follow the island rule (operators/uv_tools.islands: faces join whe
 ends of an edge): an edge is a border on a face's side when no other shown face shares the same UVs across it.
 A seam edge is a border too: Cut UVs marks one, and like Maya the cut edge shows as a border at once, also a
 single edge inside a shell that stays in one piece.
+A selected border edge is drawn again in the theme's selected-edge colour on top, so it shows like any other
+selected edge (#361).
 They are drawn by an Image Editor WINDOW POST_PIXEL handler in UV space mapped through ``View2D.view_to_region``;
 segments are cached per object and dropped on any depsgraph update of a mesh / object (like cut_sew.py).
 """
+
+from operator import attrgetter
 
 import bmesh
 import bpy
@@ -114,13 +118,56 @@ def segments_of(ob, synced):
     if pts is None:
         bm = bmesh.from_edit_mesh(ob.data)
         uv = bm.loops.layers.uv.active
+        sides = np.zeros((0, 2), np.int64)
         if uv is None:
             pts = np.zeros((0, 2), np.float32)
         else:     # numpy (operators/uv_arrays.py): the Python border_segments took ~1.8 s on 48 k faces
             arrays = uv_arrays.read(ob, bm, uv, bpy.context.view_layer.depsgraph, cached=True)
-            pts = uv_arrays.border_points(arrays, uv_arrays.shown_faces(arrays, synced))
+            b = uv_arrays.border_loops(arrays, uv_arrays.shown_faces(arrays, synced))
+            pts = uv_arrays.side_points(arrays, b)
+            face = arrays.corner_face[b]
+            sides = np.stack((face, b - arrays.loop_start[face]), axis=1)     # (face, corner within the face)
         _cache[key] = pts
+        _cache[("sides", key)] = sides
     return pts
+
+
+def selected_segments(ob, synced):
+    """UV line points (2N x 2) of the border sides whose edge is selected, in the order of ``segments_of``: drawn
+    again in the selection colour, so a selected border edge shows like any other selected edge (#361).
+    With UV Sync Selection on a selection change sends a depsgraph update, so the answer is cached with the border
+    lines; with it off a UV selection change sends none, so the selection is read on every call."""
+    pts = segments_of(ob, synced)
+    if not len(pts):
+        return pts
+    me = ob.data
+    key = (ob.as_pointer(), synced)
+    sig = (me.total_vert_sel, me.total_edge_sel, me.total_face_sel)
+    if synced:
+        hit = _cache.get(("selected", key))
+        if hit is not None and hit[0] == sig:
+            return hit[1]
+    bm = bmesh.from_edit_mesh(me)
+    on_loops = compat.uv_selection_on_loops(bm, synced)
+    if not on_loops and not me.total_edge_sel:
+        out = pts[:0]
+    else:
+        loops = _cache.get(("loops", key))
+        if loops is None:     # the BMesh loops (and edges) of the border sides; dropped with the lines on a mesh update
+            bm.faces.ensure_lookup_table()
+            faces = bm.faces
+            loops = [faces[f].loops[c] for f, c in _cache[("sides", key)].tolist()]
+            _cache[("loops", key)] = loops
+            _cache[("edges", key)] = [l.edge for l in loops]
+        if on_loops:
+            sel = np.fromiter(map(compat.uv_edge_selected_reader(), loops), bool, len(loops))
+        else:
+            edges = _cache[("edges", key)]
+            sel = np.fromiter(map(attrgetter("select"), edges), bool, len(edges))
+        out = pts.reshape(-1, 2, 2)[sel].reshape(-1, 2)
+    if synced:
+        _cache[("selected", key)] = (sig, out)
+    return out
 
 
 
@@ -176,22 +223,25 @@ def _draw():
         if not (wm.allset_uv_shell_borders or wm.allset_uv_texture_borders):
             return
         synced = context.scene.tool_settings.use_uv_select_sync
-        pts = [segments_of(ob, synced) for ob in _edit_meshes(context)]
-        pts = [p for p in pts if len(p)]
+        obs = _edit_meshes(context)
+        pts = [p for p in (segments_of(ob, synced) for ob in obs) if len(p)]
         if not pts:
             return
-        px = to_region(np.concatenate(pts), p0, p1)
-        scale = context.preferences.system.ui_scale or 1.0
-        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+        sel = [p for p in (selected_segments(ob, synced) for ob in obs) if len(p)]
+        theme = context.preferences.themes[0].image_editor
         if wm.allset_uv_shell_borders:
             rgb = SHELL_RGB
         else:
-            rgb = tuple(context.preferences.themes[0].image_editor.wire_edit)[:3]
+            rgb = tuple(theme.wire_edit)[:3]
+        scale = context.preferences.system.ui_scale or 1.0
+        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
         gpu.state.blend_set('ALPHA')
         shader.uniform_float("viewportSize", (region.width, region.height))
         shader.uniform_float("lineWidth", BORDER_PX * scale)
-        shader.uniform_float("color", (*rgb, 1.0))
-        batch_for_shader(shader, 'LINES', {"pos": px.tolist()}).draw(shader)
+        for lines, colour in ((pts, rgb), (sel, tuple(theme.edge_select)[:3])):
+            if lines:
+                shader.uniform_float("color", (*colour, 1.0))
+                batch_for_shader(shader, 'LINES', {"pos": to_region(np.concatenate(lines), p0, p1).tolist()}).draw(shader)
         gpu.state.blend_set('NONE')
     except (ReferenceError, AttributeError, ValueError):
         _cache.clear()
