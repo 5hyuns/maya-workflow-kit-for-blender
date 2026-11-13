@@ -214,7 +214,7 @@ def test_invalid_external_history_is_not_rehashed_on_every_geometry_update():
     uid = ob.data.session_uid
     assert history._valid[uid] is False
     update = SimpleNamespace(id=SimpleNamespace(original=ob.data), is_updated_geometry=True)
-    history.changed(None, SimpleNamespace(updates=[update]))
+    history.changed(None, SimpleNamespace(updates=[update], id_type_updated=lambda kind: kind == 'MESH'))
     assert history._valid[uid] is False
     ob.data.vertices[0].co = original
     ex._on_undo()

@@ -375,3 +375,54 @@ def test_one_pass_answers_like_the_single_tests():
     for row in seen:
         assert row[0] == row[3] == row[5] and row[1] == row[4] == row[6] and row[2] == row[7], row
     assert {r[5] for r in seen} == {True, False} and {r[6] for r in seen} == {True, False}, seen
+
+
+TYPE_HOOKS = ("graph_curves_203._on_depsgraph", "curves_207._on_depsgraph", "model_history.changed")
+
+
+def test_hooks_for_one_data_type_pass_only_over_updates_with_it():
+    """The graph curve sync (Actions), the curve length lock (Curves) and the modeling history (Meshes) look for one
+    data type: a joint pick, a pose move and an object move hold none of them, so these hooks don't pass over the
+    update (each pass walks every data-block of the scene); a key change, a curve edit and a mesh edit still reach
+    them."""
+    a, _b = _rig_scene(props=10)
+    gc = _m("operators.graph_curves_203")
+    me = bpy.data.meshes.new("tri")
+    me.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0)], [], [(0, 1, 2)])
+    tri = bpy.data.objects.new("tri", me)
+    bpy.context.scene.collection.objects.link(tri)
+    crv = bpy.data.curves.new("crv", 'CURVE')
+    spline = crv.splines.new('POLY')
+    spline.points.add(1)
+    bpy.context.scene.collection.objects.link(bpy.data.objects.new("crv", crv))
+    tri.keyframe_insert("location", index=0, frame=1)
+    _update()
+    scheduled = gc._state["scheduled"]
+    gc._state["scheduled"] = False
+    try:
+        with _Spy(*TYPE_HOOKS) as spy:
+            _pick(a, "ska1")
+            a.pose.bones["ska1"].location.x += 0.2
+            _update()
+            a.location.y += 0.1
+            _update()
+        assert all(len(v) >= 3 for v in spy.passes.values()), spy.passes
+        assert all(not any(v) for v in spy.passes.values()), f"no pass over updates without the type: {spy.passes}"
+        with _Spy(*TYPE_HOOKS) as spy:
+            me.vertices[0].co.x += 0.1
+            _update()
+            spline.points[1].co.x += 0.5
+            _update()
+            fc = next(iter(_m("compat").action_fcurves(tri.animation_data.action)))
+            fc.keyframe_points[0].co.y += 1.0
+            fc.update()
+            tri.animation_data.action.update_tag()
+            _update()
+        assert max(spy.passes["model_history.changed"]) == 1, spy.passes
+        assert max(spy.passes["curves_207._on_depsgraph"]) == 1, spy.passes
+        assert max(spy.passes["graph_curves_203._on_depsgraph"]) == 1, spy.passes
+        assert gc._state["scheduled"], "a key change still schedules the graph curve sync"
+    finally:
+        if bpy.app.timers.is_registered(gc._sync_tick):
+            bpy.app.timers.unregister(gc._sync_tick)
+        gc._state["scheduled"] = scheduled

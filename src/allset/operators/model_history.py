@@ -630,6 +630,9 @@ def invalidate():
 
 @bpy.app.handlers.persistent
 def changed(_scene, depsgraph):
+    # a Mesh in the update flags the type (one array read; a pass over the update walks every ID of the depsgraph)
+    if not depsgraph.id_type_updated('MESH'):
+        return
     for update in depsgraph.updates:
         data = update.id.original
         if isinstance(data, bpy.types.Mesh) and update.is_updated_geometry and KEY in data:

@@ -683,6 +683,9 @@ def _sync_tick():
 def _on_depsgraph(_scene, depsgraph):
     if _state["busy"] or _state["scheduled"]:
         return
+    # an Action in the update flags the type (one array read; a pass over the update walks every ID of the depsgraph)
+    if not depsgraph.id_type_updated('ACTION'):
+        return
     if any(isinstance(u.id, bpy.types.Action) for u in depsgraph.updates):
         _state["scheduled"] = True
         bpy.app.timers.register(_sync_tick, first_interval=SYNC_DELAY)

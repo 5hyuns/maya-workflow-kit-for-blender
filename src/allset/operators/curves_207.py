@@ -169,6 +169,9 @@ def apply_lock(data):
 def _on_depsgraph(scene, depsgraph):
     if _busy[0]:
         return
+    # a Curve in the update flags the type (one array read; a pass over the update walks every ID of the depsgraph)
+    if not depsgraph.id_type_updated('CURVE'):
+        return
     try:
         datas = {u.id.original for u in depsgraph.updates if isinstance(u.id, bpy.types.Curve)
                  and u.id.original.get(LOCK)}
