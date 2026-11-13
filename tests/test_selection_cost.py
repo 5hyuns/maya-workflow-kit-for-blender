@@ -173,6 +173,72 @@ def test_marquee_and_lasso_pick_the_same_joints_as_joint_by_joint():
             assert mj.region_pick(ctx, ob, poly) == _reference_region(ctx, ob, poly), (ob.name, poly)
 
 
+def _drawn(*obs):
+    """What a Maya view's draw keeps for ``obs`` (``maya_joints._joined``): each skeleton's lines and the lines a
+    click picks, for the current state."""
+    scene, layer = bpy.context.scene, bpy.context.view_layer
+    mj._WORLD[0] = mj._world_key(scene, layer)
+    for ob in obs:
+        pick = []
+        mj._PARTS[ob.as_pointer()] = mj._parts(ob, scene, layer.depsgraph, None, False, pick)
+        mj._PICK[ob.as_pointer()] = pick[0] if pick else None
+
+
+def _forget_drawn():
+    mj._PARTS.clear()
+    mj._PICK.clear()
+    mj._WORLD[0] = None
+
+
+def test_a_click_after_a_draw_uses_the_drawn_lines():
+    """Once a view has drawn the skeletons, a click or a marquee uses the drawn lines without reading the
+    skeleton again and finds the same joints at the same distances (Template / Reference joints and unselectable
+    bones left out); after any change, or for a skeleton not drawn as Maya joints, the skeleton is read again."""
+    _clear()
+    skel, rig, _widgets = _rig()
+    rig.data.bones["c01"].hide_select = True                   # a control Blender won't select
+    real_state = lj.state
+    lj.state = lambda ob: {"c05": lj.TEMPLATE, "c09": lj.REFERENCE} if ob == rig else real_state(ob)
+    try:
+        bpy.context.view_layer.update()
+        ctx = _front_view()
+        ctx.view_layer = bpy.context.view_layer
+        mice = ((60.0, 52.0), (130.0, 60.0), (100.0, 50.0), (150.0, 75.0), (121.0, 58.0))
+        polys = ([(40, 40), (70, 40), (70, 100), (40, 100)], [(115, 40), (150, 40), (150, 70), (115, 70)],
+                 [(0, 0), (200, 0), (200, 100), (0, 100)], [(120, 45), (160, 55), (140, 90), (110, 70)])
+        want = {(ob.name, m): _reference_distance(ctx, ob, m) for ob in (skel, rig) for m in mice}
+        want_box = {(ob.name, i): _reference_region(ctx, ob, p) for ob in (skel, rig) for i, p in enumerate(polys)}
+        near = set(want[("ctrl_rig", mice[4])])
+        assert near and not {"c01", "c05", "c09"} & near, near     # beside c05 / c01 / c09: other joints are hit
+        _drawn(skel, rig)
+        with _Count(mj, "skeleton") as sk:
+            for ob in (skel, rig):
+                for m in mice:
+                    got, ref = mj.screen_distance(ctx, ob, m), want[(ob.name, m)]
+                    assert set(got) == set(ref), (ob.name, m, set(got) ^ set(ref))
+                    assert all(abs(got[n] - ref[n]) < 1e-3 for n in ref), (ob.name, m)
+                    assert mj.pick(ctx, ob, m, 8) == min(((v, n) for n, v in ref.items() if v <= 8),
+                                                         default=(0, None))[1]
+                for i, p in enumerate(polys):
+                    assert mj.region_pick(ctx, ob, p) == want_box[(ob.name, i)], (ob.name, p)
+        assert sk.calls == 0, f"the drawn lines are used, got {sk.calls} skeleton reads"
+        mj.changed()                                               # an edit: the drawn lines are out of date
+        with _Count(mj, "skeleton") as sk:
+            got, ref = mj.screen_distance(ctx, rig, mice[1]), want[("ctrl_rig", mice[1])]
+        assert set(got) == set(ref) and all(abs(got[n] - ref[n]) < 1e-3 for n in ref)
+        assert sk.calls == 1, sk.calls
+        rig.data.display_type = 'STICK'                            # not drawn as Maya joints: read joint by joint
+        bpy.context.view_layer.update()
+        _drawn(rig)
+        assert mj._PICK[rig.as_pointer()] is None
+        with _Count(mj, "skeleton") as sk:
+            mj.screen_distance(ctx, rig, mice[1])
+        assert sk.calls == 1, sk.calls
+    finally:
+        lj.state = real_state
+        _forget_drawn()
+
+
 def test_touch_test_matches_the_segment_by_segment_rule():
     rng = np.random.default_rng(3)
     a, b = rng.uniform(0, 100, (400, 2)), rng.uniform(0, 100, (400, 2))

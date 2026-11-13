@@ -463,6 +463,44 @@ def _pick_lines(context, ob, js):
     return kept, xy[0::2], xy[1::2], front[0::2] & front[1::2], owner
 
 
+def _drawn_pick_lines(context, ob):
+    """``_pick_lines`` of skeleton ``ob`` (Object / Pose Mode, drawn as Maya joints) from the lines last drawn for it,
+    when nothing has changed since they were built (``_joined``), + its joint list; else None. A click then projects
+    the drawn lines instead of reading the skeleton again."""
+    import numpy as np
+    from ..operators.preselect import project
+    got = _PICK.get(ob.as_pointer())
+    if got is None or ob.mode == 'EDIT':
+        return None
+    layer = getattr(context, "view_layer", None) or bpy.context.view_layer
+    if _WORLD[0] != _world_key(context.scene, layer):
+        return None
+    jl, chunks = got
+    bones = ob.data.bones
+    hide_select = np.zeros(len(bones), bool)
+    bones.foreach_get("hide_select", hide_select)
+    # ``_unpickable``: a display layer's state (hidden / Template / Reference) or Blender's unselectable bones
+    pickable = np.array([jl.js[n].state is None for n in jl.names], bool) & ~hide_select[_bone_rows(ob, jl)]
+    pts, owner = [], []
+    for p, who, per in chunks:
+        if len(p):
+            pts.append(p)
+            owner.append(np.repeat(who, per) if per else who)
+    if not pts:
+        return None
+    pts, owner = np.concatenate(pts), np.concatenate(owner)
+    seg = owner[0::2]
+    keep = pickable[seg]
+    if not keep.any():
+        return [], np.zeros((0, 2)), np.zeros((0, 2)), np.zeros(0, bool), np.zeros(0, np.int64), jl
+    kept, owner = np.unique(seg[keep], return_inverse=True)
+    pts = pts.reshape(-1, 2, 3)[keep].reshape(-1, 3).astype(np.float64)
+    region, rv3d = context.region, context.region_data
+    xy, front = project(pts, rv3d.perspective_matrix, region.width, region.height)
+    return ([jl.names[i] for i in kept], xy[0::2], xy[1::2], front[0::2] & front[1::2], owner.astype(np.int64),
+            jl)
+
+
 _PICK_MEMO = [None]     # while one click is picked (``pick_memo``): {(skeleton, mode, region, mouse): distances}
 
 
@@ -500,7 +538,8 @@ def screen_distance(context, ob, mouse):
 def _screen_distance(context, ob, mouse):
     import numpy as np
     from ..operators.preselect import segment_distance
-    names, a, b, ok, owner = _pick_lines(context, ob, skeleton(ob, context.scene))
+    got = _drawn_pick_lines(context, ob)
+    names, a, b, ok, owner = got[:5] if got is not None else _pick_lines(context, ob, skeleton(ob, context.scene))
     if not names:
         return {}
     d, _t = segment_distance(mouse, a, b)
@@ -552,9 +591,16 @@ def region_pick(context, ob, poly):
     and bones of a skeleton not drawn as Maya joints are each picked, like Maya's curve controls. Joints that can't be
     picked (``_unpickable``) are left out. Returns names."""
     import numpy as np
-    js = skeleton(ob, context.scene)
     maya_drawn = getattr(ob.data, "display_type", 'OCTAHEDRAL') not in STICK_TYPES | SHAPE_TYPES
-    names, a, b, ok, owner = _pick_lines(context, ob, js)
+    got = _drawn_pick_lines(context, ob)
+    if got is not None:                        # the drawn lines (``_joined``); a joint list's joints have no shape
+        names, a, b, ok, owner, jl = got
+        js = jl.js
+        control = {jl.names[j] for j in jl.ctrl}
+    else:
+        js = skeleton(ob, context.scene)
+        names, a, b, ok, owner = _pick_lines(context, ob, js)
+        control = {n for n, j in js.items() if j.shape is not None}
     joints, each = [], []
     if not names:
         return each
@@ -564,7 +610,7 @@ def region_pick(context, ob, poly):
     index = {n: i for i, n in enumerate(js)}
     for i, n in enumerate(names):
         if hit[i]:
-            if maya_drawn and js[n].shape is None:
+            if maya_drawn and n not in control:
                 joints.append((depth(js, n), index[n], n))
             else:
                 each.append(n)
@@ -930,10 +976,11 @@ def _control_lines(ob, jl, w, allm, rgba, depsgraph):
     off = (a @ got["custom_shape_translation"][:, :, None])[:, :, 0] + src[:, :3, 3] @ w[:3, :3].T + w[:3, 3]
     pts = np.einsum('kij,kj->ki', lin[owner], p) + off[owner]
     cols = np.repeat(rgba[jl.ctrl], counts, axis=0)
+    joint = jl.ctrl[owner]
     if not jl.shown.all():                     # controls a display layer hides draw nothing
         keep = jl.shown[jl.ctrl][owner]
-        pts, cols = pts[keep], cols[keep]
-    return pts.astype(np.float32), cols
+        pts, cols, joint = pts[keep], cols[keep], joint[keep]
+    return pts.astype(np.float32), cols, joint
 
 
 def _box_array(frames, corners):
@@ -1024,11 +1071,13 @@ def _own_lines(ob, jl, w, allm, rgba, kind):
     return np.concatenate(blocks).astype(np.float32), np.repeat(rgba[plain], sizes, axis=0)
 
 
-def _parts(ob, scene, depsgraph, kind=None, playing=False):
+def _parts(ob, scene, depsgraph, kind=None, playing=False, pick=None):
     """Every line of skeleton ``ob`` as three parts (points list, colours list): the joints' spheres and the
     controls' shapes; the local axes of the selected joints (drawn in perspective views only); the bones (pyramids,
     sticks, or Blender's B-Bone / Envelope shapes). ``kind`` = the display type (default: the skeleton's). Object
-    and Pose Mode build them in arrays from one read of the pose; Edit Mode joint by joint."""
+    and Pose Mode build them in arrays from one read of the pose; Edit Mode joint by joint.
+    ``pick``: a list that gets (joint list, [(points, joint index per point or per joint, points per joint)]) — the
+    lines a click picks (``_drawn_pick_lines``) — when they are the drawn Maya joints and playback doesn't run."""
     import numpy as np
     if kind is None:
         kind = getattr(ob.data, "display_type", 'OCTAHEDRAL')
@@ -1039,6 +1088,7 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False):
     if not jl.names:
         return before, axes, after
     stick, own = kind in STICK_TYPES, kind in SHAPE_TYPES
+    chunks = [] if pick is not None and not (playing or stick or own) else None
     w, allm, centres, frames, radii = _pose_read(ob, scene, jl)
     sel, lead = _joint_selection(ob, jl)
     rgba = _joint_rgba(jl, sel, lead)
@@ -1046,11 +1096,15 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False):
     if not (stick or own) and plain.any():
         before[0].append(_spheres(centres[plain], frames[plain], radii[plain]))
         before[1].append(np.repeat(rgba[plain], 3 * SEGMENTS * 2, axis=0))
+        if chunks is not None:
+            chunks.append((before[0][-1], np.flatnonzero(plain), 3 * SEGMENTS * 2))
     if len(jl.ctrl):
         got = _control_lines(ob, jl, w, allm, rgba, depsgraph)
         if got is not None:
             before[0].append(got[0])
             before[1].append(got[1])
+            if chunks is not None:
+                chunks.append((got[0], got[2], None))
     if sel:
         picked = np.array([j for j, nm in enumerate(jl.names) if plain[j] and nm in sel], np.intp)
         if len(picked):
@@ -1076,6 +1130,10 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False):
         if len(segs):
             after[0].append(segs.astype(np.float32))
             after[1].append(rgba[owner])
+            if chunks is not None:
+                chunks.append((after[0][-1], owner, None))
+    if chunks is not None:
+        pick.append((jl, chunks))
     return before, axes, after
 
 
@@ -1320,20 +1378,25 @@ def _reload(*_args):
 
 _WORLD = [None]   # what the lines in _PARTS / _JOINED were built for: edit generation, frame, scene, view layer, ...
 _PARTS = {}       # skeleton object pointer -> its ``_parts``
+_PICK = {}        # skeleton object pointer -> the pick lines of its ``_parts`` (``_parts`` ``pick``) or None
 _JOINED = {}      # (skeletons drawn, perspective) -> [points, colours, GPU batch or None], shared by the views
+
+
+def _world_key(scene, layer):
+    from ..operators import joint_preview
+    return (_GEN[0], scene.frame_current, scene.as_pointer(), layer.as_pointer(), joint_preview.running(),
+            str(joint_preview.STATE.get("current")))
 
 
 def _joined(context):
     """[points, colours, batch] of this view. The lines of each skeleton are built once per frame (or edit) and
     shared by every 3D View that shows the same skeletons in the same projection; any skeleton in Edit Mode: built
     every redraw."""
-    from ..operators import joint_preview
     space, scene, layer = context.space_data, context.scene, context.view_layer
     if context.mode == 'EDIT_ARMATURE':
         pts, cols = view_lines(context)
         return [pts, cols, None]
-    key = (_GEN[0], scene.frame_current, scene.as_pointer(), layer.as_pointer(), joint_preview.running(),
-           str(joint_preview.STATE.get("current")))
+    key = _world_key(scene, layer)
     if _WORLD[0] != key:
         # while a pose is dragged only the skeletons that moved are built again (another character in the scene
         # keeps its lines); anything else builds every skeleton again
@@ -1341,9 +1404,11 @@ def _joined(context):
         _WORLD[0] = key
         if moved is None:
             _PARTS.clear()
+            _PICK.clear()
         else:
             for ptr in moved:
                 _PARTS.pop(ptr, None)
+                _PICK.pop(ptr, None)
         _POSED.clear()
         _JOINED.clear()
     obs = _view_skeletons(context, space)
@@ -1353,9 +1418,12 @@ def _joined(context):
     if hit is None:
         playing, depsgraph, parts = _playing(context), layer.depsgraph, []
         for ob in obs:
-            got = _PARTS.get(ob.as_pointer())
+            ptr = ob.as_pointer()
+            got = _PARTS.get(ptr)
             if got is None:
-                got = _PARTS[ob.as_pointer()] = _parts(ob, scene, depsgraph, None, playing)
+                pick = []
+                got = _PARTS[ptr] = _parts(ob, scene, depsgraph, None, playing, pick)
+                _PICK[ptr] = pick[0] if pick else None
             parts.append(got)
         hit = _JOINED[shown] = list(_join(parts, persp)) + [None]
     if len(_CACHE) > 32:
@@ -1443,6 +1511,7 @@ def unregister():
     _CACHE.clear()
     _LISTS.clear()
     _PARTS.clear()
+    _PICK.clear()
     _JOINED.clear()
     _WIDGETS.clear()
     _POSED.clear()

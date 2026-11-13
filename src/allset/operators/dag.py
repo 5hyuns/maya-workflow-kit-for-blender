@@ -66,6 +66,40 @@ def hidden_by_ancestor(ob, scene, view_layer=None):
     return False
 
 
+class _Walk:
+    """``hidden_by_ancestor`` / ``_layer_hidden`` for every object of one ``sync``: the display layers' members are
+    read once and each object's answer is kept for the objects below it (a sync runs on every depsgraph update that
+    isn't only motion, and walked every object's ancestors, listing the layers at each step)."""
+
+    def __init__(self, scene):
+        from ..ui import layer_editor
+        self.first = {}                        # object name -> its display layer (the first that lists it)
+        for coll in layer_editor.layers(scene):
+            for o in coll.objects:
+                self.first.setdefault(o.name, coll)
+        self.memo = {}
+
+    def layer_hidden(self, ob):
+        coll = self.first.get(ob.name)
+        return coll is not None and not coll.allset_layer.visible
+
+    def by_ancestor(self, ob):
+        from ..ui import layer_joints
+        chain, got, o = [], False, ob
+        while o.parent is not None:            # up to the root or to an object already answered
+            known = self.memo.get(o.as_pointer())
+            if known is not None:
+                got = known
+                break
+            chain.append(o)
+            o = o.parent
+        for o in reversed(chain):              # then down: hidden above, or hidden by its parent / parent joint
+            p = o.parent
+            got = bool(got or p.hide_viewport or self.layer_hidden(p) or layer_joints.hidden_under(o))
+            self.memo[o.as_pointer()] = got
+        return got
+
+
 def inherited_display(ob, scene, members=None):
     """TEMPLATE / REFERENCE that ``ob`` takes from a node above it: an ancestor object in such a display layer, or the
     joint it hangs from (``layer_joints.kind_under``); the one nearest the root wins. ``members`` = {object name:
@@ -123,11 +157,12 @@ def sync(scene=None, view_layer=None):
     if view_layer is None:
         return 0
     changed = 0
+    walk = _Walk(scene)
     for ob in scene.objects:
-        by_parent = hidden_by_ancestor(ob, scene, view_layer)
+        by_parent = walk.by_ancestor(ob)
         if not by_parent and MARK not in ob:
             continue
-        want = by_parent or _layer_hidden(ob, scene)
+        want = by_parent or walk.layer_hidden(ob)
         try:
             if ob.hide_get(view_layer=view_layer) != want:
                 ob.hide_set(want, view_layer=view_layer)

@@ -187,9 +187,10 @@ def flow():
                     check(f"Maya mode at {fps} fps: the Range Slider bar is drawn ({play.bars}) and reads its header "
                           f"row a few times, not every frame ({play.reads} reads in {play.frames} frames)",
                           play.bars >= 1 and play.reads <= 3 and play.frames > 20)
-                    check(f"... both skeletons are built every frame ({len(drawn)} builds) and their joint lists are "
-                          f"read once, not every frame ({len(lists)} reads)",
-                          len(drawn) >= 2 * play.frames and len(lists) <= 4)
+                    # the window can close after a frame change and before that frame is drawn: one frame of slack
+                    check(f"... both skeletons are built every frame ({len(drawn)} builds in {play.frames} frames) and "
+                          f"their joint lists are read once, not every frame ({len(lists)} reads)",
+                          len(drawn) >= 2 * (play.frames - 1) and len(lists) <= 4)
                 if SHOTS and fps == 30 and _rep == 0:
                     sim.screenshot(os.path.join(SHOTS, f"issue344_{mode}.png"))
                 yield 0.5

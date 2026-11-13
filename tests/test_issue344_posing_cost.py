@@ -247,6 +247,66 @@ def test_time_slider_holds_the_keys_while_a_move_runs():
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def test_channel_box_holds_the_rows_key_states_while_a_move_runs():
+    """While a move runs in Pose Mode (no playback) the Channel Box finds each row's key state once; a key moved
+    meanwhile (its Action updated) is found again; with no move running, or during playback, every redraw finds it.
+    The "+N" beside the lead's name counts the targets without listing them."""
+    arm = _rig(6)
+    pb = arm.pose.bones[1]
+    for f in (1, 8):
+        pb.location = (0.01 * f, 0, 0)
+        pb.keyframe_insert("location", frame=f)
+    bpy.context.scene.frame_set(8)
+    bpy.context.view_layer.update()
+    calls = []
+    real_state, real_moving = cb.channel_state, mj.transforming
+    cb.channel_state = lambda ob, key, frame=None: calls.append(key) or real_state(ob, key, frame)
+    screen = SimpleNamespace(is_animation_playing=False)
+    ctx = SimpleNamespace(screen=screen, mode='POSE')
+    try:
+        assert not cb._holds_states(ctx), "no move running"
+        cb.row_state(pb, "tx")
+        cb.row_state(pb, "tx")
+        assert len(calls) == 2, "no move: found on every redraw"
+        mj.transforming = lambda: True
+        cb._holding[0] = cb._holds_states(ctx)               # what the Channel Box draw does
+        assert cb._holding[0]
+        calls.clear()
+        for _i in range(4):
+            assert cb.row_state(pb, "tx") == 'KEYED'
+            assert cb.row_state(pb, "ty") == 'KEYED'
+        assert calls == ["tx", "ty"], f"held while the move runs ({calls})"
+        fc = time_keys.node_fcurves(pb)[0]
+        fc.keyframe_points[1].co.x = 9.0
+        fc.update()
+        arm.animation_data.action.update_tag()
+        bpy.context.view_layer.update()
+        assert cb.row_state(pb, "tx") == 'ANIMATED', "a key moved off the frame shows"
+        assert calls[-1] == "tx" and len(calls) == 3
+        screen.is_animation_playing = True
+        assert not cb._holds_states(ctx), "during playback a move can key: found every time"
+    finally:
+        cb.channel_state, mj.transforming = real_state, real_moving
+        cb._held_states.clear()
+        cb._holding[0] = False
+    # the "+N" count
+    for i, b in enumerate(arm.pose.bones):
+        cb.set_bone_selected(b, i in (1, 2, 4))
+    arm.pose.bones[4].hide = True                            # a hidden bone isn't a target
+    arm.data.bones.active = arm.data.bones[arm.pose.bones[2].name]
+    bpy.context.view_layer.update()
+    assert cb.target_count(bpy.context) == len(cb.targets(bpy.context)) == 2
+    bpy.ops.object.mode_set(mode='OBJECT')
+    other = _circle("other")
+    other.select_set(True)
+    arm.select_set(False)                                     # the active object, not selected: still a target
+    assert cb.target_count(bpy.context) == len(cb.targets(bpy.context)) == 2
+    arm.select_set(True)
+    assert cb.target_count(bpy.context) == len(cb.targets(bpy.context)) == 2
+    bpy.context.view_layer.objects.active = None
+    assert cb.target_count(bpy.context) == len(cb.targets(bpy.context)) == 2
+
+
 def test_draw_label_joints_are_found_once_while_dragging():
     labels = import_module(kit.MODULE + ".operators.joint_labels")
     arm = _rig(6)

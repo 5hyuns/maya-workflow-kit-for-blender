@@ -185,11 +185,10 @@ def pose_objects(context=None):
     return [arm] + others
 
 
-def selected_bones(context=None):
-    """The picked, shown pose bones of the posed armatures (armature order, then bone order). The flags are read in
-    one call per armature: the Channel Box and the Time Slider ask on every redraw, a rig has hundreds of bones."""
+def _picked(context):
+    """(pose bones, indices of the picked shown ones) per posed armature. The flags are read in one call per
+    armature: the Channel Box and the Time Slider ask on every redraw, a rig has hundreds of bones."""
     import numpy as np
-    out = []
     for arm in pose_objects(context):
         bones = arm.pose.bones
         n = len(bones)
@@ -199,8 +198,12 @@ def selected_bones(context=None):
         hide = np.zeros(n, dtype=bool)
         bones.foreach_get("select", sel)        # = bone_selected
         bones.foreach_get("hide", hide)         # = compat.bone_hidden
-        out += [bones[int(i)] for i in np.flatnonzero(sel & ~hide)]
-    return out
+        yield bones, np.flatnonzero(sel & ~hide)
+
+
+def selected_bones(context=None):
+    """The picked, shown pose bones of the posed armatures (armature order, then bone order)."""
+    return [bones[int(i)] for bones, idx in _picked(context) for i in idx]
 
 
 _drawing_lead = []     # [the lead] while the Channel Box draws (ALLSET_PT_channel_box.body)
@@ -230,6 +233,17 @@ def targets(context=None):
     if ld is not None:
         nodes = [ld] + [n for n in nodes if n != ld]
     return nodes
+
+
+def target_count(context=None):
+    """``len(targets(context))`` without building the list (the Channel Box's "+N" on every redraw). In Pose Mode
+    the lead is one of the picked bones; an active object that isn't selected is a target too."""
+    context = context or bpy.context
+    if pose_armature(context):
+        return sum(len(idx) for _bones, idx in _picked(context))
+    obs = context.selected_objects
+    ld = lead(context)
+    return len(obs) + int(ld is not None and ld not in obs)
 
 
 def full_path(node, path):
@@ -899,6 +913,35 @@ def channel_state(ob, key, frame=None):
     if any(abs(kp.co[0] - frame) < 0.5 for kp in fc.keyframe_points):
         return 'KEYED'
     return 'ANIMATED'
+
+
+_held_states = {}       # (lead pointer, channel key) -> its channel_state while a move runs (``row_state``)
+_holding = [False]      # set by ALLSET_PT_channel_box.body for the draw
+_UNSET = object()
+
+
+def _holds_states(context):
+    """A move runs in Object / Pose Mode and playback doesn't: until it ends the keys, drivers, layers and the frame
+    stay as they are (an animation editor's move that drags keys updates their Action: ``_on_depsgraph`` drops the
+    held states)."""
+    from .maya_joints import transforming
+    screen = getattr(context, "screen", None)
+    return (getattr(context, "mode", None) in {'OBJECT', 'POSE'} and transforming()
+            and not (screen is not None and screen.is_animation_playing))
+
+
+def row_state(ob, key):
+    """``channel_state`` of a drawn row; while a move runs the state found once is drawn again (every row looked its
+    curves up on every redraw of the drag)."""
+    if not _holding[0]:
+        return channel_state(ob, key)
+    k = (ob.as_pointer(), key)
+    got = _held_states.get(k, _UNSET)
+    if got is _UNSET:
+        if len(_held_states) > 512:
+            _held_states.clear()
+        got = _held_states[k] = channel_state(ob, key)
+    return got
 
 
 # --- channel selection (WindowManager string; not undoable) -----------------------------------
@@ -2993,7 +3036,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
     split = row.split(factor=0.5, align=True)
     _row_label(split, key, selected, sel_owner, sel_prop)
     right = split.row(align=True)
-    state = channel_state(ob, key)
+    state = row_state(ob, key)
     right.enabled = not is_locked(ob, key)
     if constrained:
         # Maya draws constrained channels blue: a pressed button is the user's
@@ -3136,7 +3179,9 @@ def _nothing_selected(context):
 
 
 @persistent
-def _on_depsgraph(_scene, _depsgraph):
+def _on_depsgraph(_scene, depsgraph):
+    if _held_states and (depsgraph is None or depsgraph.id_type_updated('ACTION')):
+        _held_states.clear()           # keys moved (or keyed) during a move: the rows' states are read again
     from .maya_joints import transforming
     if not transforming():             # a drag changes values only: the selection and the rows stay
         if selected_channels() and _nothing_selected(bpy.context):
@@ -3216,7 +3261,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         sub = split.row(align=True)
         sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
-        state = channel_state(ob, key)
+        state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
         right.prop(row, "text", text="")
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
@@ -3715,7 +3760,7 @@ def draw_blend_shape(lines, context, ob, key):
         sub = split.row(align=True)
         sel_toggle(sub, row, "sel", key in selected_channels(context), label)
         right = split.row(align=True)
-        state = channel_state(ob, key)
+        state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
         right.prop(row, "text", text="")
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
@@ -3798,12 +3843,16 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
     @staticmethod
     def body(layout, context):
         """``_body``; while it draws, every row's value field asks for the lead: it is found once (drawing can't
-        change the selection)."""
+        change the selection). While a move runs the rows' key states are kept (``row_state``)."""
         _drawing_lead[:] = [lead(context)]
+        _holding[0] = _holds_states(context)
+        if not _holding[0]:
+            _held_states.clear()
         try:
             return ALLSET_PT_channel_box._body(layout, context)
         finally:
             _drawing_lead.clear()
+            _holding[0] = False
 
     @staticmethod
     def _body(layout, context):
@@ -3853,7 +3902,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             name.operator(ALLSET_OT_cb_rename.bl_idname, text=ob.name, emboss=False, translate=False)
             args = (context, ob, cb, sel, constrained_keys(ob))
             draw = _draw_lines
-        n = len(targets(context))
+        n = target_count(context)
         if n > 1:
             head.label(text=f"+{n - 1}")
         if not is_bone(ob) and ob.type == 'ARMATURE' and ob.mode == 'OBJECT':

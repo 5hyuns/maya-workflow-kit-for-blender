@@ -194,3 +194,37 @@ def test_hair_under_a_blender_hidden_surface_stays_visible():
     _upd()
     assert hair.visible_get() and dag.MARK not in hair, (hair.visible_get(), dag.MARK in hair)
     bpy.data.objects.remove(hair)
+
+
+def test_sync_reads_the_same_hidden_ancestors_as_one_by_one():
+    """A sync answers every object of a deep, wide hierarchy (own Visibility off here and there, a hidden display
+    layer) the same as asking object by object, and hides exactly the objects under a hidden node."""
+    import random
+    g, c1, c2 = _scene()
+    rnd = random.Random(7)
+    obs = [g, c1, c2]
+    for i in range(160):
+        e = bpy.data.objects.new(f"node{i:03d}", None)
+        bpy.context.scene.collection.objects.link(e)
+        e.parent = rnd.choice(obs) if rnd.random() < 0.9 else None
+        e.hide_viewport = rnd.random() < 0.08
+        obs.append(e)
+    coll = layer_editor.new_layer(bpy.context.scene, [o for o in obs[10:40] if o.parent is not None][:6])
+    coll.allset_layer.visible = False
+    _upd()
+    scene = bpy.context.scene
+    walk = dag._Walk(scene)
+    for ob in reversed(obs):                     # children first: answers below are found before their parents'
+        assert walk.by_ancestor(ob) == dag.hidden_by_ancestor(ob, scene), ob.name
+        assert walk.layer_hidden(ob) == dag._layer_hidden(ob, scene), ob.name
+    hidden = {ob.name for ob in obs if dag.hidden_by_ancestor(ob, scene)}
+    assert hidden, "some nodes hang below a hidden one"
+    assert all(not ob.visible_get() and dag.MARK in ob for ob in obs if ob.name in hidden)
+    assert all(dag.MARK not in ob for ob in obs if ob.name not in hidden)
+    deep = obs[-1]
+    for _i in range(1200):                        # a chain deeper than Python's recursion limit
+        e = bpy.data.objects.new("chain", None)
+        bpy.context.scene.collection.objects.link(e)
+        e.parent = deep
+        deep = e
+    assert dag._Walk(scene).by_ancestor(deep) == dag.hidden_by_ancestor(deep, scene)
