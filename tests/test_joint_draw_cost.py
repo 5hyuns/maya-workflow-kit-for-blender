@@ -459,6 +459,57 @@ def test_a_new_pose_keeps_the_joint_colours():
         bpy.context.scene.frame_set(1)
 
 
+def test_a_limb_drag_works_out_only_the_joints_that_moved():
+    """Dragging a part of a skeleton (a limb) works out again only the spheres and control shapes of the joints whose
+    bones moved; moving most of it, or the object, builds it all. The points are the ones of a build from scratch,
+    bit for bit."""
+    a, b, _cube, _ctrl = _scene()
+    for pb in a.pose.bones:
+        pb.rotation_mode = 'XYZ'
+    view = _view([a, b])
+    real = mj.transforming
+    sizes = []
+    real_spheres = mj._spheres
+
+    def spheres(c, f, r):
+        sizes.append(len(c))
+        return real_spheres(c, f, r)
+
+    plain = int((mj._joint_list(a).plain).sum())
+    try:
+        mj.transforming = lambda: True            # a drag runs: only poses change
+        mj._joined(view)
+        mj._spheres = spheres
+        for step, (bone, many) in enumerate(((11, False), (12, False), (8, False), (0, True), (11, False))):
+            a.pose.bones[bone].rotation_euler.x += 0.2
+            bpy.context.view_layer.update()
+            sizes.clear()
+            with _Count(mj, "_control_lines", "_control_points") as n:
+                got = mj._joined(view)
+            if many:
+                assert sizes == [plain] and n["_control_lines"] == 1, f"step {step}: built it all {sizes} {n.calls}"
+            else:
+                moved = [a.pose.bones[bone]] + list(a.pose.bones[bone].children_recursive)
+                spheres_moved = len([pb for pb in moved if pb.custom_shape is None])
+                assert sum(sizes) == spheres_moved < plain and not n["_control_lines"], \
+                    f"step {step}: only the moved joints ({sizes}, {spheres_moved} moved, {n.calls})"
+            pts, cols = np.array(got[0]), np.array(got[1])
+            mj._spheres = real_spheres
+            want = _fresh(view)
+            mj._spheres = spheres
+            assert _bits(pts, want[0]) and _bits(cols, want[1]), f"step {step}: the lines of a build from scratch"
+            mj.transforming = lambda: True
+            mj._joined(view)
+        a.location.x += 0.3                       # the object moved: every joint
+        bpy.context.view_layer.update()
+        sizes.clear()
+        got = mj._joined(view)
+        assert sizes == [plain], f"the object moved: {sizes}"
+    finally:
+        mj._spheres = real_spheres
+        mj.transforming = real
+
+
 def test_a_selection_or_pose_mode_keeps_the_label_joints():
     """Selecting joints, the active joint and switching between Object and Pose Mode keep the Draw Label joints found
     (they are not looked for again); a rename, a hidden joint or a new label finds them again. The labels are the ones

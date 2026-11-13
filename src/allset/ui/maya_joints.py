@@ -988,24 +988,31 @@ def _same_raw(a, b):
     return a[4] is None or all(np.array_equal(x, y) for x, y in zip(a[4], b[4]))
 
 
-def _pose_read(ob, scene, jl, raw=None):
+def _pose_read(ob, scene, jl, raw=None, only=None):
     """(world matrix (4, 4), every pose bone's armature-space matrix (n, 4, 4), and the drawn joints' centres (N, 3),
     frames (N, 3, 3; columns normalised) and radii (N,)) of skeleton ``ob`` — one read of the pose for all joints.
-    ``raw``: its ``_pose_raw`` when already read."""
+    ``raw``: its ``_pose_raw`` when already read. ``only``: joint indices: the centres, frames and radii of these
+    joints alone (each joint's numbers are worked out from its own bone: the same as among all joints)."""
     import numpy as np
     from ..operators import joints
     mat, head, w, k, _shape = raw if raw is not None else _pose_raw(ob, scene, jl)
     n = len(head) // 3
     allm = mat.reshape(n, 4, 4).transpose(0, 2, 1).astype(np.float64)       # stored by columns
     m3 = w[:3, :3]
-    rows = jl.rows
+    rows = jl.rows if only is None else jl.rows[only]
     centres = head.reshape(n, 3)[rows].astype(np.float64) @ m3.T + w[:3, 3]
     frames = m3 @ allm[rows][:, :3, :3] @ np.array(joints.JOINT_AXES, np.float64)
-    for j, q in jl.turned.items():
-        frames[j] = frames[j] @ q
+    if only is None:
+        for j, q in jl.turned.items():
+            frames[j] = frames[j] @ q
+    elif jl.turned:
+        for i, j in enumerate(only.tolist()):
+            q = jl.turned.get(j)
+            if q is not None:
+                frames[i] = frames[i] @ q
     norms = np.linalg.norm(frames, axis=1, keepdims=True)
     frames = np.divide(frames, norms, out=np.zeros_like(frames), where=norms > 0)
-    return w, allm, centres, frames, jl.raw * k
+    return w, allm, centres, frames, (jl.raw if only is None else jl.raw[only]) * k
 
 
 def _pose_arrays(ob, scene, playing=False):
@@ -1182,7 +1189,6 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
         return None
     pbs = ob.pose.bones
     n = len(pbs)
-    rows = jl.rows[jl.ctrl]
     if props is None:
         props = []
         for prop in ("custom_shape_translation", "custom_shape_rotation_euler", "custom_shape_scale_xyz"):
@@ -1192,12 +1198,7 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
         use = np.zeros(n, bool)
         pbs.foreach_get("use_custom_shape_bone_size", use)
         props.append(use)
-    offset, turn, size = (a.reshape(n, 3)[rows].astype(np.float64) for a in props[:3])
-    scale = size * np.where(props[3][rows], jl.ctrl_len, 1.0)[:, None]
-    src = allm[jl.ctrl_src]
-    a = w[:3, :3] @ src[:, :3, :3]
-    lin = a @ (_euler_xyz(turn) * scale[:, None, :])
-    off = (a @ offset[:, :, None])[:, :, 0] + src[:, :3, 3] @ w[:3, :3].T + w[:3, 3]
+    lin, off = _control_placement(jl, w, allm, props, n)
     pts = np.einsum('kij,kj->ki', lin[owner], p) + off[owner]
     got = jl.owners.get("ctrl")
     if got is None or got[0] is not owner:
@@ -1207,6 +1208,36 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
     if got[2] is not None:
         pts = pts[got[2]]
     return pts.astype(np.float32), got[1]
+
+
+def _control_placement(jl, w, allm, props, n, which=None):
+    """(linear part (C, 3, 3), offset (C, 3)) of the world matrix every control's shape is drawn with (``_shape_matrix``
+    in world space; ``props``: the custom shape offset / turn / scale of the ``n`` pose bones as ``_pose_raw`` read
+    them). ``which``: control indices: those controls alone (each from its own bone: the same numbers)."""
+    import numpy as np
+    ctrl_rows, ctrl_src, ctrl_len = jl.rows[jl.ctrl], jl.ctrl_src, jl.ctrl_len
+    if which is not None:
+        ctrl_rows, ctrl_src, ctrl_len = ctrl_rows[which], ctrl_src[which], ctrl_len[which]
+    offset, turn, size = (a.reshape(n, 3)[ctrl_rows].astype(np.float64) for a in props[:3])
+    scale = size * np.where(props[3][ctrl_rows], ctrl_len, 1.0)[:, None]
+    src = allm[ctrl_src]
+    a = w[:3, :3] @ src[:, :3, :3]
+    lin = a @ (_euler_xyz(turn) * scale[:, None, :])
+    off = (a @ offset[:, :, None])[:, :, 0] + src[:, :3, 3] @ w[:3, :3].T + w[:3, 3]
+    return lin, off
+
+
+def _control_points(jl, w, allm, props, plan, which):
+    """(bool per control shape point, float32 points) of the controls ``which`` (indices, sorted) alone: their points
+    in ``_control_lines`` and those points worked out again (the same numbers; every control shown)."""
+    import numpy as np
+    p, owner = plan[0], plan[1]
+    chosen = np.zeros(len(jl.ctrl), bool)
+    chosen[which] = True
+    at = chosen[owner]
+    lin, off = _control_placement(jl, w, allm, props, len(props[3]), which)
+    local = (np.cumsum(chosen) - 1)[owner[at]]          # position in ``which`` of each point's control
+    return at, (np.einsum('kij,kj->ki', lin[local], p[at]) + off[local]).astype(np.float32)
 
 
 def _box_array(frames, corners):
@@ -1301,7 +1332,7 @@ class _Lines:
     """A skeleton's drawn lines without their colours (Object / Pose Mode): centres / frames / radii of the joints,
     the joints with a sphere, the lines before the axes and after them as (points, joint index per point) pairs, the
     lines a click picks (``_parts`` ``pick``) and the control shape lines they were built from."""
-    __slots__ = ("centres", "frames", "radii", "plain", "before", "after", "chunks", "plan")
+    __slots__ = ("centres", "frames", "radii", "plain", "before", "after", "chunks", "plan", "ctrl_at")
 
 
 def _owner(jl, part, rows, per, of=None):
@@ -1323,7 +1354,7 @@ def _lines(ob, scene, depsgraph, jl, kind, raw):
     g = _Lines()
     g.centres, g.frames, g.radii = centres, frames, radii
     g.plain = plain = jl.plain & jl.shown      # spheres / axes: joints with no custom shape that are shown
-    g.before, g.after, g.plan = [], [], None
+    g.before, g.after, g.plan, g.ctrl_at = [], [], None, None
     chunks = None if stick or own else []
     if not (stick or own) and plain.any():
         pts = _spheres(centres[plain], frames[plain], radii[plain])
@@ -1339,6 +1370,7 @@ def _lines(ob, scene, depsgraph, jl, kind, raw):
         got = _control_lines(ob, jl, w, allm, depsgraph, raw[4])
         g.plan = jl.widgets
         if got is not None:
+            g.ctrl_at = len(g.before)
             g.before.append(got)
             if chunks is not None:
                 chunks.append((got[0], got[1], None))
@@ -1359,6 +1391,81 @@ def _lines(ob, scene, depsgraph, jl, kind, raw):
             g.after.append((segs, owner))
             if chunks is not None:
                 chunks.append((segs, owner, None))
+    g.chunks = chunks
+    return g
+
+
+def _moved_bones(raw, old_raw):
+    """Bool per pose bone: its matrix or head reads differently (any bit) in pose reading ``raw`` than in
+    ``old_raw``; None when something else the lines follow changed (the object's matrix, the joint size, a custom
+    shape offset / turn / scale)."""
+    import numpy as np
+    if (old_raw is None or len(raw[1]) != len(old_raw[1]) or (raw[4] is None) != (old_raw[4] is None)
+            or np.float64(raw[3]).tobytes() != np.float64(old_raw[3]).tobytes()
+            or raw[2].tobytes() != old_raw[2].tobytes()):
+        return None
+    if raw[4] is not None and any(x.tobytes() != y.tobytes() for x, y in zip(raw[4], old_raw[4])):
+        return None
+    n = len(raw[1]) // 3
+    return (np.any(raw[0].view(np.uint32).reshape(n, 16) != old_raw[0].view(np.uint32).reshape(n, 16), axis=1)
+            | np.any(raw[1].view(np.uint32).reshape(n, 3) != old_raw[1].view(np.uint32).reshape(n, 3), axis=1))
+
+
+def _lines_moved(ob, scene, jl, kind, raw, g0, old_raw):
+    """``_lines`` of pose reading ``raw`` from the lines ``g0`` of ``old_raw`` when a part of the skeleton moved (a
+    limb dragged): only the joints whose bones moved are worked out again — each joint's sphere and control shape
+    from its own bone, so the numbers are the ones of building every joint — the bones between joints all again.
+    None when that isn't the case or not worth it (the object moved, most joints moved, a control shape that changes
+    with the frame or hidden, Blender's Stick / B-Bone / Envelope looks)."""
+    import numpy as np
+    if g0 is None or kind in STICK_TYPES or kind in SHAPE_TYPES:
+        return None
+    moved = _moved_bones(raw, old_raw)
+    if moved is None:
+        return None
+    ctrl = len(jl.ctrl)
+    plan = jl.widgets
+    if ctrl and (plan is None or plan is not g0.plan or plan[4] != _WIDGET_GEN[0] or plan[3] or not jl.shown.all()):
+        return None
+    plain = g0.plain
+    joints_moved = np.flatnonzero(moved[jl.rows])
+    spheres = joints_moved[plain[joints_moved]]
+    controls = np.flatnonzero(moved[jl.ctrl_src]) if ctrl and g0.ctrl_at is not None else np.zeros(0, np.intp)
+    if 2 * (len(spheres) + len(controls)) > int(plain.sum()) + ctrl:
+        return None                              # most of it moved: build it all
+    w, allm, c_moved, f_moved, _r = _pose_read(ob, scene, jl, raw, joints_moved)
+    g = _Lines()
+    g.centres, g.frames, g.radii, g.plain, g.plan, g.ctrl_at = g0.centres, g0.frames, g0.radii, plain, g0.plan, None
+    if len(joints_moved):
+        g.centres, g.frames = g0.centres.copy(), g0.frames.copy()
+        g.centres[joints_moved], g.frames[joints_moved] = c_moved, f_moved
+    g.before, g.after, chunks = [], [], []
+    if plain.any():
+        pts, owner = g0.before[0]
+        if len(spheres):
+            pts = pts.copy()
+            ring = pts.reshape(-1, 3 * SEGMENTS * 2, 3)
+            ring[np.cumsum(plain)[spheres] - 1] = _spheres(g.centres[spheres], g.frames[spheres],
+                                                           g.radii[spheres]).reshape(len(spheres), -1, 3)
+        g.before.append((pts, owner))
+        chunks.append((pts, jl.owners["spheres"][0], 3 * SEGMENTS * 2))
+    if g0.ctrl_at is not None:
+        pts, joint = g0.before[g0.ctrl_at]
+        if len(controls):
+            pts = pts.copy()
+            at, new = _control_points(jl, w, allm, raw[4], plan, controls)
+            pts[at] = new
+        g.ctrl_at = len(g.before)
+        g.before.append((pts, joint))
+        chunks.append((pts, joint, None))
+    if len(jl.bone_child):
+        child, par = jl.bone_child, jl.bone_par
+        segs, drawn = _bone_array(g.centres[par], g.frames[par], g.radii[par], g.centres[child], g.radii[child])
+        owner = _owner(jl, "bones", drawn, 16, par)
+        if len(segs):
+            segs = segs.astype(np.float32)
+            g.after.append((segs, owner))
+            chunks.append((segs, owner, None))
     g.chunks = chunks
     return g
 
@@ -1477,6 +1584,8 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False, pick=None, keep=None)
     raw = _pose_raw(ob, scene, jl)
     same_jl = old is not None and jl is old.jl
     g = old.lines if same_jl and _lines_hold(old.lines, jl, kind, raw, old.raw) else None
+    if g is None and same_jl:
+        g = _lines_moved(ob, scene, jl, kind, raw, old.lines, old.raw)
     if g is None:
         g = _lines(ob, scene, depsgraph, jl, kind, raw)
     sel, lead = _joint_selection(ob, jl)
