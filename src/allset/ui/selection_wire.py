@@ -78,19 +78,33 @@ def _enabled():
         return False
 
 
+# The position code of every wire shader, the same text in each. ``precise`` keeps its operations in this order, each
+# rounded on its own (no fused multiply-add), and GLSL rounds +, - and * correctly, so the one-object shader and the
+# many-object ones below give the same position from the same values on any GPU. A backend that can't compile it gets
+# the plain code in all of them.
+_POSITION = ["precise vec4 p = mvp * vec4(pos, 1.0); p.z -= bias * p.w; gl_Position = p;"]
+_PLAIN = "gl_Position = mvp * vec4(pos, 1.0); gl_Position.z -= bias * gl_Position.w;"
+
+
 def _sh():
     if not _shader:
         import gpu
-        info = gpu.types.GPUShaderCreateInfo()
-        info.push_constant('MAT4', 'mvp')
-        info.push_constant('VEC4', 'color')
-        info.push_constant('FLOAT', 'bias')
-        info.vertex_in(0, 'VEC3', 'pos')
-        info.fragment_out(0, 'VEC4', 'fragColor')
-        info.vertex_source("void main() { gl_Position = mvp * vec4(pos, 1.0);"
-                           " gl_Position.z -= bias * gl_Position.w; }")
-        info.fragment_source("void main() { fragColor = color; }")
-        _shader.append(gpu.shader.create_from_info(info))
+
+        def make(position):
+            info = gpu.types.GPUShaderCreateInfo()
+            info.push_constant('MAT4', 'mvp')
+            info.push_constant('VEC4', 'color')
+            info.push_constant('FLOAT', 'bias')
+            info.vertex_in(0, 'VEC3', 'pos')
+            info.fragment_out(0, 'VEC4', 'fragColor')
+            info.vertex_source("void main() { " + position + " }")
+            info.fragment_source("void main() { fragColor = color; }")
+            return gpu.shader.create_from_info(info)
+        try:
+            _shader.append(make(_POSITION[0]))
+        except Exception:      # noqa: BLE001
+            _POSITION[0] = _PLAIN
+            _shader.append(make(_PLAIN))
     return _shader[0]
 
 
@@ -107,6 +121,7 @@ def _shaders():
     that one can't be made."""
     if not _many:
         import gpu
+        _sh()                  # settles ``_POSITION`` first: all wire shaders compute the position the same way
 
         def make(index, inputs):
             info = gpu.types.GPUShaderCreateInfo()
@@ -117,8 +132,7 @@ def _shaders():
                 info.vertex_in(slot, kind, name)
             info.fragment_out(0, 'VEC4', 'fragColor')
             info.vertex_source(f"void main() {{ int i = {index}; mat4 mvp = inst.mvp[i];"
-                               " float bias = inst.bias[i / 4][i % 4];"
-                               " gl_Position = mvp * vec4(pos, 1.0); gl_Position.z -= bias * gl_Position.w; }")
+                               " float bias = inst.bias[i / 4][i % 4]; " + _POSITION[0] + " }")
             info.fragment_source("void main() { fragColor = color; }")
             return gpu.shader.create_from_info(info)
         made = []
