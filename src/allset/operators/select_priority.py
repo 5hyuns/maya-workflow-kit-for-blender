@@ -208,6 +208,7 @@ def hits(context, region, rv3d, mouse):
     from ..ui import maya_joints
     maya_view = maya_joints.is_maya_view(space, getattr(getattr(context, "window", None), "workspace", None))
     out = []
+    thin = []      # (row in out, start points, end points) of lines without thickness (curves, IK handles)
     for ob in typed:
         kind = kind_of(ob, targets)
         pri = priority(kind)
@@ -220,11 +221,27 @@ def hits(context, region, rv3d, mouse):
         a, b, reach = _segments(ob, kind, depsgraph)
         if len(a) == 0:
             continue
+        if not np.any(reach):
+            # its distance is found below with the others in one pass (many curve controls: one projection)
+            thin.append((len(out), np.asarray(a, dtype=np.float64).reshape(-1, 3),
+                         np.asarray(b, dtype=np.float64).reshape(-1, 3)))
+            out.append((ob.name, pri, None))
+            continue
         xa, fa = project(np.asarray(a, dtype=np.float64), persp, region.width, region.height)
         xb, fb = project(np.asarray(b, dtype=np.float64), persp, region.width, region.height)
-        width = reach * np.hypot(*(xb - xa).T) if np.any(reach) else None
+        width = reach * np.hypot(*(xb - xa).T)
         d = segments_hit(mouse, xa, xb, fa & fb, width)
         out.append((ob.name, pri, max(d, 0.0)))
+    if thin:
+        owner = np.repeat(np.arange(len(thin)), [len(t[1]) for t in thin])
+        xa, fa = project(np.concatenate([t[1] for t in thin]), persp, region.width, region.height)
+        xb, fb = project(np.concatenate([t[2] for t in thin]), persp, region.width, region.height)
+        dist, _t = segment_distance(mouse, xa, xb)
+        near = np.full(len(thin), np.inf)
+        np.minimum.at(near, owner, np.where(fa & fb, dist, np.inf))   # each object's nearest line in front
+        for (row, _a, _b), d in zip(thin, near):
+            name, pri, _none = out[row]
+            out[row] = (name, pri, max(float(d), 0.0))
     return out
 
 

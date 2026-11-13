@@ -302,3 +302,57 @@ def test_priority_hits_pass_over_meshes_by_type():
         assert best(1.5, 0.5) is None              # inside the circle, away from its line
     ranked = 4                                     # two skeletons, the circle, the IK handle
     assert kinds.calls <= 5 * ranked, (kinds.calls, len(sc.objects))
+
+
+def _reference_hits(ctx, region, rv3d, mouse):
+    """Object by object, each line set projected on its own: what the priority test gives."""
+    from_preselect = import_module(kit.MODULE + ".operators.preselect")
+    dg = ctx.evaluated_depsgraph_get()
+    targets = sp.ik_targets(ctx.scene)
+    out = []
+    for ob in ctx.scene.objects:
+        kind = sp.kind_of(ob, targets)
+        pri = sp.priority(kind)
+        if pri <= sp.DEFAULT or not sp._selectable(ob, None, ctx.view_layer):
+            continue
+        a, b, reach = sp._segments(ob, kind, dg)
+        if len(a) == 0:
+            continue
+        persp = rv3d.perspective_matrix
+        xa, fa = from_preselect.project(a, persp, region.width, region.height)
+        xb, fb = from_preselect.project(b, persp, region.width, region.height)
+        import numpy as np
+        width = reach * np.hypot(*(xb - xa).T) if np.any(reach) else None
+        out.append((ob.name, pri, max(sp.segments_hit(mouse, xa, xb, fa & fb, width), 0.0)))
+    return out
+
+
+def test_curve_controls_are_read_in_one_pass():
+    """Many curve controls (a Maya-style rig): one projection for all of them, the same distances and winner as
+    measuring each on its own."""
+    import math
+    _scene()
+    sc = bpy.context.scene
+    for i in range(60):
+        cu = bpy.data.curves.new(f"ctrl{i}", 'CURVE')
+        spline = cu.splines.new('NURBS')
+        spline.points.add(7)
+        for k, p in enumerate(spline.points):
+            ang = 2 * math.pi * k / 8
+            p.co = (0.3 * math.cos(ang), 0.0, 0.3 * math.sin(ang), 1.0)
+        spline.use_cyclic_u = True
+        o = bpy.data.objects.new(f"ctrl{i}", cu)
+        o.location = (0.7 * (i % 10) - 3.5, -1.0 + (i % 3), 0.7 * (i // 10) - 2.0)
+        sc.collection.objects.link(o)
+    sc.objects["ctrl7"].hide_set(True)
+    sc.objects["ctrl8"].location.y = 30.0          # behind the view: no line in front
+    bpy.context.view_layer.update()
+    ctx, region, rv3d = _view()
+    for mouse in ((200 + 50 * 0.5, 200), (163, 112), (5, 5), (200 - 50 * 3.2, 200 - 50 * 2.0)):
+        want = _reference_hits(ctx, region, rv3d, mouse)
+        with _Count(sp, "project") as projected:
+            got = sp.hits(ctx, region, rv3d, mouse)
+        assert [(n, p) for n, p, _d in got] == [(n, p) for n, p, _d in want], (got, want)
+        assert all(abs(dg - dw) < 1e-9 or dg == dw for (_n, _p, dg), (_n2, _p2, dw) in zip(got, want))
+        assert sp.rank(got, sp.RADIUS_PX) == sp.rank(want, sp.RADIUS_PX)
+        assert projected.calls <= 2 + 2 * 2, projected.calls      # all curves once, each skeleton on its own
