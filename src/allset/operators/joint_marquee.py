@@ -138,14 +138,15 @@ def restore(context, snap):
     from ..ui import channel_box
     scene, objects = context.scene, context.scene.objects
     now = set(context.view_layer.objects.selected.keys())
-    for name in sorted(snap["selected"] - now):
-        ob = objects.get(name)
-        if ob is not None:
-            ob.select_set(True)
-    for name in sorted((now - snap["selected"]) & snap["names"]):
-        ob = objects.get(name)
-        if ob is not None:
-            ob.select_set(False)
+    pick, drop = snap["selected"] - now, (now - snap["selected"]) & snap["names"]
+    if pick or drop:
+        # one pass over the scene: looking an object up by name walks the scene's objects each time
+        for ob in objects:
+            name = ob.name
+            if name in pick:
+                ob.select_set(True)
+            elif name in drop:
+                ob.select_set(False)
     act = snap["active"]
     if act and act in objects and context.view_layer.objects.active != objects[act]:
         context.view_layer.objects.active = objects[act]

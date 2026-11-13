@@ -163,6 +163,36 @@ def test_a_marquee_puts_back_the_selection_it_started_from():
     _object_mode()
 
 
+def test_putting_back_many_objects_walks_the_scene_once():
+    """A box that selected thousands of objects before its joint rules: putting the selection back costs about one
+    pass over the scene (looking each object up by name walked the scene once per object)."""
+    _clear()
+    scene, layer = bpy.context.scene, bpy.context.view_layer
+    obs = []
+    for i in range(3000):
+        ob = bpy.data.objects.new(f"m{i:04d}", None)
+        scene.collection.objects.link(ob)
+        obs.append(ob)
+    _armature("rig", ["r0", "r1"])
+    for ob in obs[:10]:
+        ob.select_set(True)
+    layer.objects.active = obs[0]
+    ctx = bpy.context
+    snap = jm.snapshot(ctx)
+    for ob in obs[10:]:
+        ob.select_set(True)                     # the box picked everything else
+    t = time.perf_counter()
+    names = [ob.name for ob in scene.objects]
+    one_pass = time.perf_counter() - t
+    t = time.perf_counter()
+    jm.restore(ctx, snap)
+    took = time.perf_counter() - t
+    assert [ob.name for ob in scene.objects if ob.select_get()] == [ob.name for ob in obs[:10]]
+    assert len(names) == 3001
+    assert took < 40 * one_pass + 0.02, f"putting back 2990 objects took {took * 1000:.0f} ms " \
+                                        f"(one pass {one_pass * 1000:.1f} ms)"
+
+
 def test_time_slider_shares_out_curves_by_each_paths_bone():
     """Many selected bones: every bone gets exactly its own curves (names with dots, brackets, quotes and
     backslashes too); each curve's path is looked at once, whatever the number of name lengths, and a redraw with
