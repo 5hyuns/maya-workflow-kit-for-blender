@@ -3224,9 +3224,24 @@ def wanted_rows(ob):
     return out
 
 
+_drawing_sigs = {}     # object / bone pointer -> rows_signature while the Channel Box draws (``body``)
+
+
 def rows_signature(ob):
+    """What the lead's text rows are made from. While the Channel Box draws it is found once per object: every
+    custom attribute row asks for it (a control with 30 attributes asked 30 times per redraw)."""
     if ob is None:
         return ""
+    if _drawing_lead:
+        key = ob.as_pointer()
+        sig = _drawing_sigs.get(key)
+        if sig is None:
+            sig = _drawing_sigs[key] = _rows_signature(ob)
+        return sig
+    return _rows_signature(ob)
+
+
+def _rows_signature(ob):
     cons = [(c.name, c.type, weight_name(c)) for c in constraints(ob)]
     opened = sorted(open_nodes(ob))
     if is_bone(ob):
@@ -3956,6 +3971,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         change the selection), and in a dock region kept for the fields' reads until the region has drawn
         (``field_lead``). While a move runs the rows' key states are kept (``row_state``)."""
         _drawing_lead[:] = [lead(context)]
+        _drawing_sigs.clear()
         region, area = context.region, context.area
         if region is not None and region.type == 'WINDOW' and area is not None and area.type == 'PROPERTIES':
             _field_lead[:] = [region.as_pointer(), _generation[0], _drawing_lead[0]]
@@ -3968,6 +3984,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             return ALLSET_PT_channel_box._body(layout, context)
         finally:
             _drawing_lead.clear()
+            _drawing_sigs.clear()
             _holding[0] = False
 
     @staticmethod

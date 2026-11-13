@@ -4,7 +4,8 @@
 - the skeletons of the view layer and the kit deformers a handle (Empty / lattice) drives are found once and kept
   until the scene changes (an object added, removed or linked, a modifier edit, undo, a file load); a removed object
   or a renamed / removed modifier is never handed out;
-- a channel's key state (keyed on this frame or not) reads a long curve's key frames in one call.
+- a channel's key state (keyed on this frame or not) reads a long curve's key frames in one call;
+- the custom attribute rows of a control are matched to their text rows once per draw, not once per attribute.
 The answers are the same as looking through the whole scene (or every key) each time."""
 
 import time
@@ -310,3 +311,47 @@ def test_key_state_of_a_long_curve_costs_little():
     print(f"10 key states of a 20,000-key curve: {ms:.2f} ms")
     assert states == ['KEYED'] * 10
     assert ms < 40, f"10 key states of a 20,000-key curve took {ms:.1f} ms"
+
+
+class _Recorder:
+    """A stand-in UILayout recording the owner of every ``prop``."""
+
+    def __init__(self, log=None):
+        self.log = [] if log is None else log
+
+    def __getattr__(self, name):
+        if name in ("row", "column", "split", "box", "column_flow", "grid_flow"):
+            return lambda *a, **k: _Recorder(self.log)
+        if name == "prop":
+            def prop(owner, path, **kw):
+                self.log.append((owner, path))
+            return prop
+        if name in ("menu", "operator", "label", "popover"):
+            return lambda *a, **k: type("Props", (), {})()
+        return lambda *a, **k: None
+
+    def __setattr__(self, name, value):
+        if name == "log":
+            object.__setattr__(self, name, value)
+
+
+def test_custom_attribute_rows_are_matched_once_per_draw():
+    _clear()
+    ob = bpy.data.objects.new("ctrl", None)
+    bpy.context.scene.collection.objects.link(ob)
+    names = [f"attr{i:02d}" for i in range(30)]
+    for i, name in enumerate(names):
+        ob[name] = float(i)
+    bpy.context.view_layer.update()
+    for o in bpy.context.view_layer.objects:
+        o.select_set(o == ob)
+    bpy.context.view_layer.objects.active = ob
+    cb.rebuild_rows()
+    rec = _Recorder()
+    with _Count(cb, "custom_keys") as walks:
+        cb.ALLSET_PT_channel_box.body(rec, bpy.context)
+    rows = [owner.name for owner, path in rec.log if isinstance(owner, cb.ALLSET_PG_cb_row) and path == "text"]
+    # every custom attribute draws its text row (the rows matched the lead), in order
+    assert rows == names, rows
+    # the attribute list is read for the lines (two passes) and once for the rows' match, not once per attribute
+    assert walks.calls <= 4, f"{walks.calls} reads of the attribute list for one draw of 30 attributes"
