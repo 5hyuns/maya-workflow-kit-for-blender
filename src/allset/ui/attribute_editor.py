@@ -29,6 +29,7 @@ from .. import results
 from .. import compat, live_refs
 from ..operators import display
 from . import ae_layout
+from .maya_dock import section
 from . import cb_entry, channel_box
 
 DOCK_ITEMS = (('CHANNEL_BOX', "Channel Box / Layer Editor", "Maya Channel Box and Layer Editor"),
@@ -503,9 +504,7 @@ def section_body(body):
 
 def draw_sections(layout, context, ob, target, sections, layout_id, prefix=""):
     for sec in sections:
-        header, body = layout.panel(f"allset_ae_{layout_id}_{prefix}{sec.name}",
-                                    default_closed=not sec.open)
-        header.label(text=sec.name)
+        body = section(layout, f"allset_ae_{layout_id}_{prefix}{sec.name}", sec.name, default_closed=not sec.open)
         if body is None:
             continue
         col = section_body(body)
@@ -532,8 +531,7 @@ def modifier_props(md):
 
 
 def draw_history(layout, context, ob, md):
-    header, body = layout.panel(f"allset_ae_history_{md.type}", default_closed=False)
-    header.label(text=f"{nice_type(modifier_node(ob, md)[1])} History")
+    body = section(layout, f"allset_ae_history_{md.type}", f"{nice_type(modifier_node(ob, md)[1])} History")
     if body is not None:
         col = section_body(body)
         col.prop(md, "show_viewport", text="Enabled (Node State)")
@@ -563,8 +561,8 @@ def constraint_props(con):
 
 def draw_constraint(layout, context, node, con):
     """A Maya constraint node tab: target weight (= influence), then the constraint's settings."""
-    header, body = layout.panel(f"allset_ae_constraint_{con.type}", default_closed=False)
-    header.label(text=f"{channel_box.maya_constraint_type(con, con.type.title())} Attributes")
+    body = section(layout, f"allset_ae_constraint_{con.type}",
+                   f"{channel_box.maya_constraint_type(con, con.type.title())} Attributes")
     if body is not None:
         col = section_body(body)
         if hasattr(con, "enabled"):
@@ -582,8 +580,7 @@ def draw_constraint(layout, context, node, con):
 
 def draw_extra(layout, owner, layout_id):
     keys = [k for k in owner.keys() if not k.startswith(("_", "allset_", "cycles"))]
-    header, body = layout.panel(f"allset_ae_{layout_id}_extra", default_closed=True)
-    header.label(text="Extra Attributes")
+    body = section(layout, f"allset_ae_{layout_id}_extra", "Extra Attributes", default_closed=True)
     if body is None:
         return
     body = section_body(body)
@@ -600,8 +597,7 @@ def draw_extra(layout, owner, layout_id):
 def draw_extrude_history(layout, context, rec):
     """The polyExtrudeFace tab: Maya's "Poly Extrude Face History" with the kit record's values (the same text
     proxies as Channel Box INPUTS, ui/in_view.py); also polyExtrudeEdge / Vertex and polyBevel3."""
-    header, body = layout.panel("allset_ae_history_extrude", default_closed=False)
-    header.label(text=f"{nice_type(rec.spec.node_type)} History")
+    body = section(layout, "allset_ae_history_extrude", f"{nice_type(rec.spec.node_type)} History")
     if body is None:
         return
     hist = context.window_manager.allset_history
@@ -863,8 +859,7 @@ def draw_bottom(layout, context=None):
 def draw_shading_group(layout, key, mat):
     """Maya's shading group tab (AEshadingEngineTemplate: Shading Group Attributes): the surface material opens
     its own tab; Blender has no volume / displacement slots of their own on a shading group."""
-    header, box = layout.panel("ae_shading_group", default_closed=False)
-    header.label(text="Shading Group Attributes")
+    box = section(layout, "ae_shading_group", "Shading Group Attributes")
     if box is None:
         return
     box = section_body(box)

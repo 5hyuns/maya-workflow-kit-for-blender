@@ -826,6 +826,40 @@ def content_layout(layout, context):
     return StripClear(layout, f)
 
 
+# Blender's layout.panel header takes a click anywhere across the region at its height, before the strip's keymap
+# item, so in the stack a section header over a tab swallowed the tab click. There a section is a plain disclosure
+# row inside the content column instead (open state kept for the session).
+_sections_open = {}      # section idname -> open
+
+
+def section(layout, idname, label, default_closed=False):
+    """A collapsible section: ``layout.panel`` outside the tab stack, a strip-safe row in it. Returns the body or None."""
+    if area_role(bpy.context) != 'STACK':
+        header, body = layout.panel(idname, default_closed=default_closed)
+        header.label(text=label)
+        return body
+    is_open = _sections_open.setdefault(idname, not default_closed)
+    row = layout.row()
+    row.alignment = 'LEFT'
+    row.operator(ALLSET_OT_dock_section.bl_idname, text=label, emboss=False,
+                 icon='DISCLOSURE_TRI_DOWN' if is_open else 'DISCLOSURE_TRI_RIGHT').section = idname
+    return layout.column() if is_open else None
+
+
+class ALLSET_OT_dock_section(bpy.types.Operator):
+    """Open or close this section"""
+    bl_idname = "allset.dock_section"
+    bl_label = "Toggle Section"
+    bl_options = {'INTERNAL'}
+
+    section: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        _sections_open[self.section] = not _sections_open.get(self.section, True)
+        redraw()
+        return {'FINISHED'}
+
+
 def strip_tabs(kinds, width, height, scale, measure=None):
     """[(kind, x0, y0, x1, y1)] region rects of the strip's tabs (y up, first tab at the top)."""
     if measure is None:
@@ -1244,7 +1278,7 @@ def close_floating():
 
 
 classes = (ALLSET_OT_dock_handle, ALLSET_OT_dock_back, ALLSET_OT_dock_tab, ALLSET_OT_panel_show,
-           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_PT_maya_dock)
+           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_OT_dock_section, ALLSET_PT_maya_dock)
 
 
 def register():

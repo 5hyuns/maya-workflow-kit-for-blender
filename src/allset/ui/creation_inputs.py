@@ -152,8 +152,8 @@ def draw_ae(layout, context, ob):
     _owner, node = prim_history.node_of(ob)
     if node is None:
         return
-    header, body = layout.panel("allset_ae_creation", default_closed=False)
-    header.label(text=f"{nice_type(node['type'])} History")
+    from .maya_dock import section
+    body = section(layout, "allset_ae_creation", f"{nice_type(node['type'])} History")
     if body is not None:
         from .attribute_editor import section_body
         _rows(section_body(body).column(align=True), context, node, 0.42)     # inset content area (#194)
