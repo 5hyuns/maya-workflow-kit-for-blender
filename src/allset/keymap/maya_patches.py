@@ -511,6 +511,11 @@ def patch_concepts(kd):
     _add(kd, "Mesh", "allset.component_command", make_event("D", ctrl=True), {"item": "Edit/Duplicate"})
     _add(kd, "Object Mode", "allset.duplicate_with_transform", make_event("D", shift=True))
     _add(kd, "Object Mode", "allset.duplicate_special", make_event("D", shift=True, ctrl=True))
+    # picked joints too: Duplicate with Transform repeats the change between the last copy and its joint, Duplicate
+    # Special copies with its options (IC binds neither key in these keymaps)
+    for km in ("Pose", "Armature"):
+        _add(kd, km, "allset.duplicate_with_transform", make_event("D", shift=True))
+        _add(kd, km, "allset.duplicate_special", make_event("D", shift=True, ctrl=True))
     _add(kd, "Object Mode", "allset.delete_history", make_event("D", shift=True, alt=True))
 
 

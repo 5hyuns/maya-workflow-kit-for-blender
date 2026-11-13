@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Smart Duplicate / Smart Extrude: Shift+drag a Move/Rotate/Scale manipulator
-duplicates the selected objects, or extrudes the selected faces/edges/vertices, and the drag
-transforms the copies / new components (Maya's smart duplicate / smart extrude).
+duplicates the selected objects (or the picked joints, with the joints below them), or extrudes the selected
+faces/edges/vertices, and the drag transforms the copies / new components (Maya's smart duplicate / smart extrude).
 
 Blender's transform gizmo is C. Its keymap
 (``Generic Gizmo Maybe Drag``) runs ``gizmogroup.gizmo_tweak`` for any Shift; the
@@ -68,12 +68,17 @@ def _selected_coords(ob):
 
 
 def kind(context):
-    """'DUPLICATE', 'EXTRUDE' or None for a Shift+press on the manipulator."""
+    """'DUPLICATE', 'DUPLICATE_JOINTS', 'EXTRUDE' or None for a Shift+press on the manipulator."""
     if not from_xform_gizmo(context) or component_pivot_edit(context):
         return None
     if context.mode == 'OBJECT':
         if context.selected_objects and _pref(context, "smart_duplicate"):
             return 'DUPLICATE'
+        return None
+    if context.mode in {'POSE', 'EDIT_ARMATURE'}:
+        from . import joint_duplicate
+        if _pref(context, "smart_duplicate") and joint_duplicate.any_picked(context):
+            return 'DUPLICATE_JOINTS'     # picked joints (Pose Mode, joint Edit Mode)
         return None
     if context.mode == 'EDIT_MESH' and _pref(context, "smart_extrude"):
         if any(_selected_coords(ob) for ob in _edit_meshes(context)):
@@ -91,6 +96,79 @@ def start_duplicate(context):
     return {"kind": 'DUPLICATE', "copies": [o.name for o in copies],
             "matrices": [o.matrix_world.copy() for o in copies],
             "originals": [o.name for o in originals], "active": active.name if active else None}
+
+
+def _joint_places(arms):
+    """{(skeleton, bone): where the bone is} for the copies in ``arms``: the joint (its rest) and its channels, read
+    the same way in any mode (a click that went on to selection may have left the mode meanwhile)."""
+    out = {}
+    for arm_name, info in arms.items():
+        ob = bpy.data.objects.get(arm_name)
+        if ob is None:
+            continue
+        for name in info["copies"]:
+            bone = ob.data.edit_bones.get(name) if ob.mode == 'EDIT' else ob.data.bones.get(name)
+            pb = ob.pose.bones.get(name)
+            if bone is None or pb is None:
+                continue
+            rest = bone.matrix if ob.mode == 'EDIT' else bone.matrix_local
+            out[arm_name, name] = (*(v for row in rest for v in row), bone.length,
+                                   *(v for row in pb.matrix_basis for v in row))
+    return out
+
+
+def start_duplicate_joints(context):
+    """Smart Duplicate on picked joints: Maya Duplicate of them (copies picked), the drag then moves the copies."""
+    from . import joint_duplicate
+    arms = {}
+    for ob, names in joint_duplicate._picked(context).items():
+        bones = ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones
+        arms[ob.name] = {"picked": names, "before": {b.name for b in bones},
+                         "active": bones.active.name if bones.active else None}
+    joint_duplicate.duplicate(context)
+    for arm_name, info in arms.items():
+        ob = bpy.data.objects[arm_name]
+        bones = ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones
+        info["copies"] = [b.name for b in bones if b.name not in info["before"]]
+        del info["before"]
+    return {"kind": 'DUPLICATE_JOINTS', "arms": arms, "places": _joint_places(arms)}
+
+
+def _revert_joints(state):
+    """Take back joint copies whose drag never moved them: the copies go (through Edit Mode, whatever mode the
+    skeleton is in now: a click that went on to selection may have left its mode), the joints picked before are
+    picked again."""
+    from . import joint_selection
+    from ..ui.channel_box import set_bone_selected
+    for ob in [ob for ob in (bpy.data.objects.get(n) for n in state["arms"]) if ob is not None]:
+        info = state["arms"][ob.name]
+        start = ob.mode
+        if start != 'EDIT':
+            bpy.context.view_layer.update()     # the copies' pose channels get their bones before Edit Mode
+            with bpy.context.temp_override(active_object=ob, object=ob):
+                bpy.ops.object.mode_set(mode='EDIT')
+        ebs = ob.data.edit_bones
+        for name in reversed(info["copies"]):
+            eb = ebs.get(name)
+            if eb is not None:
+                ebs.remove(eb)
+        if start == 'EDIT':
+            for eb in ebs:
+                eb.select = eb.select_head = eb.select_tail = False
+            for name in info["picked"]:
+                if name in ebs:
+                    joint_selection._pick_shape(ebs[name], True, False)
+            if info["active"] in ebs:
+                ebs.active = ebs[info["active"]]
+            continue
+        with bpy.context.temp_override(active_object=ob, object=ob):
+            bpy.ops.object.mode_set(mode=start)
+        for pb in ob.pose.bones:
+            set_bone_selected(pb, pb.name in info["picked"])
+        if info["active"] in ob.data.bones:
+            ob.data.bones.active = ob.data.bones[info["active"]]
+    from ..ui import layer_joints
+    layer_joints.bump()
 
 
 # Maya 2026 (#183): Shift+drag with vertices selected runs polyExtrudeVertex with Width 0.5 and Length 0,
@@ -139,6 +217,11 @@ def start_extrude(context):
 
 
 def moved(state):
+    if state["kind"] == 'DUPLICATE_JOINTS':
+        now = _joint_places(state["arms"])
+        if set(now) != set(state["places"]):
+            return True    # a copy went meanwhile (undo, another mode): keep what is there
+        return any(abs(a - b) > EPS for key, place in now.items() for a, b in zip(place, state["places"][key]))
     if state["kind"] == 'DUPLICATE':
         for name, m in zip(state["copies"], state["matrices"]):
             ob = bpy.data.objects.get(name)
@@ -158,6 +241,9 @@ def moved(state):
 
 def revert(state):
     """Take back a copy / extrusion whose transform was cancelled (no undo step exists)."""
+    if state["kind"] == 'DUPLICATE_JOINTS':
+        _revert_joints(state)
+        return
     if state["kind"] == 'DUPLICATE':
         for name in state["copies"]:
             ob = bpy.data.objects.get(name)
@@ -190,6 +276,12 @@ def cleanup(state):
 def _last_op():
     ops = bpy.context.window_manager.operators
     return ops[-1].as_pointer() if len(ops) else 0
+
+
+def _last_is_transform():
+    from .manip_scale import TRANSFORM_MODALS
+    ops = bpy.context.window_manager.operators
+    return bool(len(ops)) and ops[-1].bl_idname.startswith(TRANSFORM_MODALS)
 
 
 def _transform_running(window):
@@ -276,13 +368,19 @@ def handle_from_gizmo(context, gz):
 def finish(state, window, area, region):
     """After the transform: remember its handle; keep a moved copy / extrusion, take back
     one that didn't move."""
+    joints = state["kind"] == 'DUPLICATE_JOINTS'
     if state["kind"] == 'PRESS' or moved(state):
         remember_last_op(state["last_op"])
-    elif _last_op() != state["last_op"]:
+    elif _last_op() != state["last_op"] and (not joints or _last_is_transform()):
         # Confirmed without moving (Shift+click): the transform pushed the only undo
         # step (the duplicate/extrude was a nested call), so one undo is the state before.
+        # Joints: only after the transform's own step — a click that went on to selection may have left Edit Mode,
+        # and an undo back into it right then crashes Blender; such copies are taken back by hand.
         with bpy.context.temp_override(window=window, area=area, region=region):
             bpy.ops.ed.undo()
+    elif joints and window is not None:
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            revert(state)    # taken back by hand, through Edit Mode
     else:
         revert(state)    # cancelled: no undo step, take it back by hand
     cleanup(state)
@@ -325,7 +423,7 @@ class ALLSET_OT_manip_release(bpy.types.Operator):
 
 
 # In-view label while a Shift+drag copies / extrudes (the names of the tool options that turn it off)
-LABELS = {'DUPLICATE': "Shift Duplicate", 'EXTRUDE': "Shift Extrude"}
+LABELS = {'DUPLICATE': "Shift Duplicate", 'DUPLICATE_JOINTS': "Shift Duplicate", 'EXTRUDE': "Shift Extrude"}
 
 
 def label(kind):
@@ -399,7 +497,8 @@ class ALLSET_OT_manip_duplicate(bpy.types.Operator):
         what = kind(context)
         if what is None:
             return None
-        state = start_duplicate(context) if what == 'DUPLICATE' else start_extrude(context)
+        start = {'DUPLICATE': start_duplicate, 'DUPLICATE_JOINTS': start_duplicate_joints}.get(what, start_extrude)
+        state = start(context)
         if context.window is None:
             cleanup(state)
             return None

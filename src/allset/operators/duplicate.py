@@ -5,7 +5,8 @@ Transform (Shift+D).
 Duplicate Special's options start like Maya's (copy, 1 copy, grouped under the parent, translate / rotate 0,
 scale 1). Edit > Duplicate Special runs with the saved options and no dialog (its option box sets them); like Maya
 it has no Adjust Last Operation panel. Shift+D repeats the move between the last copy and its source. Maya
-duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
+duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``). On picked joints (Pose Mode, joint Edit
+Mode) all three copy the joints with the joints below them (``joint_duplicate``).
 
 What a copy takes from the original's inputs (#347), like Maya:
 
@@ -503,9 +504,11 @@ class ALLSET_OT_duplicate_special(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        return context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'}
 
     def execute(self, context):
+        if context.mode != 'OBJECT':
+            return self._joints(context)
         roots = selected_roots(context.selected_objects)
         if not roots:
             self.report({'WARNING'}, "Nothing selected")
@@ -534,6 +537,28 @@ class ALLSET_OT_duplicate_special(bpy.types.Operator):
         _select(context, made)
         return {'FINISHED'}
 
+    def _joints(self, context):
+        """Picked joints (Pose Mode, joint Edit Mode): copies with the joints below them; a joint can't be an
+        instance, a group can't hold a joint and a joint copy takes no inputs, so those copy plainly (and say so)."""
+        from . import joint_duplicate
+        notes = []
+        if self.geometry_type == 'INSTANCE':
+            notes.append("joints have no instances: copied")
+        if self.group_under == 'NEW_GROUP':
+            notes.append("a group can't hold joints: the copies stay under the parent")
+        plain = not (self.input_graph or self.input_connections)
+        if not plain:
+            notes.append("joint copies take no inputs")
+        under = joint_duplicate.WORLD if self.group_under == 'WORLD' else joint_duplicate.PARENT
+        place = joint_duplicate.offsets_place(self.translate, self.rotate, self.scale, under) if plain else None
+        made = joint_duplicate.duplicate(context, count=self.copies, place=place, under=under)
+        if not made:
+            self.report({'WARNING'}, "Nothing selected")
+            return {'CANCELLED'}
+        if notes:
+            self.report({'INFO'}, "Duplicate Special: " + "; ".join(notes))
+        return {'FINISHED'}
+
 
 class ALLSET_OT_duplicate_with_transform(bpy.types.Operator):
     """Duplicate and repeat the transform between the last duplicate and its source,
@@ -544,9 +569,15 @@ class ALLSET_OT_duplicate_with_transform(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        return context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'}
 
     def execute(self, context):
+        if context.mode != 'OBJECT':
+            from . import joint_duplicate          # picked joints (Pose Mode, joint Edit Mode)
+            if not joint_duplicate.duplicate_with_transform(context):
+                self.report({'WARNING'}, "Nothing selected")
+                return {'CANCELLED'}
+            return {'FINISHED'}
         roots = selected_roots(context.selected_objects)
         if not roots:
             self.report({'WARNING'}, "Nothing selected")

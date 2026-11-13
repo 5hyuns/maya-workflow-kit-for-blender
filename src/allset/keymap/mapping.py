@@ -258,7 +258,9 @@ ENTRIES = {
     "DeleteHistory": _e("KIT", (OBJ, "allset.delete_history", {}),
                         note="모디파이어 + 셰이프 키를 메시에 굽기"),
     "DuplicateSpecial": _e("KIT", (OBJ, "allset.duplicate_special", {}),
-                           note="복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation)"),
+                           note="복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation); 고른 조인트 (Pose / "
+                                "조인트 Edit) = 아래 조인트까지, 사본 수 · 월드 이동 · orient 축 회전 · 자기 축 스케일 누적, "
+                                "World = 같은 스켈레톤의 새 루트"),
     "ShowAttributeEditorOrChannelBox": _e("KIT", (OBJ, "allset.ae_toggle", {}),
                                           note="CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, #65), Graph Editor / Dope Sheet / NLA / 채널 목록도 (#96)"),
     "SelectAll": _e("KIT", (OBJ, "object.select_all", {"action": 'SELECT'}),
@@ -266,7 +268,7 @@ ENTRIES = {
     "SelectNone": _e("KIT", (OBJ, "allset.select_none", {}),
                      note="allset.select_none clears object/bone selection and the active object, leaving component/Pose mode"),
     "DuplicateWithTransform": _e("KIT", (OBJ, "allset.duplicate_with_transform", {}),
-                                 note="직전 복제의 변환을 반복"),
+                                 note="직전 복제의 변환을 반복 (고른 조인트도: Pose / 조인트 Edit)"),
     "AssignNewMaterial": _e("KIT", (OBJ, "allset.assign_new_material", {}),
                             note="재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만)"),
     # --- menu sets / last tool / box zoom ---
