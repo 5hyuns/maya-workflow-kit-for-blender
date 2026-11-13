@@ -15,14 +15,21 @@ def _set_flags(seq, prop):
     return np.flatnonzero(flags)
 
 
-def clear(context):
+def clear(context, keep=None):
     """Clear latent bone selections too, so reselecting a rig cannot revive them. Only the bones that are selected
     are written: a write tags the skeleton (and the meshes it deforms) for a new evaluation even when the value
-    stays the same."""
+    stays the same.
+
+    ``keep``: {skeleton pointer: pose bone names} the caller selects right after, with a new lead bone. Those of them
+    that are selected stay as they are instead of going off and on again (the same end state), and the lead bone of
+    such a skeleton is left for the caller to set. Returns the pointers of the skeletons cleared."""
     from ..ui.channel_box import set_bone_selected
+    keep = keep or {}
+    cleared = set()
     for ob in context.view_layer.objects:
         if ob is None or ob.type != 'ARMATURE':
             continue
+        cleared.add(ob.as_pointer())
         if ob.mode == 'EDIT':
             ebs = ob.data.edit_bones
             picked = set()
@@ -34,10 +41,39 @@ def clear(context):
             if ebs.active is not None:
                 ebs.active = None
         pbs = ob.pose.bones
+        stay = keep.get(ob.as_pointer())
         for i in _set_flags(pbs, "select").tolist():
-            set_bone_selected(pbs[i], False)
-        if ob.data.bones.active is not None:
+            pb = pbs[i]
+            if stay is None or pb.name not in stay:
+                set_bone_selected(pb, False)
+        if stay is None and ob.data.bones.active is not None:
             ob.data.bones.active = None
+    return cleared
+
+
+def _switches(context, ob):
+    """``bpy.ops.object.mode_set`` with ``ob`` as the active object switches its mode (else it raises before
+    switching): Blender's poll (an editable object not disabled in viewports) and no transform running, which
+    blocks every mode switch (object_edit.cc ``object_mode_set_ok_or_report``)."""
+    try:
+        with context.temp_override(active_object=ob):
+            if not bpy.ops.object.mode_set.poll():
+                return False
+        wm = context.window_manager
+        return not any(op.bl_idname.startswith("TRANSFORM_OT_") for w in wm.windows for op in w.modal_operators)
+    except (AttributeError, ReferenceError, RuntimeError, TypeError):
+        return False
+
+
+def _write_joints(ob, want):
+    """Give skeleton ``ob``'s pose bones the selection ``want`` (bools in bone order), writing only those that
+    differ."""
+    from ..ui.channel_box import set_bone_selected
+    pbs = ob.pose.bones
+    now = np.zeros(len(pbs), bool)
+    pbs.foreach_get("select", now)
+    for i in np.flatnonzero(now != want).tolist():
+        set_bone_selected(pbs[i], bool(want[i]))
 
 
 def _collection_hidden(bone):
@@ -369,18 +405,38 @@ def select(context, ob, name, shift=False, ctrl=False):
         return False
     if context.mode != 'OBJECT' and context.active_object != ob:
         bpy.ops.object.mode_set(mode='OBJECT')
+    # The joint is written before the switch into Pose Mode: a mode switch first evaluates what is pending, so the
+    # joint is evaluated with the deselection, not again after the switch (entering Pose Mode changes no bone
+    # selection: pose_edit.cc ``ED_object_posemode_enter_ex``). Not when the switch may fail (the joint would stay
+    # picked) or comes from Edit Mode (leaving it writes the edit bones' selection and lead into the bones).
+    early = (ob.mode == 'POSE' or (ob.mode == 'OBJECT' and _switches(context, ob))) and _in_layer(context, ob)
     if not shift and not ctrl:
-        clear(context)
+        clear(context, {ob.as_pointer(): {name}} if early else None)
         for other in context.selected_objects:
             if other != ob:
                 other.select_set(False)
     ob.select_set(True)
     context.view_layer.objects.active = ob
+    if early:
+        pb = ob.pose.bones[name]
+        if not bone_selected(pb):
+            set_bone_selected(pb, True)
+        ob.data.bones.active = ob.data.bones[name]
     if ob.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
-    set_bone_selected(ob.pose.bones[name], True)
-    ob.data.bones.active = ob.data.bones[name]
+    if not early:
+        set_bone_selected(ob.pose.bones[name], True)
+        ob.data.bones.active = ob.data.bones[name]
     return True
+
+
+def _in_layer(context, ob):
+    """``ob`` is in the view layer (selecting it or making it active would raise otherwise): a selected or visible
+    object has its base there."""
+    try:
+        return ob.select_get() or ob.visible_get() or any(o == ob for o in context.view_layer.objects)
+    except (AttributeError, ReferenceError, RuntimeError, TypeError):
+        return False
 
 
 def _pose_picks(context, ob, names):
@@ -423,7 +479,7 @@ def select_many(context, ob, names, shift=False, ctrl=False):
     return True
 
 
-def select_groups(context, groups, shift=False, ctrl=False):
+def select_groups(context, groups, shift=False, ctrl=False, restored=None):
     """``select_many`` on each (skeleton, names) of ``groups`` in turn: the first with ``shift`` / ``ctrl``, the rest
     added (a replace / add marquee over several skeletons).
 
@@ -433,13 +489,25 @@ def select_groups(context, groups, shift=False, ctrl=False):
     one into Pose Mode: leave the mode the drag started in, the replace's clearing, the skeletons selected, the last
     one active, Pose Mode (every selected skeleton enters it, as the last skeleton's switch did), then each
     skeleton's joints with its last joint as its lead. The same objects, modes, joints and leads as skeleton by
-    skeleton. Anything else goes skeleton by skeleton."""
+    skeleton. Anything else goes skeleton by skeleton.
+
+    ``restored``: {skeleton pointer: (skeleton, its pose bones' selection as bools in bone order)}, the joint
+    selection the caller puts back before the picks (the one a marquee started from) and has not written yet. It is
+    written first; or, when the switches can't fail, with the joints before the switch into Pose Mode (see
+    ``select``), only where the end state differs: a replace clears every skeleton of the view layer anyway."""
     groups = [(ob, list(names)) for ob, names in groups if names]
+    restored = restored or {}
     one_by_one = (len(groups) < 2 or shift != ctrl or context.mode not in {'OBJECT', 'POSE'}
                   or len({ob.as_pointer() for ob, _names in groups}) < len(groups)
                   or any(ob.library is not None or not _pose_picks(context, ob, names) for ob, names in groups)
                   # Object Mode with a skeleton left in Pose Mode: only a switch from Pose Mode would take it out
                   or (context.mode == 'OBJECT' and any(o.mode == 'POSE' for o in context.view_layer.objects)))
+    early = (not one_by_one and (context.mode == 'OBJECT' or _switches(context, context.active_object))
+             and _switches(context, groups[-1][0])
+             and all(ob.mode != 'EDIT' and _in_layer(context, ob) for ob, _names in groups))
+    if not early:
+        for ob, want in restored.values():
+            _write_joints(ob, want)
     if one_by_one:
         result = False
         for i, (ob, names) in enumerate(groups):
@@ -447,30 +515,43 @@ def select_groups(context, groups, shift=False, ctrl=False):
                 shift, ctrl = True, True
             result = select_many(context, ob, names, shift, ctrl)
         return result
-    from ..ui.channel_box import bone_selected, set_bone_selected
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     first = groups[0][0]
+    cleared = set()
     if not shift:
-        clear(context)
+        cleared = clear(context, {ob.as_pointer(): set(names) for ob, names in groups} if early else None)
         for other in context.selected_objects:
             if other != first:
                 other.select_set(False)
+    if early:
+        for ptr, (ob, want) in restored.items():
+            if ptr not in cleared:
+                _write_joints(ob, want)
     for ob, _names in groups:
         ob.select_set(True)
     last = groups[-1][0]
     context.view_layer.objects.active = last
+    if early:
+        _pick_groups(groups, not shift)     # a replace cleared the leads: each is set again
     if last.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
+    if not early:
+        _pick_groups(groups, False)
+    return True
+
+
+def _pick_groups(groups, lead):
+    """Select each group's joints, its last joint the skeleton's lead (``lead``: set even when it is already)."""
+    from ..ui.channel_box import bone_selected, set_bone_selected
     for ob, names in groups:
         pbs = ob.pose.bones
         for n in names:
             pb = pbs[n]
             if not bone_selected(pb):
                 set_bone_selected(pb, True)
-        if ob.data.bones.active != ob.data.bones[names[-1]]:
+        if lead or ob.data.bones.active != ob.data.bones[names[-1]]:
             ob.data.bones.active = ob.data.bones[names[-1]]
-    return True
 
 
 def leave(context, clear_selection=False):

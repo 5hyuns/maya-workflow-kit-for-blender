@@ -116,11 +116,12 @@ def snapshot(context):
             "active": act.name if act else None, "bones": bones}
 
 
-def _changed(seq, names, want, props):
+def _changed(seq, names, want, props, now=None):
     """Indices of ``seq`` items whose ``props`` differ from ``want`` (rows of ``snapshot``'s names), with the wanted
-    row: by index while the items are the same, else by name."""
+    row: by index while the items are the same, else by name. ``now``: their flags, when read already."""
     import numpy as np
-    now = _flags(seq, props)
+    if now is None:
+        now = _flags(seq, props)
     if seq.keys() == names:
         return [(int(i), want[i]) for i in np.flatnonzero((now != want).any(axis=1))]
     rows = dict(zip(names, want))
@@ -132,10 +133,13 @@ def _changed(seq, names, want, props):
     return out
 
 
-def restore(context, snap):
+def restore(context, snap, defer=False):
     """Back to ``snapshot``. Only what differs is written: a write makes Blender evaluate the skeleton (and what it
-    deforms) again even with the same value."""
+    deforms) again even with the same value. ``defer``: the joint selection of skeletons not in Edit Mode is not
+    written but returned, {skeleton pointer: (skeleton, its pose bones' selection as bools)} for those that differ
+    (``joint_selection.select_groups`` writes it with the picks)."""
     from ..ui import channel_box
+    later = {}
     scene, objects = context.scene, context.scene.objects
     now = set(context.view_layer.objects.selected.keys())
     pick, drop = snap["selected"] - now, (now - snap["selected"]) & snap["names"]
@@ -163,11 +167,20 @@ def restore(context, snap):
                 ebs.active = lead
         elif kind == 'POSE':
             pbs = ob.pose.bones
-            for i, want in _changed(pbs, names, states, ("select",)):
-                channel_box.set_bone_selected(pbs[i], bool(want[0]))
+            now = _flags(pbs, ("select",))
+            changes = _changed(pbs, names, states, ("select",), now)
+            if defer and changes:
+                want = now[:, 0].copy()
+                for i, row in changes:
+                    want[i] = bool(row[0])
+                later[ob.as_pointer()] = (ob, want)
+            elif not defer:
+                for i, want in changes:
+                    channel_box.set_bone_selected(pbs[i], bool(want[0]))
             lead = ob.data.bones.get(active) if active else None
             if ob.data.bones.active != lead:
                 ob.data.bones.active = lead
+    return later
 
 
 def region_of(op):
@@ -210,9 +223,10 @@ def apply(context, poly, mode, snap):
         picks.extend((ob, name) for name in maya_joints.region_pick(context, ob, poly))
     if not picks:
         return []
-    restore(context, snap)
     shift, ctrl = modifiers(mode)
     if mode in {'SET', 'ADD'}:
+        # the joints of the selection the drag started from go back with the picks (a replace clears most of them)
+        restored = restore(context, snap, defer=True)
         groups = []                           # the picks skeleton by skeleton, in order
         for ob, name in picks:
             if groups and groups[-1][0] == ob:
@@ -220,8 +234,9 @@ def apply(context, poly, mode, snap):
             else:
                 groups.append((ob, [name]))
         # the first skeleton with the drag's modifiers, the rest of a replace adds
-        joint_selection.select_groups(context, groups, shift, ctrl)
+        joint_selection.select_groups(context, groups, shift, ctrl, restored)
         return [n for _o, n in picks]
+    restore(context, snap)
     for ob, name in picks:                    # toggle / remove: joint by joint
         joint_selection.select(context, ob, name, shift, ctrl)
     return [n for _o, n in picks]
