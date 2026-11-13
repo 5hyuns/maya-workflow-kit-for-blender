@@ -442,6 +442,21 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Viewport Shading Controls",
         description="Show Blender's shading modes and settings at the right of the Maya viewport toolbar",
         default=True, update=_update_selection_wire)
+    def _update_outliner(self, context):
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'OUTLINER':
+                    area.tag_redraw()
+
+    outliner_select_column: bpy.props.BoolProperty(
+        name="Outliner Selectable", description="Blender's selectable arrow at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
+    outliner_eye_column: bpy.props.BoolProperty(
+        name="Outliner Visibility", description="Blender's eye at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
+    outliner_render_column: bpy.props.BoolProperty(
+        name="Outliner Render", description="Blender's render camera at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
     menu_set: bpy.props.EnumProperty(
         name="Menu Set", description="Maya menu set: which menus follow the common ones",
         items=lambda self, context: _menu_set_items(), default=0)
@@ -698,6 +713,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "in_view_messages")
         row.prop(self, "option_boxes_floating")
+        row = box.row()
+        row.prop(self, "outliner_select_column")
+        row.prop(self, "outliner_eye_column")
+        row.prop(self, "outliner_render_column")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps
