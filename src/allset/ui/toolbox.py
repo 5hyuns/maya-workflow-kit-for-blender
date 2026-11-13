@@ -270,7 +270,7 @@ def column_width(context=None):
 # stack 480 px x the scale (Maya resizes the stack when its tab changes, ``tab_changed``).
 DOCK_MAYA_PX = 277
 DOCK_MAX_PX = 480
-WIDE_KINDS = ('ATTRIBUTE_EDITOR',)   # wide panels (460 px by default)
+WIDE_KINDS = ('ATTRIBUTE_EDITOR', 'TOOL_SETTINGS')   # wide panels (460 px by default)
 # px between neighbouring areas: 3 at UI scale 1.0, 5 at 1.5 (the area edge grows with the scale)
 GAP_PX = 8
 # the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
