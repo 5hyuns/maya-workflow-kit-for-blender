@@ -279,9 +279,9 @@ def _read_row(region, y):
 
 def find_gap(area, region, unit, playing):
     """(span, spare) of the bar's gap in the header just drawn: ``bar_span`` and ``spare_after`` of one header row
-    (``row_reads[0]`` counts the reads). While playback runs the header keeps its layout, so the gap found for the
-    same header size and bar width is used again instead of reading the row every frame (a framebuffer read
-    and a scan of every pixel)."""
+    (``row_reads[0]`` counts the reads). While playback or a transform (a drag) runs the header keeps its layout, so
+    the gap found for the same header size and bar width is used again instead of reading the row on every redraw
+    (a framebuffer read and a scan of every pixel)."""
     key = (region.width, region.height, unit, plan_units(area), extra_units(area))
     got = _gaps.get(area.as_pointer())
     if playing and got is not None and got[0] == key:
@@ -306,7 +306,8 @@ def draw():
     scale = context.preferences.system.ui_scale or 1.0
     unit = round(20 * scale)
     screen = context.screen
-    found = find_gap(area, region, unit, screen is not None and screen.is_animation_playing)
+    from .maya_joints import transforming
+    found = find_gap(area, region, unit, (screen is not None and screen.is_animation_playing) or transforming())
     if found is None:
         return
     span, spare = found

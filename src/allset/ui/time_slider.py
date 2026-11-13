@@ -862,16 +862,37 @@ KEY_RGB = (1.0, 0.0, 0.0, 1.0)
 BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
 
 
-def key_frames(nodes):
-    """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key."""
+_bone_curves = {}     # pose bone pointer -> (owner's F-curve count, the bone's F-curves) kept while playing / dragging
+
+
+def _node_fcurves(node, keep):
+    """``time_keys.node_fcurves``; a bone's curves (found by looking through every curve of its skeleton) are kept
+    while playback or a drag runs and the skeleton keeps its number of curves."""
     from ..operators import time_keys
+    if not keep or not isinstance(node, bpy.types.PoseBone):
+        return time_keys.node_fcurves(node)
+    fcs = time_keys._cb()._fcurves(node)
+    key = len(fcs) if fcs is not None else -1
+    got = _bone_curves.get(node.as_pointer())
+    if got is None or got[0] != key:
+        if len(_bone_curves) > 256:
+            _bone_curves.clear()
+        got = _bone_curves[node.as_pointer()] = (key, time_keys.node_fcurves(node))
+    return got[1]
+
+
+def key_frames(nodes, keep=False):
+    """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key. ``keep``:
+    playback or a drag runs (the curves of a bone found once are used again; the keys are read every time)."""
     from . import cb_channels
+    if not keep:
+        _bone_curves.clear()
     frames = {}
     for node in nodes:
         # Channel Box Sync Timeline Display: only the selected channels' keys
         curves = cb_channels.timeline_curves(bpy.context, node)
         if curves is None:
-            curves = time_keys.node_fcurves(node)
+            curves = _node_fcurves(node, keep)
             if isinstance(node, bpy.types.Object):
                 # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
                 from ..operators import anim_layers
@@ -924,7 +945,9 @@ def tick_nodes(context):
 
 
 def _draw_keys(context, region, maya=False):
-    keys = key_frames(tick_nodes(context))
+    from .maya_joints import transforming
+    keep = context.screen.is_animation_playing or (context.mode in {'OBJECT', 'POSE'} and transforming())
+    keys = key_frames(tick_nodes(context), keep)
     if not keys:
         return
     import gpu

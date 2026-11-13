@@ -1029,9 +1029,25 @@ def _view_skeletons(context, space):
     return [ob for ob in context.visible_objects if ob.type == 'ARMATURE' and ob.visible_in_viewport_get(space)]
 
 
+def transforming():
+    """A transform runs in some window (move / rotate / scale, a manipulator drag): until it ends only poses and
+    object transforms change, so what is kept while playback runs can be kept too."""
+    from ..operators.manip_scale import TRANSFORM_MODALS
+    wm = bpy.context.window_manager
+    return wm is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS)
+                                  for w in wm.windows for op in w.modal_operators)
+
+
+def _posing():
+    """A transform runs in Object or Pose Mode (not Edit Mode: there it moves points and bones)."""
+    return getattr(bpy.context, "mode", None) in {'OBJECT', 'POSE'} and transforming()
+
+
 def _playing(context):
+    """Playback runs or a pose / object is being dragged: the joint lists and control shapes read once are used
+    again."""
     screen = getattr(context, "screen", None)
-    return screen is not None and screen.is_animation_playing
+    return (screen is not None and screen.is_animation_playing) or _posing()
 
 
 def view_lines(context):
@@ -1044,8 +1060,13 @@ def view_lines(context):
 
 @bpy.app.handlers.persistent
 def _depsgraph_post(_scene, depsgraph):
-    """Drop the cached lines unless the update only touched objects that are no skeleton (a moved mesh)."""
+    """Drop the cached lines unless the update only touched objects that are no skeleton (a moved mesh). While a
+    pose or an object is dragged only the pose changes: the lines are built again, the joint lists and control
+    shapes are kept."""
     try:
+        if _posing():
+            _GEN[0] += 1
+            return
         for u in depsgraph.updates:
             ob = u.id
             if isinstance(ob, bpy.types.Object) and ob.type not in {'ARMATURE', 'MESH', 'CURVE', 'EMPTY'}:
