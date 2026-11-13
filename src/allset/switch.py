@@ -128,10 +128,11 @@ def _prepare_layout(window, ws, fresh=False):
     """Restore and fit the destination before the event loop presents its first frame."""
     if bpy.app.background or not _registered[0] or not ws.screens:
         return
-    from .ui import outliner_tree, shelf, toolbox, viewport_settings
+    from .ui import kit_icons, outliner_tree, shelf, time_slider, toolbox, viewport_settings
     screen = ws.screens[0]
     if fresh:
         toolbox._state.pop(screen.name, None)  # a deleted workspace may have used this name
+    kit_icons.make_all()    # else the first frame draws Blender's fallback icons
     previous = None
     # Re-entering the screen updates area rectangles after area_move without drawing a frame.
     for _ in range(4):
@@ -145,6 +146,8 @@ def _prepare_layout(window, ws, fresh=False):
                 break
             previous = sizes
             toolbox.fit_columns(start_fit=False)
+    with bpy.context.temp_override(window=window, screen=screen):
+        time_slider.fit_timelines()     # at the final sizes; else the first draw schedules it and the ruler jumps
 
 
 TEMPLATE_KEY = "allset_template"      # the template workspace a Maya workspace was made from
