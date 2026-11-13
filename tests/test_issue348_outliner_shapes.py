@@ -46,12 +46,14 @@ def _outliner():
 
 def _filters(sp):
     return (sp.display_mode, sp.use_filter_collection, sp.use_filter_object_content, sp.show_mode_column,
-            sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha)
+            sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha,
+            sp.show_restrict_column_enable)
 
 
 def _restore(sp, saved):
     (sp.display_mode, sp.use_filter_collection, sp.use_filter_object_content, sp.show_mode_column,
-     sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha) = saved
+     sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha,
+     sp.show_restrict_column_enable) = saved
 
 
 def _header(area):

@@ -496,6 +496,40 @@ def eye_state(row):
     return not ob.hide_viewport
 
 
+def _bone_of(ob, name):
+    """The edit bone (Edit Mode) or bone ``name`` of armature ``ob``, or None."""
+    return (ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones).get(name)
+
+
+def restrict_state(row, col):
+    """Blender's SELECT (selectable) / RENDER (renders) column of a row: True / False, None without one.
+    Joints have the select column only (a bone doesn't render on its own)."""
+    ob = bpy.data.objects.get(row.ob) if row.kind in ('OBJECT', 'JOINT', 'MEMBER') else None
+    if ob is None:
+        return None
+    if row.kind == 'JOINT':
+        b = _bone_of(ob, row.sub) if col == 'SELECT' else None
+        return None if b is None else not b.hide_select
+    return not (ob.hide_select if col == 'SELECT' else ob.hide_render)
+
+
+def toggle_column(context, row, col):
+    """Flip a row's EYE / SELECT / RENDER column (the clicked row only, as Blender's Outliner does)."""
+    if col == 'EYE':
+        return toggle_eye(context, row)
+    if restrict_state(row, col) is None:
+        return False
+    ob = bpy.data.objects[row.ob]
+    if row.kind == 'JOINT':
+        b = _bone_of(ob, row.sub)
+        b.hide_select = not b.hide_select
+    elif col == 'SELECT':
+        ob.hide_select = not ob.hide_select
+    else:
+        ob.hide_render = not ob.hide_render
+    return True
+
+
 # --- delete --------------------------------------------------------------------------------------------------------
 
 def delete_selected(context):

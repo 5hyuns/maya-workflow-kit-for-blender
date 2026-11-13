@@ -85,7 +85,11 @@ def is_tree(space):
 
 def hide_rows(space):
     """Hide Blender's rows of a Maya Outliner (the kit draws them). True when it changed something."""
-    if wants_tree(space) and space.use_filter_object:
+    if not wants_tree(space):
+        return False
+    from .maya_outliner import mark
+    mark(space)
+    if space.use_filter_object:
         space.use_filter_object = False
         return True
     return False
@@ -632,6 +636,53 @@ def eye_state(row):
     return state(row)
 
 
+def _shape(tris, tcol, lines, lcol, pts, filled, rgba):
+    """A convex outline, filled (fan) or not."""
+    for i, p in enumerate(pts):
+        lines.extend((p, pts[(i + 1) % len(pts)]))
+        lcol.extend((rgba,) * 2)
+    if filled:
+        for i in range(1, len(pts) - 1):
+            tris.extend((pts[0], pts[i], pts[i + 1]))
+            tcol.extend((rgba,) * 3)
+
+
+def _arrow(tris, tcol, lines, lcol, cx, cy, u, on, rgba):
+    """Blender's selectable arrow (filled: selectable)."""
+    _shape(tris, tcol, lines, lcol, [(cx - 0.18 * u, cy + 0.32 * u), (cx - 0.18 * u, cy - 0.16 * u),
+                                     (cx + 0.2 * u, cy + 0.02 * u)], on, rgba)
+    lines.extend(((cx - 0.02 * u, cy - 0.04 * u), (cx + 0.1 * u, cy - 0.3 * u)))
+    lcol.extend((rgba,) * 2)
+
+
+def _camera(tris, tcol, lines, lcol, cx, cy, u, on, rgba):
+    """Blender's render camera (filled: renders)."""
+    _shape(tris, tcol, lines, lcol, [(cx - 0.32 * u, cy - 0.17 * u), (cx + 0.1 * u, cy - 0.17 * u),
+                                     (cx + 0.1 * u, cy + 0.17 * u), (cx - 0.32 * u, cy + 0.17 * u)], on, rgba)
+    _shape(tris, tcol, lines, lcol, [(cx + 0.1 * u, cy), (cx + 0.32 * u, cy - 0.15 * u),
+                                     (cx + 0.32 * u, cy + 0.15 * u)], on, rgba)
+
+
+# Blender's restriction columns, left to right (Display menu); EYE is the kit's visibility (hide_viewport)
+COLUMNS = (('SELECT', "show_restrict_column_select"), ('EYE', "show_restrict_column_hide"),
+           ('RENDER', "show_restrict_column_render"))
+
+
+def column_xs(space, region, u, n, first):
+    """{column: centre x} of the shown columns, the last one at ``eye_x``."""
+    shown = [c for c, prop in COLUMNS if getattr(space, prop)]
+    right = eye_x(region, u, n, first)
+    return {c: right - (len(shown) - 1 - i) * u for i, c in enumerate(shown)}
+
+
+def column_state(row, col):
+    """True / False = on / off for a row's column, None when the row has none."""
+    if col == 'EYE':
+        return eye_state(row)
+    from .outliner_tree_edit import restrict_state
+    return restrict_state(row, col)
+
+
 def selected_ancestors(context, limit=2000):
     """Expanded-state keys of the rows that have a selected object or picked joint below them."""
     from .outliner_tree_edit import ancestor_keys, selected_items
@@ -690,8 +741,7 @@ def _draw(context, space, region, area):
     back = tuple(th.space.back)[:3]
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
-    eyes = space.show_restrict_column_hide
-    ex = eye_x(region, u, n, first) if eyes else 0.0
+    cols = column_xs(space, region, u, n, first)
     tris, tcol, lines, lcol, textures, names = [], [], [], [], [], []
     seen, drawn = [], []
     r_icon = 0.36 * u
@@ -708,10 +758,11 @@ def _draw(context, space, region, area):
             _quad(tris, tcol, 0, y0, region.width, y1, child_rgba)
         if HOVER.get(area.as_pointer()) == k:
             _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
-        if eyes:
-            shown = eye_state(row)
-            if shown is not None:
-                _eye(tris, tcol, lines, lcol, ex, cy, u, shown, (*text, 0.9 if shown else 0.45))
+        for col, cx in cols.items():
+            on = column_state(row, col)
+            if on is not None:
+                draw_col = _eye if col == 'EYE' else _arrow if col == 'SELECT' else _camera
+                draw_col(tris, tcol, lines, lcol, cx, cy, u, on, (*text, 0.9 if on else 0.45))
         x = row.depth * u
         alpha = 0.5 if hidden and not sel else 1.0
         if row.kids:
@@ -1062,11 +1113,11 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             return {'FINISHED'}
         row = rows[k]
         x0 = row.depth * u
-        on_eye = space.show_restrict_column_hide and abs(x - eye_x(region, u, n, first)) <= 0.55 * u
-        if on_eye and eye_state(row) is not None:
-            from .outliner_tree_edit import toggle_eye
+        hit = next((c for c, cx in column_xs(space, region, u, n, first).items() if abs(x - cx) <= 0.5 * u), None)
+        if hit is not None and column_state(row, hit) is not None:
+            from .outliner_tree_edit import toggle_column
             _click.update(key=None, time=0.0)
-            done = toggle_eye(context, row)
+            done = toggle_column(context, row, hit)
             redraw_outliners(context)
             return {'FINISHED'} if done else {'CANCELLED'}
         if row.kids and x0 <= x < x0 + 1.1 * u:

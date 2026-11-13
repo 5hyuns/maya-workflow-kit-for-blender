@@ -28,7 +28,7 @@ def test_template_outliner_is_maya_dag():
     tree = import_module(kit.MODULE + ".ui.outliner_tree")
     assert tree.is_tree(so) and not so.use_filter_object
     assert not so.use_filter_collection, "no collection rows (Maya DAG from the world)"
-    assert not so.show_restrict_column_render
+    assert so.show_restrict_column_render and not so.show_restrict_column_enable, "Blender's columns, kit marker"
     assert not so.use_filter_object_content and so.use_filter_children
 
 
