@@ -1266,6 +1266,7 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         first = first_row(area, region, n, u)
         bar = scrollbar(region, u, n, first)
         self.scrolling = False
+        self.column = None
         if bar is not None and bar[0] - 2 <= x <= region.width:
             return self._start_scroll(context, event, bar, n, u)
         k = row_index_at(area, region, y, u, n)
@@ -1280,11 +1281,13 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         x0 = row.depth * u
         hit = next((c for c, cx in column_xs(space, region, u, n, first).items() if abs(x - cx) <= 0.5 * u), None)
         if hit is not None and column_state(row, hit) is not None:
-            from .outliner_tree_edit import toggle_column
+            # Blender: the press flips the column, dragging gives every row passed the same state, Shift takes
+            # everything below each row too
             _click.update(key=None, time=0.0)
-            done = toggle_column(context, row, hit)
-            redraw_outliners(context)
-            return {'FINISHED'} if done else {'CANCELLED'}
+            self.column, self.column_rows, self.column_last, self.u = (hit, not column_state(row, hit)), {k}, k, u
+            self._set_column(context, rows, k, event.shift)
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         if row.kids and x0 <= x < x0 + 1.1 * u:
             _click.update(key=None, time=0.0)
             keys = subtree_keys(context, space, row) if event.shift else [row.key]
@@ -1333,6 +1336,26 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         select_row(context, rows, k, mode, anchor=self.pressed)
         redraw_outliners(context)
 
+    def _set_column(self, context, rows, k, recursive):
+        from .outliner_tree_edit import set_column
+        col, on = self.column
+        if column_state(rows[k], col) is not None:
+            set_column(context, rows[k], col, on, recursive)
+            redraw_outliners(context)
+
+    def _drag_column(self, context, event):
+        area, region, space = context.area, context.region, context.space_data
+        rows = rows_for(context, space)
+        yy = min(max(event.mouse_region_y, 0), region.height - 1)
+        k = row_index_at(area, region, yy, self.u, len(rows))
+        if k is None:
+            return
+        last, self.column_last = self.column_last, k
+        for j in range(min(last, k), max(last, k) + 1):        # a fast move skips no row
+            if j not in self.column_rows:
+                self.column_rows.add(j)
+                self._set_column(context, rows, j, event.shift)
+
     # the scrollbar: drag the thumb, a click above / below it pages
     def _start_scroll(self, context, event, bar, n, u):
         _x0, _x1, b0, b1 = bar
@@ -1351,6 +1374,12 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
+        if self.column is not None:
+            if event.type == 'MOUSEMOVE':
+                self._drag_column(context, event)
+            elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE' or event.type == 'ESC':
+                return {'FINISHED'}                # one undo step for the press and the drag
+            return {'RUNNING_MODAL'}
         if not self.scrolling:
             if event.type == 'MOUSEMOVE':
                 self._drag(context, event)
