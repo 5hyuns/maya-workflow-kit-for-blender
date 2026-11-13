@@ -821,6 +821,25 @@ def _draw(context, space, region, area):
             del d[next(iter(d))]
 
 
+def redraw_rows(context, area):
+    """Redraw the kit rows of the Outliner ``area`` after a scroll or a hover change (``context`` = its main region).
+    ``area.tag_redraw()`` also redraws the header and makes Blender rebuild its own Outliner tree before drawing (one
+    element per object of the view layer, though the kit hides those rows): Blender rebuilds unless the region was
+    tagged "no rebuild" (outliner_tree.cc ``outliner_build_tree``), which its own view scrolling does
+    (view2d_ops.cc ``view_pan_apply_ex``). A view pan by nothing tags it the same way: the view stays where it is and
+    only the rows redraw. The pan also sends a mouse move where the mouse already is (``view_pan_apply_ex``); the
+    hover keeps its row for that one (``ALLSET_OT_outliner_tree_hover``), as after a plain redraw."""
+    region = context.region
+    if region is not None and region.type == 'WINDOW' and context.area == area:
+        try:
+            if bpy.ops.view2d.pan(deltax=0, deltay=0) == {'FINISHED'}:
+                _state["pan_move"] = area.as_pointer()
+                return
+        except RuntimeError:            # no View2D to pan here
+            pass
+    area.tag_redraw()
+
+
 def redraw_outliners(context=None):
     wm = (context or bpy.context).window_manager
     for w in wm.windows:
@@ -1226,11 +1245,15 @@ class ALLSET_OT_outliner_tree_hover(bpy.types.Operator):
     def invoke(self, context, event):
         if _poll(context):
             area, region = context.area, context.region
+            xy = (event.mouse_x, event.mouse_y)
+            moved, _state["hover_xy"] = xy != _state.get("hover_xy"), xy
+            if _state.pop("pan_move", None) == area.as_pointer() and not moved:
+                return {'PASS_THROUGH'}     # the mouse move a ``redraw_rows`` pan sends: the mouse did not move
             rows = rows_for(context, context.space_data)
             k = row_index_at(area, region, event.mouse_region_y, unit(context.preferences), len(rows))
             if HOVER.get(area.as_pointer()) != k:
                 HOVER[area.as_pointer()] = k
-                area.tag_redraw()
+                redraw_rows(context, area)
         return {'PASS_THROUGH'}
 
 
@@ -1263,7 +1286,7 @@ class ALLSET_OT_outliner_tree_scroll(bpy.types.Operator):
         key = area.as_pointer()
         SCROLL[key] = SCROLL.get(key, 0) + step
         first_row(area, region, n, u)
-        area.tag_redraw()
+        redraw_rows(context, area)
         return {'FINISHED'}
 
 
