@@ -134,8 +134,17 @@ def _prepare_layout(window, ws, fresh=False):
         toolbox._state.pop(screen.name, None)  # a deleted workspace may have used this name
     kit_icons.make_all()    # else the first frame draws Blender's fallback icons
     previous = None
+    # A window that already shows the screen (a new Maya scene) doesn't change screen on entering the override:
+    # pass through another workspace's screen, so coming back recomputes the rectangles and clears the screen's
+    # active region (screen.area_move doesn't poll while the mouse is over a region).
+    shown = {w.screen for w in _windows()}
+    other = next((w.screens[0] for w in bpy.data.workspaces if w != ws and w.screens and w.screens[0] not in shown),
+                 None) if screen in shown else None
     # Re-entering the screen updates area rectangles after area_move without drawing a frame.
     for _ in range(4):
+        if other is not None:
+            with bpy.context.temp_override(window=window, screen=other):
+                pass
         with bpy.context.temp_override(window=window, screen=screen):
             if previous is None:
                 shelf.settle_rows()
