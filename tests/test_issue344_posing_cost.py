@@ -189,6 +189,7 @@ def test_time_slider_keeps_a_bones_curves_while_playing_or_dragging():
         assert len(looks) == 1, f"kept: the bone's curves are found once ({len(looks)})"
         fc = next(c for c in time_keys.node_fcurves(pb) if c.array_index == 0)
         fc.keyframe_points[1].co.x = 9.0
+        bpy.context.view_layer.update()         # as before every redraw: the moved key updates its Action
         looks.clear()
         assert [f for f, _b in ts.key_frames([pb], keep=True)] == [1, 8, 9, 15], "a moved key shows at once"
         assert not looks, "the curves are still the kept ones"

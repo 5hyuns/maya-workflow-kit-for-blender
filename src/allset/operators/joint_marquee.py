@@ -68,6 +68,8 @@ def begin(context):
             or not maya_joints.is_maya_view(space, getattr(getattr(context, "window", None), "workspace", None))):
         return False
     _flush()            # the drags before this one have ended: their joint rules first, in order
+    if not bpy.data.armatures:
+        return False    # no skeleton in the file: no joint to pick, Blender's result stands
     wm = context.window_manager
     last = wm.operators[-1].as_pointer() if len(wm.operators) else 0
     _pending.append({
@@ -81,53 +83,87 @@ def begin(context):
     return True
 
 
+EDIT_FLAGS = ("select", "select_head", "select_tail")
+
+
+def _flags(seq, props):
+    """(N, len(props)) bools of ``props`` of every item of ``seq``, one read per property."""
+    import numpy as np
+    out = np.zeros((len(props), len(seq)), bool)
+    for row, prop in zip(out, props):
+        seq.foreach_get(prop, row)
+    return out.T
+
+
 def snapshot(context):
-    objs = {ob.name: ob.select_get() for ob in context.scene.objects}
-    act = context.view_layer.objects.active
+    """The selection a drag starts from: the selected objects, the active one and every skeleton's joint picks. Read
+    a collection at a time (a scene can hold thousands of objects, a rig hundreds of joints)."""
+    scene, layer = context.scene, context.view_layer
+    act = layer.objects.active
     bones = {}
-    from ..ui.channel_box import bone_selected
-    for ob in context.scene.objects:
+    for ob in scene.objects:
         if ob.type != 'ARMATURE':
             continue
         if ob.mode == 'EDIT':
-            bones[ob.name] = ('EDIT', {eb.name: (eb.select, eb.select_head, eb.select_tail)
-                                       for eb in ob.data.edit_bones},
-                              ob.data.edit_bones.active.name if ob.data.edit_bones.active else None)
+            ebs = ob.data.edit_bones
+            bones[ob.name] = ('EDIT', ebs.keys(), _flags(ebs, EDIT_FLAGS), ebs.active.name if ebs.active else None)
         else:
-            bones[ob.name] = ('POSE', {pb.name: bone_selected(pb) for pb in ob.pose.bones},
+            pbs = ob.pose.bones
+            bones[ob.name] = ('POSE', pbs.keys(), _flags(pbs, ("select",)),
                               ob.data.bones.active.name if ob.data.bones.active else None)
-    return {"objects": objs, "active": act.name if act else None, "bones": bones}
+    # the view layer's selected objects = the objects whose select_get() is on (hidden ones too)
+    return {"names": set(scene.objects.keys()), "selected": set(layer.objects.selected.keys()),
+            "active": act.name if act else None, "bones": bones}
+
+
+def _changed(seq, names, want, props):
+    """Indices of ``seq`` items whose ``props`` differ from ``want`` (rows of ``snapshot``'s names), with the wanted
+    row: by index while the items are the same, else by name."""
+    import numpy as np
+    now = _flags(seq, props)
+    if seq.keys() == names:
+        return [(int(i), want[i]) for i in np.flatnonzero((now != want).any(axis=1))]
+    rows = dict(zip(names, want))
+    out = []
+    for i, name in enumerate(seq.keys()):
+        row = rows.get(name)
+        if row is not None and (now[i] != row).any():
+            out.append((i, row))
+    return out
 
 
 def restore(context, snap):
     """Back to ``snapshot``. Only what differs is written: a write makes Blender evaluate the skeleton (and what it
     deforms) again even with the same value."""
-    from ..ui.channel_box import bone_selected, set_bone_selected
-    for ob in context.scene.objects:
-        want = snap["objects"].get(ob.name)
-        if want is not None and ob.select_get() != want:
-            ob.select_set(want)
+    from ..ui import channel_box
+    scene, objects = context.scene, context.scene.objects
+    now = set(context.view_layer.objects.selected.keys())
+    for name in sorted(snap["selected"] - now):
+        ob = objects.get(name)
+        if ob is not None:
+            ob.select_set(True)
+    for name in sorted((now - snap["selected"]) & snap["names"]):
+        ob = objects.get(name)
+        if ob is not None:
+            ob.select_set(False)
     act = snap["active"]
-    if act and act in context.scene.objects and context.view_layer.objects.active != context.scene.objects[act]:
-        context.view_layer.objects.active = context.scene.objects[act]
-    for name, (kind, states, active) in snap["bones"].items():
-        ob = context.scene.objects.get(name)
+    if act and act in objects and context.view_layer.objects.active != objects[act]:
+        context.view_layer.objects.active = objects[act]
+    for name, (kind, names, states, active) in snap["bones"].items():
+        ob = scene.objects.get(name)
         if ob is None:
             continue
         if kind == 'EDIT' and ob.mode == 'EDIT':
             ebs = ob.data.edit_bones
-            for eb in ebs:
-                want = states.get(eb.name)
-                if want is not None and (eb.select, eb.select_head, eb.select_tail) != want:
-                    eb.select, eb.select_head, eb.select_tail = want
+            for i, want in _changed(ebs, names, states, EDIT_FLAGS):
+                ebs[i].select, ebs[i].select_head, ebs[i].select_tail = (bool(v) for v in want)
             lead = ebs.get(active) if active else None
             if ebs.active != lead:
                 ebs.active = lead
         elif kind == 'POSE':
-            for pb in ob.pose.bones:
-                want = states.get(pb.name)
-                if want is not None and bone_selected(pb) != want:
-                    set_bone_selected(pb, want)
+            pbs = ob.pose.bones
+            for i, want in _changed(pbs, names, states, ("select",)):
+                channel_box.set_bone_selected(pbs[i], bool(want[0]))
             lead = ob.data.bones.get(active) if active else None
             if ob.data.bones.active != lead:
                 ob.data.bones.active = lead
