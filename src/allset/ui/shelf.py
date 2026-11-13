@@ -327,9 +327,20 @@ def editable_buttons(shelf_id, create=False):
 def button_record(shelf_id, index):
     """The stored dict of the user-made button at ``index`` in the shelf's slot order (None for a factory one)."""
     buttons = editable_buttons(shelf_id) or []
+    if not buttons:
+        return None
     if not shelf_id.startswith(USER_PREFIX):
-        index -= len(all_buttons(shelf_id))
+        index -= factory_count(shelf_id)
     return buttons[index] if 0 <= index < len(buttons) else None
+
+
+def factory_count(shelf_id):
+    """Number of Maya slots of factory shelf ``shelf_id`` (= ``len(all_buttons(shelf_id))`` without building the
+    buttons); 0 for any other id."""
+    for name, _label, buttons in shelf_data.SHELVES:
+        if name == shelf_id:
+            return len(buttons)
+    return 0
 
 
 def menu_label(path):
@@ -1540,18 +1551,26 @@ def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX, separators=()):
     return out
 
 
-def _layout(region, scale):
+def _is_separator(record):
+    return bool(record and (record.get("type") == "separator"
+                            or (record.get("action") or {}).get("type") == "separator"))
+
+
+def _plan(region, scale):
+    """(shelf id, tabs in the window, [(row, x)] per slot, buttons) of the current shelf in ``region``: read once and
+    used for every slot of one redraw or one pick."""
     space = _space_of(region)
     tabs = tabs_in_window(space)
     cur, buttons = icon_buttons(bpy.context)
-    separator_slots = {
-        slot for slot, (index, _label, _colour, _mapped) in enumerate(buttons)
-        if (record := button_record(cur, index)) is not None
-        and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator")
-    }
+    separator_slots = {slot for slot, (index, _label, _colour, _mapped) in enumerate(buttons)
+                       if _is_separator(button_record(cur, index))}
     lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps() if tabs else (),
                      STRIP_LEFT_PX if tabs else LEFT_PX, separators=separator_slots)
-    return cur, tabs, lay
+    return cur, tabs, lay, buttons
+
+
+def _layout(region, scale):
+    return _plan(region, scale)[:3]
 
 
 def rows_of(region, scale):
@@ -1577,13 +1596,15 @@ def icon_rect(region, slot, scale):
     """(x, y, size) of ``slot`` in region pixels; a slot on another row than the one shown is placed past the right
     edge (not drawn, not picked)."""
     cur, tabs, lay = _layout(region, scale)
+    _cur, buttons = icon_buttons(bpy.context)
+    return _plan_rect((cur, tabs, lay, buttons), region, slot, scale)
+
+
+def _plan_rect(plan, region, slot, scale):
+    """``icon_rect`` from a layout ``_plan`` already read."""
+    cur, tabs, lay, buttons = plan
     top = round(TAB_PX * scale) if tabs else 0
-    cur, buttons = icon_buttons(bpy.context)
-    is_separator = False
-    if 0 <= slot < len(buttons):
-        record = button_record(cur, buttons[slot][0])
-        is_separator = bool(record and (record.get("type") == "separator"
-                               or (record.get("action") or {}).get("type") == "separator"))
+    is_separator = 0 <= slot < len(buttons) and _is_separator(button_record(cur, buttons[slot][0]))
     size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
     y = (region.height - top - size) / 2
     off = getattr(region, "width", 0) + 10 ** 6
@@ -1771,12 +1792,13 @@ def shelf_icons_gear():
     return _gear_tex[0]
 
 
-def _separators(region, s, count):
+def _separators(region, s, count, plan=None):
     """x of each Maya separator before ``count`` drawn icons."""
     out = []
+    plan = plan or _plan(region, s)
     for g in _gaps():
         if g < count:
-            x, _y, size = icon_rect(region, g, s)
+            x, _y, size = _plan_rect(plan, region, g, s)
             out.append(x - (PITCH_PX - ICON_PX + SEP_PX) * s / 2)
     return out
 
@@ -1795,16 +1817,16 @@ def draw_row():
     tabs = tabs_in_window(context.space_data)
     if tabs:
         _draw_tabs(context, region, base)
-    _cur, buttons = icon_buttons(context)
+    plan = _plan(region, s)
+    _cur, buttons = plan[0], plan[3]
     hover = _hover.get(region.as_pointer())
     shown = 0
     for slot, (index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
-        x, y, size = icon_rect(region, slot, s)
+        x, y, size = _plan_rect(plan, region, slot, s)
         if x > region.width:
             continue                  # another row
         shown = slot + 1
-        record = button_record(_cur, index)
-        if record and (record.get("type") == "separator" or (record.get("action") or {}).get("type") == "separator"):
+        if _is_separator(button_record(_cur, index)):
             # Keep the slot narrow, but draw a divider at nearly the full button height.
             separator_height = min(ICON_PX * s, region.height - (TAB_PX * s if tabs else 0) - 4)
             separator_y = (region.height - (TAB_PX * s if tabs else 0) - separator_height) / 2
@@ -1823,7 +1845,7 @@ def draw_row():
         _draw_rect(x, y, size, size, None, tex)
     if tabs:
         dark, light = _separator_colours(base)
-        for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
+        for x in _separators(region, s, shown, plan):   # Maya: a raised vertical rule in a 12 px gap
             _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, dark)
             _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, light)
     _draw_scroll_bar(region, s, base)
