@@ -438,6 +438,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
                     "Panels) instead of Blender's (Blender menus stay as a submenu)",
         default=True)
+    show_viewport_shading: bpy.props.BoolProperty(
+        name="Viewport Shading Controls",
+        description="Show Blender's shading modes and settings at the right of the Maya viewport toolbar",
+        default=True, update=_update_selection_wire)
     menu_set: bpy.props.EnumProperty(
         name="Menu Set", description="Maya menu set: which menus follow the common ones",
         items=lambda self, context: _menu_set_items(), default=0)
@@ -663,6 +667,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "maya_top_bar")
         row.prop(self, "maya_panel_menus")
+        row.prop(self, "show_viewport_shading")
         row.prop(self, "menu_set", text="")
         row = box.row()
         row.prop(self, "marking_menu_style")
