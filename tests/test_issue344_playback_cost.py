@@ -749,7 +749,7 @@ def test_selection_wire_without_a_selection_draws_nothing_at_once():
     region = next(r for r in area.regions if r.type == 'WINDOW')
     looks = []
     real = sw.highlighted, sw.live_wire_objects, sw.dormant_objects
-    sw.highlighted = lambda c: looks.append("highlighted") or []
+    sw.highlighted = lambda c, **_kw: looks.append("highlighted") or []
     sw.live_wire_objects = lambda c: looks.append("live") or []
     sw.dormant_objects = lambda c: looks.append("dormant") or []
     try:

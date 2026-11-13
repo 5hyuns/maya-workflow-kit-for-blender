@@ -55,7 +55,8 @@ TYPE_FLAGS = {'MESH': "show_object_viewport_mesh", 'CURVE': "show_object_viewpor
               'SURFACE': "show_object_viewport_surf", 'FONT': "show_object_viewport_font",
               'META': "show_object_viewport_meta"}
 
-_batches = {}              # object session_uid -> (batch, edge count)
+_batches = {}              # object session_uid -> (batch, edge count, evaluated bound box: 24 floats or None)
+_corners = []              # [(bound boxes, their (n, 8, 3) corner array, unreadable indices)] of the last redraw
 _handle = []
 _shader = []
 _times = []
@@ -111,9 +112,21 @@ def _positions(me):
     return co
 
 
-def edges_of(ob, depsgraph):
-    """(vertex positions (N, 3) float32, edge indices (E, 2) int32) of the evaluated object, object space."""
+def _edge_indices(me, count):
+    """(count * 2,) C int edge vertex indices of mesh ``me``: its edge attribute in one copy (``edges.foreach_get``
+    reads edge by edge, ~3 ms for 25k edges; the attribute into a C ``int`` buffer, ~0.01 ms)."""
     import numpy as np
+    ed = np.empty(count * 2, np.intc)
+    att = me.attributes.get(".edge_verts")
+    if att is not None and att.domain == 'EDGE' and att.data_type == 'INT32_2D' and len(att.data) == count:
+        att.data.foreach_get("value", ed)
+    else:
+        me.edges.foreach_get("vertices", ed)
+    return ed
+
+
+def edges_of(ob, depsgraph):
+    """(vertex positions (N, 3) float32, edge indices (E, 2) 32-bit int) of the evaluated object, object space."""
     ev = ob.evaluated_get(depsgraph)
     if ob.type == 'LATTICE':
         return lattice_edges(ev.data)
@@ -128,9 +141,7 @@ def edges_of(ob, depsgraph):
         if got is not None and got[0] == size:
             ed = got[1]
         else:
-            ed = np.empty(size[1] * 2, np.int32)
-            me.edges.foreach_get("vertices", ed)
-            ed = ed.reshape(-1, 2)
+            ed = _edge_indices(me, size[1]).reshape(-1, 2)
             if not temp and keeps_edges(ob):
                 _edges[ob.session_uid] = (size, ed)
             else:
@@ -154,14 +165,31 @@ def lattice_edges(lat):
     return co.reshape(-1, 3), np.concatenate(pairs).astype(np.int32).reshape(-1, 2)
 
 
-def _batch(ob, depsgraph):
-    key = ob.session_uid
-    if key not in _batches:
+def _bounds(ob, depsgraph):
+    """The evaluated bound box as 24 floats (8 corners), or None when it can't be read."""
+    try:
+        box = tuple(v for corner in ob.evaluated_get(depsgraph).bound_box for v in corner)
+    except (AttributeError, TypeError, ValueError, OverflowError, RuntimeError, ReferenceError):
+        return None
+    return box if len(box) == 24 else None
+
+
+def _entry(ob, depsgraph, key=None):
+    """(batch or None, edge count, bound box) of ``ob``'s wire (``key``: its session_uid when known). The bound box is
+    read with the batch: both come from the same evaluated geometry and go together when it changes."""
+    if key is None:
+        key = ob.session_uid
+    entry = _batches.get(key)
+    if entry is None:
         from gpu_extras.batch import batch_for_shader
         co, ed = edges_of(ob, depsgraph)
         batch = batch_for_shader(_sh(), 'LINES', {"pos": co}, indices=ed) if len(ed) else None
-        _batches[key] = (batch, len(ed))
-    return _batches[key][0]
+        entry = _batches[key] = (batch, len(ed), _bounds(ob, depsgraph))
+    return entry
+
+
+def _batch(ob, depsgraph):
+    return _entry(ob, depsgraph)[0]
 
 
 def _view(context):
@@ -240,24 +268,45 @@ def wire_objects(context):
             if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space)]
 
 
-def highlighted(context):
+def children_map():
+    r"""{object: [its children]} for every object of the file, each list in ``bpy.data.objects`` order like
+    ``Object.children``. ``Object.children`` looks through every object of the file on each call
+    ($S\modules\_bpy_types.py:249), so asking it for each object of a big selection grew with selection x scene."""
+    kids = {}
+    for ob in bpy.data.objects:
+        parent = ob.parent
+        if parent is not None:
+            kids.setdefault(parent, []).append(ob)
+    return kids
+
+
+def highlighted(context, roots_shown=False):
     """[(object, is_lead)]: the selected objects that get the wire plus their descendants (Maya's hierarchy
-    highlight), each in the colour of its nearest selected ancestor (itself when selected)."""
+    highlight), each in the colour of its nearest selected ancestor (itself when selected).
+
+    ``roots_shown``: ``context`` is the 3D View's own (its draw), where ``context.selected_objects`` already holds only
+    the objects shown in that view (Blender lists a selected object there only when it is visible in the context's
+    3D View, the same test as ``visible_get(viewport=...)``), so the selected objects skip that test."""
     if not highlighting(context):
         return []
     space = _view(context)
+    view = space if isinstance(space, bpy.types.SpaceView3D) else None     # ``_shown``
     active = context.view_layer.objects.active
     out, seen = [], set()
     from ..operators import live
     live_objects = set(live.objects(context.scene))
+    kids = children_map()
 
-    def visit(ob, lead):
-        if ob.session_uid in seen:
+    def visit(ob, lead, root=False):
+        if ob in seen:
             return
-        seen.add(ob.session_uid)
-        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space) and ob not in live_objects:
+        seen.add(ob)
+        if (ob.type in WIRE_TYPES and (root or ob.mode == 'OBJECT')
+                and ((root and roots_shown) or (ob.visible_get(viewport=view) if view is not None
+                                                else ob.visible_get()))
+                and ob not in live_objects):
             out.append((ob, lead))
-        for child in ob.children:
+        for child in kids.get(ob, ()):
             if not child.select_get():          # a selected child keeps its own colour (visited as a root)
                 visit(child, lead)
     for ob in context.selected_objects:
@@ -265,7 +314,7 @@ def highlighted(context):
         # so its child meshes aren't a selected hierarchy
         if ob.mode != 'OBJECT':
             continue
-        visit(ob, ob == active)
+        visit(ob, ob == active, True)        # in Object Mode (just read)
     return out
 
 
@@ -391,9 +440,72 @@ _NO_BOX = [0.0] * 24
 _NO_MATRIX = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
 
 
-def depth_biases(objects, depsgraph, projection, viewport):
+FILE_READ_FROM = 1 / 32    # ``world_matrices`` reads the whole file's matrices from this share of its objects on
+
+
+def world_matrices(objects, uids=None):
+    """(n, 4, 4) float64 world matrices (rows) of ``objects`` and an (n,) bool array: readable. Many objects: all of
+    the file's matrices come in one ``foreach_get`` (in columns, like Blender's ``float[4][4]``), each row found by
+    session_uid; flattening each object's Matrix in Python cost a few microseconds an object, tens of milliseconds for
+    thousands of selected objects. A few objects of a big file: one by one. ``uids``: the objects' session_uids when
+    known. Integer buffers are C ``int`` (``np.intc``): ``foreach_get`` copies into a buffer of another type code one
+    item at a time."""
+    import numpy as np
+    n = len(objects)
+    ok = np.ones(n, bool)
+    worlds = np.zeros((n, 4, 4))
+    missing = list(range(n))
+    coll = bpy.data.objects
+    total = len(coll)
+    if n and total and n >= total * FILE_READ_FROM:
+        try:
+            want = np.array([ob.session_uid for ob in objects] if uids is None else uids, np.int64)
+        except (AttributeError, ReferenceError):
+            want = None
+        if want is not None:
+            file_uids = np.empty(total, np.intc)
+            flat = np.empty(total * 16, np.float32)
+            coll.foreach_get("session_uid", file_uids)
+            coll.foreach_get("matrix_world", flat)
+            order = np.argsort(file_uids, kind='stable')
+            rows = order[np.minimum(np.searchsorted(file_uids[order], want), total - 1)]
+            worlds = flat.reshape(total, 4, 4).transpose(0, 2, 1)[rows].astype(np.float64)
+            missing = np.flatnonzero(file_uids[rows] != want).tolist()
+    for k in missing:          # one by one, or not one of the file's objects
+        try:
+            mat = [v for row in objects[k].matrix_world for v in row]
+        except (AttributeError, TypeError, ValueError, OverflowError, RuntimeError, ReferenceError):
+            mat = None
+        if mat is None or len(mat) != 16:
+            ok[k] = False
+            mat = _NO_MATRIX
+        worlds[k] = np.array(mat, np.float64).reshape(4, 4)
+    return worlds, ok
+
+
+def _corner_array(boxes):
+    """(n, 8, 3) float64 corners of ``boxes`` (24 floats each, None = unreadable) and the indices of the unreadable
+    ones. The same box tuples as last time (the same objects with unchanged geometry, e.g. every redraw of an orbit)
+    give the arrays made last time."""
+    import operator
+    from itertools import chain
+    import numpy as np
+    last = _corners[0] if _corners else None
+    if last is not None and len(last[0]) == len(boxes) and all(map(operator.is_, last[0], boxes)):
+        return last[1], last[2]
+    n = len(boxes)
+    corners = np.fromiter(chain.from_iterable(_NO_BOX if box is None else box for box in boxes),
+                          np.float64, n * 24).reshape(n, 8, 3)
+    unread = [k for k, box in enumerate(boxes) if box is None]
+    _corners[:] = [(list(boxes), corners, unread)]
+    return corners, unread
+
+
+def depth_biases(objects, depsgraph, projection, viewport, boxes=None, uids=None):
     """``depth_bias`` of each of ``objects`` (a list of floats): the same rule, computed for many objects at once in
-    arrays (hundreds of selected objects took tens of milliseconds a redraw one by one)."""
+    arrays (hundreds of selected objects took tens of milliseconds a redraw one by one). ``boxes``: each object's
+    evaluated bound box as 24 floats (None: unreadable) when the caller has them already (``_entry``); ``uids``: the
+    objects' session_uids when known."""
     import math
     import numpy as np
     n = len(objects)
@@ -402,22 +514,9 @@ def depth_biases(objects, depsgraph, projection, viewport):
     width, height = viewport
     if not all(math.isfinite(v) and v > 0 for v in (width, height)):
         return [0.0] * n
-    ok = np.ones(n, bool)
-    boxes, mats = [], []
-    for k, ob in enumerate(objects):
-        # plain lists: reading Blender's arrays into numpy one object at a time costs several times more
-        try:
-            box = [v for corner in ob.evaluated_get(depsgraph).bound_box for v in corner]
-            mat = [v for row in ob.matrix_world for v in row]
-        except (AttributeError, TypeError, ValueError, OverflowError, RuntimeError, ReferenceError):
-            box = mat = None
-        if box is None or len(box) != 24 or len(mat) != 16:
-            ok[k] = False
-            box, mat = _NO_BOX, _NO_MATRIX
-        boxes.extend(box)
-        mats.extend(mat)
-    corners = np.array(boxes, np.float64).reshape(n, 8, 3)
-    worlds = np.array(mats, np.float64).reshape(n, 4, 4)
+    worlds, ok = world_matrices(objects, uids)
+    corners, unread = _corner_array([_bounds(ob, depsgraph) for ob in objects] if boxes is None else boxes)
+    ok[unread] = False
     with np.errstate(all='ignore'):
         ok &= np.isfinite(corners).all(axis=(1, 2)) & np.isfinite(worlds).all(axis=(1, 2))
         clip = np.einsum('nij,nkj->nki', np.array(projection, np.float64) @ worlds,
@@ -439,17 +538,19 @@ def depth_biases(objects, depsgraph, projection, viewport):
         longest = lengths.max(1)
         a = np.array([p[0] for p in _PAIRS])
         b = np.array([p[1] for p in _PAIRS])
-        sep = np.abs(depths[:, a] - depths[:, b])
         for axis in range(3):
-            thin = (lengths[:, axis] > 0.0) & (lengths[:, axis] < longest * DEPTH_BIAS_THIN_RATIO)
+            thin = np.flatnonzero((lengths[:, axis] > 0.0) & (lengths[:, axis] < longest * DEPTH_BIAS_THIN_RATIO))
+            if not thin.size:      # no thin box along this axis: nothing to cap
+                continue
             others = [i for i in range(3) if i != axis]
-            along = ((corners[:, a, axis] != corners[:, b, axis])
-                     & (corners[:, a, others[0]] == corners[:, b, others[0]])
-                     & (corners[:, a, others[1]] == corners[:, b, others[1]]))
+            c, d = corners[thin], depths[thin]
+            along = ((c[:, a, axis] != c[:, b, axis])
+                     & (c[:, a, others[0]] == c[:, b, others[0]])
+                     & (c[:, a, others[1]] == c[:, b, others[1]]))
             found = along.any(1)
-            ok &= ~(thin & ~found)
-            least = np.where(along, sep, np.inf).min(1)
-            bias = np.where(thin & found, np.minimum(bias, least * DEPTH_BIAS_THIN_SPAN), bias)
+            ok[thin] &= found
+            least = np.where(along, np.abs(d[:, a] - d[:, b]), np.inf).min(1)
+            bias[thin] = np.where(found, np.minimum(bias[thin], least * DEPTH_BIAS_THIN_SPAN), bias[thin])
     return np.where(ok, bias, 0.0).tolist()
 
 
@@ -469,7 +570,7 @@ def _draw():
         return              # no selected wire, no dormant wire, no Make Live wire
     from ..operators import live
     live_obs = live_wire_objects(context)
-    obs = highlighted(context) if _enabled() else []
+    obs = highlighted(context, roots_shown=True) if _enabled() else []
     dormant = dormant_objects(context) if _enabled() else []
     if not obs and not dormant and not live_obs:
         return
@@ -499,15 +600,22 @@ def _draw():
                     sh.uniform_float("mvp", pm @ ob.matrix_world)
                     batch.draw(sh)
         region = context.region
+        uids = [ob.session_uid for ob, _lead in obs]
+        entries = [_entry(ob, depsgraph, uid) for (ob, _lead), uid in zip(obs, uids)]
         biases = [DEPTH_BIAS] * len(obs) if xray else depth_biases(
-            [ob for ob, _lead in obs], depsgraph, pm, (region.width, region.height))
-        for (ob, is_lead), bias in zip(obs, biases):
-            batch = _batch(ob, depsgraph)
+            [ob for ob, _lead in obs], depsgraph, pm, (region.width, region.height),
+            boxes=[e[2] if len(e) > 2 else _bounds(ob, depsgraph) for (ob, _lead), e in zip(obs, entries)],
+            uids=uids)
+        uniform, color = sh.uniform_float, None
+        for (ob, is_lead), entry, bias in zip(obs, entries, biases):
+            batch = entry[0]
             if batch is None:
                 continue
-            sh.uniform_float("bias", bias)
-            sh.uniform_float("mvp", pm @ ob.matrix_world)
-            sh.uniform_float("color", lead if is_lead else other)
+            uniform("bias", bias)
+            uniform("mvp", pm @ ob.matrix_world)
+            if color is not (lead if is_lead else other):      # the same colour as the last object: still set
+                color = lead if is_lead else other
+                uniform("color", color)
             batch.draw(sh)
         sh.uniform_float("bias", DEPTH_BIAS)  # preserve 0.7 Make Live pass behavior
         sh.uniform_float('color', _linear(live.COLOR))
@@ -588,6 +696,7 @@ def _on_frame(scene, _depsgraph=None):
 def _on_reload(*_args):
     _batches.clear()
     _edges.clear()
+    _corners.clear()
 
 
 _HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("frame_change_post", _on_frame), ("undo_post", _on_reload), ("redo_post", _on_reload),
@@ -608,5 +717,6 @@ def unregister():
             lst.remove(fn)
     _batches.clear()
     _edges.clear()
+    _corners.clear()
     _shader.clear()
     _times.clear()

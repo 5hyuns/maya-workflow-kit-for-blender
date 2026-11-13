@@ -1,10 +1,14 @@
 """Hundreds of selected objects keep the selection wire light: the depth offset of every highlighted object is
 computed for all of them at once, with the same result as one by one (boxes seen from the front and obliquely, thin
-plates, flat cards, objects behind the eye or crossing a clip plane, empties and curves)."""
+plates, flat cards, objects behind the eye or crossing a clip plane, empties and curves). The highlighted hierarchy
+(every descendant of a selected object, in the colour of its nearest selected ancestor) is found with one look at the
+file's parents, not one look through every object of the file for each highlighted object."""
 
 import math
 import random
+import time
 from importlib import import_module
+from types import SimpleNamespace
 
 import bpy
 import numpy as np
@@ -125,3 +129,169 @@ def test_a_moved_rig_keeps_its_meshes_edges():
     assert uid not in wire._edges
     wire._batches.clear()
     wire._edges.clear()
+
+
+def _view_space():
+    return next(a.spaces.active for s in bpy.data.screens for a in s.areas if a.type == 'VIEW_3D')
+
+
+def _ctx(space):
+    c = bpy.context
+    return SimpleNamespace(space_data=space, screen=None, view_layer=c.view_layer,
+                           selected_objects=c.selected_objects, scene=c.scene)
+
+
+def _rule(context):
+    """The highlight rule written out plainly: each selected object in Object Mode and, under it, every descendant that
+    isn't selected itself, in the colour of its nearest selected ancestor (lead = the active object); drawn when it is
+    a wire type in Object Mode and shown in the view."""
+    space, active = context.space_data, context.view_layer.objects.active
+    out, seen = [], set()
+
+    def visit(ob, lead):
+        if ob.name in seen:
+            return
+        seen.add(ob.name)
+        if ob.type in wire.WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get(viewport=space):
+            out.append((ob.name, lead))
+        for child in ob.children:
+            if not child.select_get():
+                visit(child, lead)
+    for ob in context.selected_objects:
+        if ob.mode == 'OBJECT':
+            visit(ob, ob == active)
+    return out
+
+
+class _ChildrenCalls:
+    """Counts ``Object.children`` reads (each one looks through every object of the file)."""
+
+    def __enter__(self):
+        import _bpy_types
+        self.owner, self.calls = _bpy_types.Object, 0
+        self.real = self.owner.__dict__["children"]
+
+        def counted(ob):
+            self.calls += 1
+            return self.real.fget(ob)
+        self.owner.children = property(counted)
+        return self
+
+    def __exit__(self, *exc):
+        self.owner.children = self.real
+
+
+def _mesh_ob(name, parent=None, data=None, link=True):
+    if data is None:
+        data = bpy.data.meshes.new(name)
+        data.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0)], [], [(0, 1, 2)])
+    ob = bpy.data.objects.new(name, data)
+    if link:
+        bpy.context.scene.collection.objects.link(ob)
+    ob.parent = parent
+    return ob
+
+
+def test_hierarchy_highlight_follows_the_nearest_selected_ancestor():
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    group = bpy.data.objects.new("group1", None)                 # a selected empty: no wire of its own
+    bpy.context.scene.collection.objects.link(group)
+    c1 = _mesh_ob("pCube1", group)
+    _mesh_ob("pCube1a", c1)
+    crv = bpy.data.curves.new("curve1", 'CURVE')
+    spline = crv.splines.new('POLY')
+    spline.points.add(1)
+    spline.points[1].co = (1, 0, 0, 1)
+    curve = bpy.data.objects.new("curve1", crv)
+    bpy.context.scene.collection.objects.link(curve)
+    curve.parent = group
+    off = _mesh_ob("offScene", group, link=False)                # in the file, not in the scene
+    _mesh_ob("farKid", off)
+    lead = _mesh_ob("pCube2")
+    c3 = _mesh_ob("pCube3", lead)
+    c4 = _mesh_ob("pCube4", c3)                                  # selected: keeps its own colour
+    _mesh_ob("pCube5", c4)
+    hid = _mesh_ob("hidden", lead)
+    _mesh_ob("hidKid", hid)
+    loose = _mesh_ob("pCube6")
+    _mesh_ob("pCube7", loose)
+    rig = bpy.data.objects.new("rig", bpy.data.armatures.new("rig"))
+    bpy.context.scene.collection.objects.link(rig)
+    _mesh_ob("skin", rig)
+    bpy.context.view_layer.update()
+    hid.hide_set(True)
+    for ob in bpy.context.view_layer.objects:
+        ob.select_set(ob in (group, lead, c4, rig))
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode='POSE')                          # a picked control: no hierarchy highlight
+    bpy.context.view_layer.objects.active = lead
+    space = _view_space()
+    try:
+        ctx = _ctx(space)
+        got = [(o.name, is_lead) for o, is_lead in wire.highlighted(ctx)]
+        assert got == _rule(ctx), (got, _rule(ctx))
+        assert dict(got) == {"pCube1": False, "pCube1a": False, "curve1": False, "farKid": False,
+                             "pCube2": True, "pCube3": True, "pCube4": False, "pCube5": False, "hidKid": True}, got
+        shown = space.show_object_viewport_curve
+        space.show_object_viewport_curve = False                  # this view hides curves
+        try:
+            got = [(o.name, is_lead) for o, is_lead in wire.highlighted(_ctx(space))]
+            assert got == _rule(_ctx(space)) and "curve1" not in dict(got), got
+        finally:
+            space.show_object_viewport_curve = shown
+    finally:
+        bpy.context.view_layer.objects.active = rig
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_highlight_looks_at_the_files_parents_once():
+    """600 selected among 2,000 objects (chains of 5): asking each highlighted object for its children looked through
+    all 2,000 objects every time (600 x 2,000); the hierarchy is now read once."""
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    me = bpy.data.meshes.new("shared")
+    me.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0)], [], [(0, 1, 2)])
+    obs, parent = [], None
+    for i in range(2000):
+        parent = _mesh_ob(f"o{i:04d}", parent if i % 5 else None, data=me)
+        obs.append(parent)
+    bpy.context.view_layer.update()
+    for i, ob in enumerate(obs):
+        ob.select_set(i % 10 < 3)                                 # chain heads and some links
+    bpy.context.view_layer.objects.active = obs[0]
+    ctx = _ctx(_view_space())
+    want = _rule(ctx)
+    with _ChildrenCalls() as children:
+        t0 = time.perf_counter()
+        got = [(o.name, is_lead) for o, is_lead in wire.highlighted(ctx)]
+        dt = (time.perf_counter() - t0) * 1000
+    print(f"highlighted {len(got)} of 2000 objects ({len(ctx.selected_objects)} selected): {dt:.2f} ms, "
+          f"{children.calls} Object.children reads")
+    assert got == want and len(got) == 1000
+    assert children.calls == 0, f"{children.calls} looks through every object of the file"
+    assert dt < 60.0, f"{dt:.1f} ms"
+
+
+def test_world_matrices_and_kept_boxes_match_reading_each_object():
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    rng = random.Random(7)
+    objs, parent = [], None
+    for i in range(40):
+        ob = _mesh_ob(f"m{i}", parent if i % 3 else None)
+        ob.location = (rng.uniform(-9, 9), rng.uniform(-9, 9), rng.uniform(-9, 9))
+        ob.rotation_euler = Euler((rng.uniform(-3, 3), rng.uniform(-3, 3), rng.uniform(-3, 3)))
+        ob.scale = (rng.uniform(0.1, 3), rng.uniform(0.1, 3), rng.uniform(0.1, 3))
+        objs.append(ob)
+        parent = ob
+    bpy.context.view_layer.update()
+    for some in (objs[::-1], objs[5:6]):                         # many of the file's objects, one of them
+        worlds, ok = wire.world_matrices(some)
+        assert ok.all()
+        for ob, got in zip(some, worlds):
+            assert got.ravel().tolist() == [v for row in ob.matrix_world for v in row], ob.name
+    dg = bpy.context.evaluated_depsgraph_get()
+    pm = _perspective() @ _view()
+    boxes = [wire._bounds(ob, dg) for ob in objs]
+    assert wire.depth_biases(objs, dg, pm, (1280, 800), boxes=boxes) == wire.depth_biases(objs, dg, pm, (1280, 800))
