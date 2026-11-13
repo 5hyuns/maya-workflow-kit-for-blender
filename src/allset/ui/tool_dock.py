@@ -146,6 +146,11 @@ def show(context, width=None):
         if area is not None:
             area.tag_redraw()
             return area
+    from . import maya_dock
+    main = maya_dock.main_window(context.window_manager)
+    if 'TOOL_SETTINGS' in maya_dock.floating_kinds() or (main is not None and maya_dock.find_stack(main.screen)):
+        maya_dock.show(context, 'TOOL_SETTINGS')      # Maya: the Tool Settings tab of the right dock
+        return maya_dock.find_stack(main.screen) if main is not None else None
     return open_dock(context, width=width)
 
 
