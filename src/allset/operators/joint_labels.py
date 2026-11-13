@@ -523,28 +523,25 @@ def _armatures(view_layer):
     return [objects[n] for n in got[1] if n in objects]
 
 
-_labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)]) kept while playback runs
+_labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)])
 
 
-def _pose_labels(ob, playing):
-    """[(pose bone name, text, side)] of ``ob``'s joints with Draw Label on. While playback runs only the pose
-    changes, so the joints found on the first frame are used again until something is edited (every pose bone
-    was asked each frame)."""
+def _pose_labels(ob, playing=False):
+    """[(pose bone name, text, side)] of ``ob``'s joints with Draw Label on. Only the pose changes between redraws
+    (playback, a view turned, a selection), so the joints found once are used again until something that can change
+    them is edited (every pose bone was asked on every redraw)."""
     from ..ui import maya_joints
-    key = (maya_joints._EDITS[0], ob.data.as_pointer(), len(ob.pose.bones))
+    key = (maya_joints._EDITS[0], ob.data.as_pointer(), len(ob.pose.bones), ob.mode)
     got = _labelled.get(ob.as_pointer())
-    if playing and got is not None and got[0] == key:
+    if got is not None and got[0] == key:
         return got[1]
     from ..ui import layer_joints
     hidden = layer_joints.state(ob)        # hidden by a display layer or a hidden joint above: no label
     out = [(pb.name, label_text(pb.bone), get_label(pb.bone)[0]) for pb in ob.pose.bones
            if pb.bone.get(DRAW) and not pb.bone.hide and hidden.get(pb.name) != layer_joints.HIDDEN]
-    if playing:
-        if len(_labelled) > 32:
-            _labelled.clear()
-        _labelled[ob.as_pointer()] = (key, out)
-    else:
-        _labelled.pop(ob.as_pointer(), None)
+    if len(_labelled) > 32:
+        _labelled.clear()
+    _labelled[ob.as_pointer()] = (key, out)
     return out
 
 

@@ -37,6 +37,7 @@ _REV = [0]          # bumped by every change that can change a skeleton's layer 
 _STATES = {}        # skeleton object pointer -> (key, state)
 _ROOTS = {}         # kit skeleton object pointer -> (key, first root joint name)
 _PLAYING = [False]  # animation playback runs: a layer with Playback off hides its joints
+_SIGS = {}          # skeleton object pointer -> ``_signature`` when its state was read
 
 
 # --- membership -----------------------------------------------------------------------------------------------------
@@ -91,6 +92,7 @@ def bump(redraw=True):
     _REV[0] += 1
     _STATES.clear()
     _ROOTS.clear()
+    _SIGS.clear()
     try:
         from . import maya_joints
         maya_joints.changed()
@@ -158,6 +160,18 @@ def _below(name, kids):
     return out
 
 
+def _signature(ob):
+    """What a depsgraph update can change of skeleton ``ob``'s state and first root without a kit call: its name
+    (a kit skeleton is known by it), its joints (names, in order) and their own Visibility with its Show-filter mark
+    (a membership, a layer and the skeleton's own type are set through the kit, which calls ``bump``)."""
+    import numpy as np
+    pbs = ob.pose.bones
+    flags = np.zeros(len(pbs), bool)
+    pbs.foreach_get("hide", flags)
+    hidden = tuple(int(i) for i in np.flatnonzero(flags))
+    return ob.name, tuple(pbs.keys()), hidden, tuple(bool(pbs[i].get(SHOW_FILTER)) for i in hidden)
+
+
 def _compute(ob):
     pose = ob.pose
     if pose is None or not hasattr(bpy.types.PoseBone, PROP):
@@ -218,7 +232,9 @@ def kind_under(ob):
 
 def _key(ob):
     pose = ob.pose
-    return (_REV[0], ob.data.as_pointer(), ob.mode, len(pose.bones) if pose is not None else 0), ob.as_pointer()
+    # Object and Pose Mode read the same bones (a click on a joint switches between them); Edit Mode its edit bones
+    return ((_REV[0], ob.data.as_pointer(), ob.mode == 'EDIT', len(pose.bones) if pose is not None else 0),
+            ob.as_pointer())
 
 
 def _cached(store, ob, fn):
@@ -233,6 +249,10 @@ def _cached(store, ob, fn):
     if len(store) > 64:
         store.clear()
     store[ptr] = (key, out)
+    if ptr not in _SIGS and ob.pose is not None and not ob.data.is_editmode:
+        if len(_SIGS) > 64:
+            _SIGS.clear()
+        _SIGS[ptr] = _signature(ob)
     return out
 
 
@@ -292,17 +312,40 @@ def hidden_under(ob):
 
 # --- handlers -------------------------------------------------------------------------------------------------------
 
+def _same_skeletons(scene):
+    """Every skeleton of ``scene`` whose state is kept reads the same as when it was read (``_signature``)."""
+    try:
+        for ob in scene.objects:
+            if ob.type != 'ARMATURE':
+                continue
+            ptr = ob.as_pointer()
+            if ptr not in _SIGS:
+                continue
+            if ob.data.is_editmode or _SIGS.get(ptr) != _signature(ob):
+                return False
+    except (ReferenceError, AttributeError, TypeError):
+        return False
+    return True
+
+
 @persistent
-def _on_depsgraph(_scene, depsgraph=None):
+def _on_depsgraph(scene, depsgraph=None):
     """Skeleton changes other than motion: renamed, re-parented, added or removed joints / objects, a membership
-    written; in Edit Mode every bone edit (a re-parented edit bone is a geometry update)."""
-    if not _STATES:
+    written; in Edit Mode every bone edit (a re-parented edit bone is a geometry update). A joint selection (a
+    skeleton update that changes none of this) keeps the states."""
+    if not _STATES and not _ROOTS:
         return
     try:
         if depsgraph_filter.only_scene(depsgraph):
             return
-        if depsgraph_filter.only_motion(depsgraph) and not any(
-                isinstance(u.id, bpy.types.Armature) and u.id.is_editmode for u in depsgraph.updates):
+        updates = list(depsgraph.updates) if depsgraph is not None else ()
+        if any(isinstance(u.id, bpy.types.Armature) and u.id.is_editmode for u in updates):
+            bump(redraw=False)
+            return
+        if depsgraph_filter.only_motion(depsgraph):
+            return
+        if (depsgraph is not None and not any(isinstance(u.id, bpy.types.Collection) for u in updates)
+                and scene is not None and _same_skeletons(scene)):
             return
     except (ReferenceError, AttributeError):
         pass

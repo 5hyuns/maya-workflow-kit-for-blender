@@ -110,12 +110,19 @@ def _tick():
 
 # --- joints ------------------------------------------------------------------------------------------------------
 
-def drawn_radius(bone, scene, arm_scale=1.0):
-    """World radius of the drawn joint sphere: 0.5 x Radius x Joint Size, in centimetres (``units.radius_unit``)."""
-    from ..operators import joint_display, joints, units
+def drawn_radius(bone, scene, arm_scale=1.0, scale=None):
+    """World radius of the drawn joint sphere: 0.5 x Radius x Joint Size, in centimetres (``units.radius_unit``).
+    ``scale``: (Joint Size, radius unit) read once for a whole skeleton (``_radius_scale``)."""
+    from ..operators import joints
     r = float(bone.get(joints.RADIUS, MAYA_RADIUS))
-    size = joint_display.joint_size(scene)
-    return 0.5 * r * size * units.radius_unit(scene) * arm_scale
+    size, unit = scale if scale is not None else _radius_scale(scene)
+    return 0.5 * r * size * unit * arm_scale
+
+
+def _radius_scale(scene):
+    """(Joint Size, Blender units per Radius unit) of ``scene``."""
+    from ..operators import joint_display, units
+    return joint_display.joint_size(scene), units.radius_unit(scene)
 
 
 def _maya_q(bone):
@@ -138,7 +145,6 @@ def skeleton(ob, scene):
     """{name: Joint} of armature object ``ob`` in world space: the joints not hidden by their own flags, with their
     display layer state (a joint a layer hides is kept for its parent's bone, ``joint_segments`` draws nothing for
     it)."""
-    from .. import compat
     from ..operators import joints
     from ..operators.joint_edit import local_frame
     from . import layer_joints
@@ -146,6 +152,7 @@ def skeleton(ob, scene):
     mw = ob.matrix_world
     m3 = mw.to_3x3()
     s = max(mw.to_scale())
+    scale = _radius_scale(scene)
     out = {}
     if ob.mode == 'EDIT':
         for eb in ob.data.edit_bones:
@@ -153,12 +160,13 @@ def skeleton(ob, scene):
                 continue
             frame = (m3 @ local_frame(eb)).normalized()
             out[eb.name] = Joint(eb.name, eb.parent.name if eb.parent else None, mw @ eb.head, frame,
-                                 drawn_radius(eb, scene, s), state=layered.get(eb.name))
+                                 drawn_radius(eb, scene, s, scale), state=layered.get(eb.name))
     else:
-        for pb in ob.pose.bones:
-            bone = pb.bone
-            if compat.bone_hidden(pb) or _coll_hidden(bone):
+        shown = _shown(ob)
+        for i, pb in enumerate(ob.pose.bones):
+            if not shown[i]:
                 continue
+            bone = pb.bone
             f = m3 @ pb.matrix.to_3x3() @ joints.JOINT_AXES
             q = _maya_q(bone)
             frame = (f @ q if q is not None else f).normalized()
@@ -166,7 +174,7 @@ def skeleton(ob, scene):
             if pb.custom_shape is not None:
                 shape = (pb.custom_shape, mw @ _shape_matrix(pb))
             out[pb.name] = Joint(pb.name, bone.parent.name if bone.parent else None, mw @ pb.head, frame,
-                                 drawn_radius(bone, scene, s), shape, layered.get(pb.name))
+                                 drawn_radius(bone, scene, s, scale), shape, layered.get(pb.name))
     for j in out.values():
         if j.parent in out:
             out[j.parent].children.append(j.name)
@@ -175,6 +183,27 @@ def skeleton(ob, scene):
 
 def _coll_hidden(bone):
     return bool(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)
+
+
+def _shown(ob):
+    """Bool per pose bone of ``ob`` (pose bone order): not hidden by its own flag (``compat.bone_hidden``) or by its
+    bone collections (``_coll_hidden``), read for the whole skeleton at once."""
+    import numpy as np
+    pbs = ob.pose.bones
+    hide = np.zeros(len(pbs), bool)
+    pbs.foreach_get("hide", hide)
+    colls = ob.data.collections_all
+    if len(colls):
+        index = {name: i for i, name in enumerate(pbs.keys())}
+        member, visible = np.zeros(len(pbs), bool), np.zeros(len(pbs), bool)
+        for c in colls:
+            rows = [index[n] for n in c.bones.keys() if n in index]
+            if rows:
+                member[rows] = True
+                if c.is_visible_effectively:
+                    visible[rows] = True
+        hide |= member & ~visible
+    return ~hide
 
 
 def _shape_matrix(pb):
@@ -434,9 +463,41 @@ def _pick_lines(context, ob, js):
     return kept, xy[0::2], xy[1::2], front[0::2] & front[1::2], owner
 
 
+_PICK_MEMO = [None]     # while one click is picked (``pick_memo``): {(skeleton, mode, region, mouse): distances}
+
+
+class pick_memo:
+    """Within one click nothing moves between the coarse object test and the joint pick: ``screen_distance`` reads
+    each skeleton once (a skeleton read costs milliseconds per hundred joints). Nests; the outermost one ends it."""
+
+    def __enter__(self):
+        self._outer = _PICK_MEMO[0] is not None
+        if not self._outer:
+            _PICK_MEMO[0] = {}
+        return self
+
+    def __exit__(self, *_exc):
+        if not self._outer:
+            _PICK_MEMO[0] = None
+
+
 def screen_distance(context, ob, mouse):
     """{joint: screen distance from ``mouse`` to its drawn lines} of armature ``ob``, for the joints that can be
     picked."""
+    memo = _PICK_MEMO[0]
+    key = None
+    if memo is not None:
+        key = (ob.as_pointer(), ob.mode, context.region.as_pointer(), float(mouse[0]), float(mouse[1]))
+        got = memo.get(key)
+        if got is not None:
+            return dict(got)
+    out = _screen_distance(context, ob, mouse)
+    if key is not None:
+        memo[key] = dict(out)
+    return out
+
+
+def _screen_distance(context, ob, mouse):
     import numpy as np
     from ..operators.preselect import segment_distance
     names, a, b, ok, owner = _pick_lines(context, ob, skeleton(ob, context.scene))
@@ -612,16 +673,16 @@ def _joint_list(ob):
     (3, 3)}, {index: custom shape object}; for the controls (bones with a custom shape) the pose bone row their shape
     follows and their rest length; the drawn bones (parent, child) between joints without a custom shape."""
     import numpy as np
-    from .. import compat
     from ..operators import joints
     from . import layer_joints
     layered = layer_joints.state(ob)
     pbs = ob.pose.bones
+    shown = _shown(ob)
     js, names, keep, raw, turned, shaped, src, blen = {}, [], [], [], {}, {}, [], []
     for i, pb in enumerate(pbs):
-        bone = pb.bone
-        if compat.bone_hidden(pb) or _coll_hidden(bone):
+        if not shown[i]:
             continue
+        bone = pb.bone
         name, parent = pb.name, bone.parent
         if pb.custom_shape is not None:
             shaped[len(keep)] = pb.custom_shape
@@ -1154,14 +1215,22 @@ def _depsgraph_post(_scene, depsgraph):
                 _POSED.clear()
             _POSED[_GEN[0]] = _moved_skeletons(depsgraph)
             return
+        hit = shapes = False
         for u in depsgraph.updates:
             ob = u.id
-            if isinstance(ob, bpy.types.Object) and ob.type not in {'ARMATURE', 'MESH', 'CURVE', 'EMPTY'}:
-                continue
-            if isinstance(ob, bpy.types.Object) and ob.type != 'ARMATURE' and not u.is_updated_geometry:
-                continue
-            changed()
-            return
+            if isinstance(ob, bpy.types.Object):
+                if ob.type not in {'ARMATURE', 'MESH', 'CURVE', 'EMPTY'}:
+                    continue
+                if ob.type != 'ARMATURE':
+                    if not u.is_updated_geometry:
+                        continue
+                    # its geometry: read again if it is a control's custom shape (a mesh the rig deforms isn't)
+                    _WIDGETS.pop(getattr(ob, "original", ob).session_uid, None)
+            elif not isinstance(ob, (bpy.types.Scene, bpy.types.Armature)):
+                shapes = True                   # object data or a collection: every custom shape is read again
+            hit = True
+        if hit:
+            changed(shapes=shapes)
     except (ReferenceError, AttributeError):
         changed()
 
@@ -1227,11 +1296,13 @@ def _posed_since(old, key):
     return moved
 
 
-def changed():
-    """Something that can change the drawn joints other than a new frame (an edit, undo, a Radius typed)."""
+def changed(shapes=True):
+    """Something that can change the drawn joints other than a new frame (an edit, undo, a Radius typed).
+    ``shapes`` False: the custom shapes' own geometry is known to be the same (kept)."""
     _GEN[0] += 1
     _EDITS[0] += 1
-    _WIDGETS.clear()
+    if shapes:
+        _WIDGETS.clear()
 
 
 @bpy.app.handlers.persistent

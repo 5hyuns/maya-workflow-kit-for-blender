@@ -249,6 +249,11 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
     def invoke(self, context, event):
+        from ..ui import maya_joints
+        with maya_joints.pick_memo():          # the coarse test and the joint pick read each skeleton once
+            return ALLSET_OT_select_priority._invoke(self, context, event)
+
+    def _invoke(self, context, event):
         from ..ui import toolbox
         space, region = context.space_data, context.region
         if context.mode == 'EDIT_LATTICE' and space is not None and not toolbox.is_toolbox(space):

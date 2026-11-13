@@ -100,28 +100,37 @@ def snapshot(context):
 
 
 def restore(context, snap):
-    from ..ui.channel_box import set_bone_selected
+    """Back to ``snapshot``. Only what differs is written: a write makes Blender evaluate the skeleton (and what it
+    deforms) again even with the same value."""
+    from ..ui.channel_box import bone_selected, set_bone_selected
     for ob in context.scene.objects:
         want = snap["objects"].get(ob.name)
         if want is not None and ob.select_get() != want:
             ob.select_set(want)
     act = snap["active"]
-    if act and act in context.scene.objects:
+    if act and act in context.scene.objects and context.view_layer.objects.active != context.scene.objects[act]:
         context.view_layer.objects.active = context.scene.objects[act]
     for name, (kind, states, active) in snap["bones"].items():
         ob = context.scene.objects.get(name)
         if ob is None:
             continue
         if kind == 'EDIT' and ob.mode == 'EDIT':
-            for eb in ob.data.edit_bones:
-                if eb.name in states:
-                    eb.select, eb.select_head, eb.select_tail = states[eb.name]
-            ob.data.edit_bones.active = ob.data.edit_bones.get(active) if active else None
+            ebs = ob.data.edit_bones
+            for eb in ebs:
+                want = states.get(eb.name)
+                if want is not None and (eb.select, eb.select_head, eb.select_tail) != want:
+                    eb.select, eb.select_head, eb.select_tail = want
+            lead = ebs.get(active) if active else None
+            if ebs.active != lead:
+                ebs.active = lead
         elif kind == 'POSE':
             for pb in ob.pose.bones:
-                if pb.name in states:
-                    set_bone_selected(pb, states[pb.name])
-            ob.data.bones.active = ob.data.bones.get(active) if active else None
+                want = states.get(pb.name)
+                if want is not None and bone_selected(pb) != want:
+                    set_bone_selected(pb, want)
+            lead = ob.data.bones.get(active) if active else None
+            if ob.data.bones.active != lead:
+                ob.data.bones.active = lead
 
 
 def region_of(op):
@@ -166,9 +175,19 @@ def apply(context, poly, mode, snap):
         return []
     restore(context, snap)
     shift, ctrl = modifiers(mode)
-    for i, (ob, name) in enumerate(picks):
-        if i > 0 and mode == 'SET':
-            shift, ctrl = True, True          # the rest of a replace adds
+    if mode in {'SET', 'ADD'}:
+        groups = []                           # the picks skeleton by skeleton, in order
+        for ob, name in picks:
+            if groups and groups[-1][0] == ob:
+                groups[-1][1].append(name)
+            else:
+                groups.append((ob, [name]))
+        for i, (ob, names) in enumerate(groups):
+            if i > 0:
+                shift, ctrl = True, True      # the rest of a replace adds
+            joint_selection.select_many(context, ob, names, shift, ctrl)
+        return [n for _o, n in picks]
+    for ob, name in picks:                    # toggle / remove: joint by joint
         joint_selection.select(context, ob, name, shift, ctrl)
     return [n for _o, n in picks]
 

@@ -107,7 +107,7 @@ def _gap(a, b):
 def test_dragging_a_pose_keeps_the_joint_list_and_the_control_shapes():
     """A drag in Pose Mode: every step's depsgraph update redraws the lines (they follow the pose and equal the
     per-joint lines) but reads neither the joint list nor the control shapes again; the update after the drag
-    (no transform running) reads them again."""
+    (no transform running) reads the joint list again (a pose doesn't change the shapes' own geometry)."""
     arm = _rig()
     pb = arm.pose.bones[3]
     cb.set_bone_selected(pb, True)
@@ -145,7 +145,7 @@ def test_dragging_a_pose_keeps_the_joint_list_and_the_control_shapes():
         bpy.context.view_layer.update()
         assert mj._EDITS[0] > edits, "the update after the drag counts as an edit"
         mj._joined(view)
-        assert lists and reads, "after the drag the joints and shapes are read again"
+        assert lists and not reads, "after the drag the joints are read again, the shapes stay"
     finally:
         mj._read_widget, mj._joint_list, mj.transforming = real_read, real_list, real_moving
         bpy.ops.object.mode_set(mode='OBJECT')

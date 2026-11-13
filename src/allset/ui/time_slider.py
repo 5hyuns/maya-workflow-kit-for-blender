@@ -865,20 +865,59 @@ BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
 _bone_curves = {}     # pose bone pointer -> (owner's F-curve count, the bone's F-curves) kept while playing / dragging
 
 
-def _node_fcurves(node, keep):
-    """``time_keys.node_fcurves``; a bone's curves (found by looking through every curve of its skeleton) are kept
-    while playback or a drag runs and the skeleton keeps its number of curves."""
+def _bones_curves(bones):
+    """{pose bone pointer: ``time_keys.node_fcurves``} for ``bones``. One bone: that; several: each skeleton's curve
+    paths are read once and shared out by the same rule (a bone's curves start with its ``pose.bones["n"]`` path and
+    then "." or "["), instead of looking through every curve of the skeleton once per bone (hundreds of selected
+    controls took a third of a second per Time Slider redraw)."""
     from ..operators import time_keys
-    if not keep or not isinstance(node, bpy.types.PoseBone):
-        return time_keys.node_fcurves(node)
-    fcs = time_keys._cb()._fcurves(node)
-    key = len(fcs) if fcs is not None else -1
-    got = _bone_curves.get(node.as_pointer())
-    if got is None or got[0] != key:
-        if len(_bone_curves) > 256:
+    if len(bones) == 1:
+        return {bones[0].as_pointer(): time_keys.node_fcurves(bones[0])}
+    out, owners = {}, {}
+    for pb in bones:
+        if pb.as_pointer() not in out:
+            out[pb.as_pointer()] = []
+            owners.setdefault(pb.id_data.as_pointer(), []).append(pb)
+    for group in owners.values():
+        fcs = time_keys._cb()._fcurves(group[0])
+        if fcs is None:
+            continue
+        starts = {}
+        for pb in group:
+            starts.setdefault(time_keys.prefix(pb), []).append(pb.as_pointer())
+        sizes = sorted({len(p) for p in starts})
+        for fc in fcs:
+            path = fc.data_path
+            for n in sizes:
+                if len(path) > n and path[n] in ".[":
+                    for ptr in starts.get(path[:n], ()):
+                        out[ptr].append(fc)
+    return out
+
+
+def _bone_fcurves(bones, keep):
+    """{pose bone pointer: its F-curves}; while playback or a drag runs (``keep``) a bone's curves are kept while its
+    skeleton keeps its number of curves."""
+    from ..operators import time_keys
+    if not keep:
+        return _bones_curves(bones)
+    out, missing = {}, []
+    for pb in bones:
+        fcs = time_keys._cb()._fcurves(pb)
+        key = len(fcs) if fcs is not None else -1
+        got = _bone_curves.get(pb.as_pointer())
+        if got is not None and got[0] == key:
+            out[pb.as_pointer()] = got[1]
+        else:
+            missing.append((pb, key))
+    if missing:
+        found = _bones_curves([pb for pb, _key in missing])
+        if len(_bone_curves) + len(missing) > 256:
             _bone_curves.clear()
-        got = _bone_curves[node.as_pointer()] = (key, time_keys.node_fcurves(node))
-    return got[1]
+        for pb, key in missing:
+            out[pb.as_pointer()] = found[pb.as_pointer()]
+            _bone_curves[pb.as_pointer()] = (key, found[pb.as_pointer()])
+    return out
 
 
 def key_frames(nodes, keep=False):
@@ -886,14 +925,19 @@ def key_frames(nodes, keep=False):
     playback or a drag runs (the curves of a bone found once are used again; the keys are read every time)."""
     import numpy as np
     from . import cb_channels
+    from ..operators import time_keys
     if not keep:
         _bone_curves.clear()
-    frames, rounded, bd = {}, {}, _breakdown_value()
-    for node in nodes:
-        # Channel Box Sync Timeline Display: only the selected channels' keys
-        curves = cb_channels.timeline_curves(bpy.context, node)
+    frames, xs, breakdowns, bd = {}, [], [], _breakdown_value()
+    # Channel Box Sync Timeline Display: only the selected channels' keys
+    plan = [(node, cb_channels.timeline_curves(bpy.context, node)) for node in nodes]
+    bones = _bone_fcurves([n for n, c in plan if c is None and isinstance(n, bpy.types.PoseBone)], keep)
+    for node, curves in plan:
         if curves is None:
-            curves = _node_fcurves(node, keep)
+            if isinstance(node, bpy.types.PoseBone):
+                curves = bones[node.as_pointer()]
+            else:
+                curves = time_keys.node_fcurves(node)
             if isinstance(node, bpy.types.Object):
                 # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
                 from ..operators import anim_layers
@@ -912,11 +956,17 @@ def key_frames(nodes, keep=False):
             kps.foreach_get("co", co)
             kinds = np.empty(n, np.int32)
             kps.foreach_get("type", kinds)
-            for x, breakdown in zip(co[0::2].tolist(), (kinds == bd).tolist()):
-                f = rounded.get(x)
-                if f is None:
-                    f = rounded[x] = round(x, 3)
-                frames[f] = frames.get(f, True) and breakdown
+            xs.append(co[0::2])
+            breakdowns.append(kinds == bd)
+    if not xs:
+        return []
+    # the keys of all curves at once: per distinct frame, is any key there a regular one
+    raw, at = np.unique(np.concatenate(xs), return_inverse=True)
+    regular = np.zeros(len(raw), bool)
+    np.logical_or.at(regular, at.ravel(), ~np.concatenate(breakdowns))
+    for x, reg in zip(raw.tolist(), regular.tolist()):
+        f = round(x, 3)
+        frames[f] = frames.get(f, True) and not reg
     return sorted(frames.items())
 
 

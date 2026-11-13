@@ -8,19 +8,36 @@ from .. import compat
 from .preselect import project, segment_distance
 
 
+def _set_flags(seq, prop):
+    """Indices of ``seq`` items whose boolean ``prop`` is on (one read for the whole collection)."""
+    flags = np.zeros(len(seq), bool)
+    seq.foreach_get(prop, flags)
+    return np.flatnonzero(flags)
+
+
 def clear(context):
-    """Clear latent bone selections too, so reselecting a rig cannot revive them."""
+    """Clear latent bone selections too, so reselecting a rig cannot revive them. Only the bones that are selected
+    are written: a write tags the skeleton (and the meshes it deforms) for a new evaluation even when the value
+    stays the same."""
     from ..ui.channel_box import set_bone_selected
     for ob in context.view_layer.objects:
         if ob is None or ob.type != 'ARMATURE':
             continue
         if ob.mode == 'EDIT':
-            for bone in ob.data.edit_bones:
+            ebs = ob.data.edit_bones
+            picked = set()
+            for prop in ("select", "select_head", "select_tail"):
+                picked.update(_set_flags(ebs, prop).tolist())
+            for i in sorted(picked):
+                bone = ebs[i]
                 bone.select = bone.select_head = bone.select_tail = False
-            ob.data.edit_bones.active = None
-        for pb in ob.pose.bones:
-            set_bone_selected(pb, False)
-        ob.data.bones.active = None
+            if ebs.active is not None:
+                ebs.active = None
+        pbs = ob.pose.bones
+        for i in _set_flags(pbs, "select").tolist():
+            set_bone_selected(pbs[i], False)
+        if ob.data.bones.active is not None:
+            ob.data.bones.active = None
 
 
 def _collection_hidden(bone):
@@ -362,6 +379,46 @@ def select(context, ob, name, shift=False, ctrl=False):
         bpy.ops.object.mode_set(mode='POSE')
     set_bone_selected(ob.pose.bones[name], True)
     ob.data.bones.active = ob.data.bones[name]
+    return True
+
+
+def _pose_picks(context, ob, names):
+    """``select`` picks each of ``names`` of ``ob`` as a pose bone (none as an edit joint with the Move tool)."""
+    if ob.get(MOVE_SKINNED):
+        return False
+    pbs = ob.pose.bones
+    if any(pbs.get(n) is None for n in names):
+        return False
+    if ob.get(POSE_PIN) or joint_mode(ob) != 'EDIT' or not move_tool_active(context):
+        return True
+    return all(pbs[n].custom_shape is not None for n in names)     # controls stay pose bones
+
+
+def select_many(context, ob, names, shift=False, ctrl=False):
+    """``select`` on each of ``names`` of skeleton ``ob`` in turn: the first with ``shift`` / ``ctrl``, the rest added
+    (a marquee's joints of one skeleton). Once the first has made ``ob`` the lead in Pose mode, adding another bone
+    there only selects it and makes it the lead bone, so the rest are written at once; anything else (a removal, an
+    edit joint, another mode) goes joint by joint. Returns ``select``'s result for the last one."""
+    names = list(names)
+    if not names:
+        return False
+    result = select(context, ob, names[0], shift, ctrl)
+    rest = names[1:]
+    if not rest:
+        return result
+    from ..ui.channel_box import bone_selected, set_bone_selected
+    if not (result and context.active_object == ob and ob.mode == 'POSE'
+            and _pose_picks(context, ob, rest)):
+        for n in rest:
+            result = select(context, ob, n, True, True)
+        return result
+    pbs = ob.pose.bones
+    for n in rest:
+        pb = pbs[n]
+        if not bone_selected(pb):
+            set_bone_selected(pb, True)
+    if ob.data.bones.active != ob.data.bones[rest[-1]]:
+        ob.data.bones.active = ob.data.bones[rest[-1]]
     return True
 
 

@@ -1,6 +1,7 @@
 """Selecting and moving stay light in rig and modeling scenes: a click or a marquee on a skeleton measures every
-joint's drawn lines in one go (control shapes read once, not per click), a display-layer / Visibility state of a big
-skeleton is read in one pass over its joints, and Maya's component colours keep the mesh's edges, faces and selection
+joint's drawn lines in one go (control shapes read once, not per click; each skeleton read once per click), a
+display-layer / Visibility state of a big skeleton is read in one pass over its joints and kept while only the joint
+selection changes, clearing a joint selection writes only the selected joints, and Maya's component colours keep the mesh's edges, faces and selection
 while a transform only moves points. The results are the same as measuring joint by joint."""
 
 from importlib import import_module
@@ -55,7 +56,8 @@ def _front_view():
     view = Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, -10), (0, 0, 0, 1)))
     proj = Matrix(((0.2, 0, 0, 0), (0, 0.4, 0, 0), (0, 0, -0.01, 0), (0, 0, 0, 1)))
     return SimpleNamespace(region_data=SimpleNamespace(perspective_matrix=proj @ view),
-                           region=SimpleNamespace(width=200, height=100), space_data=None, window=None,
+                           region=SimpleNamespace(width=200, height=100, as_pointer=lambda: 1), space_data=None,
+                           window=None,
                            scene=bpy.context.scene, evaluated_depsgraph_get=bpy.context.evaluated_depsgraph_get)
 
 
@@ -338,3 +340,299 @@ def test_marquees_in_quick_succession_are_each_finished_in_order():
         jm._running, jm._finish, jm._registered = saved[:3]
         jm._pending[:] = saved[3]
         jm.cancel_all()
+
+
+def test_one_click_reads_each_skeleton_once():
+    """The coarse object test and the joint pick of one click read each skeleton once; the distances are the same
+    as without it."""
+    _clear()
+    skel, rig, _widgets = _rig()
+    ctx = _front_view()
+    mouse = (130.0, 60.0)
+    want = {ob.name: mj.screen_distance(ctx, ob, mouse) for ob in (skel, rig)}
+    with _Count(mj, "skeleton") as sk:
+        with mj.pick_memo():
+            got = {ob.name: mj.screen_distance(ctx, ob, mouse) for ob in (skel, rig)}
+            picked = mj.pick(ctx, rig, mouse, 8)
+            with mj.pick_memo():                       # nested: still the same click
+                mj.screen_distance(ctx, skel, mouse)
+            moved = mj.screen_distance(ctx, rig, (60.0, 52.0))
+    assert got == want, "same distances"
+    assert picked == min(((v, n) for n, v in want["ctrl_rig"].items() if v <= 8), default=(0, None))[1]
+    assert moved == mj.screen_distance(ctx, rig, (60.0, 52.0)), "another mouse position is read again"
+    assert sk.calls == 3, f"each skeleton once per mouse position, got {sk.calls}"
+    assert mj._PICK_MEMO[0] is None, "the click's memo ends with it"
+
+
+def _updated_ids(fn):
+    seen = []
+
+    def rec(_scene, dg):
+        seen.extend(u.id.original.name for u in dg.updates if isinstance(u.id, bpy.types.Object))
+    bpy.app.handlers.depsgraph_update_post.append(rec)
+    try:
+        fn()
+        bpy.context.view_layer.update()
+    finally:
+        bpy.app.handlers.depsgraph_update_post.remove(rec)
+    return set(seen)
+
+
+def test_a_joint_click_keeps_layer_states_and_leaves_other_skeletons_alone():
+    """Picking another joint writes only the joints whose selection changes (a write makes Blender evaluate the
+    skeleton and what it deforms again, even with the same value) and keeps every skeleton's display layer state.
+    A joint hidden or renamed in Blender is read again."""
+    js = import_module(kit.MODULE + ".operators.joint_selection")
+    cb = import_module(kit.MODULE + ".ui.channel_box")
+    _clear()
+    skel, rig, _widgets = _rig()
+    rig.pose.bones["c01"].hide = True               # a joint hidden by its own Visibility: a non-empty state
+    skel.pose.bones[0].hide = True
+    lj.bump(redraw=False)
+    ctx = bpy.context
+    js.select(ctx, rig, "c00")
+    bpy.context.view_layer.update()
+    assert lj.state(rig) and lj.state(skel)
+    with _Count(lj, "_compute") as comp, _Count(cb, "set_bone_selected") as writes:
+        touched = _updated_ids(lambda: js.select(ctx, rig, "c04"))
+        assert lj.state(rig).get("c01") == lj.HIDDEN and lj.state(skel)
+    assert comp.calls == 0, f"a joint selection keeps the states, read {comp.calls}x"
+    assert writes.calls == 2, f"c00 off, c04 on: {writes.calls} writes"
+    assert skel.name not in touched, touched
+    assert [pb.name for pb in rig.pose.bones if pb.select] == ["c04"]
+    with _Count(cb, "set_bone_selected") as writes:
+        js.clear(ctx)
+    assert writes.calls == 1 and not any(pb.select for pb in rig.pose.bones)
+    # Blender's own Hide (H) and a rename reach the state
+    for pb in rig.pose.bones:
+        pb.select = pb.name == "c05"
+    bpy.context.view_layer.update()
+    bpy.ops.pose.hide(unselected=False)
+    bpy.context.view_layer.update()
+    assert lj.state(rig).get("c05") == lj.HIDDEN, "a joint hidden in Blender"
+    rig.pose.bones["c01"].name = "c01_renamed"
+    bpy.context.view_layer.update()
+    st = lj.state(rig)
+    assert st.get("c01_renamed") == lj.HIDDEN and "c01" not in st, "a renamed joint"
+    _object_mode()
+
+
+def test_control_shapes_stay_read_across_a_selection():
+    """A joint or object selection doesn't change a control's custom shape: the shapes read for the drawn lines stay
+    (they are read again once a shape's own geometry is edited)."""
+    _clear()
+    skel, rig, widgets = _rig()
+    ctx = _front_view()
+    mouse = (130.0, 60.0)
+    mj._WIDGETS.clear()
+    mj.screen_distance(ctx, rig, mouse)
+    assert len(mj._WIDGETS) == len(widgets)
+    with _Count(mj, "_read_widget") as rw:
+        rig.pose.bones["c00"].select = True
+        skel.select_set(True)
+        bpy.context.view_layer.update()
+        mj.screen_distance(ctx, rig, mouse)
+    assert rw.calls == 0, f"selection re-read {rw.calls} shapes"
+    before = mj.screen_distance(ctx, rig, mouse)
+    me = widgets[0].data
+    for v in me.vertices:
+        v.co *= 2.0
+    me.update()
+    bpy.context.view_layer.update()
+    with _Count(mj, "_read_widget") as rw:
+        after = mj.screen_distance(ctx, rig, mouse)
+    assert rw.calls >= 1 and after != before, "an edited shape is read again"
+    rig.pose.bones["c00"].select = False
+
+
+def _pick_state():
+    out = {}
+    for ob in bpy.context.scene.objects:
+        if ob.type == 'ARMATURE':
+            out[ob.name] = (ob.mode, ob.select_get(), sorted(pb.name for pb in ob.pose.bones if pb.select),
+                            ob.data.bones.active.name if ob.data.bones.active else None)
+    act = bpy.context.view_layer.objects.active
+    return out, act.name if act else None
+
+
+def _reset_picks(skel, rig):
+    _object_mode()
+    for ob in (skel, rig):
+        for pb in ob.pose.bones:
+            pb.select = False
+        ob.data.bones.active = None
+        ob.select_set(False)
+    bpy.context.view_layer.objects.active = None
+
+
+def test_a_marquee_adds_a_skeletons_joints_at_once_with_the_same_result():
+    """A marquee's joints of one skeleton are written at once: the same selection, lead object, lead bone and modes
+    as picking them one by one (the first with the drag's modifiers, the rest added), with one write per bone."""
+    js = import_module(kit.MODULE + ".operators.joint_selection")
+    jm = import_module(kit.MODULE + ".operators.joint_marquee")
+    cb = import_module(kit.MODULE + ".ui.channel_box")
+    _clear()
+    skel, rig, _widgets = _rig()
+    ctx = bpy.context
+    names = ["c00", "c01", "c03", "c04", "c06", "c07"]
+    for shift, ctrl, start in ((False, False, ["c09"]), (True, True, ["c09"]), (False, False, [])):
+        results = []
+        for batched in (False, True):
+            _reset_picks(skel, rig)
+            if start:
+                js.select(ctx, rig, start[0])
+            if batched:
+                with _Count(cb, "set_bone_selected") as writes:
+                    js.select_many(ctx, rig, names, shift, ctrl)
+                assert writes.calls <= len(names) + len(start), writes.calls
+            else:
+                js.select(ctx, rig, names[0], shift, ctrl)
+                for n in names[1:]:
+                    js.select(ctx, rig, n, True, True)
+            results.append(_pick_state())
+        assert results[0] == results[1], (shift, ctrl, results)
+    # the snapshot a marquee restores writes only what differs
+    _reset_picks(skel, rig)
+    js.select(ctx, rig, "c00")
+    snap = jm.snapshot(ctx)
+    js.select(ctx, rig, "c04", True, True)
+    with _Count(cb, "set_bone_selected") as writes:
+        jm.restore(ctx, snap)
+    assert writes.calls == 1, writes.calls
+    assert sorted(pb.name for pb in rig.pose.bones if pb.select) == ["c00"]
+    assert rig.data.bones.active.name == "c00"
+    _object_mode()
+
+
+def test_joint_labels_are_found_once_between_edits():
+    """Draw Label joints are found once and used again on every redraw until something is edited (a view turned or
+    zoomed redraws without an edit); a label turned on or a renamed joint shows at once."""
+    labels = import_module(kit.MODULE + ".operators.joint_labels")
+    _clear()
+    skel, _rig_ob, _widgets = _rig()
+    ctx = SimpleNamespace(screen=None, view_layer=bpy.context.view_layer)
+    bones = skel.data.bones
+    labels.set_label(bones[1], side=labels.LEFT, type=labels.T_KNEE, draw=True)
+    labels._labelled.clear()
+    try:
+        first = labels.label_points(ctx)
+        assert len(first) == 1
+        kept = labels._labelled[skel.as_pointer()][1]
+        for _redraw in range(3):
+            assert labels.label_points(ctx) == first
+        assert labels._labelled[skel.as_pointer()][1] is kept, "no edit: found once"
+        labels.set_label(bones[2], draw=True)
+        assert len(labels.label_points(ctx)) == 2, "a label turned on shows at once"
+        name = bones[2].name
+        skel.pose.bones[name].name = name + "_x"
+        bpy.context.view_layer.update()
+        assert {t for _p, t, _s in labels.label_points(ctx)} == {labels.label_text(b) for b in bones
+                                                               if b.get(labels.DRAW)}, "a renamed joint"
+    finally:
+        labels._labelled.clear()
+
+
+def test_outliner_rows_stay_through_a_joint_selection():
+    """Selecting joints changes no row of the kit Outliner (names, parents, joints): its structure is kept; a renamed
+    joint or skeleton is read again."""
+    outliner = import_module(kit.MODULE + ".ui.outliner")
+    js = import_module(kit.MODULE + ".operators.joint_selection")
+    _clear()
+    skel, rig, _widgets = _rig()
+    ctx = bpy.context
+    js.select(ctx, rig, "c00")
+    bpy.context.view_layer.update()
+    js.select(ctx, rig, "c03")
+    bpy.context.view_layer.update()
+    v = outliner.structure_version()
+    for name in ("c04", "c06", "c07"):
+        js.select(ctx, rig, name, True, True)
+        bpy.context.view_layer.update()
+    js.clear(ctx)
+    bpy.context.view_layer.update()
+    assert outliner.structure_version() == v, "a joint selection keeps the rows"
+    rig.pose.bones["c06"].name = "c06_x"
+    bpy.context.view_layer.update()
+    assert outliner.structure_version() > v, "a renamed joint"
+    v = outliner.structure_version()
+    rig.name = "ctrl_rig_x"
+    bpy.context.view_layer.update()
+    assert outliner.structure_version() > v, "a renamed skeleton"
+    _object_mode()
+
+
+def test_outliner_skips_the_steps_of_a_pose_drag():
+    """While a move runs in Pose Mode every step updates the skeleton: the kit Outliner neither reads the skeleton
+    nor rebuilds its rows; after the move a changed skeleton is read again."""
+    outliner = import_module(kit.MODULE + ".ui.outliner")
+    js = import_module(kit.MODULE + ".operators.joint_selection")
+    _clear()
+    skel, rig, _widgets = _rig()
+    js.select(bpy.context, rig, "c03")
+    bpy.context.view_layer.update()
+    assert rig.mode == 'POSE'
+    reads = []
+    real_rows, real_moving = outliner._skeleton_rows, mj.transforming
+
+    def rows(ob):
+        reads.append(ob.name)
+        return real_rows(ob)
+
+    outliner._skeleton_rows = rows
+    try:
+        mj.transforming = lambda: True
+        v = outliner.structure_version()
+        pb = rig.pose.bones["c03"]
+        for step in range(4):
+            pb.location.x = 0.1 * (step + 1)
+            rig.data.update_tag()
+            bpy.context.view_layer.update()
+        assert outliner.structure_version() == v and not reads, (outliner.structure_version(), v, reads)
+        mj.transforming = lambda: False
+        pb.location.x = 0.0
+        rig.data.update_tag()
+        bpy.context.view_layer.update()
+        assert reads and outliner.structure_version() == v, "with no move running the skeleton is checked"
+        pb.name = "c03_x"
+        rig.data.update_tag()
+        bpy.context.view_layer.update()
+        assert outliner.structure_version() > v, "after the move a renamed joint is read again"
+    finally:
+        outliner._skeleton_rows, mj.transforming = real_rows, real_moving
+    _object_mode()
+
+
+def test_time_slider_reads_many_selected_bones_curves_in_one_pass():
+    """Hundreds of selected controls: the Time Slider shares out each skeleton's curves in one pass instead of
+    looking through every curve once per bone; every bone gets exactly the curves it had (its own channels and
+    custom properties, also for names with dots, brackets or quotes), and the key frames are the same."""
+    ts = import_module(kit.MODULE + ".ui.time_slider")
+    tk = import_module(kit.MODULE + ".operators.time_keys")
+    _clear()
+    data = bpy.data.armatures.new("keys")
+    ob = bpy.data.objects.new("keys", data)
+    bpy.context.scene.collection.objects.link(ob)
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT')
+    names = ["a", "a.b", "a.b.c", 'ar"m', "a[1]", "spine", "spine.001", "x"]
+    for i, n in enumerate(names):
+        eb = data.edit_bones.new(n)
+        eb.head, eb.tail = (i, 0, 0), (i, 0, 1)
+    bpy.ops.object.mode_set(mode='POSE')
+    for i, pb in enumerate(ob.pose.bones):
+        for f in (1 + i, 10 + 2 * i):
+            pb.location = (0.1 * f, 0, 0)
+            pb.keyframe_insert("location", frame=f)
+        if i % 2:
+            pb["amount"] = 0.5
+            pb.keyframe_insert('["amount"]', frame=30 + i)
+    bones = list(ob.pose.bones)[:-1]                       # "x" not selected: its curves go to nobody
+    want = {pb.as_pointer(): [fc.data_path + str(fc.array_index) for fc in tk.node_fcurves(pb)] for pb in bones}
+    with _Count(tk, "node_fcurves") as looks:
+        got = ts._bones_curves(bones)
+    assert looks.calls == 0, "several bones: no per-bone look through the curves"
+    assert {k: [fc.data_path + str(fc.array_index) for fc in v] for k, v in got.items()} == want
+    per_bone = sorted({f for pb in bones for f, _b in ts.key_frames([pb])})
+    assert [f for f, _b in ts.key_frames(bones)] == per_bone
+    assert [f for f, _b in ts.key_frames(bones, keep=True)] == per_bone
+    _object_mode()
