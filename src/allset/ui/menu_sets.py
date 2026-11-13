@@ -1242,19 +1242,21 @@ def menu_width_units(text, context):
     return (w + MENU_PAD_PX * scale) / (20.0 * scale)
 
 
-def _menu(layout, context, idname, collapsed):
+def _menu(layout, context, idname, collapsed, units=None):
     if collapsed:
         layout.menu(idname)
         return
     label = getattr(bpy.types, idname).bl_label
     sub = layout.row(align=True)
-    sub.ui_units_x = menu_width_units(label, context)
+    got = units.get(idname) if units else None
+    sub.ui_units_x = menu_width_units(label, context) if got is None else got
     sub.menu(idname)
 
 
-def draw_menu_bar(layout, context, collapsed=False, menu_set=True):
+def draw_menu_bar(layout, context, collapsed=False, menu_set=True, units=None):
     """Blender logo menu, Maya common menus, set menus, Cache, Help. ``menu_set``: the menu set dropdown after the
-    common menus (only when no Status Line shows it: Maya keeps it at the Status Line's left end)."""
+    common menus (only when no Status Line shows it: Maya keeps it at the Status Line's left end). ``units``:
+    {menu idname: ``menu_width_units`` of its label} already worked out for this draw."""
     from .. import preferences
     prefs = preferences.get(context)
     if collapsed:
@@ -1263,7 +1265,7 @@ def draw_menu_bar(layout, context, collapsed=False, menu_set=True):
         layout.menu("TOPBAR_MT_blender", text="", icon='BLENDER')
     set_id = prefs.menu_set
     for name in _SET_MENUS[COMMON_SET]:
-        _menu(layout, context, menu_idname(name), collapsed)
+        _menu(layout, context, menu_idname(name), collapsed, units)
     if collapsed:
         layout.separator()
         layout.prop(prefs, "menu_set", text="")
@@ -1272,7 +1274,7 @@ def draw_menu_bar(layout, context, collapsed=False, menu_set=True):
         sub.ui_units_x = 5.5
         sub.prop(prefs, "menu_set", text="")
     for name in _SET_MENUS.get(set_id, ()) + _ALWAYS_MENUS:
-        _menu(layout, context, menu_idname(name), collapsed)
+        _menu(layout, context, menu_idname(name), collapsed, units)
     draw_addon_menus(layout, context)
 
 

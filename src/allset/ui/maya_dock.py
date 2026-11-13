@@ -188,6 +188,20 @@ def kind_visible(wm, kind):
     return any(find_stack(w.screen) is not None for w in wm.windows)
 
 
+def visible_kinds(wm=None):
+    """The kinds ``kind_visible`` is True for, from one look at the windows (the Status Line asks for each of its
+    editor toggles on every redraw)."""
+    wm = wm or bpy.context.window_manager
+    floating = floating_kinds(wm)
+    tabs = [k for k in KINDS if k not in floating]
+    want = getattr(wm, "allset_dock", 'CHANNEL_BOX')
+    current = want if want in tabs else (tabs[0] if tabs else None)
+    out = set(floating)
+    if current is not None and any(find_stack(w.screen) is not None for w in wm.windows):
+        out.add(current)
+    return out
+
+
 def _main_view(screen):
     from .status_line import main_view3d
     return main_view3d(screen)
@@ -964,6 +978,13 @@ def _kept_hole(context, region):
     return hole
 
 
+def _reds(buf, n):
+    """The red byte (0-255) of the ``n`` pixels of a one-row or one-column framebuffer read (RGBA bytes), bottom /
+    left first: the read's bytes go to numpy directly instead of a Python list per pixel."""
+    import numpy as np
+    return np.frombuffer(buf, dtype=np.uint8)[0:4 * n:4].tolist()
+
+
 def _list_hole(context, region):
     """The Layer Editor list body (Blender's list grey is already as dark): left unlifted. Found in the drawn
     pixels — one row near the region bottom for its sides, one column inside its left edge for its top."""
@@ -987,10 +1008,10 @@ def _list_hole(context, region):
         if ys is None or le_top <= ys + 10:
             continue
         try:
-            row = fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE').to_list()
+            row = _reds(fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE'), region.width)
         except ValueError:
             return None
-        span = dark_span([px[0] for px in row[0]], limit)
+        span = dark_span(row, limit)
         if span is not None and span[1] - span[0] >= 40 * scale:
             break
         span = None
@@ -1000,10 +1021,9 @@ def _list_hole(context, region):
     _hole_row[key] = ys
     x0, x1 = span
     try:
-        col = fb.read_color(x0 + 1, 0, 1, le_top, 4, 0, 'UBYTE').to_list()
+        values = _reds(fb.read_color(x0 + 1, 0, 1, le_top, 4, 0, 'UBYTE'), le_top)
     except ValueError:
         return None
-    values = [c[0][0] for c in col]
     if values[ys] >= limit:
         return None
     top = dark_top(values, ys, limit, round(30 * scale))

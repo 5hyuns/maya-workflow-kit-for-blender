@@ -449,10 +449,13 @@ EDITORS = (
 DOCK_KINDS = {"MODELING_TOOLKIT": 'MODELING_TOOLKIT', "ATTRIBUTE": 'ATTRIBUTE_EDITOR', "CHANNEL_BOX": 'CHANNEL_BOX'}
 
 
-def editor_shown(screen, editor):
+def editor_shown(screen, editor, docks=None):
+    """``docks``: ``maya_dock.visible_kinds()`` already read for this draw."""
     if editor == "TOOL_SETTINGS":    # the dock left of the viewport (ui/tool_dock.py)
         from . import tool_dock
         return tool_dock.shown(screen)
+    if docks is not None:
+        return DOCK_KINDS[editor] in docks
     from . import maya_dock
     return maya_dock.kind_visible(bpy.context.window_manager, DOCK_KINDS[editor])
 
@@ -682,11 +685,13 @@ def draw_status_line(layout, context, compact=False):
     if not compact:
         layout.separator_spacer()            # Maya: the sidebar toggles sit at the right end
     row = layout.row(align=True)
+    from . import maya_dock
+    docks = maya_dock.visible_kinds(context.window_manager)     # one look at the windows for the three panels
     for editor, _desc, _icon in EDITORS:
         if editor == "TOOL_SETTINGS":         # Maya order: toolkit, character controls, AE, tool settings, CB
             _grey(row, "ed_CHARACTER", "Status Line/Show or hide the Character Controls")
         _flat(row, ALLSET_OT_editor_toggle.bl_idname, "ed_" + editor,
-              depress=editor_shown(screen, editor)).editor = editor
+              depress=editor_shown(screen, editor, docks)).editor = editor
 
     if compact and _group(layout, "INPUT"):
         input_line.draw(layout, context)
@@ -768,16 +773,25 @@ def fit_beside_more(widths, width, fixed, more):
     return n
 
 
-def menu_bar_widths(context, names, menu_set):
-    """(px width of each menu of ``names``, fixed px: padding, logo, menu set dropdown, slack, » button)."""
+def _menu_units(context, names):
+    """{menu idname: ``menu_sets.menu_width_units`` of its label} for the menus of ``names``."""
+    out = {}
+    for name in names:
+        idname = menu_sets.menu_idname(name)
+        cls = getattr(bpy.types, idname, None)
+        out[idname] = menu_sets.menu_width_units(cls.bl_label if cls is not None else name, context)
+    return out
+
+
+def menu_bar_widths(context, names, menu_set, units=None):
+    """(px width of each menu of ``names``, fixed px: padding, logo, menu set dropdown, slack, » button).
+    ``units``: ``_menu_units(context, names)`` already worked out."""
     from .toolbar_fit import unit
     system = context.preferences.system
     u = unit(system.ui_scale or 1.0, system.pixel_size)
-    widths = []
-    for name in names:
-        cls = getattr(bpy.types, menu_sets.menu_idname(name), None)
-        label = cls.bl_label if cls is not None else name
-        widths.append(int(menu_sets.menu_width_units(label, context) * u))
+    if units is None:
+        units = _menu_units(context, names)
+    widths = [int(units[menu_sets.menu_idname(name)] * u) for name in names]
     fixed = int((MENU_LEAD_UNITS + LOGO_UNITS + MENU_SLACK_UNITS) * u) + (int(MENU_SET_UNITS * u) if menu_set else 0)
     return widths, fixed, int(MENU_MORE_UNITS * u)
 
@@ -799,7 +813,8 @@ def draw_menu_bar_fit(layout, context, menu_set=True):
     prefs = preferences.get(context)
     names = menu_sets.menus_for_set(prefs.menu_set)
     region = getattr(context, "region", None)
-    widths, fixed, more = menu_bar_widths(context, names, menu_set)
+    units = _menu_units(context, names)     # once: the widths below and the menus drawn use them
+    widths, fixed, more = menu_bar_widths(context, names, menu_set, units)
     width = region.width if region is not None and region.width > 1 else None
     # other add-ons' top-bar menus follow the Maya menus when there is room for them, else they wait behind »
     funcs = menu_sets.addon_menu_funcs(context)
@@ -811,15 +826,15 @@ def draw_menu_bar_fit(layout, context, menu_set=True):
     if context.window is not None:
         _menus_shown[context.window.as_pointer()] = (tuple(names), n)
     if inline:
-        menu_sets.draw_menu_bar(layout, context, menu_set=menu_set)
+        menu_sets.draw_menu_bar(layout, context, menu_set=menu_set, units=units)
         return
     layout.menu("TOPBAR_MT_blender", text="", icon='BLENDER')
     common = len(menu_sets._SET_MENUS[menu_sets.COMMON_SET])    # the menu set dropdown follows these
     for i, name in enumerate(names[:n]):
-        cls = getattr(bpy.types, menu_sets.menu_idname(name), None)
+        idname = menu_sets.menu_idname(name)
         sub = layout.row(align=True)
-        sub.ui_units_x = menu_sets.menu_width_units(cls.bl_label if cls else name, context)
-        sub.menu(menu_sets.menu_idname(name))
+        sub.ui_units_x = units[idname]
+        sub.menu(idname)
         if menu_set and i == common - 1:
             _menu_set_field(layout, prefs)
     if menu_set and n < common:
@@ -878,7 +893,16 @@ def draw_right(self, context):
     row.label(text="Workspace:")
     sub = row.row(align=True)
     sub.ui_units_x = 7
-    sub.prop(context.window_manager, "allset_workspace", text="")
+    # the field asks for its items twice and its value once while it is built: one workspace list for all three
+    from . import workspaces
+    try:
+        _ws_rows[:] = [workspaces.entries()]
+    except Exception:     # the field's own callbacks read the list (and report the error) as before
+        _ws_rows.clear()
+    try:
+        sub.prop(context.window_manager, "allset_workspace", text="")
+    finally:
+        _ws_rows.clear()
     if len(bpy.data.scenes) > 1:  # Maya has one scene per file; show only when needed
         row = layout.row()
         row.ui_units_x = 6
@@ -907,14 +931,17 @@ def status_line_shown(context):
 # #81).
 
 
+_ws_rows = []    # [workspaces.entries()] while draw_right builds the Workspace field, else empty
+
+
 def _workspaces(self, context):
     from . import workspaces
-    return workspaces.dropdown_items(self, context)
+    return workspaces.dropdown_items(self, context, _ws_rows[0] if _ws_rows else None)
 
 
 def _get_workspace(self):
     from . import workspaces
-    return workspaces.dropdown_get(self)
+    return workspaces.dropdown_get(self, _ws_rows[0] if _ws_rows else None)
 
 
 def _set_workspace(self, value):

@@ -633,20 +633,31 @@ def _make(pc, name, size):
     return p
 
 
+# "name@size" -> icon_id of that preview: a preview keeps its icon id while it lives, and these previews live until
+# the collection is removed (unregister). The Status Line and the panel toolbar ask for dozens of glyphs per redraw.
+_ids = {}
+
+
 def icon(name):
     """icon_value of glyph ``name`` at the current UI scale's icon size."""
-    pc = _collection()
     size = icon_px()
-    p = pc.get(f"{name}@{size}")
+    key = f"{name}@{size}"
+    got = _ids.get(key)
+    if got is not None:
+        return got
+    pc = _collection()
+    p = pc.get(key)
     if p is not None:
-        return p.icon_id
+        got = _ids[key] = p.icon_id
+        return got
     old = _size[0] if _size else None
     if old is not None and old != size:
         q = pc.get(f"{name}@{old}")
         if q is not None:           # stand-in until the timer has made this size
             _schedule()
             return q.icon_id
-    return _make(pc, name, size).icon_id
+    got = _ids[key] = _make(pc, name, size).icon_id
+    return got
 
 
 def _schedule():
@@ -695,6 +706,7 @@ def unregister():
     if bpy.app.timers.is_registered(make_all):
         bpy.app.timers.unregister(make_all)
     _size.clear()
+    _ids.clear()
     if _pcoll:
         import bpy.utils.previews
         bpy.utils.previews.remove(_pcoll.pop())

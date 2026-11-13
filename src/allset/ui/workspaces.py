@@ -162,8 +162,9 @@ def entries():
     return out
 
 
-def dropdown_items(_self, _context):
-    labels = tuple(label for _t, _w, label in entries())
+def dropdown_items(_self, _context, rows=None):
+    """``rows``: ``entries()`` already read for this draw of the dropdown."""
+    labels = tuple(label for _t, _w, label in (entries() if rows is None else rows))
     items = _items.get(labels)
     if items is None:
         items = [(str(i), label, "Switch to this Maya workspace" if i < len(IN_TEMPLATE) else
@@ -172,11 +173,11 @@ def dropdown_items(_self, _context):
     return items
 
 
-def dropdown_get(_self):
+def dropdown_get(_self, rows=None):
     window = bpy.context.window
     if window is None:
         return 0
-    for i, (_t, ws, _label) in enumerate(entries()):
+    for i, (_t, ws, _label) in enumerate(entries() if rows is None else rows):
         if ws is not None and ws == window.workspace:
             return i
     return 0
