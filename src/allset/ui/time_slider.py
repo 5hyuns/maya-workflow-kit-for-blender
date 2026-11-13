@@ -780,10 +780,26 @@ def _rows(name, h, rows=None, scale=1.0):
     return h - (bottom + 1) * k, h - top * k
 
 
+_TRIS = {}      # triangle points -> their GPU batch: the ruler and the key ticks redraw the same shapes every frame
+
+
+def _tris_batch(shader, tris):
+    """The GPU batch of the triangle list ``tris`` (``UNIFORM_COLOR``), made once and drawn again while the same
+    shapes are drawn (the Time Slider redraws on every frame change)."""
+    key = tuple(tris)
+    batch = _TRIS.get(key)
+    if batch is None:
+        from gpu_extras.batch import batch_for_shader
+        batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
+        if len(_TRIS) > 256:
+            _TRIS.clear()
+        _TRIS[key] = batch
+    return batch
+
+
 def _draw_ruler(context, region):
     import blf
     import gpu
-    from gpu_extras.batch import batch_for_shader
     scene = context.scene
     s = context.preferences.system.ui_scale or 1.0
     w, h = region.width, region.height
@@ -806,7 +822,7 @@ def _draw_ruler(context, region):
             tris += [(x0, y0), (x1, y0), (x1, y1), (x0, y0), (x1, y1), (x0, y1)]
         if tris:
             shader.uniform_float("color", colour)
-            batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+            _tris_batch(shader, tris).draw(shader)
     from ..operators import bookmarks
     marks = bookmarks.markers(scene)
     rows = ROWS_BOOKMARKS if marks else ROWS
@@ -869,13 +885,12 @@ _BONE_PREFIX = re.compile(r'pose\.bones\["(?:[^"\\]|\\.)*"\]', re.DOTALL)
 
 
 def _bones_curves(bones):
-    """{pose bone pointer: ``time_keys.node_fcurves``} for ``bones``. One bone: that; several: each skeleton's curves
-    are shared out by the same rule (a bone's curves start with its ``pose.bones["n"]`` path and then "." or "["),
-    once per skeleton (``_skeleton_parts``), instead of looking through every curve of the skeleton once per bone
-    (hundreds of selected controls took a third of a second per Time Slider redraw)."""
+    """{pose bone pointer: ``time_keys.node_fcurves``} for ``bones``: each skeleton's curves are shared out by the same
+    rule (a bone's curves start with its ``pose.bones["n"]`` path and then "." or "["), once per skeleton
+    (``_skeleton_parts``, kept until the curves change), instead of looking through every curve of the skeleton once
+    per bone (hundreds of selected controls took a third of a second per Time Slider redraw; one picked control of a
+    rig with a thousand curves read them all again on every redraw)."""
     from ..operators import time_keys
-    if len(bones) == 1:
-        return {bones[0].as_pointer(): time_keys.node_fcurves(bones[0])}
     out, owners = {}, {}
     for pb in bones:
         ptr = pb.as_pointer()
@@ -889,11 +904,14 @@ def _bones_curves(bones):
         if fcs is None:
             continue
         parts = _skeleton_parts(first.id_data, fcs)
+        # Blender finds the n-th curve of a slot by stepping through the n curves before it: several bones take
+        # their curves from one list of the skeleton's curves
+        seq = list(fcs) if len(group) > 1 else fcs
         for ptr, pb in group:
             # = time_keys.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
             idx = parts.get(f'pose.bones["{escape(pb.name)}"]')
             if idx:
-                out[ptr] = [fcs[i] for i in idx]
+                out[ptr] = [seq[i] for i in idx]
     return out
 
 
@@ -999,7 +1017,7 @@ def key_frames(nodes, keep=False):
     # the keys of all curves at once: per distinct frame, is any key there a regular one
     raw, at = np.unique(np.concatenate(xs), return_inverse=True)
     regular = np.zeros(len(raw), bool)
-    np.logical_or.at(regular, at.ravel(), ~np.concatenate(breakdowns))
+    regular[at.ravel()[~np.concatenate(breakdowns)]] = True     # a frame with any regular key
     for x, reg in zip(raw.tolist(), regular.tolist()):
         f = round(x, 3)
         frames[f] = frames.get(f, True) and not reg
@@ -1129,7 +1147,6 @@ def _draw_keys(context, region, maya=False):
     if not keys:
         return
     import gpu
-    from gpu_extras.batch import batch_for_shader
     w = max(1.0, round(context.preferences.system.ui_scale or 1.0))
     h = region.height
     if maya:
@@ -1159,7 +1176,7 @@ def _draw_keys(context, region, maya=False):
             tris += [(x0, 0), (x1, 0), (x1, h), (x0, 0), (x1, h), (x0, h)]
         if tris:
             shader.uniform_float("color", colour)
-            batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+            _tris_batch(shader, tris).draw(shader)
 
 
 def blue_pencil_marks(region, frames, y0, scale):
@@ -1399,6 +1416,7 @@ def unregister():
     _HELD.clear()
     _KEYS.clear()
     _PARTS.clear()
+    _TRIS.clear()
     if _on_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load)
     bpy.msgbus.clear_by_owner(_OWNER)

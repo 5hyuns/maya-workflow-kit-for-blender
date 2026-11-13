@@ -178,8 +178,8 @@ def test_time_slider_keeps_a_bones_curves_while_playing_or_dragging():
         pb.keyframe_insert("location", frame=f)
         other.keyframe_insert("rotation_quaternion", frame=f + 1)
     looks = []
-    real = time_keys.node_fcurves
-    time_keys.node_fcurves = lambda node: looks.append(node.name) or real(node)
+    real = ts._bones_curves         # where the Time Slider looks a bone's curves up
+    ts._bones_curves = lambda bones: looks.append([b.name for b in bones]) or real(bones)
     try:
         want = ts.key_frames([pb])
         assert [f for f, _b in want] == [1, 8, 15]
@@ -197,7 +197,7 @@ def test_time_slider_keeps_a_bones_curves_while_playing_or_dragging():
         assert [f for f, _b in ts.key_frames([pb], keep=True)] == [1, 4, 8, 9, 15], "new curves are found"
         assert ts.key_frames([pb]) == ts.key_frames([pb], keep=True)
     finally:
-        time_keys.node_fcurves = real
+        ts._bones_curves = real
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
