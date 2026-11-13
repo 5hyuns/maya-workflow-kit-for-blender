@@ -222,21 +222,23 @@ def attr(md, name):
     return None
 
 
+HANDLE_TYPES = {'EMPTY', 'LATTICE'}
+_HANDLE_FIELDS = ("object", "origin", "start_position_object")
+
+
+def drives(md, ob):
+    """Kit deformer modifier ``md`` takes ``ob`` as its lattice / handle."""
+    if base_of(md) is None:
+        return False
+    return any(getattr(md, p, None) == ob for p in _HANDLE_FIELDS)
+
+
 def driven_modifiers(ob):
     """Kit deformer modifiers that ``ob`` drives (a lattice / handle object): Maya shows the deformer node in
     the handle's INPUTS (ffd1Lattice, bend1Handle)."""
-    if ob is None or getattr(ob, "type", None) not in {'EMPTY', 'LATTICE'}:
+    if ob is None or getattr(ob, "type", None) not in HANDLE_TYPES:
         return []
-    out = []
-    for o in bpy.data.objects:
-        for md in getattr(o, "modifiers", ()):
-            if base_of(md) is None:
-                continue
-            for p in ("object", "origin", "start_position_object"):
-                if getattr(md, p, None) == ob:
-                    out.append(md)
-                    break
-    return out
+    return [md for o in bpy.data.objects for md in getattr(o, "modifiers", ()) if drives(md, ob)]
 
 
 # --- selection -------------------------------------------------------------------------------------------

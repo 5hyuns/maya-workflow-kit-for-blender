@@ -176,12 +176,13 @@ def placing_joints(context=None):
 
 
 # --- scene facts kept between redraws -------------------------------------------------------------------------------
-# The Channel Box asks who the lead is many times per redraw (every value field's getter, the rename button's
-# poll, the "+N" count, the 10 Hz value watch), so the answer that needs a walk over every object of the scene is
-# kept: which objects are skeletons. It is found again after any depsgraph update that is not a pure move (adding,
-# removing or linking objects send the Scene in the update), an undo / redo and a file load (``_generation``). A kept
-# answer is checked on use: Blender hands out one Python object per ID and makes it raise ReferenceError once the ID
-# is removed.
+# The Channel Box asks who the lead is and what drives it many times per redraw (every value field's getter, the
+# rename button's poll, the "+N" count, the 10 Hz value watch), so the two answers that need a walk over every object
+# of the scene are kept: which objects are skeletons, and which kit deformers a handle drives. They are found again
+# after any depsgraph update that is not a pure move (adding, removing or linking objects and every modifier edit send
+# the Scene in the update), an undo / redo and a file load (``_generation``). A kept answer is checked on use: Blender
+# hands out one Python object per ID and makes it raise ReferenceError once the ID is removed, and a kept modifier is
+# looked up by name on its object again (``bpy.data.objects.get`` would walk the whole list).
 
 _generation = [0]
 
@@ -1340,13 +1341,43 @@ def _text_set(key):
 
 # --- rows for custom attributes, SHAPES and INPUTS --------------------------------
 
+_driven = {}     # handle object pointer -> (generation, ((object, modifier name), ...))
+
+
+def driven_modifiers(ob):
+    """``deformers.driven_modifiers`` (every object's modifiers looked at) kept until the scene changes
+    (``_generation``); each kept modifier is looked up on its object again and checked on use."""
+    from ..operators import deformers
+    if ob is None or getattr(ob, "type", None) not in deformers.HANDLE_TYPES:
+        return []
+    key = ob.as_pointer()
+    got = _driven.get(key)
+    if got is not None and got[0] == _generation[0]:
+        out = []
+        try:
+            for owner, name in got[1]:
+                md = owner.modifiers.get(name)
+                if md is None or not deformers.drives(md, ob):
+                    break
+                out.append(md)
+            else:
+                return out
+        except ReferenceError:
+            pass
+    mods = deformers.driven_modifiers(ob)
+    if len(_driven) > 64:
+        _driven.clear()
+    _driven[key] = (_generation[0], tuple((md.id_data, md.name) for md in mods))
+    return mods
+
+
 def _inputs(ob):
     # + the kit deformers a lattice / handle drives: Maya shows ffd1 / bend1 in the INPUTS of ffd1Lattice /
     # bend1Handle
     from ..operators import deformers, skin_method, skin_tools_199, type_manip
     return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m) and not deformers.is_base(m)
             and not skin_tools_199.is_part(m) and not skin_method.is_part(m) and not type_manip.is_part(m)] \
-        + deformers.driven_modifiers(ob)
+        + driven_modifiers(ob)
 
 
 def _virtual(owner, name):
@@ -4122,6 +4153,7 @@ def unregister():
     while _on_scene_change in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(_on_scene_change)
     _skeletons.clear()
+    _driven.clear()
     _field_lead.clear()
     del bpy.types.WindowManager.allset_cb_selected
     del bpy.types.Scene.allset_cb

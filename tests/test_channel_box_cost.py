@@ -1,8 +1,9 @@
 """The Channel Box stays light in big scenes:
 - in Pose Mode the lead is the active joint, else the first picked shown one, found without a Python object for
   every picked joint (Blender reads every value field again after the panel's draw returns: many asks per redraw);
-- the skeletons of the view layer are found once and kept until the scene changes (an object added, removed or
-  linked, undo, a file load); a removed object is never handed out.
+- the skeletons of the view layer and the kit deformers a handle (Empty / lattice) drives are found once and kept
+  until the scene changes (an object added, removed or linked, a modifier edit, undo, a file load); a removed object
+  or a renamed / removed modifier is never handed out.
 The answers are the same as looking through the whole scene each time."""
 
 import time
@@ -13,6 +14,7 @@ import bpy
 import kit
 
 cb = import_module(kit.MODULE + ".ui.channel_box")
+deformers = import_module(kit.MODULE + ".operators.deformers")
 
 
 class _Count:
@@ -188,3 +190,79 @@ def test_lead_cost_does_not_grow_with_the_scene():
     # looking at every object (6,000) took > 1 ms per call; asking for the lead is a few array reads
     assert ms < 25, f"100 lead lookups took {ms:.1f} ms"
     _object_mode()
+
+
+def _handle_scene(extra=300):
+    """Empty ``handle`` driving bend1 on ``host``, plus ``extra`` meshes with a modifier each."""
+    _clear()
+    handle = bpy.data.objects.new("bend1Handle", None)
+    bpy.context.scene.collection.objects.link(handle)
+    me = bpy.data.meshes.new("m")
+    host = bpy.data.objects.new("host", me)
+    bpy.context.scene.collection.objects.link(host)
+    md = host.modifiers.new("bend1", 'SIMPLE_DEFORM')
+    md.origin = handle
+    for i in range(extra):
+        o = bpy.data.objects.new(f"other{i}", me)
+        bpy.context.scene.collection.objects.link(o)
+        o.modifiers.new("Subdivision", 'SUBSURF')
+    bpy.context.view_layer.update()
+    return handle, host
+
+
+def _driven_names(handle):
+    return [(m.id_data.name, m.name) for m in cb.driven_modifiers(handle)]
+
+
+def _walk_names(handle):
+    return [(m.id_data.name, m.name) for m in deformers.driven_modifiers(handle)]
+
+
+def test_handle_inputs_are_found_once_until_the_scene_changes():
+    handle, host = _handle_scene()
+    with _Count(deformers, "driven_modifiers") as scans:
+        for _ in range(20):
+            names = [m.name for m in cb._inputs(handle)]
+            assert names == ["bend1"], names
+    # a Channel Box redraw asked about 2 + rows times; every one looked through every object's modifiers
+    assert scans.calls == 1, f"{scans.calls} walks over every object for one unchanged handle"
+    # a second deformer on another mesh: the update finds it
+    host2 = bpy.data.objects.new("host2", host.data)
+    bpy.context.scene.collection.objects.link(host2)
+    host2.modifiers.new("bend2", 'SIMPLE_DEFORM').origin = handle
+    bpy.context.view_layer.update()
+    assert _driven_names(handle) == _walk_names(handle) == [("host", "bend1"), ("host2", "bend2")]
+    # removed / renamed without a depsgraph update in between: looked up again
+    bpy.data.objects.remove(host)
+    assert _driven_names(handle) == _walk_names(handle) == [("host2", "bend2")]
+    host2.modifiers["bend2"].name = "Deform"
+    assert _driven_names(handle) == _walk_names(handle) == []
+    host2.modifiers["Deform"].name = "bend2"
+    bpy.context.view_layer.update()
+    assert _driven_names(handle) == _walk_names(handle) == [("host2", "bend2")]
+    # the deformer handed to another handle
+    other = bpy.data.objects.new("bend2Handle", None)
+    bpy.context.scene.collection.objects.link(other)
+    host2.modifiers["bend2"].origin = other
+    bpy.context.view_layer.update()
+    assert _driven_names(handle) == _walk_names(handle) == []
+    assert _driven_names(other) == _walk_names(other) == [("host2", "bend2")]
+    # a mesh is no handle
+    assert cb.driven_modifiers(host2) == deformers.driven_modifiers(host2) == []
+
+
+def test_moving_the_handle_keeps_its_inputs():
+    """A move (transform-only updates) keeps the kept deformers; a selection change finds them again."""
+    handle, _host = _handle_scene()
+    cb._inputs(handle)
+    with _Count(deformers, "driven_modifiers") as scans:
+        for i in range(10):
+            handle.location.x = 0.1 * i
+            bpy.context.view_layer.update()
+            assert [m.name for m in cb._inputs(handle)] == ["bend1"]
+    assert scans.calls == 0, f"a move looked through every object {scans.calls} times"
+    with _Count(deformers, "driven_modifiers") as scans:
+        handle.select_set(True)
+        bpy.context.view_layer.update()
+        assert [m.name for m in cb._inputs(handle)] == ["bend1"]
+    assert scans.calls == 1
