@@ -44,6 +44,9 @@ def _space(context):
 
 
 def _owner(space, context, owner):
+    if owner == "preferences":
+        from .. import preferences
+        return preferences.get(context)
     return {"space": space, "shading": space.shading, "overlay": space.overlay}[owner]
 
 
