@@ -31,6 +31,7 @@ def _view(label, view):
 
 VIEW = [
     ("prop", "preferences", "show_viewport_shading", "Viewport Shading Controls"),
+    ("prop", "preferences", "show_view_cube_buttons", "Camera / Projection Buttons"),
     _sep(),
     ("set", "SELECT_CAMERA", "Select Camera"),
     ("set", "CAMERA_LOCK", "Lock Camera"),

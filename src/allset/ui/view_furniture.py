@@ -866,8 +866,9 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
         region, rv = context.region, context.region_data
         size = cube_size(region.width, region.height, s)
         centre, _label, _triad = layout(_bounds(context), s, size)
+        hide = not _cube_here(context) or not _prefs().show_view_cube_buttons
         for i, button in enumerate((self.camera_button, self.projection_button)):
-            button.hide = not _cube_here(context)
+            button.hide = hide
             button.scale_basis = 14 * s
             button.matrix_basis.translation = (centre[0] + size * .5,
                                                 centre[1] - size * .8 - (18 + 30 * i) * s, 0)
