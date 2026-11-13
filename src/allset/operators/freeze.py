@@ -171,19 +171,22 @@ def _bbox_center(corners):
 
 
 def local_center(ob):
-    """Bounding-box centre in ``ob``'s local space, or None (nothing to centre on)."""
-    if ob.type in BAKE_TYPES and ob.data is not None:
-        return _bbox_center([Vector(v) for v in ob.bound_box])
+    """Bounding-box centre in ``ob``'s local space, or None (nothing to centre on).
+
+    Like Maya, the box holds ``ob``'s own data and all its descendants' and is measured in ``ob``'s space.
+    """
+    inv = ob.matrix_world.inverted_safe()
     corners = []
-    stack = list(ob.children)
+    stack = [ob]
     while stack:
-        ch = stack.pop()
-        stack.extend(ch.children)
-        if ch.type in BAKE_TYPES and ch.data is not None:
-            corners.extend(ch.matrix_world @ Vector(v) for v in ch.bound_box)
+        o = stack.pop()
+        stack.extend(o.children)
+        if o.type in BAKE_TYPES and o.data is not None:
+            to_local = inv @ o.matrix_world
+            corners.extend(to_local @ Vector(v) for v in o.bound_box)
     if not corners:
         return None
-    return ob.matrix_world.inverted_safe() @ _bbox_center(corners)
+    return _bbox_center(corners)
 
 
 def shift_pivot(ob, c):
