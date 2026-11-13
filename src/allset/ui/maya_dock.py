@@ -50,6 +50,19 @@ def _flags(space):
     return marked_window._flag_names(space)[0]
 
 
+_MARK_FLAGS = {}      # space class -> its tab flags that can mark a kind (fixed per space type)
+
+
+def _mark_flags(space):
+    """``marked_window._flag_names(space)[1]`` kept per space class: ``role`` runs dozens of times per dock redraw
+    (panel polls, the tab list of every area) and reading the space's RNA description each time was most of it."""
+    flags = _MARK_FLAGS.get(type(space))
+    if flags is None:
+        from . import marked_window
+        flags = _MARK_FLAGS[type(space)] = marked_window._flag_names(space)[1]
+    return flags
+
+
 def role(area):
     """'STACK' / a KINDS member / 'MENU' for a kit dock area, else None (the Tool Settings dock has no role)."""
     if area is None or area.type != 'PROPERTIES':
@@ -60,9 +73,8 @@ def role(area):
     on = [name for name, flag in ROLE_FLAGS.items() if getattr(space, flag, False)]
     if len(on) != 1:
         return None
-    from . import marked_window
     keep = ("show_properties_tool", ROLE_FLAGS[on[0]])
-    if any(getattr(space, f) for f in marked_window._flag_names(space)[1] if f not in keep):
+    if any(getattr(space, f) for f in _mark_flags(space) if f not in keep):
         return None
     return on[0]
 
@@ -1050,6 +1062,8 @@ def _fill(shader, x0, y0, x1, y1, rgba):
 
 
 def _strip_callback():
+    from . import channel_box
+    channel_box.region_drawn()      # the region's buttons are drawn: the Channel Box's draw-time lead ends here
     try:
         draw_tint()
         draw_strip()
@@ -1232,6 +1246,7 @@ def unregister():
     _drawn.clear()
     _hole_kept.clear()
     _rects.clear()
+    _MARK_FLAGS.clear()
     _torn_menus.clear()
     _pending.clear()
     for cls in reversed(classes):
