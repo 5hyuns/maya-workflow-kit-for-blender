@@ -320,15 +320,26 @@ def _cube_here(context):
 # --- drawing --------------------------------------------------------------------------------
 
 _shader = []
-def _face_label(name, poly, facing, u2, size, alpha):
-    """The face's name in Blender's UI font, centred on the projected face, along its text axis and never
-    upside down."""
-    cx = sum(p[0] for p in poly) / 4
-    cy = sum(p[1] for p in poly) / 4
-    ang = math.atan2(u2[1], u2[0])
-    if math.cos(ang) < 0:
-        ang += math.pi
-    _text(name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (.16, .16, .16, min(1.0, alpha * 1.5)), ang)
+def _face_label_matrix(name, q, centre, size):
+    """Font pixels to homogeneous screen coordinates, on the cube's actual face plane."""
+    from mathutils import Matrix
+    n, u, v = FACES[name]
+    origin = _to_view(q, Vector(n) * .5)
+    axes = (_to_view(q, Vector(u) * .0112), _to_view(q, Vector(v) * .0112))
+    k = size * _PX_PER_UNIT * (CUBE_EYE - .5)
+    columns = []
+    for p, offset in ((axes[0], 0.0), (axes[1], 0.0), (Vector((0, 0, 0)), 0.0), (origin, CUBE_EYE)):
+        w = offset - p.z
+        columns.append((centre[0] * w + k * p.x, centre[1] * w + k * p.y, 0.0, w))
+    return Matrix(columns).transposed()
+
+
+def _face_label(name, q, centre, size, alpha):
+    """Keep glyphs fixed to the face, including perspective, shear and foreshortening."""
+    import gpu
+    with gpu.matrix.push_pop():
+        gpu.matrix.multiply_matrix(_face_label_matrix(name, q, centre, size))
+        _text(name, 0, 0, 16, (.16, .16, .16, min(1.0, alpha * 1.5)))
 
 
 def _arc_arrow(centre, radius, start, end, length, half_width):
@@ -518,7 +529,7 @@ def draw_cube(context, hover=None, alpha=0.5):
             _fill_cube_face(poly, name, facing, alpha)
         _lines(poly, (0.418, 0.418, 0.418, alpha), 1.95, region, loop=True)
         if facing > 0.28:
-            _face_label(name, poly, facing, u2, size, alpha)
+            _face_label(name, q, centre, size, alpha)
     if hover is not None:
         _draw_controls(context, centre, size, hover)
     return faces
@@ -573,7 +584,7 @@ def _hud_callback():
 # --- asset shelf strip ----------------------------------------------------------
 # Pose / paint modes give the view an ASSET_SHELF_HEADER region (29 px at the bottom) that never draws
 # while the shelf is collapsed: it expects Region Overlap, which Maya mode turns off. Without overlap the
-# WINDOW region shrinks above it and the strip keeps the pixels drawn there before the mode change — the camera
+# WINDOW region shrinks above it and the strip keeps the pixels drawn there before the mode change â€” the camera
 # label and triad showed twice ("persp" under "persp"). A draw handler on that region is never called,
 # so the strip is hidden instead (screen.region_toggle; Maya has no asset shelf) and shown again when the shelf is
 # opened or the kit unregisters. The HUD draw sees the state; the toggle runs from a timer.
