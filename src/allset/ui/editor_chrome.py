@@ -17,12 +17,14 @@ the icon row follows the menus on it; the UV Editor's tool header is Maya's seco
 stay in a "Blender" menu at the end of the bar.
 """
 
+import contextlib
 import re
 import types
 
 import blf
 import bpy
 import gpu
+import numpy as np
 from bpy.props import BoolProperty, IntProperty, StringProperty
 from gpu_extras.batch import batch_for_shader
 
@@ -556,18 +558,35 @@ def selected_points(context):
 
 
 def _stats_get(field):
+    axis = 0 if field == "time" else 1
+
     def get(scene):
         from . import cb_entry
-        pts = selected_points(bpy.context)
-        if not pts:
+        first, values = None, set()
+        for fc in getattr(bpy.context, "editable_fcurves", None) or ():
+            kps = fc.keyframe_points
+            n = len(kps)
+            if not n:
+                continue
+            sel = np.empty(n, dtype=bool)
+            kps.foreach_get("select_control_point", sel)
+            if not sel.any():
+                continue
+            co = np.empty(n * 2, dtype=np.float64)
+            kps.foreach_get("co", co)
+            picked = co[axis::2][sel]
+            if first is None:
+                first = (fc, float(picked[0]))
+            # the rounded values of the selected keys (equal values round alike)
+            values.update(round(float(v), 6) for v in (picked if np.isnan(picked).any() else np.unique(picked)))
+            if len(values) > 1:
+                return "-"          # Maya shows a blank field for several values; "-" = mixed
+        if first is None:
             return ""
-        values = {round(kp.co.x if field == "time" else kp.co.y, 6) for _fc, kp in pts}
-        if len(values) > 1:
-            return "-"          # Maya shows a blank field for several values; "-" = mixed
-        fc, kp = pts[0]
+        fc, value = first
         if field == "time":
-            return cb_entry.fmt_number(kp.co.x)
-        return cb_entry.format_value(kp.co.y, _kind(fc), scene)
+            return cb_entry.fmt_number(value)
+        return cb_entry.format_value(value, _kind(fc), scene)
     return get
 
 
@@ -614,6 +633,36 @@ _scroll = {}                             # area pointer -> first row shown
 _picked = {"ids": set(), "sig": None}
 _BONES = 'pose.bones["'
 _SHAPES = 'key_blocks["'
+_bone_names = {}                         # data path -> its joint name (None: not a joint's path)
+_BONE_NAMES_MAX = 200000
+# One pass (a ``sync`` of every editor, one list build): results that can't change while it runs are computed once —
+# an owner's drivers by joint, an object's curves by joint, the selection, each editor's listed nodes. None = no pass
+# open (every call computes).
+_memo = {"on": None}
+
+
+@contextlib.contextmanager
+def one_pass():
+    """Open a pass (nested passes share the outer one): the list helpers reuse what they computed inside it."""
+    if _memo["on"] is not None:
+        yield
+        return
+    _memo["on"] = {}
+    try:
+        yield
+    finally:
+        _memo["on"] = None
+
+
+def _memo_get(key, make):
+    memo = _memo["on"]
+    if memo is None:
+        return make()
+    try:
+        return memo[key]
+    except KeyError:
+        value = memo[key] = make()
+        return value
 
 
 def _maya_names():
@@ -682,8 +731,7 @@ def shape_key(ob):
     return key if key is not None and compat.id_fcurves(key) else None
 
 
-def _bone_name(path):
-    """``pose.bones["joint1"].location`` -> "joint1" (None for other paths)."""
+def _parse_bone_name(path):
     if not path.startswith(_BONES):
         return None
     end = path.find('"]', len(_BONES))
@@ -692,8 +740,28 @@ def _bone_name(path):
     return bpy.utils.unescape_identifier(path[len(_BONES):end]) if end > 0 else None
 
 
+def _bone_name(path):
+    """``pose.bones["joint1"].location`` -> "joint1" (None for other paths). The name depends on the path text
+    alone, so it is kept per path."""
+    try:
+        return _bone_names[path]
+    except KeyError:
+        pass
+    if len(_bone_names) >= _BONE_NAMES_MAX:
+        _bone_names.clear()
+    name = _bone_names[path] = _parse_bone_name(path)
+    return name
+
+
 def split_object_curves(ob):
     """(the object's own curves, [(pose bone, its curves)] in the armature's bone order): joints are Maya nodes."""
+    if _memo["on"] is None:
+        return _split_object_curves(ob)
+    own, joints = _memo_get(("split", ob.as_pointer()), lambda: _split_object_curves(ob))
+    return list(own), [(pb, list(c)) for pb, c in joints]
+
+
+def _split_object_curves(ob):
     own, by_bone = [], {}
     bones = ob.pose.bones if ob.type == 'ARMATURE' and ob.pose is not None else None
     for fc in object_curves(ob):
@@ -853,7 +921,8 @@ def attr_filters():
 
 
 def _selected_objects(context):
-    return [ob for ob in context.scene.objects if ob.select_get()]
+    return list(_memo_get(("selected", context.scene.as_pointer()),
+                          lambda: [ob for ob in context.scene.objects if ob.select_get()]))
 
 
 def _descendants(obs):
@@ -1204,15 +1273,23 @@ def node_drivers(node):
     ad = getattr(owner, "animation_data", None)
     if ad is None:
         return []
-    out = []
-    for fc in ad.drivers:
-        name = _bone_name(fc.data_path) if isinstance(owner, bpy.types.Object) else None
-        if isinstance(node, bpy.types.PoseBone):
-            if name == node.name:
-                out.append(fc)
-        elif name is None or owner.type != 'ARMATURE':
-            out.append(fc)
-    return out
+    every, by_joint = _memo_get(("drivers", owner.as_pointer()), lambda: _drivers_by_joint(owner, ad))
+    if isinstance(node, bpy.types.PoseBone):
+        return list(by_joint.get(node.name, ()))
+    if isinstance(owner, bpy.types.Object) and owner.type == 'ARMATURE':
+        return list(by_joint.get(None, ()))        # the armature's own (not a joint's) driver curves
+    return list(every)
+
+
+def _drivers_by_joint(owner, ad):
+    """(every driver curve, {joint name or None: its driver curves}) of one owner, in Blender's order."""
+    every, by_joint = list(ad.drivers), {}
+    if isinstance(owner, bpy.types.Object):
+        for fc in every:
+            by_joint.setdefault(_bone_name(fc.data_path), []).append(fc)
+    else:
+        by_joint[None] = every
+    return every, by_joint
 
 
 def filter_curves(node, curves, flt=None):
@@ -1246,6 +1323,22 @@ def listed_nodes(context, space):
     Objects > Sets / Characters lists only those nodes: kit sets as rows without channels (a Maya set row has
     none), character sets (a character is a set) with their member channels; kit sets and characters can't be
     selected like Maya's, so every one is listed. A bookmark loaded from List > Bookmarks shows its set row first."""
+    with one_pass():
+        nodes = _memo_get(("listed", _list_key(space)), lambda: _listed_nodes(context, space))
+        return [(kind, node, list(curves)) for kind, node, curves in nodes]
+
+
+def _list_key(space):
+    """What a pass keys an editor's list by: the editor, and its list state ``sync_space`` may change in the pass."""
+    ds = _ds(space)
+    coll = kit_list(space)
+    ptr = getattr(space, "as_pointer", None)
+    return (ptr() if ptr is not None else id(space), bool(getattr(ds, "show_only_selected", False)),
+            coll.as_pointer() if coll is not None else 0,
+            None if coll is None else (coll.get(LOADED) is None, bool(coll.get(AUTO, False))))
+
+
+def _listed_nodes(context, space):
     from . import channel_box
     out = []
     flt = attr_filters()
@@ -1334,6 +1427,25 @@ def shows_upstream(space, flt=None):
 def upstream_curves(context, space):
     """[(driver ID, its keyed curve)] the listed driven-key channels' upstream rows show (Blender must draw them)."""
     if not shows_upstream(space):
+        return []
+    with one_pass():
+        return list(_memo_get(("upstream", _list_key(space)), lambda: _upstream_curves(context, space)))
+
+
+def _sdk_drivers(owner):
+    """Does the ID have a driver with the kit's SDK variable (an upstream row needs one)?"""
+    from ..operators import driven_key
+    ad = getattr(owner, "animation_data", None)
+    return ad is not None and any(v.name == driven_key.VAR for fc in ad.drivers for v in fc.driver.variables)
+
+
+def _upstream_curves(context, space):
+    # the list's driver curves are its objects' (joints' included) and their shape keys' drivers: without an SDK
+    # driver among them there is no upstream row, and the list need not be built
+    owners = []
+    for ob in listed_objects(context, space):
+        owners += [ob, getattr(getattr(ob, "data", None), "shape_keys", None)]
+    if not any(_memo_get(("sdk", o.as_pointer()), lambda o=o: _sdk_drivers(o)) for o in owners if o is not None):
         return []
     out = []
     for _kind, node, curves in listed_nodes(context, space):
@@ -1714,9 +1826,10 @@ def sync(context):
     for window, area, sp in found:
         if (is_graph(sp) or is_dope(sp)) and setup_toolbar_row(window, area):
             changed = True
-    for sp in spaces:
-        changed |= sync_space(context, sp)
-    changed |= bool(sync_hidden(context, spaces))
+    with one_pass():
+        for sp in spaces:
+            changed |= sync_space(context, sp)
+        changed |= bool(sync_hidden(context, spaces))
     if changed:
         _redraw_editors(context)
 
