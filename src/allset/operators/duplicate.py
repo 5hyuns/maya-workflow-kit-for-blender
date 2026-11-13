@@ -31,7 +31,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatVectorProperty, IntProperty
 from mathutils import Euler, Quaternion, Vector
 
-from .. import undo_steps
+from .. import results, undo_steps
 from . import naming, prim_history
 from .freeze import hierarchy
 from .group import make_group
@@ -556,7 +556,7 @@ class ALLSET_OT_duplicate_special(bpy.types.Operator):
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
         if notes:
-            self.report({'INFO'}, "Duplicate Special: " + "; ".join(notes))
+            results.result(self, "Duplicate Special: " + "; ".join(notes))
         return {'FINISHED'}
 
 
