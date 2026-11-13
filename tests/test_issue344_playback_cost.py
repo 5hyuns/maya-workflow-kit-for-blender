@@ -786,9 +786,9 @@ def test_frame_changes_dont_look_through_every_object():
             scene.frame_set(f)
         assert not applied, f"Object Mode: no Edit Mode mesh to move ({len(applied)} looks)"
         assert len(looks) <= 1, f"the RP handles are found once, not every frame ({len(looks)} looks)"
+        looks.clear()
         scene.collection.objects.link(bpy.data.objects.new("added", None))
         bpy.context.view_layer.update()
-        looks.clear()
         scene.frame_set(9)
         scene.frame_set(10)
         assert len(looks) == 1, f"an added object: the handles are found again once ({len(looks)})"

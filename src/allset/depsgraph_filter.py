@@ -9,7 +9,9 @@ change what they look at. Blender's ``depsgraph.updates`` per kind of edit (5.2)
 - parent / unparent: Scene + Objects; add / delete / link / hide_viewport: Scene + Collection + Objects;
 - edit-mode bone add / rename: the Armature data.
 
-Each test reads only the few entries of ``depsgraph.updates`` (no scene walk)."""
+A pass over ``depsgraph.updates`` walks every ID the depsgraph holds (about 0.3 ms with 5,000 objects), so a handler
+reads it once (``Look``) and answers what it can from ``depsgraph.id_type_updated`` first: the type of every entry
+is flagged there (a flag can also be set with no entry of that type: a selection flags OBJECT)."""
 
 import bpy
 
@@ -31,8 +33,8 @@ def only_motion(depsgraph):
 
 def only_scene(depsgraph):
     """True when the update is the Scene alone (selection, active object, ``hide_set``)."""
-    if depsgraph is None:
-        return False
+    if depsgraph is None or not depsgraph.id_type_updated('SCENE'):
+        return False                    # no Scene entry: not a selection
     seen = False
     for u in depsgraph.updates:
         seen = True
@@ -41,15 +43,48 @@ def only_scene(depsgraph):
     return seen
 
 
+class Look:
+    """One pass over a depsgraph update: its entries (evaluated ID, moved = a transform or geometry change) and the
+    ``only_scene`` / ``only_motion`` answers, for a handler that tests several things on the same update."""
+
+    __slots__ = ("entries", "scene_only", "motion", "collection", "armature")
+
+    def __init__(self, depsgraph):
+        entries = []
+        scene_only = motion = True
+        collection = armature = False
+        for u in depsgraph.updates:
+            id_ = u.id
+            moved = u.is_updated_transform or u.is_updated_geometry
+            entries.append((id_, moved))
+            if isinstance(id_, bpy.types.Scene):
+                motion = False
+                continue
+            scene_only = False
+            if isinstance(id_, bpy.types.Collection):
+                collection, motion = True, False
+                continue
+            if isinstance(id_, bpy.types.Armature):
+                armature = True
+            if not moved:
+                motion = False
+        self.entries = entries
+        self.scene_only = bool(entries) and scene_only      # = only_scene
+        self.motion = bool(entries) and motion              # = only_motion
+        self.collection = collection                        # a Collection entry
+        self.armature = armature                            # an Armature data entry
+
+    def outliner_skip(self):
+        """= ``outliner_skip`` of the same update."""
+        return not self.armature and (self.scene_only or self.motion)
+
+
 def outliner_skip(depsgraph):
     """The kit Outliner's rows (names, parents, membership, bones) can't change: motion only, or the Scene alone. An
     Armature data update (edit-mode bones) always counts."""
     if depsgraph is None:
         return False
-    for u in depsgraph.updates:
-        if isinstance(u.id, bpy.types.Armature):
-            return False
-    return only_scene(depsgraph) or only_motion(depsgraph)
+    return Look(depsgraph).outliner_skip()
 
 
 def structure_changed(depsgraph):

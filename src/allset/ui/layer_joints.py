@@ -38,6 +38,10 @@ _STATES = {}        # skeleton object pointer -> (key, state)
 _ROOTS = {}         # kit skeleton object pointer -> (key, first root joint name)
 _PLAYING = [False]  # animation playback runs: a layer with Playback off hides its joints
 _SIGS = {}          # skeleton object pointer -> ``_signature`` when its state was read
+_SIG_DATA = {}      # skeleton object pointer -> its armature data pointer, for the skeletons in ``_SIGS``
+# skeleton object / armature data pointers an update touched since their signature was last compared (a pose drag,
+# a joint's Visibility set from Python: updates that only move skip the comparison)
+_DIRTY = (set(), set())
 
 
 # --- membership -----------------------------------------------------------------------------------------------------
@@ -93,6 +97,9 @@ def bump(redraw=True):
     _STATES.clear()
     _ROOTS.clear()
     _SIGS.clear()
+    _SIG_DATA.clear()
+    _DIRTY[0].clear()
+    _DIRTY[1].clear()
     try:
         from . import maya_joints
         maya_joints.changed()
@@ -252,7 +259,9 @@ def _cached(store, ob, fn):
     if ptr not in _SIGS and ob.pose is not None and not ob.data.is_editmode:
         if len(_SIGS) > 64:
             _SIGS.clear()
+            _SIG_DATA.clear()
         _SIGS[ptr] = _signature(ob)
+        _SIG_DATA[ptr] = ob.data.as_pointer()
     return out
 
 
@@ -312,41 +321,68 @@ def hidden_under(ob):
 
 # --- handlers -------------------------------------------------------------------------------------------------------
 
-def _same_skeletons(scene):
-    """Every skeleton of ``scene`` whose state is kept reads the same as when it was read (``_signature``)."""
+def _same_skeletons(scene, obs):
+    """Every skeleton whose state is kept and that an update touched since its last comparison (``_DIRTY``) reads
+    the same as when it was read (``_signature``); the others weren't touched, so they read the same too. ``obs``:
+    {pointer: skeleton object} of the current update; a touched skeleton it doesn't hold (touched by an earlier
+    update that only moved) is looked up in the scene."""
+    dirty_obs, dirty_data = _DIRTY
+    want = {p for p in _SIGS if p in dirty_obs or _SIG_DATA.get(p) in dirty_data}
+    if not want:
+        return True
     try:
-        for ob in scene.objects:
-            if ob.type != 'ARMATURE':
-                continue
-            ptr = ob.as_pointer()
-            if ptr not in _SIGS:
-                continue
-            if ob.data.is_editmode or _SIGS.get(ptr) != _signature(ob):
+        found = [obs[p] for p in want if p in obs]
+        if len(found) < len(want):
+            missing = want.difference(obs)
+            found += [ob for ob in scene.objects if ob.type == 'ARMATURE' and ob.as_pointer() in missing]
+        for ob in found:
+            if ob.data.is_editmode or _SIGS.get(ob.as_pointer()) != _signature(ob):
                 return False
     except (ReferenceError, AttributeError, TypeError):
         return False
     return True
 
 
+def _touched(look):
+    """({pointer: skeleton object}, {armature data pointer}) of an update (``depsgraph_filter.Look``), and whether it
+    holds an Armature in Edit Mode."""
+    obs, data = {}, set()
+    editing = False
+    for id_, _moved in look.entries:
+        if isinstance(id_, bpy.types.Armature):
+            editing = editing or id_.is_editmode
+            data.add(id_.original.as_pointer())
+        elif isinstance(id_, bpy.types.Object) and id_.type == 'ARMATURE':
+            ob = id_.original
+            obs[ob.as_pointer()] = ob
+    return obs, data, editing
+
+
 @persistent
 def _on_depsgraph(scene, depsgraph=None):
     """Skeleton changes other than motion: renamed, re-parented, added or removed joints / objects, a membership
     written; in Edit Mode every bone edit (a re-parented edit bone is a geometry update). A joint selection (a
-    skeleton update that changes none of this) keeps the states."""
+    skeleton update that changes none of this) keeps the states. One pass over the update; only the skeletons it
+    (or an earlier update that only moved) touched are compared."""
     if not _STATES and not _ROOTS:
         return
     try:
-        if depsgraph_filter.only_scene(depsgraph):
-            return
-        updates = list(depsgraph.updates) if depsgraph is not None else ()
-        if any(isinstance(u.id, bpy.types.Armature) and u.id.is_editmode for u in updates):
-            bump(redraw=False)
-            return
-        if depsgraph_filter.only_motion(depsgraph):
-            return
-        if (depsgraph is not None and not any(isinstance(u.id, bpy.types.Collection) for u in updates)
-                and scene is not None and _same_skeletons(scene)):
-            return
+        if depsgraph is not None:
+            look = depsgraph_filter.Look(depsgraph)
+            if look.scene_only:
+                return
+            obs, data, editing = _touched(look)
+            if editing:
+                bump(redraw=False)
+                return
+            _DIRTY[0].update(obs)
+            _DIRTY[1].update(data)
+            if look.motion:
+                return
+            if not look.collection and scene is not None and _same_skeletons(scene, obs):
+                _DIRTY[0].clear()
+                _DIRTY[1].clear()
+                return
     except (ReferenceError, AttributeError):
         pass
     bump(redraw=False)
@@ -379,5 +415,9 @@ def unregister():
             lst.remove(fn)
     _STATES.clear()
     _ROOTS.clear()
+    _SIGS.clear()
+    _SIG_DATA.clear()
+    _DIRTY[0].clear()
+    _DIRTY[1].clear()
     _PLAYING[0] = False
     del bpy.types.PoseBone.allset_display_layer

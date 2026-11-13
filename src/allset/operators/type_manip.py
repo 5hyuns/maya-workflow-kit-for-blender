@@ -353,6 +353,33 @@ def handles(scene=None):
     return [ob for ob in (scene.objects if scene is not None else bpy.data.objects) if ob.get(HANDLE)]
 
 
+_parts = {}         # scene pointer -> (``objects_version``, the scene's type objects and handles, in scene order)
+
+
+def _scene_parts(scene):
+    """The objects of ``scene`` the manipulator works on: every type object and every handle (``HANDLE``), looked up
+    again only when objects came or went (an object's type and its handle mark never change)."""
+    from ..ui.outliner import objects_version
+    key = objects_version()
+    ptr = scene.as_pointer()
+    got = _parts.get(ptr)
+    if got is None or got[0] != key:
+        if len(_parts) > 8:
+            _parts.clear()
+        got = _parts[ptr] = (key, [ob for ob in scene.objects
+                                   if ob is not None and (ob.type == 'FONT' or HANDLE in ob)])
+    return got[1]
+
+
+def _handles_of(scene):
+    """``handles(scene)`` from ``_scene_parts``."""
+    try:
+        return [ob for ob in _scene_parts(scene) if ob.get(HANDLE)]
+    except ReferenceError:          # an object removed before the next depsgraph update
+        _parts.clear()
+        return handles(scene)
+
+
 _written = {}      # handle pointer -> the matrix_basis last written to its character / placed by the kit
 
 
@@ -408,6 +435,7 @@ def make_handle(context, ob):
         context.scene.collection.objects.link(handle)
     handle.parent = ob
     handle.matrix_parent_inverse.identity()
+    _parts.clear()                  # a click before the next depsgraph update finds it too
     return handle
 
 
@@ -432,6 +460,7 @@ def stop(context, ob):
     was_selected = handle is not None and handle.select_get()
     if handle is not None:
         _written.pop(handle.as_pointer(), None)
+        _parts.clear()
         bpy.data.objects.remove(handle, do_unlink=True)
     drop_if_unused(ob)
     if was_selected or context.view_layer.objects.active is None:
@@ -525,9 +554,7 @@ def _arm():
 def _on_depsgraph(scene, depsgraph):
     if not _armed[0]:
         return
-    for ob in scene.objects:
-        if ob is None:
-            continue
+    for ob in _scene_parts(scene):
         if ob.type == 'FONT' and modifier(ob) is not None:
             sig = _signature(ob)
             if _signatures.get(ob.as_pointer()) != sig:
@@ -559,6 +586,7 @@ def _stop_unselected():
         if ob is None or _selected(handle) or _selected(ob):
             continue
         _written.pop(handle.as_pointer(), None)
+        _parts.clear()
         bpy.data.objects.remove(handle, do_unlink=True)
         drop_if_unused(ob)
     return None
@@ -568,6 +596,7 @@ def _stop_unselected():
 def _on_load(*_args):
     _signatures.clear()
     _written.clear()
+    _parts.clear()
     _armed[0] = any(ob.type == 'FONT' and modifier(ob) is not None for ob in bpy.data.objects)
 
 
@@ -654,7 +683,7 @@ class ALLSET_OT_type_char_pick(bpy.types.Operator):
         if context.mode != 'OBJECT' or context.region is None or context.region_data is None:
             return {'PASS_THROUGH'}
         x, y = event.mouse_region_x, event.mouse_region_y
-        for handle in handles(context.scene):
+        for handle in _handles_of(context.scene):
             ob = type_of(handle)
             if ob is None or not ob.visible_get():
                 continue
@@ -677,7 +706,7 @@ def _draw():
     scene = context.scene
     if scene is None or not _armed[0]:
         return
-    hs = handles(scene)
+    hs = _handles_of(scene)
     if not hs:
         return
     import gpu
@@ -730,3 +759,4 @@ def unregister_handlers():
         bpy.app.timers.unregister(_on_load_later)
     _signatures.clear()
     _written.clear()
+    _parts.clear()

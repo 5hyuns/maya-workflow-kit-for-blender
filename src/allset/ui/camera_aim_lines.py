@@ -61,11 +61,29 @@ def colour(group, active):
     return DORMANT
 
 
-def segments(view_layer, space=None):
-    """[(camera point, target point, colour)] for every visible kit camera rig in this view layer / view."""
+_CAMERAS = {}       # view layer pointer -> (``objects_version``, its cameras in view layer order)
+
+
+def cameras(view_layer):
+    """The cameras of ``view_layer``, in its object order, looked up again only when objects came or went (an object's
+    type never changes): a draw doesn't read every object of the scene."""
+    from .outliner import objects_version
+    key = objects_version()
+    ptr = view_layer.as_pointer()
+    got = _CAMERAS.get(ptr)
+    if got is None or got[0] != key:
+        if len(_CAMERAS) > 8:
+            _CAMERAS.clear()
+        got = _CAMERAS[ptr] = (key, [ob for ob in view_layer.objects if ob.type == 'CAMERA'])
+    return got[1]
+
+
+def segments(view_layer, space=None, cams=None):
+    """[(camera point, target point, colour)] for every visible kit camera rig in this view layer / view. ``cams``:
+    the view layer's cameras when known (``cameras``), else every object of the view layer is looked at."""
     active = view_layer.objects.active
     out = []
-    for cam in view_layer.objects:
+    for cam in (view_layer.objects if cams is None else cams):
         if cam.type != 'CAMERA':
             continue
         targets = rig_targets(cam)
@@ -96,7 +114,12 @@ def _draw():
         space = context.space_data
         if not is_maya_view(space, context.window.workspace):
             return
-        segs = segments(context.view_layer, space)
+        view_layer = context.view_layer
+        try:
+            segs = segments(view_layer, space, cameras(view_layer))
+        except ReferenceError:      # a camera removed before the next depsgraph update: read the view layer again
+            _CAMERAS.clear()
+            segs = segments(view_layer, space, cameras(view_layer))
     except (ReferenceError, AttributeError, KeyError, ValueError, RuntimeError, TypeError):
         return
     if not segs:
@@ -130,3 +153,4 @@ def register():
 def unregister():
     while _handle:
         bpy.types.SpaceView3D.draw_handler_remove(_handle.pop(), 'WINDOW')
+    _CAMERAS.clear()

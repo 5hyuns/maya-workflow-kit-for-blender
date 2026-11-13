@@ -316,32 +316,46 @@ def rp_handles():
 
 
 _busy = []
-_count = [-1, 0]           # (last object count seen, the one before): drop orphaned 3+ bone pieces after a removal
-_found = [None, []]        # (scene structure version and object count, ``rp_handles``) of the last look
+# (last object count seen, the one before, ``objects_version`` it was read at): drop orphaned 3+ bone pieces after a
+# removal
+_count = [-1, 0, None]
+_found = [None, []]        # (``objects_version`` and object count, ``rp_handles``) of the last look
 
 
-def _handles(fresh):
-    """``rp_handles``; a frame change (``fresh`` False) uses the last look again while no object was added, removed
-    or renamed (the scene structure version), so playback doesn't look through every object each frame."""
-    from ..ui.outliner import structure_version
-    key = (structure_version(), len(bpy.data.objects))
-    if fresh or _found[0] != key:
+def _handles():
+    """``rp_handles`` of the last look while no object came or went (``objects_version`` and the object count), so a
+    click, a move or playback doesn't look through every object of the file."""
+    from ..ui.outliner import objects_version
+    key = (objects_version(), _count[0])
+    if _found[0] != key:
         _found[0], _found[1] = key, rp_handles()
     return _found[1]
 
 
-def _update(fresh):
+def _count_may_change(depsgraph):
+    """An object may have been made or removed since the count was read: the update flags Objects (a new object, one
+    made in no collection too) or Collections (a removal), or ``objects_version`` moved (load, undo, redo). Counting
+    reads every object of the file."""
+    from ..ui.outliner import objects_version
+    return (depsgraph is None or _count[2] != objects_version() or depsgraph.id_type_updated('OBJECT')
+            or depsgraph.id_type_updated('COLLECTION'))
+
+
+def _update(depsgraph=None, frame=False):
     if _busy:
         return
     _busy.append(1)
     try:
-        count = len(bpy.data.objects)
-        if count != _count[0]:
-            _count[0] = count
-            if count < _count[1]:
-                drop_orphan_rotations()    # a handle deleted some other way than the kit's Delete
-            _count[1] = count
-        for handle in _handles(fresh):
+        if frame or _count_may_change(depsgraph):
+            from ..ui.outliner import objects_version
+            _count[2] = objects_version()
+            count = len(bpy.data.objects)
+            if count != _count[0]:
+                _count[0] = count
+                if count < _count[1]:
+                    drop_orphan_rotations()    # a handle deleted some other way than the kit's Delete
+                _count[1] = count
+        for handle in _handles():
             update_handle(handle)
     except (ReferenceError, AttributeError, RuntimeError):
         _found[0] = None
@@ -350,13 +364,13 @@ def _update(fresh):
 
 
 @persistent
-def _on_update(*_args):
-    _update(True)
+def _on_update(_scene=None, depsgraph=None):
+    _update(depsgraph)
 
 
 @persistent
-def _on_frame(*_args):
-    _update(False)
+def _on_frame(_scene=None, depsgraph=None):
+    _update(depsgraph, frame=True)
 
 
 def set_pole_object(handle, target):
@@ -390,6 +404,7 @@ def unregister_handlers():
             hs.remove(fn)
     _solvers.clear()
     _found[0], _found[1] = None, []
+    _count[2] = None
 
 
 # --- #181: 3+ bone chains bend like Maya ------------------------------------------------------------------

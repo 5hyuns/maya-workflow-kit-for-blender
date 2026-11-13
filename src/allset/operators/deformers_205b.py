@@ -455,18 +455,31 @@ deformers.ATTRS.update(ATTRS)
 
 # --- rest helpers ---------------------------------------------------------------------------------------------
 
+_helpers = [None, []]      # (``objects_version``, the rest helpers of the file) of the last look
+
+
 def _rest(name, owner):
     """A hidden object (in no collection) sharing ``owner``'s mesh, showing its basis shape: Maya's Orig shape."""
     ob = bpy.data.objects.new(name, owner.data)
     ob[REST_OF] = owner
     ob.show_only_shape_key = True
     ob.active_shape_key_index = 0
+    _helpers[0] = None              # made in no collection: no Collection update tells ``objects_version``
     return ob
+
+
+def _rest_helpers():
+    """The objects of the file that are rest helpers, looked up again only when objects came or went."""
+    from ..ui.outliner import objects_version
+    key = objects_version()
+    if _helpers[0] != key:
+        _helpers[0], _helpers[1] = key, [ob for ob in bpy.data.objects if REST_OF in ob]
+    return _helpers[1]
 
 
 def sync_rest():
     """Keep every rest helper on its owner's current mesh (Delete History / Freeze give the owner a new one)."""
-    for ob in bpy.data.objects:
+    for ob in _rest_helpers():
         owner = ob.get(REST_OF) if REST_OF in ob else None
         if owner is not None and getattr(owner, "data", None) is not None and ob.data != owner.data:
             ob.data = owner.data
@@ -479,7 +492,7 @@ def _on_depsgraph(_scene, _depsgraph=None):
     try:
         sync_rest()
     except (ReferenceError, AttributeError, TypeError):
-        pass
+        _helpers[0] = None
 
 
 # --- creators -------------------------------------------------------------------------------------------------
@@ -722,3 +735,4 @@ def register_handlers():
 def unregister_handlers():
     if _on_depsgraph in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
+    _helpers[0], _helpers[1] = None, []
