@@ -381,6 +381,165 @@ def test_clicks_in_one_view_project_the_drawn_lines_once():
     assert n["project"] == 1, "another view projects them again"
 
 
+def _ring_product(c, f, r):
+    """Sphere ring points as a matrix product of the unit rings and each joint's frame, x radius, + centre."""
+    t = np.arange(mj.SEGMENTS + 1) * (2.0 * math.pi / mj.SEGMENTS)
+    unit = np.zeros((3, mj.SEGMENTS + 1, 3))
+    for k, (i, j) in enumerate(((0, 1), (1, 2), (0, 2))):
+        unit[k, :, i], unit[k, :, j] = np.cos(t), np.sin(t)
+    ring = np.stack((unit[:, :-1], unit[:, 1:]), axis=2).reshape(-1, 3)
+    return (c[:, None, :] + np.matmul(ring, f.transpose(0, 2, 1)) * r[:, None, None]).reshape(-1, 3).astype(np.float32)
+
+
+def _bits(a, b):
+    a, b = np.ascontiguousarray(a), np.ascontiguousarray(b)
+    return a.shape == b.shape and a.dtype == b.dtype and np.array_equal(a.view(np.uint8), b.view(np.uint8))
+
+
+def test_sphere_rings_are_the_matrix_product_bit_for_bit():
+    """The joint spheres' points are exactly (every bit) the matrix product of the unit rings and the joints' frames,
+    scaled and moved: posed joints, exact axes, zero centres, random frames of any size."""
+    a, _b, _cube, _ctrl = _scene()
+    for i, pb in enumerate(a.pose.bones):
+        pb.rotation_mode = 'XYZ'
+        pb.rotation_euler = (0.3 * i, -0.2, 0.11 * i)
+    a.location = (0.37, -1.3, 0.2)
+    bpy.context.view_layer.update()
+    jl = mj._joint_list(a)
+    _w, _m, c, f, r = mj._pose_read(a, bpy.context.scene, jl)
+    cases = [(c, f, r)]
+    rng = np.random.default_rng(7)
+    for trial in range(12):
+        n = int(rng.integers(1, 700))
+        fr = rng.standard_normal((n, 3, 3)) * rng.random() * 4
+        if trial % 3 == 0:
+            fr[: n // 2] = np.eye(3)
+        cr = rng.standard_normal((n, 3)) * 10.0 ** int(rng.integers(-3, 4))
+        if trial % 4 == 0:
+            cr[: n // 3] = 0.0
+        cases.append((cr, fr, rng.random(n) * 10.0 ** int(rng.integers(-3, 3))))
+    for k, (cc, ff, rr) in enumerate(cases):
+        assert _bits(mj._spheres(cc, ff, rr), _ring_product(cc, ff, rr)), f"case {k}: {len(cc)} joints"
+    assert mj._spheres(c[:0], f[:0], r[:0]).shape == (0, 3)
+
+
+def test_a_new_pose_keeps_the_joint_colours():
+    """While a pose changes (playing, a drag) the joined colours of the views and their GPU buffer are kept: only the
+    points are joined again. A selection recolours them. The lines equal a build from scratch."""
+    a, b, _cube, _ctrl = _scene()
+    for k in (1, 10):
+        for i, pb in enumerate(a.pose.bones):
+            pb.rotation_mode = 'XYZ'
+            pb.rotation_euler = (0.1 * k, 0.02 * i, 0.0)
+            pb.keyframe_insert("rotation_euler", frame=k)
+    bpy.context.scene.frame_set(1)
+    view = _view([a, b])
+    real = mj.transforming
+    try:
+        mj.transforming = lambda: True
+        first = mj._joined(view)
+        first[3][2] = held = object()             # stands in for the colours' GPU buffer
+        for frame in (3, 6):
+            bpy.context.scene.frame_set(frame)
+            got = mj._joined(view)
+            assert got is not first and not np.array_equal(got[0], first[0]), f"frame {frame}: new points"
+            assert got[1] is first[1] and got[3][2] is held, f"frame {frame}: the colours and their buffer are kept"
+            _same(got, _fresh(view), f"frame {frame}")
+            first = mj._joined(view)
+            first[3][2] = held
+        mj.transforming = real
+        a.select_set(True)
+        bpy.context.view_layer.objects.active = a
+        bpy.context.view_layer.update()
+        got = mj._joined(view)
+        assert got[1] is not first[1] and got[3][2] is None, "a selection: new colours, a new buffer"
+        _same(got, _fresh(view), "selected")
+    finally:
+        mj.transforming = real
+        bpy.context.scene.frame_set(1)
+
+
+def test_a_selection_or_pose_mode_keeps_the_label_joints():
+    """Selecting joints, the active joint and switching between Object and Pose Mode keep the Draw Label joints found
+    (they are not looked for again); a rename, a hidden joint or a new label finds them again. The labels are the ones
+    found from scratch."""
+    a, b, _cube, _ctrl = _scene()
+    labels.set_label(a.data.bones[2], side=labels.LEFT, type=labels.T_KNEE, draw=True)
+    labels.set_label(a.data.bones[5], side=labels.RIGHT, type=labels.T_HIP, draw=True)
+    ctx = SimpleNamespace(screen=None, view_layer=bpy.context.view_layer)
+
+    def fresh():
+        labels._labelled.clear()
+        return labels.label_points(ctx)
+
+    labels._labelled.clear()
+    try:
+        labels.label_points(ctx)
+        kept = labels._labelled[a.as_pointer()][1]
+        bpy.context.view_layer.objects.active = a
+        a.select_set(True)
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.context.view_layer.update()
+        for step, act in enumerate((lambda: setattr(a.pose.bones[1], "select", True),
+                                    lambda: setattr(a.data.bones, "active", a.data.bones[3]),
+                                    lambda: bpy.ops.object.mode_set(mode='OBJECT'),
+                                    lambda: bpy.ops.object.mode_set(mode='POSE'))):
+            act()
+            bpy.context.view_layer.update()
+            with _Count(lj, "state") as n:
+                got = labels.label_points(ctx)
+            assert labels._labelled[a.as_pointer()][1] is kept and not n["state"], \
+                f"step {step}: the label joints are kept ({n.calls})"
+            assert got == fresh(), f"step {step}"
+            labels.label_points(ctx)
+            kept = labels._labelled[a.as_pointer()][1]
+        for step, act in enumerate((lambda: setattr(a.data.bones[2], "name", "renamed"),
+                                    lambda: setattr(a.data.bones[5], "hide", True),
+                                    lambda: labels.set_label(a.data.bones[7], side=labels.CENTER, draw=True))):
+            act()
+            bpy.context.view_layer.update()
+            got = labels.label_points(ctx)
+            assert labels._labelled[a.as_pointer()][1] is not kept, f"edit {step}: found again"
+            assert got == fresh(), f"edit {step}"
+            labels.label_points(ctx)
+            kept = labels._labelled[a.as_pointer()][1]
+        assert sorted(t for _p, t, _s in got) == ["Knee (L)", "None"], got
+    finally:
+        labels._labelled.clear()
+        _object_mode()
+
+
+def test_click_distances_are_each_joints_nearest_segment():
+    """A click's distance per joint is exactly the smallest distance to its drawn segments in front of the view;
+    repeated clicks on the same drawn lines sort them by joint once."""
+    a, b, _cube, _ctrl = _scene()
+    ctx = _front_view()
+    ctx.visible_objects = [a, b]
+    mj._joined(ctx)
+    for m in ((100.0, 52.0), (108.0, 60.0), (140.0, 55.0), (-500.0, 9000.0)):
+        names, pa, pb, ok, owner, _jl = mj._drawn_pick_lines(ctx, a)
+        d, _t = preselect.segment_distance(m, pa, pb)
+        near = np.full(len(names), np.inf)
+        np.minimum.at(near, owner[ok], d[ok])
+        want = {n: float(near[i]) for i, n in enumerate(names) if np.isfinite(near[i])}
+        got = mj.screen_distance(ctx, a, m)
+        assert got == want and list(got) == list(want), m
+        assert mj._NEAREST[0][0] is owner, "the drawn segments' order by joint is kept between clicks"
+    order = mj._NEAREST[0][2]
+    mj.screen_distance(ctx, a, (101.0, 50.0))
+    assert mj._NEAREST[0][2] is order, "sorted once"
+    rng = np.random.default_rng(3)
+    for trial in range(20):
+        n = int(rng.integers(1, 3000))
+        pa = rng.standard_normal((n, 2)) * 10.0 ** int(rng.integers(0, 4))
+        pb = pa + rng.standard_normal((n, 2)) * 10.0 ** int(rng.integers(-7, 3))
+        pb[: n // 4] = pa[: n // 4]                     # zero-length segments
+        for m in ((0.0, 0.0), (int(rng.integers(-50, 50)), 7), tuple(rng.standard_normal(2) * 300)):
+            want, _t = preselect.segment_distance(m, pa, pb)
+            got = mj._segment_distances(m, mj._segment_columns(pa, pb))
+            assert _bits(got, want), (trial, m)
+
+
 def test_joint_colours_are_the_per_joint_colours():
     """The colours of all joints at once equal the joint-by-joint colours: own selection, the lead, a Template /
     Reference layer, else the nearest selected joint above."""

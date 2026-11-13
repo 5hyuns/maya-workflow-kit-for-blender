@@ -514,25 +514,43 @@ def _armatures(view_layer):
     return maya_joints.armatures(view_layer)
 
 
-_labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)])
+_labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)], light stamp, ``_names_hidden``)
+
+
+def _names_hidden(ob):
+    """What a light update (``maya_joints.light_stamp``) can change of ``ob``'s labels: its bone names and the
+    bones' own hide flags."""
+    import numpy as np
+    bones = ob.data.bones
+    hide = np.zeros(len(bones), bool)
+    bones.foreach_get("hide", hide)
+    return tuple(ob.pose.bones.keys()), hide.tobytes()
 
 
 def _pose_labels(ob, playing=False):
     """[(pose bone name, text, side)] of ``ob``'s joints with Draw Label on. Only the pose changes between redraws
     (playback, a view turned, a selection), so the joints found once are used again until something that can change
-    them is edited (every pose bone was asked on every redraw)."""
+    them is edited (every pose bone was asked on every redraw). A selection or a switch between Object and Pose Mode
+    keeps them while no bone is renamed or hidden."""
     from ..ui import maya_joints
-    key = (maya_joints.edit_stamp(ob), ob.data.as_pointer(), len(ob.pose.bones), ob.mode)
-    got = _labelled.get(ob.as_pointer())
+    key = (maya_joints.edit_stamp(ob), ob.data.as_pointer(), len(ob.pose.bones))
+    light = maya_joints.light_stamp(ob)
+    ptr = ob.as_pointer()
+    got = _labelled.get(ptr)
     if got is not None and got[0] == key:
-        return got[1]
+        if got[2] == light:
+            return got[1]
+        seen = _names_hidden(ob)
+        if seen == got[3]:
+            _labelled[ptr] = (key, got[1], light, seen)
+            return got[1]
     from ..ui import layer_joints
     hidden = layer_joints.state(ob)        # hidden by a display layer or a hidden joint above: no label
     out = [(pb.name, label_text(pb.bone), get_label(pb.bone)[0]) for pb in ob.pose.bones
            if pb.bone.get(DRAW) and not pb.bone.hide and hidden.get(pb.name) != layer_joints.HIDDEN]
     if len(_labelled) > 32:
         _labelled.clear()
-    _labelled[ob.as_pointer()] = (key, out)
+    _labelled[ptr] = (key, out, light, _names_hidden(ob))
     return out
 
 
