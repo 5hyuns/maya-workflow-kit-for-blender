@@ -147,11 +147,18 @@ _items = {}
 def entries():
     """[(template name / ("user", saved name) / None, workspace or None, label)] in dropdown order: Maya's
     workspaces, the user's saved ones, then the file's other workspaces."""
-    out = [(name, find(name), LABELS[name]) for name in IN_TEMPLATE]
+    # one template lookup per workspace (the Status Line dropdown asks on every top bar redraw); the first workspace
+    # of a template wins, like ``find``
+    made = [(ws, switch.template_of(ws)) for ws in bpy.data.workspaces]
+    first = {}
+    for ws, template in made:
+        if template is not None:
+            first.setdefault(template, ws)
+    out = [(name, first.get(name), LABELS[name]) for name in IN_TEMPLATE]
     saved = user_workspaces.saved_names()
     out += [(("user", name), user_workspaces.find(name), name) for name in saved]
-    out += [(None, ws, ws.name) for ws in bpy.data.workspaces
-            if switch.template_of(ws) is None and user_workspaces.user_name(ws) not in saved]
+    out += [(None, ws, ws.name) for ws, template in made
+            if template is None and user_workspaces.user_name(ws) not in saved]
     return out
 
 

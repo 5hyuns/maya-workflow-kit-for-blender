@@ -1029,13 +1029,20 @@ def _view_skeletons(context, space):
     return [ob for ob in context.visible_objects if ob.type == 'ARMATURE' and ob.visible_in_viewport_get(space)]
 
 
+def transform_op():
+    """The transform running in some window (move / rotate / scale, a manipulator drag), else None."""
+    from ..operators.manip_scale import TRANSFORM_MODALS
+    wm = bpy.context.window_manager
+    if wm is None:
+        return None
+    return next((op for w in wm.windows for op in w.modal_operators if op.bl_idname.startswith(TRANSFORM_MODALS)),
+                None)
+
+
 def transforming():
     """A transform runs in some window (move / rotate / scale, a manipulator drag): until it ends only poses and
     object transforms change, so what is kept while playback runs can be kept too."""
-    from ..operators.manip_scale import TRANSFORM_MODALS
-    wm = bpy.context.window_manager
-    return wm is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS)
-                                  for w in wm.windows for op in w.modal_operators)
+    return transform_op() is not None
 
 
 def _posing():
@@ -1066,6 +1073,9 @@ def _depsgraph_post(_scene, depsgraph):
     try:
         if _posing():
             _GEN[0] += 1
+            if len(_POSED) > 64:
+                _POSED.clear()
+            _POSED[_GEN[0]] = _moved_skeletons(depsgraph)
             return
         for u in depsgraph.updates:
             ob = u.id
@@ -1077,6 +1087,67 @@ def _depsgraph_post(_scene, depsgraph):
             return
     except (ReferenceError, AttributeError):
         changed()
+
+
+_POSED = {}     # generation -> skeletons (object pointers) that update moved while a pose was dragged; None: unknown
+
+
+def _moved_skeletons(depsgraph):
+    """The skeletons a depsgraph update during a drag touched (those whose pose or place follows the dragged
+    control: the dragged one, rigs constrained or parented to it), or None when it touched something else that can
+    change drawn lines (a control shape's geometry, data that isn't an object)."""
+    shapes = None
+    out = set()
+    for u in depsgraph.updates:
+        id_ = u.id
+        if isinstance(id_, bpy.types.Object):
+            if id_.type == 'ARMATURE':
+                out.add(id_.original.as_pointer())
+                continue
+            if shapes is None:
+                shapes = _control_shapes()
+            if id_.original.as_pointer() in shapes:
+                return None
+            continue                    # a mesh deformed by the rig, a prop: not drawn as a joint
+        if isinstance(id_, bpy.types.Armature):
+            continue                    # comes with its skeleton object
+        return None
+    return out
+
+
+_SHAPES = [None, frozenset()]     # (the joint lists they were read from, pointers of their controls' shape objects)
+
+
+def _control_shapes():
+    """Pointers of the custom shape objects of the kept joint lists (a mesh the rig deforms updates on every drag
+    step: looked up in a set made once per set of lists)."""
+    # the lists of the current edit only (a deleted skeleton's list is from an older one)
+    live = [(ptr, got) for ptr, got in _LISTS.items() if got[0][0] == _EDITS[0]]
+    key = tuple((ptr, got[0], id(got[1])) for ptr, got in live)
+    if _SHAPES[0] != key:
+        out = set()
+        for _ptr, got in live:
+            for shape in got[1].ctrl_shapes:
+                try:
+                    out.add(shape.as_pointer())
+                except ReferenceError:
+                    pass
+        _SHAPES[:] = [key, frozenset(out)]
+    return _SHAPES[1]
+
+
+def _posed_since(old, key):
+    """The skeletons moved between ``_joined`` key ``old`` and ``key`` when only drag updates came between them
+    (same frame, scene, view layer and preview), else None."""
+    if old is None or old[1:] != key[1:] or key[0] <= old[0]:
+        return None
+    moved = set()
+    for gen in range(old[0] + 1, key[0] + 1):
+        got = _POSED.get(gen)
+        if got is None:
+            return None
+        moved |= got
+    return moved
 
 
 def changed():
@@ -1095,6 +1166,8 @@ def _frame_post(*_args):
 def _reload(*_args):
     changed()
     _LISTS.clear()
+    _POSED.clear()
+    _SHAPES[:] = [None, frozenset()]
 
 
 _WORLD = [None]   # what the lines in _PARTS / _JOINED were built for: edit generation, frame, scene, view layer, ...
@@ -1114,8 +1187,16 @@ def _joined(context):
     key = (_GEN[0], scene.frame_current, scene.as_pointer(), layer.as_pointer(), joint_preview.running(),
            str(joint_preview.STATE.get("current")))
     if _WORLD[0] != key:
+        # while a pose is dragged only the skeletons that moved are built again (another character in the scene
+        # keeps its lines); anything else builds every skeleton again
+        moved = _posed_since(_WORLD[0], key)
         _WORLD[0] = key
-        _PARTS.clear()
+        if moved is None:
+            _PARTS.clear()
+        else:
+            for ptr in moved:
+                _PARTS.pop(ptr, None)
+        _POSED.clear()
         _JOINED.clear()
     obs = _view_skeletons(context, space)
     persp = context.region_data.is_perspective
@@ -1216,6 +1297,8 @@ def unregister():
     _PARTS.clear()
     _JOINED.clear()
     _WIDGETS.clear()
+    _POSED.clear()
+    _SHAPES[:] = [None, frozenset()]
     _WORLD[0] = None
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)

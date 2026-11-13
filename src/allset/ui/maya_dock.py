@@ -46,7 +46,8 @@ _pending = {}                # area pointer -> role it waits for (a new Properti
 # --- roles ---------------------------------------------------------------------------------------------------------
 
 def _flags(space):
-    return [p.identifier for p in space.bl_rna.properties if p.identifier.startswith("show_properties_")]
+    from . import marked_window      # the tab flags of the space's type, read once
+    return marked_window._flag_names(space)[0]
 
 
 def role(area):
@@ -59,9 +60,9 @@ def role(area):
     on = [name for name, flag in ROLE_FLAGS.items() if getattr(space, flag, False)]
     if len(on) != 1:
         return None
-    from .. import compat
-    if any(getattr(space, f) for f in _flags(space)
-           if f not in ("show_properties_tool", ROLE_FLAGS[on[0]]) and f not in compat.LATER_PROPERTIES_TABS):
+    from . import marked_window
+    keep = ("show_properties_tool", ROLE_FLAGS[on[0]])
+    if any(getattr(space, f) for f in marked_window._flag_names(space)[1] if f not in keep):
         return None
     return on[0]
 
@@ -890,7 +891,7 @@ def draw_tint():
         return
     import gpu
     w, h = region.width, region.height
-    hole = _list_hole(context, region) if shown_kind(context) == 'CHANNEL_BOX' else None
+    hole = _kept_hole(context, region) if shown_kind(context) == 'CHANNEL_BOX' else None
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     gpu.state.blend_set('ADDITIVE')
     try:
@@ -929,6 +930,26 @@ def dark_top(values, start, limit, gap):
 
 
 _hole_row = {}    # region pointer -> framebuffer row that last crossed the list body
+_hole_kept = {}   # region pointer -> (transform pointer, region size, list body rect) found during that transform
+
+
+def _kept_hole(context, region):
+    """``_list_hole``; while a transform runs the rect found at its first redraw is used again: until it ends the
+    selection and so the Channel Box rows and the Layer Editor list stay where they are (only values change), and
+    reading the drawn pixels back on every redraw of a drag cost more than the rest of the tint."""
+    from .maya_joints import transform_op
+    key = region.as_pointer()
+    op = transform_op()
+    if op is None:
+        _hole_kept.pop(key, None)
+        return _list_hole(context, region)
+    stamp = (op.as_pointer(), region.width, region.height)
+    got = _hole_kept.get(key)
+    if got is not None and got[0] == stamp:
+        return got[1]
+    hole = _list_hole(context, region)
+    _hole_kept[key] = (stamp, hole)
+    return hole
 
 
 def _list_hole(context, region):
@@ -1012,10 +1033,18 @@ def draw_strip():
         gpu.state.blend_set('NONE')
 
 
+_rects = {}      # (x0, y0, x1, y1) -> GPU batch of that rect: the dock draws the same rects on every redraw
+
+
 def _fill(shader, x0, y0, x1, y1, rgba):
-    from gpu_extras.batch import batch_for_shader
-    batch = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]},
-                             indices=[(0, 1, 2), (0, 2, 3)])
+    key = (x0, y0, x1, y1)
+    batch = _rects.get(key)
+    if batch is None:
+        from gpu_extras.batch import batch_for_shader
+        if len(_rects) > 64:
+            _rects.clear()
+        batch = _rects[key] = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]},
+                                               indices=[(0, 1, 2), (0, 2, 3)])
     shader.uniform_float("color", rgba)
     batch.draw(shader)
 
@@ -1168,6 +1197,7 @@ def _close_stale_menus():
 def _on_load(*_args):
     _torn_menus.clear()
     _drawn.clear()          # area pointers of the old file may be reused
+    _hole_kept.clear()
     if not bpy.app.background:
         bpy.app.timers.register(_close_stale_menus, first_interval=0.2)
 
@@ -1200,6 +1230,8 @@ def unregister():
     while _strip_handle:
         bpy.types.SpaceProperties.draw_handler_remove(_strip_handle.pop(), 'WINDOW')
     _drawn.clear()
+    _hole_kept.clear()
+    _rects.clear()
     _torn_menus.clear()
     _pending.clear()
     for cls in reversed(classes):

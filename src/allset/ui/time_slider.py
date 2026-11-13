@@ -884,10 +884,11 @@ def _node_fcurves(node, keep):
 def key_frames(nodes, keep=False):
     """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key. ``keep``:
     playback or a drag runs (the curves of a bone found once are used again; the keys are read every time)."""
+    import numpy as np
     from . import cb_channels
     if not keep:
         _bone_curves.clear()
-    frames = {}
+    frames, rounded, bd = {}, {}, _breakdown_value()
     for node in nodes:
         # Channel Box Sync Timeline Display: only the selected channels' keys
         curves = cb_channels.timeline_curves(bpy.context, node)
@@ -902,10 +903,30 @@ def key_frames(nodes, keep=False):
                 from ..operators import point_keys
                 curves += point_keys.selected_point_curves(node)
         for fc in curves:
-            for kp in fc.keyframe_points:
-                f = round(kp.co.x, 3)
-                frames[f] = frames.get(f, True) and kp.type == 'BREAKDOWN'
+            # every key's frame and type in one read per curve (the Time Slider redraws on every step of a drag)
+            kps = fc.keyframe_points
+            n = len(kps)
+            if not n:
+                continue
+            co = np.empty(2 * n, np.float64)
+            kps.foreach_get("co", co)
+            kinds = np.empty(n, np.int32)
+            kps.foreach_get("type", kinds)
+            for x, breakdown in zip(co[0::2].tolist(), (kinds == bd).tolist()):
+                f = rounded.get(x)
+                if f is None:
+                    f = rounded[x] = round(x, 3)
+                frames[f] = frames.get(f, True) and breakdown
     return sorted(frames.items())
+
+
+_BREAKDOWN = []     # the RNA value of a key's type 'BREAKDOWN'
+
+
+def _breakdown_value():
+    if not _BREAKDOWN:
+        _BREAKDOWN.append(bpy.types.Keyframe.bl_rna.properties["type"].enum_items["BREAKDOWN"].value)
+    return _BREAKDOWN[0]
 
 
 def blend_weight_curves(ob):

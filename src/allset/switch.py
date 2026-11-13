@@ -66,9 +66,10 @@ def is_maya_workspace(ws):
         return True
     for screen in ws.screens:
         for area in screen.areas:
-            space = area.spaces.active
-            if area.type == 'IMAGE_EDITOR' and getattr(space, "mask", None) is not None \
-                    and space.mask.name.startswith(".Allset"):
+            if area.type != 'IMAGE_EDITOR':
+                continue
+            mask = getattr(area.spaces.active, "mask", None)
+            if mask is not None and mask.name.startswith(".Allset"):
                 return True
     return False
 

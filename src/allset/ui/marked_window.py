@@ -29,8 +29,24 @@ KINDS = {
 }
 
 
+_FLAG_NAMES = {}     # Space RNA identifier -> (every tab flag, the tab flags that can mark a kind)
+
+
+def _flag_names(space):
+    """The tab flags of ``space``'s type, read from its RNA once (the property list is fixed per type; kind_of runs
+    in panel polls on every redraw of a dock)."""
+    rna = space.bl_rna
+    names = _FLAG_NAMES.get(rna.identifier)
+    if names is None:
+        from .. import compat
+        every = tuple(p.identifier for p in rna.properties if p.identifier.startswith("show_properties_"))
+        names = _FLAG_NAMES[rna.identifier] = (every,
+                                               tuple(f for f in every if f not in compat.LATER_PROPERTIES_TABS))
+    return names
+
+
 def _flags(space):
-    return [p.identifier for p in space.bl_rna.properties if p.identifier.startswith("show_properties_")]
+    return _flag_names(space)[0]
 
 
 def kind_of(area):
@@ -40,8 +56,7 @@ def kind_of(area):
     space = area.spaces.active
     if space.show_region_header or not space.show_properties_tool:
         return None
-    from .. import compat
-    on = {f for f in _flags(space) if getattr(space, f)} - set(compat.LATER_PROPERTIES_TABS)
+    on = {f for f in _flag_names(space)[1] if getattr(space, f)}
     for kind, mark in KINDS.items():
         if on == {"show_properties_tool", *mark}:
             return kind

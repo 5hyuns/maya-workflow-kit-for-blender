@@ -186,12 +186,30 @@ def pose_objects(context=None):
 
 
 def selected_bones(context=None):
-    return [pb for arm in pose_objects(context) for pb in arm.pose.bones
-            if bone_selected(pb) and not compat.bone_hidden(pb)]
+    """The picked, shown pose bones of the posed armatures (armature order, then bone order). The flags are read in
+    one call per armature: the Channel Box and the Time Slider ask on every redraw, a rig has hundreds of bones."""
+    import numpy as np
+    out = []
+    for arm in pose_objects(context):
+        bones = arm.pose.bones
+        n = len(bones)
+        if not n:
+            continue
+        sel = np.zeros(n, dtype=bool)
+        hide = np.zeros(n, dtype=bool)
+        bones.foreach_get("select", sel)        # = bone_selected
+        bones.foreach_get("hide", hide)         # = compat.bone_hidden
+        out += [bones[int(i)] for i in np.flatnonzero(sel & ~hide)]
+    return out
+
+
+_drawing_lead = []     # [the lead] while the Channel Box draws (ALLSET_PT_channel_box.body)
 
 
 def lead(context=None):
     """The Maya lead: the active object, or in pose mode the active (selected) pose bone."""
+    if context is None and _drawing_lead:
+        return _drawing_lead[0]
     context = context or bpy.context
     arm = pose_armature(context)
     if arm is None:
@@ -3119,9 +3137,11 @@ def _nothing_selected(context):
 
 @persistent
 def _on_depsgraph(_scene, _depsgraph):
-    if selected_channels() and _nothing_selected(bpy.context):
-        set_selected_channels([])      # Maya: deselecting everything also deselects the channels
-    rebuild_rows()
+    from .maya_joints import transforming
+    if not transforming():             # a drag changes values only: the selection and the rows stay
+        if selected_channels() and _nothing_selected(bpy.context):
+            set_selected_channels([])      # Maya: deselecting everything also deselects the channels
+        rebuild_rows()
     # The dock is a custom PROPERTIES-area UI, not Blender's native transform
     # sidebar. Tag it explicitly: transform gizmos can update RNA values without
     # invalidating the Channel Box panel's drawn value fields.
@@ -3777,6 +3797,16 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
 
     @staticmethod
     def body(layout, context):
+        """``_body``; while it draws, every row's value field asks for the lead: it is found once (drawing can't
+        change the selection)."""
+        _drawing_lead[:] = [lead(context)]
+        try:
+            return ALLSET_PT_channel_box._body(layout, context)
+        finally:
+            _drawing_lead.clear()
+
+    @staticmethod
+    def _body(layout, context):
         """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane). The row above it
         (Maya's title / tab row) is the dock's handle + tab row (ui/maya_dock.py)."""
         # Early-return views (paint tools, no selection, joint placement) use
