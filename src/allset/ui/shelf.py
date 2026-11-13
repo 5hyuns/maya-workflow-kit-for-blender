@@ -112,7 +112,8 @@ def _infer_shelf_requirements(kind, target="", menu_path=""):
         if any(token in menu_path for token in ("dope sheet", "timeline")):
             return "DOPESHEET_EDITOR", "ANY", "ANY"
         if any(token in menu_path for token in ("edit mesh", "mesh tools", "vertex", "edge", "face")):
-            return "VIEW_3D", "EDIT_MESH", "MESH"
+            # any mode: the menu item enters component mode itself (Maya: Insert Edge Loop on a selected object)
+            return "VIEW_3D", "ANY", "MESH"
         if any(token in menu_path for token in ("polygon primitives", "create polygon", "create/")):
             return "VIEW_3D", "OBJECT", "ANY"
         return "VIEW_3D", "ANY", "ANY"
