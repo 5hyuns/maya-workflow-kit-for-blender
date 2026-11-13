@@ -21,7 +21,7 @@ Y-up view direction ("top -Y", "front -Z"): they name Maya's cameras, not axes.
 import math
 
 import bpy
-from mathutils import Quaternion, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 # --- Maya sizes and colours -----------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view
@@ -734,6 +734,73 @@ def turntable(q, dx, dy, rate):
     return turned
 
 
+def _view_camera(context):
+    """The camera object a camera view looks through, else None."""
+    rv, space = context.region_data, context.space_data
+    if rv is None or rv.view_perspective != 'CAMERA' or space is None:
+        return None
+    return space.camera or context.scene.camera
+
+
+class CameraTumble:
+    """A ViewCube drag in a camera view moves the camera as Alt+LMB does there (Lock Camera to View): the camera
+    turns like ``turntable`` around the point on its axis at the depth of the view centre, its top parent moves
+    instead when the camera's Camera Parent Lock is on, and locked channels stay. Every step is taken from the
+    press, so the drag can be put back exactly."""
+
+    def __init__(self, context, camera):
+        rv = context.region_data
+        m = camera.matrix_world.normalized()
+        self.rotation = m.to_quaternion()
+        eye = m.translation
+        forward = self.rotation @ Vector((0.0, 0.0, -1.0))
+        depth = forward.dot(rv.view_location - eye)
+        if depth < 1e-6:                           # the view centre behind the camera
+            depth = 1.0
+        self.pivot = eye + forward * depth
+        self.view = (rv.view_location.copy(), rv.view_distance)
+        rv.view_location, rv.view_distance = self.pivot, depth     # the view centre on the camera's axis
+        target = camera
+        if camera.use_camera_lock_parent:
+            while target.parent is not None:
+                target = target.parent
+        self.name = target.name
+        self.world = target.matrix_world.copy()
+        self.basis = target.matrix_basis.copy()
+        self.channels = (target.location.copy(), target.rotation_euler.copy(), target.rotation_quaternion.copy(),
+                         tuple(target.rotation_axis_angle), target.scale.copy())
+
+    def turn(self, dx, dy, rate):
+        """The camera after a drag of (dx, dy) px from the press."""
+        ob = bpy.data.objects.get(self.name)
+        if ob is None:
+            return
+        spin = (turntable(self.rotation, dx, dy, rate) @ self.rotation.inverted()).to_matrix().to_4x4()
+        ob.matrix_world = Matrix.Translation(self.pivot) @ spin @ Matrix.Translation(-self.pivot) @ self.world
+        loc, eul, quat, axis_angle, scale = self.channels
+        if ob.rotation_mode not in {'QUATERNION', 'AXIS_ANGLE'}:     # the Euler angles nearest the old ones
+            ob.rotation_euler = ob.rotation_euler.to_matrix().to_euler(ob.rotation_mode, eul)
+        for i in range(3):
+            if ob.lock_location[i]:
+                ob.location[i] = loc[i]
+            if ob.lock_rotation[i]:
+                ob.rotation_euler[i] = eul[i]
+                ob.rotation_quaternion[i + 1] = quat[i + 1]
+                ob.rotation_axis_angle[i + 1] = axis_angle[i + 1]
+            if ob.lock_scale[i]:
+                ob.scale[i] = scale[i]
+        if ob.lock_rotations_4d and ob.lock_rotation_w:
+            ob.rotation_quaternion[0] = quat[0]
+            ob.rotation_axis_angle[0] = axis_angle[0]
+
+    def cancel(self, context):
+        ob = bpy.data.objects.get(self.name)
+        if ob is not None:
+            ob.matrix_basis = self.basis
+        rv = context.region_data
+        rv.view_location, rv.view_distance = self.view
+
+
 def _drag_threshold(context):
     prefs = context.preferences
     return max(1.0, prefs.inputs.drag_threshold_mouse * (prefs.system.ui_scale or 1.0))
@@ -773,7 +840,7 @@ class ALLSET_OT_view_cube_face(bpy.types.Operator):
             return self.execute(context)
         self._start = self._last = (event.mouse_x, event.mouse_y)
         self._dragging = self._locked = False
-        self._before = None
+        self._before = self._camera = None
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -784,8 +851,16 @@ class ALLSET_OT_view_cube_face(bpy.types.Operator):
             self._locked = True
             return
         self._locked = False
+        camera = _view_camera(context)
+        if camera is not None:
+            # Looking through a camera: the camera moves, as with Alt+LMB (which turns the view's Lock Camera to
+            # View on); the view stays the camera's
+            from ..operators import view
+            view.camera_navigation(context)
+            self._camera = CameraTumble(context, camera)
+            return
         self._before = (rv.view_perspective, rv.view_rotation.copy())
-        if rv.view_perspective == 'CAMERA':      # the free view from the visible camera orientation (as the roll)
+        if rv.view_perspective == 'CAMERA':      # no camera object to move: the free view from the visible one
             visible = _cube_rotation(rv)
             rv.view_perspective = 'PERSP'
             rv.view_rotation = visible
@@ -801,7 +876,10 @@ class ALLSET_OT_view_cube_face(bpy.types.Operator):
                     return {'RUNNING_MODAL'}
                 self._begin_drag(context)
                 self._last = self._start            # the whole drag counts, from the press
-            if not self._locked:
+            if self._camera is not None:
+                self._camera.turn(x - self._start[0], y - self._start[1], tumble_rate(context))
+                context.area.tag_redraw()
+            elif not self._locked:
                 rv.view_rotation = turntable(rv.view_rotation, x - self._last[0], y - self._last[1],
                                              tumble_rate(context))
                 context.area.tag_redraw()
@@ -809,10 +887,15 @@ class ALLSET_OT_view_cube_face(bpy.types.Operator):
             return {'RUNNING_MODAL'}
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             if self._dragging:
+                if self._camera is not None and not context.mode.startswith('EDIT'):
+                    bpy.ops.ed.undo_push(message="Rotate View")     # one undo step for the move, like Alt+LMB
                 return {'FINISHED'}                 # a drag: no snap to a face
             return self.execute(context)
         if event.type in {'ESC', 'RIGHTMOUSE'}:
-            if self._before is not None:
+            if self._camera is not None:
+                self._camera.cancel(context)
+                context.area.tag_redraw()
+            elif self._before is not None:
                 rv.view_rotation = self._before[1]
                 if self._before[0] == 'CAMERA':
                     rv.view_perspective = 'CAMERA'
