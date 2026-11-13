@@ -67,6 +67,7 @@ def begin(context):
     if (context.mode not in MODES or context.region is None or context.region.type != 'WINDOW'
             or not maya_joints.is_maya_view(space, getattr(getattr(context, "window", None), "workspace", None))):
         return False
+    _flush()            # the drags before this one have ended: their joint rules first, in order
     wm = context.window_manager
     last = wm.operators[-1].as_pointer() if len(wm.operators) else 0
     _pending.append({
@@ -243,7 +244,7 @@ def _watch():
         running = _running(entry)
         entry["seen"] = entry["seen"] or running
         entry["waited"] += _TICK
-        if entry["seen"] and not running:
+        if not running and (entry["seen"] or _registered(entry) is not None):
             _pending.remove(entry)
             try:
                 _finish(entry)
@@ -254,6 +255,22 @@ def _watch():
     if not _pending:
         _track_stop()
     return _TICK if _pending else None
+
+
+def _flush():
+    """Apply the joint rules of every drag whose box / lasso has ended. A new drag starts only once the one before it
+    ended, so however fast drags follow each other each one is finished, and its selection remembered, before the
+    next one begins."""
+    for entry in list(_pending):
+        if _running(entry):
+            continue
+        _pending.remove(entry)
+        if not (entry["seen"] or _registered(entry) is not None):
+            continue                  # never seen running and nothing registered: Blender's box didn't start
+        try:
+            _finish(entry)
+        except (ReferenceError, RuntimeError, AttributeError, KeyError) as e:
+            print("allset: joint marquee:", e)
 
 
 def pending():

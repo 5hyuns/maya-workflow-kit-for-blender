@@ -312,3 +312,29 @@ def test_scrubbing_the_time_reuses_what_playback_reuses():
     finally:
         mj.scrubbing = real
         mj._LISTS.clear()
+
+
+def test_marquees_in_quick_succession_are_each_finished_in_order():
+    """A marquee's joint rules run once Blender's box has ended. When the next drag starts first, the drags before it
+    are finished (in order) before the new one is remembered; a box that ended between two checks and registered its
+    result is finished too, instead of being given up."""
+    jm = import_module(kit.MODULE + ".operators.joint_marquee")
+    done = []
+    saved = (jm._running, jm._finish, jm._registered, list(jm._pending))
+    try:
+        jm._running = lambda entry: entry.get("running", False)
+        jm._finish = lambda entry: done.append(entry["id"])
+        jm._registered = lambda entry: entry.get("op")
+        jm._pending[:] = [{"id": 1, "seen": True}, {"id": 2, "seen": False, "op": object()},
+                          {"id": 3, "seen": False}, {"id": 4, "seen": True, "running": True}]
+        jm._flush()
+        assert done == [1, 2], done                     # 3 never started, 4 still runs
+        assert [e["id"] for e in jm._pending] == [4]
+        done.clear()
+        jm._pending[:] = [{"id": 5, "seen": False, "op": object(), "waited": 0.0}]
+        jm._watch()
+        assert done == [5] and not jm._pending, "a box that ended unseen but registered is finished"
+    finally:
+        jm._running, jm._finish, jm._registered = saved[:3]
+        jm._pending[:] = saved[3]
+        jm.cancel_all()
