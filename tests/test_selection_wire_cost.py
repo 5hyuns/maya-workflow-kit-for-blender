@@ -273,6 +273,47 @@ def test_highlight_looks_at_the_files_parents_once():
     assert dt < 60.0, f"{dt:.1f} ms"
 
 
+def test_posed_skeleton_reads_no_parents():
+    """A skeleton picked in Pose Mode highlights no hierarchy (its child meshes aren't a selected hierarchy), so a
+    redraw during a pose drag doesn't look through every object of the file for the parents; an object picked in
+    Object Mode next to it still gets its hierarchy, read once."""
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    me = bpy.data.meshes.new("shared")
+    me.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0)], [], [(0, 1, 2)])
+    for i in range(1500):
+        _mesh_ob(f"o{i:04d}", data=me)
+    rig = bpy.data.objects.new("rig", bpy.data.armatures.new("rig"))
+    bpy.context.scene.collection.objects.link(rig)
+    _mesh_ob("skin", rig, data=me)
+    box = _mesh_ob("box", data=me)
+    _mesh_ob("boxKid", box, data=me)
+    bpy.context.view_layer.update()
+    for ob in bpy.context.view_layer.objects:
+        ob.select_set(ob == rig)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode='POSE')
+    real, calls = wire.children_map, [0]
+
+    def counted():
+        calls[0] += 1
+        return real()
+    wire.children_map = counted
+    try:
+        ctx = _ctx(_view_space())
+        assert wire.highlighted(ctx) == [] == _rule(ctx)
+        assert calls[0] == 0, f"{calls[0]} looks through every object of the file for a posed skeleton"
+        box.select_set(True)                                      # an Object Mode pick beside the posed skeleton
+        ctx = _ctx(_view_space())
+        got = [(o.name, is_lead) for o, is_lead in wire.highlighted(ctx)]
+        assert got == _rule(ctx) == [("box", False), ("boxKid", False)], got
+        assert calls[0] == 1
+    finally:
+        wire.children_map = real
+        bpy.context.view_layer.objects.active = rig
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
 def test_world_matrices_and_kept_boxes_match_reading_each_object():
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)

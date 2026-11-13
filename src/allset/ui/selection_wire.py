@@ -289,6 +289,12 @@ def highlighted(context, roots_shown=False):
     3D View, the same test as ``visible_get(viewport=...)``), so the selected objects skip that test."""
     if not highlighting(context):
         return []
+    # #173: an armature in Pose / Edit mode is selected for its bones (Maya: a picked control), so its child meshes
+    # aren't a selected hierarchy. With no selected object in Object Mode (a posed skeleton) nothing is highlighted:
+    # the file's parents (one look through every object) aren't read for nothing on each redraw of a pose drag.
+    roots = [ob for ob in context.selected_objects if ob.mode == 'OBJECT']
+    if not roots:
+        return []
     space = _view(context)
     view = space if isinstance(space, bpy.types.SpaceView3D) else None     # ``_shown``
     active = context.view_layer.objects.active
@@ -309,11 +315,7 @@ def highlighted(context, roots_shown=False):
         for child in kids.get(ob, ()):
             if not child.select_get():          # a selected child keeps its own colour (visited as a root)
                 visit(child, lead)
-    for ob in context.selected_objects:
-        # #173: an armature in Pose / Edit mode is selected for its bones (Maya: a picked control),
-        # so its child meshes aren't a selected hierarchy
-        if ob.mode != 'OBJECT':
-            continue
+    for ob in roots:
         visit(ob, ob == active, True)        # in Object Mode (just read)
     return out
 
