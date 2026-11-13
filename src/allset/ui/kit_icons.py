@@ -651,14 +651,23 @@ def texture(name, n, greyed=False):
     return tex
 
 
+_quads = {}               # (x, y, n) -> the batch of a glyph square drawn there (the same points every redraw)
+
+
 def draw_texture(name, x, y, n, greyed=False):
     """Draw glyph ``name`` with its lower left corner at region pixel (x, y), unscaled."""
     import gpu
-    from gpu_extras.batch import batch_for_shader
     x, y = round(x), round(y)
     sh = gpu.shader.from_builtin('IMAGE')
-    coords = ((x, y), (x + n, y), (x + n, y + n), (x, y + n))
-    batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
+    key = (x, y, n)
+    batch = _quads.get(key)
+    if batch is None:
+        from gpu_extras.batch import batch_for_shader
+        coords = ((x, y), (x + n, y), (x + n, y + n), (x, y + n))
+        if len(_quads) > 256:
+            _quads.clear()
+        batch = _quads[key] = batch_for_shader(sh, 'TRI_FAN', {"pos": coords,
+                                                              "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
     sh.uniform_sampler("image", texture(name, n, greyed))
     gpu.state.blend_set('ALPHA')
     batch.draw(sh)
@@ -687,6 +696,7 @@ def unregister():
             pass
     _geom_ids.clear()
     _textures.clear()
+    _quads.clear()
     if _pcoll:
         import bpy.utils.previews
         bpy.utils.previews.remove(_pcoll.pop())

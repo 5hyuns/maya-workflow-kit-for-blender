@@ -163,7 +163,11 @@ def default_options(**kw):
 
 
 def type_group(ob):
-    t = ob.type
+    return _type_group(ob.type)
+
+
+def _type_group(t):
+    """``type_group`` of an object of type ``t``."""
     if t in ('MESH', 'ARMATURE', 'EMPTY', 'LIGHT', 'CAMERA'):
         return t
     if t in ('GREASEPENCIL', 'GPENCIL'):
@@ -180,6 +184,24 @@ def icon_kind(ob):
     from ..operators import create
     from .hypergraph_layout import node_kind
     return node_kind(ob.type, bool(ob.get(create.LOCATOR_PROP)))
+
+
+def _icon_kinds():
+    """``icon_kind`` as a function of (object, its type) for one rows build: the imports are done once, and only an
+    empty's kind depends on the locator property (``node_kind``), so only empties read it."""
+    from ..operators import create
+    from .hypergraph_layout import node_kind
+    prop = create.LOCATOR_PROP
+    kinds = {}
+
+    def kind(ob, t):
+        if t == 'EMPTY':
+            return node_kind(t, bool(ob.get(prop)))
+        got = kinds.get(t)
+        if got is None:
+            got = kinds[t] = node_kind(t)
+        return got
+    return kind
 
 
 class _Bones:
@@ -303,31 +325,41 @@ def build(scene, view_layer, opts, expand_all=False):
         return node('JOINT', ob.name, name, depth, ('B', ob.session_uid, name), name, 'JOINT',
                     children if child_names or objs else None, 'ARMATURE' in shown, top)
 
+    kind_of = _icon_kinds()
+
     def visit(ob, depth):
-        b = bones_of(ob) if ob.type == 'ARMATURE' else None
+        t = ob.type
+        b = bones_of(ob) if t == 'ARMATURE' else None
         obj_kids = kids.get(ob, ())
         if b is not None and is_kit_skeleton(ob, b):
             rows = []
             for i, root in enumerate(b.roots):
                 rows += visit_bone(ob, b, root, depth, obj_kids if i == 0 else (), top=True)
             return rows
-        shape = opts.shapes and ob.data is not None and ob.type not in ('ARMATURE', 'EMPTY')
+        shape = opts.shapes and ob.data is not None and t not in ('ARMATURE', 'EMPTY')
         roots_b = b.roots if b is not None else ()
+        name = ob.name
+        icon = kind_of(ob, t)
+        type_ok = _type_group(t) in shown
+        if not (shape or roots_b or obj_kids):
+            # = node() of a row without children: no arrow, never open
+            if not type_ok or (match is not None and not match(name)):
+                return []
+            return [Row('OBJECT', name, "", 0 if flat else depth, False, False, name, icon, ('O', ob.session_uid),
+                        False)]
 
         def children(d):
             rows = []
             if shape:
                 label = ob.data.name
                 if match is None or match(label):
-                    rows.append(Row('SHAPE', ob.name, label, 0 if flat else d, False, False, label, icon_kind(ob),
-                                    None))
+                    rows.append(Row('SHAPE', name, label, 0 if flat else d, False, False, label, icon, None))
             for r in roots_b:
                 rows += visit_bone(ob, b, r, d)
             for o in obj_kids:
                 rows += visit(o, d)
             return rows
-        return node('OBJECT', ob.name, "", depth, ('O', ob.session_uid), ob.name, icon_kind(ob),
-                    children if shape or roots_b or obj_kids else None, type_group(ob) in shown)
+        return node('OBJECT', name, "", depth, ('O', ob.session_uid), name, icon, children, type_ok)
 
     rows = []
     real = startup_cameras.names(scene)
@@ -411,32 +443,59 @@ def set_expanded(keys, state):
 
 # --- row state (drawn per visible row) ------------------------------------------------------------------------------
 
-_by_name = {"key": None, "objects": {}}
+_by_name = {"key": None, "objects": {}, "count": -1, "counted": False}
+
+
+def _map_names():
+    """Map the names again, in the same dict (a redraw that already read it sees the new names)."""
+    objects = bpy.data.objects
+    mapped = _by_name["objects"]
+    mapped.clear()
+    # the first object of a name wins, like ``get`` (a linked object can share a local object's name)
+    mapped.update(zip(reversed(objects.keys()), reversed(objects.values())))
+    _by_name["count"] = len(objects)
+    _by_name["counted"] = True
 
 
 def object_names():
     """{name: object} of the file's objects for the rows being drawn: Blender finds a name by walking every object
     of the file (a quarter of a millisecond per row in a file of 5,000 objects), so the names are mapped once while
     the file's names and objects stay the same (``outliner.structure_version`` / ``objects_version``: a row's object
-    can't be removed without them changing, so no removed object is kept). With linked libraries a linked and a
-    local object can share a name, so there the object count is checked too (counting walks the objects). Read it
-    once per redraw and look rows up with ``object_named``, which checks what it finds."""
+    can't be removed without them changing, so no removed object is kept). Read it once per redraw and look rows up
+    with ``object_named``, which checks what it finds (a linked object found there also checks the object count
+    once per redraw)."""
     from .outliner import objects_version, structure_version
-    objects = bpy.data.objects
-    key = (structure_version(), objects_version(), len(objects) if len(bpy.data.libraries) else -1)
+    key = (structure_version(), objects_version())
     if _by_name["key"] != key:
-        # the first object of a name wins, like ``get`` (a linked object can share a local object's name)
-        _by_name["objects"] = dict(zip(reversed(objects.keys()), reversed(objects.values())))
+        _map_names()
         _by_name["key"] = key
+    else:
+        _by_name["counted"] = False
     return _by_name["objects"]
 
 
 def object_named(name, names=None):
     """``bpy.data.objects.get(name)``, from ``names`` (``object_names()``) when the object found there still carries
-    the name."""
-    ob = (object_names() if names is None else names).get(name)
+    the name.
+
+    ``get`` returns the first object of that name in the file's list. A local object found under its own name is
+    that one: local data-blocks come first in the list and no two local ones share a name (lib_id.cc
+    ``id_sort_by_name``, ``BKE_id_new_name_validate``). A linked object can share its name with a local object or one
+    of another library, so for one the map is first made again if objects came or went since it was made (the
+    object count, read at most once per redraw); a removed object raises ReferenceError here (its Python object is
+    invalidated when it is freed) and the name is looked up again."""
+    if names is None:
+        names = object_names()
+    ob = names.get(name)
     try:
         if ob is not None and ob.name == name:
+            if ob.library is None:
+                return ob
+            if names is _by_name["objects"] and not _by_name["counted"]:
+                _by_name["counted"] = True
+                if len(bpy.data.objects) != _by_name["count"]:
+                    _map_names()
+                    return object_named(name, _by_name["objects"])
             return ob
     except ReferenceError:
         pass
@@ -615,7 +674,26 @@ def _quad(pos, col, x0, y0, x1, y1, rgba):
     col.extend((rgba,) * 6)
 
 
+_ICON_PARTS = {}          # (kind, cx, cy, r, rgba) -> the icon's (tris, tcol, lines, lcol) made by ``_icon_parts``
+
+
 def _icon(tris, tcol, lines, lcol, kind, cx, cy, r, rgba):
+    """Add a node icon's shapes; an icon drawn at the same place and colour before reuses the points made then."""
+    key = (kind, cx, cy, r, rgba)
+    got = _ICON_PARTS.get(key)
+    if got is None:
+        made = ([], [], [], [])
+        _icon_parts(*made, kind, cx, cy, r, rgba)
+        if len(_ICON_PARTS) > 1024:
+            _ICON_PARTS.clear()
+        got = _ICON_PARTS[key] = tuple(tuple(m) for m in made)
+    tris.extend(got[0])
+    tcol.extend(got[1])
+    lines.extend(got[2])
+    lcol.extend(got[3])
+
+
+def _icon_parts(tris, tcol, lines, lcol, kind, cx, cy, r, rgba):
     from .hypergraph_layout import icon_shapes
     for prim in icon_shapes(kind):
         name, a = prim[0], prim[1:]
@@ -1320,6 +1398,7 @@ def unregister():
         bpy.types.SpaceOutliner.draw_handler_remove(_handle[0], 'WINDOW')
         _handle[0] = None
     _cache.clear()
+    _ICON_PARTS.clear()
     SEEN.clear()
     DRAWN.clear()
     SCROLL.clear()

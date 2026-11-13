@@ -1,7 +1,8 @@
 """In the Maya layout, the kit rows that redraw on every frame and selection change draw the same pixels from what
 they kept as from scratch: the shelf row, the Outliner's kit tree, the Range Slider in the timeline header and the
 Time Slider (ruler + key ticks). A shelf redraw that changed nothing makes no new GPU batch (it made one per
-rectangle on every redraw)."""
+rectangle on every redraw); an Outliner redraw that changed nothing makes no new glyph batch and works out no row
+icon's shapes again."""
 
 import os
 import sys
@@ -17,6 +18,8 @@ shelf = import_module(f"{MODULE}.ui.shelf")
 ts = import_module(f"{MODULE}.ui.time_slider")
 tree = import_module(f"{MODULE}.ui.outliner_tree")
 rb = import_module(f"{MODULE}.ui.range_bar")
+kit_icons = import_module(f"{MODULE}.ui.kit_icons")
+layout = import_module(f"{MODULE}.ui.hypergraph_layout")
 
 
 def redraw():
@@ -92,6 +95,8 @@ def s_kept():
     shelf._SHELF_BATCHES.clear()
     ts._TRIS.clear()
     tree._by_name["key"] = None
+    getattr(tree, "_ICON_PARTS", {}).clear()
+    getattr(kit_icons, "_quads", {}).clear()
     rb._gaps.clear()
     redraw()
 
@@ -107,18 +112,32 @@ def s_fresh():
     check("the Range Slider found its gap", any(rb._bars.values()))
     batch = import_module("gpu_extras.batch")
     real = batch.batch_for_shader
-    made = {"shelf": 0, "time slider": 0}
+    made = {"shelf": 0, "time slider": 0, "outliner glyph": 0, "outliner icon shapes": 0}
 
     def counted(*a, **k):
         space = getattr(bpy.context, "space_data", None)
         region = getattr(bpy.context, "region", None)
-        if shelf.is_shelf_row(space):
+        if sys._getframe(1).f_code.co_name == "draw_texture":
+            made["outliner glyph"] += 1
+        elif shelf.is_shelf_row(space):
             made["shelf"] += 1
         elif space is not None and space.type == 'DOPESHEET_EDITOR' and getattr(region, "type", "") == 'WINDOW':
             made["time slider"] += 1
         return real(*a, **k)
     batch.batch_for_shader = counted
-    C["restore"] = lambda: setattr(batch, "batch_for_shader", real)
+    real_shapes = layout.icon_shapes
+
+    def shapes(kind):
+        made["outliner icon shapes"] += 1
+        return real_shapes(kind)
+    layout.icon_shapes = shapes
+    drew = C["outliner draws"] = [tree.STATS["draws"]]
+
+    def restore():
+        batch.batch_for_shader = real
+        layout.icon_shapes = real_shapes
+        drew.append(tree.STATS["draws"])
+    C["restore"] = restore
     C["made"] = made
     redraw()
 
@@ -126,8 +145,11 @@ def s_fresh():
 @step
 def s_count():
     C["restore"]()
-    check(f"a redraw that changed nothing makes no new shelf or Time Slider batch {C['made']}",
-          C["made"] == {"shelf": 0, "time slider": 0})
+    drew = C["outliner draws"]
+    check(f"the Outliner rows redrew ({drew[1] - drew[0]} redraws)", drew[1] > drew[0])
+    check(f"a redraw that changed nothing makes no new shelf, Time Slider or Outliner glyph batch and works out no "
+          f"row icon's shapes again {C['made']}",
+          C["made"] == {"shelf": 0, "time slider": 0, "outliner glyph": 0, "outliner icon shapes": 0})
     # enough rows to scroll the Outliner
     me = bpy.data.meshes.new("rowShape")
     for i in range(80):
