@@ -89,6 +89,43 @@ def spare_after(row, end, bg, skip=2):
     return 0
 
 
+def row_runs(codes):
+    """[(start, end, is background)] runs of a header row given as one number per pixel (``codes``, a numpy array),
+    the background being the colour of the row's third pixel (``find_gap``): the runs ``bar_span`` and
+    ``spare_after`` walk, found with array operations instead of one Python step per pixel."""
+    import numpy as np
+    n = len(codes)
+    if n == 0:
+        return []
+    is_bg = codes == codes[min(2, n - 1)]
+    cuts = (np.flatnonzero(is_bg[1:] != is_bg[:-1]) + 1).tolist()
+    starts = [0] + cuts
+    ends = cuts + [n]
+    flags = is_bg[starts].tolist()
+    return list(zip(starts, ends, flags))
+
+
+def gap_of_runs(runs, n, min_w, skip=2):
+    """(``bar_span``, ``spare_after`` of that span) of a row of ``n`` pixels from its ``row_runs``: the same answer
+    as the per-pixel helpers."""
+    span, at, seen = None, None, 0
+    for k, (a, b, is_bg) in enumerate(runs):
+        if not is_bg:
+            seen += 1
+        elif seen >= skip and b - a >= min_w and b < n:
+            span, at = (a, b), k + 1
+            break
+    if span is None:
+        return None, 0
+    seen = 0
+    for a, b, is_bg in runs[at:]:
+        if not is_bg:
+            seen += 1
+        elif seen >= skip:
+            return span, (b - a if b < n else 0)
+    return span, 0
+
+
 def next_extra(extra, spare_px, unit, floor=0):
     """The bar's next extra ui units from the spare room ``spare_px`` in the header this draw. ``floor``: how far
     below the base width the label may shrink (negative) when the header has no room at all."""
@@ -268,13 +305,27 @@ def _rounded(x0, y0, x1, y1, r, colour):
 
 
 def _read_row(region, y):
+    """One header row as one number per pixel (its RGB bytes, a numpy array; empty outside the region). The
+    framebuffer read hands its bytes to numpy directly, instead of one Python colour per pixel."""
     import gpu
+    import numpy as np
     fb = gpu.state.active_framebuffer_get()
     from .. import compat
     buf = compat.read_region_row(fb, region, y)
     if buf is None:
         return []
-    return [tuple(buf[0][i][:3]) for i in range(region.width)]
+    px = np.frombuffer(buf, dtype=np.uint8).reshape(-1, 4)[:region.width].astype(np.int32)
+    return px[:, 0] | (px[:, 1] << 8) | (px[:, 2] << 16)
+
+
+def _codes(row):
+    """A row as one number per pixel: ``_read_row``'s array as it is, a list of colours (``bar_span``'s rows) as
+    one number per distinct colour."""
+    import numpy as np
+    if isinstance(row, np.ndarray):
+        return row
+    ids = {}
+    return np.array([ids.setdefault(c, len(ids)) for c in row], dtype=np.int64)
 
 
 def find_gap(area, region, unit, playing):
@@ -291,8 +342,8 @@ def find_gap(area, region, unit, playing):
     if len(row) < 3:
         _gaps.pop(area.as_pointer(), None)
         return None
-    span = bar_span(row, row[2], min_w=(key[3] + min(0, key[4])) * unit * 0.6)
-    found = (span, spare_after(row, span[1], row[2]) if span is not None else 0)
+    codes = _codes(row)
+    found = gap_of_runs(row_runs(codes), len(codes), min_w=(key[3] + min(0, key[4])) * unit * 0.6)
     _gaps[area.as_pointer()] = (key, found)
     return found
 
