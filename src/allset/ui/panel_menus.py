@@ -137,6 +137,7 @@ FAILS = {
                      "views and a view that looks through a camera",
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
+    "RENDER_CYCLES": "Cycles is off: enable the Cycles add-on in Preferences > Add-ons",
     "BOOKMARK": camera_bookmarks.NO_CAMERA,
 }
 for _k in CAMERA_DATA:
@@ -234,8 +235,8 @@ def state(context, key):
         return sh.type in ('SOLID', 'WIREFRAME') and sh.light == 'FLAT'
     if key == "RENDER_VP2":
         return sh.type != 'RENDERED'
-    if key == "RENDER_ENGINE":
-        return sh.type == 'RENDERED'
+    if key in RENDER_ENGINES:
+        return sh.type == 'RENDERED' and context.scene.render.engine.startswith(RENDER_ENGINES[key])
     if key == "TUMBLE_SELECTION":
         return context.preferences.inputs.use_rotate_around_active
     if key == "TUMBLE_COI":
@@ -263,7 +264,7 @@ def state(context, key):
 
 
 RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT", "RENDER_VP2",
-         "RENDER_ENGINE", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
+         "RENDER_EEVEE", "RENDER_CYCLES", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
@@ -286,6 +287,23 @@ def main_region(area):
 
 
 _before_render = {}   # 3D View space pointer -> shading type before Rendered (IPR / Renderer menu)
+
+
+RENDER_ENGINES = {"RENDER_EEVEE": 'BLENDER_EEVEE', "RENDER_CYCLES": 'CYCLES'}   # prefix of scene.render.engine
+
+
+def set_engine(scene, key):
+    """Set the scene engine; False when it is not available (Cycles add-on disabled)."""
+    want = RENDER_ENGINES[key]
+    if scene.render.engine.startswith(want):
+        return True
+    for engine in (want, want + "_NEXT"):     # Blender 4.2-4.4 call it BLENDER_EEVEE_NEXT
+        try:
+            scene.render.engine = engine
+            return True
+        except TypeError:
+            pass
+    return False
 
 
 def enter_rendered(space):
@@ -329,7 +347,9 @@ def apply(context, key):
         sh.light = 'FLAT'
     elif key == "RENDER_VP2":
         leave_rendered(space)
-    elif key == "RENDER_ENGINE":
+    elif key in RENDER_ENGINES:
+        if not set_engine(context.scene, key):
+            return False
         enter_rendered(space)
     elif key in ("TUMBLE_SELECTION", "TUMBLE_COI"):
         # Blender's Orbit Around Selection is a user preference, which the kit never writes:
@@ -579,8 +599,6 @@ def draw_rows(layout, context, rows, idname=""):
                 layout.prop(_owner(space, context, owner), prop, text=label)
         elif kind == "set":
             _k, key, label = row
-            if key == "RENDER_ENGINE":
-                label = context.engine.replace("BLENDER_", "").replace("_NEXT", "").title()
             on = state(context, key)
             if on is None:
                 icon = 'NONE'

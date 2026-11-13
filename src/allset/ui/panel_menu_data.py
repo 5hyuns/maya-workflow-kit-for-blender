@@ -170,7 +170,9 @@ RENDERER = [
     _grey("Legacy Default Viewport"),
     _grey("Legacy High Quality Viewport"),
     _sep(),
-    ("set", "RENDER_ENGINE", "{engine}"),   # Maya lists render overrides here (Arnold)
+    # Maya lists render overrides here (Arnold); these set the scene engine + Rendered shading
+    ("set", "RENDER_EEVEE", "Eevee"),
+    ("set", "RENDER_CYCLES", "Cycles"),
 ]
 
 PANELS = [
