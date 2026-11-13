@@ -100,8 +100,20 @@ def next_extra(extra, spare_px, unit, floor=0):
     return extra
 
 
+_settled = {}    # (header width, base units) -> extra units a bar settled at: where a new area's bar starts
+
+
+def _seed_key(area):
+    return next((r.width for r in area.regions if r.type == 'HEADER'), 0), plan_units(area)
+
+
 def extra_units(area):
-    return _extra.get(area.as_pointer(), 0) if area is not None else 0
+    """A new area (a Maya layout just appended by the switch) starts from the width the last bar in a header
+    of this size settled at, so its bar doesn't slide into place over the first frames."""
+    if area is None:
+        return 0
+    got = _extra.get(area.as_pointer())
+    return _settled.get(_seed_key(area), 0) if got is None else got
 
 
 def plan_units(area, units=None):
@@ -303,16 +315,19 @@ def draw():
     span, spare = found
     if span is None:
         _bars.pop(area.as_pointer(), None)
-        if _extra.pop(area.as_pointer(), 0):    # the bar no longer fits: start again from its base width
+        # the bar no longer fits: start again from its base width (a settled width that doesn't fit goes too)
+        if _settled.pop(_seed_key(area), 0) | _extra.pop(area.as_pointer(), 0):
             _redraw_later(area.as_pointer())
         return
     key = area.as_pointer()
-    extra = _extra.get(key, 0)
+    extra = extra_units(area)
     planned = plan_units(area)
     grown = next_extra(extra, spare, unit, floor=-max(0, int(planned - MIN_BAR_UNITS)))
+    _extra[key] = grown
     if grown != extra:
-        _extra[key] = grown
         _redraw_later(key)
+    else:
+        _settled[_seed_key(area)] = extra
     pad = round(4 * scale)
     x0, x1 = span[0] + pad, span[1] - pad
     y0 = (region.height - unit) / 2.0

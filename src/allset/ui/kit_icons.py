@@ -524,6 +524,15 @@ def make(name, n):
     return pv.icon_id
 
 
+def make_all(context=None):
+    """Every glyph at the current UI scale now (from a timer, before a layout's first frame): the first draw
+    doesn't show Blender's fallback icons and swap them a moment later."""
+    import bpy
+    scale = (context or bpy.context).preferences.system.ui_scale
+    for name in GLYPHS:
+        make(name, size_for(name, scale))
+
+
 def _make_pending():
     try:
         for name, n in list(_pending):
