@@ -35,6 +35,10 @@ _stack = []            # step names, oldest first (Blender's undo order)
 _pos = [-1]            # index of Blender's active step in _stack (-1 = before every known step)
 _seen = set()          # wm.operators pointers already counted
 _claimed = set()       # pointers ``operator_step`` counted before Blender registered them
+# (count, newest pointer) of wm.operators at the last full look while _seen / _claimed stayed as it left them: Blender
+# adds an operator at the end and frees the oldest at the start, so a list with the same count and the same newest
+# entry holds nothing new (the look runs after every depsgraph update: every step of a drag, every click)
+_looked = [None]
 _pending = [None]      # text to show in the post handler
 _before = [None]       # (text, error) of the result field before the undo / redo
 
@@ -44,6 +48,7 @@ def reset():
     _pos[0] = -1
     _seen.clear()
     _claimed.clear()
+    _looked[0] = None
     _pending[0] = None
     _before[0] = None
 
@@ -75,8 +80,22 @@ def _registered():
         return []
 
 
+def _newest():
+    """(count, pointer of the newest) of ``wm.operators``, or None."""
+    wm = bpy.context.window_manager
+    try:
+        ops = wm.operators
+        n = len(ops)
+        return n, (ops[n - 1].as_pointer() if n else 0)
+    except (AttributeError, ReferenceError, IndexError):
+        return None
+
+
 def _scan():
     """Count the operators Blender registered since the last look (each REGISTER + UNDO one pushed a step)."""
+    mark = _newest()
+    if mark is not None and mark == _looked[0]:
+        return
     ops = _registered()
     cur = {op.as_pointer() for op in ops}
     # Blender frees the oldest registered operators and reuses their addresses: keep only live pointers
@@ -95,6 +114,7 @@ def _scan():
             undo = False
         if undo:
             _add(op.name)
+    _looked[0] = mark
 
 
 def pushed(name):
@@ -119,6 +139,7 @@ def operator_step(op):
         return
     _scan()
     _claimed.add(p)                       # it registers after it finishes: don't count it twice
+    _looked[0] = None
     _add(name)
 
 
@@ -184,6 +205,7 @@ def _on_post(*_args):
         return
     _seen.clear()                         # Blender emptied wm.operators
     _claimed.clear()
+    _looked[0] = None
     text, _pending[0] = _pending[0], None
     if text is None:
         return

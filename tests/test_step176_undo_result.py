@@ -96,6 +96,34 @@ def test_unknown_step_reads_like_a_nameless_maya_chunk():
     assert not command_line._result["error"]
 
 
+def test_moves_do_not_list_the_registered_operators_again():
+    """Every depsgraph update looks for newly registered operators: while none came (the steps of a drag, clicks
+    on nothing new) the list is not read again; the next registered operator is still named."""
+    _start()
+    _select_all()
+    bpy.ops.object.location_clear('EXEC_DEFAULT', True)
+    ob = bpy.context.scene.objects[0]
+    real, reads = undo_text._registered, [0]
+
+    def counted():
+        reads[0] += 1
+        return real()
+    undo_text._registered = counted
+    try:
+        for i in range(20):
+            ob.location.x = 0.1 * i                     # a drag step: one depsgraph update each
+            bpy.context.view_layer.update()
+        assert reads[0] <= 1, f"20 moves listed the registered operators {reads[0]} times"
+        bpy.ops.object.scale_clear('EXEC_DEFAULT', True)
+        bpy.context.view_layer.update()
+    finally:
+        undo_text._registered = real
+    bpy.ops.ed.undo()
+    assert _field() == "Undo: Clear Scale", _field()
+    bpy.ops.ed.undo()
+    assert _field() == "Undo: Clear Location", _field()
+
+
 def test_disable_removes_the_handlers():
     handlers = [fn for _name, fn in undo_text.HANDLERS]
     for name, fn in undo_text.HANDLERS:
