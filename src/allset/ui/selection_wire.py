@@ -1082,6 +1082,46 @@ def time_dependent(ob, data_memo=None):
     return False
 
 
+# The kit's frame change handlers that write nothing to the file during a frame change (they clear a cache or start a
+# timer), as "<module under the package>:<function>".
+_FRAME_READERS = frozenset((
+    "operators.live:frame_changed", "operators.auto_key:_on_frame", "operators.playback_maya:_on_frame",
+    "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame"))
+_PACKAGE = __name__.rsplit(".ui.", 1)[0]
+
+
+def _idle_writer(key, scene):
+    """Does the kit frame change handler ``key`` write nothing on this frame change? False when it may write."""
+    from importlib import import_module
+    if key == "operators.point_keys:_on_frame":
+        return not import_module(_PACKAGE + ".operators.point_keys")._editing_meshes()
+    if key == "operators.playback_maya:_on_frame_stepped":
+        return not import_module(_PACKAGE + ".operators.playback_maya").active(scene)
+    if key == "operators.constrain_interp:_on_update":
+        return not import_module(_PACKAGE + ".operators.constrain_interp")._state["armed"]
+    if key == "operators.ik_rp:_on_frame":
+        found = import_module(_PACKAGE + ".operators.ik_rp")._found[1]
+        return isinstance(found, list) and not found
+    if key in ("operators.constrain_199:_on_frame", "operators.pins_205:_on_frame"):
+        names = import_module(_PACKAGE + "." + key.split(":")[0])._state.get("names")
+        return isinstance(names, set) and not names
+    return False
+
+
+def _frame_writers_idle(scene):
+    """Can nothing in ``frame_change_post`` write during this frame change? Any handler that isn't the kit's own
+    counts as one that may write."""
+    for fn in bpy.app.handlers.frame_change_post:
+        f = getattr(fn, "__func__", fn)
+        mod = getattr(f, "__module__", "") or ""
+        if not mod.startswith(_PACKAGE + "."):
+            return False
+        key = mod[len(_PACKAGE) + 1:] + ":" + getattr(f, "__name__", "")
+        if key not in _FRAME_READERS and not _idle_writer(key, scene):
+            return False
+    return True
+
+
 @persistent
 def _on_frame(scene, _depsgraph=None):
     """Drop the batches of time-dependent objects so the next redraw reads this frame's evaluated mesh (#91); a mesh
@@ -1097,6 +1137,21 @@ def _on_frame(scene, _depsgraph=None):
         _used.clear()
         _draws[0] = 0
     if not _batches:
+        return
+    if _depsgraph is not None and _frame_writers_idle(scene):
+        # Nothing writes during this frame change, so Blender evaluates the frame once and its update lists every
+        # object whose evaluated shape changed (each evaluated part of an ID adds its flag to the update:
+        # source/blender/depsgraph/intern/eval/deg_eval_flush.cc ``flush_editors_id_update``). A handler that writes
+        # makes Blender evaluate a second time without telling Python (source/blender/blenkernel/intern/scene.cc
+        # ``BKE_scene_graph_update_for_newframe_ex``): then every time-dependent object is asked about, below.
+        for update in _depsgraph.updates:
+            if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
+                ob = update.id.original
+                uid = ob.session_uid
+                if uid in _batches:
+                    del _batches[uid]
+                    if not keeps_edges(ob):
+                        _edges.pop(uid, None)
         return
     import numpy as np
     objects = scene.objects
