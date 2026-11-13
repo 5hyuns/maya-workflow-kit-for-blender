@@ -325,6 +325,49 @@ def s_wait_eye():
     redraw_all()
 
 
+def column_point(label, col):
+    area, region = outliner()
+    rs = rows()
+    t = tree()
+    u = t.unit(bpy.context.preferences)
+    k = next(i for i, r in enumerate(rs) if r.label == label)
+    y0, y1 = t.row_rect(area, region, k, u, len(rs))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
+    return region.x + int(xs[col]), region.y + int((y0 + y1) / 2)
+
+
+@step
+def s_shift_drag():
+    # Blender: Shift held, press the arrow of joint1 and drag down to box1: every row passed and all below them
+    C["rows"] = [(r.kind, r.label) for r in rows()]
+    (x, y0), (_x, y1) = column_point("joint1", 'SELECT'), column_point("box1", 'SELECT')
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y0, shift=True)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y0, shift=True)
+    for k in range(1, 7):
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y0 + (y1 - y0) * k // 6, shift=True)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y1, shift=True)
+
+
+@step
+def s_wait_shift():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_shift_dragged():
+    rig, box, cyl = (bpy.data.objects[n] for n in ("skeleton1", "box1", "pCylinder1"))
+    bones = [b.name for b in rig.data.bones if not b.hide_select]
+    check(f"Shift-drag makes every joint unselectable (still selectable: {bones}; rows {C['rows']})", not bones)
+    check(f"... and pCylinder1 under joint3 and box1 ({cyl.hide_select}, {box.hide_select})",
+          cyl.hide_select and box.hide_select)
+    check("only the arrow column changed (box1 render stays off from the camera click)",
+          not cyl.hide_render and box.hide_render)
+    for b in rig.data.bones:
+        b.hide_select = False
+    cyl.hide_select = box.hide_select = False
+
+
 @step
 def s_eyed():
     ob = bpy.data.objects["box1"]

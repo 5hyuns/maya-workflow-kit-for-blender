@@ -212,6 +212,26 @@ def test_select_and_render_columns():
     assert 20 in heights and len(icons) == 6 * len(heights), "Blender's 3 icons x on/off at every captured height"
 
 
+def test_column_shift_takes_everything_below():
+    cube, sk, names = _rig()
+    child = _mesh("pSphere1", cube)
+    grand = _mesh("pCone1", child)
+    rows = _rows()
+    row = _row(rows, "pCube1")
+    assert edit.set_column(bpy.context, row, 'RENDER', False)
+    assert cube.hide_render and not child.hide_render, "a plain click: the row only"
+    assert edit.set_column(bpy.context, row, 'SELECT', False, recursive=True)
+    assert cube.hide_select and child.hide_select and grand.hide_select, "Shift: the objects below too"
+    assert not grand.hide_render
+    assert edit.toggle_column(bpy.context, row, 'SELECT', recursive=True)
+    assert not (cube.hide_select or child.hide_select or grand.hide_select)
+    root = _row(rows, names[0])
+    edit.set_column(bpy.context, root, 'SELECT', False)
+    assert [sk.data.bones[n].hide_select for n in names] == [True] + [False] * (len(names) - 1)
+    edit.set_column(bpy.context, root, 'SELECT', False, recursive=True)
+    assert all(sk.data.bones[n].hide_select for n in names), "Shift: the joints below too"
+
+
 def test_delete_objects_and_joints():
     cube, sk, names = _rig()
     child = _mesh("pSphere1", cube)
