@@ -507,20 +507,11 @@ LABEL_SIZE = 11                # font px at UI scale 1.0
 _handles = []
 
 
-_armature_cache = {}
-
-
 def _armatures(view_layer):
-    """The view layer's armature objects, kept until the scene's structure changes (#191: every 3D View
-    redraw walked every object)."""
-    from ..ui.outliner import structure_version
-    key = (structure_version(), len(view_layer.objects))
-    got = _armature_cache.get(view_layer.as_pointer())
-    if got is None or got[0] != key:
-        got = (key, [ob.name for ob in view_layer.objects if ob is not None and ob.type == 'ARMATURE'])
-        _armature_cache[view_layer.as_pointer()] = got
-    objects = view_layer.objects
-    return [objects[n] for n in got[1] if n in objects]
+    """The view layer's armature objects, kept until an update can add or remove one (``maya_joints.armatures``:
+    a redraw walks no other object; looking each one up by name walked them all)."""
+    from ..ui import maya_joints
+    return maya_joints.armatures(view_layer)
 
 
 _labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)])
@@ -531,7 +522,7 @@ def _pose_labels(ob, playing=False):
     (playback, a view turned, a selection), so the joints found once are used again until something that can change
     them is edited (every pose bone was asked on every redraw)."""
     from ..ui import maya_joints
-    key = (maya_joints._EDITS[0], ob.data.as_pointer(), len(ob.pose.bones), ob.mode)
+    key = (maya_joints.edit_stamp(ob), ob.data.as_pointer(), len(ob.pose.bones), ob.mode)
     got = _labelled.get(ob.as_pointer())
     if got is not None and got[0] == key:
         return got[1]
@@ -554,7 +545,10 @@ def label_points(context):
     playing = (screen is not None and screen.is_animation_playing) or (
         getattr(bpy.context, "mode", None) in {'OBJECT', 'POSE'} and transforming()) or scrubbing()
     for ob in _armatures(context.view_layer):
-        if ob is None or not ob.visible_get():
+        try:
+            if ob is None or not ob.visible_get():
+                continue
+        except ReferenceError:                 # removed before the update that drops it from the list
             continue
         mw = ob.matrix_world
         if ob.mode == 'EDIT':

@@ -226,7 +226,8 @@ def _circle(name, n=12, r=0.15):
 def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
     """Two skeletons with control shapes; a pose of one is dragged: each drag step builds the lines of the skeleton
     that moved only (another one moved by the update is built too), and the joined lines equal a fresh build of
-    both. A control shape's own geometry changing, a new frame or an edit builds every skeleton again."""
+    both. A control shape's own geometry changing or a new frame looks at every skeleton again; the update after the
+    drag only at the skeleton it touched."""
     mj = import_module(kit.MODULE + ".ui.maya_joints")
     import numpy as np
     bpy.ops.wm.read_homefile(use_factory_startup=True)
@@ -254,7 +255,7 @@ def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
 
     def fresh():
         """Both skeletons built again from scratch (what the view would draw without anything kept)."""
-        mj._GEN[0] += 1000                            # a generation no drag recorded
+        mj._forget()                                  # nothing kept
         got = mj._joined(view)
         return np.array(got[0]), np.array(got[1])
 
@@ -294,8 +295,12 @@ def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
         mj.transforming = lambda: False               # the drag has ended: an update is an edit
         pb.rotation_euler = (0.0, 0.0, 0.0)
         bpy.context.view_layer.update()
-        mj._joined(view)
-        assert sorted(built) == ["a", "b"], f"after the drag every skeleton is built ({built})"
+        got = mj._joined(view)
+        assert built == ["a"], f"after the drag the skeleton the update touched is built ({built})"
+        pts, cols = np.array(got[0]), np.array(got[1])
+        want = fresh()
+        assert pts.shape == want[0].shape and np.allclose(pts, want[0], atol=1e-6), "after the drag: points"
+        assert np.array_equal(cols, want[1]), "after the drag: colours"
     finally:
         mj._parts, mj.transforming = real_parts, real_moving
         bpy.ops.object.mode_set(mode='OBJECT')
