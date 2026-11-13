@@ -9,11 +9,20 @@ selected faces a 1-in-4 pixel stipple #e3ac79, no fill.
 Blender draws edit meshes with the user's theme (orange / black). The kit ships no theme,
 so this POST_VIEW handler draws the Maya colours on top of Blender's own edit-mesh drawing (which stays under it).
 
-Reading the edit mesh (a mesh of 101 124 vertices): the evaluated object's ``to_mesh()`` is the current
-BMesh with ``.select_vert/edge/poly`` in ~4 ms; BMesh Python loops cost ~0.4 s. With a modifier shown in edit mode
-the evaluated mesh is not the cage, so the cage is read from the BMesh, only up to ``BMESH_LIMIT`` vertices
-(bigger meshes keep Blender's drawing). Arrays and GPU batches are cached per object and re-read when a
-depsgraph update names the object or its mesh.
+Reading the edit mesh: with no modifier shown in edit mode the evaluated object's ``to_mesh()`` is the cage. Its
+points, edges, face corners and hidden flags are copied as attribute arrays (a few ms for 100k vertices; a BMesh
+Python loop over every element costs ~0.1 s per 20k vertices). Its selection is not used: a selection change
+re-evaluates nothing, and the evaluated mesh keeps the selection it had when it was first copied after its last
+geometry update. The selection is read from the BMesh instead, and only the flags the select mode draws (vertices,
+edges or faces). With a modifier shown in edit mode the evaluated mesh is not the cage, so the cage is read from the
+BMesh, only up to ``BMESH_LIMIT`` vertices (bigger meshes keep Blender's drawing).
+
+Arrays and GPU batches are cached per object. A depsgraph update that names the object or its mesh with a geometry
+change reads the mesh again; any other update (a click, a box select: selection only) reads only the selection flags
+and keeps the points, edges, faces and the batch of every edge. After a click the selection history holds the
+picked elements; when they are as many as the selected total, they are the selection and no element is walked. A timer checks the BMesh's element and selection
+counts (constant time) for selection changes that came with no depsgraph update; in the UV component it compares the
+UV selection itself (UV Editor clicks tag nothing in the 3D View).
 
 Selected faces: Blender's own selected-face tint (theme ``face_select``, drawn when the view's overlay
 ``show_faces`` is on) sat under the kit stipple and turned the 1-in-4 stipple into a near-opaque orange (pixels between the stipple
@@ -40,6 +49,8 @@ Vertices are drawn with Blender's point shader: the plain uniform-colour shader 
 Metal (every vertex became a single dark pixel there and the theme's Vertex Size did nothing).
 """
 
+from operator import attrgetter
+
 import bpy
 import numpy as np
 
@@ -64,10 +75,15 @@ _faces_off = set()          # (space pointer, overlay prop) the kit switched off
 _pending = {}               # (space pointer, overlay prop) -> value the timer writes
 _shader = {}
 _cache = {}                 # (object pointer, mesh pointer) -> _State
-_dirty = set()              # object / mesh names a depsgraph update touched since the last read
+_dirty = set()              # object / mesh names a geometry update touched since the last read
+_dirty_sel = set()          # object / mesh names any other update touched (only the selection can have changed)
 _times = []
 _selection_snapshot = {}       # edit-mesh selection signatures for changes with no depsgraph notification
 _POLL_INTERVAL = 0.15
+_SELECT = attrgetter("select")
+# foreach_get copies an int attribute in one block only into a C int array; numpy's int32 is a C long on Windows
+# and is filled element by element (~25 ms instead of ~0.1 ms for 200k edges).
+_INT = np.intc
 
 
 # --- pure helpers (tests/test_step134_selection.py) -----------------------------------------------
@@ -132,15 +148,15 @@ def fan_triangles(loop_start, loop_total, corner_vert, mask):
     return np.stack([cv[first], cv[first + offs], cv[first + offs + 1]], axis=1).astype(np.int32)
 
 
-def layers(m, select_mode, uv=False):
+def layers(m, select_mode, uv=False, wire=True):
     """What to draw for the Maya component look: dict of index arrays into ``m.co``.
 
-    edges: every visible edge (hilite); verts / verts_sel (vertex mode); edges_sel (edge mode); tris (face mode,
-    selected visible faces). Hidden elements are never drawn. ``uv``: UV mode — points only, ``m.vsel`` holds the
-    vertices with a selected UV."""
+    edges: every visible edge (hilite; left out with ``wire`` False: it doesn't depend on the selection);
+    verts / verts_sel (vertex mode); edges_sel (edge mode); tris (face mode, selected visible faces). Hidden elements
+    are never drawn. ``uv``: UV mode — points only, ``m.vsel`` holds the vertices with a selected UV."""
     vert_mode, edge_mode, face_mode = (True, False, False) if uv else (bool(x) for x in select_mode)
     vis_e = ~m.ehide
-    out = {"edges": m.edges[vis_e]}
+    out = {"edges": m.edges[vis_e]} if wire else {}
     if vert_mode:
         vis = ~m.vhide
         out["verts"] = np.flatnonzero(vis & ~m.vsel).astype(np.int32)
@@ -184,24 +200,42 @@ def _attr(me, name, count):
     return out
 
 
+def _positions(me, n):
+    co = np.empty(n * 3, np.float32)
+    a = me.attributes.get("position")
+    if a is not None and a.domain == 'POINT' and a.data_type == 'FLOAT_VECTOR':
+        a.data.foreach_get("vector", co)
+    else:
+        me.vertices.foreach_get("co", co)
+    return co
+
+
+def _ints(me, name, count, fallback):
+    """Int attribute ``name`` as a C int array (one block copy), else ``fallback(out)`` fills it."""
+    out = np.empty(count, _INT)
+    a = me.attributes.get(name)
+    if count and a is not None and a.data_type in {'INT', 'INT32_2D'}:
+        a.data.foreach_get("value", out)
+    elif count:
+        fallback(out)
+    return out
+
+
 def read_evaluated(ob, depsgraph, faces=True):
     """MeshArrays of the evaluated edit mesh (no edit-mode modifiers: this is the cage); polygons only with
-    ``faces`` (face select mode)."""
+    ``faces`` (face select mode). Its selection flags are as they were at the last geometry update: use the BMesh's."""
     ev = ob.evaluated_get(depsgraph)
     me = ev.to_mesh()
     try:
         n, e = len(me.vertices), len(me.edges)
         f, l = (len(me.polygons), len(me.loops)) if faces else (0, 0)
-        co = np.empty(n * 3, np.float32)
-        me.vertices.foreach_get("co", co)
-        ed = np.empty(e * 2, np.int32)
-        me.edges.foreach_get("vertices", ed)
-        ls = np.empty(f, np.int32)
-        me.polygons.foreach_get("loop_start", ls)
-        lt = np.empty(f, np.int32)
-        me.polygons.foreach_get("loop_total", lt)
-        cv = np.empty(l, np.int32)
-        me.loops.foreach_get("vertex_index", cv)
+        co = _positions(me, n)
+        ed = _ints(me, ".edge_verts", e * 2, lambda out: me.edges.foreach_get("vertices", out))
+        ls = np.empty(f, _INT)
+        if f:
+            me.polygons.foreach_get("loop_start", ls)
+        lt = np.diff(np.append(ls, l)).astype(np.int32)           # face corners are stored face by face
+        cv = _ints(me, ".corner_vert", l, lambda out: me.loops.foreach_get("vertex_index", out))
         return MeshArrays(co, ed, _attr(me, ".select_vert", n), _attr(me, ".hide_vert", n),
                           _attr(me, ".select_edge", e), _attr(me, ".hide_edge", e),
                           _attr(me, ".select_poly", f), _attr(me, ".hide_poly", f), ls, lt, cv)
@@ -219,25 +253,65 @@ def read_bmesh(bm):
     lt = np.fromiter((len(f.verts) for f in bm.faces), np.int32, len(bm.faces))
     ls = (np.cumsum(lt) - lt).astype(np.int32)
     cv = np.fromiter(chain.from_iterable((v.index for v in f.verts) for f in bm.faces), np.int32, int(lt.sum()))
-    return MeshArrays(co, ed,
-                      np.fromiter((v.select for v in bm.verts), bool, n), np.fromiter((v.hide for v in bm.verts), bool, n),
-                      np.fromiter((x.select for x in bm.edges), bool, e), np.fromiter((x.hide for x in bm.edges), bool, e),
-                      np.fromiter((f.select for f in bm.faces), bool, len(bm.faces)),
-                      np.fromiter((f.hide for f in bm.faces), bool, len(bm.faces)), ls, lt, cv)
+    hide = attrgetter("hide")
+    return MeshArrays(co, ed, _flags(bm.verts), np.fromiter(map(hide, bm.verts), bool, n),
+                      _flags(bm.edges), np.fromiter(map(hide, bm.edges), bool, e),
+                      _flags(bm.faces), np.fromiter(map(hide, bm.faces), bool, len(bm.faces)), ls, lt, cv)
+
+
+def _flags(seq):
+    """Select flags of a BMesh element sequence (one Python pass, the cheapest the BMesh API allows)."""
+    return np.fromiter(map(_SELECT, seq), bool, len(seq))
+
+
+def _kind_flags(me, bm, kind):
+    """Select flags of the vertices ('v'), edges ('e') or faces ('f') of an edit mesh.
+
+    A click leaves the picked element in the selection history. When the history's selected elements of this type
+    are as many as the mesh's selected total (kept by the BMesh), they are exactly the selection: no pass over every
+    element. Otherwise (a box select, select more: nothing in the history) one pass."""
+    import bmesh
+    seq, total, cls = {"v": (bm.verts, me.total_vert_sel, bmesh.types.BMVert),
+                       "e": (bm.edges, me.total_edge_sel, bmesh.types.BMEdge),
+                       "f": (bm.faces, me.total_face_sel, bmesh.types.BMFace)}[kind]
+    history = bm.select_history
+    if total <= len(history):
+        seq.index_update()
+        picked = {ele.index for ele in history if isinstance(ele, cls) and ele.select}
+        if len(picked) == total:
+            out = np.zeros(len(seq), bool)
+            out[list(picked)] = True
+            return out
+    return _flags(seq)
+
+
+def selection_kinds(select_mode, uv=False):
+    """The selection flags the Maya look draws: 'v' vertices, 'e' edges, 'f' faces; 'uv' the UV selection."""
+    if uv:
+        return {"uv"}
+    return {k for k, on in zip("vef", select_mode) if on}
+
+
+def counts_signature(me, bm):
+    """Element and selection counts of an edit mesh, read in constant time (the BMesh keeps the selected totals)."""
+    return (len(bm.verts), len(bm.edges), len(bm.faces), me.total_vert_sel, me.total_edge_sel, me.total_face_sel)
 
 
 class _State:
-    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv", "op")
+    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv", "op", "sel", "wire", "counts")
 
     def __init__(self, ob):
         self.arrays = None
         self.uv = False
         self.faces = False          # arrays hold the polygons (read only in face select mode)
-        self.batches = None
+        self.batches = None         # batches that depend on the selection, for bkey
         self.bkey = None
+        self.wire = None            # the batch of every visible edge (geometry only)
         self.name = ob.name
         self.me_name = ob.data.name
         self.op = 0                 # the transform running when the arrays were read in full (0: none)
+        self.sel = set()            # selection_kinds whose flags in arrays are current
+        self.counts = None          # (vertices, edges, faces) of the BMesh the arrays were read from
 
 
 def _transform_ptr():
@@ -273,9 +347,7 @@ def _coordinates(ob, depsgraph, bm, n):
         try:
             if len(me.vertices) != n:
                 return None
-            co = np.empty(n * 3, np.float32)
-            me.vertices.foreach_get("co", co)
-            return co.reshape(-1, 3)
+            return _positions(me, n).reshape(-1, 3)
         finally:
             ev.to_mesh_clear()
     if len(bm.verts) != n:
@@ -324,35 +396,39 @@ def _linear(hex_str):
 
 
 def _batches(st, select_mode):
-    key = (st.uv,) + tuple(bool(x) for x in select_mode)
-    if st.batches is not None and st.bkey == key:
-        return st.batches
+    """Draw list in order: selected face stipple, every edge (hilite), selected edges, vertices, selected vertices.
+    The every-edge batch is kept while only the selection changes."""
     from gpu_extras.batch import batch_for_shader
     m = st.arrays
-    lay = layers(m, select_mode, st.uv)
-    dots = _builtin('POINT_UNIFORM_COLOR')   # Vulkan / Metal size points only with a point shader
     poly = _builtin('POLYLINE_UNIFORM_COLOR')
-    out = []
 
-    def lines(idx, color, width, kind='LINES'):
+    def lines(out, idx, color, width, kind='LINES'):
         if len(idx):
             out.append((kind, poly, batch_for_shader(poly, 'LINES', {"pos": m.co[idx.reshape(-1)]}), color, width))
+    if st.wire is None:
+        st.wire = []
+        lines(st.wire, m.edges[~m.ehide], srgb(HILITE) + (1.0,), LINE_PX)
+    key = (st.uv,) + tuple(bool(x) for x in select_mode)
+    if st.batches is None or st.bkey != key:
+        lay = layers(m, select_mode, st.uv, wire=False)
+        dots = _builtin('POINT_UNIFORM_COLOR')   # Vulkan / Metal size points only with a point shader
+        front, back = [], []
 
-    def points(idx, color, size):
-        if len(idx):
-            out.append(('POINTS', dots, batch_for_shader(dots, 'POINTS', {"pos": m.co[idx]}), color, size))
-    if "tris" in lay and len(lay["tris"]):
-        sh = _stipple()
-        out.append(('TRIS', sh, batch_for_shader(sh, 'TRIS', {"pos": m.co}, indices=lay["tris"]),
-                    _linear(FACE_SEL), 0.0))
-    lines(lay["edges"], srgb(HILITE) + (1.0,), LINE_PX)
-    if "edges_sel" in lay:
-        lines(lay["edges_sel"], srgb(EDGE_SEL) + (1.0,), EDGE_SEL_PX, 'LINES_SEL')
-    if "verts" in lay:
-        points(lay["verts"], srgb(VERT) + (1.0,), 0)          # size index into theme_point_sizes
-        points(lay["verts_sel"], srgb(VERT_SEL) + (1.0,), 1)
-    st.batches, st.bkey = out, key
-    return out
+        def points(idx, color, size):
+            if len(idx):
+                back.append(('POINTS', dots, batch_for_shader(dots, 'POINTS', {"pos": m.co[idx]}), color, size))
+        if "tris" in lay and len(lay["tris"]):
+            sh = _stipple()
+            front.append(('TRIS', sh, batch_for_shader(sh, 'TRIS', {"pos": m.co}, indices=lay["tris"]),
+                          _linear(FACE_SEL), 0.0))
+        if "edges_sel" in lay:
+            lines(back, lay["edges_sel"], srgb(EDGE_SEL) + (1.0,), EDGE_SEL_PX, 'LINES_SEL')
+        if "verts" in lay:
+            points(lay["verts"], srgb(VERT) + (1.0,), 0)          # size index into theme_point_sizes
+            points(lay["verts_sel"], srgb(VERT_SEL) + (1.0,), 1)
+        st.batches, st.bkey = (front, back), key
+    front, back = st.batches
+    return front + st.wire + back
 
 
 def _biased_projection(rv3d, bias):
@@ -392,62 +468,105 @@ def uv_selected_verts(bm):
     return out
 
 
-def state(ob, depsgraph, faces=True, uv=False):
+def _read(st, ob, depsgraph, bm, faces, uv):
+    """Read the cage of ``ob`` in full into ``st`` (selection flags: see _select); False when the kit leaves this
+    mesh to Blender's drawing."""
+    n = len(bm.verts)
+    evaluated = use_evaluated(ob.modifiers)
+    if not readable(n, evaluated) or (uv and n > BMESH_LIMIT):
+        return False
+    arrays, current = None, set()
+    if evaluated:
+        arrays = read_evaluated(ob, depsgraph, faces)
+        if (len(arrays.co) != n or len(arrays.edges) != len(bm.edges)
+                or (faces and len(arrays.loop_start) != len(bm.faces))):
+            arrays = None           # not this BMesh's evaluation (the depsgraph wasn't evaluated since a change)
+    if arrays is None:
+        if n > BMESH_LIMIT:
+            return False
+        arrays, faces, current = read_bmesh(bm), True, {"v", "e", "f"}
+    st.arrays, st.faces, st.uv, st.sel = arrays, faces, uv, current
+    st.batches = st.bkey = st.wire = None
+    st.counts = (n, len(bm.edges), len(bm.faces))
+    return True
+
+
+def _select(st, me, bm, need):
+    """Make the selection flags in ``need`` (selection_kinds) current: read from the BMesh, the evaluated mesh's
+    selection stays as it was at its last geometry update."""
+    missing = need - st.sel
+    if not missing:
+        return
+    m = st.arrays
+    if "uv" in missing:
+        m.vsel = uv_selected_verts(bm)
+        m.esel = np.zeros(len(m.esel), bool)
+        m.fsel = np.zeros(len(m.fsel), bool)
+        st.sel = {"uv"}
+    else:
+        if "v" in missing:
+            m.vsel = _kind_flags(me, bm, "v")
+        if "e" in missing:
+            m.esel = _kind_flags(me, bm, "e")
+        if "f" in missing and st.faces:
+            m.fsel = _kind_flags(me, bm, "f")
+        st.sel |= missing
+    st.batches, st.bkey = None, None
+
+
+def state(ob, depsgraph, faces=True, uv=False, select_mode=None):
     """Up-to-date cached arrays of ``ob`` (None when the kit leaves this mesh to Blender's drawing); ``faces``:
-    the polygons are needed too (face select mode); ``uv``: UV mode (points show the UV selection)."""
+    the polygons are needed too (face select mode); ``uv``: UV mode (points show the UV selection);
+    ``select_mode``: only the selection flags this select mode draws are made current (None: every flag).
+
+    A geometry update reads the mesh again; any other update (selection only) reads only the selection flags and
+    keeps the points, edges, faces and the batch of every edge."""
     import bmesh
     key = (ob.as_pointer(), ob.data.as_pointer())
     st = _cache.get(key)
     if st is None or st.name != ob.name or st.me_name != ob.data.name:
         st = _cache[key] = _State(ob)
-        st.arrays = None
-    if (st.arrays is not None and ob.name not in _dirty and ob.data.name not in _dirty and (st.faces or not faces)
-            and st.uv == uv):
+    names = (ob.name, ob.data.name)
+    need = selection_kinds((True, True, True) if select_mode is None else select_mode, uv)
+    full = (st.arrays is None or names[0] in _dirty or names[1] in _dirty or (faces and not st.faces)
+            or st.uv != uv)
+    touched = names[0] in _dirty_sel or names[1] in _dirty_sel
+    if not full and not touched and need <= st.sel:
         return st
     bm = bmesh.from_edit_mesh(ob.data)
     # During a transform only the points move: the arrays read in full once in this transform keep their edges,
     # faces, selection and hidden flags, and get the new positions.
     op = _transform_ptr()
-    if op and st.op == op and st.arrays is not None and (st.faces or not faces) and st.uv == uv:
-        co = _coordinates(ob, depsgraph, bm, len(st.arrays.co))
+    same_transform = op and st.op == op and st.arrays is not None and (st.faces or not faces) and st.uv == uv
+    if full:
+        co = _coordinates(ob, depsgraph, bm, len(st.arrays.co)) if same_transform else None
         if co is not None:
             st.arrays.co = co
-            st.batches, st.bkey = None, None
-            return st
-    # Draw may run before the selection poll. Detect changed membership here.
-    # This avoids presenting the previously cached GPU batch for one more frame.
-    if len(bm.verts) <= BMESH_LIMIT:
-        sig = _selection_signature(bm, uv)
-        if _selection_snapshot.get(key) != sig:
-            _selection_snapshot[key] = sig
-            _dirty.update((ob.name, ob.data.name))
-    evaluated = use_evaluated(ob.modifiers)
-    if not readable(len(bm.verts), evaluated) or (uv and len(bm.verts) > BMESH_LIMIT):
-        st.arrays = None
-        return None
-    # Blender 4.5: evaluated mesh selection attributes may lag behind the live
-    # edit BMesh (notably when growing/shrinking selections without a geometry
-    # dependency-graph update). Always obtain highlight flags from the BMesh.
-    # For small meshes also read cage coordinates from the BMesh, avoiding stale
-    # evaluated snapshots and preserving consistent element ordering.
-    if len(bm.verts) <= BMESH_LIMIT:
-        arrays, faces = read_bmesh(bm), True
-    else:
-        arrays = read_evaluated(ob, depsgraph, faces) if evaluated else None
-        if arrays is None or len(arrays.co) != len(bm.verts) or len(arrays.edges) != len(bm.edges):
-            return None
-        # Keep evaluated coordinates on large meshes but use authoritative live
-        # BMesh selection flags (the element order matches when lengths match).
-        arrays.vsel = np.fromiter((v.select for v in bm.verts), bool, len(bm.verts))
-        arrays.esel = np.fromiter((e.select for e in bm.edges), bool, len(bm.edges))
-        if faces and len(arrays.fsel) == len(bm.faces):
-            arrays.fsel = np.fromiter((f.select for f in bm.faces), bool, len(bm.faces))
+            st.batches = st.bkey = st.wire = None
+        else:
+            if not _read(st, ob, depsgraph, bm, faces, uv):
+                st.arrays = None
+                return None
+            st.op = op
+    elif touched and not same_transform:
+        if st.counts != (len(bm.verts), len(bm.edges), len(bm.faces)):
+            # elements came or went with no geometry update: read in full
+            if not _read(st, ob, depsgraph, bm, faces, uv):
+                st.arrays = None
+                return None
+            st.op = op
+        else:
+            st.sel = set()
+    _select(st, ob.data, bm, need)
+    # The selection poll compares with what was drawn last
     if uv:
-        arrays.vsel = uv_selected_verts(bm)
-        arrays.esel[:] = False
-        arrays.fsel[:] = False
-    st.arrays, st.faces, st.batches, st.bkey, st.uv = arrays, faces, None, None, uv
-    st.op = op
+        if len(bm.verts) <= BMESH_LIMIT:
+            bm.verts.index_update()
+            bm.edges.index_update()
+            bm.faces.index_update()
+            _selection_snapshot[key] = _selection_signature(bm, True)
+    else:
+        _selection_snapshot[key] = counts_signature(ob.data, bm)
     return st
 
 
@@ -494,6 +613,8 @@ def _draw():
     if not _enabled():
         if _faces_off:
             _face_overlay(context, space, False)
+        if _cache or _selection_snapshot:
+            _forget()               # nothing is kept up to date while off: read afresh when switched back on
         return
     from . import toolbox
     if toolbox.is_toolbox(space):
@@ -509,10 +630,12 @@ def _draw():
     uv = uv_mode(context)
     states = []
     for ob in obs:
-        st = state(ob, depsgraph, select_mode[2] and not uv, uv)
+        st = state(ob, depsgraph, select_mode[2] and not uv, uv, select_mode)
         if st is not None:
             states.append((ob, st))
-    _dirty.difference_update({ob.name for ob in obs} | {ob.data.name for ob in obs})
+    names = {ob.name for ob in obs} | {ob.data.name for ob in obs}
+    _dirty.difference_update(names)
+    _dirty_sel.difference_update(names)
     live = {(ob.as_pointer(), ob.data.as_pointer()) for ob in obs}
     for k in [k for k in _cache if k not in live]:
         del _cache[k]
@@ -578,12 +701,9 @@ def uv_mode(context):
 
 
 def _selection_signature(bm, uv=False):
-    """Track selection *membership*, not only counts (replace/add/subtract all matter).
-
-    Blender does not always tag edit-mesh selection as a depsgraph update, especially
-    when expanding an existing component selection. The overlay must not cache it forever.
-    In UV mode the UV selection counts too (UV Editor clicks tag nothing in the 3D View).
-    """
+    """Selection *membership*, not only counts (replace / add / subtract all matter); one Python pass over every
+    element. In UV mode the UV selection counts too (UV Editor clicks tag nothing in the 3D View), so the UV mode
+    poll compares this; the mesh selection is followed through depsgraph updates and counts_signature."""
     sig = (len(bm.verts), len(bm.edges), len(bm.faces),
            tuple(v.index for v in bm.verts if v.select),
            tuple(e.index for e in bm.edges if e.select),
@@ -594,9 +714,15 @@ def _selection_signature(bm, uv=False):
 
 
 def _poll_selection():
-    """Invalidate and redraw the Maya overlay when component selection changes."""
+    """Redraw the Maya overlay when a component selection changed with no depsgraph update.
+
+    Blender's selection operators send one (a selection-only update, see _on_depsgraph), so outside the UV
+    component this compares only element and selection counts (constant time); in the UV component it compares the
+    UV selection itself, up to BMESH_LIMIT vertices."""
     if not _handle:
         return None
+    if not _enabled():
+        return _POLL_INTERVAL          # nothing drawn
     if _transform_ptr() or _navigating():
         return _POLL_INTERVAL          # a transform or a view drag changes no selection
     try:
@@ -618,16 +744,19 @@ def _poll_selection():
                             continue
                         seen.add(key)
                         bm = bmesh.from_edit_mesh(ob.data)
-                        # Avoid scanning unusually large edit meshes on a UI timer.
-                        if len(bm.verts) > BMESH_LIMIT:
-                            continue
-                        bm.verts.index_update()
-                        bm.edges.index_update()
-                        bm.faces.index_update()
-                        sig = _selection_signature(bm, uv_mode(ctx))
+                        if uv_mode(ctx):
+                            # Avoid scanning unusually large edit meshes on a UI timer.
+                            if len(bm.verts) > BMESH_LIMIT:
+                                continue
+                            bm.verts.index_update()
+                            bm.edges.index_update()
+                            bm.faces.index_update()
+                            sig = _selection_signature(bm, True)
+                        else:
+                            sig = counts_signature(ob.data, bm)
                         if _selection_snapshot.get(key) != sig:
                             _selection_snapshot[key] = sig
-                            _dirty.update((ob.name, ob.data.name))
+                            _dirty_sel.update((ob.name, ob.data.name))
                             changed = True
         for key in tuple(_selection_snapshot):
             if key not in seen:
@@ -644,18 +773,27 @@ def _poll_selection():
 
 @bpy.app.handlers.persistent
 def _on_depsgraph(_scene=None, depsgraph=None):
+    """Mark what an update touched: a geometry update (points, elements, hidden flags, select mode; edit-mesh
+    operators and ``bmesh.update_edit_mesh`` send one) -> read again; any other (a click, a box select, select
+    more / less: a selection-only update; an object move) -> only the selection flags."""
     if depsgraph is None or not _cache:
         return
     for u in depsgraph.updates:
         if isinstance(u.id, (bpy.types.Mesh, bpy.types.Object)):
-            _dirty.add(u.id.original.name if u.id.original is not None else u.id.name)
+            name = u.id.original.name if u.id.original is not None else u.id.name
+            (_dirty if u.is_updated_geometry else _dirty_sel).add(name)
+
+
+def _forget():
+    _cache.clear()
+    _dirty.clear()
+    _dirty_sel.clear()
+    _selection_snapshot.clear()
 
 
 @bpy.app.handlers.persistent
 def _on_reload(*_args):
-    _cache.clear()
-    _dirty.clear()
-    _selection_snapshot.clear()
+    _forget()
 
 
 @bpy.app.handlers.persistent
@@ -692,8 +830,6 @@ def unregister():
         _pending[key] = True
     _faces_off.clear()
     _apply_pending()
-    _cache.clear()
-    _dirty.clear()
-    _selection_snapshot.clear()
+    _forget()
     _shader.clear()
     _times.clear()

@@ -312,7 +312,7 @@ def test_component_colours_keep_the_mesh_while_a_transform_moves_points():
     cc._dirty.clear()
     try:
         cc._transform_ptr = lambda: 4242                   # a transform runs
-        with _Count(cc, "read_bmesh") as rb:
+        with _Count(cc, "_read") as rb:
             st = cc.state(ob, dg, faces=True)
             assert rb.calls == 1
             before = st.arrays
@@ -336,13 +336,13 @@ def test_component_colours_keep_the_mesh_while_a_transform_moves_points():
         # the transform ended: the next change reads the mesh in full again
         cc._transform_ptr = lambda: 0
         cc._dirty.update((ob.name, ob.data.name))
-        with _Count(cc, "read_bmesh") as rb:
+        with _Count(cc, "_read") as rb:
             cc.state(ob, dg, faces=True)
         assert rb.calls == 1
         # a new transform (after an edit that may have changed the mesh) starts with one full read
         cc._transform_ptr = lambda: 5151
         cc._dirty.update((ob.name, ob.data.name))
-        with _Count(cc, "read_bmesh") as rb:
+        with _Count(cc, "_read") as rb:
             cc.state(ob, dg, faces=True)
             cc._dirty.update((ob.name, ob.data.name))
             cc.state(ob, dg, faces=True)
