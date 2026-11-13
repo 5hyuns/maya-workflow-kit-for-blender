@@ -214,75 +214,45 @@ class Handles:
     1 right), ``key_px``, ``end_px`` (where the handle is drawn), ``selected`` (handle flag set while its key isn't
     selected: Blender sets a key's handle flags with the key), ``weighted``."""
 
-    def __init__(self, context, space, region):
+    def __init__(self, context, space, region, keys=None):
         from . import graph_keys_draw as gk
-        from .graph_layers import normalization, value_factor
         from ..operators import graph_weights
         self.fcurves, self.factors = [], []
-        rows = {k: [] for k in ("curves", "keys", "sides", "key_px", "end_px", "selected", "weighted")}
-        empty = not shows_handles(space)
-        curves = [] if empty else list(getattr(context, "visible_fcurves", None) or ())
-        scene = context.scene
-        only_selected = bool(getattr(context.preferences.edit, "show_only_selected_curve_keyframes", False))
+        if not shows_handles(space):
+            self._empty()
+            return
+        if keys is None or not keys.handles:
+            keys = gk.Keys(context, space, handles=True)
         near_selected = bool(getattr(space, "use_only_selected_keyframe_handles", False))
-        normalize = bool(getattr(space, "use_normalization", False))
-        tweak = gk._owners(scene)
-        length = fixed_px(context)
-        for fc in curves:
-            if not gk.draws_keys(fc, only_selected):
-                continue
-            kps = fc.keyframe_points
-            n = len(kps)
-            flags = {}
-            for name in ("select_control_point", "select_left_handle", "select_right_handle"):
-                a = np.empty(n, dtype=bool)
-                kps.foreach_get(name, a)
-                flags[name] = a
-            ipo = np.array([kp.interpolation for kp in kps])
-            left_on, right_on = gk._handle_sides(ipo)
-            key_sel = flags["select_control_point"]
-            if near_selected:
-                any_sel = key_sel | flags["select_left_handle"] | flags["select_right_handle"]
-                left_on, right_on = left_on & any_sel, right_on & any_sel
-            if not (left_on.any() or right_on.any()):
-                continue
-            off, k = normalization(fc) if normalize else (0.0, value_factor(scene, fc))
-            ad = tweak.get(fc.id_data.as_pointer()) if fc.id_data is not None else None
+        left_on, right_on = keys.handle_sides(near_selected)
+        rows, sides = keys.handle_rows(left_on, right_on)
+        if not len(rows):
+            self._empty()
+            return
+        # the curves with a shown handle, in Blender's order: ``curves`` indexes into them
+        curve_of = keys.curve_of_key()
+        shown = np.unique(curve_of[rows])
+        index = np.full(len(keys.fcurves), -1, dtype=int)
+        index[shown] = np.arange(len(shown))
+        self.fcurves = [keys.fcurves[i] for i in shown]
+        self.factors = [keys.factors[i] for i in shown]
+        weighted = np.array([graph_weights.is_weighted(fc) for fc in self.fcurves], dtype=bool)
+        self.curves = index[curve_of[rows]]
+        self.keys = (rows - keys.start[curve_of[rows]]).astype(int)
+        self.sides = sides
+        self.weighted = weighted[self.curves]
+        self.key_px = gk.to_region(region, keys.co[rows])
+        self.end_px = gk.to_region(region, keys.handle_ends(rows, sides))
+        loose = ~self.weighted
+        if loose.any():
+            self.end_px[loose] = fixed_ends(self.key_px[loose], self.end_px[loose], sides[loose], fixed_px(context))
+        picked = np.where(sides == 0, keys.select_left[rows], keys.select_right[rows])
+        self.selected = (picked & ~keys.select[rows]).astype(bool)
 
-            def view(prop):
-                co = np.empty(n * 2, dtype=np.float64)
-                kps.foreach_get(prop, co)
-                co = co.reshape(n, 2)
-                co[:, 1] = (co[:, 1] + off) * k
-                if ad is not None:
-                    co[:, 0] = [ad.nla_tweak_strip_time_to_scene(x) for x in co[:, 0]]
-                return co
-            key_px = gk.to_region(region, view("co"))
-            weighted = graph_weights.is_weighted(fc)
-            ci = len(self.fcurves)
-            self.fcurves.append(fc)
-            self.factors.append((off, k))
-            for side, prop, shown, picked in ((0, "handle_left", left_on, flags["select_left_handle"]),
-                                              (1, "handle_right", right_on, flags["select_right_handle"])):
-                idx = np.nonzero(shown)[0]
-                if not len(idx):
-                    continue
-                ends = gk.to_region(region, view(prop))[idx]
-                kp_px = key_px[idx]
-                if not weighted:
-                    ends = fixed_ends(kp_px, ends, np.full(len(idx), side), length)
-                rows["curves"].append(np.full(len(idx), ci))
-                rows["keys"].append(idx)
-                rows["sides"].append(np.full(len(idx), side))
-                rows["key_px"].append(kp_px)
-                rows["end_px"].append(ends)
-                rows["selected"].append(picked[idx] & ~key_sel[idx])
-                rows["weighted"].append(np.full(len(idx), weighted))
-        for name, parts in rows.items():
-            if parts:
-                setattr(self, name, np.concatenate(parts))
-            else:
-                setattr(self, name, np.zeros((0, 2)) if name in ("key_px", "end_px") else np.zeros(0, dtype=int))
+    def _empty(self):
+        for name in ("curves", "keys", "sides", "selected", "weighted"):
+            setattr(self, name, np.zeros(0, dtype=int))
+        self.key_px, self.end_px = np.zeros((0, 2)), np.zeros((0, 2))
         self.selected = self.selected.astype(bool)
         self.weighted = self.weighted.astype(bool)
 
