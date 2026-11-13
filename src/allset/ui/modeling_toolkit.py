@@ -176,9 +176,8 @@ def _grid(layout, items, context):
 
 
 def _section(layout, idname, label, default_closed=False):
-    header, body = layout.panel(idname, default_closed=default_closed)
-    header.label(text=label)
-    return body
+    from .maya_dock import section
+    return section(layout, idname, label, default_closed)
 
 
 def draw(layout, context):

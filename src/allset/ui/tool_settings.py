@@ -761,8 +761,8 @@ def draw_dock(layout, context):
     if kind is None:
         return    # Blender's own tool panels follow (dock_tabs hides them only for tools with Maya sections)
     for key, title, is_open in sections(kind):
-        header, body = layout.panel(f"allset_ts_{kind.lower()}_{key}", default_closed=not is_open)
-        header.label(text=title)
+        from .maya_dock import section
+        body = section(layout, f"allset_ts_{kind.lower()}_{key}", title, default_closed=not is_open)
         if body is not None:
             draw_section(body.column(), context, key, kind)
 
