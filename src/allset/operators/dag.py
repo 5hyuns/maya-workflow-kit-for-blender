@@ -16,7 +16,9 @@ Blender: a parent's ``hide_viewport`` / ``hide_set`` never hides its children an
   Template / Reference reaches every object below a member the same way (Maya: isTemplated / the drawing override
   are inherited): such objects are marked ``layer_editor.INHERITED`` and drawn / locked like a member, the one
   nearest the root winning.
-  Run from a depsgraph handler (only writes on change, so it settles) and right after kit visibility edits.
+  Run right after kit visibility edits, and from a depsgraph handler (only writes on change, so it settles). The
+  handler walks the scene again only when an update can change what it reads (``_what_changed``): a click that
+  selects or changes modes leaves it at a look at the update's few entries.
 - ``hierarchy``: the selection with all descendants, for Delete (``allset.delete``), Export Selection
   (``selected_hierarchy``) and Isolate Select (``allset.isolate``).
 """
@@ -72,7 +74,8 @@ class _Walk:
     isn't only motion, and walked every object's ancestors, listing the layers at each step)."""
 
     def __init__(self, scene):
-        from ..ui import layer_editor
+        from ..ui import layer_editor, layer_joints
+        self.hidden_under = layer_joints.hidden_under      # looked up once, not once per object
         self.first = {}                        # object name -> its display layer (the first that lists it)
         for coll in layer_editor.layers(scene):
             for o in coll.objects:
@@ -84,7 +87,7 @@ class _Walk:
         return coll is not None and not coll.allset_layer.visible
 
     def by_ancestor(self, ob):
-        from ..ui import layer_joints
+        hidden_under = self.hidden_under
         chain, got, o = [], False, ob
         while o.parent is not None:            # up to the root or to an object already answered
             known = self.memo.get(o.as_pointer())
@@ -95,7 +98,7 @@ class _Walk:
             o = o.parent
         for o in reversed(chain):              # then down: hidden above, or hidden by its parent / parent joint
             p = o.parent
-            got = bool(got or p.hide_viewport or self.layer_hidden(p) or layer_joints.hidden_under(o))
+            got = bool(got or p.hide_viewport or self.layer_hidden(p) or hidden_under(o))
             self.memo[o.as_pointer()] = got
         return got
 
@@ -119,15 +122,16 @@ def inherited_display(ob, scene, members=None):
     return kind
 
 
-def sync_display(scene):
+def sync_display(scene, marked=None):
     """Template / Reference inherited from a layer above (``INHERITED``), only written on change. Returns the number
-    of changes."""
+    of changes. ``marked``: the objects of ``scene`` that carry ``INHERITED`` (None: look at every object); while no
+    layer is Template / Reference only they can change."""
     from ..ui import layer_editor, layer_joints
     ls = layer_editor.layers(scene)
     active = any(c.allset_layer.display_type != "NORMAL" for c in ls)
     members = {o.name: c for c in ls for o in c.objects} if active else {}
     changed, skeletons = 0, False
-    for ob in scene.objects:
+    for ob in (scene.objects if active or marked is None else marked):
         mark = ob.get(layer_editor.INHERITED)
         if not active and mark is None:
             continue
@@ -156,12 +160,27 @@ def sync(scene=None, view_layer=None):
     view_layer = view_layer or bpy.context.view_layer
     if view_layer is None:
         return 0
+    key = (scene.as_pointer(), view_layer.as_pointer())
+    _SEEN.pop(key, None)              # a sync that stops half way leaves nothing to skip by
+    rev = _joint_rev()                # the joint layer states this walk reads
+    from ..ui import layer_editor
+    inherited_key = layer_editor.INHERITED
     changed = 0
     walk = _Walk(scene)
+    parents, marked, inherited = {}, [], []
     for ob in scene.objects:
-        by_parent = walk.by_ancestor(ob)
-        if not by_parent and MARK not in ob:
-            continue
+        if inherited_key in ob:
+            inherited.append(ob)
+        p = ob.parent
+        if p is None:                 # a root: nothing above it can hide it
+            if MARK not in ob:
+                continue
+            by_parent = False
+        else:
+            parents[ob.as_pointer()] = (p.as_pointer(), ob.parent_type, ob.parent_bone, ob.name)
+            by_parent = walk.by_ancestor(ob)
+            if not by_parent and MARK not in ob:
+                continue
         want = by_parent or walk.layer_hidden(ob)
         try:
             if ob.hide_get(view_layer=view_layer) != want:
@@ -172,9 +191,94 @@ def sync(scene=None, view_layer=None):
         if by_parent:
             if MARK not in ob:
                 ob[MARK] = True
+            marked.append((ob.name, ob.session_uid))
         elif MARK in ob:
             del ob[MARK]
-    return changed + sync_display(scene)
+    changed += sync_display(scene, inherited)
+    if len(_SEEN) > 16:
+        _SEEN.clear()
+    _SEEN[key] = (rev, parents, marked)
+    return changed
+
+
+# --- the handler: walk again only when an update can change the answer ---------------------------------------------
+# What a sync reads and the depsgraph update each edit of it makes (Blender 5.2, ``depsgraph_filter``):
+# - an object's parent (pointer, type, bone) or a child's name: the object's own entry (Python, Ctrl+P, Alt+P,
+#   rename);
+# - an object's own Visibility (``hide_viewport``), a link / unlink / add / delete, a display layer's members:
+#   Collection entries;
+# - a display layer's Visible / Template / Reference: the layer's update calls ``sync`` itself;
+# - a joint's display layer or Visibility, a renamed or re-parented joint (objects under joints): ``layer_joints``
+#   bumps its revision (its handler runs first);
+# - Blender's eye / H (``hide_set``) on an object the parent rule hides: the Scene alone.
+# A selection, an active object, a mode switch, a joint selection, a custom property, a material, a key are none of
+# these: their updates hold the Scene, the objects with the same parents, and other data. Undo, redo and a file load
+# start over.
+
+_SEEN = {}          # (scene, view layer) pointers -> (joint revision, {child pointer: parent facts},
+#                     [(name, session uid) of the objects it marked])
+_FULL, _MARKED = "FULL", "MARKED"
+_FEW_MARKED = 4     # up to this many marked objects are found by name; more: one pass over the scene
+
+
+def _joint_rev():
+    from ..ui import layer_joints
+    rev = getattr(layer_joints, "_REV", None)
+    return rev[0] if rev else None
+
+
+def _what_changed(scene, view_layer, depsgraph):
+    """``_FULL``: walk the scene again; ``_MARKED``: only the objects the last walk hid (Blender's eye / H may have
+    shown one); None: nothing a sync reads changed. Reads only the update's entries."""
+    if depsgraph is None or scene is None or view_layer is None:
+        return _FULL
+    seen = _SEEN.get((scene.as_pointer(), view_layer.as_pointer()))
+    if seen is None:
+        return _FULL
+    rev, parents, _marked = seen
+    if rev is None or rev != _joint_rev():
+        return _FULL
+    scene_entry = False
+    for u in depsgraph.updates:
+        id_ = u.id
+        if isinstance(id_, bpy.types.Object):
+            ob = id_.original
+            p = ob.parent
+            facts = 0 if p is None else (p.as_pointer(), ob.parent_type, ob.parent_bone, ob.name)
+            if parents.get(ob.as_pointer(), 0) != facts:
+                return _FULL
+        elif isinstance(id_, bpy.types.Collection):
+            return _FULL
+        elif isinstance(id_, bpy.types.Scene):
+            scene_entry = True
+    return _MARKED if scene_entry else None
+
+
+def _keep_marked_hidden(scene, view_layer):
+    """Hide again what the last sync hid under a hidden node and was shown since (only ``hide_set`` changed: a
+    Scene-only update). Returns the number of changes."""
+    seen = _SEEN.get((scene.as_pointer(), view_layer.as_pointer()))
+    if seen is None or not seen[2]:
+        return 0
+    marked = seen[2]
+    found = None
+    if len(marked) <= _FEW_MARKED:
+        found = [bpy.data.objects.get(name) for name, _uid in marked]
+        if any(ob is None or ob.session_uid != uid for ob, (_name, uid) in zip(found, marked)):
+            found = None              # renamed, or a linked object of the same name: look at every object instead
+    if found is None:
+        found = (ob for ob in scene.objects if MARK in ob)
+    changed = 0
+    for ob in found:
+        if ob is None or MARK not in ob:
+            continue
+        try:
+            if not ob.hide_get(view_layer=view_layer):
+                ob.hide_set(True, view_layer=view_layer)
+                changed += 1
+        except RuntimeError:          # not in this view layer
+            continue
+    return changed
 
 
 _busy = []
@@ -183,12 +287,20 @@ _busy = []
 @persistent
 def _on_depsgraph(scene, _depsgraph=None):
     # #191: visibility only changes with a hide, a parent change or a new / removed node — never with a
-    # move or a mesh edit; sync walks every object's ancestors
+    # move or a mesh edit; a sync walks every object's ancestors, so it runs only when the update can change them
     if _busy or depsgraph_filter.only_motion(_depsgraph):
         return
     _busy.append(True)
     try:
-        sync(scene)
+        view_layer = bpy.context.view_layer
+        try:
+            what = _what_changed(scene, view_layer, _depsgraph)
+        except (AttributeError, ReferenceError, RuntimeError, TypeError):
+            what = _FULL
+        if what == _FULL:
+            sync(scene)
+        elif what == _MARKED:
+            _keep_marked_hidden(scene, view_layer)
     except Exception:          # never break the depsgraph update
         pass
     finally:
@@ -196,7 +308,13 @@ def _on_depsgraph(scene, _depsgraph=None):
 
 
 @persistent
+def _on_undo(*_args):
+    _SEEN.clear()               # objects, parents and marks are the undone step's: the next update walks again
+
+
+@persistent
 def _on_load(*_args):
+    _SEEN.clear()
     for scene in bpy.data.scenes:
         for vl in scene.view_layers:
             try:
@@ -357,11 +475,17 @@ class ALLSET_OT_outliner_delete(bpy.types.Operator):
 classes = (ALLSET_OT_delete, ALLSET_OT_outliner_delete, ALLSET_OT_isolate)
 
 
+def _handlers():
+    h = bpy.app.handlers
+    return ((h.depsgraph_update_post, _on_depsgraph), (h.load_post, _on_load), (h.undo_post, _on_undo),
+            (h.redo_post, _on_undo))
+
+
 def register_handlers():
-    if _on_depsgraph not in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
-    if _on_load not in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.append(_on_load)
+    _SEEN.clear()                   # while the handlers were off nothing was followed
+    for lst, fn in _handlers():
+        if fn not in lst:
+            lst.append(fn)
 
 
 def release_all():
@@ -388,9 +512,10 @@ def release_all():
 
 
 def unregister_handlers():
-    for lst, fn in ((bpy.app.handlers.depsgraph_update_post, _on_depsgraph), (bpy.app.handlers.load_post, _on_load)):
+    for lst, fn in _handlers():
         if fn in lst:
             lst.remove(fn)
+    _SEEN.clear()
     try:
         release_all()
     except Exception:          # restricted context while Blender quits

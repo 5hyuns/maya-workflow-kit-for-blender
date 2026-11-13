@@ -110,10 +110,11 @@ def pick_joint(context, ob, mouse, radius):
 
 # --- scene -------------------------------------------------------------------------------------------------
 
-def ik_targets(scene):
-    """Objects that are an IK constraint's target (Maya ikHandle; kit ``ikHandleN``)."""
+def ik_targets(scene, armatures=None):
+    """Objects that are an IK constraint's target (Maya ikHandle; kit ``ikHandleN``). ``armatures``: the scene's
+    armature objects when the caller has them already."""
     out = set()
-    for ob in scene.objects:
+    for ob in (armatures if armatures is not None else scene.objects):
         if ob.type != 'ARMATURE' or ob.pose is None:
             continue
         for pb in ob.pose.bones:
@@ -121,6 +122,9 @@ def ik_targets(scene):
                 if con.type == 'IK' and con.target is not None and con.target.type != 'ARMATURE':
                     out.add(con.target.name)
     return out
+
+
+_RANKED_TYPES = frozenset({'ARMATURE', 'CURVE'})     # object types whose kind ranks above 2 (``priority``)
 
 
 def kind_of(ob, targets):
@@ -194,12 +198,17 @@ def hits(context, region, rv3d, mouse):
     """``(name, priority, screen distance)`` for every selectable object above priority 2."""
     space, view_layer = context.space_data, context.view_layer
     depsgraph = context.evaluated_depsgraph_get()
-    targets = ik_targets(context.scene)
+    objects = context.scene.objects    # view_layer.objects can yield None after removals
+    # only skeletons, curves and IK handles rank above 2: the rest of the scene is passed over by its type alone
+    typed = [ob for ob in objects if ob.type in _RANKED_TYPES]
+    targets = ik_targets(context.scene, [ob for ob in typed if ob.type == 'ARMATURE'])
+    if targets:                        # an IK handle can be any kind of object
+        typed = [ob for ob in objects if ob.type in _RANKED_TYPES or ob.name in targets]
     persp = np.array(rv3d.perspective_matrix, dtype=np.float64)
     from ..ui import maya_joints
     maya_view = maya_joints.is_maya_view(space, getattr(getattr(context, "window", None), "workspace", None))
     out = []
-    for ob in context.scene.objects:   # view_layer.objects can yield None after removals
+    for ob in typed:
         kind = kind_of(ob, targets)
         pri = priority(kind)
         if pri <= DEFAULT or not _selectable(ob, space, view_layer):

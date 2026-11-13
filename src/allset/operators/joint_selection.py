@@ -345,8 +345,9 @@ def select(context, ob, name, shift=False, ctrl=False):
     # a bone with a custom shape is a control (control = bone Custom Shape), not a Maya joint: picking it
     # keeps Pose mode with the Move tool too (#171: an unkeyed Rigify rig went to Edit mode on a W click)
     control = name in ob.pose.bones and ob.pose.bones[name].custom_shape is not None
-    if ob.get(MOVE_SKINNED) or (joint_mode(ob) == 'EDIT' and not control and not ob.get(POSE_PIN)
-                                and move_tool_active(context)):
+    # the tool first: ``joint_mode`` looks at every object's modifiers (is the skeleton skinned?)
+    if ob.get(MOVE_SKINNED) or (not control and not ob.get(POSE_PIN) and move_tool_active(context)
+                                and joint_mode(ob) == 'EDIT'):
         r = select_edit(context, ob, name, shift, ctrl)
         if not ob.get(MOVE_SKINNED) and ob.mode == 'EDIT':
             ob[AUTO_EDIT] = True
@@ -389,7 +390,7 @@ def _pose_picks(context, ob, names):
     pbs = ob.pose.bones
     if any(pbs.get(n) is None for n in names):
         return False
-    if ob.get(POSE_PIN) or joint_mode(ob) != 'EDIT' or not move_tool_active(context):
+    if ob.get(POSE_PIN) or not move_tool_active(context) or joint_mode(ob) != 'EDIT':
         return True
     return all(pbs[n].custom_shape is not None for n in names)     # controls stay pose bones
 
