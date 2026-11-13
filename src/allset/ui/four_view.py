@@ -259,6 +259,9 @@ def default(space, role, scene):
     """A panel showing Maya's startup camera for ``role`` (persp = Maya's new-scene persp)."""
     from ..operators import units, view
     space.shading.type = DEFAULT_SHADING[role]
+    space.shading.use_scene_world = False
+    space.shading.studiolight_background_alpha = 1.0
+    space.overlay.show_look_dev = True
     rv3d = space.region_3d
     if rv3d is None:
         return
