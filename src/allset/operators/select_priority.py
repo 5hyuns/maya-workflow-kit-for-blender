@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya selection priority for object-mode clicks.
 
-Maya picks the overlapping candidate of the highest type priority (``selectPrefPriorityMode
-"animation"``; ikHandle 10, joint 9, nurbsCurve 4, everything else 2),
-occluded or not. Blender's ``view3d.select`` picks by
+Like Maya's animation selection priority, the overlapping candidate of the highest type wins (IK handle first,
+then joint, then curve, then everything else), occluded or not. Blender's ``view3d.select`` picks by
 depth, so a control curve or a joint in front of (or behind) a mesh can lose to the mesh.
 
 ``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
