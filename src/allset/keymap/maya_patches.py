@@ -26,7 +26,7 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.time_slider_menu", "allset.time_range_all", 
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag", "allset.shelf_scroll",
+                      "allset.hs_swatch_drag", "allset.shelf_scroll", "allset.shelf_button_menu",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
@@ -1359,6 +1359,8 @@ def patch_graph_outliner(kd):
 
 
 def patch_shelf_scroll(kd):
+    _add(kd, "Image", "allset.shelf_button_menu", make_event("RIGHTMOUSE", value="RELEASE"),
+         first=True, shadows=("Image", "View2D"))
     # Maya's wheel over the shelf icons scrolls one row; the shelf
     # row is an Image Editor, so the items sit first in "Image" and pass through in every other image editor
     for wheel, delta in (("WHEELUPMOUSE", -1), ("WHEELDOWNMOUSE", 1)):
