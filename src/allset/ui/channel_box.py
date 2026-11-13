@@ -978,10 +978,20 @@ def channel_state(ob, key, frame=None):
     if fc.mute:
         return 'MUTED'
     frame = bpy.context.scene.frame_current if frame is None else frame
-    if any(abs(kp.co[0] - frame) < 0.5 for kp in fc.keyframe_points):
-        return 'KEYED'
-    return 'ANIMATED'
+    return 'KEYED' if keyed_at(fc, frame) else 'ANIMATED'
 
+
+def keyed_at(fc, frame):
+    """F-curve ``fc`` has a key within half a frame of ``frame``. A long curve (motion capture: a key on every frame)
+    is read in one call; the test is the same double-precision comparison either way."""
+    kps = fc.keyframe_points
+    n = len(kps)
+    if n <= 32:
+        return any(abs(kp.co[0] - frame) < 0.5 for kp in kps)
+    import numpy as np
+    co = np.empty(2 * n, dtype=np.float32)     # the stored type: read in one copy
+    kps.foreach_get("co", co)
+    return bool((np.abs(co[0::2].astype(np.float64) - frame) < 0.5).any())
 
 
 _held_states = {}       # (lead pointer, channel key) -> its channel_state while a move runs (``row_state``)

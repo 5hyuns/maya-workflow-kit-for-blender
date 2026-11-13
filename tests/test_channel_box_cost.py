@@ -1,15 +1,17 @@
-"""The Channel Box stays light in big scenes:
+"""The Channel Box stays light in big scenes and long animations:
 - in Pose Mode the lead is the active joint, else the first picked shown one, found without a Python object for
   every picked joint (Blender reads every value field again after the panel's draw returns: many asks per redraw);
 - the skeletons of the view layer and the kit deformers a handle (Empty / lattice) drives are found once and kept
   until the scene changes (an object added, removed or linked, a modifier edit, undo, a file load); a removed object
-  or a renamed / removed modifier is never handed out.
-The answers are the same as looking through the whole scene each time."""
+  or a renamed / removed modifier is never handed out;
+- a channel's key state (keyed on this frame or not) reads a long curve's key frames in one call.
+The answers are the same as looking through the whole scene (or every key) each time."""
 
 import time
 from importlib import import_module
 
 import bpy
+import numpy as np
 
 import kit
 
@@ -266,3 +268,45 @@ def test_moving_the_handle_keeps_its_inputs():
         bpy.context.view_layer.update()
         assert [m.name for m in cb._inputs(handle)] == ["bend1"]
     assert scans.calls == 1
+
+
+def _long_curve(ob, frames):
+    """A Translate X curve on ``ob`` with a key on each of ``frames`` (float32, like Blender stores them)."""
+    ob.keyframe_insert("location", index=0, frame=1)
+    fc = kit.fcurves(ob).find("location", index=0)
+    fc.keyframe_points.add(len(frames) - len(fc.keyframe_points))
+    co = np.zeros(2 * len(frames), dtype=np.float32)
+    co[0::2] = frames
+    fc.keyframe_points.foreach_set("co", co)
+    fc.update()
+    return fc
+
+
+def test_key_state_of_a_long_curve_is_the_same():
+    _clear()
+    ob = bpy.data.objects.new("pCube1", bpy.data.meshes.new("pCubeShape1"))
+    bpy.context.scene.collection.objects.link(ob)
+    frames = np.arange(0, 3000, dtype=np.float32) * 1.5 + 0.25     # 0.25, 1.75, 3.25 ...
+    fc = _long_curve(ob, frames)
+    assert len(fc.keyframe_points) == 3000
+    for frame in (0, 1, 2, 3, 4, 10, 100, 101, 4499, 4500, 5000, -1, 0.75, 0.7499999, 1.25, 2.2500001, 1000.6):
+        want = any(abs(kp.co[0] - frame) < 0.5 for kp in fc.keyframe_points)
+        assert cb.keyed_at(fc, frame) == want, (frame, want)
+        assert cb.channel_state(ob, "tx", frame) == ('KEYED' if want else 'ANIMATED'), frame
+    short = _long_curve(bpy.data.objects.new("pCube2", None), np.array([1.0, 5.0, 9.5], dtype=np.float32))
+    for frame in (1, 2, 5, 9, 10, 10.5):
+        assert cb.keyed_at(short, frame) == any(abs(kp.co[0] - frame) < 0.5 for kp in short.keyframe_points)
+
+
+def test_key_state_of_a_long_curve_costs_little():
+    """A key on every frame (motion capture): ten rows' states on every redraw were a Python loop over every key."""
+    _clear()
+    ob = bpy.data.objects.new("pCube1", bpy.data.meshes.new("pCubeShape1"))
+    bpy.context.scene.collection.objects.link(ob)
+    _long_curve(ob, np.arange(1, 20001, dtype=np.float32))
+    t = time.perf_counter()
+    states = [cb.channel_state(ob, "tx", 19000.4) for _ in range(10)]
+    ms = 1000 * (time.perf_counter() - t)
+    print(f"10 key states of a 20,000-key curve: {ms:.2f} ms")
+    assert states == ['KEYED'] * 10
+    assert ms < 40, f"10 key states of a 20,000-key curve took {ms:.1f} ms"
