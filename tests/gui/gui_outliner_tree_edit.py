@@ -294,9 +294,29 @@ def s_eye_click():
     u = t.unit(bpy.context.preferences)
     k = next(i for i, r in enumerate(rs) if r.label == "box1")
     y0, y1 = t.row_rect(area, region, k, u, len(rs))
-    ex = t.eye_x(region, u, len(rs), t.first_row(area, region, len(rs), u))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
     shot("6_eye_column")
-    click(region.x + int(ex), region.y + int((y0 + y1) / 2))
+    click(region.x + int(xs['EYE']), region.y + int((y0 + y1) / 2))
+
+
+@step
+def s_wait_eye_click():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_render_click():
+    # Blender's render camera, the column right of the eye
+    area, region = outliner()
+    rs = rows()
+    t = tree()
+    u = t.unit(bpy.context.preferences)
+    k = next(i for i, r in enumerate(rs) if r.label == "box1")
+    y0, y1 = t.row_rect(area, region, k, u, len(rs))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
+    check("select / eye / render columns, left to right", list(xs) == ['SELECT', 'EYE', 'RENDER'])
+    click(region.x + int(xs['RENDER']), region.y + int((y0 + y1) / 2))
 
 
 @step
@@ -309,6 +329,9 @@ def s_wait_eye():
 def s_eyed():
     ob = bpy.data.objects["box1"]
     check(f"the eye hides box1 (visibility off: {ob.hide_viewport})", ob.hide_viewport)
+    check(f"the camera stops box1 rendering, select untouched ({ob.hide_render}, {ob.hide_select})",
+          ob.hide_render and not ob.hide_select)
+    ob.hide_render = False
     area, region = outliner()
     area.spaces.active.show_restrict_column_hide = False
     ob.hide_viewport = False

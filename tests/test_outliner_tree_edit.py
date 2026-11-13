@@ -190,6 +190,27 @@ def test_hide_in_outliner_and_eye_column():
     assert edit.eye_state(_row(rows, "persp")) is None
 
 
+def test_select_and_render_columns():
+    cube, sk, names = _rig()
+    rows = _rows()
+    row, root = _row(rows, "pCube1"), _row(rows, names[0])
+    for col, prop in (('SELECT', "hide_select"), ('RENDER', "hide_render")):
+        assert tree.column_state(row, col) is True
+        assert edit.toggle_column(bpy.context, row, col) and getattr(cube, prop)
+        assert tree.column_state(row, col) is False
+        edit.toggle_column(bpy.context, row, col)
+        assert not getattr(cube, prop)
+    assert tree.column_state(root, 'SELECT') is True
+    assert edit.toggle_column(bpy.context, root, 'SELECT') and sk.data.bones[names[0]].hide_select
+    assert tree.column_state(root, 'SELECT') is False
+    edit.toggle_column(bpy.context, root, 'SELECT')
+    assert tree.column_state(root, 'RENDER') is None, "a joint has no render column"
+    assert not edit.toggle_column(bpy.context, root, 'RENDER')
+    assert tree.column_state(_row(rows, "persp"), 'SELECT') is None
+    shape = tree.Row('SHAPE', "pCube1", cube.data.name, 1, False, False, cube.data.name, 'SHAPE', None)
+    assert tree.column_state(shape, 'RENDER') is None
+
+
 def test_delete_objects_and_joints():
     cube, sk, names = _rig()
     child = _mesh("pSphere1", cube)

@@ -34,7 +34,8 @@ def test_setup_turns_the_mode_column_off():
     sp = SimpleNamespace(show_mode_column=True)
     maya_outliner.setup(sp)
     assert sp.show_mode_column is False
-    assert sp.display_mode == 'VIEW_LAYER' and sp.show_restrict_column_hide is False
+    assert sp.display_mode == 'VIEW_LAYER' and sp.show_restrict_column_hide is True
+    assert sp.show_restrict_column_select and sp.show_restrict_column_render and not sp.show_restrict_column_enable
 
 
 def _template_time_slider(screen):

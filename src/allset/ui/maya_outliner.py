@@ -20,22 +20,34 @@ MENU_BAR = (("Display", "ALLSET_MT_outliner_display"), ("Show", "ALLSET_MT_outli
 
 def is_maya_outliner(space):
     """The Maya header goes on this Outliner: View Layer mode, no collection rows, and either no object contents (how
-    the kit sets it up) or Display > Shapes on in an Outliner the kit set up — no mode column and no render toggle,
-    which the Maya menus can't change and a plain Blender Outliner shows."""
+    the kit sets it up) or Display > Shapes on in an Outliner the kit set up — no mode column, and no render or
+    exclude column (``mark``: the kit turns the exclude column off), which a plain Blender Outliner shows."""
     if (space is None or space.type != 'OUTLINER' or space.display_mode != 'VIEW_LAYER'
             or space.use_filter_collection):
         return False
-    return not space.use_filter_object_content or not (space.show_mode_column or space.show_restrict_column_render)
+    return not space.use_filter_object_content or not (
+        space.show_mode_column or (space.show_restrict_column_render and space.show_restrict_column_enable))
+
+
+def mark(space):
+    """The first time the kit claims a Maya Outliner: the exclude column (unused: no collection rows) goes off to
+    mark it as the kit's, and Blender's select / eye / render columns go on once; the Display menu keeps later
+    choices."""
+    if space.show_restrict_column_enable:
+        space.show_restrict_column_enable = False
+        space.show_restrict_column_select = True
+        space.show_restrict_column_hide = True
+        space.show_restrict_column_render = True
 
 
 def setup(space):
-    """Maya Outliner filters (DAG only, from the world; no eye / mode column: Maya hides with H)."""
+    """Maya Outliner filters (DAG only, from the world; no mode column) with Blender's select / eye / render columns."""
     space.display_mode = 'VIEW_LAYER'
     space.use_filter_object_content = False
     space.use_filter_collection = False
     space.use_filter_children = True
-    space.show_restrict_column_render = False
-    space.show_restrict_column_hide = False
+    space.show_restrict_column_enable = True
+    mark(space)
     space.show_mode_column = False      # Maya has no mode column (Blender shows it in edit mode)
     space.use_sort_alpha = False        # Maya lists the DAG in creation order, startup cameras first
     from . import outliner_tree         # the kit draws the rows (joints under their skeleton, #348)
@@ -50,7 +62,9 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
         sp, lay = context.space_data, self.layout
         lay.prop(sp, "use_filter_children", text="Children (DAG Hierarchy)")
         lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
+        lay.prop(sp, "show_restrict_column_select", text="Selectable Column")
         lay.prop(sp, "show_restrict_column_hide", text="Visibility Column")
+        lay.prop(sp, "show_restrict_column_render", text="Render Column")
         lay.separator()
         # Maya Display > Shapes: a shape row (pCubeShape1) under each transform
         lay.prop(sp, "use_filter_object_content", text="Shapes")
