@@ -905,7 +905,8 @@ def _draw(context, space, region, area):
         if HOVER.get(area.as_pointer()) == k:
             _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
         for col, cx in cols.items():
-            on = column_state(row, col, by_name)
+            # a drawn startup camera (no object) shows a real one's state: selectable, hidden, not rendered
+            on = (col == 'SELECT') if row.kind == 'CAMERA' else column_state(row, col, by_name)
             if on is not None:
                 icons.append((col, on, int(cx) - u // 2, y0))
         x = row.depth * u
