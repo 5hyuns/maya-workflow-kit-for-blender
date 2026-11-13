@@ -423,6 +423,56 @@ def select_many(context, ob, names, shift=False, ctrl=False):
     return True
 
 
+def select_groups(context, groups, shift=False, ctrl=False):
+    """``select_many`` on each (skeleton, names) of ``groups`` in turn: the first with ``shift`` / ``ctrl``, the rest
+    added (a replace / add marquee over several skeletons).
+
+    Skeleton by skeleton, each added skeleton leaves Pose Mode for Object Mode and comes back (it has to be the active
+    object to enter), and every mode switch evaluates the scene twice (rigs and the meshes they deform). When every
+    group is picked as pose bones from Object or Pose Mode the end state is written with at most one switch out and
+    one into Pose Mode: leave the mode the drag started in, the replace's clearing, the skeletons selected, the last
+    one active, Pose Mode (every selected skeleton enters it, as the last skeleton's switch did), then each
+    skeleton's joints with its last joint as its lead. The same objects, modes, joints and leads as skeleton by
+    skeleton. Anything else goes skeleton by skeleton."""
+    groups = [(ob, list(names)) for ob, names in groups if names]
+    one_by_one = (len(groups) < 2 or shift != ctrl or context.mode not in {'OBJECT', 'POSE'}
+                  or len({ob.as_pointer() for ob, _names in groups}) < len(groups)
+                  or any(ob.library is not None or not _pose_picks(context, ob, names) for ob, names in groups)
+                  # Object Mode with a skeleton left in Pose Mode: only a switch from Pose Mode would take it out
+                  or (context.mode == 'OBJECT' and any(o.mode == 'POSE' for o in context.view_layer.objects)))
+    if one_by_one:
+        result = False
+        for i, (ob, names) in enumerate(groups):
+            if i > 0:
+                shift, ctrl = True, True
+            result = select_many(context, ob, names, shift, ctrl)
+        return result
+    from ..ui.channel_box import bone_selected, set_bone_selected
+    if context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    first = groups[0][0]
+    if not shift:
+        clear(context)
+        for other in context.selected_objects:
+            if other != first:
+                other.select_set(False)
+    for ob, _names in groups:
+        ob.select_set(True)
+    last = groups[-1][0]
+    context.view_layer.objects.active = last
+    if last.mode != 'POSE':
+        bpy.ops.object.mode_set(mode='POSE')
+    for ob, names in groups:
+        pbs = ob.pose.bones
+        for n in names:
+            pb = pbs[n]
+            if not bone_selected(pb):
+                set_bone_selected(pb, True)
+        if ob.data.bones.active != ob.data.bones[names[-1]]:
+            ob.data.bones.active = ob.data.bones[names[-1]]
+    return True
+
+
 def leave(context, clear_selection=False):
     if clear_selection:
         clear(context)

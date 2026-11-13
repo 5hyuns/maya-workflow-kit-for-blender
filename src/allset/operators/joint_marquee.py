@@ -218,10 +218,8 @@ def apply(context, poly, mode, snap):
                 groups[-1][1].append(name)
             else:
                 groups.append((ob, [name]))
-        for i, (ob, names) in enumerate(groups):
-            if i > 0:
-                shift, ctrl = True, True      # the rest of a replace adds
-            joint_selection.select_many(context, ob, names, shift, ctrl)
+        # the first skeleton with the drag's modifiers, the rest of a replace adds
+        joint_selection.select_groups(context, groups, shift, ctrl)
         return [n for _o, n in picks]
     for ob, name in picks:                    # toggle / remove: joint by joint
         joint_selection.select(context, ob, name, shift, ctrl)
