@@ -111,17 +111,23 @@ def _posing():
 @persistent
 def _on_depsgraph(scene, depsgraph):
     # #191: the rows are names / parents / membership / bones — a move, a mesh edit or a selection change can't
-    # change them (one pass over the update for every test)
+    # change them (one pass over the update for every test). A running move / rotate / scale keeps the structure
+    # whatever the update holds, so it is asked first: each of its steps skips the pass over the update.
+    try:
+        posing = _posing()
+    except (ReferenceError, AttributeError):
+        posing = None
+    if posing:
+        return
     look = depsgraph_filter.Look(depsgraph) if depsgraph is not None else None
     if look is not None and look.outliner_skip():
         return
-    try:
-        if _posing():
-            return
-        if _joint_selection_only(scene, look):
-            return
-    except (ReferenceError, AttributeError):
-        pass
+    if posing is not None:
+        try:
+            if _joint_selection_only(scene, look):
+                return
+        except (ReferenceError, AttributeError):
+            pass
     _bump()
 
 
