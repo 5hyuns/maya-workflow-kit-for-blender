@@ -702,23 +702,72 @@ def region_pick(context, ob, poly):
     hit = np.zeros(len(names), bool)
     use = np.flatnonzero(ok)
     hit[owner[use[_touching(a[use], b[use], poly)]]] = True
+    for i in np.flatnonzero(hit).tolist():
+        n = names[i]
+        if maya_drawn and n not in control:
+            joints.append(n)
+        else:
+            each.append(n)
+    if not joints:
+        return each
+    depths, index = _region_depths(js)
+    return each + [min((depths[n], index[n], n) for n in joints)[2]]
+
+
+_DEPTHS = {}    # id(joints) -> (joints, {name: ``depth``}, {name: position}): ``region_pick`` of the same joints
+
+
+def _region_depths(js):
+    """{name: ``depth(js, name)``} and {name: position in ``js``} of every joint, kept while ``js`` is the same (a
+    drawn skeleton's joint list lasts until the skeleton changes)."""
+    held = _DEPTHS.get(id(js))
+    if held is not None and held[0] is js:
+        return held[1], held[2]
+    depths = {}
+    for name in js:
+        chain, p = [], name
+        while p not in depths:
+            chain.append(p)
+            p = js[p].parent
+            if p not in js:              # the top: no parent among the joints
+                d = 0
+                break
+        else:
+            d = depths[p] + 1
+        for n in reversed(chain):
+            depths[n] = d
+            d += 1
+    if len(_DEPTHS) > 8:
+        _DEPTHS.clear()
     index = {n: i for i, n in enumerate(js)}
-    for i, n in enumerate(names):
-        if hit[i]:
-            if maya_drawn and n not in control:
-                joints.append((depth(js, n), index[n], n))
-            else:
-                each.append(n)
-    return each + ([min(joints)[2]] if joints else [])
+    _DEPTHS[id(js)] = (js, depths, index)
+    return depths, index
+
+
+def _box_bounds(pg):
+    """(x min, x max, y min, y max) of a polygon that is an upright rectangle given corner by corner (a box select's
+    region), else None."""
+    if len(pg) != 4:
+        return None
+    (ax, ay), (bx, by), (cx, cy), (dx, dy) = pg.tolist()
+    if not ((ay == by and bx == cx and cy == dy and dx == ax) or (ax == bx and by == cy and cx == dx and dy == ay)):
+        return None
+    return min(ax, cx), max(ax, cx), min(ay, cy), max(ay, cy)
 
 
 def _touching(a, b, poly):
     """``segments_touch`` for each segment a[i]-b[i] ((S, 2) arrays) at once: a bool per segment."""
     import numpy as np
     pg = np.asarray(poly, np.float64).reshape(-1, 2)
+    box = _box_bounds(pg)
 
     def inside(p):
         x, y = p[:, 0], p[:, 1]
+        if box is not None:
+            # the crossing rule below on an upright rectangle: only its two upright sides count, each at its own x
+            # for any y, so a point is inside from the low side up to (not including) the high side
+            x0, x1, y0, y1 = box
+            return (x >= x0) & (x < x1) & (y >= y0) & (y < y1)
         res = np.zeros(len(p), bool)
         for i in range(len(pg)):
             (x1, y1), (x2, y2) = pg[i], pg[i - 1]
@@ -727,14 +776,20 @@ def _touching(a, b, poly):
         return res
 
     out = inside(a) | inside(b)
+    rest = np.flatnonzero(~out)          # a segment with an end inside touches already: the crossings of the others
+    if not len(rest):
+        return out
+    a, b = a[rest], b[rest]
     ax, ay, bx, by = a[:, 0], a[:, 1], b[:, 0], b[:, 1]
+    cross = np.zeros(len(rest), bool)
     for i in range(len(pg)):
         (ex0, ey0), (ex1, ey1) = pg[i - 1], pg[i]
         d1 = (ex1 - ex0) * (ay - ey0) - (ey1 - ey0) * (ax - ex0)
         d2 = (ex1 - ex0) * (by - ey0) - (ey1 - ey0) * (bx - ex0)
         d3 = (bx - ax) * (ey0 - ay) - (by - ay) * (ex0 - ax)
         d4 = (bx - ax) * (ey1 - ay) - (by - ay) * (ex1 - ax)
-        out |= (d1 * d2 < 0) & (d3 * d4 < 0)
+        cross |= (d1 * d2 < 0) & (d3 * d4 < 0)
+    out[rest] = cross
     return out
 
 

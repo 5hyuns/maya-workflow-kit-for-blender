@@ -6030,6 +6030,9 @@
    "Toggle Selected Labels": "Toggle Selected Labels",
    "Type": "Type"
   },
+  "Labels/operators/joint_selection": {
+   "Joint Pick": "Joint Pick"
+  },
   "Labels/operators/joints": {
    "Auto orient secondary axis": "Auto orient secondary axis",
    "Behavior": "Behavior",
@@ -9746,6 +9749,11 @@
    "Maya Show All Labels / Hide All Labels: every joint in the scene": "Maya Show All Labels / Hide All Labels: every joint in the scene",
    "Maya Skeleton > Joint Labelling > Add Joint Labels: set the side or the type label of the selected joints": "Maya Skeleton > Joint Labelling > Add Joint Labels: set the side or the type label of the selected joints",
    "Maya Toggle Selected Labels: show or hide the labels of the selected joints and the joints below them": "Maya Toggle Selected Labels: show or hide the labels of the selected joints and the joints below them"
+  },
+  "Tooltips/operators/joint_selection": {
+   "Leave the mode, write the joint pick and enter Pose Mode (internal)": "Leave the mode, write the joint pick and enter Pose Mode (internal)",
+   "Write the joint pick and enter Pose Mode (internal)": "Write the joint pick and enter Pose Mode (internal)",
+   "Write the joint pick waiting between the mode switches of a joint pick (internal)": "Write the joint pick waiting between the mode switches of a joint pick (internal)"
   },
   "Tooltips/operators/joints": {
    "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish": "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish",

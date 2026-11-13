@@ -390,4 +390,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
-classes = (ALLSET_OT_select_priority,)
+# the joint pick's one-call mode switches (``joint_selection._one_switch``) go with the click that uses them
+from . import joint_selection as _joint_selection  # noqa: E402
+
+classes = (ALLSET_OT_select_priority, *_joint_selection.classes)

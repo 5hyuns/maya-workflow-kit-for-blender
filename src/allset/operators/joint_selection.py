@@ -426,8 +426,12 @@ def select(context, ob, name, shift=False, ctrl=False):
     # Edit Mode (leaving it writes the edit bones' selection and lead into the bones).
     sure = ob.mode in {'POSE', 'OBJECT'} and _switches(context, ob) and _in_layer(context, ob)
     if leave and sure and _switches(context, context.active_object):
-        if not _switch_with(context, 'OBJECT', lambda: _write_pick(context, ob, name, shift, ctrl, True),
-                            lambda: bpy.context.mode == 'OBJECT'):
+        done = _one_switch(context, lambda: _write_pick(context, ob, name, shift, ctrl, True), True)
+        if done is None and not _switch_with(context, 'OBJECT',
+                                             lambda: _write_pick(context, ob, name, shift, ctrl, True),
+                                             lambda: bpy.context.mode == 'OBJECT'):
+            done = False
+        if done is False:
             _write_pick(context, ob, name, shift, ctrl, True)
         if ob.mode != 'POSE':
             bpy.ops.object.mode_set(mode='POSE')
@@ -435,6 +439,15 @@ def select(context, ob, name, shift=False, ctrl=False):
     if leave:
         bpy.ops.object.mode_set(mode='OBJECT')
     early = (ob.mode == 'POSE' or (ob.mode == 'OBJECT' and _switches(context, ob))) and _in_layer(context, ob)
+    if early and ob.mode == 'OBJECT':
+        # the selection, then the switch into Pose Mode (which enters ``ob`` and the selected skeletons), in one call
+        done = _one_switch(context, lambda: _write_pick(context, ob, name, shift, ctrl, True), False, ob)
+        if done is not None:
+            if not done:
+                _write_pick(context, ob, name, shift, ctrl, True)
+            if ob.mode != 'POSE':
+                bpy.ops.object.mode_set(mode='POSE')
+            return True
     if early and ob.mode == 'OBJECT' and (shift or ctrl or not any(
             o != ob and o.type == 'ARMATURE' for o in context.view_layer.objects.selected)):
         if context.view_layer.objects.active != ob:
@@ -497,6 +510,99 @@ def _switch_with(context, mode, write, switched):
     if err:
         raise err[0]
     return bool(done)
+
+
+_JOB = [None]       # the pick ``_one_switch`` hands to ALLSET_OT_joint_pick_write
+
+
+def _quiet_between(context, out):
+    """No depsgraph handler of the kit acts on the Object Mode state between the switches: the Maya pivot point of
+    Object Mode is set already (or isn't a Maya one), and no pivot axes follow the lead (``pivot._on_depsgraph``)."""
+    from . import pivot
+    scene = context.scene
+    slots = scene.transform_orientation_slots
+    if any(slots[i].type == pivot.ORIENT_NAME for i in pivot.PIVOT_SLOTS):
+        return False
+    if out:
+        now = scene.tool_settings.transform_pivot_point
+        if now != pivot.MAYA_PIVOT_POINT.get('OBJECT') and now in pivot.MAYA_PIVOT_POINT.values():
+            return False
+    return True
+
+
+def _one_switch(context, write, out, lead=None):
+    """The switch out of the current mode (``out``), ``write()`` and the switch into Pose Mode as one operator call (a
+    macro). Blender evaluates the scene after an operator call, not between the operators of a macro, so the
+    selection and both switches are evaluated once instead of after each switch; the same objects, modes and
+    selection come out. Without ``out``, ``write`` makes ``lead`` the active object: Blender checks the switch into
+    Pose Mode before the call, so it is checked with ``lead`` active. None when it can't be used and the caller goes
+    the usual way: the switches can't run in this context, or a depsgraph handler of the kit would act on the Object
+    Mode state between them (``_quiet_between``). True when ``write`` ran (raising what it raised), False when the
+    switch out didn't happen (the caller writes)."""
+    macro = bpy.ops.allset.joint_pick_switch if out else bpy.ops.allset.joint_pick_enter
+    try:
+        with context.temp_override(**({} if out else {"active_object": lead})):
+            if not _quiet_between(context, out) or not macro.poll():
+                return None
+    except (AttributeError, KeyError, ReferenceError, RuntimeError, TypeError):
+        return None
+    job = {"write": write, "out": out, "ran": False, "err": None}
+    _JOB[0] = job
+    try:
+        with context.temp_override(**({} if out else {"active_object": lead})):
+            macro()
+    finally:
+        _JOB[0] = None
+    if job["err"] is not None:
+        raise job["err"]
+    return job["ran"]
+
+
+class ALLSET_OT_joint_pick_write(bpy.types.Operator):
+    """Write the joint pick waiting between the mode switches of a joint pick (internal)"""
+    bl_idname = "allset.joint_pick_write"
+    bl_label = "Joint Pick"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, _context):
+        job = _JOB[0]
+        if job is None or job["ran"] or (job["out"] and bpy.context.mode != 'OBJECT'):
+            return {'CANCELLED'}        # nothing waiting, or the switch out didn't happen: the caller writes
+        job["ran"] = True
+        try:
+            job["write"]()
+        except Exception as e:      # noqa: BLE001 - raised from the caller, as a write made there would be
+            job["err"] = e
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_OT_joint_pick_switch(bpy.types.Macro):
+    """Leave the mode, write the joint pick and enter Pose Mode (internal)"""
+    bl_idname = "allset.joint_pick_switch"
+    bl_label = "Joint Pick"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def register(cls):
+        cls.define("OBJECT_OT_mode_set").properties.mode = 'OBJECT'
+        cls.define("ALLSET_OT_joint_pick_write")
+        cls.define("OBJECT_OT_mode_set").properties.mode = 'POSE'
+
+
+class ALLSET_OT_joint_pick_enter(bpy.types.Macro):
+    """Write the joint pick and enter Pose Mode (internal)"""
+    bl_idname = "allset.joint_pick_enter"
+    bl_label = "Joint Pick"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def register(cls):
+        cls.define("ALLSET_OT_joint_pick_write")
+        cls.define("OBJECT_OT_mode_set").properties.mode = 'POSE'
+
+
+classes = (ALLSET_OT_joint_pick_write, ALLSET_OT_joint_pick_switch, ALLSET_OT_joint_pick_enter)
 
 
 def _in_layer(context, ob):
@@ -603,7 +709,12 @@ def select_groups(context, groups, shift=False, ctrl=False, restored=None):
         if early:
             _pick_groups(groups, not shift)     # a replace cleared the leads: each is set again
 
-    if context.mode == 'OBJECT':
+    # (see ``select``: the switch out, the selection and the switch in as one operator call when it can be)
+    done = _one_switch(context, write, context.mode != 'OBJECT', last) if early else None
+    if done is not None:
+        if not done:
+            write()
+    elif context.mode == 'OBJECT':
         write()
     elif not early:
         bpy.ops.object.mode_set(mode='OBJECT')
