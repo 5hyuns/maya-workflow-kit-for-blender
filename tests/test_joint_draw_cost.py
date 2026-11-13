@@ -246,10 +246,12 @@ def test_edits_and_frames_build_only_what_changed():
 
 
 def test_edit_mode_builds_the_edited_skeleton_when_it_changes():
-    """A skeleton in Edit Mode: redraws without a change build nothing; an edit bone moved or a Maya frame written
-    (no update) builds it again; the skeleton in Object Mode is never built again. The lines equal the view's own
-    lines."""
+    """A skeleton in Edit Mode: redraws without a change build nothing; an edit bone moved, a Maya frame written or a
+    bone put in a hidden bone collection (neither sends an update) builds it again; the skeleton in Object Mode keeps
+    its geometry. The lines equal the view's own lines."""
     a, b, _cube, _ctrl = _scene()
+    hidden = a.data.collections.new("hidden")
+    hidden.is_visible = False
     bpy.context.view_layer.objects.active = a
     a.select_set(True)
     bpy.ops.object.mode_set(mode='EDIT')
@@ -263,9 +265,10 @@ def test_edit_mode_builds_the_edited_skeleton_when_it_changes():
         eb = a.data.edit_bones[3]
         for step, edit in enumerate((lambda: setattr(eb, "head", eb.head + Vector((0.05, 0.0, 0.0))),
                                      lambda: eb.__setitem__(joints.MAYA_FRAME, [0.9238795, 0.0, 0.3826834, 0.0]),
-                                     lambda: setattr(eb, "select", True))):
+                                     lambda: setattr(eb, "select", True),
+                                     lambda: hidden.assign(a.data.edit_bones[5]))):
             edit()
-            if step != 1:
+            if step in (0, 2):
                 bpy.context.view_layer.update()
             with _Count(mj, *BUILD) as n:
                 got = mj._joined(view)

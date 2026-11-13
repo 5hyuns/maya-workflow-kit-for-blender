@@ -1817,7 +1817,7 @@ def _edit_signature(ob):
     colls = data.collections_all
     out.append(tuple(c.is_visible_effectively for c in colls))
     if not all(out[-1]):                       # a hidden bone collection hides its bones: who is in one matters
-        out.append(tuple(_coll_hidden(eb) for eb in ebs))
+        out.append(tuple(tuple(eb.collections.keys()) for eb in ebs))
     radius, frame = joints.RADIUS, joints.MAYA_FRAME
     out.append(tuple((eb.get(radius), tuple(q) if (q := eb.get(frame)) is not None else None) for eb in ebs))
     return out
@@ -1862,10 +1862,10 @@ def _joined(context):
                 _PICK[ptr] = None
                 fresh = True
             continue
-        if b.key != _build_key(ob, getattr(ob.data, "display_type", 'OCTAHEDRAL')) or b.parts is not _PARTS.get(ptr):
-            b.level = 'new'                    # other data, look or bones (Edit Mode left); lines set by a test
+        if b.parts is not _PARTS.get(ptr) or b.key is None or b.key[0] == 'EDIT':
+            b.level = 'new'                    # Edit Mode left; lines set by a test
         elif b.level is None:
-            continue
+            continue                           # other data, look or bones come with an update (``_parts`` key)
         before = b.parts
         b.sig = None
         pick = []
