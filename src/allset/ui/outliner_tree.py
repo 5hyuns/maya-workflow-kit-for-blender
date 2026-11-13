@@ -809,14 +809,18 @@ def _draw_restrict(icons, rgb, u):
         batch.draw(sh)
 
 
-# Blender's restriction columns, left to right (Display menu); EYE is the kit's visibility (hide_viewport)
-COLUMNS = (('SELECT', "show_restrict_column_select"), ('EYE', "show_restrict_column_hide"),
-           ('RENDER', "show_restrict_column_render"))
+# Blender's restriction columns, left to right (Display menu, kit preference); EYE is the kit's visibility
+COLUMNS = (('SELECT', "show_restrict_column_select", "outliner_select_column"),
+           ('EYE', "show_restrict_column_hide", "outliner_eye_column"),
+           ('RENDER', "show_restrict_column_render", "outliner_render_column"))
 
 
 def column_xs(space, region, u, n, first):
-    """{column: centre x} of the shown columns, the last one at ``eye_x``."""
-    shown = [c for c, prop in COLUMNS if getattr(space, prop)]
+    """{column: centre x} of the shown columns (on in the Display menu and the kit preferences), the last one at
+    ``eye_x``."""
+    from .. import preferences
+    prefs = preferences.get()
+    shown = [c for c, prop, pref in COLUMNS if getattr(space, prop) and getattr(prefs, pref)]
     right = eye_x(region, u, n, first)
     return {c: right - (len(shown) - 1 - i) * u for i, c in enumerate(shown)}
 
