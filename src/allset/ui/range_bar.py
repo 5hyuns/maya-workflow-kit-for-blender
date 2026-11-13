@@ -306,8 +306,9 @@ def draw():
     scale = context.preferences.system.ui_scale or 1.0
     unit = round(20 * scale)
     screen = context.screen
-    from .maya_joints import transforming
-    found = find_gap(area, region, unit, (screen is not None and screen.is_animation_playing) or transforming())
+    from .maya_joints import scrubbing, transforming
+    found = find_gap(area, region, unit, (screen is not None and screen.is_animation_playing) or transforming()
+                     or scrubbing())
     if found is None:
         return
     span, spare = found

@@ -227,7 +227,7 @@ def read_bmesh(bm):
 
 
 class _State:
-    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv")
+    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv", "op")
 
     def __init__(self, ob):
         self.arrays = None
@@ -237,6 +237,51 @@ class _State:
         self.bkey = None
         self.name = ob.name
         self.me_name = ob.data.name
+        self.op = 0                 # the transform running when the arrays were read in full (0: none)
+
+
+def _transform_ptr():
+    """Pointer of the transform running in some window (move / rotate / scale, slide, a manipulator drag), else 0.
+    Until it ends only point positions change: topology, selection and hidden elements stay as they were."""
+    from . import maya_joints
+    try:
+        op = maya_joints.transform_op()
+    except (AttributeError, ReferenceError, RuntimeError):
+        return 0
+    return op.as_pointer() if op is not None else 0
+
+
+NAVIGATION = ("VIEW3D_OT_rotate", "VIEW3D_OT_move", "VIEW3D_OT_zoom", "VIEW3D_OT_dolly", "VIEW3D_OT_fly",
+              "VIEW3D_OT_walk")
+
+
+def _navigating():
+    """A view tumble / track / dolly / fly runs in some window (it selects nothing until it ends)."""
+    try:
+        return any(op.bl_idname in NAVIGATION for w in bpy.context.window_manager.windows
+                   for op in w.modal_operators)
+    except (AttributeError, ReferenceError, RuntimeError):
+        return False
+
+
+def _coordinates(ob, depsgraph, bm, n):
+    """The cage's point positions ((n, 3) float32) of an edit mesh whose topology is unchanged, or None when the
+    count no longer matches. Read from the evaluated mesh when it is the cage (one array copy), else from the BMesh."""
+    if use_evaluated(ob.modifiers):
+        ev = ob.evaluated_get(depsgraph)
+        me = ev.to_mesh()
+        try:
+            if len(me.vertices) != n:
+                return None
+            co = np.empty(n * 3, np.float32)
+            me.vertices.foreach_get("co", co)
+            return co.reshape(-1, 3)
+        finally:
+            ev.to_mesh_clear()
+    if len(bm.verts) != n:
+        return None
+    from itertools import chain
+    return np.fromiter(chain.from_iterable(v.co for v in bm.verts), np.float32, 3 * n).reshape(-1, 3)
 
 
 # --- drawing ---------------------------------------------------------------------------------------
@@ -360,6 +405,15 @@ def state(ob, depsgraph, faces=True, uv=False):
             and st.uv == uv):
         return st
     bm = bmesh.from_edit_mesh(ob.data)
+    # During a transform only the points move: the arrays read in full once in this transform keep their edges,
+    # faces, selection and hidden flags, and get the new positions.
+    op = _transform_ptr()
+    if op and st.op == op and st.arrays is not None and (st.faces or not faces) and st.uv == uv:
+        co = _coordinates(ob, depsgraph, bm, len(st.arrays.co))
+        if co is not None:
+            st.arrays.co = co
+            st.batches, st.bkey = None, None
+            return st
     # Draw may run before the selection poll. Detect changed membership here.
     # This avoids presenting the previously cached GPU batch for one more frame.
     if len(bm.verts) <= BMESH_LIMIT:
@@ -393,6 +447,7 @@ def state(ob, depsgraph, faces=True, uv=False):
         arrays.esel[:] = False
         arrays.fsel[:] = False
     st.arrays, st.faces, st.batches, st.bkey, st.uv = arrays, faces, None, None, uv
+    st.op = op
     return st
 
 
@@ -542,6 +597,8 @@ def _poll_selection():
     """Invalidate and redraw the Maya overlay when component selection changes."""
     if not _handle:
         return None
+    if _transform_ptr() or _navigating():
+        return _POLL_INTERVAL          # a transform or a view drag changes no selection
     try:
         import bmesh
         seen = set()

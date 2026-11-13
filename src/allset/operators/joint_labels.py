@@ -552,10 +552,10 @@ def label_points(context):
     """[(world point, text, side)] for every visible joint with Draw Label on."""
     from ..ui import layer_joints
     out = []
-    from ..ui.maya_joints import transforming
+    from ..ui.maya_joints import scrubbing, transforming
     screen = getattr(context, "screen", None)
     playing = (screen is not None and screen.is_animation_playing) or (
-        getattr(bpy.context, "mode", None) in {'OBJECT', 'POSE'} and transforming())
+        getattr(bpy.context, "mode", None) in {'OBJECT', 'POSE'} and transforming()) or scrubbing()
     for ob in _armatures(context.view_layer):
         if ob is None or not ob.visible_get():
             continue

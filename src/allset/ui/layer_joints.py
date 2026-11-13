@@ -137,6 +137,27 @@ def _object_kind(ob):
         return None
 
 
+def _children(bones):
+    """{joint name: [child joint names]} of a skeleton, read in one pass over its bones (a bone's
+    ``children_recursive`` walks every bone of the skeleton on each call)."""
+    kids = {}
+    for b in bones:
+        p = b.parent
+        if p is not None:
+            kids.setdefault(p.name, []).append(b.name)
+    return kids
+
+
+def _below(name, kids):
+    """``name`` and every joint below it, from a ``_children`` map."""
+    out, stack = [name], [name]
+    while stack:
+        for child in kids.get(stack.pop(), ()):
+            out.append(child)
+            stack.append(child)
+    return out
+
+
 def _compute(ob):
     pose = ob.pose
     if pose is None or not hasattr(bpy.types.PoseBone, PROP):
@@ -174,8 +195,9 @@ def _compute(ob):
     out = {}
     if whole is not None:                       # the skeleton object is above every joint: its type wins
         out = {b.name: whole for b in bones}
+    kids = _children(bones) if ranked else {}
     for _depth, name, b, hidden, kind in ranked:
-        names = (name, *(c.name for c in b.children_recursive))
+        names = _below(name, kids)
         if hidden:
             for n in names:
                 out[n] = HIDDEN

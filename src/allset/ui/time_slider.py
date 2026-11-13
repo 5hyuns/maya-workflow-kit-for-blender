@@ -966,8 +966,9 @@ def tick_nodes(context):
 
 
 def _draw_keys(context, region, maya=False):
-    from .maya_joints import transforming
-    keep = context.screen.is_animation_playing or (context.mode in {'OBJECT', 'POSE'} and transforming())
+    from .maya_joints import scrubbing, transforming
+    keep = (context.screen.is_animation_playing or (context.mode in {'OBJECT', 'POSE'} and transforming())
+            or scrubbing())
     keys = key_frames(tick_nodes(context), keep)
     if not keys:
         return

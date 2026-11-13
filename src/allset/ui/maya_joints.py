@@ -387,26 +387,65 @@ def _unpickable(ob, js):
     return {n for n, j in js.items() if j.state is not None or (n in bones and bones[n].hide_select)}
 
 
+def _shape_points(shape, matrix, depsgraph):
+    """``shape_lines`` as one (2E, 3) array, from the edges read once per shape (``_widget_segments``)."""
+    import numpy as np
+    segs, _moves = _widget_segments(shape, depsgraph)
+    if not len(segs):
+        return np.zeros((0, 3))
+    m = np.array(matrix, np.float64)
+    return segs @ m[:3, :3].T + m[:3, 3]
+
+
+def _pick_lines(context, ob, js):
+    """(joint names, (S, 2) screen start points, end points, in-front mask, owner index per segment) of every joint of
+    ``js`` that can be picked: the lines ``joint_segments`` draws for each (sphere and bones to its children, or its
+    custom shape), built for all joints at once."""
+    import numpy as np
+    from ..operators.preselect import project
+    dg = context.evaluated_depsgraph_get()
+    skip = _unpickable(ob, js)
+    names = [n for n in js if n not in skip and js[n].state != _HIDDEN]
+    plain = [n for n in names if js[n].shape is None]
+    rings = {}
+    if plain:
+        c = np.array([tuple(js[n].centre) for n in plain], np.float64)
+        f = np.array([[tuple(r) for r in js[n].frame] for n in plain], np.float64)
+        r = np.array([js[n].radius for n in plain], np.float64)
+        rings = dict(zip(plain, _spheres(c, f, r).reshape(len(plain), -1, 3)))
+    kept, chunks = [], []
+    for n in names:
+        j = js[n]
+        if j.shape is not None:
+            pts = _shape_points(j.shape[0], j.shape[1], dg)
+        else:
+            pts = rings[n]
+            more = [tuple(p) for cn in j.children if js[cn].shape is None for p in bone_lines(j, js[cn])]
+            if more:
+                pts = np.vstack((pts, np.array(more, np.float32)))
+        if len(pts):
+            kept.append(n)
+            chunks.append(np.asarray(pts, np.float64).reshape(-1, 3))
+    if not kept:
+        return kept, np.zeros((0, 2)), np.zeros((0, 2)), np.zeros(0, bool), np.zeros(0, np.int64)
+    owner = np.repeat(np.arange(len(kept)), [len(p) // 2 for p in chunks])
+    region, rv3d = context.region, context.region_data
+    xy, front = project(np.concatenate(chunks), rv3d.perspective_matrix, region.width, region.height)
+    return kept, xy[0::2], xy[1::2], front[0::2] & front[1::2], owner
+
+
 def screen_distance(context, ob, mouse):
     """{joint: screen distance from ``mouse`` to its drawn lines} of armature ``ob``, for the joints that can be
     picked."""
+    import numpy as np
     from ..operators.preselect import segment_distance
-    js = skeleton(ob, context.scene)
-    dg = context.evaluated_depsgraph_get()
-    skip = _unpickable(ob, js)
-    out = {}
-    for n in js:
-        if n in skip:
-            continue
-        pts = joint_segments(js, n, dg)
-        if not pts:
-            continue
-        a, b, ok = _screen(context, pts)
-        if not ok.any():
-            continue
-        d, _t = segment_distance(mouse, a[ok], b[ok])
-        out[n] = float(d.min())
-    return out
+    names, a, b, ok, owner = _pick_lines(context, ob, skeleton(ob, context.scene))
+    if not names:
+        return {}
+    d, _t = segment_distance(mouse, a, b)
+    near = np.full(len(names), np.inf)
+    np.minimum.at(near, owner[ok], d[ok])
+    return {n: float(near[i]) for i, n in enumerate(names) if np.isfinite(near[i])}
 
 
 def pick(context, ob, mouse, radius):
@@ -451,24 +490,50 @@ def region_pick(context, ob, poly):
     closest to the root (a box around a whole chain selects its top joint); controls (bones with a custom shape)
     and bones of a skeleton not drawn as Maya joints are each picked, like Maya's curve controls. Joints that can't be
     picked (``_unpickable``) are left out. Returns names."""
+    import numpy as np
     js = skeleton(ob, context.scene)
-    dg = context.evaluated_depsgraph_get()
     maya_drawn = getattr(ob.data, "display_type", 'OCTAHEDRAL') not in STICK_TYPES | SHAPE_TYPES
-    skip = _unpickable(ob, js)
+    names, a, b, ok, owner = _pick_lines(context, ob, js)
     joints, each = [], []
-    for n in js:
-        if n in skip:
-            continue
-        pts = joint_segments(js, n, dg)
-        if not pts:
-            continue
-        a, b, ok = _screen(context, pts)
-        if ok.any() and segments_touch([tuple(v) for v in a[ok]], [tuple(v) for v in b[ok]], poly):
+    if not names:
+        return each
+    hit = np.zeros(len(names), bool)
+    use = np.flatnonzero(ok)
+    hit[owner[use[_touching(a[use], b[use], poly)]]] = True
+    index = {n: i for i, n in enumerate(js)}
+    for i, n in enumerate(names):
+        if hit[i]:
             if maya_drawn and js[n].shape is None:
-                joints.append((depth(js, n), list(js).index(n), n))
+                joints.append((depth(js, n), index[n], n))
             else:
                 each.append(n)
     return each + ([min(joints)[2]] if joints else [])
+
+
+def _touching(a, b, poly):
+    """``segments_touch`` for each segment a[i]-b[i] ((S, 2) arrays) at once: a bool per segment."""
+    import numpy as np
+    pg = np.asarray(poly, np.float64).reshape(-1, 2)
+
+    def inside(p):
+        x, y = p[:, 0], p[:, 1]
+        res = np.zeros(len(p), bool)
+        for i in range(len(pg)):
+            (x1, y1), (x2, y2) = pg[i], pg[i - 1]
+            if y1 != y2:              # a level edge never crosses the ray
+                res ^= ((y1 > y) != (y2 > y)) & (x < (x2 - x1) * (y - y1) / (y2 - y1) + x1)
+        return res
+
+    out = inside(a) | inside(b)
+    ax, ay, bx, by = a[:, 0], a[:, 1], b[:, 0], b[:, 1]
+    for i in range(len(pg)):
+        (ex0, ey0), (ex1, ey1) = pg[i - 1], pg[i]
+        d1 = (ex1 - ex0) * (ay - ey0) - (ey1 - ey0) * (ax - ex0)
+        d2 = (ex1 - ex0) * (by - ey0) - (ey1 - ey0) * (bx - ex0)
+        d3 = (bx - ax) * (ey0 - ay) - (by - ay) * (ex0 - ax)
+        d4 = (bx - ax) * (ey1 - ay) - (by - ay) * (ex1 - ax)
+        out |= (d1 * d2 < 0) & (d3 * d4 < 0)
+    return out
 
 
 def _sphere_array(js):
@@ -1050,11 +1115,23 @@ def _posing():
     return getattr(bpy.context, "mode", None) in {'OBJECT', 'POSE'} and transforming()
 
 
+SCRUB_MODALS = frozenset({"ALLSET_OT_time_scrub", "ANIM_OT_change_frame"})
+
+
+def scrubbing():
+    """The time is being dragged in a Time Slider / timeline (a scrub): until it ends only the frame changes, as
+    while playback runs."""
+    wm = bpy.context.window_manager
+    if wm is None:
+        return False
+    return any(op.bl_idname in SCRUB_MODALS for w in wm.windows for op in w.modal_operators)
+
+
 def _playing(context):
-    """Playback runs or a pose / object is being dragged: the joint lists and control shapes read once are used
-    again."""
+    """Playback runs, the time is scrubbed or a pose / object is being dragged: the joint lists and control shapes
+    read once are used again."""
     screen = getattr(context, "screen", None)
-    return (screen is not None and screen.is_animation_playing) or _posing()
+    return (screen is not None and screen.is_animation_playing) or _posing() or scrubbing()
 
 
 def view_lines(context):
