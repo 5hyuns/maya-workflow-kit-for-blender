@@ -539,13 +539,23 @@ def _remove_handler():
 
 @persistent
 def _on_depsgraph(_scene, depsgraph):
-    """Drop the cached batch of objects whose geometry changed (edits, modifiers, shape keys)."""
+    """Drop the cached batch of objects whose geometry changed (edits, modifiers, shape keys). Their edges go too,
+    unless only the points can have moved: a mesh that only deforms (``keeps_edges``) re-evaluated with no update of
+    its own mesh data — its skeleton or lattice moved (a moved rig re-read every child mesh's edges each step)."""
     if not _batches and not _edges:
         return
+    data_updated = None
     for update in depsgraph.updates:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
-            _batches.pop(update.id.original.session_uid, None)
-            _edges.pop(update.id.original.session_uid, None)
+            ob = update.id.original
+            _batches.pop(ob.session_uid, None)
+            if ob.session_uid not in _edges:
+                continue
+            if data_updated is None:
+                data_updated = {u.id.original.as_pointer() for u in depsgraph.updates
+                                if not isinstance(u.id, bpy.types.Object)}
+            if ob.data is None or ob.data.as_pointer() in data_updated or not keeps_edges(ob):
+                _edges.pop(ob.session_uid, None)
 
 
 def time_dependent(ob):

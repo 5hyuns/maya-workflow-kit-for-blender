@@ -7,6 +7,7 @@ import random
 from importlib import import_module
 
 import bpy
+import numpy as np
 from mathutils import Euler, Matrix, Vector
 
 import kit
@@ -72,3 +73,55 @@ def test_all_at_once_matches_one_by_one():
     assert wire.depth_biases([], dg, pm, (100, 100)) == []
     few = objs[:wire.ARRAY_FROM - 1]        # a few objects: one by one
     assert wire.depth_biases(few, dg, pm, (1280, 800)) == [wire.depth_bias(o, dg, pm, (1280, 800)) for o in few]
+
+
+def test_a_moved_rig_keeps_its_meshes_edges():
+    """Moving a skeleton re-evaluates the mesh it deforms: the highlighted mesh's wire reads its points again but
+    keeps its edges; an edit of the mesh itself, or a modifier that can change its edges, reads them again."""
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    arm = bpy.data.objects.new("rig", bpy.data.armatures.new("rig"))
+    bpy.context.scene.collection.objects.link(arm)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode='EDIT')
+    eb = arm.data.edit_bones.new("b")
+    eb.tail = (0, 0, 2)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    me = bpy.data.meshes.new("skin")
+    me.from_pydata([(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (0, 2)], [],
+                   [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)])
+    skin = bpy.data.objects.new("skin", me)
+    bpy.context.scene.collection.objects.link(skin)
+    group = skin.vertex_groups.new(name="b")
+    group.add(list(range(8)), 1.0, 'REPLACE')
+    skin.modifiers.new("Armature", 'ARMATURE').object = arm
+    pb = arm.pose.bones["b"]
+    pb.rotation_mode = 'XYZ'
+    pb.rotation_euler = (0.6, 0.0, 0.0)          # posed and not parented: moving the rig moves the points
+    bpy.context.view_layer.update()
+    assert wire.keeps_edges(skin)
+    uid = skin.session_uid
+
+    def read():
+        co, ed = wire.edges_of(skin, bpy.context.evaluated_depsgraph_get())
+        wire._batches[uid] = (None, len(ed))
+        return co
+
+    first = read()
+    kept = wire._edges[uid]
+    arm.location.y += 0.5
+    bpy.context.view_layer.update()
+    assert uid not in wire._batches, "the points moved: the batch is made again"
+    assert wire._edges.get(uid) is kept, "the edges are kept"
+    moved = read()
+    assert not np.array_equal(first, moved) and wire._edges.get(uid) is kept
+    me.vertices[0].co.x -= 0.25                                   # the mesh itself edited
+    me.update()
+    bpy.context.view_layer.update()
+    assert uid not in wire._edges, "an edit of the mesh reads its edges again"
+    read()
+    skin.modifiers.new("Subdivision", 'SUBSURF')                  # can change the edges
+    bpy.context.view_layer.update()
+    assert uid not in wire._edges
+    wire._batches.clear()
+    wire._edges.clear()

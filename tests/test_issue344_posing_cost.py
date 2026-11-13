@@ -200,6 +200,53 @@ def test_time_slider_keeps_a_bones_curves_while_playing_or_dragging():
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def test_time_slider_holds_the_keys_while_a_move_runs():
+    """While a move runs in Pose Mode (no playback) the Time Slider finds the selected bones' keys once; keys moved
+    meanwhile (an animation editor's drag updates their Action) are found again; during playback, or with no move
+    running, the keys are found on every redraw."""
+    arm = _rig(6)
+    bones = [arm.pose.bones[i] for i in (1, 2, 3)]
+    for f in (1, 8, 15):
+        for pb in bones:
+            pb.location = (0.01 * f, 0, 0)
+            pb.keyframe_insert("location", frame=f)
+    bpy.context.view_layer.update()
+    calls = []
+    real_frames, real_nodes, real_moving = ts.key_frames, ts.tick_nodes, mj.transforming
+    ts.key_frames = lambda nodes, keep=False: calls.append(keep) or real_frames(nodes, keep)
+    ts.tick_nodes = lambda _context: bones
+    screen = SimpleNamespace(is_animation_playing=False)
+    ctx = SimpleNamespace(screen=screen, mode='POSE')
+    region = SimpleNamespace(as_pointer=lambda: 7)
+    try:
+        mj.transforming = lambda: True
+        want = ts._shown_keys(ctx, region)
+        assert [f for f, _b in want] == [1, 8, 15]
+        for _i in range(3):
+            assert ts._shown_keys(ctx, region) == want
+        assert calls == [True], f"held while the move runs ({calls})"
+        fc = time_keys.node_fcurves(bones[0])[0]
+        fc.keyframe_points[1].co.x = 9.0
+        fc.update()
+        arm.animation_data.action.update_tag()
+        bpy.context.view_layer.update()
+        assert [f for f, _b in ts._shown_keys(ctx, region)] == [1, 8, 9, 15], "a moved key shows"
+        assert len(calls) == 2
+        screen.is_animation_playing = True
+        ts._shown_keys(ctx, region)
+        ts._shown_keys(ctx, region)
+        assert len(calls) == 4, "during playback the keys are read every time"
+        screen.is_animation_playing = False
+        mj.transforming = lambda: False
+        ts._shown_keys(ctx, region)
+        ts._shown_keys(ctx, region)
+        assert len(calls) == 6 and calls[-1] is False and not ts._HELD, "no move: read every time, nothing held"
+    finally:
+        ts.key_frames, ts.tick_nodes, mj.transforming = real_frames, real_nodes, real_moving
+        ts._HELD.clear()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
 def test_draw_label_joints_are_found_once_while_dragging():
     labels = import_module(kit.MODULE + ".operators.joint_labels")
     arm = _rig(6)

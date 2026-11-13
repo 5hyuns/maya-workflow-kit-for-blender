@@ -1015,11 +1015,38 @@ def tick_nodes(context):
     return [n for n in channel_box.targets(context) if _shows_keys(n)]
 
 
-def _draw_keys(context, region, maya=False):
+_HELD = {}      # region pointer -> its keys while a move or a time drag runs without playback (``_shown_keys``)
+
+
+def _shown_keys(context, region):
+    """``key_frames`` of the ticked nodes. While a move (Object / Pose Mode) or a time drag runs and playback doesn't,
+    neither the selection nor the keys change until it ends — unless an animation editor's move drags keys, which
+    updates their Action (``_drop_held``) — so the keys found once are drawn again (hundreds of selected bones were
+    read again on every redraw of the drag). During playback a move can key (auto keying): read every time."""
     from .maya_joints import scrubbing, transforming
-    keep = (context.screen.is_animation_playing or (context.mode in {'OBJECT', 'POSE'} and transforming())
-            or scrubbing())
-    keys = key_frames(tick_nodes(context), keep)
+    playing = context.screen.is_animation_playing
+    dragging = (context.mode in {'OBJECT', 'POSE'} and transforming()) or scrubbing()
+    if playing or not dragging:
+        _HELD.clear()
+        return key_frames(tick_nodes(context), playing or dragging)
+    ptr = region.as_pointer()
+    got = _HELD.get(ptr)
+    if got is None:
+        if len(_HELD) > 16:
+            _HELD.clear()
+        got = _HELD[ptr] = key_frames(tick_nodes(context), True)
+    return got
+
+
+@persistent
+def _drop_held(_scene, depsgraph=None):
+    """Keys moved (their Action updated): the held keys are read again."""
+    if _HELD and (depsgraph is None or depsgraph.id_type_updated('ACTION')):
+        _HELD.clear()
+
+
+def _draw_keys(context, region, maya=False):
+    keys = _shown_keys(context, region)
     if not keys:
         return
     import gpu
@@ -1246,7 +1273,8 @@ def restore_frame():
 
 
 _UNDO_HANDLERS = (("undo_pre", _keep_frame_pre), ("redo_pre", _keep_frame_pre),
-                  ("undo_post", _keep_frame_post), ("redo_post", _keep_frame_post))
+                  ("undo_post", _keep_frame_post), ("redo_post", _keep_frame_post),
+                  ("depsgraph_update_post", _drop_held), ("undo_post", _drop_held), ("redo_post", _drop_held))
 
 
 def register():
@@ -1285,6 +1313,7 @@ def unregister():
     if bpy.app.timers.is_registered(restore_frame):
         bpy.app.timers.unregister(restore_frame)
     _KEEP.clear()
+    _HELD.clear()
     if _on_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load)
     bpy.msgbus.clear_by_owner(_OWNER)
