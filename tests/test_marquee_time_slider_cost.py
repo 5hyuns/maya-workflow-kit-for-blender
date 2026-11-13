@@ -348,3 +348,39 @@ def test_big_edit_mesh_without_point_keys_is_not_walked():
     got = sorted((fc.data_path, fc.array_index) for fc in pk.selected_point_curves(ob))
     assert got == [("vertices[9].co", i) for i in range(3)], got
     _object_mode()
+
+
+def test_time_slider_skips_the_curves_of_objects_without_animation():
+    """Thousands of selected props: an object without animation data is not looked through for its curves or
+    animation layers; keyed objects and keyed blendShape weights of an unkeyed mesh still give their ticks."""
+    al = import_module(kit.MODULE + ".operators.anim_layers")
+    _clear()
+    scene = bpy.context.scene
+    obs = []
+    for i in range(400):
+        ob = bpy.data.objects.new(f"p{i:03d}", None)
+        scene.collection.objects.link(ob)
+        obs.append(ob)
+    keyed = obs[::50]
+    for i, ob in enumerate(keyed):
+        for f in (2 + i, 30):
+            ob.location.x = 0.1 * f
+            ob.keyframe_insert("location", index=0, frame=f)
+    bpy.ops.mesh.primitive_cube_add()
+    face = bpy.context.active_object
+    face.shape_key_add(name="Basis")
+    smile = face.shape_key_add(name="smile")
+    smile.value = 0.5
+    smile.keyframe_insert("value", frame=17)
+    nodes = obs + [face]
+    want = {}
+    for ob in keyed:
+        for fc in tk.node_fcurves(ob):
+            for kp in fc.keyframe_points:
+                want[round(kp.co.x, 3)] = False
+    want[17.0] = False
+    with _Count(tk, "node_fcurves") as looks, _Count(al, "hidden_base_curves") as layers:
+        got = ts.key_frames(nodes)
+    assert got == sorted(want.items()), got
+    assert looks.calls == len(keyed) and layers.calls == len(keyed), \
+        f"only the {len(keyed)} animated objects are looked through ({looks.calls}, {layers.calls})"

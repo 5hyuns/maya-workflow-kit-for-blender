@@ -976,13 +976,16 @@ def key_frames(nodes, keep=False):
         if curves is None:
             if isinstance(node, bpy.types.PoseBone):
                 curves = bones[node.as_pointer()]
+            elif isinstance(node, bpy.types.Object) and node.animation_data is None:
+                curves = []         # no curves and no animation layers of its own (thousands of selected props)
             else:
                 curves = time_keys.node_fcurves(node)
+                if isinstance(node, bpy.types.Object):
+                    # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
+                    from ..operators import anim_layers
+                    curves = list(curves) + anim_layers.hidden_base_curves(node, bpy.context.scene)
             if isinstance(node, bpy.types.Object):
-                # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
-                from ..operators import anim_layers
-                curves = list(curves) + anim_layers.hidden_base_curves(node, bpy.context.scene)
-                curves += blend_weight_curves(node)
+                curves = list(curves) + blend_weight_curves(node)
                 # component mode: the keys of the selected points (vertices / CVs / lattice points)
                 from ..operators import point_keys
                 curves += point_keys.selected_point_curves(node)
@@ -1049,8 +1052,11 @@ def blend_weight_curves(ob):
     bs = channel_box.blend_shape_key(ob)
     if bs is None:
         return []
+    fcs = compat.id_fcurves(bs)
+    if not fcs:
+        return []           # no weight is keyed: the targets aren't listed
     paths = {channel_box.blend_path(kb.name) for kb in channel_box.blend_shape_targets(bs)}
-    return [fc for fc in compat.id_fcurves(bs) if fc.data_path in paths]
+    return [fc for fc in fcs if fc.data_path in paths]
 
 
 def key_x(region, frame, maya):
