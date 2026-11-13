@@ -33,11 +33,32 @@ MARK = "allset_hidden_by_parent"
 SHOW_FILTER = "allset_hidden_by_show"
 
 
+def _below(ob, kids):
+    """``Object.children_recursive`` of ``ob`` (depth first, children in ``bpy.data.objects`` order) from the
+    parent -> children map ``kids``, without recursion (any depth)."""
+    out, stack = [], [iter(kids.get(ob, ()))]
+    while stack:
+        child = next(stack[-1], None)
+        if child is None:
+            stack.pop()
+            continue
+        out.append(child)
+        stack.append(iter(kids.get(child, ())))
+    return out
+
+
 def hierarchy(objects):
-    """``objects`` plus everything below them, each once, parents first."""
+    """``objects`` plus everything below them, each once, parents first. The parent -> children map is read once for
+    all of them (``Object.children_recursive`` reads every object of the file on each call)."""
+    objects = list(objects)
+    kids = {}
+    if objects:
+        for child in bpy.data.objects:
+            if (parent := child.parent) is not None:
+                kids.setdefault(parent, []).append(child)
     out, seen = [], set()
     for ob in objects:
-        for o in (ob, *ob.children_recursive):
+        for o in (ob, *_below(ob, kids)):
             if o.session_uid not in seen:
                 seen.add(o.session_uid)
                 out.append(o)

@@ -228,3 +228,38 @@ def test_sync_reads_the_same_hidden_ancestors_as_one_by_one():
         e.parent = deep
         deep = e
     assert dag._Walk(scene).by_ancestor(deep) == dag.hidden_by_ancestor(deep, scene)
+
+
+def test_hierarchy_of_many_picked_objects_reads_the_file_once():
+    """Delete / Export Selection / Isolate on many picked objects: the same objects in the same order as
+    ``children_recursive`` gives, at a cost that doesn't grow with picked objects x objects in the file."""
+    import random
+    import time
+    g, c1, c2 = _scene()
+    rnd = random.Random(3)
+    obs = [g, c1, c2]
+    for i in range(3000):
+        e = bpy.data.objects.new(f"n{i:04d}", None)
+        bpy.context.scene.collection.objects.link(e)
+        e.parent = rnd.choice(obs[-60:]) if rnd.random() < 0.7 else None
+        obs.append(e)
+    picked = obs[::4]
+    want, seen = [], set()
+    for ob in picked[:40]:                       # the reference: Blender's own walk, object by object
+        for o in (ob, *ob.children_recursive):
+            if o.session_uid not in seen:
+                seen.add(o.session_uid)
+                want.append(o.name)
+    assert [o.name for o in dag.hierarchy(picked[:40])] == want
+    t = time.perf_counter()
+    got = dag.hierarchy(picked)
+    dt = time.perf_counter() - t
+    assert len({o.session_uid for o in got}) == len(got) and set(picked) <= set(got)
+    assert dt < 0.15, f"hierarchy of {len(picked)} picked objects took {dt:.3f} s"
+    deep = obs[-1]
+    for _i in range(1200):                       # deeper than Python's recursion limit
+        e = bpy.data.objects.new("chain", None)
+        bpy.context.scene.collection.objects.link(e)
+        e.parent = deep
+        deep = e
+    assert dag.hierarchy([obs[-1]])[-1] == deep
