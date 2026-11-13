@@ -369,6 +369,37 @@ def s_shift_dragged():
 
 
 @step
+def s_sweep():
+    # Blender: Shift held, press the arrow of pCylinder1, sweep right over its eye and camera, then down over box1's
+    box = bpy.data.objects["box1"]
+    box.hide_viewport = box.hide_render = False
+    pts = [column_point("pCylinder1", 'SELECT'), column_point("pCylinder1", 'RENDER'), column_point("box1", 'RENDER'),
+           column_point("box1", 'SELECT')]
+    ev('MOUSEMOVE', 'NOTHING', x=pts[0][0], y=pts[0][1], shift=True)
+    ev('LEFTMOUSE', 'PRESS', x=pts[0][0], y=pts[0][1], shift=True)
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        for k in range(1, 4):
+            ev('MOUSEMOVE', 'NOTHING', x=ax + (bx - ax) * k // 3, y=ay + (by - ay) * k // 3, shift=True)
+    ev('LEFTMOUSE', 'RELEASE', x=pts[-1][0], y=pts[-1][1], shift=True)
+
+
+@step
+def s_wait_sweep():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_swept():
+    obs = [bpy.data.objects[n] for n in ("pCylinder1", "box1")]
+    state = [(o.name, o.hide_select, o.hide_viewport, o.hide_render) for o in obs]
+    check(f"one sweep turns all 3 icons of both rows off ({state})", all(all(t[1:]) for t in state))
+    for o in obs:
+        o.hide_select = o.hide_viewport = o.hide_render = False
+    bpy.data.objects["box1"].hide_viewport = bpy.data.objects["box1"].hide_render = True    # as s_eyed expects
+
+
+@step
 def s_eyed():
     ob = bpy.data.objects["box1"]
     check(f"the eye hides box1 (visibility off: {ob.hide_viewport})", ob.hide_viewport)

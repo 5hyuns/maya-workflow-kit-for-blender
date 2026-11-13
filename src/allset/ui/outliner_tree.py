@@ -1107,11 +1107,11 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         x0 = row.depth * u
         hit = next((c for c, cx in column_xs(space, region, u, n, first).items() if abs(x - cx) <= 0.5 * u), None)
         if hit is not None and column_state(row, hit) is not None:
-            # Blender: the press flips the column, dragging gives every row passed the same state, Shift takes
-            # everything below each row too
+            # Blender: the press flips the icon, dragging gives every icon passed (any row, any column) the same
+            # state, Shift takes everything below each row too
             _click.update(key=None, time=0.0)
-            self.column, self.column_rows, self.column_last, self.u = (hit, not column_state(row, hit)), {k}, k, u
-            self._set_column(context, rows, k, event.shift)
+            self.column, self.column_cells, self.column_last, self.u = not column_state(row, hit), {(k, hit)}, (x, y), u
+            self._set_column(context, rows, k, hit, event.shift)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         if row.kids and x0 <= x < x0 + 1.1 * u:
@@ -1162,25 +1162,27 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         select_row(context, rows, k, mode, anchor=self.pressed)
         redraw_outliners(context)
 
-    def _set_column(self, context, rows, k, recursive):
+    def _set_column(self, context, rows, k, col, recursive):
         from .outliner_tree_edit import set_column
-        col, on = self.column
         if column_state(rows[k], col) is not None:
-            set_column(context, rows[k], col, on, recursive)
+            set_column(context, rows[k], col, self.column, recursive)
             redraw_outliners(context)
 
     def _drag_column(self, context, event):
         area, region, space = context.area, context.region, context.space_data
         rows = rows_for(context, space)
-        yy = min(max(event.mouse_region_y, 0), region.height - 1)
-        k = row_index_at(area, region, yy, self.u, len(rows))
-        if k is None:
-            return
-        last, self.column_last = self.column_last, k
-        for j in range(min(last, k), max(last, k) + 1):        # a fast move skips no row
-            if j not in self.column_rows:
-                self.column_rows.add(j)
-                self._set_column(context, rows, j, event.shift)
+        n, u = len(rows), self.u
+        xs = column_xs(space, region, u, n, first_row(area, region, n, u))
+        (x0, y0), (x1, y1) = self.column_last, (event.mouse_region_x, event.mouse_region_y)
+        self.column_last = (x1, y1)
+        steps = max(1, int(max(abs(x1 - x0), abs(y1 - y0)) * 4 / u))     # a fast move skips no icon
+        for i in range(1, steps + 1):
+            x, y = x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps
+            k = row_index_at(area, region, y, u, n)
+            col = next((c for c, cx in xs.items() if abs(x - cx) <= 0.5 * u), None)
+            if k is not None and col is not None and (k, col) not in self.column_cells:
+                self.column_cells.add((k, col))
+                self._set_column(context, rows, k, col, event.shift)
 
     # the scrollbar: drag the thumb, a click above / below it pages
     def _start_scroll(self, context, event, bar, n, u):
