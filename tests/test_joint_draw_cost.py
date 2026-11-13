@@ -484,7 +484,7 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
             a.pose.bones[bone].rotation_euler.x += 0.2
             bpy.context.view_layer.update()
             sizes.clear()
-            with _Count(mj, "_control_lines", "_control_points") as n:
+            with _Count(mj, "_control_lines") as n:
                 got = mj._joined(view)
             if many:
                 assert sizes == [plain] and n["_control_lines"] == 1, f"step {step}: built it all {sizes} {n.calls}"
