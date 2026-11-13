@@ -417,12 +417,13 @@ _by_name = {"key": None, "objects": {}}
 def object_names():
     """{name: object} of the file's objects for the rows being drawn: Blender finds a name by walking every object
     of the file (a quarter of a millisecond per row in a file of 5,000 objects), so the names are mapped once while
-    the file's names and its number of objects stay the same (``outliner.structure_version``, the object count; a
-    selection change keeps them). Read it once per redraw and look rows up with ``object_named``, which checks what it
-    finds."""
-    from .outliner import structure_version
+    the file's names and objects stay the same (``outliner.structure_version`` / ``objects_version``: a row's object
+    can't be removed without them changing, so no removed object is kept). With linked libraries a linked and a
+    local object can share a name, so there the object count is checked too (counting walks the objects). Read it
+    once per redraw and look rows up with ``object_named``, which checks what it finds."""
+    from .outliner import objects_version, structure_version
     objects = bpy.data.objects
-    key = (structure_version(), len(objects))
+    key = (structure_version(), objects_version(), len(objects) if len(bpy.data.libraries) else -1)
     if _by_name["key"] != key:
         # the first object of a name wins, like ``get`` (a linked object can share a local object's name)
         _by_name["objects"] = dict(zip(reversed(objects.keys()), reversed(objects.values())))

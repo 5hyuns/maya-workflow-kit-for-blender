@@ -78,8 +78,13 @@ def test_outliner_rows_find_their_objects_like_get():
         assert tree.object_named(n) == bpy.data.objects.get(n), n
     obs[3].name = "renamed"                          # no depsgraph update in between
     obs[5].name = "pCube4"                           # takes the old name of obs[3]
+    for n in names + ["renamed", "pCube4"]:
+        assert tree.object_named(n) == bpy.data.objects.get(n), n
     gone = obs[7].name
+    version = outliner.objects_version()
     bpy.data.objects.remove(obs[7])
+    bpy.context.view_layer.update()                  # as before every redraw
+    assert outliner.objects_version() != version, "a removed object drops the kept names (none is kept removed)"
     lone = bpy.data.objects.new("lone", None)        # in no collection: no update flags it
     for n in names + ["renamed", "pCube4", gone, "lone"]:
         assert tree.object_named(n) == bpy.data.objects.get(n), n
