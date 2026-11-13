@@ -3,10 +3,11 @@ state and the same undo steps.
 
 Every mode switch evaluates what is pending before it and what it changed after it, and each evaluation runs every
 depsgraph handler (in a scene of thousands of objects each one costs several milliseconds even when it changes
-little). A click on another skeleton's joint is three evaluations (out of Pose Mode, the selection with the joint,
-into Pose Mode); a replace marquee over two posed skeletons is three as well, and its undo step evaluates nothing.
-The joint is written before the switch into Pose Mode, which changes no bone selection; picks that are already
-selected are not written off and on again."""
+little). The selection is written where a switch evaluates anyway: a click on another skeleton's joint is two
+evaluations (out of Pose Mode with the selection and the joint, into Pose Mode), a click from Object Mode on the active
+skeleton's joint one, taking the last joint off one; a replace marquee over two posed skeletons is two and its undo
+step evaluates nothing. Entering Pose Mode changes no bone selection; picks that are already selected are not
+written off and on again."""
 
 from importlib import import_module
 
@@ -141,6 +142,9 @@ def _start(kind):
     if kind == "object_mesh":
         obs["box"].select_set(True)
         bpy.context.view_layer.objects.active = obs["box"]
+    elif kind == "object_C":
+        obs["rigC"].select_set(True)
+        bpy.context.view_layer.objects.active = obs["rigC"]
     elif kind == "pose_A":
         _pose("rigA", picks=(("rigA", "a1"),))
     elif kind == "pose_A3":
@@ -246,7 +250,8 @@ def test_a_joint_click_ends_as_with_the_joint_written_after_the_mode_switch():
     _scene()
     ctx = bpy.context
     try:
-        for start in ("object", "object_mesh", "pose_A", "pose_A3", "pose_AB", "edit_B", "pose_A_hidden_B"):
+        for start in ("object", "object_mesh", "object_C", "pose_A", "pose_A3", "pose_AB", "edit_B",
+                      "pose_A_hidden_B"):
             for rig, bone in (("rigA", "a2"), ("rigA", "a1"), ("rigB", "b3")):
                 for mod, (shift, ctrl) in MODS.items():
                     _start(start)
@@ -331,14 +336,16 @@ class _Rounds:
         bpy.app.handlers.depsgraph_update_post.remove(self._fn)
 
 
-def test_a_click_on_another_skeleton_evaluates_three_times():
-    """Pose Mode on one skeleton, a click on another's joint: out of Pose Mode, the selection with the joint, into
-    Pose Mode (the window's update after it finds nothing left). From Object Mode: two."""
+def test_a_click_on_another_skeleton_evaluates_twice():
+    """Pose Mode on one skeleton, a click on another's joint: out of Pose Mode with the selection and the joint, into
+    Pose Mode (the window's update after it finds nothing left). From Object Mode: making the skeleton active, into
+    Pose Mode with the selection; one when it is the active object already."""
     _scene()
     ctx = bpy.context
     try:
-        for start, rig, bone, most in (("pose_A", "rigB", "b3", 3), ("pose_AB", "rigC", "c2", 3),
-                                       ("object", "rigB", "b3", 2), ("object_mesh", "rigA", "a2", 2)):
+        for start, rig, bone, most in (("pose_A", "rigB", "b3", 2), ("pose_AB", "rigC", "c2", 2),
+                                       ("object", "rigB", "b3", 2), ("object_mesh", "rigA", "a2", 2),
+                                       ("object_C", "rigC", "c2", 1)):
             _start(start)
             bpy.context.view_layer.update()
             with _Rounds() as r:
@@ -351,10 +358,29 @@ def test_a_click_on_another_skeleton_evaluates_three_times():
         _reset()
 
 
-def test_a_replace_marquee_over_posed_skeletons_evaluates_three_times():
+def test_taking_the_last_joint_off_evaluates_once():
+    """Ctrl+click (or Shift+click) on the only picked joint: the skeleton leaves Pose Mode with the joint taken off
+    and the skeleton deselected, in one evaluation."""
+    _scene()
+    ctx = bpy.context
+    try:
+        for shift, ctrl in ((False, True), (True, False)):
+            _start("pose_A")
+            bpy.context.view_layer.update()
+            rig = bpy.context.scene.objects["rigA"]
+            with _Rounds() as r:
+                js.select(ctx, rig, "a1", shift, ctrl)
+                bpy.context.view_layer.update()
+            assert r.n <= 1, (shift, ctrl, r.n)
+            assert (rig.mode, rig.select_get(), [pb.name for pb in rig.pose.bones if pb.select]) ==                 ('OBJECT', False, []), (rig.mode, rig.select_get())
+    finally:
+        _reset()
+
+
+def test_a_replace_marquee_over_posed_skeletons_evaluates_twice():
     """Two posed skeletons with their joints picked, a replace box over the same joints (Blender's box took them
-    off): out of Pose Mode, the selection with the joints, into Pose Mode; the joints are written once each and the
-    marquee's undo step evaluates nothing."""
+    off): out of Pose Mode with the selection and the joints, into Pose Mode; the joints are written once each and
+    the marquee's undo step evaluates nothing."""
     _scene()
     picks = {"rigA": ["a0", "a1", "a2", "a3", "a4", "a5"], "rigB": ["b0", "b1", "b2", "b3"]}
     real = mj.region_pick
@@ -379,7 +405,7 @@ def test_a_replace_marquee_over_posed_skeletons_evaluates_three_times():
                     bpy.context.view_layer.update()
             finally:
                 cb.set_bone_selected = real_write
-            assert r.n <= 3, r.n
+            assert r.n <= 2, r.n
             assert in_push.n == 0, in_push.n
             assert len(writes) == sum(map(len, picks.values())), writes
             obs = bpy.context.scene.objects

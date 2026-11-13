@@ -392,6 +392,19 @@ def select(context, ob, name, shift=False, ctrl=False):
     pb = ob.pose.bones[name]
     selected = bone_selected(pb)
     remove = (ctrl and not shift) or (shift and not ctrl and selected)
+    if (remove and context.active_object == ob and ob.mode == 'POSE' and _switches(context, ob)
+            and not any(bone_selected(b) for b in ob.pose.bones if b != pb)):
+        # the last joint taken off: the skeleton leaves Pose Mode, its joint written with that switch (see below)
+        def write():
+            set_bone_selected(pb, False)
+            if ob.data.bones.active == pb.bone:
+                ob.data.bones.active = None
+            ob.select_set(False)
+            if context.view_layer.objects.active == ob:
+                context.view_layer.objects.active = next(iter(context.selected_objects), None)
+        if not _switch_with(context, 'OBJECT', write, lambda: ob.mode == 'OBJECT'):
+            write()
+        return False
     if remove:
         set_bone_selected(pb, False)
         if ob.data.bones.active == pb.bone:
@@ -403,31 +416,87 @@ def select(context, ob, name, shift=False, ctrl=False):
             if context.view_layer.objects.active == ob:
                 context.view_layer.objects.active = next(iter(context.selected_objects), None)
         return False
-    if context.mode != 'OBJECT' and context.active_object != ob:
+    leave = context.mode != 'OBJECT' and context.active_object != ob
+    # Every mode switch evaluates the scene after it (and what is pending before it), so the selection is written
+    # where an evaluation comes anyway: inside the one after the switch out of the mode another object is in, or
+    # after the switch from Object Mode into Pose Mode (the switch in only needs ``ob`` active and, for a replace,
+    # no other skeleton selected: object_edit.cc ``posemode_exec`` enters the selected skeletons too), else before
+    # the switch in. Entering Pose Mode changes no bone selection (pose_edit.cc ``ED_object_posemode_enter_ex``), so
+    # the joint may be written before it. Not when a switch may fail (the joint would stay picked) or ``ob`` is in
+    # Edit Mode (leaving it writes the edit bones' selection and lead into the bones).
+    sure = ob.mode in {'POSE', 'OBJECT'} and _switches(context, ob) and _in_layer(context, ob)
+    if leave and sure and _switches(context, context.active_object):
+        if not _switch_with(context, 'OBJECT', lambda: _write_pick(context, ob, name, shift, ctrl, True),
+                            lambda: bpy.context.mode == 'OBJECT'):
+            _write_pick(context, ob, name, shift, ctrl, True)
+        if ob.mode != 'POSE':
+            bpy.ops.object.mode_set(mode='POSE')
+        return True
+    if leave:
         bpy.ops.object.mode_set(mode='OBJECT')
-    # The joint is written before the switch into Pose Mode: a mode switch first evaluates what is pending, so the
-    # joint is evaluated with the deselection, not again after the switch (entering Pose Mode changes no bone
-    # selection: pose_edit.cc ``ED_object_posemode_enter_ex``). Not when the switch may fail (the joint would stay
-    # picked) or comes from Edit Mode (leaving it writes the edit bones' selection and lead into the bones).
     early = (ob.mode == 'POSE' or (ob.mode == 'OBJECT' and _switches(context, ob))) and _in_layer(context, ob)
-    if not shift and not ctrl:
-        clear(context, {ob.as_pointer(): {name}} if early else None)
-        for other in context.selected_objects:
-            if other != ob:
-                other.select_set(False)
-    ob.select_set(True)
-    context.view_layer.objects.active = ob
-    if early:
-        pb = ob.pose.bones[name]
-        if not bone_selected(pb):
-            set_bone_selected(pb, True)
-        ob.data.bones.active = ob.data.bones[name]
+    if early and ob.mode == 'OBJECT' and (shift or ctrl or not any(
+            o != ob and o.type == 'ARMATURE' for o in context.view_layer.objects.selected)):
+        if context.view_layer.objects.active != ob:
+            context.view_layer.objects.active = ob     # (set again with the selection)
+        if not _switch_with(context, 'POSE', lambda: _write_pick(context, ob, name, shift, ctrl, True),
+                            lambda: ob.mode == 'POSE'):
+            _write_pick(context, ob, name, shift, ctrl, True)
+        return True
+    _write_pick(context, ob, name, shift, ctrl, early)
     if ob.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
     if not early:
         set_bone_selected(ob.pose.bones[name], True)
         ob.data.bones.active = ob.data.bones[name]
     return True
+
+
+def _write_pick(context, ob, name, shift, ctrl, joint):
+    """A joint pick's selection: a replace clears the joints and the other objects, ``ob`` selected and active, and
+    (``joint``) the joint picked and made the lead (one already picked is not written off and on again)."""
+    from ..ui.channel_box import bone_selected, set_bone_selected
+    if not shift and not ctrl:
+        clear(context, {ob.as_pointer(): {name}} if joint else None)
+        for other in context.selected_objects:
+            if other != ob:
+                other.select_set(False)
+    ob.select_set(True)
+    context.view_layer.objects.active = ob
+    if joint:
+        pb = ob.pose.bones[name]
+        if not bone_selected(pb):
+            set_bone_selected(pb, True)
+        ob.data.bones.active = ob.data.bones[name]
+
+
+def _switch_with(context, mode, write, switched):
+    """``bpy.ops.object.mode_set(mode=mode)`` with ``write()`` run inside the scene evaluation that follows the
+    switch, so it is evaluated together with the switch instead of in an evaluation of its own: a one-time
+    depsgraph_update_pre handler runs it before that evaluation, once the switch is done (``switched()``). Returns
+    True when ``write`` ran there (raising what it raised), False when the switch evaluated nothing (the caller
+    writes)."""
+    done, err = [], []
+
+    def before_update(*_args):
+        if done or not switched():
+            return
+        done.append(True)
+        try:
+            write()
+        except Exception as e:      # noqa: BLE001 - raised from the caller, as a write made there would be
+            err.append(e)
+    handlers = bpy.app.handlers.depsgraph_update_pre
+    handlers.insert(0, before_update)
+    try:
+        bpy.ops.object.mode_set(mode=mode)
+    finally:
+        # removed only now: Blender walks the handler list by index while it calls them
+        while before_update in handlers:
+            handlers.remove(before_update)
+    if err:
+        raise err[0]
+    return bool(done)
 
 
 def _in_layer(context, ob):
@@ -515,25 +584,32 @@ def select_groups(context, groups, shift=False, ctrl=False, restored=None):
                 shift, ctrl = True, True
             result = select_many(context, ob, names, shift, ctrl)
         return result
-    if context.mode != 'OBJECT':
+    first, last = groups[0][0], groups[-1][0]
+
+    def write():
+        cleared = set()
+        if not shift:
+            cleared = clear(context, {ob.as_pointer(): set(names) for ob, names in groups} if early else None)
+            for other in context.selected_objects:
+                if other != first:
+                    other.select_set(False)
+        if early:
+            for ptr, (ob, want) in restored.items():
+                if ptr not in cleared:
+                    _write_joints(ob, want)
+        for ob, _names in groups:
+            ob.select_set(True)
+        context.view_layer.objects.active = last
+        if early:
+            _pick_groups(groups, not shift)     # a replace cleared the leads: each is set again
+
+    if context.mode == 'OBJECT':
+        write()
+    elif not early:
         bpy.ops.object.mode_set(mode='OBJECT')
-    first = groups[0][0]
-    cleared = set()
-    if not shift:
-        cleared = clear(context, {ob.as_pointer(): set(names) for ob, names in groups} if early else None)
-        for other in context.selected_objects:
-            if other != first:
-                other.select_set(False)
-    if early:
-        for ptr, (ob, want) in restored.items():
-            if ptr not in cleared:
-                _write_joints(ob, want)
-    for ob, _names in groups:
-        ob.select_set(True)
-    last = groups[-1][0]
-    context.view_layer.objects.active = last
-    if early:
-        _pick_groups(groups, not shift)     # a replace cleared the leads: each is set again
+        write()
+    elif not _switch_with(context, 'OBJECT', write, lambda: bpy.context.mode == 'OBJECT'):
+        write()                                 # (see ``select``: written with the switch out of Pose Mode)
     if last.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
     if not early:
