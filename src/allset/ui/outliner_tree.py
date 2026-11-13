@@ -776,12 +776,12 @@ def eye_state(row, names=None):
 _restrict_textures = {}
 
 
-def restrict_texture(u, col, on, rgb):
+def restrict_texture(u, col, on, rgb, alpha=1.0):
     """(size, GPU texture) of Blender's own column icon for row height ``u`` (``blender_restrict_icons``: captured
     from Blender's Outliner at that height; the nearest one for a height not captured), in the theme text colour."""
     from .blender_restrict_icons import CELLS
     have = min({k[0] for k in CELLS}, key=lambda k: (abs(k - u), k))
-    key = (have, col, on, rgb)
+    key = (have, col, on, rgb, alpha)
     hit = _restrict_textures.get(key)
     if hit is None:
         import base64
@@ -791,7 +791,7 @@ def restrict_texture(u, col, on, rgb):
         cov = np.frombuffer(zlib.decompress(base64.b64decode(CELLS[(have, col, on)])), np.uint8)
         px = np.empty((have, have, 4), np.float32)
         px[..., :3] = rgb
-        px[..., 3] = cov.reshape(have, have)[::-1] / 255.0        # stored top row first
+        px[..., 3] = cov.reshape(have, have)[::-1] * (alpha / 255.0)        # stored top row first
         buf = gpu.types.Buffer('FLOAT', have * have * 4, px.ravel().tolist())
         hit = _restrict_textures[key] = (have, gpu.types.GPUTexture((have, have), format='RGBA32F', data=buf))
     return hit
@@ -801,8 +801,8 @@ def _draw_restrict(icons, rgb, u):
     import gpu
     from gpu_extras.batch import batch_for_shader
     sh = gpu.shader.from_builtin('IMAGE')
-    for col, on, x0, y0 in icons:
-        _n, tex = restrict_texture(u, col, on, rgb)
+    for col, on, x0, y0, alpha in icons:
+        _n, tex = restrict_texture(u, col, on, rgb, alpha)
         coords = ((x0, y0), (x0 + u, y0), (x0 + u, y0 + u), (x0, y0 + u))
         batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
         sh.uniform_sampler("image", tex)
@@ -904,13 +904,13 @@ def _draw(context, space, region, area):
             _quad(tris, tcol, 0, y0, region.width, y1, child_rgba)
         if HOVER.get(area.as_pointer()) == k:
             _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
+        alpha = 0.5 if hidden and not sel else 1.0      # greyed row: name, icon and column icons
         for col, cx in cols.items():
             # a drawn startup camera (no object) shows a real one's state: selectable, hidden, not rendered
             on = (col == 'SELECT') if row.kind == 'CAMERA' else column_state(row, col, by_name)
             if on is not None:
-                icons.append((col, on, int(cx) - u // 2, y0))
+                icons.append((col, on, int(cx) - u // 2, y0, alpha))
         x = row.depth * u
-        alpha = 0.5 if hidden and not sel else 1.0
         if row.kids:
             _triangle(tris, tcol, x + 0.6 * u, cy, u * 0.17, row.open, (*text, 0.8))
         ix = x + 1.5 * u
