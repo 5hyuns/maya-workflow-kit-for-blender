@@ -8,7 +8,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .. import settings_io, switch
-from . import four_view, selection_wire
+from . import four_view, range_bar, selection_wire
 
 FILE = "viewport_settings.json"
 TICK = 0.5
@@ -112,6 +112,11 @@ def sample():
                 _seen[pointer] = (key, current)
     for pointer in set(_seen) - alive:
         del _seen[pointer]
+    # the Range Slider bar widths found by drawing: the next session's first frame starts from them
+    bars = {f"{w},{u}": e for (w, u), e in range_bar._settled.items()}
+    if _data.get("range_bar") != bars:
+        _data["range_bar"] = bars
+        _dirty = True
     save()
 
 
@@ -144,6 +149,12 @@ def register():
     data = settings_io._read(target)
     if isinstance(data, dict) and isinstance(data.get("panels"), dict):
         _data.update(data)
+    try:
+        for key, extra in _data.get("range_bar", {}).items():
+            w, u = key.split(",")
+            range_bar._settled.setdefault((int(w), float(u)), int(extra))
+    except (AttributeError, ValueError, TypeError):     # a hand-edited file: the bar finds its width by drawing
+        pass
     bpy.app.handlers.load_pre.append(_before_load)
     bpy.app.handlers.load_post.append(_after_load)
     bpy.app.timers.register(_tick, first_interval=TICK, persistent=True)
