@@ -821,12 +821,15 @@ def _draw_restrict(icons, rgb, u):
     import gpu
     from gpu_extras.batch import batch_for_shader
     sh = gpu.shader.from_builtin('IMAGE')
+    quads = {}      # one batch per texture, not per icon
     for col, on, x0, y0, alpha in icons:
-        _n, tex = restrict_texture(u, col, on, rgb, alpha)
-        coords = ((x0, y0), (x0 + u, y0), (x0 + u, y0 + u), (x0, y0 + u))
-        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
-        sh.uniform_sampler("image", tex)
-        batch.draw(sh)
+        pos, uv = quads.setdefault((col, on, alpha), ([], []))
+        a, b, c, d = (x0, y0), (x0 + u, y0), (x0 + u, y0 + u), (x0, y0 + u)
+        pos.extend((a, b, c, a, c, d))
+        uv.extend(((0, 0), (1, 0), (1, 1), (0, 0), (1, 1), (0, 1)))
+    for (col, on, alpha), (pos, uv) in quads.items():
+        sh.uniform_sampler("image", restrict_texture(u, col, on, rgb, alpha)[1])
+        batch_for_shader(sh, 'TRIS', {"pos": pos, "texCoord": uv}).draw(sh)
 
 
 # Blender's restriction columns, left to right (Display menu, kit preference); EYE is the kit's visibility
