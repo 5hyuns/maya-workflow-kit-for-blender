@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large table file: search it (grep) or read line ranges; reading it whole is rarely needed.
 """Kit-made colour shelf icons, drawn by code, one drawing per button.
 
 No Maya icons. A Maya shelf shows one colour pictogram per button; the kit (#23) gives every

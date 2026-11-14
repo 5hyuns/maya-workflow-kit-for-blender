@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large table file: search it (grep) or read line ranges; reading it whole is rarely needed.
 """Simplified Chinese (zh_HANS) translations of the kit's labels and tooltips: {English: translation}.
 
 Kept sorted; ``python tools/i18n_strings.py`` reports coverage and stale keys. Corrections by native
