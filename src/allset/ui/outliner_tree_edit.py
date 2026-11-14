@@ -741,6 +741,50 @@ class ALLSET_MT_outliner_tree_hide(bpy.types.Menu):
         self.layout.operator(ALLSET_OT_outliner_tree_hide.bl_idname, text="Unhide").hide = False
 
 
+_menu_row = {"ob": "", "kind": ""}       # the row the right-click menu was opened on ("" = no object / camera row)
+
+
+def menu_camera(context):
+    """Name of the camera the right-click menu acts on: the clicked row's (a startup camera row the scene has no
+    object for included), else the active object's; "" when neither is a camera."""
+    name = _menu_row["ob"]
+    if name and _menu_row["kind"] == 'CAMERA':
+        return name
+    ob = context.scene.objects.get(name) if name else None
+    if ob is None or ob.type != 'CAMERA':
+        ob = context.active_object
+    return ob.name if ob is not None and ob.type == 'CAMERA' else ""
+
+
+class ALLSET_OT_outliner_set_active_camera(bpy.types.Operator):
+    """Make this camera the scene camera; every 3D View's camera view (Numpad 0) then looks through it"""
+    bl_idname = "allset.outliner_set_active_camera"
+    bl_label = "Set Active Camera"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    camera: StringProperty(options={'SKIP_SAVE'})   # empty: the active object
+
+    def execute(self, context):
+        from .panel_menus import enable_in_viewports
+        scene = context.scene
+        ob = scene.objects.get(self.camera) if self.camera else context.active_object
+        if ob is None and self.camera in tree.CAMERAS:      # a startup camera row the scene has no object for
+            from ..operators import startup_cameras
+            startup_cameras.ensure(scene, context.view_layer)
+            ob = scene.objects.get(self.camera)
+        if ob is None or ob.type != 'CAMERA':
+            self.report({'WARNING'}, "Not a camera")
+            return {'CANCELLED'}
+        enable_in_viewports(ob)
+        context.scene.camera = ob
+        # a kit panel looks through its own (local) camera, which Blender's camera toggle prefers to the scene's
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.spaces.active.use_local_camera = False
+                area.tag_redraw()
+        return {'FINISHED'}
+
+
 class ALLSET_MT_outliner_tree(bpy.types.Menu):
     """Maya's Outliner right-click menu (the same on every row and on empty space)"""
     bl_label = "Outliner"
@@ -753,6 +797,9 @@ class ALLSET_MT_outliner_tree(bpy.types.Menu):
             layout.prop(space, "use_filter_object_content", text="Shapes")
         layout.separator()
         layout.operator(ALLSET_OT_outliner_tree_reveal.bl_idname, text="Reveal Selected")
+        cam = menu_camera(context)
+        if cam:
+            layout.operator(ALLSET_OT_outliner_set_active_camera.bl_idname, icon='CAMERA_DATA').camera = cam
         layout.menu(ALLSET_MT_outliner_tree_hide.__name__)
         layout.separator()
         layout.menu(ALLSET_MT_outliner_tree_sets.__name__)
@@ -778,6 +825,8 @@ class ALLSET_OT_outliner_tree_menu(bpy.types.Operator):
         u = tree.unit(context.preferences)
         k = tree.row_index_at(context.area, context.region, event.mouse_region_y, u, len(rows))
         row = rows[k] if k is not None else None
+        on = row is not None and row.kind in ('OBJECT', 'CAMERA')
+        _menu_row["ob"], _menu_row["kind"] = (row.ob, row.kind) if on else ("", "")
         if row is not None and row.kind in ('SET', 'MEMBER'):
             # the kit's set menu (Select Set Members, Show Set Members, Add / Remove, Rename, Delete Set)
             wm = context.window_manager
@@ -809,6 +858,7 @@ classes = (ALLSET_PT_outliner_tree_rename, ALLSET_OT_outliner_tree_rename, ALLSE
            ALLSET_OT_outliner_tree_walk, ALLSET_OT_outliner_tree_hide, ALLSET_OT_outliner_tree_show_all,
            ALLSET_MT_outliner_tree_sets, ALLSET_MT_outliner_tree_add_set, ALLSET_MT_outliner_tree_remove_set,
            ALLSET_MT_outliner_tree_hide, ALLSET_MT_outliner_tree, ALLSET_OT_outliner_tree_menu,
+           ALLSET_OT_outliner_set_active_camera,
            ALLSET_OT_outliner_tree_delete)
 
 
