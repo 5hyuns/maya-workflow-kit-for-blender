@@ -7454,29 +7454,37 @@
    "Unfold": "Unfold"
   },
   "Labels/operators/view": {
-   "Axis-Locked Tumble/Track": "Axis-Locked Tumble/Track",
    "Default View": "Default View",
-   "Dolly": "Dolly",
-   "Dolly 2D": "Dolly 2D",
+   "Toggle Four Views": "Toggle Four Views"
+  },
+  "Labels/operators/view_frame": {
    "Frame": "Frame",
    "Frame in All Views": "Frame in All Views",
-   "Navigation Chord": "Navigation Chord",
-   "Pan / Zoom 2D View": "Pan / Zoom 2D View",
-   "Redo": "Redo",
    "Selected": "Selected",
-   "Toggle Four Views": "Toggle Four Views",
-   "Track": "Track",
-   "Tumble": "Tumble",
-   "Tumble (Emulated Middle Mouse)": "Tumble (Emulated Middle Mouse)",
-   "Undo": "Undo",
-   "Undo/Redo View Change": "Undo/Redo View Change",
    "With Children": "With Children"
+  },
+  "Labels/operators/view_history": {
+   "Redo": "Redo",
+   "Undo": "Undo",
+   "Undo/Redo View Change": "Undo/Redo View Change"
   },
   "Labels/operators/view_keys3": {
    "Camera Mode Toggle": "Camera Mode Toggle",
    "Cycle Display Mode": "Cycle Display Mode",
    "Move One Pixel": "Move One Pixel",
    "Tweak Mode (hold)": "Tweak Mode (hold)"
+  },
+  "Labels/operators/view_nav": {
+   "Axis-Locked Tumble/Track": "Axis-Locked Tumble/Track",
+   "Dolly": "Dolly",
+   "Navigation Chord": "Navigation Chord",
+   "Track": "Track",
+   "Tumble": "Tumble",
+   "Tumble (Emulated Middle Mouse)": "Tumble (Emulated Middle Mouse)"
+  },
+  "Labels/operators/view_nav_2d": {
+   "Dolly 2D": "Dolly 2D",
+   "Pan / Zoom 2D View": "Pan / Zoom 2D View"
   },
   "Labels/operators/visibility": {
    "Action": "Action",
@@ -10376,25 +10384,33 @@
    "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)"
   },
   "Tooltips/operators/view": {
-   "Alt+LMB tumble while Emulate 3 Button Mouse is on (Blender delivers that drag as a middle drag)": "Alt+LMB tumble while Emulate 3 Button Mouse is on (Blender delivers that drag as a middle drag)",
-   "Dolly the view in / out with a left / right drag (Maya Alt+RMB)": "Dolly the view in / out with a left / right drag (Maya Alt+RMB)",
-   "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)": "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)",
-   "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)": "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)",
    "Go to the default view (Maya Home)": "Go to the default view (Maya Home)",
-   "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)": "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)",
-   "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings": "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings",
-   "Track the view (Maya Alt+MMB); pressing LMB as well dollies": "Track the view (Maya Alt+MMB); pressing LMB as well dollies",
-   "Tumble or track the view along one axis only (Maya Alt+Shift+drag)": "Tumble or track the view along one axis only (Maya Alt+Shift+drag)",
-   "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views": "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views",
-   "Turn a running tumble / track into a dolly when the other mouse button is pressed too": "Turn a running tumble / track into a dolly when the other mouse button is pressed too",
-   "Undo or redo a view change (Maya [ and ]); separate from scene undo": "Undo or redo a view change (Maya [ and ]); separate from scene undo",
-   "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)": "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)"
+   "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings": "Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each\nwith its own camera, shading and Show settings"
+  },
+  "Tooltips/operators/view_frame": {
+   "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)": "Frame the selection (or everything) in every 3D view (Maya Shift+F / Shift+A /\nCtrl+Shift+F)",
+   "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)": "Frame the selection (or everything) in this view with Maya's fit (F, A, Ctrl+Shift+F)"
+  },
+  "Tooltips/operators/view_history": {
+   "Undo or redo a view change (Maya [ and ]); separate from scene undo": "Undo or redo a view change (Maya [ and ]); separate from scene undo"
   },
   "Tooltips/operators/view_keys3": {
    "Cycle the view's display: X-ray joints / joints, curves and meshes / meshes only (Maya Alt+A)": "Cycle the view's display: X-ray joints / joints, curves and meshes / meshes only (Maya Alt+A)",
    "Move the selection one pixel in the view plane (Maya Alt+arrow keys)": "Move the selection one pixel in the view plane (Maya Alt+arrow keys)",
    "Switch the view's camera between perspective and orthographic, keeping the view (Maya Alt+P)": "Switch the view's camera between perspective and orthographic, keeping the view (Maya Alt+P)",
    "Tweak mode while held: click-drag moves what is under the mouse without selecting it first (Maya `)": "Tweak mode while held: click-drag moves what is under the mouse without selecting it first (Maya `)"
+  },
+  "Tooltips/operators/view_nav": {
+   "Alt+LMB tumble while Emulate 3 Button Mouse is on (Blender delivers that drag as a middle drag)": "Alt+LMB tumble while Emulate 3 Button Mouse is on (Blender delivers that drag as a middle drag)",
+   "Dolly the view in / out with a left / right drag (Maya Alt+RMB)": "Dolly the view in / out with a left / right drag (Maya Alt+RMB)",
+   "Track the view (Maya Alt+MMB); pressing LMB as well dollies": "Track the view (Maya Alt+MMB); pressing LMB as well dollies",
+   "Tumble or track the view along one axis only (Maya Alt+Shift+drag)": "Tumble or track the view along one axis only (Maya Alt+Shift+drag)",
+   "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views": "Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views",
+   "Turn a running tumble / track into a dolly when the other mouse button is pressed too": "Turn a running tumble / track into a dolly when the other mouse button is pressed too"
+  },
+  "Tooltips/operators/view_nav_2d": {
+   "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)": "Pan a 2D editor with Alt+MMB, zoom it with Alt+LMB+MMB (Maya)",
+   "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)": "Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)"
   },
   "Tooltips/operators/visibility": {
    "Maya object visibility (h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H)": "Maya object visibility (h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H)"
