@@ -8134,6 +8134,13 @@
   "Labels/ui/creation_inputs": {
    "Select this attribute: click, Ctrl toggle, Shift range, drag over the rows; then middle-drag in the viewport changes it": "Select this attribute: click, Ctrl toggle, Shift range, drag over the rows; then middle-drag in the viewport changes it"
   },
+  "Labels/ui/display_layers": {
+   "Display Type": "Display Type",
+   "Playback": "Playback",
+   "Show the layer's objects (Maya V)": "Show the layer's objects (Maya V)",
+   "Show the layer's objects during playback (Maya P)": "Show the layer's objects during playback (Maya P)",
+   "Visible": "Visible"
+  },
   "Labels/ui/editor_chrome": {
    "Auto Load Selected Objects": "Auto Load Selected Objects",
    "Characters": "Characters",
@@ -8449,14 +8456,12 @@
   },
   "Labels/ui/layer_editor": {
    "Add Selected Objects": "Add Selected Objects",
-   "Additive": "Additive",
    "Assign Selected": "Assign Selected",
    "Channel Box / Layer Editor": "Channel Box / Layer Editor",
    "Create Empty Layer": "Create Empty Layer",
    "Create Layer from Selected": "Create Layer from Selected",
    "Cycle Layer Type": "Cycle Layer Type",
    "Delete Layer": "Delete Layer",
-   "Display Type": "Display Type",
    "Down": "Down",
    "Empty the Layer": "Empty the Layer",
    "Help": "Help",
@@ -8467,15 +8472,16 @@
    "Move Layer": "Move Layer",
    "New Layer": "New Layer",
    "Options": "Options",
-   "Override": "Override",
    "Playback": "Playback",
    "Select Objects": "Select Objects",
    "Set Layer Type": "Set Layer Type",
-   "Show the layer's objects (Maya V)": "Show the layer's objects (Maya V)",
-   "Show the layer's objects during playback (Maya P)": "Show the layer's objects during playback (Maya P)",
    "Toggle Layer": "Toggle Layer",
    "Up": "Up",
    "Visible": "Visible"
+  },
+  "Labels/ui/layer_editor_anim": {
+   "Additive": "Additive",
+   "Override": "Override"
   },
   "Labels/ui/layout_fit": {
    "Fit Maya Layout Columns": "Fit Maya Layout Columns"
