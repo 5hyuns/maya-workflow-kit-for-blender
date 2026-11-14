@@ -3,6 +3,7 @@ import bpy
 from importlib import import_module
 import kit
 q=import_module(kit.MODULE+'.operators.quad_draw')
+qs=import_module(kit.MODULE+'.operators.quad_draw_state')
 
 
 def fixture(original=(False,True,.37)):
@@ -24,11 +25,11 @@ def fixture(original=(False,True,.37)):
 def test_save_serializes_original_overlay_and_resumes_the_current_display():
     a,r,space=fixture();original=q.STATE['overlays'][space.as_pointer()];runtime=q._overlay_values(space)
     q._overlay_save_pre('unused.blend')
-    assert q._overlay_values(space)==original and q._overlay_saving
+    assert q._overlay_values(space)==original and qs._overlay_saving
     with bpy.context.temp_override(area=a,region=r):q.sync_overlays(bpy.context)
     assert q._overlay_values(space)==original,'draw cannot put temporary values back during serialization'
     q._overlay_save_post('unused.blend')
-    assert q._overlay_values(space)==runtime and not q._overlay_saving and not q._overlay_save_runtime
+    assert q._overlay_values(space)==runtime and not qs._overlay_saving and not q._overlay_save_runtime
     q._restore_overlays();assert q._overlay_values(space)==original
 
 
@@ -41,7 +42,7 @@ def test_failed_save_handler_restores_the_live_tool_and_is_registered_once():
     q._overlay_save_pre('failed.blend')
     for fn in list(bpy.app.handlers.save_post_fail):
         if fn is q._overlay_save_post:fn('failed.blend')
-    assert q._overlay_values(space)==runtime and not q._overlay_saving and not q._overlay_save_runtime
+    assert q._overlay_values(space)==runtime and not qs._overlay_saving and not q._overlay_save_runtime
 
 
 def test_a_manually_enabled_native_overlay_and_custom_offset_are_preserved():
@@ -82,7 +83,7 @@ def test_file_reset_discards_suspended_values_from_the_previous_file():
     a,r,space=fixture();original=q.STATE['overlays'][space.as_pointer()];q._overlay_save_pre()
     q._file_reset(None)
     assert q._overlay_values(space)==original
-    assert not q._overlay_saving and not q._overlay_save_runtime and not q.STATE['overlays']
+    assert not qs._overlay_saving and not q._overlay_save_runtime and not q.STATE['overlays']
     q._overlay_save_post();assert q._overlay_values(space)==original
 
 

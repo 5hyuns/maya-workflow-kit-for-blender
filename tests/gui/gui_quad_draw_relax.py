@@ -123,5 +123,5 @@ def exit_wait():pass
 @step
 def exit_released():
  q=mod('quad_draw');overlay=mod('quad_draw_overlay');relax=mod('quad_draw_relax')
- check('tool exit releases loop, influence and display caches',q._component_loop_cache is None and relax._preview is None and overlay._relax_preview is None and overlay._delete_preview is None)
+ check('tool exit releases loop, influence and display caches',mod('quad_draw_state')._component_loop_cache is None and relax._preview is None and overlay._relax_preview is None and overlay._delete_preview is None)
 run()

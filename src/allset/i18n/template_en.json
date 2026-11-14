@@ -6865,15 +6865,21 @@
    "Set Project": "Set Project"
   },
   "Labels/operators/quad_draw": {
+   "Middle-drag: only move what is under the mouse": "Middle-drag: only move what is under the mouse",
+   "Quad Draw": "Quad Draw"
+  },
+  "Labels/operators/quad_draw_commands": {
    "Clear Dots": "Clear Dots",
    "Exit Quad Draw": "Exit Quad Draw",
-   "Middle-drag: only move what is under the mouse": "Middle-drag: only move what is under the mouse",
    "Pick Topology Seam": "Pick Topology Seam",
-   "Quad Draw": "Quad Draw",
-   "Quad Draw Extend": "Quad Draw Extend",
-   "Quad Draw Preview": "Quad Draw Preview",
    "Quad Draw Tool": "Quad Draw Tool",
    "Restore Modeling Display": "Restore Modeling Display"
+  },
+  "Labels/operators/quad_draw_hover": {
+   "Quad Draw Preview": "Quad Draw Preview"
+  },
+  "Labels/operators/quad_draw_tab": {
+   "Quad Draw Extend": "Quad Draw Extend"
   },
   "Labels/operators/references": {
    "Action": "Action",
@@ -10092,14 +10098,20 @@
    "Save the scene; a scene never saved asks for a name in the project's scenes folder (Maya Save Scene)": "Save the scene; a scene never saved asks for a name in the project's scenes folder (Maya Save Scene)"
   },
   "Tooltips/operators/quad_draw": {
+   "Maya Quad Draw: click = dot on the surface, drag = move a dot / vertex / edge / face along the surface,\nShift+click = fill a polygon, Shift+drag = relax, Ctrl+click = edge loop, Ctrl+Shift+click = delete": "Maya Quad Draw: click = dot on the surface, drag = move a dot / vertex / edge / face along the surface,\nShift+click = fill a polygon, Shift+drag = relax, Ctrl+click = edge loop, Ctrl+Shift+click = delete"
+  },
+  "Tooltips/operators/quad_draw_commands": {
    "Choose an existing center edge to establish topology correspondence": "Choose an existing center edge to establish topology correspondence",
    "Leave Quad Draw for the Select tool (Maya Esc / Q)": "Leave Quad Draw for the Select tool (Maya Esc / Q)",
    "Maya Mesh Tools > Quad Draw: draw a new mesh on the live surface (or edit the selected mesh)": "Maya Mesh Tools > Quad Draw: draw a new mesh on the live surface (or edit the selected mesh)",
-   "Maya Quad Draw: click = dot on the surface, drag = move a dot / vertex / edge / face along the surface,\nShift+click = fill a polygon, Shift+drag = relax, Ctrl+click = edge loop, Ctrl+Shift+click = delete": "Maya Quad Draw: click = dot on the surface, drag = move a dot / vertex / edge / face along the surface,\nShift+click = fill a polygon, Shift+drag = relax, Ctrl+click = edge loop, Ctrl+Shift+click = delete",
-   "Quad Draw Tab: while Tab is held, drag from a border edge to extend it, or in empty space to draw a strip of\nquads": "Quad Draw Tab: while Tab is held, drag from a border edge to extend it, or in empty space to draw a strip of\nquads",
-   "Quad Draw hover preview (passes the event on)": "Quad Draw hover preview (passes the event on)",
    "Remove every Quad Draw dot (Maya Tool Settings: Clear Dots)": "Remove every Quad Draw dot (Maya Tool Settings: Clear Dots)",
    "Turn off a persisted Retopology overlay in this viewport to restore ordinary component shading": "Turn off a persisted Retopology overlay in this viewport to restore ordinary component shading"
+  },
+  "Tooltips/operators/quad_draw_hover": {
+   "Quad Draw hover preview (passes the event on)": "Quad Draw hover preview (passes the event on)"
+  },
+  "Tooltips/operators/quad_draw_tab": {
+   "Quad Draw Tab: while Tab is held, drag from a border edge to extend it, or in empty space to draw a strip of\nquads": "Quad Draw Tab: while Tab is held, drag from a border edge to extend it, or in empty space to draw a strip of\nquads"
   },
   "Tooltips/operators/references": {
    "Maya Export to Offline File / Assign Offline File: the selected reference's edits to / from a file": "Maya Export to Offline File / Assign Offline File: the selected reference's edits to / from a file",

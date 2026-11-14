@@ -121,7 +121,7 @@ def alpha_and_drag():
         point=q.project_point(ctx,Vector((0,0,.001)),refs,r,rv)
         check('projection stays on the visible sheet instead of the nearest hidden sheet',abs(point.z-.02)<1e-5)
         q._restore_overlays()
-        check('leaving Quad Draw releases its GPU and screen caches', mod('operators.quad_draw_overlay')._cached is None and q._pick_projection is None)
+        check('leaving Quad Draw releases its GPU and screen caches', mod('operators.quad_draw_overlay')._cached is None and mod('operators.quad_draw_state')._pick_projection is None)
         ov=a.spaces.active.overlay
         check('original viewport overlay settings are restored',(ov.show_retopology,ov.show_faces,ov.retopology_offset)==C['overlays'])
 
@@ -160,7 +160,7 @@ def cache_and_occlusion():
         check('unchanged geometry reuses both GPU batches',first[0] is second[0] and first[1] is second[1])
         q=mod('operators.quad_draw')
         q.component_at(ctx,r,a.spaces.active.region_3d,(r.width/2,r.height/2),ob)
-        old=q._pick_projection
+        old=mod('operators.quad_draw_state')._pick_projection
         a.spaces.active.region_3d.view_distance=5.5
         q.component_at(ctx,r,a.spaces.active.region_3d,(r.width/2,r.height/2),ob)
         # A view redraw updates perspective_matrix; the next step verifies the key changed.
@@ -182,7 +182,7 @@ def occluded_faces():
     with override():
         ctx=bpy.context; a,r=view3d();q=mod('operators.quad_draw')
         q.component_at(ctx,r,a.spaces.active.region_3d,(r.width/2,r.height/2),ctx.edit_object)
-        check('view changes invalidate the cached screen projection',q._pick_projection[1]!=C['projection'])
+        check('view changes invalidate the cached screen projection',mod('operators.quad_draw_state')._pick_projection[1]!=C['projection'])
         bpy.ops.allset.quad_draw_exit()
 
 

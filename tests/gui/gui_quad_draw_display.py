@@ -100,7 +100,7 @@ def saving():
     with override():
         q=mod('operators.quad_draw');C['runtime']=q._overlay_values(bpy.context.space_data);C['saved']=str(OUT/'display_lifecycle_saved.blend')
         bpy.ops.wm.save_as_mainfile(filepath=C['saved']);bpy.ops.wm.save_mainfile()
-        check('saving resumes Quad Draw with its native depth override',q._overlay_values(bpy.context.space_data)==C['runtime'] and not q._overlay_saving)
+        check('saving resumes Quad Draw with its native depth override',q._overlay_values(bpy.context.space_data)==C['runtime'] and not mod('operators.quad_draw_state')._overlay_saving)
         check('save completion releases its suspended state',not q._overlay_save_runtime)
         check('the tool never owns the Maya Tool Box column',all(ptr not in q.STATE['overlays'] for ptr in C['toolbox']))
 @step
@@ -110,7 +110,7 @@ def save_failure():
         try:answer=bpy.ops.wm.save_as_mainfile(filepath=str(bad));failed=answer!={'FINISHED'}
         except RuntimeError:failed=True
         check('the fixture triggers a real save failure',failed)
-        check('failed save restores the live display and releases suspension',q._overlay_values(bpy.context.space_data)==C['runtime'] and not q._overlay_saving and not q._overlay_save_runtime)
+        check('failed save restores the live display and releases suspension',q._overlay_values(bpy.context.space_data)==C['runtime'] and not mod('operators.quad_draw_state')._overlay_saving and not q._overlay_save_runtime)
 @step
 def change_workspace():win().workspace=bpy.data.workspaces[C['secondary']]
 @step
