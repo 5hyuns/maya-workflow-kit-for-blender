@@ -30,9 +30,6 @@ def _view(label, view):
 
 
 VIEW = [
-    ("prop", "preferences", "show_viewport_shading", "Viewport Shading Controls"),
-    ("prop", "preferences", "show_view_cube_buttons", "Camera / Projection Buttons"),
-    _sep(),
     ("set", "SELECT_CAMERA", "Select Camera"),
     ("set", "CAMERA_LOCK", "Lock Camera"),
     _sep(),
@@ -57,6 +54,9 @@ VIEW = [
     ("menu", "Camera Tools", "ALLSET_MT_panel_camera_tools"),
     _sep(),
     _grey("View Sequence Time"),
+    _sep(),
+    ("prop", "preferences", "show_viewport_shading", "Viewport Shading Controls"),
+    ("prop", "preferences", "show_view_cube_buttons", "Camera / Projection Buttons"),
 ]
 
 # Maya viewSet -vx = seen from +X (Maya 2022 panel View menu); axis names as Blender's
