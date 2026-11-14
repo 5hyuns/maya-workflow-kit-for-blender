@@ -2327,6 +2327,7 @@ STRINGS = {
     'Location': '位置',
     'Locator': '定位器',
     'Locators': '定位器',
+    'Locators (Empties)': '定位器 (空物体)',
     'Lock': '锁定',
     'Lock Camera': '锁定摄像机',
     'Lock Channel': '锁定通道',
