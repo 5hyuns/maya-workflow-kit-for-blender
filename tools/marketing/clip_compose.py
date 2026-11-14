@@ -31,7 +31,7 @@ piped raw into ffmpeg (no PNG sequence on disk). Motion:
   and lockup rise in, headline, the ``highlight`` CTA pill pops, then a held, gently breathing state).
 - Check: per output the longest near-static run (mean |frame - previous| < STATIC_DIFF of 255) is reported; >= 2 s
   fails, as do the size / length limits. First frames go to tmp/marketing/posters/.
-ffmpeg: PATH, or $FFMPEG, or the hermes build.
+ffmpeg: $FFMPEG, or PATH.
 """
 
 import argparse
@@ -62,7 +62,6 @@ SHOT = (144, 22, 1632, 918)          # x, y, w, h of the window picture (85 %)
 BAND_Y = SHOT[1] + SHOT[3]            # caption band below it
 BAND_H = H - BAND_Y
 LIMIT_MP4, LIMIT_TRAILER, LIMIT_GIF = 8e6, 20e6, 4e6
-FFMPEG_FALLBACK = Path(os.environ.get("LOCALAPPDATA", "")) / "hermes/tools/ffmpeg-9.0.1-win32-x64/bin/ffmpeg.exe"
 
 SPEED = 1.35            # default playback speed (content.json clip "speed")
 CAPTION_MIN = 1.2       # s a caption stays at least (output time)
@@ -82,8 +81,7 @@ STATIC_MAX = 2.0        # s
 
 
 def ffmpeg():
-    exe = os.environ.get("FFMPEG") or shutil.which("ffmpeg") or (str(FFMPEG_FALLBACK) if FFMPEG_FALLBACK.exists()
-                                                                    else None)
+    exe = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
     if not exe:
         sys.exit("ffmpeg not found (PATH, $FFMPEG)")
     return exe

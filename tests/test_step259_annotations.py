@@ -8,6 +8,7 @@ fails to register although Blender lists it as installed), and ``cls.__dict__`` 
 
 import ast
 import os
+import shutil
 import subprocess
 from importlib import import_module
 from pathlib import Path
@@ -82,11 +83,8 @@ def test_own_annotations_and_merged_classes():
     assert "local_translate_z" in props and props["local_translate_z"].is_hidden, list(props.keys())
 
 
-PY314 = (
-    os.environ.get("ALLSET_PY314", ""),
-    os.path.expandvars(r"%LOCALAPPDATA%\hermes\tools\python-3.14.9+20261021-win32-x64\python.exe"),
-    os.path.expandvars(r"%APPDATA%\uv\python\cpython-3.14-windows-x86_64-none\python.exe"),
-)
+# a Python 3.14 interpreter: $ALLSET_PY314, else python3.14 on PATH
+PY314 = (os.environ.get("ALLSET_PY314", ""), shutil.which("python3.14") or "")
 
 # The kit's class patterns, outside Blender: the old one must fail on 3.14 (the reported error), the new ones work.
 _PROBE = r'''

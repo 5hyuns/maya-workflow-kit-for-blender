@@ -11,8 +11,8 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-BIN = Path(os.environ.get("LOCALAPPDATA", "")) / "hermes" / "tools" / "ffmpeg-9.0.1-win32-x64" / "bin"
-FF, FP = str(BIN / "ffmpeg.exe"), str(BIN / "ffprobe.exe")
+# ffmpeg and ffprobe: from the folder $FFMPEG_DIR, else PATH
+FF, FP = (shutil.which(n, path=os.environ.get("FFMPEG_DIR")) or n for n in ("ffmpeg", "ffprobe"))
 MK = ROOT / "docs/distribution/marketing"
 OUT = ROOT / "site/media"
 # what site/index.html and app.js use (#41: the full lists left 32 unused files in site/media)
