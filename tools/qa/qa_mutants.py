@@ -28,7 +28,7 @@ MUTANTS = [
      "step220"),
     ("ui/status_line.py", "    return elements is not None and ts.use_snap and elements <= set(ts.snap_elements)",
      "    return elements is not None and elements <= set(ts.snap_elements)", "step220,status_line,step240"),
-    ("operators/bevel_maya.py", "                ent[1] = min(ent[1], sin)", "                ent[1] = max(ent[1], sin)",
+    ("operators/bevel_width.py", "                ent[1] = min(ent[1], sin)", "                ent[1] = max(ent[1], sin)",
      "step239,bevel"),
     ("operators/bevel_maya.py", "s.calc_length() * sin / len(ends)", "s.calc_length() * sin", "step239,bevel"),
     ("operators/anim_layers.py", "            acc = (1.0 - w) * acc + w * x", "            acc = acc + w * x",
