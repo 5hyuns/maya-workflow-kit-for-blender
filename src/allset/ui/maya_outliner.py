@@ -62,9 +62,14 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
         sp, lay = context.space_data, self.layout
         lay.prop(sp, "use_filter_children", text="Children (DAG Hierarchy)")
         lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
-        lay.prop(sp, "show_restrict_column_select", text="Selectable Column")
-        lay.prop(sp, "show_restrict_column_hide", text="Visibility Column")
-        lay.prop(sp, "show_restrict_column_render", text="Render Column")
+        from .. import preferences   # the add-on's global switch for all three column icons
+        prefs = preferences.get()
+        lay.prop(prefs, "outliner_columns", text="Column Icons")
+        col = lay.column()
+        col.active = prefs.outliner_columns
+        col.prop(sp, "show_restrict_column_select", text="Selectable Column")
+        col.prop(sp, "show_restrict_column_hide", text="Visibility Column")
+        col.prop(sp, "show_restrict_column_render", text="Render Column")
         lay.separator()
         # Maya Display > Shapes: a shape row (pCubeShape1) under each transform
         lay.prop(sp, "use_filter_object_content", text="Shapes")

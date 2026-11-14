@@ -665,7 +665,8 @@ def column_xs(space, region, u, n, first):
     ``eye_x``."""
     from .. import preferences
     prefs = preferences.get()
-    shown = [c for c, prop, pref in COLUMNS if getattr(space, prop) and getattr(prefs, pref)]
+    shown = [c for c, prop, pref in COLUMNS
+             if prefs.outliner_columns and getattr(space, prop) and getattr(prefs, pref)]
     right = eye_x(region, u, n, first)
     return {c: right - (len(shown) - 1 - i) * u for i, c in enumerate(shown)}
 
