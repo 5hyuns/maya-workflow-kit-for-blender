@@ -59,6 +59,7 @@ WHEEL_ROWS = 3
 
 EXPANDED = set()          # ('O', object session_uid) / ('B', armature session_uid, bone name)
 SCROLL = {}               # area pointer -> first shown row
+SCROLL_X = {}             # area pointer -> pixels the rows are panned left (Alt+middle-drag, #365)
 HOVER = {}                # area pointer -> row under the mouse (drawn lighter, like Blender's Outliner)
 SEEN = {}                 # region pointer -> [(kind, label, row on screen, depth)] of the last draw (tests read it)
 DRAWN = {}                # region pointer -> [(y0, y1, Row)] of the last draw: where each shown row is
@@ -694,6 +695,15 @@ def row_rect(area, region, k, u, n):
     return y1 - u, y1
 
 
+def shift_x(area, rows, u):
+    """Pixels the rows of ``area`` are panned left, clamped so the deepest row's arrow can reach the left edge."""
+    key = area.as_pointer()
+    sx = SCROLL_X.get(key, 0)
+    if sx:
+        sx = SCROLL_X[key] = min(max(0, sx), max((r.depth for r in rows), default=0) * u)
+    return sx
+
+
 SCROLLBAR = 0.35      # x UI unit: the scrollbar width at the right edge
 
 
@@ -895,6 +905,7 @@ def _draw(context, space, region, area):
     n = len(rows)
     first = first_row(area, region, n, u)
     last = min(n, first + top(region, u) // u + 1)
+    sx = shift_x(area, rows, u)
     th = prefs.themes[0].outliner
     text = tuple(th.space.text)[:3]
     text_hi = tuple(th.space.text_hi)[:3]
@@ -938,7 +949,7 @@ def _draw(context, space, region, area):
             on = (col == 'SELECT') if row.kind == 'CAMERA' else column_state(row, col, by_name)
             if on is not None:
                 icons.append((col, on, int(cx) - u // 2, y0, alpha))
-        x = row.depth * u
+        x = row.depth * u - sx
         if row.kids:
             _triangle(tris, tcol, x + 0.6 * u, cy, u * 0.17, row.open, (*text, 0.8))
         ix = x + 1.5 * u
@@ -1326,7 +1337,7 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             redraw_outliners(context)
             return {'FINISHED'}
         row = rows[k]
-        x0 = row.depth * u
+        x0 = row.depth * u - shift_x(area, rows, u)
         hit = next((c for c, cx in column_xs(space, region, u, n, first).items() if abs(x - cx) <= 0.5 * u), None)
         if hit is not None and column_state(row, hit) is not None:
             # Blender: the press flips the icon, dragging gives every icon passed (any row, any column) the same
@@ -1507,7 +1518,53 @@ class ALLSET_OT_outliner_tree_scroll(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_hover, ALLSET_OT_outliner_tree_scroll)
+class ALLSET_OT_outliner_tree_pan(bpy.types.Operator):
+    """Pan the Maya Outliner rows in both directions (Maya: Alt+middle-drag, like a 2D view)"""
+    bl_idname = "allset.outliner_tree_pan"
+    bl_label = "Outliner Pan"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region is not None and context.region.type == 'WINDOW'
+
+    def invoke(self, context, event):
+        if not _poll(context):
+            return {'PASS_THROUGH'}
+        key = context.area.as_pointer()
+        self.start = (event.mouse_x, event.mouse_y, SCROLL_X.get(key, 0), SCROLL.get(key, 0))
+        context.window.cursor_modal_set('SCROLL_XY')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def pan(self, context, dx, dy):
+        """Move the rows by (dx, dy) pixels from where the drag started (+x right, +y up)."""
+        x0, y0, sx0, first0 = self.start
+        area, region = context.area, context.region
+        u = unit(context.preferences)
+        rows = rows_for(context, context.space_data)
+        key = area.as_pointer()
+        SCROLL_X[key] = sx0 - dx
+        SCROLL[key] = first0 + round(dy / u)
+        shift_x(area, rows, u)
+        first_row(area, region, len(rows), u)
+        redraw_rows(context, area)
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            self.pan(context, event.mouse_x - self.start[0], event.mouse_y - self.start[1])
+        elif event.type in ('ESC', 'RIGHTMOUSE'):
+            self.pan(context, 0, 0)
+            context.window.cursor_modal_restore()
+            return {'CANCELLED'}
+        elif event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+            context.window.cursor_modal_restore()
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
+classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_hover, ALLSET_OT_outliner_tree_scroll,
+           ALLSET_OT_outliner_tree_pan)
 
 
 def register():
@@ -1541,6 +1598,7 @@ def unregister():
     SEEN.clear()
     DRAWN.clear()
     SCROLL.clear()
+    SCROLL_X.clear()
     HOVER.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

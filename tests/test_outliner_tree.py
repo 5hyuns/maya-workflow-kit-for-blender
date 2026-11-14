@@ -386,3 +386,31 @@ def test_search_row_above_rows():
     assert tree.row_index_at(area, region, top, u, 5) is None
     assert tree.row_index_at(area, region, top - 1, u, 5) == 0
     assert tree.page_rows(region, u) == top // u
+
+
+def test_rows_pan_sideways_up_to_the_deepest_joint():
+    """#365: Maya's Outliner pans like a 2D view (Alt+middle-drag), so a deep joint chain can be seen; the pan stops
+    when the deepest row's arrow reaches the left edge."""
+    _on()
+    _clear()
+    _sk, names = _skeleton([(None, (0, 0, 0))] + [(i, (0, 0, i + 1)) for i in range(5)])
+    rows = _rows()
+    while any(r.kids and not r.open for r in rows):
+        _open(*[r for r in rows if r.kids])
+        rows = _rows()
+    deepest = max(r.depth for r in rows)
+    assert deepest >= 5, _shown(rows)
+    area = SimpleNamespace(as_pointer=lambda: 365)
+    try:
+        assert tree.shift_x(area, rows, 20) == 0
+        tree.SCROLL_X[365] = 50
+        assert tree.shift_x(area, rows, 20) == 50
+        tree.SCROLL_X[365] = 10 ** 6
+        assert tree.shift_x(area, rows, 20) == deepest * 20
+        tree.SCROLL_X[365] = -40
+        assert tree.shift_x(area, rows, 20) == 0
+    finally:
+        tree.SCROLL_X.pop(365, None)
+    maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
+    assert any(km == "View2D" and idname == "allset.outliner_tree_pan" and ev["type"] == 'MIDDLEMOUSE' and ev.get("alt")
+               for km, idname, ev, _p, _s in maya_patches.ADDED)

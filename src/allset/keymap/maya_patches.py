@@ -1314,7 +1314,7 @@ GRAPH_WER = {"W": "transform.translate", "E": "transform.rotate", "R": "transfor
 
 OUTLINER_TREE_ITEMS = ("allset.outliner_tree_click", "allset.outliner_tree_menu", "allset.outliner_tree_rename",
                        "allset.outliner_tree_reveal", "allset.outliner_tree_walk", "allset.outliner_tree_delete",
-                       "allset.outliner_tree_scroll", "allset.outliner_tree_hover")
+                       "allset.outliner_tree_scroll", "allset.outliner_tree_pan", "allset.outliner_tree_hover")
 
 
 def patch_outliner_tree(kd):
@@ -1343,6 +1343,9 @@ def patch_outliner_tree(kd):
     for wheel, rows in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):
         _add(kd, "View2D", "allset.outliner_tree_scroll", make_event(wheel), {"rows": rows}, first=True,
              shadows=("View2D", "View2D Buttons List"))
+    # Maya: Alt+middle-drag pans the rows both ways, so a deep joint chain can be seen (#365)
+    _add(kd, "View2D", "allset.outliner_tree_pan", make_event("MIDDLEMOUSE", alt=True), first=True,
+         shadows=("View2D", "View2D Buttons List"))
 
 
 # --- 46. Render slots ----------------------------------------------------------------------------------
