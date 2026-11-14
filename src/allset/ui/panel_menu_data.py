@@ -225,7 +225,7 @@ TOOLBAR = (
      ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
     (("grid", "set", "GRID", "Grid"),
      ("film_gate", "set", "FILM_GATE", "Film Gate"),
-     ("res_gate", "grey", None, "Resolution Gate"),
+     ("res_gate", "set", "RES_GATE", "Resolution Gate"),
      ("gate_mask", "set", "GATE_MASK", "Gate Mask"),
      ("field_chart", "grey", None, "Field Chart"),
      ("safe_action", "set", "SAFE_ACTION", "Safe Action"),

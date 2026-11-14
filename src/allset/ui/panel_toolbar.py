@@ -348,8 +348,10 @@ def _draw_item(row, context, item, text=""):
     if kind == "set":
         on = bool(panel_menus.state(context, data))
         sub = _flat(row, on, bool(text))
-        if data in panel_menus.CAMERA_KEYS:
+        if data == "CAMERA_LOCK":
             sub.enabled = panel_menus.view_camera(context) is not None
+        elif data in panel_menus.CAMERA_KEYS:   # Blender's own view: the button looks through its startup camera
+            sub.enabled = panel_menus.has_panel_camera(context)
         elif data in ("SELECT_CAMERA", "BOOKMARK"):
             sub.enabled = panel_menus.has_panel_camera(context)
         op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text=text, icon_value=_icon(glyph),

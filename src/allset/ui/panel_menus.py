@@ -120,7 +120,11 @@ def camera_locked(ob):
 # Blender draws title and action safe areas together (one flag).
 CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
                "SAFE_ACTION": "show_safe_areas", "SAFE_TITLE": "show_safe_areas"}
-CAMERA_KEYS = {"CAMERA_LOCK", *CAMERA_DATA}
+# Resolution Gate: Blender always draws the render frame in a camera view, so the toggle keeps Maya's
+# state (camera data ID property) and Overscan; Film Gate and Resolution Gate are exclusive (Maya updateModelPanelBar).
+RES_GATE = "allset_res_gate"
+GATE_OVERSCAN = 1.3
+CAMERA_KEYS = {"CAMERA_LOCK", "RES_GATE", *CAMERA_DATA}
 
 # Toolbar toggles whose Maya off state is another mode (Maya panel toolbar):
 # Wireframe off = smooth shaded, Smooth Shade All off = wireframe, Use All Lights off = default lighting.
@@ -140,7 +144,7 @@ FAILS = {
     "RENDER_CYCLES": "Cycles is off: enable the Cycles add-on in Preferences > Add-ons",
     "BOOKMARK": camera_bookmarks.NO_CAMERA,
 }
-for _k in CAMERA_DATA:
+for _k in (*CAMERA_DATA, "RES_GATE"):
     FAILS[_k] = FAILS["CAMERA_LOCK"]
 
 TIPS = {
@@ -152,6 +156,7 @@ TIPS = {
     "CAMERA_LOCK": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and "
                    "rotation channels are locked)",
     "FILM_GATE": "Film gate (Blender: camera sensor frame)",
+    "RES_GATE": "Resolution gate (Blender always draws the render frame in a camera view; this sets Overscan 1.3)",
     "GATE_MASK": "Gate mask (Blender: passepartout)",
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
@@ -210,6 +215,8 @@ def state(context, key):
             return False
         if key == "CAMERA_LOCK":
             return camera_locked(ob)
+        if key == "RES_GATE":
+            return ob.type == 'CAMERA' and bool(ob.data.get(RES_GATE))
         return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
     if key == "ISOLATE":
         return space.local_view is not None
@@ -268,7 +275,7 @@ RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
-TOOLBAR_KEYS = ["FILM_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
+TOOLBAR_KEYS = ["FILM_GATE", "RES_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
                 "BOOKMARK", "PAN_ZOOM"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
@@ -403,12 +410,20 @@ def apply(context, key):
         context.view_layer.objects.active = cam
     elif key in CAMERA_KEYS:
         ob = view_camera(context)
+        if ob is None and key != "CAMERA_LOCK":
+            ob = _look_through_panel_camera(context, space)
         if ob is None or (key != "CAMERA_LOCK" and ob.type != 'CAMERA'):
             return False
         if key == "CAMERA_LOCK":
             on = not camera_locked(ob)
             ob.lock_location = (on,) * 3
             ob.lock_rotation = (on,) * 3
+        elif key in ("FILM_GATE", "RES_GATE"):
+            data = ob.data
+            on = not state(context, key)
+            data.show_sensor = on and key == "FILM_GATE"
+            data[RES_GATE] = on and key == "RES_GATE"
+            data.allset_overscan = GATE_OVERSCAN if on else 1.0     # Maya: camera -e -overscan 1.3 / 1.0
         else:
             prop = CAMERA_DATA[key]
             setattr(ob.data, prop, not getattr(ob.data, prop))
@@ -653,6 +668,22 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
 # what each view showed before a kit Look Through (RegionView3D pointer -> perspective, camera name, local camera):
 # when Ctrl+Z removes the camera a view looks through, the view goes back to it (session only)
 _before_look = {}
+
+
+def _look_through_panel_camera(context, space):
+    """Maya's persp / top / front / side panel is that camera: in Blender's own view, put the view's startup camera
+    where the view looks (Create Camera From View's placement) and look through it. None: no such camera."""
+    area = context.area
+    rv3d = space.region_3d
+    if area is None or area.type != 'VIEW_3D' or rv3d is None:
+        return None
+    cam = panel_camera(context, make=True)
+    if cam is None or cam.type != 'CAMERA':
+        return None
+    from ..operators import camera_copy, units
+    camera_copy._place_from_view(cam, space, rv3d, units.maya_unit(context.scene))
+    look_through(context, area, cam)
+    return cam
 
 
 def look_through(context, area, ob):

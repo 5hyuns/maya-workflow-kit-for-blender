@@ -4,6 +4,7 @@ camera view moves the camera (#9), UV checker toggle (#13). GUI side: tests/gui/
 from importlib import import_module
 
 import bpy
+from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
 import kit
@@ -40,6 +41,7 @@ def _snapshot(space, cam):
     return (sh.type, sh.light, sh.color_type, sh.show_shadows, sh.show_cavity, sh.show_xray, sh.use_dof,
             ov.show_wireframes, ov.show_xray_bone, maya_grid.visible(space), tuple(cam.lock_location),
             tuple(cam.lock_rotation), cam.data.show_sensor, cam.data.show_passepartout, cam.data.show_safe_areas,
+            bool(cam.data.get(pm.RES_GATE)), round(cam.data.allset_overscan, 4),
             round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform,
             camera_bookmarks.pan_zoom_on(space.region_3d))
 
@@ -103,9 +105,34 @@ def test_camera_buttons_need_a_camera_view():
     space = _space()
     space.region_3d.view_perspective = 'PERSP'
     ctx = Ctx(space)
-    for key in ("CAMERA_LOCK", "FILM_GATE", "GATE_MASK", "SAFE_TITLE"):
-        assert not pm.apply(ctx, key), key
+    assert not pm.apply(ctx, "CAMERA_LOCK")
+    for key in ("CAMERA_LOCK", "FILM_GATE", "RES_GATE", "GATE_MASK", "SAFE_TITLE"):
         assert key in pm.FAILS
+
+
+def test_gate_buttons_look_through_the_persp_camera():
+    # Maya's persp panel is the persp camera: a gate button in Blender's persp view looks through it, placed where
+    # the view looked; Film Gate / Resolution Gate are exclusive and set Overscan 1.3 (Maya updateModelPanelBar)
+    space = _space()
+    area = next(a for s in bpy.data.screens for a in s.areas if space in a.spaces[:])
+    rv3d = space.region_3d
+    rv3d.view_perspective = 'PERSP'
+    space.use_local_camera = False
+    ctx = Ctx(space)
+    ctx.area = area
+    loc, rot, dist = rv3d.view_location.copy(), rv3d.view_rotation.copy(), rv3d.view_distance
+    assert pm.apply(ctx, "FILM_GATE")
+    cam = pm.view_camera(ctx)
+    assert rv3d.view_perspective == 'CAMERA' and cam is not None and cam.name == "persp"
+    fwd = cam.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0))
+    assert (fwd - rot @ Vector((0.0, 0.0, -1.0))).length < 1e-4     # placed where the view looked
+    assert (cam.matrix_world.translation + fwd * dist - loc).length < 1e-3
+    assert cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    assert pm.apply(ctx, "RES_GATE")
+    assert pm.state(ctx, "RES_GATE") and not cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    assert pm.apply(ctx, "RES_GATE")
+    assert not pm.state(ctx, "RES_GATE") and abs(cam.data.allset_overscan - 1.0) < 1e-6
+    rv3d.view_perspective = 'PERSP'
 
 
 def test_select_camera_selects_the_looked_through_camera():
