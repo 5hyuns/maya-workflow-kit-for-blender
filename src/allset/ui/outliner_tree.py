@@ -153,9 +153,21 @@ def _first_hide():
 
 # --- row model -----------------------------------------------------------------------------------------------------
 
+def sort_alpha(space):
+    # Blender 5.3 replaced the use_sort_alpha bool with the sort_method enum (ALPHA / CUSTOM / NONE)
+    return space.sort_method == 'ALPHA' if hasattr(space, "sort_method") else space.use_sort_alpha
+
+
+def set_sort_alpha(space, on):
+    if hasattr(space, "sort_method"):
+        space.sort_method = 'ALPHA' if on else 'NONE'
+    else:
+        space.use_sort_alpha = on
+
+
 def options(space):
     types = frozenset(t for t, prop in TYPE_PROPS if getattr(space, prop, True))
-    return Options(space.use_filter_children, space.use_sort_alpha, space.use_filter_object_content, types,
+    return Options(space.use_filter_children, sort_alpha(space), space.use_filter_object_content, types,
                    space.filter_text, space.use_filter_case_sensitive, space.use_filter_complete)
 
 

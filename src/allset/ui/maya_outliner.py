@@ -49,8 +49,8 @@ def setup(space):
     space.show_restrict_column_enable = True
     mark(space)
     space.show_mode_column = False      # Maya has no mode column (Blender shows it in edit mode)
-    space.use_sort_alpha = False        # Maya lists the DAG in creation order, startup cameras first
     from . import outliner_tree         # the kit draws the rows (joints under their skeleton, #348)
+    outliner_tree.set_sort_alpha(space, False)  # Maya lists the DAG in creation order, startup cameras first
     outliner_tree.hide_rows(space)
 
 
@@ -61,7 +61,10 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
     def draw(self, context):
         sp, lay = context.space_data, self.layout
         lay.prop(sp, "use_filter_children", text="Children (DAG Hierarchy)")
-        lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
+        if hasattr(sp, "sort_method"):     # Blender 5.3+: an enum, Blender's own label
+            lay.prop(sp, "sort_method")
+        else:
+            lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
         from .. import preferences   # the add-on's global switch for all three column icons
         prefs = preferences.get()
         lay.prop(prefs, "outliner_columns", text="Column Icons")

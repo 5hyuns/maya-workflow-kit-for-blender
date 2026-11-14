@@ -64,7 +64,8 @@ def s_scene():
     check(f"a new Maya scene has Maya's startup cameras ({names})", names == ["persp", "top", "front", "side"])
     check("they are hidden and don't render", all(o.hide_viewport and o.hide_render for o in stc.cameras(sc)))
     a, _r = outl()
-    check("the Maya Outliner lists in creation order (Sort Alphabetically off)", not a.spaces.active.use_sort_alpha)
+    check("the Maya Outliner lists in creation order (Sort Alphabetically off)", 
+          not mod("ui.outliner_tree").sort_alpha(a.spaces.active))
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.create(kind='CUBE')

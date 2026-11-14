@@ -260,8 +260,8 @@ def test_drop_between_rows_reorders():
     rows = _rows()
     assert [r.label for r in rows if r.kind == 'OBJECT'] == ["pCube1", "pSphere1"]
     sp = _outliner_space()
-    saved = sp.use_sort_alpha
-    sp.use_sort_alpha = False                 # Maya order (a factory Outliner sorts by name)
+    saved = tree.sort_alpha(sp)
+    tree.set_sort_alpha(sp, False)                # Maya order (a factory Outliner sorts by name)
     try:
         tree._cache.clear()
         before = tree.rows_for(bpy.context, sp)
@@ -274,7 +274,7 @@ def test_drop_between_rows_reorders():
             "the cached rows follow the new order (an ID property write tags nothing)"
         assert [r.label for r in before if r.kind == 'OBJECT'] == ["pCube1", "pSphere1"]
     finally:
-        sp.use_sort_alpha = saved
+        tree.set_sort_alpha(sp, saved)
 
 
 def _outliner_space():
