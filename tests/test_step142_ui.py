@@ -267,6 +267,6 @@ def test_dormant_wire_colour_and_objects():
 
 def test_no_theme_or_preference_writes():
     for name in ("maya_dock.py", "toolbox.py", "status_line.py", "set_driven_key.py", "manipulator.py",
-                 "selection_wire.py"):
+                 "selection_wire.py", "status_line_buttons.py", "menu_bar_fit.py"):
         text = (SRC / "ui" / name).read_text(encoding="utf-8")
         assert not re.search(r"themes\[0\][\w.]*\s*=[^=]", text), name

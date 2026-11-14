@@ -26,7 +26,7 @@ MUTANTS = [
     ("operators/snap_align.py", "        if not getattr(ts, flag):", "        if getattr(ts, flag):", "step220"),
     ("operators/snap_align.py", "    if not other_snaps_on(ts):\n        return 0", "    if other_snaps_on(ts):\n        return 0",
      "step220"),
-    ("ui/status_line.py", "    return elements is not None and ts.use_snap and elements <= set(ts.snap_elements)",
+    ("ui/status_line_buttons.py", "    return elements is not None and ts.use_snap and elements <= set(ts.snap_elements)",
      "    return elements is not None and elements <= set(ts.snap_elements)", "step220,status_line,step240"),
     ("operators/bevel_width.py", "                ent[1] = min(ent[1], sin)", "                ent[1] = max(ent[1], sin)",
      "step239,bevel"),

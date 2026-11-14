@@ -8560,6 +8560,9 @@
   "Labels/ui/menu_bar_addons": {
    "Add-on Menus": "Add-on Menus"
   },
+  "Labels/ui/menu_bar_fit": {
+   "More Menus": "More Menus"
+  },
   "Labels/ui/menu_item_ops": {
    "Enter mesh edit (component) mode first": "Enter mesh edit (component) mode first",
    "Maya Command in Component Mode": "Maya Command in Component Mode",
@@ -9167,26 +9170,28 @@
   },
   "Labels/ui/status_line": {
    "Back to Previous": "Back to Previous",
-   "Component": "Component",
-   "IPR Render": "IPR Render",
-   "Light Editor": "Light Editor",
    "Live Surface": "Live Surface",
    "Maya workspace: switch to another workspace of this file": "Maya workspace: switch to another workspace of this file",
-   "More Menus": "More Menus",
-   "Object": "Object",
    "Only show the editor (Maya toolPropertyWindow), never hide it": "Only show the editor (Maya toolPropertyWindow), never hide it",
-   "Render Settings": "Render Settings",
-   "Selection Mask": "Selection Mask",
-   "Selection Mode": "Selection Mode",
-   "Snap Toggle": "Snap Toggle",
    "Status Line Group": "Status Line Group",
    "Symmetric modeling: the current mode (the arrow opens the list)": "Symmetric modeling: the current mode (the arrow opens the list)",
    "Symmetry": "Symmetry",
-   "Symmetry Settings": "Symmetry Settings",
    "The live surface (Make Live); No Live Surface when none": "The live surface (Make Live); No Live Surface when none",
    "Toggle Editor": "Toggle Editor",
    "Workspace": "Workspace",
    "Workspace:": "Workspace:"
+  },
+  "Labels/ui/status_line_buttons": {
+   "Component": "Component",
+   "IPR Render": "IPR Render",
+   "Light Editor": "Light Editor",
+   "Object": "Object",
+   "Render Settings": "Render Settings",
+   "Selection Mask": "Selection Mask",
+   "Selection Mode": "Selection Mode",
+   "Snap Toggle": "Snap Toggle",
+   "Symmetry": "Symmetry",
+   "Symmetry Settings": "Symmetry Settings"
   },
   "Labels/ui/time_slider": {
    "A Shift-dragged Time Slider range is highlighted": "A Shift-dragged Time Slider range is highlighted",
@@ -10663,6 +10668,9 @@
   "Tooltips/ui/menu_bar_addons": {
    "Menus other add-ons put in Blender's top bar": "Menus other add-ons put in Blender's top bar"
   },
+  "Tooltips/ui/menu_bar_fit": {
+   "More Maya menus: the ones that don't fit the menu bar": "More Maya menus: the ones that don't fit the menu bar"
+  },
   "Tooltips/ui/menu_item_ops": {
    "A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there\n(``menu_map.EDIT_MODE``)": "A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there\n(``menu_map.EDIT_MODE``)",
    "Maya menu item with an option box (press and hold: Option Box)": "Maya menu item with an option box (press and hold: Option Box)",
@@ -10843,14 +10851,15 @@
    "Skin layers, top layer first": "Skin layers, top layer first"
   },
   "Tooltips/ui/status_line": {
+   "Show or hide a Maya editor": "Show or hide a Maya editor",
+   "Show or hide this Status Line group (Maya collapse handle)": "Show or hide this Status Line group (Maya collapse handle)"
+  },
+  "Tooltips/ui/status_line_buttons": {
    "IPR: interactive render in its own window, looking where the main view looks; click again to close it": "IPR: interactive render in its own window, looking where the main view looks; click again to close it",
    "Maya selection mode: Object (object mode) or Component (edit mode)": "Maya selection mode: Object (object mode) or Component (edit mode)",
    "Maya symmetry modes (Status Line ▾ list)": "Maya symmetry modes (Status Line ▾ list)",
-   "More Maya menus: the ones that don't fit the menu bar": "More Maya menus: the ones that don't fit the menu bar",
    "Open Blender's render settings (Properties > Render) in a new window, like Maya's Render Settings window": "Open Blender's render settings (Properties > Render) in a new window, like Maya's Render Settings window",
    "Open an Outliner window that lists only the scene's lights (Blender has no Light Editor)": "Open an Outliner window that lists only the scene's lights (Blender has no Light Editor)",
-   "Show or hide a Maya editor": "Show or hide a Maya editor",
-   "Show or hide this Status Line group (Maya collapse handle)": "Show or hide this Status Line group (Maya collapse handle)",
    "Toggle a Maya snap mode": "Toggle a Maya snap mode",
    "Toggle whether this kind of object can be selected (all 3D Views)": "Toggle whether this kind of object can be selected (all 3D Views)"
   },
