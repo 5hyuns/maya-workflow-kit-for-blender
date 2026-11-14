@@ -825,6 +825,15 @@ class _FileDialog:
 
     def check(self, context):
         """Keep the file name's extension in step with Files of type (Maya does the same)."""
+        space = context.space_data
+        if space is not None and space.type == 'FILE_BROWSER' and space.params is not None:
+            path = space.params.filename.strip().strip('"')
+            if path and ('/' in path or '\\' in path or path in {'.', '..'}):
+                folder = os.path.abspath(os.path.join(os.fsdecode(space.params.directory), path))
+                if os.path.isdir(folder):
+                    # check runs before Blender sanitizes filename separators; return the new browser path.
+                    self.filepath = os.path.join(folder, "")
+                    return True
         if self.mode == 'IMPORT' or not self.filepath or format_of(self.filepath) == self.export_type:
             return False
         self.filepath = bpy.path.ensure_ext(os.path.splitext(self.filepath)[0], _BY_ID[self.export_type][2])
