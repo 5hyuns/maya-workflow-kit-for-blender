@@ -5,6 +5,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [0.16.0] — 2026-11-14
 
+A speed release: Maya mode is much lighter in big and rigged scenes (clicks, box selection, playback, scrubbing,
+posing, the Outliner and the Graph Editor). Thanks to everyone who reported, asked and tested in Issues and
+Discussions.
+
 ### Changed
 - **Maya mode is much faster in big and rigged scenes** (#344). With rigged characters or thousands of objects, Maya
   mode used to redo a lot of work on every click, drag and frame. That work is now done once and kept, or skipped

@@ -6,6 +6,11 @@ Text for the GitHub release of v0.16.0. Full list: the 0.16.0 section of `CHANGE
 
 **0.16.0 — A much faster Maya mode in big and rigged scenes, display layers that hold joints, Duplicate on joints, a ViewCube you can drag, Blue Pencil on the Time Slider, and the fixes from your reports** (Blender 5.2 LTS)
 
+Hello everyone, and thank you. This version is mostly about speed: in big and rigged scenes, Maya mode is now much
+lighter when you click and box-select joints, play back, scrub, pose, and work in the Outliner and the Graph Editor.
+A lot of it started from your reports and questions in Issues and Discussions, and from the people who kept testing
+and sending details, @pixelkeyblade18 above all (#344). The full thanks are at the end of these notes.
+
 Install it over 0.15.0 (or 0.8.0 – 0.14.0) as usual; shelves, hotkeys, scenes and the kit's settings are kept.
 (Removing the kit before installing deletes them: use Export Settings first.)
 Supported: Blender 5.2 LTS. Other versions are not tested: the extension still installs on Blender 5.0 and 5.1,
