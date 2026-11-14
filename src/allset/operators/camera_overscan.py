@@ -103,15 +103,61 @@ def res_label(scene):
     return f"{r.resolution_x} x {r.resolution_y}"
 
 
-def draw_res_label():
-    """Maya: with Resolution Gate on, the render size is written centred above the gate."""
+FIELD_CELLS = 24                       # Maya's 12-field chart: 12 cells each side of the centre
+FIELD_COLOUR = (0.0, 0.42, 0.18, 1.0)
+
+
+def field_chart_lines(x0, y0, x1, y1, n=FIELD_CELLS):
+    """Line end points of Maya's field chart over the rect: an n x n grid and both diagonals."""
+    pts = []
+    for i in range(n + 1):
+        x = x0 + (x1 - x0) * i / n
+        y = y0 + (y1 - y0) * i / n
+        pts += [(x, y0), (x, y1), (x0, y), (x1, y)]
+    pts += [(x0, y0), (x1, y1), (x0, y1), (x1, y0)]
+    return pts
+
+
+def _draw_field_chart(x0, y0, x1, y1, scale):
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    batch = batch_for_shader(shader, 'LINES', {"pos": field_chart_lines(x0, y0, x1, y1)})
+    gpu.state.blend_set('ALPHA')
+    shader.uniform_float("color", FIELD_COLOUR)
+    batch.draw(shader)
+    gpu.state.blend_set('NONE')
+    # field numbers 1-11 out from the centre along both centre lines
+    font, half = 0, FIELD_CELLS // 2
+    blf.size(font, round(LABEL_SIZE * scale))
+    blf.color(font, *FIELD_COLOUR[:3], 1.0)
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    cw, ch = (x1 - x0) / FIELD_CELLS, (y1 - y0) / FIELD_CELLS
+    for k in range(1, half):
+        text = str(k)
+        w, h = blf.dimensions(font, text)
+        for sx in (-1, 1):
+            blf.position(font, round(cx + sx * k * cw - w / 2.0), round(cy - h / 2.0), 0)
+            blf.draw(font, text)
+        for sy in (-1, 1):
+            blf.position(font, round(cx - w / 2.0), round(cy + sy * k * ch - h / 2.0), 0)
+            blf.draw(font, text)
+
+
+def draw_gate_overlays():
+    """Maya camera displays Blender doesn't draw: the Field Chart over the resolution gate, and with Resolution Gate
+    on the render size written centred above the gate."""
     context = bpy.context
     space, region, rv3d = context.space_data, context.region, context.region_data
     if rv3d is None or rv3d.view_perspective != 'CAMERA':
         return
     cam = view_camera(space, context.scene)
-    from ..ui.panel_menus import RES_GATE
-    if cam is None or cam.type != 'CAMERA' or not cam.data.get(RES_GATE):
+    from ..ui.panel_menus import RES_GATE, FIELD_CHART
+    if cam is None or cam.type != 'CAMERA':
+        return
+    res, chart = cam.data.get(RES_GATE), cam.data.get(FIELD_CHART)
+    if not (res or chart):
         return
     import blf
     from bpy_extras.view3d_utils import location_3d_to_region_2d
@@ -119,19 +165,23 @@ def draw_res_label():
            for v in cam.data.view_frame(scene=context.scene)]
     if any(p is None for p in pts):
         return
-    text = res_label(context.scene)
-    font, scale = 0, context.preferences.system.ui_scale
-    blf.size(font, round(LABEL_SIZE * scale))
-    w = blf.dimensions(font, text)[0]
-    x = sum(p.x for p in pts) / len(pts) - w / 2.0
-    y = max(p.y for p in pts) + 10.0 * scale
-    blf.color(font, 0.8, 0.8, 0.8, 1.0)
-    blf.position(font, round(x), round(y), 0)
-    blf.draw(font, text)
+    scale = context.preferences.system.ui_scale
+    x0, x1 = min(p.x for p in pts), max(p.x for p in pts)
+    y0, y1 = min(p.y for p in pts), max(p.y for p in pts)
+    if chart:
+        _draw_field_chart(x0, y0, x1, y1, scale)
+    if res:
+        text = res_label(context.scene)
+        font = 0
+        blf.size(font, round(LABEL_SIZE * scale))
+        w = blf.dimensions(font, text)[0]
+        blf.color(font, 0.8, 0.8, 0.8, 1.0)
+        blf.position(font, round((x0 + x1) / 2.0 - w / 2.0), round(y1 + 10.0 * scale), 0)
+        blf.draw(font, text)
 
 
 def register_props():
-    _label_handles.append(bpy.types.SpaceView3D.draw_handler_add(draw_res_label, (), 'WINDOW', 'POST_PIXEL'))
+    _label_handles.append(bpy.types.SpaceView3D.draw_handler_add(draw_gate_overlays, (), 'WINDOW', 'POST_PIXEL'))
     bpy.types.Camera.allset_overscan = FloatProperty(
         name="Overscan", default=1.0, min=0.0001, soft_min=1.0, soft_max=3.0, step=10, precision=3, update=_update,
         description="Room around the camera's frame in a view that looks through this camera, like Maya: 1 fits "

@@ -124,12 +124,13 @@ CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
 # state (camera data ID property) and Overscan; Film Gate and Resolution Gate are exclusive (Maya updateModelPanelBar).
 RES_GATE = "allset_res_gate"
 GATE_OVERSCAN = 1.3
+FIELD_CHART = "allset_field_chart"     # Maya Field Chart: drawn by operators/camera_overscan.draw_gate_overlays
 # Safe Action / Safe Title: Blender has one show_safe_areas flag drawing both frames. Each Maya toggle keeps its own
 # flag on the camera data; the frame that is off gets a 0 margin in the scene's safe areas (drawn on the camera frame
 # line), its real margin kept in a scene ID property until it is turned on again.
 # shortcut: safe-area margins are per scene, so two cameras with different Safe toggles share the last one set.
 SAFE = {"SAFE_ACTION": ("allset_safe_action", "action"), "SAFE_TITLE": ("allset_safe_title", "title")}
-CAMERA_KEYS = {"CAMERA_LOCK", "RES_GATE", *CAMERA_DATA}
+CAMERA_KEYS = {"CAMERA_LOCK", "RES_GATE", "FIELD_CHART", *CAMERA_DATA}
 
 # Toolbar toggles whose Maya off state is another mode (Maya panel toolbar):
 # Wireframe off = smooth shaded, Smooth Shade All off = wireframe, Use All Lights off = default lighting.
@@ -149,7 +150,7 @@ FAILS = {
     "RENDER_CYCLES": "Cycles is off: enable the Cycles add-on in Preferences > Add-ons",
     "BOOKMARK": camera_bookmarks.NO_CAMERA,
 }
-for _k in (*CAMERA_DATA, "RES_GATE"):
+for _k in (*CAMERA_DATA, "RES_GATE", "FIELD_CHART"):
     FAILS[_k] = FAILS["CAMERA_LOCK"]
 
 TIPS = {
@@ -162,6 +163,7 @@ TIPS = {
                    "rotation channels are locked)",
     "FILM_GATE": "Film gate (Blender: camera sensor frame)",
     "RES_GATE": "Resolution Gate",
+    "FIELD_CHART": "Field Chart",
     "GATE_MASK": "Gate mask (Blender: passepartout)",
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
@@ -222,6 +224,8 @@ def state(context, key):
             return camera_locked(ob)
         if key == "RES_GATE":
             return ob.type == 'CAMERA' and bool(ob.data.get(RES_GATE))
+        if key == "FIELD_CHART":
+            return ob.type == 'CAMERA' and bool(ob.data.get(FIELD_CHART))
         if key in SAFE:
             return ob.type == 'CAMERA' and _safe_on(ob.data, key)
         return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
@@ -282,7 +286,7 @@ RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
-TOOLBAR_KEYS = ["FILM_GATE", "RES_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
+TOOLBAR_KEYS = ["FILM_GATE", "RES_GATE", "GATE_MASK", "FIELD_CHART", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
                 "BOOKMARK", "PAN_ZOOM"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
@@ -431,6 +435,11 @@ def apply(context, key):
             data.show_sensor = on and key == "FILM_GATE"
             data[RES_GATE] = on and key == "RES_GATE"
             data.allset_overscan = GATE_OVERSCAN if on else 1.0     # Maya: camera -e -overscan 1.3 / 1.0
+        elif key == "FIELD_CHART":
+            ob.data[FIELD_CHART] = not ob.data.get(FIELD_CHART)
+            for a in context.screen.areas if context.screen else ():
+                if a.type == 'VIEW_3D':
+                    a.tag_redraw()
         elif key in SAFE:
             on = {k: _safe_on(ob.data, k) for k in SAFE}
             on[key] = not on[key]

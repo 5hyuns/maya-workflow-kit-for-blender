@@ -41,7 +41,7 @@ def _snapshot(space, cam):
     return (sh.type, sh.light, sh.color_type, sh.show_shadows, sh.show_cavity, sh.show_xray, sh.use_dof,
             ov.show_wireframes, ov.show_xray_bone, maya_grid.visible(space), tuple(cam.lock_location),
             tuple(cam.lock_rotation), cam.data.show_sensor, cam.data.show_passepartout, cam.data.show_safe_areas,
-            bool(cam.data.get(pm.RES_GATE)), round(cam.data.allset_overscan, 4),
+            bool(cam.data.get(pm.RES_GATE)), bool(cam.data.get(pm.FIELD_CHART)), round(cam.data.allset_overscan, 4),
             round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform,
             camera_bookmarks.pan_zoom_on(space.region_3d))
 
@@ -252,4 +252,15 @@ def test_resolution_gate_label_is_the_render_size():
     r = bpy.context.scene.render
     r.resolution_x, r.resolution_y = 960, 540
     assert overscan.res_label(bpy.context.scene) == "960 x 540"
-    assert overscan._label_handles, "the label's draw handler is registered"
+    assert overscan._label_handles, "the overlay draw handler is registered"
+    pts = overscan.field_chart_lines(0, 0, 240, 120)
+    assert len(pts) == 4 * 25 + 4 and (120.0, 0) in pts and (240, 120) in pts
+
+
+def test_field_chart_toggles_on_the_camera():
+    space = _space()
+    cam = _camera_view(space)
+    ctx = Ctx(space)
+    assert pm.apply(ctx, "FIELD_CHART") and pm.state(ctx, "FIELD_CHART") and cam.data.get(pm.FIELD_CHART)
+    assert pm.apply(ctx, "FIELD_CHART") and not pm.state(ctx, "FIELD_CHART")
+    space.region_3d.view_perspective = 'PERSP'

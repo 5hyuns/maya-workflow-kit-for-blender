@@ -227,7 +227,7 @@ TOOLBAR = (
      ("film_gate", "set", "FILM_GATE", "Film Gate"),
      ("res_gate", "set", "RES_GATE", "Resolution Gate"),
      ("gate_mask", "set", "GATE_MASK", "Gate Mask"),
-     ("field_chart", "grey", None, "Field Chart"),
+     ("field_chart", "set", "FIELD_CHART", "Field Chart"),
      ("safe_action", "set", "SAFE_ACTION", "Safe Action"),
      ("safe_title", "set", "SAFE_TITLE", "Safe Title")),
     (("wire", "set", "SHADE_WIRE", "Wireframe"),
