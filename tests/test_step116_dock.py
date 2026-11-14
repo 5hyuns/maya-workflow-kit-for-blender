@@ -94,7 +94,7 @@ def test_stack_tabs_skip_floating_panels():
     maya_dock.set_role(areas[1], 'ATTRIBUTE_EDITOR')      # = a torn-off Attribute Editor
     try:
         assert maya_dock.floating_kinds(wm) == {'ATTRIBUTE_EDITOR'}
-        assert maya_dock.stack_tabs(wm) == ['CHANNEL_BOX', 'MODELING_TOOLKIT']
+        assert maya_dock.stack_tabs(wm) == ['CHANNEL_BOX', 'MODELING_TOOLKIT', 'TOOL_SETTINGS']
         wm.allset_dock = 'ATTRIBUTE_EDITOR'
         assert maya_dock.current_tab(wm) == 'CHANNEL_BOX', "the stack shows another tab"
         assert maya_dock.kind_visible(wm, 'ATTRIBUTE_EDITOR'), "the floating one is shown"
@@ -119,7 +119,7 @@ def test_stack_panel_draws_handle_tabs_and_content():
         assert ops[0] == (maya_dock.HANDLE, "allset.dock_handle"), ops[:3]
         # #78: the tabs are Maya's vertical strip drawn on the right edge, not a button row
         assert not [t for t, idname in ops if idname == "allset.dock_tab"], ops[:6]
-        assert maya_dock.stack_tabs(wm) == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT']
+        assert maya_dock.stack_tabs(wm) == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT', 'TOOL_SETTINGS']
         if marker:
             assert any(t == marker for k, t, _a, _p in rec.log if k in ("menu", "label")), (kind, rec.log[:12])
     wm.allset_dock = 'CHANNEL_BOX'

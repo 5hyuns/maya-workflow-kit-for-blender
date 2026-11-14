@@ -108,4 +108,4 @@ def test_template_timeline_sidebar_and_outliner():
     tl = next(a for a in areas if a.ui_type == 'TIMELINE')
     assert time_slider.has_slider_panel(tl.spaces.active), "Time Slider buttons in the timeline sidebar"
     outl = next(a for a in areas if a.type == 'OUTLINER').spaces.active
-    assert maya_outliner.is_maya_outliner(outl) and not outl.show_restrict_column_hide
+    assert maya_outliner.is_maya_outliner(outl) and outl.show_restrict_column_hide

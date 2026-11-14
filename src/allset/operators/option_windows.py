@@ -690,6 +690,8 @@ def store(key, values):
     else:
         data[key] = {k: v for k, v in values.items() if window is None or k not in window.pref_fields}
     prefs.option_settings = json.dumps(data)
+    # Python-set add-on preferences don't mark the preferences changed: Auto-Save Preferences would skip them
+    bpy.context.preferences.is_dirty = True
 
 
 def values_of(window, holder):

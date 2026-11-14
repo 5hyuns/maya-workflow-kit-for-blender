@@ -44,6 +44,9 @@ def _space(context):
 
 
 def _owner(space, context, owner):
+    if owner == "preferences":
+        from .. import preferences
+        return preferences.get(context)
     return {"space": space, "shading": space.shading, "overlay": space.overlay}[owner]
 
 
@@ -117,7 +120,17 @@ def camera_locked(ob):
 # Blender draws title and action safe areas together (one flag).
 CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
                "SAFE_ACTION": "show_safe_areas", "SAFE_TITLE": "show_safe_areas"}
-CAMERA_KEYS = {"CAMERA_LOCK", *CAMERA_DATA}
+# Resolution Gate: Blender always draws the render frame in a camera view, so the toggle keeps Maya's
+# state (camera data ID property) and Overscan; Film Gate and Resolution Gate are exclusive (Maya updateModelPanelBar).
+RES_GATE = "allset_res_gate"
+GATE_OVERSCAN = 1.3
+FIELD_CHART = "allset_field_chart"     # Maya Field Chart: drawn by operators/camera_overscan.draw_gate_overlays
+# Safe Action / Safe Title: Blender has one show_safe_areas flag drawing both frames. Each Maya toggle keeps its own
+# flag on the camera data; the frame that is off gets a 0 margin in the scene's safe areas (drawn on the camera frame
+# line), its real margin kept in a scene ID property until it is turned on again.
+# shortcut: safe-area margins are per scene, so two cameras with different Safe toggles share the last one set.
+SAFE = {"SAFE_ACTION": ("allset_safe_action", "action"), "SAFE_TITLE": ("allset_safe_title", "title")}
+CAMERA_KEYS = {"CAMERA_LOCK", "RES_GATE", "FIELD_CHART", *CAMERA_DATA}
 
 # Toolbar toggles whose Maya off state is another mode (Maya panel toolbar):
 # Wireframe off = smooth shaded, Smooth Shade All off = wireframe, Use All Lights off = default lighting.
@@ -134,9 +147,10 @@ FAILS = {
                      "views and a view that looks through a camera",
     "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
     "ISOLATE": "Select the objects to isolate",
+    "RENDER_CYCLES": "Cycles is off: enable the Cycles add-on in Preferences > Add-ons",
     "BOOKMARK": camera_bookmarks.NO_CAMERA,
 }
-for _k in CAMERA_DATA:
+for _k in (*CAMERA_DATA, "RES_GATE", "FIELD_CHART"):
     FAILS[_k] = FAILS["CAMERA_LOCK"]
 
 TIPS = {
@@ -148,6 +162,8 @@ TIPS = {
     "CAMERA_LOCK": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and "
                    "rotation channels are locked)",
     "FILM_GATE": "Film gate (Blender: camera sensor frame)",
+    "RES_GATE": "Resolution Gate",
+    "FIELD_CHART": "Field Chart",
     "GATE_MASK": "Gate mask (Blender: passepartout)",
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
@@ -206,6 +222,12 @@ def state(context, key):
             return False
         if key == "CAMERA_LOCK":
             return camera_locked(ob)
+        if key == "RES_GATE":
+            return ob.type == 'CAMERA' and bool(ob.data.get(RES_GATE))
+        if key == "FIELD_CHART":
+            return ob.type == 'CAMERA' and bool(ob.data.get(FIELD_CHART))
+        if key in SAFE:
+            return ob.type == 'CAMERA' and _safe_on(ob.data, key)
         return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
     if key == "ISOLATE":
         return space.local_view is not None
@@ -231,8 +253,8 @@ def state(context, key):
         return sh.type in ('SOLID', 'WIREFRAME') and sh.light == 'FLAT'
     if key == "RENDER_VP2":
         return sh.type != 'RENDERED'
-    if key == "RENDER_ENGINE":
-        return sh.type == 'RENDERED'
+    if key in RENDER_ENGINES:
+        return sh.type == 'RENDERED' and context.scene.render.engine.startswith(RENDER_ENGINES[key])
     if key == "TUMBLE_SELECTION":
         return context.preferences.inputs.use_rotate_around_active
     if key == "TUMBLE_COI":
@@ -260,11 +282,11 @@ def state(context, key):
 
 
 RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT", "RENDER_VP2",
-         "RENDER_ENGINE", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
+         "RENDER_EEVEE", "RENDER_CYCLES", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
-TOOLBAR_KEYS = ["FILM_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
+TOOLBAR_KEYS = ["FILM_GATE", "RES_GATE", "GATE_MASK", "FIELD_CHART", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE",
                 "BOOKMARK", "PAN_ZOOM"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
@@ -283,6 +305,23 @@ def main_region(area):
 
 
 _before_render = {}   # 3D View space pointer -> shading type before Rendered (IPR / Renderer menu)
+
+
+RENDER_ENGINES = {"RENDER_EEVEE": 'BLENDER_EEVEE', "RENDER_CYCLES": 'CYCLES'}   # prefix of scene.render.engine
+
+
+def set_engine(scene, key):
+    """Set the scene engine; False when it is not available (Cycles add-on disabled)."""
+    want = RENDER_ENGINES[key]
+    if scene.render.engine.startswith(want):
+        return True
+    for engine in (want, want + "_NEXT"):     # Blender 4.2-4.4 call it BLENDER_EEVEE_NEXT
+        try:
+            scene.render.engine = engine
+            return True
+        except TypeError:
+            pass
+    return False
 
 
 def enter_rendered(space):
@@ -326,7 +365,9 @@ def apply(context, key):
         sh.light = 'FLAT'
     elif key == "RENDER_VP2":
         leave_rendered(space)
-    elif key == "RENDER_ENGINE":
+    elif key in RENDER_ENGINES:
+        if not set_engine(context.scene, key):
+            return False
         enter_rendered(space)
     elif key in ("TUMBLE_SELECTION", "TUMBLE_COI"):
         # Blender's Orbit Around Selection is a user preference, which the kit never writes:
@@ -380,12 +421,32 @@ def apply(context, key):
         context.view_layer.objects.active = cam
     elif key in CAMERA_KEYS:
         ob = view_camera(context)
+        if ob is None and key != "CAMERA_LOCK":
+            ob = _look_through_panel_camera(context, space)
         if ob is None or (key != "CAMERA_LOCK" and ob.type != 'CAMERA'):
             return False
         if key == "CAMERA_LOCK":
             on = not camera_locked(ob)
             ob.lock_location = (on,) * 3
             ob.lock_rotation = (on,) * 3
+        elif key in ("FILM_GATE", "RES_GATE"):
+            data = ob.data
+            on = not state(context, key)
+            data.show_sensor = on and key == "FILM_GATE"
+            data[RES_GATE] = on and key == "RES_GATE"
+            data.allset_overscan = GATE_OVERSCAN if on else 1.0     # Maya: camera -e -overscan 1.3 / 1.0
+        elif key == "FIELD_CHART":
+            ob.data[FIELD_CHART] = not ob.data.get(FIELD_CHART)
+            for a in context.screen.areas if context.screen else ():
+                if a.type == 'VIEW_3D':
+                    a.tag_redraw()
+        elif key in SAFE:
+            on = {k: _safe_on(ob.data, k) for k in SAFE}
+            on[key] = not on[key]
+            for k, (flag, _attr) in SAFE.items():
+                ob.data[flag] = on[k]
+            ob.data.show_safe_areas = any(on.values())
+            _sync_safe_margins(context.scene, on)
         else:
             prop = CAMERA_DATA[key]
             setattr(ob.data, prop, not getattr(ob.data, prop))
@@ -576,8 +637,6 @@ def draw_rows(layout, context, rows, idname=""):
                 layout.prop(_owner(space, context, owner), prop, text=label)
         elif kind == "set":
             _k, key, label = row
-            if key == "RENDER_ENGINE":
-                label = context.engine.replace("BLENDER_", "").replace("_NEXT", "").title()
             on = state(context, key)
             if on is None:
                 icon = 'NONE'
@@ -634,6 +693,40 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
 _before_look = {}
 
 
+def _safe_on(data, key):
+    """A camera from before separate Safe flags: show_safe_areas meant both."""
+    return bool(data.show_safe_areas and data.get(SAFE[key][0], True))
+
+
+def _sync_safe_margins(scene, on):
+    areas = scene.safe_areas
+    for key, (_flag, attr) in SAFE.items():
+        kept = "allset_kept_safe_" + attr
+        if on[key] or not any(on.values()):      # both off: nothing drawn, give the real margins back
+            if kept in scene:
+                setattr(areas, attr, tuple(scene[kept]))
+                del scene[kept]
+        elif kept not in scene:
+            scene[kept] = tuple(getattr(areas, attr))
+            setattr(areas, attr, (0.0, 0.0))
+
+
+def _look_through_panel_camera(context, space):
+    """Maya's persp / top / front / side panel is that camera: in Blender's own view, put the view's startup camera
+    where the view looks (Create Camera From View's placement) and look through it. None: no such camera."""
+    area = context.area
+    rv3d = space.region_3d
+    if area is None or area.type != 'VIEW_3D' or rv3d is None:
+        return None
+    cam = panel_camera(context, make=True)
+    if cam is None or cam.type != 'CAMERA':
+        return None
+    from ..operators import camera_copy, units
+    camera_copy._place_from_view(cam, space, rv3d, units.maya_unit(context.scene))
+    look_through(context, area, cam)
+    return cam
+
+
 def look_through(context, area, ob):
     space = area.spaces.active
     rv3d = space.region_3d
@@ -643,6 +736,14 @@ def look_through(context, area, ob):
                                            space.use_local_camera)
     # the view's own camera (a Maya panel's): local first, since a camera set on a view locked to the scene becomes
     # the scene camera
+    if ob.hide_viewport:
+        # Blender doesn't evaluate an object disabled in viewports (the startup cameras: Maya Visibility off), so
+        # navigating through it would not move the view; hide it with the eye instead (still not drawn)
+        ob.hide_viewport = False
+        try:
+            ob.hide_set(True)
+        except RuntimeError:     # not in this view layer
+            pass
     space.use_local_camera = ob != context.scene.camera
     space.camera = ob
     space.region_3d.view_perspective = 'CAMERA'

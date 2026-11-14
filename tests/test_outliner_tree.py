@@ -6,6 +6,7 @@ and row selection. GUI: tests/gui/gui_outliner_tree.py."""
 import os
 import tempfile
 import time
+from types import SimpleNamespace
 from importlib import import_module
 from mathutils import Vector
 
@@ -372,3 +373,16 @@ def test_tree_picks_set_the_lead():
     tree.select_row(bpy.context, rows, i["pC1"], 'REPLACE')
     tree.select_row(bpy.context, rows, i["pA1"], 'RANGE', anchor=tree.active_row(bpy.context, rows))
     assert pick_order.last(bpy.context) == a and {o.name for o in bpy.context.selected_objects} == {"pA1", "pB1", "pC1"}
+
+
+def test_search_row_above_rows():
+    """Maya's search row: the first row starts below it, and a press on it hits no row."""
+    region = SimpleNamespace(height=400, width=260)
+    area = SimpleNamespace(as_pointer=lambda: 987654)
+    u = 20
+    top = tree.top(region, u)
+    assert top == 400 - int(tree.SEARCH_ROW * u) < 400
+    assert tree.row_rect(area, region, 0, u, 5) == (top - u, top)
+    assert tree.row_index_at(area, region, top, u, 5) is None
+    assert tree.row_index_at(area, region, top - 1, u, 5) == 0
+    assert tree.page_rows(region, u) == top // u

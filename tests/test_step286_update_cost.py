@@ -39,7 +39,7 @@ def _space():
     """The Layout screen's Outliner, set up as a Maya Outliner (creation order, no shapes)."""
     area = next(a for a in bpy.data.screens["Layout"].areas if a.type == 'OUTLINER')
     sp = area.spaces.active
-    sp.use_sort_alpha = False
+    import_module(kit.MODULE + ".ui.outliner_tree").set_sort_alpha(sp, False)
     sp.use_filter_object_content = False
     sp.use_filter_children = True
     return sp

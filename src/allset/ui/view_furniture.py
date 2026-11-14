@@ -320,15 +320,27 @@ def _cube_here(context):
 # --- drawing --------------------------------------------------------------------------------
 
 _shader = []
-def _face_label(name, poly, facing, u2, size, alpha):
-    """``_text`` arguments of the face's name in Blender's UI font, centred on the projected face, along its text axis
-    and never upside down."""
-    cx = sum(p[0] for p in poly) / 4
-    cy = sum(p[1] for p in poly) / 4
-    ang = math.atan2(u2[1], u2[0])
-    if math.cos(ang) < 0:
-        ang += math.pi
-    return name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (.16, .16, .16, min(1.0, alpha * 1.5)), ang
+def _face_label_matrix(name, q, centre, size):
+    """Font pixels to homogeneous screen coordinates, on the cube's actual face plane."""
+    from mathutils import Matrix
+    n, u, v = FACES[name]
+    origin = _to_view(q, Vector(n) * .5)
+    axes = (_to_view(q, Vector(u) * .0112), _to_view(q, Vector(v) * .0112))
+    k = size * _PX_PER_UNIT * (CUBE_EYE - .5)
+    columns = []
+    for p, offset in ((axes[0], 0.0), (axes[1], 0.0), (Vector((0, 0, 0)), 0.0), (origin, CUBE_EYE)):
+        w = offset - p.z
+        columns.append((centre[0] * w + k * p.x, centre[1] * w + k * p.y, 0.0, w))
+    return Matrix(columns).transposed()
+
+
+def _face_label(name, matrix, alpha):
+    """Keep glyphs fixed to the face (``matrix``: ``_face_label_matrix``), including perspective, shear and
+    foreshortening."""
+    import gpu
+    with gpu.matrix.push_pop():
+        gpu.matrix.multiply_matrix(matrix)
+        _text(name, 0, 0, 16, (.16, .16, .16, min(1.0, alpha * 1.5)))
 
 
 def _arc_arrow(centre, radius, start, end, length, half_width):
@@ -537,7 +549,7 @@ def _cube_plan(q, centre, size, hover, alpha):
             fill = (batch_for_shader(_sh()[0], 'TRI_FAN', {"pos": poly}), (0.55, 0.75, 0.95, alpha))
         else:
             fill = (_cube_face_batch(poly, name, facing, alpha), None)
-        label = _face_label(name, poly, facing, u2, size, alpha) if facing > 0.28 else None
+        label = (name, _face_label_matrix(name, q, centre, size)) if facing > 0.28 else None
         steps.append((fill, _strip_batch(list(poly) + [poly[0]]), label))
     return faces, steps
 
@@ -562,7 +574,7 @@ def draw_cube(context, hover=None, alpha=0.5):
             batch.draw(shaders[2])
         _draw_strip(outline, (0.418, 0.418, 0.418, alpha), 1.95, region)
         if label is not None:
-            _text(*label)
+            _face_label(*label, alpha)
     if hover is not None:
         _draw_controls(context, centre, size, hover)
     return faces
@@ -1065,6 +1077,31 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
 
     def setup(self, context):
         self.gizmos.new(ALLSET_GT_view_cube.bl_idname)
+        self.camera_button = self.gizmos.new('GIZMO_GT_button_2d')
+        self.projection_button = self.gizmos.new('GIZMO_GT_button_2d')
+        for button, operator in ((self.camera_button, 'view3d.view_camera'),
+                                 (self.projection_button, 'view3d.view_persportho')):
+            button.draw_options = {'OUTLINE', 'BACKDROP'}
+            button.show_drag = False
+            button.color = (0.0, 0.0, 0.0)
+            button.alpha = 0.0
+            button.color_highlight = (0.5, 0.5, 0.5)
+            button.alpha_highlight = 0.5
+            button.target_set_operator(operator)
+
+    def draw_prepare(self, context):
+        s = _scale()
+        region, rv = context.region, context.region_data
+        size = cube_size(region.width, region.height, s)
+        centre, _label, _triad = layout(_bounds(context), s, size)
+        hide = not _cube_here(context) or not _prefs().show_view_cube_buttons
+        for i, button in enumerate((self.camera_button, self.projection_button)):
+            button.hide = hide
+            button.scale_basis = 14 * s
+            button.matrix_basis.translation = (centre[0] + size * .5,
+                                                centre[1] - size * .8 - (18 + 30 * i) * s, 0)
+        self.camera_button.icon = 'VIEW_CAMERA' if rv.view_perspective == 'CAMERA' else 'VIEW_CAMERA_UNSELECTED'
+        self.projection_button.icon = 'VIEW_PERSPECTIVE' if rv.is_perspective else 'VIEW_ORTHO'
 
 
 classes = (ALLSET_OT_view_cube_face, ALLSET_OT_view_cube_control, ALLSET_MT_view_cube, ALLSET_GT_view_cube, ALLSET_GGT_view_cube)

@@ -190,6 +190,50 @@ def test_hide_in_outliner_and_eye_column():
     assert edit.eye_state(_row(rows, "persp")) is None
 
 
+def test_select_and_render_columns():
+    cube, sk, names = _rig()
+    rows = _rows()
+    row, root = _row(rows, "pCube1"), _row(rows, names[0])
+    for col, prop in (('SELECT', "hide_select"), ('RENDER', "hide_render")):
+        assert tree.column_state(row, col) is True
+        assert edit.toggle_column(bpy.context, row, col) and getattr(cube, prop)
+        assert tree.column_state(row, col) is False
+        edit.toggle_column(bpy.context, row, col)
+        assert not getattr(cube, prop)
+    assert tree.column_state(root, 'SELECT') is True
+    assert edit.toggle_column(bpy.context, root, 'SELECT') and sk.data.bones[names[0]].hide_select
+    assert tree.column_state(root, 'SELECT') is False
+    edit.toggle_column(bpy.context, root, 'SELECT')
+    assert tree.column_state(root, 'RENDER') is None, "a joint has no render column"
+    assert not edit.toggle_column(bpy.context, root, 'RENDER')
+    assert tree.column_state(_row(rows, "persp"), 'SELECT') is None
+    shape = tree.Row('SHAPE', "pCube1", cube.data.name, 1, False, False, cube.data.name, 'SHAPE', None)
+    assert tree.column_state(shape, 'RENDER') is None
+    icons = import_module(kit.MODULE + ".ui.blender_restrict_icons").CELLS
+    heights = {k[0] for k in icons}
+    assert 20 in heights and len(icons) == 6 * len(heights), "Blender's 3 icons x on/off at every captured height"
+
+
+def test_column_shift_takes_everything_below():
+    cube, sk, names = _rig()
+    child = _mesh("pSphere1", cube)
+    grand = _mesh("pCone1", child)
+    rows = _rows()
+    row = _row(rows, "pCube1")
+    assert edit.set_column(bpy.context, row, 'RENDER', False)
+    assert cube.hide_render and not child.hide_render, "a plain click: the row only"
+    assert edit.set_column(bpy.context, row, 'SELECT', False, recursive=True)
+    assert cube.hide_select and child.hide_select and grand.hide_select, "Shift: the objects below too"
+    assert not grand.hide_render
+    assert edit.toggle_column(bpy.context, row, 'SELECT', recursive=True)
+    assert not (cube.hide_select or child.hide_select or grand.hide_select)
+    root = _row(rows, names[0])
+    edit.set_column(bpy.context, root, 'SELECT', False)
+    assert [sk.data.bones[n].hide_select for n in names] == [True] + [False] * (len(names) - 1)
+    edit.set_column(bpy.context, root, 'SELECT', False, recursive=True)
+    assert all(sk.data.bones[n].hide_select for n in names), "Shift: the joints below too"
+
+
 def test_delete_objects_and_joints():
     cube, sk, names = _rig()
     child = _mesh("pSphere1", cube)
@@ -216,8 +260,8 @@ def test_drop_between_rows_reorders():
     rows = _rows()
     assert [r.label for r in rows if r.kind == 'OBJECT'] == ["pCube1", "pSphere1"]
     sp = _outliner_space()
-    saved = sp.use_sort_alpha
-    sp.use_sort_alpha = False                 # Maya order (a factory Outliner sorts by name)
+    saved = tree.sort_alpha(sp)
+    tree.set_sort_alpha(sp, False)                # Maya order (a factory Outliner sorts by name)
     try:
         tree._cache.clear()
         before = tree.rows_for(bpy.context, sp)
@@ -230,7 +274,7 @@ def test_drop_between_rows_reorders():
             "the cached rows follow the new order (an ID property write tags nothing)"
         assert [r.label for r in before if r.kind == 'OBJECT'] == ["pCube1", "pSphere1"]
     finally:
-        sp.use_sort_alpha = saved
+        tree.set_sort_alpha(sp, saved)
 
 
 def _outliner_space():

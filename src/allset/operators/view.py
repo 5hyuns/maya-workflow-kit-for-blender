@@ -185,6 +185,15 @@ def dolly_distance(distance0, dx, dy, ui_scale=1.0, invert=False):
     return distance0 * (2.0 ** (step if invert else -step))
 
 
+def drag_jump(region, dx, dy):
+    """True when one mouse step of (dx, dy) px is a cursor warp (GRAB_CURSOR wrap at the edge, a pen tablet's
+    absolute position) rather than a hand move: over half the region in one event. Such a step is dropped, or the
+    dolly snaps the wrong way."""
+    w = getattr(region, "width", 0) or 1000
+    h = getattr(region, "height", 0) or 1000
+    return abs(dx) > w / 2 or abs(dy) > h / 2
+
+
 def invert_zoom(context):
     """Blender's Preferences > Input > Invert Zoom Direction (drag zoom), read only (#295)."""
     return bool(getattr(context.preferences.inputs, "invert_mouse_zoom", False))
@@ -209,7 +218,8 @@ class ALLSET_OT_dolly(bpy.types.Operator):
             camera_navigation(context)           # through a camera: Blender's zoom moves it (#9)
             bpy.ops.view3d.zoom('INVOKE_DEFAULT')
             return {'FINISHED'}
-        self._start = (event.mouse_x, event.mouse_y)
+        self._last = (event.mouse_x, event.mouse_y)
+        self._drag = [0, 0]
         self._d0 = rv3d.view_distance
         # the button that started it: RMB for Alt+RMB, LMB for the Dolly Tool (ui/camera_tools.py)
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'} else 'RIGHTMOUSE'
@@ -220,10 +230,14 @@ class ALLSET_OT_dolly(bpy.types.Operator):
     def modal(self, context, event):
         rv3d = context.region_data
         if event.type == 'MOUSEMOVE':
-            dx = event.mouse_x - self._start[0]
-            dy = event.mouse_y - self._start[1]
-            rv3d.view_distance = dolly_distance(self._d0, dx, dy, context.preferences.system.ui_scale or 1.0,
-                                                invert_zoom(context))
+            dx = event.mouse_x - self._last[0]
+            dy = event.mouse_y - self._last[1]
+            self._last = (event.mouse_x, event.mouse_y)
+            if not drag_jump(context.region, dx, dy):
+                self._drag[0] += dx
+                self._drag[1] += dy
+            rv3d.view_distance = dolly_distance(self._d0, self._drag[0], self._drag[1],
+                                                context.preferences.system.ui_scale or 1.0, invert_zoom(context))
             context.area.tag_redraw()
         elif event.type in self._ends and event.value == 'RELEASE':
             return {'FINISHED'}
@@ -292,7 +306,8 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
         if event.type == 'MOUSEMOVE':
             dx, dy = event.mouse_x - self._last[0], event.mouse_y - self._last[1]
             self._last = (event.mouse_x, event.mouse_y)
-            self.step(context, dx, dy)
+            if not drag_jump(context.region, dx, dy):
+                self.step(context, dx, dy)
             context.area.tag_redraw()
         elif event.type == self._button and event.value == 'RELEASE':
             return {'FINISHED'}
@@ -693,7 +708,8 @@ def frame_region(context, area, region, selected=True, children=False):
     loc, dist = framing.fit(points, rv3d.view_rotation, rv3d.window_matrix.copy(),
                             rv3d.view_distance, rv3d.view_perspective == 'ORTHO',
                             (region.width, region.height), rect,
-                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene),
+                            film_aspect=framing.FILM_ASPECT)
     rv3d.view_location = loc
     rv3d.view_distance = dist
     region.tag_redraw()
@@ -732,8 +748,11 @@ def frame_camera(context, cam, points):
     centre = sum((Vector(p) for p in points), Vector()) / len(points)
     forward = rot @ Vector((0.0, 0.0, -1.0))
     dist0 = max((centre - loc0).dot(forward), 1e-3)
+    data = cam.data
+    film = data.sensor_width / data.sensor_height if data.sensor_height > 0 else framing.FILM_ASPECT
     loc, dist = framing.fit(points, rot, win, dist0, ortho, size, (0.0, 0.0, size[0], size[1]),
-                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene),
+                            film_aspect=film)     # Maya GUI viewFit: the film-fit axis only, like the persp view
     if ortho:
         cam.data.ortho_scale *= dist / dist0
         dist = dist0

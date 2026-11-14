@@ -54,6 +54,9 @@ VIEW = [
     ("menu", "Camera Tools", "ALLSET_MT_panel_camera_tools"),
     _sep(),
     _grey("View Sequence Time"),
+    _sep(),
+    ("prop", "preferences", "show_viewport_shading", "Viewport Shading Controls"),
+    ("prop", "preferences", "show_view_cube_buttons", "Camera / Projection Buttons"),
 ]
 
 # Maya viewSet -vx = seen from +X (Maya 2022 panel View menu); axis names as Blender's
@@ -124,7 +127,7 @@ SHOW_TYPES = (
     ("Joints", "armature"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
     ("Particle Instancers", None), ("Fluids", "volume"), ("Hair Systems", "curves"),
     ("Follicles", None), ("nCloths", None), ("nParticles", None), ("nRigids", None),
-    ("Dynamic Constraints", None), ("Locators", "empty"), ("Dimensions", None),
+    ("Dynamic Constraints", None), ("Locators (Empties)", "empty"), ("Dimensions", None),
     ("Pivots", "@show_object_origins"), ("Handles", None), ("Texture Placements", None),
     ("Strokes", None), ("Motion Trails", "@show_motion_paths"), ("Plugin Shapes", None),
     ("Clip Ghosts", None), ("Grease Pencil", "grease_pencil"),
@@ -167,7 +170,9 @@ RENDERER = [
     _grey("Legacy Default Viewport"),
     _grey("Legacy High Quality Viewport"),
     _sep(),
-    ("set", "RENDER_ENGINE", "{engine}"),   # Maya lists render overrides here (Arnold)
+    # Maya lists render overrides here (Arnold); these set the scene engine + Rendered shading
+    ("set", "RENDER_EEVEE", "Eevee"),
+    ("set", "RENDER_CYCLES", "Cycles"),
 ]
 
 PANELS = [
@@ -220,9 +225,9 @@ TOOLBAR = (
      ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
     (("grid", "set", "GRID", "Grid"),
      ("film_gate", "set", "FILM_GATE", "Film Gate"),
-     ("res_gate", "grey", None, "Resolution Gate"),
+     ("res_gate", "set", "RES_GATE", "Resolution Gate"),
      ("gate_mask", "set", "GATE_MASK", "Gate Mask"),
-     ("field_chart", "grey", None, "Field Chart"),
+     ("field_chart", "set", "FIELD_CHART", "Field Chart"),
      ("safe_action", "set", "SAFE_ACTION", "Safe Action"),
      ("safe_title", "set", "SAFE_TITLE", "Safe Title")),
     (("wire", "set", "SHADE_WIRE", "Wireframe"),

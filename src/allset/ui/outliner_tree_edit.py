@@ -502,34 +502,7 @@ def _drop(context, dragged, target, where):
 
 def toggle_eye(context, row):
     """Flip the visibility of an object row (``hide_viewport``, Maya's visibility) or a joint row (its bone)."""
-    ob = bpy.data.objects.get(row.ob)
-    if ob is None:
-        return False
-    if row.kind == 'JOINT':
-        # Maya: a joint's Visibility hides everything below it too, without changing the children's own Visibility
-        # (ui/layer_joints.state); the eye sets this joint only
-        from .. import compat
-        from . import layer_joints
-        if ob.mode == 'EDIT':
-            eb = ob.data.edit_bones.get(row.sub)
-            if eb is None:
-                return False
-            eb.hide = not eb.hide
-        else:
-            pb = ob.pose.bones.get(row.sub) if ob.pose is not None else None
-            if pb is None:
-                return False
-            compat.set_bone_hidden(pb, not compat.bone_hidden(pb))
-        layer_joints.bump()
-        from ..operators import dag
-        dag.sync(context.scene, context.view_layer)       # objects under the joints follow them
-        return True
-    if row.kind in ('OBJECT', 'MEMBER', 'SHAPE'):
-        ob.hide_viewport = not ob.hide_viewport
-        from ..operators import dag
-        dag.sync(context.scene, context.view_layer)       # Maya hides what is below a hidden node
-        return True
-    return False
+    return toggle_column(context, row, 'EYE')
 
 
 def eye_state(row, names=None):
@@ -546,6 +519,69 @@ def eye_state(row, names=None):
         pb = ob.pose.bones.get(row.sub) if ob.pose is not None else None
         return None if pb is None else not compat.bone_hidden(pb)
     return not ob.hide_viewport
+
+
+def _bone_of(ob, name):
+    """The edit bone (Edit Mode) or bone ``name`` of armature ``ob``, or None."""
+    return (ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones).get(name)
+
+
+def restrict_state(row, col, names=None):
+    """Blender's SELECT (selectable) / RENDER (renders) column of a row: True / False, None without one.
+    Joints have the select column only (a bone doesn't render on its own). ``names`` as in ``eye_state``."""
+    ob = tree.object_named(row.ob, names) if row.kind in ('OBJECT', 'JOINT', 'MEMBER') else None
+    if ob is None:
+        return None
+    if row.kind == 'JOINT':
+        b = _bone_of(ob, row.sub) if col == 'SELECT' else None
+        return None if b is None else not b.hide_select
+    return not (ob.hide_select if col == 'SELECT' else ob.hide_render)
+
+
+def column_on(row, col):
+    """True / False = a row's EYE / SELECT / RENDER column is on / off, None when the row has none."""
+    return eye_state(row) if col == 'EYE' else restrict_state(row, col)
+
+
+def toggle_column(context, row, col, recursive=False):
+    """Flip a row's EYE / SELECT / RENDER column (Shift: ``recursive``)."""
+    on = column_on(row, col)
+    return on is not None and set_column(context, row, col, not on, recursive)
+
+
+def set_column(context, row, col, on, recursive=False):
+    """Set a row's EYE / SELECT / RENDER column to ``on``. ``recursive`` (Blender's Shift): every node below the row
+    too (child objects; for a joint its child joints and the objects parented to them). A joint's eye sets that joint
+    only: Maya hides what is below it without changing the children's own Visibility (ui/layer_joints.state)."""
+    if column_on(row, col) is None:
+        return False
+    ob = bpy.data.objects[row.ob]
+    obs = [ob]
+    if row.kind == 'JOINT':
+        from .. import compat
+        b = _bone_of(ob, row.sub)
+        bones = [b, *b.children_recursive] if recursive else [b]
+        names = {x.name for x in bones}
+        for x in bones:
+            if col == 'SELECT':
+                x.hide_select = not on
+            elif ob.mode == 'EDIT':
+                x.hide = not on
+            elif ob.pose is not None and ob.pose.bones.get(x.name) is not None:
+                compat.set_bone_hidden(ob.pose.bones[x.name], not on)
+        obs = [o for o in ob.children if o.parent_type == 'BONE' and o.parent_bone in names] if recursive else []
+        if col == 'EYE':
+            from . import layer_joints
+            layer_joints.bump()
+    if recursive:
+        obs = [*obs, *(c for o in obs for c in o.children_recursive)]
+    prop = {'EYE': "hide_viewport", 'SELECT': "hide_select", 'RENDER': "hide_render"}[col]
+    for o in obs:
+        setattr(o, prop, not on)
+    if col == 'EYE':
+        from ..operators import dag
+        dag.sync(context.scene, context.view_layer)       # Maya hides what is below a hidden node
+    return True
 
 
 # --- delete --------------------------------------------------------------------------------------------------------

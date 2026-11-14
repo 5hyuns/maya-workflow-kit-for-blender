@@ -53,11 +53,16 @@ def test_dolly_modal_follows_preference():
         for value in (False, True):
             inputs.invert_mouse_zoom = value
             rv3d.view_distance = 10.0
-            op = SimpleNamespace(_start=(100, 100), _d0=10.0, _button='RIGHTMOUSE')
+            op = SimpleNamespace(_last=(100, 100), _drag=[0, 0], _d0=10.0, _button='RIGHTMOUSE')
             with bpy.context.temp_override(window=win, area=area, region=region, space_data=area.spaces.active):
                 ctx = bpy.context
                 view.ALLSET_OT_dolly.modal(op, ctx, Event('MOUSEMOVE', 'NOTHING', 250, 100))
-            results[value] = rv3d.view_distance
+                results[value] = rv3d.view_distance
+                # a cursor warp back across the region (GRAB_CURSOR wrap) must not reverse the dolly
+                view.ALLSET_OT_dolly.modal(op, ctx, Event('MOUSEMOVE', 'NOTHING', 250 - region.width, 100))
+                assert abs(rv3d.view_distance - results[value]) < 1e-9, "warp jump moved the dolly"
+                view.ALLSET_OT_dolly.modal(op, ctx, Event('MOUSEMOVE', 'NOTHING', 260 - region.width, 100))
+                assert (rv3d.view_distance < results[value]) is (not value), "drag after the warp keeps going"
         assert results[False] < 10.0 < results[True], results
     finally:
         inputs.invert_mouse_zoom = old_inv

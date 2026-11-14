@@ -17,6 +17,7 @@ from mathutils import Matrix, Vector
 
 FIT = 0.95       # Maya fit factor
 MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units
+FILM_ASPECT = 1.5  # Maya persp camera film back 1.417 x 0.945 in
 
 
 def view_matrix(loc, rot, dist):
@@ -58,11 +59,12 @@ def _bounds(persp, corners, size):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HALF):
+def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HALF, film_aspect=None):
     """(view_location, view_distance) that fit ``points`` into ``rect`` (region pixels).
 
     ``rect`` = (x0, y0, x1, y1), the visible part of the region; the box fills ``factor``
     of it on its tighter axis and is centred in it. ``size`` = region (width, height).
+    ``film_aspect``: perspective only, fit just the axis the film (this aspect, Fill) matches, like Maya's F.
     """
     corners = box_corners(points, min_half)
     centre = sum(corners, Vector()) / 8.0
@@ -137,6 +139,14 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
             return abs(axis.x) * half.x + abs(axis.y) * half.y + abs(axis.z) * half.z
         tan_w = (rect[2] - rect[0]) / max(size[0], 1.0) / win0[0][0]
         tan_h = (rect[3] - rect[1]) / max(size[1], 1.0) / win0[1][1]
+        if film_aspect:
+            # Maya 2026 GUI viewFit (F) fits only the film-fit axis: in a panel wider than the film (Fill) just the
+            # width, so a tall object runs off top and bottom (measured: box 2x4x1 front 2.5468, cone steep 9.2532).
+            # shortcut: panels taller than the film fit only the height, not measured in Maya.
+            if tan_w >= tan_h * film_aspect:
+                tan_h = float("inf")
+            else:
+                tan_w = float("inf")
         d = extent(fwd) + max(extent(right) / tan_w, extent(up) / tan_h) / factor
         ndc_x = (rect[0] + rect[2]) / max(size[0], 1.0) - 1.0
         ndc_y = (rect[1] + rect[3]) / max(size[1], 1.0) - 1.0

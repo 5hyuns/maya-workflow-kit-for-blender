@@ -46,12 +46,15 @@ def _outliner():
 
 def _filters(sp):
     return (sp.display_mode, sp.use_filter_collection, sp.use_filter_object_content, sp.show_mode_column,
-            sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha)
+            sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children,
+            outliner_tree.sort_alpha(sp), sp.show_restrict_column_enable)
 
 
 def _restore(sp, saved):
     (sp.display_mode, sp.use_filter_collection, sp.use_filter_object_content, sp.show_mode_column,
-     sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, sp.use_sort_alpha) = saved
+     sp.show_restrict_column_render, sp.show_restrict_column_hide, sp.use_filter_children, alpha,
+     sp.show_restrict_column_enable) = saved
+    outliner_tree.set_sort_alpha(sp, alpha)
 
 
 def _header(area):
@@ -73,7 +76,7 @@ def test_shapes_on_keeps_the_maya_outliner():
         assert outliner_tree.is_tree(sp), "Shapes on: still the kit's rows (shape rows added)"
         rec = _header(area)
         assert rec.texts("menu") == ["Display", "Show", "Help"], rec.log
-        assert "filter_text" in rec.props(), "search field"
+        assert "filter_text" not in rec.props(), "the search field is the tree's own row, below the menu bar"
         sp.use_filter_object_content = False                     # Display > Shapes off again, same place
         assert maya_outliner.is_maya_outliner(sp) and outliner_tree.is_tree(sp)
         assert _header(area).texts("menu") == ["Display", "Show", "Help"]

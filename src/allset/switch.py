@@ -111,6 +111,7 @@ def enter_layout(window):
         # nothing appended twice (#19); the user's workspace is remembered for the way back (#185)
         if window.workspace is not None:
             own[BLENDER_PREV_KEY] = window.workspace.name
+        _prepare_layout(window, own)
         window.workspace = own
         return own
     prev = window.workspace.name
@@ -119,7 +120,43 @@ def enter_layout(window):
         return None
     ws[PREV_KEY] = prev
     ws.name = WORKSPACE
+    _prepare_layout(window, ws, fresh=True)
     return ws
+
+
+def _prepare_layout(window, ws, fresh=False):
+    """Restore and fit the destination before the event loop presents its first frame."""
+    if bpy.app.background or not _registered[0] or not ws.screens:
+        return
+    from .ui import kit_icons, outliner_tree, shelf, time_slider, toolbox, viewport_settings
+    screen = ws.screens[0]
+    if fresh:
+        toolbox._state.pop(screen.name, None)  # a deleted workspace may have used this name
+    kit_icons.make_all()    # else the first frame draws Blender's fallback icons
+    previous = None
+    # A window that already shows the screen (a new Maya scene) doesn't change screen on entering the override:
+    # pass through another workspace's screen, so coming back recomputes the rectangles and clears the screen's
+    # active region (screen.area_move doesn't poll while the mouse is over a region).
+    shown = {w.screen for w in _windows()}
+    other = next((w.screens[0] for w in bpy.data.workspaces if w != ws and w.screens and w.screens[0] not in shown),
+                 None) if screen in shown else None
+    # Re-entering the screen updates area rectangles after area_move without drawing a frame.
+    for _ in range(4):
+        if other is not None:
+            with bpy.context.temp_override(window=window, screen=other):
+                pass
+        with bpy.context.temp_override(window=window, screen=screen):
+            if previous is None:
+                shelf.settle_rows()
+                outliner_tree.hide_all()
+                viewport_settings.sample()
+            sizes = tuple((a.x, a.y, a.width, a.height) for a in screen.areas)
+            if sizes == previous:
+                break
+            previous = sizes
+            toolbox.fit_columns(start_fit=False)
+    with bpy.context.temp_override(window=window, screen=screen):
+        time_slider.fit_timelines()     # at the final sizes; else the first draw schedules it and the ruler jumps
 
 
 TEMPLATE_KEY = "allset_template"      # the template workspace a Maya workspace was made from

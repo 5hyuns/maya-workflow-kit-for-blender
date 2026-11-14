@@ -284,6 +284,9 @@ def default(space, role, scene):
     # through camera1 again for View > Cameras > Active Camera. A new panel starts with the scene's camera.
     space.use_local_camera = False
     space.lock_camera = False
+    space.shading.use_scene_world = False
+    space.shading.studiolight_background_alpha = 1.0
+    space.overlay.show_look_dev = True
     rv3d = space.region_3d
     if rv3d is None:
         return
