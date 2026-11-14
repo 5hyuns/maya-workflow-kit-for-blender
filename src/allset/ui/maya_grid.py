@@ -27,6 +27,7 @@ import math
 import time
 
 import bpy
+from bpy.app.handlers import persistent
 
 # Default grid.
 SIZE = 12
@@ -44,6 +45,75 @@ OFF_LINES = 16          # Blender's default grid_lines: "not the Maya grid"
 _handle = []
 _batches = {}
 _times = []
+_depth_batches = {}
+
+
+def opaque_material(material):
+    """Only fill depth for surfaces whose opacity is unambiguous."""
+    if material is None:
+        return True
+    if material.use_backface_culling:
+        return False
+    if not material.use_nodes:
+        return material.diffuse_color[3] == 1.0
+    output = material.node_tree.get_output_node('EEVEE')
+    if output is None or output.inputs['Displacement'].is_linked or output.inputs['Volume'].is_linked:
+        return False
+    links = output.inputs['Surface'].links
+    if len(links) != 1 or links[0].from_node.type != 'BSDF_PRINCIPLED':
+        return False
+    inputs = links[0].from_node.inputs
+    return all(not inputs[name].is_linked and inputs[name].default_value == value
+               for name, value in (('Alpha', 1.0), ('Transmission Weight', 0.0)))
+
+
+@persistent
+def _clear_depth(*_args):
+    _depth_batches.clear()
+
+
+def _draw_mesh_depth(context):
+    """Repair EEVEE's depth at mesh seams before the unfiltered grid overlay."""
+    import gpu
+    import numpy as np
+    from gpu_extras.batch import batch_for_shader
+    from .selection_wire import _positions
+
+    space = context.space_data
+    if not (space.shading.type == 'MATERIAL' or
+            (space.shading.type == 'RENDERED' and context.scene.render.engine == 'BLENDER_EEVEE')):
+        return
+    depsgraph = context.evaluated_depsgraph_get()
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.depth_test_set('LESS_EQUAL')
+    gpu.state.depth_mask_set(True)
+    gpu.state.blend_set('ALPHA')
+    shader.bind()
+    shader.uniform_float('color', (0.0, 0.0, 0.0, 0.0))
+    # shortcut: non-mesh objects and generated instances retain engine depth; extend if they show the same defect.
+    for obj in context.visible_objects:
+        if obj.type != 'MESH' or obj.display_type in {'WIRE', 'BOUNDS'} or obj.mode == 'EDIT':
+            continue
+        evaluated = obj.evaluated_get(depsgraph)
+        key = (depsgraph.as_pointer(), obj.session_uid)
+        if key not in _depth_batches:
+            mesh = evaluated.data
+            opaque = [opaque_material(s.material) for s in evaluated.material_slots] or [True]
+            mesh.calc_loop_triangles()
+            indices = np.empty(len(mesh.loop_triangles) * 3, np.int32)
+            materials = np.empty(len(mesh.loop_triangles), np.int32)
+            mesh.loop_triangles.foreach_get('vertices', indices)
+            mesh.loop_triangles.foreach_get('material_index', materials)
+            mask = np.array([opaque[i] if i < len(opaque) else False for i in materials])
+            triangles = indices.reshape(-1, 3)[mask.astype(bool)]
+            _depth_batches[key] = (batch_for_shader(shader, 'TRIS',
+                                  {'pos': _positions(mesh).reshape(-1, 3)}, indices=triangles)
+                                  if len(triangles) else None)
+        batch = _depth_batches[key]
+        if batch is not None:
+            with gpu.matrix.push_pop():
+                gpu.matrix.multiply_matrix(evaluated.matrix_world)
+                batch.draw(shader)
 
 
 # --- maths (no bpy) ----------------------------------------------------------------------
@@ -275,6 +345,7 @@ def _draw():
         chunk = spacing * 2 ** max(0, math.ceil(math.log2(max(half / 2.0 / spacing, 1e-9))))   # few distinct keys
         span = (view_span(loc[ix] / unit, half, chunk), view_span(loc[iy] / unit, half, chunk))
     shader, batches = _batch_set(plane, unit, opts, span)
+    _draw_mesh_depth(context)
     gpu.state.depth_test_set('LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     gpu.state.blend_set('ALPHA')
@@ -295,12 +366,20 @@ def _draw():
 
 
 def _callback():
+    import gpu
+    depth_test = gpu.state.depth_test_get()
+    depth_mask = gpu.state.depth_mask_get()
+    blend = gpu.state.blend_get()
     try:
         _draw()
     except Exception:  # never let a draw error repeat every frame
         import traceback
         traceback.print_exc()
         unregister_draw()
+    finally:
+        gpu.state.depth_test_set(depth_test)
+        gpu.state.depth_mask_set(depth_mask)
+        gpu.state.blend_set(blend)
 
 
 def unregister_draw():
@@ -315,10 +394,17 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     _handle.append(bpy.types.SpaceView3D.draw_handler_add(_callback, (), 'WINDOW', 'POST_VIEW'))
+    for event in ('depsgraph_update_post', 'frame_change_post', 'load_post', 'undo_post', 'redo_post'):
+        getattr(bpy.app.handlers, event).append(_clear_depth)
 
 
 def unregister():
     unregister_draw()
+    for event in ('depsgraph_update_post', 'frame_change_post', 'load_post', 'undo_post', 'redo_post'):
+        handlers = getattr(bpy.app.handlers, event)
+        if _clear_depth in handlers:
+            handlers.remove(_clear_depth)
+    _clear_depth()
     _batches.clear()
     _times.clear()
     for cls in reversed(classes):

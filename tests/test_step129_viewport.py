@@ -4,6 +4,7 @@ camera view moves the camera (#9), UV checker toggle (#13). GUI side: tests/gui/
 from importlib import import_module
 
 import bpy
+from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
 import kit
@@ -40,6 +41,7 @@ def _snapshot(space, cam):
     return (sh.type, sh.light, sh.color_type, sh.show_shadows, sh.show_cavity, sh.show_xray, sh.use_dof,
             ov.show_wireframes, ov.show_xray_bone, maya_grid.visible(space), tuple(cam.lock_location),
             tuple(cam.lock_rotation), cam.data.show_sensor, cam.data.show_passepartout, cam.data.show_safe_areas,
+            bool(cam.data.get(pm.RES_GATE)), bool(cam.data.get(pm.FIELD_CHART)), round(cam.data.allset_overscan, 4),
             round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform,
             camera_bookmarks.pan_zoom_on(space.region_3d))
 
@@ -103,9 +105,39 @@ def test_camera_buttons_need_a_camera_view():
     space = _space()
     space.region_3d.view_perspective = 'PERSP'
     ctx = Ctx(space)
-    for key in ("CAMERA_LOCK", "FILM_GATE", "GATE_MASK", "SAFE_TITLE"):
-        assert not pm.apply(ctx, key), key
+    assert not pm.apply(ctx, "CAMERA_LOCK")
+    for key in ("CAMERA_LOCK", "FILM_GATE", "RES_GATE", "GATE_MASK", "SAFE_TITLE"):
         assert key in pm.FAILS
+
+
+def test_gate_buttons_look_through_the_persp_camera():
+    # Maya's persp panel is the persp camera: a gate button in Blender's persp view looks through it, placed where
+    # the view looked; Film Gate / Resolution Gate are exclusive and set Overscan 1.3 (Maya updateModelPanelBar)
+    space = _space()
+    area = next(a for s in bpy.data.screens for a in s.areas if space in a.spaces[:])
+    rv3d = space.region_3d
+    rv3d.view_perspective = 'PERSP'
+    space.use_local_camera = False
+    ctx = Ctx(space)
+    ctx.area = area
+    loc, rot, dist = rv3d.view_location.copy(), rv3d.view_rotation.copy(), rv3d.view_distance
+    assert pm.apply(ctx, "FILM_GATE")
+    cam = pm.view_camera(ctx)
+    assert rv3d.view_perspective == 'CAMERA' and cam is not None and cam.name == "persp"
+    fwd = cam.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0))
+    assert (fwd - rot @ Vector((0.0, 0.0, -1.0))).length < 1e-4     # placed where the view looked
+    assert (cam.matrix_world.translation + fwd * dist - loc).length < 1e-3
+    assert cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    # the startup camera (Maya Visibility off) must still be evaluated, or navigating through it can't move the view
+    assert not cam.hide_viewport and cam.hide_get()
+    cam.location.x += 1.0
+    bpy.context.view_layer.update()
+    assert abs(cam.matrix_world.translation.x - cam.location.x) < 1e-6
+    assert pm.apply(ctx, "RES_GATE")
+    assert pm.state(ctx, "RES_GATE") and not cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    assert pm.apply(ctx, "RES_GATE")
+    assert not pm.state(ctx, "RES_GATE") and abs(cam.data.allset_overscan - 1.0) < 1e-6
+    rv3d.view_perspective = 'PERSP'
 
 
 def test_select_camera_selects_the_looked_through_camera():
@@ -151,9 +183,8 @@ def test_frame_in_camera_view_moves_the_camera():
     assert cam.matrix_world.to_quaternion().rotation_difference(rot0).angle < 1e-4   # orientation kept
     uv = [world_to_camera_view(scene, cam, p) for p in pts]
     xs, ys = [p.x for p in uv], [p.y for p in uv]
-    assert min(xs) > -0.01 and max(xs) < 1.01 and min(ys) > -0.01 and max(ys) < 1.01, (xs, ys)
-    fill = max(max(xs) - min(xs), max(ys) - min(ys))
-    assert abs(fill - 0.95) < 0.02, fill                          # Maya's fit factor on the tighter axis
+    # Maya GUI viewFit: only the width (render wider than the 36 x 24 film) fills 0.95; the height may overflow
+    assert abs((max(xs) - min(xs)) - 0.95) < 0.02, xs
     centre = ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)
     assert abs(centre[0] - 0.5) < 0.01 and abs(centre[1] - 0.5) < 0.01, centre
     # a Maya-locked camera doesn't move
@@ -189,3 +220,47 @@ def test_uv_checker_toggles_off():
     assert ob.material_slots[0].link == 'DATA' and ob.material_slots[0].material == own
     assert all(not (s.material and s.material.get(mi.CHECKER_MAT)) for s in bare.material_slots)
     assert all(s.link == 'DATA' for s in bare.material_slots)
+
+
+def test_safe_action_and_title_toggle_separately():
+    # Maya: Safe Action and Safe Title are separate camera toggles; Blender draws both with one flag, so the one
+    # that is off gets a 0 margin and its own margin comes back when it is turned on
+    space = _space()
+    cam = _camera_view(space)
+    ctx = Ctx(space)
+    areas = bpy.context.scene.safe_areas
+    title0, action0 = tuple(areas.title), tuple(areas.action)
+    cam.data.show_safe_areas = False
+    assert pm.apply(ctx, "SAFE_TITLE")
+    assert pm.state(ctx, "SAFE_TITLE") and not pm.state(ctx, "SAFE_ACTION")
+    assert cam.data.show_safe_areas and tuple(areas.action) == (0.0, 0.0) and tuple(areas.title) == title0
+    assert pm.apply(ctx, "SAFE_ACTION")
+    assert pm.state(ctx, "SAFE_TITLE") and pm.state(ctx, "SAFE_ACTION")
+    assert tuple(areas.action) == action0
+    assert pm.apply(ctx, "SAFE_TITLE")
+    assert not pm.state(ctx, "SAFE_TITLE") and pm.state(ctx, "SAFE_ACTION")
+    assert tuple(areas.title) == (0.0, 0.0)
+    assert pm.apply(ctx, "SAFE_ACTION")
+    assert not cam.data.show_safe_areas
+    assert pm.apply(ctx, "SAFE_TITLE") and pm.apply(ctx, "SAFE_ACTION")
+    assert tuple(areas.title) == title0 and tuple(areas.action) == action0
+    space.region_3d.view_perspective = 'PERSP'
+
+
+def test_resolution_gate_label_is_the_render_size():
+    overscan = import_module(kit.MODULE + ".operators.camera_overscan")
+    r = bpy.context.scene.render
+    r.resolution_x, r.resolution_y = 960, 540
+    assert overscan.res_label(bpy.context.scene) == "960 x 540"
+    assert overscan._label_handles, "the overlay draw handler is registered"
+    pts = overscan.field_chart_lines(0, 0, 240, 120)
+    assert len(pts) == 4 * 25 + 4 and (120.0, 0) in pts and (240, 120) in pts
+
+
+def test_field_chart_toggles_on_the_camera():
+    space = _space()
+    cam = _camera_view(space)
+    ctx = Ctx(space)
+    assert pm.apply(ctx, "FIELD_CHART") and pm.state(ctx, "FIELD_CHART") and cam.data.get(pm.FIELD_CHART)
+    assert pm.apply(ctx, "FIELD_CHART") and not pm.state(ctx, "FIELD_CHART")
+    space.region_3d.view_perspective = 'PERSP'

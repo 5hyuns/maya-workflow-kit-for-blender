@@ -54,6 +54,11 @@ def new_maya_scene(options=None):
     if scene is not None:
         startup_cameras.ensure(scene, scene.view_layers[0])
         option_windows.apply_new_scene(scene, options, full, before)
+    win = _window()
+    if win is not None and win.workspace is not None:
+        # sizes, shading, Outliner, icons final before the first frame, like a switch (else timers settle them
+        # one after another over the first second)
+        switch._prepare_layout(win, win.workspace, fresh=True)
     return res
 
 

@@ -114,6 +114,7 @@ def ensure_keys():
         k = km2.keymap_items.new("allset.outliner_tree_scroll", wheel, 'PRESS')
         k.properties.rows = n
         TEMP_ITEMS.append((km2, k))
+    TEMP_ITEMS.append((km2, km2.keymap_items.new("allset.outliner_tree_pan", 'MIDDLEMOUSE', 'PRESS', alt=True)))
     # the kit keeps its own items in front of later add-on items: its plain View2D wheel scroll goes off meanwhile
     for k in km2.keymap_items:
         if k.idname.startswith("view2d.scroll_") and k.type.startswith("WHEEL") and k.active:
@@ -294,6 +295,45 @@ def s_empty():
 
 @step
 def s_wait_many():
+    redraw_all()
+
+
+@step
+def s_pan_press():
+    # #365: Alt+middle-drag pans the rows both ways (Maya), so a deep joint chain can be seen
+    area, region = outliner()
+    C["pan0"] = tree().SCROLL.get(area.as_pointer(), 0)
+    C["pan_xy"] = x, y = region.x + region.width // 2, region.y + region.height // 2
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('MIDDLEMOUSE', 'PRESS', x=x, y=y, alt=True)
+
+
+@step
+def s_pan_drag():
+    x, y = C["pan_xy"]
+    u = tree().unit()
+    for i in range(1, 6):
+        ev('MOUSEMOVE', 'NOTHING', x=x - 60 * i, y=y + round(2 * u * i / 5), alt=True)
+
+
+@step
+def s_pan_release():
+    ev('MIDDLEMOUSE', 'RELEASE', alt=True)
+    redraw_all()
+
+
+@step
+def s_panned():
+    shot("4b_panned")
+    area, _region = outliner()
+    key, u = area.as_pointer(), tree().unit()
+    deepest = max(r.depth for r in rows())
+    sx, first = tree().SCROLL_X.get(key, 0), tree().SCROLL.get(key, 0)
+    check(f"Alt+middle-drag left pans the rows up to the deepest row ({sx} px, deepest {deepest} x {u})",
+          deepest > 0 and sx == deepest * u)
+    check(f"Alt+middle-drag up scrolls two rows ({C['pan0']} -> {first})", first == C["pan0"] + 2)
+    tree().SCROLL_X.pop(key, None)
+    tree().SCROLL[key] = C["pan0"]
     redraw_all()
 
 

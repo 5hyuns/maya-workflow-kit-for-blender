@@ -406,7 +406,7 @@ def test_range_slider_reads_its_header_row_once_while_playing():
     reads = []
     real = rb._read_row
     rb._read_row = lambda region, y: reads.append(y) or list(row)
-    area = SimpleNamespace(as_pointer=lambda: 344)
+    area = SimpleNamespace(as_pointer=lambda: 344, regions=[])
     region = SimpleNamespace(width=len(row), height=30)
     want = rb.bar_span(row, bg, min_w=rb.BAR_UNITS * 20 * 0.6)
     try:

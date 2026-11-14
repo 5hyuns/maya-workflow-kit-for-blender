@@ -21,6 +21,7 @@ import bpy
 import numpy as np
 
 from . import panel_menus, status_icons, toolbar_fit
+from .. import preferences
 from .toolbar_fit import BAR_UNITS
 from .status_icons import DARK, DIM, GREY, LIGHT, TEAL, TEAL_DARK, TEAL_LIGHT, letter
 
@@ -347,8 +348,10 @@ def _draw_item(row, context, item, text=""):
     if kind == "set":
         on = bool(panel_menus.state(context, data))
         sub = _flat(row, on, bool(text))
-        if data in panel_menus.CAMERA_KEYS:
+        if data == "CAMERA_LOCK":
             sub.enabled = panel_menus.view_camera(context) is not None
+        elif data in panel_menus.CAMERA_KEYS:   # Blender's own view: the button looks through its startup camera
+            sub.enabled = panel_menus.has_panel_camera(context)
         elif data in ("SELECT_CAMERA", "BOOKMARK"):
             sub.enabled = panel_menus.has_panel_camera(context)
         op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text=text, icon_value=_icon(glyph),
@@ -416,6 +419,7 @@ def _draw_cm(layout, context, menu=False):
 # area pointer -> index of the first group in the » popover (written by the tool header draw, read by the popover;
 # a plain dict, no ID data is written while drawing)
 _FIRST_HIDDEN = {}
+SHADING_UNITS = 5.5  # Four native shading modes and their settings popover.
 
 
 def shown_groups(context):
@@ -424,7 +428,11 @@ def shown_groups(context):
     system = context.preferences.system
     if region is None or region.type != 'TOOL_HEADER':
         return len(TOOLBAR) + 1
-    return toolbar_fit.fit(fit_groups(), region.width, system.ui_scale, system.pixel_size)
+    reserved = 0
+    if preferences.get(context).show_viewport_shading:
+        reserved = toolbar_fit.px(SHADING_UNITS, toolbar_fit.unit(system.ui_scale, system.pixel_size))
+        reserved += toolbar_fit.spacing(system.ui_scale)
+    return toolbar_fit.fit(fit_groups(), region.width - reserved, system.ui_scale, system.pixel_size)
 
 
 def draw_toolbar(layout, context):
@@ -439,12 +447,17 @@ def draw_toolbar(layout, context):
     if n > len(TOOLBAR):
         _bar(layout)
         _draw_cm(layout.row(align=True), context)
-        return
-    # Maya's overflow arrow at the right end of the bar: the groups that don't fit, in a popover
     layout.separator_spacer()
-    sub = layout.row(align=True)
-    sub.ui_units_x = toolbar_fit.MORE_UNITS
-    sub.popover(ALLSET_PT_panel_toolbar_more.bl_idname, text="", icon_value=_icon("more"))
+    if n <= len(TOOLBAR):
+        # Keep overflow next to the shading controls when the Maya groups don't fit.
+        sub = layout.row(align=True)
+        sub.ui_units_x = toolbar_fit.MORE_UNITS
+        sub.popover(ALLSET_PT_panel_toolbar_more.bl_idname, text="", icon_value=_icon("more"))
+    if preferences.get(context).show_viewport_shading:
+        row = layout.row(align=True)
+        row.ui_units_x = SHADING_UNITS
+        row.prop(context.space_data.shading, "type", text="", expand=True)
+        row.popover(panel="VIEW3D_PT_shading", text="")
 
 
 class ALLSET_PT_panel_toolbar_more(bpy.types.Panel):

@@ -255,11 +255,17 @@ def test_center_pivot():
     channels = _channels(ob)
     kid_channels = _channels(kid)
     before, kid_before = _world_verts(ob), _world_verts(kid)
+    world_before = ob.matrix_world.copy()
     _select([ob])
     assert bpy.ops.allset.center_pivot() == {'FINISHED'}
     _update()
     assert _close_vs(_world_verts(ob), before)
-    center = sum(before, Vector()) / len(before)  # a box: vertex mean = bbox centre
+    # Maya xform -cp: the box of the object and its children, measured in the object's own space
+    to_local = world_before.inverted()
+    local = [to_local @ v for v in before + kid_before]
+    lo = Vector(min(v[i] for v in local) for i in range(3))
+    hi = Vector(max(v[i] for v in local) for i in range(3))
+    center = world_before @ ((lo + hi) / 2)
     assert _close_v(ob.matrix_world.translation, center), (ob.matrix_world.translation, center)
     assert all(_close_v(a, b) for a, b in zip(_channels(ob), channels)), _channels(ob)
     assert _close_vs(_world_verts(kid), kid_before)

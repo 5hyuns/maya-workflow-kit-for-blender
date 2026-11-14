@@ -26,7 +26,7 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.time_slider_menu", "allset.time_range_all", 
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag", "allset.shelf_scroll",
+                      "allset.hs_swatch_drag", "allset.shelf_scroll", "allset.shelf_button_menu",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
@@ -1210,6 +1210,8 @@ PIXEL_MOVE_KEYS = (("UP_ARROW", 0, 1), ("DOWN_ARROW", 0, -1), ("LEFT_ARROW", -1,
 
 
 def patch_view_keys_3(kd):
+    for km in ("Vertex Paint", "Weight Paint"):   # Blender 5.3 Alt+A pie; Maya's Alt+A wins in the kit
+        kd.remove(km, "wm.call_menu_pie", optional=True, type="A", alt=True)
     _add(kd, "3D View", "allset.cycle_display", make_event("A", alt=True), shadows=VIEW3_SHADOWS)
     _add(kd, "3D View", "allset.camera_mode_toggle", make_event("P", alt=True), shadows=VIEW3_SHADOWS)
     for key, dx, dy in PIXEL_MOVE_KEYS:
@@ -1312,7 +1314,7 @@ GRAPH_WER = {"W": "transform.translate", "E": "transform.rotate", "R": "transfor
 
 OUTLINER_TREE_ITEMS = ("allset.outliner_tree_click", "allset.outliner_tree_menu", "allset.outliner_tree_rename",
                        "allset.outliner_tree_reveal", "allset.outliner_tree_walk", "allset.outliner_tree_delete",
-                       "allset.outliner_tree_scroll", "allset.outliner_tree_hover")
+                       "allset.outliner_tree_scroll", "allset.outliner_tree_pan", "allset.outliner_tree_hover")
 
 
 def patch_outliner_tree(kd):
@@ -1341,6 +1343,9 @@ def patch_outliner_tree(kd):
     for wheel, rows in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):
         _add(kd, "View2D", "allset.outliner_tree_scroll", make_event(wheel), {"rows": rows}, first=True,
              shadows=("View2D", "View2D Buttons List"))
+    # Maya: Alt+middle-drag pans the rows both ways, so a deep joint chain can be seen (#365)
+    _add(kd, "View2D", "allset.outliner_tree_pan", make_event("MIDDLEMOUSE", alt=True), first=True,
+         shadows=("View2D", "View2D Buttons List"))
 
 
 # --- 46. Render slots ----------------------------------------------------------------------------------
@@ -1375,6 +1380,8 @@ def patch_graph_outliner(kd):
 
 
 def patch_shelf_scroll(kd):
+    _add(kd, "Image", "allset.shelf_button_menu", make_event("RIGHTMOUSE", value="RELEASE"),
+         first=True, shadows=("Image", "View2D"))
     # Maya's wheel over the shelf icons scrolls one row; the shelf
     # row is an Image Editor, so the items sit first in "Image" and pass through in every other image editor
     for wheel, delta in (("WHEELUPMOUSE", -1), ("WHEELDOWNMOUSE", 1)):
@@ -1475,6 +1482,8 @@ def patch_key_batch_3(kd):
     kd.remove("Screen", "screen.userpref_show", type="COMMA", ctrl=True)
 
     # menu bars and background
+    # Blender 5.3 Grease Pencil Draw Mode Ctrl+M mirror; Maya's Ctrl+M wins in the kit
+    kd.remove("Grease Pencil Draw Mode", "transform.mirror", optional=True, type="M", ctrl=True)
     _add(kd, "Screen", "allset.main_menubar_toggle", make_event("M", ctrl=True), shadows=("Grease Pencil Edit Mode",))
     _add(kd, "Screen", "wm.context_toggle", make_event("M", shift=True), {"data_path": "area.show_menus"},
          shadows=("Sequencer",))
@@ -1566,6 +1575,8 @@ def patch_repeat(kd):
     """G = Maya repeat last, menu / shelf / marking commands too (operators/repeat_maya.py); Blender's
     screen.repeat_last only knows registered operators. Graph Editor G stays anim.scene_range_frame."""
     kd.remove("Screen", "screen.repeat_last", type="G")
+    # Blender 5.3 Grease Pencil Draw Mode G move; Maya's G (repeat) wins in the kit
+    kd.remove("Grease Pencil Draw Mode", "transform.translate", optional=True, type="G")
     repeat_maps = ("Screen", "3D View", "Object Mode", "Mesh")
     _add(kd, "Screen", "allset.repeat_last", make_event("G"),
          shadows=repeat_maps + ("Graph Editor", "Dopesheet", "Grease Pencil Edit Mode"))  # their own G wins

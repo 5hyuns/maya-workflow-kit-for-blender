@@ -49,7 +49,7 @@ def _world_verts(ob):
 
 def test_dock_and_status_line_toggle():
     ids = [i[0] for i in ae.DOCK_ITEMS]
-    assert ids == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'], ids
+    assert ids == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT', 'TOOL_SETTINGS'], ids
     wm = bpy.context.window_manager
     wm.allset_dock = 'MODELING_TOOLKIT'
     assert ae.dock_mode(bpy.context) == 'MODELING_TOOLKIT'

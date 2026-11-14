@@ -10,11 +10,64 @@ way: world transform kept, ``matrix_parent_inverse``
 left at identity so the child's local values are relative to the group.
 """
 
+from contextlib import nullcontext
+
 import bpy
 from mathutils import Matrix
 
 from .. import results
 from . import units
+
+
+def hidden_groups(context):
+    """Selected group transforms omitted by the viewport's Locators filter."""
+    space = getattr(context, "space_data", None)
+    if (space is None or space.type != 'VIEW_3D'
+            or getattr(space, "show_object_viewport_empty", True)):
+        return []
+    selected = context.selected_objects
+    groups = [ob for ob in context.view_layer.objects.selected if ob.type == 'EMPTY' and ob not in selected]
+    if not groups:
+        return []
+    view_layer = context.view_layer
+    with bpy.context.temp_override(area=None, region=None):
+        groups = [ob for ob in groups if ob.visible_get(view_layer=view_layer)]
+    return [ob for ob in groups if not space.local_view or ob.local_view_get(space)]
+
+
+def selected_objects(context):
+    return context.selected_objects + hidden_groups(context)
+
+
+def selection_context(context):
+    """Let transforms operate on groups without displaying their locator axes or selecting children."""
+    groups = hidden_groups(context) if context.mode == 'OBJECT' else []
+    if not groups:
+        return nullcontext()
+    return context.temp_override(selected_objects=context.selected_objects + groups,
+                                 selected_editable_objects=list(context.selected_editable_objects) +
+                                 [ob for ob in groups if ob.is_editable and not ob.hide_select])
+
+
+class ALLSET_OT_group_transform(bpy.types.Operator):
+    """Drag the selected group's transform with its locator axes hidden"""
+    bl_idname = "allset.group_transform"
+    bl_label = "Transform Group"
+    bl_options = {'INTERNAL'}
+
+    operation: bpy.props.EnumProperty(items=[(n, n.title(), "") for n in ('translate', 'rotate', 'trackball')])
+    constraint_axis: bpy.props.BoolVectorProperty(size=3)
+    orient_type: bpy.props.StringProperty(default='GLOBAL')
+    orient_axis: bpy.props.EnumProperty(items=[(a, a, "") for a in 'XYZ'], default='Z')
+    orient_matrix_type: bpy.props.StringProperty(default='GLOBAL')
+    orient_matrix: bpy.props.FloatVectorProperty(size=(3, 3), subtype='MATRIX')
+    release_confirm: bpy.props.BoolProperty(default=True)
+
+    def invoke(self, context, _event):
+        kwargs = {name: getattr(self, name) for name in self.properties.keys() if name != 'operation'}
+        with selection_context(context):
+            res = getattr(bpy.ops.transform, self.operation)('INVOKE_DEFAULT', **kwargs)
+        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
 
 def next_group_name(names):
@@ -227,4 +280,4 @@ class ALLSET_OT_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_group, ALLSET_OT_ungroup)
+classes = (ALLSET_OT_group, ALLSET_OT_ungroup, ALLSET_OT_group_transform)

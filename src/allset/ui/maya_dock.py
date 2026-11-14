@@ -28,12 +28,13 @@ from bpy.props import EnumProperty, StringProperty
 
 from .. import i18n, live_refs
 
-KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT')
+KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT', 'TOOL_SETTINGS')   # Maya's right dock tabs
 LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attribute Editor",
           'MODELING_TOOLKIT': "Modeling Toolkit", 'TOOL_SETTINGS': "Tool Settings", 'OUTLINER': "Outliner"}
 # Role marker = Tool tab + exactly one of these hidden tab flags (invisible: the tab column is hidden).
 ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
               'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
+              'TOOL_SETTINGS': "show_properties_constraints",
               'MENU': "show_properties_texture"}
 WIDTH = 260                  # unscaled px: Maya-style narrow panels
 HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
@@ -643,18 +644,12 @@ class ALLSET_OT_panel_show(bpy.types.Operator):
     bl_label = "Show Panel"
     bl_options = {'INTERNAL'}
 
-    panel: EnumProperty(items=[(k, LABELS[k], "") for k in (*KINDS, 'OUTLINER', 'TOOL_SETTINGS')])
+    panel: EnumProperty(items=[(k, LABELS[k], "") for k in (*KINDS, 'OUTLINER')])
 
     def execute(self, context):
         if self.panel in KINDS:
             return {'FINISHED'} if show(context, self.panel) else {'CANCELLED'}
         wm = context.window_manager
-        if self.panel == 'TOOL_SETTINGS':
-            from . import tool_dock
-            if any(tool_dock.is_dock(a) for w in wm.windows for a in w.screen.areas):
-                return {'FINISHED'}
-            tool_dock.toggle(context, show_only=True)
-            return {'FINISHED'}
         # Outliner: docked in this layout or already floating = shown; else a floating Maya Outliner
         if any(a.type == 'OUTLINER' for w in wm.windows for a in w.screen.areas):
             return {'FINISHED'}
@@ -831,6 +826,40 @@ def content_layout(layout, context):
     return StripClear(layout, f)
 
 
+# Blender's layout.panel header takes a click anywhere across the region at its height, before the strip's keymap
+# item, so in the stack a section header over a tab swallowed the tab click. There a section is a plain disclosure
+# row inside the content column instead (open state kept for the session).
+_sections_open = {}      # section idname -> open
+
+
+def section(layout, idname, label, default_closed=False):
+    """A collapsible section: ``layout.panel`` outside the tab stack, a strip-safe row in it. Returns the body or None."""
+    if area_role(bpy.context) != 'STACK':
+        header, body = layout.panel(idname, default_closed=default_closed)
+        header.label(text=label)
+        return body
+    is_open = _sections_open.setdefault(idname, not default_closed)
+    row = layout.row()
+    row.alignment = 'LEFT'
+    row.operator(ALLSET_OT_dock_section.bl_idname, text=label, emboss=False,
+                 icon='DISCLOSURE_TRI_DOWN' if is_open else 'DISCLOSURE_TRI_RIGHT').section = idname
+    return layout.column() if is_open else None
+
+
+class ALLSET_OT_dock_section(bpy.types.Operator):
+    """Open or close this section"""
+    bl_idname = "allset.dock_section"
+    bl_label = "Toggle Section"
+    bl_options = {'INTERNAL'}
+
+    section: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        _sections_open[self.section] = not _sections_open.get(self.section, True)
+        redraw()
+        return {'FINISHED'}
+
+
 def strip_tabs(kinds, width, height, scale, measure=None):
     """[(kind, x0, y0, x1, y1)] region rects of the strip's tabs (y up, first tab at the top)."""
     if measure is None:
@@ -885,7 +914,7 @@ def _strip_colours(context):
 # region raises the background to #444444 and the value fields with it (#1d1d1d -> #313131); text stays
 # near white. Only a theme darker than that is lifted, never a light one.
 MAYA_DOCK_GREY = 0x44 / 255.0
-TINTED_ROLES = {'STACK', 'CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'}
+TINTED_ROLES = {'STACK', *KINDS}
 
 
 def dock_lift(context):
@@ -1162,6 +1191,9 @@ class ALLSET_PT_maya_dock(bpy.types.Panel):
         elif kind == 'MODELING_TOOLKIT':
             from . import modeling_toolkit
             modeling_toolkit.draw(layout, context)
+        elif kind == 'TOOL_SETTINGS':
+            from . import tool_settings
+            tool_settings.draw_dock(layout, context)
 
 
 def draw_torn_menu(layout, context):
@@ -1246,7 +1278,7 @@ def close_floating():
 
 
 classes = (ALLSET_OT_dock_handle, ALLSET_OT_dock_back, ALLSET_OT_dock_tab, ALLSET_OT_panel_show,
-           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_PT_maya_dock)
+           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_OT_dock_section, ALLSET_PT_maya_dock)
 
 
 def register():

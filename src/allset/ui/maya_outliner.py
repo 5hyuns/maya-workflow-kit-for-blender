@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner chrome on Blender's Outliner.
 
-Maya's Outliner has a menu bar Display / Show / Help and a search field.
+Maya's Outliner has a menu bar Display / Show / Help and a search field on a row below it.
 Outliners set up the Maya way (the Maya Workflow Kit layout and Windows > Outliner:
 View Layer mode, no collection rows; ``is_maya_outliner``) get that header: ``OUTLINER_HT_header.draw`` is swapped
 while the kit is enabled and restored on unregister; other Outliners draw as usual. The rows of an Outliner the kit
@@ -20,25 +20,37 @@ MENU_BAR = (("Display", "ALLSET_MT_outliner_display"), ("Show", "ALLSET_MT_outli
 
 def is_maya_outliner(space):
     """The Maya header goes on this Outliner: View Layer mode, no collection rows, and either no object contents (how
-    the kit sets it up) or Display > Shapes on in an Outliner the kit set up — no mode column and no render toggle,
-    which the Maya menus can't change and a plain Blender Outliner shows."""
+    the kit sets it up) or Display > Shapes on in an Outliner the kit set up — no mode column, and no render or
+    exclude column (``mark``: the kit turns the exclude column off), which a plain Blender Outliner shows."""
     if (space is None or space.type != 'OUTLINER' or space.display_mode != 'VIEW_LAYER'
             or space.use_filter_collection):
         return False
-    return not space.use_filter_object_content or not (space.show_mode_column or space.show_restrict_column_render)
+    return not space.use_filter_object_content or not (
+        space.show_mode_column or (space.show_restrict_column_render and space.show_restrict_column_enable))
+
+
+def mark(space):
+    """The first time the kit claims a Maya Outliner: the exclude column (unused: no collection rows) goes off to
+    mark it as the kit's, and Blender's select / eye / render columns go on once; the Display menu keeps later
+    choices."""
+    if space.show_restrict_column_enable:
+        space.show_restrict_column_enable = False
+        space.show_restrict_column_select = True
+        space.show_restrict_column_hide = True
+        space.show_restrict_column_render = True
 
 
 def setup(space):
-    """Maya Outliner filters (DAG only, from the world; no eye / mode column: Maya hides with H)."""
+    """Maya Outliner filters (DAG only, from the world; no mode column) with Blender's select / eye / render columns."""
     space.display_mode = 'VIEW_LAYER'
     space.use_filter_object_content = False
     space.use_filter_collection = False
     space.use_filter_children = True
-    space.show_restrict_column_render = False
-    space.show_restrict_column_hide = False
+    space.show_restrict_column_enable = True
+    mark(space)
     space.show_mode_column = False      # Maya has no mode column (Blender shows it in edit mode)
-    space.use_sort_alpha = False        # Maya lists the DAG in creation order, startup cameras first
     from . import outliner_tree         # the kit draws the rows (joints under their skeleton, #348)
+    outliner_tree.set_sort_alpha(space, False)  # Maya lists the DAG in creation order, startup cameras first
     outliner_tree.hide_rows(space)
 
 
@@ -49,8 +61,18 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
     def draw(self, context):
         sp, lay = context.space_data, self.layout
         lay.prop(sp, "use_filter_children", text="Children (DAG Hierarchy)")
-        lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
-        lay.prop(sp, "show_restrict_column_hide", text="Visibility Column")
+        if hasattr(sp, "sort_method"):     # Blender 5.3+: an enum; a submenu row, lay.prop splits the menu in two
+            lay.prop_menu_enum(sp, "sort_method")
+        else:
+            lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
+        from .. import preferences   # the add-on's global switch for all three column icons
+        prefs = preferences.get()
+        lay.prop(prefs, "outliner_columns", text="Column Icons")
+        col = lay.column()
+        col.active = prefs.outliner_columns
+        col.prop(sp, "show_restrict_column_select", text="Selectable Column")
+        col.prop(sp, "show_restrict_column_hide", text="Visibility Column")
+        col.prop(sp, "show_restrict_column_render", text="Render Column")
         lay.separator()
         # Maya Display > Shapes: a shape row (pCubeShape1) under each transform
         lay.prop(sp, "use_filter_object_content", text="Shapes")
@@ -134,11 +156,26 @@ def _draw(self, context):
     from . import maya_dock      # Maya's dotted handle: tear the Outliner off / dock it back
     layout.operator("allset.dock_handle", text=maya_dock.HANDLE[:8], emboss=False)
     chrome.menu_bar(layout, MENU_BAR)
-    layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
+    from . import outliner_tree
+    if not outliner_tree.is_tree(space):   # Blender's own rows: no drawn search row, the field stays in the header
+        layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
+
+
+class ALLSET_PT_outliner_search(bpy.types.Panel):
+    """The Maya Outliner's search field: Blender's header has one row, so the kit tree draws Maya's search row above
+    its rows (``outliner_tree``) and a click on it opens the real field here"""
+    bl_label = "Search"
+    bl_space_type = 'OUTLINER'
+    bl_region_type = 'HEADER'
+    bl_ui_units_x = 10
+
+    def draw(self, context):
+        self.layout.activate_init = True   # typing starts at once, like clicking Maya's field
+        self.layout.prop(context.space_data, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
 
 
 classes = (ALLSET_MT_outliner_display, ALLSET_MT_outliner_show, ALLSET_MT_outliner_help,
-           ALLSET_OT_outliner_collections)
+           ALLSET_OT_outliner_collections, ALLSET_PT_outliner_search)
 
 
 def register():

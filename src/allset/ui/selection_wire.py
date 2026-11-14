@@ -41,6 +41,7 @@ The kit draws the edges itself (POST_VIEW):
 
 import bpy
 from bpy.app.handlers import persistent
+from ..operators.group import selected_objects as _selection_roots
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
@@ -395,7 +396,7 @@ def highlighted(context, roots_shown=False):
 
     ``roots_shown``: ``context`` is the 3D View's own (its draw), where ``context.selected_objects`` already holds only
     the objects shown in that view (Blender lists a selected object there only when it is visible in the context's
-    3D View, the same test as ``visible_get(viewport=...)``), so the selected objects skip that test."""
+    3D View). Groups whose locator axes are hidden are included separately; they have no wire of their own."""
     objs, leads, _uids = _highlight(context, roots_shown)
     return list(zip(objs, leads))
 
@@ -466,7 +467,7 @@ def _highlight(context, roots_shown=False):
     objects made thousands of tuples a redraw, which set off Python's garbage collector every few redraws."""
     if not highlighting(context):
         return [], [], []
-    selected = context.selected_objects
+    selected = _selection_roots(context)
     if not selected:
         return [], [], []
     # #173: an armature in Pose / Edit mode is selected for its bones (Maya: a picked control), so its child meshes
@@ -969,7 +970,7 @@ def _draw():
     space, rv3d = context.space_data, context.region_data
     if rv3d is None or not view_draws(space):
         return
-    if (not context.selected_objects and space.shading.type != 'WIREFRAME'
+    if (not _selection_roots(context) and space.shading.type != 'WIREFRAME'
             and not space.overlay.show_wireframes):
         return              # no selected wire, no dormant wire, no Make Live wire
     from ..operators import live
@@ -1104,7 +1105,8 @@ def time_dependent(ob, data_memo=None):
 # timer), as "<module under the package>:<function>".
 _FRAME_READERS = frozenset((
     "operators.live:frame_changed", "operators.auto_key:_on_frame", "operators.playback_maya:_on_frame",
-    "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame"))
+    "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame",
+    "ui.maya_grid:_clear_depth"))
 _PACKAGE = __name__.rsplit(".ui.", 1)[0]
 
 

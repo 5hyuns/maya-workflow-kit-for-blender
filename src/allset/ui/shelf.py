@@ -68,7 +68,11 @@ def _run_in_editor_space(context, space_type, callback):
 
     area = context.area if context.area is not None and context.area.type == space_type else None
     if area is None:
-        area = next((item for item in screen.areas if item.type == space_type), None)
+        if space_type == 'VIEW_3D':
+            from .status_line import main_view3d
+            area, _region = main_view3d(screen)
+        else:
+            area = next((item for item in screen.areas if item.type == space_type), None)
     if area is None:
         raise ShelfContextError(
             f"No {space_type} editor is open in this window. Open the requested editor and try again."
@@ -112,7 +116,8 @@ def _infer_shelf_requirements(kind, target="", menu_path=""):
         if any(token in menu_path for token in ("dope sheet", "timeline")):
             return "DOPESHEET_EDITOR", "ANY", "ANY"
         if any(token in menu_path for token in ("edit mesh", "mesh tools", "vertex", "edge", "face")):
-            return "VIEW_3D", "EDIT_MESH", "MESH"
+            # any mode: the menu item enters component mode itself (Maya: Insert Edge Loop on a selected object)
+            return "VIEW_3D", "ANY", "MESH"
         if any(token in menu_path for token in ("polygon primitives", "create polygon", "create/")):
             return "VIEW_3D", "OBJECT", "ANY"
         return "VIEW_3D", "ANY", "ANY"
@@ -940,9 +945,14 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     index: IntProperty()
+    shelf: StringProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        self.shelf = self.shelf or current(context)
+        return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        buttons = editable_buttons(current(context)) or []
+        buttons = editable_buttons(self.shelf or current(context)) or []
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         del buttons[self.index]
@@ -1338,29 +1348,23 @@ class ALLSET_MT_shelf_tabs(bpy.types.Menu):
 
 
 class ALLSET_MT_shelf_settings(bpy.types.Menu):
-    """Maya shelf menu: new/delete shelf, add/edit/delete buttons"""
+    """Maya shelf menu: editor, shelf navigation and shelf management"""
     bl_idname = "ALLSET_MT_shelf_settings"
     bl_label = "Shelf"
 
     def draw(self, context):
         layout = self.layout
+        layout.operator_context = 'INVOKE_DEFAULT'
+        layout.emboss = 'PULLDOWN_MENU'
+        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor...")
+        layout.separator()
+        layout.menu(ALLSET_MT_shelf_tabs.bl_idname, text="Navigate Shelves")
+        layout.separator()
         layout.operator(ALLSET_OT_shelf_new.bl_idname, icon='ADD')
-        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor")
         layout.operator(ALLSET_OT_shelf_delete.bl_idname, icon='TRASH')
         layout.separator()
         layout.menu(ALLSET_MT_shelf_add_action.bl_idname, icon='ADD', text="Add Shelf Button...")
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
-        buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too
-        if buttons:
-            layout.separator()
-            for i, b in enumerate(buttons):
-                row = layout.row()
-                row.operator(ALLSET_OT_shelf_edit_button.bl_idname, text=f"Edit {b['label']}",
-                             icon='GREASEPENCIL').index = i
-            layout.separator()
-            for i, b in enumerate(buttons):
-                layout.operator(ALLSET_OT_shelf_remove_button.bl_idname, text=f"Delete {b['label']}",
-                                icon='X').index = i
 
 
 def draw_shelf(layout, context):
@@ -1451,6 +1455,42 @@ def _record_mapped(b):
 def slot_button(context, slot):
     cur, buttons = icon_buttons(context)
     return (cur, buttons[slot]) if 0 <= slot < len(buttons) else (cur, None)
+
+
+class ALLSET_OT_shelf_button_menu(bpy.types.Operator):
+    """Open the actions for the shelf button under the pointer"""
+    bl_idname = "allset.shelf_button_menu"
+    bl_label = "Shelf Button Menu"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if not is_shelf_row(getattr(context, "space_data", None)) or context.region is None \
+                or context.region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        cur, buttons = icon_buttons(context)
+        scale = context.preferences.system.ui_scale or 1.0
+        for slot, button in enumerate(buttons):
+            x, y, size = icon_rect(context.region, slot, scale)
+            if x <= event.mouse_region_x < x + size and y <= event.mouse_region_y < y + size:
+                index = button[0]
+                record = button_record(cur, index)
+                editable_index = index if cur.startswith(USER_PREFIX) else index - len(all_buttons(cur))
+
+                def draw(menu, _context):
+                    layout = menu.layout
+                    layout.operator_context = 'INVOKE_DEFAULT'
+                    op = layout.operator(ALLSET_OT_shelf_button.bl_idname, text="Open")
+                    op.shelf, op.index = cur, index
+                    row = layout.column()
+                    row.enabled = record is not None
+                    op = row.operator("allset.shelf_editor_open", text="Edit")
+                    op.shelf_id, op.index = cur, editable_index
+                    op = row.operator(ALLSET_OT_shelf_remove_button.bl_idname, text="Delete")
+                    op.shelf, op.index = cur, editable_index
+
+                context.window_manager.popover(draw, ui_units_x=10)
+                return {'FINISHED'}
+        return {'PASS_THROUGH'}
 
 
 class ALLSET_OT_shelf_slot(bpy.types.Operator):
@@ -1621,7 +1661,7 @@ def _plan_rect(plan, region, slot, scale):
     top = round(TAB_PX * scale) if tabs else 0
     is_separator = 0 <= slot < len(buttons) and slot in separators
     size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
-    y = (region.height - top - size) / 2
+    y = round((region.height - top - size) / 2)   # whole pixels keep icons sharp
     off = getattr(region, "width", 0) + 10 ** 6
     if slot >= len(lay):           # past the last button (tests ask for empty slots)
         return off, y, size
@@ -1841,6 +1881,22 @@ def _separators(region, s, count, plan=None):
     return out
 
 
+CHECKED_COLOUR = (0.32, 0.52, 0.65, 1.0)   # Maya's highlight blue (#5285A6)
+
+
+def _checked(context, record):
+    """A user button's optional "checked" kit preference (``"select_through"``, or ``"not select_through"``; a
+    leading ``prefs.`` is accepted) is on: frame it like Maya's checked shelf icons. Unknown names count as off."""
+    name = (record.get("checked") if record else None) or ""
+    negate = name.startswith("not ")
+    name = name.removeprefix("not ").strip().removeprefix("prefs.")
+    if not name.isidentifier() or name.startswith("_"):
+        return False
+    from .. import preferences
+    value = getattr(preferences.get(context), name, None)
+    return value is not None and bool(value) != negate
+
+
 def draw_row():
     """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons; the tab strip when the row has
     no header). The gizmos only pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor
@@ -1874,6 +1930,8 @@ def draw_row():
             _draw_rect(cx - s, separator_y, max(1.0, s), separator_height, dark)
             _draw_rect(cx, separator_y, max(1.0, s), separator_height, light)
             continue
+        if _checked(context, button_record(_cur, index)):
+            _draw_rect(x - 2, y - 2, size + 4, size + 4, CHECKED_COLOUR)
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
         if colour_key is None:
@@ -1998,15 +2056,33 @@ class ALLSET_OT_shelf_tab(bpy.types.Operator):
         if not rects or self.slot >= len(rects):
             return {'CANCELLED'}
         action = rects[self.slot][4]
+        if action in {"menu", "gear"} and event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            # Open after release so the opening click cannot choose a menu item.
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         _hover.pop(context.region.as_pointer(), None)
         if action == "menu":
             bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_tabs.bl_idname)
         elif action == "gear":
-            bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_settings.bl_idname)
+            # Popovers have no last-item memory that could put Delete Shelf under the cursor.
+            context.window_manager.popover(ALLSET_MT_shelf_settings.draw, ui_units_x=14)
         else:
             set_current(context, action)
             _redraw(context)
         return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type in {'ESC', 'RIGHTMOUSE', 'WINDOW_DEACTIVATE'}:
+            return {'CANCELLED'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            rects = _tab_rects.get(context.region.as_pointer()) if context.region else None
+            if not rects or self.slot >= len(rects):
+                return {'CANCELLED'}
+            x0, y0, x1, y1, _ = rects[self.slot]
+            if not (x0 <= event.mouse_region_x <= x1 and y0 <= event.mouse_region_y <= y1):
+                return {'CANCELLED'}
+            return self.invoke(context, event)
+        return {'RUNNING_MODAL'}
 
 
 TAB_SLOTS = 24
@@ -2164,6 +2240,7 @@ classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
            ALLSET_MT_shelf_add_action, ALLSET_OT_shelf_add_action, ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
+           ALLSET_OT_shelf_button_menu,
            ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab,
            ALLSET_GT_shelf_scroll, ALLSET_OT_shelf_scroll, ALLSET_GGT_shelf)
 

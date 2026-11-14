@@ -93,7 +93,11 @@ def test_presets_cm_y_up():
 
 def test_format_by_extension_and_files_of_type():
     assert file_io.format_of("a/b.FBX") == 'FBX' and file_io.format_of("x.usdz") == 'USD'
-    assert file_io.format_of("scene.blend") == 'BLEND' and file_io.format_of("scene.ma") == ""
+    assert file_io.format_of("scene.blend") == 'BLEND'
+    assert file_io.format_of("scene.ma") == file_io.format_of("scene.MB") == 'MAYA'
+    assert '*.ma' in file_io.ALL_GLOB and '*.mb' in file_io.ALL_GLOB
+    assert 'MAYA' in {f[0] for f in file_io.IMPORT_TYPES}
+    assert 'MAYA' not in {f[0] for f in file_io.EXPORT_TYPES}
     labels = [f[1] for f in file_io.FORMATS]
     assert labels[0].startswith("Maya Scenes") and any("Alembic" in l for l in labels)
     assert file_io.IMPORT_TYPES[0][0] == 'AUTO'

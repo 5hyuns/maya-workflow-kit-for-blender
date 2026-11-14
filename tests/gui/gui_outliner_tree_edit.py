@@ -294,9 +294,29 @@ def s_eye_click():
     u = t.unit(bpy.context.preferences)
     k = next(i for i, r in enumerate(rs) if r.label == "box1")
     y0, y1 = t.row_rect(area, region, k, u, len(rs))
-    ex = t.eye_x(region, u, len(rs), t.first_row(area, region, len(rs), u))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
     shot("6_eye_column")
-    click(region.x + int(ex), region.y + int((y0 + y1) / 2))
+    click(region.x + int(xs['EYE']), region.y + int((y0 + y1) / 2))
+
+
+@step
+def s_wait_eye_click():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_render_click():
+    # Blender's render camera, the column right of the eye
+    area, region = outliner()
+    rs = rows()
+    t = tree()
+    u = t.unit(bpy.context.preferences)
+    k = next(i for i, r in enumerate(rs) if r.label == "box1")
+    y0, y1 = t.row_rect(area, region, k, u, len(rs))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
+    check("select / eye / render columns, left to right", list(xs) == ['SELECT', 'EYE', 'RENDER'])
+    click(region.x + int(xs['RENDER']), region.y + int((y0 + y1) / 2))
 
 
 @step
@@ -305,10 +325,87 @@ def s_wait_eye():
     redraw_all()
 
 
+def column_point(label, col):
+    area, region = outliner()
+    rs = rows()
+    t = tree()
+    u = t.unit(bpy.context.preferences)
+    k = next(i for i, r in enumerate(rs) if r.label == label)
+    y0, y1 = t.row_rect(area, region, k, u, len(rs))
+    xs = t.column_xs(area.spaces.active, region, u, len(rs), t.first_row(area, region, len(rs), u))
+    return region.x + int(xs[col]), region.y + int((y0 + y1) / 2)
+
+
+@step
+def s_shift_drag():
+    # Blender: Shift held, press the arrow of joint1 and drag down to box1: every row passed and all below them
+    C["rows"] = [(r.kind, r.label) for r in rows()]
+    (x, y0), (_x, y1) = column_point("joint1", 'SELECT'), column_point("box1", 'SELECT')
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y0, shift=True)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y0, shift=True)
+    for k in range(1, 7):
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y0 + (y1 - y0) * k // 6, shift=True)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y1, shift=True)
+
+
+@step
+def s_wait_shift():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_shift_dragged():
+    rig, box, cyl = (bpy.data.objects[n] for n in ("skeleton1", "box1", "pCylinder1"))
+    bones = [b.name for b in rig.data.bones if not b.hide_select]
+    check(f"Shift-drag makes every joint unselectable (still selectable: {bones}; rows {C['rows']})", not bones)
+    check(f"... and pCylinder1 under joint3 and box1 ({cyl.hide_select}, {box.hide_select})",
+          cyl.hide_select and box.hide_select)
+    check("only the arrow column changed (box1 render stays off from the camera click)",
+          not cyl.hide_render and box.hide_render)
+    for b in rig.data.bones:
+        b.hide_select = False
+    cyl.hide_select = box.hide_select = False
+
+
+@step
+def s_sweep():
+    # Blender: Shift held, press the arrow of pCylinder1, sweep right over its eye and camera, then down over box1's
+    box = bpy.data.objects["box1"]
+    box.hide_viewport = box.hide_render = False
+    pts = [column_point("pCylinder1", 'SELECT'), column_point("pCylinder1", 'RENDER'), column_point("box1", 'RENDER'),
+           column_point("box1", 'SELECT')]
+    ev('MOUSEMOVE', 'NOTHING', x=pts[0][0], y=pts[0][1], shift=True)
+    ev('LEFTMOUSE', 'PRESS', x=pts[0][0], y=pts[0][1], shift=True)
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        for k in range(1, 4):
+            ev('MOUSEMOVE', 'NOTHING', x=ax + (bx - ax) * k // 3, y=ay + (by - ay) * k // 3, shift=True)
+    ev('LEFTMOUSE', 'RELEASE', x=pts[-1][0], y=pts[-1][1], shift=True)
+
+
+@step
+def s_wait_sweep():
+    park_mouse()
+    redraw_all()
+
+
+@step
+def s_swept():
+    obs = [bpy.data.objects[n] for n in ("pCylinder1", "box1")]
+    state = [(o.name, o.hide_select, o.hide_viewport, o.hide_render) for o in obs]
+    check(f"one sweep turns all 3 icons of both rows off ({state})", all(all(t[1:]) for t in state))
+    for o in obs:
+        o.hide_select = o.hide_viewport = o.hide_render = False
+    bpy.data.objects["box1"].hide_viewport = bpy.data.objects["box1"].hide_render = True    # as s_eyed expects
+
+
 @step
 def s_eyed():
     ob = bpy.data.objects["box1"]
     check(f"the eye hides box1 (visibility off: {ob.hide_viewport})", ob.hide_viewport)
+    check(f"the camera stops box1 rendering, select untouched ({ob.hide_render}, {ob.hide_select})",
+          ob.hide_render and not ob.hide_select)
+    ob.hide_render = False
     area, region = outliner()
     area.spaces.active.show_restrict_column_hide = False
     ob.hide_viewport = False

@@ -13,7 +13,7 @@ gives a new window exactly the size and place of the area it copies; Python can'
   remembered);
 - opening that kind again carves an area of the remembered size and place out of the largest area of the window
   the command runs in (one split per tick: Blender lays areas out only between ticks), runs the opening command
-  again, which copies that piece into the new window, and closes the pieces, so the main layout is as it was. A remembered rect is first fitted inside that area: the kit can only place a window over
+  again, which copies that piece into the new window, and reverses the splits, so the main layout is as it was. A remembered rect is first fitted inside that area: the kit can only place a window over
   the window it opens from, which also brings a window that was on another monitor or off the
   screen back into view.
 
@@ -225,13 +225,14 @@ def calling_operator():
 
 class _Carve:
     """Splits ``area`` one cut per tick (Blender lays the areas out only between ticks) until one piece covers the
-    target rect, then runs the opening operator again, which copies that piece (``open_at``), and closes the pieces
+    target rect, then runs the opening operator again, which copies that piece (``open_at``), and rejoins the pieces
     afterwards."""
 
     def __init__(self, kind, window, area, rect, op_call):
         self.kind, self.rect, self.call = kind, rect, op_call
         self.win, self.source = window.as_pointer(), area.as_pointer()
         self.piece, self.made, self.last = area.as_pointer(), [], None
+        self.joins = []
         self.todo = cuts(rect, _rect(area))
         self.wait = 0
 
@@ -267,6 +268,7 @@ class _Carve:
             if new:
                 self.last = new[0].as_pointer()
                 self.made.append(self.last)
+                self.joins.append((piece.as_pointer(), self.last))
                 self.wait = 0
             return TICK_FAST
         got = _rect(piece)
@@ -296,25 +298,32 @@ class _Carve:
             print("Maya Workflow Kit: reopening a window failed:", ex)
         finally:
             _ready.pop(self.kind, None)
-        made = list(self.made)
+        joins = list(self.joins)
         ptr = self.win
-        bpy.app.timers.register(lambda: _close_later(ptr, made), first_interval=TICK_FAST)
+        bpy.app.timers.register(lambda: _close_later(ptr, joins), first_interval=TICK_FAST)
         return None
 
 
-def _close_later(win_ptr, made):
+def _close_later(win_ptr, joins):
     window = live_refs.window(win_ptr)
     if window is None:
         return None
-    for ptr in reversed(made):
-        a = _area(window, ptr)
-        if a is None:
-            continue
-        with bpy.context.temp_override(window=window, screen=window.screen, area=a):
+    # Reverse each split: area_close can give a piece to the Outliner or dock instead of the viewport.
+    for keep_ptr, remove_ptr in reversed(joins):
+        keep, remove = _area(window, keep_ptr), _area(window, remove_ptr)
+        if keep is None or remove is None:
+            return None
+        with bpy.context.temp_override(window=window, screen=window.screen):
             try:
-                bpy.ops.screen.area_close()
+                outcome = bpy.ops.screen.area_join(
+                    source_xy=(keep.x + keep.width // 2, keep.y + keep.height // 2),
+                    target_xy=(remove.x + remove.width // 2, remove.y + remove.height // 2))
+                if outcome != {'FINISHED'}:
+                    print('Maya Workflow Kit: window split join cancelled')
+                    return None
             except RuntimeError as ex:
-                print("Maya Workflow Kit: area close failed:", ex)
+                print("Maya Workflow Kit: window split join failed:", ex)
+                return None
     return None
 
 
