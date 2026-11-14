@@ -74,9 +74,14 @@ def blender_run(blender, args, env, log):
 
 def install(blender, zip_path, env):
     log = SANDBOX / "logs" / "install.log"
-    rc = blender_run(blender, ["--factory-startup", "--command", "extension", "install-file",
-                               "-r", REPO_ID, str(zip_path)], env, log)
     installed = SANDBOX / "extensions" / REPO_ID / PKG_ID / "__init__.py"
+    # Windows: a virus scanner holding a just-unpacked file fails Blender's "allset@" rename at random
+    # ("Access is denied"), and Blender still exits 0; another try gets through
+    for _ in range(3):
+        rc = blender_run(blender, ["--factory-startup", "--command", "extension", "install-file",
+                                   "-r", REPO_ID, str(zip_path)], env, log)
+        if rc != 0 or installed.exists():
+            break
     if rc != 0 or not installed.exists():
         print(log.read_text(encoding="utf-8", errors="replace"))
         raise SystemExit(f"install failed (exit {rc}); see {log}")
