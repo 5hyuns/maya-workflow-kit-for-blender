@@ -15,6 +15,8 @@ import numpy as np
 import kit
 
 chrome = import_module(kit.MODULE + ".ui.editor_chrome")
+gchan = import_module(kit.MODULE + ".ui.graph_channels")     # holds the callers of _bone_name
+glist = import_module(kit.MODULE + ".ui.graph_list")         # holds the caller of _listed_nodes
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
 
@@ -125,12 +127,12 @@ def test_list_reads_each_driver_once():
     arm = _rig(bones=40)
     sp = _space()
     paths = len(kit.fcurves(arm)) + len(arm.animation_data.drivers)
-    real, calls = chrome._bone_name, [0]
+    real, calls = gchan._bone_name, [0]
 
     def counted(path):
         calls[0] += 1
         return real(path)
-    chrome._bone_name = counted
+    gchan._bone_name = counted
     try:
         nodes = chrome.listed_nodes(bpy.context, sp)
         one = calls[0]
@@ -138,7 +140,7 @@ def test_list_reads_each_driver_once():
         chrome.needs_kit_list(bpy.context, sp)
         chrome.drawn_objects(bpy.context, sp)
     finally:
-        chrome._bone_name = real
+        gchan._bone_name = real
     assert len([n for k, n, _c in nodes if k == "JOINT"]) == 41
     # 41 joints x 42 drivers would be ~1,700 reads
     assert one <= 2 * paths, (one, paths)
@@ -149,12 +151,12 @@ def test_one_sync_builds_each_list_once():
     """Inside one sync of the editors (a pass) an editor's list is built once, however many helpers ask for it."""
     _rig(bones=6)
     sp = _space()
-    real, calls = chrome._listed_nodes, [0]
+    real, calls = glist._listed_nodes, [0]
 
     def counted(*a):
         calls[0] += 1
         return real(*a)
-    chrome._listed_nodes = counted
+    glist._listed_nodes = counted
     try:
         with chrome.one_pass():
             first = chrome.listed_nodes(bpy.context, sp)
@@ -165,7 +167,7 @@ def test_one_sync_builds_each_list_once():
         chrome.listed_nodes(bpy.context, sp)              # outside a pass: built anew
         assert calls[0] == 2, calls[0]
     finally:
-        chrome._listed_nodes = real
+        glist._listed_nodes = real
     assert [(k, n.name, c) for k, n, c in first] == [(k, n.name, c) for k, n, c in again]
 
 

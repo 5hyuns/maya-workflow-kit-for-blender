@@ -8081,17 +8081,24 @@
    "Select this attribute: click, Ctrl toggle, Shift range, drag over the rows; then middle-drag in the viewport changes it": "Select this attribute: click, Ctrl toggle, Shift range, drag over the rows; then middle-drag in the viewport changes it"
   },
   "Labels/ui/editor_chrome": {
+   "Auto Load Selected Objects": "Auto Load Selected Objects",
+   "Characters": "Characters",
+   "Key Time": "Key Time",
+   "Key Value": "Key Value",
+   "List only the character sets with their member attributes (Maya Show > Objects > Characters)": "List only the character sets with their member attributes (Maya Show > Objects > Characters)",
+   "Maya Stats: the selected keys' time (type a frame, +=5 to move them)": "Maya Stats: the selected keys' time (type a frame, +=5 to move them)",
+   "Maya Stats: the selected keys' value (display units, +=5 / *=2 work)": "Maya Stats: the selected keys' value (display units, +=5 / *=2 work)",
+   "Maya: the list follows the selection (off: Load / Add Selected Objects keep a fixed list)": "Maya: the list follows the selection (off: Load / Add Selected Objects keep a fixed list)"
+  },
+  "Labels/ui/editor_icon_data": {
    "Absolute view": "Absolute view",
-   "Add": "Add",
    "Add selected nodes to graph": "Add selected nodes to graph",
    "Auto Custom tangents": "Auto Custom tangents",
    "Auto Ease tangents": "Auto Ease tangents",
-   "Auto Load Selected Objects": "Auto Load Selected Objects",
    "Auto Mix tangents": "Auto Mix tangents",
    "Auto load Dope Sheet on selection": "Auto load Dope Sheet on selection",
    "Auto load Graph Editor on selection": "Auto load Graph Editor on selection",
    "Auto tangents": "Auto tangents",
-   "Blender": "Blender",
    "Blender doesn't dim the image: pick no image in the header field to hide it.": "Blender doesn't dim the image: pick no image in the header field to hide it.",
    "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.": "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.",
    "Blender draws seams in the 3D View, not texture borders here.": "Blender draws seams in the 3D View, not texture borders here.",
@@ -8111,10 +8118,8 @@
    "Blender's nodes have no attribute filter field.": "Blender's nodes have no attribute filter field.",
    "Break tangents": "Break tangents",
    "Buffer curve snapshot": "Buffer curve snapshot",
-   "Characters": "Characters",
    "Checker tiling": "Checker tiling",
    "Clamped tangents": "Clamped tangents",
-   "Clear Below": "Clear Below",
    "Clear graph": "Clear graph",
    "Click / box select": "Click / box select",
    "Default in tangent": "Default in tangent",
@@ -8126,14 +8131,11 @@
    "Display the UVs as wireframe": "Display the UVs as wireframe",
    "Display the grid": "Display the grid",
    "Drag a key": "Drag a key",
-   "Editor Button": "Editor Button",
    "Flat tangents": "Flat tangents",
    "Frame all": "Frame all",
    "Frame playback range": "Frame playback range",
    "Free tangent length": "Free tangent length",
    "Grab Keys Tool": "Grab Keys Tool",
-   "Graph Editor Outliner Click": "Graph Editor Outliner Click",
-   "Graph Editor Outliner Scroll": "Graph Editor Outliner Scroll",
    "Graph materials on selected objects": "Graph materials on selected objects",
    "Hide": "Hide",
    "Hide attributes": "Hide attributes",
@@ -8144,37 +8146,21 @@
    "Input connections": "Input connections",
    "Insert Keys Tool": "Insert Keys Tool",
    "Isolate select": "Isolate select",
-   "Key Time": "Key Time",
-   "Key Value": "Key Value",
    "Lattice Deform Keys": "Lattice Deform Keys",
    "Linear tangents": "Linear tangents",
-   "List only the character sets with their member attributes (Maya Show > Objects > Characters)": "List only the character sets with their member attributes (Maya Show > Objects > Characters)",
-   "Load": "Load",
-   "Load Selected Objects": "Load Selected Objects",
    "Load the selected objects": "Load the selected objects",
    "Lock tangent length": "Lock tangent length",
-   "Maya Stats: the selected keys' time (type a frame, +=5 to move them)": "Maya Stats: the selected keys' time (type a frame, +=5 to move them)",
-   "Maya Stats: the selected keys' value (display units, +=5 / *=2 work)": "Maya Stats: the selected keys' value (display units, +=5 / *=2 work)",
-   "Maya: the list follows the selection (off: Load / Add Selected Objects keep a fixed list)": "Maya: the list follows the selection (off: Load / Add Selected Objects keep a fixed list)",
-   "Maya: {item}": "Maya: {item}",
-   "Maya: {item} (greyed)": "Maya: {item} (greyed)",
-   "Maya: {item} (greyed)  →  {substitute}": "Maya: {item} (greyed)  →  {substitute}",
-   "More Buttons": "More Buttons",
    "Move Nearest Picked Key Tool": "Move Nearest Picked Key Tool",
    "Move Tool": "Move Tool",
    "Move keys (G)": "Move keys (G)",
    "Move nodes": "Move nodes",
    "Normalized view": "Normalized view",
-   "Not Available": "Not Available",
    "Not in Blender": "Not in Blender",
-   "Not in this Blender editor.": "Not in this Blender editor.",
    "Open the Dope Sheet": "Open the Dope Sheet",
    "Open the Graph Editor": "Open the Graph Editor",
    "Open the Time Editor": "Open the Time Editor",
    "Output connections": "Output connections",
-   "Panels": "Panels",
    "Pin": "Pin",
-   "Pin Channel": "Pin Channel",
    "Plateau tangents": "Plateau tangents",
    "Post-infinity cycle": "Post-infinity cycle",
    "Post-infinity cycle with offset": "Post-infinity cycle with offset",
@@ -8187,8 +8173,6 @@
    "Remove selected nodes from graph": "Remove selected nodes from graph",
    "Restore last closed tab": "Restore last closed tab",
    "Retime Tool: scale and ripple keys": "Retime Tool: scale and ripple keys",
-   "Rows": "Rows",
-   "Rows to scroll, positive = down the list": "Rows to scroll, positive = down the list",
    "Scale (S)": "Scale (S)",
    "Scale Tool": "Scale Tool",
    "Scroll the view so the current time sits in the middle": "Scroll the view so the current time sits in the middle",
@@ -8205,7 +8189,6 @@
    "Snap": "Snap",
    "Spline tangents": "Spline tangents",
    "Stacked view": "Stacked view",
-   "Stats": "Stats",
    "Stepped tangents": "Stepped tangents",
    "Swap buffer curves": "Swap buffer curves",
    "Time snap": "Time snap",
@@ -8215,6 +8198,20 @@
    "Unconstrained drag": "Unconstrained drag",
    "Unify tangents": "Unify tangents",
    "Value snap": "Value snap"
+  },
+  "Labels/ui/editor_icon_row": {
+   "Editor Button": "Editor Button",
+   "Maya: {item}": "Maya: {item}",
+   "Maya: {item} (greyed)": "Maya: {item} (greyed)",
+   "Maya: {item} (greyed)  →  {substitute}": "Maya: {item} (greyed)  →  {substitute}",
+   "More Buttons": "More Buttons",
+   "Not Available": "Not Available",
+   "Not in this Blender editor.": "Not in this Blender editor.",
+   "Stats": "Stats"
+  },
+  "Labels/ui/editor_menu_bar": {
+   "Blender": "Blender",
+   "Panels": "Panels"
   },
   "Labels/ui/editor_panels": {
    "Dock Bottom": "Dock Bottom",
@@ -8249,6 +8246,19 @@
   },
   "Labels/ui/graph_layers": {
    "Pick Layer Curve": "Pick Layer Curve"
+  },
+  "Labels/ui/graph_list_sync": {
+   "Add": "Add",
+   "Clear Below": "Clear Below",
+   "Load": "Load",
+   "Load Selected Objects": "Load Selected Objects"
+  },
+  "Labels/ui/graph_outliner": {
+   "Graph Editor Outliner Click": "Graph Editor Outliner Click",
+   "Graph Editor Outliner Scroll": "Graph Editor Outliner Scroll",
+   "Pin Channel": "Pin Channel",
+   "Rows": "Rows",
+   "Rows to scroll, positive = down the list": "Rows to scroll, positive = down the list"
   },
   "Labels/ui/graph_view": {
    "Clear Below": "Clear Below",
@@ -10383,15 +10393,10 @@
    "Open the Connection Editor: connect an attribute of the left node to one of the right node (Maya Windows >\nGeneral Editors > Connection Editor; Blender: a driver)": "Open the Connection Editor: connect an attribute of the left node to one of the right node (Maya Windows >\nGeneral Editors > Connection Editor; Blender: a driver)",
    "Pick this attribute; with Auto-connect a pick on the other side connects (or, if connected, breaks) the pair": "Pick this attribute; with Auto-connect a pick on the other side connects (or, if connected, breaks) the pair"
   },
-  "Tooltips/ui/editor_chrome": {
-   "Clear the attribute filters: every animated attribute is listed again (Maya Show > Attributes > Clear\nBelow)": "Clear the attribute filters: every animated attribute is listed again (Maya Show > Attributes > Clear\nBelow)",
-   "Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected": "Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected",
-   "Maya Graph Editor outliner: click a node (all its curves) or an attribute (that curve); Ctrl toggles,\nShift adds; the +/- sign folds the attributes": "Maya Graph Editor outliner: click a node (all its curves) or an attribute (that curve); Ctrl toggles,\nShift adds; the +/- sign folds the attributes",
-   "Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays\nwhen the selection changes (only while Auto Load Selected Objects is off)": "Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays\nwhen the selection changes (only while Auto Load Selected Objects is off)",
+  "Tooltips/ui/editor_icon_row": {
    "Maya editor button without a Blender counterpart (always greyed out)": "Maya editor button without a Blender counterpart (always greyed out)",
    "Maya editor icon-row button": "Maya editor icon-row button",
-   "More toolbar buttons: the ones that don't fit this editor's width": "More toolbar buttons: the ones that don't fit this editor's width",
-   "Scroll the Maya Graph Editor outliner by rows (positive = down the list)": "Scroll the Maya Graph Editor outliner by rows (positive = down the list)"
+   "More toolbar buttons: the ones that don't fit this editor's width": "More toolbar buttons: the ones that don't fit this editor's width"
   },
   "Tooltips/ui/editor_panels": {
    "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)": "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)"
@@ -10402,6 +10407,15 @@
   },
   "Tooltips/ui/graph_layers": {
    "Click a curve of another selected animation layer: that layer becomes the last picked one (its curves become\neditable)": "Click a curve of another selected animation layer: that layer becomes the last picked one (its curves become\neditable)"
+  },
+  "Tooltips/ui/graph_list_sync": {
+   "Clear the attribute filters: every animated attribute is listed again (Maya Show > Attributes > Clear\nBelow)": "Clear the attribute filters: every animated attribute is listed again (Maya Show > Attributes > Clear\nBelow)",
+   "Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays\nwhen the selection changes (only while Auto Load Selected Objects is off)": "Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays\nwhen the selection changes (only while Auto Load Selected Objects is off)"
+  },
+  "Tooltips/ui/graph_outliner": {
+   "Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected": "Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected",
+   "Maya Graph Editor outliner: click a node (all its curves) or an attribute (that curve); Ctrl toggles,\nShift adds; the +/- sign folds the attributes": "Maya Graph Editor outliner: click a node (all its curves) or an attribute (that curve); Ctrl toggles,\nShift adds; the +/- sign folds the attributes",
+   "Scroll the Maya Graph Editor outliner by rows (positive = down the list)": "Scroll the Maya Graph Editor outliner by rows (positive = down the list)"
   },
   "Tooltips/ui/graph_view": {
    "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)": "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)",
