@@ -22,7 +22,9 @@ The kit draws the edges itself (POST_VIEW):
 - #91: a frame change (playback, scrubbing, ``frame_set``) evaluates the depsgraph without a
   ``depsgraph_update_post``, so a skinned / nCloth mesh kept the wire of the first evaluated frame. ``frame_change_post``
   drops the batches of objects whose evaluated shape can depend on time (``time_dependent``: modifiers, shape keys,
-  animated data); static meshes keep their batch.
+  animated data); static meshes keep their batch. When Blender evaluates the frame only once (no frame handler
+  writes, one depsgraph drawn, no depsgraph update since the last frame) the frame's own update names the objects
+  whose shape changed, and only their batches go.
 - A selected lattice is drawn too (Blender's own is the theme's orange). Maya draws a selected
   lattice in the same colours as meshes (white, the lead green). Edges = the lattice grid along U / V / W through the evaluated points
   (``co_deform``).
@@ -59,6 +61,7 @@ _batches = {}              # object session_uid -> (batch, edge count, evaluated
 _corners = []              # [(bound boxes, their ``_corner_array``)] of the last redraw
 _used = set()              # session_uids whose batch a redraw used since the last frame change
 _draws = [0]               # redraws since the last frame change
+_updated = [False]         # a depsgraph update came since the last frame change (``_on_frame``)
 _handle = []
 _shader = []
 _many = []                 # [instanced, merged wire shader] (``_shaders``), None for one that can't be made
@@ -1044,6 +1047,7 @@ def _on_depsgraph(_scene, depsgraph):
     its own mesh data — its skeleton or lattice moved (a moved rig re-read every child mesh's edges each step)."""
     if not _batches and not _edges:
         return
+    _updated[0] = True
     data_updated = None
     for update in depsgraph.updates:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
@@ -1090,8 +1094,11 @@ _FRAME_READERS = frozenset((
 _PACKAGE = __name__.rsplit(".ui.", 1)[0]
 
 
-def _idle_writer(key, scene):
-    """Does the kit frame change handler ``key`` write nothing on this frame change? False when it may write."""
+def _idle_writer(key, scene, count):
+    """Does the kit frame change handler ``key`` write nothing on this frame change? False when it may write. Each
+    test is the handler's own early return; a handler that looks for its helpers again when the file's objects came or
+    went (``count``: a one-item list for the object count, read once) counts as idle only while its last look is
+    current and found none."""
     from importlib import import_module
     if key == "operators.point_keys:_on_frame":
         return not import_module(_PACKAGE + ".operators.point_keys")._editing_meshes()
@@ -1099,25 +1106,51 @@ def _idle_writer(key, scene):
         return not import_module(_PACKAGE + ".operators.playback_maya").active(scene)
     if key == "operators.constrain_interp:_on_update":
         return not import_module(_PACKAGE + ".operators.constrain_interp")._state["armed"]
+    if not count:
+        count.append(len(bpy.data.objects))
     if key == "operators.ik_rp:_on_frame":
-        found = import_module(_PACKAGE + ".operators.ik_rp")._found[1]
-        return isinstance(found, list) and not found
+        from .outliner import objects_version
+        rp = import_module(_PACKAGE + ".operators.ik_rp")
+        return (isinstance(rp._found[1], list) and not rp._found[1] and rp._count[0] == count[0]
+                and rp._found[0] == (objects_version(), count[0]))
     if key in ("operators.constrain_199:_on_frame", "operators.pins_205:_on_frame"):
-        names = import_module(_PACKAGE + "." + key.split(":")[0])._state.get("names")
-        return isinstance(names, set) and not names
+        state = import_module(_PACKAGE + "." + key.split(":")[0])._state
+        names = state.get("names")
+        return isinstance(names, set) and not names and state.get("count") == count[0]
     return False
 
 
 def _frame_writers_idle(scene):
     """Can nothing in ``frame_change_post`` write during this frame change? Any handler that isn't the kit's own
     counts as one that may write."""
+    count = []
     for fn in bpy.app.handlers.frame_change_post:
         f = getattr(fn, "__func__", fn)
         mod = getattr(f, "__module__", "") or ""
         if not mod.startswith(_PACKAGE + "."):
             return False
         key = mod[len(_PACKAGE) + 1:] + ":" + getattr(f, "__name__", "")
-        if key not in _FRAME_READERS and not _idle_writer(key, scene):
+        if key not in _FRAME_READERS and not _idle_writer(key, scene, count):
+            return False
+    return True
+
+
+def _windows():
+    wm = bpy.context.window_manager
+    return wm.windows if wm is not None else ()
+
+
+def _only_depsgraph(scene, depsgraph):
+    """Is ``depsgraph`` the one every window draws? A window on another view layer or scene has a depsgraph of its
+    own, which evaluates the new frame later with no handler at all (it finds the time changed and evaluates again:
+    source/blender/depsgraph/intern/eval/depsgraph_eval.cc ``DEG_evaluate_on_refresh``; no data was flagged, so
+    ``scene_graph_update_tagged`` in source/blender/blenkernel/intern/scene.cc calls no ``depsgraph_update_post``).
+    A render's depsgraph isn't drawn either."""
+    if depsgraph.mode != 'VIEWPORT':
+        return False
+    layer = depsgraph.view_layer
+    for win in _windows():
+        if win.scene != scene or win.view_layer != layer:
             return False
     return True
 
@@ -1136,14 +1169,20 @@ def _on_frame(scene, _depsgraph=None):
             _edges.pop(uid, None)
         _used.clear()
         _draws[0] = 0
+    updated = _updated[0]
+    _updated[0] = False
     if not _batches:
         return
-    if _depsgraph is not None and _frame_writers_idle(scene):
+    if (not updated and _depsgraph is not None and _only_depsgraph(scene, _depsgraph)
+            and _frame_writers_idle(scene)):
         # Nothing writes during this frame change, so Blender evaluates the frame once and its update lists every
         # object whose evaluated shape changed (each evaluated part of an ID adds its flag to the update:
         # source/blender/depsgraph/intern/eval/deg_eval_flush.cc ``flush_editors_id_update``). A handler that writes
         # makes Blender evaluate a second time without telling Python (source/blender/blenkernel/intern/scene.cc
-        # ``BKE_scene_graph_update_for_newframe_ex``): then every time-dependent object is asked about, below.
+        # ``BKE_scene_graph_update_for_newframe_ex``): then every time-dependent object is asked about, below. So is
+        # every one after a depsgraph update since the last frame change: a ``depsgraph_update_post`` handler that
+        # wrote had Blender evaluate again unseen too (``scene_graph_update_tagged``), and this frame change drops
+        # what that may have left behind.
         for update in _depsgraph.updates:
             if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
                 ob = update.id.original
@@ -1170,6 +1209,7 @@ def _on_frame(scene, _depsgraph=None):
 def _on_reload(*_args):
     _batches.clear()
     _edges.clear()
+    _updated[0] = False
     _corners.clear()
     _used.clear()
     _last_many.clear()
@@ -1198,6 +1238,7 @@ def unregister():
     _corners.clear()
     _used.clear()
     _draws[0] = 0
+    _updated[0] = False
     _last_many.clear()
     _file_index.clear()
     _rows_of.clear()

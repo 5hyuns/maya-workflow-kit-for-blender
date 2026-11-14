@@ -2,11 +2,15 @@
 every object whose shape changed (skinned, wave, geometry nodes on the scene time, hooked, animated
 modifier, cloth): with no handler writing during the frame change, the wires to drop come from the frame's own
 update, and no object is asked about one by one. A frame change handler that writes (a script posing a skeleton
-every frame) brings back the object-by-object look, so a mesh that skeleton deforms still gets its new wire."""
+every frame) brings back the object-by-object look, so a mesh that skeleton deforms still gets its new wire. So do a
+depsgraph update since the last frame change (its handlers may have written too), a window on another view layer
+(its depsgraph evaluates the frame on its own) and a kit frame handler whose last look for its helpers is out of
+date (it looks again, and may write)."""
 
 import hashlib
 import math
 from importlib import import_module
+from types import SimpleNamespace
 
 import bpy
 import numpy as np
@@ -23,6 +27,7 @@ def _clear():
     wire._edges.clear()
     wire._used.clear()
     wire._draws[0] = 0
+    wire._updated[0] = False
 
 
 def _link(ob):
@@ -152,8 +157,8 @@ def _frames(obs, frames):
     return out
 
 
-def test_a_frame_change_drops_the_changed_wires_from_its_update():
-    obs = _scene()
+def _asked_frames(obs, frames):
+    """(``_frames``, the names of the objects asked about one by one)"""
     real, asked = wire.time_dependent, []
 
     def counted(ob, *args):
@@ -161,9 +166,15 @@ def test_a_frame_change_drops_the_changed_wires_from_its_update():
         return real(ob, *args)
     wire.time_dependent = counted
     try:
-        rows = _frames(obs, range(2, 14))
+        rows = _frames(obs, frames)
     finally:
         wire.time_dependent = real
+    return rows, asked
+
+
+def test_a_frame_change_drops_the_changed_wires_from_its_update():
+    obs = _scene()
+    rows, asked = _asked_frames(obs, range(2, 14))
     for i, (gone, changed) in enumerate(rows):
         assert changed <= gone, f"frame {i + 2}: {sorted(changed - gone)} changed shape but kept their wire"
         assert not gone & {"still", "still_subsurf"}, f"frame {i + 2}: a still object lost its wire: {sorted(gone)}"
@@ -189,4 +200,83 @@ def test_a_frame_handler_that_writes_brings_back_the_object_by_object_look():
     for i, (gone, changed) in enumerate(rows):
         assert "posed_by_script" in changed, f"frame {i + 2}: the script's pose didn't move the mesh"
         assert changed <= gone, f"frame {i + 2}: {sorted(changed - gone)} changed shape but kept their wire"
+    _clear()
+
+
+def test_a_depsgraph_update_since_the_last_frame_brings_back_the_object_by_object_look():
+    """A ``depsgraph_update_post`` handler that writes has Blender evaluate a second time, unseen: a mesh posed that
+    way may keep an old wire until the next frame change, which drops it as before."""
+    obs = _scene()
+    sc = bpy.context.scene
+    sc.frame_set(1)
+    posed, script_rig = bpy.data.objects["posed_by_script"], bpy.data.objects["script_rig"]
+    before = _shape(posed, bpy.context.evaluated_depsgraph_get())
+    for ob in obs:
+        wire._batches[ob.session_uid] = (None, 0, None)
+
+    def pose_on_update(_scene, _dg=None):
+        pb = script_rig.pose.bones["b"]
+        if abs(pb.rotation_euler.x - 0.7) > 1e-6:
+            pb.rotation_euler.x = 0.7
+
+    bpy.app.handlers.depsgraph_update_post.append(pose_on_update)
+    try:
+        bpy.data.objects["still"].location.x += 0.5
+        dg = bpy.context.evaluated_depsgraph_get()
+    finally:
+        bpy.app.handlers.depsgraph_update_post.remove(pose_on_update)
+    assert _shape(posed, dg) != before, "the handler's pose didn't move the mesh"
+    sc.frame_set(2)
+    assert posed.session_uid not in wire._batches, "the frame change kept the wire the update before it left behind"
+    _clear()
+
+
+def test_a_window_on_another_view_layer_brings_back_the_object_by_object_look():
+    obs = _scene()
+    sc = bpy.context.scene
+    other = sc.view_layers.new("other")
+    windows = [SimpleNamespace(scene=sc, view_layer=bpy.context.view_layer)]
+    real = wire._windows
+    wire._windows = lambda: windows
+    try:
+        assert wire._only_depsgraph(sc, bpy.context.evaluated_depsgraph_get())
+        windows.append(SimpleNamespace(scene=sc, view_layer=other))
+        assert not wire._only_depsgraph(sc, bpy.context.evaluated_depsgraph_get())
+        rows, asked = _asked_frames(obs, range(2, 5))
+    finally:
+        wire._windows = real
+        sc.view_layers.remove(other)
+    assert asked, "the frame changes dropped wires from one depsgraph's update while a window draws another"
+    for i, (gone, changed) in enumerate(rows):
+        assert changed <= gone, f"frame {i + 2}: {sorted(changed - gone)} changed shape but kept their wire"
+    _clear()
+
+
+def test_a_kit_frame_handler_with_an_old_look_for_its_helpers_counts_as_writing():
+    """The skeleton RP handles, normal / tangent constraints and pins look for their helpers again on a frame change
+    when objects came or went since their last look, and may write then."""
+    _scene()
+    sc = bpy.context.scene
+    sc.frame_set(1)           # each handler looks at the file as it is now
+    assert wire._frame_writers_idle(sc)
+    keys = ("operators.ik_rp:_on_frame", "operators.constrain_199:_on_frame", "operators.pins_205:_on_frame")
+    for key in keys:
+        assert wire._idle_writer(key, sc, []), key
+    extra = bpy.data.objects.new("made_since", None)
+    try:
+        for key in keys:
+            assert not wire._idle_writer(key, sc, []), f"{key}: an object made since its last look"
+        assert not wire._frame_writers_idle(sc)
+        sc.frame_set(2)
+        assert wire._frame_writers_idle(sc), "the handlers looked again on the frame change"
+    finally:
+        bpy.data.objects.remove(extra)
+    rp = import_module(kit.MODULE + ".operators.ik_rp")
+    sc.frame_set(1)
+    saved = rp._found[0]
+    rp._found[0] = None       # a look that failed
+    try:
+        assert not wire._idle_writer("operators.ik_rp:_on_frame", sc, [])
+    finally:
+        rp._found[0] = saved
     _clear()
