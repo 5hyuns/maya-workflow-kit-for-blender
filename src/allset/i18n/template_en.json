@@ -5980,6 +5980,7 @@
    "Keep the children where they are (off = the group's transform goes into their local values)": "Keep the children where they are (off = the group's transform goes into their local values)",
    "Parent": "Parent",
    "Preserve Position": "Preserve Position",
+   "Transform Group": "Transform Group",
    "Ungroup": "Ungroup",
    "Ungroup Under": "Ungroup Under",
    "World": "World"
@@ -8608,6 +8609,7 @@
   },
   "Labels/ui/outliner_tree": {
    "Outliner Hover": "Outliner Hover",
+   "Outliner Pan": "Outliner Pan",
    "Outliner Scroll": "Outliner Scroll",
    "Outliner Select": "Outliner Select"
   },
@@ -8629,6 +8631,7 @@
    "Rename": "Rename",
    "Reveal Selected": "Reveal Selected",
    "Right": "Right",
+   "Set Active Camera": "Set Active Camera",
    "Sets": "Sets",
    "Shapes": "Shapes",
    "Show": "Show",
@@ -9748,6 +9751,7 @@
    "Weighted tangents keep their length; non-weighted ones stay a third of the way to the next key\n(Maya Curves > Weighted / Non-weighted Tangents)": "Weighted tangents keep their length; non-weighted ones stay a third of the way to the next key\n(Maya Curves > Weighted / Non-weighted Tangents)"
   },
   "Tooltips/operators/group": {
+   "Drag the selected group's transform with its locator axes hidden": "Drag the selected group's transform with its locator axes hidden",
    "Group the selected objects under a new transform (Maya Ctrl+G). With root joints selected their skeleton\ngoes under the group": "Group the selected objects under a new transform (Maya Ctrl+G). With root joints selected their skeleton\ngoes under the group",
    "Move the children of the selected groups up one level and delete the groups (Maya Ungroup)": "Move the children of the selected groups up one level and delete the groups (Maya Ungroup)"
   },
@@ -10565,11 +10569,13 @@
   "Tooltips/ui/outliner_tree": {
    "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing": "Click a row to select it (Ctrl: toggle, Shift: range, Ctrl+Shift: add), drag over rows to select them, click\nits arrow to expand it (Shift: with everything below), double-click its name to rename it, click empty space to\nselect nothing",
    "Light up the Outliner row under the mouse": "Light up the Outliner row under the mouse",
+   "Pan the Maya Outliner rows in both directions (Maya: Alt+middle-drag, like a 2D view)": "Pan the Maya Outliner rows in both directions (Maya: Alt+middle-drag, like a 2D view)",
    "Scroll the Maya Outliner rows": "Scroll the Maya Outliner rows"
   },
   "Tooltips/ui/outliner_tree_edit": {
    "Delete the selection and everything below it (Maya Edit > Delete)": "Delete the selection and everything below it (Maya Edit > Delete)",
    "Hide the selected objects from the Outliner (they stay in the scene), or show them in it again": "Hide the selected objects from the Outliner (they stay in the scene), or show them in it again",
+   "Make this camera the scene camera; every 3D View's camera view (Numpad 0) then looks through it": "Make this camera the scene camera; every 3D View's camera view (Numpad 0) then looks through it",
    "Maya's Outliner right-click menu (the same on every row and on empty space)": "Maya's Outliner right-click menu (the same on every row and on empty space)",
    "Maya's Outliner right-click menu; on a set row, the set's menu": "Maya's Outliner right-click menu; on a set row, the set's menu",
    "Open the rows above the selection and scroll to it (Maya Reveal Selected)": "Open the rows above the selection and scroll to it (Maya Reveal Selected)",
