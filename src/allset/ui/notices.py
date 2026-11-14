@@ -873,13 +873,6 @@ PANEL_MENU = {
         "Windows > Workspaces", "Blender saves layouts as workspaces (Windows > Workspaces, the Status Line drop-down)."),
     _PM + "Panels/Panel Editor...": (
         "Workspaces", "Blender has no panel editor: split / join areas by their corners and keep layouts as workspaces."),
-    _PT + "Resolution Gate": (
-        "Camera view frame (always on)", "Blender's camera view always draws the render resolution frame (Maya's "
-        "resolution gate; a new Maya camera has it off, overscan 1.0): it can't be "
-        "hidden. Gate Mask dims the outside (Blender passepartout)."),
-    _PT + "Field Chart": (
-        "Safe Action / Safe Title", "Blender has no field chart: the safe areas (Safe Action / Safe Title) are the "
-        "camera guides it draws."),
     _PT + "Motion Blur": (
         "Render Properties > Motion Blur", "Blender's viewport doesn't preview motion blur: it is a render setting "
         "(EEVEE / Cycles Motion Blur)."),
