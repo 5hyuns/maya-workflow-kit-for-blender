@@ -465,6 +465,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                 if area.type == 'OUTLINER':
                     area.tag_redraw()
 
+    outliner_columns: bpy.props.BoolProperty(
+        name="Outliner Column Icons", description="Blender's selectable / eye / render icons at the right of the "
+                                                  "Maya Outliner rows (each one also has its own toggle)",
+        default=True, update=_update_outliner)
     outliner_select_column: bpy.props.BoolProperty(
         name="Outliner Selectable", description="Blender's selectable arrow at the right of the Maya Outliner rows",
         default=True, update=_update_outliner)
@@ -732,9 +736,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "in_view_messages")
         row.prop(self, "option_boxes_floating")
         row = box.row()
-        row.prop(self, "outliner_select_column")
-        row.prop(self, "outliner_eye_column")
-        row.prop(self, "outliner_render_column")
+        row.prop(self, "outliner_columns")
+        sub = row.row()
+        sub.active = self.outliner_columns
+        sub.prop(self, "outliner_select_column")
+        sub.prop(self, "outliner_eye_column")
+        sub.prop(self, "outliner_render_column")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps
