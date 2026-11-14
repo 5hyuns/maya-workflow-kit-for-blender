@@ -19,6 +19,7 @@ sw = import_module(kit.MODULE + ".switch")
 ws_mod = import_module(kit.MODULE + ".ui.workspaces")
 user_ws = import_module(kit.MODULE + ".ui.user_workspaces")
 cb = import_module(kit.MODULE + ".ui.channel_box")
+cb_nodes = import_module(kit.MODULE + ".ui.cb_nodes")
 md = import_module(kit.MODULE + ".ui.maya_dock")
 mw = import_module(kit.MODULE + ".ui.marked_window")
 ts = import_module(kit.MODULE + ".ui.time_slider")
@@ -120,12 +121,12 @@ def test_picked_bones_are_read_in_one_call_per_skeleton():
         want = [pb for arm in cb.pose_objects() for pb in arm.pose.bones
                 if pb.select and not pb.hide]
         calls = []
-        real = cb.bone_selected
-        cb.bone_selected = lambda pb: calls.append(pb.name) or real(pb)
+        real = cb_nodes.bone_selected
+        cb_nodes.bone_selected = lambda pb: calls.append(pb.name) or real(pb)
         try:
             got = cb.selected_bones()
         finally:
-            cb.bone_selected = real
+            cb_nodes.bone_selected = real
         assert [pb.name for pb in got] == [pb.name for pb in want] and len(got) > 10, \
             ([pb.name for pb in got], [pb.name for pb in want])
         assert all(isinstance(pb, bpy.types.PoseBone) and pb.id_data in (a, b) for pb in got)

@@ -8,6 +8,7 @@
 - the custom attribute rows of a control are matched to their text rows once per draw, not once per attribute.
 The answers are the same as looking through the whole scene (or every key) each time."""
 
+import sys
 import time
 from importlib import import_module
 
@@ -21,19 +22,26 @@ deformers = import_module(kit.MODULE + ".operators.deformers")
 
 
 class _Count:
+    """Counts the calls of ``owner.name`` made through every kit module that holds the same function (the module
+    that defines it and the modules that import it by name)."""
     def __init__(self, owner, name):
         self.owner, self.name, self.calls = owner, name, 0
         self.real = getattr(owner, name)
+        self.homes = [owner] + [m for key, m in list(sys.modules.items())
+                                if m is not None and m is not owner and key.startswith(kit.MODULE + ".")
+                                and vars(m).get(name) is self.real]
 
     def __enter__(self):
         def counted(*a, **k):
             self.calls += 1
             return self.real(*a, **k)
-        setattr(self.owner, self.name, counted)
+        for m in self.homes:
+            setattr(m, self.name, counted)
         return self
 
     def __exit__(self, *exc):
-        setattr(self.owner, self.name, self.real)
+        for m in self.homes:
+            setattr(m, self.name, self.real)
 
 
 def _object_mode():

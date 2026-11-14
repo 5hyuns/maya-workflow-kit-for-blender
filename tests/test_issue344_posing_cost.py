@@ -18,6 +18,7 @@ import kit
 mj = import_module(kit.MODULE + ".ui.maya_joints")
 joints = import_module(kit.MODULE + ".operators.joints")
 cb = import_module(kit.MODULE + ".ui.channel_box")
+cb_values = import_module(kit.MODULE + ".ui.cb_values")
 ts = import_module(kit.MODULE + ".ui.time_slider")
 time_keys = import_module(kit.MODULE + ".operators.time_keys")
 
@@ -260,8 +261,8 @@ def test_channel_box_holds_the_rows_key_states_while_a_move_runs():
     bpy.context.scene.frame_set(8)
     bpy.context.view_layer.update()
     calls = []
-    real_state, real_moving = cb.channel_state, mj.transforming
-    cb.channel_state = lambda ob, key, frame=None: calls.append(key) or real_state(ob, key, frame)
+    real_state, real_moving = cb_values.channel_state, mj.transforming
+    cb_values.channel_state = lambda ob, key, frame=None: calls.append(key) or real_state(ob, key, frame)
     screen = SimpleNamespace(is_animation_playing=False)
     ctx = SimpleNamespace(screen=screen, mode='POSE')
     try:
@@ -287,7 +288,7 @@ def test_channel_box_holds_the_rows_key_states_while_a_move_runs():
         screen.is_animation_playing = True
         assert not cb._holds_states(ctx), "during playback a move can key: found every time"
     finally:
-        cb.channel_state, mj.transforming = real_state, real_moving
+        cb_values.channel_state, mj.transforming = real_state, real_moving
         cb._held_states.clear()
         cb._holding[0] = False
     # the "+N" count

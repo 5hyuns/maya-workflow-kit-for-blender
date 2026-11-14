@@ -7944,40 +7944,45 @@
    "Paste Selected": "Paste Selected",
    "Select Connection": "Select Connection"
   },
-  "Labels/ui/cb_points": {
-   "CVs": "CVs",
-   "CVs Shown": "CVs Shown"
+  "Labels/ui/cb_drag": {
+   "Adjust Channel Values": "Adjust Channel Values",
+   "Channel Box Hover": "Channel Box Hover",
+   "Channel Value": "Channel Value",
+   "Deselect Channels": "Deselect Channels",
+   "Extend": "Extend",
+   "Select Channel": "Select Channel",
+   "Select Channels": "Select Channels",
+   "Set": "Set",
+   "Toggle": "Toggle"
   },
-  "Labels/ui/channel_box": {
-   "(attributes)": "(attributes)",
+  "Labels/ui/cb_keys": {
+   "Rotate X": "Rotate X",
+   "Rotate Y": "Rotate Y",
+   "Rotate Z": "Rotate Z",
+   "Scale X": "Scale X",
+   "Scale Y": "Scale Y",
+   "Scale Z": "Scale Z",
+   "Translate X": "Translate X",
+   "Translate Y": "Translate Y",
+   "Translate Z": "Translate Z",
+   "Visibility": "Visibility"
+  },
+  "Labels/ui/cb_menus": {
    "Add Attribute...": "Add Attribute...",
    "Add to Selected Layers": "Add to Selected Layers",
-   "Adjust Channel Values": "Adjust Channel Values",
    "All": "All",
    "Attribute Editor": "Attribute Editor",
-   "Channel Box": "Channel Box",
-   "Channel Box Hover": "Channel Box Hover",
-   "Channel Box Virtual Slider": "Channel Box Virtual Slider",
-   "Channel Box Wheel Navigation": "Channel Box Wheel Navigation",
-   "Channel Value": "Channel Value",
    "Channels": "Channels",
    "Copy Selected": "Copy Selected",
    "Cut Selected": "Cut Selected",
    "Delete Attributes": "Delete Attributes",
    "Delete History": "Delete History",
    "Delete Node": "Delete Node",
-   "Deselect Channels": "Deselect Channels",
    "Edit": "Edit",
    "Edit Attribute...": "Edit Attribute...",
-   "Editing joints: W / E / R move them,": "Editing joints: W / E / R move them,",
-   "Expand Node": "Expand Node",
-   "Extend": "Extend",
-   "F8 = pose mode (channels and keys)": "F8 = pose mode (channels and keys)",
    "Freeze": "Freeze",
    "Graph Editor": "Graph Editor",
    "Hide Selected": "Hide Selected",
-   "INPUTS": "INPUTS",
-   "Interp Type": "Interp Type",
    "Lead Object": "Lead Object",
    "Lock Selected": "Lock Selected",
    "Lock and Hide Selected": "Lock and Hide Selected",
@@ -7985,52 +7990,60 @@
    "Make Selected Nonkeyable": "Make Selected Nonkeyable",
    "Manipulators": "Manipulators",
    "Material Attributes...": "Material Attributes...",
-   "Modeling Toolkit": "Modeling Toolkit",
    "Mute All": "Mute All",
    "Mute Selected": "Mute Selected",
-   "Name": "Name",
    "Object": "Object",
    "Only": "Only",
    "Paste Selected": "Paste Selected",
-   "Radius": "Radius",
    "Remove From Selected Layers": "Remove From Selected Layers",
-   "Rename": "Rename",
    "Rotate Order": "Rotate Order",
-   "Rotate Order XYZ": "Rotate Order XYZ",
-   "Rotate X": "Rotate X",
-   "Rotate Y": "Rotate Y",
-   "Rotate Z": "Rotate Z",
-   "SHAPES": "SHAPES",
-   "Scale X": "Scale X",
-   "Scale Y": "Scale Y",
-   "Scale Z": "Scale Z",
-   "Scroll Channel Box": "Scroll Channel Box",
-   "Select Channel": "Select Channel",
-   "Select Channels": "Select Channels",
    "Select Node": "Select Node",
-   "Select objects in the scene to view,": "Select objects in the scene to view,",
    "Select only this object": "Select only this object",
-   "Select this channel: click, Ctrl toggle, Shift range, drag over the rows": "Select this channel: click, Ctrl toggle, Shift range, drag over the rows",
-   "Selected": "Selected",
-   "Selected Channels": "Selected Channels",
-   "Set": "Set",
    "Set Driven Key...": "Set Driven Key...",
    "Settings": "Settings",
    "Show": "Show",
    "Show All Channels": "Show All Channels",
    "Sync Selection in Graph Editor": "Sync Selection in Graph Editor",
    "Sync Timeline Display": "Sync Timeline Display",
-   "The lead's name: Enter renames it": "The lead's name: Enter renames it",
-   "Toggle": "Toggle",
-   "Translate X": "Translate X",
-   "Translate Y": "Translate Y",
-   "Translate Z": "Translate Z",
    "Unlock Selected": "Unlock Selected",
    "Unmute All": "Unmute All",
    "Unmute Selected": "Unmute Selected",
-   "Virtual slider speed": "Virtual slider speed",
-   "Visibility": "Visibility",
+   "Virtual slider speed": "Virtual slider speed"
+  },
+  "Labels/ui/cb_pane": {
+   "Scroll Channel Box": "Scroll Channel Box"
+  },
+  "Labels/ui/cb_panel": {
+   "(attributes)": "(attributes)",
+   "Attribute Editor": "Attribute Editor",
+   "Channel Box": "Channel Box",
+   "Editing joints: W / E / R move them,": "Editing joints: W / E / R move them,",
+   "Expand Node": "Expand Node",
+   "F8 = pose mode (channels and keys)": "F8 = pose mode (channels and keys)",
+   "INPUTS": "INPUTS",
+   "Interp Type": "Interp Type",
+   "Modeling Toolkit": "Modeling Toolkit",
+   "Radius": "Radius",
+   "Rename": "Rename",
+   "Rotate Order XYZ": "Rotate Order XYZ",
+   "SHAPES": "SHAPES",
+   "Select objects in the scene to view,": "Select objects in the scene to view,",
    "edit and set keyframes on channels": "edit and set keyframes on channels"
+  },
+  "Labels/ui/cb_points": {
+   "CVs": "CVs",
+   "CVs Shown": "CVs Shown"
+  },
+  "Labels/ui/cb_slider": {
+   "Channel Box Virtual Slider": "Channel Box Virtual Slider"
+  },
+  "Labels/ui/channel_box": {
+   "Channel Box Wheel Navigation": "Channel Box Wheel Navigation",
+   "Name": "Name",
+   "Select this channel: click, Ctrl toggle, Shift range, drag over the rows": "Select this channel: click, Ctrl toggle, Shift range, drag over the rows",
+   "Selected": "Selected",
+   "Selected Channels": "Selected Channels",
+   "The lead's name: Enter renames it": "The lead's name: Enter renames it"
   },
   "Labels/ui/component_editor": {
    "Auto Normalization:": "Auto Normalization:",
@@ -10351,33 +10364,43 @@
    "Select what feeds the selected channel: the driver's or constraint's objects, else its animation curve in the\nGraph Editor (Maya Channels > Select Connection)": "Select what feeds the selected channel: the driver's or constraint's objects, else its animation curve in the\nGraph Editor (Maya Channels > Select Connection)",
    "Set a breakdown key on every channel shown (Maya Channels > Breakdown All)": "Set a breakdown key on every channel shown (Maya Channels > Breakdown All)"
   },
-  "Tooltips/ui/cb_points": {
-   "Show or hide the selected points' values (Maya: click the CVs line)": "Show or hide the selected points' values (Maya: click the CVs line)"
-  },
-  "Tooltips/ui/channel_box": {
-   "Base: acts on selected channels of all target objects.": "Base: acts on selected channels of all target objects.",
-   "Catch Channel Box scrolling before Blender's field and panel handlers": "Catch Channel Box scrolling before Blender's field and panel handlers",
+  "Tooltips/ui/cb_drag": {
    "Channel Box: remember the channel under the mouse and watch for a drag over the rows": "Channel Box: remember the channel under the mouse and watch for a drag over the rows",
    "Clear the Channel Box channel selection": "Clear the Channel Box channel selection",
    "Drag a numeric Channel Box value horizontally": "Drag a numeric Channel Box value horizontally",
-   "MMB-drag in the viewport changes the channels selected in the Channel Box": "MMB-drag in the viewport changes the channels selected in the Channel Box",
+   "Maya Channel Box selection: click a channel name or field, drag over the rows to select a range\n(Ctrl toggles / adds, Shift selects from the last clicked channel)": "Maya Channel Box selection: click a channel name or field, drag over the rows to select a range\n(Ctrl toggles / adds, Shift selects from the last clicked channel)",
+   "Select this channel (Ctrl: toggle, Shift: add). Selected channels follow MMB-drag in the viewport": "Select this channel (Ctrl: toggle, Shift: add). Selected channels follow MMB-drag in the viewport",
+   "The Channel Box field editor popover (called by edit_field only)": "The Channel Box field editor popover (called by edit_field only)"
+  },
+  "Tooltips/ui/cb_menus": {
+   "Base: acts on selected channels of all target objects.": "Base: acts on selected channels of all target objects.",
    "Make this object the lead (Maya Channel Box Object menu: select -add)": "Make this object the lead (Maya Channel Box Object menu: select -add)",
-   "Maya Attribute Editor tab of the dock": "Maya Attribute Editor tab of the dock",
    "Maya Channel Box Channels menu (RMB anywhere in the Channel Box)": "Maya Channel Box Channels menu (RMB anywhere in the Channel Box)",
    "Maya Channel Box Edit menu": "Maya Channel Box Edit menu",
    "Maya Channel Box Object menu: the selected objects (joints in pose mode), picking one makes it\nthe lead": "Maya Channel Box Object menu: the selected objects (joints in pose mode), picking one makes it\nthe lead",
    "Maya Channel Box Show menu": "Maya Channel Box Show menu",
-   "Maya Channel Box selection: click a channel name or field, drag over the rows to select a range\n(Ctrl toggles / adds, Shift selects from the last clicked channel)": "Maya Channel Box selection: click a channel name or field, drag over the rows to select a range\n(Ctrl toggles / adds, Shift selects from the last clicked channel)",
    "Maya Channels > Freeze (makeIdentity -apply on the chosen channels)": "Maya Channels > Freeze (makeIdentity -apply on the chosen channels)",
+   "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler": "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler",
+   "Show every hidden channel again": "Show every hidden channel again"
+  },
+  "Tooltips/ui/cb_pane": {
+   "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)": "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)"
+  },
+  "Tooltips/ui/cb_panel": {
+   "Maya Attribute Editor tab of the dock": "Maya Attribute Editor tab of the dock",
    "Maya Modeling Toolkit tab of the dock": "Maya Modeling Toolkit tab of the dock",
    "Rename this node (click the name, type, Enter)": "Rename this node (click the name, type, Enter)",
-   "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)": "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)",
-   "Select this channel (Ctrl: toggle, Shift: add). Selected channels follow MMB-drag in the viewport": "Select this channel (Ctrl: toggle, Shift: add). Selected channels follow MMB-drag in the viewport",
-   "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler": "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler",
-   "Show every hidden channel again": "Show every hidden channel again",
    "Show or hide this node's attributes (Maya: click the node name in INPUTS)": "Show or hide this node's attributes (Maya: click the node name in INPUTS)",
-   "The Channel Box field editor popover (called by edit_field only)": "The Channel Box field editor popover (called by edit_field only)",
    "The Channel Box name editor popover (called by allset.cb_rename only)": "The Channel Box name editor popover (called by allset.cb_rename only)"
+  },
+  "Tooltips/ui/cb_points": {
+   "Show or hide the selected points' values (Maya: click the CVs line)": "Show or hide the selected points' values (Maya: click the CVs line)"
+  },
+  "Tooltips/ui/cb_slider": {
+   "MMB-drag in the viewport changes the channels selected in the Channel Box": "MMB-drag in the viewport changes the channels selected in the Channel Box"
+  },
+  "Tooltips/ui/channel_box": {
+   "Catch Channel Box scrolling before Blender's field and panel handlers": "Catch Channel Box scrolling before Blender's field and panel handlers"
   },
   "Tooltips/ui/component_editor": {
    "Close the Component Editor window": "Close the Component Editor window",

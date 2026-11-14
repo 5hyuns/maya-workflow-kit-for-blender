@@ -84,6 +84,15 @@ def flow():
     drawn = {}
     counts = {"dock": 0, "lead": 0, "listed": 0}
     real = {"get": cb.get_value, "lead": cb.lead, "listed": cb.selected_bones}
+    # each function is held by the Channel Box module that defines it and the ones that import it: swap it in all
+    homes = {name: [m for k, m in list(sys.modules.items()) if m is not None and k.startswith(MODULE + ".")
+                    and vars(m).get(name) is real[key]]
+             for name, key in (("get_value", "get"), ("lead", "lead"), ("selected_bones", "listed"))}
+
+    def swap(**fns):
+        for name, fn in fns.items():
+            for m in homes[name]:
+                setattr(m, name, fn)
 
     def get_value(ob, key):
         v = real["get"](ob, key)
@@ -112,7 +121,7 @@ def flow():
     def want(pb):
         return {k: (pb.name, round(real["get"](pb, k), 6)) for k in KEYS}
 
-    cb.get_value, cb.lead, cb.selected_bones = get_value, lead, selected_bones
+    swap(get_value=get_value, lead=lead, selected_bones=selected_bones)
     handle = bpy.types.SpaceProperties.draw_handler_add(dock_drawn, (), 'WINDOW', 'POST_PIXEL')
     try:
         for k in counts:
@@ -156,7 +165,7 @@ def flow():
         check("no draw-time lead is left after the dock drew", not cb._field_lead if hasattr(cb, "_field_lead")
               else True)
     finally:
-        cb.get_value, cb.lead, cb.selected_bones = real["get"], real["lead"], real["listed"]
+        swap(get_value=real["get"], lead=real["lead"], selected_bones=real["listed"])
         bpy.types.SpaceProperties.draw_handler_remove(handle, 'WINDOW')
     with _override(active_object=arm, object=arm):
         bpy.ops.object.mode_set(mode='OBJECT')

@@ -110,13 +110,23 @@ def flow():
         counts["bone"] += 1
         return real["bone"](p)
 
+    # each Channel Box function is held by the module that defines it and the ones that import it: swap it in all
+    homes = {name: [m for k, m in list(sys.modules.items()) if m is not None and k.startswith(MODULE + ".")
+                    and vars(m).get(name) is real[key]]
+             for name, key in (("get_value", "get"), ("bone_selected", "bone"))}
+
+    def swap(**fns):
+        for name, fn in fns.items():
+            for m in homes[name]:
+                setattr(m, name, fn)
+
     def dock_drawn():
         area = bpy.context.area
         if area is not None and area.as_pointer() == dock_ptr:
             counts["dock"] += 1
 
-    cb.get_value, md._list_hole, sw.template_of, wsm.entries, cb.bone_selected = (
-        get_value, hole, template_of, entries, bone_selected)
+    md._list_hole, sw.template_of, wsm.entries = hole, template_of, entries
+    swap(get_value=get_value, bone_selected=bone_selected)
     handle = bpy.types.SpaceProperties.draw_handler_add(dock_drawn, (), 'WINDOW', 'POST_PIXEL')
     try:
         area = _view()
@@ -172,8 +182,8 @@ def flow():
         check(f"a redraw after the drag reads the pixels again ({counts['hole'] - holes} reads) and keeps nothing "
               f"of the drag", counts["hole"] > holes and not md._hole_kept)
     finally:
-        cb.get_value, md._list_hole, sw.template_of, wsm.entries, cb.bone_selected = (
-            real["get"], real["hole"], real["template"], real["entries"], real["bone"])
+        md._list_hole, sw.template_of, wsm.entries = real["hole"], real["template"], real["entries"]
+        swap(get_value=real["get"], bone_selected=real["bone"])
         bpy.types.SpaceProperties.draw_handler_remove(handle, 'WINDOW')
     with _override(active_object=arm, object=arm):
         bpy.ops.object.mode_set(mode='OBJECT')
