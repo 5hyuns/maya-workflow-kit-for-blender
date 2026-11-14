@@ -8866,11 +8866,16 @@
    "Weight/Drivers": "Weight/Drivers"
   },
   "Labels/ui/shelf": {
+   "Maya Shelf": "Maya Shelf",
+   "Scroll Shelf": "Scroll Shelf",
+   "Shelf Button": "Shelf Button",
+   "Shelf Tab": "Shelf Tab"
+  },
+  "Labels/ui/shelf_edit_ops": {
    "3D View": "3D View",
    "Add Button": "Add Button",
    "Add Last Command": "Add Last Command",
    "Add Shelf Button": "Add Shelf Button",
-   "Add Shelf Button...": "Add Shelf Button...",
    "Advanced: Python runs with the kit command-line environment.": "Advanced: Python runs with the kit command-line environment.",
    "Blender Menu": "Blender Menu",
    "Blender Pie Menu": "Blender Pie Menu",
@@ -8879,16 +8884,13 @@
    "Custom UI Operator": "Custom UI Operator",
    "Delete Button": "Delete Button",
    "Delete Shelf": "Delete Shelf",
-   "Double-click or Ctrl+click: options": "Double-click or Ctrl+click: options",
    "Edit Button": "Edit Button",
    "Editor": "Editor",
    "From Text Editor": "From Text Editor",
    "Icon": "Icon",
    "Label": "Label",
    "Maya Menu Item": "Maya Menu Item",
-   "Maya Shelf": "Maya Shelf",
    "Maya menu path or Blender Menu bl_idname": "Maya menu path or Blender Menu bl_idname",
-   "Maya menu: {path}": "Maya menu: {path}",
    "Menu": "Menu",
    "Menu ID": "Menu ID",
    "Menu Path / ID": "Menu Path / ID",
@@ -8902,23 +8904,13 @@
    "Optional Operator properties as a JSON object": "Optional Operator properties as a JSON object",
    "Properties (JSON)": "Properties (JSON)",
    "Python": "Python",
-   "Scroll Shelf": "Scroll Shelf",
    "Select Shelf": "Select Shelf",
-   "Shelf": "Shelf",
-   "Shelf Button": "Shelf Button",
-   "Shelf Editor": "Shelf Editor",
-   "Shelf Tab": "Shelf Tab",
-   "Shelves": "Shelves",
    "Tool ID": "Tool ID",
    "Tool identifier, e.g. builtin.move": "Tool identifier, e.g. builtin.move",
    "Tooltip": "Tooltip",
    "UI Operator ID": "UI Operator ID",
    "UV Editor": "UV Editor",
-   "Use the text open in a Text Editor instead of the line above": "Use the text open in a Text Editor instead of the line above",
-   "{label} (Maya shelf)": "{label} (Maya shelf)",
-   "{label} (Maya shelf)  →  Blender: {substitute}": "{label} (Maya shelf)  →  Blender: {substitute}",
-   "{label} (Maya shelf, greyed)  →  {substitute}": "{label} (Maya shelf, greyed)  →  {substitute}",
-   "{label} (greyed: no Blender equivalent in Maya Workflow Kit)": "{label} (greyed: no Blender equivalent in Maya Workflow Kit)"
+   "Use the text open in a Text Editor instead of the line above": "Use the text open in a Text Editor instead of the line above"
   },
   "Labels/ui/shelf_editor": {
    "3D View": "3D View",
@@ -9037,6 +9029,13 @@
    "Video Sequencer": "Video Sequencer",
    "Weight Paint": "Weight Paint"
   },
+  "Labels/ui/shelf_header": {
+   "Add Button": "Add Button",
+   "Add Shelf Button...": "Add Shelf Button...",
+   "Shelf": "Shelf",
+   "Shelf Editor": "Shelf Editor",
+   "Shelves": "Shelves"
+  },
   "Labels/ui/shelf_map": {
    "Blender has no curve editing manipulator: edit the curve's points in Edit Mode (Tab).": "Blender has no curve editing manipulator: edit the curve's points in Edit Mode (Tab).",
    "Blender masks are painted in Sculpt mode (Mask brush, Mask menu); there is no conversion from a component selection.": "Blender masks are painted in Sculpt mode (Mask brush, Mask menu); there is no conversion from a component selection.",
@@ -9046,6 +9045,18 @@
    "Maya Workflow Kit has no OpenPBR Surface material: use the Standard Surface Material button (a Principled BSDF material).": "Maya Workflow Kit has no OpenPBR Surface material: use the Standard Surface Material button (a Principled BSDF material).",
    "Sculpt mode Mask": "Sculpt mode Mask",
    "Standard Surface Material": "Standard Surface Material"
+  },
+  "Labels/ui/shelf_run": {
+   "Double-click or Ctrl+click: options": "Double-click or Ctrl+click: options",
+   "Maya menu: {path}": "Maya menu: {path}",
+   "Shelf Button": "Shelf Button",
+   "{label} (Maya shelf)": "{label} (Maya shelf)",
+   "{label} (Maya shelf)  →  Blender: {substitute}": "{label} (Maya shelf)  →  Blender: {substitute}",
+   "{label} (Maya shelf, greyed)  →  {substitute}": "{label} (Maya shelf, greyed)  →  {substitute}",
+   "{label} (greyed: no Blender equivalent in Maya Workflow Kit)": "{label} (greyed: no Blender equivalent in Maya Workflow Kit)"
+  },
+  "Labels/ui/shelf_strip": {
+   "Shelf": "Shelf"
   },
   "Labels/ui/skin_tools": {
    "Active Layer": "Active Layer",
@@ -10688,26 +10699,24 @@
    "Show or hide this blendShape's targets": "Show or hide this blendShape's targets"
   },
   "Tooltips/ui/shelf": {
+   "Scroll the shelf one row (Maya: the shelf's scroll bar / the mouse wheel over the icons)": "Scroll the shelf one row (Maya: the shelf's scroll bar / the mouse wheel over the icons)",
+   "Shelf icon": "Shelf icon",
+   "Shelf slot ``slot`` (the current shelf's button there): picking only, drawn by ``draw_row``;\nclicking runs allset.shelf_slot (its target operator). A fixed pool, so switching shelves needs\nno rebuild.": "Shelf slot ``slot`` (the current shelf's button there): picking only, drawn by ``draw_row``;\nclicking runs allset.shelf_slot (its target operator). A fixed pool, so switching shelves needs\nno rebuild.",
+   "Shelf tab strip: show this shelf, or open the shelf menu": "Shelf tab strip: show this shelf, or open the shelf menu",
+   "Tab strip slot ``slot`` of ``tab_rects`` (the shelf menu, the gear, a tab): picking only, drawn by\n``draw_row``; clicking runs allset.shelf_tab.": "Tab strip slot ``slot`` of ``tab_rects`` (the shelf menu, the gear, a tab): picking only, drawn by\n``draw_row``; clicking runs allset.shelf_tab.",
+   "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks).": "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks)."
+  },
+  "Tooltips/ui/shelf_edit_ops": {
    "Add a Python script button to the current user shelf": "Add a Python script button to the current user shelf",
    "Add a Shelf Button using a selected command type.": "Add a Shelf Button using a selected command type.",
    "Add an empty shelf (Maya shelf menu > New Shelf)": "Add an empty shelf (Maya shelf menu > New Shelf)",
    "Add the last command-line command as a button (Maya: drag a script to the shelf)": "Add the last command-line command as a button (Maya: drag a script to the shelf)",
    "Change a button of the current user shelf": "Change a button of the current user shelf",
-   "Choose the shelf (Maya shelf tabs)": "Choose the shelf (Maya shelf tabs)",
    "Delete a button from the current user shelf": "Delete a button from the current user shelf",
    "Delete the current user shelf (factory shelves stay)": "Delete the current user shelf (factory shelves stay)",
-   "Maya shelf menu: new/delete shelf, add/edit/delete buttons": "Maya shelf menu: new/delete shelf, add/edit/delete buttons",
    "Maya-style visual chooser for the kind of command a Shelf Button runs.": "Maya-style visual chooser for the kind of command a Shelf Button runs.",
    "Previous / next shelf tab": "Previous / next shelf tab",
-   "Run this shelf button (double-click or Ctrl+click: its options)": "Run this shelf button (double-click or Ctrl+click: its options)",
-   "Scroll the shelf one row (Maya: the shelf's scroll bar / the mouse wheel over the icons)": "Scroll the shelf one row (Maya: the shelf's scroll bar / the mouse wheel over the icons)",
-   "Shelf icon": "Shelf icon",
-   "Shelf slot ``slot`` (the current shelf's button there): picking only, drawn by ``draw_row``;\nclicking runs allset.shelf_slot (its target operator). A fixed pool, so switching shelves needs\nno rebuild.": "Shelf slot ``slot`` (the current shelf's button there): picking only, drawn by ``draw_row``;\nclicking runs allset.shelf_slot (its target operator). A fixed pool, so switching shelves needs\nno rebuild.",
-   "Shelf tab strip: show this shelf, or open the shelf menu": "Shelf tab strip: show this shelf, or open the shelf menu",
-   "Show or hide the Status Line + Shelf strip above the largest 3D View": "Show or hide the Status Line + Shelf strip above the largest 3D View",
-   "Show this shelf": "Show this shelf",
-   "Tab strip slot ``slot`` of ``tab_rects`` (the shelf menu, the gear, a tab): picking only, drawn by\n``draw_row``; clicking runs allset.shelf_tab.": "Tab strip slot ``slot`` of ``tab_rects`` (the shelf menu, the gear, a tab): picking only, drawn by\n``draw_row``; clicking runs allset.shelf_tab.",
-   "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks).": "The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come\nbefore the image editor's tool keymap (its Sample tool took plain clicks)."
+   "Show this shelf": "Show this shelf"
   },
   "Tooltips/ui/shelf_editor": {
    "Apply edited Shelf button properties without changing unrelated button data.": "Apply edited Shelf button properties without changing unrelated button data.",
@@ -10720,6 +10729,16 @@
    "One horizontal row of icon buttons inside the scrollable picker.": "One horizontal row of icon buttons inside the scrollable picker.",
    "Open the Maya-style floating Shelf Editor": "Open the Maya-style floating Shelf Editor",
    "Transient row data used by the scrollable Shelf Contents list.": "Transient row data used by the scrollable Shelf Contents list."
+  },
+  "Tooltips/ui/shelf_header": {
+   "Choose the shelf (Maya shelf tabs)": "Choose the shelf (Maya shelf tabs)",
+   "Maya shelf menu: new/delete shelf, add/edit/delete buttons": "Maya shelf menu: new/delete shelf, add/edit/delete buttons"
+  },
+  "Tooltips/ui/shelf_run": {
+   "Run this shelf button (double-click or Ctrl+click: its options)": "Run this shelf button (double-click or Ctrl+click: its options)"
+  },
+  "Tooltips/ui/shelf_strip": {
+   "Show or hide the Status Line + Shelf strip above the largest 3D View": "Show or hide the Status Line + Shelf strip above the largest 3D View"
   },
   "Tooltips/ui/skin_tools": {
    "Apply the Set Weights mode and intensity to the active layer on the selected vertices (all when none)": "Apply the Set Weights mode and intensity to the active layer on the selected vertices (all when none)",

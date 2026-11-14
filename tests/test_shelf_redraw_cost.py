@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import kit
 
 shelf = import_module(kit.MODULE + ".ui.shelf")
+shelf_store = import_module(kit.MODULE + ".ui.shelf_store")
 shelf_data = import_module(kit.MODULE + ".ui.shelf_data")
 shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 
@@ -83,7 +84,7 @@ def test_button_record_finds_added_buttons_without_building_the_shelf():
     n = shelf.factory_count(cur)
     undo = _with_extras(cur, [ADDED, SEP, ADDED])
     try:
-        with _Count(shelf_map, "lookup") as lk, _Count(shelf, "all_buttons") as ab:
+        with _Count(shelf_map, "lookup") as lk, _Count(shelf_store, "all_buttons") as ab:
             assert shelf.button_record(cur, 0) is None, "a Maya slot has no stored record"
             assert shelf.button_record(cur, n - 1) is None
             assert shelf.button_record(cur, n) is not None and shelf.button_record(cur, n)["label"] == "Mine"

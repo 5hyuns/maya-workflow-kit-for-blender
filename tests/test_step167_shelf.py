@@ -10,6 +10,7 @@ import bpy
 import kit
 
 shelf = import_module(kit.MODULE + ".ui.shelf")
+shelf_run = import_module(kit.MODULE + ".ui.shelf_run")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 modal = import_module(kit.MODULE + ".marking.modal")
 
@@ -27,7 +28,7 @@ def _index(shelf_id, label):
 
 
 class _Ops:
-    """Stands in for ``bpy`` inside ui/shelf.py: records the option-box / undo calls, passes the rest through."""
+    """Stands in for ``bpy`` inside ui/shelf_run.py: records the option-box / undo calls, passes the rest through."""
 
     def __init__(self, log):
         self.log = log
@@ -67,13 +68,13 @@ def test_double_click_runs_once_then_opens_the_option_window():
     assert path == "Create/Polygon Primitives/Cube", path
     assert menu_sets.option_kind(path) == "window", "Polygon Cube Options (option_windows poly_cube)"
     log = []
-    saved = shelf.bpy
-    shelf.bpy = _Ops(log)
+    saved = shelf_run.bpy
+    shelf_run.bpy = _Ops(log)
     try:
         assert _click("Polygons", i) == {'FINISHED'}
         assert _click("Polygons", i) == {'FINISHED'}         # second press within the double-click time
     finally:
-        shelf.bpy = saved
+        shelf_run.bpy = saved
     cubes = [o for o in bpy.data.objects if o.type == 'MESH']
     assert len(cubes) == 1, [o.name for o in cubes]
     assert log == [("option_box", path)], log      # no redo_last, no undo (an option window doesn't run again)
@@ -83,13 +84,13 @@ def test_double_click_event_and_ctrl_click():
     _fresh()
     i = _index("Polygons", "Polygon Cube")
     log = []
-    saved = shelf.bpy
-    shelf.bpy = _Ops(log)
+    saved = shelf_run.bpy
+    shelf_run.bpy = _Ops(log)
     try:
         assert _click("Polygons", i, value='DOUBLE_CLICK') == {'FINISHED'}
         assert _click("Polygons", i, ctrl=True) == {'FINISHED'}      # no first run, the box only
     finally:
-        shelf.bpy = saved
+        shelf_run.bpy = saved
     assert not [o for o in bpy.data.objects if o.type == 'MESH']
     assert log == [("option_box", "Create/Polygon Primitives/Cube")] * 2, log
 
@@ -100,13 +101,13 @@ def test_double_click_redo_kind_takes_the_first_run_back():
                  and menu_sets.option_kind(p) == "redo"), None)
     assert redo is not None
     log = []
-    saved = shelf.bpy
-    shelf.bpy = _Ops(log)
+    saved = shelf_run.bpy
+    shelf_run.bpy = _Ops(log)
     try:
         shelf.take_back_run(redo)
         shelf.take_back_run("Create/Polygon Primitives/Cube")
     finally:
-        shelf.bpy = saved
+        shelf_run.bpy = saved
     assert log == [("undo",)], log
 
 

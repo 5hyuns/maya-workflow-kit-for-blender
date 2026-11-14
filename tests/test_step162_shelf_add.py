@@ -14,6 +14,7 @@ import bpy
 import kit
 
 shelf = import_module(kit.MODULE + ".ui.shelf")
+shelf_run = import_module(kit.MODULE + ".ui.shelf_run")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_icon_data = import_module(kit.MODULE + ".ui.menu_icon_data")
@@ -184,12 +185,12 @@ def test_tool_shelf_button_activates_saved_tool_action():
             "action": {"type": "tool", "id": "builtin.move", "space_type": "VIEW_3D"},
         })
         shelf.save_user()
-        original = shelf._run_in_editor_space
-        shelf._run_in_editor_space = lambda context, _space, callback: callback(context)
+        original = shelf_run._run_in_editor_space
+        shelf_run._run_in_editor_space = lambda context, _space, callback: callback(context)
         try:
             assert bpy.ops.allset.shelf_button(shelf="USER:Custom", index=0) == {'FINISHED'}
         finally:
-            shelf._run_in_editor_space = original
+            shelf_run._run_in_editor_space = original
 
 def test_remove_and_edit_with_the_shelf_tools():
     with _sandbox({"LEFT_CTRL", "LEFT_SHIFT"}):
