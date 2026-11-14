@@ -9113,34 +9113,43 @@
   },
   "Labels/ui/time_slider": {
    "A Shift-dragged Time Slider range is highlighted": "A Shift-dragged Time Slider range is highlighted",
+   "Time Range": "Time Range"
+  },
+  "Labels/ui/time_slider_header": {
    "Animation Preferences": "Animation Preferences",
-   "Hold": "Hold",
    "Keying": "Keying",
-   "Keys": "Keys",
    "Marker": "Marker",
-   "Move / Scale Range Keys": "Move / Scale Range Keys",
-   "Move the time without updating the scene, so the current pose can be keyed at another frame": "Move the time without updating the scene, so the current pose can be keyed at another frame",
    "No Anim Layer": "No Anim Layer",
    "No Character Set": "No Character Set",
+   "Playback": "Playback",
+   "Time Slider": "Time Slider",
+   "View": "View"
+  },
+  "Labels/ui/time_slider_menu": {
+   "Keys": "Keys",
    "Not Available": "Not Available",
    "Paste": "Paste",
    "Play Every Frame, Max Real-time": "Play Every Frame, Max Real-time",
-   "Playback": "Playback",
    "Playback Looping": "Playback Looping",
    "Playback Speed": "Playback Speed",
    "Playblast...": "Playblast...",
-   "Range": "Range",
    "Real-time": "Real-time",
    "Set Range to": "Set Range to",
-   "Shift-drag: highlight a time range": "Shift-drag: highlight a time range",
    "Tangents": "Tangents",
-   "Time Range": "Time Range",
    "Time Slider": "Time Slider",
-   "Time Slider Menu": "Time Slider Menu",
+   "Time Slider Menu": "Time Slider Menu"
+  },
+  "Labels/ui/time_slider_mouse": {
+   "Hold": "Hold",
+   "Move / Scale Range Keys": "Move / Scale Range Keys",
+   "Move the time without updating the scene, so the current pose can be keyed at another frame": "Move the time without updating the scene, so the current pose can be keyed at another frame",
+   "Range": "Range",
+   "Shift-drag: highlight a time range": "Shift-drag: highlight a time range",
    "Time Slider Range All": "Time Slider Range All",
-   "Time Slider Scrub": "Time Slider Scrub",
-   "Time Slider View": "Time Slider View",
-   "View": "View"
+   "Time Slider Scrub": "Time Slider Scrub"
+  },
+  "Labels/ui/time_slider_view": {
+   "Time Slider View": "Time Slider View"
   },
   "Labels/ui/tool_settings": {
    "Accurate": "Accurate",
@@ -10730,16 +10739,22 @@
    "Toggle a Maya snap mode": "Toggle a Maya snap mode",
    "Toggle whether this kind of object can be selected (all 3D Views)": "Toggle whether this kind of object can be selected (all 3D Views)"
   },
-  "Tooltips/ui/time_slider": {
+  "Tooltips/ui/time_slider_header": {
    "Animation preferences (Maya's button at the right end of the Range Slider): Blender's\ntimeline Playback, Keying, View and Marker menus": "Animation preferences (Maya's button at the right end of the Range Slider): Blender's\ntimeline Playback, Keying, View and Marker menus",
-   "Current time field and transport buttons at the right of Maya's Time Slider.": "Current time field and transport buttons at the right of Maya's Time Slider.",
+   "Current time field and transport buttons at the right of Maya's Time Slider.": "Current time field and transport buttons at the right of Maya's Time Slider."
+  },
+  "Tooltips/ui/time_slider_menu": {
    "Maya Time Slider menu (RMB on the Time Slider)": "Maya Time Slider menu (RMB on the Time Slider)",
    "Maya Time Slider menu, in Maya's order": "Maya Time Slider menu, in Maya's order",
+   "Time Slider item with no Blender equivalent (greyed)": "Time Slider item with no Blender equivalent (greyed)"
+  },
+  "Tooltips/ui/time_slider_mouse": {
    "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them": "Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them",
    "Maya Time Slider: a double-click highlights the whole visible range": "Maya Time Slider: a double-click highlights the whole visible range",
-   "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)": "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)",
-   "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider": "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider",
-   "Time Slider item with no Blender equivalent (greyed)": "Time Slider item with no Blender equivalent (greyed)"
+   "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)": "Maya Time Slider: click or drag to move the time (Shift: highlight a range, middle mouse: keep the pose)"
+  },
+  "Tooltips/ui/time_slider_view": {
+   "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider": "Maya's Time Slider shows the playback range and does not zoom or scroll: change the range with the\nRange Slider"
   },
   "Tooltips/ui/tool_settings": {
    "Maya Tool Settings (the Properties Tool tab of the dock)": "Maya Tool Settings (the Properties Tool tab of the dock)",
