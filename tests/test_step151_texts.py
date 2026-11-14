@@ -70,7 +70,10 @@ def test_100_ik_handle_result_in_command_line_not_a_blender_note():
     arm.data.bones.active = arm.data.bones["joint3"]
     assert bpy.ops.allset.ik_handle() == {'FINISHED'}
     assert command_line._result["text"] == "Result: ikHandle1", command_line._result
-    assert "Blender has" not in inspect.getsource(skin)
+    parts = [skin] + [import_module(kit.MODULE + ".operators." + n)      # the modules skin re-exports
+                      for n in ("skin_cluster", "ik_handle", "skin_bind", "paint_skin_weights", "skin_copy_mirror")]
+    for part in parts:
+        assert "Blender has" not in inspect.getsource(part), part.__name__
 
 
 def test_100_no_pivot_edit_report():

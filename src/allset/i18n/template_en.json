@@ -6000,6 +6000,13 @@
    "Set IK/FK Key": "Set IK/FK Key",
    "Switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping the pose (Maya Key > IK/FK Keys > Enable IK Solver)": "Switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping the pose (Maya Key > IK/FK Keys > Enable IK Solver)"
   },
+  "Labels/operators/ik_handle": {
+   "Current solver": "Current solver",
+   "IK Handle Tool": "IK Handle Tool",
+   "Pole Vector": "Pole Vector",
+   "Solver enable": "Solver enable",
+   "Weight": "Weight"
+  },
   "Labels/operators/interactive_create": {
    "Interactive Creation": "Interactive Creation",
    "JSON: option-window node attributes": "JSON: option-window node attributes",
@@ -6551,6 +6558,28 @@
    "Outliner Drag": "Outliner Drag",
    "Parent": "Parent"
   },
+  "Labels/operators/paint_skin_weights": {
+   "Apply Tool Settings": "Apply Tool Settings",
+   "Apply the Maya tool settings above (the option window); a plain click keeps the brush as it is": "Apply the Maya tool settings above (the option window); a plain click keeps the brush as it is",
+   "Classic Tool": "Classic Tool",
+   "Flood": "Flood",
+   "Leave Paint Skin Weights": "Leave Paint Skin Weights",
+   "Move": "Move",
+   "Normalize Weights": "Normalize Weights",
+   "Opacity": "Opacity",
+   "Paint Skin Weights": "Paint Skin Weights",
+   "Paint operation": "Paint operation",
+   "Profile": "Profile",
+   "Radius(U)": "Radius(U)",
+   "Rotate": "Rotate",
+   "Scale": "Scale",
+   "Screen projection": "Screen projection",
+   "Select": "Select",
+   "Show wireframe": "Show wireframe",
+   "Start the paint tool even when the mesh has skin layers (Skin Tools paints through it)": "Start the paint tool even when the mesh has skin layers (Skin Tools paints through it)",
+   "Value": "Value",
+   "XRay Joints": "XRay Joints"
+  },
   "Labels/operators/pan_zoom": {
    "2D Box Zoom": "2D Box Zoom",
    "2D Pan": "2D Pan",
@@ -6985,70 +7014,47 @@
    "Mode": "Mode",
    "Remove Joint": "Remove Joint"
   },
-  "Labels/operators/skin": {
-   "Apply Tool Settings": "Apply Tool Settings",
-   "Apply the Maya tool settings above (the option window); a plain click keeps the brush as it is": "Apply the Maya tool settings above (the option window); a plain click keeps the brush as it is",
-   "Bind Skin": "Bind Skin",
-   "Bind Skin Options": "Bind Skin Options",
-   "Bind To": "Bind To",
-   "Bind method": "Bind method",
-   "Classic Tool": "Classic Tool",
-   "Colorize skeleton": "Colorize skeleton",
-   "Copy Skin Weights": "Copy Skin Weights",
-   "Copy Vertex Weights": "Copy Vertex Weights",
-   "Current solver": "Current solver",
-   "Direction: Positive to Negative": "Direction: Positive to Negative",
-   "Dropoff rate": "Dropoff rate",
-   "Flood": "Flood",
-   "History": "History",
-   "IK Handle Tool": "IK Handle Tool",
-   "Influence Association 1": "Influence Association 1",
-   "Influence Association 2": "Influence Association 2",
-   "Influence Association 3": "Influence Association 3",
-   "Joint Hierarchy": "Joint Hierarchy",
-   "Leave Paint Skin Weights": "Leave Paint Skin Weights",
-   "Maintain max influences": "Maintain max influences",
-   "Max Influences": "Max Influences",
-   "Mirror Across": "Mirror Across",
-   "Mirror Skin Weights": "Mirror Skin Weights",
-   "Move": "Move",
-   "Move Skinned Joints": "Move Skinned Joints",
-   "No": "No",
-   "Normalize": "Normalize",
-   "Normalize Weights": "Normalize Weights",
-   "Normalize weights": "Normalize weights",
-   "Opacity": "Opacity",
-   "Paint Skin Weights": "Paint Skin Weights",
-   "Paint operation": "Paint operation",
-   "Paste Vertex Weights": "Paste Vertex Weights",
-   "Pole Vector": "Pole Vector",
-   "Profile": "Profile",
-   "Radius(U)": "Radius(U)",
-   "Remove joint colors": "Remove joint colors",
-   "Remove unused influences": "Remove unused influences",
-   "Reset Default Weights": "Reset Default Weights",
-   "Rotate": "Rotate",
-   "Scale": "Scale",
-   "Screen projection": "Screen projection",
-   "Select": "Select",
-   "Selected Joints": "Selected Joints",
-   "Show wireframe": "Show wireframe",
-   "Skinning method": "Skinning method",
-   "Solver enable": "Solver enable",
-   "Start the paint tool even when the mesh has skin layers (Skin Tools paints through it)": "Start the paint tool even when the mesh has skin layers (Skin Tools paints through it)",
-   "Surface Association": "Surface Association",
-   "Unbind Skin": "Unbind Skin",
-   "Value": "Value",
-   "Weight": "Weight",
-   "XRay Joints": "XRay Joints",
-   "Yes": "Yes"
-  },
   "Labels/operators/skin_basics": {
    "Go to Bind Pose": "Go to Bind Pose",
    "Max influences": "Max influences",
    "Prune Weights Options": "Prune Weights Options",
    "Prune below": "Prune below",
    "Set Max Influences": "Set Max Influences"
+  },
+  "Labels/operators/skin_bind": {
+   "Bind Skin": "Bind Skin",
+   "Bind Skin Options": "Bind Skin Options",
+   "Bind To": "Bind To",
+   "Bind method": "Bind method",
+   "Colorize skeleton": "Colorize skeleton",
+   "Dropoff rate": "Dropoff rate",
+   "History": "History",
+   "Joint Hierarchy": "Joint Hierarchy",
+   "Maintain max influences": "Maintain max influences",
+   "Max Influences": "Max Influences",
+   "Move Skinned Joints": "Move Skinned Joints",
+   "No": "No",
+   "Normalize weights": "Normalize weights",
+   "Remove joint colors": "Remove joint colors",
+   "Remove unused influences": "Remove unused influences",
+   "Reset Default Weights": "Reset Default Weights",
+   "Selected Joints": "Selected Joints",
+   "Skinning method": "Skinning method",
+   "Unbind Skin": "Unbind Skin",
+   "Yes": "Yes"
+  },
+  "Labels/operators/skin_copy_mirror": {
+   "Copy Skin Weights": "Copy Skin Weights",
+   "Copy Vertex Weights": "Copy Vertex Weights",
+   "Direction: Positive to Negative": "Direction: Positive to Negative",
+   "Influence Association 1": "Influence Association 1",
+   "Influence Association 2": "Influence Association 2",
+   "Influence Association 3": "Influence Association 3",
+   "Mirror Across": "Mirror Across",
+   "Mirror Skin Weights": "Mirror Skin Weights",
+   "Normalize": "Normalize",
+   "Paste Vertex Weights": "Paste Vertex Weights",
+   "Surface Association": "Surface Association"
   },
   "Labels/operators/skin_method": {
    "Maya skinCluster Skinning Method": "Maya skinCluster Skinning Method",
@@ -9796,6 +9802,10 @@
    "Maya Move IK to FK: move the selected IK handles to the end of their FK chains": "Maya Move IK to FK: move the selected IK handles to the end of their FK chains",
    "Maya Set IK/FK Key: key the selected IK handles (Ik Blend included) and their joints' rotation": "Maya Set IK/FK Key: key the selected IK handles (Ik Blend included) and their joints' rotation"
   },
+  "Tooltips/operators/ik_handle": {
+   "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)": "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)",
+   "Maya Pole Vector constraint: select the pole object, then the IK handle": "Maya Pole Vector constraint: select the pole object, then the IK handle"
+  },
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"
   },
@@ -9959,6 +9969,11 @@
   "Tooltips/operators/outliner_drag": {
    "Maya Outliner middle-drag: drop onto an item = parent under it, between items = move there,\nonto empty space = to the world (kept in place)": "Maya Outliner middle-drag: drop onto an item = parent under it, between items = move there,\nonto empty space = to the world (kept in place)",
    "Parent / unparent objects keeping them in place (an Outliner drop redone the Maya way)": "Parent / unparent objects keeping them in place (an Outliner drop redone the Maya way)"
+  },
+  "Tooltips/operators/paint_skin_weights": {
+   "Flood the current operation and opacity into the active influence, respecting masks and locked weights": "Flood the current operation and opacity into the active influence, respecting masks and locked weights",
+   "Leave Paint Skin Weights and activate Maya's Select, Move, Rotate, or Scale tool": "Leave Paint Skin Weights and activate Maya's Select, Move, Rotate, or Scale tool",
+   "Maya Paint Skin Weights: weight paint the skinned mesh with its skeleton posable (Ctrl+click picks a joint)": "Maya Paint Skin Weights: weight paint the skinned mesh with its skeleton posable (Ctrl+click picks a joint)"
   },
   "Tooltips/operators/pan_zoom": {
    "Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)": "Drag a box to zoom the picture into it in 2D; the camera stays (Maya 2D Pan/Zoom Tool, Ctrl+drag)",
@@ -10135,27 +10150,24 @@
    "Maya Insert Joint Tool: click a joint and drag to place a new joint between it and its children": "Maya Insert Joint Tool: click a joint and drag to place a new joint between it and its children",
    "Maya Remove Joint: delete the selected joints; their children move up to the parent and stay where they are": "Maya Remove Joint: delete the selected joints; their children move up to the parent and stay where they are"
   },
-  "Tooltips/operators/skin": {
-   "Flood the current operation and opacity into the active influence, respecting masks and locked weights": "Flood the current operation and opacity into the active influence, respecting masks and locked weights",
-   "Leave Paint Skin Weights and activate Maya's Select, Move, Rotate, or Scale tool": "Leave Paint Skin Weights and activate Maya's Select, Move, Rotate, or Scale tool",
+  "Tooltips/operators/skin_basics": {
+   "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound": "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound",
+   "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs": "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs",
+   "Maya Set Max Influences: limit each vertex to this many joints (weights recomputed by distance; locked joints\nkeep theirs)": "Maya Set Max Influences: limit each vertex to this many joints (weights recomputed by distance; locked joints\nkeep theirs)"
+  },
+  "Tooltips/operators/skin_bind": {
    "Maya Bind Skin Options question for a mesh that already has a skin": "Maya Bind Skin Options question for a mesh that already has a skin",
    "Maya Bind Skin: the selected skeleton and meshes, in any order (closest distance weights, no parenting)": "Maya Bind Skin: the selected skeleton and meshes, in any order (closest distance weights, no parenting)",
-   "Maya Copy Skin Weights: select the source mesh, then the destination": "Maya Copy Skin Weights: select the source mesh, then the destination",
-   "Maya Copy Vertex Weights: remember the active vertex's joint weights": "Maya Copy Vertex Weights: remember the active vertex's joint weights",
-   "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)": "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)",
-   "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position": "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position",
-   "Maya Paint Skin Weights: weight paint the skinned mesh with its skeleton posable (Ctrl+click picks a joint)": "Maya Paint Skin Weights: weight paint the skinned mesh with its skeleton posable (Ctrl+click picks a joint)",
-   "Maya Paste Vertex Weights: give the selected vertices the copied joint weights": "Maya Paste Vertex Weights: give the selected vertices the copied joint weights",
-   "Maya Pole Vector constraint: select the pole object, then the IK handle": "Maya Pole Vector constraint: select the pole object, then the IK handle",
    "Maya Reset Default Weights: give the skinned mesh its bind weights again (closest distance, the joints it is\nbound to, at most as many influences as each vertex has now, at least 5)": "Maya Reset Default Weights: give the skinned mesh its bind weights again (closest distance, the joints it is\nbound to, at most as many influences as each vertex has now, at least 5)",
    "Maya Skin > Move Skinned Joints: reposition the joints of a skinned skeleton without deforming the mesh (the\nnew place becomes the bind). Run it again, press F8 or pick another tool mode to go back to posing": "Maya Skin > Move Skinned Joints: reposition the joints of a skinned skeleton without deforming the mesh (the\nnew place becomes the bind). Run it again, press F8 or pick another tool mode to go back to posing",
    "Maya Unbind Skin: remove the Armature modifier (and, by default, the joint weight groups)": "Maya Unbind Skin: remove the Armature modifier (and, by default, the joint weight groups)",
    "No: leave the mesh with its one skin": "No: leave the mesh with its one skin"
   },
-  "Tooltips/operators/skin_basics": {
-   "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound": "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound",
-   "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs": "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs",
-   "Maya Set Max Influences: limit each vertex to this many joints (weights recomputed by distance; locked joints\nkeep theirs)": "Maya Set Max Influences: limit each vertex to this many joints (weights recomputed by distance; locked joints\nkeep theirs)"
+  "Tooltips/operators/skin_copy_mirror": {
+   "Maya Copy Skin Weights: select the source mesh, then the destination": "Maya Copy Skin Weights: select the source mesh, then the destination",
+   "Maya Copy Vertex Weights: remember the active vertex's joint weights": "Maya Copy Vertex Weights: remember the active vertex's joint weights",
+   "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position": "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position",
+   "Maya Paste Vertex Weights: give the selected vertices the copied joint weights": "Maya Paste Vertex Weights: give the selected vertices the copied joint weights"
   },
   "Tooltips/operators/skin_tools_199": {
    "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)": "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)",
