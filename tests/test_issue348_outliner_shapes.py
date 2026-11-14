@@ -75,7 +75,7 @@ def test_shapes_on_keeps_the_maya_outliner():
         assert outliner_tree.is_tree(sp), "Shapes on: still the kit's rows (shape rows added)"
         rec = _header(area)
         assert rec.texts("menu") == ["Display", "Show", "Help"], rec.log
-        assert "filter_text" in rec.props(), "search field"
+        assert "filter_text" not in rec.props(), "the search field is the tree's own row, below the menu bar"
         sp.use_filter_object_content = False                     # Display > Shapes off again, same place
         assert maya_outliner.is_maya_outliner(sp) and outliner_tree.is_tree(sp)
         assert _header(area).texts("menu") == ["Display", "Show", "Help"]
