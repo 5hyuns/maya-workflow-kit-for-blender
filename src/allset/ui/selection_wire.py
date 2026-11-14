@@ -1104,7 +1104,8 @@ def time_dependent(ob, data_memo=None):
 # timer), as "<module under the package>:<function>".
 _FRAME_READERS = frozenset((
     "operators.live:frame_changed", "operators.auto_key:_on_frame", "operators.playback_maya:_on_frame",
-    "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame"))
+    "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame",
+    "ui.maya_grid:_clear_depth"))
 _PACKAGE = __name__.rsplit(".ui.", 1)[0]
 
 
