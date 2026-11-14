@@ -3,6 +3,106 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] — 2026-11-14
+
+### Changed
+- **Maya mode is much faster in big and rigged scenes** (#344). With rigged characters or thousands of objects, Maya
+  mode used to redo a lot of work on every click, drag and frame. That work is now done once and kept, or skipped
+  when nothing changed; what you see and what gets picked stay the same.
+- **Playback and scrubbing with rigs**: rig controls (bones with a custom shape), B-Bone and Envelope joints are drawn
+  all at once instead of being built again shape by shape on every frame, each sphere, pyramid and control shape point
+  is drawn once, only the rigs whose pose changed are drawn again, and the four-view layout shares one build of the
+  joints between its views. The ViewCube and the axis triad keep their drawing while the view stays, a frame change
+  drops only the selection wires whose shape changed, and dragging the time to the left of frame 0 no longer updates
+  the whole scene on every mouse move. Playback with the armatures shown is much closer to Blender mode, and scrubbing
+  keeps up better (#344).
+- **Clicking joints**: a click on a joint goes into Pose Mode in one step, updates the scene fewer times and checks
+  only what a click can change (the parent rule, the pick priority, and the curve, key and history checks are skipped
+  when a click can't affect them), so picking joints and controls in big rigs, also rigs with many curve controls,
+  answers much faster (#344).
+- **Box selection over joints**: the first frame after letting go shows the final selection (before, Blender's own
+  box result, with the meshes picked and the joints dropped, could show for a frame or two); a box over several
+  skeletons switches modes once; a box over thousands of objects puts the selection back in one pass; and the Time
+  Slider shows the keys of a new joint selection sooner.
+- **Posing and moving rigs**: while a rig control or many joints are dragged, the Channel Box, the Status Line, the
+  Time Slider and the skeletons keep what doesn't change on each mouse step, only the moved part of the rig (a hand, a
+  foot, a finger) is drawn again, and other characters keep their joint lines. The Channel Box still shows the live
+  values while you drag. Moves and joint picks in big scenes no longer read every object (#344).
+- **Many selected objects**: the selection wire stays light with thousands of objects selected (before, with nearly
+  every object of a big scene selected a single redraw could take seconds), orbiting and playback with hundreds of
+  objects selected no longer slow down, and Delete, Export Selection and Isolate on many picked objects are quicker.
+- **The Maya Outliner in big scenes**: it rebuilds faster after a load, an undo or a rename, its rows find their
+  objects without walking the whole file, scrolling and hovering the rows no longer rebuild Blender's hidden tree, the
+  steps of a move no longer reread the whole update, and edits no longer leave old rows behind during a long session.
+- **Graph Editor and Channel Box**: with a keyed rig selected the Graph Editor's Maya list and Stats fields redraw
+  quickly, keys and tangents of many curves are read once per redraw, and a pan moves the drawing instead of building
+  it again. The Channel Box redraws quickly with many picked joints, with controls that have many custom attributes,
+  with a deformer handle's inputs and with long animation curves.
+- **Edit Mode on big meshes**: clicks and box selections stay quick with Maya's component colours; only the selection
+  is read again, not the whole mesh.
+- **Everyday UI**: the shelf row is laid out once per redraw and reuses its shapes; the Time Slider (it skips selected
+  objects that have no animation), the Range Slider, the top bar, the Status Line and the dock ask less on every
+  redraw; a marking menu redraws only the editors it covers.
+- A new group (Ctrl+G) goes into the collection its members share (or the active collection when they share none);
+  before, it went into the first selected object's first collection, which could be a set or a display layer (#359).
+- A display layer's Template and Reference reach every object below a member, as its visibility already did: the
+  children of a member object, the objects under a member joint and the joints of a skeleton below a member (drawn
+  grey or black, not picked). The layer nearest the root wins over a child's own layer. Select Objects picks every
+  member, Template, Reference and hidden ones included, and the Hypergraph colours a kit skeleton's node with its root
+  joint's layer.
+
+### Added
+- Display layers hold joints, like Maya: Create Layer from Selected and Add / Remove Selected Objects take a joint
+  picked in a view (Pose Mode, or Edit Mode with the Move tool) as the member itself instead of the whole skeleton; a
+  kit skeleton picked as a whole stands for its root joints, and other rigs stay object members. Hiding the layer
+  hides that joint, the joints below it and the objects parented under them; Template draws them grey and Reference
+  black, and clicks, marquees and lassos skip them. The joints above the member, the skeleton object and each joint's
+  own Visibility are left alone, and skinned surfaces keep deforming. Add moves a joint between layers, Remove, Empty
+  and Delete give it back, and membership follows renames, save and reload, duplicates and undo. Layers saved with
+  earlier versions keep working (#355).
+- A joint's Visibility off (Channel Box, the Outliner eye or Blender's hide) hides the joints and objects below it,
+  like Maya, without changing their own Visibility; the Outliner eye sets the clicked joint only (#355).
+- Duplicate on joints, like Maya: Ctrl+D (Edit > Duplicate) copies each picked joint with the joints below it, in
+  place under the same parent (a root's copy is a new root), in Pose Mode and in joint Edit Mode; the copies take the
+  next joint numbers, keep their joint attributes and display layers but no animation, and are picked afterwards. A
+  joint duplicated while posed keeps its pose. Shift+D (Duplicate with Transform), Duplicate Special (copies moved,
+  turned and scaled one step more each) and Shift+drag on the manipulator copy picked joints too, and Duplicate
+  Special's note about joint copies shows in the Command Line.
+- Dragging the ViewCube tumbles the view the same way round as Alt+LMB, and when you look through a camera it turns
+  the camera; a click without a drag still looks along that face, and Esc or a right-click during the drag puts the
+  view back (#357).
+- Blue Pencil (Visualize > Blue Pencil): drawn frames show as light blue marks on the Time Slider, Alt+< / Alt+> jump
+  to the previous / next drawn frame (wrapping around at the ends), Ghost Previous / Ghost Next show the drawings of
+  the nearest drawn frames, fading with distance and hidden during playback, and Tool Settings has Pencil, Line and
+  Eraser (#357).
+- Modify > Center Pivot works in component mode, like Maya: each edited object's pivot goes to the centre of its
+  selected components (the whole object when nothing is selected), the geometry and translate channels stay where
+  they are, and you are back in object mode with those objects selected; one undo brings back component mode, the
+  mesh and the pivot (#356).
+- Attribute Editor: Blender Modifiers... (under Select / Load Attributes / Copy Tab) opens the object's whole Blender
+  modifier stack in a floating window, Add Modifier included. The README FAQ explains how modifiers map to the Maya
+  interface (#358).
+- Maya Outliner: Display > Blender Collections shows the scene's collections with Blender's own rows, and Maya
+  Outliner in that header goes back. The README FAQ explains groups and collections (#358, #359).
+
+### Fixed
+- Four view: a panel that looks through a camera keeps that camera, with its zoom and offset, when Space switches
+  between the four views and one view, and a panel split off a camera view no longer takes over that view's camera
+  (#362).
+- UV Editor: selected edges on a shell border show in the selection colour on top of the Texture Borders line
+  (#361).
+- A quick marquee over joints or rig controls picks the same joints as a slow one; before, a drag that started right
+  after another one could end with only the objects or part of the controls selected.
+
+### Known differences
+- Panels > Layouts > Single Perspective View keeps the camera the perspective panel looks through; Maya goes back to
+  the persp camera.
+- Blue Pencil frames can't be moved on the Time Slider yet (Shift+drag in Maya).
+- In very big rigged scenes Maya mode still does more work than Blender mode: scrubbing, box selection over joints
+  and moving or posing a rig stay heavier there.
+- Scrubbing a very big scene is slower while a second Blender window (such as a floating editor) is open; close it
+  when scrubbing feels heavy.
+
 ## [0.15.0] — 2026-11-12
 
 ### Added
