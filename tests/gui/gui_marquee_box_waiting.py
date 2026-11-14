@@ -1,5 +1,5 @@
-"""A replace marquee over two posed skeletons whose joint rules run before Blender's own box result is evaluated (the
-rules run in the same main-loop pass as the end of Blender's box): the joints are picked as always (each skeleton's
+"""A replace marquee over two posed skeletons: its joint rules run in the main-loop pass that ends Blender's own box,
+before Blender's result is evaluated, and the joints are picked as always (each skeleton's
 boxed joint closest to the root, the last skeleton active, both in Pose mode), the joint selection is evaluated
 together with Blender's result, the evaluation after the mode switches updates only the skeleton objects, and one
 Ctrl+Z takes the marquee back."""
@@ -125,10 +125,6 @@ def corners():
 @step
 def s_box_press():
     jm = mod(".operators.joint_marquee")
-    # the joint rules' check runs on every main-loop pass: it runs in the pass that ends Blender's box, before the
-    # scene is evaluated and drawn
-    C["tick"] = jm._TICK
-    jm._TICK = 0.0
     real = jm.apply
 
     def apply(*args):
@@ -175,7 +171,6 @@ def s_box_done():
     jm = mod(".operators.joint_marquee")
     bpy.app.handlers.depsgraph_update_post.remove(_note)
     jm.apply = C["real_apply"]
-    jm._TICK = C["tick"]
     got = state()
     want = ({n: [C["names"][n][0]] for n in C["rigs"]}, ['POSE', 'POSE'], C["rigs"][-1])
     check(f"the marquee picks each skeleton's top joint, the last skeleton active ({got})", got == want)

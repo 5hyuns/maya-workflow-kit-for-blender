@@ -402,6 +402,9 @@ def test_marquees_in_quick_succession_are_each_finished_in_order():
         jm._pending[:] = [{"id": 5, "seen": False, "op": object(), "waited": 0.0}]
         jm._watch()
         assert done == [5] and not jm._pending, "a box that ended unseen but registered is finished"
+        # while a box runs the check comes back on the next main-loop pass (it runs in the pass that ends the box)
+        jm._pending[:] = [{"id": 6, "seen": False, "running": True}]
+        assert jm._watch() == 0.0 and [e["id"] for e in jm._pending] == [6]
     finally:
         jm._running, jm._finish, jm._registered = saved[:3]
         jm._pending[:] = saved[3]

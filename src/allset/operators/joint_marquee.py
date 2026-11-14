@@ -11,6 +11,12 @@ Ctrl removes, Ctrl+Shift adds, as for objects.
 once Blender's box / lasso modal has ended, the region it registered is checked against the drawn joints. When a joint
 was hit the remembered selection comes back and the joints are applied with the drag's mode.
 
+Like Maya, the first frame after the release shows the final selection. The check runs from a timer on every
+main-loop pass while a drag waits, and a pass runs the event handlers (where Blender's box / lasso ends), then the
+timers, then the scene evaluation and the drawing (wm.cc ``WM_main``; wm_event_system.cc ``wm_event_do_notifiers``
+runs the timers first). So the joint rules run in the pass that ends Blender's box, before its result is evaluated or
+drawn.
+
 A box that changes nothing in Blender's eyes (nothing selected before, no Blender element inside) ends CANCELLED and is
 not registered, so the box is also read from the running operator while it is drawn and used when nothing new was
 registered. Blender pushed no undo step then, so the kit's step stands alone. A running lasso keeps its path to
@@ -23,14 +29,15 @@ result and no evaluation has run since, its selection is still waiting to be eva
 evaluated in the same pass as Blender's result.
 """
 
+import time
+
 import bpy
 
 from .. import live_refs
 
 MODES = {'OBJECT', 'POSE', 'EDIT_ARMATURE'}
 SELECT_OPS = {"VIEW3D_OT_select_box", "VIEW3D_OT_select_lasso"}
-_TICK = 0.05
-_GIVE_UP = 1.5
+_GIVE_UP = 1.5          # s: a drag whose box / lasso was never seen running nor registered is dropped
 _pending = []
 _track = {"handle": None, "region": 0, "pts": []}      # pointer track of the running drag (region px)
 _evaluations = [0]      # scene evaluations counted while a drag waits (``_count``)
@@ -97,11 +104,11 @@ def begin(context):
     _pending.append({
         "window": live_refs.pointer(context.window), "area": context.area.as_pointer(),
         "region": context.region.as_pointer(), "last": last, "snap": snapshot(context),
-        "seen": False, "waited": 0.0, "mode": context.mode, "box": None, "evaluations": _evaluations[0],
+        "seen": False, "start": time.monotonic(), "mode": context.mode, "box": None, "evaluations": _evaluations[0],
     })
     _counting(True)
     if not bpy.app.timers.is_registered(_watch):
-        bpy.app.timers.register(_watch, first_interval=_TICK)
+        bpy.app.timers.register(_watch, first_interval=0.0)
     _track_start(context.region)
     return True
 
@@ -342,19 +349,19 @@ def _watch():
         if running or not ended:
             entry["evaluations"] = _evaluations[0]      # Blender's box / lasso has no result yet
         entry["seen"] = entry["seen"] or running
-        entry["waited"] += _TICK
         if not running and (entry["seen"] or ended):
             _pending.remove(entry)
             try:
                 _finish(entry)
             except (ReferenceError, RuntimeError, AttributeError, KeyError) as e:
                 print("allset: joint marquee:", e)
-        elif not entry["seen"] and entry["waited"] >= _GIVE_UP:
+        elif not entry["seen"] and time.monotonic() - entry.get("start", 0.0) >= _GIVE_UP:
             _pending.remove(entry)
     if not _pending:
         _track_stop()
         _counting(False)
-    return _TICK if _pending else None
+        return None
+    return 0.0          # again on the next main-loop pass (see the module notes)
 
 
 def _flush():
