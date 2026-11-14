@@ -244,6 +244,74 @@ def test_time_drag_speed():
     sc.use_preview_range = False
 
 
+def _frame_writes(step):
+    """How many times ``step()`` set the scene's frame: a frame write tags the Scene, which the next view layer
+    update reports to depsgraph_update_post (each such write also evaluates the scene again in the UI)."""
+    hits = []
+
+    def on_update(_scene, depsgraph):
+        if depsgraph.id_type_updated('SCENE'):
+            hits.append(1)
+    bpy.context.view_layer.update()
+    bpy.app.handlers.depsgraph_update_post.append(on_update)
+    try:
+        step()
+        bpy.context.view_layer.update()
+    finally:
+        bpy.app.handlers.depsgraph_update_post.remove(on_update)
+    return len(hits)
+
+
+def test_kept_frame_like_blender():
+    sc = bpy.context.scene
+    edit = bpy.context.preferences.edit
+    was = edit.use_negative_frames
+    try:
+        for allow in (False, True):
+            edit.use_negative_frames = allow
+            for f in (-7, -1, 0, 5):
+                sc.frame_current = 3
+                sc.frame_current = f
+                assert sc.frame_current == taphold.kept_frame(f), (allow, f, sc.frame_current)
+    finally:
+        edit.use_negative_frames = was
+        sc.frame_current = 1
+    assert _frame_writes(lambda: None) == 0, "nothing else tags the Scene"
+
+
+def test_drag_past_frame_0_sets_it_once():
+    """Dragging the time on past frame 0 (negative frames not allowed): frame 0 is set once, not again on every
+    mouse move; MMB (keep the pose) still goes to the frame asked."""
+    sc = bpy.context.scene
+    assert not bpy.context.preferences.edit.use_negative_frames
+    # Time Slider drag: a stand-in timeline region that shows frame x - 100 at window x
+    region = types.SimpleNamespace(x=0, view2d=types.SimpleNamespace(region_to_view=lambda x, y: (x - 100.0, y)))
+    op = types.SimpleNamespace(range=False, hold=False, _region=region, _button='LEFTMOUSE', _held=None)
+    op._set_frame = types.MethodType(ts.ALLSET_OT_time_scrub._set_frame, op)
+    ctx = types.SimpleNamespace(window_manager=bpy.context.window_manager, scene=sc, screen=None)
+
+    def move(x):
+        ev = types.SimpleNamespace(type='MOUSEMOVE', value='NOTHING', mouse_x=x)
+        assert ts.ALLSET_OT_time_scrub.modal(op, ctx, ev) == {'RUNNING_MODAL'}
+    sc.frame_current = 2
+    writes = sum(_frame_writes(lambda x=x: move(x)) for x in (99, 97, 95, 90))
+    assert sc.frame_current == 0 and writes == 1, (sc.frame_current, writes)
+    writes = sum(_frame_writes(lambda x=x: move(x)) for x in (101, 103, 103))
+    assert sc.frame_current == 3 and writes == 2, (sc.frame_current, writes)
+    op._held = []                        # MMB: the frame is evaluated as asked, below 0 too
+    move(97)
+    assert sc.frame_current == -3, sc.frame_current
+    # K + drag
+    b = taphold.TimeDragBinding()
+    b._start, b._fpp, b._area = 2, 1.0, None
+    ctx = types.SimpleNamespace(scene=sc)
+    sc.frame_current = 2
+    writes = sum(_frame_writes(lambda x=x: b.drag(ctx, types.SimpleNamespace(mouse_x=x), (100, 0)))
+                 for x in (97, 95, 90))
+    assert sc.frame_current == 0 and writes == 1, (sc.frame_current, writes)
+    sc.frame_current = 1
+
+
 def test_time_slider_menu_order():
     rec = Recorder()
     ts.ALLSET_MT_time_slider.draw(types.SimpleNamespace(layout=rec), bpy.context)

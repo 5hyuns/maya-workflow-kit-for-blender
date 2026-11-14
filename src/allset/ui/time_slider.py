@@ -31,6 +31,7 @@ import bpy
 
 from .. import results
 from .. import compat, i18n
+from ..operators import taphold
 from bpy.app.handlers import persistent
 
 # Blender 5.x: the Timeline is a Dope Sheet mode; compat names the header classes.
@@ -337,7 +338,8 @@ class ALLSET_OT_time_scrub(bpy.types.Operator):
             f = frame_at(self._region, event.mouse_x)
             if self.range:
                 set_range(wm, self._anchor, f)
-            elif f != scene.frame_current:
+            elif (f if self._held is not None else taphold.kept_frame(f)) != scene.frame_current:
+                # MMB evaluates the frame as asked; the plain write keeps 0 below frame 0 (see kept_frame)
                 self._set_frame(scene, f)
             _tag(context)
             return {'RUNNING_MODAL'}

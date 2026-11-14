@@ -239,6 +239,15 @@ def time_from_drag(start_frame, dx, fpp):
     return int(round(start_frame + dx * fpp))
 
 
+def kept_frame(frame):
+    """The frame ``scene.frame_current = frame`` leaves: Blender keeps 0 for a frame below 0 unless Preferences >
+    Animation > Allow Negative Frames is on. A drag compares with this, so moving on past frame 0 doesn't set (and
+    evaluate) frame 0 again on every mouse move."""
+    if frame < 0 and not bpy.context.preferences.edit.use_negative_frames:
+        return 0
+    return frame
+
+
 class TimeDragBinding(TapHoldBinding):
     """K: hold + LMB drag anywhere = move the current time (Maya Time Dragger, TimeDraggerToolActivate).
     LMB is used up, so the selection
@@ -257,7 +266,7 @@ class TimeDragBinding(TapHoldBinding):
 
     def drag(self, context, event, start):
         frame = time_from_drag(self._start, event.mouse_x - start[0], self._fpp)
-        if frame != context.scene.frame_current:
+        if kept_frame(frame) != context.scene.frame_current:
             context.scene.frame_current = frame
         self._header(frame)
 
