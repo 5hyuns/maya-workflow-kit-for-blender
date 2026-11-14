@@ -8055,6 +8055,9 @@
    "Unmute Selected": "Unmute Selected",
    "Virtual slider speed": "Virtual slider speed"
   },
+  "Labels/ui/cb_model_node": {
+   "Edit Node Attributes": "Edit Node Attributes"
+  },
   "Labels/ui/cb_pane": {
    "Scroll Channel Box": "Scroll Channel Box"
   },
@@ -8285,6 +8288,11 @@
    "Dock Right": "Dock Right",
    "Dock Top": "Dock Top"
   },
+  "Labels/ui/extrude_manipulator": {
+   "Extrude Manipulator": "Extrude Manipulator",
+   "Maya Extrude Manipulator": "Maya Extrude Manipulator",
+   "World / Local Axes": "World / Local Axes"
+  },
   "Labels/ui/file_project": {
    "Bookmarks": "Bookmarks",
    "Current Project": "Current Project",
@@ -8433,15 +8441,11 @@
   },
   "Labels/ui/in_view": {
    "Divisions": "Divisions",
-   "Edit Node Attributes": "Edit Node Attributes",
-   "Extrude Manipulator": "Extrude Manipulator",
    "In-View Editor": "In-View Editor",
    "In-View Editor Drag Speed": "In-View Editor Drag Speed",
-   "Maya Extrude Manipulator": "Maya Extrude Manipulator",
    "Maya In-View Editor": "Maya In-View Editor",
    "Move In-View Editor": "Move In-View Editor",
-   "Value": "Value",
-   "World / Local Axes": "World / Local Axes"
+   "Value": "Value"
   },
   "Labels/ui/input_line": {
    "Construction History": "Construction History",
@@ -10486,6 +10490,9 @@
    "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler": "Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler",
    "Show every hidden channel again": "Show every hidden channel again"
   },
+  "Tooltips/ui/cb_model_node": {
+   "Apply typed modeling channels and compatible selected channels as one undo step": "Apply typed modeling channels and compatible selected channels as one undo step"
+  },
   "Tooltips/ui/cb_pane": {
    "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)": "Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)"
   },
@@ -10526,6 +10533,12 @@
   },
   "Tooltips/ui/editor_panels": {
    "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)": "Dock this floating editor into the main window on that side (Maya: drag the window onto a dock zone)"
+  },
+  "Tooltips/ui/extrude_manipulator": {
+   "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)": "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)",
+   "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).": "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).",
+   "Put the Transform Component manipulator on world or local axes": "Put the Transform Component manipulator on world or local axes",
+   "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels": "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels"
   },
   "Tooltips/ui/ghosting": {
    "Maya Visualize ghosting: Ghost Selected / Unghost Selected / Unghost All": "Maya Visualize ghosting: Ghost Selected / Unghost Selected / Unghost All",
@@ -10586,17 +10599,12 @@
    "Show this material in the graph and the Property Editor (Maya Hypershade swatch click)": "Show this material in the graph and the Property Editor (Maya Hypershade swatch click)"
   },
   "Tooltips/ui/in_view": {
-   "Apply typed modeling channels and compatible selected channels as one undo step": "Apply typed modeling channels and compatible selected channels as one undo step",
-   "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)": "Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local\nTranslate Z of an edge extrusion, Length of a vertex extrusion)",
    "Drag the In-View Editor by its title to move it": "Drag the In-View Editor by its title to move it",
    "In-View Editor drag speed: click or drag round the pie (empty = slowest, full = full speed)": "In-View Editor drag speed: click or drag round the pie (empty = slowest, full = full speed)",
    "In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it": "In-View Editor: drag sideways to change the value (Ctrl: finer, Shift: coarser), click to type it",
-   "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).": "One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim).",
-   "Put the Transform Component manipulator on world or local axes": "Put the Transform Component manipulator on world or local axes",
    "Row ``row`` of the In-View Editor: picking only (drawn by ``draw_box``).": "Row ``row`` of the In-View Editor: picking only (drawn by ``draw_box``).",
    "The In-View Editor's drag-speed pie: picking only, drawn by ``draw_box``": "The In-View Editor's drag-speed pie: picking only, drawn by ``draw_box``",
    "The In-View Editor's title bar (off its pie): picking only, drawn by ``draw_box``": "The In-View Editor's title bar (off its pie): picking only, drawn by ``draw_box``",
-   "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels": "The world / local switch of the Transform Component manipulator, drawn and picked in region pixels",
    "Type a value of the last extrusion (In-View Editor)": "Type a value of the last extrusion (In-View Editor)"
   },
   "Tooltips/ui/input_line": {
