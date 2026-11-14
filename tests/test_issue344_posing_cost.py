@@ -135,7 +135,7 @@ def test_dragging_a_pose_keeps_the_joint_list_and_the_control_shapes():
             assert mj._EDITS[0] == edits, f"step {step}: no edit counted while dragging"
             got = mj._joined(view)
             assert not reads and not lists, f"step {step}: nothing read again ({lists}, {reads})"
-            drawn = _rows(got[0], got[1])
+            drawn = _rows(*mj.joined_segments(got))
             ref = _reference(arm)
             assert drawn.shape == ref.shape and _gap(drawn, ref) < 1e-4, f"step {step}: the per-joint lines"
             assert prev is None or _gap(drawn, prev) > 1e-3, f"step {step}: the lines follow the pose"

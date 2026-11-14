@@ -726,7 +726,8 @@ def test_views_share_one_build_of_each_skeleton():
         assert d is not a and len(d[0]) < len(a[0]), "a view showing one skeleton draws only that one"
         for got, ctx in ((a, view(one, True)), (c, view(one, False)), (d, view(two, True, [rigs[0]]))):
             pts, cols = mj.view_lines(ctx)
-            assert np.array_equal(got[0], pts) and np.array_equal(got[1], cols), "the view's own lines"
+            seg_pts, seg_cols = mj.joined_segments(got)
+            assert np.array_equal(seg_pts, pts) and np.array_equal(seg_cols, cols), "the view's own lines"
         builds.clear()
         mj._frame_post()                               # a new frame
         mj._joined(view(one, True))

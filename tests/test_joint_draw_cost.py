@@ -53,7 +53,8 @@ class _Count:
         return self.calls[name]
 
 
-BUILD = ("_parts", "_joint_list", "_spheres", "_bone_array", "_control_lines", "_read_widget", "_joint_parts")
+BUILD = ("_parts", "_joint_list", "_spheres", "_sphere_ring", "_bone_array", "_control_lines", "_read_widget",
+         "_joint_parts")
 
 
 def _object_mode():
@@ -125,11 +126,11 @@ def _fresh(view):
     """The view's lines built from scratch (nothing kept)."""
     mj._forget()
     got = mj._joined(view)
-    return np.array(got[0]), np.array(got[1])
+    return mj.joined_segments(got)
 
 
 def _same(got, want, what):
-    pts, cols = np.array(got[0]), np.array(got[1])
+    pts, cols = mj.joined_segments(got)
     assert pts.shape == want[0].shape and np.array_equal(pts, want[0]), f"{what}: points"
     assert np.array_equal(cols, want[1]), f"{what}: colours"
 
@@ -191,7 +192,7 @@ def test_a_joint_selection_recolours_its_skeleton_only():
                 got = mj._joined(view)
             assert n["_parts"] == 1 and not n["_joint_list"], \
                 f"{picks}: only the touched skeleton is looked at, its joint list kept ({n.calls})"
-            assert not (n["_spheres"] or n["_bone_array"] or n["_control_lines"] or n["_read_widget"]), \
+            assert not (n["_sphere_ring"] or n["_bone_array"] or n["_control_lines"] or n["_read_widget"]), \
                 f"{picks}: the geometry is kept ({n.calls})"
             assert mj._PARTS[b.as_pointer()] is kept_b, f"{picks}: the other skeleton's lines are kept"
             _same(got, _fresh(view), f"selection {picks}")
@@ -235,7 +236,8 @@ def test_edits_and_frames_build_only_what_changed():
             bpy.context.scene.frame_set(frame)
             with _Count(mj, *BUILD) as n:
                 got = mj._joined(view)
-            assert n["_spheres"] == 1 and n["_joint_list"] == 0, f"frame {frame}: the animated skeleton ({n.calls})"
+            assert n["_sphere_ring"] == 1 and n["_joint_list"] == 0, \
+                f"frame {frame}: the animated skeleton ({n.calls})"
             assert mj._PARTS[b.as_pointer()] is kept_b, f"frame {frame}: the still skeleton keeps its lines"
             want = _fresh(view)
             _same(got, want, f"frame {frame}")
@@ -277,7 +279,8 @@ def test_edit_mode_builds_the_edited_skeleton_when_it_changes():
             assert n["_joint_parts"] == 1 and n["_spheres"] == 1 and not n["_bone_array"] and \
                 not n["_control_lines"], f"edit {step}: the edited skeleton is built ({n.calls})"
             pts, cols = mj.view_lines(view)
-            assert np.array_equal(got[0], pts) and np.array_equal(got[1], cols), f"edit {step}: the view's lines"
+            seg_pts, seg_cols = mj.joined_segments(got)
+            assert np.array_equal(seg_pts, pts) and np.array_equal(seg_cols, cols), f"edit {step}: the view's lines"
     finally:
         _object_mode()
 
@@ -469,7 +472,7 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
     view = _view([a, b])
     real = mj.transforming
     sizes = []
-    real_spheres = mj._spheres
+    real_spheres = mj._sphere_ring
 
     def spheres(c, f, r):
         sizes.append(len(c))
@@ -479,7 +482,7 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
     try:
         mj.transforming = lambda: True            # a drag runs: only poses change
         mj._joined(view)
-        mj._spheres = spheres
+        mj._sphere_ring = spheres
         for step, (bone, many) in enumerate(((11, False), (12, False), (8, False), (0, True), (11, False))):
             a.pose.bones[bone].rotation_euler.x += 0.2
             bpy.context.view_layer.update()
@@ -493,10 +496,10 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
                 spheres_moved = len([pb for pb in moved if pb.custom_shape is None])
                 assert sum(sizes) == spheres_moved < plain and not n["_control_lines"], \
                     f"step {step}: only the moved joints ({sizes}, {spheres_moved} moved, {n.calls})"
-            pts, cols = np.array(got[0]), np.array(got[1])
-            mj._spheres = real_spheres
+            pts, cols = mj.joined_segments(got)
+            mj._sphere_ring = real_spheres
             want = _fresh(view)
-            mj._spheres = spheres
+            mj._sphere_ring = spheres
             assert _bits(pts, want[0]) and _bits(cols, want[1]), f"step {step}: the lines of a build from scratch"
             mj.transforming = lambda: True
             mj._joined(view)
@@ -506,7 +509,7 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
         got = mj._joined(view)
         assert sizes == [plain], f"the object moved: {sizes}"
     finally:
-        mj._spheres = real_spheres
+        mj._sphere_ring = real_spheres
         mj.transforming = real
 
 
@@ -610,3 +613,50 @@ def test_joint_colours_are_the_per_joint_colours():
                 assert np.array_equal(got, want), (sel, lead)
     finally:
         lj.state = real
+
+
+def test_joints_draw_each_point_once_through_a_line_index():
+    """The joined lines hold each sphere ring point, pyramid corner / apex and control shape point once and draw the
+    segments through a line index: far fewer points than segment ends, and the segments are bit for bit the ones of
+    a copy per segment end (sphere rings: ``_spheres``; pyramids: each corner to the next and to the apex). A new
+    frame keeps the line index and its GPU buffer with the colours; only the points are joined again."""
+    a, b, _cube, _ctrl = _scene()
+    for k in (1, 10):
+        for i, pb in enumerate(a.pose.bones):
+            pb.rotation_mode = 'XYZ'
+            pb.rotation_euler = (0.1 * k, 0.02 * i, 0.0)
+            pb.keyframe_insert("rotation_euler", frame=k)
+    bpy.context.scene.frame_set(1)
+    view = _view([a, b])
+    real = mj.transforming
+    try:
+        mj.transforming = lambda: True
+        first = mj._joined(view)
+        index = first[4]
+        assert index.dtype == np.intc and len(index) % 2 == 0 and index.max() < len(first[0]), "a line index"
+        assert len(first[0]) * 10 < len(index) * 6, f"{len(first[0])} points for {len(index)} segment ends"
+        first[3][5] = held = object()             # stands in for the index's GPU buffer
+        for frame in (3, 6):
+            bpy.context.scene.frame_set(frame)
+            got = mj._joined(view)
+            assert not np.array_equal(got[0], first[0]), f"frame {frame}: new points"
+            assert got[4] is index and got[3][5] is held, f"frame {frame}: the line index and its buffer are kept"
+            _same(got, _fresh(view), f"frame {frame}")
+            first = mj._joined(view)
+            first[3][5] = held
+            index = first[4]
+    finally:
+        mj.transforming = real
+        bpy.context.scene.frame_set(1)
+    rng = np.random.default_rng(11)
+    for n in (1, 2, 7, 300):
+        c, f, r = rng.standard_normal((n, 3)) * 3.0, rng.standard_normal((n, 3, 3)), rng.random(n) + 0.1
+        ring = mj._sphere_ring(c, f, r)
+        assert len(ring) == 3 * (mj.SEGMENTS + 1) * n, "each ring point once"
+        assert _bits(ring[mj._sphere_index(n)], _ring_product(c, f, r)), f"{n} spheres: the segments"
+        cc = c + rng.standard_normal((n, 3)) * 4.0
+        pts, drawn = mj._bone_array(c, f, r * 0.2, cc, r * 0.2)
+        corners = pts.reshape(-1, 5, 3)[:, :4]
+        apex = np.broadcast_to(pts.reshape(-1, 5, 3)[:, 4:], corners.shape)
+        ends = np.stack((corners, np.roll(corners, -1, axis=1), corners, apex), axis=2).reshape(-1, 3)
+        assert len(pts) == 5 * len(drawn) and _bits(pts[mj._bone_index(len(drawn))], ends), f"{n} pyramids"

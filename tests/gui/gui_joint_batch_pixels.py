@@ -1,7 +1,7 @@
-"""Maya joints drawn from a points buffer and a colours buffer kept across redraws look exactly like the same lines
-drawn from one interleaved buffer: every pixel of the view is the same, with spheres, bones, control shapes, selected
-joints (their local axes, the lead colour) and X-Ray Joints. A new pose draws the same pixels as drawing it from
-scratch."""
+"""Maya joints drawn from a points buffer, a colours buffer and a line index kept across redraws (each point once)
+look exactly like the same lines drawn from one interleaved buffer with a copy of every segment end: every pixel of
+the view is the same, with spheres, bones, control shapes, selected joints (their local axes, the lead colour) and
+X-Ray Joints. A new pose draws the same pixels as drawing it from scratch."""
 
 import math
 import os
@@ -42,11 +42,12 @@ def redraw():
 
 
 def interleaved(hit):
-    """The lines as one buffer of points and colours."""
+    """The lines as one buffer of points and colours, a copy of every segment end (no line index)."""
     import gpu
     from gpu_extras.batch import batch_for_shader
     sh = gpu.shader.from_builtin('POLYLINE_SMOOTH_COLOR')
-    return batch_for_shader(sh, 'LINES', {"pos": hit[0], "color": hit[1]})
+    pts, cols = mod(".ui.maya_joints").joined_segments(hit)
+    return batch_for_shader(sh, 'LINES', {"pos": pts, "color": cols})
 
 
 def use(batcher):

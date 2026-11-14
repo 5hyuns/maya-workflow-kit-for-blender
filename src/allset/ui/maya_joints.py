@@ -493,10 +493,12 @@ def _pick_plan(ptr, got):
         return held[1]
     jl, chunks = got
     pts, owner = [], []
-    for p, who, per in chunks:
+    for p, who, index in chunks:
+        if index is not None:
+            p, who = p[index], who[index]
         if len(p):
             pts.append(p)
-            owner.append(np.repeat(who, per) if per else who)
+            owner.append(who)
     plan = None
     if pts:
         pts, owner = np.concatenate(pts), np.concatenate(owner)
@@ -807,15 +809,42 @@ def _sphere_array(js):
 
 def _spheres(c, f, r):
     """Segment end points (float32) of the three great circles of spheres at centres ``c`` (N, 3) with frames ``f``
-    (N, 3, 3; columns = the joint's X, Y, Z) and radii ``r`` (N,)."""
+    (N, 3, 3; columns = the joint's X, Y, Z) and radii ``r`` (N,): per joint, circle and segment its two ends."""
+    import numpy as np
+    if not len(c):
+        return np.zeros((0, 3), np.float32)
+    return _sphere_ring(c, f, r)[_sphere_index(len(c))]
+
+
+def _sphere_index(n):
+    """Int32 line index into ``_sphere_ring`` of ``n`` spheres giving the segments of ``_spheres`` in its order (per
+    joint, circle and segment: ring points i and i + 1). Kept per ``n``."""
+    import numpy as np
+    got = _RING_INDEX.get(n)
+    if got is None:
+        j = np.arange(n, dtype=np.intc)[:, None, None]
+        k = np.arange(3, dtype=np.intc)[None, :, None]
+        s = np.arange(SEGMENTS, dtype=np.intc)[None, None, :]
+        a = (k * (SEGMENTS + 1) + s) * n + j                                    # (joint, circle, segment)
+        got = np.ascontiguousarray(np.stack((a, a + n), axis=3).reshape(-1))
+        if len(_RING_INDEX) > 64:
+            _RING_INDEX.clear()
+        _RING_INDEX[n] = got
+    return got
+
+
+def _sphere_ring(c, f, r):
+    """The ring points (float32) of the three great circles of spheres at centres ``c`` (N, 3) with frames ``f``
+    (N, 3, 3; columns = the joint's X, Y, Z) and radii ``r`` (N,), each point once: (3 * (SEGMENTS + 1) * N, 3) in
+    the order circle, ring point, joint. ``_sphere_index`` draws them as the segments of ``_spheres``."""
     import numpy as np
     n = len(c)
     if not n:
         return np.zeros((0, 3), np.float32)
     if _RING[0] is None:
         t = np.arange(SEGMENTS + 1) * (2.0 * math.pi / SEGMENTS)
-        _RING[0] = np.cos(t)[:, None], np.sin(t)[:, None], np.dtype((np.void, 12))
-    cos, sin, point = _RING[0]
+        _RING[0] = np.cos(t)[:, None], np.sin(t)[:, None]
+    cos, sin = _RING[0]
     # ring point i of the circle in the joint's axes a, b: centre + (cos_i * axis a + sin_i * axis b) * radius, each
     # step rounded in this order; worked out for every joint side by side (x, y, z of joint 0, of joint 1, ...)
     axes = f.transpose(2, 0, 1).reshape(3, n * 3)       # frame column a of every joint
@@ -827,20 +856,17 @@ def _spheres(c, f, r):
         u[k] += term
     u *= np.repeat(r, 3)
     u += c.reshape(-1)
-    ring = u.astype(np.float32).view(point)             # (circle, ring point, joint), whole 12-byte points
-    out = np.empty((n, 3, SEGMENTS, 2), point)          # per joint, circle, segment: its two end points
-    out[:, :, :, 0] = ring[:, :-1].transpose(2, 0, 1)
-    out[:, :, :, 1] = ring[:, 1:].transpose(2, 0, 1)
-    return out.view(np.float32).reshape(-1, 3)
+    return u.astype(np.float32).reshape(-1, 3)          # (circle, ring point, joint): x, y, z of each point
 
 
-_RING = [None]      # (cos, sin) of the ring points' angles (S + 1, 1), the dtype of one float32 point
+_RING = [None]      # (cos, sin) of the ring points' angles (S + 1, 1)
+_RING_INDEX = {}    # sphere count -> ``_sphere_index``
 
 
 def _bone_array(pc, pf, pr, cc, cr):
     """``bone_lines`` for many bones at once: parents' centres / frames / radii (M, 3) (M, 3, 3) (M,) and children's
-    centres / radii. Returns (end points (K * 16, 3), the K bones that are drawn) — a bone whose spheres overlap
-    draws nothing."""
+    centres / radii. Returns (points (K * 5, 3): each pyramid's four base corners and its apex, the K bones that are
+    drawn) — a bone whose spheres overlap draws nothing. ``_bone_index`` draws them as ``bone_lines``' segments."""
     import numpy as np
     d = cc - pc
     length = np.linalg.norm(d, axis=1)
@@ -864,11 +890,26 @@ def _bone_array(pc, pf, pr, cc, cr):
     a = np.divide(a, n, out=np.zeros_like(a), where=n > 0)
     b = np.cross(u, a)
     ar, br = a * pr[:, None], b * pr[:, None]
-    corners = np.stack((base + ar, base + br, base - ar, base - br), axis=1)            # (K, 4, 3)
-    nxt = np.roll(corners, -1, axis=1)
-    tip = np.broadcast_to(apex[:, None, :], corners.shape)
-    pts = np.stack((corners, nxt, corners, tip), axis=2)                                # (K, 4, 4, 3)
+    pts = np.stack((base + ar, base + br, base - ar, base - br, apex), axis=1)          # (K, 5, 3)
     return pts.reshape(-1, 3), drawn
+
+
+_BONE_SEGMENTS = (0, 1, 0, 4, 1, 2, 1, 4, 2, 3, 2, 4, 3, 0, 3, 4)   # corner i to i + 1 and to the apex, per corner
+_BONE_INDEX = {}    # pyramid count -> ``_bone_index``
+
+
+def _bone_index(k):
+    """Int32 line index into ``_bone_array``'s points of ``k`` pyramids: per corner the base edge to the next corner,
+    then the edge up to the apex. Kept per ``k``."""
+    import numpy as np
+    got = _BONE_INDEX.get(k)
+    if got is None:
+        got = np.ascontiguousarray((np.arange(k, dtype=np.intc)[:, None] * 5
+                                    + np.array(_BONE_SEGMENTS, np.intc)[None, :]).reshape(-1))
+        if len(_BONE_INDEX) > 64:
+            _BONE_INDEX.clear()
+        _BONE_INDEX[k] = got
+    return got
 
 
 class JointList:
@@ -1203,10 +1244,23 @@ def _euler_xyz(e):
     return m
 
 
+def _distinct_points(segs):
+    """(each distinct point of segment end points ``segs`` (2E, 3) once, int32 index of every end point into them):
+    points with the same bits are one point."""
+    import numpy as np
+    if not len(segs):
+        return segs, np.zeros(0, np.intc)
+    rows = np.ascontiguousarray(segs).view(np.dtype((np.void, segs.dtype.itemsize * 3))).reshape(-1)
+    _u, first, inverse = np.unique(rows, return_index=True, return_inverse=True)
+    return segs[first], inverse.reshape(-1).astype(np.intc)
+
+
 def _widget_plan(jl, depsgraph):
     """The controls' shape lines joined in their own space: (points, shape per point, points per shape, the shapes
-    that change with the frame [(shape, start, count)], widget generation). Joined once per joint list and kept
-    while no shape's own geometry changed; the shapes that change with the frame are read again in place."""
+    that change with the frame [(shape, start, count)], widget generation, int32 line index into the points of every
+    shape's segments in order). A shape that can't change with the frame keeps each of its points once; one that can
+    keeps its segments' end points. Joined once per joint list and kept while no shape's own geometry changed; the
+    shapes that change with the frame are read again in place."""
     import numpy as np
     plan = jl.widgets
     if plan is not None and plan[4] != _WIDGET_GEN[0]:
@@ -1220,26 +1274,32 @@ def _widget_plan(jl, depsgraph):
                 break
             p[start:start + count] = segs
     if plan is None:
-        segs, moving, start = [], [], 0
+        pts, index, moving, start = [], [], [], 0
         for shape in jl.ctrl_shapes:
             s, m = _widget_segments(shape, depsgraph)
             if m:
                 moving.append((shape, start, len(s)))
-            segs.append(s)
+                at = np.arange(len(s), dtype=np.intc)
+            else:
+                s, at = _distinct_points(s)
+            pts.append(s)
+            index.append(at + start)
             start += len(s)
-        counts = np.fromiter((len(s) for s in segs), np.intp, len(segs))
-        p = np.concatenate(segs) if counts.sum() else np.zeros((0, 3))
-        plan = jl.widgets = (p, np.repeat(np.arange(len(segs)), counts), counts, moving, _WIDGET_GEN[0])
+        counts = np.fromiter((len(s) for s in pts), np.intp, len(pts))
+        p = np.concatenate(pts) if counts.sum() else np.zeros((0, 3))
+        index = np.concatenate(index).astype(np.intc) if index else np.zeros(0, np.intc)
+        plan = jl.widgets = (p, np.repeat(np.arange(len(pts)), counts), counts, moving, _WIDGET_GEN[0], index)
     return plan
 
 
 def _control_lines(ob, jl, w, allm, depsgraph, props=None):
-    """(points, joint index per point) of every control's custom shape (``shape_lines`` with ``_shape_matrix``, all
-    controls at once), or None. The shapes' own lines are joined once per joint list (``_widget_plan``); the pose and
-    the custom shape offset / turn / scale (they can be keyed; ``props``: as ``_pose_raw`` read them) are read every
-    time."""
+    """(points, joint index per point, int32 line index into the points) of every control's custom shape
+    (``shape_lines`` with ``_shape_matrix``, all controls at once), or None. The shapes' own lines are joined once per
+    joint list (``_widget_plan``); the pose and the custom shape offset / turn / scale (they can be keyed; ``props``:
+    as ``_pose_raw`` read them) are read every time. The controls a display layer hides keep their points but have
+    no lines."""
     import numpy as np
-    p, owner, _counts, _moving, _gen = _widget_plan(jl, depsgraph)
+    p, owner, _counts, _moving, _gen, index = _widget_plan(jl, depsgraph)
     if not len(p):
         return None
     pbs = ob.pose.bones
@@ -1257,12 +1317,11 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
     pts = np.einsum('kij,kj->ki', lin[owner], p) + off[owner]
     got = jl.owners.get("ctrl")
     if got is None or got[0] is not owner:
-        keep = None if jl.shown.all() else jl.shown[jl.ctrl][owner]     # controls a display layer hides draw nothing
-        joint = jl.ctrl[owner]
-        got = jl.owners["ctrl"] = (owner, joint if keep is None else joint[keep], keep)
-    if got[2] is not None:
-        pts = pts[got[2]]
-    return pts.astype(np.float32), got[1]
+        if not jl.shown.all():                       # controls a display layer hides draw nothing
+            pairs = index.reshape(-1, 2)
+            index = np.ascontiguousarray(pairs[jl.shown[jl.ctrl][owner][pairs[:, 0]]].reshape(-1))
+        got = jl.owners["ctrl"] = (owner, jl.ctrl[owner], index)
+    return pts.astype(np.float32), got[1], got[2]
 
 
 def _control_placement(jl, w, allm, props, n, which=None):
@@ -1385,9 +1444,21 @@ def _own_lines(ob, jl, w, allm, kind):
 
 class _Lines:
     """A skeleton's drawn lines without their colours (Object / Pose Mode): centres / frames / radii of the joints,
-    the joints with a sphere, the lines before the axes and after them as (points, joint index per point) pairs, the
-    lines a click picks (``_parts`` ``pick``) and the control shape lines they were built from."""
+    the joints with a sphere, the lines before the axes and after them as (points, joint index per point, int32 line
+    index into the points or None: the points are segment end points) triples, the lines a click picks (``_parts``
+    ``pick``, the same triples) and the control shape lines they were built from."""
     __slots__ = ("centres", "frames", "radii", "plain", "before", "after", "chunks", "plan", "ctrl_at")
+
+
+def _sphere_owner(jl, plain):
+    """(joints with a sphere, joint index per ``_sphere_ring`` point, ``_sphere_index``) of joint list ``jl``, whose
+    joints ``plain`` have a sphere; kept on it."""
+    import numpy as np
+    got = jl.owners.get("spheres")
+    if got is None:
+        idx = np.flatnonzero(plain)
+        got = jl.owners["spheres"] = (idx, np.tile(idx, 3 * (SEGMENTS + 1)), _sphere_index(len(idx)))
+    return got
 
 
 def _owner(jl, part, rows, per, of=None):
@@ -1412,15 +1483,11 @@ def _lines(ob, scene, depsgraph, jl, kind, raw):
     g.before, g.after, g.plan, g.ctrl_at = [], [], None, None
     chunks = None if stick or own else []
     if not (stick or own) and plain.any():
-        pts = _spheres(centres[plain], frames[plain], radii[plain])
-        got = jl.owners.get("spheres")
-        if got is None:
-            idx = np.flatnonzero(plain)
-            got = jl.owners["spheres"] = (idx, np.repeat(idx, 3 * SEGMENTS * 2))
-        idx = got[0]
-        g.before.append((pts, got[1]))
+        pts = _sphere_ring(centres[plain], frames[plain], radii[plain])
+        got = _sphere_owner(jl, plain)
+        g.before.append((pts, got[1], got[2]))
         if chunks is not None:
-            chunks.append((pts, idx, 3 * SEGMENTS * 2))
+            chunks.append(g.before[-1])
     if len(jl.ctrl):
         got = _control_lines(ob, jl, w, allm, depsgraph, raw[4])
         g.plan = jl.widgets
@@ -1428,24 +1495,23 @@ def _lines(ob, scene, depsgraph, jl, kind, raw):
             g.ctrl_at = len(g.before)
             g.before.append(got)
             if chunks is not None:
-                chunks.append((got[0], got[1], None))
+                chunks.append(got)
     if own:
         got = _own_lines(ob, jl, w, allm, kind)
         if got is not None:
-            g.after.append(got)
+            g.after.append((got[0], got[1], None))
     elif len(jl.bone_child):
         child, par = jl.bone_child, jl.bone_par
         if stick:
             segs = np.stack((centres[par], centres[child]), axis=1).reshape(-1, 3)
-            owner = _owner(jl, "sticks", par, 2)
+            owner, index = _owner(jl, "sticks", par, 2), None
         else:
             segs, drawn = _bone_array(centres[par], frames[par], radii[par], centres[child], radii[child])
-            owner = _owner(jl, "bones", drawn, 16, par)
+            owner, index = _owner(jl, "bones", drawn, 5, par), _bone_index(len(drawn))
         if len(segs):
-            segs = segs.astype(np.float32)
-            g.after.append((segs, owner))
+            g.after.append((segs.astype(np.float32), owner, index))
             if chunks is not None:
-                chunks.append((segs, owner, None))
+                chunks.append(g.after[-1])
     g.chunks = chunks
     return g
 
@@ -1496,31 +1562,30 @@ def _lines_moved(ob, scene, jl, kind, raw, g0, old_raw):
         g.centres[joints_moved], g.frames[joints_moved] = c_moved, f_moved
     g.before, g.after, chunks = [], [], []
     if plain.any():
-        pts, owner = g0.before[0]
+        pts, owner, index = g0.before[0]
         if len(spheres):
             pts = pts.copy()
-            ring = pts.reshape(-1, 3 * SEGMENTS * 2, 3)
-            ring[np.cumsum(plain)[spheres] - 1] = _spheres(g.centres[spheres], g.frames[spheres],
-                                                           g.radii[spheres]).reshape(len(spheres), -1, 3)
-        g.before.append((pts, owner))
-        chunks.append((pts, jl.owners["spheres"][0], 3 * SEGMENTS * 2))
+            ring = pts.reshape(3, SEGMENTS + 1, -1, 3)        # ``_sphere_ring``: circle, ring point, joint
+            ring[:, :, np.cumsum(plain)[spheres] - 1] = _sphere_ring(
+                g.centres[spheres], g.frames[spheres], g.radii[spheres]).reshape(3, SEGMENTS + 1, len(spheres), 3)
+        g.before.append((pts, owner, index))
+        chunks.append(g.before[-1])
     if g0.ctrl_at is not None:
-        pts, joint = g0.before[g0.ctrl_at]
+        pts, joint, index = g0.before[g0.ctrl_at]
         if len(controls):
             pts = pts.copy()
             at, new = _control_points(jl, w, allm, raw[4], plan, controls)
             pts[at] = new
         g.ctrl_at = len(g.before)
-        g.before.append((pts, joint))
-        chunks.append((pts, joint, None))
+        g.before.append((pts, joint, index))
+        chunks.append(g.before[-1])
     if len(jl.bone_child):
         child, par = jl.bone_child, jl.bone_par
         segs, drawn = _bone_array(g.centres[par], g.frames[par], g.radii[par], g.centres[child], g.radii[child])
-        owner = _owner(jl, "bones", drawn, 16, par)
+        owner = _owner(jl, "bones", drawn, 5, par)
         if len(segs):
-            segs = segs.astype(np.float32)
-            g.after.append((segs, owner))
-            chunks.append((segs, owner, None))
+            g.after.append((segs.astype(np.float32), owner, _bone_index(len(drawn))))
+            chunks.append(g.after[-1])
     g.chunks = chunks
     return g
 
@@ -1551,9 +1616,11 @@ def _paint(jl, g, sel, rgba, prev=None):
                 return prev[2][0 if part == "before" else 2][1][k]
         return rgba[idx]
 
-    before = ([p for p, _i in g.before], [colour("before", k, i) for k, (_p, i) in enumerate(g.before)])
-    after = ([p for p, _i in g.after], [colour("after", k, i) for k, (_p, i) in enumerate(g.after)])
-    axes = ([], [])
+    before = ([p for p, _i, _x in g.before], [colour("before", k, i) for k, (_p, i, _x) in enumerate(g.before)],
+              [x for _p, _i, x in g.before])
+    after = ([p for p, _i, _x in g.after], [colour("after", k, i) for k, (_p, i, _x) in enumerate(g.after)],
+             [x for _p, _i, x in g.after])
+    axes = ([], [], [])
     if sel:
         key = frozenset(sel)
         got = jl.owners.get("axes")
@@ -1569,6 +1636,7 @@ def _paint(jl, g, sel, rgba, prev=None):
             axes[0].append(np.stack((np.broadcast_to(c[:, None, :], ends.shape), ends), axis=2)
                            .reshape(-1, 3).astype(np.float32))
             axes[1].append(got[2])
+            axes[2].append(None)
     return before, axes, after
 
 
@@ -1631,7 +1699,7 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False, pick=None, keep=None)
         if old is not None and _same_list(old.jl, jl):
             jl = old.jl
     if not jl.names:
-        parts = ([], []), ([], []), ([], [])
+        parts = ([], [], []), ([], [], []), ([], [], [])
         if keep is not None:
             keep.level, keep.key, keep.jl, keep.stamp, keep.raw, keep.lines = None, key, jl, stamp, None, None
             keep.sel, keep.rgba, keep.parts, keep.pick = None, None, parts, None
@@ -1666,7 +1734,7 @@ def _parts(ob, scene, depsgraph, kind=None, playing=False, pick=None, keep=None)
 def _joint_parts(ob, scene, depsgraph, kind):
     """``_parts`` joint by joint (``skeleton``): Edit Mode."""
     import numpy as np
-    before, axes, after = ([], []), ([], []), ([], [])
+    before, axes, after = ([], [], []), ([], [], []), ([], [], [])
     js = skeleton(ob, scene)
     if not js:
         return before, axes, after
@@ -1678,12 +1746,14 @@ def _joint_parts(ob, scene, depsgraph, kind):
         if segs:
             part[0].append(np.array([tuple(v) for v in segs], np.float32))
             part[1].append(np.tile(np.array((*colour, 1.0), np.float32), (len(segs), 1)))
+            part[2].append(None)
 
     spheres, order = _sphere_array(js) if not (stick or own) else (None, ())
     if order:
         before[0].append(spheres)
         before[1].append(np.repeat(np.array([(*col[n], 1.0) for n in order], np.float32), 3 * SEGMENTS * 2,
                                    axis=0))
+        before[2].append(None)
     bones, bone_cols = [], []
     if own:
         for name, segs in own_shape_lines(ob, kind).items():
@@ -1708,38 +1778,44 @@ def _joint_parts(ob, scene, depsgraph, kind):
     if bones:
         after[0].append(np.array([tuple(v) for v in bones], np.float32))
         after[1].append(np.array([(*c, 1.0) for c in bone_cols], np.float32))
+        after[2].append(None)
     return before, axes, after
 
 
 def _part_arrays(parts, perspective):
-    """([points], [colours]) float32 arrays of the ``_parts`` of several skeletons in drawing order, the axes only in
-    perspective."""
-    pts, cols = [], []
+    """([points], [colours], [int32 line index or None]) of the ``_parts`` of several skeletons in drawing order, the
+    axes only in perspective."""
+    pts, cols, index = [], [], []
     for before, axes, after in parts:
         for part in (before, axes, after) if perspective else (before, after):
             pts += part[0]
             cols += part[1]
-    return pts, cols
+            index += part[2]
+    return pts, cols, index
+
+
+def _segments(pts, cols, index):
+    """Lists ``pts`` / ``cols`` of points and colours with their line indices ``index`` as segment end points and
+    their colours (a piece without an index is one already)."""
+    return ([p if x is None else p[x] for p, x in zip(pts, index)],
+            [c if x is None else c[x] for c, x in zip(cols, index)])
 
 
 def _join(parts, perspective):
-    """(points, colours) float32 arrays of the ``_parts`` of several skeletons, the axes only in perspective."""
+    """(points, colours) float32 arrays of the segment end points of the ``_parts`` of several skeletons, the axes
+    only in perspective."""
     import numpy as np
-    pts, cols = _part_arrays(parts, perspective)
+    pts, cols = _segments(*_part_arrays(parts, perspective))
     if not pts:
         return np.zeros((0, 3), np.float32), np.zeros((0, 4), np.float32)
     return np.concatenate(pts), np.concatenate(cols)
 
 
 def _fast_lines(ob, scene, perspective, depsgraph, stick, playing=False, kind=None):
-    """(points, colours) lists of float32 arrays of skeleton ``ob`` drawn as ``kind`` (default: Maya joints, or
-    sticks with ``stick``): the same lines and colours as the per-joint geometry, built in arrays."""
-    before, axes, after = _parts(ob, scene, depsgraph, kind or ('STICK' if stick else 'OCTAHEDRAL'), playing)
-    pts, cols = list(before[0]), list(before[1])
-    if perspective:
-        pts += axes[0]
-        cols += axes[1]
-    return pts + after[0], cols + after[1]
+    """(points, colours) lists of float32 arrays of segment end points of skeleton ``ob`` drawn as ``kind`` (default:
+    Maya joints, or sticks with ``stick``): the same lines and colours as the per-joint geometry, built in arrays."""
+    parts = _parts(ob, scene, depsgraph, kind or ('STICK' if stick else 'OCTAHEDRAL'), playing)
+    return _segments(*_part_arrays([parts], perspective))
 
 
 _ARMS = {}          # view layer pointer -> (layer generation, its armature objects in its object order)
@@ -2159,18 +2235,29 @@ def _joined(context):
 
 
 def _join_view(shown, parts, persp):
-    """[points, colours, None, ``_COLOURS`` entry] of the ``_parts`` of the skeletons ``shown`` draws: the points
-    joined again, the colours kept while every part still has the same colour array (``_paint``)."""
+    """[points, colours, None, ``_COLOURS`` entry, int32 line index into the points] of the ``_parts`` of the
+    skeletons ``shown`` draws: the points joined again, the colours and the line index kept while every part still
+    has the same colour array (``_paint``) and line index."""
     import numpy as np
-    pts, cols = _part_arrays(parts, persp)
+    pts, cols, index = _part_arrays(parts, persp)
     joined = np.concatenate(pts) if pts else np.zeros((0, 3), np.float32)
     held = _COLOURS.get(shown)
     if (held is None or len(held[0]) != len(cols) or any(a is not b for a, b in zip(held[0], cols))
-            or len(held[1]) != len(joined)):
+            or any(a is not b for a, b in zip(held[3], index)) or len(held[1]) != len(joined)):
         if len(_COLOURS) > 16:
             _COLOURS.clear()
-        held = _COLOURS[shown] = [cols, np.concatenate(cols) if cols else np.zeros((0, 4), np.float32), None]
-    return [joined, held[1], None, held]
+        lines, start = [], 0
+        for p, x in zip(pts, index):
+            lines.append((np.arange(len(p), dtype=np.intc) if x is None else x) + np.intc(start))
+            start += len(p)
+        held = _COLOURS[shown] = [cols, np.concatenate(cols) if cols else np.zeros((0, 4), np.float32), None, index,
+                                  np.concatenate(lines) if lines else np.zeros(0, np.intc), None]
+    return [joined, held[1], None, held, held[4]]
+
+
+def joined_segments(hit):
+    """(points, colours) of joined lines ``hit`` (``_joined``) as segment end points (what its line index draws)."""
+    return hit[0][hit[4]], hit[1][hit[4]]
 
 
 _FORMATS = {}       # attribute name -> GPU vertex format of that attribute alone
@@ -2189,22 +2276,25 @@ def _vertex_buffer(name, data):
 
 
 def _new_batch(hit):
-    """GPU batch of joined lines ``hit`` (``_joined``): the colours' vertex buffer, made once and kept with the
-    colours (``_COLOURS``), and one of the points. The colours come first: Blender draws a polyline batch with the
-    colour format of its first vertex buffer (gpu_batch.cc, polyline_draw_workaround)."""
-    from gpu.types import GPUBatch
+    """GPU batch of joined lines ``hit`` (``_joined``): the colours' vertex buffer and the line index, made once and
+    kept with the colours (``_COLOURS``), and one vertex buffer of the points. The colours come first: Blender draws
+    a polyline batch with the colour format of its first vertex buffer (gpu_batch.cc, polyline_draw_workaround). The
+    polyline shader reads each segment end through the index, so a point shared by several segments gives each the
+    same position and colour as when every segment had its own copy (gpu_batch.cc, GPU_batch_bind_as_resources)."""
+    from gpu.types import GPUBatch, GPUIndexBuf
     held = hit[3]
     if held[2] is None:
         held[2] = _vertex_buffer("color", held[1])
-    batch = GPUBatch(type='LINES', buf=held[2])
+    if held[5] is None:
+        held[5] = GPUIndexBuf(type='LINES', seq=held[4].reshape(-1, 2))
+    batch = GPUBatch(type='LINES', buf=held[2], elem=held[5])
     batch.vertbuf_add(_vertex_buffer("pos", hit[0]))
     return batch
 
 
 def cached_view_lines(context):
     """``view_lines`` kept until a joint can have changed, shared by the views."""
-    hit = _joined(context)
-    return hit[0], hit[1]
+    return joined_segments(_joined(context))
 
 
 @bpy.app.handlers.persistent
@@ -2235,7 +2325,7 @@ def _draw():
         hit = _joined(context)
     except (ReferenceError, AttributeError, KeyError, ValueError, RuntimeError):
         return
-    if not len(hit[0]):
+    if not len(hit[4]):
         return
     import gpu
     region = context.region

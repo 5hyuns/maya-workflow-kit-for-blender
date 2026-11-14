@@ -257,7 +257,7 @@ def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
         """Both skeletons built again from scratch (what the view would draw without anything kept)."""
         mj._forget()                                  # nothing kept
         got = mj._joined(view)
-        return np.array(got[0]), np.array(got[1])
+        return mj.joined_segments(got)
 
     try:
         mj.changed()
@@ -271,7 +271,7 @@ def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
             bpy.context.view_layer.update()           # this drag step's depsgraph update
             got = mj._joined(view)
             assert built == ["a"], f"step {step}: only the dragged skeleton is built ({built})"
-            pts, cols = np.array(got[0]), np.array(got[1])
+            pts, cols = mj.joined_segments(got)
             want = fresh()
             assert pts.shape == want[0].shape and np.allclose(pts, want[0], atol=1e-6), f"step {step}: points"
             assert np.array_equal(cols, want[1]), f"step {step}: colours"
@@ -297,7 +297,7 @@ def test_dragging_one_skeleton_keeps_the_other_skeletons_lines():
         bpy.context.view_layer.update()
         got = mj._joined(view)
         assert built == ["a"], f"after the drag the skeleton the update touched is built ({built})"
-        pts, cols = np.array(got[0]), np.array(got[1])
+        pts, cols = mj.joined_segments(got)
         want = fresh()
         assert pts.shape == want[0].shape and np.allclose(pts, want[0], atol=1e-6), "after the drag: points"
         assert np.array_equal(cols, want[1]), "after the drag: colours"
