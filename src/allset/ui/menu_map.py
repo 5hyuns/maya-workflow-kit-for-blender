@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large table file: search it (grep) or read line ranges; reading it whole is rarely needed.
 """Maya menu item -> Blender action.
 
 Key = label path in ``menu_data.MENUS`` ("Create/Polygon Primitives/Cube"),
