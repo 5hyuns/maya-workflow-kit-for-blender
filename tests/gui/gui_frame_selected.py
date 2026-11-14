@@ -125,6 +125,11 @@ def reenable():
  with override():import_module(MODULE+'.switch').set_mode(True,layout=False)
  far_view()
 @step
+def reenable_settle():
+ # Turning Maya mode on starts a timer that builds the Status Line icons in one call; on a busy machine that call
+ # can land between F and the check, so the viewport would not redraw in between. Let it run first.
+ pass
+@step
 def reenabled_press():tap('F')
 @step
 def reenabled_result():
