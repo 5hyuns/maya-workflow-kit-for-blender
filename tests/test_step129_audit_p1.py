@@ -174,6 +174,7 @@ def test_paint_skin_weights_normalizes_interactively():
     _mod("compat").unified_paint_settings(ts).weight = 1.0
     ts.weight_paint.brush.weight = 1.0
     ts.weight_paint.brush.blend = 'MIX'
+    ts.weight_paint.brush.strength = 1.0     # Blender 5.3's default weight brush is Add Weight at 0.05
     mod, name = paint_weights.FLOOD_OP.split(".")
     assert getattr(getattr(bpy.ops, mod), name)() == {'FINISHED'}       # the dock's Flood button
     bpy.ops.allset.paint_skin_weights()                                  # leave the tool
@@ -192,6 +193,7 @@ def test_flood_keeps_blender_choice_without_normalization():
     _mod("compat").unified_paint_settings(ts).weight = 1.0
     ts.weight_paint.brush.weight = 1.0
     ts.weight_paint.brush.blend = 'MIX'
+    ts.weight_paint.brush.strength = 1.0     # Blender 5.3's default weight brush is Add Weight at 0.05
     mod, name = _mod("ui.paint_weights").FLOOD_OP.split(".")
     getattr(getattr(bpy.ops, mod), name)()
     bpy.ops.allset.paint_skin_weights()
