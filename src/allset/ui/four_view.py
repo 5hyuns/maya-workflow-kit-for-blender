@@ -40,7 +40,7 @@ AXIS = {"top": Quaternion(), "front": Euler((math.pi / 2, 0.0, 0.0)).to_quaterni
 DEFAULT_SHADING = {"top": 'SOLID', "persp": 'SOLID', "front": 'SOLID', "side": 'SOLID'}
 SPLITS = (0.5001, 0.4999)            # HORIZONTAL (new on top), VERTICAL (new on the left)
 
-_SPACE_PROPS = ("lens", "clip_start", "clip_end")
+_SPACE_PROPS = ("lens", "clip_start", "clip_end", "use_local_camera", "lock_camera")
 _SKIP = {"rna_type"}
 
 
@@ -220,13 +220,16 @@ def _apply_props(struct, values, first=("type",)):
 
 
 def capture(space):
-    """One panel's settings: shading, overlays, object types shown, lens / clip and the camera."""
+    """One panel's settings: shading, overlays, object types shown, lens / clip and the camera (the view, and the
+    camera object it looks through with its camera zoom / offset)."""
     rv3d = space.region_3d
     view = {}
     if rv3d is not None:
         view = {"perspective": rv3d.view_perspective, "rotation": list(rv3d.view_rotation),
                 "location": list(rv3d.view_location), "distance": rv3d.view_distance,
-                "side": bool(rv3d.is_orthographic_side_view)}
+                "side": bool(rv3d.is_orthographic_side_view),
+                "camera": space.camera.name if space.camera is not None else "",
+                "camera_zoom": rv3d.view_camera_zoom, "camera_offset": list(rv3d.view_camera_offset)}
     shown = {p.identifier: getattr(space, p.identifier) for p in space.bl_rna.properties
              if p.identifier.startswith("show_object_viewport_")}
     return {"shading": _props(space.shading), "overlay": _props(space.overlay),
@@ -241,24 +244,46 @@ def capture_area(area):
     return out
 
 
-def apply(space, data):
+def _saved_camera(space, view, scene):
+    """The camera a recorded panel looks through: its own camera (by name, set on the panel again), else the scene's
+    active camera; None when that camera is gone."""
+    if not space.use_local_camera:
+        return scene.camera if scene is not None else None
+    ob = scene.objects.get(view.get("camera") or "") if scene is not None else None
+    if ob is not None:
+        space.camera = ob            # only while the view has its own camera: else this sets the scene camera
+    return ob
+
+
+def apply(space, data, scene=None):
+    """Put a recorded panel back. A panel that looked through a camera looks through it again, with its camera zoom
+    / offset, like a Maya panel keeps its camera; when that camera is gone it shows the perspective view."""
     _apply_props(space.shading, data.get("shading", {}))
     _apply_props(space.overlay, data.get("overlay", {}), first=())
     _apply_props(space, {**data.get("space", {}), **data.get("shown", {})}, first=())
     view, rv3d = data.get("view"), space.region_3d
     if view and rv3d is not None:
+        cam = _saved_camera(space, view, scene or bpy.context.scene)
         rv3d.view_perspective = view["perspective"] if view["perspective"] != 'CAMERA' else 'PERSP'
         rv3d.view_rotation = Quaternion(view["rotation"])
         rv3d.view_location = view["location"]
         rv3d.view_distance = view["distance"]
         if view["perspective"] == 'ORTHO':
             rv3d.is_orthographic_side_view = view["side"]
+        elif view["perspective"] == 'CAMERA' and cam is not None:
+            rv3d.view_perspective = 'CAMERA'
+            rv3d.view_camera_zoom = view.get("camera_zoom", rv3d.view_camera_zoom)
+            rv3d.view_camera_offset = view.get("camera_offset", tuple(rv3d.view_camera_offset))
 
 
 def default(space, role, scene):
     """A panel showing Maya's startup camera for ``role`` (persp = Maya's new-scene persp)."""
     from ..operators import units, view
     space.shading.type = DEFAULT_SHADING[role]
+    # Blender's area split copies the whole view: a panel split off a view that looks through camera1 would look
+    # through camera1 again for View > Cameras > Active Camera. A new panel starts with the scene's camera.
+    space.use_local_camera = False
+    space.lock_camera = False
     rv3d = space.region_3d
     if rv3d is None:
         return
@@ -306,7 +331,7 @@ def _place(context, role, area, saved, window=None):
             if window is not None:
                 _place_later(window.as_pointer(), area.as_pointer(), role)   # a new 3D View: region data next tick
         elif "shading" in data:
-            apply(space, data)
+            apply(space, data, context.scene)
         else:
             default(space, role, context.scene)
     area.tag_redraw()

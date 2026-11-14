@@ -77,6 +77,69 @@ def test_maya_cameras_per_role():
     check(a.region_3d.view_perspective == 'PERSP', "persp")
 
 
+def _camera(name):
+    ob = bpy.data.objects.get(name)
+    if ob is None:
+        ob = bpy.data.objects.new(name, bpy.data.cameras.new(name))
+        bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+
+def _looks_through(space):
+    if space.region_3d.view_perspective != 'CAMERA':
+        return None
+    ob = space.camera if space.use_local_camera else bpy.context.scene.camera
+    return ob.name if ob is not None else None
+
+
+def test_a_camera_panel_keeps_its_camera():
+    """#362: a panel that looks through a camera gets it back (its own camera, zoom and offset), like a Maya panel."""
+    a, b = _two()
+    scene = bpy.context.scene
+    scene.camera = _camera("cam_scene")
+    four_view.default(a, "persp", scene)
+    four_view.default(b, "top", scene)
+    a.use_local_camera = True
+    a.camera = _camera("cam_own")
+    a.lock_camera = True
+    a.region_3d.view_perspective = 'CAMERA'
+    a.region_3d.view_camera_zoom = 9.0
+    a.region_3d.view_camera_offset = (0.1, -0.05)
+    data = four_view.capture(a)
+    json.dumps(data)
+    four_view.apply(b, data, scene)
+    check(_looks_through(b) == "cam_own" and b.use_local_camera and b.lock_camera, f"own camera {_looks_through(b)}")
+    check(scene.camera.name == "cam_scene", "the scene camera stays")
+    check(abs(b.region_3d.view_camera_zoom - 9.0) < 1e-4, f"zoom {b.region_3d.view_camera_zoom}")
+    check(abs(b.region_3d.view_camera_offset[0] - 0.1) < 1e-4 and abs(b.region_3d.view_camera_offset[1] + 0.05) < 1e-4,
+          f"offset {tuple(b.region_3d.view_camera_offset)}")
+    # the scene's camera (View > Cameras > Active Camera)
+    four_view.default(a, "persp", scene)
+    a.region_3d.view_perspective = 'CAMERA'
+    four_view.default(b, "top", scene)
+    four_view.apply(b, four_view.capture(a), scene)
+    check(_looks_through(b) == "cam_scene" and not b.use_local_camera, f"scene camera {_looks_through(b)}")
+    # a camera that is gone: the perspective view
+    a.use_local_camera = True
+    a.camera = _camera("cam_gone")
+    a.region_3d.view_perspective = 'CAMERA'
+    data = four_view.capture(a)
+    bpy.data.objects.remove(bpy.data.objects["cam_gone"])
+    four_view.default(b, "top", scene)
+    four_view.apply(b, data, scene)
+    check(b.region_3d.view_perspective == 'PERSP', f"gone camera -> {b.region_3d.view_perspective}")
+
+
+def test_a_new_panel_has_no_camera_of_its_own():
+    """A panel split off a view that looks through a camera starts with the scene camera (Blender copies the view)."""
+    a, _b = _two()
+    a.use_local_camera = True
+    a.camera = _camera("cam_own")
+    a.lock_camera = True
+    four_view.default(a, "front", bpy.context.scene)
+    check(not a.use_local_camera and not a.lock_camera, "local camera / camera lock off")
+
+
 def test_roles_by_place():
     def area(x, y):
         return SimpleNamespace(x=x, y=y, width=100, height=80)
