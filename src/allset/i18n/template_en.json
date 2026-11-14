@@ -8473,27 +8473,33 @@
    "Save": "Save",
    "Tool": "Tool"
   },
-  "Labels/ui/menu_sets": {
-   "Add-on Menus": "Add-on Menus",
-   "Away": "Away",
-   "Back": "Back",
-   "Blender": "Blender",
+  "Labels/ui/menu_bar_addons": {
+   "Add-on Menus": "Add-on Menus"
+  },
+  "Labels/ui/menu_item_ops": {
    "Enter mesh edit (component) mode first": "Enter mesh edit (component) mode first",
-   "Hold Row": "Hold Row",
    "Maya Command in Component Mode": "Maya Command in Component Mode",
    "Menu Item": "Menu Item",
    "Menu Item on Whole Mesh": "Menu Item on Whole Mesh",
-   "Menus": "Menus",
    "No Blender equivalent in Maya Workflow Kit yet": "No Blender equivalent in Maya Workflow Kit yet",
    "Not Available": "Not Available",
-   "Option Box": "Option Box",
-   "Point for Option Box": "Point for Option Box",
    "Run in 3D View": "Run in 3D View",
    "Set": "Set",
-   "Set Tool": "Set Tool",
-   "Shelf": "Shelf",
-   "UI Elements": "UI Elements",
+   "Set Tool": "Set Tool"
+  },
+  "Labels/ui/menu_option_box": {
+   "Away": "Away",
+   "Back": "Back",
+   "Hold Row": "Hold Row",
+   "Option Box": "Option Box",
+   "Point for Option Box": "Point for Option Box",
    "❒ Option box: click the box, or press and hold the item (or Shift / Ctrl+click)": "❒ Option box: click the box, or press and hold the item (or Shift / Ctrl+click)"
+  },
+  "Labels/ui/menu_sets": {
+   "Blender": "Blender",
+   "Menus": "Menus",
+   "Shelf": "Shelf",
+   "UI Elements": "UI Elements"
   },
   "Labels/ui/mesh_tools": {
    "3D Cut and Sew UV Tool": "3D Cut and Sew UV Tool",
@@ -10500,20 +10506,26 @@
    "Put back the values the window opened with (Maya's Edit > Revert to Saved)": "Put back the values the window opened with (Maya's Edit > Revert to Saved)",
    "Put back the values the window opened with and close it (Maya's Cancel)": "Put back the values the window opened with and close it (Maya's Cancel)"
   },
-  "Tooltips/ui/menu_sets": {
+  "Tooltips/ui/menu_bar_addons": {
+   "Menus other add-ons put in Blender's top bar": "Menus other add-ons put in Blender's top bar"
+  },
+  "Tooltips/ui/menu_item_ops": {
    "A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there\n(``menu_map.EDIT_MODE``)": "A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there\n(``menu_map.EDIT_MODE``)",
-   "Maya Windows > UI Elements": "Maya Windows > UI Elements",
    "Maya menu item with an option box (press and hold: Option Box)": "Maya menu item with an option box (press and hold: Option Box)",
    "Maya menu item without a Blender equivalent in Maya Workflow Kit (always greyed out)": "Maya menu item without a Blender equivalent in Maya Workflow Kit (always greyed out)",
-   "Maya option box: the command's option window": "Maya option box: the command's option window",
    "Maya radio menu item: set this choice": "Maya radio menu item: set this choice",
-   "Menus other add-ons put in Blender's top bar": "Menus other add-ons put in Blender's top bar",
-   "Move the pointer for a held option box: onto the hold menu's row, away (closes the menu) and back": "Move the pointer for a held option box: onto the hold menu's row, away (closes the menu) and back",
    "Run a Blender operator in the largest 3D View (for Maya menu items)": "Run a Blender operator in the largest 3D View (for Maya menu items)",
    "Run a component command on every component of the selected meshes (Maya does that for an object\nselection) and come back to object mode, as one undo step": "Run a component command on every component of the selected meshes (Maya does that for an object\nselection) and come back to object mode, as one undo step",
-   "Switch the 3D View tool (for Maya menu items that pick a tool)": "Switch the 3D View tool (for Maya menu items that pick a tool)",
-   "The Maya menu bar folded into one menu (header menus collapsed)": "The Maya menu bar folded into one menu (header menus collapsed)",
+   "Switch the 3D View tool (for Maya menu items that pick a tool)": "Switch the 3D View tool (for Maya menu items that pick a tool)"
+  },
+  "Tooltips/ui/menu_option_box": {
+   "Maya option box: the command's option window": "Maya option box: the command's option window",
+   "Move the pointer for a held option box: onto the hold menu's row, away (closes the menu) and back": "Move the pointer for a held option box: onto the hold menu's row, away (closes the menu) and back",
    "The option box of the Maya menu item that was held": "The option box of the Maya menu item that was held"
+  },
+  "Tooltips/ui/menu_sets": {
+   "Maya Windows > UI Elements": "Maya Windows > UI Elements",
+   "The Maya menu bar folded into one menu (header menus collapsed)": "The Maya menu bar folded into one menu (header menus collapsed)"
   },
   "Tooltips/ui/modeling_toolkit": {
    "Maya soft select falloff mode: Volume (by distance) or Surface (along the connected surface)": "Maya soft select falloff mode: Volume (by distance) or Surface (along the connected surface)",

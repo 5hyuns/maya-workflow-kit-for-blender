@@ -348,7 +348,7 @@ def hold_case(path, row_k):
         warp = [w[1:] for w in ms().LAST_WARP if w[0] == 'HOLD_ROW']
         C["warp"] = list(warp[0]) if warp else []
         x, y = C["warp"] if warp else C["row"]
-        ms().AWAY_TICK = 0.3
+        mod(".ui.menu_option_box").AWAY_TICK = 0.3
         ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
         ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
         if ms().compat.menus_close_on_leave(bpy.context.preferences):
@@ -361,7 +361,7 @@ def hold_case(path, row_k):
 
     def s_result():
         shot(tag + "_option_box")
-        ms().AWAY_TICK = 0.05
+        mod(".ui.menu_option_box").AWAY_TICK = 0.05
         print("GUI350 hold", path, "warp", C["warp"], "calls", C["calls"], flush=True)
         check(f"hotbox {path}: press and hold the item, let go = the option box ({C['calls']})",
               C["calls"] == [("box_hold", path), ("box", path)])
