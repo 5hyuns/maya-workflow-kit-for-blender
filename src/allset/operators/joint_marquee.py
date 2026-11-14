@@ -15,6 +15,12 @@ A box that changes nothing in Blender's eyes (nothing selected before, no Blende
 not registered, so the box is also read from the running operator while it is drawn and used when nothing new was
 registered. Blender pushed no undo step then, so the kit's step stands alone. A running lasso keeps its path to
 itself until it ends, so the path of such a lasso is the pointer track a draw cursor callback collects while it runs.
+
+While a drag waits, the scene evaluations are counted (a depsgraph_update_post handler; Blender runs the update
+handlers only for an evaluation that updated something, scene.cc:2759-2786). When Blender's box / lasso has ended with a
+result and no evaluation has run since, its selection is still waiting to be evaluated, and the joint rules are told so
+(``waiting``): the kit's first operator call evaluates what is pending before it runs, so a selection written then is
+evaluated in the same pass as Blender's result.
 """
 
 import bpy
@@ -27,6 +33,22 @@ _TICK = 0.05
 _GIVE_UP = 1.5
 _pending = []
 _track = {"handle": None, "region": 0, "pts": []}      # pointer track of the running drag (region px)
+_evaluations = [0]      # scene evaluations counted while a drag waits (``_count``)
+
+
+def _count(*_args):
+    _evaluations[0] += 1
+
+
+def _counting(on):
+    """The evaluation count runs only while a drag waits."""
+    handlers = bpy.app.handlers.depsgraph_update_post
+    if on:
+        if _count not in handlers:
+            handlers.append(_count)
+    else:
+        while _count in handlers:
+            handlers.remove(_count)
 
 
 def _track_cursor(*args):
@@ -75,8 +97,9 @@ def begin(context):
     _pending.append({
         "window": live_refs.pointer(context.window), "area": context.area.as_pointer(),
         "region": context.region.as_pointer(), "last": last, "snap": snapshot(context),
-        "seen": False, "waited": 0.0, "mode": context.mode, "box": None,
+        "seen": False, "waited": 0.0, "mode": context.mode, "box": None, "evaluations": _evaluations[0],
     })
+    _counting(True)
     if not bpy.app.timers.is_registered(_watch):
         bpy.app.timers.register(_watch, first_interval=_TICK)
     _track_start(context.region)
@@ -211,8 +234,9 @@ def objects_instead(context, poly, mode, lasso):
         bpy.ops.view3d.select_lasso(path=[{"name": "", "loc": q, "time": 0.0} for q in poly], mode=mode)
 
 
-def apply(context, poly, mode, snap):
-    """Maya's joint rules for a finished drag. Returns the joints selected (empty: Blender's result stands)."""
+def apply(context, poly, mode, snap, waiting=False):
+    """Maya's joint rules for a finished drag. Returns the joints selected (empty: Blender's result stands).
+    ``waiting``: Blender's own result has not been evaluated yet (see ``joint_selection.select_groups``)."""
     from ..ui import maya_joints
     from . import joint_selection
     space = context.space_data
@@ -235,7 +259,7 @@ def apply(context, poly, mode, snap):
             else:
                 groups.append((ob, [name]))
         # the first skeleton with the drag's modifiers, the rest of a replace adds
-        joint_selection.select_groups(context, groups, shift, ctrl, restored)
+        joint_selection.select_groups(context, groups, shift, ctrl, restored, waiting)
         return [n for _o, n in picks]
     restore(context, snap)
     for ob, name in picks:                    # toggle / remove: joint by joint
@@ -273,8 +297,10 @@ def _finish(entry):
     region = next((r for r in area.regions if r.as_pointer() == entry["region"]), None) if area else None
     if region is None:
         return
+    # Blender's box / lasso ended with a result and the scene has not been evaluated since
+    waiting = op is not None and entry.get("evaluations") == _evaluations[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
-        picked = apply(bpy.context, poly, mode, entry["snap"])
+        picked = apply(bpy.context, poly, mode, entry["snap"], waiting)
         if not picked and entry["mode"] in {'POSE', 'EDIT_ARMATURE'}:
             lasso = (op.bl_idname == "VIEW3D_OT_select_lasso") if op is not None else bool(entry.get("lasso"))
             objects_instead(bpy.context, poly, mode, lasso)
@@ -312,9 +338,12 @@ def _running(entry):
 def _watch():
     for entry in list(_pending):
         running = _running(entry)
+        ended = _registered(entry) is not None
+        if running or not ended:
+            entry["evaluations"] = _evaluations[0]      # Blender's box / lasso has no result yet
         entry["seen"] = entry["seen"] or running
         entry["waited"] += _TICK
-        if not running and (entry["seen"] or _registered(entry) is not None):
+        if not running and (entry["seen"] or ended):
             _pending.remove(entry)
             try:
                 _finish(entry)
@@ -324,6 +353,7 @@ def _watch():
             _pending.remove(entry)
     if not _pending:
         _track_stop()
+        _counting(False)
     return _TICK if _pending else None
 
 
@@ -351,5 +381,6 @@ def pending():
 def cancel_all():
     _pending.clear()
     _track_stop()
+    _counting(False)
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)

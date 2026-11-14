@@ -415,3 +415,125 @@ def test_a_replace_marquee_over_posed_skeletons_evaluates_twice():
     finally:
         mj.region_pick = real
         _reset()
+
+
+pv = import_module(kit.MODULE + ".operators.pivot")
+
+
+def _start_with(kind):
+    """``_start`` plus a pivot setting: ``..._bbc`` Bounding Box Center, ``..._maya_axes`` the Maya pivot axes in the
+    orientation slots."""
+    if kind.endswith("_bbc"):
+        _start(kind[:-4])
+        bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
+    elif kind.endswith("_maya_axes"):
+        _start(kind[:-10])
+        from mathutils import Matrix
+        scene, layer = bpy.context.scene, bpy.context.view_layer
+        keep = layer.objects.active
+        if pv._orientation(scene) is None:
+            layer.objects.active = scene.objects["box"]
+        assert pv.set_custom_orientation(bpy.context, Matrix.Identity(3))
+        layer.objects.active = keep
+    else:
+        _start(kind)
+    bpy.context.view_layer.update()
+
+
+def _pivot_reset():
+    scene = bpy.context.scene
+    scene.tool_settings.transform_pivot_point = 'ACTIVE_ELEMENT'
+    for slot in scene.transform_orientation_slots:
+        if slot.type != 'GLOBAL':
+            slot.type = 'GLOBAL'
+
+
+def test_a_marquee_ends_the_same_while_blenders_box_waits_for_its_evaluation():
+    """Blender's box result not evaluated yet when the joint rules run (``waiting``): every start, joint set and
+    modifier ends as when Blender's result was evaluated first, with the same states after Undo and Redo, the same bone
+    flags in Edit Mode, pivot point and orientation slots."""
+    _scene()
+    real = mj.region_pick
+    hits = {}
+    mj.region_pick = lambda _ctx, ob, _poly: list(hits.get(ob.name, ()))
+    try:
+        for start in ("object", "object_C", "pose_A", "pose_A3", "pose_AB", "pose_AC", "pose_A_hidden_B", "edit_B",
+                      "pose_AB_bbc", "pose_AB_maya_axes", "pose_AC_bbc"):
+            for chosen in ({"rigA": ["a1", "a2"], "rigB": ["b2", "b4"]}, {"rigA": ["a0", "a4"], "rigB": ["b1"]},
+                           {"rigA": ["a1"], "rigB": ["b3"], "rigC": ["c0", "c2"]}, {"rigA": ["a1", "a3"]}):
+                for mode in MODS:
+                    results = []
+                    for waiting in (False, True):
+                        _pivot_reset()
+                        _start_with(start)
+                        hits.clear()
+                        hits.update(chosen)
+                        ctx = _Ctx(_space())
+                        snap = jm.snapshot(ctx)
+
+                        def run():
+                            _box_takes_joints_off(mode)
+                            if not waiting:
+                                bpy.context.view_layer.update()
+                            jm.apply(ctx, POLY, mode, snap, waiting)
+                        out = _outcome(run)
+                        scene = bpy.context.scene
+                        out["pivot"] = (scene.tool_settings.transform_pivot_point,
+                                        [s.type for s in scene.transform_orientation_slots])
+                        results.append(out)
+                    assert results[0] == results[1], (start, chosen, mode, results)
+    finally:
+        mj.region_pick = real
+        _pivot_reset()
+        _reset()
+
+
+class _Kinds:
+    """The kinds of data each depsgraph evaluation updated, in order."""
+
+    KINDS = ('SCENE', 'OBJECT', 'ARMATURE', 'MESH')
+
+    def __enter__(self):
+        self.rounds = []
+
+        def note(_scene, depsgraph):
+            self.rounds.append({k for k in self.KINDS if depsgraph.id_type_updated(k)})
+        self._fn = note
+        bpy.app.handlers.depsgraph_update_post.append(note)
+        return self
+
+    def __exit__(self, *exc):
+        bpy.app.handlers.depsgraph_update_post.remove(self._fn)
+
+
+def test_a_replace_marquee_is_evaluated_with_blenders_waiting_box():
+    """Two posed skeletons, the last one active, a replace box whose Blender result has not been evaluated yet: the
+    joint selection is evaluated together with Blender's result, and the evaluation after the mode switches updates
+    only the skeleton objects (no scene selection, no armature data), so the skeletons and what they deform are not
+    evaluated again for the selection."""
+    _scene()
+    picks = {"rigA": ["a0", "a2"], "rigB": ["b1", "b3"]}
+    real = mj.region_pick
+    mj.region_pick = lambda _ctx, ob, _poly: list(picks.get(ob.name, ()))
+    try:
+        _start("pose_AB")
+        ctx = _Ctx(_space())
+        jm.apply(ctx, POLY, 'SET', jm.snapshot(ctx))      # the joints of a first box
+        bpy.context.view_layer.update()
+        for _rep in range(2):
+            snap = jm.snapshot(ctx)
+            with _Kinds() as k:
+                _box_takes_joints_off('SET')                # Blender's box result, not evaluated yet
+                jm.apply(ctx, POLY, 'SET', snap, True)
+                up.push(bpy.context.scene, "Select")
+                bpy.context.view_layer.update()
+            assert len(k.rounds) == 2, k.rounds
+            assert {'SCENE', 'ARMATURE'} <= k.rounds[0], k.rounds
+            assert not k.rounds[1] & {'SCENE', 'ARMATURE', 'MESH'}, k.rounds
+            obs = bpy.context.scene.objects
+            assert {n: sorted(pb.name for pb in obs[n].pose.bones if pb.select) for n in picks} == picks
+            assert (obs["rigA"].mode, obs["rigB"].mode, bpy.context.view_layer.objects.active.name) == \
+                ('POSE', 'POSE', "rigB")
+    finally:
+        mj.region_pick = real
+        _reset()

@@ -530,6 +530,16 @@ def _quiet_between(context, out):
     return True
 
 
+def _one_switch_ready(context, out, lead=None):
+    """``_one_switch`` can run now (see there)."""
+    macro = bpy.ops.allset.joint_pick_switch if out else bpy.ops.allset.joint_pick_enter
+    try:
+        with context.temp_override(**({} if out else {"active_object": lead})):
+            return _quiet_between(context, out) and macro.poll()
+    except (AttributeError, KeyError, ReferenceError, RuntimeError, TypeError):
+        return False
+
+
 def _one_switch(context, write, out, lead=None):
     """The switch out of the current mode (``out``), ``write()`` and the switch into Pose Mode as one operator call (a
     macro). Blender evaluates the scene after an operator call, not between the operators of a macro, so the
@@ -539,13 +549,9 @@ def _one_switch(context, write, out, lead=None):
     the usual way: the switches can't run in this context, or a depsgraph handler of the kit would act on the Object
     Mode state between them (``_quiet_between``). True when ``write`` ran (raising what it raised), False when the
     switch out didn't happen (the caller writes)."""
-    macro = bpy.ops.allset.joint_pick_switch if out else bpy.ops.allset.joint_pick_enter
-    try:
-        with context.temp_override(**({} if out else {"active_object": lead})):
-            if not _quiet_between(context, out) or not macro.poll():
-                return None
-    except (AttributeError, KeyError, ReferenceError, RuntimeError, TypeError):
+    if not _one_switch_ready(context, out, lead):
         return None
+    macro = bpy.ops.allset.joint_pick_switch if out else bpy.ops.allset.joint_pick_enter
     job = {"write": write, "out": out, "ran": False, "err": None}
     _JOB[0] = job
     try:
@@ -654,7 +660,7 @@ def select_many(context, ob, names, shift=False, ctrl=False):
     return True
 
 
-def select_groups(context, groups, shift=False, ctrl=False, restored=None):
+def select_groups(context, groups, shift=False, ctrl=False, restored=None, waiting=False):
     """``select_many`` on each (skeleton, names) of ``groups`` in turn: the first with ``shift`` / ``ctrl``, the rest
     added (a replace / add marquee over several skeletons).
 
@@ -669,7 +675,15 @@ def select_groups(context, groups, shift=False, ctrl=False, restored=None):
     ``restored``: {skeleton pointer: (skeleton, its pose bones' selection as bools in bone order)}, the joint
     selection the caller puts back before the picks (the one a marquee started from) and has not written yet. It is
     written first; or, when the switches can't fail, with the joints before the switch into Pose Mode (see
-    ``select``), only where the end state differs: a replace clears every skeleton of the view layer anyway."""
+    ``select``), only where the end state differs: a replace clears every skeleton of the view layer anyway.
+
+    ``waiting``: a change made before (Blender's own box / lasso result) has not been evaluated yet. The switches'
+    operator call evaluates it first anyway, so a replace from Pose Mode writes the end state before the switches,
+    evaluated in that same pass, and the switches' own evaluation is left with the mode change. Only while the active
+    object is the last skeleton, in Pose Mode: the switch out of Pose Mode acts on the active object (object_modes.cc
+    ``mode_set_ex``), so it takes the same skeletons out as with the selection written between the switches; entering
+    Pose Mode changes no bone selection and enters the active and selected skeletons (object_edit.cc
+    ``posemode_exec``), the ones written."""
     groups = [(ob, list(names)) for ob, names in groups if names]
     restored = restored or {}
     one_by_one = (len(groups) < 2 or shift != ctrl or context.mode not in {'OBJECT', 'POSE'}
@@ -709,6 +723,14 @@ def select_groups(context, groups, shift=False, ctrl=False, restored=None):
         if early:
             _pick_groups(groups, not shift)     # a replace cleared the leads: each is set again
 
+    if (waiting and early and not shift and context.mode == 'POSE' and last.mode == 'POSE'
+            and context.view_layer.objects.active == last and _one_switch_ready(context, True)):
+        write()                                 # evaluated with the pending change, before the switches
+        if _one_switch(context, lambda: None, True) is None:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        if last.mode != 'POSE':
+            bpy.ops.object.mode_set(mode='POSE')
+        return True
     # (see ``select``: the switch out, the selection and the switch in as one operator call when it can be)
     done = _one_switch(context, write, context.mode != 'OBJECT', last) if early else None
     if done is not None:
