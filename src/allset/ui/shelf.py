@@ -1657,7 +1657,7 @@ def _plan_rect(plan, region, slot, scale):
     top = round(TAB_PX * scale) if tabs else 0
     is_separator = 0 <= slot < len(buttons) and slot in separators
     size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
-    y = round((region.height - top - size) / 2)   # TNT patch: whole pixels keep icons sharp
+    y = round((region.height - top - size) / 2)   # whole pixels keep icons sharp
     off = getattr(region, "width", 0) + 10 ** 6
     if slot >= len(lay):           # past the last button (tests ask for empty slots)
         return off, y, size
