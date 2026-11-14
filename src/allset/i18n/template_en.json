@@ -6037,19 +6037,35 @@
    "Toggle Selected Labels": "Toggle Selected Labels",
    "Type": "Type"
   },
+  "Labels/operators/joint_pick_walk": {
+   "Direction": "Direction",
+   "Down": "Down",
+   "Left": "Left",
+   "Pick Walk Joint": "Pick Walk Joint",
+   "Right": "Right",
+   "Up": "Up"
+  },
   "Labels/operators/joint_selection": {
    "Joint Pick": "Joint Pick"
+  },
+  "Labels/operators/joint_tool": {
+   "Auto orient secondary axis": "Auto orient secondary axis",
+   "Create IK handle": "Create IK handle",
+   "Current solver": "Current solver",
+   "JSON list of world points: place these joints without clicks (scripts)": "JSON list of world points: place these joints without clicks (scripts)",
+   "Joint Tool": "Joint Tool",
+   "Orient Joint to World": "Orient Joint to World",
+   "Rotate-Plane Solver": "Rotate-Plane Solver",
+   "Secondary Axis": "Secondary Axis",
+   "Secondary Axis World Orientation": "Secondary Axis World Orientation",
+   "Sign": "Sign",
+   "Single-Chain Solver": "Single-Chain Solver",
+   "Solver enable": "Solver enable",
+   "Weight": "Weight"
   },
   "Labels/operators/joints": {
    "Auto orient secondary axis": "Auto orient secondary axis",
    "Behavior": "Behavior",
-   "Create IK handle": "Create IK handle",
-   "Current solver": "Current solver",
-   "Direction": "Direction",
-   "Down": "Down",
-   "JSON list of world points: place these joints without clicks (scripts)": "JSON list of world points: place these joints without clicks (scripts)",
-   "Joint Tool": "Joint Tool",
-   "Left": "Left",
    "Maya 2025+: the secondary axis follows the bend of the chain, turned toward the world orientation": "Maya 2025+: the secondary axis follows the bend of the chain, turned toward the world orientation",
    "Mirror Across": "Mirror Across",
    "Mirror Function": "Mirror Function",
@@ -6059,21 +6075,13 @@
    "Orient Joint to World": "Orient Joint to World",
    "Orientation": "Orientation",
    "Parent Joints": "Parent Joints",
-   "Pick Walk Joint": "Pick Walk Joint",
    "Primary Axis": "Primary Axis",
    "Replace With": "Replace With",
    "Replacement names for duplicated joints": "Replacement names for duplicated joints",
-   "Right": "Right",
-   "Rotate-Plane Solver": "Rotate-Plane Solver",
    "Search For": "Search For",
    "Secondary Axis": "Secondary Axis",
    "Secondary Axis World Orientation": "Secondary Axis World Orientation",
-   "Sign": "Sign",
-   "Single-Chain Solver": "Single-Chain Solver",
-   "Solver enable": "Solver enable",
-   "Unparent Joints": "Unparent Joints",
-   "Up": "Up",
-   "Weight": "Weight"
+   "Unparent Joints": "Unparent Joints"
   },
   "Labels/operators/key_batch": {
    "Create Camera From View": "Create Camera From View",
@@ -9831,18 +9839,22 @@
    "Maya Skeleton > Joint Labelling > Add Joint Labels: set the side or the type label of the selected joints": "Maya Skeleton > Joint Labelling > Add Joint Labels: set the side or the type label of the selected joints",
    "Maya Toggle Selected Labels: show or hide the labels of the selected joints and the joints below them": "Maya Toggle Selected Labels: show or hide the labels of the selected joints and the joints below them"
   },
+  "Tooltips/operators/joint_pick_walk": {
+   "Walk the joint selection through the skeleton (Maya arrow keys)": "Walk the joint selection through the skeleton (Maya arrow keys)"
+  },
   "Tooltips/operators/joint_selection": {
    "Leave the mode, write the joint pick and enter Pose Mode (internal)": "Leave the mode, write the joint pick and enter Pose Mode (internal)",
    "Write the joint pick and enter Pose Mode (internal)": "Write the joint pick and enter Pose Mode (internal)",
    "Write the joint pick waiting between the mode switches of a joint pick (internal)": "Write the joint pick waiting between the mode switches of a joint pick (internal)"
   },
+  "Tooltips/operators/joint_tool": {
+   "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish": "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish"
+  },
   "Tooltips/operators/joints": {
-   "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish": "Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish",
    "Maya Mirror Joints: copy the selected joints and their children across a plane through the origin": "Maya Mirror Joints: copy the selected joints and their children across a plane through the origin",
    "Maya Orient Joint: orient the joints from their positions (primary axis down the chain, secondary axis by the\nbend or a world direction)": "Maya Orient Joint: orient the joints from their positions (primary axis down the chain, secondary axis by the\nbend or a world direction)",
    "Parent the selected joints to the last selected one, keeping their place (Maya P)": "Parent the selected joints to the last selected one, keeping their place (Maya P)",
-   "Unparent the selected joints, keeping their place (Maya Shift+P)": "Unparent the selected joints, keeping their place (Maya Shift+P)",
-   "Walk the joint selection through the skeleton (Maya arrow keys)": "Walk the joint selection through the skeleton (Maya arrow keys)"
+   "Unparent the selected joints, keeping their place (Maya Shift+P)": "Unparent the selected joints, keeping their place (Maya Shift+P)"
   },
   "Tooltips/operators/key_batch": {
    "Copy this view's camera and look through the copy (Maya View > Create Camera From View, Ctrl+Shift+C)": "Copy this view's camera and look through the copy (Maya View > Create Camera From View, Ctrl+Shift+C)",
