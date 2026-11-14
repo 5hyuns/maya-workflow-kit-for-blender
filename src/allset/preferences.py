@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large file, one preferences class that is mostly property declarations: grep the property name; draw() is near
+# the end of the class and the settings backup follows it.
 """Add-on preferences (Preferences > Add-ons > Maya Workflow Kit).
 
 Options for Maya units and parent mode

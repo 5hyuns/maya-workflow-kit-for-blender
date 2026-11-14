@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large table file: search it (grep) or read line ranges; reading it whole is rarely needed.
 """Maya marking menus as plain data.
 
 Positions and labels follow Maya's own marking menus. Re-implemented: only labels, radial
