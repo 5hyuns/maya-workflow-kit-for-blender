@@ -3100,7 +3100,7 @@ class ALLSET_MT_cb_show(bpy.types.Menu):
 # Maya Channel Box menu bar, left to right (Maya 2022).
 MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit"),
             ("Object", "ALLSET_MT_cb_object"), ("Show", "ALLSET_MT_cb_show"))
-# Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).
+# The empty Channel Box text: three centred lines.
 EMPTY_TEXT = (i18n.mark("Select objects in the scene to view,"), i18n.mark("edit and set keyframes on channels"),
               i18n.mark("(attributes)"))
 

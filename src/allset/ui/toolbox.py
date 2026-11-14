@@ -522,8 +522,8 @@ def fit_columns(start_fit=True):
                 _move_edge(window, row, row.x + row.width // 2, row.y, -d,
                            (row.x + row.width // 2, row.y - 1), pending)
         # the Time Slider (#109): its ruler keeps 36 px times the UI scale. The template area has a
-        # fixed height, so at UI 1.25 the taller header left a 29 px ruler that Blender's current-frame box filled
-        # (look_compare time_slider_current): grow it upwards
+        # fixed height, so at UI 1.25 the taller header left a 29 px ruler that Blender's current-frame box filled:
+        # grow it upwards
         slider = time_slider_area(screen)
         if slider is not None:
             hdr = next((r.height for r in slider.regions if r.type == 'HEADER'), 0)

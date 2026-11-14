@@ -72,17 +72,16 @@ INTERMEDIATE_OF = "allset_intermediate_of"
 PIN_TYPES = ("uvPin", "proximityPin")
 AXIS_ITEMS = ("X", "Y", "Z", "-X", "-Y", "-Z")
 
-# Maya messages (Maya 2022 string resources)
+# Messages
 MSG_GEOMETRY = "Must select geometry before adding this constraint."
 MSG_OUTPUT_MODE = "Output mode does not work with this creation mode"
 MSG_NO_COMPONENTS = "No components were selected: no uvPin node created"
 MSG_NOT_IMPLEMENTED = "Not yet implemented..."
 MSG_IO = "Existing transform cannot be used as both an input and output."
 MSG_INHERIT = "Inherit transform has been turned off for {0}"
-MSG_AXIS = ("Selection rejected because normal axis cannot be the same as tangent axis. Choose an axis that is "
-            "different than the tangent axis.")
-HINT_UV = ("Select geometry to constrain to and then Shift + select transforms to derive input uvs Or selected "
-           "geometry components to specify input uvs.")
+MSG_AXIS = "The normal axis and the tangent axis lie on the same line: pick a different normal axis."
+HINT_UV = ("Select the geometry to pin to, then Shift-select the objects to pin (each takes the closest UV), "
+           "or select components of the geometry to pin at their UVs.")
 HINT_PROX = "Select geometry to constrain to and then Shift + select objects to be constrained."
 MSG_NO_DEFORMABLE = "No deformable object is selected."
 MSG_ALREADY_OFF = "Display is already toggled off."
@@ -95,7 +94,7 @@ MSG_NO_WRAP = "No wrap deformer is associated with surface {0}."
 
 # --- geometry: original and deformed points of one mesh -------------------------------------------------------
 #
-# Maya's pin surface frame (every "O" case within 1.4e-7):
+# The pin surface frame:
 # a location is (face, weights over its corners) — on a quad the bilinear (s, t) of its corners f0 f1 f2 f3, found
 # from the UV (UV Pin) or the closest point (Proximity Pin); position = the same blend of the corner points, normal =
 # the same blend of Maya vertex normals (normalised sum of the unit face normals around the vertex), tangent = dP/du

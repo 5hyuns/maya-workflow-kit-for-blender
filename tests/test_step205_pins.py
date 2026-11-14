@@ -180,6 +180,12 @@ def test_uv_pin_selection_errors_and_axes():
     assert bpy.ops.allset.uv_pin('EXEC_DEFAULT', True) == {'CANCELLED'}           # no geometry
     _select(plane, loc)
     assert bpy.ops.allset.uv_pin('EXEC_DEFAULT', True, normal_axis="Y", tangent_axis="-Y") == {'CANCELLED'}
+    try:                                                                             # same line: refused
+        pins._axes("Y", "-Y")
+    except RuntimeError as ex:
+        assert str(ex) == pins.MSG_AXIS, ex
+    else:
+        raise AssertionError("normal and tangent axes on one line were accepted")
     assert bpy.ops.allset.uv_pin('EXEC_DEFAULT', True, normal_axis="-Z", tangent_axis="X") == {'FINISHED'}
     _settle()
     m = _world(loc)
