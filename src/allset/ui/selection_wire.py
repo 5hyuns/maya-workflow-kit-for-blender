@@ -41,6 +41,7 @@ The kit draws the edges itself (POST_VIEW):
 
 import bpy
 from bpy.app.handlers import persistent
+from ..operators.group import selected_objects as _selection_roots
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
@@ -387,16 +388,6 @@ def children_map():
         if parent is not None:
             kids.setdefault(parent, []).append(ob)
     return kids
-
-
-def _selection_roots(context):
-    """Hidden locator axes must not hide the selection wire of a group's visible children."""
-    selected = context.selected_objects
-    space = _view(context)
-    if space is not None and not getattr(space, "show_object_viewport_empty", True):
-        selected = selected + [ob for ob in context.view_layer.objects.selected
-                               if ob.type == 'EMPTY' and ob not in selected]
-    return selected
 
 
 def highlighted(context, roots_shown=False):
