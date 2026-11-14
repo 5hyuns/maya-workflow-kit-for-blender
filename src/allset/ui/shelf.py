@@ -1621,7 +1621,7 @@ def icon_rect(region, slot, scale):
         is_separator = bool(record and (record.get("type") == "separator"
                                or (record.get("action") or {}).get("type") == "separator"))
     size = min((8 if is_separator else ICON_PX) * scale, region.height - top - 4)
-    y = round((region.height - top - size) / 2)   # TNT patch: whole pixels keep icons sharp
+    y = round((region.height - top - size) / 2)   # whole pixels keep icons sharp
     off = getattr(region, "width", 0) + 10 ** 6
     if slot >= len(lay):           # past the last button (tests ask for empty slots)
         return off, y, size
