@@ -124,7 +124,7 @@ def draw_res_label():
     blf.size(font, round(LABEL_SIZE * scale))
     w = blf.dimensions(font, text)[0]
     x = sum(p.x for p in pts) / len(pts) - w / 2.0
-    y = max(p.y for p in pts) + 4.0 * scale
+    y = max(p.y for p in pts) + 10.0 * scale
     blf.color(font, 0.8, 0.8, 0.8, 1.0)
     blf.position(font, round(x), round(y), 0)
     blf.draw(font, text)
