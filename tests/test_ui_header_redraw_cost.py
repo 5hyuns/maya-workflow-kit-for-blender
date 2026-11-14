@@ -16,6 +16,7 @@ status_line = import_module(kit.MODULE + ".ui.status_line")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 ws_mod = import_module(kit.MODULE + ".ui.workspaces")
 md = import_module(kit.MODULE + ".ui.maya_dock")
+mdr = import_module(kit.MODULE + ".ui.maya_dock_roles")
 prefs_mod = import_module(kit.MODULE + ".preferences")
 
 
@@ -179,8 +180,8 @@ def test_workspace_field_reads_the_workspace_list_once():
 def test_visible_kinds_is_kind_visible_for_every_dock_state():
     areas = [types.SimpleNamespace(name=f"a{i}", as_pointer=lambda i=i: 1000 + i) for i in range(4)]
     roles = {}
-    real_role = md.role
-    md.role = lambda area: roles.get(getattr(area, "name", None))
+    real_role = mdr.role
+    mdr.role = lambda area: roles.get(getattr(area, "name", None))
     try:
         for stack, floating, want in itertools.product((False, True), itertools.chain.from_iterable(
                 itertools.combinations(md.KINDS, n) for n in range(len(md.KINDS) + 1)), md.KINDS + ('BOGUS',)):
@@ -196,12 +197,12 @@ def test_visible_kinds_is_kind_visible_for_every_dock_state():
             ref = {k for k in md.KINDS if md.kind_visible(wm, k)}
             assert got == ref, (stack, floating, want, got, ref)
     finally:
-        md.role = real_role
+        mdr.role = real_role
 
 
 def test_status_line_looks_at_the_docks_once():
     lay = _Layout()
-    with _Count(md, "floating_kinds") as looks:
+    with _Count(mdr, "floating_kinds") as looks:
         status_line.draw_status_line(lay, bpy.context)
     toggles = {e[3].editor: e[2] for e in lay.log
                if e[0] == "op" and e[1] == status_line.ALLSET_OT_editor_toggle.bl_idname}

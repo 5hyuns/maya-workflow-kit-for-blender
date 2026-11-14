@@ -8517,14 +8517,18 @@
    "Dock": "Dock",
    "Dock Panel": "Dock Panel",
    "Dock Tab": "Dock Tab",
-   "Dock Tab Strip": "Dock Tab Strip",
    "Every panel of this tab stack is in its own window": "Every panel of this tab stack is in its own window",
    "Maya Panel": "Maya Panel",
    "Panel Handle": "Panel Handle",
    "Show Panel": "Show Panel",
-   "Tear Off": "Tear Off",
-   "This torn-off menu ended with its session": "This torn-off menu ended with its session",
    "Tool": "Tool"
+  },
+  "Labels/ui/maya_dock_menus": {
+   "Tear Off": "Tear Off",
+   "This torn-off menu ended with its session": "This torn-off menu ended with its session"
+  },
+  "Labels/ui/maya_dock_strip": {
+   "Dock Tab Strip": "Dock Tab Strip"
   },
   "Labels/ui/maya_grid": {
    "Grid": "Grid"
@@ -10645,10 +10649,14 @@
    "A Maya panel in its own dock area or floating window (Channel Box / Layer Editor, Attribute Editor, Modeling\nToolkit, torn-off menus)": "A Maya panel in its own dock area or floating window (Channel Box / Layer Editor, Attribute Editor, Modeling\nToolkit, torn-off menus)",
    "Dock this floating panel again (or close it)": "Dock this floating panel again (or close it)",
    "Maya panel handle: click to tear this panel off into a floating window; on a floating panel, dock it back": "Maya panel handle: click to tear this panel off into a floating window; on a floating panel, dock it back",
-   "Maya tab strip of the dock: click a tab to raise that panel": "Maya tab strip of the dock: click a tab to raise that panel",
    "Show this Maya panel: raise it where it is docked, else open it as a floating window (Maya Windows menu)": "Show this Maya panel: raise it where it is docked, else open it as a floating window (Maya Windows menu)",
-   "Show this panel in the tab stack": "Show this panel in the tab stack",
+   "Show this panel in the tab stack": "Show this panel in the tab stack"
+  },
+  "Tooltips/ui/maya_dock_menus": {
    "Tear off this menu into a floating window (Maya's dotted line at the top of a menu)": "Tear off this menu into a floating window (Maya's dotted line at the top of a menu)"
+  },
+  "Tooltips/ui/maya_dock_strip": {
+   "Maya tab strip of the dock: click a tab to raise that panel": "Maya tab strip of the dock: click a tab to raise that panel"
   },
   "Tooltips/ui/maya_grid": {
    "Show or hide the grid in this view (Maya grid: Display > Grid options set its size, lines and colours)": "Show or hide the grid in this view (Maya grid: Display > Grid options set its size, lines and colours)"

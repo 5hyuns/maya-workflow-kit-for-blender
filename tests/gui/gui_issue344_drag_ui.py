@@ -63,6 +63,7 @@ def flow():
     sw = import_module(MODULE + ".switch")
     mj = import_module(MODULE + ".ui.maya_joints")
     md = import_module(MODULE + ".ui.maya_dock")
+    mdt = import_module(MODULE + ".ui.maya_dock_tint")
     cb = import_module(MODULE + ".ui.channel_box")
     wsm = import_module(MODULE + ".ui.workspaces")
     sw.set_mode(True, layout=True)
@@ -84,7 +85,7 @@ def flow():
     pb = arm.pose.bones[name]
 
     drawn, counts = {}, {"dock": 0, "hole": 0, "template": 0, "entries": 0, "bone": 0}
-    real = {"get": cb.get_value, "hole": md._list_hole, "template": sw.template_of, "entries": wsm.entries,
+    real = {"get": cb.get_value, "hole": mdt._list_hole, "template": sw.template_of, "entries": wsm.entries,
             "bone": cb.bone_selected}
 
     def get_value(ob, key):
@@ -125,7 +126,7 @@ def flow():
         if area is not None and area.as_pointer() == dock_ptr:
             counts["dock"] += 1
 
-    md._list_hole, sw.template_of, wsm.entries = hole, template_of, entries
+    mdt._list_hole, sw.template_of, wsm.entries = hole, template_of, entries
     swap(get_value=get_value, bone_selected=bone_selected)
     handle = bpy.types.SpaceProperties.draw_handler_add(dock_drawn, (), 'WINDOW', 'POST_PIXEL')
     try:
@@ -182,7 +183,7 @@ def flow():
         check(f"a redraw after the drag reads the pixels again ({counts['hole'] - holes} reads) and keeps nothing "
               f"of the drag", counts["hole"] > holes and not md._hole_kept)
     finally:
-        md._list_hole, sw.template_of, wsm.entries = real["hole"], real["template"], real["entries"]
+        mdt._list_hole, sw.template_of, wsm.entries = real["hole"], real["template"], real["entries"]
         swap(get_value=real["get"], bone_selected=real["bone"])
         bpy.types.SpaceProperties.draw_handler_remove(handle, 'WINDOW')
     with _override(active_object=arm, object=arm):
