@@ -30,11 +30,14 @@ FORMATS = (
     ('USD', "USD (.usd .usda .usdc .usdz)", ".usd", "*.usd;*.usda;*.usdc;*.usdz"),
     ('GLTF', "glTF 2.0 (.glb .gltf)", ".glb", "*.glb;*.gltf"),
 )
-_BY_ID = {f[0]: f for f in FORMATS}
-_EXT = {ext: f[0] for f in FORMATS for ext in f[3].replace("*", "").split(";")}
-ALL_GLOB = ";".join(f[3] for f in FORMATS)
+IMPORT_FORMATS = FORMATS + (
+    ('MAYA', "Maya Native (.ma .mb)", ".ma", "*.ma;*.mb"),
+)
+_BY_ID = {f[0]: f for f in IMPORT_FORMATS}
+_EXT = {ext: f[0] for f in IMPORT_FORMATS for ext in f[3].replace("*", "").split(";")}
+ALL_GLOB = ";".join(f[3] for f in IMPORT_FORMATS)
 IMPORT_TYPES = (('AUTO', "Best Guess (by extension)", "Pick the format from the file's extension (Maya Best Guess)"),
-                *((f[0], f[1], "") for f in FORMATS))
+                *((f[0], f[1], "") for f in IMPORT_FORMATS))
 EXPORT_TYPES = tuple((f[0], f[1], "") for f in FORMATS)
 MODES = (('IMPORT', "Import", "Maya File > Import"), ('EXPORT_ALL', "Export All", "Maya File > Export All"),
          ('EXPORT_SELECTION', "Export Selection", "Maya File > Export Selection"))
@@ -840,6 +843,9 @@ class _FileDialog:
         sub = box.column()
         sub.enabled = self.maya_conversion
         sub.label(text=preset_text(fmt, k, self.mode != 'IMPORT'))
+        if fmt == 'MAYA':
+            box.label(text="Native reader; no Maya installation needed")
+            box.label(text="Standard cm / Y-up scenes; partial scene support")
         if self.mode != 'IMPORT':
             box.label(text="Selection Only", icon='CHECKBOX_HLT' if self.selection else 'CHECKBOX_DEHLT')
             if fmt in ('FBX', 'ABC', 'USD'):
@@ -860,7 +866,7 @@ class _FileDialog:
         fmt = self._fmt()
         if not fmt:
             self.report({'ERROR'}, f"No translator reads {os.path.basename(path)} "
-                                   "(Maya .ma / .mb can't be read: export FBX from Maya)")
+                                   "(choose a supported Files of type format)")
             return {'CANCELLED'}
         k = units.maya_unit(context.scene)
         try:
@@ -872,6 +878,16 @@ class _FileDialog:
                     obs = import_blend(context, path)
                     results.result(self, f"Imported {len(obs)} object(s) from {os.path.basename(path)}")
                     return {'FINISHED'}
+                if fmt == 'MAYA':
+                    reader = getattr(bpy.types, "IMPORT_SCENE_OT_maya_ascii", None)
+                    if reader is None or not reader.__module__.endswith(".maya_ascii_scene_io.ui"):
+                        self.report({'ERROR'}, "Enable Maya ASCII Scene IO (native-only edition); "
+                                              "disable the older Import Maya Scene add-on")
+                        return {'CANCELLED'}
+                    return bpy.ops.import_scene.maya_ascii(
+                        'EXEC_DEFAULT', filepath=path,
+                        global_scale=k if self.maya_conversion else 1.0,
+                        apply_axis=self.maya_conversion)
                 op, args = import_args(fmt, k, self.maya_conversion)
                 if fmt == 'FBX' and self.maya_conversion:
                     from . import fbx_rig_import
