@@ -7348,6 +7348,10 @@
    "Split": "Split",
    "UV set": "UV set"
   },
+  "Labels/operators/uv_components": {
+   "Component": "Component",
+   "UV Component": "UV Component"
+  },
   "Labels/operators/uv_loop_pick": {
    "Add": "Add",
    "Add to the selection": "Add to the selection",
@@ -7364,6 +7368,15 @@
    "Match Grid": "Match Grid",
    "Stack Similar Shells": "Stack Similar Shells",
    "Straighten Border": "Straighten Border"
+  },
+  "Labels/operators/uv_projection": {
+   "1 = Fewer pieces, 0 = Less distortion": "1 = Fewer pieces, 0 = Less distortion",
+   "Automatic": "Automatic",
+   "Contour Stretch": "Contour Stretch",
+   "Optimize": "Optimize",
+   "Percentage Space": "Percentage Space",
+   "Planes": "Planes",
+   "polyAutoProj": "polyAutoProj"
   },
   "Labels/operators/uv_select_178": {
    "Faces": "Faces",
@@ -7425,29 +7438,20 @@
    "Up": "Up"
   },
   "Labels/operators/uv_tools": {
-   "1 = Fewer pieces, 0 = Less distortion": "1 = Fewer pieces, 0 = Less distortion",
    "3D View Edges": "3D View Edges",
-   "Automatic": "Automatic",
-   "Component": "Component",
-   "Contour Stretch": "Contour Stretch",
    "Cut UV Edges": "Cut UV Edges",
    "Get Texel Density": "Get Texel Density",
    "Layout": "Layout",
    "Map Size": "Map Size",
-   "Optimize": "Optimize",
-   "Percentage Space": "Percentage Space",
    "Pixels between UV shells (Layout)": "Pixels between UV shells (Layout)",
    "Pixels per Maya unit (px/cm in the Maya Workflow Kit template)": "Pixels per Maya unit (px/cm in the Maya Workflow Kit template)",
-   "Planes": "Planes",
    "Set Texel Density": "Set Texel Density",
    "Sew UV Edges": "Sew UV Edges",
    "Shell Padding": "Shell Padding",
    "Shell Padding (px)": "Shell Padding (px)",
    "Texel Density": "Texel Density",
    "Texture size in pixels for Texel Density and Layout padding": "Texture size in pixels for Texel Density and Layout padding",
-   "UV Component": "UV Component",
-   "Unfold": "Unfold",
-   "polyAutoProj": "polyAutoProj"
+   "Unfold": "Unfold"
   },
   "Labels/operators/view": {
    "Axis-Locked Tumble/Track": "Axis-Locked Tumble/Track",
@@ -10296,6 +10300,9 @@
    "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)": "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)",
    "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)": "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)"
   },
+  "Tooltips/operators/uv_components": {
+   "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only": "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only"
+  },
   "Tooltips/operators/uv_loop_pick": {
    "UV Editor double-click: a UV edge selects its UV edge loop (Ctrl: its edge ring), a UV or a UV face its\nUV shell; Shift adds to the selection": "UV Editor double-click: a UV edge selects its UV edge loop (Ctrl: its edge ring), a UV or a UV face its\nUV shell; Shift adds to the selection"
   },
@@ -10306,6 +10313,11 @@
    "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)": "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)",
    "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)": "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)",
    "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)": "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)"
+  },
+  "Tooltips/operators/uv_projection": {
+   "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed": "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed",
+   "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode": "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode",
+   "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode": "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode"
   },
   "Tooltips/operators/uv_select_178": {
    "Maya UV Editor Edit > Unpin All: every pinned UV of the meshes unpinned": "Maya UV Editor Edit > Unpin All: every pinned UV of the meshes unpinned",
@@ -10341,13 +10353,9 @@
    "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)": "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)"
   },
   "Tooltips/operators/uv_tools": {
-   "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed": "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed",
    "Cut the UVs along the selected edges (Maya Cut UV Edges): a seam, and the shells separate in place": "Cut the UVs along the selected edges (Maya Cut UV Edges): a seam, and the shells separate in place",
    "Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)": "Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)",
-   "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode": "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode",
-   "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only": "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only",
    "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit": "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit",
-   "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode": "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode",
    "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)": "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)",
    "Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one": "Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one",
    "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)"
