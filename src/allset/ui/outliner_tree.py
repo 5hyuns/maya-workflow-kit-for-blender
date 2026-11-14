@@ -647,8 +647,16 @@ def _font_size(prefs):
     return points * prefs.system.ui_scale
 
 
+SEARCH_ROW = 1.3      # x UI unit: Maya's search row above the rows (Blender's Outliner header has one row only)
+
+
+def top(region, u):
+    """Region y of the first row's top edge: the search row lies above it."""
+    return region.height - int(SEARCH_ROW * u)
+
+
 def page_rows(region, u):
-    return max(1, region.height // u)
+    return max(1, top(region, u) // u)
 
 
 def first_row(area, region, n, u):
@@ -661,16 +669,16 @@ def first_row(area, region, n, u):
 
 def row_index_at(area, region, y, u, n):
     """Row under region y, or None (below the last row)."""
-    if y < 0 or y >= region.height:
+    if y < 0 or y >= top(region, u):
         return None
-    k = first_row(area, region, n, u) + int((region.height - 1 - y) // u)
+    k = first_row(area, region, n, u) + int((top(region, u) - 1 - y) // u)
     return k if 0 <= k < n else None
 
 
 def row_rect(area, region, k, u, n):
     """(y0, y1) region pixels of row ``k`` (it may lie outside the region)."""
     j = k - first_row(area, region, n, u)
-    y1 = region.height - j * u
+    y1 = top(region, u) - j * u
     return y1 - u, y1
 
 
@@ -682,7 +690,7 @@ def scrollbar(region, u, n, first):
     page = page_rows(region, u)
     if n <= page:
         return None
-    h = region.height
+    h = top(region, u)
     thumb = max(u, h * page / n)
     y1 = h - (h - thumb) * first / max(1, n - page)
     x1 = region.width - 2
@@ -871,7 +879,7 @@ def _draw(context, space, region, area):
     rows = rows_for(context, space)
     n = len(rows)
     first = first_row(area, region, n, u)
-    last = min(n, first + region.height // u + 1)
+    last = min(n, first + top(region, u) // u + 1)
     th = prefs.themes[0].outliner
     text = tuple(th.space.text)[:3]
     text_hi = tuple(th.space.text_hi)[:3]
@@ -899,7 +907,7 @@ def _draw(context, space, region, area):
     for k in range(first, last):
         row = rows[k]
         j = k - first
-        y1 = region.height - j * u
+        y1 = top(region, u) - j * u
         y0 = y1 - u
         cy = (y0 + y1) / 2.0
         sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set, signature, by_name)
@@ -940,6 +948,22 @@ def _draw(context, space, region, area):
     if bar is not None:
         x0, x1, b0, b1 = bar
         _quad(tris, tcol, x0, b0, x1, b1, (*text, 0.35))
+    # Maya's search field on its own row (drawn; a click opens the real field, ``ALLSET_PT_outliner_search``)
+    field = prefs.themes[0].user_interface.wcol_text
+    pad = max(2, round(0.15 * u))
+    fy0, fy1, fx1 = top(region, u) + pad, region.height - pad, region.width - pad
+    _quad(tris, tcol, pad, fy0, fx1, fy1, (*tuple(field.outline)[:3], 1.0))
+    _quad(tris, tcol, pad + 1, fy0 + 1, fx1 - 1, fy1 - 1, (*tuple(field.inner)[:3], 1.0))
+    fcy, glass = (fy0 + fy1) / 2.0, 0.2 * u       # magnifier: ring + handle
+    gx, grgba = pad + 0.6 * u, (*tuple(field.text)[:3], 0.8)
+    ring = [(gx + glass * math.cos(a * math.pi / 6), fcy + 1 + glass * math.sin(a * math.pi / 6)) for a in range(13)]
+    for a, b in zip(ring, ring[1:]):
+        lines.extend((a, b))
+    lines.extend(((gx + 0.7 * glass, fcy + 1 - 0.7 * glass), (gx + 1.8 * glass, fcy + 1 - 1.8 * glass)))
+    lcol.extend((grgba,) * 26)
+    query = space.filter_text
+    names.append((pad + 1.3 * u, fcy, query or bpy.app.translations.pgettext_iface("Search..."),
+                  (*tuple(field.text)[:3], 1.0 if query else 0.5)))
     gpu.state.blend_set('ALPHA')
     if tris:
         sh = gpu.shader.from_builtin('SMOOTH_COLOR')
@@ -1269,6 +1293,9 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         rows = rows_for(context, space)
         n = len(rows)
         x, y = event.mouse_region_x, event.mouse_region_y
+        if y >= top(region, u):     # the search row: a real text field can only live in a popup
+            bpy.ops.wm.call_panel(name="ALLSET_PT_outliner_search", keep_open=False)
+            return {'FINISHED'}
         first = first_row(area, region, n, u)
         bar = scrollbar(region, u, n, first)
         self.scrolling = False
@@ -1326,15 +1353,15 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         self.dragging = True
         rows = rows_for(context, space)
         n = len(rows)
-        if y >= region.height and SCROLL.get(area.as_pointer(), 0) > 0:      # past the top / bottom: scroll
+        if y >= top(region, u) and SCROLL.get(area.as_pointer(), 0) > 0:      # past the top / bottom: scroll
             SCROLL[area.as_pointer()] -= 1
         elif y < 0:
             SCROLL[area.as_pointer()] = SCROLL.get(area.as_pointer(), 0) + 1
         first = first_row(area, region, n, u)
-        yy = min(max(y, 0), region.height - 1)
+        yy = min(max(y, 0), top(region, u) - 1)
         k = row_index_at(area, region, yy, u, n)
         if k is None:
-            k = n - 1 if yy < region.height / 2 else first
+            k = n - 1 if yy < top(region, u) / 2 else first
         if k == self.last or n == 0:
             return
         self.last = k
@@ -1398,7 +1425,7 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             y0, first0, n, u, thumb = self.grab
             region, area = context.region, context.area
             page = page_rows(region, u)
-            span = max(1.0, region.height - thumb)
+            span = max(1.0, top(region, u) - thumb)
             SCROLL[area.as_pointer()] = int(round(first0 + (y0 - event.mouse_region_y) / span * (n - page)))
             first_row(area, region, n, u)
             area.tag_redraw()

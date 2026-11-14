@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner chrome on Blender's Outliner.
 
-Maya's Outliner has a menu bar Display / Show / Help and a search field.
+Maya's Outliner has a menu bar Display / Show / Help and a search field on a row below it.
 Outliners set up the Maya way (the Maya Workflow Kit layout and Windows > Outliner:
 View Layer mode, no collection rows; ``is_maya_outliner``) get that header: ``OUTLINER_HT_header.draw`` is swapped
 while the kit is enabled and restored on unregister; other Outliners draw as usual. The rows of an Outliner the kit
@@ -153,11 +153,26 @@ def _draw(self, context):
     from . import maya_dock      # Maya's dotted handle: tear the Outliner off / dock it back
     layout.operator("allset.dock_handle", text=maya_dock.HANDLE[:8], emboss=False)
     chrome.menu_bar(layout, MENU_BAR)
-    layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
+    from . import outliner_tree
+    if not outliner_tree.is_tree(space):   # Blender's own rows: no drawn search row, the field stays in the header
+        layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
+
+
+class ALLSET_PT_outliner_search(bpy.types.Panel):
+    """The Maya Outliner's search field: Blender's header has one row, so the kit tree draws Maya's search row above
+    its rows (``outliner_tree``) and a click on it opens the real field here"""
+    bl_label = "Search"
+    bl_space_type = 'OUTLINER'
+    bl_region_type = 'HEADER'
+    bl_ui_units_x = 10
+
+    def draw(self, context):
+        self.layout.activate_init = True   # typing starts at once, like clicking Maya's field
+        self.layout.prop(context.space_data, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
 
 
 classes = (ALLSET_MT_outliner_display, ALLSET_MT_outliner_show, ALLSET_MT_outliner_help,
-           ALLSET_OT_outliner_collections)
+           ALLSET_OT_outliner_collections, ALLSET_PT_outliner_search)
 
 
 def register():
