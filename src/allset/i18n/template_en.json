@@ -8495,10 +8495,12 @@
    "Fit Maya Layout Columns": "Fit Maya Layout Columns"
   },
   "Labels/ui/manipulator": {
+   "Maya Manipulator": "Maya Manipulator"
+  },
+  "Labels/ui/manipulator_tools": {
    "Axis Orientation": "Axis Orientation",
    "Bake": "Bake",
    "Edit Pivot": "Edit Pivot",
-   "Maya Manipulator": "Maya Manipulator",
    "Pivot": "Pivot",
    "Reset": "Reset",
    "Retain Component Spacing": "Retain Component Spacing",
