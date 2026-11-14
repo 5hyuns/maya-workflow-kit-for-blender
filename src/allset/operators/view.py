@@ -748,8 +748,11 @@ def frame_camera(context, cam, points):
     centre = sum((Vector(p) for p in points), Vector()) / len(points)
     forward = rot @ Vector((0.0, 0.0, -1.0))
     dist0 = max((centre - loc0).dot(forward), 1e-3)
+    data = cam.data
+    film = data.sensor_width / data.sensor_height if data.sensor_height > 0 else framing.FILM_ASPECT
     loc, dist = framing.fit(points, rot, win, dist0, ortho, size, (0.0, 0.0, size[0], size[1]),
-                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene),
+                            film_aspect=film)     # Maya GUI viewFit: the film-fit axis only, like the persp view
     if ortho:
         cam.data.ortho_scale *= dist / dist0
         dist = dist0

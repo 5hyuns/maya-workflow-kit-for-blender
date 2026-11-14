@@ -93,7 +93,45 @@ def _update(self, _context):
     apply_later(camera_data=self)
 
 
+LABEL_SIZE = 11     # px at UI scale 1
+_label_handles = []
+
+
+def res_label(scene):
+    """Maya's resolution gate label: the render size."""
+    r = scene.render
+    return f"{r.resolution_x} x {r.resolution_y}"
+
+
+def draw_res_label():
+    """Maya: with Resolution Gate on, the render size is written centred above the gate."""
+    context = bpy.context
+    space, region, rv3d = context.space_data, context.region, context.region_data
+    if rv3d is None or rv3d.view_perspective != 'CAMERA':
+        return
+    cam = view_camera(space, context.scene)
+    from ..ui.panel_menus import RES_GATE
+    if cam is None or cam.type != 'CAMERA' or not cam.data.get(RES_GATE):
+        return
+    import blf
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    pts = [location_3d_to_region_2d(region, rv3d, cam.matrix_world @ v)
+           for v in cam.data.view_frame(scene=context.scene)]
+    if any(p is None for p in pts):
+        return
+    text = res_label(context.scene)
+    font, scale = 0, context.preferences.system.ui_scale
+    blf.size(font, round(LABEL_SIZE * scale))
+    w = blf.dimensions(font, text)[0]
+    x = sum(p.x for p in pts) / len(pts) - w / 2.0
+    y = max(p.y for p in pts) + 4.0 * scale
+    blf.color(font, 0.8, 0.8, 0.8, 1.0)
+    blf.position(font, round(x), round(y), 0)
+    blf.draw(font, text)
+
+
 def register_props():
+    _label_handles.append(bpy.types.SpaceView3D.draw_handler_add(draw_res_label, (), 'WINDOW', 'POST_PIXEL'))
     bpy.types.Camera.allset_overscan = FloatProperty(
         name="Overscan", default=1.0, min=0.0001, soft_min=1.0, soft_max=3.0, step=10, precision=3, update=_update,
         description="Room around the camera's frame in a view that looks through this camera, like Maya: 1 fits "
@@ -101,5 +139,7 @@ def register_props():
 
 
 def unregister_props():
+    while _label_handles:
+        bpy.types.SpaceView3D.draw_handler_remove(_label_handles.pop(), 'WINDOW')
     if hasattr(bpy.types.Camera, PROP):
         del bpy.types.Camera.allset_overscan
