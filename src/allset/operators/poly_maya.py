@@ -224,7 +224,7 @@ def _loop_neighbour(v, e):
 def _flow_point(a, b, t, adjust, pa=None, pb=None):
     """A point at ``t`` from ``a`` to ``b`` (BMVerts); with ``adjust`` (Maya Insert with edge flow) it follows a cubic
     through the loop neighbours: Hermite tangents 0.7 x (next - previous), the deviation from the straight edge times
-    Adjust Edge Flow (fits Maya's polyConnectComponents on an 8 x 8 sphere within 1e-4)."""
+    Adjust Edge Flow, like Maya."""
     p1, p2 = a.co.copy(), b.co.copy()
     lin = p1.lerp(p2, t)
     if not adjust:

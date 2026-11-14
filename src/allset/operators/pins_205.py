@@ -21,8 +21,7 @@ The kit: a pinned transform gets a Copy Transforms constraint named like the May
 Original (Full) — world = pin matrix @ own channels, Maya's offsetParentMatrix with inheritsTransform off (the
 "Inherit transform has been turned off" warning lists every pinned existing transform, like Maya) — targeting a hidden
 helper empty that a depsgraph / frame handler keeps at the pin matrix (the pattern of operators/constrain_199.py). The
-pin matrix follows Maya's rules (within 1e-4, checked by
-tests/test_step205_pins_maya.py): quad locations are bilinear (s, t), normal = blend of Maya vertex normals (unit
+pin matrix follows Maya's rules: quad locations are bilinear (s, t), normal = blend of Maya vertex normals (unit
 face-normal average), tangent = dP/du of the face's first triangle; UV Pin = the frame at the stored UV on the deformed
 mesh; Proximity Pin = the closest point of the *original* mesh to pinInput at every evaluation, output = F1 · F0⁻¹ ·
 input (Offset Translation 0 = on the surface, Offset Orientation 0 = Edge / UV orientation, Envelope = slerp / lerp
