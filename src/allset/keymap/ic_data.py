@@ -16,7 +16,7 @@ from importlib import import_module
 from .. import compat
 
 # Minors with a data file (tools/gen_ic_data.py writes one only when the data changed).
-VERSIONS = ((5, 0), (5, 1), (5, 2))
+VERSIONS = ((5, 0), (5, 1), (5, 2), (5, 3))
 
 
 def data_version(version=None):
