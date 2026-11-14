@@ -241,8 +241,9 @@ def test_manipulator_axes_are_maya_colours():
     c = manipulator.axis_colours()
     assert manipulator.MAYA_AXIS == {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
     assert c['X'] == (230 / 255, 0.0, 0.0) and c['Y'] == (0.0, 230 / 255, 0.0) and c['Z'] == (0.0, 0.0, 1.0)
-    text = (SRC / "ui" / "manipulator.py").read_text(encoding="utf-8")
-    assert not re.search(r"\.axis_[xyz]\b", text), "the Move / Scale handles don't read the theme's axis colours"
+    for name in ("manipulator.py", "manipulator_shapes.py", "manipulator_frame.py", "manipulator_tools.py"):
+        text = (SRC / "ui" / name).read_text(encoding="utf-8")
+        assert not re.search(r"\.axis_[xyz]\b", text), "the Move / Scale handles don't read the theme's axis colours"
 
 
 def test_dormant_wire_colour_and_objects():
@@ -266,7 +267,12 @@ def test_dormant_wire_colour_and_objects():
 
 
 def test_no_theme_or_preference_writes():
-    for name in ("maya_dock.py", "toolbox.py", "status_line.py", "set_driven_key.py", "manipulator.py",
-                 "selection_wire.py", "status_line_buttons.py", "menu_bar_fit.py"):
+    for name in ("maya_dock.py", "maya_dock_roles.py", "maya_dock_windows.py", "maya_dock_menus.py",
+                 "maya_dock_tint.py", "maya_dock_strip.py",
+                 "toolbox.py", "toolbox_column.py", "toolbox_layouts.py", "armature_modes.py", "layout_fit.py",
+                 "status_line.py", "status_line_buttons.py", "menu_bar_fit.py", "set_driven_key.py",
+                 "manipulator.py", "manipulator_shapes.py", "manipulator_frame.py", "manipulator_tools.py",
+                 "selection_wire.py", "selection_wire_gpu.py", "selection_wire_edges.py", "selection_wire_show.py",
+                 "selection_wire_rows.py", "selection_wire_depth.py"):
         text = (SRC / "ui" / name).read_text(encoding="utf-8")
         assert not re.search(r"themes\[0\][\w.]*\s*=[^=]", text), name
