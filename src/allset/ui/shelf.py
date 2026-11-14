@@ -68,7 +68,11 @@ def _run_in_editor_space(context, space_type, callback):
 
     area = context.area if context.area is not None and context.area.type == space_type else None
     if area is None:
-        area = next((item for item in screen.areas if item.type == space_type), None)
+        if space_type == 'VIEW_3D':
+            from .status_line import main_view3d
+            area, _region = main_view3d(screen)
+        else:
+            area = next((item for item in screen.areas if item.type == space_type), None)
     if area is None:
         raise ShelfContextError(
             f"No {space_type} editor is open in this window. Open the requested editor and try again."
