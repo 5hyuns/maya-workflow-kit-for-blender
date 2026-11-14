@@ -83,8 +83,39 @@ def test_own_annotations_and_merged_classes():
     assert "local_translate_z" in props and props["local_translate_z"].is_hidden, list(props.keys())
 
 
-# a Python 3.14 interpreter: $ALLSET_PY314, else python3.14 on PATH
-PY314 = (os.environ.get("ALLSET_PY314", ""), shutil.which("python3.14") or "")
+def _is_3_14(exe):
+    try:
+        out = subprocess.run([exe, "-I", "-c", "import sys; print(sys.version_info[:2])"], capture_output=True,
+                             text=True, timeout=30, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return out.returncode == 0 and out.stdout.strip() == "(3, 14)"
+
+
+def _python_3_14():
+    """A Python 3.14 interpreter: $ALLSET_PY314 (must be one), else python3.14 on PATH, the py launcher or a
+    uv-managed Python. None when the machine has none."""
+    exe = os.environ.get("ALLSET_PY314")
+    if exe:
+        assert _is_3_14(exe), f"ALLSET_PY314 is not a Python 3.14 interpreter: {exe}"
+        return exe
+    found = shutil.which("python3.14")
+    if found and _is_3_14(found):
+        return found
+    for tool, args in (("py", ["-3.14", "-c", "import sys; print(sys.executable)"]),
+                       ("uv", ["python", "find", "--no-project", "3.14"])):
+        path = shutil.which(tool)
+        if path is None:
+            continue
+        try:
+            out = subprocess.run([path, *args], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        cand = out.stdout.strip().splitlines()[-1].strip() if out.returncode == 0 and out.stdout.strip() else ""
+        if cand and _is_3_14(cand):
+            return cand
+    return None
+
 
 # The kit's class patterns, outside Blender: the old one must fail on 3.14 (the reported error), the new ones work.
 _PROBE = r'''
@@ -117,10 +148,10 @@ print(sys.version_info[:2], repr(old), sorted(New.__annotations__), sorted(merge
 
 
 def test_patterns_on_python_3_14():
-    exe = next((p for p in PY314 if p and os.path.exists(p)), None)
+    exe = _python_3_14()
     if exe is None:
-        print("no Python 3.14 interpreter here: skipped")
-        return
+        raise kit.Skip("no Python 3.14 interpreter (set ALLSET_PY314, or install one: uv python install 3.14)")
+    print("Python 3.14:", exe)
     probe = ROOT / "tmp" / "s259_probe.py"
     probe.parent.mkdir(exist_ok=True)
     probe.write_text(_PROBE, encoding="utf-8")
