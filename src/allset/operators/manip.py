@@ -6,7 +6,7 @@ faces/edges/vertices, and the drag transforms the copies / new components (Maya'
 Blender's transform gizmo is C. Its keymap
 (``Generic Gizmo Maybe Drag``) runs ``gizmogroup.gizmo_tweak`` for any Shift; the
 Maya keyconfig puts ``allset.manip_duplicate`` in front of it
-(keymap/maya_patches.py 21). This operator duplicates/extrudes and always passes the
+(keymap/maya_patches_manip.py). This operator duplicates/extrudes and always passes the
 event on, so the gizmo then transforms the selection, which is the new part. A timer
 waits for the transform to end and takes the copy / extrusion back when nothing moved
 (a Shift+click, a cancelled drag).
