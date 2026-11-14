@@ -182,7 +182,12 @@ def draw_gate_overlays():
         blf.enable(font, blf.SHADOW)
         blf.shadow(font, 5, 0.0, 0.0, 0.0, 1.0)
         blf.shadow_offset(font, 1, -1)
-        blf.position(font, round((x0 + x1) / 2.0 - w / 2.0), round((y1 + region.height) / 2.0 - h / 2.0), 0)
+        # visible top: the region runs under overlapping (transparent) headers, so stop at their bottom edge
+        top = region.height
+        for r in context.area.regions:
+            if r.type in {'HEADER', 'TOOL_HEADER'} and r.height > 1 and r.y > region.y + region.height / 2:
+                top = min(top, r.y - region.y)
+        blf.position(font, round((x0 + x1) / 2.0 - w / 2.0), round((y1 + top) / 2.0 - h / 2.0), 0)
         blf.draw(font, text)
         blf.disable(font, blf.SHADOW)
 
