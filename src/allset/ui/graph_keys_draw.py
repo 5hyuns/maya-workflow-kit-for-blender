@@ -189,7 +189,7 @@ def _navigation(context):
     """Pointer of the View2D navigation operator running modal in the context's window, else None."""
     window = getattr(context, "window", None)
     for op in getattr(window, "modal_operators", None) or ():
-        if op.bl_idname in NAV_OPS:
+        if op is not None and op.bl_idname in NAV_OPS:
             return op.as_pointer()
     return None
 

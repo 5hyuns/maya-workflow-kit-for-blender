@@ -332,7 +332,7 @@ NAVIGATION = ("VIEW3D_OT_rotate", "VIEW3D_OT_move", "VIEW3D_OT_zoom", "VIEW3D_OT
 def _navigating():
     """A view tumble / track / dolly / fly runs in some window (it selects nothing until it ends)."""
     try:
-        return any(op.bl_idname in NAVIGATION for w in bpy.context.window_manager.windows
+        return any(op is not None and op.bl_idname in NAVIGATION for w in bpy.context.window_manager.windows
                    for op in w.modal_operators)
     except (AttributeError, ReferenceError, RuntimeError):
         return False

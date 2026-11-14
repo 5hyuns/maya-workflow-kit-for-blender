@@ -60,7 +60,8 @@ def _switches(context, ob):
             if not bpy.ops.object.mode_set.poll():
                 return False
         wm = context.window_manager
-        return not any(op.bl_idname.startswith("TRANSFORM_OT_") for w in wm.windows for op in w.modal_operators)
+        return not any(op is not None and op.bl_idname.startswith("TRANSFORM_OT_")
+                       for w in wm.windows for op in w.modal_operators)
     except (AttributeError, ReferenceError, RuntimeError, TypeError):
         return False
 

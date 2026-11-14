@@ -1854,8 +1854,8 @@ def transform_op():
     wm = bpy.context.window_manager
     if wm is None:
         return None
-    return next((op for w in wm.windows for op in w.modal_operators if op.bl_idname.startswith(TRANSFORM_MODALS)),
-                None)
+    return next((op for w in wm.windows for op in w.modal_operators
+                 if op is not None and op.bl_idname.startswith(TRANSFORM_MODALS)), None)
 
 
 def transforming():
@@ -1878,7 +1878,7 @@ def scrubbing():
     wm = bpy.context.window_manager
     if wm is None:
         return False
-    return any(op.bl_idname in SCRUB_MODALS for w in wm.windows for op in w.modal_operators)
+    return any(op is not None and op.bl_idname in SCRUB_MODALS for w in wm.windows for op in w.modal_operators)
 
 
 def _playing(context):
