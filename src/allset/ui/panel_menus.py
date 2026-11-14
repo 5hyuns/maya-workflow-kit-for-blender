@@ -727,6 +727,14 @@ def look_through(context, area, ob):
                                            space.use_local_camera)
     # the view's own camera (a Maya panel's): local first, since a camera set on a view locked to the scene becomes
     # the scene camera
+    if ob.hide_viewport:
+        # Blender doesn't evaluate an object disabled in viewports (the startup cameras: Maya Visibility off), so
+        # navigating through it would not move the view; hide it with the eye instead (still not drawn)
+        ob.hide_viewport = False
+        try:
+            ob.hide_set(True)
+        except RuntimeError:     # not in this view layer
+            pass
     space.use_local_camera = ob != context.scene.camera
     space.camera = ob
     space.region_3d.view_perspective = 'CAMERA'

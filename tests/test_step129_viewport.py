@@ -128,6 +128,11 @@ def test_gate_buttons_look_through_the_persp_camera():
     assert (fwd - rot @ Vector((0.0, 0.0, -1.0))).length < 1e-4     # placed where the view looked
     assert (cam.matrix_world.translation + fwd * dist - loc).length < 1e-3
     assert cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    # the startup camera (Maya Visibility off) must still be evaluated, or navigating through it can't move the view
+    assert not cam.hide_viewport and cam.hide_get()
+    cam.location.x += 1.0
+    bpy.context.view_layer.update()
+    assert abs(cam.matrix_world.translation.x - cam.location.x) < 1e-6
     assert pm.apply(ctx, "RES_GATE")
     assert pm.state(ctx, "RES_GATE") and not cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
     assert pm.apply(ctx, "RES_GATE")
