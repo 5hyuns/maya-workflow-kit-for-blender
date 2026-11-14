@@ -61,8 +61,8 @@ class ALLSET_MT_outliner_display(bpy.types.Menu):
     def draw(self, context):
         sp, lay = context.space_data, self.layout
         lay.prop(sp, "use_filter_children", text="Children (DAG Hierarchy)")
-        if hasattr(sp, "sort_method"):     # Blender 5.3+: an enum, Blender's own label
-            lay.prop(sp, "sort_method")
+        if hasattr(sp, "sort_method"):     # Blender 5.3+: an enum; a submenu row, lay.prop splits the menu in two
+            lay.prop_menu_enum(sp, "sort_method")
         else:
             lay.prop(sp, "use_sort_alpha", text="Sort Alphabetically")
         from .. import preferences   # the add-on's global switch for all three column icons
