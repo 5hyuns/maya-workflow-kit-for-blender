@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, step, setup, screenshot, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
+GUI_GEOMETRY = "0 0 1920 1017"
 C = {}
 TOL = 4
 
@@ -124,6 +125,39 @@ def s_check_offscreen():
           inside and abs(w.width - 500) <= TOL)
     check("main layout as before", layout() == C["layout"])
     close_others()
+
+
+for editor in ('SHELF_EDITOR', 'UV'):
+    @step
+    def s_open_full_height(editor=editor):
+        main = win()
+        C['layout'] = layout()
+        area = max(main.screen.areas, key=lambda a: a.width * a.height)
+        wp = mod('ui.window_places')
+        kind = 'marked:SHELF_EDITOR' if editor == 'SHELF_EDITOR' else 'editor:UV'
+        width = area.width - 400
+        wp.remember(kind, (main.x + area.x + (area.width - width) // 2, main.y + area.y, width, area.height))
+        C['size'] = (width, area.height)
+        wp.remember('marked:SHELF_EDITOR_SIZE_V4', (2, 0, 0, 0))
+        C['before'] = set(bpy.context.window_manager.windows[:])
+        with bpy.context.temp_override(window=main, area=area):
+            if editor == 'SHELF_EDITOR':
+                bpy.ops.allset.shelf_editor_open()
+            else:
+                bpy.ops.allset.open_editor(ui_type='UV')
+
+    for _i in range(6):
+        step(lambda: None)
+
+    @step
+    def s_check_full_height(editor=editor):
+        w = new_window()
+        check(f'{editor} opened at full viewport height', w is not None)
+        check(f'{editor} restored the requested size', w is not None and
+              all(abs(a - b) <= TOL for a, b in zip((w.width, w.height), C['size'])))
+        print('FULL_HEIGHT', editor, 'before', C['layout'], 'after', layout(), flush=True)
+        check(f'{editor} keeps both side panels and the viewport unchanged', layout() == C['layout'])
+        close_others()
 
 
 run()
