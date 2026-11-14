@@ -83,6 +83,18 @@ def test_perspective_fit_excludes_sidebar():
     _check_fit(_proj_bounds(loc, dist, win, rot, pts), rect, persp=True)
 
 
+def test_perspective_fit_matches_maya_film():
+    # Maya 2026 mayapy: polyCube w2 h4 d1, front camera, viewFit -f 0.95 -> distance 6.6404 (film 1.5,
+    # independent of the panel); Maya's 1.417 in film = Blender's 36 mm sensor at 35 mm.
+    size = (1800, 1000)
+    pts = [Vector((x, y, z)) for x in (-1, 1) for y in (-2, 2) for z in (-0.5, 0.5)]
+    rect = (0, 0, *size)
+    loc, dist = framing.fit(pts, Quaternion(), _persp_win(size=size), 1.0, False, size, rect,
+                            film_aspect=framing.FILM_ASPECT)
+    assert abs(dist - 6.6404) < 1e-3
+    assert loc.length < 1e-6
+
+
 def test_ortho_fit():
     rot, pts = Quaternion(), _cube(1.0)   # top view
     dist0 = 10.0

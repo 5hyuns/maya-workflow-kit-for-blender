@@ -17,6 +17,7 @@ from mathutils import Matrix, Vector
 
 FIT = 0.95       # Maya fit factor
 MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units
+FILM_ASPECT = 1.5  # Maya persp camera film back 1.417 x 0.945 in
 
 
 def view_matrix(loc, rot, dist):
@@ -58,11 +59,12 @@ def _bounds(persp, corners, size):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HALF):
+def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HALF, film_aspect=None):
     """(view_location, view_distance) that fit ``points`` into ``rect`` (region pixels).
 
     ``rect`` = (x0, y0, x1, y1), the visible part of the region; the box fills ``factor``
     of it on its tighter axis and is centred in it. ``size`` = region (width, height).
+    ``film_aspect``: perspective only, fit to a film of this aspect filling the view (Maya F) instead of the view.
     """
     corners = box_corners(points, min_half)
     centre = sum(corners, Vector()) / 8.0
@@ -137,6 +139,13 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
             return abs(axis.x) * half.x + abs(axis.y) * half.y + abs(axis.z) * half.z
         tan_w = (rect[2] - rect[0]) / max(size[0], 1.0) / win0[0][0]
         tan_h = (rect[3] - rect[1]) / max(size[1], 1.0) / win0[1][1]
+        if film_aspect:
+            # Maya F (fitPanel: viewFit without -panel) fits the camera's film, not the panel; the film fills the
+            # panel (Fill), so the panel's narrower axis is overfilled.
+            if tan_w > tan_h * film_aspect:
+                tan_h = tan_w / film_aspect
+            else:
+                tan_w = tan_h * film_aspect
         d = extent(fwd) + max(extent(right) / tan_w, extent(up) / tan_h) / factor
         ndc_x = (rect[0] + rect[2]) / max(size[0], 1.0) - 1.0
         ndc_y = (rect[1] + rect[3]) / max(size[1], 1.0) - 1.0
