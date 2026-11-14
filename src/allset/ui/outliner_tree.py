@@ -254,11 +254,16 @@ def _matcher(opts):
     return lambda label: fnmatch.fnmatchcase(label.lower(), pattern)
 
 
-def build(scene, view_layer, opts, expand_all=False):
-    """Startup camera + DAG rows of ``view_layer`` for the filters ``opts`` (an ``Options``)."""
+def build(scene, view_layer, opts, expand_all=False, reuse=None):
+    """Startup camera + DAG rows of ``view_layer`` for the filters ``opts`` (an ``Options``).
+
+    ``reuse``: {row: row} of rows built before; a new row equal to one of them is that row. A rebuild after an edit
+    then makes new rows only for what changed: Python's garbage collector counts every row that lives on as a new
+    long-lived object, and enough of those start a full pass over every object."""
     from ..operators import startup_cameras
     from . import outliner_order
     STATS["builds"] += 1
+    keep = (reuse or {}).get
     match = _matcher(opts)
     flat = not opts.children
     open_all = expand_all or flat or match is not None
@@ -309,7 +314,7 @@ def build(scene, view_layer, opts, expand_all=False):
         if match is not None and not match(label) and not below:
             return []
         row = Row(kind, ob_name, sub, 0 if flat else depth, has and not flat, is_open, label, icon, key, top)
-        return [row] + below
+        return [keep(row, row)] + below
 
     def visit_bone(ob, b, name, depth, extra=(), top=False):
         child_names = b.kids.get(name, ())
@@ -345,15 +350,16 @@ def build(scene, view_layer, opts, expand_all=False):
             # = node() of a row without children: no arrow, never open
             if not type_ok or (match is not None and not match(name)):
                 return []
-            return [Row('OBJECT', name, "", 0 if flat else depth, False, False, name, icon, ('O', ob.session_uid),
-                        False)]
+            row = Row('OBJECT', name, "", 0 if flat else depth, False, False, name, icon, ('O', ob.session_uid), False)
+            return [keep(row, row)]
 
         def children(d):
             rows = []
             if shape:
                 label = ob.data.name
                 if match is None or match(label):
-                    rows.append(Row('SHAPE', name, label, 0 if flat else d, False, False, label, icon, None))
+                    row = Row('SHAPE', name, label, 0 if flat else d, False, False, label, icon, None)
+                    rows.append(keep(row, row))
             for r in roots_b:
                 rows += visit_bone(ob, b, r, d)
             for o in obj_kids:
@@ -366,7 +372,8 @@ def build(scene, view_layer, opts, expand_all=False):
     if 'CAMERA' in shown:
         for name in CAMERAS:
             if name not in real and (match is None or match(name)):
-                rows.append(Row('CAMERA', name, "", 0, False, False, name, 'CAMERA_ROW', None))
+                row = Row('CAMERA', name, "", 0, False, False, name, 'CAMERA_ROW', None)
+                rows.append(keep(row, row))
     for ob in roots:
         rows += visit(ob, 0)
     return rows
@@ -399,13 +406,24 @@ def rows_for(context, space):
     from .outliner import structure_version
     scene, view_layer = context.scene, context.view_layer
     opts = options(space)
-    key = (structure_version(), _state["expand"], scene.as_pointer(), view_layer.as_pointer(), opts)
+    version = (structure_version(), _state["expand"])
+    key = (*version, scene.as_pointer(), view_layer.as_pointer(), opts)
     head = _cache.get(key)
     if head is None:
+        reuse = {r: r for h in _cache.values() for r in h}
+        _drop_old_heads(version)
         if len(_cache) > 16:
             _cache.clear()
-        head = _cache[key] = build(scene, view_layer, opts)
+        head = _cache[key] = build(scene, view_layer, opts, reuse=reuse)
     return head + tail_rows(scene, opts)
+
+
+def _drop_old_heads(version):
+    """Forget the heads of an older structure or expanded state. Both numbers only go up, so no Outliner asks for
+    those rows again; kept, a big scene's old heads would pile up (thousands of rows each) for Python's garbage
+    collector to walk on every full pass."""
+    for k in [k for k in _cache if k[:2] != version]:
+        del _cache[k]
 
 
 def subtree_keys(context, space, row):
