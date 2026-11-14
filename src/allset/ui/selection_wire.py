@@ -1113,22 +1113,25 @@ def _idle_writer(key, scene, count):
     test is the handler's own early return; a handler that looks for its helpers again when the file's objects came or
     went (``count``: a one-item list for the object count, read once) counts as idle only while its last look is
     current and found none."""
-    from importlib import import_module
     if key == "operators.point_keys:_on_frame":
-        return not import_module(_PACKAGE + ".operators.point_keys")._editing_meshes()
+        from ..operators import point_keys
+        return not point_keys._editing_meshes()
     if key == "operators.playback_maya:_on_frame_stepped":
-        return not import_module(_PACKAGE + ".operators.playback_maya").active(scene)
+        from ..operators import playback_maya
+        return not playback_maya.active(scene)
     if key == "operators.constrain_interp:_on_update":
-        return not import_module(_PACKAGE + ".operators.constrain_interp")._state["armed"]
+        from ..operators import constrain_interp
+        return not constrain_interp._state["armed"]
     if not count:
         count.append(len(bpy.data.objects))
     if key == "operators.ik_rp:_on_frame":
         from .outliner import objects_version
-        rp = import_module(_PACKAGE + ".operators.ik_rp")
+        from ..operators import ik_rp as rp
         return (isinstance(rp._found[1], list) and not rp._found[1] and rp._count[0] == count[0]
                 and rp._found[0] == (objects_version(), count[0]))
     if key in ("operators.constrain_199:_on_frame", "operators.pins_205:_on_frame"):
-        state = import_module(_PACKAGE + "." + key.split(":")[0])._state
+        from ..operators import constrain_199, pins_205
+        state = (constrain_199 if key.startswith("operators.constrain_199") else pins_205)._state
         names = state.get("names")
         return isinstance(names, set) and not names and state.get("count") == count[0]
     return False
