@@ -171,13 +171,20 @@ def draw_gate_overlays():
     if chart:
         _draw_field_chart(x0, y0, x1, y1, scale)
     if res:
+        # styled like the viewport's own info text (widget font, theme text_hi, dark shadow), centred
+        # halfway between the gate top and the region top
         text = res_label(context.scene)
         font = 0
-        blf.size(font, round(LABEL_SIZE * scale))
-        w = blf.dimensions(font, text)[0]
-        blf.color(font, 0.8, 0.8, 0.8, 1.0)
-        blf.position(font, round((x0 + x1) / 2.0 - w / 2.0), round(y1 + 10.0 * scale), 0)
+        prefs = context.preferences
+        blf.size(font, round(prefs.ui_styles[0].widget.points * scale))
+        w, h = blf.dimensions(font, text)
+        blf.color(font, *prefs.themes[0].view_3d.space.text_hi, 1.0)
+        blf.enable(font, blf.SHADOW)
+        blf.shadow(font, 5, 0.0, 0.0, 0.0, 1.0)
+        blf.shadow_offset(font, 1, -1)
+        blf.position(font, round((x0 + x1) / 2.0 - w / 2.0), round((y1 + region.height) / 2.0 - h / 2.0), 0)
         blf.draw(font, text)
+        blf.disable(font, blf.SHADOW)
 
 
 def register_props():
