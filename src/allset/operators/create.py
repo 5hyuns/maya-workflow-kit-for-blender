@@ -145,7 +145,10 @@ def create(context, kind, maya_naming=True, overrides=None):
     k = units.maya_unit(context.scene)
     kw = {key: v * k if key in LENGTHS else v for key, v in props.items()}
     kw.update(location=(0.0, 0.0, 0.0), rotation=rot or (0.0, 0.0, 0.0), align='WORLD')
-    getattr(getattr(bpy.ops, mod), name)(**kw)
+    add = getattr(getattr(bpy.ops, mod), name)
+    if "radius" in kw and "radius" not in add.get_rna_type().properties:
+        kw["size"] = kw.pop("radius")       # Blender 5.3 renamed text_add's radius to size
+    add(**kw)
     ob = context.view_layer.objects.active
     _scale_data(ob, k)
     if maya_naming:
