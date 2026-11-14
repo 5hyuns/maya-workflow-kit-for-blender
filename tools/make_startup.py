@@ -452,6 +452,7 @@ class Builder:
         OUT.parent.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(OUT), compress=True, check_existing=False)
         OUT.with_suffix(".blend1").unlink(missing_ok=True)  # Blender's backup of the previous file
+        check_saved_bytes(OUT)
         log(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
 
 
@@ -498,8 +499,8 @@ def maya_views():
                 space.shading.background_type = 'VIEWPORT'
                 space.shading.background_color = (MAYA_BG_LINEAR,) * 3
                 # The studio light, matcap and HDRI names are written as Blender's own defaults, so nothing from
-                # the machine that generates the file is named in it (an unnamed slot once picked up a local
-                # image; the generator also runs without the user's datafiles, tools/build.sandbox_env).
+                # the machine that generates the file is named in it (the generator also runs without the user's
+                # datafiles, tools/build.sandbox_env); blank_name_tails clears what an older name left behind.
                 sh = space.shading
                 for kind, light, name in (('MATERIAL', None, 'forest.exr'), ('SOLID', 'MATCAP', 'basic_bright.exr'),
                                           ('SOLID', 'STUDIO', 'Default')):
@@ -507,10 +508,43 @@ def maya_views():
                     if light is not None:
                         sh.light = light
                     sh.studio_light = name
+                blank_name_tails(sh)
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')
                 rv3d.view_distance = eye.length
+
+
+# View3DShading's name fields in Blender 5.2: (byte offset, the name maya_views writes there), 256 bytes each.
+SHADING_NAME_FIELDS = ((12, b"Default"), (268, b"forest.exr"), (524, b"basic_bright.exr"))
+NAME_FIELD_LEN = 256
+# what the saved file must not hold (tests/test_startup_blend_clean.py checks the same)
+FORBIDDEN_BYTES = (b".jpg", b".jpeg", b".png", b"500x500", b"Users", b"AppData", b"Desktop")
+
+
+def blank_name_tails(shading):
+    """Zero the bytes after each shading name's end mark. Blender keeps a field's old bytes behind a shorter name
+    and saves them: its own factory startup carries an old image file name behind the matcap name."""
+    import ctypes
+    base = shading.as_pointer()
+    for offset, name in SHADING_NAME_FIELDS:
+        field = ctypes.string_at(base + offset, NAME_FIELD_LEN)
+        # the offsets fit only the layout they were made for: stop when the name isn't where it should be
+        assert field.startswith(name + b"\0"), (offset, field[:40])
+        used = len(name) + 1
+        ctypes.memset(base + offset + used, 0, NAME_FIELD_LEN - used)
+
+
+def check_saved_bytes(path):
+    """Fail when the saved file (its zstd frames unpacked) holds a file name or path from FORBIDDEN_BYTES."""
+    import io
+    import zstandard
+    data = path.read_bytes()
+    if data.startswith(b"\x28\xb5\x2f\xfd"):
+        data = zstandard.ZstdDecompressor().stream_reader(io.BytesIO(data), read_across_frames=True).read()
+    assert data.startswith(b"BLENDER"), data[:12]
+    found = {w: data.count(w) for w in FORBIDDEN_BYTES if w in data}
+    assert not found, f"{path.name} holds {found}"
 
 
 def setup_scene():
