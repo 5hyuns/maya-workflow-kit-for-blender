@@ -138,6 +138,7 @@ def next_extra(extra, spare_px, unit, floor=0):
 
 
 _settled = {}    # (header width, base units) -> extra units a bar settled at: where a new area's bar starts
+SETTLED_MAX = 32
 
 
 def _seed_key(area):
@@ -389,7 +390,11 @@ def draw():
     if grown != extra:
         _redraw_later(key)
     else:
-        _settled[_seed_key(area)] = extra
+        seed = _seed_key(area)
+        _settled.pop(seed, None)        # re-insert: newest last
+        _settled[seed] = extra
+        while len(_settled) > SETTLED_MAX:      # every width a resize passed would stay forever
+            _settled.pop(next(iter(_settled)))
     pad = round(4 * scale)
     x0, x1 = span[0] + pad, span[1] - pad
     y0 = (region.height - unit) / 2.0
