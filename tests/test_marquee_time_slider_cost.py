@@ -1,9 +1,9 @@
 """Box selection and the Time Slider stay light in big scenes. A marquee remembers and puts back the selection it
 started from a collection at a time (thousands of objects, hundreds of joints) with the same result. The Time Slider
 shares out a skeleton's curves with one look per curve, reads a curve's keys once until its Action changes (a new
-selection reads no key again), asks for Sync Timeline Display's channels only when that is on, and a big mesh in
-Edit Mode without point keys is not walked for its selected points. The ticks are the same as reading every key on
-every redraw."""
+selection reads no key again and takes one look per bone), reads keys into buffers Blender fills in one pass, asks
+for Sync Timeline Display's channels only when that is on, and a big mesh in Edit Mode without point keys is not
+walked for its selected points. The ticks are the same as reading every key on every redraw."""
 
 import time
 from importlib import import_module
@@ -414,3 +414,180 @@ def test_time_slider_skips_the_curves_of_objects_without_animation():
     assert got == sorted(want.items()), got
     assert looks.calls == len(keyed) and layers.calls == len(keyed), \
         f"only the {len(keyed)} animated objects are looked through ({looks.calls}, {layers.calls})"
+
+
+def _many_bone_rig():
+    """A skeleton with many keyed bones (names with dots, brackets, quotes, backslashes), several curves per bone,
+    custom property keys, breakdowns and keys between frames."""
+    import random
+    names = ["a.b", "q[1]", 'x"y', "back\\slash"] + [f"c{i:03d}" for i in range(140)]
+    ob = _armature("many", names)
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='POSE')
+    rnd = random.Random(7)
+    for i, pb in enumerate(ob.pose.bones):
+        pb.rotation_mode = 'XYZ'
+        for f in sorted(rnd.sample(range(1, 80), 3)):
+            pb.location = (0.01 * f, 0.0, 0.0)
+            pb.keyframe_insert("location", frame=f)
+        if i % 3 == 0:
+            pb.keyframe_insert("rotation_euler", frame=1 + i % 50)
+        if i % 10 == 0:
+            pb["amount"] = 0.5
+            pb.keyframe_insert('["amount"]', frame=33)
+    for j, fc in enumerate(compat.id_fcurves(ob)):
+        if j % 5 == 0:
+            fc.keyframe_points[0].type = 'BREAKDOWN'
+        if j % 11 == 0:
+            fc.keyframe_points[-1].co.x += 0.25         # a key between frames
+            fc.update()
+    bpy.context.view_layer.update()
+    return ob
+
+
+def test_time_slider_reads_a_new_selections_bone_keys_with_one_look_per_bone():
+    """Bones whose keys were read: a new selection of them neither looks up their curves on the skeleton nor asks
+    for any curve's keys again (hundreds of selected controls of a big rig took milliseconds on every selection
+    change); an Action update, a frame change and an undo read them again. The ticks always match the curves."""
+    _clear()
+    ob = _many_bone_rig()
+    bones = list(ob.pose.bones)
+    ts.key_frames(bones)                    # the keys of every bone are read once
+    for sel in (bones[::2], bones[1::3], bones[40:41], bones[100:]):
+        with _Count(ts, "_curve_keys") as reads, _Count(ts, "_skeleton_parts") as shares, \
+                _Count(ts, "_bones_curves") as looks:
+            got = ts.key_frames(sel)
+        assert got == _reference_keys(sel)
+        assert reads.calls == 0, f"a new selection asked for {reads.calls} curves' keys again"
+        assert shares.calls == 0 and looks.calls == 0, \
+            f"a new selection looked up its bones' curves ({shares.calls}, {looks.calls})"
+    fc = tk.node_fcurves(bones[9])[0]
+    fc.keyframe_points[1].co.x = 77.0
+    fc.update()
+    bpy.context.view_layer.update()
+    with _Count(ts, "_curve_keys") as reads:
+        assert ts.key_frames(bones[5:20]) == _reference_keys(bones[5:20]), "a moved key shows"
+    assert reads.calls > 0, "an Action update reads the keys again"
+    ts.key_frames(bones)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    with _Count(ts, "_curve_keys") as reads:
+        assert ts.key_frames(bones[::4]) == _reference_keys(bones[::4])
+    assert reads.calls > 0, "a frame change reads the keys again"
+    assert ts.key_frames(bones, keep=True) == ts.key_frames(bones) == _reference_keys(bones)
+    bpy.ops.ed.undo_push(message="before")
+    tk.node_fcurves(ob.pose.bones["c050"])[0].keyframe_points[0].co.x = 90.0
+    bpy.context.view_layer.update()
+    bpy.ops.ed.undo_push(message="moved")
+    assert 90.0 in [f for f, _b in ts.key_frames(list(bpy.data.objects["many"].pose.bones))]
+    bpy.ops.ed.undo()
+    nodes = list(bpy.data.objects["many"].pose.bones)
+    assert ts.key_frames(nodes) == _reference_keys(nodes), "an undo shows the keys from before"
+    _object_mode()
+
+
+def test_time_slider_bone_ticks_follow_layers_breakdowns_and_edits():
+    """Many selected bones of a layered skeleton: the ticks are the curves' keys (a frame with any regular key is a
+    regular key, breakdowns otherwise) for every selection, with BaseAnimation or a layer shown, after keys are
+    set, moved, retyped or deleted, with Sync Timeline Display on, and the same while playing or dragging."""
+    import random
+    al = import_module(kit.MODULE + ".operators.anim_layers")
+    _clear()
+    sc = bpy.context.scene
+    ls = getattr(sc, "allset_anim_layers", None)
+    if ls is not None:
+        ls.clear()
+    ob = _many_bone_rig()
+    bones = list(ob.pose.bones)
+    members = bones[10:60]
+    ob.select_set(True)
+    for pb in bones:
+        cb.set_bone_selected(pb, pb in members)
+    ob.data.bones.active = ob.data.bones[members[-1].name]
+    assert bpy.ops.allset.anim_layer_create(from_selected=True) == {'FINISHED'}
+    assert sorted(al.member_bones(ob, "AnimLayer1")) == sorted(pb.name for pb in members)
+    for i, pb in enumerate(members[::3]):
+        al.key_pose_bone(pb, "location", 0, frame=5 + i, scene=sc)
+    bpy.context.view_layer.update()
+    rnd = random.Random(11)
+
+    def check(what):
+        for _i in range(6):
+            sel = rnd.sample(bones, rnd.choice((1, 3, 30, 120)))
+            want = _reference_keys(sel)
+            assert ts.key_frames(sel) == want, what
+            assert ts.key_frames(sel) == want, what + " (again)"
+            assert ts.key_frames(sel, keep=True) == want, what + " (playing)"
+        assert ts.key_frames(members) == _reference_keys(members), what
+    for shown in (1, 0, 1):
+        sc.allset_anim_layer_index = shown
+        check(f"layer {shown} shown")
+    fcs = compat.id_fcurves(ob)
+    fcs[3].keyframe_points[0].co.x = 44.0
+    fcs[3].update()
+    fcs[8].keyframe_points[-1].type = 'BREAKDOWN'
+    fcs[13].keyframe_points.remove(fcs[13].keyframe_points[0])
+    al.key_pose_bone(bones[70], "location", 0, frame=66, scene=sc)      # BaseAnimation: not a layer member
+    bpy.context.view_layer.update()
+    check("after edits")
+    prefs = cbc._prefs()
+    wm = bpy.context.window_manager
+    old = (prefs.cb_sync_timeline, wm.allset_cb_selected)
+    try:
+        prefs.cb_sync_timeline = True
+        wm.allset_cb_selected = "tx"
+        sel = bones[::5]
+        assert ts.key_frames(sel) == _reference_keys(sel, "location", 0), "Sync Timeline Display: Translate X"
+    finally:
+        prefs.cb_sync_timeline, wm.allset_cb_selected = old
+    check("sync off again")
+    _object_mode()
+
+
+def test_time_slider_reads_keys_into_buffers_blender_fills_directly():
+    """A curve's keys are read into buffers of the keys' own types (frames float32, types one byte), which Blender
+    fills in one pass: the Time Slider reads many keys in well under the time of reading them into float64 / int32
+    buffers (filled one value at a time), with the same frames and breakdowns."""
+    _clear()
+    ob = bpy.data.objects.new("holder", None)
+    bpy.context.scene.collection.objects.link(ob)
+    for i in range(300):
+        ob[f"p{i}"] = 0.0
+        ob.keyframe_insert(f'["p{i}"]', frame=1)
+    fcs = list(compat.id_fcurves(ob))
+    co = np.zeros(320, np.float32)
+    co[0::2] = np.arange(1, 161)
+    for j, fc in enumerate(fcs):
+        kps = fc.keyframe_points
+        kps.add(159)
+        kps.foreach_set("co", co)
+        kps[49].type = 'BREAKDOWN'           # frame 50: breakdowns only
+        kps[j % 160].type = 'BREAKDOWN'
+        fc.update()
+    bpy.context.view_layer.update()
+
+    def slow():
+        for fc in fcs:
+            kps = fc.keyframe_points
+            n = len(kps)
+            frames = np.empty(2 * n, np.float64)
+            kps.foreach_get("co", frames)
+            kinds = np.empty(n, np.int32)
+            kps.foreach_get("type", kinds)
+
+    def read():
+        ts._drop_keys()
+        return ts.key_frames([ob])
+
+    def best(fn, n=7):
+        out = []
+        for _i in range(n):
+            t = time.perf_counter()
+            fn()
+            out.append(time.perf_counter() - t)
+        return min(out)
+    one_by_one, direct = best(slow), best(read)
+    assert direct < 0.75 * one_by_one, (f"the Time Slider read {len(fcs)} curves of 160 keys in {direct * 1000:.1f} ms "
+                                        f"(into float64 / int32 buffers {one_by_one * 1000:.1f} ms)")
+    assert read() == [(float(f), f == 50) for f in range(1, 161)]
+    assert read() == _reference_keys([ob])
+    bpy.data.objects.remove(ob)

@@ -905,7 +905,8 @@ def _bones_curves(bones):
         fcs = time_keys._cb()._fcurves(first)
         if fcs is None:
             continue
-        parts = _skeleton_parts(first.id_data, fcs)
+        ob = first.id_data
+        parts = _skeleton_parts(ob, fcs, _skeleton_key(ob, fcs))
         # Blender finds the n-th curve of a slot by stepping through the n curves before it: several bones take
         # their curves from one list of the skeleton's curves
         seq = list(fcs) if len(group) > 1 else fcs
@@ -920,16 +921,21 @@ def _bones_curves(bones):
 _PARTS = {}     # (Action, slot, curve count, bone names) -> ``_skeleton_parts``; dropped with ``_KEYS``
 
 
-def _skeleton_parts(ob, fcs):
-    """{``pose.bones["n"]`` path: the indices in ``fcs`` (skeleton ``ob``'s curves) of that bone's curves}. A path
-    names one bone, so its leading bone path is read once per curve and looked up. Kept for the skeleton's Action,
-    slot, number of curves and bone names (a renamed bone renames its curves' paths) until the curves' keys are
-    dropped (an Action update, a frame change, undo, redo, a file load)."""
+def _skeleton_key(ob, fcs):
+    """(Action, slot, number of curves, bone names) of skeleton ``ob`` whose curves are ``fcs``, None when it has
+    none: what its bones' share of the curves depends on (a renamed bone renames its curves' paths)."""
     try:
         ad = ob.animation_data
-        key = (ad.action.as_pointer(), ad.action_slot.handle, len(fcs), tuple(ob.pose.bones.keys()))
+        return ad.action.as_pointer(), ad.action_slot.handle, len(fcs), tuple(ob.pose.bones.keys())
     except (AttributeError, ReferenceError):
-        key = None
+        return None
+
+
+def _skeleton_parts(ob, fcs, key):
+    """{``pose.bones["n"]`` path: the indices in ``fcs`` (skeleton ``ob``'s curves) of that bone's curves}. A path
+    names one bone, so its leading bone path is read once per curve and looked up. Kept for the skeleton's
+    ``_skeleton_key`` ``key`` until the curves' keys are dropped (an Action update, a frame change, undo, redo, a
+    file load)."""
     got = _PARTS.get(key) if key is not None else None
     if got is not None:
         return got
@@ -975,67 +981,137 @@ def _bone_fcurves(bones, keep):
     return out
 
 
+_BONE_KEYS = {}     # ``_skeleton_key`` -> {bone path: ([co arrays], [type arrays]) of its curves}, dropped with _KEYS
+
+
+def _bones_keys(bones, cos, kinds):
+    """Adds the ``_curve_keys`` arrays of the curves of pose bones ``bones`` (the curves ``_bones_curves`` shares
+    out) to ``cos`` / ``kinds``. A bone's arrays are kept by its skeleton's ``_skeleton_key`` and its path,
+    and dropped with the curves' keys (an Action update, a frame change, undo, redo, a file load): a new selection
+    of bones whose keys were read takes one look per bone instead of finding each bone's curves and looking up
+    every curve's keys (hundreds of selected controls of a rig with a thousand curves took milliseconds on every
+    selection change)."""
+    from ..operators import time_keys
+    owners = {}
+    for pb in bones:
+        owners.setdefault(pb.id_data.as_pointer(), []).append(pb)
+    escape = bpy.utils.escape_identifier
+    for group in owners.values():
+        first = group[0]
+        fcs = time_keys._cb()._fcurves(first)
+        if fcs is None:
+            continue
+        ob = first.id_data
+        key = _skeleton_key(ob, fcs)
+        held = None
+        if key is not None:
+            held = _BONE_KEYS.get(key)
+            if held is None:
+                if len(_BONE_KEYS) > 64:
+                    _BONE_KEYS.clear()
+                held = _BONE_KEYS[key] = {}
+        missing = []
+        for pb in group:
+            # = time_keys.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
+            path = f'pose.bones["{escape(pb.name)}"]'
+            got = held.get(path) if held is not None else None
+            if got is None:
+                missing.append(path)
+            else:
+                cos += got[0]
+                kinds += got[1]
+        if not missing:
+            continue
+        parts = _skeleton_parts(ob, fcs, key)
+        # Blender finds the n-th curve of a slot by stepping through the n curves before it: several bones take
+        # their curves from one list of the skeleton's curves
+        seq = list(fcs) if len(missing) > 1 else fcs
+        for path in missing:
+            got = ([], [])
+            for i in parts.get(path, ()):
+                keys = _curve_keys(seq[i])
+                if keys is not None:
+                    got[0].append(keys[1])
+                    got[1].append(keys[2])
+            if held is not None:
+                held[path] = got
+            cos += got[0]
+            kinds += got[1]
+
+
 def key_frames(nodes, keep=False):
     """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key. ``keep``:
     playback or a drag runs (the curves of a bone found once are used again). A curve's keys are read once until its
-    Action changes or the frame does (``_curve_keys``)."""
+    Action changes or the frame does (``_curve_keys``); so are a bone's (``_bones_keys``)."""
     import numpy as np
     from . import cb_channels
     from ..operators import time_keys
     if not keep:
         _bone_curves.clear()
-    frames, xs, breakdowns, bd = {}, [], [], _breakdown_value()
+    # looked up once: bpy.types finds a type by its name on every access (bpy_rna.cc bpy_types_module_getattro)
+    pose_bone, object_type = bpy.types.PoseBone, bpy.types.Object
+    frames, cos, kinds = {}, [], []
     # Channel Box Sync Timeline Display: only the selected channels' keys (none selected / off: all keys)
     from . import channel_box
     if cb_channels.sync_timeline_on() and channel_box.selected_channels(bpy.context):
         plan = [(node, cb_channels.timeline_curves(bpy.context, node)) for node in nodes]
     else:
         plan = [(node, None) for node in nodes]
-    bones = _bone_fcurves([n for n, c in plan if c is None and isinstance(n, bpy.types.PoseBone)], keep)
+    pose_bones = [n for n, c in plan if c is None and isinstance(n, pose_bone)]
+    if keep:
+        bones = _bone_fcurves(pose_bones, keep)
+    else:
+        bones = None
+        _bones_keys(pose_bones, cos, kinds)
     for node, curves in plan:
         if curves is None:
-            if isinstance(node, bpy.types.PoseBone):
+            if isinstance(node, pose_bone):
+                if bones is None:
+                    continue        # its keys are in cos already (_bones_keys)
                 curves = bones[node.as_pointer()]
-            elif isinstance(node, bpy.types.Object) and node.animation_data is None:
+            elif isinstance(node, object_type) and node.animation_data is None:
                 curves = []         # no curves and no animation layers of its own (thousands of selected props)
             else:
                 curves = time_keys.node_fcurves(node)
-                if isinstance(node, bpy.types.Object):
+                if isinstance(node, object_type):
                     # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
                     from ..operators import anim_layers
                     curves = list(curves) + anim_layers.hidden_base_curves(node, bpy.context.scene)
-            if isinstance(node, bpy.types.Object):
+            if isinstance(node, object_type):
                 curves = list(curves) + blend_weight_curves(node)
                 # component mode: the keys of the selected points (vertices / CVs / lattice points)
                 from ..operators import point_keys
                 curves += point_keys.selected_point_curves(node)
         for fc in curves:
-            got = _curve_keys(fc, bd)
+            got = _curve_keys(fc)
             if got is not None:
-                xs.append(got[0])
-                breakdowns.append(got[1])
-    if not xs:
+                cos.append(got[1])
+                kinds.append(got[2])
+    if not cos:
         return []
-    # the keys of all curves at once: per distinct frame, is any key there a regular one
-    raw, at = np.unique(np.concatenate(xs), return_inverse=True)
+    # the keys of all curves at once: per distinct frame, is any key there a regular one. Two sorts of the frames
+    # (all of them, the regular keys' ones) cost less than one sort that also maps every key to its frame.
+    every = np.concatenate(cos)[0::2]
+    raw = np.unique(every)
     regular = np.zeros(len(raw), bool)
-    regular[at.ravel()[~np.concatenate(breakdowns)]] = True     # a frame with any regular key
+    keyed = every[np.concatenate(kinds) != _breakdown_value()]
+    regular[np.searchsorted(raw, np.unique(keyed))] = True     # a frame with any regular key
     for x, reg in zip(raw.tolist(), regular.tolist()):
         f = round(x, 3)
         frames[f] = frames.get(f, True) and not reg
     return sorted(frames.items())
 
 
-_KEYS = {}      # F-curve pointer -> (key count, key frames, is breakdown) until an Action changes (``_drop_held``)
+_KEYS = {}      # F-curve pointer -> ``_curve_keys`` until an Action changes (``_drop_held``)
 _KEYS_MAX = 50000
 
 
-def _curve_keys(fc, bd):
-    """(frames, is breakdown) arrays of the curve's keys, None without keys: every key's frame and type in one read
-    per curve. Kept until a key is set, moved, retyped or deleted: Blender tags the curve's Action for that (its
-    evaluated copy has to follow), so the next Action update drops them (``_drop_held``), as do a frame change
-    (``_drop_keys``), undo, redo and a file load. A selection change keeps them: the keys of a new selection's bones
-    are read once."""
+def _curve_keys(fc):
+    """(key count, every key's (frame, value) co, every key's type) of the curve, None without keys: the keys' co and
+    types in one read each per curve. Kept until a key is set, moved, retyped or deleted: Blender tags the curve's
+    Action for that (its evaluated copy has to follow), so the next Action update drops them (``_drop_held``), as do
+    a frame change (``_drop_keys``), undo, redo and a file load. A selection change keeps them: the keys of a new
+    selection's bones are read once."""
     import numpy as np
     kps = fc.keyframe_points
     n = len(kps)
@@ -1044,15 +1120,18 @@ def _curve_keys(fc, bd):
     ptr = fc.as_pointer()
     got = _KEYS.get(ptr)
     if got is not None and got[0] == n:
-        return got[1], got[2]
-    co = np.empty(2 * n, np.float64)
+        return got
+    # Blender's foreach_get fills a buffer of the property's own C type in one pass (a key's frame is a float, its
+    # type one byte) and any other buffer one value at a time through Python objects (bpy_rna.cc
+    # foreach_compat_buffer): float32 / uint8 read the same values in about half the time.
+    co = np.empty(2 * n, np.float32)
     kps.foreach_get("co", co)
-    kinds = np.empty(n, np.int32)
+    kinds = np.empty(n, np.uint8)
     kps.foreach_get("type", kinds)
     if len(_KEYS) >= _KEYS_MAX:
         _KEYS.clear()
-    entry = _KEYS[ptr] = (n, co[0::2], kinds == bd)
-    return entry[1], entry[2]
+    got = _KEYS[ptr] = (n, co, kinds)
+    return got
 
 
 _BREAKDOWN = []     # the RNA value of a key's type 'BREAKDOWN'
@@ -1100,7 +1179,8 @@ def tick_nodes(context):
     """Nodes whose keys the Time Slider shows: the selected ones, like Maya (nothing selected = no ticks). Blender
     keeps an active object after it is deselected; its keys are not shown."""
     from . import channel_box
-    return [n for n in channel_box.targets(context) if _shows_keys(n)]
+    object_type = bpy.types.Object      # looked up once (``key_frames``)
+    return [n for n in channel_box.targets(context) if not isinstance(n, object_type) or _shows_keys(n)]
 
 
 _HELD = {}      # region pointer -> its keys while a move or a time drag runs without playback (``_shown_keys``)
@@ -1130,10 +1210,11 @@ def _shown_keys(context, region):
 def _drop_held(_scene, depsgraph=None):
     """Keys moved (their Action updated), undo, redo, a file load: the held keys and the curves' keys are read
     again."""
-    if (_HELD or _KEYS or _PARTS) and (depsgraph is None or depsgraph.id_type_updated('ACTION')):
+    if (_HELD or _KEYS or _PARTS or _BONE_KEYS) and (depsgraph is None or depsgraph.id_type_updated('ACTION')):
         _HELD.clear()
         _KEYS.clear()
         _PARTS.clear()
+        _BONE_KEYS.clear()
 
 
 @persistent
@@ -1142,6 +1223,7 @@ def _drop_keys(*_args):
     would not reach ``_drop_held``): the curves' keys are read again on the next redraw."""
     _KEYS.clear()
     _PARTS.clear()
+    _BONE_KEYS.clear()
 
 
 def _draw_keys(context, region, maya=False):
@@ -1322,6 +1404,7 @@ def _on_load(_dummy=None):
     _subscribe()   # file loading clears msgbus subscriptions
     _KEYS.clear()  # another file: other curves
     _PARTS.clear()
+    _BONE_KEYS.clear()
     _HELD.clear()
     if not bpy.app.background:
         _schedule()
@@ -1418,6 +1501,7 @@ def unregister():
     _HELD.clear()
     _KEYS.clear()
     _PARTS.clear()
+    _BONE_KEYS.clear()
     _TRIS.clear()
     if _on_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load)

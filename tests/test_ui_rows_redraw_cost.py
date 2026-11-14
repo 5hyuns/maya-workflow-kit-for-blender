@@ -340,7 +340,7 @@ def test_one_picked_controls_keys_come_from_the_rigs_split_curves():
             for _i in range(5):
                 assert ts.key_frames([pb]) == frames
         assert walked.calls == 0, f"every curve of the rig read again ({walked.calls})"
-        assert parts.calls == 5
+        assert parts.calls == 0, f"redraws take the control's kept keys ({parts.calls} curve splits)"
         assert len(ts._PARTS) >= 1
     finally:
         bpy.ops.object.mode_set(mode='OBJECT')
