@@ -124,6 +124,11 @@ CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
 # state (camera data ID property) and Overscan; Film Gate and Resolution Gate are exclusive (Maya updateModelPanelBar).
 RES_GATE = "allset_res_gate"
 GATE_OVERSCAN = 1.3
+# Safe Action / Safe Title: Blender has one show_safe_areas flag drawing both frames. Each Maya toggle keeps its own
+# flag on the camera data; the frame that is off gets a 0 margin in the scene's safe areas (drawn on the camera frame
+# line), its real margin kept in a scene ID property until it is turned on again.
+# shortcut: safe-area margins are per scene, so two cameras with different Safe toggles share the last one set.
+SAFE = {"SAFE_ACTION": ("allset_safe_action", "action"), "SAFE_TITLE": ("allset_safe_title", "title")}
 CAMERA_KEYS = {"CAMERA_LOCK", "RES_GATE", *CAMERA_DATA}
 
 # Toolbar toggles whose Maya off state is another mode (Maya panel toolbar):
@@ -156,7 +161,7 @@ TIPS = {
     "CAMERA_LOCK": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and "
                    "rotation channels are locked)",
     "FILM_GATE": "Film gate (Blender: camera sensor frame)",
-    "RES_GATE": "Resolution gate (Blender always draws the render frame in a camera view; this sets Overscan 1.3)",
+    "RES_GATE": "Resolution Gate",
     "GATE_MASK": "Gate mask (Blender: passepartout)",
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
@@ -217,6 +222,8 @@ def state(context, key):
             return camera_locked(ob)
         if key == "RES_GATE":
             return ob.type == 'CAMERA' and bool(ob.data.get(RES_GATE))
+        if key in SAFE:
+            return ob.type == 'CAMERA' and _safe_on(ob.data, key)
         return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
     if key == "ISOLATE":
         return space.local_view is not None
@@ -424,6 +431,13 @@ def apply(context, key):
             data.show_sensor = on and key == "FILM_GATE"
             data[RES_GATE] = on and key == "RES_GATE"
             data.allset_overscan = GATE_OVERSCAN if on else 1.0     # Maya: camera -e -overscan 1.3 / 1.0
+        elif key in SAFE:
+            on = {k: _safe_on(ob.data, k) for k in SAFE}
+            on[key] = not on[key]
+            for k, (flag, _attr) in SAFE.items():
+                ob.data[flag] = on[k]
+            ob.data.show_safe_areas = any(on.values())
+            _sync_safe_margins(context.scene, on)
         else:
             prop = CAMERA_DATA[key]
             setattr(ob.data, prop, not getattr(ob.data, prop))
@@ -668,6 +682,24 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
 # what each view showed before a kit Look Through (RegionView3D pointer -> perspective, camera name, local camera):
 # when Ctrl+Z removes the camera a view looks through, the view goes back to it (session only)
 _before_look = {}
+
+
+def _safe_on(data, key):
+    """A camera from before separate Safe flags: show_safe_areas meant both."""
+    return bool(data.show_safe_areas and data.get(SAFE[key][0], True))
+
+
+def _sync_safe_margins(scene, on):
+    areas = scene.safe_areas
+    for key, (_flag, attr) in SAFE.items():
+        kept = "allset_kept_safe_" + attr
+        if on[key] or not any(on.values()):      # both off: nothing drawn, give the real margins back
+            if kept in scene:
+                setattr(areas, attr, tuple(scene[kept]))
+                del scene[kept]
+        elif kept not in scene:
+            scene[kept] = tuple(getattr(areas, attr))
+            setattr(areas, attr, (0.0, 0.0))
 
 
 def _look_through_panel_camera(context, space):

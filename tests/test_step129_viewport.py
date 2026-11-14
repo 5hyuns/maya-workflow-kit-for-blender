@@ -216,3 +216,28 @@ def test_uv_checker_toggles_off():
     assert ob.material_slots[0].link == 'DATA' and ob.material_slots[0].material == own
     assert all(not (s.material and s.material.get(mi.CHECKER_MAT)) for s in bare.material_slots)
     assert all(s.link == 'DATA' for s in bare.material_slots)
+
+
+def test_safe_action_and_title_toggle_separately():
+    # Maya: Safe Action and Safe Title are separate camera toggles; Blender draws both with one flag, so the one
+    # that is off gets a 0 margin and its own margin comes back when it is turned on
+    space = _space()
+    cam = _camera_view(space)
+    ctx = Ctx(space)
+    areas = bpy.context.scene.safe_areas
+    title0, action0 = tuple(areas.title), tuple(areas.action)
+    cam.data.show_safe_areas = False
+    assert pm.apply(ctx, "SAFE_TITLE")
+    assert pm.state(ctx, "SAFE_TITLE") and not pm.state(ctx, "SAFE_ACTION")
+    assert cam.data.show_safe_areas and tuple(areas.action) == (0.0, 0.0) and tuple(areas.title) == title0
+    assert pm.apply(ctx, "SAFE_ACTION")
+    assert pm.state(ctx, "SAFE_TITLE") and pm.state(ctx, "SAFE_ACTION")
+    assert tuple(areas.action) == action0
+    assert pm.apply(ctx, "SAFE_TITLE")
+    assert not pm.state(ctx, "SAFE_TITLE") and pm.state(ctx, "SAFE_ACTION")
+    assert tuple(areas.title) == (0.0, 0.0)
+    assert pm.apply(ctx, "SAFE_ACTION")
+    assert not cam.data.show_safe_areas
+    assert pm.apply(ctx, "SAFE_TITLE") and pm.apply(ctx, "SAFE_ACTION")
+    assert tuple(areas.title) == title0 and tuple(areas.action) == action0
+    space.region_3d.view_perspective = 'PERSP'
