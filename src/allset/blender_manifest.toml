@@ -15,8 +15,8 @@ tags = ["User Interface"]
 # 5.0 since 0.7.0: 0.6.2 is the last version for Blender 4.5.
 blender_version_min = "5.0.0"
 # Supported: Blender 5.2 LTS; other versions are not tested (5.0 / 5.1 still install). Exclusive maximum: a
-# Blender after 5.2 gets a clear "not compatible" until it is tested.
-blender_version_max = "5.3.0"
+# Blender after 5.3 gets a clear "not compatible" until it is tested (5.3 checked with the TNT shelf port).
+blender_version_max = "5.4.0"
 
 # Code GPL-3.0-or-later; the kit-made images and data files (welcome PNGs, the Maya layout startup.blend)
 # CC0-1.0 — extensions.blender.org terms 1.2, ASSETS_LICENSE.txt.
