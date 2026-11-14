@@ -6393,29 +6393,15 @@
    "Unlock": "Unlock"
   },
   "Labels/operators/option_windows": {
-   "All": "All",
-   "Always merge for two vertices": "Always merge for two vertices",
    "Apply": "Apply",
    "Back to the default settings (like Maya's Edit > Reset Settings)": "Back to the default settings (like Maya's Edit > Reset Settings)",
-   "Chamfer": "Chamfer",
-   "Compressed save": "Compressed save",
-   "Create UVs": "Create UVs",
-   "Do not reset working units": "Do not reset working units",
    "Edit Taper Curve": "Edit Taper Curve",
-   "Incremental save": "Incremental save",
-   "Keep the width below what the mesh allows": "Keep the width below what the mesh allows",
    "Keep these settings for next time (Maya Edit > Save Settings)": "Keep these settings for next time (Maya Edit > Save Settings)",
    "Not in Blender:": "Not in Blender:",
    "Options": "Options",
    "Reset Settings": "Reset Settings",
-   "Rotate": "Rotate",
-   "Round cap": "Round cap",
    "Run with these settings and keep the window open (Maya Apply)": "Run with these settings and keep the window open (Maya Apply)",
-   "Save Settings": "Save Settings",
-   "Scale": "Scale",
-   "Set Border Edges to Hard": "Set Border Edges to Hard",
-   "Translate": "Translate",
-   "World (Ignore scaling on object)": "World (Ignore scaling on object)"
+   "Save Settings": "Save Settings"
   },
   "Labels/operators/option_windows_197": {
    "4-sided faces": "4-sided faces",
@@ -6434,6 +6420,21 @@
    "Disable non-skin deformers": "Disable non-skin deformers",
    "Maintain offset": "Maintain offset",
    "Retain old geometry": "Retain old geometry"
+  },
+  "Labels/operators/option_windows_basic": {
+   "All": "All",
+   "Always merge for two vertices": "Always merge for two vertices",
+   "Chamfer": "Chamfer",
+   "Compressed save": "Compressed save",
+   "Do not reset working units": "Do not reset working units",
+   "Incremental save": "Incremental save",
+   "Keep the width below what the mesh allows": "Keep the width below what the mesh allows",
+   "Rotate": "Rotate",
+   "Round cap": "Round cap",
+   "Scale": "Scale",
+   "Set Border Edges to Hard": "Set Border Edges to Hard",
+   "Translate": "Translate",
+   "World (Ignore scaling on object)": "World (Ignore scaling on object)"
   },
   "Labels/operators/option_windows_curves": {
    "Keep originals": "Keep originals"
@@ -6533,6 +6534,9 @@
    "Snap curve to root": "Snap curve to root",
    "Solver enable": "Solver enable",
    "XRay Joints": "XRay Joints"
+  },
+  "Labels/operators/option_windows_spec": {
+   "Create UVs": "Create UVs"
   },
   "Labels/operators/option_windows_surfaces": {
    "Auto reverse": "Auto reverse",
