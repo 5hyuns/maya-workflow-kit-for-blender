@@ -8286,6 +8286,9 @@
    "Clear Below": "Clear Below",
    "Value Lines": "Value Lines"
   },
+  "Labels/ui/help_line": {
+   "Note": "Note"
+  },
   "Labels/ui/history_rebind": {
    "Rebind History Selection": "Rebind History Selection",
    "Rebind Selection": "Rebind Selection"
@@ -10473,6 +10476,9 @@
    "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)": "Clear the object-type filters: every object type is listed again (Maya Show > Objects > Clear Below)",
    "Show or hide the value lines: the zero value and the lowest / highest value of the selected curves (Maya l)": "Show or hide the value lines: the zero value and the lowest / highest value of the selected curves (Maya l)"
   },
+  "Tooltips/ui/help_line": {
+   "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line": "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line"
+  },
   "Tooltips/ui/history_rebind": {
    "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel": "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel"
   },
@@ -10599,9 +10605,6 @@
   },
   "Tooltips/ui/node_attributes": {
    "Commit modeling attributes as one undoable edit from any attribute UI": "Commit modeling attributes as one undoable edit from any attribute UI"
-  },
-  "Tooltips/ui/notices": {
-   "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line": "A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;\nclicking puts it in the Help Line"
   },
   "Tooltips/ui/option_click": {
    "Where the last click went (called with INVOKE from inside an EXEC operator: the window's latest event)": "Where the last click went (called with INVOKE from inside an EXEC operator: the window's latest event)"

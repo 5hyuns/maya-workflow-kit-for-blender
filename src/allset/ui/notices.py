@@ -1,17 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Large table file: search it (grep) or read line ranges; reading it whole is rarely needed.
 """Not-in-Blender notices: the near substitute + one line, for Maya menu items.
 
 One table for every place a Maya item has no Blender equivalent, or a different one: the item's tooltip
 (greyed items: ``allset.menu_unavailable``; items with a substitute: ``allset.menu_item``) and the Help
 Line, which shows the notice while the tooltip is up — Maya's Help Line shows a menu item's annotation the same
 way. Keys are Maya menu label paths (``ui/menu_sets.iter_items``).
-"""
 
-import time
+Data file: four tables of (Blender substitute, one line) — ``NOTICES`` (Maya menu items by label path),
+``CATEGORIES`` (greyed items by path prefix), ``PANEL_MENU`` (panel menus, panel toolbar, Status Line) and
+``MARKING`` (marking menus, by kit menu name + label path). Grep a path or a key prefix and read that line range.
+Lookups: ``notice``, ``category``, ``greyed_notice``, ``tooltip``; the Help Line display is in ``help_line``.
+"""
 
 import bpy
 
-from .. import i18n, live_refs
+from .. import i18n
+from .help_line import (SHOW_SECONDS, ALLSET_OT_tip, _current, _expire, _redraw_status,  # noqa: F401
+                        _redraw_status_later, _status_area, current, remember_status_area, show, tip)
 
 # The line shown on Maya FX items that create a simulation: Blender's simulations are not rescaled.
 METRE_SCENES = ("Blender simulates one unit as one metre: FX works in metre scenes (in the centimetre layout 100 "
@@ -771,13 +777,6 @@ CATEGORIES.update({
 })
 
 
-SHOW_SECONDS = 5.0
-_current = {"text": "", "until": 0.0}
-# [(window pointer, status bar area)] seen while drawing it. Global areas aren't in screen.areas, so the area can't be
-# found again by pointer; it lives as long as its window, so it is only touched while that window is open (#36).
-_status_area = []
-
-
 def notice(path):
     """(substitute, line) written for this Maya menu path, or None."""
     return NOTICES.get(path)
@@ -921,78 +920,6 @@ def tooltip(path, mapped):
     head = f"Maya: {shown}  →  Blender: {substitute}" if mapped else f"Maya: {shown} (greyed)  →  {substitute}"
     show(f"{shown.rsplit('/', 1)[-1]}: {line}")
     return f"{head}\n{line}"
-
-
-def show(text):
-    """Put ``text`` in the Help Line for a few seconds."""
-    _current["text"] = text
-    _current["until"] = time.monotonic() + SHOW_SECONDS
-    _redraw_status_later()
-    if not bpy.app.timers.is_registered(_expire):
-        bpy.app.timers.register(_expire, first_interval=SHOW_SECONDS + 0.1)
-
-
-def current():
-    return _current["text"] if time.monotonic() < _current["until"] else ""
-
-
-def remember_status_area(area, window=None):
-    window = window or bpy.context.window
-    if area is not None and window is not None and (not _status_area or _status_area[0][1] != area):
-        _status_area[:] = [(window.as_pointer(), area)]
-
-
-def _redraw_status():
-    for win_ptr, area in list(_status_area):
-        if live_refs.window(win_ptr) is None:
-            _status_area.clear()
-            continue
-        try:
-            area.tag_redraw()
-        except ReferenceError:
-            _status_area.clear()
-    return None
-
-
-def _redraw_status_later():
-    # Not from inside a tooltip / draw callback: one tick later.
-    if not bpy.app.timers.is_registered(_redraw_status):
-        bpy.app.timers.register(_redraw_status, first_interval=0.0)
-
-
-def _expire():
-    if not current():
-        _current["text"] = ""
-        _redraw_status()
-        return None
-    return 0.5
-
-
-class ALLSET_OT_tip(bpy.types.Operator):
-    """A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window;
-    clicking puts it in the Help Line"""
-    bl_idname = "allset.tip"
-    bl_label = "Note"
-    bl_options = {'INTERNAL'}
-
-    text: bpy.props.StringProperty(options={'SKIP_SAVE'})
-
-    @classmethod
-    @i18n.translated
-    def description(cls, context, props):
-        return i18n.tip(props.text)
-
-    def execute(self, context):
-        if self.text:
-            show(i18n.tip(self.text))
-        return {'FINISHED'}
-
-
-def tip(layout, text, label="", icon='INFO'):
-    """A flat button whose tooltip is ``text`` (Maya windows carry no Blender explanation sentences)."""
-    op = layout.operator(ALLSET_OT_tip.bl_idname, text=label, icon=icon, emboss=False)
-    op.text = text
-    return op
 
 
 def register():
