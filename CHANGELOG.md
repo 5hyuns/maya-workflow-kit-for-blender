@@ -21,7 +21,6 @@ with their translations.
 - Panel toolbar: Resolution Gate and Film Gate, one at a time like Maya (on sets the camera's Overscan to 1.3, off to
   1.0; the render size is written above the resolution gate), Field Chart, and Safe Action / Safe Title as separate
   toggles; a gate button in Blender's own view looks through the panel's startup camera.
-- Renderer menu: Eevee and Cycles items (scene engine and Rendered shading).
 - Shelf: right-click a button for Open / Edit / Delete; a user button can be framed while a kit preference is on
   (its "checked" field names the preference).
 - G repeats a modal command started from a shelf, menu or marking menu (Knife: a fresh cut each time).
@@ -32,7 +31,10 @@ with their translations.
 - Preferences, all off by default (Maya has none of these): Blender's shading controls in the panel toolbar, camera /
   projection buttons under the ViewCube, Material Preview HDRI and look-dev spheres, Blender's selectable / eye /
   render columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
-  sessions, and a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE.
+  sessions, a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE, and Eevee /
+  Cycles items in the panel Renderer menu that set the scene engine (Maya's Renderer menu only changes the panel).
+- **Maya Workflow Kit Theme**: a separate, optional theme extension with Maya-like interface greys. The add-on
+  itself never changes the theme; install the theme like any other and switch back from the theme menu.
 
 ### Changed
 - Center Pivot centres on the object's own geometry and all its children, like Maya, the box built level by level in
@@ -40,6 +42,8 @@ with their translations.
 - Chamfer off keeps the original surface: the support edges stay on the original faces, the corners stay and the
   volume is unchanged (#368); like Maya the step count is even (2 segments give the 1-segment shape, 4 the 3-segment
   one).
+- Faster scene updates: the kit's update handlers share one pass over each update instead of each walking it again
+  (about 40 % less handler time per update in a scene with thousands of objects).
 
 ### Fixed
 - Alt+RMB dolly no longer jumps the wrong way when the cursor wraps at the edge of the view or a pen tablet jumps.
@@ -48,6 +52,13 @@ with their translations.
 - The ViewCube's face names lie on their faces.
 - In the right dock's tab stack a section header no longer takes the click meant for the tab beside it.
 - Auto-Save Preferences keeps the option window values you saved.
+- Blender 5.3: Paint Skin Weights draws its brush panels (5.3's Shape panel), starts with a brush that sets the
+  value, and its Value / Opacity follow the brush's shared settings; shelf tab text uses a readable colour on light
+  themes; the Range Slider's Keying item opens the whole Keyframing popover.
+- The Channel Box keeps updating its values after File > Open and File > New, and the pivot, joint, curve sync,
+  constraint group and Component Editor watchers start again after a file is opened.
+- The Tension and Solidify rest-position handler keeps running after a file is opened.
+- Finished modal tools are no longer counted as running wherever the kit checks a window's modal tools.
 - The Maya layout is ready before its first frame (sizes, Outliner, icons, Time Slider), instead of settling over
   the first second; the Range Slider starts at its settled width.
 
