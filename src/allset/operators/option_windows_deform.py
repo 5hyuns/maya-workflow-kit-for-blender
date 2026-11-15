@@ -205,7 +205,7 @@ WINDOWS = [
     Window("deform_wire", "Wire Tool", "Create", _match('WIRE'), [
         F("envelope", "Envelope:", "float", 1.0, lo=0.0, hi=1.0),
         F("dropoff", "Dropoff distance:", "float", 1.0, lo=0.0, hi=100.0)], _create('WIRE'), paths=("Deform/Wire",),
-        missing=("Holders (Deform > Wire > Add Holder)", "Crossing effect 0 / Local influence 0 (the factory "
+        missing=("Holders (Deform > Wire > Add Holder)", "Crossing effect 0 / Local influence 0 (the default "
                  "values: no effect)", "Grouping: Group wire(s) and base wire(s) (Wire > Parent Base Wire)")
         + ADVANCED[:1]),
     *[Window(f"wire_{key.lower()}", title, "Apply and Close", None, [

@@ -496,7 +496,7 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
 
 
 class ALLSET_MT_hotbox_controls(bpy.types.Menu):
-    """Hotbox Controls (Maya 2022 hotbox): menu sets, rows, style"""
+    """Hotbox Controls (Maya hotbox): menu sets, rows, style"""
     bl_idname = "ALLSET_MT_hotbox_controls"
     bl_label = "Hotbox Controls"
 
@@ -527,7 +527,7 @@ _persp_views = {}  # area pointer -> (rotation, location, distance) of the last 
 
 
 class ALLSET_OT_hb_view(bpy.types.Operator):
-    """Switch the pane to a Maya camera view (Maya 2022 hotbox centre zone)"""
+    """Switch the pane to a Maya camera view (Maya hotbox centre zone)"""
     bl_idname = "allset.hb_view"
     bl_label = "Switch View"
     bl_options = {'INTERNAL'}
@@ -555,7 +555,7 @@ class ALLSET_OT_hb_view(bpy.types.Operator):
 
 
 class ALLSET_OT_hb_pane(bpy.types.Operator):
-    """Turn the pane under the hotbox into another editor (Maya 2022 hotbox South zone)"""
+    """Turn the pane under the hotbox into another editor (Maya hotbox South zone)"""
     bl_idname = "allset.hb_pane"
     bl_label = "Switch Panel Type"
     bl_options = {'INTERNAL'}
@@ -615,7 +615,7 @@ _PREF_ELEMENTS = {"HELP_LINE": "show_help_line", "STATUS_LINE": "show_status_lin
 
 
 class ALLSET_OT_hb_ui(bpy.types.Operator):
-    """Show or hide a Maya UI element (Maya 2022 hotbox East zone)"""
+    """Show or hide a Maya UI element (Maya hotbox East zone)"""
     bl_idname = "allset.hb_ui"
     bl_label = "Toggle UI Element"
     bl_options = {'INTERNAL'}
@@ -680,7 +680,7 @@ class ALLSET_OT_hb_mask(bpy.types.Operator):
 
 
 class ALLSET_OT_hb_style(bpy.types.Operator):
-    """Hotbox style: zones and menu rows, zones only, or centre only (Maya 2022 hotbox centre zone)"""
+    """Hotbox style: zones and menu rows, zones only, or centre only (Maya hotbox centre zone)"""
     bl_idname = "allset.hb_style"
     bl_label = "Hotbox Style"
     bl_options = {'INTERNAL'}

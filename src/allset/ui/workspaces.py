@@ -260,7 +260,7 @@ class ALLSET_OT_reset_workspace(bpy.types.Operator):
 
 
 class ALLSET_MT_maya_workspaces(bpy.types.Menu):
-    """Maya Windows > Workspaces (Maya 2022 order)"""
+    """Maya Windows > Workspaces (same order as Maya)"""
     bl_label = "Workspaces"
 
     def draw(self, context):

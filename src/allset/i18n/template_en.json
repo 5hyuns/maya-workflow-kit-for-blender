@@ -9550,16 +9550,16 @@
    "Use the Python of this Text (Text Editor) as the item's command": "Use the Python of this Text (Text Editor) as the item's command"
   },
   "Tooltips/marking/modal": {
-   "Hotbox Controls (Maya 2022 hotbox): menu sets, rows, style": "Hotbox Controls (Maya 2022 hotbox): menu sets, rows, style",
-   "Hotbox style: zones and menu rows, zones only, or centre only (Maya 2022 hotbox centre zone)": "Hotbox style: zones and menu rows, zones only, or centre only (Maya 2022 hotbox centre zone)",
+   "Hotbox Controls (Maya hotbox): menu sets, rows, style": "Hotbox Controls (Maya hotbox): menu sets, rows, style",
+   "Hotbox style: zones and menu rows, zones only, or centre only (Maya hotbox centre zone)": "Hotbox style: zones and menu rows, zones only, or centre only (Maya hotbox centre zone)",
    "Maya hotbox: hold Space; click a menu name, or click a zone for its marking menu.\nA quick tap toggles the pane": "Maya hotbox: hold Space; click a menu name, or click a zone for its marking menu.\nA quick tap toggles the pane",
    "Maya marking menu: drag in a direction and release, flick, or click": "Maya marking menu: drag in a direction and release, flick, or click",
    "Only this kind of object can be selected (Maya selection mask preset)": "Only this kind of object can be selected (Maya selection mask preset)",
-   "Show or hide a Maya UI element (Maya 2022 hotbox East zone)": "Show or hide a Maya UI element (Maya 2022 hotbox East zone)",
+   "Show or hide a Maya UI element (Maya hotbox East zone)": "Show or hide a Maya UI element (Maya hotbox East zone)",
    "Single Perspective layout: leave four views": "Single Perspective layout: leave four views",
-   "Switch the pane to a Maya camera view (Maya 2022 hotbox centre zone)": "Switch the pane to a Maya camera view (Maya 2022 hotbox centre zone)",
+   "Switch the pane to a Maya camera view (Maya hotbox centre zone)": "Switch the pane to a Maya camera view (Maya hotbox centre zone)",
    "Switch to a workspace (Maya panel layouts with Hypershade or Graph Editor)": "Switch to a workspace (Maya panel layouts with Hypershade or Graph Editor)",
-   "Turn the pane under the hotbox into another editor (Maya 2022 hotbox South zone)": "Turn the pane under the hotbox into another editor (Maya 2022 hotbox South zone)"
+   "Turn the pane under the hotbox into another editor (Maya hotbox South zone)": "Turn the pane under the hotbox into another editor (Maya hotbox South zone)"
   },
   "Tooltips/marking/rmb_items": {
    "Camera-Based Selection: marquee and lasso select only the components you can see (Maya ``cmds.selectPref(useDepth=...)``;\nthe kit preference \"Marquee Selects Hidden Components\" the other way)": "Camera-Based Selection: marquee and lasso select only the components you can see (Maya ``cmds.selectPref(useDepth=...)``;\nthe kit preference \"Marquee Selects Hidden Components\" the other way)",
@@ -11048,7 +11048,7 @@
    "Remembers the pointer for the brush-local labels (first MOUSEMOVE item of \"Weight Paint\", passes through)": "Remembers the pointer for the brush-local labels (first MOUSEMOVE item of \"Weight Paint\", passes through)"
   },
   "Tooltips/ui/workspaces": {
-   "Maya Windows > Workspaces (Maya 2022 order)": "Maya Windows > Workspaces (Maya 2022 order)",
+   "Maya Windows > Workspaces (same order as Maya)": "Maya Windows > Workspaces (same order as Maya)",
    "Put the current Maya workspace back to its factory layout (Maya Windows > Workspaces > Reset Current\nWorkspace): closed, moved or resized panels come back": "Put the current Maya workspace back to its factory layout (Maya Windows > Workspaces > Reset Current\nWorkspace): closed, moved or resized panels come back",
    "Switch to this Maya workspace (Maya Windows > Workspaces); a file without it gets the kit's copy": "Switch to this Maya workspace (Maya Windows > Workspaces); a file without it gets the kit's copy"
   },

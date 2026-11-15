@@ -298,7 +298,7 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
     # the Time Slider menu acts on its range / the current frame
     time_range: EnumProperty(name="Time Range", options={'SKIP_SAVE'}, items=(
         ('SLIDER', "Time Slider", "The Shift-dragged Time Slider range, else the current frame"),
-        ('ALL', "All", "Every key of the selection (Maya Key menu, factory Time range All)")))
+        ('ALL', "All", "Every key of the selection (Maya Key menu, default Time range All)")))
 
     @classmethod
     @i18n.translated
