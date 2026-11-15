@@ -1,6 +1,6 @@
 """Windows installer helper round trip: install -> Make Blender Maya -> uninstall restores all.
 
-    python tools/installer_check.py [--blender PATH] [--no-build]
+    python tools/installer_check.py [--blender PATH | VERSION] [--no-build]
 
 Runs tools/installer/allset_setup.ps1 (what the Inno Setup draft allset.iss calls) with Windows
 PowerShell 5.1 on a clean sandbox (tmp/release_env_installer; BLENDER_USER_* point there and are
@@ -27,9 +27,11 @@ KEYS = ("active_keyconfig", "inputs", "undo_steps", "view", "theme")
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER),
+                    help="blender.exe, or a version / minor of a portable build (5.3 = the newest 5.3)")
     ap.add_argument("--no-build", action="store_true")
     args = ap.parse_args(argv)
+    args.blender = build.blender_exe(args.blender)
     zip_path = build.ext_zip()
     if not args.no_build or not zip_path.exists():
         zip_path = build.main(["--blender", args.blender, "--no-legacy"])

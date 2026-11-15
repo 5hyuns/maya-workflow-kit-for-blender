@@ -1,6 +1,6 @@
 """Build a static extension repository (Blender 4.2+ "remote repository") into dist/repo/.
 
-    python tools/build_repo.py [--blender PATH] [--out DIR] [--zip ZIP ...] [--no-build]
+    python tools/build_repo.py [--blender PATH | VERSION] [--out DIR] [--zip ZIP ...] [--no-build]
 
 dist/repo/ gets the extension zip(s) and the listing Blender reads, made by Blender itself:
 ``blender --command extension server-generate --repo-dir dist/repo --html`` -> index.json +
@@ -46,11 +46,13 @@ def file_url(path):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER),
+                    help="blender.exe, or a version / minor of a portable build (5.3 = the newest 5.3)")
     ap.add_argument("--out", default=str(REPO), help="repository folder (default dist/repo)")
     ap.add_argument("--zip", action="append", default=[], help="extension zip(s) to list (default: build one)")
     ap.add_argument("--no-build", action="store_true", help="use dist/maya-workflow-kit-<version>.zip as it is")
     args = ap.parse_args(argv)
+    args.blender = build.blender_exe(args.blender)
 
     out = Path(args.out)
     zips = [Path(z) for z in args.zip]
