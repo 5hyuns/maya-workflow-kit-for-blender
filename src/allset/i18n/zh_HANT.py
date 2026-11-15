@@ -6528,4 +6528,5 @@ STRINGS = {
     'Remember Panel Settings': '記住面板設定',
     'Tool Settings Tab': '工具設置分頁',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': '工具設置作為右側 Maya 停靠區的分頁開啟，位於通道盒與屬性編輯器旁 (關閉: 視口左側的獨立停靠區)',
+    "Save the preferences. While Maya mode shows Maya's colours, the file gets your own theme": '儲存首選項。Maya 模式顯示 Maya 的顏色時，檔案中儲存的仍是你自己的主題',
 }
