@@ -6426,4 +6426,11 @@ STRINGS = {
     "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)": '最初に選択したフェースのマテリアルと UV をコピーし、選択したフェースまたはメッシュにペーストするか、クリップボードをクリアします (Maya のメッシュ > クリップボード アクション)',
     "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)": '最初に選択したオブジェクトのトランスフォーム、可視性、共通のカスタム アトリビュート値を 2 番目のオブジェクトにコピーします (Maya の編集 > アトリビュート値の転送)',
     'Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup': 'Maya の編集 > LOD: 選択を詳細レベルとしてグループ化、削減した複製を追加、またはグループ解除します',
+    'Blender bakes the Displace modifiers into a new mesh; material displacement only shows in renders and is not baked.': 'Blender はディスプレイスモディファイアを新しいメッシュにベイクします。マテリアルのディスプレイスメントはレンダリングでのみ表示され、ベイクされません。',
+    'Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, Grab = Pull Tips, Clump = Pinch.': 'Blender ではヘアカーブをスカルプトモードでグルーミングします: 配置 = 追加、長さ = 伸縮、グラブ = 毛先を引っ張る、クランプ = つまむ。',
+    "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry Nodes hair modifiers.": 'Blender のヘアスカルプトブラシには幅、ねじり、ノイズ、分け目、フリーズのブラシがありません。ジオメトリノードのヘアモディファイアを使用してください。',
+    'Displace modifier (baked copy)': 'ディスプレイスモディファイア (ベイクしたコピー)',
+    'Hair sculpt brushes': 'ヘアスカルプトブラシ',
+    'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '選択したメッシュのディスプレイスモディファイアを新しいポリゴン オブジェクトにベイクします。元のオブジェクトは残ります (Maya の修正 > 変換 > ディスプレイスメントをポリゴンに)',
+    'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': 'このヘアスカルプトブラシでヘアをグルーミングします (Maya の生成 > インタラクティブグルーミングツール)',
 }

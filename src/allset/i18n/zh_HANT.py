@@ -6525,4 +6525,11 @@ STRINGS = {
     "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)": '複製第一個選取面的材質和 UV，將其貼上到選取的面或網格上，或清除剪貼簿（Maya 網格 > 剪貼簿動作）',
     "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)": '將第一個選取物件的變換、可見性和共有的自訂屬性值複製到第二個物件（Maya 編輯 > 傳遞屬性值）',
     'Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup': 'Maya 編輯 > LOD：將選取內容群組為細節層級、加入精簡副本或取消群組',
+    'Blender bakes the Displace modifiers into a new mesh; material displacement only shows in renders and is not baked.': 'Blender 將置換修改器烘焙到新網格中；材質置換只在算圖中顯示，不會被烘焙。',
+    'Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, Grab = Pull Tips, Clump = Pinch.': 'Blender 在雕刻模式下修飾毛髮曲線：放置 = 新增，長度 = 生長/收縮，抓取 = 拉動髮梢，聚攏 = 捏合。',
+    "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry Nodes hair modifiers.": 'Blender 的毛髮雕刻筆刷沒有寬度、扭曲、雜訊、分縫或凍結筆刷：請使用幾何節點毛髮修改器。',
+    'Displace modifier (baked copy)': '置換修改器（烘焙副本）',
+    'Hair sculpt brushes': '毛髮雕刻筆刷',
+    'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '將選取網格的置換修改器烘焙到新的多邊形物件中；原物件保留（Maya 修改 > 轉換 > 置換到多邊形）',
+    'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': '用此毛髮雕刻筆刷修飾毛髮（Maya 產生 > 交互式修飾工具）',
 }

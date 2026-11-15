@@ -697,33 +697,63 @@ class ALLSET_OT_paint_hair_follicles(bpy.types.Operator):
 BRUSH_RETRY_S, BRUSH_RETRIES = 0.2, 25
 
 
-def _activate_brush(brush, window=None):
+def _activate_brush(brush, window=None, library=SCULPT_LIBRARY):
     """``brush.asset_activate`` in a 3D View of the window when there is one: 5.2 checks the mode there and refuses
     from another editor (a shelf button: "Unable to activate brush, wrong object mode", GUI)."""
     window = window or bpy.context.window
     area = next((a for a in window.screen.areas if a.type == 'VIEW_3D'), None) if window else None
     region = next((r for r in area.regions if r.type == 'WINDOW'), None) if area else None
-    kwargs = dict(asset_library_type='ESSENTIALS', relative_asset_identifier=SCULPT_LIBRARY + brush)
+    kwargs = dict(asset_library_type='ESSENTIALS', relative_asset_identifier=library + brush)
     if region is None:
         return bpy.ops.brush.asset_activate(**kwargs)
     with bpy.context.temp_override(window=window, area=area, region=region):
         return bpy.ops.brush.asset_activate(**kwargs)
 
 
-def _retry_brush(brush):
+def _retry_brush(brush, library=SCULPT_LIBRARY, mode='SCULPT'):
     left = [BRUSH_RETRIES]
 
     def tick():
         left[0] -= 1
         win = bpy.context.window_manager.windows[0] if bpy.context.window_manager.windows else None
-        if win is None or bpy.context.mode != 'SCULPT':
+        if win is None or bpy.context.mode != mode:
             return None
         try:
-            done = _activate_brush(brush, win) == {'FINISHED'}
+            done = _activate_brush(brush, win, library) == {'FINISHED'}
         except RuntimeError:
             done = False
         return None if done or left[0] <= 0 else BRUSH_RETRY_S
     bpy.app.timers.register(tick, first_interval=BRUSH_RETRY_S)
+
+
+# --- Generate > Interactive Grooming Tools ----------------------------------------------------
+
+CURVES_LIBRARY = "brushes/essentials_brushes-curve_sculpt.blend/Brush/"
+
+
+class ALLSET_OT_groom_brush(bpy.types.Operator):
+    """Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)"""
+    bl_idname = "allset.groom_brush"
+    bl_label = "Grooming Tool"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    brush: StringProperty(name="Brush", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        # same target as Paint Hair Follicles: the hair Curves object, or the selected mesh's hair (made if missing)
+        if context.mode != 'SCULPT_CURVES' and bpy.ops.allset.paint_hair_follicles() != {'FINISHED'}:
+            self.report({'WARNING'}, "Select a hair Curves object or the mesh it grows on.")
+            return {'CANCELLED'}
+        try:
+            res = _activate_brush(self.brush, library=CURVES_LIBRARY)
+        except RuntimeError as ex:
+            if context.window is None:
+                self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+                return {'CANCELLED'}
+            res = {'CANCELLED'}
+        if res != {'FINISHED'} and context.window is not None:
+            _retry_brush(self.brush, CURVES_LIBRARY, 'SCULPT_CURVES')
+        return {'FINISHED'}
 
 
 # --- UV > Assign Checker Shader ---------------------------------------------------------------
@@ -995,4 +1025,5 @@ class ALLSET_OT_menu_note(bpy.types.Operator):
 classes = (ALLSET_OT_prefix_hierarchy, ALLSET_OT_search_replace_names, ALLSET_OT_soften_harden,
            ALLSET_OT_detach, ALLSET_OT_edge_flow, ALLSET_OT_wedge, ALLSET_OT_nonlinear,
            ALLSET_OT_object_display, ALLSET_OT_sculpt_tool, ALLSET_OT_checker_shader, ALLSET_OT_checker_toggle, ALLSET_OT_checker_density, ALLSET_OT_import_audio,
-           ALLSET_OT_delete_sounds, ALLSET_OT_stereo_camera, ALLSET_OT_menu_note, ALLSET_OT_paint_hair_follicles)
+           ALLSET_OT_delete_sounds, ALLSET_OT_stereo_camera, ALLSET_OT_menu_note, ALLSET_OT_paint_hair_follicles,
+           ALLSET_OT_groom_brush)

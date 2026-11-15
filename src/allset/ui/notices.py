@@ -25,6 +25,17 @@ NOTICES = {
     **{f"Edit/LOD (Level of Detail)/{item}": ("Empty + Decimate modifier", "Blender has no level of detail "
                                               "switching: every level stays visible; hide the ones you don't need.")
        for item in ("Create LOD Group", "Generate LOD Meshes", "Ungroup LOD Group")},
+    **{f"Generate/Interactive Grooming Tools/{item} Brush": (
+        "Hair sculpt brushes", "Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, "
+        "Grab = Pull Tips, Clump = Pinch.")
+       for item in ("Density", "Place", "Length", "Cut", "Comb", "Grab", "Smooth", "Clump", "Select")},
+    **{f"Generate/Interactive Grooming Tools/{item} Brush": (
+        "none", "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry "
+        "Nodes hair modifiers.")
+       for item in ("Width", "Twist", "Noise", "Part", "Freeze")},
+    "Modify/Convert/Displacement to Polygons": (
+        "Displace modifier (baked copy)", "Blender bakes the Displace modifiers into a new mesh; material "
+        "displacement only shows in renders and is not baked."),
     "Mesh Display/Assign Existing Set/No bakesets defined": ("Render Properties > Bake", "Maya lists the scene's bake sets here; Blender bakes from Render Properties > Bake (Cycles)."),
     # Skin
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
