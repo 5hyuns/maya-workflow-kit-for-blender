@@ -1,0 +1,20 @@
+schema_version = "1.0.0"
+
+# A separate theme extension: Maya's greys for Blender's own interface. The Maya Workflow Kit add-on never
+# changes the theme; this theme is installed and picked by the user (Preferences > Themes), like any other.
+id = "allset_theme"
+version = "0.1.0"
+name = "Maya Workflow Kit Theme"
+tagline = "Maya's grey panels, fields, menus and selection blue for Blender"
+maintainer = "5hyuns <555hyuns@gmail.com>"
+type = "theme"
+tags = ["Dark", "Inspired By"]
+
+blender_version_min = "5.0.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+copyright = [
+  "2026 5hyuns",
+]
