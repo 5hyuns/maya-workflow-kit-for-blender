@@ -32,6 +32,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .. import compat, live_refs
+from .. import update_summary
 from . import playback_maya
 
 EPS = 1e-5
@@ -381,8 +382,9 @@ def _on_depsgraph(scene, depsgraph):
     found = False
     # an object whose animation curves changed in this update (keys dragged in the Graph Editor, a key set, a tangent
     # rule) only shows its new animated value: that is no channel change to key
-    edited = {u.id.original.as_pointer() for u in depsgraph.updates if isinstance(u.id, bpy.types.Action)}
-    for update in depsgraph.updates:
+    ups = update_summary.updates(depsgraph, _on_depsgraph)
+    edited = {u.id.original.as_pointer() for u in ups if isinstance(u.id, bpy.types.Action)}
+    for update in ups:
         ob = update.id.original if isinstance(update.id, bpy.types.Object) else None
         if _edit_points(ob):
             # component mode: the object's points changed (or only its selection: compared when keying)

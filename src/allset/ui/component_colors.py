@@ -54,6 +54,8 @@ from operator import attrgetter
 import bpy
 import numpy as np
 
+from .. import update_summary
+
 HILITE = "#64dcff"          # the object being edited, every edge
 VERT = "#c800c8"            # unselected vertices
 VERT_SEL = "#fdff88"        # selected vertices
@@ -778,7 +780,7 @@ def _on_depsgraph(_scene=None, depsgraph=None):
     more / less: a selection-only update; an object move) -> only the selection flags."""
     if depsgraph is None or not _cache:
         return
-    for u in depsgraph.updates:
+    for u in update_summary.updates(depsgraph, _on_depsgraph):
         if isinstance(u.id, (bpy.types.Mesh, bpy.types.Object)):
             name = u.id.original.name if u.id.original is not None else u.id.name
             (_dirty if u.is_updated_geometry else _dirty_sel).add(name)

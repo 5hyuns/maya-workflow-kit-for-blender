@@ -46,6 +46,7 @@ from bpy.props import EnumProperty
 from mathutils import Vector
 
 from .. import results, undo_steps
+from .. import update_summary
 from . import deformers, units, wire_deformer
 from .. import i18n
 from .tension_solidify_sculpt_nodes import (VERSION_PROP, VERSION, GROUPS, SLOT, SLOT_COUNT,  # noqa: F401
@@ -556,7 +557,7 @@ def windows():
 def _on_depsgraph(scene, depsgraph):
     seen = set()
     obs = []
-    for upd in depsgraph.updates:
+    for upd in update_summary.updates(depsgraph, _on_depsgraph):
         idb = getattr(upd.id, "original", upd.id)
         if isinstance(idb, bpy.types.Object):
             obs.append(idb)

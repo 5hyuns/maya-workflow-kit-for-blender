@@ -38,6 +38,7 @@ from bpy.props import BoolProperty, EnumProperty
 from gpu_extras.batch import batch_for_shader
 
 from .. import results
+from .. import update_summary
 from .. import compat
 from ..operators import uv_arrays, uv_tools
 from .. import i18n
@@ -250,7 +251,7 @@ def _draw():
 @bpy.app.handlers.persistent
 def _invalidate(_scene=None, depsgraph=None):
     if depsgraph is not None and not any(isinstance(u.id, (bpy.types.Mesh, bpy.types.Object))
-                                         for u in depsgraph.updates):
+                                         for u in update_summary.updates(depsgraph, _invalidate)):
         return
     _cache.clear()
     uv_arrays.invalidate()

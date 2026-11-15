@@ -22,6 +22,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
 from .. import undo_steps
+from .. import update_summary
 from . import time_keys
 from .. import i18n
 from .graph_key_edits import (_clip, _curve_keys, _END_GAP, _ensure_key, _FAR, _key_at, _remove,  # noqa: F401
@@ -186,7 +187,7 @@ def _keys_depsgraph(scene, depsgraph):
         fresh = op is not None and op.as_pointer() != _insert["op"] and op.bl_idname in BLENDER_KEY_OPS
         if op is not None and fresh:
             _insert["op"] = op.as_pointer()
-        for update in depsgraph.updates:
+        for update in update_summary.updates(depsgraph, _keys_depsgraph):
             idd = update.id
             if not isinstance(idd, bpy.types.Action):
                 continue

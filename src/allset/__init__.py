@@ -16,14 +16,15 @@ no module writes Blender's preferences or files outside the extension's folders,
 ``unregister()`` takes back everything ``register()`` added — there is nothing to restore on disable or Remove.
 """
 
-from . import i18n, preferences, translations, settings_io, switch, welcome, operators, ui, command_line, marking, first_start, keymap
+from . import i18n, preferences, translations, settings_io, switch, welcome, operators, ui, command_line, marking, first_start, update_summary, keymap
 
 # Always registered: the translations, the preferences (with the translation files box), settings export / import,
 # the Maya / Blender switch and the opt-in.
 CORE = (i18n, preferences, translations, settings_io, switch, welcome)
 # "Maya mode": registered while the add-on preference ``maya_mode`` is on; switching to
-# Blender unregisters them, which takes back everything they registered.
-MODE = (operators, ui, command_line, marking, first_start, keymap)
+# Blender unregisters them, which takes back everything they registered. ``update_summary`` comes after every module
+# with a depsgraph handler: its round markers go first and last in the list.
+MODE = (operators, ui, command_line, marking, first_start, update_summary, keymap)
 
 
 def register():

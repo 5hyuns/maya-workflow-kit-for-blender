@@ -43,6 +43,7 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty
 
 from .. import compat
+from .. import update_summary
 from .. import results
 from .. import i18n
 
@@ -354,7 +355,7 @@ def _on_depsgraph(scene, depsgraph):
         if not depsgraph.id_type_updated('ACTION'):
             return
         changed = 0
-        for update in depsgraph.updates:
+        for update in update_summary.updates(depsgraph, _on_depsgraph):
             idd = update.id
             if not isinstance(idd, bpy.types.Action):
                 continue

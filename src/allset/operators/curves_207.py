@@ -22,6 +22,7 @@ from bpy.props import EnumProperty, FloatProperty
 from mathutils import Matrix, Vector
 
 from .. import results, undo_steps
+from .. import update_summary
 from . import curves_math as cm
 from . import naming, units
 from .curves_maya import MCurve, _curves_selected, _new_curve_object, _replace_splines, read_spline
@@ -173,8 +174,8 @@ def _on_depsgraph(scene, depsgraph):
     if not depsgraph.id_type_updated('CURVE'):
         return
     try:
-        datas = {u.id.original for u in depsgraph.updates if isinstance(u.id, bpy.types.Curve)
-                 and u.id.original.get(LOCK)}
+        datas = {u.id.original for u in update_summary.updates(depsgraph, _on_depsgraph)
+                 if isinstance(u.id, bpy.types.Curve) and u.id.original.get(LOCK)}
     except (ReferenceError, AttributeError):
         return
     if not datas:

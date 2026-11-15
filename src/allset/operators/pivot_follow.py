@@ -24,6 +24,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .. import live_refs
+from .. import update_summary
 
 SAMPLES = 64          # selected vertices compared (spread over the selection)
 EPS = 1e-6            # smallest offset that counts as a move
@@ -289,7 +290,7 @@ def _on_depsgraph(_scene, depsgraph):
     if _snap["points"] is None:
         return
     try:
-        for change in depsgraph.updates:
+        for change in update_summary.updates(depsgraph, _on_depsgraph):
             if change.is_updated_geometry:
                 _geom[0] += 1
                 return

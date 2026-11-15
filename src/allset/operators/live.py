@@ -5,6 +5,7 @@ import bpy
 from bpy.app.handlers import persistent
 from mathutils.bvhtree import BVHTree
 from .. import i18n
+from .. import update_summary
 
 COLOR = (0., 153/255, 84/255)  # sRGB #009954, Maya's live surface wire / Outliner colour
 LIMIT = 16
@@ -379,7 +380,7 @@ def nearest(context, point, targets=None):
 @persistent
 def changed(_scene=None, depsgraph=None):
     if depsgraph is not None:
-        for update in depsgraph.updates:
+        for update in update_summary.updates(depsgraph, changed):
             if update.is_updated_geometry or update.is_updated_transform:
                 block = update.id.original
                 if isinstance(block, bpy.types.Object):

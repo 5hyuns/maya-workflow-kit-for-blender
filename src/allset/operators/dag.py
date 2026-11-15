@@ -27,6 +27,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .. import depsgraph_filter
+from .. import update_summary
 
 MARK = "allset_hidden_by_parent"
 # a type filter of the panel Show menu hides only that node, never its children (ui/panel_state.SHOW_HIDDEN)
@@ -248,9 +249,10 @@ def _joint_rev():
     return rev[0] if rev else None
 
 
-def _what_changed(scene, view_layer, depsgraph):
+def _what_changed(scene, view_layer, depsgraph, me=None):
     """``_FULL``: walk the scene again; ``_MARKED``: only the objects the last walk hid (Blender's eye / H may have
-    shown one); None: nothing a sync reads changed. Reads only the update's entries."""
+    shown one); None: nothing a sync reads changed. Reads only the update's entries (those handler ``me``
+    shares, ``update_summary``)."""
     if depsgraph is None or scene is None or view_layer is None:
         return _FULL
     seen = _SEEN.get((scene.as_pointer(), view_layer.as_pointer()))
@@ -260,7 +262,7 @@ def _what_changed(scene, view_layer, depsgraph):
     if rev is None or rev != _joint_rev():
         return _FULL
     scene_entry = False
-    for u in depsgraph.updates:
+    for u in (depsgraph.updates if me is None else update_summary.updates(depsgraph, me)):
         id_ = u.id
         if isinstance(id_, bpy.types.Object):
             ob = id_.original
@@ -309,13 +311,13 @@ _busy = []
 def _on_depsgraph(scene, _depsgraph=None):
     # #191: visibility only changes with a hide, a parent change or a new / removed node — never with a
     # move or a mesh edit; a sync walks every object's ancestors, so it runs only when the update can change them
-    if _busy or depsgraph_filter.only_motion(_depsgraph):
+    if _busy or depsgraph_filter.only_motion(_depsgraph, _on_depsgraph):
         return
     _busy.append(True)
     try:
         view_layer = bpy.context.view_layer
         try:
-            what = _what_changed(scene, view_layer, _depsgraph)
+            what = _what_changed(scene, view_layer, _depsgraph, _on_depsgraph)
         except (AttributeError, ReferenceError, RuntimeError, TypeError):
             what = _FULL
         if what == _FULL:

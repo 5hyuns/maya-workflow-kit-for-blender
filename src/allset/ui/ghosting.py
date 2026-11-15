@@ -28,6 +28,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, StringProperty
 from .. import i18n
+from .. import update_summary
 
 GEOMETRY = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 MODES = ("Pre And Post Frames", "Pre Frames", "Post Frames", "Custom Frames", "Pre And Post Keyframes",
@@ -503,7 +504,7 @@ def _on_depsgraph(scene, depsgraph):
     if anim_snapshot._busy or not _geom:
         return
     uids = set()
-    for update in depsgraph.updates:
+    for update in update_summary.updates(depsgraph, _on_depsgraph):
         idb = update.id
         if isinstance(idb, bpy.types.Action):
             drop()

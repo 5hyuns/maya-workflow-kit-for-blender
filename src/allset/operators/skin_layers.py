@@ -22,6 +22,7 @@ import bpy
 import numpy as np
 
 from .. import live_refs
+from .. import update_summary
 from . import skin, skin_layers_math as math_
 
 PROP = "allset_skin_layers"
@@ -585,7 +586,7 @@ def ensure_timer():
 def on_depsgraph(scene, depsgraph):
     if not _session["ob"]:
         return
-    for up in depsgraph.updates:
+    for up in update_summary.updates(depsgraph, on_depsgraph):
         idb = up.id
         if isinstance(idb, (bpy.types.Object, bpy.types.Mesh)) and getattr(idb, "name", None) in (
                 _session["ob"], getattr(getattr(session_object(), "data", None), "name", None)):

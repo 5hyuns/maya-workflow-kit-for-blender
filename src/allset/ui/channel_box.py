@@ -82,7 +82,7 @@ from .cb_panel import (CATEGORY, AE_CATEGORY, MTK_CATEGORY, ALLSET_PT_cb_name, A
 
 @persistent
 def _on_scene_change(_scene, depsgraph):
-    if not depsgraph_filter.only_motion(depsgraph):
+    if not depsgraph_filter.only_motion(depsgraph, _on_scene_change):
         _generation[0] += 1
 
 

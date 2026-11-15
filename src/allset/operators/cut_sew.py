@@ -13,6 +13,7 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 
 from .. import results
+from .. import update_summary
 from . import preselect, uv_tools
 
 TOOL = "allset.cut_sew_tool"
@@ -137,7 +138,7 @@ def _draw():
 def _invalidate(_scene=None, depsgraph=None):
     if depsgraph is not None and not any(
             isinstance(u.id, (bpy.types.Mesh, bpy.types.Object)) and (u.is_updated_geometry or u.is_updated_transform)
-            for u in depsgraph.updates):
+            for u in update_summary.updates(depsgraph, _invalidate)):
         return
     _border_cache.clear()
 

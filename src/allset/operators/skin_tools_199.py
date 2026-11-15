@@ -38,6 +38,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .. import results
+from .. import update_summary
 from . import skin
 from .skin_weight_access import _skin_armature, influence_names, NO_SKIN, skinned_meshes, _Weights  # noqa: F401
 from .skin_normalize_weights import (ALLSET_OT_skin_normalize_mode, _build_sum_group, ensure_sum_modifier, is_part,
@@ -158,7 +159,7 @@ class ALLSET_OT_move_skin_weights(bpy.types.Operator):
 @bpy.app.handlers.persistent
 def _sync_sum_modifiers(scene, depsgraph):
     """Keep weight-sum modifiers summing the skin's current influences; drop them when the skin is gone."""
-    for upd in depsgraph.updates:
+    for upd in update_summary.updates(depsgraph, _sync_sum_modifiers):
         ob = upd.id.original if isinstance(upd.id, bpy.types.Object) else None
         if ob is None or ob.type != 'MESH' or not ob.modifiers:
             continue

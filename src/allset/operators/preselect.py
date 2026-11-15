@@ -30,6 +30,8 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
+from .. import update_summary
+
 MODES = {'EDIT_MESH'}
 SELECT_TOOLS = ("builtin.select", "allset.target_weld_tool", "allset.cut_sew_tool")   # the edge a press cuts
 TRANSFORM_TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE', "builtin.rotate": 'ROTATE',
@@ -273,7 +275,7 @@ def invalidate(_scene=None, depsgraph=None):
     keeps them and only forgets the selection."""
     global _coordinate_session
     if depsgraph is not None:
-        for u in depsgraph.updates:
+        for u in update_summary.updates(depsgraph, invalidate):
             if isinstance(u.id, (bpy.types.Mesh, bpy.types.Object)) and (u.is_updated_geometry or u.is_updated_transform):
                 # Only a running coordinate-only modal can retain topology.
                 # Transforms, other meshes and all explicit invalidations reset it.

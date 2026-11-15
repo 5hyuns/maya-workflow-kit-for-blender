@@ -368,7 +368,7 @@ def _on_depsgraph(scene, depsgraph=None):
         return
     try:
         if depsgraph is not None:
-            look = depsgraph_filter.Look(depsgraph)
+            look = depsgraph_filter.look(depsgraph, _on_depsgraph)
             if look.scene_only:
                 return
             obs, data, editing = _touched(look)

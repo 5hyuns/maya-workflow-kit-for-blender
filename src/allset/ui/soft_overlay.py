@@ -24,6 +24,7 @@ import numpy as np
 from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
+from .. import update_summary
 
 LINE_PX = 2.0
 POINT_PX = 5.0
@@ -178,7 +179,7 @@ def invalidate_all():
 def _on_depsgraph(_scene=None, depsgraph=None):
     if depsgraph is None:
         return
-    for u in depsgraph.updates:
+    for u in update_summary.updates(depsgraph, _on_depsgraph):
         if isinstance(u.id, (bpy.types.Mesh, bpy.types.Object)):
             name = u.id.original.name if u.id.original is not None else u.id.name
             _dirty["any"].add(name)

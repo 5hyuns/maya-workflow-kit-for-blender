@@ -18,6 +18,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProp
 from mathutils import Vector
 
 from .. import compat, results, undo_steps
+from .. import update_summary
 from . import curves_maya, material, naming, units
 from . import surfaces_math as sm
 from .modify_maya import selection_order
@@ -356,7 +357,7 @@ def _tick():
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, depsgraph):
     names = set()
-    for up in depsgraph.updates:
+    for up in update_summary.updates(depsgraph, _on_depsgraph):
         idb = up.id
         if isinstance(idb, bpy.types.Object) and idb.type == 'CURVE' and (up.is_updated_geometry
                                                                           or up.is_updated_transform):

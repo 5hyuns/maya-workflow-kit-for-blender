@@ -35,6 +35,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import compat, live_refs, results, undo_steps
+from .. import update_summary
 from .. import i18n
 
 EPS = 1e-4
@@ -686,7 +687,7 @@ def _on_depsgraph(_scene, depsgraph):
     # an Action in the update flags the type (one array read; a pass over the update walks every ID of the depsgraph)
     if not depsgraph.id_type_updated('ACTION'):
         return
-    if any(isinstance(u.id, bpy.types.Action) for u in depsgraph.updates):
+    if any(isinstance(u.id, bpy.types.Action) for u in update_summary.updates(depsgraph, _on_depsgraph)):
         _state["scheduled"] = True
         bpy.app.timers.register(_sync_tick, first_interval=SYNC_DELAY)
 

@@ -27,6 +27,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty
 from bpy.app.handlers import persistent
 
 from .. import live_refs
+from .. import update_summary
 from .. import results
 from .. import undo_steps
 
@@ -273,7 +274,7 @@ def _on_depsgraph(scene, depsgraph):
         return
     actions = set()
     touched = set()
-    for update in depsgraph.updates:
+    for update in update_summary.updates(depsgraph, _on_depsgraph):
         idb = update.id
         if isinstance(idb, bpy.types.Action):
             actions.add(idb.original.session_uid)

@@ -60,6 +60,8 @@ from .maya_joints_pick import (_box_bounds, _DEPTHS, _drawn_pick_lines, _in_poly
                                _segment_columns, _segment_distances, segments_touch, _touching,
                                _unpickable)  # noqa: F401
 
+from .. import update_summary
+
 LINE_PX = 1.0
 
 _handle = []
@@ -893,7 +895,7 @@ def _depsgraph_post(_scene, depsgraph):
     pose or an object is dragged only poses change: the joint lists and control shapes are kept."""
     try:
         if _posing():
-            moved = _moved_skeletons(depsgraph)
+            moved = _moved_skeletons(depsgraph, update_summary.updates(depsgraph, _depsgraph_post))
             if moved is None:
                 _LAYER_GEN[0] += 1
                 _note({}, 'pose')
@@ -902,7 +904,7 @@ def _depsgraph_post(_scene, depsgraph):
             else:
                 _note({})
             return
-        got = _touched(depsgraph)
+        got = _touched(depsgraph, update_summary.updates(depsgraph, _depsgraph_post))
         if got is None:
             changed(shapes=True)
             return

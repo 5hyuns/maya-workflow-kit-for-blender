@@ -65,12 +65,12 @@ def light_stamp(ob):
     return _SKEL_LIGHT.get(ob.as_pointer(), 0)
 
 
-def _touched(depsgraph):
+def _touched(depsgraph, updates=None):
     """({skeleton an update touched: 'light' / 'edit'}, the Scene changed, skeletons whose control shapes' own
     geometry it changed), or None when it can have changed anything (objects added, removed, linked: a Collection
-    update)."""
+    update). ``updates``: the update's entries when the caller has them (``update_summary``)."""
     touched, rebuilt, scene = {}, set(), False
-    for u in depsgraph.updates:
+    for u in (depsgraph.updates if updates is None else updates):
         id_ = u.id
         if isinstance(id_, bpy.types.Object):
             ob = id_.original
@@ -103,12 +103,12 @@ def _touched(depsgraph):
     return touched, scene, rebuilt
 
 
-def _moved_skeletons(depsgraph):
+def _moved_skeletons(depsgraph, updates=None):
     """The skeletons a depsgraph update during a drag touched (those whose pose or place follows the dragged
     control: the dragged one, rigs constrained or parented to it), or None when it touched something else that can
-    change drawn lines (a control shape's geometry, data that isn't an object)."""
+    change drawn lines (a control shape's geometry, data that isn't an object). ``updates`` as in ``_touched``."""
     out = set()
-    for u in depsgraph.updates:
+    for u in (depsgraph.updates if updates is None else updates):
         id_ = u.id
         if isinstance(id_, bpy.types.Object):
             if id_.type == 'ARMATURE':

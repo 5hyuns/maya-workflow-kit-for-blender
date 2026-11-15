@@ -20,6 +20,7 @@ import bpy
 import numpy as np
 
 from .. import live_refs
+from .. import update_summary
 
 LIMIT = 2000
 FONT = 0
@@ -193,7 +194,7 @@ class ALLSET_OT_weight_numbers_hover(bpy.types.Operator):
 
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, depsgraph):
-    for u in depsgraph.updates:
+    for u in update_summary.updates(depsgraph, _on_depsgraph):
         if isinstance(u.id, (bpy.types.Object, bpy.types.Mesh)) and (u.is_updated_geometry or u.is_updated_transform):
             _cache["dirty"] = True
             return

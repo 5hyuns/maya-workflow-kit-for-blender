@@ -57,6 +57,8 @@ from .selection_wire_depth import (ARRAY_FROM, DEPTH_BIAS, DEPTH_BIAS_MAX_SPAN, 
                                    DEPTH_BIAS_THIN_RATIO, DEPTH_BIAS_THIN_SPAN, _NO_BOX, _PAIRS, _WORD_ONES, _all_rows,
                                    _biases_rows, _corner_array, _corners, _fold_rows, depth_bias)
 
+from .. import update_summary
+
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
 LEAD = "#43ffa3"           # lead (last selected = Blender's active)
@@ -557,14 +559,15 @@ def _on_depsgraph(_scene, depsgraph):
         return
     _updated[0] = True
     data_updated = None
-    for update in depsgraph.updates:
+    ups = update_summary.updates(depsgraph, _on_depsgraph)
+    for update in ups:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
             ob = update.id.original
             _batches.pop(ob.session_uid, None)
             if ob.session_uid not in _edges:
                 continue
             if data_updated is None:
-                data_updated = {u.id.original.as_pointer() for u in depsgraph.updates
+                data_updated = {u.id.original.as_pointer() for u in ups
                                 if not isinstance(u.id, bpy.types.Object)}
             if ob.data is None or ob.data.as_pointer() in data_updated or not keeps_edges(ob):
                 _edges.pop(ob.session_uid, None)
