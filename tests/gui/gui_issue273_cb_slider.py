@@ -126,7 +126,9 @@ def empty_point():
     used = cb()._filled[area.as_pointer()]
     share = cb().cb_share(region, u) * region.height
     top = region.y + region.height
-    y = top - round((used * u + share) / 2)
+    # half a row under the last row (the Maya layout leaves little room above the Layer Editor's tabs), and never
+    # lower than halfway down to the Channel Box part's end
+    y = top - round(min(used * u + 0.5 * u, (used * u + share) / 2))
     return region.x + region.width // 3, y
 
 

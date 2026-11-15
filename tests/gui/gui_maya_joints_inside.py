@@ -31,9 +31,10 @@ def shot(name):
     return px.reshape(h, w, 4)[..., :3]
 
 
-def violet_at(px, world, half=80):
-    """Joint-violet pixels (thin smooth lines blend with the background) in a square around ``world``; the blue
-    mesh wire and the grey background don't count."""
+def violet_at(px, world, half=60):
+    """Joint-violet pixels (thin smooth lines blend with the background) in a square around ``world``, inside the
+    cylinder's outline (the lines to the end joints run outside it, above and below); the blue mesh wire and the grey
+    background don't count."""
     from bpy_extras.view3d_utils import location_3d_to_region_2d
     area, region = view3d()
     p = location_3d_to_region_2d(region, area.spaces.active.region_3d, world)
