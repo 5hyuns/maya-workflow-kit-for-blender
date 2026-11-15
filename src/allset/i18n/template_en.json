@@ -7030,6 +7030,10 @@
    "Mode": "Mode",
    "Remove Joint": "Remove Joint"
   },
+  "Labels/operators/skin_bake_deformation": {
+   "Bake Deformation to Skin Weights": "Bake Deformation to Skin Weights",
+   "Max influences": "Max influences"
+  },
   "Labels/operators/skin_basics": {
    "Go to Bind Pose": "Go to Bind Pose",
    "Max influences": "Max influences",
@@ -7084,25 +7088,29 @@
    "Maya skinCluster Skinning Method": "Maya skinCluster Skinning Method",
    "Skinning Method": "Skinning Method"
   },
-  "Labels/operators/skin_tools_199": {
-   "Bake Deformation to Skin Weights": "Bake Deformation to Skin Weights",
-   "Comma-separated joint names": "Comma-separated joint names",
+  "Labels/operators/skin_normalize_weights": {
+   "Normalize Weights": "Normalize Weights",
+   "Weight Normalization": "Weight Normalization"
+  },
+  "Labels/operators/skin_substitute_geometry": {
    "Disable non-skin deformers": "Disable non-skin deformers",
+   "Maya units: new points farther from the old surface take the nearest old vertex's weights": "Maya units: new points farther from the old surface take the nearest old vertex's weights",
+   "Retain old geometry": "Retain old geometry",
+   "Reweighting distance": "Reweighting distance",
+   "Substitute Geometry": "Substitute Geometry"
+  },
+  "Labels/operators/skin_tools_199": {
+   "Comma-separated joint names": "Comma-separated joint names",
+   "Move Weights to Influences": "Move Weights to Influences",
+   "Source": "Source",
+   "Targets": "Targets"
+  },
+  "Labels/operators/skin_weight_maps": {
    "Export Weight Maps": "Export Weight Maps",
    "Image format": "Image format",
    "Import Weight Maps": "Import Weight Maps",
    "Map size X": "Map size X",
-   "Map size Y": "Map size Y",
-   "Max influences": "Max influences",
-   "Maya units: new points farther from the old surface take the nearest old vertex's weights": "Maya units: new points farther from the old surface take the nearest old vertex's weights",
-   "Move Weights to Influences": "Move Weights to Influences",
-   "Normalize Weights": "Normalize Weights",
-   "Retain old geometry": "Retain old geometry",
-   "Reweighting distance": "Reweighting distance",
-   "Source": "Source",
-   "Substitute Geometry": "Substitute Geometry",
-   "Targets": "Targets",
-   "Weight Normalization": "Weight Normalization"
+   "Map size Y": "Map size Y"
   },
   "Labels/operators/smart_bevel": {
    "Bevel width in scene units (not a fraction of the edges)": "Bevel width in scene units (not a fraction of the edges)",
@@ -10262,6 +10270,9 @@
    "Maya Insert Joint Tool: click a joint and drag to place a new joint between it and its children": "Maya Insert Joint Tool: click a joint and drag to place a new joint between it and its children",
    "Maya Remove Joint: delete the selected joints; their children move up to the parent and stay where they are": "Maya Remove Joint: delete the selected joints; their children move up to the parent and stay where they are"
   },
+  "Tooltips/operators/skin_bake_deformation": {
+   "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)": "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)"
+  },
   "Tooltips/operators/skin_basics": {
    "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound": "Maya Go to Bind Pose: every joint of the skeleton back to where it was when the skin was bound",
    "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs": "Maya Prune Small Weights: weights below the threshold leave the selected vertices (or the whole skin); the\nrest are normalised. Locked joints keep theirs",
@@ -10287,13 +10298,18 @@
    "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)": "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)",
    "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)": "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)"
   },
-  "Tooltips/operators/skin_tools_199": {
-   "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)": "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)",
-   "Maya Skin > Export Weight Maps...: one grey image per joint in UV space and a .weightMap file listing them": "Maya Skin > Export Weight Maps...: one grey image per joint in UV space and a .weightMap file listing them",
-   "Maya Skin > Import Weights Maps...: set the skins' weights from a .weightMap file and its images": "Maya Skin > Import Weights Maps...: set the skins' weights from a .weightMap file and its images",
-   "Maya Skin > Move Weights to Influences: on the selected vertices the target joints get the source joint's\nweight and the source gets none (select the vertices, the source joint, then the targets)": "Maya Skin > Move Weights to Influences: on the selected vertices the target joints get the source joint's\nweight and the source gets none (select the vertices, the source joint, then the targets)",
-   "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights": "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights",
+  "Tooltips/operators/skin_normalize_weights": {
+   "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights": "Maya Skin > Normalize Weights > Disable / Enable / Enable Post: how the selected skins keep their weights"
+  },
+  "Tooltips/operators/skin_substitute_geometry": {
    "Maya Skin > Substitute Geometry: the selected skinned mesh takes the other selected mesh's geometry and keeps\nits skin (weights carried over by closest point)": "Maya Skin > Substitute Geometry: the selected skinned mesh takes the other selected mesh's geometry and keeps\nits skin (weights carried over by closest point)"
+  },
+  "Tooltips/operators/skin_tools_199": {
+   "Maya Skin > Move Weights to Influences: on the selected vertices the target joints get the source joint's\nweight and the source gets none (select the vertices, the source joint, then the targets)": "Maya Skin > Move Weights to Influences: on the selected vertices the target joints get the source joint's\nweight and the source gets none (select the vertices, the source joint, then the targets)"
+  },
+  "Tooltips/operators/skin_weight_maps": {
+   "Maya Skin > Export Weight Maps...: one grey image per joint in UV space and a .weightMap file listing them": "Maya Skin > Export Weight Maps...: one grey image per joint in UV space and a .weightMap file listing them",
+   "Maya Skin > Import Weights Maps...: set the skins' weights from a .weightMap file and its images": "Maya Skin > Import Weights Maps...: set the skins' weights from a .weightMap file and its images"
   },
   "Tooltips/operators/smart_bevel": {
    "Change the last Smart Bevel (Maya: edit the polySmartBevel node). Blender keeps no edit-mode history, so\nonly the last one can be changed": "Change the last Smart Bevel (Maya: edit the polySmartBevel node). Blender keeps no edit-mode history, so\nonly the last one can be changed",
