@@ -1237,9 +1237,14 @@ def value_cell(layout, owner, prop, selected):
     ``prop`` (edit_field)."""
     twin = prop + "_on"
     if selected and twin in owner.bl_rna.properties:
-        # shortcut: a toggle centres its text and UILayout can't left-align it (an icon, or a second filler button,
-        # was tried and drew wrong); upgrade when a left-aligned pressed widget is found
-        layout.prop(owner, twin, text=getattr(owner, prop), toggle=True, translate=False)
+        # a toggle centres its text and UILayout can't left-align it: the value goes in a button just wide enough for
+        # it (so it sits where the text field's does) and a second pressed button of the twin fills the cell
+        val = getattr(owner, prop)
+        cell = layout.row(align=True)
+        left = cell.row(align=True)
+        left.ui_units_x = 0.42 * len(val) + 0.95   # shortcut: width from the character count, measure if it clips
+        left.prop(owner, twin, text=val, toggle=True, translate=False)
+        cell.prop(owner, twin, text=" ", toggle=True, translate=False)
     else:
         layout.prop(owner, prop, text="")
 
