@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Edit Mesh > Bevel: the profile shapes for Segments > 1 and Chamfer off. Maya's circular profile between the two width
-points (``arc_points``, ``frame_points``, ``true_arcs``), profiles meeting where three or more bevelled edges meet
-(``hub_profile_frames``, ``flat_corners``: one flat polygon) and the old corner kept as a profile point
-(``corner_kept``). Used by the bevel driver in ``bevel_maya``.
+"""Edit Mesh > Bevel: the profile shapes for Segments > 1. Maya's circular profile between the two width points
+(``arc_points``, ``frame_points``, ``true_arcs``) and profiles meeting where three or more bevelled edges meet
+(``hub_profile_frames``, ``flat_corners``: one flat polygon). Chamfer off is Blender's square profile
+(``bevel_maya``). Used by the bevel driver in ``bevel_maya``.
 """
 
 import math
@@ -240,46 +240,6 @@ def true_arcs(bm, elay, strip, segments, depth, hubs, hub_frames=None, w=0.0):
                 for v, p in zip(chain[1:-1], pts):
                     v.co = p
 
-
-def corner_kept(bm, elay, strip, segments, hubs):
-    """Chamfer off: each profile runs from its first end over the old corner to its other end (the line where the
-    two faces meet), its points in equal steps along that path. ``segments`` = Blender's (Maya's + 1). Ends where
-    two or more bevelled edges meet keep Blender's points."""
-    rails = {}
-    for e in bm.edges:
-        if e[elay]:
-            rails.setdefault(e[elay], []).append(e)
-    for f in bm.faces:
-        f.normal_update()
-    for tag, rs in rails.items():
-        if len(rs) != 2:
-            continue
-        walk = _strip_chains(rs[0], tag, elay, strip, segments)
-        if walk is None:
-            continue
-        chain_a, chain_b, first, last = walk
-        n0, n1 = _side_normal(first, strip), _side_normal(last, strip)
-        if n0 is None or n1 is None or len(chain_a) != segments + 1:
-            continue
-        along = n0.cross(n1)
-        if along.length <= ZERO:
-            continue
-        along.normalize()
-        for chain in (chain_a, chain_b):
-            mid = chain[len(chain) // 2].co
-            if hubs and min(hubs, key=lambda h: (mid - h[0]).length_squared)[1] >= 2:
-                continue
-            p0, p1 = chain[0].co.copy(), chain[-1].co.copy()
-            corner = _three_planes((n0, n0.dot(p0)), (n1, n1.dot(p1)), (along, along.dot((p0 + p1) / 2)))
-            if corner is None:
-                continue
-            legs = (corner - p0).length, (p1 - corner).length
-            total = legs[0] + legs[1]
-            if total <= ZERO:
-                continue
-            for k, v in enumerate(chain[1:-1], 1):
-                d = total * k / segments
-                v.co = p0.lerp(corner, d / legs[0]) if d <= legs[0] else corner.lerp(p1, (d - legs[0]) / legs[1])
 
 
 def _three_planes(a, b, c):
