@@ -430,3 +430,98 @@ def mesh_from_pydata(mesh, vertices, edges, faces):
     Blender to compute)."""
     mesh.from_pydata(vertices, edges, faces)
     repair_selection_attributes(mesh)
+
+
+# === Blender 5.3: weight paint brushes, paint panels, theme header text ==========================================
+
+# --- "Use unified" switches ------------------------------------------------------------------------------------
+# Up to 5.2 the switches that make a paint mode's brushes share one size / strength / weight belong to the mode's
+# unified paint settings (``UnifiedPaintSettings.use_unified_*``). 5.3 moved them onto each brush
+# (``Brush.use_unified_*``, size on and strength / weight off in the essentials brushes); the unified settings keep
+# the shared values, and their old switches are deprecated and change nothing.
+BRUSH_UNIFIED_SWITCHES = "use_unified_size" in bpy.types.Brush.bl_rna.properties
+UNIFIED_NAMES = ("size", "strength", "weight")
+
+
+def unified_switch_owner(ups, brush):
+    """The struct whose ``use_unified_<name>`` switches decide what ``brush`` shares: the brush (5.3; None without a
+    brush), else the paint mode's unified settings ``ups``."""
+    return brush if BRUSH_UNIFIED_SWITCHES else ups
+
+
+def unified_on(ups, brush, name):
+    """Does ``brush`` use the shared ``name`` ('size', 'strength' or 'weight') of ``ups``?"""
+    owner = unified_switch_owner(ups, brush)
+    return owner is not None and bool(getattr(owner, "use_unified_" + name))
+
+
+def unified_value_owner(ups, brush, name):
+    """Where strokes of ``brush`` read ``name`` (and where the kit writes it): ``ups`` when shared or without a
+    brush, else the brush."""
+    return ups if brush is None or unified_on(ups, brush, name) else brush
+
+
+def set_unified(ups, brush, name, on):
+    """Share ``name`` across the paint mode's brushes (``on``) or not; False when Blender refused (no brush, or a
+    brush that can't be edited)."""
+    owner = unified_switch_owner(ups, brush)
+    if owner is None:
+        return False
+    try:
+        setattr(owner, "use_unified_" + name, on)
+        return True
+    except (AttributeError, TypeError, ValueError, RuntimeError):
+        return False
+
+
+def unified_switches(ups, brush):
+    """{name: shared} of ``brush`` for size / strength / weight, or None when there is no brush to read."""
+    if BRUSH_UNIFIED_SWITCHES and brush is None:
+        return None
+    return {name: unified_on(ups, brush, name) for name in UNIFIED_NAMES}
+
+
+def keep_unified_switches(ups, brush, switches):
+    """After the kit changed the brush: ``brush`` shares what the previous one shared (``unified_switches`` read
+    before the change). Up to 5.2 the switches belong to the paint mode and already stay."""
+    if not BRUSH_UNIFIED_SWITCHES or brush is None or not switches:
+        return
+    for name, on in switches.items():
+        if unified_on(ups, brush, name) != on:
+            set_unified(ups, brush, name, on)
+
+
+# --- Essentials weight paint brushes -------------------------------------------------------------------------
+# 5.3 renamed the essentials draw brush "Paint" (blend Mix, strength 1) to "Set Weight" and gives new scenes, and
+# files that painted with "Paint", "Add Weight" (blend Add, strength 0.05, accumulating); 5.0 - 5.2 start with "Paint".
+WEIGHT_BRUSH_ASSETS = {'DRAW': "Set Weight" if VERSION >= (5, 3) else "Paint", 'BLUR': "Blur",
+                       'AVERAGE': "Average", 'SMEAR': "Smear"}
+_WEIGHT_START_BRUSH = "Add Weight" if VERSION >= (5, 3) else ""
+
+
+def weight_brush_asset(kind):
+    """The essentials weight paint brush asset (``brushes/...mesh_weight.blend/Brush/<name>``) of brush ``kind``."""
+    return "brushes/essentials_brushes-mesh_weight.blend/Brush/" + WEIGHT_BRUSH_ASSETS[kind]
+
+
+def is_adding_start_brush(brush):
+    """Is ``brush`` the essentials brush 5.3 starts weight painting with ("Add Weight"), still adding (blend Add)?
+    Always False up to 5.2, whose start brush mixes."""
+    return (bool(_WEIGHT_START_BRUSH) and brush is not None and brush.name == _WEIGHT_START_BRUSH
+            and brush.library is not None and getattr(brush, "blend", '') == 'ADD')
+
+
+# 5.3 also starts new scenes with Weight Paint's Multi-Paint (and Auto-Normalize) on; 5.0 - 5.2 with both off.
+MULTIPAINT_STARTS_ON = bool(bpy.types.ToolSettings.bl_rna.properties["use_multipaint"].default)
+
+
+# --- Paint panels the kit draws inside its own panels --------------------------------------------------------------
+def weight_falloff_panel():
+    """Blender's paint panel class that draws a weight brush's falloff curve and falloff shape: 5.3's Shape panel
+    (its Falloff panel no longer has the shape and is not shown for weight paint), else the Falloff panel."""
+    from bl_ui import properties_paint_common as paint_common
+    shape = getattr(paint_common, "ShapePanel", None)
+    supports = getattr(paint_common, "supports_shape_panel", None)
+    if shape is not None and (supports is None or supports('PAINT_WEIGHT')):
+        return shape
+    return paint_common.FalloffPanel

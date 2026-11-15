@@ -60,7 +60,8 @@ with bpy.context.temp_override(area=area, region=region):
         assert bpy.context.mode == 'PAINT_WEIGHT'
     bpy.ops.allset.weight_tool(kind='DRAW', blend='MIX')
     ups = addon.compat.unified_paint_settings(bpy.context.tool_settings)
-    ups.use_unified_weight = ups.use_unified_strength = True
+    for name in ('weight', 'strength'):     # shared values (the switches are on the brush from Blender 5.3)
+        assert addon.compat.set_unified(ups, bpy.context.tool_settings.weight_paint.brush, name, True)
     ups.strength = .5
     bpy.context.tool_settings.use_auto_normalize = False
     bpy.ops.allset.weight_value(value=.8)

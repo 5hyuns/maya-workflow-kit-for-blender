@@ -89,8 +89,8 @@ def flood_settings(context, operation='BRUSH'):
     ts = context.tool_settings
     brush = ts.weight_paint.brush
     ups = compat.unified_paint_settings(ts)
-    strength = (ups if ups.use_unified_strength or brush is None else brush).strength
-    value = (ups if ups.use_unified_weight or brush is None else brush).weight
+    strength = compat.unified_value_owner(ups, brush, 'strength').strength
+    value = compat.unified_value_owner(ups, brush, 'weight').weight
     if operation != 'BRUSH':
         return operation, value, strength
     kind = brush_kind(brush) or 'DRAW'

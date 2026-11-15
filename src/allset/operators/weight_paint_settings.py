@@ -201,17 +201,22 @@ def brush_tool(context, kind):
     return next((name for name in ids if suffix and name.lower() == 'builtin_brush.' + suffix), 'builtin.brush')
 
 
-def activate_brush(context, kind='DRAW', blend=None):
+def activate_brush(context, kind='DRAW', blend=None, essentials=False):
+    """The weight brush of ``kind`` in the main 3D View (the current brush when it has that kind, else the essentials
+    brush; ``essentials``: always the essentials brush), with ``blend`` set. Raises RuntimeError."""
     with viewport(context) as ctx:
+        wp = ctx.tool_settings.weight_paint
+        # what the brush shares (Value / Opacity / Radius) stays the same after the switch, like a Maya tool setting
+        shared = compat.unified_switches(wp.unified_paint_settings, wp.brush)
         bpy.ops.wm.tool_set_by_id(name=brush_tool(ctx, kind))
-        brush = ctx.tool_settings.weight_paint.brush
-        if brush is None or brush_kind(brush) != kind:
-            asset = {'DRAW': 'Paint', 'BLUR': 'Blur', 'AVERAGE': 'Average', 'SMEAR': 'Smear'}[kind]
+        brush = wp.brush
+        if essentials or brush is None or brush_kind(brush) != kind:
             bpy.ops.brush.asset_activate(asset_library_type='ESSENTIALS',
-                relative_asset_identifier='brushes/essentials_brushes-mesh_weight.blend/Brush/' + asset)
-            brush = ctx.tool_settings.weight_paint.brush
+                                         relative_asset_identifier=compat.weight_brush_asset(kind))
+            brush = wp.brush
         if brush is None or brush_kind(brush) != kind:
             raise RuntimeError('Choose a compatible weight brush from Brush Assets')
+        compat.keep_unified_switches(wp.unified_paint_settings, brush, shared)
         if blend is not None and not skin._brush_set(brush, 'blend', blend):
             raise RuntimeError('This brush is read-only; make an editable copy from Brush Assets')
         return brush

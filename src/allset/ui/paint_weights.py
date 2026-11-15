@@ -53,9 +53,13 @@ def _card(layout, title, icon='NONE', setting=None, context=None):
 def _native(layout, context, cls):
     # These native paint panels support Properties docks as well as 3D Views.
     # Keep the draw context intact; only interactive viewport actions are routed.
+    # The panels ask their ``self`` for the paint settings: ``paint_settings`` up to Blender 5.2,
+    # ``paint_settings_from_active_tool`` / ``paint_settings_from_mode`` from 5.3.
+    def settings(ctx, _mode=None):
+        return ctx.tool_settings.weight_paint
     holder = SimpleNamespace(layout=_BrushLayout(layout), is_popover=False, bl_label=cls.bl_label,
-                             paint_settings=lambda ctx: ctx.tool_settings.weight_paint,
-                             get_brush_mode=lambda ctx: 'PAINT_WEIGHT')
+                             paint_settings=settings, paint_settings_from_active_tool=settings,
+                             paint_settings_from_mode=settings, get_brush_mode=lambda ctx: 'PAINT_WEIGHT')
     cls.draw(holder, context)
 
 
@@ -246,8 +250,7 @@ def _unified(layout, context, name, label, pressure=None):
     ts = context.tool_settings
     brush = ts.weight_paint.brush
     ups = compat.unified_paint_settings(ts)
-    unified = {'weight': 'use_unified_weight', 'strength': 'use_unified_strength', 'size': 'use_unified_size'}[name]
-    owner = ups if getattr(ups, unified) or brush is None else brush
+    owner = compat.unified_value_owner(ups, brush, name)
     prop = name
     if name == 'size' and getattr(owner, 'use_locked_size', 'VIEW') == 'SCENE':
         prop = 'unprojected_size'
@@ -255,7 +258,7 @@ def _unified(layout, context, name, label, pressure=None):
     row.prop(owner, prop, text=label, slider=name != 'size')
     if pressure:
         _prop(row, brush, pressure, text='')
-    row.prop(ups, unified, text='', icon='BRUSHES_ALL')
+    _prop(row, compat.unified_switch_owner(ups, brush), 'use_unified_' + name, text='', icon='BRUSHES_ALL')
     return row
 
 
@@ -368,7 +371,7 @@ def _brush(layout, context):
             col.template_curve_mapping(brush, curve, brush=True, show_presets=True)
     # Maya "Profile" = the brush falloff
     col.separator(factor=0.5)
-    _native(col, context, paint_common.FalloffPanel)
+    _native(col, context, compat.weight_falloff_panel())
     _prop(col, brush, 'falloff_shape', text='Shape')
     _prop(col, brush, 'use_frontface', text='Front faces only')
     _prop(col, brush, 'use_frontface_falloff', text='Front-face falloff')
@@ -378,7 +381,7 @@ def _brush(layout, context):
     _prop(col, brush, 'blend', text='Blend mode')
     _prop(col, brush, 'use_accumulate', text='Accumulate strokes')
     ups = compat.unified_paint_settings(ts)
-    _prop(col, ups if ups.use_unified_size else brush, 'use_locked_size', text='Size units')
+    _prop(col, compat.unified_value_owner(ups, brush, 'size'), 'use_locked_size', text='Size units')
     _prop(col, ts, 'use_multipaint', text='Multi-paint selected joints')
     _prop(col, ts.weight_paint, 'use_group_restrict', text='Existing weights only')
 

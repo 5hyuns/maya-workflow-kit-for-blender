@@ -116,8 +116,7 @@ def _brush_radius(context):
     ts = context.tool_settings
     brush = ts.weight_paint.brush
     ups = compat.unified_paint_settings(ts)
-    owner = ups if (ups.use_unified_size or brush is None) else brush
-    return float(getattr(owner, "size", 50))
+    return float(getattr(compat.unified_value_owner(ups, brush, 'size'), "size", 50))
 
 
 def draw():

@@ -107,6 +107,22 @@ def _brush_set(brush, name, value):
         return False
 
 
+def _maya_start(context, first):
+    """Maya's Paint Skin Weights paints one influence with a Paint operation (Replace by default) at the tool's
+    Opacity. Blender 5.3 starts new scenes (and 5.2 files) with an accumulating low-strength Add brush and Multi-Paint
+    on: the tool starts with the Replace draw brush instead of that brush, and with Multi-Paint off the ``first`` time
+    it opens on a skin (afterwards Multi-Paint stays as the user sets it)."""
+    ts = context.tool_settings
+    if first and compat.MULTIPAINT_STARTS_ON:
+        ts.use_multipaint = False
+    if compat.is_adding_start_brush(ts.weight_paint.brush):
+        from .weight_paint import activate_brush
+        try:
+            activate_brush(context, 'DRAW', 'MIX', essentials=True)
+        except (RuntimeError, TypeError):
+            pass
+
+
 def apply_paint_settings(context, mesh, arm, v):
     """Maya tool values ``v`` (PAINT_FIELDS) -> the weight paint tool, brush, unified settings and overlays.
     Returns the names Blender refused (e.g. a brush that is a linked asset)."""
@@ -133,7 +149,8 @@ def apply_paint_settings(context, mesh, arm, v):
         if not _brush_set(brush, curve_prop, PROFILE_CURVE[v["profile"]]):
             refused.append("profile")
     # Maya Value / Opacity / Radius(U) are tool settings: Blender's unified paint settings hold them for every brush
-    ups.use_unified_weight = ups.use_unified_strength = ups.use_unified_size = True
+    for name in compat.UNIFIED_NAMES:
+        compat.set_unified(ups, brush, name, True)
     ups.weight = max(0.0, min(1.0, v["value"]))
     ups.strength = max(0.0, min(1.0, v["opacity"]))
     if v["screen_projection"]:
@@ -226,8 +243,10 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         # keeps the picked one afterwards. Bind Skin leaves
         # Blender's last made group (the last joint) active: the first entry picks by hierarchy (#146).
         first = first_influence(mesh)
-        if first is not None and (mesh.vertex_groups.active is None or not mesh.get(PAINT_SEEN)):
+        seen = bool(mesh.get(PAINT_SEEN))
+        if first is not None and (mesh.vertex_groups.active is None or not seen):
             mesh.vertex_groups.active_index = first.index
+        _maya_start(context, not seen)
         mesh[PAINT_SEEN] = True
         # Maya keeps a vertex selection made before the tool and floods only it
         # (Maya): Blender shows that selection only with the vertex

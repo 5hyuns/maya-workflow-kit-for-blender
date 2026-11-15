@@ -77,8 +77,7 @@ class ALLSET_OT_weight_value(bpy.types.Operator):
     def execute(self, context):
         ups = compat.unified_paint_settings(context.tool_settings)
         brush = context.tool_settings.weight_paint.brush
-        owner = ups if ups.use_unified_weight or brush is None else brush
-        owner.weight = self.value
+        compat.unified_value_owner(ups, brush, 'weight').weight = self.value
         return {'FINISHED'}
 
 
