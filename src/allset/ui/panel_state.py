@@ -17,9 +17,9 @@ from .panel_menu_data import ALL_TYPES, LAYOUTS, LIGHTING, RENDERER, SHADING, SH
 CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
                "SAFE_ACTION": "show_safe_areas", "SAFE_TITLE": "show_safe_areas"}
 # Resolution Gate: Blender always draws the render frame in a camera view, so the toggle keeps Maya's
-# state (camera data ID property); Film Gate and Resolution Gate are exclusive, like Maya. The camera's Overscan
-# stays as it is (Attribute Editor > Film Back).
+# state (camera data ID property) and Overscan; Film Gate and Resolution Gate are exclusive, like Maya.
 RES_GATE = "allset_res_gate"
+GATE_OVERSCAN = 1.3
 FIELD_CHART = "allset_field_chart"     # Maya Field Chart: drawn by operators/camera_overscan.draw_gate_overlays
 # Safe Action / Safe Title: Blender has one show_safe_areas flag drawing both frames. Each Maya toggle keeps its own
 # flag on the camera data; the frame that is off gets a 0 margin in the scene's safe areas (drawn on the camera frame
@@ -350,6 +350,7 @@ def apply(context, key):
             on = not state(context, key)
             data.show_sensor = on and key == "FILM_GATE"
             data[RES_GATE] = on and key == "RES_GATE"
+            data.allset_overscan = GATE_OVERSCAN if on else 1.0     # Maya: Overscan 1.3 while a gate shows
         elif key == "FIELD_CHART":
             ob.data[FIELD_CHART] = not ob.data.get(FIELD_CHART)
             for a in context.screen.areas if context.screen else ():

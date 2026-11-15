@@ -18,9 +18,9 @@ with their translations.
   Weight / Vertex Paint Alt+A pie and Grease Pencil Draw Ctrl+M / G).
 - Maya Outliner: Alt+middle-drag pans the rows both ways, so a deep joint chain can be seen (#365); the search field
   is a row under the menu bar, like Maya; right-click > Set Active Camera on a camera row.
-- Panel toolbar: Resolution Gate and Film Gate (one at a time, the render size written above the resolution gate),
-  Field Chart, and Safe Action / Safe Title as separate toggles; a gate button in Blender's own view looks through the
-  panel's startup camera.
+- Panel toolbar: Resolution Gate and Film Gate, one at a time like Maya (on sets the camera's Overscan to 1.3, off to
+  1.0; the render size is written above the resolution gate), Field Chart, and Safe Action / Safe Title as separate
+  toggles; a gate button in Blender's own view looks through the panel's startup camera.
 - Renderer menu: Eevee and Cycles items (scene engine and Rendered shading).
 - Shelf: right-click a button for Open / Edit / Delete; a user button can be framed while a kit preference is on
   (its "checked" field names the preference).

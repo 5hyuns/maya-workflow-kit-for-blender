@@ -197,6 +197,7 @@ def s_case_set():
             check(f"{name}: the camera has Fit Resolution Gate (Maya's Fill / Horizontal / Vertical / Overscan)",
                   False)
     cam.data.show_sensor = False
+    cam.data.allset_overscan = 2.2          # the "off" shot with the same room around the frame as the "on" one
     bpy.context.view_layer.update()
     for a in win().screen.areas:
         a.tag_redraw()
@@ -205,8 +206,13 @@ def s_case_set():
 @step
 def s_case_off():
     screenshot(os.path.join(TMP, "off.png"))
+    cam = C["cam"]
     with bpy.context.temp_override(**ctx()):
         bpy.ops.allset.panel_set(key='FILM_GATE')          # the panel toolbar's Film Gate button
+    name = _case()[0]
+    check(f"{name}: the Film Gate button sets the camera's Overscan to 1.3, like Maya ({cam.data.allset_overscan:g})",
+          abs(cam.data.allset_overscan - 1.3) < 1e-6)
+    cam.data.allset_overscan = 2.2          # back to the room the comparison needs (Maya keeps a value set now)
     for a in win().screen.areas:
         a.tag_redraw()
 

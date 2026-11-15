@@ -44,7 +44,7 @@ from .panel_cameras import (ALLSET_MT_panel_new_ortho, ALLSET_MT_panel_ortho_new
                             _on_undo, _scene_camera_view, _space, _startup_name, camera_locked, enable_in_viewports,
                             has_panel_camera, look_through, panel_camera, restore_camera_less, view_camera)
 from .panel_state import (CAMERA_DATA, CAMERA_KEYS, EXPOSURE_LAST, FAILS, FIELD_CHART, GAMMA_LAST,  # noqa: F401
-                          RADIO, RAW, RENDER_ENGINES, RES_GATE, SAFE, SET_KEYS, SHOW_HIDDEN, TIPS,
+                          GATE_OVERSCAN, RADIO, RAW, RENDER_ENGINES, RES_GATE, SAFE, SET_KEYS, SHOW_HIDDEN, TIPS,
                           TOGGLE_OFF, TOOLBAR_KEYS, TRANSFORM_LAST, _before_render, _safe_on, _sync_safe_margins,
                           _toggle_colour, apply, enter_rendered, leave_rendered, main_region, set_engine,
                           show_ik_handles, state)
