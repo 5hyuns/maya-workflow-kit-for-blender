@@ -453,6 +453,66 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
                     "Panels) instead of Blender's (Blender menus stay as a submenu)",
         default=True)
+    # Off by default (Maya has none of these): Blender controls next to the Maya ones.
+    show_viewport_shading: bpy.props.BoolProperty(
+        name="Viewport Shading Controls",
+        description="Show Blender's shading modes and settings at the right of the Maya viewport toolbar",
+        default=False, update=_update_selection_wire)
+    show_view_cube_buttons: bpy.props.BoolProperty(
+        name="Camera / Projection Buttons",
+        description="Show the Camera View and Perspective/Orthographic buttons under the ViewCube",
+        default=False, update=_update_selection_wire)
+    material_preview_hdri: bpy.props.BoolProperty(
+        name="Material Preview HDRI",
+        description="A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev "
+                    "spheres (off: the Maya view background)",
+        default=False)
+    grid_depth_pass: bpy.props.BoolProperty(
+        name="Grid Behind Surfaces",
+        description="Material Preview and EEVEE Rendered: the Maya grid doesn't show through the seams of opaque "
+                    "meshes (one more depth pass over the visible meshes each redraw)",
+        default=False, update=_update_selection_wire)
+    tool_settings_tab: bpy.props.BoolProperty(
+        name="Tool Settings Tab",
+        description="Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the "
+                    "Attribute Editor (off: their own dock left of the viewport)",
+        default=False, update=_update_dock_colors)
+
+    def _update_panel_memory(self, context):
+        from .ui import viewport_settings
+        viewport_settings.follow_preference()
+
+    remember_panel_settings: bpy.props.BoolProperty(
+        name="Remember Panel Settings",
+        description="Each Maya panel's display settings (shading, overlays, Show filters) come back in the next "
+                    "Blender session; kept in a file in the kit's extension folder",
+        default=False, update=_update_panel_memory)
+
+    @_quiet
+    def _update_outliner(self, context):
+        if self.outliner_columns:
+            from .ui import maya_outliner, outliner_tree     # switched on: Blender's columns show in every one
+            for space in outliner_tree._outliner_spaces():
+                if outliner_tree.is_tree(space):
+                    maya_outliner.show_columns(space)
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'OUTLINER':
+                    area.tag_redraw()
+
+    outliner_columns: bpy.props.BoolProperty(
+        name="Outliner Column Icons", description="Blender's selectable / eye / render icons at the right of the "
+                                                  "Maya Outliner rows (each one also has its own toggle)",
+        default=False, update=_update_outliner)
+    outliner_select_column: bpy.props.BoolProperty(
+        name="Outliner Selectable", description="Blender's selectable arrow at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
+    outliner_eye_column: bpy.props.BoolProperty(
+        name="Outliner Visibility", description="Blender's eye at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
+    outliner_render_column: bpy.props.BoolProperty(
+        name="Outliner Render", description="Blender's render camera at the right of the Maya Outliner rows",
+        default=True, update=_update_outliner)
     menu_set: bpy.props.EnumProperty(
         name="Menu Set", description="Maya menu set: which menus follow the common ones",
         items=lambda self, context: _menu_set_items(), default=0)
@@ -708,6 +768,24 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "in_view_messages")
         row.prop(self, "option_boxes_floating")
+        row = box.row()
+        row.prop(self, "tool_settings_tab")
+        row.prop(self, "remember_panel_settings")
+        row.prop(self, "grid_depth_pass")
+
+        box = layout.box()
+        box.label(text="Blender Controls (Maya has none of these)")
+        row = box.row()
+        row.prop(self, "show_viewport_shading")
+        row.prop(self, "show_view_cube_buttons")
+        row.prop(self, "material_preview_hdri")
+        row = box.row()
+        row.prop(self, "outliner_columns")
+        sub = row.row()
+        sub.active = self.outliner_columns
+        sub.prop(self, "outliner_select_column")
+        sub.prop(self, "outliner_eye_column")
+        sub.prop(self, "outliner_render_column")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps
