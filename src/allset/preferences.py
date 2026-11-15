@@ -477,7 +477,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Grid Behind Surfaces",
         description="Material Preview and EEVEE Rendered: the Maya grid doesn't show through the seams of opaque "
                     "meshes (one more depth pass over the visible meshes each redraw)",
-        default=False, update=_update_selection_wire)
+        default=True, update=_update_selection_wire)
     tool_settings_tab: bpy.props.BoolProperty(
         name="Tool Settings Tab",
         description="Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the "

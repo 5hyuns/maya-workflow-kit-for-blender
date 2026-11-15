@@ -43,8 +43,7 @@ extension until they are tested.
 - New preferences, all off by default (Maya has none of these): Blender's shading controls in the panel toolbar,
   camera / projection buttons under the ViewCube, a Material Preview HDRI, Blender's selectable / eye / render
   columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
-  sessions, a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE, and Eevee /
-  Cycles items in the panel Renderer menu.
+  sessions, and Eevee / Cycles items in the panel Renderer menu.
 - Maya's interface colours in Maya mode: grey panels, menu bars, fields, buttons and menus, Maya's selection blue and
   pale yellow tooltips. Only theme values change, and your own theme comes back when you switch to Blender, disable or
   remove the kit, or quit; Save Preferences while Maya mode is on still saves your own theme.
@@ -60,6 +59,8 @@ extension until they are tested.
 
 ## Fixed
 
+- The grid stays behind meshes in Material Preview and EEVEE Rendered, like Maya, instead of showing through their
+  seams.
 - Alt+RMB dolly no longer jumps the wrong way when the cursor wraps at the edge of the view or a pen tablet jumps.
 - A window reopened at its remembered place no longer resizes the Outliner or the dock.
 - The ViewCube's face names lie on their faces.

@@ -41,14 +41,15 @@ def test_opaque_material_boundaries():
         bpy.data.materials.remove(material)
 
 
-def test_off_by_default():
+def test_on_by_default():
+    """Like Maya, the grid stays behind meshes in shaded views: the pass is on after install and can be turned off."""
     prefs = import_module(kit.MODULE + '.preferences').get()
-    assert prefs.grid_depth_pass is False and not grid.depth_pass_on()
+    assert prefs.grid_depth_pass is True and grid.depth_pass_on()
     try:
-        prefs.grid_depth_pass = True
-        assert grid.depth_pass_on()
-    finally:
         prefs.grid_depth_pass = False
+        assert not grid.depth_pass_on()
+    finally:
+        prefs.grid_depth_pass = True
 
 
 def test_cache_invalidates_on_scene_changes():

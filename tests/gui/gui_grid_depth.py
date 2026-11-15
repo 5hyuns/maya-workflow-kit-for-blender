@@ -1,6 +1,7 @@
-"""Grid Behind Surfaces (ui/maya_grid.py depth pass) in a real viewport: off by default (no depth batches); on, a
-Material Preview view builds one batch per visible mesh, a frame change keeps the static meshes' batches and makes
-only the deforming one again, a move keeps the batch, and a frame step costs about what it costs with the pass off."""
+"""Grid Behind Surfaces (ui/maya_grid.py depth pass) in a real viewport: on by default, like Maya (a Material Preview
+view builds one batch per visible mesh); turned off and on again, a frame change keeps the static meshes' batches and
+makes only the deforming one again, a move keeps the batch, and a frame step costs about what it costs with the pass
+off."""
 
 import os
 import sys
@@ -68,9 +69,18 @@ def s_scene():
 
 
 @step
-def s_off_by_default():
-    check("Grid Behind Surfaces is off after install", prefs().grid_depth_pass is False)
-    check(f"off: no depth batches ({len(grid()._depth_batches)})", not grid()._depth_batches)
+def s_on_by_default():
+    check("Grid Behind Surfaces is on after install", prefs().grid_depth_pass is True)
+    n = len(grid()._depth_batches)
+    check(f"on by default: one batch per visible mesh ({n}, {SPHERES + 1} meshes)", n == SPHERES + 1)
+    prefs().grid_depth_pass = False
+    grid()._depth_batches.clear()
+    redraw(2)
+
+
+@step
+def s_off():
+    check(f"off: no depth batches built ({len(grid()._depth_batches)})", not grid()._depth_batches)
     C["off_ms"] = frame_steps()
 
 
@@ -107,7 +117,6 @@ def s_moved():
     print(f"GRID_DEPTH frame step: off {C['off_ms']:.1f} ms, on {on_ms:.1f} ms", flush=True)
     check(f"on: a frame step costs about the same as off ({on_ms:.1f} vs {C['off_ms']:.1f} ms)",
           on_ms < C["off_ms"] * 1.5 + 5.0)
-    prefs().grid_depth_pass = False
 
 
 run()

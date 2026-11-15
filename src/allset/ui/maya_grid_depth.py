@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Grid Behind Surfaces (preference, off by default): in Material Preview and EEVEE Rendered, the visible opaque
+"""Grid Behind Surfaces (preference, on by default like Maya): in Material Preview and EEVEE Rendered, the visible opaque
 meshes are drawn into the depth before the Maya grid (ui/maya_grid.py ``_draw``), so the grid doesn't show through
 their seams. ``opaque_material`` decides which surfaces count; the per-object batches and the handlers that drop
 them are below."""
@@ -71,7 +71,7 @@ def _depth_on_frame(*_args):
 
 
 def depth_pass_on():
-    """The Grid Behind Surfaces preference (off by default)."""
+    """The Grid Behind Surfaces preference (on by default)."""
     from .. import preferences
     try:
         return bool(preferences.get().grid_depth_pass)

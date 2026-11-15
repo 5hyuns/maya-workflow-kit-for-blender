@@ -34,8 +34,8 @@ with their translations.
 - Preferences, all off by default (Maya has none of these): Blender's shading controls in the panel toolbar, camera /
   projection buttons under the ViewCube, Material Preview HDRI and look-dev spheres, Blender's selectable / eye /
   render columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
-  sessions, a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE, and Eevee /
-  Cycles items in the panel Renderer menu that set the scene engine (Maya's Renderer menu only changes the panel).
+  sessions, and Eevee / Cycles items in the panel Renderer menu that set the scene engine (Maya's Renderer menu only
+  changes the panel).
 - **Maya's interface colours in Maya mode**: grey panels, menu bars, fields, buttons and menus, Maya's selection
   blue, square scroll bars and pale yellow tooltips. Only theme values change. Maya mode off, disable, Remove and
   quitting Blender put your own theme back; a theme edit or a theme picked while Maya mode is on stays; Save
@@ -51,6 +51,9 @@ with their translations.
   (about 40 % less handler time per update in a scene with thousands of objects).
 
 ### Fixed
+- The Maya grid stays behind meshes in Material Preview and EEVEE Rendered, like Maya, instead of showing through
+  their seams: a depth pass draws the visible opaque meshes first, keeping each mesh's batch until that mesh changes
+  (Preferences > Grid Behind Surfaces, on by default).
 - Alt+RMB dolly no longer jumps the wrong way when the cursor wraps at the edge of the view or a pen tablet jumps.
 - A window reopened at its remembered place no longer resizes the Outliner or the dock when the carved pieces are put
   back.
