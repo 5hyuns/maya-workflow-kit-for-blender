@@ -527,6 +527,13 @@ def weight_falloff_panel():
     return paint_common.FalloffPanel
 
 
+# --- Timeline keying popover ------------------------------------------------------------------------------------
+def keying_popover():
+    """The Timeline popover with the keying set and new-keyframe settings: 5.3's "Keyframing" popover (those settings
+    plus Auto Keying, as sub-panels sized by it), else the "Keyframing Settings" panel of 5.0 - 5.2."""
+    return "TIME_PT_keyframing" if hasattr(bpy.types, "TIME_PT_keyframing") else "TIME_PT_keyframing_settings"
+
+
 # --- Theme header text -----------------------------------------------------------------------------------------
 def header_text_colours(space_theme):
     """(text, highlighted text) RGB of an editor's header in the user's theme (read only): ``header_text`` /

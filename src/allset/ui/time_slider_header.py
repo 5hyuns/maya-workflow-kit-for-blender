@@ -181,7 +181,7 @@ class ALLSET_MT_anim_preferences(bpy.types.Menu):
     def draw(self, context):
         lay = self.layout
         lay.popover(panel="TIME_PT_playback", text="Playback")
-        lay.popover(panel="TIME_PT_keyframing_settings", text="Keying")
+        lay.popover(panel=compat.keying_popover(), text="Keying")
         lay.separator()
         lay.menu("TIME_MT_view", text="View")
         lay.menu(compat.timeline_marker_menu(), text="Marker")
