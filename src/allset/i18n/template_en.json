@@ -4797,7 +4797,6 @@
    "Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.": "Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.",
    "Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).": "Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).",
    "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).": "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).",
-   "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.": "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.",
    "Blender has no Light Editor: an Outliner window lists the scene lights; its eye and camera icons turn them off, Light Properties hold their values.": "Blender has no Light Editor: an Outliner window lists the scene lights; its eye and camera icons turn them off, Light Properties hold their values.",
    "Blender has no NURBS cone: a NURBS cylinder with its top row of points closed.": "Blender has no NURBS cone: a NURBS cylinder with its top row of points closed.",
    "Blender has no NURBS cube: six NURBS surface patches under an empty, like Maya's group.": "Blender has no NURBS cube: six NURBS surface patches under an empty, like Maya's group.",
@@ -4823,9 +4822,11 @@
    "Blender has no component metadata: store values as custom properties (Attribute Editor Extra Attributes) or mesh attributes.": "Blender has no component metadata: store values as custom properties (Attribute Editor Extra Attributes) or mesh attributes.",
    "Blender has no connection graph: attribute links are drivers (Expression Editor).": "Blender has no connection graph: attribute links are drivers (Expression Editor).",
    "Blender has no editor by this name: any area's editor-type menu gives the closest editor.": "Blender has no editor by this name: any area's editor-type menu gives the closest editor.",
+   "Blender has no fur and no level of detail switching: Object > Link/Transfer Data copies data between objects.": "Blender has no fur and no level of detail switching: Object > Link/Transfer Data copies data between objects.",
    "Blender has no gravity field: a Wind field blowing down (Blender's strength); the scene's gravity is global (Scene properties).": "Blender has no gravity field: a Wind field blowing down (Blender's strength); the scene's gravity is global (Scene properties).",
    "Blender has no hierarchy pick mode: pick roots in the Outliner, Select > Hierarchy takes the children.": "Blender has no hierarchy pick mode: pick roots in the Outliner, Select > Hierarchy takes the children.",
    "Blender has no hierarchy select mode: click the object and use Select > Hierarchy (or the Outliner) to take its children.": "Blender has no hierarchy select mode: click the object and use Select > Hierarchy (or the Outliner) to take its children.",
+   "Blender has no level of detail switching: every level stays visible; hide the ones you don't need.": "Blender has no level of detail switching: every level stays visible; hide the ones you don't need.",
    "Blender has no live object axis: create an orientation from the object (Orientation menu > Create) and pick it.": "Blender has no live object axis: create an orientation from the object (Orientation menu > Create) and pick it.",
    "Blender has no nConstraints: pin cloth with a vertex group (Cloth > Shape > Pin Group), connect rigid bodies with Rigid Body Constraints.": "Blender has no nConstraints: pin cloth with a vertex group (Cloth > Shape > Pin Group), connect rigid bodies with Rigid Body Constraints.",
    "Blender has no namespaces: Maya Workflow Kit keeps them as a \"ns:\" prefix in names.": "Blender has no namespaces: Maya Workflow Kit keeps them as a \"ns:\" prefix in names.",
@@ -4957,6 +4958,7 @@
    "Edit mode": "Edit mode",
    "Edit mode tools": "Edit mode tools",
    "Emit from Object": "Emit from Object",
+   "Empty + Decimate modifier": "Empty + Decimate modifier",
    "Enable All Caches on Selected": "Enable All Caches on Selected",
    "Extrude (E)": "Extrude (E)",
    "Face corners": "Face corners",
@@ -5239,6 +5241,13 @@
    "Time Slider": "Time Slider",
    "Update": "Update",
    "Update Snapshot": "Update Snapshot"
+  },
+  "Labels/operators/attr_clipboard": {
+   "Clear Clipboard": "Clear Clipboard",
+   "Clipboard Actions": "Clipboard Actions",
+   "Copy Attributes": "Copy Attributes",
+   "Paste Attributes": "Paste Attributes",
+   "Transfer Attribute Values": "Transfer Attribute Values"
   },
   "Labels/operators/auto_key": {
    "Auto Key": "Auto Key",
@@ -6118,6 +6127,12 @@
    "Left": "Left",
    "Middle": "Middle",
    "Move on Live Surface": "Move on Live Surface"
+  },
+  "Labels/operators/lod": {
+   "Create LOD Group": "Create LOD Group",
+   "Generate LOD Meshes": "Generate LOD Meshes",
+   "LOD (Level of Detail)": "LOD (Level of Detail)",
+   "Ungroup LOD Group": "Ungroup LOD Group"
   },
   "Labels/operators/loop_pick": {
    "Between": "Between",
@@ -7262,6 +7277,7 @@
    "Set Key": "Set Key",
    "Set Range to": "Set Range to",
    "Set a breakdown key (Maya Set Breakdown Key)": "Set a breakdown key (Maya Set Breakdown Key)",
+   "Sound Length": "Sound Length",
    "Start/End": "Start/End",
    "Tangent": "Tangent",
    "Time Range": "Time Range",
@@ -7596,6 +7612,7 @@
    "Component Colors": "Component Colors",
    "Create menu names objects pCube1 / pCubeShape1 (otherwise Blender names)": "Create menu names objects pCube1 / pCubeShape1 (otherwise Blender names)",
    "Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. Blender's own preferences are never changed.": "Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. Blender's own preferences are never changed.",
+   "Current Frame": "Current Frame",
    "Current Project": "Current Project",
    "Curve": "Curve",
    "Curve Colors": "Curve Colors",
@@ -7618,8 +7635,12 @@
    "Fast": "Fast",
    "Fixed-length Tangents": "Fixed-length Tangents",
    "Flat": "Flat",
+   "Focal Length": "Focal Length",
    "Ghost Next": "Ghost Next",
    "Ghost Previous": "Ghost Previous",
+   "Heads Up Display: the current frame in the bottom right of the view": "Heads Up Display: the current frame in the bottom right of the view",
+   "Heads Up Display: the current time as hh:mm:ss:ff in the bottom right of the view": "Heads Up Display: the current time as hh:mm:ss:ff in the bottom right of the view",
+   "Heads Up Display: the view's focal length in the bottom right of the view": "Heads Up Display: the view's focal length in the bottom right of the view",
    "Help Line": "Help Line",
    "History Output": "History Output",
    "Hotbox Style": "Hotbox Style",
@@ -7727,6 +7748,7 @@
    "Save a copy of the scene every few minutes into the autosave folder (the scene's own file is not touched)": "Save a copy of the scene every few minutes into the autosave folder (the scene's own file is not touched)",
    "Scale Keys Manipulator": "Scale Keys Manipulator",
    "Scene Concepts": "Scene Concepts",
+   "Scene Timecode": "Scene Timecode",
    "Scene unit scale 0.01 with centimetres and Maya camera clipping (0.1 - 10000) for this file and new files. Physics, light falloff and importers assume 1 BU = 1 m. Turning it off restores the previous values": "Scene unit scale 0.01 with centimetres and Maya camera clipping (0.1 - 10000) for this file and new files. Physics, light falloff and importers assume 1 BU = 1 m. Turning it off restores the previous values",
    "Selected objects show their wireframe over shading, like Maya (lead light green, others white); in wireframe shading unselected objects are Maya's dark blue": "Selected objects show their wireframe over shading, like Maya (lead light green, others white); in wireframe shading unselected objects are Maya's dark blue",
    "Selecting channels in the Channel Box selects their curves, and S keys only the selected channels": "Selecting channels in the Channel Box selects their curves, and S keys only the selected channels",
@@ -7972,6 +7994,7 @@
   },
   "Labels/ui/channel_box": {
    "(attributes)": "(attributes)",
+   "A value for every selected channel: Enter sets it": "A value for every selected channel: Enter sets it",
    "Add Attribute...": "Add Attribute...",
    "Add to Selected Layers": "Add to Selected Layers",
    "Adjust Channel Values": "Adjust Channel Values",
@@ -8050,6 +8073,7 @@
    "Unlock Selected": "Unlock Selected",
    "Unmute All": "Unmute All",
    "Unmute Selected": "Unmute Selected",
+   "Value": "Value",
    "Virtual slider speed": "Virtual slider speed",
    "Visibility": "Visibility",
    "edit and set keyframes on channels": "edit and set keyframes on channels"
@@ -9445,6 +9469,10 @@
    "Copy the selected geometry at sampled frames into a snapshot group (Maya Visualize > Create Animation\nSnapshot)": "Copy the selected geometry at sampled frames into a snapshot group (Maya Visualize > Create Animation\nSnapshot)",
    "Sample the snapshots' sources again (Maya Visualize > Update Snapshot)": "Sample the snapshots' sources again (Maya Visualize > Update Snapshot)"
   },
+  "Tooltips/operators/attr_clipboard": {
+   "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)": "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)",
+   "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)": "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)"
+  },
   "Tooltips/operators/bake_maya": {
    "Maya Bake Simulation: key every transform channel of the selection on each sampled frame; constraints stop\ndriving the baked channels (muted, kept)": "Maya Bake Simulation: key every transform channel of the selection on each sampled frame; constraints stop\ndriving the baked channels (muted, kept)"
   },
@@ -9828,6 +9856,9 @@
   },
   "Tooltips/operators/live_translate": {
    "Move along the live surface; centre and plane handles project to live meshes only": "Move along the live surface; centre and plane handles project to live meshes only"
+  },
+  "Tooltips/operators/lod": {
+   "Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup": "Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup"
   },
   "Tooltips/operators/loop_pick": {
    "Maya double-click: an edge selects its loop, a vertex or face its shell; Shift: the components between the\nlast pick and this one along their loop": "Maya double-click: an edge selects its loop, a vertex or face its shell; Shift: the components between the\nlast pick and this one along their loop"

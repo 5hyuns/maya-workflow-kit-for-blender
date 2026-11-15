@@ -491,7 +491,6 @@ STRINGS = {
     'Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.': 'Blender 没有 HumanIK 控制绑定、角色映射或重定向：用骨骼集合对控制器分组。角色集：控制 > 创建角色集。',
     'Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).': 'Blender 没有 HumanIK: 此菜单通向附带的 Rigify 插件 (元绑定、生成绑定、绑定设置和控制器)。',
     'Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).': 'Blender 没有 Hypershade：着色器编辑器即节点图，其侧栏的 Hypershade 选项卡即浏览器 (用 Shift+A 添加节点)。',
-    'Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.': 'Blender 没有 LOD 组、毛皮或属性值传递：物体 > 关联/传递数据可在物体之间复制数据。',
     'Blender has no MASH: instancing networks are Geometry Nodes.': 'Blender 没有 MASH：实例化网络使用几何节点。',
     'Blender has no NURBS cone: a NURBS cylinder with its top row of points closed.': 'Blender 没有 NURBS 圆锥：用顶行点闭合的 NURBS 圆柱代替。',
     "Blender has no NURBS cube: six NURBS surface patches under an empty, like Maya's group.": 'Blender 没有 NURBS 立方体：用空物体下的六个 NURBS 曲面片代替，与 Maya 的组相同。',
@@ -6520,4 +6519,10 @@ STRINGS = {
     "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender 的精确布尔运算，立即应用；第二个对象被删除，与 Maya 关闭构建历史时相同。',
     'Boolean modifier (applied)': '布尔修改器（已应用）',
     'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '删除当前时间的时间滑块书签，或删除所有书签（Maya 删除 / 删除所有书签）',
+    'Blender has no fur and no level of detail switching: Object > Link/Transfer Data copies data between objects.': 'Blender 没有毛发，也没有细节级别切换：对象 > 关联/传递数据 可在对象之间复制数据。',
+    "Blender has no level of detail switching: every level stays visible; hide the ones you don't need.": 'Blender 没有细节级别切换：所有级别都保持可见，请隐藏不需要的级别。',
+    'Empty + Decimate modifier': '空物体 + 精简修改器',
+    "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)": '复制第一个选定面的材质和 UV，将其粘贴到选定的面或网格上，或清除剪贴板（Maya 网格 > 剪贴板操作）',
+    "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)": '将第一个选定对象的变换、可见性和共有的自定义属性值复制到第二个对象（Maya 编辑 > 传递属性值）',
+    'Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup': 'Maya 编辑 > LOD：将所选内容编组为细节级别、添加精简副本或取消编组',
 }

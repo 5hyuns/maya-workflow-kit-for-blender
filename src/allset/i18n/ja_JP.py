@@ -491,7 +491,6 @@ STRINGS = {
     'Blender has no HumanIK control rigs, character mapping or redirection: bone collections group the controls. Character sets: Control > Create Character Set.': 'Blender には HumanIK のコントロールリグ・キャラクタマッピング・リダイレクトはありません: ボーンコレクションでコントロールをまとめます。キャラクタセット: コントロール > キャラクタセットの作成。',
     'Blender has no HumanIK: this menu leads to the bundled Rigify add-on (meta-rig, Generate Rig, rig settings and controls).': 'Blender には HumanIK がありません: このメニューは同梱の Rigify アドオンにつながります (メタリグ、リグの生成、リグの設定とコントロール)。',
     'Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar tab the browser (add nodes with Shift+A).': 'Blender には Hypershade がありません: シェーダーエディターがグラフ、そのサイドバーの Hypershade タブがブラウザです (ノードは Shift+A で追加)。',
-    'Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data copies data between objects.': 'Blender には LOD グループ・ファー・アトリビュート値の転送はありません: オブジェクト > リンク/データ転送でオブジェクト間のデータをコピーします。',
     'Blender has no MASH: instancing networks are Geometry Nodes.': 'Blender には MASH がありません: インスタンス化のネットワークはジオメトリノードです。',
     'Blender has no NURBS cone: a NURBS cylinder with its top row of points closed.': 'Blender には NURBS 円錐がありません: 上端の点の列を閉じた NURBS 円柱です。',
     "Blender has no NURBS cube: six NURBS surface patches under an empty, like Maya's group.": 'Blender には NURBS 立方体がありません: 6 枚の NURBS サーフェスパッチをエンプティの下にまとめたもので、Maya のグループと同じです。',
@@ -6421,4 +6420,10 @@ STRINGS = {
     "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender の Exact ブーリアンをすぐに適用し、2 番目のオブジェクトを削除します (Maya でコンストラクション ヒストリをオフにした場合と同じ)。',
     'Boolean modifier (applied)': 'ブーリアンモディファイア (適用済み)',
     'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '現在の時間のタイムスライダ ブックマーク、またはすべてのブックマークを削除します (Maya の削除 / すべてのブックマークを削除)',
+    'Blender has no fur and no level of detail switching: Object > Link/Transfer Data copies data between objects.': 'Blender にはファーと詳細レベルの切り替えがありません。オブジェクト > データのリンク/転送 でオブジェクト間でデータをコピーできます。',
+    "Blender has no level of detail switching: every level stays visible; hide the ones you don't need.": 'Blender には詳細レベルの切り替えがありません。すべてのレベルが表示されたままになるので、不要なレベルは非表示にしてください。',
+    'Empty + Decimate modifier': 'エンプティ + デシメートモディファイア',
+    "Copy the first selected face's material and UVs, paste them on the selected faces or meshes, or clear the\nclipboard (Maya Mesh > Clipboard Actions)": '最初に選択したフェースのマテリアルと UV をコピーし、選択したフェースまたはメッシュにペーストするか、クリップボードをクリアします (Maya のメッシュ > クリップボード アクション)',
+    "Copy the first selected object's transform, visibility and shared custom attribute values to the second\n(Maya Edit > Transfer Attribute Values)": '最初に選択したオブジェクトのトランスフォーム、可視性、共通のカスタム アトリビュート値を 2 番目のオブジェクトにコピーします (Maya の編集 > アトリビュート値の転送)',
+    'Maya Edit > LOD: group the selection as levels of detail, add reduced duplicates, or ungroup': 'Maya の編集 > LOD: 選択を詳細レベルとしてグループ化、削減した複製を追加、またはグループ解除します',
 }

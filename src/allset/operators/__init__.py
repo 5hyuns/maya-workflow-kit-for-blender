@@ -226,6 +226,10 @@ from . import graph_bookmarks  # noqa: E402  Graph Editor List > Bookmarks
 classes += graph_bookmarks.classes
 from . import fill_bridge  # noqa: E402  Mesh > Fill Hole / Edit Mesh > Bridge with Maya's selection rules (#337)
 classes += fill_bridge.classes
+from . import attr_clipboard  # noqa: E402  Mesh > Clipboard Actions, Edit > Transfer Attribute Values
+classes += attr_clipboard.classes
+from . import lod  # noqa: E402  Edit > LOD (Level of Detail)
+classes += lod.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
