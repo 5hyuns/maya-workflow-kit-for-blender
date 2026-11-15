@@ -5194,6 +5194,9 @@
    "Normal": "Normal",
    "Select Node": "Select Node"
   },
+  "Labels/maya_look": {
+   "Save Preferences": "Save Preferences"
+  },
   "Labels/operators/anim_layers": {
    "Create Animation Layer": "Create Animation Layer",
    "Ctrl: add / remove this layer": "Ctrl: add / remove this layer",
@@ -9618,6 +9621,9 @@
    "Select, enable or disable every input / output node of the object (Maya Select / Enable / Disable All)": "Select, enable or disable every input / output node of the object (Maya Select / Enable / Disable All)",
    "Show this node in the Channel Box and the Attribute Editor (Maya: select the node); option box = the\nAttribute Editor": "Show this node in the Channel Box and the Attribute Editor (Maya: select the node); option box = the\nAttribute Editor",
    "The object's input / output nodes with their state (Maya All Inputs... / All Outputs...)": "The object's input / output nodes with their state (Maya All Inputs... / All Outputs...)"
+  },
+  "Tooltips/maya_look": {
+   "Save the preferences. While Maya mode shows Maya's colours, the file gets your own theme": "Save the preferences. While Maya mode shows Maya's colours, the file gets your own theme"
   },
   "Tooltips/operators/anim_layers": {
    "Add the Channel Box's selected channels to the selected animation layer, or remove them (Maya Channel Box >\nChannels > Add to / Remove From Selected Layers)": "Add the Channel Box's selected channels to the selected animation layer, or remove them (Maya Channel Box >\nChannels > Add to / Remove From Selected Layers)",

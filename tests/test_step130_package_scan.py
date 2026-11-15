@@ -37,7 +37,9 @@ BANNED_NAMES = {
     "reset_default_theme": "theme change",
     "interface_theme_preset_add": "theme change",
 }
-ALLOWED_STRINGS = {("ui/menu_map.py", "wm.save_userpref")}   # Maya's File > Save Preferences: the user's own command
+ALLOWED_STRINGS = {("ui/menu_map.py", "wm.save_userpref"),       # Maya's File > Save Preferences: the user's own
+                   ("ui/menu_map.py", "allset.save_userpref"),   # command (the kit's save while Maya mode is on)
+                   ("maya_look.py", "save_userpref")}
 # maya_look.py saves the preferences again right after the user saved them while Maya mode is on, with the user's
 # theme values in place, so the file never keeps Maya's look (tests/test_maya_look.py)
 ALLOWED_NAMES = {("maya_look.py", "save_userpref")}

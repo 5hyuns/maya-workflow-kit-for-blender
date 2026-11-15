@@ -13,9 +13,11 @@ The user's values are kept in the extension's user folder (``maya_look.json``) a
   the theme menu in the meantime (its file path changes) stays as picked.
 - Quitting Blender: back before Blender's Auto-Save Preferences writes the preferences (``exit_pre`` runs first), so
   the saved file holds the user's theme. Blender also unregisters add-ons on quit, after that.
-- Save Preferences while Maya mode is on: the kit notices the newer userpref.blend (``check_saved``, once a second)
-  and saves it again with the user's theme values, then puts the Maya values back on screen. A start without the
-  kit reads the user's theme.
+- Save Preferences while Maya mode is on: Blender's save button and Save & Load menu item (and the kit's Maya
+  File > Save Preferences) run ``allset.save_userpref``, which in one call puts the user's values in, saves and puts
+  Maya's values back on screen, so the file never holds Maya's colours. A script that calls wm.save_userpref itself
+  is caught once a second (``check_saved``): the file is saved again, twice, so userpref.blend and userpref.blend1
+  both hold the user's theme.
 - Load Factory Settings: Blender's factory theme is the new one, nothing is put back (the add-on is no longer in
   the preferences' add-on list when Blender unregisters it).
 - A backup left by a crash is applied once at the next start (values still holding the Maya value) and dropped.
@@ -264,30 +266,122 @@ def forget():
     _drop_state()
 
 
+def _save_with_users_theme(state, times=1):
+    """Save Preferences with the user's theme values in place, then Maya's values back on screen: one call, so the
+    file never holds Maya's colours. ``times`` 2 also replaces the previous file Blender keeps (userpref.blend1)."""
+    on = _still_applied(state)
+
+    def save():
+        _put_back(state, on)
+        try:
+            for _i in range(times):
+                bpy.ops.wm.save_userpref()
+        finally:
+            for p in on:
+                _set(p, state["applied"][p])
+    _quietly(save)
+    bpy.context.preferences.is_dirty = False
+    state["saved"] = _userpref_mtime()
+    _write_state(state)
+
+
+def save_preferences():
+    """Save Preferences as the user asked, with the user's own theme in the file (Maya's look stays on screen)."""
+    state = read_state()
+    if state is not None and _theme().filepath != state["filepath"]:
+        forget()                     # the user picked another theme: it is theirs now
+        state = None
+    if state is None:
+        bpy.ops.wm.save_userpref()
+        return
+    _save_with_users_theme(state)
+
+
 def check_saved():
-    """userpref.blend written while Maya's look is on screen: write it again with the user's theme values, then
-    put the Maya values back on screen. Returns True when it saved."""
+    """Fallback for a script that calls wm.save_userpref itself while Maya's look is on screen: the newer
+    userpref.blend is written again, twice, so it and userpref.blend1 both hold the user's theme. Returns True
+    when it saved."""
     state = read_state()
     if state is None or _userpref_mtime() == state["saved"]:
         return False
     if _theme().filepath != state["filepath"]:
         forget()
         return False
-    on = _still_applied(state)
-    prefs = bpy.context.preferences
-
-    def resave():
-        _put_back(state, on)
-        try:
-            bpy.ops.wm.save_userpref()
-        finally:
-            for p in on:
-                _set(p, state["applied"][p])
-    _quietly(resave)
-    prefs.is_dirty = False
-    state["saved"] = _userpref_mtime()
-    _write_state(state)
+    _save_with_users_theme(state, times=2)
     return True
+
+
+class ALLSET_OT_save_userpref(bpy.types.Operator):
+    """Save the preferences. While Maya mode shows Maya's colours, the file gets your own theme"""
+    bl_idname = "allset.save_userpref"
+    bl_label = "Save Preferences"
+
+    def execute(self, context):
+        save_preferences()
+        return {'FINISHED'}
+
+
+# --- Blender's Save Preferences entries call the kit's save while the look is on ---------------------------------
+
+SAVE_OP = "wm.save_userpref"
+
+
+class _SwapLayout:
+    """A UILayout that draws ``allset.save_userpref`` wherever ``wm.save_userpref`` is asked for (the same button,
+    label and place); every other call goes to the real layout."""
+
+    __slots__ = ("_layout",)
+    _SUB = {"row", "column", "split", "box", "column_flow", "grid_flow", "menu_pie"}
+
+    def __init__(self, layout):
+        object.__setattr__(self, "_layout", layout)
+
+    def operator(self, idname, *args, **kw):
+        return self._layout.operator(ALLSET_OT_save_userpref.bl_idname if idname == SAVE_OP else idname, *args, **kw)
+
+    def __getattr__(self, name):
+        attr = getattr(self._layout, name)
+        if name in self._SUB:
+            return lambda *a, **k: _SwapLayout(attr(*a, **k))
+        return attr
+
+    def __setattr__(self, name, value):
+        setattr(self._layout, name, value)
+
+
+class _SwapSelf:
+    __slots__ = ("_owner", "layout")
+
+    def __init__(self, owner):
+        self._owner, self.layout = owner, _SwapLayout(owner.layout)
+
+    def __getattr__(self, name):
+        return getattr(self._owner, name)
+
+
+_patched = {}       # (class name, attribute): Blender's own function
+
+
+def _route_saves(on):
+    """Blender's Preferences window save button and the Save & Load menu item run the kit's save (on) or Blender's
+    own again (off)."""
+    if on and not _patched:
+        menu = getattr(bpy.types, "USERPREF_MT_save_load", None)
+        header = getattr(bpy.types, "USERPREF_HT_header", None)
+        if menu is not None:
+            draw = menu.draw
+            _patched[("USERPREF_MT_save_load", "draw")] = draw
+            menu.draw = lambda self, context, _draw=draw: _draw(_SwapSelf(self), context)
+        if header is not None and hasattr(header, "draw_buttons"):
+            buttons = header.draw_buttons
+            _patched[("USERPREF_HT_header", "draw_buttons")] = buttons
+            header.draw_buttons = staticmethod(lambda layout, context, _b=buttons: _b(_SwapLayout(layout), context))
+    elif not on:
+        for (cls_name, attr), fn in _patched.items():
+            cls = getattr(bpy.types, cls_name, None)
+            if cls is not None:
+                setattr(cls, attr, staticmethod(fn) if attr == "draw_buttons" else fn)
+        _patched.clear()
 
 
 def _tick():
@@ -317,6 +411,8 @@ def _exit_pre(*_args):
 
 def register():
     _quitting[0] = False
+    bpy.utils.register_class(ALLSET_OT_save_userpref)
+    _route_saves(True)
     if _exit_pre not in bpy.app.handlers.exit_pre:
         bpy.app.handlers.exit_pre.append(_exit_pre)
     if wanted():
@@ -326,6 +422,8 @@ def register():
 def unregister():
     if _exit_pre in bpy.app.handlers.exit_pre:
         bpy.app.handlers.exit_pre.remove(_exit_pre)
+    _route_saves(False)
+    bpy.utils.unregister_class(ALLSET_OT_save_userpref)
     if _quitting[0]:
         _watch(False)
         return

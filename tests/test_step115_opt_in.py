@@ -106,10 +106,12 @@ def test_no_automatic_preference_save():
                     for line in fh:
                         if "save_userpref" in line and not line.lstrip().startswith("#"):
                             hits.append((os.path.relpath(path, SRC).replace(os.sep, "/"), line.strip()))
-    # Maya's File > Save Preferences menu item is the user's own action; maya_look.py saves again only right after
-    # the user saved while Maya mode is on, with the user's theme values (tests/test_maya_look.py)
-    assert sorted(hits) == [("maya_look.py", "bpy.ops.wm.save_userpref()"),
-                            ("ui/menu_map.py", '"File/Save Preferences": "wm.save_userpref",')], hits
+    # Saving is always the user's own action: Maya's File > Save Preferences item and Blender's save entries run
+    # maya_look.py's save (the user's theme in the file while Maya mode shows Maya's colours); maya_look.py also
+    # saves again after a script saved by itself (tests/test_maya_look.py)
+    assert {f for f, _line in hits} == {"maya_look.py", "ui/menu_map.py"}, hits
+    assert [line for f, line in hits if f == "ui/menu_map.py"] == \
+        ['"File/Save Preferences": "allset.save_userpref",'], hits
 
 
 def test_keymap_never_changes_the_active_keyconfig():

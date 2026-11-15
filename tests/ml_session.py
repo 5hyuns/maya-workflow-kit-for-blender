@@ -4,7 +4,7 @@ blender -b --python ml_session.py -- <out.json> <action> ...
 
 The look is put in place in this headless Blender too (ALLSET_MAYA_LOOK_BACKGROUND=1 from the test). Actions:
 own_theme (theme values of the user's own), enable (the add-on, Maya mode as saved), maya_on / maya_off, save
-(Save Preferences), tick (the kit's once-a-second look at userpref.blend), edit (a theme edit by the user),
+(a script's own wm.save_userpref), save_ui (Save Preferences from the UI), tick (the kit's once-a-second look at userpref.blend), edit (a theme edit by the user),
 factory (Load Factory Preferences), uninstall (Remove from inside Blender), crash (end without quitting).
 The theme's values, the add-on state and the kit's kept-values file are written to the JSON after the actions.
 """
@@ -64,6 +64,8 @@ for action in ACTIONS:
         import_module(kit.MODULE + ".switch").set_mode(False, layout=False)
     elif action == "save":
         bpy.ops.wm.save_userpref()
+    elif action == "save_ui":
+        bpy.ops.allset.save_userpref()       # what Blender's save button / Save & Load menu item run in Maya mode
     elif action == "tick":
         _look().check_saved()
     elif action == "edit":
