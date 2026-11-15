@@ -49,7 +49,7 @@ READERS = frozenset((
     "ui.uv_display:_invalidate", "ui.uv_shell_preview:_invalidate", "ui.uv_hud:_invalidate",
     "ui.graph_keys_draw:_on_depsgraph", "ui.component_editor:_on_depsgraph", "ui.hypergraph:_on_depsgraph",
     "operators.skin_layers:on_depsgraph", "ui.soft_overlay:_on_depsgraph", "command_line.undo_text:_on_depsgraph",
-    "operators.joint_marquee:_count"))
+    "operators.joint_marquee:_count", "ui.maya_grid:_depth_on_depsgraph"))
 
 # Kit depsgraph_update_post handlers that call ``wrote()`` before anything they write during a round (most write only
 # what differs, so a round with nothing to change keeps the walk).

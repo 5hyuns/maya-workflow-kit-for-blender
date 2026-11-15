@@ -64,6 +64,27 @@ def test_settings_travel_by_role():
     check(b.shading.type == 'SOLID' and b.region_3d.view_perspective == 'PERSP', "back to its own")
 
 
+def test_material_preview_hdri_only_with_its_preference():
+    """A new panel keeps the Maya view background in Material Preview; the Material Preview HDRI preference gives
+    Blender's HDRI background and look-dev spheres instead."""
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    a, _b = _two()
+    sh, ov = a.shading, a.overlay
+    old = prefs.material_preview_hdri
+    try:
+        sh.studiolight_background_alpha, ov.show_look_dev, sh.use_scene_world = 0.0, False, True
+        prefs.material_preview_hdri = False
+        four_view.default(a, "persp", bpy.context.scene)
+        check((sh.studiolight_background_alpha, ov.show_look_dev, sh.use_scene_world) == (0.0, False, True),
+              "off (default): the panel's background and overlays are left alone")
+        prefs.material_preview_hdri = True
+        four_view.default(a, "persp", bpy.context.scene)
+        check((sh.studiolight_background_alpha, ov.show_look_dev, sh.use_scene_world) == (1.0, True, False),
+              "on: HDRI background, look-dev spheres, no scene world")
+    finally:
+        prefs.material_preview_hdri = old
+
+
 def test_maya_cameras_per_role():
     a, _b = _two()
     want = {"top": "TOP", "front": "FRONT", "side": "SIDE-"}
