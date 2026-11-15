@@ -6418,4 +6418,13 @@ STRINGS = {
     'Toggle Section': 'セクションの切り替え',
     'Transform Group': 'トランスフォームグループ',
     'Viewport Shading Controls': 'ビューポートのシェーディングコントロール',
+    "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)": 'Maya の新しいパネルのマテリアルプレビューで、Blender の HDRI を背景にし、ルックデブの球を表示します (オフ: Maya のビュー背景)',
+    'Blender Controls (Maya has none of these)': 'Blender のコントロール (Maya にはないもの)',
+    "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder": 'Maya の各パネルの表示設定 (シェーディング、オーバーレイ、Show フィルタ) を次の Blender セッションでも戻します。キットの拡張機能フォルダのファイルに保存します',
+    'Grid Behind Surfaces': 'サーフェスの後ろのグリッド',
+    'Material Preview HDRI': 'マテリアルプレビューの HDRI',
+    "Material Preview and EEVEE Rendered: the Maya grid doesn't show through the seams of opaque meshes (one more depth pass over the visible meshes each redraw)": 'マテリアルプレビューと EEVEE レンダー: 不透明なメッシュの継ぎ目から Maya のグリッドが透けて見えません (再描画ごとに表示中のメッシュの深度パスを 1 回追加)',
+    'Remember Panel Settings': 'パネル設定を記憶',
+    'Tool Settings Tab': 'ツール設定タブ',
+    'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': 'ツール設定を右の Maya ドックのタブとして、チャンネルボックスとアトリビュートエディタの隣に開きます (オフ: ビューポートの左の専用ドック)',
 }

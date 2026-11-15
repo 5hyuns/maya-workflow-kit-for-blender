@@ -6517,4 +6517,13 @@ STRINGS = {
     'Toggle Section': '切换区段',
     'Transform Group': '变换分组',
     'Viewport Shading Controls': '视口着色控制',
+    "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)": '新的 Maya 面板在材质预览中以 Blender 的 HDRI 作为背景，并显示外观开发球体 (关闭: Maya 视图背景)',
+    'Blender Controls (Maya has none of these)': 'Blender 控件 (Maya 没有这些)',
+    "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder": '每个 Maya 面板的显示设置 (着色、叠加层、Show 过滤) 在下一次 Blender 会话中恢复；保存在套件扩展文件夹中的文件里',
+    'Grid Behind Surfaces': '表面后的栅格',
+    'Material Preview HDRI': '材质预览 HDRI',
+    "Material Preview and EEVEE Rendered: the Maya grid doesn't show through the seams of opaque meshes (one more depth pass over the visible meshes each redraw)": '材质预览和 EEVEE 渲染: Maya 栅格不会从不透明网格的接缝中透出 (每次重绘对可见网格多做一次深度绘制)',
+    'Remember Panel Settings': '记住面板设置',
+    'Tool Settings Tab': '工具设置标签页',
+    'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': '工具设置作为右侧 Maya 停靠区的标签页打开，位于通道盒和属性编辑器旁边 (关闭: 视口左侧的独立停靠区)',
 }
