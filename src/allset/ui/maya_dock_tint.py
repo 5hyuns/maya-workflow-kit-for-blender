@@ -7,7 +7,7 @@ maya_dock.py's Properties draw callback; maya_dock.py re-exports these names.
 
 import bpy
 
-from .maya_dock_roles import role, shown_kind
+from .maya_dock_roles import KINDS, role, shown_kind
 
 
 # Maya-style dock grey #444444 (Blender's factory Properties grey is #303030). The kit
@@ -15,7 +15,7 @@ from .maya_dock_roles import role, shown_kind
 # region raises the background to #444444 and the value fields with it (#1d1d1d -> #313131); text stays
 # near white. Only a theme darker than that is lifted, never a light one.
 MAYA_DOCK_GREY = 0x44 / 255.0
-TINTED_ROLES = {'STACK', 'CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'}
+TINTED_ROLES = {'STACK', *KINDS}
 
 
 def dock_lift(context):

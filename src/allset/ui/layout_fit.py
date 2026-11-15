@@ -33,7 +33,7 @@ _fallback = set()   # screens whose main view shows its toolbar because the colu
 # stack 480 px x the scale (Maya resizes the stack when its tab changes, ``tab_changed``).
 DOCK_MAYA_PX = 277
 DOCK_MAX_PX = 480
-WIDE_KINDS = ('ATTRIBUTE_EDITOR',)   # wide panels (460 px by default)
+WIDE_KINDS = ('ATTRIBUTE_EDITOR', 'TOOL_SETTINGS')   # wide panels (460 px by default)
 # the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
 # window at UI scale 1.5 keeps a 439 px viewport
 MIN_VIEW_PX = 280

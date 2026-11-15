@@ -23,9 +23,10 @@ def _hidden(context):
     if region is None or region.type != 'WINDOW':
         return False
     # A Maya panel's own dock area (ui/maya_dock.py) shows only that panel.
-    from . import maya_dock
+    from . import maya_dock, tool_settings
     if maya_dock.area_role(context) is not None:
-        return True
+        # the Tool Settings tab keeps Blender's tool panels for tools without Maya sections
+        return maya_dock.shown_kind(context) != 'TOOL_SETTINGS' or tool_settings.has_maya_sections(context)
     from . import hypershade         # a Hypershade pane shows only its own panel
     if hypershade.context_pane(context) is not None:
         return True
@@ -37,7 +38,6 @@ def _hidden(context):
         return True
     # The Tool Settings dock (a Properties Tool tab): Maya sections replace Blender's tool panels
     # for Move / Rotate / Scale.
-    from . import tool_settings
     return tool_settings.hides_blender_panels(context)
 
 

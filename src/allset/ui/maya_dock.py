@@ -36,7 +36,7 @@ from .. import i18n
 from .maya_dock_roles import (KINDS, LABELS, ROLE_FLAGS, WIDTH, _MARK_FLAGS, _flags, _mark_flags,  # noqa: F401
                               _pending, _torn_menus, area_role, current_tab, find_stack, floating_kinds,
                               is_floating, kind_visible, redraw, role, set_role, set_role_later, shown_kind,
-                              stack_tabs, visible_kinds)
+                              stack_tabs, tab_kinds, visible_kinds)
 from .maya_dock_windows import (MIN_KEEP_PX, MIN_ROWS, PAD_ROWS, _main_view, close_area,  # noqa: F401
                                 close_floating, close_window_later, content_height, dock, main_window,
                                 open_floating, open_stack, show, sized_window, split_side, toggle)
@@ -46,9 +46,10 @@ from .maya_dock_menus import (ALLSET_OT_menu_tear_off, TEAR_LINE, _CENTRED, _Hol
 from .maya_dock_tint import (MAYA_DOCK_GREY, TINTED_ROLES, _around, _fill, _hole_kept, _hole_row,  # noqa: F401
                              _kept_hole, _list_hole, _rects, _reds, dark_span, dark_top, dock_lift, draw_tint)
 from .maya_dock_strip import (PANEL_MARGIN_U, STRIP_GAP_PX, STRIP_PX, STRIP_SHADE, STRIP_TOP_PX,  # noqa: F401
-                              TAB_END_PX, TAB_GAP_PX, TAB_SHADE, TEXT_LOWERED, ALLSET_OT_dock_strip_click,
-                              StripClear, _drawn, _strip_colours, _ui_unit, content_factor, content_layout,
-                              draw_strip, reserved_px, strip_hit, strip_px, strip_tabs, tab_drawn)
+                              TAB_END_PX, TAB_GAP_PX, TAB_SHADE, TEXT_LOWERED, ALLSET_OT_dock_section,
+                              ALLSET_OT_dock_strip_click, StripClear, _drawn, _sections_open, _strip_colours,
+                              _ui_unit, content_factor, content_layout, draw_strip, reserved_px, section, strip_hit,
+                              strip_px, strip_tabs, tab_drawn)
 
 HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
 
@@ -189,10 +190,10 @@ class ALLSET_OT_panel_show(bpy.types.Operator):
     bl_label = "Show Panel"
     bl_options = {'INTERNAL'}
 
-    panel: EnumProperty(items=[(k, LABELS[k], "") for k in (*KINDS, 'OUTLINER', 'TOOL_SETTINGS')])
+    panel: EnumProperty(items=[(k, LABELS[k], "") for k in (*KINDS, 'OUTLINER')])
 
     def execute(self, context):
-        if self.panel in KINDS:
+        if self.panel in tab_kinds():       # Tool Settings: a stack tab only with the Tool Settings Tab preference
             return {'FINISHED'} if show(context, self.panel) else {'CANCELLED'}
         wm = context.window_manager
         if self.panel == 'TOOL_SETTINGS':
@@ -311,6 +312,9 @@ class ALLSET_PT_maya_dock(bpy.types.Panel):
         elif kind == 'MODELING_TOOLKIT':
             from . import modeling_toolkit
             modeling_toolkit.draw(layout, context)
+        elif kind == 'TOOL_SETTINGS':
+            from . import tool_settings
+            tool_settings.draw_dock(layout, context)
 
 
 @bpy.app.handlers.persistent
@@ -323,7 +327,7 @@ def _on_load(*_args):
 
 
 classes = (ALLSET_OT_dock_handle, ALLSET_OT_dock_back, ALLSET_OT_dock_tab, ALLSET_OT_panel_show,
-           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_PT_maya_dock)
+           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_OT_dock_section, ALLSET_PT_maya_dock)
 
 
 def register():

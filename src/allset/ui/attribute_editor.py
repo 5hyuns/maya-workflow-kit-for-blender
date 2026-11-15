@@ -40,7 +40,7 @@ from .ae_menus import (  # noqa: F401
     ALLSET_MT_ae_focus, ALLSET_MT_ae_attributes, ALLSET_MT_ae_attribute_names, ALLSET_MT_ae_display,
     ALLSET_MT_ae_node_types, ALLSET_MT_ae_show, ALLSET_MT_ae_help, ALLSET_MT_ae_presets, MENU_BAR, MENUS)
 from .ae_operators import (  # noqa: F401
-    DOCK_ITEMS, dock_mode, set_tab, ALLSET_OT_ae_tab, ALLSET_OT_ae_step, ALLSET_OT_ae_modifier, ALLSET_OT_ae_add_limit,
+    DOCK_ITEMS, DOCK_TABS, dock_mode, set_tab, ALLSET_OT_ae_tab, ALLSET_OT_ae_step, ALLSET_OT_ae_modifier, ALLSET_OT_ae_add_limit,
     ALLSET_OT_ae_select, show_dock, ALLSET_OT_ae_toggle, ALLSET_OT_dock_show, ALLSET_OT_object_attributes, _redraw,
     ALLSET_OT_ae_focus, ALLSET_OT_ae_show_types, ALLSET_OT_ae_hide_type, ALLSET_OT_ae_load, ALLSET_OT_ae_show_node,
     COPY_TABS, copy_tab_target, ALLSET_OT_ae_copy_tab, MODIFIER_TYPES, modifier_owner, ALLSET_OT_ae_blender_modifiers,
@@ -338,7 +338,7 @@ classes = (ALLSET_OT_ae_tab, ALLSET_OT_ae_step, ALLSET_OT_ae_modifier, ALLSET_OT
 
 def register():
     wm = bpy.types.WindowManager
-    wm.allset_dock = EnumProperty(name="Dock", items=DOCK_ITEMS, options={'SKIP_SAVE'}, update=_dock_update)
+    wm.allset_dock = EnumProperty(name="Dock", items=DOCK_TABS, options={'SKIP_SAVE'}, update=_dock_update)
     wm.allset_ae_tab = StringProperty(options={'SKIP_SAVE'})
     wm.allset_ae_kind = StringProperty(default="S", options={'SKIP_SAVE'})
     wm.allset_ae_auto_load = bpy.props.BoolProperty(

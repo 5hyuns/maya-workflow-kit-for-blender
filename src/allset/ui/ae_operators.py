@@ -17,6 +17,8 @@ from .ae_menus import _remember
 DOCK_ITEMS = (('CHANNEL_BOX', "Channel Box / Layer Editor", "Maya Channel Box and Layer Editor"),
               ('ATTRIBUTE_EDITOR', "Attribute Editor", "Maya Attribute Editor"),
               ('MODELING_TOOLKIT', "Modeling Toolkit", "Maya Modeling Toolkit (ui/modeling_toolkit.py)"))
+# the tab stack's panels: also Tool Settings (a tab only with the Tool Settings Tab preference, ui/maya_dock_roles)
+DOCK_TABS = DOCK_ITEMS + (('TOOL_SETTINGS', "Tool Settings", "Maya Tool Settings (ui/tool_settings.py)"),)
 
 
 def dock_mode(context):

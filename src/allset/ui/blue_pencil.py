@@ -112,8 +112,9 @@ def _prefs():
 
 def draw_settings(layout, context, tool_id):
     """The Blue Pencil section of the Tool Settings while an annotate tool is active."""
-    header, body = layout.panel("allset_ts_blue_pencil", default_closed=False)
-    header.label(text="Blue Pencil")
+    from .maya_dock_strip import section     # a plain row in the dock's tab stack (Tool Settings tab)
+    from .. import i18n
+    body = section(layout, "allset_ts_blue_pencil", i18n.mark("Blue Pencil"))
     if body is None:
         return
     row = body.row(align=True)

@@ -10,12 +10,13 @@ import bpy
 
 from .. import live_refs
 
-KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT')
+KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT', 'TOOL_SETTINGS')   # the right dock's panels
 LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attribute Editor",
           'MODELING_TOOLKIT': "Modeling Toolkit", 'TOOL_SETTINGS': "Tool Settings", 'OUTLINER': "Outliner"}
 # Role marker = Tool tab + exactly one of these hidden tab flags (invisible: the tab column is hidden).
 ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
               'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
+              'TOOL_SETTINGS': "show_properties_constraints",
               'MENU': "show_properties_texture"}
 WIDTH = 260                  # unscaled px: Maya-style narrow panels
 
@@ -133,9 +134,18 @@ def floating_kinds(wm=None):
     return out
 
 
+def tab_kinds():
+    """The panels the tab stack can show: Tool Settings only with the Tool Settings Tab preference (off: the kit's
+    Tool Settings dock left of the viewport, ``tool_dock``)."""
+    from .. import preferences
+    if preferences.get().tool_settings_tab:
+        return KINDS
+    return tuple(k for k in KINDS if k != 'TOOL_SETTINGS')
+
+
 def stack_tabs(wm=None):
     floating = floating_kinds(wm)
-    return [k for k in KINDS if k not in floating]
+    return [k for k in tab_kinds() if k not in floating]
 
 
 def current_tab(wm=None):
@@ -173,7 +183,7 @@ def visible_kinds(wm=None):
     editor toggles on every redraw)."""
     wm = wm or bpy.context.window_manager
     floating = floating_kinds(wm)
-    tabs = [k for k in KINDS if k not in floating]
+    tabs = [k for k in tab_kinds() if k not in floating]
     want = getattr(wm, "allset_dock", 'CHANNEL_BOX')
     current = want if want in tabs else (tabs[0] if tabs else None)
     out = set(floating)
