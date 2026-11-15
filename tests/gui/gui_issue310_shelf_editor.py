@@ -73,7 +73,7 @@ def s_check_open():
           want is not None and abs(got[0] - want[0]) <= TOL and abs(got[1] - want[1]) <= TOL)
     check(f"not a copy of the whole 3D View {got} vs {C['area']}",
           got[0] < C["area"][0] - TOL or got[1] < C["area"][1] - TOL)
-    check("the editor has a draft", mod("ui.shelf_editor")._draft is not None)
+    check("the editor has a draft", mod("ui.shelf_editor_draft")._draft is not None)
     check(f"main layout as before ({len(layout())} areas)", layout() == C["layout"])
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_issue310_main.png"))
