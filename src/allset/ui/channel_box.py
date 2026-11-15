@@ -1231,20 +1231,35 @@ def _on_set(_self, _value):
     pass
 
 
+def _left_pad(text):
+    """Spaces after ``text`` that move it, centred in a Channel Box value cell, to the cell's left edge.
+    shortcut: the cell width is estimated from the region width (half the row, less the state icon column); the
+    estimate is kept a little short so the text never clips; measure the real button if it lands off."""
+    import blf
+    region = bpy.context.region
+    if region is None:
+        return ""
+    prefs = bpy.context.preferences
+    s = prefs.system.ui_scale
+    blf.size(0, prefs.ui_styles[0].widget.points * s)
+    space = blf.dimensions(0, "a a")[0] - blf.dimensions(0, "aa")[0]
+    if space <= 0:
+        return ""
+    cell = (region.width - 24 * s) * 0.5 - 20 * s
+    room = cell - 30 * s - blf.dimensions(0, text)[0]
+    return " " * max(0, int(room / space))
+
+
 def value_cell(layout, owner, prop, selected):
     """A Channel Box value field; selected (#375), Maya's blue value cell: a pressed toggle of the twin ``<prop>_on``
     showing the value (UILayout can't colour a text field). The drag watcher eats the press either way and edits
     ``prop`` (edit_field)."""
     twin = prop + "_on"
     if selected and twin in owner.bl_rna.properties:
-        # a toggle centres its text and UILayout can't left-align it: the value goes in a button just wide enough for
-        # it (so it sits where the text field's does) and a second pressed button of the twin fills the cell
+        # one pressed toggle (two joined buttons draw a divider, and a narrow one drops its text); a toggle centres
+        # its text, so trailing spaces push the value to the cell's left edge like the text field's
         val = getattr(owner, prop)
-        cell = layout.row(align=True)
-        left = cell.row(align=True)
-        left.ui_units_x = 0.42 * len(val) + 0.95   # shortcut: width from the character count, measure if it clips
-        left.prop(owner, twin, text=val, toggle=True, translate=False)
-        cell.prop(owner, twin, text=" ", toggle=True, translate=False)
+        layout.prop(owner, twin, text=val + _left_pad(val), toggle=True, translate=False)
     else:
         layout.prop(owner, prop, text="")
 
