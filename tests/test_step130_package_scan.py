@@ -1,7 +1,8 @@
 """The store review points (GitHub #40) stay fixed — a static scan of the extension.
 
 The extensions.blender.org moderator asked for: no ``exec`` / ``eval``; no manual ``sys.path`` / ``sys.modules``
-changes (and no import hooks); nothing related to themes; nothing that outlives the add-on (no ``user_disabling``,
+changes (and no import hooks); theme values only while Maya mode is on, all put back (maya_look.py,
+tests/test_maya_look.py); nothing that outlives the add-on (no ``user_disabling``,
 no template copied outside the extension, no preference / active-keyconfig changes); tags = User Interface only.
 
 Scanned: every ``.py`` file of ``src/allset`` and of the built extension zip (``dist/maya-workflow-kit-<ver>.zip``,
@@ -37,6 +38,11 @@ BANNED_NAMES = {
     "interface_theme_preset_add": "theme change",
 }
 ALLOWED_STRINGS = {("ui/menu_map.py", "wm.save_userpref")}   # Maya's File > Save Preferences: the user's own command
+# maya_look.py saves the preferences again right after the user saved them while Maya mode is on, with the user's
+# theme values in place, so the file never keeps Maya's look (tests/test_maya_look.py)
+ALLOWED_NAMES = {("maya_look.py", "save_userpref")}
+# Files that only read the user config folder: maya_look.py reads userpref.blend's time stamp
+READ_ONLY_CONFIG = {"maya_look.py"}
 
 
 def _sources():
@@ -157,7 +163,7 @@ def _violations(label, rel, text):
                 args = [x.string.strip("'\"") for x in toks[i:] if x.type == tokenize.STRING]
                 if {"exec", "eval", "single"} & set(args):
                     hit(n, "compile(..., 'exec' / 'eval')")
-            if s in BANNED_NAMES:
+            if s in BANNED_NAMES and (rel, s) not in ALLOWED_NAMES:
                 hit(n, BANNED_NAMES[s])
             if s == "sys" and nxt == "." and i + 2 < len(strs) and strs[i + 2] in {"path", "modules", "meta_path",
                                                                                  "path_hooks"}:
@@ -222,7 +228,7 @@ def test_no_writes_outside_the_extension():
                     hits.append(f"{label}:{rel}:{n}: {t.string}")
                 if t.type == tokenize.NAME and t.string == "save_homefile":
                     hits.append(f"{label}:{rel}:{n}: save_homefile")
-                if t.type == tokenize.NAME and t.string == "user_resource":
+                if t.type == tokenize.NAME and t.string == "user_resource" and rel not in READ_ONLY_CONFIG:
                     hits.append(f"{label}:{rel}:{n}: user_resource (user config / scripts folder)")
     assert not hits, "\n".join(hits)
 

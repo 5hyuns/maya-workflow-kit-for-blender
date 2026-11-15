@@ -103,11 +103,14 @@ def test_enable_maya_on_off_disable_leaves_everything():
     try:
         d = _pref_diff(before["prefs"], _prefs())
         assert not d, "enabling changed preferences:\n" + "\n".join(d[:20])
+        import_module(kit.MODULE + ".maya_look").IN_BACKGROUND = True     # Maya's look in this headless Blender too
         sw = import_module(kit.MODULE + ".switch")
         sw.set_mode(True)
         import_module(kit.MODULE + ".first_start").make(bpy.context, open_layout=False)
-        d = _pref_diff(before["prefs"], _prefs(), skip=LANE_K_PENDING)
-        assert not d, "Maya mode changed preferences:\n" + "\n".join(d[:20])
+        on = _prefs()
+        assert on["theme"] != before["prefs"]["theme"], "Maya mode puts Maya's look into the theme"
+        d = _pref_diff(before["prefs"], on, skip=LANE_K_PENDING + ("theme",))
+        assert not d, "Maya mode changed other preferences:\n" + "\n".join(d[:20])
         assert _user_files() == before["files"], "Maya mode wrote into the user's scripts / config folders"
         funcs = _kit_functions()
         assert len(funcs) > 100, len(funcs)
@@ -170,6 +173,7 @@ def _sandbox(name):
     env["ALLSET_NO_WELCOME"] = "1"
     env["ALLSET_PROJECTS_DIR"] = os.path.join(root, "projects")
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["ALLSET_MAYA_LOOK_BACKGROUND"] = "1"      # Maya mode puts Maya's look into the theme here too
     return root, env
 
 
