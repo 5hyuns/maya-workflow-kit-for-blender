@@ -177,7 +177,6 @@ def process(context):
 
 
 TICK = 0.05
-_timer = {"on": False}
 
 
 def _tick():
@@ -185,7 +184,6 @@ def _tick():
         context = bpy.context
         if context.mode != 'EDIT_ARMATURE':
             _snap.update(ob=None, bones={})
-            _timer["on"] = False
             return None
         process(context)
     except (AttributeError, RuntimeError, ReferenceError):
@@ -196,8 +194,7 @@ def _tick():
 def watch():
     """Keep watching while Edit Armature mode lasts (tool_keys' watch starts it; a fast tick so a move followed at once
     by F8 / E is still caught before the mode changes)."""
-    if not _timer["on"]:
-        _timer["on"] = True
+    if not bpy.app.timers.is_registered(_tick):      # also after a file load, which drops the timer
         bpy.app.timers.register(_tick, first_interval=TICK)
 
 
@@ -310,7 +307,6 @@ def unregister():
         del bpy.types.Bone.allset_ssc
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
-    _timer["on"] = False
     for a in AXES:
         if hasattr(bpy.types.Scene, f"allset_joint_t{a}"):
             delattr(bpy.types.Scene, f"allset_joint_t{a}")

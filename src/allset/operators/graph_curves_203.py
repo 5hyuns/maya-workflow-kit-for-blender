@@ -682,7 +682,8 @@ def _sync_tick():
 
 @bpy.app.handlers.persistent
 def _on_depsgraph(_scene, depsgraph):
-    if _state["busy"] or _state["scheduled"]:
+    # scheduled: unless a file load dropped the timer meanwhile
+    if _state["busy"] or (_state["scheduled"] and bpy.app.timers.is_registered(_sync_tick)):
         return
     # an Action in the update flags the type (one array read; a pass over the update walks every ID of the depsgraph)
     if not depsgraph.id_type_updated('ACTION'):

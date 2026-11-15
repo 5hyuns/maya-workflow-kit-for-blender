@@ -811,7 +811,9 @@ def _tick():
 @bpy.app.handlers.persistent
 def _on_depsgraph(_scene, _depsgraph):
     # armed once a group exists in this session (build / file load): at most one cleanup scan per 0.3 s
-    if _state["pending"] or not (_state["armed"] or bpy.data.collections.get(HELPERS) is not None):
+    # pending: unless a file load dropped the timer meanwhile
+    if ((_state["pending"] and bpy.app.timers.is_registered(_tick))
+            or not (_state["armed"] or bpy.data.collections.get(HELPERS) is not None)):
         return
     _state["pending"] = True
     bpy.app.timers.register(_tick, first_interval=0.3)

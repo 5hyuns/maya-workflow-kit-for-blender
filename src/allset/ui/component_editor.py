@@ -402,7 +402,7 @@ def _tick():
 
 @persistent
 def _on_depsgraph(scene, _depsgraph=None):
-    if _pending["timer"]:
+    if _pending["timer"] and bpy.app.timers.is_registered(_tick):    # unless a file load dropped it meanwhile
         return
     wm = bpy.context.window_manager
     if wm is None or not getattr(wm, "allset_ce_auto_update", False) or not _is_open(bpy.context):

@@ -608,7 +608,8 @@ def register():
     bpy.app.handlers.load_post.append(_on_load)
     bpy.app.timers.register(_first_rebuild, first_interval=0.0)
     if not bpy.app.timers.is_registered(_poll_transform_values):
-        bpy.app.timers.register(_poll_transform_values, first_interval=0.1)
+        # persistent: Blender drops the other timers on File > Open / New (and the Maya layout opening is one)
+        bpy.app.timers.register(_poll_transform_values, first_interval=0.1, persistent=True)
     bpy.types.UI_MT_button_context_menu.prepend(draw_button_menu)
     if not bpy.app.background:
         bpy.app.timers.register(_ensure_wheel_watch, first_interval=0.0, persistent=True)

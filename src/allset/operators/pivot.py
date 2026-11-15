@@ -342,9 +342,16 @@ def _tick():
     return None
 
 
+def watching():
+    """The watch runs. A file load drops its timer and the snapshots belong to the file before: then it has ended."""
+    if _watch["running"] and not bpy.app.timers.is_registered(_tick):
+        _watch.update(running=False, snaps={}, last_op=None)
+    return _watch["running"]
+
+
 def watch():
     """Start watching origin-only transforms (idempotent)."""
-    if _watch["running"]:
+    if watching():
         return
     _watch["running"] = True
     _watch["last_op"] = _op_key()
@@ -444,7 +451,7 @@ class ALLSET_OT_reset_pivot(_PivotOp, bpy.types.Operator):
             reset_pivot(ob, self.position, self.orientation)
         if self.orientation:
             leave_custom_orientation(context.scene)
-        if _watch["running"]:
+        if watching():
             process(context)
         return {'FINISHED'}
 
@@ -463,7 +470,7 @@ class ALLSET_OT_bake_pivot(_PivotOp, bpy.types.Operator):
         leave_custom_orientation(context.scene, 'LOCAL')   # Maya: axis mode back to Object (P8)
         if not n:
             results.result(self, "No custom pivot orientation to bake")
-        if _watch["running"]:
+        if watching():
             process(context)
         return {'FINISHED'}
 
@@ -509,7 +516,7 @@ class ALLSET_OT_match_pivots(_PivotOp, bpy.types.Operator):
                 turned = match_pivot_orient(ob, turn) or turned
         if turned:
             leave_custom_orientation(context.scene, 'LOCAL')   # like Bake Pivot: the axes are the object's again
-        if _watch["running"]:
+        if watching():
             process(context)
         return {'FINISHED'}
 
