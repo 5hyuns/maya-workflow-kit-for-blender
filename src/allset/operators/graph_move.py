@@ -111,17 +111,20 @@ def time_snap_on(scene):
 # --- curves -----------------------------------------------------------------------------------------------------
 
 def _value_scales(context, fcurves):
-    """Per curve: stored value per display value of the Graph Editor's value axis (rotation in degrees, normalized
-    view)."""
+    """Per curve: stored value per display value of the Graph Editor's value axis (rotation in degrees, lengths in the
+    scene's length unit where Blender draws them so, normalized view)."""
     from ..ui import graph_units
     units = graph_units.curve_units(fcurves)
     degrees = getattr(context.scene.unit_settings, "system_rotation", 'DEGREES') == 'DEGREES'
+    length = graph_units.display_factor(context.scene, 'LENGTH')
     normalized = bool(getattr(context.space_data, "use_normalization", False))
     out = []
     for fc, unit in zip(fcurves, units):
         k = 1.0
         if unit == 'ROTATION' and degrees:
             k *= math.pi / 180.0
+        elif unit == 'LENGTH' and length != 1.0:
+            k /= length
         if normalized:
             pts = [(kp.co.y, kp.handle_left.y, kp.handle_right.y, kp.interpolation) for kp in fc.keyframe_points]
             f, _off = normalization(pts)

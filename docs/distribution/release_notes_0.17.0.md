@@ -27,6 +27,8 @@ extension until they are tested.
   follow the brush's shared settings; shelf tab text uses a readable colour on light themes; the Range Slider's
   Keying item opens the whole Keyframing popover.
 - Help links open the Blender 5.3 manual, API and release notes on Blender 5.3 (the 5.2 pages on 5.2).
+- In the Graph Editor, Blender 5.3 shows Translate curves in the scene's unit (centimetres in a Maya scene): the kit's
+  keys, tangents, key drags, Scale Keys box and Sculpting Tools follow it.
 
 ## Maya's interface colours in Maya mode
 

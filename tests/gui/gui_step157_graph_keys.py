@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -29,7 +29,7 @@ def selected():
 
 def at(frame):
     r = region()
-    x, y = r.view2d.view_to_region(frame, curve().evaluate(frame), clip=False)
+    x, y = r.view2d.view_to_region(frame, graph_value(curve(), curve().evaluate(frame)), clip=False)
     return int(r.x + x), int(r.y + y)
 
 

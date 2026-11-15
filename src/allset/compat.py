@@ -598,3 +598,24 @@ def theme_has(struct, prop):
     only these: 5.3 dropped the editors' ``header_text`` / ``header_text_hi`` (header text then follows the editor's
     ``text``, which the look leaves alone)."""
     return struct is not None and prop in struct.bl_rna.properties
+
+
+# Graph Editor value axis: Blender 5.3 draws length curves in the scene's length unit (Unit Scale included), so a
+# curve of 0.05 BU reads 5 in a centimetre scene; earlier versions draw lengths as stored. Rotations are in degrees on
+# both.
+GRAPH_LENGTH_UNITS = VERSION >= (5, 3)
+_LENGTH_SIZE = {"KILOMETERS": 1000.0, "METERS": 1.0, "CENTIMETERS": 0.01, "MILLIMETERS": 0.001,
+                "MICROMETERS": 1e-6, "MILES": 1609.344, "FEET": 0.3048, "INCHES": 0.0254, "THOU": 0.0000254}
+
+
+def graph_length_factor(unit_settings):
+    """Graph Editor display value per stored value of a length curve (1.0 where lengths are drawn as stored): the
+    scene's Unit Scale over its length unit; Adaptive = metres (metric) / feet (imperial); no unit system = 1."""
+    if not GRAPH_LENGTH_UNITS or unit_settings is None or unit_settings.system == 'NONE':
+        return 1.0
+    unit = unit_settings.length_unit
+    if unit == 'ADAPTIVE':
+        size = 1.0 if unit_settings.system == 'METRIC' else 0.3048
+    else:
+        size = _LENGTH_SIZE.get(unit, 1.0)
+    return (unit_settings.scale_length or 1.0) / size

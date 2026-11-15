@@ -10,7 +10,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 C = {}
 THIRD = 10.0 / 3.0          # key 10's right interval (10 -> 20) / 3
@@ -55,7 +55,7 @@ def modals():
 
 def handle_px():
     kp = key10()
-    x, y = region().view2d.view_to_region(kp.handle_right[0], kp.handle_right[1], clip=False)
+    x, y = region().view2d.view_to_region(kp.handle_right[0], graph_value(curve(), kp.handle_right[1]), clip=False)
     r = region()
     return int(round(r.x + x)), int(round(r.y + y))
 

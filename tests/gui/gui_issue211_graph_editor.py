@@ -10,7 +10,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -164,7 +164,8 @@ def _mid():
 
 def _key_px():
     kp = key10()
-    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, kp.co.y, clip=False))
+    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, graph_value(curve(), kp.co.y),
+                                                                       clip=False))
 
 
 # 1. a plain middle drag counts from the press: one move of 2 frames' pixels moves the key by exactly that
@@ -276,9 +277,10 @@ def s_l_check():
     a = C["area"]
     with bpy.context.temp_override(window=win(), area=a, region=region(), space_data=a.spaces.active):
         lines = gv.value_lines(bpy.context)
-    # the selected key's curve runs from 0 to 0.05: zero line, lowest 0, highest 0.05
+    # the selected key's curve runs from 0 to 0.05: zero line, lowest 0, highest 0.05 (where the value axis puts it)
+    want = [0.0, 0.0, round(graph_value(curve(), 0.05), 3)]
     check(f"l turns the value lines on: zero / lowest / highest ({[round(v, 3) for v, _c in lines]})",
-          prefs().graph_value_lines and [round(v, 3) for v, _c in lines] == [0.0, 0.0, 0.05])
+          prefs().graph_value_lines and [round(v, 3) for v, _c in lines] == want)
     if SHOTS:
         screenshot(os.path.join(SHOTS, "issue211_value_lines.png"))
     prefs().graph_value_lines = False

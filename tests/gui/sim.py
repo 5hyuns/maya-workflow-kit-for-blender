@@ -39,6 +39,14 @@ def win():
     return bpy.context.window_manager.windows[0]
 
 
+def graph_value(fc, value):
+    """Where the Graph Editor's value axis puts ``value`` of the length or unitless curve ``fc``: Blender 5.3 draws
+    length curves in the scene's length unit (5 for 0.05 in a centimetre scene), 5.2 as stored. Positions computed
+    with ``View2D.view_to_region`` from a key's value go through this."""
+    return value * import_module(MODULE + ".compat").graph_length_factor(bpy.context.scene.unit_settings) \
+        if import_module(MODULE + ".ui.graph_units").curve_unit(fc) == 'LENGTH' else value
+
+
 def view3d():
     # the largest: the Maya Workflow Kit layout also has the narrow Tool Box 3D View
     area = max((a for a in win().screen.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)

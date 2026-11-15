@@ -115,6 +115,13 @@ def s_kit_shot():
     gu = mod(".ui.graph_units")
     w, a, r = editor()
     snap = gu._SNAP.get(r.as_pointer())
+    if mod(".compat").GRAPH_LENGTH_UNITS:
+        # Blender draws the length curve in the scene's unit itself: its own numbers already read 0 .. 5 cm, so the
+        # kit writes none over them
+        lo, hi = r.view2d.region_to_view(0, 0)[1], r.view2d.region_to_view(0, r.height)[1]
+        check(f"Translate X only, cm scene: Blender's value axis is in cm ({lo:.2f} .. {hi:.2f}) and the kit "
+              f"leaves its numbers ({snap is None})", snap is None and lo < 0.5 and 4.5 < hi < 10)
+        return
     check(f"Translate X only, cm scene (maya_unit {C['k']}) -> the Graph Editor gets display-unit labels",
           snap is not None and C["k"] == 0.01)
     if snap is None:

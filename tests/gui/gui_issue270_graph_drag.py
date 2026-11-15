@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -40,7 +40,8 @@ def win_xy(rx, ry):
 
 def key_px(frame):
     kp = min(curve().keyframe_points, key=lambda k: abs(k.co.x - frame))
-    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, kp.co.y, clip=False))
+    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, graph_value(curve(), kp.co.y),
+                                                                       clip=False))
 
 
 def frame_px(frame):
@@ -302,10 +303,11 @@ def _ppf():
     return v2d.view_to_region(11, 0, clip=False)[0] - v2d.view_to_region(10, 0, clip=False)[0]
 
 
-# right side 4.5 frames further: time x1.5 about frame 1 -> 10 lands on 14 (values kept)
-_box_case("box_right", lambda b: (b[2], (b[1] + b[3]) / 2), lambda b: (4.5 * _ppf(), 0),
+# right side 4.3 frames further: time x1.48 about frame 1 -> 10 lands on 14.3, snapped to 14 (values kept); not 4.5:
+# x1.5 puts the key on 14.5, where a pixel of mouse rounding decides between 14 and 15
+_box_case("box_right", lambda b: (b[2], (b[1] + b[3]) / 2), lambda b: (4.3 * _ppf(), 0),
           lambda pts: (pts[0] == (1.0, 0.0) and pts[1] == (14.0, 0.05) and pts[2] == (20.0, 0.02),
-                       "time scaled 1.5 about the left side"))
+                       "time scaled about the left side"))
 # top side up by the box height: value x2 about the bottom (value 0) -> 0.05 becomes 0.1, times kept
 _box_case("box_top", lambda b: ((b[0] + b[2]) / 2, b[3]), lambda b: (0, b[3] - b[1]),
           lambda pts: (pts[0] == (1.0, 0.0) and pts[1][0] == 10.0 and abs(pts[1][1] - 0.1) < 2e-3
@@ -316,8 +318,9 @@ _box_case("box_inside", lambda b: ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2 - 3), la
 # a drag inside the box (empty space) moves the selected keys: 2 frames right, the key outside the box stays
 _box_case("box_move", lambda b: ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2 + 4), lambda b: (2 * _ppf(), 0),
           lambda pts: (pts == [(3.0, 0.0), (12.0, 0.05), (20.0, 0.02)], "the selected keys moved 2 frames"))
-# Shift on the top-right corner, dragged mostly right: time x1.5 only, the small upward part doesn't scale values
-_box_case("box_corner_shift", lambda b: (b[2], b[3]), lambda b: (4.5 * _ppf(), 6),
+# Shift on the top-right corner, dragged mostly right: time only (x1.48, as above), the small upward part doesn't
+# scale values
+_box_case("box_corner_shift", lambda b: (b[2], b[3]), lambda b: (4.3 * _ppf(), 6),
           lambda pts: (pts[0] == (1.0, 0.0) and pts[1] == (14.0, 0.05) and pts[2] == (20.0, 0.02),
                        "Shift: the corner scaled time only"), shift=True)
 

@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, setup, step, view3d, win, load_maya_layout, screenshot  # noqa: E402
+from sim import MODULE, check, ev, run, setup, step, view3d, win, load_maya_layout, screenshot, graph_value  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -34,8 +34,9 @@ def vals(index=0):
 
 
 def at(t, v):
+    """Window position of (frame, the Translate curves' value ``v``)."""
     r = region()
-    x, y = r.view2d.view_to_region(t, v, clip=False)
+    x, y = r.view2d.view_to_region(t, graph_value(curve(), v), clip=False)
     return r.x + x, r.y + y
 
 
@@ -122,7 +123,8 @@ def s_grab():
 def s_grab_check():
     v = vals()
     r = region()
-    dv = r.view2d.region_to_view(0, 100 - 40)[1] - r.view2d.region_to_view(0, 100)[1]
+    # the drag in curve values (the value axis may show lengths in the scene's unit)
+    dv = (r.view2d.region_to_view(0, 100 - 40)[1] - r.view2d.region_to_view(0, 100)[1]) / graph_value(curve(), 1.0)
     rad = bpy.context.window_manager.allset_sculpt_keys_radius
     s = bpy.context.preferences.system.ui_scale
     w1 = gs().falloff(gs().brush_distance(1, 0, rad, s))

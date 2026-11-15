@@ -62,6 +62,10 @@ with their translations.
 - Blender 5.3: Paint Skin Weights draws its brush panels (5.3's Shape panel), starts with a brush that sets the
   value, and its Value / Opacity follow the brush's shared settings; shelf tab text uses a readable colour on light
   themes; the Range Slider's Keying item opens the whole Keyframing popover.
+- Blender 5.3: the Graph Editor shows Translate and other length curves in the scene's unit (centimetres in a Maya
+  scene); the kit's keys, tangents and other layers' curves are drawn on those curves again, and its key clicks and
+  drags, the Scale Keys box, the Sculpting Tools, framing, value lines and Add Key follow that axis. The kit's own cm
+  labels are left out on 5.3, where Blender's numbers already read cm.
 - The Channel Box keeps updating its values after File > Open and File > New, and the pivot, joint, curve sync,
   constraint group and Component Editor watchers start again after a file is opened.
 - The Tension and Solidify rest-position handler keeps running after a file is opened.

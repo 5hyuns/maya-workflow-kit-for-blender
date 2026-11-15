@@ -12,7 +12,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 GUI_TIMEOUT = 300
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
@@ -46,6 +46,11 @@ def end_px(key, side):
     r = next(i for i in range(len(h)) if h.fcurves[int(h.curves[i])] == curve() and h.keys[i] == key
              and h.sides[i] == side)
     return tuple(float(v) for v in h.end_px[r]), tuple(float(v) for v in h.key_px[r])
+
+
+def view_px(co):
+    """Region pixel of a (frame, Translate X value) point (the value axis may show lengths in the scene's unit)."""
+    return region().view2d.view_to_region(co[0], graph_value(curve(), co[1]), clip=False)
 
 
 def win_xy(rx, ry):
@@ -127,6 +132,17 @@ def s_frame():
     fc.keyframe_points[1].select_control_point = True     # On Active Keys: its tangents show
     with bpy.context.temp_override(window=win(), area=a, region=region()):
         bpy.ops.graph.view_all()
+    # the kit draws the tangent with a fixed length: keep the real handle clearly shorter on screen, so the two can
+    # be told apart whatever size the Graph Editor has
+    reg = region()
+    fixed = mod(".ui.graph_handles").FIXED_PX * (bpy.context.preferences.system.ui_scale or 1.0)
+    for _ in range(4):
+        kx, ky = view_px(kp.co)
+        hx, hy = view_px(kp.handle_right)
+        if abs(math.hypot(hx - kx, hy - ky) - fixed) >= 20:
+            break
+        with bpy.context.temp_override(window=win(), area=a, region=reg):
+            bpy.ops.view2d.zoom_out()
     move_to(region().width // 2, 20)
 
 
@@ -145,7 +161,7 @@ def s_takeover():
     ui = bpy.context.preferences.system.ui_scale or 1.0
     check(f"non-weighted handle drawn {length:.1f} px from its key (fixed {gh.FIXED_PX * ui:.0f})",
           abs(length - gh.FIXED_PX * ui) < 0.5)
-    real = region().view2d.view_to_region(*curve().keyframe_points[1].handle_right, clip=False)
+    real = view_px(curve().keyframe_points[1].handle_right)
     check(f"... not at the real handle ({math.hypot(real[0] - kx, real[1] - ky):.0f} px away)",
           abs(math.hypot(real[0] - kx, real[1] - ky) - length) > 5)
     C["arm0"] = arm(1)
@@ -293,7 +309,7 @@ drag('LEFTMOUSE', 30, 20)
 @step
 def s_weighted_check():
     kp = curve().keyframe_points[1]
-    got = region().view2d.view_to_region(*kp.handle_right, clip=False)
+    got = view_px(kp.handle_right)
     want = (C["press"][0] + 30, C["press"][1] + 20)
     check(f"weighted handle end follows the mouse ({got[0]:.1f}, {got[1]:.1f}) ~ {want}",
           abs(got[0] - want[0]) < 1.5 and abs(got[1] - want[1]) < 1.5)

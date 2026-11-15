@@ -86,11 +86,17 @@ def activate_row(context, row):
 # --- curve lines -------------------------------------------------------------------------------------------------
 
 def value_factor(scene, fc):
-    """Blender's Graph Editor unit factor: rotations in degrees unless the scene's rotation unit is radians."""
+    """Blender's Graph Editor unit factor: rotations in degrees unless the scene's rotation unit is radians; lengths
+    in the scene's length unit where Blender draws them so (5.3)."""
     tail = fc.data_path.rsplit(".", 1)[-1]
-    if tail in _ROTATIONS and not (tail == "rotation_axis_angle" and fc.array_index == 0) \
-            and scene.unit_settings.system_rotation == 'DEGREES':
-        return 180.0 / math.pi
+    if tail in _ROTATIONS and not (tail == "rotation_axis_angle" and fc.array_index == 0):
+        return 180.0 / math.pi if scene.unit_settings.system_rotation == 'DEGREES' else 1.0
+    from .. import compat
+    length = compat.graph_length_factor(scene.unit_settings)
+    if length != 1.0:
+        from .graph_units import curve_unit
+        if curve_unit(fc) == 'LENGTH':
+            return length
     return 1.0
 
 

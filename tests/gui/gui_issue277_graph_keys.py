@@ -8,7 +8,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, load_maya_layout, run, setup, step, win  # noqa: E402
+from sim import MODULE, check, load_maya_layout, run, setup, step, win, graph_value  # noqa: E402
 
 GUI_TIMEOUT = 200
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "") or bpy.app.tempdir
@@ -57,7 +57,7 @@ def near(c, ref, tol=0.08):
 def key_win(fc, i):
     _a, r = graph()
     kp = fc.keyframe_points[i]
-    x, y = r.view2d.view_to_region(kp.co.x, kp.co.y, clip=False)
+    x, y = r.view2d.view_to_region(kp.co.x, graph_value(fc, kp.co.y), clip=False)
     return x + r.x, y + r.y
 
 
@@ -175,7 +175,7 @@ def s_wait5():
 def handle_win(fc, i, side):
     _a, r = graph()
     co = getattr(fc.keyframe_points[i], side)
-    x, y = r.view2d.view_to_region(co.x, co.y, clip=False)
+    x, y = r.view2d.view_to_region(co.x, graph_value(fc, co.y), clip=False)
     return x + r.x, y + r.y
 
 
