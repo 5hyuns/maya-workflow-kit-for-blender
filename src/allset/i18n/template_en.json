@@ -6040,6 +6040,10 @@
    "JSON: option-window node attributes": "JSON: option-window node attributes",
    "Kind": "Kind"
   },
+  "Labels/operators/intermediate_objects": {
+   "Display": "Display",
+   "Intermediate Objects": "Intermediate Objects"
+  },
   "Labels/operators/joint_display": {
    "Blender draws joints by bone length: this sizes where a click picks them.": "Blender draws joints by bone length: this sizes where a click picks them.",
    "Joint Display Scale": "Joint Display Scale",
@@ -6627,26 +6631,21 @@
    "Pick Walk": "Pick Walk",
    "Pick Walk Components": "Pick Walk Components"
   },
-  "Labels/operators/pins_205": {
-   "Add Influence": "Add Influence",
+  "Labels/operators/pin_create": {
    "Components": "Components",
-   "Display": "Display",
    "Edge": "Edge",
    "Input": "Input",
-   "Intermediate Objects": "Intermediate Objects",
    "Maintain offset": "Maintain offset",
    "Mode": "Mode",
    "Normal axis": "Normal axis",
    "Output": "Output",
    "Pin locations": "Pin locations",
    "Proximity Pin": "Proximity Pin",
-   "Remove Influence": "Remove Influence",
    "Setup mode": "Setup mode",
    "Tangent axis": "Tangent axis",
    "Transforms": "Transforms",
    "UV": "UV",
-   "UV Pin": "UV Pin",
-   "Wrap Influence": "Wrap Influence"
+   "UV Pin": "UV Pin"
   },
   "Labels/operators/pivot": {
    "Also turn the objects to the last selected one's orientation; their geometry and children stay where they are": "Also turn the objects to the last selected one's orientation; their geometry and children stay where they are",
@@ -7586,6 +7585,11 @@
    "The override colour (the index's colour; editing it switches to RGB, Maya overrideColorRGB)": "The override colour (the index's colour; editing it switches to RGB, Maya overrideColorRGB)",
    "User Color": "User Color",
    "Wireframe Color": "Wireframe Color"
+  },
+  "Labels/operators/wrap_influence": {
+   "Add Influence": "Add Influence",
+   "Remove Influence": "Remove Influence",
+   "Wrap Influence": "Wrap Influence"
   },
   "Labels/operators/xform_constraint": {
    "Slide Components": "Slide Components",
@@ -9895,6 +9899,9 @@
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"
   },
+  "Tooltips/operators/intermediate_objects": {
+   "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)": "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)"
+  },
   "Tooltips/operators/joint_display": {
    "Maya Display > Animation > Joint Size: the scene's joint display scale (sizes the joints' click spheres)": "Maya Display > Animation > Joint Size: the scene's joint display scale (sizes the joints' click spheres)",
    "Maya Display > Transform Display > Local Rotation Axes: show / hide the axes of the selected joints or objects": "Maya Display > Transform Display > Local Rotation Axes: show / hide the axes of the selected joints or objects"
@@ -10071,10 +10078,8 @@
    "Walk the component selection to the next vertex / edge / face (Maya arrow keys)": "Walk the component selection to the next vertex / edge / face (Maya arrow keys)",
    "Walk the selection through the hierarchy (Maya arrow keys)": "Walk the selection through the hierarchy (Maya arrow keys)"
   },
-  "Tooltips/operators/pins_205": {
-   "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)": "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)",
+  "Tooltips/operators/pin_create": {
    "Constrains one or more objects to the UVs of a deforming target object (Maya Constrain > UV Pin): select the\ngeometry, then the transforms": "Constrains one or more objects to the UVs of a deforming target object (Maya Constrain > UV Pin): select the\ngeometry, then the transforms",
-   "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)": "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)",
    "Keeps objects on a deforming surface at the spot nearest to each, optionally with their current offset (Maya\nConstrain > Proximity Pin): select the geometry, then the objects to constrain": "Keeps objects on a deforming surface at the spot nearest to each, optionally with their current offset (Maya\nConstrain > Proximity Pin): select the geometry, then the objects to constrain"
   },
   "Tooltips/operators/pivot": {
@@ -10451,6 +10456,9 @@
   },
   "Tooltips/operators/wire_color": {
    "Maya Wireframe Color: colour the selected objects' wire with a user colour or an RGB colour": "Maya Wireframe Color: colour the selected objects' wire with a user colour or an RGB colour"
+  },
+  "Tooltips/operators/wrap_influence": {
+   "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)": "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)"
   },
   "Tooltips/operators/xform_constraint": {
    "Set the Move tool's Transform Constraint (Off / Edge Slide / Surface Slide / Along Normals)": "Set the Move tool's Transform Constraint (Off / Edge Slide / Surface Slide / Along Normals)",
