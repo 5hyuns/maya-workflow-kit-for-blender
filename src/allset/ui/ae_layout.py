@@ -12,7 +12,7 @@ Row forms:
   ("prop", owner, attr, label)   owner: "ob" | "data" | "view" (3D View space); joints (pose bones):
                                  "ob" = the pose bone, "bone" = its Bone, "arm" = the Armature data,
                                  "armob" = the armature object
-  ("draw", name)                 custom drawer in ui/attribute_editor.py
+  ("draw", name)                 custom drawer in ui/ae_rows.py
   ("socket", input name, label)  Principled BSDF input (material tabs), with the Maya map button
   ("maya", material prop, label, input name)  a Maya number converted to that Principled input (Material property
                                  with get/set), with the input's map button

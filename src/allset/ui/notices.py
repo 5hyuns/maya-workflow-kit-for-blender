@@ -5,7 +5,7 @@
 One table for every place a Maya item has no Blender equivalent, or a different one: the item's tooltip
 (greyed items: ``allset.menu_unavailable``; items with a substitute: ``allset.menu_item``) and the Help
 Line, which shows the notice while the tooltip is up — Maya's Help Line shows a menu item's annotation the same
-way. Keys are Maya menu label paths (``ui/menu_sets.iter_items``).
+way. Keys are Maya menu label paths (``ui/menu_tree.iter_items``).
 
 Data file: four tables of (Blender substitute, one line) — ``NOTICES`` (Maya menu items by label path),
 ``CATEGORIES`` (greyed items by path prefix), ``PANEL_MENU`` (panel menus, panel toolbar, Status Line) and

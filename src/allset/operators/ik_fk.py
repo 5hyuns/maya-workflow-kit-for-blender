@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya IK / FK switching on kit IK handles (Issue #133).
 
-A kit IK handle is the ``ikHandleN`` empty an IK constraint targets (operators/skin.create_ik). Maya's handle
+A kit IK handle is the ``ikHandleN`` empty an IK constraint targets (operators/ik_handle.create_ik). Maya's handle
 attribute **Ik Blend** (keyable, default 1) is the handle's custom property
 ``ikBlend``, and the IK constraint's Influence is driven by it — so the Channel Box shows "Ik Blend" on the handle, S
 and Set IK/FK Key key it on the handle like Maya. Like Maya's ``ikFK`` the chain joints get

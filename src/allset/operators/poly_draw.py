@@ -3,7 +3,7 @@
 
 - Create Polygon (Mesh Tools > Create Polygon): the kit tool ``allset.create_polygon_tool`` (object and edit mode) runs
   ``allset.create_polygon``: click = a point (Maya's construction plane: the ground in a perspective view, the view
-  plane through the origin in an orthographic one, ``joints.click_point``; grid / point snapping while held), press-drag
+  plane through the origin in an orthographic one, ``joint_tool.click_point``; grid / point snapping while held), press-drag
   moves it, middle-drag moves the last point, Backspace / Delete removes the last point, Enter completes a new
   ``polySurfaceN`` (vertices in world space, pivot at the origin, lambert1), Limit points completes by itself, Esc drops
   the points (with none, leaves the tool). The tool stays, like Maya's.
@@ -312,7 +312,7 @@ def _ui_scale(context):
 
 
 def construction_point(context, region, rv3d, coord):
-    """Maya's construction plane point under ``coord`` (joints.click_point), with the snapping the user holds:
+    """Maya's construction plane point under ``coord`` (joint_tool.click_point), with the snapping the user holds:
     grid (X) rounds to one Maya unit, point (V) takes the nearest vertex of a visible mesh on screen."""
     from . import joints, units
     p = joints.click_point(region, rv3d, coord)

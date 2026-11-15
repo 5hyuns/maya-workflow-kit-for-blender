@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor shell commands.
 
-Shell = the kit island rule (`uv_tools.islands`, shared UV coordinates); any selected UV / edge / face of a shell picks
+Shell = the kit island rule (`uv_islands.islands`, shared UV coordinates); any selected UV / edge / face of a shell picks
 the whole shell for the shell commands. A "UV" = the loops of one vertex that share
 one coordinate inside one face set (Maya's UV id); UVs are ordered by their first loop index, which is Maya's UV-index order
 for meshes built face by face (the test meshes).
@@ -352,7 +352,7 @@ def move_sew(bm, uv, edges):
 
 def create_shell(bm, uv, faces):
     """Maya Create UV Shell: cut along the border of ``faces`` (edges to unselected faces); uv_tools.cut nudges the
-    smaller side by uv_tools.NUDGE so the island rule sees two shells."""
+    smaller side by uv_islands.NUDGE so the island rule sees two shells."""
     fs = set(faces)
     border = [e for f in faces for e in f.edges
               if len([g for g in e.link_faces if not g.hide]) == 2 and any(g not in fs for g in e.link_faces)]
@@ -399,7 +399,7 @@ class _ShellOp:
     # with nothing picked is left alone while another mesh has a pick
     _fallback = True
     # a main UV menu command: with UV Sync Selection off it can take the 3D View selection
-    # (uv_tools.mesh_selection_wanted)
+    # (uv_components.mesh_selection_wanted)
     reads_3d = False
 
     poll = classmethod(lambda cls, context: _poll(context))

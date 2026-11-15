@@ -57,7 +57,7 @@ def helper_of(con):
 
 
 def pin_type(con):
-    """``uvPin`` / ``proximityPin`` for a kit pin constraint, else None (ui/channel_box INPUTS / AE tab type)."""
+    """``uvPin`` / ``proximityPin`` for a kit pin constraint, else None (ui/cb_inputs INPUTS / AE tab type)."""
     h = helper_of(con)
     return h.get(KIND) if h is not None else None
 

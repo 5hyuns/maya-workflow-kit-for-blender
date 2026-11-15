@@ -68,7 +68,7 @@ def test_pane_bar_ends_with_panels_then_blender():
 
 def test_floating_window_bar_has_the_handle_and_no_panels_menu():
     ep = _mod("ui.editor_panels")
-    # a window with one area that is not the first window = a floating kit window (ui/maya_dock.is_floating)
+    # a window with one area that is not the first window = a floating kit window (ui/maya_dock_roles.is_floating)
     window = types.SimpleNamespace(screen=types.SimpleNamespace(areas=[object()]))
     for editor, space_type in (("Graph Editor", 'GRAPH_EDITOR'), ("Dope Sheet", 'DOPESHEET_EDITOR'),
                                ("UV Editor", 'IMAGE_EDITOR')):

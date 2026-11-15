@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """#103: Maya option windows of Create > Polygon Primitives (Disc ... Ultra Shape) and Create > NURBS
-Primitives (same spec as operators/option_windows.py; option_windows._extend appends ``WINDOWS``).
+Primitives (same spec as operators/option_windows_spec.py; option_windows._extend appends ``WINDOWS``).
 
 Titles, field labels and ranges follow Maya's
 option windows.

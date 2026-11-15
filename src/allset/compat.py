@@ -18,7 +18,7 @@ IS_STRICT = VERSION in STRICT_VERSIONS
 
 
 # Properties tab flags newer than 4.5: the Maya Workflow Kit template is still a 4.5-saved file
-# and opens in 5.x with them on, so they carry no meaning in a kit dock's role (ui/maya_dock.role).
+# and opens in 5.x with them on, so they carry no meaning in a kit dock's role (ui/maya_dock_roles.role).
 LATER_PROPERTIES_TABS = frozenset({"show_properties_strip", "show_properties_strip_modifier"})
 
 

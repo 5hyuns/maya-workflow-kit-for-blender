@@ -328,7 +328,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm "
                     "across: 1 = like Maya)")
     # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
-    # Maya Graph Editor Select menu, operators/graph_key_menu.py).
+    # Maya Graph Editor Select menu, operators/graph_select_masks.py).
     graph_select_curve: bpy.props.BoolProperty(
         name="Curve", default=True, description="Clicking or dragging in the Graph Editor can pick curves")
     graph_select_key: bpy.props.BoolProperty(
@@ -370,7 +370,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     maya_viewcube: bpy.props.BoolProperty(
         name="ViewCube", description="Maya ViewCube (or Blender's navigation gizmo, see Viewport Navigation) in "
                                      "the top right of the view", default=True, update=_update_navigation)
-    # #209: Blender's navigation gizmo instead of the Maya ViewCube (ui/view_furniture.py)
+    # #209: Blender's navigation gizmo instead of the Maya ViewCube (ui/view_furniture_state.py)
     view_navigation: bpy.props.EnumProperty(
         name="Viewport Navigation",
         items=(('VIEWCUBE', "Maya ViewCube", "Maya ViewCube in the top right of the view (click a face to look "
@@ -487,7 +487,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
                                                "the current one (on by default, like Maya)",
         default=True)
-    # Extra marking menu behaviour (marking/engine.Params), off by default.
+    # Extra marking menu behaviour (marking/menu_layout.Params), off by default.
     mm_quick_gestures: bpy.props.BoolProperty(
         name="Quick Gestures",
         description="Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after "

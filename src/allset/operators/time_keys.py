@@ -6,7 +6,7 @@ Maya keys (S keys every keyable attribute); Maya
 Time Slider menu (the time slider edits act on the Time Slider's highlighted range: the
 Shift-dragged range, else the current frame).
 
-Nodes are the Channel Box's (``ui/channel_box.targets``): selected objects, or the selected pose bones
+Nodes are the Channel Box's (``ui/cb_nodes.targets``): selected objects, or the selected pose bones
 in pose mode (a bone's curves are the armature action's ``pose.bones["n"]...`` curves).
 
 Code: key_nodes (nodes, their curves, the Time Slider range), key_scope (Key menu commands with options, the

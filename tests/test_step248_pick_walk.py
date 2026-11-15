@@ -3,7 +3,7 @@
 Maya pick-walk:
 spine's children L_arm, R_arm, neck in creation order; Left / Right walk the siblings in that order and wrap; Down = the
 first child; a leaf stays. Controller tags first, hidden bone collections skipped by default, as before.
-Kit: operators/joints.py child_order_key / stamp_last, operators/joint_display.py.
+Kit: operators/joint_common.py child_order_key / stamp_last, operators/joint_display.py.
 """
 
 from importlib import import_module

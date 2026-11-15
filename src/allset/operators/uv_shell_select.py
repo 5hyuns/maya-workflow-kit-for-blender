@@ -6,7 +6,7 @@ Maya 2026:
   Components > UV Shell and Alt+F12 (`SelectMeshUVShell`): component mode, selection cleared, in-view message. Here: the
   WindowManager flag ``allset_uv_shell_mask`` + face select mode + UV Sync Selection on (one selection for the 3D View
   and the UV Editor, like Maya's one selection list). Any other component mode clears the flag
-  (``uv_tools.leave_uv_mode`` / ``set_component``).
+  (``uv_components.leave_uv_mode`` / ``set_component``).
 - A click selects **faces**: every face of the UV shell of the face under the cursor (3D: the face the pick returns at
   that pixel, so on an edge between two shells one shell wins; UV Editor: the UV face containing the point).
   Plain = replace, Shift = toggle the shell (by the clicked face's state), Ctrl = remove, Ctrl+Shift = add; a

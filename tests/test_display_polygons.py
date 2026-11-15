@@ -2,7 +2,7 @@
 and set the overlays of the 3D View the menu acts on (the largest one when the menu is in the top bar); Normals Size...
 is a small kit window whose slider is the overlay's Normal Size (live, open until OK); Reset Display is a kit
 operator; the items without a Blender equivalent are greyed with a notice.
-Kit: ui/menu_map.py, ui/status_line.view3d_space, ui/menu_sets.prop_owner, operators/poly_display.py, ui/notices.py."""
+Kit: ui/menu_map.py, ui/status_line_buttons.view3d_space, ui/menu_item_ops.prop_owner, operators/poly_display.py, ui/notices.py."""
 
 import inspect
 import types

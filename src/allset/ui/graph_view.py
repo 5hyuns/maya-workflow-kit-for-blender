@@ -36,7 +36,7 @@ LABEL_DY = 4.0                    # baseline px above the curve (x UI scale)
 # Show > Objects > Clear Below turns these type filters back on (the ones the Show > Objects items map to)
 OBJECT_FILTERS = ("show_meshes", "show_curves", "show_cache_files", "show_cameras", "show_armatures")
 
-# ... and the kit's own Show > Objects items (WindowManager flags, ui/editor_chrome.py) off
+# ... and the kit's own Show > Objects items (WindowManager flags, ui/graph_list.py) off
 KIT_OBJECT_FILTERS = ("allset_show_ik_handles", "allset_show_sets", "allset_show_characters")
 
 _state = {"sig": None}

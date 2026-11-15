@@ -2,9 +2,9 @@
 """Joint display with Maya's controls (Issue #165): the Channel Box Radius row, Display > Transform Display >
 Local Rotation Axes, Display > Animation > Joint Size....
 
-- Radius = the Maya joint radius the kit keeps on each bone (``joints.RADIUS``, a plain number drawn in centimetres
+- Radius = the Maya joint radius the kit keeps on each bone (``joint_frames.RADIUS``, a plain number drawn in centimetres
   whatever the scene unit, ``units.radius_unit``; a joint without one reads
-  the default 1). It sizes the joint's click sphere (``joints.joint_sphere_radius``).
+  the default 1). It sizes the joint's click sphere (``joint_tool.joint_sphere_radius``).
 - Joint Size = Maya's scene-wide jointDisplayScale (default 1) as ``Scene.allset_joint_size``: it scales every joint's
   click sphere. Blender draws a bone's size from its length only, so the drawn joints keep their size.
 - Local Rotation Axes: Maya toggles the selected nodes' displayLocalAxis. Blender shows bone axes per skeleton

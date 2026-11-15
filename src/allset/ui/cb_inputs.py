@@ -223,8 +223,8 @@ def _nth_constraint(node, con):
 
 def maya_constraint_type(con, default=None):
     """Maya node type of a kit constraint: normal / tangent constraints are a Track To on a helper (
-    operators/constrain_199.maya_type), UV / Proximity Pins a Copy Transforms on a helper (
-    operators/pins_205.pin_type), a kit multi-target group its own type (a parent group's Copy Location / Rotation,
+    operators/constrain_modify.maya_type), UV / Proximity Pins a Copy Transforms on a helper (
+    operators/pin_update.pin_type), a kit multi-target group its own type (a parent group's Copy Location / Rotation,
     operators/constrain_multi.py), the rest by Blender type."""
     from ..operators import constrain_multi
     grouped = constrain_multi.group_type(con)

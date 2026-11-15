@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Create > Curve Tools drawing tools: CV Curve Tool, EP Curve Tool, Three / Two Point Circular Arc.
 
-Window-level modals like the Joint Tool (operators/joints.py): menus / shelf invoke them from any context and
+Window-level modals like the Joint Tool (operators/joint_tool.py): menus / shelf invoke them from any context and
 each click finds the 3D View WINDOW region under the mouse itself (not the Tool Box column). Maya places curve points on
 the ground grid in a perspective view (Blender z = 0) and on the view plane through the origin in orthographic views
-(same rule as the Joint Tool, ``joints.click_point``).
+(same rule as the Joint Tool, ``joint_tool.click_point``).
 
 Keys (Maya curve contexts): LMB press = new point, drag = move it, release = place it; Enter = finish (CV: degree + 1
 points, EP: 2 points, else the tool keeps waiting); Backspace / Delete = remove the last point; Esc or a tool key

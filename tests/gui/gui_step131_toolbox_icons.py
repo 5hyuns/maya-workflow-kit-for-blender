@@ -138,7 +138,7 @@ def s_check():
     stack = dock_area()
     sreg = next(rg for rg in stack.regions if rg.type == 'WINDOW')
     crop = px[sreg.y:sreg.y + sreg.height, sreg.x:sreg.x + sreg.width]
-    # the dock's additive lift to the dock grey (maya_dock.draw_tint) also lifts the icons drawn under it
+    # the dock's additive lift to the dock grey (maya_dock_tint.draw_tint) also lifts the icons drawn under it
     lift = import_module(MODULE + ".ui.maya_dock").dock_lift(bpy.context)
     t = near(crop, np.clip(TEAL + lift, 0.0, 1.0))
     check(f"Layer Editor toolbar icons in the Maya-style teal ({int(t.sum())} px)", t.sum() > 12)

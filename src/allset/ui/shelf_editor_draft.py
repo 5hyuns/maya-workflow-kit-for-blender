@@ -376,7 +376,7 @@ class ALLSET_OT_shelf_editor_save(bpy.types.Operator):
                 return {'CANCELLED'}
 
         # Freeze the editor state before touching the live shelf cache.  The
-        # draft is deliberately independent from shelf._user, but keeping an
+        # draft is deliberately independent from shelf_store._user, but keeping an
         # immutable snapshot here also prevents a refresh from replacing the
         # only copy of newly added factory-shelf extras.
         draft_snapshot = json.loads(json.dumps(_draft))

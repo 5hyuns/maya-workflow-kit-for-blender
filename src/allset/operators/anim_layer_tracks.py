@@ -291,7 +291,7 @@ def display_layer(scene, ob):
 
 
 def show(scene):
-    """Make every layered object's active action its display layer's strip action at influence 0 (module docstring):
+    """Make every layered object's active action its display layer's strip action at influence 0 (anim_layers.py module docstring):
     Graph Editor / Dope Sheet / key readers then show that layer, the evaluated result stays the NLA's."""
     for ob in layer_ids(scene):
         have = tracks(ob)

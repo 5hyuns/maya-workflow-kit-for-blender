@@ -140,7 +140,7 @@ def handle_fields(rec, handle, world=False, rings=False):
 def manip_frame(ob, rec, world=False):
     """(world centre, 3x3 world unit axes (columns X, Y, Z), world lengths of one mesh unit along X / Y / Z) of the
     extrude manipulator: Z = the faces' normal, X / Y = polyExtrudeFace's local axes of that normal (world X projected
-    into the face plane, extrude.face_axes); ``world``: the world axes (Transform Component switch). None when there
+    into the face plane, extrude_face.face_axes); ``world``: the world axes (Transform Component switch). None when there
     is nothing to show."""
     frame = cap_frame(ob, rec)
     if frame is None:

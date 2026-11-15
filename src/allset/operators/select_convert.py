@@ -21,7 +21,7 @@ Every rule is Maya 2022's, checked on a 4 x 4 plane, a 6 x 6 plane and a cube.
 - To UVs (PolySelectConvert 4): faces -> their UVs; edges -> their UVs in the faces beside them; vertices -> every UV.
 
 Blender has no UV component in the 3D View: a UV result is the UV Editor's selection with UV Sync Selection off
-(the kit's Maya UV component, operators/uv_tools.set_component). In that state the selection *is* the UV
+(the kit's Maya UV component, operators/uv_components.set_component). In that state the selection *is* the UV
 selection, so a conversion reads it as vertices (the selected UVs' vertices); sync off alone is Blender's factory
 state, so ``uv_source`` decides.
 """
@@ -407,7 +407,7 @@ def uv_border_loops(bm, uv, loops):
 
 def uv_source(context, bm, uv):
     """Is the selection UVs (the kit's Maya UV component)? Sync off is also Blender's factory state, so
-    only in the UV Editor, or in the 3D View when every shown face is selected (how uv_tools.set_component shows
+    only in the UV Editor, or in the 3D View when every shown face is selected (how uv_components.set_component shows
     the UVs) and some but not all UVs are."""
     if uv is None or context.scene.tool_settings.use_uv_select_sync:
         return False
@@ -478,7 +478,7 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
             self.report({'WARNING'}, "Select a mesh with UVs" if self.kind in UV_TARGET else "Select a mesh")
             return {'CANCELLED'}
         if any(r[3] is not None and r[3][0] == 'LOOP' for r in results):
-            # a UV selection: Maya's UV component = sync off, every face shown (uv_tools.set_component)
+            # a UV selection: Maya's UV component = sync off, every face shown (uv_components.set_component)
             uv_tools.forget_mesh_selection()      # a conversion: no F12 selection to bring back (#80)
             uv_tools.set_component(context, 'UV')
             ts.uv_select_mode = 'VERTEX'

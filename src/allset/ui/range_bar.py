@@ -7,7 +7,7 @@ a handle square (#919191) inside each end and the start / end frames next to the
 segment moves the playback range, dragging a handle moves that end.
 
 Blender has no such widget and Python can't tell where a header layout put an item, so
-``time_slider.draw_range_slider`` leaves an empty label where the bar goes (a button would take the
+``time_slider_header.draw_range_slider`` leaves an empty label where the bar goes (a button would take the
 mouse) and the header POST_PIXEL handler here finds that gap by reading one row of the header it has
 just drawn (``bar_span``), draws the bar there and remembers the rectangle for
 ``allset.range_bar_drag`` ("Screen" keymap: a click on an empty label reaches the window keymaps).
@@ -46,7 +46,7 @@ _handle = []
 # stretching item, so the bar label is BAR_UNITS + the extra units here, and each draw moves the extra toward
 # the spare room it sees (the spacer after the end fields).
 _extra = {}      # area pointer -> extra ui units of the bar label
-_planned = {}    # area pointer -> the label's base ui units this draw (time_slider.row_plan: shorter on a short header)
+_planned = {}    # area pointer -> the label's base ui units this draw (time_slider_header.row_plan: shorter on a short header)
 _gaps = {}       # area pointer -> (header size and bar width, (span, spare)) of the last header row read
 row_reads = [0]  # header rows read so far
 SPARE_UNITS = 1  # room left in the spacer

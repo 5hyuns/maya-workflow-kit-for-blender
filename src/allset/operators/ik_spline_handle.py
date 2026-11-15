@@ -2,7 +2,7 @@
 """Maya Skeleton > Create IK Spline Handle: a Spline IK constraint ``ikHandleN`` on the chain from the start joint to
 the end joint, on a new curve fitted through the chain (``fit_spans`` / ``fit_cubic``) or on an existing curve, run as
 a command or as a click tool (start joint, end joint, then the curve). Entry points ``create_spline_ik`` and
-``allset.ik_spline_handle``; twist drivers: spline_twist.py, chain lookup: skin.ik_chain; rig_maya re-exports them.
+``allset.ik_spline_handle``; twist drivers: spline_twist.py, chain lookup: ik_handle.ik_chain; rig_maya re-exports them.
 """
 
 import bpy

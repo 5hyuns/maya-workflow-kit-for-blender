@@ -9,8 +9,8 @@ Everything goes through the kit's own data so a script gives what the menus give
   ``outColor`` / ``outAlpha``; Blender has no free-standing shader node, a group can be shared by every
   material it is connected to like Maya's node), sets = kit sets (``operators/sets.py``), shading groups =
   initialShadingGroup / ``<material>SG`` (``material.shading_group_name``), creation nodes (``prim_history``),
-  extrusions (``operators/extrude.py`` records + the per-mesh list ``HISTORY_PROP`` the commands keep), constraints
-  (``channel_box.constraint_node_name``), bones = joints.
+  extrusions (``operators/extrude_record.py`` records + the per-mesh list ``HISTORY_PROP`` the commands keep), constraints
+  (``cb_inputs.constraint_node_name``), bones = joints.
 - ``currentUnit`` = the scene's unit settings / frame rate (Maya's working units are the scene's display units);
   ``ls`` / ``getAttr`` / ``setAttr`` / ``select`` / ``objExists`` learn these nodes in
   ``_extend_shim`` (the shim's versions handle DAG objects only).

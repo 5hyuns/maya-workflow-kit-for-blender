@@ -10,7 +10,7 @@ into that order (``_renumber``). Used by the bevel driver in ``bevel_maya`` and 
 def maya_edge_ids(bm):
     """{BMEdge: Maya edge id}: the mesh's edge index (kit design). It is Maya's id wherever
     the kit made the edges: kit polyCube / polyCylinder are built with Maya's edge order (prim_shapes ``edges``) and
-    kit extrusions sort their result into polyExtrudeFacet's order (extrude.renumber),
+    kit extrusions sort their result into polyExtrudeFacet's order (extrude_face.renumber),
     Maya numbers a mesh made from a face list in face-corner order; bmesh's
     ``faces.new`` doesn't (it makes a face's closing edge first), so such a mesh needs its edges made in that order
     first. Elsewhere (other primitives, Blender's own tools, imports) Maya's ids are not known."""

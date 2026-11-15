@@ -67,7 +67,7 @@ def pick(scene, index, toggle=False, extend=False):
         if e.picked != (i in have):
             e.picked = i in have
     if scene.allset_anim_layer_index != new:
-        scene.allset_anim_layer_index = new       # its update shows the layer (anim_layers.show)
+        scene.allset_anim_layer_index = new       # its update shows the layer (anim_layer_tracks.show)
     else:
         al.show(scene)
 
@@ -226,7 +226,7 @@ def copy_base(scene):
     """Maya Duplicate Layer on BaseAnimation (``copy_base``): an Override layer
     ``BaseAnimation_copy`` on top of the stack; members = the layered attributes only (those in some layer above
     BaseAnimation), curves = copies of their base curves; a member without a base curve holds its base value (the
-    property default NLA starts from, see anim_layers.key) — so the copy overrides every layer below."""
+    property default NLA starts from, see anim_layer_keys.key) — so the copy overrides every layer below."""
     from ..ui import channel_box as cb
     ls = al.layers(scene)
     new = insert_layer(scene, maya_name(scene, al.BASE + COPY), len(ls) - 1)
@@ -356,7 +356,7 @@ def key_weight(scene, names, weight, frame=None):
         e = al.layers(scene)[i]
         value = 1.0 if name == al.BASE else (e.weight if weight is None else weight)
         if name != al.BASE and abs(e.weight - value) > 1e-9:
-            e.weight = value                     # its update writes the strips (anim_layers.sync)
+            e.weight = value                     # its update writes the strips (anim_layer_tracks.sync)
         for ob in al.members(scene, name):
             st = al._strip(al.tracks(ob)[name])
             fc = al.weight_curve(st)

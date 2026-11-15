@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya option windows of the Surfaces menu (same spec as operators/option_windows.py; option_windows._extend
+"""Maya option windows of the Surfaces menu (same spec as operators/option_windows_spec.py; option_windows._extend
 appends ``WINDOWS``). Titles and field labels follow Maya's option
 windows.
 Fields Blender / the kit can't follow are listed as ``missing``. Operators:

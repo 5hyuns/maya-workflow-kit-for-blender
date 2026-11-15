@@ -1,4 +1,4 @@
-"""Joint Tool drag (#230): ``joints.move_joint`` moves the joint just placed the way ``add_joint`` would have placed
+"""Joint Tool drag (#230): ``joint_tool.move_joint`` moves the joint just placed the way ``add_joint`` would have placed
 it there; the Help Line shows the Joint Tool's help while it runs; the preview handler comes and goes with the tool."""
 
 from importlib import import_module

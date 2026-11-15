@@ -237,7 +237,7 @@ def _penumbra():
 def channel_attrs(light=None):
     """Maya light shape channels Blender keeps differently (keyable attributes): Color R / G / B
     (one colour vector), spot Cone Angle / Penumbra Angle (``spot_size`` + ``spot_blend``) — Channel Box SHAPES rows
-    ``maya:colorR`` ... (ui/channel_box._virtual). ``paths`` = the Blender properties a key on the row keys."""
+    ``maya:colorR`` ... (ui/cb_inputs._virtual). ``paths`` = the Blender properties a key on the row keys."""
     from .deformers import Attr
     out = []
     for i, c in enumerate("RGB"):

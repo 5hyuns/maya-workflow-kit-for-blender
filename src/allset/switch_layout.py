@@ -174,13 +174,13 @@ def reset_workspace(window, ws=None):
     return ws
 
 
-STRIP_MASKS = (".AllsetStrip", ".AllsetShelf")   # ui/shelf.MARKER, SHELF_MARKER (top to bottom)
+STRIP_MASKS = (".AllsetStrip", ".AllsetShelf")   # ui/shelf_strip.MARKER, SHELF_MARKER (top to bottom)
 MASK_KEY = "allset_switch_masks"
 
 
 def _mark_strips(ws):
     """Appending a workspace doesn't bring the Masks its Image Editors point to, and those mark the
-    Status Line row and the Shelf row (ui/shelf.is_strip): load them and point the two
+    Status Line row and the Shelf row (ui/shelf_strip.is_strip): load them and point the two
     top Image Editors (Status Line above the Shelf) at them again."""
     missing = [m for m in STRIP_MASKS if m not in bpy.data.masks]
     if missing:

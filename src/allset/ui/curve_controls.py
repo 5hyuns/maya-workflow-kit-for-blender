@@ -6,7 +6,7 @@ of its armature, so the view's curve filter
 (``SpaceView3D.show_object_viewport_curve``) hides curve *objects* only (NURBS Curves off, nothing selected: the
 bone's circle is still drawn; Show > Joints off hides it). Blender has no
 per-view switch for custom shapes, so the kit hides those bones (pose-bone hide, every view) and marks them; turning
-NURBS Curves back on un-hides only marked bones, like Show > IK Handles (ui/panel_menus.show_ik_handles).
+NURBS Curves back on un-hides only marked bones, like Show > IK Handles (ui/panel_state.show_ik_handles).
 """
 
 import bpy

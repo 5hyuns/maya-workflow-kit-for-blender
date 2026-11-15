@@ -5,7 +5,7 @@ the UV Sets items Rename Current UV Set / Copy UVs to UV Set > map1 / map1.
 Rules follow Maya.
 Maya UVs are kit points (operators/uv_shells.uv_points: loops of one vertex sharing a
 coordinate); a Maya cut that leaves the UVs where they are can't be told apart from no cut in Blender (islands are
-made from shared coordinates), so a split UV moves uv_tools.NUDGE towards its own faces (same convention as
+made from shared coordinates), so a split UV moves uv_islands.NUDGE towards its own faces (same convention as
 Cut / Create UV Shell).
 
 - Cycle: the first face of the selection (faces, else faces touching the selection) is cut
@@ -415,7 +415,7 @@ class _UVOp:
     poll = classmethod(lambda cls, context: _poll(context))
     empty = "Select UVs"
     # a main UV menu command: with UV Sync Selection off it can take the 3D View selection
-    # (uv_tools.mesh_selection_wanted)
+    # (uv_components.mesh_selection_wanted)
     reads_3d = False
 
     def run(self, context, bm, uv, synced, uv_mode):

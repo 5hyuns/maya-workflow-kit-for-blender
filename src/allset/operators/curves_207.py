@@ -6,7 +6,7 @@
   (x, y, z) is Maya (x, z, -y), the frame's twist axis comes from Maya's world up). Object selected = every CV; in edit
   mode the selected CV range of a spline = Maya's ``cv[a:b]`` (the CVs after b follow).
 - Lock / Unlock Length = Maya's ``lockLength`` attribute (curve data ID property); while it is on, CV edits keep every
-  CV leg length (``curves_math.keep_leg_lengths``, a depsgraph handler; Maya's CV manipulator rule is).
+  CV leg length (``curves_math_cv_tools.keep_leg_lengths``, a depsgraph handler; Maya's CV manipulator rule is).
 - CV Hardness = ``cmds.hardenPointCurve(multiplicity=-1)`` on the last selected CV (knots; shape exact through
   write_spline).
 - Fit B-spline = fitBspline on degree-1 curves: a new ``fitBsplineCurveN``.

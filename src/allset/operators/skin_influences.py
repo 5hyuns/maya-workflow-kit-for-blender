@@ -41,7 +41,7 @@ def normalize(mesh, groups=None):
 
 
 # Maya Add Influence without Lock weights: the skin's
-# weights are recomputed by the closest-distance rule of Bind Skin (skin.closest_distance_weights) over the old and
+# weights are recomputed by the closest-distance rule of Bind Skin (skin_bind.closest_distance_weights) over the old and
 # the new influences, each with its own dropoff (old = the bind's, new = the option's Dropoff, factory 4).
 MAX_INFLUENCES_PROP = "allset_max_influences"   # Maya skinCluster maxInfluences (Bind Skin factory 5)
 DROPOFF_PROP = "allset_dropoff"                 # {influence: dropoff} of influences added with another dropoff
@@ -50,7 +50,7 @@ MAX_INFLUENCES = 5
 
 def _joint_segments(arm, names):
     """{name: [(a, b) world segment]}: a joint's segments run to each child joint, an end joint is a point (the Bind
-    Skin rule, skin.joint_segments, without its deform filter: a joint added as influence counts whatever its flag)."""
+    Skin rule, skin_bind.joint_segments, without its deform filter: a joint added as influence counts whatever its flag)."""
     mw = arm.matrix_world
     out = {}
     for name in names:

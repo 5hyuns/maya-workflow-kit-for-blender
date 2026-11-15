@@ -373,7 +373,7 @@ def pane_tap(context):
         view_message.show(context, "Space: this pane can't be maximized here")
 
 
-_LAST_HOLD_END = [None]   # monotonic time the last hotbox hold ended (engine.restart_too_soon)
+_LAST_HOLD_END = [None]   # monotonic time the last hotbox hold ended (hotbox_engine.restart_too_soon)
 
 
 class ALLSET_OT_hotbox(bpy.types.Operator):

@@ -123,7 +123,7 @@ def s_rmb():
     want = ["Select", "Select All", "Deselect All", "Select Hierarchy", "Invert Selection", "Select Similar",
             "Make Live", "DG Traversal", "Inputs", "Outputs", "Paint"]
     check("Maya 2022 rows in order", labels[1:1 + len(want)] == want)
-    # marking/engine.fit_ring: one column, under the ring when it fits, else beside it on the side
+    # marking/ring_fit.fit_ring: one column, under the ring when it fits, else beside it on the side
     # without a radial submenu (RMB on a mesh: E = UV, so the left side); never over the ring
     boxes = list(s.layout.radial.values())
     ring_bottom = min(it.rect[1] for it in boxes)

@@ -101,7 +101,7 @@ def test_turning_one_tool_on_leaves_the_others_off():
 def test_move_absolute_only_with_world_axes():
     # Maya Move Tool Settings: "Absolute only supported in world mode"
     sc = bpy.context.scene
-    slot = sc.transform_orientation_slots[1]          # the Move tool's axis (ui/manipulator.SLOT)
+    slot = sc.transform_orientation_slots[1]          # the Move tool's axis (ui/manipulator_frame.SLOT)
     slot.type = 'GLOBAL'
     assert snap.absolute_offered(sc, 'TRANSLATE')
     slot.type = 'LOCAL'

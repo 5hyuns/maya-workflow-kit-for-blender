@@ -16,7 +16,7 @@ or ``OUTLINER_OT_parent_clear`` (empty space); MMB does nothing. So
 Maya: MMB-drag a camera from the Outliner into a view panel = that panel looks through the camera (each panel has its
 own camera); other items dropped on a panel do nothing. The modal keeps the window's mouse events after the cursor
 leaves the Outliner, so a release outside it is mapped to the 3D View under it (any window, ``ui/hs_drag.view_under``)
-and that view looks through the camera (``ui/panel_menus.look_through``).
+and that view looks through the camera (``ui/panel_cameras.look_through``).
 """
 
 import json

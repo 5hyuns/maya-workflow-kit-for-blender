@@ -151,7 +151,7 @@ class ALLSET_OT_ae_select(bpy.types.Operator):
 
 
 def show_dock(context, dock):
-    """Raise ``dock`` in the Maya tab stack, or open it as a floating window (ui/maya_dock.py)."""
+    """Raise ``dock`` in the Maya tab stack, or open it as a floating window (ui/maya_dock_windows.py)."""
     from . import maya_dock
     return maya_dock.show(context, dock)
 

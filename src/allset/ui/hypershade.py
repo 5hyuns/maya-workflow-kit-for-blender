@@ -11,7 +11,7 @@ node list), the Graph work area (centre: graph toolbar, "Untitled_1" tab, node e
 
 - menu strip = a Shader Editor one header high whose header draws only the Maya menus (``NODE_HT_header``'s own draw
   swapped, ``own_draw``); items in ``editor_menu_map`` "Hypershade/...";
-- Graph = a Shader Editor whose header is Maya's graph toolbar (``editor_chrome.ICONS["Hypershade"]``) + Blender's
+- Graph = a Shader Editor whose header is Maya's graph toolbar (``editor_icon_data.ICONS["Hypershade"]``) + Blender's
   node menus folded into "Blender"; a drawn "Untitled_1" tab at its top-left;
 - Browser / Create / Material Viewer / Property Editor = Properties editors on the Tool tab (the Maya dock
   mechanism), marked by hidden tab flags (``MARK`` + ``PANE_FLAGS``) and drawn by ``ALLSET_PT_hypershade_pane``.

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """maya.cmds look-alike: ``sets`` on the kit's sets (operators/sets.py; ``_set_members`` also lists a shading
 group's members) and shading nodes: ``shadingNode`` makes a kit material or a ``file`` texture
-(``new_file_texture``) and selects it; ``connect_texture`` / ``shading_sources`` give cmds_rig.py's connectAttr /
+(``new_file_texture``) and selects it; ``connect_texture`` / ``shading_sources`` give cmds_connections.py's connectAttr /
 listConnections the texture -> material colour connections. Re-exported by cmds_misc.py."""
 
 import bpy
@@ -148,7 +148,7 @@ def shadingNode(*args, **kwargs):
 def connect_texture(src_plug, dst_plug):
     """``connectAttr file1.outColor lambert2.color``: the file node's group goes into the material in front of its
     Maya colour input. Returns Maya's message, or None when the plugs aren't a texture -> material connection
-    (for cmds_rig.connectAttr)."""
+    (for cmds_connections.connectAttr)."""
     from ..operators import material
     try:
         src_node, src_attr = str(src_plug).split(".", 1)
@@ -177,7 +177,7 @@ def connect_texture(src_plug, dst_plug):
 
 def shading_sources(plug):
     """Maya plugs feeding a material plug (``listConnections lambert2.color -s 1 -p 1``), or None when ``plug`` isn't
-    a kit material's (for cmds_rig.listConnections)."""
+    a kit material's (for cmds_connections.listConnections)."""
     from ..operators import material
     try:
         node, attr = str(plug).split(".", 1)

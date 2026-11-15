@@ -42,7 +42,7 @@ HELPER = "allset_pole_helper"          # handle -> its pole helper empty
 OWNER = "allset_pole_of"               # helper -> its handle
 POLE_OBJECT = "allset_pole_object"     # handle -> the Pole Vector constraint's target
 PREBEND = math.radians(1.0)
-# Maya world axes in Blender world (joints.MAYA_WORLD): Maya X -> X, Y -> Z, Z -> -Y
+# Maya world axes in Blender world (joint_frames.MAYA_WORLD): Maya X -> X, Y -> Z, Z -> -Y
 _M2B = ((1.0, 0.0, 0.0), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0))
 
 
@@ -114,7 +114,7 @@ def default_pole_vector(points, length, start_frame=None):
 
 
 # R4: Maya writes the middle joint's preferred angle (0, 90, 0) — 90° about its Maya Y = the bone's Z
-# (joints.JOINT_AXES), as pose Euler XYZ in bone axes like rig_maya.PREFERRED_PROP — when the 3-joint chain is
+# (joint_frames.JOINT_AXES), as pose Euler XYZ in bone axes like rig_maya.PREFERRED_PROP — when the 3-joint chain is
 # straight. Straightness: the kit takes 1e-3 of the chain length; jointOrient: 1e-6 rad (5.7e-5°).
 AUTO_PREFERRED = (0.0, 0.0, 90.0)
 STRAIGHT_TOL = 1e-3
@@ -122,7 +122,7 @@ JO_TOL = 1e-6
 
 
 def maya_axes(arm, bone):
-    """World rotation (3x3) of the joint's Maya axes at rest (joints.maya_frame for a Bone)."""
+    """World rotation (3x3) of the joint's Maya axes at rest (joint_frames.maya_frame for a Bone)."""
     from .joints import JOINT_AXES, MAYA_FRAME
     f = (arm.matrix_world.to_3x3().normalized() @ bone.matrix_local.to_3x3().normalized()) @ JOINT_AXES
     q = bone.get(MAYA_FRAME)

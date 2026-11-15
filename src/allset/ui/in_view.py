@@ -3,7 +3,7 @@
 .
 
 - Visible while the active edit object's last kit extrusion is valid and its extruded faces are the selection
-  (operators/extrude.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
+  (operators/extrude_record.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
   (ui/manipulator.py) hides meanwhile.
 - The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended).
   Maya's polyExtrudeFace manipulator in the faces' local frame - three

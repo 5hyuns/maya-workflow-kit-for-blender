@@ -370,7 +370,7 @@ def draw_extra(layout, owner, layout_id):
 
 def draw_extrude_history(layout, context, rec):
     """The polyExtrudeFace tab: Maya's "Poly Extrude Face History" with the kit record's values (the same text
-    proxies as Channel Box INPUTS, ui/in_view.py); also polyExtrudeEdge / Vertex and polyBevel3."""
+    proxies as Channel Box INPUTS, ui/cb_model_node.py); also polyExtrudeEdge / Vertex and polyBevel3."""
     header, body = layout.panel("allset_ae_history_extrude", default_closed=False)
     header.label(text=f"{nice_type(rec.spec.node_type)} History")
     if body is None:

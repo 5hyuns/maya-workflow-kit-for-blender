@@ -45,7 +45,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
 
     type: EnumProperty(items=CONSTRAINT_TYPES, name="Type")
     # Maya option window values for a multi-target constraint (operators/constrain_multi.py); a one-target
-    # constraint is set up afterwards by option_windows._constraint as before
+    # constraint is set up afterwards by option_windows_spec._constraint as before
     maintain_offset: EnumProperty(name="Maintain Offset", items=(
         ('DEFAULT', "Default", "Like Maya: on for Parent, off for Point / Orient / Scale"),
         ('ON', "On", ""), ('OFF', "Off", "")), default='DEFAULT', options={'SKIP_SAVE', 'HIDDEN'})

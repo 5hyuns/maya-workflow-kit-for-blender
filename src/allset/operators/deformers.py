@@ -8,7 +8,7 @@ modifier that does the same job, named like the Maya node (``ffd1``, ``deltaMush
 transform it is driven by (``ffd1Lattice``, ``bend1Handle``). Its weights are the vertex group of the node's name
 (weight 1 on the deformed points), which Deform > Paint Weights paints.
 
-``ATTRS`` are the Maya attributes the Channel Box INPUTS show for a node (ui/channel_box.py reads them as virtual
+``ATTRS`` are the Maya attributes the Channel Box INPUTS show for a node (ui/cb_inputs.py reads them as virtual
 rows ``maya:<key>``): each converts between the Maya value and the modifier's own settings.
 """
 
@@ -55,7 +55,7 @@ def node_type(md):
 def is_base(md):
     """The Hook that carries a kit lattice's / wrap influence's transform (``ffd1Base``, ``wrap1Base``, see
     ``_base_hook``), or a wrap's extra influence ``wrap1Influence2`` + its Hook ``wrap1Influence2Base`` (
-    operators/pins_205.py): part of that node, not an INPUTS node of its own."""
+    operators/wrap_influence.py): part of that node, not an INPUTS node of its own."""
     if md.type == 'SURFACE_DEFORM':
         return re.match(r"^wrap\d+Influence\d+$", md.name) is not None
     return md.type == 'HOOK' and re.match(r"^((ffd|wrap|proximityWrap)\d+|wrap\d+Influence\d+)Base$",

@@ -96,7 +96,7 @@ class ALLSET_OT_layer_select(_LayerOp, bpy.types.Operator):
 def select_members(context, coll, joints):
     """Maya Select Objects: only the members are picked (not what is below them), also in a Template or Reference
     layer or a hidden one. Objects Blender can't select (Template / Reference, hidden) stay picked the way the kit
-    Outliner keeps them (``outliner_tree._keep_hidden``). Member joints alone: Pose Mode on their skeletons, the last
+    Outliner keeps them (``outliner_tree_select._keep_hidden``). Member joints alone: Pose Mode on their skeletons, the last
     member the lead; with objects the skeletons are selected in Object Mode with the member joints picked on them."""
     from ..operators import joint_selection
     from . import outliner_tree
@@ -433,7 +433,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
 
 def list_rows(context):
     """Layer list rows that fill the dock to the bottom (Maya's Layer Editor pane is the dock's lower part,
-    channel_box.CB_SHARE)."""
+    cb_pane.CB_SHARE)."""
     from .channel_box import _round_half_up, cb_share
     region = context.region
     if region is None or region.type not in {'UI', 'WINDOW'}:   # the dock is a Properties WINDOW

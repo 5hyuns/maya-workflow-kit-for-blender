@@ -2,7 +2,7 @@
 """Maya Bind Skin and Unbind Skin: closest-distance weights (or closest in hierarchy / heat map), binding in the
 current pose (``unpose_mesh``), skinCluster names, the second-skin question, detaching with Delete / Keep / Bake
 history; also Reset Default Weights and Move Skinned Joints. Entry points ``bind_skin``, ``closest_distance_weights``,
-``joint_segments``, ``unbind``, ``move_skinned_joints``. Related: skin_basics.py, skin_follow.py, rig_maya.py.
+``joint_segments``, ``unbind``, ``move_skinned_joints``. Related: skin_basics.py, skin_follow.py, skin_influences.py.
 """
 
 import bpy

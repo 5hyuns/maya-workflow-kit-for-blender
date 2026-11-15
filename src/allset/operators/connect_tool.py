@@ -90,7 +90,7 @@ def _restore(bm, pre):
 
 def _connect(ob_name, bm, items, values, ring=True):
     """Connect ``items`` with the tool's ``values`` (slide, segments, pinch) and remember the connection for a
-    middle-drag. Returns the result of ``poly_maya.connect_items``."""
+    middle-drag. Returns the result of ``poly_connect.connect_items``."""
     bm.verts.index_update()
     bm.edges.index_update()
     bm.faces.index_update()

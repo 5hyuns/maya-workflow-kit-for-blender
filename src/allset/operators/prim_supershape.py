@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polySuperShape (Create > Polygon Primitives > Super Ellipse / Spherical Harmonics / Ultra Shape).
 
-Pure Python (no bpy), Maya Y-up space and Maya units, returning ``prim_shapes.Mesh``. Every rule follows
+Pure Python (no bpy), Maya Y-up space and Maya units, returning ``prim_nodes.Mesh``. Every rule follows
 Maya (default menu items and each attribute on its own).
 No Maya code or data was copied.
 
@@ -198,7 +198,7 @@ POLY = {"polySuperShape": poly_super_shape}
 
 
 def build(attrs):
-    """``poly_super_shape`` on the node defaults + ``attrs`` (clamped like ``prim_shapes.clamp``)."""
+    """``poly_super_shape`` on the node defaults + ``attrs`` (clamped like ``prim_nodes.clamp``)."""
     a = {s[0]: s[2] for s in NODES["polySuperShape"]}
     a.update(attrs)
     out = {}

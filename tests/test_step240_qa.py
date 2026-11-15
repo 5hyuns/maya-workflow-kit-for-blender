@@ -1,6 +1,6 @@
 """Release QA, activity J: tests for mutants that survived the mutation sample (tools/qa/qa_mutants.py).
 
-- status_line.snap_on must read Blender's use_snap: an element left in snap_elements while snapping is off is not "on"
+- status_line_buttons.snap_on must read Blender's use_snap: an element left in snap_elements while snapping is off is not "on"
   (the Status Line icon would show on while Move doesn't snap, #139 class).
 - Animation layer weights (Maya: additive = base + w·x, override = lerp, scale layers multiply by x^w; quaternion
   additive = lower @ q^w) — layer weights other than 1 were not exercised.

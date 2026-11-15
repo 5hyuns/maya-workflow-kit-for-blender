@@ -58,7 +58,7 @@ def v3d_ctx():
 
 def handle_point(axis, frac):
     """Window point at ``frac`` arrow units along the manipulator's ``axis`` (0 / 1 / 2) from its centre (one unit =
-    in_view.unit_px: wm_gizmo scale = scale_basis x gizmo_size x UI scale)."""
+    extrude_manipulator.unit_px: wm_gizmo scale = scale_basis x gizmo_size x UI scale)."""
     area, region = view3d()
     in_view = mod(".ui.in_view")
     with v3d_ctx():

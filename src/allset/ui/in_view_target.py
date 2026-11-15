@@ -38,7 +38,7 @@ def creation_rows(node_type):
 
 
 class _CreationSpec:
-    """The ``extrude.Spec`` attributes the In-View Editor reads, for a creation node type: rows only, no
+    """The ``extrude_spec.Spec`` attributes the In-View Editor reads, for a creation node type: rows only, no
     manipulator."""
     arrow = None
     in_view = True
@@ -84,7 +84,7 @@ def is_creation(rec):
 
 def object_node(ob):
     """Object mode: the input node T shows for ``ob`` - the one picked in Channel Box INPUTS when the kit can show
-    it, else the newest: the last kit operation (``extrude.object_record``), else the creation node. None when
+    it, else the newest: the last kit operation (``extrude_record.object_record``), else the creation node. None when
     there is none."""
     nodes = []
     rec = extrude.object_record(ob)

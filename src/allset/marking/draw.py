@@ -451,7 +451,7 @@ AREA_GAP_MAX = 8
 
 def window_edges(window, region):
     """Area border bands of ``window`` in ``region`` pixels: (x0, y0, x1, y1) rectangles, the gaps between areas
-    and the rims around them, including the window's outer edge (engine.fit_ring ``edges``)."""
+    and the rims around them, including the window's outer edge (ring_fit.fit_ring ``edges``)."""
     areas = list(window.screen.areas) if window and window.screen else []
     if not areas:
         return ()

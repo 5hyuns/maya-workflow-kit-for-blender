@@ -33,7 +33,7 @@ BASELINE_PX = 7
 LINE_PX = 20
 ISOLATE_TEXT = "Isolated Selection (Ctrl + 1)"
 REFRESH_S = 0.25                     # statistics are recomputed at most this often (or after a depsgraph update)
-STACK_EPS = 1e-6                     # "overlapping" = the same position (kit cuts sit uv_tools.NUDGE apart)
+STACK_EPS = 1e-6                     # "overlapping" = the same position (kit cuts sit uv_islands.NUDGE apart)
 
 _handle = []
 _cache = {"at": 0.0, "key": None, "value": None, "last": None}

@@ -10,7 +10,7 @@ Maya's Attribute Editor.
   data, one tab per modifier (construction history inputs) and per material.
 - Sections and their rows: ``ae_layout`` (Maya template sections, collapse flags
   from Maya's Attribute Editor templates), drawn as ``layout.panel`` sections.
-- Joints: in pose mode the node is the lead pose bone (``channel_box.lead``): a
+- Joints: in pose mode the node is the lead pose bone (``cb_nodes.lead``): a
   ``joint`` tab (ae_layout.JOINT) plus one tab per constraint node, like Maya's
   ``pCube1_parentConstraint1``.
 - Maya's Attribute Editor:
@@ -301,7 +301,7 @@ def _dock_update(self, context):
 
 
 def draw_panel(layout, context):
-    """The Attribute Editor body of the dock (``channel_box.ALLSET_PT_dock_attribute_editor``)."""
+    """The Attribute Editor body of the dock (``cb_panel.ALLSET_PT_dock_attribute_editor``)."""
     if channel_box.placing_joints(context):
         from . import chrome
         chrome.wrapped(layout, channel_box.PLACING_TEXT)

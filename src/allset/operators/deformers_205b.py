@@ -638,7 +638,7 @@ class ALLSET_OT_gn_deformer_enum(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Attribute Editor (ui/attribute_editor.draw_history) --------------------------------------------------------
+# --- Attribute Editor (ui/ae_rows.draw_history) --------------------------------------------------------
 
 def _draw_input(layout, md, socket, label):
     from .. import compat

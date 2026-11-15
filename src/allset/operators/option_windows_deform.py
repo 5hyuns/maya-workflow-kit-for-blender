@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""#34: Maya option windows of the Deform menu: same spec as operators/option_windows.py (``F`` fields,
+"""#34: Maya option windows of the Deform menu: same spec as operators/option_windows_spec.py (``F`` fields,
 ``Window`` = one ``allset.opt_<key>`` operator; option_windows._extend appends ``WINDOWS``).
 
 Titles, buttons, Basic tab fields in screen order and default values match Maya's Deform
@@ -84,7 +84,7 @@ PAINT_MISSING = ("Radius(L) 0.001", "Min/Max value 0 / 1", "Rotate to stroke", "
 
 def _paint(kind):
     """Start painting this deformer's weights (Set Membership: Blender's Weight Paint toggle) with the window's
-    Maya tool values (operators/skin.apply_paint_settings; deformer weights are never normalized)."""
+    Maya tool values (operators/paint_skin_weights.apply_paint_settings; deformer weights are never normalized)."""
     def run(context, v):
         from . import option_windows_rig, skin
         if kind:

@@ -13,7 +13,7 @@ Maya:
   moves that skeleton (pure translation, world frames kept) so its root sits on the second joint and parents it to
   the second joint's parent; parent mode parents it under the second joint keeping its world.
 
-A kit joint is a bone (head = the joint) whose Maya frame is its bone frame turned by ``joints.MAYA_FRAME``: every
+A kit joint is a bone (head = the joint) whose Maya frame is its bone frame turned by ``joint_frames.MAYA_FRAME``: every
 command keeps the Maya frames of the joints it touches and stores what the bones can't take.
 """
 

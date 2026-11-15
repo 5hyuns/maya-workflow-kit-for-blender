@@ -709,7 +709,7 @@ MAP.update({
     "Display/Object Display/Bounding Box": ("allset.object_display", {"kind": 'BBOX'}),
     "Display/Object Display/No Bounding Box": ("allset.object_display", {"kind": 'NO_BBOX'}),
     # Display > Polygons is Maya's submenu, no longer a leaf. Its check items are the overlays of the 3D View
-    # the menu acts on ("view3d.", ui/status_line.view3d_space), drawn on meshes in edit mode; Maya's Standard /
+    # the menu acts on ("view3d.", ui/status_line_buttons.view3d_space), drawn on meshes in edit mode; Maya's Standard /
     # Soft/Hard Edges pair = Blender's Sharp edge overlay off / on; Custom Polygon Display = Blender's edit-mode
     # overlay popover (the item this menu used to be). The rest is greyed with a notice (ui/notices.py).
     "Display/Polygons/Backface Culling": ("prop", "view3d.shading.show_backface_culling", {}),
@@ -887,7 +887,7 @@ MAP.update({
     # Skeleton / Skin / Constrain
     "Skeleton/Insert Joints": "allset.insert_joint_tool",          # click a joint, drag
     "Skeleton/Connect Joint": "allset.connect_joint",              # connect / parent mode (option box)
-    # #106: Maya's three skinCluster.normalizeWeights modes (operators/skin_tools_199.py)
+    # #106: Maya's three skinCluster.normalizeWeights modes (operators/skin_normalize_weights.py)
     "Skin/Normalize Weights/Enable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'INTERACTIVE'}),
     "Skin/Normalize Weights/Disable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'NONE'}),
     "Skin/Normalize Weights/Enable Weight Post Normalization": ("allset.skin_normalize_mode", {"mode": 'POST'}),
@@ -896,7 +896,7 @@ MAP.update({
     "Skin/Import Weights Maps...": "allset.import_weight_maps",
     "Skin/Substitute Geometry": "allset.substitute_geometry",
     "Skin/Bake Deformation to Skin Weights...": "allset.bake_deformation",
-    # #106, operators/constrain_199.py
+    # #106, operators/constrain_199.py, constrain_modify.py
     "Constrain/Normal": "allset.normal_constraint",
     "Constrain/Tangent": "allset.tangent_constraint",
     "Constrain/Remove Target": "allset.remove_constraint_target",
@@ -1058,7 +1058,7 @@ MAP.update({
 })
 
 # modeling / rigging commands with Maya's results;
-# operators/poly_maya.py, operators/rig_maya.py, menu_items.nonlinear.
+# operators/poly_maya.py, operators/rig_maya.py / ik_spline_handle.py / skin_influences.py / cluster_soft_mod.py, menu_items.nonlinear.
 MAP.update({
     "Edit Mesh/Circularize": "allset.circularize",
     "Mesh Tools/Connect": "allset.connect_tool_enter",      # connects the selection, then the tool waits
@@ -1118,7 +1118,7 @@ MAP.update({
     "Deform/Cluster": "allset.cluster",
     "Deform/Nonlinear/Twist": ("allset.deformer", {"kind": 'TWIST'}),     # operators/deformers.py
     "Deform/Soft Modification Tool": "allset.soft_mod",
-    # operators/pins_205.py: Maya 2020+ matrix constraints, intermediate objects, wrap influences
+    # operators/pin_create.py, intermediate_objects.py, wrap_influence.py: Maya 2020+ matrix constraints, intermediate objects, wrap influences
     "Constrain/UV Pin": "allset.uv_pin",
     "Constrain/Proximity Pin": "allset.proximity_pin",
     "Deform/Display Intermediate Objects": ("allset.intermediate_objects", {"show": True}),
@@ -1178,7 +1178,7 @@ BLENDER_MENU = {
 
 # Graph Editor / Dope Sheet / UV Editor / UV Toolkit menu bars: their own module, same forms.
 from .editor_menu_map import MAP as _EDITOR_MAP  # noqa: E402
-from .editor_menu_map import GREY_ON_POLL  # noqa: E402,F401  (menu_sets.draw_item)
+from .editor_menu_map import GREY_ON_POLL  # noqa: E402,F401  (menu_item_draw.draw_item)
 
 MAP.update(_EDITOR_MAP)
 

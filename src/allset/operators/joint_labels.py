@@ -508,7 +508,7 @@ _handles = []
 
 
 def _armatures(view_layer):
-    """The view layer's armature objects, kept until an update can add or remove one (``maya_joints.armatures``:
+    """The view layer's armature objects, kept until an update can add or remove one (``maya_joints_views.armatures``:
     a redraw walks no other object; looking each one up by name walked them all)."""
     from ..ui import maya_joints
     return maya_joints.armatures(view_layer)
@@ -518,7 +518,7 @@ _labelled = {}      # skeleton pointer -> (key, [(pose bone name, text, side)], 
 
 
 def _names_hidden(ob):
-    """What a light update (``maya_joints.light_stamp``) can change of ``ob``'s labels: its bone names and the
+    """What a light update (``maya_joints_cache.light_stamp``) can change of ``ob``'s labels: its bone names and the
     bones' own hide flags."""
     import numpy as np
     bones = ob.data.bones

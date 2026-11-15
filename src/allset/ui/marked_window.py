@@ -4,7 +4,7 @@ Connection Editor.
 
 Same mechanism as the Reference Editor (ui/reference_editor.py) and the Hypershade panes: a new
 window whose one area is a Properties editor on the Tool tab (header and navigation bar hidden) marked by hidden tab
-flags. Each kind has its own flag pair (``KINDS``) — none of them is a ``maya_dock.ROLE_FLAGS`` single flag, the
+flags. Each kind has its own flag pair (``KINDS``) — none of them is a ``maya_dock_roles.ROLE_FLAGS`` single flag, the
 Hypershade ``MARK`` pair or the Reference Editor's triple, so their checks never match each other. The editor's panel
 (``bl_space_type`` VIEW_3D, ``bl_category`` "Tool") polls ``context_kind(context) == kind``.
 """

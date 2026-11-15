@@ -208,13 +208,13 @@ GRAPH_WER = {"W": "transform.translate", "E": "transform.rotate", "R": "transfor
 
 # --- 47. Graph Editor outliner rows ------------------------------------------------------------------
 # The kit draws Maya's outliner pane (object + "Translate X" rows) over the Graph Editor's channel region
-# (ui/editor_chrome.py); presses on it go first in "Animation Channels" (Blender's channels_click is a PRESS item, a
+# (ui/graph_outliner.py); presses on it go first in "Animation Channels" (Blender's channels_click is a PRESS item, a
 # handled press sends no CLICK) and pass through over Blender's search field.
 
 def patch_graph_outliner(kd):
     _add(kd, "Animation Channels", "allset.graph_channel_click", make_event("LEFTMOUSE", any=True),
          first=True, shadows=("Animation Channels", "View2D Buttons List"))   # Hypergraph items poll False here
-    # #96: the wheel scrolls the kit's rows (ui/editor_chrome.py keeps the offset). In the channel region
+    # #96: the wheel scrolls the kit's rows (ui/graph_outliner.py keeps the offset). In the channel region
     # the wheel goes to "View2D" and never reaches "Animation Channels" (--debug-handlers), so the items
     # sit first in View2D; the operator passes through anywhere but a kit Graph Editor's outliner pane.
     for wheel, delta in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):

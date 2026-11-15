@@ -4,7 +4,7 @@
 Like Maya:
 - Blue Pencil frames are the annotation's drawn frames (every shown layer of the scene's annotation). The Time
   Slider marks each one with a light blue triangle (``FRAME_RGB``, 8 x 11 px at UI scale 1.0, its upright edge 2 px
-  right of the frame's tick, standing on the ticks' bottom end: ``time_slider._draw_blue_pencil``).
+  right of the frame's tick, standing on the ticks' bottom end: ``time_slider_ruler._draw_blue_pencil``).
 - Alt+< / Alt+> go to the previous / next frame and wrap around at the ends (``allset.blue_pencil_frame``).
 - Ghost Previous / Ghost Next (on, 3 frames each; add-on preferences ``bp_ghost_*``): the drawings of the nearest
   frames before / after the one on screen are drawn in their own colour at opacity 0.4 * (n + 1 - k) / n for the

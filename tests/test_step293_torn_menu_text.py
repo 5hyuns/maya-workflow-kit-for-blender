@@ -73,7 +73,7 @@ def test_torn_file_menu_items_start_on_the_left():
     ops = [(kind, align, text) for name, kind, align, text in rec.log if name.startswith("operator")]
     assert len(ops) > 10, rec.log
     assert all(kind == "ROW" and align == 'LEFT' for kind, align, _t in ops), ops
-    # the hotkey / option box column is still in the text (``menu_sets.item_texts``)
+    # the hotkey / option box column is still in the text (``menu_item_text.item_texts``)
     assert any(text.startswith("New Scene") and "Ctrl+N" in text and text.endswith(menu_sets.BOX_MARK)
                for _k, _a, text in ops), ops
     # no tear-off line in the torn copy, and the sub-menu rows stay on the column

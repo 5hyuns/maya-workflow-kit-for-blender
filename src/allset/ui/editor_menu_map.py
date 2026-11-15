@@ -150,7 +150,7 @@ def _keys_menu(ed, graph):
     if graph:
         m[f"{ed}/Keys/Insert Key Tool"] = "allset.insert_key_tool"
     # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
-    # the other Remove Key items delete keys by time (operators/graph_key_menu.remove_keys)
+    # the other Remove Key items delete keys by time (operators/graph_key_edits.remove_keys)
     m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
     if graph:     # Maya List > Bookmarks (operators/graph_bookmarks)
         m[f"{ed}/List/Bookmarks"] = ("menu", "ALLSET_MT_graph_bookmarks")
@@ -179,7 +179,7 @@ SHOW_ATTRIBUTES = {"Translate": "Location", "Rotate": "Rotation", "Scale": "Scal
                    "Keyable": ""}
 
 
-# #110: the kit's Show / List check items (WindowManager flags, ui/editor_chrome.FLAGS)
+# #110: the kit's Show / List check items (WindowManager flags, ui/graph_list.FLAGS)
 SHOW_ATTRIBUTE_FLAGS = {"Hidden": "hidden", "Driven by Anim Curve": "anim_curve",
                         "Driven by Expression": "expression", "Driven by Driven Key": "driven_key",
                         "User Defined": "user_defined"}
@@ -188,7 +188,7 @@ _WM = "window_manager"
 
 def _list_show_menus(ed):
     m = {
-        # Auto Load = Blender's Only Show Selected unless the kit keeps the list (ui/editor_chrome.py)
+        # Auto Load = Blender's Only Show Selected unless the kit keeps the list (ui/graph_list.py)
         f"{ed}/List/Auto Load Selected Objects": _prop(f"{_WM}.allset_auto_load"),
         f"{ed}/List/Load Selected Objects": ("allset.graph_list", {"action": "LOAD"}),
         f"{ed}/List/Add Selected Objects": ("allset.graph_list", {"action": "ADD"}),
@@ -204,7 +204,7 @@ def _list_show_menus(ed):
     }
     m.update({f"{ed}/Show/Objects/{label}": _prop(f"{_DS}.{attr}") for label, attr in SHOW_OBJECTS.items()})
     # the Graph Editor's kit outliner filters its rows; Blender's Dope Sheet channel list can't drop single
-    # channels, so there they keep the objects with such an attribute (ui/editor_chrome.row_objects)
+    # channels, so there they keep the objects with such an attribute (ui/graph_list.row_objects)
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_WM}.allset_attr_{flag}")
               for label, flag in SHOW_ATTRIBUTE_FLAGS.items()})
     # Maya 2026: Show Animated Shapes is an All / One / None expand choice (Maya 2022: one check item); All =
@@ -760,6 +760,6 @@ for _ed in (GE,):
     MAP[f"{_ed}/Edit/Select Curve Nodes"] = "allset.select_curve_nodes"
 
 # Maya greys these while their state forbids them (List > Load / Add Selected Objects while Auto Load is on):
-# menu_sets.draw_item draws them with Blender's poll instead of the always-enabled
+# menu_item_draw.draw_item draws them with Blender's poll instead of the always-enabled
 # allset.menu_item route
 GREY_ON_POLL = {f"{ed}/List/{label}" for ed in (GE, DS) for label in ("Load Selected Objects", "Add Selected Objects")}

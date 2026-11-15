@@ -213,7 +213,7 @@ def _sync_base(mat):
 def diffuse_bypass():
     """Exchange-format writers (FBX / OBJ / glTF ...) read Base Color's default or an image node linked straight to
     it: for the duration, link whatever feeds each diffuse node's B directly to Base Color (default = the B colour),
-    then put the diffuse node back (kit File > Export, operators/file_io.write; Blender's own File > Export menu is
+    then put the diffuse node back (kit File > Export, operators/file_io_export.write; Blender's own File > Export menu is
     not wrapped)."""
     saved = []
     for mat in bpy.data.materials:

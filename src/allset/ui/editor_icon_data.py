@@ -143,7 +143,7 @@ def _hsg(action):
     return ("allset.hs_graph", {"action": action})
 
 
-# Maya Hypershade graph toolbar (kit button names + tooltips); actions run in the Hypershade's graph (ui/hypershade.py)
+# Maya Hypershade graph toolbar (kit button names + tooltips); actions run in the Hypershade's graph (ui/hypershade_graph.py)
 HS_GRAPH_ICONS = (
     ("show_inputs", 'BACK', _hsg("UPSTREAM"), "Input connections"),
     ("show_inputs_outputs", 'ARROW_LEFTRIGHT', _hsg("BOTH"), "Input and output connections"),

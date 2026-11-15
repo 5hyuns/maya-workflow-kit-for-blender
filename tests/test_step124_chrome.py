@@ -1,5 +1,5 @@
 """The two kit bugs found in the marketing shots — the asset shelf header strip that kept a second camera
-label in pose / paint modes (ui/view_furniture.strip_action decides hide / show) and the welcome dialog body cut at
+label in pose / paint modes (ui/view_furniture_state.strip_action decides hide / show) and the welcome dialog body cut at
 125 % UI scale (welcome.wrap breaks the paragraphs by text width). The drawing itself is checked in
 tests/gui/gui_step124_persp_label.py and gui_step124_welcome.py."""
 

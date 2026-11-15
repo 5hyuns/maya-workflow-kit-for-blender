@@ -39,7 +39,7 @@ def maya_warning(path, target):
 def prop_owner(context, target):
     """(owner, attribute) of a ``("prop", target)`` mapping: a path from the context ("space_data.show_handles"),
     "addon_prefs.<name>" = this add-on's preferences, "view3d.<path>" = the 3D View the Display menu acts on
-    (``status_line.view3d_space``; the main menu bar is in the top bar, whose space has no overlays).
+    (``status_line_buttons.view3d_space``; the main menu bar is in the top bar, whose space has no overlays).
     Blender's own preferences are never a target (store review, #40 / #43): such a path has no owner."""
     *parents, attr = target.split(".")
     if parents and parents[0] == "preferences":
@@ -307,7 +307,7 @@ def _run_on_owners(context, action, path):
 # Maya: Shift+Ctrl+click on a menu item adds it to the current shelf; Maya's
 # Maya appends a shelf button with the item's label / annotation / image (running the item's command)
 # to the shelf tab shown, factory tabs included, and prints nothing. The kit button runs
-# the path like the menu (``shelf.add_menu_item``, ``marking.modal.run_action(("item", path))``).
+# the path like the menu (``shelf_store.add_menu_item``, ``marking.modal.run_action(("item", path))``).
 
 def ctrl_shift_held():
     """Ctrl and Shift both physically down (OS key state; unknown = not held)."""

@@ -252,7 +252,7 @@ def draw(layout, context):
                 mesh_tools_poly.draw_shortcuts(shortcuts, mesh_tools_poly.QUAD_DRAW_SHORTCUTS)
 
 
-# Drawn by the dock's Modeling Toolkit tab (channel_box.ALLSET_PT_dock_modeling_toolkit).
+# Drawn by the dock's Modeling Toolkit tab (cb_panel.ALLSET_PT_dock_modeling_toolkit).
 classes = (ALLSET_OT_soft_select_reset, ALLSET_OT_soft_falloff_mode)
 
 

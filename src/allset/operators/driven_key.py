@@ -118,7 +118,7 @@ def refresh_items(st):
 
 
 def hold_driven(node, key):
-    """channel_box.set_value hook: keep a typed value on a channel the SDK window drives."""
+    """cb_values.set_value hook: keep a typed value on a channel the SDK window drives."""
     try:
         st = state()
     except AttributeError:

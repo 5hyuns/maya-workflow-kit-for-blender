@@ -116,7 +116,7 @@ LIGHTING = [
 ]
 
 # Maya object type -> SpaceView3D.show_object_viewport_<type> (None = no Blender filter, "@" = an overlay flag,
-# "!" = a kit ``set`` key: ui/panel_menus.state / apply).
+# "!" = a kit ``set`` key: ui/panel_state.state / apply).
 SHOW_TYPES = (
     ("Controllers", None), ("NURBS Curves", "!SHOW_NURBS_CURVES"), ("NURBS Surfaces", "surf"),
     ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
@@ -208,7 +208,7 @@ BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
 #
 # #10: every Maya toggle (a check button on Maya's panel toolbar) is a
 # toggle here too — "set" keys are drawn with ``toggle=True`` so Wireframe / Smooth Shade All / Use All Lights turn
-# off to Maya's off state (panel_menus.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
+# off to Maya's off state (panel_state.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
 # disabled in Blender's persp / ortho views (Maya disables Lock Camera there too).
 TOOLBAR = (
     (("cam_select", "set", "SELECT_CAMERA", "Select Camera"),

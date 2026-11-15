@@ -73,7 +73,7 @@ def _pref_diff(a, b, skip=()):
 
 
 def _kit_functions():
-    """Every function object the kit's modules hold at module level (also inside lists / tuples, e.g. switch._timers):
+    """Every function object the kit's modules hold at module level (also inside lists / tuples, e.g. switch_layout._timers):
     the callbacks it can register as timers."""
     out = []
     for name, mod in list(sys.modules.items()):

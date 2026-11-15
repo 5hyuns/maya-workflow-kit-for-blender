@@ -67,7 +67,7 @@ def dock_region(kind=None):
 
 def dock_tab_point(kind):
     """Window point (x, y) in the middle of ``kind``'s tab on the stack's vertical tab strip (drawn on the
-    right edge, ui/maya_dock.strip_tabs), or None when the strip has no such tab."""
+    right edge, ui/maya_dock_strip.strip_tabs), or None when the strip has no such tab."""
     md = import_module(MODULE + ".ui.maya_dock")
     region = dock_region()
     s = bpy.context.preferences.system.ui_scale

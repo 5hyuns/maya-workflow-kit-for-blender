@@ -116,7 +116,7 @@ class _Holder:
 # Maya's torn-off menu reads like the menu, every item's text from the left edge. Outside a menu Blender
 # centres an operator button's text (plain, press-and-hold for the option box, radio choice; sub-menu rows, labels
 # and check boxes stay left), and ``column.alignment`` doesn't change that: a row aligned LEFT around the button
-# sizes it to its text, which then starts at the left. The hotkey / option box column (``menu_sets.item_texts``) is
+# sizes it to its text, which then starts at the left. The hotkey / option box column (``menu_item_text.item_texts``) is
 # in the text, so it still lines up; the rows keep their height (``menu_rows``).
 _CENTRED = ("operator", "operator_menu_hold", "prop_enum")
 

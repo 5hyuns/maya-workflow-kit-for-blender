@@ -1,6 +1,6 @@
 """The Maya camera label "persp" drew twice in pose / paint modes. Those modes add a 29 px asset shelf
 header strip under the view; with Region Overlap off (Maya mode) it never draws and kept the pixels of the
-label drawn there before the mode change. ui/view_furniture.py hides that strip while the shelf is collapsed (the
+label drawn there before the mode change. ui/view_furniture_state.py hides that strip while the shelf is collapsed (the
 view gets the height back) and shows it again when the kit unregisters. Checked on the regions and on a screenshot
 (the camera label drawn once)."""
 

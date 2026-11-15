@@ -44,7 +44,7 @@ def _run_combine(context, v):
 
 
 def _run_smooth(context, v):
-    """Maya Smooth with the window's values: real Catmull-Clark geometry (operators/poly_maya.py)."""
+    """Maya Smooth with the window's values: real Catmull-Clark geometry (operators/poly_smooth.py)."""
     if context.mode != 'EDIT_MESH' and not any(o.type == 'MESH' for o in context.selected_objects):
         raise RuntimeError("Select a mesh first.")
     return bpy.ops.allset.smooth('EXEC_DEFAULT', divisions=v["levels"])
@@ -140,7 +140,7 @@ def _run_uv_planar(context, v):
 
 
 def _run_uv_auto(context, v):
-    # Maya polyAutoProjection in bmesh (operators/uv_tools.auto_project); handles object mode itself.
+    # Maya polyAutoProjection in bmesh (operators/uv_projection.auto_project); handles object mode itself.
     return bpy.ops.allset.uv_automatic('EXEC_DEFAULT', planes=v["planes"], spacing=v["spacing"])
 
 

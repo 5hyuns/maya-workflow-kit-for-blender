@@ -5,7 +5,7 @@ Maya 2026: W on a joint changes only its
 translate, its subtree follows, and **no jointOrient changes** — the parent's X stops aiming at the moved child.
 Preserve Children (``cmds.move(preserveChildPosition=True)``) keeps the children's world positions instead. A Blender
 bone always points at its tail, so moving a connected child re-aims the parent bone; the joint's Maya frame is then
-written back into ``joints.MAYA_FRAME`` (the bone-relative frame the FBX writer already reads).
+written back into ``joint_frames.MAYA_FRAME`` (the bone-relative frame the FBX writer already reads).
 
 ``process`` runs from tool_keys' 0.25 s watch in Edit Armature mode: while no transform runs it snapshots every bone's
 (head, tail, roll, MAYA_FRAME, Maya frame); a bone whose head or tail afterwards moved with the same MAYA_FRAME (= it
@@ -210,7 +210,7 @@ def rebase(context=None):
 def joint_translate(eb):
     """Maya translate of a joint in rest (Blender length, armature space): the head in the parent's Maya frame. A top
     joint's translate is its position, in the kit's Z-up axes like every object Translate (the
-    same numbers as the Pose-mode Channel Box, ``channel_box.root_translate``)."""
+    same numbers as the Pose-mode Channel Box, ``cb_nodes.root_translate``)."""
     if eb.parent is None:
         return eb.head.copy()
     return local_frame(eb.parent).transposed() @ (eb.head - eb.parent.head)

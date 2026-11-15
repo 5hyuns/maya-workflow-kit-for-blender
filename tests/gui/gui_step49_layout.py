@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-os.environ["ALLSET_FIT_WARP"] = "1"   # the fit only runs right after load (toolbox.FIT_WINDOW)
+os.environ["ALLSET_FIT_WARP"] = "1"   # the fit only runs right after load (layout_fit.FIT_WINDOW)
 from sim import MODULE, check, ev, run, scale, step, setup, screenshot, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
@@ -32,7 +32,7 @@ def toolbox_area():
 
 def tools_region():
     """The Tool Box: the column's toolbar, or the main view's when the column is too narrow for this
-    UI scale and Blender has not let the kit resize it yet (ui/toolbox.py fit_columns)."""
+    UI scale and Blender has not let the kit resize it yet (ui/layout_fit.py fit_columns)."""
     r = next(r for r in toolbox_area().regions if r.type == 'TOOLS')
     if r.width >= toolbox.column_width() - 1:
         return r

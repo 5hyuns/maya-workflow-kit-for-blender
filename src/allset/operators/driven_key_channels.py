@@ -10,7 +10,7 @@ import bpy
 from ..ui import channel_box as cb
 
 VAR = "sdk"          # the kit's driver variable name: marks a Set Driven Key driver
-INPUT_PROP = "allset_sdk_"     # hidden blendWeighted input properties (channel_box.custom_keys hides allset_*)
+INPUT_PROP = "allset_sdk_"     # hidden blendWeighted input properties (cb_keys.custom_keys hides allset_*)
 SHAPE = "bs:"        # a blendShape target weight: key block ``value`` of a shape Key
 WEIGHT = "cw"        # a constraint node's weight (<target>W0)
 WEIGHT_PROP = "allset_w_"      # the Maya weight of a multi-target constraint group, on the owner

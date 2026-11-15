@@ -270,7 +270,7 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
 # --- Maya's numbering of the result (#149) ---------------------------------------------------------------
 # polyExtrudeFacet (Maya 2026): vertices, edges and faces by index, with a border and for whole closed
 # shells. The mesh's edge index is taken as Maya's edge id: kit
-# primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_maya.maya_edge_ids).
+# primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_numbering.maya_edge_ids).
 
 def maya_plan(bm, picked, divisions=1, together=True):
     """What Maya's polyExtrudeFacet of faces ``picked`` (indices) leaves, in Maya's order, as descriptors:

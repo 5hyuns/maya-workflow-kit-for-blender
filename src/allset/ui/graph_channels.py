@@ -256,7 +256,7 @@ def upstream_rows(node, fc):
 
 # Show > Attributes kinds of a curve (Maya attribute filters): keyed curves are "Driven by Anim Curve", kit SDK
 # drivers (variable ``sdk``) "Driven by Driven Key", scripted drivers "Driven by Expression", custom properties
-# "User Defined", Channel Box hidden channels (Channel Control / Hide Selected, ``channel_box.HIDDEN_PROP``) "Hidden".
+# "User Defined", Channel Box hidden channels (Channel Control / Hide Selected, ``cb_keys.HIDDEN_PROP``) "Hidden".
 
 def _channel_tail(node, fc):
     path = fc.data_path

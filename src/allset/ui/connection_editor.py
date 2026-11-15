@@ -29,7 +29,7 @@ MODES = (("OUTPUTS", "Outputs", "Both lists show outputs: connect left to right"
          ("FROM_TO", "from -> to", "Connect a left output to a right input"),
          ("INPUTS", "Inputs", "Both lists show inputs: connect right to left"))
 
-# Maya long name -> (Blender path, index, kind); compounds -> their children (Maya's readable list, ui/channel_box MAIN)
+# Maya long name -> (Blender path, index, kind); compounds -> their children (Maya's readable list, ui/cb_keys MAIN)
 SIMPLE = {}
 COMPOUNDS = {}
 for _maya, _path, _kind in (("translate", "location", "LOC"), ("rotate", "rotation_euler", "ROT"),

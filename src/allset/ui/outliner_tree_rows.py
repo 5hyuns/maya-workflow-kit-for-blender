@@ -90,7 +90,7 @@ def _icon_kinds():
 
 class _Bones:
     """An armature's joints: the bone list (edit bones in Edit Mode), roots and children by name, in Maya child
-    order (``joints.child_order_key``: creation order, a re-parented joint last)."""
+    order (``joint_common.child_order_key``: creation order, a re-parented joint last)."""
 
     def __init__(self, ob, sort_alpha=False):
         from ..operators.joints import CHILD_ORDER

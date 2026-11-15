@@ -237,7 +237,7 @@ def _rig():
     handle.location = bl((0, 10, 0))
     _key(handle, "location", 0, 1, 0.0)
     _key(handle, "location", 0, 10, 3.0)
-    con = arm.pose.bones["b"].constraints.new('IK')     # kit IK handle (operators/skin.py create_ik)
+    con = arm.pose.bones["b"].constraints.new('IK')     # kit IK handle (operators/ik_handle.py create_ik)
     con.target, con.chain_count, con.use_tail = handle, 2, True
     sc.frame_set(1)
     return arm, handle, con

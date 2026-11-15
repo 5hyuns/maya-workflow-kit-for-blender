@@ -14,7 +14,7 @@ Blender: a parent's ``hide_viewport`` / ``hide_set`` never hides its children an
   (``hide_set``) marked ``MARK``; its own ``hide_viewport`` (Maya's Visibility channel) stays as it was. Objects the
   kit did not hide that way are never touched (a layer's or Blender's own ``hide_set`` stays). A display layer's
   Template / Reference reaches every object below a member the same way (Maya: isTemplated / the drawing override
-  are inherited): such objects are marked ``layer_editor.INHERITED`` and drawn / locked like a member, the one
+  are inherited): such objects are marked ``display_layers.INHERITED`` and drawn / locked like a member, the one
   nearest the root winning.
   Run right after kit visibility edits, and from a depsgraph handler (only writes on change, so it settles). The
   handler walks the scene again only when an update can change what it reads (``_what_changed``): a click that
@@ -29,7 +29,7 @@ from bpy.app.handlers import persistent
 from .. import depsgraph_filter
 
 MARK = "allset_hidden_by_parent"
-# a type filter of the panel Show menu hides only that node, never its children (ui/panel_menus.SHOW_HIDDEN)
+# a type filter of the panel Show menu hides only that node, never its children (ui/panel_state.SHOW_HIDDEN)
 SHOW_FILTER = "allset_hidden_by_show"
 
 
@@ -127,7 +127,7 @@ class _Walk:
 def inherited_display(ob, scene, members=None):
     """TEMPLATE / REFERENCE that ``ob`` takes from a node above it: an ancestor object in such a display layer, or the
     joint it hangs from (``layer_joints.kind_under``); the one nearest the root wins. ``members`` = {object name:
-    layer} (``layer_editor.layer_of`` when None)."""
+    layer} (``display_layers.layer_of`` when None)."""
     from ..ui import layer_editor, layer_joints
     kind = None
     child, p = ob, ob.parent

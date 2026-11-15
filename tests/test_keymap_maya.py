@@ -265,7 +265,7 @@ def test_added_bindings_not_shadowed():
         for km_name, args, content in data:
             if args.get("modal") or (stack is not None and km_name not in stack):
                 continue
-            if km_name in shadows:  # declared intentional (maya_patches._add)
+            if km_name in shadows:  # declared intentional (maya_patches_base._add)
                 continue
             for it in content["items"]:
                 if patch.event_key(it[1]) == k and not (km_name == km and it[0] == idname):

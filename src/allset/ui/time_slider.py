@@ -148,7 +148,7 @@ _BONE_PREFIX = re.compile(r'pose\.bones\["(?:[^"\\]|\\.)*"\]', re.DOTALL)
 
 
 def _bones_curves(bones):
-    """{pose bone pointer: ``time_keys.node_fcurves``} for ``bones``: each skeleton's curves are shared out by the same
+    """{pose bone pointer: ``key_nodes.node_fcurves``} for ``bones``: each skeleton's curves are shared out by the same
     rule (a bone's curves start with its ``pose.bones["n"]`` path and then "." or "["), once per skeleton
     (``_skeleton_parts``, kept until the curves change), instead of looking through every curve of the skeleton once
     per bone (hundreds of selected controls took a third of a second per Time Slider redraw; one picked control of a
@@ -172,7 +172,7 @@ def _bones_curves(bones):
         # their curves from one list of the skeleton's curves
         seq = list(fcs) if len(group) > 1 else fcs
         for ptr, pb in group:
-            # = time_keys.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
+            # = key_nodes.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
             idx = parts.get(f'pose.bones["{escape(pb.name)}"]')
             if idx:
                 out[ptr] = [seq[i] for i in idx]
@@ -273,7 +273,7 @@ def _bones_keys(bones, cos, kinds):
                 held = _BONE_KEYS[key] = {}
         missing = []
         for pb in group:
-            # = time_keys.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
+            # = key_nodes.prefix(pb): a pose bone's path is its escaped name in pose.bones["..."]
             path = f'pose.bones["{escape(pb.name)}"]'
             got = held.get(path) if held is not None else None
             if got is None:

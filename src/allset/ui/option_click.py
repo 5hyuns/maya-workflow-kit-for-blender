@@ -7,9 +7,9 @@ regions, a screenshot taken in ``execute`` already shows the menu closed). Two t
 - where the click was: a nested ``INVOKE_DEFAULT`` call inside ``execute`` gets the window's latest event, the
   LEFTMOUSE release on the row (``ALLSET_OT_click_point``);
 - where a Maya pulldown sits: the kit lays out the top bar itself (every menu button has ``ui_units_x``,
-  ``status_line.menu_bar_widths``), Blender opens a pulldown with its left edge on the button's left edge and a
+  ``menu_bar_fit.menu_bar_widths``), Blender opens a pulldown with its left edge on the button's left edge and a
   submenu against its parent's right edge, every row's text starts ``TEXT_UNITS`` from the menu edge and the kit's
-  label + hotkey + ❒ texts are right-aligned (``menu_sets.item_texts``), so the ❒ ends at menu left + text start +
+  label + hotkey + ❒ texts are right-aligned (``menu_item_text.item_texts``), so the ❒ ends at menu left + text start +
   the aligned text width (checked on screenshots at UI scale 1.0 / 1.25, ``tests/test_step183_option_click.py`` +
   ``tests/gui/gui_step183_option_click.py``).
 A Maya menu the Space hotbox opens is a popup at the pointer (``wm.call_menu``): Blender puts the pointer at

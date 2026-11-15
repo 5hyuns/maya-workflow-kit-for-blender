@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Mesh > Smooth as real Catmull-Clark geometry on the selected faces or meshes (``smooth``, ``smooth_targets``),
-kept as an editable ``polySmoothFace`` history node: ``SMOOTH`` is its extrude.Spec (made once, at import),
+kept as an editable ``polySmoothFace`` history node: ``SMOOTH`` is its extrude_spec.Spec (made once, at import),
 ``allset.smooth`` records it, ``allset.smooth_edit`` changes its Divisions from Channel Box INPUTS. The Smooth option
 window runs ``allset.smooth`` (option_windows_basic.py). Imported through poly_maya.py.
 """
@@ -108,7 +108,7 @@ def smooth_targets(bm):
 
 
 # polySmoothFace history node (#204): Maya's Mesh > Smooth leaves polySmoothFace1 in Channel Box INPUTS with its
-# Divisions editable. Like the kit's extrude / bevel nodes it is the last kit operation on the mesh (operators/extrude.py
+# Divisions editable. Like the kit's extrude / bevel nodes it is the last kit operation on the mesh (operators/extrude_record.py
 # records), editable while the mesh is still its result, in component and object mode. The kit's Catmull-Clark has no
 # Method / Continuity switch, so Divisions is its only row.
 

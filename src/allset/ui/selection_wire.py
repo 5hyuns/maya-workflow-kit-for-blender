@@ -62,7 +62,7 @@ WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe c
 LEAD = "#43ffa3"           # lead (last selected = Blender's active)
 OTHER = "#ffffff"          # other selected objects
 DORMANT = "#000460"        # unselected polymesh wire in wireframe shading
-# the 3D View's per-type visibility (the Tool Box column hides every type, ui/toolbox.is_toolbox)
+# the 3D View's per-type visibility (the Tool Box column hides every type, ui/toolbox_column.is_toolbox)
 TYPE_FLAGS = {'MESH': "show_object_viewport_mesh", 'CURVE': "show_object_viewport_curve",
               'SURFACE': "show_object_viewport_surf", 'FONT': "show_object_viewport_font",
               'META': "show_object_viewport_meta"}

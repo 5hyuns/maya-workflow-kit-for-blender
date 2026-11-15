@@ -394,7 +394,7 @@ def _on_reload(*_args):
 
 
 def _handlers():
-    h = bpy.app.handlers     # playback start / end: layer_editor.on_playback_pre / _post call set_playing
+    h = bpy.app.handlers     # playback start / end: display_layers.on_playback_pre / _post call set_playing
     return ((h.undo_post, _on_reload), (h.redo_post, _on_reload), (h.load_post, _on_reload))
 
 

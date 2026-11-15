@@ -28,7 +28,7 @@ _fallback = set()   # screens whose main view shows its toolbar because the colu
 # The right tab stack (ui/maya_dock.py STACK area, #60, #78): 280 px with the Channel Box raised (a 260 px
 # panel + the vertical tab strip; = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px with the Attribute Editor
 # raised (the AE is a wide panel). The kit's tabs are a Maya-style
-# vertical strip too (maya_dock.draw_strip), so the stack is as wide as the raised panel needs: the Channel Box / Modeling
+# vertical strip too (maya_dock_strip.draw_strip), so the stack is as wide as the raised panel needs: the Channel Box / Modeling
 # Toolkit stack at least 277 px x the scale (wider when the Channel Box labels need it), the Attribute Editor
 # stack 480 px x the scale (Maya resizes the stack when its tab changes, ``tab_changed``).
 DOCK_MAYA_PX = 277
@@ -64,7 +64,7 @@ def text_px(text, scale):
 
 def dock_need(scale, pixel_size=1.0, measure=text_px):
     """{"labels", "ae_menu"}: px the tab stack needs at ``scale`` so the Channel Box labels aren't truncated and the
-    AE menu bar is one row, both left of the vertical tab strip (``maya_dock.reserved_px``)."""
+    AE menu bar is one row, both left of the vertical tab strip (``maya_dock_strip.reserved_px``)."""
     from . import attribute_editor, maya_dock
     u = _unit(scale, pixel_size)
     strip = maya_dock.reserved_px(scale)
@@ -203,7 +203,7 @@ _tab_target = {}     # screen name -> kind the stack is being fitted to
 
 
 def tab_changed(window, old, new):
-    """The stack area of ``window`` drew ``new`` after ``old`` (maya_dock.tab_drawn, called while drawing: the
+    """The stack area of ``window`` drew ``new`` after ``old`` (maya_dock_strip.tab_drawn, called while drawing: the
     resize runs from a timer)."""
     if (old in WIDE_KINDS) == (new in WIDE_KINDS):
         return

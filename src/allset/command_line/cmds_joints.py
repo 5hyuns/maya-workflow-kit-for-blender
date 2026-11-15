@@ -2,7 +2,7 @@
 """maya.cmds look-alike: ``joint`` (a bone of a kit skeleton named ``jointN`` scene-wide, under the selected joint or
 in a new skeleton; -p / -r / -n / -rad, -q / -e) and the joint helpers the DAG commands use: getAttr on a joint
 (``_joint_attr``), selecting and deleting joints. Joint lookup: cmds_rig_common.py; skeleton building:
-operators/joints.py; re-exported by cmds_rig.py."""
+operators/joint_tool.py; re-exported by cmds_rig.py."""
 
 import bpy
 from mathutils import Vector

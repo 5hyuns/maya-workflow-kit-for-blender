@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya option windows of UV Editor > Modify > Straighten UVs and Randomize Shells, and View > Grid.
 
-Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator bound to its
+Same spec as operators/option_windows_spec.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator bound to its
 menu paths; option_windows._extend appends ``WINDOWS``). Defaults: Straighten UVs straightens along U and V within
 30 degrees; Randomize Shells moves shells up to 0.1 along U and V and neither turns nor scales them (22.5 degrees and
 10 percent once those are switched on). View > Grid's window sets how many UDIM tiles (0-1 squares, 1001 at the

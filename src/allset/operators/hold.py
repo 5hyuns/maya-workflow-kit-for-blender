@@ -174,7 +174,7 @@ def component_pivot_after(saved, moved):
 
 EDIT_MODE = 'EDIT_MESH'
 # Like Maya, the component pivot is edited with the Move / Rotate / Scale tools: the tool stays and its manipulator
-# shows the pivot handles (ui/manipulator.pivot_edit). With the Select tool D / Insert do nothing.
+# shows the pivot handles (ui/manipulator_frame.pivot_edit). With the Select tool D / Insert do nothing.
 PIVOT_TOOLS = ("builtin.move", "builtin.rotate", "builtin.scale")
 
 

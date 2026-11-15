@@ -125,7 +125,7 @@ def strip_hit(kinds, width, height, scale, x, y, measure=None):
 
 
 def tab_drawn(context, kind):
-    """Remember the tab a stack area drew; a change resizes the stack Maya's way (toolbox.tab_changed)."""
+    """Remember the tab a stack area drew; a change resizes the stack Maya's way (layout_fit.tab_changed)."""
     area = context.area
     if area is None or kind is None:
         return

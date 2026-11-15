@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """maya.cmds look-alike: connectAttr, disconnectAttr, isConnected, listConnections and connectionInfo on the
 Connection Editor's connections (drivers with Maya's unit conversion, ui/connection_editor.py); a file texture to
-material plug goes to cmds_misc.py. ``connections`` lists every kit connection in the scene. Re-exported by
+material plug goes to cmds_sets_shading.py. ``connections`` lists every kit connection in the scene. Re-exported by
 cmds_rig.py."""
 
 import bpy

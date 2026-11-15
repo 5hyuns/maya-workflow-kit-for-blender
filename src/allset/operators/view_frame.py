@@ -145,7 +145,7 @@ def camera_projection(context, cam):
 def frame_camera(context, cam, points):
     """Move ``cam`` so ``points`` fill 0.95 of its frame, keeping its orientation (Maya framing in a camera
     view dollies / tracks the camera; an orthographic camera changes its width). A locked camera (Maya Lock Camera,
-    ui/panel_menus.camera_locked) stays. Returns True when the camera moved."""
+    ui/panel_cameras.camera_locked) stays. Returns True when the camera moved."""
     if all(cam.lock_location):
         return False
     mw = cam.matrix_world

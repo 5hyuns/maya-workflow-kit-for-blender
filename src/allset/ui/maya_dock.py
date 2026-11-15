@@ -218,7 +218,7 @@ def draw_handle(layout, context=None, tabs=False):
     if tabs and context is not None:
         # Blender splits an expanded row into equal tabs ("Channel Box / Layer Editor" was cut while "Attribute
         # Editor" got twice its text): each tab gets its text's width (the same rule sizes the dock,
-        # ui/toolbox.dock_need)
+        # ui/layout_fit.dock_need)
         row.alignment = 'LEFT'
         grip.ui_units_x = text_units(context, HANDLE, GRIP_PAD)
     grip.operator(ALLSET_OT_dock_handle.bl_idname, text=HANDLE, emboss=False)

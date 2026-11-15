@@ -1,7 +1,7 @@
 """#82: a Maya menu item's option box opens by holding the item, without a drag.
 
 Press and hold Display > Grid, Key > Set Key, Constrain > Parent: after Blender's hold time (0.2 s) its hold menu
-opens below the item and the kit puts the pointer on the menu's Option Box row (``menu_sets.LAST_WARP``), so letting
+opens below the item and the kit puts the pointer on the menu's Option Box row (``menu_option_box.LAST_WARP``), so letting
 go runs ``allset.menu_option_box`` and not the command. A plain click on the label still runs the command.
 """
 

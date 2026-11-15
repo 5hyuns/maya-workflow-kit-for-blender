@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya option windows: modeling, parenting and key commands (issues #33, #35).
 
-Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
+Same spec as operators/option_windows_spec.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
 what the values do follow Maya.
 option_windows.py appends ``WINDOWS`` to its own list, so this
 module only imports ``F`` / ``Window`` / helpers from it. Maya fields Blender can't honour are listed in ``missing``

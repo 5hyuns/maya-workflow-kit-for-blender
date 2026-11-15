@@ -33,7 +33,7 @@ SET_NAME = "Maya Workflow Kit"          # names.PRODUCT; Maya shows the current 
 COLUMNS = (("Command", 0.36), ("Maya Hotkey", 0.17), ("Kit Hotkey", 0.24), ("Status", 1.0))
 PERSIST_NOTE = "Changes are Blender keymap edits: Save Preferences (or auto-save) keeps them"
 
-# Blender keymaps of one object mode each (keymap/maya_patches.MODE_KEYMAPS + Sculpt)
+# Blender keymaps of one object mode each (keymap/maya_patches_mesh.MODE_KEYMAPS + Sculpt)
 MODE_KEYMAPS = frozenset(("Object Mode", "Mesh", "Pose", "Curve", "Curves", "Armature", "Metaball", "Lattice",
                           "Particle", "Font", "Sculpt", "Weight Paint", "Vertex Paint", "Image Paint"))
 _ROWS = []            # hotkey_rows.build_rows(), built once

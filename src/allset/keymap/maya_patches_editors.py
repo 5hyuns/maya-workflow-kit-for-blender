@@ -23,7 +23,7 @@ def patch_cb_slider(kd):
     _add(kd, "Object Mode", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"),
          shadows=("Object Mode", "3D View"))     # the emulated Alt+LMB tumble (#242) passes through otherwise
     # Channel Box rows: drag over names / fields selects a range (the dock is a Properties editor;
-    # ui/channel_box.ALLSET_OT_cb_hover)
+    # ui/cb_drag.ALLSET_OT_cb_hover)
     _add(kd, "Property Editor", "allset.cb_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
     # right-click on the panel toolbar's camera icon = the scene's cameras (ui/panel_toolbar.ALLSET_OT_pt_hover; the
     # 3D View tool header runs the "3D View Generic" keymap)
@@ -39,7 +39,7 @@ def patch_cb_slider(kd):
         # it first) and scrolls the whole region on the wheel, so the item sits first in that keymap
         _add(kd, "View2D Buttons List", "allset.cb_scroll", make_event(wheel), first=True,
              shadows=("View2D Buttons List",))   # first + PASS_THROUGH over view2d.scroll_up / _down
-    # Maya's vertical tab strip on the dock's right edge (#78; ui/maya_dock.draw_strip): drawn, not buttons,
+    # Maya's vertical tab strip on the dock's right edge (#78; ui/maya_dock_strip.draw_strip): drawn, not buttons,
     # so a click there reaches the keymaps; first in the region's earliest keymap (its scroller sits on that edge)
     _add(kd, "View2D Buttons List", "allset.dock_strip_click", make_event("LEFTMOUSE"), first=True,
          shadows=("View2D Buttons List", "Property Editor", "Screen"))   # PASS_THROUGH off the strip

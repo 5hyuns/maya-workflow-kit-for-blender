@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """UV projections: Maya UV > Automatic (``auto_project``: plane choice, shells and their packed layout, with
 operators/autoproj_layout.py; ``allset.uv_automatic``) and its editable polyAutoProj node (the ``AUTOPROJ`` spec of
-operators/extrude.py, ``allset.uv_automatic_edit``), and UV > Contour Stretch (``allset.uv_contour``: Follow Active
+operators/extrude_spec.py, ``allset.uv_automatic_edit``), and UV > Contour Stretch (``allset.uv_contour``: Follow Active
 Quads, then 0-1). From object mode both act on every face of the selected meshes (``_ObjectFaces``).
 """
 
@@ -222,7 +222,7 @@ class ALLSET_OT_uv_automatic(bpy.types.Operator):
 # after the projection's Translate / Rotate / Scale / Pivot). The kit's node shows the rows it rebuilds with
 # (Planes, Optimize = 1 Fewer pieces / 0 Less distortion, Percentage Space); the others stay at their
 # defaults (Into square, Uniform, Bounding box, no projection transform). Like the kit's extrude / bevel
-# nodes it is the last kit operation on the mesh (operators/extrude.py records); a UV > Automatic run from object
+# nodes it is the last kit operation on the mesh (operators/extrude_record.py records); a UV > Automatic run from object
 # mode stays editable there while the mesh's UVs are the ones it made.
 
 PLANE_COUNTS = (3, 4, 5, 6, 8, 12)

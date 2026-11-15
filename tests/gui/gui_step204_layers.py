@@ -262,7 +262,7 @@ def _pixels(path, rect):
         x0, y0, x1, y1 = rect
         sub = px[max(0, y0):min(h, y1), max(0, x0):min(w, x1), :3]
         r, g, b = sub[..., 0], sub[..., 1], sub[..., 2]
-        # kit line: dim Maya red (editor_chrome.AXIS_COLOR[0] x graph_layers.DIM, alpha 0.9)
+        # kit line: dim Maya red (graph_channels.AXIS_COLOR[0] x graph_layers.DIM, alpha 0.9)
         kit = (np.abs(r - 0.50) < 0.1) & (np.abs(g - 0.15) < 0.08) & (np.abs(b - 0.15) < 0.08)
         # Blender's curve of the active layer, whatever its colour: bright, saturated, not the orange keys /
         # blue frame line / white handles

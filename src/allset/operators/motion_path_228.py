@@ -5,7 +5,7 @@
   selected objects + one curve in any order (Maya takes the curve as the path). Per
   object one Follow Path constraint ``motionPathN`` (Maya's node name, numbered one past the highest) with Fixed
   Position on: its Offset = Maya's ``uValue`` in fraction mode (arc-length fraction), keyed at the Time Slider start
-  (0) and end (1) with Maya auto tangents (two keys = flat ends; ``driven_key.maya_auto``), constant extrapolation.
+  (0) and end (1) with Maya auto tangents (two keys = flat ends; ``driven_key_drivers.maya_auto``), constant extrapolation.
   Maya places the object on the path without adding its own position or rotation, so the object's Translate (and
   Rotate while Follow is on) are zeroed (Blender's Follow Path adds the owner's transform).
 - Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position

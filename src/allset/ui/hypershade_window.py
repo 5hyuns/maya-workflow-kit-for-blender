@@ -15,7 +15,7 @@ HS = "Hypershade"
 
 # --- the Hypershade window: panes, menu strip, Graph ---------------------------------------------------------
 # A pane = a Properties editor on the Tool tab (header hidden) with both MARK flags and one PANE_FLAGS flag. Two of
-# maya_dock's role flags make ``maya_dock.role`` None and ``tool_dock.is_dock`` False, so neither the Maya dock panel
+# maya_dock's role flags make ``maya_dock_roles.role`` None and ``tool_dock.is_dock`` False, so neither the Maya dock panel
 # nor Tool Settings draw there; the flags are saved with the file and copied by ``area_dupli``.
 MARK = ("show_properties_world", "show_properties_texture")
 PANE_FLAGS = {"BROWSER": "show_properties_render", "CREATE": "show_properties_output",

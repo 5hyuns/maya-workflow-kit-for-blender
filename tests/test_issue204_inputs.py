@@ -1,6 +1,6 @@
 """Issue #204: Maya's Channel Box INPUTS list the mesh's history nodes in object mode too, newest first —
 polyBevel / polyExtrudeFace / polySmoothFace / blendShape — each with its editable attributes. The kit's
-"last operation" nodes (operators/extrude.py records) show there in object mode while the mesh is still the result
+"last operation" nodes (operators/extrude_record.py records) show there in object mode while the mesh is still the result
 the kit made; Mesh > Smooth (menu, hotbox, shelf) leaves an editable polySmoothFace node; a blend shape is a
 blendShape node with Envelope and one weight row per target."""
 

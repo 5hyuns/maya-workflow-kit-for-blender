@@ -14,7 +14,7 @@ from .driven_key_channels import (HELPER, HELPER_NAME, INPUT_PROP, VAR, Chan, _i
 # --- curve shape ----------------------------------------------------------------------------------
 
 def maya_slopes(points):
-    """Maya 2026 auto tangent slopes of sorted (x, y) keys (module docstring 1): ends and local extremes flat,
+    """Maya 2026 auto tangent slopes of sorted (x, y) keys (driven_key.py module docstring 1): ends and local extremes flat,
     else the neighbours' chord slope; the slope is limited so a handle never passes a neighbour's value (no
     known case reaches the limit)."""
     n = len(points)

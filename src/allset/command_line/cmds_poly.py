@@ -64,7 +64,7 @@ def compact_components(ob_name, kind, ids):
 
 
 def _extrude_object(context, ob, ids, params, world_t, name, history):
-    """Maya polyExtrudeFace on faces ``ids`` of ``ob`` (``operators/extrude.py`` geometry); the extruded faces keep
+    """Maya polyExtrudeFace on faces ``ids`` of ``ob`` (``operators/extrude_face.py`` geometry); the extruded faces keep
     their Maya ids and the new side faces come after them. Returns the node name (None without history)."""
     from ..operators import extrude, units
     me = ob.data

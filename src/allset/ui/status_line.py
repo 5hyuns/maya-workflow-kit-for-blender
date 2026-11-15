@@ -47,7 +47,7 @@ DOCK_KINDS = {"MODELING_TOOLKIT": 'MODELING_TOOLKIT', "ATTRIBUTE": 'ATTRIBUTE_ED
 
 
 def editor_shown(screen, editor, docks=None):
-    """``docks``: ``maya_dock.visible_kinds()`` already read for this draw."""
+    """``docks``: ``maya_dock_roles.visible_kinds()`` already read for this draw."""
     if editor == "TOOL_SETTINGS":    # the dock left of the viewport (ui/tool_dock.py)
         from . import tool_dock
         return tool_dock.shown(screen)
@@ -79,7 +79,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
             tool_dock.toggle(context, show_only=self.show)
             return {'FINISHED'}
         # Maya Windows > UI Elements toggles: a panel tabbed behind another is raised,
-        # a shown one hidden (ui/maya_dock.py)
+        # a shown one hidden (ui/maya_dock_windows.py)
         from . import maya_dock
         maya_dock.toggle(context, DOCK_KINDS[self.editor], show_only=self.show)
         return {'FINISHED'}
@@ -269,7 +269,7 @@ def draw_status_line(layout, context, compact=False):
         _flat(row, "allset.render", "render")
         _flat(row, ALLSET_OT_ipr_toggle.bl_idname, "ipr", depress=_ipr_on(space))
         _flat(row, ALLSET_OT_render_settings.bl_idname, "render_settings")
-        _flat(row, "allset.hypershade", "hypershade")       # ui/hypershade.py
+        _flat(row, "allset.hypershade", "hypershade")       # ui/hypershade_ops.py
         _grey(row, "render_setup", "Status Line/Render Setup")
         _flat(row, ALLSET_OT_light_editor.bl_idname, "light_editor")
         _grey(row, "pause", "Status Line/Pause Viewport 2.0")

@@ -62,7 +62,7 @@ def _package():
 
 
 def store_path():
-    """``marking_menus.json`` in the extension's user folder (like ``ui/shelf.store_path``; the legacy add-on build:
+    """``marking_menus.json`` in the extension's user folder (like ``ui/shelf_store.store_path``; the legacy add-on build:
     a folder inside the add-on's own folder — nothing is written to the user's Blender config)."""
     import bpy
     try:

@@ -80,7 +80,7 @@ def _same(a, b, tol=TOL):
 
 
 def _check_kit_is_nla(sc, ob):
-    """The kit's own composition (anim_layers.result) equals Blender's NLA at every frame (channels some layer has a
+    """The kit's own composition (anim_layer_keys.result) equals Blender's NLA at every frame (channels some layer has a
     curve for; an unanimated channel keeps its property value)."""
     got = [[al.result(ob, p, i, frame=f, scene=sc) for p, i in CH] for f in FRAMES]
     ev = _evaluated(sc, ob)

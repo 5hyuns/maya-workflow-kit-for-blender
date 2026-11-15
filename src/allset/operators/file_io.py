@@ -105,7 +105,7 @@ def export_args(fmt, k, selection, maya=True):
                         apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_space_transform=True,
                         bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
                         # Maya joints point X down the bone; Maya Y = the bone's
-                        # Z, Maya Z = its X (joints.JOINT_AXES, what Orient Joint sets) — '-Y' put Maya Y on the
+                        # Z, Maya Z = its X (joint_frames.JOINT_AXES, what Orient Joint sets) — '-Y' put Maya Y on the
                         # bone's -X (jointOrient 90 deg off Maya's); Maya exports joints, not the kit's control bones; a key per frame like Maya's bake (also re-composable by fbx_rig)
                         primary_bone_axis='X', secondary_bone_axis='Z', use_armature_deform_only=True,
                         bake_anim_simplify_factor=0.0)

@@ -64,7 +64,7 @@ def _cube_top_extruded():
 
 
 def _view_context(ob):
-    """What ``in_view.record`` reads: a (non Tool Box) 3D View and the edit object."""
+    """What ``in_view_target.record`` reads: a (non Tool Box) 3D View and the edit object."""
     space = SimpleNamespace(type='VIEW_3D', show_region_toolbar=False, show_region_header=True,
                             show_region_ui=False, show_object_viewport_mesh=True)
     return SimpleNamespace(space_data=space, edit_object=ob)
