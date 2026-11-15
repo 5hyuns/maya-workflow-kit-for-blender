@@ -291,7 +291,7 @@ def test_menus_shelf_and_notices():
     for path in ("Constrain/Parent", "Constrain/Orient", "Constrain/Point", "Constrain/Aim"):
         assert m[path][0] == "allset.constrain", path
     for label in ("Add Attribute...", "Edit Attribute...", "Delete Attribute..."):
-        # the Attributes section comes from menu_data (tools/gen_menu_data.py RUNTIME_LABELS)
+        # the Attributes section rows are in the generated menu_data table
         assert (label,) in menu_data.MENUS["mainModifyMenu"][3] and m["Modify/" + label].startswith("allset.")
     assert m["Skeleton/Quick Rig"] == "allset.quick_rig"
     assert "Skeleton/Quick Rig" in notices.NOTICES and "Skeleton/HumanIK" in notices.NOTICES

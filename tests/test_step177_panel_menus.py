@@ -1,5 +1,5 @@
 """The viewport panel menus, panel toolbar and greyed Status Line widgets are counted (tools/menu_count.py),
-every greyed one has a notice (menu rule), none has a working twin (tools/menu_consistency.py), and the rows with
+every greyed one has a notice (menu rule), none has a working twin in another menu, and the rows with
 a kit counterpart run it: Center View of Selection (Maya viewFit -c), Camera Attribute Editor, the camera
 tools."""
 

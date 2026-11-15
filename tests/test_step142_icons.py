@@ -1,5 +1,5 @@
-"""#54: kit-drawn icons for the Maya menu items that have no shelf button (ui/menu_drawings*.py, linked by
-tools/gen_menu_icons.py into ui/menu_icon_data.py).
+"""#54: kit-drawn icons for the Maya menu items that have no shelf button (ui/menu_drawings*.py, linked in
+the generated table ui/menu_icon_data.py).
 
 Checks: every drawing is linked and every linked drawing exists; the priority menus (Deform, Mesh Display, Effects,
 Fields, Edit Mesh, Mesh Tools, Mesh) have an icon on every item Maya shows with one; drawings render at every

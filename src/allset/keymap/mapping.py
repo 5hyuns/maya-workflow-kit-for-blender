@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya runTimeCommand -> Blender handling, for the keymap mapping table.
 
-Pure Python. Used by tools/gen_keymap_mapping.py (writes the doc) and by
+Pure Python. Used to write the mapping table and by
 tests/test_keymap_maya.py (checks every IC/KIT row is really bound).
 
 Maya side: Maya's standard hotkeys (keys, contexts and

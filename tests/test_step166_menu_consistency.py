@@ -1,4 +1,4 @@
-"""No Maya command greyed in one menu while it works in another (tools/menu_consistency.py on the live kit),
+"""No Maya command greyed in one menu while it works in another (checked on the live kit's menus),
 Select / Delete All by Type for the kit's IK handles and clusters, Dope Sheet curve commands and Auto Frame."""
 
 import importlib.util

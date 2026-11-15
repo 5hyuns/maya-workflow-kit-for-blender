@@ -1,5 +1,5 @@
 """Lane MENU (#23): Maya menu items that Maya draws with an icon show the kit's own drawing of the same
-command (ui/menu_icons.py, table ui/menu_icon_data.py from tools/gen_menu_icons.py).
+command (ui/menu_icons.py, generated table ui/menu_icon_data.py).
 GUI: tests/gui/gui_step131_menu_icons.py."""
 
 import collections
