@@ -1199,18 +1199,18 @@ def _sel_set(key):
 def cell_key(path, scene=None):
     """(channel key, "NAME" / "VALUE") of a Channel Box cell from its data path (``context.property``), or None."""
     import re
-    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel|sel_on)$", path or "")
+    m = re.match(r"^allset_cb\.([a-z]+)_(text|text_on|sel|sel_on)$", path or "")
     if m and m.group(1) in MAIN_BY_KEY:
-        return m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
+        return m.group(1), ("VALUE" if m.group(2).startswith("text") else "NAME")
     m = re.match(r"^allset_creation\.([A-Za-z0-9]+?)_(text|sel|sel_on)$", path or "")
     if m:
         return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
-    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel|sel_on)$", path or "")
+    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|text_on|sel|sel_on)$", path or "")
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
         if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE", "INPUT", "CONSTRAINT", "BLEND"):
-            return row_key(rows[i]), ("VALUE" if m.group(2) == "text" else "NAME")
+            return row_key(rows[i]), ("VALUE" if m.group(2).startswith("text") else "NAME")
     return None
 
 
@@ -1221,6 +1221,31 @@ def sel_toggle(layout, owner, prop, selected, text, translate=True):
     row (#316); another property is another button."""
     layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected,
                 translate=translate)
+
+
+def _on_get(_self):
+    return True
+
+
+def _on_set(_self, _value):
+    pass
+
+
+def value_cell(layout, owner, prop, selected):
+    """A Channel Box value field; selected (#375), Maya's blue value cell: a pressed toggle of the twin ``<prop>_on``
+    showing the value (UILayout can't colour a text field). The drag watcher eats the press either way and edits
+    ``prop`` (edit_field)."""
+    twin = prop + "_on"
+    if selected and twin in owner.bl_rna.properties:
+        # a toggle centres its text (an icon too): the value goes in a left-aligned button sized to it, and a second
+        # pressed button of the same twin fills the rest, so the number sits on the left like the text field's
+        cell = layout.row(align=True)
+        left = cell.row(align=True)
+        left.alignment = 'LEFT'
+        left.prop(owner, twin, text=getattr(owner, prop), toggle=True, translate=False)
+        cell.prop(owner, twin, text=" ", toggle=True, translate=False)
+    else:
+        layout.prop(owner, prop, text="")
 
 
 # --- proxies -------------------------------------------------------------------------------------
@@ -1797,6 +1822,7 @@ class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
     mod_type: StringProperty()    # INPUT: modifier type, CONSTRAINT: constraint type
     nth: IntProperty()            # position among the lead's modifiers / constraints of that type
     text: StringProperty(get=_row_get, set=_row_set)
+    text_on: BoolProperty(name="Value", get=_on_get, set=_on_set)
     sel: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
                       description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
     sel_on: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
@@ -1914,6 +1940,7 @@ def _make_proxy_annotations():
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
         ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
+        ann[key + "_text_on"] = BoolProperty(name=label, get=_on_get, set=_on_set)
         for suffix in ("_sel", "_sel_on"):
             ann[key + suffix] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
                                              description="Select this channel: click, Ctrl toggle, Shift range, "
@@ -3206,7 +3233,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
         row.label(text="", icon='CONSTRAINT')
         return row
     right.alert = state_alert(state)
-    right.prop(value_owner, value_prop, text="")
+    value_cell(right, value_owner, value_prop, selected)
     # Proxy fields get no automatic keyframe colouring: show the lead object's state.
     row.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
     return row
@@ -3439,7 +3466,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         right = split.row(align=True)
         state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
-        right.prop(row, "text", text="")
+        value_cell(right, row, "text", key in selected_channels(context))
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
         return
     name = split.row(align=True)
@@ -3938,7 +3965,7 @@ def draw_blend_shape(lines, context, ob, key):
         right = split.row(align=True)
         state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
-        right.prop(row, "text", text="")
+        value_cell(right, row, "text", key in selected_channels(context))
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
 
 
