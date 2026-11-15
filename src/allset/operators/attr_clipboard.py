@@ -4,9 +4,9 @@
 Behaviour measured in Maya 2026 (mayapy):
 
 - Copy Attributes takes the first selected face only: its shader and UVs (factory options UV on, Shader on, Color
-  off). An object selection is refused: "Cannot copy non face component attributes to the clipboard."
+  off). An object selection is refused (Maya errors too).
 - Paste Attributes gives every target face (the selected faces; an object = all its faces) that shader and those
-  UVs. Nothing selected or an empty clipboard: "Could not paste attribute(s) from the clipboard."
+  UVs. Nothing selected or an empty clipboard is refused.
 - Clear Clipboard empties it.
 - Transfer Attribute Values copies, from the first selected object to the second, translate / rotate / scale /
   visibility / rotate order and the custom attributes both have (no animation). Not exactly two objects:
@@ -22,8 +22,8 @@ from .mesh_maya import _first_selected
 
 # Session clipboard like Maya's: {"material": name or None, "uvs": [(u, v), ...] or None}
 CLIPBOARD = {}
-NO_FACES = "Cannot copy non face component attributes to the clipboard."
-NO_PASTE = "Could not paste attribute(s) from the clipboard."
+NO_FACES = "Select a face to copy its attributes."
+NO_PASTE = "Nothing to paste: copy a face first, then select faces or objects."
 
 
 def copy(context):
