@@ -1,0 +1,188 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya Edit Mesh > Detach, Edit Edge Flow and Wedge as bmesh edits in Edit Mode.
+
+``detach`` splits vertices per face or edges open, ``edge_flow`` moves each vertex onto the curve through its ring
+neighbours (also used by edge_loops), ``ALLSET_OT_wedge`` spins the selected faces around an edge. menu_items
+re-exports them.
+"""
+
+import math
+
+import bmesh
+import bpy
+from bpy.props import FloatProperty, IntProperty
+
+
+# --- Edit Mesh > Detach / Edit Edge Flow / Wedge ----------------------------------------------
+
+def _edit_bm(context):
+    ob = context.edit_object
+    return ob, bmesh.from_edit_mesh(ob.data)
+
+
+def detach(bm, mode):
+    """Maya Detach of vertices (each face around a selected vertex gets its own vertex) or edges (split
+    open). Returns how many elements were detached."""
+    if mode == 'VERT':
+        verts = [v for v in bm.verts if v.select and len(v.link_faces) > 1]
+        for v in verts:
+            bmesh.utils.vert_separate(v, list(v.link_edges))
+        return len(verts)
+    if mode == 'EDGE':
+        edges = [e for e in bm.edges if e.select and not e.is_boundary]
+        if edges:
+            bmesh.ops.split_edges(bm, edges=edges)
+        return len(edges)
+    return 0
+
+
+class ALLSET_OT_detach(bpy.types.Operator):
+    """Detach the selected components: vertices split per face, edges split open, faces become their own
+    shell (Maya Edit Mesh > Detach)"""
+    bl_idname = "allset.detach"
+    bl_label = "Detach"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        ob, bm = _edit_bm(context)
+        mode = context.tool_settings.mesh_select_mode
+        if mode[2]:
+            if not any(f.select for f in bm.faces):
+                self.report({'WARNING'}, "No vertices or edges selected to detach.")
+                return {'CANCELLED'}
+            bpy.ops.mesh.split()
+            return {'FINISHED'}
+        n = detach(bm, 'VERT' if mode[0] else 'EDGE')
+        if not n:
+            self.report({'WARNING'}, "No vertices or edges selected to detach.")   # Maya's warning
+            return {'CANCELLED'}
+        bmesh.update_edit_mesh(ob.data)
+        return {'FINISHED'}
+
+
+def _across(v, e):
+    """The edge of ``v`` opposite ``e`` in a 4-edge vertex (the next edge of the ring), or None."""
+    if len(v.link_edges) != 4:
+        return None
+    faces = set(e.link_faces)
+    others = [x for x in v.link_edges if x is not e and not (set(x.link_faces) & faces)]
+    return others[0] if len(others) == 1 else None
+
+
+def _circle_tangent(p_prev, p, p_next):
+    """Unit tangent at ``p`` of the circle through three points, pointing from ``p_prev`` towards ``p_next``
+    (None when they are in a line)."""
+    a, b = p_prev - p, p_next - p
+    axb = a.cross(b)
+    if axb.length_squared < 1e-18:
+        return None
+    centre = p + (b * a.length_squared - a * b.length_squared).cross(axb) / (2 * axb.length_squared)
+    t = axb.cross(p - centre)
+    if t.length_squared < 1e-18:
+        return None
+    t.normalize()
+    return t if t.dot(p_next - p_prev) >= 0 else -t
+
+
+def edge_flow(bm, edges, flow=1.0):
+    """Maya Edit Edge Flow (polyEditEdgeFlow -adjustEdgeFlow): each vertex of the selected edges moves onto a cubic
+    Hermite curve between its two ring neighbours a, b, with tangents along the circles through (a's outer
+    neighbour, a, b) and (a, b, b's outer neighbour) and length = |ab|, at the vertex's own parameter; flow 0 = the
+    straight line. Returns the number of moved vertices."""
+    selected = set(edges)
+    moves = {}
+    for v in {v for e in edges for v in e.verts}:
+        ring = [x for x in v.link_edges if x not in selected]
+        if len(ring) != 2:
+            continue
+        pts = []
+        for x in ring:
+            a = x.other_vert(v)
+            nxt = _across(a, x)
+            pts.append((a.co.copy(), nxt.other_vert(a).co.copy() if nxt else None))
+        (a, a2), (b, b2) = pts
+        da, db = (v.co - a).length, (v.co - b).length
+        if da + db < 1e-9:
+            continue
+        t = da / (da + db)
+        chord = b - a
+        length = chord.length
+        ta = _circle_tangent(a2, a, b) if a2 is not None else None
+        tb = _circle_tangent(a, b, b2) if b2 is not None else None
+        if ta is None and tb is None:
+            curve = a.lerp(b, t)
+        else:
+            u = chord.normalized()
+            ta = ta if ta is not None else (u * 2 * u.dot(tb) - tb)    # mirror the other tangent about the chord
+            tb = tb if tb is not None else (u * 2 * u.dot(ta) - ta)
+            h00, h10 = 2 * t ** 3 - 3 * t ** 2 + 1, t ** 3 - 2 * t ** 2 + t
+            h01, h11 = -2 * t ** 3 + 3 * t ** 2, t ** 3 - t ** 2
+            curve = a * h00 + ta * (length * h10) + b * h01 + tb * (length * h11)
+        moves[v] = a.lerp(b, t).lerp(curve, flow)
+    for v, co in moves.items():
+        v.co = co
+    return len(moves)
+
+
+class ALLSET_OT_edge_flow(bpy.types.Operator):
+    """Move the selected edges so they follow the curvature of the surrounding surface
+    (Maya Edit Mesh > Edit Edge Flow)"""
+    bl_idname = "allset.edge_flow"
+    bl_label = "Edit Edge Flow"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    flow: FloatProperty(name="Edge Flow", default=1.0, soft_min=-1.0, soft_max=2.0,
+                        description="Maya adjustEdgeFlow: 1 follows the curvature, 0 is straight")
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        for ob in context.objects_in_mode:
+            bm = bmesh.from_edit_mesh(ob.data)
+            edge_flow(bm, [e for e in bm.edges if e.select], self.flow)
+            bmesh.update_edit_mesh(ob.data)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_wedge(bpy.types.Operator):
+    """Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)"""
+    bl_idname = "allset.wedge"
+    bl_label = "Wedge"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    angle: FloatProperty(name="Wedge Angle", default=90.0, min=-360.0, max=360.0)
+    divisions: IntProperty(name="Divisions", default=4, min=1, max=256)
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        ob, bm = _edit_bm(context)
+        faces = [f for f in bm.faces if f.select]
+        edge = bm.select_history.active
+        if not isinstance(edge, bmesh.types.BMEdge):
+            edge = next((e for e in bm.edges if e.select and e.is_boundary is False
+                         and sum(f.select for f in e.link_faces) == 1), None)
+        if not faces or edge is None:
+            self.report({'WARNING'}, "No faces selected to wedge. Select faces and one or more edges from the "
+                                     "selected faces to wedge about.")   # Maya's warning
+            return {'CANCELLED'}
+        mw = ob.matrix_world
+        p0, p1 = mw @ edge.verts[0].co, mw @ edge.verts[1].co
+        axis = (p1 - p0).normalized()
+        centre = (p0 + p1) / 2
+        # spin so the faces turn away from the rest of the mesh (towards their normal)
+        normal = (mw.to_3x3() @ faces[0].normal).normalized()
+        side = (mw @ faces[0].calc_center_median()) - centre
+        if axis.cross(side).dot(normal) < 0:
+            axis = -axis
+        bpy.ops.mesh.spin(steps=self.divisions, angle=math.radians(self.angle), center=centre, axis=axis,
+                          dupli=False, use_auto_merge=True)
+        return {'FINISHED'}

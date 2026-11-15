@@ -5663,6 +5663,15 @@
    "Where a loop ends inside the mesh, merge the two triangles there": "Where a loop ends inside the mesh, merge the two triangles there",
    "Where the loop cuts the clicked edge (from its first vertex)": "Where the loop cuts the clicked edge (from its first vertex)"
   },
+  "Labels/operators/edit_mesh_items": {
+   "Detach": "Detach",
+   "Divisions": "Divisions",
+   "Edge Flow": "Edge Flow",
+   "Edit Edge Flow": "Edit Edge Flow",
+   "Maya adjustEdgeFlow: 1 follows the curvature, 0 is straight": "Maya adjustEdgeFlow: 1 follows the curvature, 0 is straight",
+   "Wedge": "Wedge",
+   "Wedge Angle": "Wedge Angle"
+  },
   "Labels/operators/extrude": {
    "Base of the extruded vertex as a fraction of each of its edges": "Base of the extruded vertex as a fraction of each of its edges",
    "Divisions": "Divisions",
@@ -6188,21 +6197,11 @@
   },
   "Labels/operators/menu_items": {
    "All": "All",
-   "Angle": "Angle",
-   "Assign Checker Shader": "Assign Checker Shader",
    "Brush": "Brush",
-   "Checker Density": "Checker Density",
-   "Checker Map": "Checker Map",
-   "Default 30: faces at a smaller angle shade smooth across the edge": "Default 30: faces at a smaller angle shade smooth across the edge",
    "Delete Sounds": "Delete Sounds",
-   "Detach": "Detach",
    "Display": "Display",
-   "Divisions": "Divisions",
-   "Edge Flow": "Edge Flow",
-   "Edit Edge Flow": "Edit Edge Flow",
    "Hierarchy": "Hierarchy",
    "Import Audio": "Import Audio",
-   "Maya adjustEdgeFlow: 1 follows the curvature, 0 is straight": "Maya adjustEdgeFlow: 1 follows the curvature, 0 is straight",
    "Nonlinear Deformer": "Nonlinear Deformer",
    "Note": "Note",
    "Object Display": "Object Display",
@@ -6215,13 +6214,9 @@
    "Search For": "Search For",
    "Search and Replace Names": "Search and Replace Names",
    "Selected": "Selected",
-   "Soften/Harden Edges": "Soften/Harden Edges",
-   "Step": "Step",
    "Stereo Camera": "Stereo Camera",
    "Text to find; like Maya, $ = the end of the name (adds a suffix), ^ = the start (adds a prefix), . = any character": "Text to find; like Maya, $ = the end of the name (adds a suffix), ^ = the start (adds a prefix), . = any character",
-   "Type": "Type",
-   "Wedge": "Wedge",
-   "Wedge Angle": "Wedge Angle"
+   "Type": "Type"
   },
   "Labels/operators/mesh_maya": {
    "Automatic": "Automatic",
@@ -7176,6 +7171,11 @@
    "Maya soft selection (one setting for object and component mode; B)": "Maya soft selection (one setting for object and component mode; B)",
    "Soft Select": "Soft Select"
   },
+  "Labels/operators/soften_harden_edges": {
+   "Angle": "Angle",
+   "Default 30: faces at a smaller angle shade smooth across the edge": "Default 30: faces at a smaller angle shade smooth across the edge",
+   "Soften/Harden Edges": "Soften/Harden Edges"
+  },
   "Labels/operators/surfaces_maya": {
    "At path": "At path",
    "At profile": "At profile",
@@ -7347,6 +7347,12 @@
    "Rename Current UV Set": "Rename Current UV Set",
    "Split": "Split",
    "UV set": "UV set"
+  },
+  "Labels/operators/uv_checker": {
+   "Assign Checker Shader": "Assign Checker Shader",
+   "Checker Density": "Checker Density",
+   "Checker Map": "Checker Map",
+   "Step": "Step"
   },
   "Labels/operators/uv_components": {
    "Component": "Component",
@@ -9718,6 +9724,11 @@
    "Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values).": "Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values).",
    "Middle-drag: slide the selected edges along their neighbouring edges (Maya Slide Edge)": "Middle-drag: slide the selected edges along their neighbouring edges (Maya Slide Edge)"
   },
+  "Tooltips/operators/edit_mesh_items": {
+   "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)": "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)",
+   "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)": "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)",
+   "Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)": "Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)"
+  },
   "Tooltips/operators/extrude": {
    "Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,\nso only the last one can be changed": "Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,\nso only the last one can be changed",
    "Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,\nso only the last one can be changed": "Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,\nso only the last one can be changed",
@@ -9965,20 +9976,13 @@
    "Add a nonlinear deformer to the selected objects: Simple Deform with Maya's neutral start value, deforming\naround the handle ``<type>NHandle`` at the objects' bounding-box centre (Maya Deform > Nonlinear)": "Add a nonlinear deformer to the selected objects: Simple Deform with Maya's neutral start value, deforming\naround the handle ``<type>NHandle`` at the objects' bounding-box centre (Maya Deform > Nonlinear)",
    "Create a stereo camera: a Maya camera with Blender's stereoscopy (Views) turned on\n(Maya Stereo > Create > Stereo Camera)": "Create a stereo camera: a Maya camera with Blender's stereoscopy (Views) turned on\n(Maya Stereo > Create > Stereo Camera)",
    "Delete the scene's sounds (Maya Audio > Delete Sounds)": "Delete the scene's sounds (Maya Audio > Delete Sounds)",
-   "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)": "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)",
-   "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)": "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)",
    "Import a sound at the start of the time slider; it plays with the scene (Maya Audio > Import Audio)": "Import a sound at the start of the time slider; it plays with the scene (Maya Audio > Import Audio)",
-   "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)": "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)",
    "Maya Display > Object Display: template / bounding box display of the selected objects": "Maya Display > Object Display: template / bounding box display of the selected objects",
    "Maya item whose behaviour already is Blender's: shows the notice": "Maya item whose behaviour already is Blender's: shows the notice",
-   "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)": "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)",
    "Paint hair on the selected mesh (Maya nHair > Paint Hair Follicles; Blender: a hair Curves object on that\nsurface, groomed in Sculpt mode)": "Paint hair on the selected mesh (Maya nHair > Paint Hair Follicles; Blender: a hair Curves object on that\nsurface, groomed in Sculpt mode)",
    "Put a prefix in front of the names of the selected objects and everything under them\n(Maya Modify > Prefix Hierarchy Names)": "Put a prefix in front of the names of the selected objects and everything under them\n(Maya Modify > Prefix Hierarchy Names)",
    "Replace text in object names: in the selected hierarchies, the selection only, or every object\n(Maya Modify > Search and Replace Names)": "Replace text in object names: in the selected hierarchies, the selection only, or every object\n(Maya Modify > Search and Replace Names)",
-   "Sculpt the active mesh with this brush (Maya Mesh Tools > Sculpting Tools)": "Sculpt the active mesh with this brush (Maya Mesh Tools > Sculpting Tools)",
-   "Show or hide a checker map on the selected objects (Maya UV Editor checker button); a second click puts the\nobjects' own materials back": "Show or hide a checker map on the selected objects (Maya UV Editor checker button); a second click puts the\nobjects' own materials back",
-   "Soften edges whose faces meet at less than the angle, harden the rest: the selected edges in\ncomponent mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)": "Soften edges whose faces meet at less than the angle, harden the rest: the selected edges in\ncomponent mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)",
-   "Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)": "Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)"
+   "Sculpt the active mesh with this brush (Maya Mesh Tools > Sculpting Tools)": "Sculpt the active mesh with this brush (Maya Mesh Tools > Sculpting Tools)"
   },
   "Tooltips/operators/mesh_maya": {
    "Maya Booleans: select the first object, then the others; the first meets all the others together": "Maya Booleans: select the first object, then the others; the first meets all the others together",
@@ -10265,6 +10269,9 @@
    "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)": "Maya Step Snap of the Move / Rotate / Scale tool: off, relative to the start, or to\nabsolute steps (Discrete Move / Rotate / Snap Scale)",
    "Move (and turn) the first selected object so its points land on the last selected\nobject's points (Maya Modify > Snap Align Objects > Point to Point / 2 / 3 Points)": "Move (and turn) the first selected object so its points land on the last selected\nobject's points (Maya Modify > Snap Align Objects > Point to Point / 2 / 3 Points)"
   },
+  "Tooltips/operators/soften_harden_edges": {
+   "Soften edges whose faces meet at less than the angle, harden the rest: the selected edges in\ncomponent mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)": "Soften edges whose faces meet at less than the angle, harden the rest: the selected edges in\ncomponent mode, every edge of the selected meshes in object mode (Maya Mesh Display > Soften/Harden)"
+  },
   "Tooltips/operators/surfaces_maya": {
    "Copy the surface patches around the selected CVs as a new surface (Maya Surfaces > Duplicate NURBS Patches)": "Copy the surface patches around the selected CVs as a new surface (Maya Surfaces > Duplicate NURBS Patches)",
    "Fill the space between three or four boundary curves (Maya Surfaces > Boundary / Square)": "Fill the space between three or four boundary curves (Maya Surfaces > Boundary / Square)",
@@ -10322,6 +10329,11 @@
    "Rename the current UV set (Maya UV Sets > Rename Current UV Set...)": "Rename the current UV set (Maya UV Sets > Rename Current UV Set...)",
    "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)": "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)",
    "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)": "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)"
+  },
+  "Tooltips/operators/uv_checker": {
+   "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)": "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)",
+   "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)": "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)",
+   "Show or hide a checker map on the selected objects (Maya UV Editor checker button); a second click puts the\nobjects' own materials back": "Show or hide a checker map on the selected objects (Maya UV Editor checker button); a second click puts the\nobjects' own materials back"
   },
   "Tooltips/operators/uv_components": {
    "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only": "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only"
