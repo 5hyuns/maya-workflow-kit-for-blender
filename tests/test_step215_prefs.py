@@ -35,7 +35,7 @@ def test_every_row_resolves():
         if row[0] == "blender":
             assert row[2] in mp.SECTIONS, row
     assert not missing, missing
-    assert set(data.MAYA_FACTORY) <= {r[1] for _k, _s, r in data.rows("scene")}
+    assert set(data.MAYA_START_VALUES) <= {r[1] for _k, _s, r in data.rows("scene")}
 
 
 def test_revert_puts_back_the_opening_values():
@@ -51,7 +51,7 @@ def test_revert_puts_back_the_opening_values():
     assert mp.revert(bpy.context) == 0
 
 
-def test_restore_defaults_is_maya_factory():
+def test_restore_defaults_gives_the_start_values():
     mp = m("ui.maya_prefs")
     prefs, scene = _prefs(), bpy.context.scene
     scene.render.fps, scene.frame_start, scene.frame_end = 30, 5, 50

@@ -19,7 +19,7 @@ data = import_module(kit.MODULE + ".ui.editor_menu_data")
 modal = import_module(kit.MODULE + ".marking.modal")
 
 # default states (like Maya) of the Script Editor History menu (check marks)
-MAYA_FACTORY = {"se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True,
+START_VALUES = {"se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True,
                 "se_stack_trace": False, "se_suppress_results": False, "se_suppress_info": False,
                 "se_suppress_warnings": False, "se_suppress_errors": False, "se_suppress_dup_vars": False,
                 "se_suppress_stack_window": False, "se_history_output": 'BOTH'}
@@ -39,7 +39,7 @@ def _prefs():
 
 def _reset():
     p = _prefs()
-    for k, v in MAYA_FACTORY.items():
+    for k, v in START_VALUES.items():
         setattr(p, k, v)
 
 
@@ -219,5 +219,5 @@ def test_prefs_round_trip_and_disable_enable():
     assert runner.option("se_line_numbers") is True, "without the preferences: the default state"
     kit.enable()
     p = _prefs()
-    assert {k: getattr(p, k) for k in MAYA_FACTORY} == MAYA_FACTORY
+    assert {k: getattr(p, k) for k in START_VALUES} == START_VALUES
     assert hasattr(bpy.types, "ALLSET_OT_script_echo")

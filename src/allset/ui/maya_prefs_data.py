@@ -11,7 +11,7 @@ Blender's preferences, so a page row is one of:
                                              Recommended setup note and a button that opens that Preferences section
   ("missing", label, note)                   a Maya control with no kit / Blender counterpart (greyed + the reason)
 
-``MAYA_FACTORY`` = the default value of each scene row, like Maya (Edit > Restore Default Settings).
+``MAYA_START_VALUES`` = the default value of each scene row, like Maya (Edit > Restore Default Settings).
 """
 
 # (key, label, depth, page title, sections) — sections = [(section title, [rows])]; order = Maya's list.
@@ -267,7 +267,7 @@ BY_KEY = {p[0]: p for p in PAGES}
 
 # Default values of the scene rows (Settings / Time Slider pages; units = the
 # Maya Workflow Kit template's display units) — Edit > Restore Default Settings.
-MAYA_FACTORY = {
+MAYA_START_VALUES = {
     "unit_settings.length_unit": 'CENTIMETERS',
     "unit_settings.system_rotation": 'DEGREES',
     "allset_auto_key": False,
