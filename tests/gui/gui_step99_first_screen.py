@@ -120,7 +120,8 @@ def s_toolbox():
     cams = [o.name for o in mod("operators.startup_cameras").cameras(bpy.context.scene)]
     check(f"persp / top / front / side are the first four rows, the sets under them (cameras {cams}, y1 "
           f"{r and r[0][1]} of {reg.height})",
-          cams == ["persp", "top", "front", "side"] and bool(r) and abs(r[0][1] - (reg.height - 4 * u)) <= u)
+          cams == ["persp", "top", "front", "side"] and bool(r)
+          and abs(r[0][1] - (mod("ui.outliner_tree").top(reg, u) - 4 * u)) <= u)     # rows under the search row
     check(f"dock opens on the {CB!r} tab ({tab()})", tab() == 'CHANNEL_BOX')
     shot("s99_first_screen")
 
@@ -172,7 +173,8 @@ def s_rows_after():
     kinds = [x[2] for x in r]
     u = mod("ui.outliner_tree").unit(bpy.context.preferences)
     check(f"with objects the default rows follow the DAG rows ({kinds})",
-          kinds[:2] == ['DEFAULT_SET'] * 2 and abs(r[0][1] - (outl()[1].height - 6 * u)) <= u)
+          kinds[:2] == ['DEFAULT_SET'] * 2
+          and abs(r[0][1] - (mod("ui.outliner_tree").top(outl()[1], u) - 6 * u)) <= u)
     shot("s99_cube_selected")
     C["light"] = next(o.name for o in bpy.context.scene.objects if o.type == 'LIGHT')
     click_row(next(x for x in r if x[3] == "defaultLightSet"))
@@ -182,8 +184,8 @@ def s_rows_after():
 def s_lightset():
     sel = sorted(o.name for o in bpy.context.selected_objects)
     check(f"defaultLightSet selects the lights ({sel})", sel == [C["light"]])
-    h = outl()[1].height
     u = mod("ui.outliner_tree").unit(bpy.context.preferences)
+    h = mod("ui.outliner_tree").top(outl()[1], u)     # the rows start under the search row
     click_row((h - u, h))                     # the first row = the startup persp camera
 
 

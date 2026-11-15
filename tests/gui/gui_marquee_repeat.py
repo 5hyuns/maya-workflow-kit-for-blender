@@ -40,6 +40,17 @@ def tip():
     return to_window(a.matrix_world @ a.data.bones[C["names"][2]].head_local)
 
 
+def half_box():
+    """Half the marquee's side in px: 1.2 scene units at the tip, so the box reaches the tip joint's sphere but not
+    the bone of the joint before it, whatever size the viewport has."""
+    a = arm()
+    area, _region = view3d()
+    right = area.spaces.active.region_3d.view_rotation @ Vector((1.0, 0.0, 0.0))
+    k = mod(".operators.units").maya_unit()
+    edge = to_window(a.matrix_world @ a.data.bones[C["names"][2]].head_local + right * 1.2 * k)
+    return (edge - tip()).length
+
+
 def selected_joints():
     a = arm()
     if a.mode != 'POSE':
@@ -143,7 +154,7 @@ def settle():
 @step
 def s_one():
     deselect()
-    play([drag_events(40)])
+    play([drag_events(half_box())])
 
 
 for _i in range(5):
@@ -160,7 +171,7 @@ def s_one_check():
 def rapid(k):
     def go():
         deselect()
-        play([drag_events(40) for _ in range(3)])   # three marquees, the next press 20 ms after a release
+        play([drag_events(half_box()) for _ in range(3)])   # three marquees, the next press 20 ms after a release
     go.__name__ = f"s_rapid_{k}"
 
     def look():

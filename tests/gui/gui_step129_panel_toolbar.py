@@ -7,7 +7,11 @@ buttons change nothing. Value fields (exposure / gamma / view transform) are not
 
 #52: runs at the session's UI scale (1.25 on a 125 % display; ``--ui-scale 0.8`` = 1.0, ``1.2`` = 1.5).
 The groups that don't fit the header are in the Maya » overflow popover: the test opens it, sweeps it top to bottom
-and clicks those buttons there (the popover is reopened before every click)."""
+and clicks those buttons there (the popover is reopened before every click).
+
+``ALLSET_PT_SHADING=1``: the same with the Viewport Shading Controls preference on (Blender's shading modes at the
+right end take room; every Maya button must still be in the bar or the popover; Blender's own controls aren't
+clicked)."""
 
 import os
 import sys
@@ -20,6 +24,7 @@ from sim import MODULE, button_under_mouse, check, ev, run, screenshot, setup, s
 
 GUI_TIMEOUT = 480
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
+SHADING = os.environ.get("ALLSET_PT_SHADING", "") == "1"
 # buttons: command / data path -> (x0, x1, y0, y1) window px; popover: the ones found in the » popover
 C = {"buttons": {}, "popover": set(), "rows": []}
 
@@ -47,6 +52,8 @@ def snapshot():
         "xray_bone": ov.show_xray_bone, "grid": mod("ui.maya_grid").visible(sp),
         "cam_locked": bool(cam and all(cam.lock_location) and all(cam.lock_rotation)),
         "film_gate": bool(cam and cam.data.show_sensor), "gate_mask": bool(cam and cam.data.show_passepartout),
+        "res_gate": bool(cam and cam.data.get("allset_res_gate")),
+        "field_chart": bool(cam and cam.data.get("allset_field_chart")),
         "safe": bool(cam and cam.data.show_safe_areas), "isolate": sp.local_view is not None,
         "exposure": round(vs.exposure, 3), "gamma": round(vs.gamma, 3), "cm": vs.view_transform,
         "selected": tuple(sorted(o.name for o in scene.objects if o.select_get())),
@@ -66,6 +73,8 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     load_maya_layout()
+    if SHADING:
+        mod("preferences").get().show_viewport_shading = True
 
 
 @step
@@ -119,12 +128,27 @@ def sweep():
 step(sweep())
 
 
+def is_blender(key):
+    """One of Blender's shading controls the Viewport Shading Controls preference adds at the header's right end."""
+    return "shading.type" in key or "VIEW3D_PT_shading" in key
+
+
+def reserved():
+    """Header px the Viewport Shading Controls take at the right end (0 with the preference off)."""
+    if not SHADING:
+        return 0
+    pt, fit = mod("ui.panel_toolbar"), mod("ui.toolbar_fit")
+    system = bpy.context.preferences.system
+    return fit.px(pt.SHADING_UNITS, fit.unit(system.ui_scale, system.pixel_size)) + fit.spacing(system.ui_scale)
+
+
 def more_xy():
-    """Centre of the » button (right end of the tool header, toolbar_fit.more_x)."""
+    """Centre of the » button (right end of the tool header, toolbar_fit.more_x; left of Blender's shading
+    controls when they are shown)."""
     _a, region = header()
     fit = mod("ui.toolbar_fit")
     system = bpy.context.preferences.system
-    x0, x1 = fit.more_x(region.width, system.ui_scale, system.pixel_size)
+    x0, x1 = fit.more_x(region.width - reserved(), system.ui_scale, system.pixel_size)
     return region.x + (x0 + x1) // 2, region.y + region.height // 2
 
 
@@ -133,14 +157,14 @@ def s_bar():
     _a, region = header()
     pt, fit = mod("ui.panel_toolbar"), mod("ui.toolbar_fit")
     system = bpy.context.preferences.system
-    C["shown"] = fit.fit(pt.fit_groups(), region.width, system.ui_scale, system.pixel_size)
+    C["shown"] = fit.fit(pt.fit_groups(), region.width - reserved(), system.ui_scale, system.pixel_size)
     print("PT scale", system.ui_scale, "header", region.width, "groups shown", C["shown"], "of", len(pt.TOOLBAR) + 1)
     shown = sum(len(g) for g in pt.TOOLBAR[:C["shown"]]) + (3 if C["shown"] > len(pt.TOOLBAR) else 0)
-    found = [k for k in C["buttons"] if "view_settings." not in k]
+    found = [k for k in C["buttons"] if "view_settings." not in k and not is_blender(k)]
     check(f"UI scale {system.ui_scale:g}: the header shows {C['shown']} groups, every button of them found "
           f"({len(found)} of {shown})", len(found) == shown)
     _a, region = header()
-    last = region.x + max((v[1] for v in C["buttons"].values()), default=0)
+    last = region.x + max((v[1] for k, v in C["buttons"].items() if not is_blender(k)), default=0)
     if C["shown"] <= len(pt.TOOLBAR):
         check("the shown groups end left of the » button", last < more_xy()[0] - 4)
         ev('MOUSEMOVE', 'NOTHING', x=more_xy()[0], y=more_xy()[1])
@@ -206,7 +230,11 @@ def s_found():
         print("PT", "pop" if k in C["popover"] else "bar", v, k)
     pt = mod("ui.panel_toolbar")
     expected = sum(len(g) for g in pt.TOOLBAR)
-    clickable = [k for k in names if "view_settings." not in k]
+    blender = [k for k in names if is_blender(k)]     # the preference's controls
+    if SHADING:
+        check(f"UI scale {bpy.context.preferences.system.ui_scale:g}: Blender's shading controls are in the bar "
+              f"({blender})", bool(blender))
+    clickable = [k for k in names if "view_settings." not in k and k not in blender]
     fields = [k for k in names if "view_settings." in k]
     scale = bpy.context.preferences.system.ui_scale
     check(f"UI scale {scale:g}: every panel toolbar icon reachable in the bar or the » popover ({len(clickable)} "

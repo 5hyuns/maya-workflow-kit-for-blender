@@ -160,7 +160,9 @@ def s_done():
 def s_long():
     """A longer sequence (persp, camA) cancelled during persp's render job."""
     sc = bpy.context.scene
-    sc.frame_end = 60
+    # long enough that persp's render job still runs when the cancel comes (16 px Workbench frames take ~10 ms;
+    # 60 of them could all be written before the step that cancels)
+    sc.frame_end = 400
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT, exist_ok=True)
     C["before"] = _settings()

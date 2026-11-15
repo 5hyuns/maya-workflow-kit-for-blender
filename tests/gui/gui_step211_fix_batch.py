@@ -88,7 +88,7 @@ def s_order_check():
           'CAMERA' not in kinds and kinds[:3] == ['DEFAULT_SET', 'DEFAULT_SET', 'SET'])
     u = mod("ui.outliner_tree").unit(bpy.context.preferences)
     if rows:
-        k = round((reg.height - rows[0][1]) / u)
+        k = round((mod("ui.outliner_tree").top(reg, u) - rows[0][1]) / u)      # rows start under the search row
         check(f"the default sets follow 6 rows (4 cameras + 2 objects; first set row = row {k})", k == 6)
     shot("outliner")
     C["u"], C["seen"] = u, []
@@ -97,7 +97,7 @@ def s_order_check():
 def _row_point(k):
     _a, reg = outl()
     u = C["u"]
-    return reg.x + int(4 * u), reg.y + reg.height - int((k + 0.5) * u)
+    return reg.x + int(4 * u), reg.y + mod("ui.outliner_tree").top(reg, u) - int((k + 0.5) * u)
 
 
 def _scan(k):

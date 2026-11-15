@@ -26,10 +26,14 @@ def outl():
 
 
 def row_xy(i):
-    _a, r = outl()
-    h = 20 * bpy.context.preferences.system.ui_scale
-    _x, y = r.view2d.view_to_region(0, -(i + 0.5) * h, clip=False)
-    return r.x + int(2.5 * h), r.y + int(y)
+    """Window position of the kit tree's row i (the rows start under the Maya search row)."""
+    a, r = outl()
+    tree = import_module(MODULE + ".ui.outliner_tree")
+    u = tree.unit(bpy.context.preferences)
+    with bpy.context.temp_override(window=win(), area=a, region=r):
+        n = len(tree.rows_for(bpy.context, a.spaces.active))
+    y0, y1 = tree.row_rect(a, r, i, u, n)
+    return r.x + int(2.5 * u), r.y + (y0 + y1) // 2
 
 
 def view_xy():
