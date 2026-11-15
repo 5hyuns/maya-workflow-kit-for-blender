@@ -33,4 +33,5 @@ skinClusters per mesh (Maya 2024 and later).
 `tests/integration/blender_weight_workspace.py` (brush families, gradients, Flood maths and masks, locks,
 normalization, transfer, automatic / envelope weights, filtering, re-entry) and
 `tests/integration/blender_weight_workspace_ui.py` (every section collapsed and expanded in a Tool Settings dock) pass on
-Blender 5.2; `tests/gui/gui_step58_skin.py` paints through the Tool Settings influence list.
+Blender 5.2 LTS and 5.3 (`python tests/integration/run.py -k weight`, `--blender 5.3` for 5.3);
+`tests/gui/gui_step58_skin.py` paints through the Tool Settings influence list.

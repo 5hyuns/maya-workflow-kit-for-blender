@@ -114,10 +114,10 @@ state._ob = rig
 assert joints.ALLSET_OT_joint_tool.modal(state, bpy.context, event) == {'FINISHED'}
 
 # An object row can release Edit mode without a manual Tab/F8.
-from allset.ui import outliner
+from allset.ui import outliner_tree
 bpy.ops.object.mode_set(mode='EDIT')
-row = SimpleNamespace(kind='OBJECT', object=mesh.name)
-outliner.select_rows(bpy.context, [row], 0, 'REPLACE')
+row = SimpleNamespace(kind='OBJECT', ob=mesh.name, sub='')      # a Maya Outliner object row (outliner_tree.Row)
+outliner_tree.select_row(bpy.context, [row], 0, 'REPLACE')
 assert bpy.context.mode == 'OBJECT' and bpy.context.active_object == mesh
 assert not selected()
 
