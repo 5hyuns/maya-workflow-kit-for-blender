@@ -99,11 +99,14 @@ def _colour(text):
 
 
 def values():
-    """{path below the theme ("user_interface.wcol_regular.inner"): Maya value}."""
+    """{path below the theme ("user_interface.wcol_regular.inner"): Maya value} for the properties this Blender has
+    (compat.theme_has)."""
     out = {}
     for struct, props in LOOK:
         for prop, v in props.items():
-            out[f"{struct}.{prop}"] = _colour(v) if isinstance(v, str) else v
+            path = f"{struct}.{prop}"
+            if _owner(path)[0] is not None:
+                out[path] = _colour(v) if isinstance(v, str) else v
     return out
 
 
@@ -112,12 +115,14 @@ def _theme():
 
 
 def _owner(path):
+    """(theme struct, property) of a path, struct None when this Blender has no such property."""
+    from . import compat
     struct, _, prop = path.rpartition(".")
     try:
         owner = _theme().path_resolve(struct)
     except ValueError:
         return None, prop
-    return (owner, prop) if hasattr(owner, prop) else (None, prop)
+    return (owner, prop) if compat.theme_has(owner, prop) else (None, prop)
 
 
 def _get(path):
@@ -231,7 +236,6 @@ def apply():
         _drop_state()
     look = values()
     backup = {p: _get(p) for p in look}
-    look = {p: v for p, v in look.items() if backup[p] is not None}      # what this Blender has
     _quietly(lambda: [_set(p, v) for p, v in look.items()])
     _write_state({"backup": {p: backup[p] for p in look}, "applied": {p: _get(p) for p in look},
                   "filepath": _theme().filepath, "saved": _userpref_mtime()})

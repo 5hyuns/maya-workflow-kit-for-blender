@@ -591,3 +591,10 @@ def header_text_colours(space_theme):
     if hasattr(space_theme, "header_text"):
         return tuple(space_theme.header_text)[:3], tuple(space_theme.header_text_hi)[:3]
     return tuple(space_theme.text)[:3], tuple(space_theme.text_hi)[:3]
+
+
+def theme_has(struct, prop):
+    """``struct`` (a theme struct) has the property ``prop`` in this Blender. Maya mode's look (maya_look.py) sets
+    only these: 5.3 dropped the editors' ``header_text`` / ``header_text_hi`` (header text then follows the editor's
+    ``text``, which the look leaves alone)."""
+    return struct is not None and prop in struct.bl_rna.properties
