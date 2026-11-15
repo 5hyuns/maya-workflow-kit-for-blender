@@ -26,7 +26,9 @@ skeleton the user named, or a Rigify rig, is an object row with its root joints 
 shape row (object data, e.g. pCubeShape1) under each transform. Display > Children off lists every node flat; the
 search field keeps the matching rows and the rows above them.
 
-Expanded rows and the scroll position are session state (``EXPANDED`` / ``SCROLL``): nothing goes into the scene.
+Expanded rows and the scroll position are session state (``EXPANDED`` / ``SCROLL`` / ``SCROLL_X``): nothing goes
+into the scene. Maya's search field is a row the kit draws above the rows (Blender's Outliner header has one row
+only); a click on it opens the real field in a popup (``maya_outliner.ALLSET_PT_outliner_search``).
 
 Code: outliner_tree_rows (row model, expanded rows), outliner_tree_select (row selection),
 outliner_tree_geometry (row geometry and shapes); this module keeps which Outliners show the tree, the rows
@@ -45,9 +47,10 @@ from .outliner_tree_rows import (ALL_TYPES, CAMERAS, DEFAULT_SETS, EXPANDED, Opt
                                  natural_key, options, set_expanded, subtree_keys, tail_rows, type_group)
 from .outliner_tree_select import (_keep_hidden, active_row, deselect_all, is_picked, picked_unselectable,  # noqa: F401
                                    select_row, unselectable, visible_signature)
-from .outliner_tree_geometry import (CHILD_SELECTED, ICON_RGB, JOINT_RGB, SCROLL, SCROLLBAR, _ICON_PARTS,  # noqa: F401
-                                     _eye, _font_size, _icon, _quad, _triangle, eye_x, first_row, page_rows,
-                                     row_index_at, row_rect, scrollbar, unit)
+from .outliner_tree_geometry import (CHILD_SELECTED, COLUMNS, ICON_RGB, JOINT_RGB, SCROLL, SCROLLBAR,  # noqa: F401
+                                     SCROLL_X, SEARCH_ROW, _ICON_PARTS, _draw_restrict, _font_size, _icon, _quad,
+                                     _restrict_textures, _triangle, column_xs, eye_x, first_row, page_rows,
+                                     restrict_texture, row_index_at, row_rect, scrollbar, shift_x, top, unit)
 
 # The kit tree replaces Blender's rows in Maya Outliners (tests switch it off to see Blender's rows).
 ENABLED = True
@@ -75,7 +78,11 @@ def is_tree(space):
 
 def hide_rows(space):
     """Hide Blender's rows of a Maya Outliner (the kit draws them). True when it changed something."""
-    if wants_tree(space) and space.use_filter_object:
+    if not wants_tree(space):
+        return False
+    from .maya_outliner import mark
+    mark(space)
+    if space.use_filter_object:
         space.use_filter_object = False
         return True
     return False
@@ -311,6 +318,25 @@ def eye_state(row, names=None):
     return state(row, names)
 
 
+def sort_alpha(space):
+    """The Outliner sorts its rows by name (compat: Blender 5.3's sort_method)."""
+    from .. import compat
+    return compat.outliner_sort_alpha(space)
+
+
+def set_sort_alpha(space, on):
+    from .. import compat
+    compat.set_outliner_sort_alpha(space, on)
+
+
+def column_state(row, col, names=None):
+    """True / False = on / off for a row's column, None when the row has none (``names``: ``object_names()``)."""
+    if col == 'EYE':
+        return eye_state(row, names)
+    from .outliner_tree_edit import restrict_state
+    return restrict_state(row, col, names)
+
+
 def selected_ancestors(context, limit=2000):
     """Expanded-state keys of the rows that have a selected object or picked joint below them."""
     from .outliner_tree_edit import ancestors_of, selected_items
@@ -348,7 +374,8 @@ def _draw(context, space, region, area):
     rows = rows_for(context, space)
     n = len(rows)
     first = first_row(area, region, n, u)
-    last = min(n, first + region.height // u + 1)
+    last = min(n, first + top(region, u) // u + 1)
+    sx = shift_x(area, rows, u)
     th = prefs.themes[0].outliner
     text = tuple(th.space.text)[:3]
     text_hi = tuple(th.space.text_hi)[:3]
@@ -369,15 +396,14 @@ def _draw(context, space, region, area):
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
     by_name = object_names()
-    eyes = space.show_restrict_column_hide
-    ex = eye_x(region, u, n, first) if eyes else 0.0
-    tris, tcol, lines, lcol, textures, names = [], [], [], [], [], []
+    cols = column_xs(space, region, u, n, first)
+    tris, tcol, lines, lcol, textures, names, icons = [], [], [], [], [], [], []
     seen, drawn = [], []
     r_icon = 0.36 * u
     for k in range(first, last):
         row = rows[k]
         j = k - first
-        y1 = region.height - j * u
+        y1 = top(region, u) - j * u
         y0 = y1 - u
         cy = (y0 + y1) / 2.0
         sel, act, hidden, is_live = row_state(context, row, live_objects, selected_set, signature, by_name)
@@ -387,12 +413,13 @@ def _draw(context, space, region, area):
             _quad(tris, tcol, 0, y0, region.width, y1, child_rgba)
         if HOVER.get(area.as_pointer()) == k:
             _quad(tris, tcol, 0, y0, region.width, y1, (*text_hi, 0.05))
-        if eyes:
-            shown = eye_state(row, by_name)
-            if shown is not None:
-                _eye(tris, tcol, lines, lcol, ex, cy, u, shown, (*text, 0.9 if shown else 0.45))
-        x = row.depth * u
-        alpha = 0.5 if hidden and not sel else 1.0
+        alpha = 0.5 if hidden and not sel else 1.0      # greyed row: name, icon and column icons
+        for col, cx in cols.items():
+            # a drawn startup camera (no object) shows a real one's state: selectable, hidden, not rendered
+            on = (col == 'SELECT') if row.kind == 'CAMERA' else column_state(row, col, by_name)
+            if on is not None:
+                icons.append((col, on, int(cx) - u // 2, y0, alpha))
+        x = row.depth * u - sx
         if row.kids:
             _triangle(tris, tcol, x + 0.6 * u, cy, u * 0.17, row.open, (*text, 0.8))
         ix = x + 1.5 * u
@@ -417,6 +444,22 @@ def _draw(context, space, region, area):
     if bar is not None:
         x0, x1, b0, b1 = bar
         _quad(tris, tcol, x0, b0, x1, b1, (*text, 0.35))
+    # Maya's search field on its own row (drawn; a click opens the real field, ``ALLSET_PT_outliner_search``)
+    field = prefs.themes[0].user_interface.wcol_text
+    pad = max(2, round(0.15 * u))
+    fy0, fy1, fx1 = top(region, u) + pad, region.height - pad, region.width - pad
+    _quad(tris, tcol, pad, fy0, fx1, fy1, (*tuple(field.outline)[:3], 1.0))
+    _quad(tris, tcol, pad + 1, fy0 + 1, fx1 - 1, fy1 - 1, (*tuple(field.inner)[:3], 1.0))
+    fcy, glass = (fy0 + fy1) / 2.0, 0.2 * u       # magnifier: ring + handle
+    gx, grgba = pad + 0.6 * u, (*tuple(field.text)[:3], 0.8)
+    ring = [(gx + glass * math.cos(a * math.pi / 6), fcy + 1 + glass * math.sin(a * math.pi / 6)) for a in range(13)]
+    for a, b in zip(ring, ring[1:]):
+        lines.extend((a, b))
+    lines.extend(((gx + 0.7 * glass, fcy + 1 - 0.7 * glass), (gx + 1.8 * glass, fcy + 1 - 1.8 * glass)))
+    lcol.extend((grgba,) * 26)
+    query = space.filter_text
+    names.append((pad + 1.3 * u, fcy, query or bpy.app.translations.pgettext_iface("Search..."),
+                  (*tuple(field.text)[:3], 1.0 if query else 0.5)))
     gpu.state.blend_set('ALPHA')
     if tris:
         sh = gpu.shader.from_builtin('SMOOTH_COLOR')
@@ -427,6 +470,7 @@ def _draw(context, space, region, area):
     for name, cx, cy, greyed in textures:
         size = kit_icons.size_for(name, prefs.system.ui_scale)
         kit_icons.draw_texture(name, math.floor(cx - size / 2), math.floor(cy - size / 2), size, greyed)
+    _draw_restrict(icons, text, u)
     blf.size(0, _font_size(prefs))
     dy = 0.32 * blf.dimensions(0, "Xg")[1] + 1
     for x, cy, label, rgba in names:
@@ -516,9 +560,13 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         rows = rows_for(context, space)
         n = len(rows)
         x, y = event.mouse_region_x, event.mouse_region_y
+        if y >= top(region, u):     # the search row: a real text field can only live in a popup
+            bpy.ops.wm.call_panel(name="ALLSET_PT_outliner_search", keep_open=False)
+            return {'FINISHED'}
         first = first_row(area, region, n, u)
         bar = scrollbar(region, u, n, first)
         self.scrolling = False
+        self.column = None
         if bar is not None and bar[0] - 2 <= x <= region.width:
             return self._start_scroll(context, event, bar, n, u)
         k = row_index_at(area, region, y, u, n)
@@ -530,14 +578,16 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             redraw_outliners(context)
             return {'FINISHED'}
         row = rows[k]
-        x0 = row.depth * u
-        on_eye = space.show_restrict_column_hide and abs(x - eye_x(region, u, n, first)) <= 0.55 * u
-        if on_eye and eye_state(row) is not None:
-            from .outliner_tree_edit import toggle_eye
+        x0 = row.depth * u - shift_x(area, rows, u)
+        hit = next((c for c, cx in column_xs(space, region, u, n, first).items() if abs(x - cx) <= 0.5 * u), None)
+        if hit is not None and column_state(row, hit) is not None:
+            # Blender: the press flips the icon, dragging gives every icon passed (any row, any column) the same
+            # state, Shift takes everything below each row too
             _click.update(key=None, time=0.0)
-            done = toggle_eye(context, row)
-            redraw_outliners(context)
-            return {'FINISHED'} if done else {'CANCELLED'}
+            self.column, self.column_cells, self.column_last, self.u = not column_state(row, hit), {(k, hit)}, (x, y), u
+            self._set_column(context, rows, k, hit, event.shift)
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         if row.kids and x0 <= x < x0 + 1.1 * u:
             _click.update(key=None, time=0.0)
             keys = subtree_keys(context, space, row) if event.shift else [row.key]
@@ -570,21 +620,43 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         self.dragging = True
         rows = rows_for(context, space)
         n = len(rows)
-        if y >= region.height and SCROLL.get(area.as_pointer(), 0) > 0:      # past the top / bottom: scroll
+        if y >= top(region, u) and SCROLL.get(area.as_pointer(), 0) > 0:      # past the top / bottom: scroll
             SCROLL[area.as_pointer()] -= 1
         elif y < 0:
             SCROLL[area.as_pointer()] = SCROLL.get(area.as_pointer(), 0) + 1
         first = first_row(area, region, n, u)
-        yy = min(max(y, 0), region.height - 1)
+        yy = min(max(y, 0), top(region, u) - 1)
         k = row_index_at(area, region, yy, u, n)
         if k is None:
-            k = n - 1 if yy < region.height / 2 else first
+            k = n - 1 if yy < top(region, u) / 2 else first
         if k == self.last or n == 0:
             return
         self.last = k
         mode = 'RANGE_ADD' if self.mode in ('TOGGLE', 'RANGE_ADD') else 'RANGE'
         select_row(context, rows, k, mode, anchor=self.pressed)
         redraw_outliners(context)
+
+    def _set_column(self, context, rows, k, col, recursive):
+        from .outliner_tree_edit import set_column
+        if column_state(rows[k], col) is not None:
+            set_column(context, rows[k], col, self.column, recursive)
+            redraw_outliners(context)
+
+    def _drag_column(self, context, event):
+        area, region, space = context.area, context.region, context.space_data
+        rows = rows_for(context, space)
+        n, u = len(rows), self.u
+        xs = column_xs(space, region, u, n, first_row(area, region, n, u))
+        (x0, y0), (x1, y1) = self.column_last, (event.mouse_region_x, event.mouse_region_y)
+        self.column_last = (x1, y1)
+        steps = max(1, int(max(abs(x1 - x0), abs(y1 - y0)) * 4 / u))     # a fast move skips no icon
+        for i in range(1, steps + 1):
+            x, y = x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps
+            k = row_index_at(area, region, y, u, n)
+            col = next((c for c, cx in xs.items() if abs(x - cx) <= 0.5 * u), None)
+            if k is not None and col is not None and (k, col) not in self.column_cells:
+                self.column_cells.add((k, col))
+                self._set_column(context, rows, k, col, event.shift)
 
     # the scrollbar: drag the thumb, a click above / below it pages
     def _start_scroll(self, context, event, bar, n, u):
@@ -604,6 +676,12 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
+        if self.column is not None:
+            if event.type == 'MOUSEMOVE':
+                self._drag_column(context, event)
+            elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE' or event.type == 'ESC':
+                return {'FINISHED'}                # one undo step for the press and the drag
+            return {'RUNNING_MODAL'}
         if not self.scrolling:
             if event.type == 'MOUSEMOVE':
                 self._drag(context, event)
@@ -614,7 +692,7 @@ class ALLSET_OT_outliner_tree_click(bpy.types.Operator):
             y0, first0, n, u, thumb = self.grab
             region, area = context.region, context.area
             page = page_rows(region, u)
-            span = max(1.0, region.height - thumb)
+            span = max(1.0, top(region, u) - thumb)
             SCROLL[area.as_pointer()] = int(round(first0 + (y0 - event.mouse_region_y) / span * (n - page)))
             first_row(area, region, n, u)
             area.tag_redraw()
@@ -681,7 +759,53 @@ class ALLSET_OT_outliner_tree_scroll(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_hover, ALLSET_OT_outliner_tree_scroll)
+class ALLSET_OT_outliner_tree_pan(bpy.types.Operator):
+    """Pan the Maya Outliner rows in both directions (Maya: Alt+middle-drag, like a 2D view)"""
+    bl_idname = "allset.outliner_tree_pan"
+    bl_label = "Outliner Pan"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region is not None and context.region.type == 'WINDOW'
+
+    def invoke(self, context, event):
+        if not _poll(context):
+            return {'PASS_THROUGH'}
+        key = context.area.as_pointer()
+        self.start = (event.mouse_x, event.mouse_y, SCROLL_X.get(key, 0), SCROLL.get(key, 0))
+        context.window.cursor_modal_set('SCROLL_XY')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def pan(self, context, dx, dy):
+        """Move the rows by (dx, dy) pixels from where the drag started (+x right, +y up)."""
+        x0, y0, sx0, first0 = self.start
+        area, region = context.area, context.region
+        u = unit(context.preferences)
+        rows = rows_for(context, context.space_data)
+        key = area.as_pointer()
+        SCROLL_X[key] = sx0 - dx
+        SCROLL[key] = first0 + round(dy / u)
+        shift_x(area, rows, u)
+        first_row(area, region, len(rows), u)
+        redraw_rows(context, area)
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            self.pan(context, event.mouse_x - self.start[0], event.mouse_y - self.start[1])
+        elif event.type in ('ESC', 'RIGHTMOUSE'):
+            self.pan(context, 0, 0)
+            context.window.cursor_modal_restore()
+            return {'CANCELLED'}
+        elif event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+            context.window.cursor_modal_restore()
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
+
+
+classes = (ALLSET_OT_outliner_tree_click, ALLSET_OT_outliner_tree_hover, ALLSET_OT_outliner_tree_scroll,
+           ALLSET_OT_outliner_tree_pan)
 
 
 def register():
@@ -715,6 +839,8 @@ def unregister():
     SEEN.clear()
     DRAWN.clear()
     SCROLL.clear()
+    SCROLL_X.clear()
     HOVER.clear()
+    _restrict_textures.clear()      # Blender's column icons as GPU textures
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

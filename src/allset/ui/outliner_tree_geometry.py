@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Where the kit tree's rows sit and the shapes drawn in them: row height (``unit``), scroll position per Outliner
-(``SCROLL``, ``first_row``), the row under a region y (``row_index_at``) and its rectangle (``row_rect``), the
-scrollbar and the visibility column (``scrollbar``, ``eye_x``), and the node icons, expand arrows and eyes added to
-the draw batches (``_icon``, ``_triangle``, ``_eye``). The draw itself: outliner_tree._draw.
+(``SCROLL``, ``first_row``; the sideways pan ``SCROLL_X``, ``shift_x``), the search row above the rows (``top``), the
+row under a region y (``row_index_at``) and its rectangle (``row_rect``), the scrollbar and the restriction columns
+(``scrollbar``, ``eye_x``, ``column_xs``), the node icons and expand arrows added to the draw batches (``_icon``,
+``_triangle``) and Blender's column icons (``restrict_texture``, ``_draw_restrict``). The draw itself:
+outliner_tree._draw.
 """
 
 import math
@@ -10,6 +12,7 @@ import math
 import bpy
 
 SCROLL = {}               # area pointer -> first shown row
+SCROLL_X = {}             # area pointer -> pixels the rows are panned left (Alt+middle-drag, #365)
 
 
 # --- geometry ------------------------------------------------------------------------------------------------------
@@ -26,8 +29,16 @@ def _font_size(prefs):
     return points * prefs.system.ui_scale
 
 
+SEARCH_ROW = 1.3      # x UI unit: Maya's search row above the rows (Blender's Outliner header has one row only)
+
+
+def top(region, u):
+    """Region y of the first row's top edge: the search row lies above it."""
+    return region.height - int(SEARCH_ROW * u)
+
+
 def page_rows(region, u):
-    return max(1, region.height // u)
+    return max(1, top(region, u) // u)
 
 
 def first_row(area, region, n, u):
@@ -40,17 +51,26 @@ def first_row(area, region, n, u):
 
 def row_index_at(area, region, y, u, n):
     """Row under region y, or None (below the last row)."""
-    if y < 0 or y >= region.height:
+    if y < 0 or y >= top(region, u):
         return None
-    k = first_row(area, region, n, u) + int((region.height - 1 - y) // u)
+    k = first_row(area, region, n, u) + int((top(region, u) - 1 - y) // u)
     return k if 0 <= k < n else None
 
 
 def row_rect(area, region, k, u, n):
     """(y0, y1) region pixels of row ``k`` (it may lie outside the region)."""
     j = k - first_row(area, region, n, u)
-    y1 = region.height - j * u
+    y1 = top(region, u) - j * u
     return y1 - u, y1
+
+
+def shift_x(area, rows, u):
+    """Pixels the rows of ``area`` are panned left, clamped so the deepest row's arrow can reach the left edge."""
+    key = area.as_pointer()
+    sx = SCROLL_X.get(key, 0)
+    if sx:
+        sx = SCROLL_X[key] = min(max(0, sx), max((r.depth for r in rows), default=0) * u)
+    return sx
 
 
 SCROLLBAR = 0.35      # x UI unit: the scrollbar width at the right edge
@@ -61,7 +81,7 @@ def scrollbar(region, u, n, first):
     page = page_rows(region, u)
     if n <= page:
         return None
-    h = region.height
+    h = top(region, u)
     thumb = max(u, h * page / n)
     y1 = h - (h - thumb) * first / max(1, n - page)
     x1 = region.width - 2
@@ -139,26 +159,65 @@ JOINT_RGB = (0.282, 0.667, 0.710)     # kit icon teal
 CHILD_SELECTED = 0.33                 # share of the selection highlight on a row with a selected node below it
 
 
-def _eye(tris, tcol, lines, lcol, cx, cy, u, shown, rgba):
-    """An eye (open: outline + pupil; closed: the lower lid only)."""
-    rx, ry = 0.36 * u, 0.2 * u
-    n = 12
-    upper = [(cx - rx + 2 * rx * i / n, cy + ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
-    lower = [(cx - rx + 2 * rx * i / n, cy - ry * math.sin(math.pi * i / n)) for i in range(n + 1)]
-    for pts in ((upper, lower) if shown else (lower,)):
-        for i in range(n):
-            lines.extend((pts[i], pts[i + 1]))
-            lcol.extend((rgba,) * 2)
-    if shown:
-        r = 0.1 * u
-        pts = [(cx + r * math.cos(2 * math.pi * i / 10), cy + r * math.sin(2 * math.pi * i / 10)) for i in range(10)]
-        for i in range(10):
-            tris.extend(((cx, cy), pts[i], pts[(i + 1) % 10]))
-            tcol.extend((rgba,) * 3)
-
-
 def eye_x(region, u, n, first):
-    """Centre x of the visibility column (Display > Visibility Column), left of the scrollbar."""
+    """Centre x of the last restriction column, left of the scrollbar."""
     bar = scrollbar(region, u, n, first)
     right = bar[0] if bar is not None else region.width
-    return right - 0.9 * u
+    return right - u        # where Blender centres its last restriction column
+
+
+_restrict_textures = {}
+
+
+def restrict_texture(u, col, on, rgb, alpha=1.0):
+    """(size, GPU texture) of Blender's own column icon for row height ``u`` (``blender_restrict_icons``: Blender's
+    Outliner icon at that height; the nearest one for a height not there), in the theme text colour."""
+    from .blender_restrict_icons import CELLS
+    have = min({k[0] for k in CELLS}, key=lambda k: (abs(k - u), k))
+    key = (have, col, on, rgb, alpha)
+    hit = _restrict_textures.get(key)
+    if hit is None:
+        import base64
+        import zlib
+        import gpu
+        import numpy as np
+        cov = np.frombuffer(zlib.decompress(base64.b64decode(CELLS[(have, col, on)])), np.uint8)
+        px = np.empty((have, have, 4), np.float32)
+        px[..., :3] = rgb
+        px[..., 3] = cov.reshape(have, have)[::-1] * (alpha / 255.0)        # stored top row first
+        buf = gpu.types.Buffer('FLOAT', have * have * 4, px.ravel().tolist())
+        hit = _restrict_textures[key] = (have, gpu.types.GPUTexture((have, have), format='RGBA32F', data=buf))
+    return hit
+
+
+def _draw_restrict(icons, rgb, u):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    sh = gpu.shader.from_builtin('IMAGE')
+    quads = {}      # one batch per texture, not per icon
+    for col, on, x0, y0, alpha in icons:
+        pos, uv = quads.setdefault((col, on, alpha), ([], []))
+        a, b, c, d = (x0, y0), (x0 + u, y0), (x0 + u, y0 + u), (x0, y0 + u)
+        pos.extend((a, b, c, a, c, d))
+        uv.extend(((0, 0), (1, 0), (1, 1), (0, 0), (1, 1), (0, 1)))
+    for (col, on, alpha), (pos, uv) in quads.items():
+        sh.uniform_sampler("image", restrict_texture(u, col, on, rgb, alpha)[1])
+        batch_for_shader(sh, 'TRIS', {"pos": pos, "texCoord": uv}).draw(sh)
+
+
+# Blender's restriction columns, left to right (Display menu, kit preference); EYE is the kit's visibility
+COLUMNS = (('SELECT', "show_restrict_column_select", "outliner_select_column"),
+           ('EYE', "show_restrict_column_hide", "outliner_eye_column"),
+           ('RENDER', "show_restrict_column_render", "outliner_render_column"))
+
+
+def column_xs(space, region, u, n, first):
+    """{column: centre x} of the shown columns, the last one at ``eye_x``. With the Outliner Column Icons preference
+    off only the kit's visibility column (Display > Visibility Column); on, each column that is on in the Display
+    menu and in the kit preferences."""
+    from .. import preferences
+    prefs = preferences.get()
+    shown = [c for c, prop, pref in COLUMNS
+             if getattr(space, prop) and (getattr(prefs, pref) if prefs.outliner_columns else c == 'EYE')]
+    right = eye_x(region, u, n, first)
+    return {c: right - (len(shown) - 1 - i) * u for i, c in enumerate(shown)}

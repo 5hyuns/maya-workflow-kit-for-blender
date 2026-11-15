@@ -130,13 +130,14 @@ def _outliner():
 def _filters(sp):
     return (sp.display_mode, sp.use_filter_collection, sp.use_filter_object, sp.use_filter_object_content,
             sp.show_mode_column, sp.show_restrict_column_render, sp.show_restrict_column_hide,
-            sp.use_filter_children, sp.use_sort_alpha)
+            sp.use_filter_children, outliner_tree.sort_alpha(sp))
 
 
 def _restore(sp, saved):
     (sp.display_mode, sp.use_filter_collection, sp.use_filter_object, sp.use_filter_object_content,
      sp.show_mode_column, sp.show_restrict_column_render, sp.show_restrict_column_hide,
-     sp.use_filter_children, sp.use_sort_alpha) = saved
+     sp.use_filter_children, alpha) = saved
+    outliner_tree.set_sort_alpha(sp, alpha)
 
 
 def _header(area):

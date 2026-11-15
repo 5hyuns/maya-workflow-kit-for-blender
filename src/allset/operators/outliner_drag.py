@@ -449,11 +449,11 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
         if cycles:
             self.report({'WARNING'}, "Skipped (the drop target is their descendant): "
                         + ", ".join(ob.name for ob in cycles))
-        from ..ui import outliner_order
+        from ..ui import outliner_order, outliner_tree
         if done and not context.space_data.use_filter_collection:
             outliner_order.to_end(done, context.scene)      # Maya: last among the new siblings
         ordered = False
-        if target is not None and where != 'ON' and not context.space_data.use_sort_alpha:
+        if target is not None and where != 'ON' and not outliner_tree.sort_alpha(context.space_data):
             keep = [ob for ob in movers if ob not in cycles]
             # the Maya Outliner's order = creation order numbers (ui/outliner_order.py)
             ordered = not context.space_data.use_filter_collection and outliner_order.place(
