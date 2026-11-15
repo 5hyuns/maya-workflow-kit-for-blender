@@ -6756,6 +6756,13 @@
    "Operation": "Operation",
    "Select matching polygons": "Select matching polygons"
   },
+  "Labels/operators/poly_connect": {
+   "Adjust Edge Flow": "Adjust Edge Flow",
+   "Connect": "Connect",
+   "Insert with edge flow": "Insert with edge flow",
+   "Segments": "Segments",
+   "Slide": "Slide"
+  },
   "Labels/operators/poly_display": {
    "Blender draws normals on meshes in edit mode.": "Blender draws normals on meshes in edit mode.",
    "Length of the normals drawn in the 3D View (Blender units)": "Length of the normals drawn in the 3D View (Blender units)",
@@ -6815,26 +6822,25 @@
   },
   "Labels/operators/poly_maya": {
    "Add Divisions": "Add Divisions",
-   "Adjust Edge Flow": "Adjust Edge Flow",
    "Always merge for two vertices": "Always merge for two vertices",
    "Circularize": "Circularize",
-   "Connect": "Connect",
-   "Division levels": "Division levels",
-   "Divisions": "Divisions",
    "Evenly Distribute": "Evenly Distribute",
-   "Insert with edge flow": "Insert with edge flow",
    "Make Hole": "Make Hole",
    "Merge": "Merge",
    "Merge mode": "Merge mode",
    "Normal Offset": "Normal Offset",
    "Radial Offset": "Radial Offset",
-   "Segments": "Segments",
-   "Slide": "Slide",
-   "Smooth": "Smooth",
-   "Symmetrize": "Symmetrize",
    "Threshold": "Threshold",
-   "Twist": "Twist",
+   "Twist": "Twist"
+  },
+  "Labels/operators/poly_smooth": {
+   "Division levels": "Division levels",
+   "Divisions": "Divisions",
+   "Smooth": "Smooth",
    "polySmoothFace": "polySmoothFace"
+  },
+  "Labels/operators/poly_symmetrize": {
+   "Symmetrize": "Symmetrize"
   },
   "Labels/operators/pose_space_227": {
    "Add Pose": "Add Pose",
@@ -10127,6 +10133,9 @@
   "Tooltips/operators/poly_cleanup": {
    "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)": "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)"
   },
+  "Tooltips/operators/poly_connect": {
+   "Connect the selected edges through their midpoints, the selected vertices across their faces, or the\nselected faces through their middles (Maya Edit Mesh / Mesh Tools > Connect)": "Connect the selected edges through their midpoints, the selected vertices across their faces, or the\nselected faces through their middles (Maya Edit Mesh / Mesh Tools > Connect)"
+  },
   "Tooltips/operators/poly_display": {
    "Maya Display > Polygons > Normals Size: the length of the face and vertex normals drawn in the 3D View": "Maya Display > Polygons > Normals Size: the length of the face and vertex normals drawn in the 3D View",
    "Maya Display > Polygons > Reset Display: normals, edge and face display back to their defaults": "Maya Display > Polygons > Reset Display: normals, edge and face display back to their defaults",
@@ -10143,12 +10152,15 @@
   },
   "Tooltips/operators/poly_maya": {
    "Arrange the selected loop of components evenly on a circle (Maya Edit Mesh > Circularize)": "Arrange the selected loop of components evenly on a circle (Maya Edit Mesh > Circularize)",
-   "Change the last Smooth (Maya: edit the polySmoothFace node). Blender keeps no history, so only the last one\ncan be changed": "Change the last Smooth (Maya: edit the polySmoothFace node). Blender keeps no history, so only the last one\ncan be changed",
-   "Click a mesh edge on the symmetry seam: the selected components' counterparts on the other side take their\nmirrored positions (Maya Edit Mesh > Symmetrize). Esc / right click cancels": "Click a mesh edge on the symmetry seam: the selected components' counterparts on the other side take their\nmirrored positions (Maya Edit Mesh > Symmetrize). Esc / right click cancels",
-   "Connect the selected edges through their midpoints, the selected vertices across their faces, or the\nselected faces through their middles (Maya Edit Mesh / Mesh Tools > Connect)": "Connect the selected edges through their midpoints, the selected vertices across their faces, or the\nselected faces through their middles (Maya Edit Mesh / Mesh Tools > Connect)",
    "Cut the shape of the active (second) face as a hole into the other selected face of the same mesh\n(Maya Mesh Tools > Make Hole)": "Cut the shape of the active (second) face as a hole into the other selected face of the same mesh\n(Maya Mesh Tools > Make Hole)",
-   "Merge the selected vertices closer than the threshold to their centre; two vertices always merge\n(Maya Edit Mesh > Merge)": "Merge the selected vertices closer than the threshold to their centre; two vertices always merge\n(Maya Edit Mesh > Merge)",
+   "Merge the selected vertices closer than the threshold to their centre; two vertices always merge\n(Maya Edit Mesh > Merge)": "Merge the selected vertices closer than the threshold to their centre; two vertices always merge\n(Maya Edit Mesh > Merge)"
+  },
+  "Tooltips/operators/poly_smooth": {
+   "Change the last Smooth (Maya: edit the polySmoothFace node). Blender keeps no history, so only the last one\ncan be changed": "Change the last Smooth (Maya: edit the polySmoothFace node). Blender keeps no history, so only the last one\ncan be changed",
    "Smooth the selected faces (component mode) or the selected meshes with real Catmull-Clark geometry\n(Maya Mesh > Smooth): change its Divisions in Channel Box INPUTS (polySmoothFace)": "Smooth the selected faces (component mode) or the selected meshes with real Catmull-Clark geometry\n(Maya Mesh > Smooth): change its Divisions in Channel Box INPUTS (polySmoothFace)"
+  },
+  "Tooltips/operators/poly_symmetrize": {
+   "Click a mesh edge on the symmetry seam: the selected components' counterparts on the other side take their\nmirrored positions (Maya Edit Mesh > Symmetrize). Esc / right click cancels": "Click a mesh edge on the symmetry seam: the selected components' counterparts on the other side take their\nmirrored positions (Maya Edit Mesh > Symmetrize). Esc / right click cancels"
   },
   "Tooltips/operators/pose_space_227": {
    "Add a corrective shape for this pose on the skinned mesh, then sculpt it in the pose (Maya Pose Editor > Add\nShape)": "Add a corrective shape for this pose on the skinned mesh, then sculpt it in the pose (Maya Pose Editor > Add\nShape)",
