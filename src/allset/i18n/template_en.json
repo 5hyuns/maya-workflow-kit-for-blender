@@ -5319,6 +5319,14 @@
    "Translate": "Translate",
    "Visibility": "Visibility"
   },
+  "Labels/operators/cluster_soft_mod": {
+   "Cluster": "Cluster",
+   "Envelope": "Envelope",
+   "Falloff Radius": "Falloff Radius",
+   "Maya cluster envelope = the Hook's strength": "Maya cluster envelope = the Hook's strength",
+   "Maya units (softMod falloffRadius)": "Maya units (softMod falloffRadius)",
+   "Soft Modification": "Soft Modification"
+  },
   "Labels/operators/color_sets_maya": {
    "Alpha": "Alpha",
    "Alpha blending": "Alpha blending",
@@ -6015,6 +6023,17 @@
    "Pole Vector": "Pole Vector",
    "Solver enable": "Solver enable",
    "Weight": "Weight"
+  },
+  "Labels/operators/ik_spline_handle": {
+   "Auto create curve": "Auto create curve",
+   "Auto parent curve": "Auto parent curve",
+   "Create IK Spline Handle": "Create IK Spline Handle",
+   "Curve": "Curve",
+   "Existing curve object (Auto create curve off); empty = the selected curve": "Existing curve object (Auto create curve off); empty = the selected curve",
+   "Number of spans": "Number of spans",
+   "Root on curve": "Root on curve",
+   "Snap curve to root": "Snap curve to root",
+   "Twist type": "Twist type"
   },
   "Labels/operators/interactive_create": {
    "Interactive Creation": "Interactive Creation",
@@ -6923,31 +6942,10 @@
    "Repeat Last": "Repeat Last"
   },
   "Labels/operators/rig_maya": {
-   "Add Influence": "Add Influence",
    "Assume Preferred Angle": "Assume Preferred Angle",
-   "Auto create curve": "Auto create curve",
-   "Auto parent curve": "Auto parent curve",
-   "Cluster": "Cluster",
-   "Create IK Spline Handle": "Create IK Spline Handle",
-   "Curve": "Curve",
-   "Default weight": "Default weight",
-   "Envelope": "Envelope",
-   "Existing curve object (Auto create curve off); empty = the selected curve": "Existing curve object (Auto create curve off); empty = the selected curve",
-   "Falloff Radius": "Falloff Radius",
-   "Hammer Skin Weights": "Hammer Skin Weights",
    "Hierarchy": "Hierarchy",
-   "Lock weights": "Lock weights",
-   "Maya cluster envelope = the Hook's strength": "Maya cluster envelope = the Hook's strength",
-   "Maya units (softMod falloffRadius)": "Maya units (softMod falloffRadius)",
-   "Number of spans": "Number of spans",
-   "Remove Influence": "Remove Influence",
-   "Remove Unused Influences": "Remove Unused Influences",
    "Reroot Skeleton": "Reroot Skeleton",
-   "Root on curve": "Root on curve",
-   "Set Preferred Angle": "Set Preferred Angle",
-   "Snap curve to root": "Snap curve to root",
-   "Soft Modification": "Soft Modification",
-   "Twist type": "Twist type"
+   "Set Preferred Angle": "Set Preferred Angle"
   },
   "Labels/operators/rig_tools": {
    "Add Attribute": "Add Attribute",
@@ -7068,6 +7066,14 @@
    "Normalize": "Normalize",
    "Paste Vertex Weights": "Paste Vertex Weights",
    "Surface Association": "Surface Association"
+  },
+  "Labels/operators/skin_influences": {
+   "Add Influence": "Add Influence",
+   "Default weight": "Default weight",
+   "Hammer Skin Weights": "Hammer Skin Weights",
+   "Lock weights": "Lock weights",
+   "Remove Influence": "Remove Influence",
+   "Remove Unused Influences": "Remove Unused Influences"
   },
   "Labels/operators/skin_method": {
    "Maya skinCluster Skinning Method": "Maya skinCluster Skinning Method",
@@ -9571,6 +9577,10 @@
    "The current (or picked) character set's attributes, like Maya's Attribute Editor of the character node": "The current (or picked) character set's attributes, like Maya's Attribute Editor of the character node",
    "Windows > Relationship Editors > Character Sets: Maya's Relationship Editor in character mode\nlists the character sets, highlights the current one and edits its members from the selection — here a popup over\nthe kit character sets (= scene Keying Sets).": "Windows > Relationship Editors > Character Sets: Maya's Relationship Editor in character mode\nlists the character sets, highlights the current one and edits its members from the selection — here a popup over\nthe kit character sets (= scene Keying Sets)."
   },
+  "Tooltips/operators/cluster_soft_mod": {
+   "Make a cluster of the selected components (or the whole object): a Hook modifier ``clusterN`` driven by the\nhandle ``clusterNHandle`` at their centre (Maya Deform > Cluster)": "Make a cluster of the selected components (or the whole object): a Hook modifier ``clusterN`` driven by the\nhandle ``clusterNHandle`` at their centre (Maya Deform > Cluster)",
+   "Soft modification at the selection: a Hook modifier ``softModN`` on the whole mesh with Maya's falloff\n(radius 5, smooth) driven by ``softModNHandle`` (Maya Deform > Soft Modification)": "Soft modification at the selection: a Hook modifier ``softModN`` on the whole mesh with Maya's falloff\n(radius 5, smooth) driven by ``softModNHandle`` (Maya Deform > Soft Modification)"
+  },
   "Tooltips/operators/color_sets_maya": {
    "Assign the selected meshes to an existing vertex bake set (Maya Mesh Display > Assign Existing Set)": "Assign the selected meshes to an existing vertex bake set (Maya Mesh Display > Assign Existing Set)",
    "Bake the scene lighting of the selected meshes into their current colour set (Maya Mesh Display > Prelight;\nBlender: a Cycles diffuse bake)": "Bake the scene lighting of the selected meshes into their current colour set (Maya Mesh Display > Prelight;\nBlender: a Cycles diffuse bake)",
@@ -9879,6 +9889,9 @@
    "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)": "Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)",
    "Maya Pole Vector constraint: select the pole object, then the IK handle": "Maya Pole Vector constraint: select the pole object, then the IK handle"
   },
+  "Tooltips/operators/ik_spline_handle": {
+   "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)": "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)"
+  },
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"
   },
@@ -10179,15 +10192,8 @@
    "Run a Recent Commands entry again": "Run a Recent Commands entry again"
   },
   "Tooltips/operators/rig_maya": {
-   "Add the selected joints to the selected skinned mesh; the weights are recomputed by distance (Maya Skin >\nEdit Influences > Add Influence)": "Add the selected joints to the selected skinned mesh; the weights are recomputed by distance (Maya Skin >\nEdit Influences > Add Influence)",
-   "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)": "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)",
-   "Give the selected vertices the average skin weights of their neighbours (Maya Skin > Hammer Skin Weights)": "Give the selected vertices the average skin weights of their neighbours (Maya Skin > Hammer Skin Weights)",
-   "Make a cluster of the selected components (or the whole object): a Hook modifier ``clusterN`` driven by the\nhandle ``clusterNHandle`` at their centre (Maya Deform > Cluster)": "Make a cluster of the selected components (or the whole object): a Hook modifier ``clusterN`` driven by the\nhandle ``clusterNHandle`` at their centre (Maya Deform > Cluster)",
    "Make the selected joint the root of its skeleton (Maya Skeleton > Reroot Skeleton)": "Make the selected joint the root of its skeleton (Maya Skeleton > Reroot Skeleton)",
    "Remember the selected joints' current rotation as their preferred angle (Maya Skeleton > Set Preferred\nAngle)": "Remember the selected joints' current rotation as their preferred angle (Maya Skeleton > Set Preferred\nAngle)",
-   "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)": "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)",
-   "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)": "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)",
-   "Soft modification at the selection: a Hook modifier ``softModN`` on the whole mesh with Maya's falloff\n(radius 5, smooth) driven by ``softModNHandle`` (Maya Deform > Soft Modification)": "Soft modification at the selection: a Hook modifier ``softModN`` on the whole mesh with Maya's falloff\n(radius 5, smooth) driven by ``softModNHandle`` (Maya Deform > Soft Modification)",
    "Turn the selected joints back to their preferred angle (Maya Skeleton > Assume Preferred Angle)": "Turn the selected joints back to their preferred angle (Maya Skeleton > Assume Preferred Angle)"
   },
   "Tooltips/operators/rig_tools": {
@@ -10244,6 +10250,12 @@
    "Maya Copy Vertex Weights: remember the active vertex's joint weights": "Maya Copy Vertex Weights: remember the active vertex's joint weights",
    "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position": "Maya Mirror Skin Weights: copy one side's weights onto the other, joints paired by position",
    "Maya Paste Vertex Weights: give the selected vertices the copied joint weights": "Maya Paste Vertex Weights: give the selected vertices the copied joint weights"
+  },
+  "Tooltips/operators/skin_influences": {
+   "Add the selected joints to the selected skinned mesh; the weights are recomputed by distance (Maya Skin >\nEdit Influences > Add Influence)": "Add the selected joints to the selected skinned mesh; the weights are recomputed by distance (Maya Skin >\nEdit Influences > Add Influence)",
+   "Give the selected vertices the average skin weights of their neighbours (Maya Skin > Hammer Skin Weights)": "Give the selected vertices the average skin weights of their neighbours (Maya Skin > Hammer Skin Weights)",
+   "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)": "Remove influences that weigh nothing on any vertex (Maya Skin > Edit Influences > Remove Unused\nInfluences)",
+   "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)": "Remove the selected joints from the selected skinned mesh; the weights are renormalised (Maya Skin > Edit\nInfluences > Remove Influence)"
   },
   "Tooltips/operators/skin_tools_199": {
    "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)": "Maya Skin > Bake Deformation to Skin Weights...: fit the destination skin's weights to the source mesh's whole\ndeformation (skin + deformers) over each joint's range of motion (select the source, then the destination)",
