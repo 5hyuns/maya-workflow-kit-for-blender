@@ -5402,8 +5402,18 @@
    "Vertex": "Vertex"
   },
   "Labels/operators/constrain_199": {
-   "Aim constraint": "Aim constraint",
    "Aim vector": "Aim vector",
+   "Normal Constraint": "Normal Constraint",
+   "Tangent Constraint": "Tangent Constraint",
+   "Up vector": "Up vector",
+   "Weight": "Weight",
+   "World up type": "World up type"
+  },
+  "Labels/operators/constrain_interp": {
+   "Interp Type": "Interp Type"
+  },
+  "Labels/operators/constrain_modify": {
+   "Aim constraint": "Aim constraint",
    "All": "All",
    "Enable to make the constraint act upon the X axis": "Enable to make the constraint act upon the X axis",
    "Enable to make the constraint act upon the Y axis": "Enable to make the constraint act upon the Y axis",
@@ -5411,7 +5421,6 @@
    "Geometry constraint": "Geometry constraint",
    "Maintain offset": "Maintain offset",
    "Modify Constrained Axis": "Modify Constrained Axis",
-   "Normal Constraint": "Normal Constraint",
    "Normal constraint": "Normal constraint",
    "Orient constraint": "Orient constraint",
    "Parent constraint": "Parent constraint",
@@ -5422,14 +5431,7 @@
    "Remove the targets from every constraint type": "Remove the targets from every constraint type",
    "Scale constraint": "Scale constraint",
    "Set Rest Position": "Set Rest Position",
-   "Tangent Constraint": "Tangent Constraint",
-   "Tangent constraint": "Tangent constraint",
-   "Up vector": "Up vector",
-   "Weight": "Weight",
-   "World up type": "World up type"
-  },
-  "Labels/operators/constrain_interp": {
-   "Interp Type": "Interp Type"
+   "Tangent constraint": "Tangent constraint"
   },
   "Labels/operators/constrain_multi": {
    "Constraint Node State": "Constraint Node State"
@@ -9642,14 +9644,16 @@
    "Middle-drag in the Connect Tool: change the value picked in its Tool Settings (Segments by default, or\nSlide / Pinch) and re-do the last connection with it; Esc / right-click puts the value back": "Middle-drag in the Connect Tool: change the value picked in its Tool Settings (Segments by default, or\nSlide / Pinch) and re-do the last connection with it; Esc / right-click puts the value back"
   },
   "Tooltips/operators/constrain_199": {
-   "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive": "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive",
    "Maya Normal constraint: select the target surface(s), then the object; its aim vector follows the surface\nnormal at the closest point": "Maya Normal constraint: select the target surface(s), then the object; its aim vector follows the surface\nnormal at the closest point",
-   "Maya Remove Target: select the target(s), then the constrained object; the constraints from those targets go\n(the last one of a type leaves the channels where the constraint had them)": "Maya Remove Target: select the target(s), then the constrained object; the constraints from those targets go\n(the last one of a type leaves the channels where the constraint had them)",
-   "Maya Set Rest Position: the constrained objects' current values become where they go when the constraint\nweights are 0": "Maya Set Rest Position: the constrained objects' current values become where they go when the constraint\nweights are 0",
    "Maya Tangent constraint: select the target curve(s), then the object; its aim vector follows the curve\ntangent at the closest point": "Maya Tangent constraint: select the target curve(s), then the object; its aim vector follows the curve\ntangent at the closest point"
   },
   "Tooltips/operators/constrain_interp": {
    "Maya Interp Type of an orient / parent constraint node (how several targets' rotations are blended)": "Maya Interp Type of an orient / parent constraint node (how several targets' rotations are blended)"
+  },
+  "Tooltips/operators/constrain_modify": {
+   "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive": "Maya Modify Constrained Axis: which axes the selected objects' point / orient / scale / parent constraints\ndrive",
+   "Maya Remove Target: select the target(s), then the constrained object; the constraints from those targets go\n(the last one of a type leaves the channels where the constraint had them)": "Maya Remove Target: select the target(s), then the constrained object; the constraints from those targets go\n(the last one of a type leaves the channels where the constraint had them)",
+   "Maya Set Rest Position: the constrained objects' current values become where they go when the constraint\nweights are 0": "Maya Set Rest Position: the constrained objects' current values become where they go when the constraint\nweights are 0"
   },
   "Tooltips/operators/constrain_multi": {
    "Turn the Maya constraint node on / off (every Blender constraint of the multi-target group)": "Turn the Maya constraint node on / off (every Blender constraint of the multi-target group)"
