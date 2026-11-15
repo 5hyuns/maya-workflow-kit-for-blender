@@ -45,8 +45,9 @@ extension until they are tested.
   columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
   sessions, a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE, and Eevee /
   Cycles items in the panel Renderer menu.
-- Maya Workflow Kit Theme: a separate, optional theme extension with Maya-like interface greys (see Recommended setup
-  in the README). The add-on itself still never changes the theme.
+- Maya's interface colours in Maya mode: grey panels, menu bars, fields, buttons and menus, Maya's selection blue and
+  pale yellow tooltips. Only theme values change, and your own theme comes back when you switch to Blender, disable or
+  remove the kit, or quit; Save Preferences while Maya mode is on still saves your own theme.
 
 ## Changed
 

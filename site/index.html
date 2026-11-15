@@ -132,7 +132,8 @@
       menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a welcome dialog. Your keymap, theme, layout and
       preferences stay as they are.</p>
     <p>Choose <strong>Make Blender feel like Maya</strong> and the kit adds its Maya-style keys, menus and panels and
-      the Maya layout in the open file. It never touches your theme, preferences or active keymap. Click
+      the Maya layout in the open file. It sets Maya's interface colours in the theme while Maya mode is on and never
+      touches your preferences or active keymap. Click
       <strong>Blender</strong> in the switch and Blender's own keys and UI are back; switch again whenever a tutorial
       uses Blender's own keys.</p>
   </div>
@@ -284,14 +285,10 @@
 
 <section class="limits" id="setup" aria-labelledby="setup-title">
   <h2 id="setup-title">Recommended setup</h2>
-  <p>Optional. The kit leaves your theme and Blender preferences to you.</p>
+  <p>Optional. The kit leaves your Blender preferences to you.</p>
   <details class="setup">
-    <summary>The five settings Maya users usually change</summary>
+    <summary>The four settings Maya users usually change</summary>
     <ul class="limits__list">
-      <li>A Maya-grey theme: the separate Maya Workflow Kit Theme, or any theme you like
-        (<span class="path">Edit › Preferences › Get Extensions</span>, filter by Themes). Save your current theme first
-        with the + next to the theme menu in <span class="path">Preferences › Themes</span>; that menu switches
-        back.</li>
       <li>Navigation: Orbit Method Turntable, Orbit Around Selection off, Zoom to Mouse Position off, Auto Perspective on,
         Zoom Method Dolly with a horizontal axis.</li>
       <li>Undo Steps set to 256 (Blender's maximum) under System.</li>
@@ -327,8 +324,9 @@
   </details>
   <details>
     <summary>Will it change my Blender settings?</summary>
-    <p>No. Maya mode adds keys, menus, panels and a layout; it never writes your theme, preferences or active
-      keymap, and never saves preferences. The switch, disabling or removing the extension takes its additions away.</p>
+    <p>No. Maya mode adds keys, menus, panels and a layout; it never writes your preferences or active keymap.
+      While Maya mode is on it sets Maya's colours in the theme, and when you save preferences then, it saves them
+      again with your own theme. The switch, disabling or removing the extension takes its additions away.</p>
   </details>
   <details>
     <summary>Can I follow Blender tutorials with it installed?</summary>
