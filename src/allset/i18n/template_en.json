@@ -4892,6 +4892,7 @@
    "Blender windows are managed by the OS (Window > Toggle Window Fullscreen); there is no Home screen.": "Blender windows are managed by the OS (Window > Toggle Window Fullscreen); there is no Home screen.",
    "Blender's Alembic import already keeps the file linked (Mesh Sequence Cache); replace = import again, About = the Blender manual.": "Blender's Alembic import already keeps the file linked (Mesh Sequence Cache); replace = import again, About = the Blender manual.",
    "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane).": "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane).",
+   "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.",
    "Blender's IK bends from the rest pose: the angle is stored for Assume Preferred Angle, the solver doesn't read it.": "Blender's IK bends from the rest pose: the angle is stored for Assume Preferred Angle, the solver doesn't read it.",
    "Blender's IPR is a 3D View in Rendered shading: it opens in its own window and looks where the main view looks; IPR again closes it (Render Region: Ctrl+B).": "Blender's IPR is a 3D View in Rendered shading: it opens in its own window and looks where the main view looks; IPR again closes it (Render Region: Ctrl+B).",
    "Blender's Measure tool measures distances and angles; parameter and arc length tools aren't built in.": "Blender's Measure tool measures distances and angles; parameter and arc length tools aren't built in.",
@@ -4927,6 +4928,7 @@
    "Blender: invisible faces = delete or hide faces, reorder vertices = Mesh > Sort Elements, project a curve = Knife Project.": "Blender: invisible faces = delete or hide faces, reorder vertices = Mesh > Sort Elements, project a curve = Knife Project.",
    "Blender: paint reduce / transfer weights = vertex groups on Decimate / Data Transfer modifiers.": "Blender: paint reduce / transfer weights = vertex groups on Decimate / Data Transfer modifiers.",
    "Bone collections": "Bone collections",
+   "Boolean modifier (applied)": "Boolean modifier (applied)",
    "Bridged loops": "Bridged loops",
    "Cache File properties": "Cache File properties",
    "Cloth modifier": "Cloth modifier",
@@ -5272,6 +5274,8 @@
   "Labels/operators/bookmarks": {
    "Create Bookmark": "Create Bookmark",
    "Current": "Current",
+   "Delete Bookmark": "Delete Bookmark",
+   "Every bookmark (Maya Delete All Bookmarks)": "Every bookmark (Maya Delete All Bookmarks)",
    "Frame Bookmark": "Frame Bookmark",
    "Name": "Name",
    "Next": "Next",
@@ -6219,8 +6223,10 @@
    "Combine with Original": "Combine with Original",
    "Custom threshold (Maya units)": "Custom threshold (Maya units)",
    "Cut Geometry": "Cut Geometry",
+   "Cut Out": "Cut Out",
    "Difference (A - B)": "Difference (A - B)",
    "Difference (B - A)": "Difference (B - A)",
+   "Hole Punch": "Hole Punch",
    "Intersection": "Intersection",
    "Merge Threshold": "Merge Threshold",
    "Merge border vertices": "Merge border vertices",
@@ -6233,6 +6239,8 @@
    "Operation": "Operation",
    "Plane offset along the axis (Maya units)": "Plane offset along the axis (Maya units)",
    "Separate": "Separate",
+   "Slice": "Slice",
+   "Split Edges": "Split Edges",
    "Union": "Union",
    "World": "World"
   },
@@ -7459,7 +7467,8 @@
    "First Selection": "First Selection",
    "Independent": "Independent",
    "Maya Visibility": "Maya Visibility",
-   "Saved": "Saved"
+   "Saved": "Saved",
+   "Type": "Type"
   },
   "Labels/operators/weight_paint": {
    "1 = next mode (Ctrl+.), -1 = previous mode (Ctrl+,), 0 = the mode above": "1 = next mode (Ctrl+.), -1 = previous mode (Ctrl+,), 0 = the mode above",
@@ -9447,6 +9456,7 @@
   },
   "Tooltips/operators/bookmarks": {
    "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time": "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time",
+   "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)": "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)",
    "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)": "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)"
   },
   "Tooltips/operators/by_type": {

@@ -37,7 +37,65 @@ ACTIONS = (
     ('SHOW_SELECTED', "Show Selected Objects", "Maya Shift+H"),
     ('SHOW_LAST', "Show Last Hidden", "Maya Ctrl+Shift+H"),
     ('SHOW_ALL', "Show All", "Maya Display > Show > All: every object whose visibility is off"),
+    ('HIDE_ALL', "Hide All", "Maya Display > Hide > All: every object"),
+    ('HIDE_TYPE', "Hide by Type", "Maya Display > Hide > <type>: every object of the type"),
+    ('SHOW_TYPE', "Show by Type", "Maya Display > Show > <type>: every hidden object of the type"),
 )
+
+# Maya Display > Hide / Show > <type> (HideNURBSSurfaces, ShowJoints, ...): the kit's node of each Maya type.
+GEOMETRY_TYPES = {'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'CURVES', 'POINTCLOUD', 'VOLUME'}
+
+
+def _deforming(ob):
+    from .history import is_deformer
+    return ob.type in GEOMETRY_TYPES and any(is_deformer(md) for md in getattr(ob, "modifiers", ()))
+
+
+def _nonlinear_handles(scene):
+    from .history import NONLINEARS
+    used = {getattr(md, "origin", None) or getattr(md, "start_position_object", None) or getattr(md, "object", None)
+            for o in scene.objects for md in getattr(o, "modifiers", ()) if md.type in NONLINEARS}
+    return [ob for ob in scene.objects if ob in used]
+
+
+def _of_type(*types):
+    return lambda scene: [ob for ob in scene.objects if ob.type in types]
+
+
+def _selector(kind):
+    from .by_type import SELECTORS, ik_handles, cluster_handles
+    return {
+        'GEOMETRY': _of_type(*GEOMETRY_TYPES),
+        'NURBS_SURFACES': _of_type('SURFACE'),
+        'NURBS_CURVES': _of_type('CURVE'),
+        'POLYGONS': _of_type('MESH'),
+        'DEFORMING': lambda scene: [ob for ob in scene.objects if _deforming(ob)],
+        'KINEMATICS': lambda scene: _of_type('ARMATURE')(scene) + ik_handles(scene),
+        'JOINTS': _of_type('ARMATURE'),
+        'IK_HANDLES': ik_handles,
+        'DEFORMERS': lambda scene: (_of_type('LATTICE')(scene) + cluster_handles(scene)
+                                    + _nonlinear_handles(scene)),
+        'LATTICES': _of_type('LATTICE'),
+        'CLUSTERS': cluster_handles,
+        'NONLINEARS': _nonlinear_handles,
+        'LIGHTS': _of_type('LIGHT'),
+        'CAMERAS': _of_type('CAMERA'),
+        'NCLOTHS': SELECTORS['NCLOTHS'],
+        'NPARTICLES': SELECTORS['NPARTICLES'],
+        'NRIGIDS': SELECTORS['NRIGIDS'],
+    }[kind]
+
+
+KINDS = tuple((k, k.replace("_", " ").title(), "") for k in (
+    'NONE', 'GEOMETRY', 'NURBS_SURFACES', 'NURBS_CURVES', 'POLYGONS', 'DEFORMING', 'KINEMATICS', 'JOINTS',
+    'IK_HANDLES', 'DEFORMERS', 'LATTICES', 'CLUSTERS', 'NONLINEARS', 'LIGHTS', 'CAMERAS', 'NCLOTHS', 'NPARTICLES',
+    'NRIGIDS'))
+
+
+def of_kind(context, kind):
+    """The view layer's objects of a Maya Hide / Show type (scene order, each once)."""
+    in_layer = {ob.session_uid for ob in context.view_layer.objects}
+    return [ob for ob in dict.fromkeys(_selector(kind)(context.scene)) if ob.session_uid in in_layer]
 
 
 def _clear(objects, key):
@@ -169,8 +227,9 @@ def toggle(context, dependent=False):
     return len(members)
 
 
-def apply(context, action, dependent=None):
-    """Run ``action`` on the view layer; returns the number of objects changed."""
+def apply(context, action, dependent=None, kind='NONE'):
+    """Run ``action`` on the view layer (``kind``: the type of HIDE_TYPE / SHOW_TYPE); returns the number of
+    objects changed."""
     vl = context.view_layer
     objs = list(vl.objects)
     selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
@@ -198,6 +257,12 @@ def apply(context, action, dependent=None):
         return _show([ob for ob in hidden if LAST in ob], vl)
     if action == 'SHOW_ALL':
         return _show(hidden, vl, select=False)
+    if action == 'HIDE_ALL':
+        return _hide([ob for ob in objs if not ob.hide_viewport], objs)
+    if action == 'HIDE_TYPE':
+        return _hide([ob for ob in of_kind(context, kind) if not ob.hide_viewport], objs)
+    if action == 'SHOW_TYPE':
+        return _show([ob for ob in of_kind(context, kind) if ob.hide_viewport], vl, select=False)
     raise ValueError(action)
 
 
@@ -209,6 +274,7 @@ class ALLSET_OT_visibility(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     action: EnumProperty(name="Action", items=ACTIONS, default='TOGGLE')
+    kind: EnumProperty(name="Type", items=KINDS, default='NONE', options={'SKIP_SAVE'})
     # Toggle: Maya's First Selection; SAVED = the Toggle Visibility Options window's value
     behaviour: EnumProperty(name="First Selection", options={'SKIP_SAVE', 'HIDDEN'}, default='SAVED', items=(
         ('SAVED', "Saved", ""), ('INDEPENDENT', "Independent", ""), ('DEPENDENT', "Dependent", "")))
@@ -226,7 +292,7 @@ class ALLSET_OT_visibility(bpy.types.Operator):
         vl = context.view_layer
         had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
         changed = apply(context, self.action,
-                        None if self.behaviour == 'SAVED' else self.behaviour == 'DEPENDENT')
+                        None if self.behaviour == 'SAVED' else self.behaviour == 'DEPENDENT', self.kind)
         from . import dag
         dag.sync(context.scene, vl)          # a hidden parent hides its children (Maya)
         text = message(self.action, had_selection, changed)

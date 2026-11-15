@@ -106,14 +106,14 @@ def rows(path):
     items, prefix, top_label = got
     kids = menu_sets.menu_rows(items, prefix)       # labels in the interface language
     plain = [(p, it[0], p in menu_sets.OPTION_BOXES) for p, it in kids
-             if p is not None and not (menu_sets.sub_items(p, it) and p not in menu_map.MAP)]
+             if p is not None and not menu_map.is_submenu(p, menu_sets.sub_items(p, it))]
     texts = menu_sets.item_texts(plain)
     out = [(maya_dock.TEAR_LINE, False)]
     for p, it in kids:
         if p is None:
             if len(it) > 1 and it[1]:
                 out.append((i18n.iface(it[1]), False))   # drawn by Blender, translated
-        elif menu_sets.sub_items(p, it) and p not in menu_map.MAP:
+        elif menu_map.is_submenu(p, menu_sets.sub_items(p, it)):
             out.append((it[0] + (menu_sets.BOX_MARK if p in menu_sets.OPTION_BOXES else ""), True))
         else:
             out.append((texts[p], False))

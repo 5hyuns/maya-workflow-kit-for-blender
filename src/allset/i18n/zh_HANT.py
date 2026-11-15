@@ -6517,4 +6517,7 @@ STRINGS = {
     'Toggle Section': '切換區段',
     'Transform Group': '變換分組',
     'Viewport Shading Controls': '視口著色控制',
+    "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender 的精確布林運算，立即套用；第二個物件會被刪除，與 Maya 關閉建構歷史時相同。',
+    'Boolean modifier (applied)': '布林修改器（已套用）',
+    'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '刪除目前時間的時間滑桿書籤，或刪除所有書籤（Maya 刪除 / 刪除所有書籤）',
 }

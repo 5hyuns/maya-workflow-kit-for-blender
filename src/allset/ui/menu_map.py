@@ -307,8 +307,29 @@ MAP = {
     # --- Display ---
     "Display/Grid": ("v3d", "allset.toggle_grid", {}),     # Maya grid (ui/maya_grid.py)
     # one Maya visibility = hide_viewport (operators/visibility.py, #26)
+    # the two submenu paths stay mapped for shelf buttons saved with them; SUBMENUS still draws Maya's items
     "Display/Hide": ("allset.visibility", {"action": 'HIDE'}),
     "Display/Show": ("allset.visibility", {"action": 'SHOW_ALL'}),
+    "Display/Hide/Hide Selection": ("allset.visibility", {"action": 'HIDE'}),
+    "Display/Hide/Hide Unselected Objects": ("allset.visibility", {"action": 'HIDE_UNSELECTED'}),
+    "Display/Hide/All": ("allset.visibility", {"action": 'HIDE_ALL'}),
+    "Display/Show/Show Selection": ("allset.visibility", {"action": 'SHOW_SELECTED'}),
+    "Display/Show/Show Last Hidden": ("allset.visibility", {"action": 'SHOW_LAST'}),
+    "Display/Show/All": ("allset.visibility", {"action": 'SHOW_ALL'}),
+    "Display/Show/All Components": ("mesh.reveal", {"select": False}),   # Maya showAllComponents
+    # Maya hideShow -<type> -hide / -show: the visibility of every node of the type (operators/visibility.py)
+    **{f"Display/{verb}/{label}": ("allset.visibility", {"action": f'{verb.upper()}_TYPE', "kind": kind})
+       for verb in ("Hide", "Show")
+       for label, kind in ((f"{verb} Geometry/All", 'GEOMETRY'), (f"{verb} Geometry/NURBS Surfaces", 'NURBS_SURFACES'),
+                           (f"{verb} Geometry/NURBS Curves", 'NURBS_CURVES'),
+                           (f"{verb} Geometry/Polygon Surfaces", 'POLYGONS'),
+                           (f"{verb} Geometry/Deforming Geometry", 'DEFORMING'),
+                           (f"{verb} Kinematics/All", 'KINEMATICS'), (f"{verb} Kinematics/Joints", 'JOINTS'),
+                           (f"{verb} Kinematics/IK Handles", 'IK_HANDLES'),
+                           (f"{verb} Deformers/All", 'DEFORMERS'), (f"{verb} Deformers/Lattices", 'LATTICES'),
+                           (f"{verb} Deformers/Clusters", 'CLUSTERS'), (f"{verb} Deformers/Nonlinears", 'NONLINEARS'),
+                           ("Lights", 'LIGHTS'), ("Cameras", 'CAMERAS'), ("nCloths", 'NCLOTHS'),
+                           ("nParticles", 'NPARTICLES'), ("nRigids", 'NRIGIDS'))},
     # #165: joints = their skeleton's bone axes, objects = every selected one (operators/joint_display.py)
     "Display/Transform Display/Local Rotation Axes": "allset.local_rotation_axes",
     "Display/Frame All in All Views": ("allset.frame_all_views", {"selected": False}),
@@ -339,6 +360,9 @@ MAP = {
     "Mesh/Booleans/Intersection": ("allset.boolean", {"operation": 'INTERSECT'}),
     # Maya 2026 Booleans (PolygonBooleanDifferenceBA = Difference B - A)
     "Mesh/Booleans/Difference (B - A)": ("allset.boolean", {"operation": 'DIFFERENCE_BA'}),
+    **{f"Mesh/Booleans/{label}": ("allset.boolean", {"operation": op})
+       for label, op in (("Slice", 'SLICE'), ("Hole Punch", 'HOLE_PUNCH'), ("Cut Out", 'CUT_OUT'),
+                         ("Split Edges", 'SPLIT_EDGES'))},
     "Mesh/Unsmooth": ("v3d", "mesh.unsubdivide", {}),        # UnsmoothPolygon -> Blender Un-Subdivide
     "Mesh/Fill Hole": "allset.fill_hole",     # every selected border loop, any number of edges (#337)
     "Mesh/Reduce": _mod('DECIMATE'),
@@ -913,7 +937,16 @@ MAP.update({
     **{f"Playback/Playback Looping/{label}": ("prop", "scene.allset_playback_loop", {"value": value})
        for value, label in (("CONTINUOUS", "Continuous"), ("ONCE", "Once"), ("OSCILLATE", "Oscillate"))},
     "Playback/Enable Stepped Preview": ("prop", "scene.allset_stepped_preview", {}),
-    "Visualize/Time Slider Bookmarks": "marker.add",
+    # the same actions as the Maya bookmark hotkeys (keymap/mapping.py, operators/bookmarks.py)
+    "Visualize/Time Slider Bookmarks/Create": "allset.bookmark_create",
+    "Visualize/Time Slider Bookmarks/Next Bookmark": ("screen.marker_jump", {"next": True}),
+    "Visualize/Time Slider Bookmarks/Previous Bookmark": ("screen.marker_jump", {"next": False}),
+    "Visualize/Time Slider Bookmarks/Frame Bookmark": ("allset.bookmark_frame", {"which": 'CURRENT'}),
+    "Visualize/Time Slider Bookmarks/Frame Previous Bookmark": ("allset.bookmark_frame", {"which": 'PREVIOUS'}),
+    "Visualize/Time Slider Bookmarks/Frame Next Bookmark": ("allset.bookmark_frame", {"which": 'NEXT'}),
+    "Visualize/Time Slider Bookmarks/Unframe": "allset.playback_range_anim",
+    "Visualize/Time Slider Bookmarks/Delete": "allset.bookmark_delete",
+    "Visualize/Time Slider Bookmarks/Delete All Bookmarks": ("allset.bookmark_delete", {"all": True}),
     # Audio: sounds are Video Sequencer sound strips
     "Audio/Import Audio...": "allset.import_audio",
     "Audio/Import Audio Clip to Time Editor...": "allset.import_audio",
@@ -1223,6 +1256,15 @@ MAP.setdefault("UV/Delete UVs", "allset.uv_delete")   # main menu twin of the UV
 for _twin, _source in TWINS.items():
     if _twin not in MAP and _source in MAP:
         MAP[_twin] = MAP[_source]
+
+
+# Maya submenus drawn with their items although their own path is mapped (shelf buttons saved with that path)
+SUBMENUS = frozenset({"Display/Hide", "Display/Show"})
+
+
+def is_submenu(path, kids):
+    """A menu entry with children opens them, unless its own path is mapped to one action."""
+    return bool(kids) and (path not in MAP or path in SUBMENUS)
 
 
 def spec(path):

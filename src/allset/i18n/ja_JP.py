@@ -6418,4 +6418,7 @@ STRINGS = {
     'Toggle Section': 'セクションの切り替え',
     'Transform Group': 'トランスフォームグループ',
     'Viewport Shading Controls': 'ビューポートのシェーディングコントロール',
+    "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender の Exact ブーリアンをすぐに適用し、2 番目のオブジェクトを削除します (Maya でコンストラクション ヒストリをオフにした場合と同じ)。',
+    'Boolean modifier (applied)': 'ブーリアンモディファイア (適用済み)',
+    'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '現在の時間のタイムスライダ ブックマーク、またはすべてのブックマークを削除します (Maya の削除 / すべてのブックマークを削除)',
 }
