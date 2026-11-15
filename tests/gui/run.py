@@ -1,7 +1,7 @@
 """GUI event-simulation tests.
 
-    python tests/gui/run.py [-k PATTERN] [--no-build] [--shots DIR] [--ui-scale 0.8]
-    python tests/gui/run.py -k PATTERN --blenders 5.0.1,5.1.2,5.2.3   # the same files on several Blenders
+    python tests/gui/run.py [-k PATTERN] [--no-build] [--shots DIR] [--ui-scale 0.8] [--blender PATH | VERSION]
+    python tests/gui/run.py -k PATTERN --blenders 5.2,5.3   # the same files on each supported Blender
 
 Builds and installs the extension into the same sandbox as tests/run.py,
 then runs each tests/gui/gui_*.py in a GUI Blender started with
@@ -11,9 +11,11 @@ terminated on timeout. Prints PASS/FAIL per check; exit 1 on any failure.
 ``--ui-scale`` sets Preferences > Interface > Resolution Scale for every test (also after
 a template switch, which reloads factory preferences); 0.8 = the Maya density preset on a
 125 % display.
-``--blenders`` (release smoke): one run per portable Blender
-(``%LOCALAPPDATA%/allset_blenders/blender-<ver>-windows-x64/blender.exe``, or a path), one after the other, each in
-its own sandbox ``<ALLSET_SANDBOX or test_env>_<ver>``; the extension is built once.
+``--blender 5.3`` is the newest portable 5.3 build (tools/build.py ``blender_exe``: a version like 5.3.0, a minor
+like 5.3, or a path); the default is 5.2 LTS.
+``--blenders``: one run per Blender (portable builds in ``%LOCALAPPDATA%/allset_blenders/blender-<ver>-windows-x64``,
+or paths), one after the other, each in its own sandbox ``<ALLSET_SANDBOX or test_env>_<ver>``; the extension is
+built once.
 """
 
 import argparse
@@ -29,15 +31,7 @@ ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parent))
 import run as headless  # noqa: E402
 
-PORTABLE = Path(os.environ.get("ALLSET_BLENDERS",
-                               os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders")))
-
-
-def blender_exe(ver):
-    """A version like 5.1.2 -> its portable build's blender.exe; anything with a path separator is a path."""
-    if "/" in ver or "\\" in ver:
-        return ver
-    return str(PORTABLE / f"blender-{ver}-windows-x64" / "blender.exe")
+blender_exe = headless.build.blender_exe      # a version / minor -> its portable build; a path stays
 
 
 def run_matrix(args):
@@ -47,7 +41,10 @@ def run_matrix(args):
     base = os.environ.get("ALLSET_SANDBOX", "test_env")
     summary, worst = [], 0
     for n, ver in enumerate(v.strip() for v in args.blenders.split(",") if v.strip()):
-        exe = blender_exe(ver)
+        try:
+            exe = blender_exe(ver)
+        except SystemExit as missing:      # no portable build of that minor
+            exe = str(missing)
         tag = ver if exe != ver else str(n)
         if not Path(exe).exists():
             print(f"MISSING  {ver}: {exe}")
@@ -109,14 +106,16 @@ def main(argv=None):
     ap.add_argument("--shots", default="", help="directory for screenshots")
     ap.add_argument("--ui-scale", type=float, default=0.0, help="view.ui_scale for all tests")
     ap.add_argument("--dir", default=str(HERE), help="folder of gui_*.py files (audit repro scripts: tests/gui/audit128)")
-    ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER))
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER),
+                    help="blender.exe, or a version / minor of a portable build (5.3 = the newest 5.3)")
     ap.add_argument("--include-skipped", action="store_true", help="also run files marked GUI_SKIP")
-    ap.add_argument("--blenders", default="", help="comma-separated Blender versions (portable builds) or paths: "
+    ap.add_argument("--blenders", default="", help="comma-separated Blenders (versions or paths, e.g. 5.2,5.3): "
                                                    "run the selected files on each, one after the other")
     headless.add_order_args(ap)
     args = ap.parse_args(argv)
     if args.blenders:
         return run_matrix(args)
+    args.blender = blender_exe(args.blender)
 
     if args.zip:
         zip_path = Path(args.zip).resolve()

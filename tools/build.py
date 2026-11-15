@@ -1,6 +1,6 @@
 """Build the Maya Workflow Kit packages into dist/.
 
-    python tools/build.py [--blender PATH] [--no-legacy]
+    python tools/build.py [--blender PATH | VERSION] [--no-legacy]
 
 Outputs:
   dist/maya-workflow-kit-<version>.zip         Blender 4.2+ extension (id ``allset`` inside)
@@ -28,11 +28,35 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "allset"
 DIST = ROOT / "dist"
-# Main target: Blender 5.2 LTS, the portable 5.2.3 build; 5.0 / 5.1 are run with
-# ``--blender`` / ``BLENDER``. Blender 4.5 is not supported since 0.7.0.
+# Supported: Blender 5.2 LTS and 5.3; every test and release check runs on both. The main target and every tool's
+# default Blender is 5.2 LTS, the portable 5.2.3 build; ``--blender 5.3`` (or ``BLENDER=5.3``) picks 5.3. 5.0 / 5.1
+# still install and are run the same way (``--blender 5.1``). Blender 4.5 is not supported since 0.7.0.
+SUPPORTED = ("5.2", "5.3")
+# portable Blender builds: <PORTABLE>/blender-<version>-windows-x64/blender.exe
+PORTABLE = Path(os.environ.get("ALLSET_BLENDERS",
+                               os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders")))
 BLENDER_52 = os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders", "blender-5.2.3-windows-x64",
                           "blender.exe")
 DEFAULT_BLENDER = BLENDER_52
+
+
+def blender_exe(name):
+    """The blender.exe a ``--blender`` / ``BLENDER`` value names: a version such as ``5.3.0`` = its portable build,
+    a minor such as ``5.3`` = the newest portable build of that minor, anything else = a path, as it is."""
+    name = str(name).strip()
+    if re.fullmatch(r"\d+\.\d+\.\d+", name):
+        return str(PORTABLE / f"blender-{name}-windows-x64" / "blender.exe")
+    if not re.fullmatch(r"\d+\.\d+", name):
+        return name
+    found = []
+    for folder in PORTABLE.glob(f"blender-{name}.*-windows-x64"):
+        m = re.fullmatch(rf"blender-{re.escape(name)}\.(\d+)-windows-x64", folder.name)
+        if m and (folder / "blender.exe").is_file():
+            found.append((int(m.group(1)), str(folder / "blender.exe")))
+    if not found:
+        raise SystemExit(f"no portable Blender {name} in {PORTABLE}: put blender-{name}.<patch>-windows-x64 there "
+                         "or pass the path to blender.exe")
+    return max(found)[1]
 
 # Zip file name stem = the product name. `extension build` would name the file after the
 # manifest id; the output path is passed explicitly.
@@ -137,6 +161,7 @@ def main(argv=None):
     ap.add_argument("--blender", default=os.environ.get("BLENDER", DEFAULT_BLENDER))
     ap.add_argument("--no-legacy", action="store_true", help="skip the legacy add-on zip")
     args = ap.parse_args(argv)
+    args.blender = blender_exe(args.blender)
 
     version = manifest_value("version")
     DIST.mkdir(exist_ok=True)

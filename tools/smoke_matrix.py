@@ -1,7 +1,8 @@
-"""Release smoke on every supported Blender minor (#198 #199).
+"""Release smoke on every Blender minor the kit installs on (#198 #199): 5.2 LTS and 5.3 are supported, 5.0 / 5.1
+still install.
 
-    python tools/smoke_matrix.py                          # 5.0.1, 5.1.2, 5.2.3 (portable builds)
-    python tools/smoke_matrix.py --blenders 5.1.2         # one version (or a path to blender.exe)
+    python tools/smoke_matrix.py                          # 5.0, 5.1, 5.2, 5.3 (the newest portable build of each)
+    python tools/smoke_matrix.py --blenders 5.1.2         # one version (or a minor, or a path to blender.exe)
     python tools/smoke_matrix.py --headless-only / --gui-only
 
 For each Blender, one after the other: the headless smoke files (enable / disable, the Maya / Blender switch, its
@@ -21,17 +22,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import build  # noqa: E402
 
-BLENDERS = "5.0.1,5.1.2,5.2.3"       # the newest patch release of every supported minor
+BLENDERS = "5.0,5.1,5.2,5.3"         # every minor the manifest allows (build.blender_exe: its newest portable build)
 HEADLESS = "step279,enable_disable,step60_switch,issue185_switch_back,step115,step130_lifecycle"
 GUI = "step279,switch,layout"
-PORTABLE = Path(os.environ.get("ALLSET_BLENDERS",
-                               os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders")))
 
 
 def blender_exe(ver):
-    if "/" in ver or "\\" in ver:
-        return ver
-    return str(PORTABLE / f"blender-{ver}-windows-x64" / "blender.exe")
+    """build.blender_exe; a minor without a portable build gives a path that doesn't exist (reported missing)."""
+    try:
+        return build.blender_exe(ver)
+    except SystemExit:
+        return str(build.PORTABLE / f"blender-{ver}.x-windows-x64" / "blender.exe")
 
 
 def main(argv=None):

@@ -1,6 +1,7 @@
 """Run joint, Channel Box and weight-paint integration checks in isolated Blender processes.
 
-python tests/integration/run.py --blender PATH [--no-build] [-k PATTERN] [--headless-only]
+python tests/integration/run.py [--blender PATH | VERSION] [--no-build] [-k PATTERN] [--headless-only]
+(``--blender 5.3`` = the newest portable 5.3 build; the default is 5.2 LTS.)
 GUI checks open a temporary factory window and close it on completion.
 """
 
@@ -30,7 +31,8 @@ def main():
     ap.add_argument('--headless-only', action='store_true')
     ap.add_argument('-k', default='', help='comma-separated filename patterns')
     args = ap.parse_args()
-    files = [p for p in sorted(HERE.glob('blender_*.py'))
+    args.blender = headless.build.blender_exe(args.blender)
+    files =[p for p in sorted(HERE.glob('blender_*.py'))
              if any(k in p.stem for k in args.k.split(','))
              and not (args.headless_only and p.stem in GUI_RESULTS)]
     if not files:

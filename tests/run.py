@@ -1,6 +1,11 @@
 """Headless test harness for Maya Workflow Kit.
 
-    python tests/run.py [-k PATTERN] [--no-build] [--blender PATH]
+    python tests/run.py [-k PATTERN] [--no-build] [--blender PATH | VERSION]
+    python tests/run.py --blenders 5.2,5.3        # the same files on each supported Blender, one after the other
+
+``--blender 5.3`` is the newest portable 5.3 build (tools/build.py ``blender_exe``); the default is 5.2 LTS.
+``--blenders``: one run per Blender, each in its own sandbox ``<ALLSET_SANDBOX or test_env>_<version>``; the
+extension is built once.
 
 1. Builds dist/maya-workflow-kit-<version>.zip with tools/build.py (skip: --no-build).
 2. Recreates a sandbox tmp/test_env/{config,scripts,extensions} and points
@@ -132,13 +137,47 @@ def order(files, args):
     return files
 
 
+def run_matrix(args, argv):
+    """``--blenders``: this runner once per Blender, one after the other (one Blender at a time), each in its own
+    sandbox; the extension is built once, with the first of them."""
+    names = [v.strip() for v in args.blenders.split(",") if v.strip()]
+    if not (args.no_build or args.zip):
+        build.main(["--blender", build.blender_exe(names[0]), "--no-legacy"])
+    rest, skip = [], False            # this run's arguments without --blenders
+    for a in argv:
+        if skip or a == "--blenders":
+            skip = not skip
+            continue
+        if not a.startswith("--blenders="):
+            rest.append(a)
+    base = os.environ.get("ALLSET_SANDBOX", "test_env")
+    summary = []
+    for n, name in enumerate(names):
+        exe = build.blender_exe(name)
+        env = dict(os.environ, ALLSET_SANDBOX=f"{base}_{name if exe != name else n}")
+        print(f"\n=== Blender {name} (sandbox tmp/{env['ALLSET_SANDBOX']}) ===", flush=True)
+        code = subprocess.call([sys.executable, str(Path(__file__).resolve()), *rest, "--no-build", "--blender", exe],
+                               env=env, stdin=subprocess.DEVNULL)
+        summary.append((name, code))
+    print("\nBlender matrix:")
+    for name, code in summary:
+        print(f"  {name}: {'ok' if code == 0 else 'FAILED'}")
+    return 1 if any(code for _n, code in summary) else 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Run Maya Workflow Kit headless tests")
     ap.add_argument("-k", default="", help="only test files whose name contains this (comma-separated: any of them)")
     ap.add_argument("--no-build", action="store_true")
-    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER),
+                    help="blender.exe, or a version / minor of a portable build (5.3 = the newest 5.3)")
+    ap.add_argument("--blenders", default="", help="comma-separated Blenders (versions or paths, e.g. 5.2,5.3): "
+                                                   "run the selected files on each, one after the other")
     add_order_args(ap)
     args = ap.parse_args(argv)
+    if args.blenders:
+        return run_matrix(args, sys.argv[1:] if argv is None else list(argv))
+    args.blender = build.blender_exe(args.blender)
 
     if not Path(args.blender).is_file():
         raise SystemExit(f"Blender not found: {args.blender}")

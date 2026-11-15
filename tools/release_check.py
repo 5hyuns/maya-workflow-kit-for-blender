@@ -1,6 +1,11 @@
-"""Release check: build, validate, install into a clean config, screenshot set.
+"""Release check: build, validate, install into a clean config, screenshot set, on every supported Blender.
 
-    python tools/release_check.py [--blender PATH] [--no-shots] [--shots DIR]
+    python tools/release_check.py [--no-shots] [--shots DIR]      # Blender 5.2 LTS, then 5.3
+    python tools/release_check.py --blender 5.3                    # one Blender (a version or a path)
+
+Items 2-4 run on each Blender of ``--blenders`` (default the supported 5.2 and 5.3), one after the other, each in its
+own sandboxes (the first in tmp/release_env*, the others with ``_<version>`` after the name). The first Blender
+builds the zips and writes docs/screenshots/; the others' screenshots stay in their sandbox. Then the site checks.
 
 1. ``tools/build.py`` (extension zip + legacy zip).
 2. ``blender --command extension validate`` on the zip.
@@ -79,11 +84,12 @@ DECLARED_INPUTS = {"view_rotate_method", "use_rotate_around_active", "use_mouse_
 USER_SANDBOX = ROOT / "tmp" / "release_env_user"
 
 
-def user_setup_check(blender, zip_path):
+def user_setup_check(blender, zip_path, suffix=""):
     """Seed a "user" setup in its own sandbox, install + enable the kit, snapshot, disable, snapshot."""
-    env = sandbox_env(USER_SANDBOX)
+    user_sandbox = Path(f"{USER_SANDBOX}{suffix}")
+    env = sandbox_env(user_sandbox)
     probe = [blender, "-b", "--python", str(ROOT / "tools" / "release_probe.py"), "--"]
-    snaps = {name: USER_SANDBOX / f"{name}.json" for name in ("before", "after", "disabled")}
+    snaps = {name: user_sandbox / f"{name}.json" for name in ("before", "after", "disabled")}
     rc, out = run(probe + ["seed", str(snaps["before"])], env)
     if rc != 0 or not snaps["before"].exists():
         print(out[-3000:])
@@ -96,10 +102,10 @@ def user_setup_check(blender, zip_path):
     run(probe + ["disable", str(snaps["disabled"])], env)
     checks = user_setup_checks(snaps["before"], snaps["after"], snaps["disabled"])
     # enable again, Make Blender Maya, then Remove the extension in Maya mode
-    removed = USER_SANDBOX / "removed.json"
+    removed = user_sandbox / "removed.json"
     run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
-    run(probe + ["make", str(USER_SANDBOX / "made.json")], env)
-    rc, out = run(probe + ["remove", str(USER_SANDBOX / "removing.json")], env)
+    run(probe + ["make", str(user_sandbox / "made.json")], env)
+    rc, out = run(probe + ["remove", str(user_sandbox / "removing.json")], env)
     run(probe + ["check", str(removed)], env)
     if rc != 0 or not removed.exists():
         print(out[-3000:])
@@ -122,20 +128,21 @@ def _files(root):
     return {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
 
 
-def leftover_check(blender, zip_path):
+def leftover_check(blender, zip_path, suffix=""):
     """Clean config -> install -> enable -> opt in -> disable -> Remove leaves no kit file behind."""
-    env = sandbox_env(CLEAN_SANDBOX)
+    clean = Path(f"{CLEAN_SANDBOX}{suffix}")
+    env = sandbox_env(clean)
     probe = [blender, "-b", "--python", str(ROOT / "tools" / "release_probe.py"), "--"]
-    run(probe + ["check", str(CLEAN_SANDBOX / "start.json")], env)
-    before = _files(CLEAN_SANDBOX)
+    run(probe + ["check", str(clean / "start.json")], env)
+    before = _files(clean)
     run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
-    run(probe + ["make", str(CLEAN_SANDBOX / "made.json")], env)
-    template = CLEAN_SANDBOX / "scripts" / "startup" / "bl_app_templates_user" / "Maya_Workflow_Kit"
+    run(probe + ["make", str(clean / "made.json")], env)
+    template = clean / "scripts" / "startup" / "bl_app_templates_user" / "Maya_Workflow_Kit"
     made = template.is_dir()
-    run(probe + ["disable", str(CLEAN_SANDBOX / "disabled.json")], env)
-    rc, out = run(probe + ["remove", str(CLEAN_SANDBOX / "removed.json")], env)
+    run(probe + ["disable", str(clean / "disabled.json")], env)
+    rc, out = run(probe + ["remove", str(clean / "removed.json")], env)
     # the probe's snapshots sit at the sandbox root; Blender keeps a managed repository's index / cache
-    left = sorted(f for f in _files(CLEAN_SANDBOX) - before
+    left = sorted(f for f in _files(clean) - before
                   if "/" in f and f not in BLENDER_OWN
                   and not f.startswith(("extensions/.cache/", f"extensions/{REPO_ID}/.blender_ext/")))
     for f in left:
@@ -169,35 +176,58 @@ def user_setup_checks(before_path, after_path, disabled_path):
     ]
 
 
-def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
-    ap.add_argument("--no-shots", action="store_true")
-    ap.add_argument("--shots", default=str(SHOTS), help="screenshot folder (default docs/screenshots)")
-    args = ap.parse_args(argv)
-    shots = Path(args.shots)
+def check_blender(blender, zip_path, suffix, shots):
+    """Items 2-4 (module docstring) on one Blender, in the sandboxes named with ``suffix``; ``shots`` None = no
+    screenshot run. Returns ok."""
+    sandbox = Path(f"{SANDBOX}{suffix}")
+    env = sandbox_env(sandbox)
     ok = True
-
-    zip_path = build.main(["--blender", args.blender])
-    env = sandbox_env()
-    rc, out = run([args.blender, "--factory-startup", "--command", "extension", "validate",
+    rc, out = run([blender, "--factory-startup", "--command", "extension", "validate",
                    str(zip_path)], env)
     valid = rc == 0 and "Success" in out
     print("validate:", "PASS" if valid else "FAIL", out.strip().splitlines()[-1] if out.strip() else "")
     ok &= valid
 
-    rc, out = run([args.blender, "--command", "extension", "install-file", "-r", REPO_ID,
+    rc, out = run([blender, "--command", "extension", "install-file", "-r", REPO_ID,
                    "--enable", str(zip_path)], env)
-    installed = (SANDBOX / "extensions" / REPO_ID / build.manifest_value("id") / "__init__.py").exists()
+    installed = (sandbox / "extensions" / REPO_ID / build.manifest_value("id") / "__init__.py").exists()
     print("install + enable:", "PASS" if rc == 0 and installed else "FAIL")
     if not (rc == 0 and installed):
         print(out[-3000:])
-        return 1
+        return False
 
-    for name, good in user_setup_check(args.blender, zip_path) + leftover_check(args.blender, zip_path):
+    for name, good in user_setup_check(blender, zip_path, suffix) + leftover_check(blender, zip_path, suffix):
         print("PASS" if good else "FAIL", name)
         ok &= good
 
+    if shots is None:
+        return ok
+    shots.mkdir(parents=True, exist_ok=True)
+    result = sandbox / "shots.json"
+    log = sandbox / "shots.log"
+    env["ALLSET_SHOTS"] = str(shots)
+    env["ALLSET_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
+    cmd = [blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
+           "--python", str(ROOT / "tools" / "release_shots.py"), "--", str(result)]
+    with blender_slots.slot("release_check shots"), open(log, "w", encoding="utf-8", errors="replace") as fh:
+        proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
+                                stderr=subprocess.STDOUT)
+        try:
+            proc.wait(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()  # only the Blender started here
+    checks = json.loads(result.read_text(encoding="utf-8")) if result.exists() else \
+        [{"name": f"release_shots.py wrote no results (see {log.relative_to(ROOT).as_posix()})", "ok": False}]
+    for c in checks:
+        print("PASS" if c["ok"] else "FAIL", c["name"])
+        ok &= c["ok"]
+    print("screenshots:", ", ".join(sorted(p.name for p in shots.glob("*.png"))))
+    return ok
+
+
+def site_checks():
+    """The product site names the current release and quotes today's menu coverage. Returns ok."""
+    ok = True
     # the product site names the current release in its hero line; a release must not leave the old one there
     version = build.manifest_value("version")
     html = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
@@ -211,35 +241,42 @@ def main(argv=None):
     count = subprocess.run([sys.executable, str(ROOT / "tools" / "menu_count.py")], capture_output=True, text=True,
                            stdin=subprocess.DEVNULL).stdout
     m = re.search(r"^total\s+leaves\s+(\d+)\s+working\s+(\d+)", count, re.M)
-    quoted = bool(m) and f"{int(m.group(2)):,} of the {int(m.group(1)):,} main-menu items" in \
-        (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    quoted = bool(m) and f"{int(m.group(2)):,} of the {int(m.group(1)):,} main-menu items" in html
     print("PASS" if quoted else "FAIL", "site/index.html quotes the current menu coverage"
           + (f" ({m.group(2)} of {m.group(1)})" if m else " (menu_count.py gave no total)"))
     ok &= quoted
+    return ok
 
-    if args.no_shots:
-        return 0 if ok else 1
-    shots.mkdir(parents=True, exist_ok=True)
-    result = SANDBOX / "shots.json"
-    log = SANDBOX / "shots.log"
-    env["ALLSET_SHOTS"] = str(shots)
-    env["ALLSET_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
-    cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
-           "--python", str(ROOT / "tools" / "release_shots.py"), "--", str(result)]
-    with blender_slots.slot("release_check shots"), open(log, "w", encoding="utf-8", errors="replace") as fh:
-        proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
-                                stderr=subprocess.STDOUT)
-        try:
-            proc.wait(timeout=TIMEOUT)
-        except subprocess.TimeoutExpired:
-            proc.kill()  # only the Blender started here
-    checks = json.loads(result.read_text(encoding="utf-8")) if result.exists() else \
-        [{"name": "release_shots.py wrote no results (see tmp/release_env/shots.log)", "ok": False}]
-    for c in checks:
-        print("PASS" if c["ok"] else "FAIL", c["name"])
-        ok &= c["ok"]
-    print("screenshots:", ", ".join(sorted(p.name for p in shots.glob("*.png"))))
-    return 0 if ok else 1
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--blenders", default=",".join(build.SUPPORTED),
+                    help=f"comma-separated Blenders, versions or paths (default the supported "
+                         f"{', '.join(build.SUPPORTED)}); the first one builds and takes docs/screenshots")
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", ""),
+                    help="only this Blender (a path or a version) instead of --blenders")
+    ap.add_argument("--no-shots", action="store_true")
+    ap.add_argument("--shots", default=str(SHOTS), help="screenshot folder (default docs/screenshots)")
+    args = ap.parse_args(argv)
+    names = [args.blender] if args.blender else [v.strip() for v in args.blenders.split(",") if v.strip()]
+    exes = [build.blender_exe(n) for n in names]
+
+    zip_path = build.main(["--blender", exes[0]])
+    results = []
+    for i, (name, exe) in enumerate(zip(names, exes)):
+        # the first Blender keeps the plain sandbox names and writes the screenshot folder; the others write their
+        # screenshots into their own sandbox. Absolute: Blender writes nothing to a relative screenshot path.
+        suffix = "" if i == 0 else f"_{name if exe != name else i}"
+        print(f"\n=== Blender {name}: {exe} (sandboxes tmp/release_env*{suffix}) ===", flush=True)
+        shots = None if args.no_shots else \
+            Path(args.shots).resolve() if i == 0 else Path(f"{SANDBOX}{suffix}") / "screenshots"
+        results.append((name, check_blender(exe, zip_path, suffix, shots)))
+    print()
+    site = site_checks()
+    print("\nRelease check per Blender:")
+    for name, good in results:
+        print(f"  {name}: {'PASS' if good else 'FAIL'}")
+    return 0 if site and all(good for _n, good in results) else 1
 
 
 if __name__ == "__main__":
