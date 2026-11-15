@@ -39,18 +39,22 @@ from .. import i18n
 # the split-out parts, also read through this module by other UI and the tests
 from .panel_cameras import (ALLSET_MT_panel_new_ortho, ALLSET_MT_panel_ortho_new,  # noqa: F401
                             ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_ortho, ALLSET_OT_panel_new_persp,
-                            ORTHO_SIDES, _before_look, _cameras, _draw_camera_list, _on_undo, _scene_camera_view,
-                            _space, _startup_name, camera_locked, has_panel_camera, look_through, panel_camera,
-                            restore_camera_less, view_camera)
-from .panel_state import (CAMERA_DATA, CAMERA_KEYS, EXPOSURE_LAST, FAILS, GAMMA_LAST, RADIO, RAW,  # noqa: F401
-                          SET_KEYS, SHOW_HIDDEN, TIPS, TOGGLE_OFF, TOOLBAR_KEYS, TRANSFORM_LAST, _before_render,
-                          _toggle_colour, apply, enter_rendered, leave_rendered, main_region, show_ik_handles,
-                          state)
+                            ORTHO_SIDES, _before_look, _cameras, _draw_camera_list, _look_through_panel_camera,
+                            _on_undo, _scene_camera_view, _space, _startup_name, camera_locked, enable_in_viewports,
+                            has_panel_camera, look_through, panel_camera, restore_camera_less, view_camera)
+from .panel_state import (CAMERA_DATA, CAMERA_KEYS, EXPOSURE_LAST, FAILS, FIELD_CHART, GAMMA_LAST,  # noqa: F401
+                          GATE_OVERSCAN, RADIO, RAW, RENDER_ENGINES, RES_GATE, SAFE, SET_KEYS, SHOW_HIDDEN, TIPS,
+                          TOGGLE_OFF, TOOLBAR_KEYS, TRANSFORM_LAST, _before_render, _safe_on, _sync_safe_margins,
+                          _toggle_colour, apply, enter_rendered, leave_rendered, main_region, set_engine,
+                          show_ik_handles, state)
 
 
 # --- state ---------------------------------------------------------------------------
 
 def _owner(space, context, owner):
+    if owner == "preferences":
+        from .. import preferences
+        return preferences.get(context)
     return {"space": space, "shading": space.shading, "overlay": space.overlay}[owner]
 
 
@@ -189,8 +193,6 @@ def draw_rows(layout, context, rows, idname=""):
                 layout.prop(_owner(space, context, owner), prop, text=label)
         elif kind == "set":
             _k, key, label = row
-            if key == "RENDER_ENGINE":
-                label = context.engine.replace("BLENDER_", "").replace("_NEXT", "").title()
             on = state(context, key)
             if on is None:
                 icon = 'NONE'

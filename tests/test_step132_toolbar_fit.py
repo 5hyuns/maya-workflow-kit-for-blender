@@ -58,6 +58,25 @@ def test_fit_leaves_room_for_the_more_button():
             assert nxt + s > fit.more_x(width, scale)[0] - fit.SLACK, (scale, width, n)
 
 
+def test_viewport_shading_controls_only_with_their_preference():
+    """Off (default): the Maya groups get the whole tool header. The Viewport Shading Controls preference keeps room
+    at the right end for Blender's four shading modes and their settings popover."""
+    from types import SimpleNamespace
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    system = bpy.context.preferences.system
+    ctx = SimpleNamespace(region=SimpleNamespace(type='TOOL_HEADER', width=963), preferences=bpy.context.preferences)
+    groups = pt.fit_groups()
+    assert prefs.show_viewport_shading is False
+    assert pt.shown_groups(ctx) == fit.fit(groups, 963, system.ui_scale, system.pixel_size)
+    try:
+        prefs.show_viewport_shading = True
+        reserved = fit.px(pt.SHADING_UNITS, fit.unit(system.ui_scale, system.pixel_size)) + fit.spacing(system.ui_scale)
+        assert reserved > 0
+        assert pt.shown_groups(ctx) == fit.fit(groups, 963 - reserved, system.ui_scale, system.pixel_size)
+    finally:
+        prefs.show_viewport_shading = False
+
+
 def test_every_button_is_in_the_bar_or_the_popover():
     groups = pt.fit_groups()
     assert len(groups) == len(pt.TOOLBAR) + 1

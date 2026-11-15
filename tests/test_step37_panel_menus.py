@@ -146,8 +146,10 @@ def test_shading_and_lighting_radios():
     pm.apply(ctx, "LIGHT_ALL")
     assert sh.type == 'MATERIAL' and sh.use_scene_lights and pm.state(ctx, "LIGHT_ALL")
     assert pm.state(ctx, "RENDER_VP2")
-    pm.apply(ctx, "RENDER_ENGINE")
-    assert sh.type == 'RENDERED' and pm.state(ctx, "RENDER_ENGINE")
+    pm.apply(ctx, "RENDER_EEVEE")
+    assert sh.type == 'RENDERED' and pm.state(ctx, "RENDER_EEVEE") and not pm.state(ctx, "RENDER_CYCLES")
+    if pm.apply(ctx, "RENDER_CYCLES") is not False:   # skipped when the Cycles add-on is off
+        assert pm.state(ctx, "RENDER_CYCLES") and not pm.state(ctx, "RENDER_EEVEE")
     pm.apply(ctx, "LIGHT_DEFAULT")
     assert sh.type == 'SOLID' and sh.light == 'STUDIO' and pm.state(ctx, "LIGHT_DEFAULT")
     pm.apply(ctx, "DEFAULT_MATERIAL")
