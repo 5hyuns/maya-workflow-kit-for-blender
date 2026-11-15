@@ -3419,6 +3419,9 @@ def _m64_5_ctrl_shift_check():
 
 @named("m64_5_shift_start")
 def _m64_5_shift_start():
+    # the Ctrl+Z above can take the scene back to before the Snap Step was set (5.3's Edit Mode undo restores scene
+    # settings that a script changed without an undo step)
+    mtools().settings(bpy.context).snap_step = 25
     ob = OB()
     a, b = C["edge"]
     C["n0"] = nverts(ob)

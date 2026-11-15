@@ -179,6 +179,12 @@ def s_dup_cancel():
     x, y, d = C["g"]
     ev('RIGHTMOUSE', 'PRESS', x=int(x + d.x * 60), y=int(y + d.y * 60), shift=True)
     ev('RIGHTMOUSE', 'RELEASE', x=int(x + d.x * 60), y=int(y + d.y * 60), shift=True)
+
+
+@step
+def s_cancel_release():
+    # the left button comes up after the cancel, a moment later (not in the same instant as the right click)
+    x, y, d = C["g"]
     ev('LEFTMOUSE', 'RELEASE', x=int(x + d.x * 60), y=int(y + d.y * 60))
     shift_up()
 
