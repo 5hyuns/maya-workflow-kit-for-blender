@@ -70,8 +70,10 @@ def main(argv=None):
                     "bl_ext.user_default.allset" in s["addons"]))
     results.append((f"active keymap unchanged (got {s and s['active_keyconfig']})",
                     s and s["active_keyconfig"] == before["active_keyconfig"]))
-    results.append(("Make Blender Maya applied (theme kept, splash off)", s and s["theme"] == before["theme"]
-                    and s["view"]["show_splash"] == "False"))
+    # Make Blender Maya turns Maya mode on and writes none of Blender's own preferences (the theme, the splash)
+    results.append(("Make Blender Maya applied (Maya mode on, the user's theme and splash setting kept)",
+                    s and s.get("maya_mode") is True and s["theme"] == before["theme"]
+                    and s["view"]["show_splash"] == before["view"]["show_splash"]))
     results.append(("the user's add-ons are kept", s and set(before["addons"]) < set(s["addons"])))
     recorded = record.read_text(encoding="utf-8-sig").splitlines() if record.exists() else []
     results.append((f"install records its Blender for the uninstaller ({len(recorded)} line)",

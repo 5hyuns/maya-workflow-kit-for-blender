@@ -84,8 +84,17 @@ def snapshot():
         "theme": _theme_hash(),
         "blender": bpy.app.version_string,
         "kit_version": _kit_version(),
+        "maya_mode": _maya_mode(),
         "repos": sorted(r.module for r in prefs.extensions.repos),
     }
+
+
+def _maya_mode():
+    """The kit's Maya mode preference as saved; None when the kit isn't enabled."""
+    for a in bpy.context.preferences.addons:
+        if a.module.endswith(".allset"):
+            return bool(getattr(a.preferences, "maya_mode", False))
+    return None
 
 
 def _kit_version():
@@ -122,7 +131,7 @@ def main():
     if mode == "seed":
         seed()
     elif mode == "make":
-        # Make Blender Maya (theme, splash, density ...), saved like a user would leave it
+        # Make Blender Maya (Maya mode on; Blender's own preferences stay), saved like a user would leave it
         from importlib import import_module
         kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".allset"))
         import_module(kit + ".welcome").opt_in(open_layout=False)   # Maya mode on + Make Blender Maya

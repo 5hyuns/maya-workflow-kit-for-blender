@@ -1,6 +1,6 @@
 """Runs inside a background Blender for the Windows installer (tools/installer/allset_setup.ps1).
 
-    blender -b --python blender_helper.py -- make   OUT.json   # Make Blender Maya (layout template, theme ...)
+    blender -b --python blender_helper.py -- make   OUT.json   # Make Blender Maya (Maya mode on)
     blender -b --python blender_helper.py -- remove OUT.json   # uninstall the way Preferences > Remove does
     blender -b --python blender_helper.py -- status OUT.json   # what is installed / enabled
 

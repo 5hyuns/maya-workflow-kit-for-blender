@@ -434,14 +434,24 @@ def s_cb_shot():
     shot("09_channel_box.png")
     cb = __import__(MODULE + ".ui.channel_box", fromlist=["x"])
     cb.set_selected_channels(["ty"])
-    C["y0"] = bpy.data.objects["pCube1"].location.y   # channel names follow Blender axes
-    drag('MIDDLEMOUSE', 100, 0)
+    ob = bpy.data.objects["pCube1"]
+    C["y0"] = ob.location.y   # channel names follow Blender axes
+    # a translate channel moves along its axis as drawn, like the Move manipulator's arrow: drag 100 px along it
+    _area, region = view3d()
+    origin, direction = cb.node_axes(ob, "ty")
+    axis = cb.screen_axis(region, region.data, origin, direction)
+    n = (axis.x * axis.x + axis.y * axis.y) ** 0.5 or 1.0
+    dx, dy = round(100 * axis.x / n), round(100 * axis.y / n)
+    C["want_y"] = cb.projected_delta((axis.x, axis.y), dx, dy)
+    drag('MIDDLEMOUSE', dx, dy)
 
 
 @step
 def s_cb_slider():
     dy = bpy.data.objects["pCube1"].location.y - C["y0"]
-    check(f"MMB drag 100 px with Translate Y selected (dy {dy:.2f} BU)", dy > 0.5)
+    want = C["want_y"]
+    check(f"MMB drag 100 px along Translate Y as drawn moves pCube1 along Y (dy {dy:.3f}, want {want:.3f} BU)",
+          want > 1e-3 and abs(dy - want) < 0.05 * want + 1e-4)
     cb = __import__(MODULE + ".ui.channel_box", fromlist=["x"])
     cb.set_selected_channels([])
     redraw()

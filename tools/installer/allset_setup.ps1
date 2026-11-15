@@ -11,7 +11,7 @@
 .NOTES
   Every action goes through Blender itself:
     install   = blender --command extension install-file -r user_default --enable <zip>
-    Make Maya = blender -b --python blender_helper.py -- make   (layout template, theme, splash off)
+    Make Maya = blender -b --python blender_helper.py -- make   (Maya mode on; Blender's own preferences stay)
     uninstall = blender -b --python blender_helper.py -- remove (Preferences > Remove: the kit's
                 unregister restores the user's keymap, theme and preferences first)
   Each Blender version has its own user config (%APPDATA%\Blender Foundation\Blender\<x.y>), so the kit
