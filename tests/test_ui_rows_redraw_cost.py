@@ -253,7 +253,7 @@ def test_range_slider_reads_a_wide_header_row_quickly():
     real_read, real_fb = compat.read_region_row, gpu.state.active_framebuffer_get
     compat.read_region_row = lambda fb, region, y: buf
     gpu.state.active_framebuffer_get = lambda: None
-    area = SimpleNamespace(as_pointer=lambda: 4242)
+    area = SimpleNamespace(as_pointer=lambda: 4242, regions=())
     region = SimpleNamespace(width=w, height=40)
     try:
         rb._gaps.clear()

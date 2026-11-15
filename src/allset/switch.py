@@ -34,8 +34,9 @@ from . import i18n
 from .switch_layout import (BLENDER_LAYOUT_KEY, BLENDER_PREV_KEY, MASK_KEY, PREV_KEY, STRIP_MASKS,  # noqa: F401
                             TEMPLATE_KEY, TEMPLATE_WORKSPACE, USER_KEY, USER_UNIT_KEY, WORKSPACE, _delete_later,
                             _delete_workspace, _fit_views, _forget_timer, _linked_from, _mark_strips,
-                            _template_blend, _timers, _window_override, _windows, append_workspace,
-                            drop_workspace, enter_layout, is_maya_workspace, reset_workspace, template_of)
+                            _prepare_layout, _template_blend, _timers, _window_override, _windows,
+                            append_workspace, drop_workspace, enter_layout, is_maya_workspace, reset_workspace,
+                            template_of)
 
 
 SHORTCUT = ('M', {"ctrl": True, "alt": True, "shift": True})
