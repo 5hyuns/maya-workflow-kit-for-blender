@@ -204,9 +204,14 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     index: IntProperty()
+    shelf: StringProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        self.shelf = self.shelf or current(context)
+        return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        buttons = editable_buttons(current(context)) or []
+        buttons = editable_buttons(self.shelf or current(context)) or []
         if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         del buttons[self.index]

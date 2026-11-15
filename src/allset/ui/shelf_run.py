@@ -33,7 +33,11 @@ def _run_in_editor_space(context, space_type, callback):
 
     area = context.area if context.area is not None and context.area.type == space_type else None
     if area is None:
-        area = next((item for item in screen.areas if item.type == space_type), None)
+        if space_type == 'VIEW_3D':
+            from .status_line import main_view3d
+            area, _region = main_view3d(screen)
+        else:
+            area = next((item for item in screen.areas if item.type == space_type), None)
     if area is None:
         raise ShelfContextError(
             f"No {space_type} editor is open in this window. Open the requested editor and try again."
@@ -77,7 +81,8 @@ def _infer_shelf_requirements(kind, target="", menu_path=""):
         if any(token in menu_path for token in ("dope sheet", "timeline")):
             return "DOPESHEET_EDITOR", "ANY", "ANY"
         if any(token in menu_path for token in ("edit mesh", "mesh tools", "vertex", "edge", "face")):
-            return "VIEW_3D", "EDIT_MESH", "MESH"
+            # any mode: the menu item enters component mode itself (Maya: Insert Edge Loop on a selected object)
+            return "VIEW_3D", "ANY", "MESH"
         if any(token in menu_path for token in ("polygon primitives", "create polygon", "create/")):
             return "VIEW_3D", "OBJECT", "ANY"
         return "VIEW_3D", "ANY", "ANY"

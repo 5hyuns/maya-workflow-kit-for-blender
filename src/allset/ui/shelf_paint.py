@@ -87,6 +87,22 @@ def _separator_colours(base):
     return (*dark, 1.0), (*light, 1.0)
 
 
+CHECKED_COLOUR = (0.32, 0.52, 0.65, 1.0)   # Maya's highlight blue (#5285A6)
+
+
+def _checked(context, record):
+    """A user button's optional "checked" kit preference (``"select_through"``, or ``"not select_through"``; a
+    leading ``prefs.`` is accepted) is on: frame it like Maya's checked shelf icons. Unknown names count as off."""
+    name = (record.get("checked") if record else None) or ""
+    negate = name.startswith("not ")
+    name = name.removeprefix("not ").strip().removeprefix("prefs.")
+    if not name.isidentifier() or name.startswith("_"):
+        return False
+    from .. import preferences
+    value = getattr(preferences.get(context), name, None)
+    return value is not None and bool(value) != negate
+
+
 def _hover_colour(base, mapped):
     """A hover box that shows on dark and light rows: white over dark, black over light."""
     ink = 1.0 if _luma(base) < 0.5 else 0.0

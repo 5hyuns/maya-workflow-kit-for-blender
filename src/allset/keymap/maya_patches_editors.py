@@ -128,6 +128,8 @@ def patch_render_slots(kd):
 
 
 def patch_shelf_scroll(kd):
+    _add(kd, "Image", "allset.shelf_button_menu", make_event("RIGHTMOUSE", value="RELEASE"),
+         first=True, shadows=("Image", "View2D"))
     # Maya's wheel over the shelf icons scrolls one row; the shelf
     # row is an Image Editor, so the items sit first in "Image" and pass through in every other image editor
     for wheel, delta in (("WHEELUPMOUSE", -1), ("WHEELDOWNMOUSE", 1)):

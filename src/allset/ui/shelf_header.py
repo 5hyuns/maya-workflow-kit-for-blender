@@ -33,29 +33,23 @@ class ALLSET_MT_shelf_tabs(bpy.types.Menu):
 
 
 class ALLSET_MT_shelf_settings(bpy.types.Menu):
-    """Maya shelf menu: new/delete shelf, add/edit/delete buttons"""
+    """Maya shelf menu: editor, shelf navigation and shelf management"""
     bl_idname = "ALLSET_MT_shelf_settings"
     bl_label = "Shelf"
 
     def draw(self, context):
         layout = self.layout
+        layout.operator_context = 'INVOKE_DEFAULT'
+        layout.emboss = 'PULLDOWN_MENU'
+        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor...")
+        layout.separator()
+        layout.menu(ALLSET_MT_shelf_tabs.bl_idname, text="Navigate Shelves")
+        layout.separator()
         layout.operator(ALLSET_OT_shelf_new.bl_idname, icon='ADD')
-        layout.operator("allset.shelf_editor_open", icon='WINDOW', text="Shelf Editor")
         layout.operator(ALLSET_OT_shelf_delete.bl_idname, icon='TRASH')
         layout.separator()
         layout.menu(ALLSET_MT_shelf_add_action.bl_idname, icon='ADD', text="Add Shelf Button...")
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
-        buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too
-        if buttons:
-            layout.separator()
-            for i, b in enumerate(buttons):
-                row = layout.row()
-                row.operator(ALLSET_OT_shelf_edit_button.bl_idname, text=f"Edit {b['label']}",
-                             icon='GREASEPENCIL').index = i
-            layout.separator()
-            for i, b in enumerate(buttons):
-                layout.operator(ALLSET_OT_shelf_remove_button.bl_idname, text=f"Delete {b['label']}",
-                                icon='X').index = i
 
 
 def draw_shelf(layout, context):
