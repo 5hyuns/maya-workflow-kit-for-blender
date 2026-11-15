@@ -12,7 +12,7 @@
   face, wound against the face they border), later clicks pick another border edge (its two vertices) or place a point
   (on the plane through the first edge that faces the view), Enter adds the face to the mesh.
 Tool Settings (Divisions, Limit points, Keep new faces planar, Texture) live in ``Scene.allset_poly_tools`` with
-the same defaults as Maya's tool. Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
+the options of the Maya tool. Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
 ``build_polygon``, ``append_face``) are tested headless (tests/test_step144_poly.py).
 """
 

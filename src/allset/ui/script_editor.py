@@ -24,7 +24,7 @@ from .. import undo_steps
 
 _WINDOWS = set()
 LANG_PROP = "allset_script_lang"        # "MEL" / "Python" on the kit's script texts
-TABS = (("MEL", "MEL"), ("Python", "Python"))     # Maya's two tabs in their default order (MEL first), Python current
+TABS = (("MEL", "MEL"), ("Python", "Python"))     # Maya's two tabs, MEL first; Python is the current one
 
 
 def mark(window):
