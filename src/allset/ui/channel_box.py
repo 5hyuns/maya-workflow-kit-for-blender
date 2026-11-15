@@ -1886,6 +1886,19 @@ class ALLSET_OT_cb_rename(bpy.types.Operator):
         return self.invoke(context, None)
 
 
+_edit = {"key": None, "blank": False}
+
+
+def _entry_text_get(_self):
+    return ""
+
+
+def _entry_text_set(_self, text):
+    # empty: the popover closed by a click elsewhere (Blender commits the text on click-out), nothing typed
+    if text.strip() and _edit["key"] is not None:
+        apply_entry(_edit["key"], text)
+
+
 def _make_proxy_annotations():
     ann = {}
     for key, label, _path, _idx, kind in MAIN:
@@ -1907,6 +1920,8 @@ def _make_proxy_annotations():
                                                          "drag over the rows")
     ann["lead_name"] = StringProperty(name="Name", get=_lead_name_get, set=_lead_name_set,
                                       description="The lead's name: Enter renames it")
+    ann["entry_text"] = StringProperty(name="Value", get=_entry_text_get, set=_entry_text_set,
+                                       description="A value for every selected channel: Enter sets it")
     ann["rows"] = CollectionProperty(type=ALLSET_PG_cb_row)
     ann["rows_sig"] = StringProperty(options={'HIDDEN'})
     return ann
@@ -2691,6 +2706,12 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         shift, ctrl = getattr(self, "_mods", (False, False))
         if self._dragging:
             self._extend(context, self._current(event))   # the hover of the last move
+            if part == "VALUE" and not (shift or ctrl):
+                # #375, Maya: after a drag over the values, typing goes straight into every selected channel
+                try:
+                    edit_field(context, self._extended or self._key, blank=True)
+                except RuntimeError:
+                    pass
         elif part == "VALUE" and (shift or ctrl):
             # a Shift / Ctrl click on a value selects like one on the name
             if shift and _anchor["key"] is not None:
@@ -2722,15 +2743,14 @@ def field_owner(context, key):
     return None, None
 
 
-_edit = {"key": None}
-
-
-def edit_field(context, key):
+def edit_field(context, key, blank=False):
     """Edit channel ``key``'s field in a popover at the mouse with the text active at once (Maya: a click into a
-    field edits it); Enter writes the text into every selected channel (apply_entry) and closes it, like F2."""
+    field edits it); Enter writes the text into every selected channel (apply_entry) and closes it, like F2.
+    ``blank`` (after a drag over the values, #375): an empty field, so a click away changes no channel."""
     if field_owner(context, key)[0] is None:
         return False
     _edit["key"] = key
+    _edit["blank"] = blank
     bpy.ops.wm.call_panel(name=ALLSET_PT_cb_field.__name__, keep_open=False)
     return True
 
@@ -2746,6 +2766,8 @@ class ALLSET_PT_cb_field(bpy.types.Panel):
         owner, prop = field_owner(context, _edit["key"] or "")
         if owner is None:
             return
+        if _edit["blank"]:
+            owner, prop = context.scene.allset_cb, "entry_text"
         row = self.layout.row()
         row.activate_init = True
         row.prop(owner, prop, text="")
