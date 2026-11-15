@@ -3,6 +3,54 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] — unreleased
+
+Blender 5.3 support and a batch of fixes and Maya behaviours from a contributor. Thanks to @AlexBarbulescu for
+#366 and #372: the Blender 5.3 changes (keymap data, Outliner sorting, the Properties tab flags, the text size
+argument, the new 5.3 keys), the Outliner pan (#365) and search row, Chamfer off keeping the shape (#368), Center
+Pivot with the children, the camera gates, Field Chart and Safe Action / Title, repeating modal tools with G, the group
+manipulators, the shelf right-click menu, the window rejoin, the dolly fix, and the optional Blender controls below,
+with their translations.
+
+### Added
+- **Blender 5.3**: the kit installs and runs on Blender 5.3 as well as 5.2 LTS (Industry Compatible keymap data of
+  5.3, its Outliner sorting, its new Properties tab, the renamed text size; Maya keys keep winning over 5.3's new
+  Weight / Vertex Paint Alt+A pie and Grease Pencil Draw Ctrl+M / G).
+- Maya Outliner: Alt+middle-drag pans the rows both ways, so a deep joint chain can be seen (#365); the search field
+  is a row under the menu bar, like Maya; right-click > Set Active Camera on a camera row.
+- Panel toolbar: Resolution Gate and Film Gate (one at a time, the render size written above the resolution gate),
+  Field Chart, and Safe Action / Safe Title as separate toggles; a gate button in Blender's own view looks through the
+  panel's startup camera.
+- Renderer menu: Eevee and Cycles items (scene engine and Rendered shading).
+- Shelf: right-click a button for Open / Edit / Delete; a user button can be framed while a kit preference is on
+  (its "checked" field names the preference).
+- G repeats a modal command started from a shelf, menu or marking menu (Knife: a fresh cut each time).
+- Shift+double-click a vertex or face on another piece adds that piece's shell.
+- File dialog: a folder pasted into the file name field opens that folder.
+- With Show > Locators off, a selected group still shows its Move / Rotate / Scale manipulators and its contents'
+  selection wire.
+- Preferences, all off by default (Maya has none of these): Blender's shading controls in the panel toolbar, camera /
+  projection buttons under the ViewCube, Material Preview HDRI and look-dev spheres, Blender's selectable / eye /
+  render columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
+  sessions, and a grid depth pass so the grid doesn't show through mesh seams in Material Preview / EEVEE.
+
+### Changed
+- Center Pivot centres on the object's own geometry and all its children, like Maya, the box built level by level in
+  each parent's space.
+- Chamfer off keeps the original surface: the support edges stay on the original faces, the corners stay and the
+  volume is unchanged (#368); like Maya the step count is even (2 segments give the 1-segment shape, 4 the 3-segment
+  one).
+
+### Fixed
+- Alt+RMB dolly no longer jumps the wrong way when the cursor wraps at the edge of the view or a pen tablet jumps.
+- A window reopened at its remembered place no longer resizes the Outliner or the dock when the carved pieces are put
+  back.
+- The ViewCube's face names lie on their faces.
+- In the right dock's tab stack a section header no longer takes the click meant for the tab beside it.
+- Auto-Save Preferences keeps the option window values you saved.
+- The Maya layout is ready before its first frame (sizes, Outliner, icons, Time Slider), instead of settling over
+  the first second; the Range Slider starts at its settled width.
+
 ## [0.16.0] — 2026-11-14
 
 A speed release: Maya mode is much lighter in big and rigged scenes (clicks, box selection, playback, scrubbing,
