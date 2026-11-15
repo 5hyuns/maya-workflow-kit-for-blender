@@ -11,6 +11,8 @@
   (``arc_points``). Blender's superellipse (``profile = t^2``, t = 0.5 + Depth x (sqrt(1/2) - 1/2)) stays where
   the profile runs at a slant to its edge, where two bevelled edges meet, and for Segments 1.
 - Three or more bevelled edges at a corner: one polygon through the profiles' ends (``flat_corners``).
+- Chamfer off: Blender's square profile preserves the surface (Segments + 1 steps along the two faces, the old
+  corner one of the points; an odd step count is spread evenly over the old corner, ``corner_kept``).
 - Zero-length slide edges don't count, and what the bevel makes is merged within 0.0001 (Merge Vertices): the
   cap of a zero-length extrusion bevels into an inset (12/20/10, cap at 0.25), Fraction 1 merges (6/9/5).
 - Faces bevel their edges; Maya leaves nothing selected afterwards. Vertex mode = Chamfer Vertex (Maya's Bevel
@@ -63,16 +65,17 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     ``smoothing_angle`` (degrees) decides which new edges are hard (``set_hardness``)."""
     edges = [e for e in edges if e.is_valid and len(e.link_faces) == 2]      # like Maya: border edges stay
     ids = edge_ids if edge_ids is not None else maya_edge_ids(bm)
-    pairs2 = corner_pairs(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
-    triples = corner_triples(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
-    splits = corner_splits(edges, ids) if int(segments) == 1 and offset_as_fraction else {}
+    pairs2 = corner_pairs(edges, ids) if chamfer and int(segments) == 1 and offset_as_fraction else {}
+    triples = corner_triples(edges, ids) if chamfer and int(segments) == 1 and offset_as_fraction else {}
+    splits = corner_splits(edges, ids) if chamfer and int(segments) == 1 and offset_as_fraction else {}
     w = width(edges, fraction, offset_as_fraction, offset, unit, pairs2, triples, splits)
     if not edges or w <= 0.0:
         return []
     hard_in = input_hardness(bm, edges)
     uv_maps = face_uv_maps(bm, {f for e in edges for v in e.verts for f in v.link_faces})
     uv_maps["beside"] = {f.index for e in edges for f in e.link_faces}
-    # Chamfer off: Maya keeps the old corner as one more profile point (Segments + 1 steps along the two faces)
+    # Chamfer off: Maya keeps the old corner as one more profile point (Segments + 1 steps along the two faces),
+    # on the square profile that keeps the original surface (#368)
     bseg = max(1, int(segments)) + (0 if chamfer else 1)
     plan = _plan(bm, edges, ids) if ids is not None and int(segments) == 1 and chamfer else None
     bm.edges.index_update()
@@ -110,17 +113,18 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     pairs2 = corner_pairs(edges, ids) if pairs2 else {}      # the elements were collected again
     triples = corner_triples(edges, ids) if triples else {}
     splits = corner_splits(edges, ids) if splits else {}
-    moves = [m + (None,) for m in terminal_moves(edges, pairs2)[0]] if int(segments) == 1 and offset_as_fraction else []
+    moves = ([m + (None,) for m in terminal_moves(edges, pairs2)[0]]
+             if chamfer and int(segments) == 1 and offset_as_fraction else [])
     # an end whose slide edge runs near the bevelled edge's line: Maya's offsets there, in both modes
-    moves += end_moves(edges, pairs2)[0] if int(segments) == 1 else []
-    offsets = corner_offsets(edges, ids) if int(segments) == 1 and not offset_as_fraction else {}
+    moves += end_moves(edges, pairs2)[0] if chamfer and int(segments) == 1 else []
+    offsets = corner_offsets(edges, ids) if chamfer and int(segments) == 1 and not offset_as_fraction else {}
     moves += [m + (None,) for c in offsets.values() for m in c["ends"]]
     pair_moves = [(c["origin"], c["ray"], c["k_ray"], c["u3"], c["k_u3"])
                   for c in list(pairs2.values()) + list(offsets.values())]
-    corners = corner_moves(edges) if int(segments) == 1 else []
+    corners = corner_moves(edges) if chamfer and int(segments) == 1 else []
     merges = [(p, {f[flay] for f in fs}) for p, fs in gap_merges(edges, w)]   # gap faces by their source id
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
-                          segments=bseg, profile=profile(depth), affect='EDGES',
+                          segments=bseg, profile=profile(depth) if chamfer else 1.0, affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
     made = [v for v in ret["verts"] if v.is_valid]
     for f in ret["faces"]:
@@ -201,7 +205,8 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
         if hit is not None and off_line(hit) < 1e-5:
             hit.co = origin + unit_dir * slide
     if not chamfer:
-        corner_kept(bm, elay, {f for f in ret["faces"] if f.is_valid}, bseg, hubs)
+        if bseg % 2:        # an odd step count: the steps go evenly over the old corner
+            corner_kept(bm, elay, {f for f in ret["faces"] if f.is_valid}, bseg, hubs)
     elif bseg > 1:
         true_arcs(bm, elay, {f for f in ret["faces"] if f.is_valid}, bseg, depth, hubs, hub_frames, w)
     if bseg > 1:
