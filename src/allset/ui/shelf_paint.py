@@ -5,6 +5,7 @@ header (``draw_tab_row``). ``_hover`` / ``_tab_rects`` are shared with the gizmo
 
 import bpy
 
+from .. import compat
 from .shelf_strip import is_shelf_row, TAB_PX, TAB_LEFT_PX, TAB_PAD_PX, TAB_FONT_PX
 from .shelf_store import shelves, current
 
@@ -74,8 +75,7 @@ def _text_colours(context):
     dimmer other tabs, readable on a dark or a light header."""
     sp = context.preferences.themes[0].image_editor.space
     base = _theme_colour(context)
-    hi = tuple(getattr(sp, "header_text_hi", (1.0, 1.0, 1.0)))[:3]
-    text = tuple(getattr(sp, "header_text", hi))[:3]
+    text, hi = compat.header_text_colours(sp)
     other = tuple(t * 0.7 + b * 0.3 for t, b in zip(text, base))
     return (*hi, 1.0), (*other, 1.0), (*text, 1.0)
 

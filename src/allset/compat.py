@@ -525,3 +525,12 @@ def weight_falloff_panel():
     if shape is not None and (supports is None or supports('PAINT_WEIGHT')):
         return shape
     return paint_common.FalloffPanel
+
+
+# --- Theme header text -----------------------------------------------------------------------------------------
+def header_text_colours(space_theme):
+    """(text, highlighted text) RGB of an editor's header in the user's theme (read only): ``header_text`` /
+    ``header_text_hi`` up to 5.2; 5.3 dropped them and draws header text with the editor's ``text`` / ``text_hi``."""
+    if hasattr(space_theme, "header_text"):
+        return tuple(space_theme.header_text)[:3], tuple(space_theme.header_text_hi)[:3]
+    return tuple(space_theme.text)[:3], tuple(space_theme.text_hi)[:3]
