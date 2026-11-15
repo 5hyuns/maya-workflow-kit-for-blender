@@ -180,6 +180,27 @@ def s_face_double_click():
     check(f"#222: double-click a face selects its shell ({got}, {len(sel)} faces, shell {len(want)}, mesh "
           f"{len(bm.faces)})",
           sel == want and len(want) < len(bm.faces))
+    C["big"] = want
+    half = max(abs(v.co.x) for v in bm.verts)      # the big cube's (the small one sits above it, on x = 0)
+    small = min((g for g in bm.faces if g.calc_center_median().z > half), key=lambda g: g.calc_center_median().y)
+    C["small"] = {g.index for g in shell_of(small)}
+    C["x"], C["y"] = screen_of(ob, small.calc_center_median())
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+@step
+def s_face_shift_click_other_piece():
+    ev('LEFTMOUSE', 'PRESS', shift=True)
+    ev('LEFTMOUSE', 'RELEASE', shift=True)
+
+
+@step
+def s_face_shift_double_click_other_piece():
+    got = invoke(True)
+    ob, bm = edit()
+    sel = {g.index for g in bm.faces if g.select}
+    check(f"Shift+double-click a face of another piece adds its shell ({got}, {len(sel)} faces)",
+          sel == C["big"] | C["small"] and not C["big"] & C["small"])
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.context.tool_settings.mesh_select_mode = (True, False, False)
     ob, bm = edit()

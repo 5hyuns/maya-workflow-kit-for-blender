@@ -4,7 +4,8 @@
 Maya 2026 polygon selection: double-click an edge = its edge loop; double-click a vertex or a face = every
 vertex / face of its shell (the connected piece of the mesh). Select a component, then Shift+double-click a
 second one on the same loop = the run of components between the two (both kept); for two neighbouring faces
-that run is the whole face loop through both. A second component on no common loop gets its whole loop added.
+that run is the whole face loop through both. A second component on no common loop gets its whole loop (edge)
+or its shell (vertex / face, e.g. Shift+double-click a separate piece) added.
 
 Blender has the loop pick (``mesh.loop_select``: nearest edge decides the direction in every select mode) and
 the linked pick (``mesh.select_linked_pick``) but no "between two picks on the loop" — ``mesh.shortest_path_select``
@@ -217,10 +218,10 @@ class ALLSET_OT_loop_pick(bpy.types.Operator):
     def invoke(self, context, event):
         if self.between and self._between(context):
             return {'FINISHED'}
-        # plain double-click on a vertex / face: its shell (Maya 2026); on an edge, or a second pick on no common
-        # loop: Blender's loop pick at the mouse (Shift adds the loop to the selection)
+        # double-click on a vertex / face: its shell (Maya 2026); Shift with no common loop (e.g. another piece)
+        # adds that shell. On an edge: Blender's loop pick at the mouse (Shift adds the loop to the selection)
         try:
-            if not self.between and shell_mode(context.tool_settings.mesh_select_mode):
+            if shell_mode(context.tool_settings.mesh_select_mode):
                 return bpy.ops.mesh.select_linked_pick('INVOKE_DEFAULT', deselect=False, delimit=set())
             return bpy.ops.mesh.loop_select('INVOKE_DEFAULT', **loop_select_args(self.between))
         except RuntimeError:
