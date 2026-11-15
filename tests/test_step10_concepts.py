@@ -255,15 +255,57 @@ def test_center_pivot():
     channels = _channels(ob)
     kid_channels = _channels(kid)
     before, kid_before = _world_verts(ob), _world_verts(kid)
+    world_before = ob.matrix_world.copy()
     _select([ob])
     assert bpy.ops.allset.center_pivot() == {'FINISHED'}
     _update()
     assert _close_vs(_world_verts(ob), before)
-    center = sum(before, Vector()) / len(before)  # a box: vertex mean = bbox centre
+    # Maya's Center Pivot: the box of the object and its children, in the object's own space
+    to_local = world_before.inverted()
+    local = [to_local @ v for v in before + kid_before]
+    lo = Vector(min(v[i] for v in local) for i in range(3))
+    hi = Vector(max(v[i] for v in local) for i in range(3))
+    center = world_before @ ((lo + hi) / 2)
     assert _close_v(ob.matrix_world.translation, center), (ob.matrix_world.translation, center)
     assert all(_close_v(a, b) for a, b in zip(_channels(ob), channels)), _channels(ob)
     assert _close_vs(_world_verts(kid), kid_before)
     assert all(_close_v(a, b) for a, b in zip(_channels(kid), kid_channels))
+
+
+def _level_box(ob):
+    """(lo, hi) of ``ob``'s mesh and everything below it in ``ob``'s space, each child's box (with everything below
+    it) made axis-aligned in its parent's space first."""
+    pts = [v.co.copy() for v in ob.data.vertices] if ob.type == 'MESH' else []
+    for ch in ob.children:
+        lo, hi = _level_box(ch)
+        m = ob.matrix_world.inverted() @ ch.matrix_world
+        pts += [m @ Vector((x, y, z)) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
+    return Vector(min(p[i] for p in pts) for i in range(3)), Vector(max(p[i] for p in pts) for i in range(3))
+
+
+def test_center_pivot_nested_rotations_box_of_boxes():
+    """A chain rotated at every level: like Maya, the box is built level by level (each child's box, with everything
+    below it, axis-aligned in its parent's space); one box of every mesh straight in the top's space lies elsewhere."""
+    _fresh()
+    top = _transformed(_cube("top"), loc=(1, 2, 3), rot=(0.17, 0.35, 0.52), scale=(1, 1, 1))
+    mid = _transformed(_cube("mid"), loc=(2, 1, 0), rot=(0.0, 0.87, 0.44), scale=(1, 1, 1))
+    low = _transformed(_cube("low"), loc=(0, 3, 1), rot=(0.7, 0.0, 0.61), scale=(1, 1, 1))
+    low.data.transform(Matrix.Diagonal((1.0, 4.0, 1.0, 1.0)))       # a long piece at the end of the chain
+    mid.parent, low.parent = top, mid
+    _update()
+    lo, hi = _level_box(top)
+    want = top.matrix_world @ ((lo + hi) / 2)
+    inv = top.matrix_world.inverted()
+    flat = [inv @ ob.matrix_world @ v.co for ob in (top, mid, low) for v in ob.data.vertices]
+    flat_c = top.matrix_world @ ((Vector(min(p[i] for p in flat) for i in range(3))
+                                  + Vector(max(p[i] for p in flat) for i in range(3))) / 2)
+    assert (flat_c - want).length > 0.1, (flat_c, want)
+    befores = {ob.name: _world_verts(ob) for ob in (top, mid, low)}
+    _select([top])
+    assert bpy.ops.allset.center_pivot() == {'FINISHED'}
+    _update()
+    assert _close_v(top.matrix_world.translation, want), (top.matrix_world.translation, want)
+    assert all(_close_vs(_world_verts(ob), befores[ob.name]) for ob in (top, mid, low)), "nothing moves"
 
 
 def test_center_pivot_group_uses_children_bounds():

@@ -170,20 +170,41 @@ def _bbox_center(corners):
     return (lo + hi) / 2
 
 
-def local_center(ob):
-    """Bounding-box centre in ``ob``'s local space, or None (nothing to centre on)."""
-    if ob.type in BAKE_TYPES and ob.data is not None:
-        return _bbox_center([Vector(v) for v in ob.bound_box])
-    corners = []
-    stack = list(ob.children)
+def _box_corners(lo, hi):
+    return [Vector((x, y, z)) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
+
+
+def local_box(ob):
+    """(lo, hi) of ``ob``'s own data and all its descendants, axis-aligned in ``ob``'s space, or None (nothing to
+    centre on). Like Maya, level by level: each child's box (with everything below it) is made axis-aligned in its
+    parent's space, a box of boxes."""
+    kids, order, stack = {}, [], [ob]
     while stack:
-        ch = stack.pop()
-        stack.extend(ch.children)
-        if ch.type in BAKE_TYPES and ch.data is not None:
-            corners.extend(ch.matrix_world @ Vector(v) for v in ch.bound_box)
-    if not corners:
-        return None
-    return ob.matrix_world.inverted_safe() @ _bbox_center(corners)
+        o = stack.pop()
+        order.append(o)
+        kids[o] = list(o.children)
+        stack.extend(kids[o])
+    boxes = {}
+    for o in reversed(order):                 # every child before its parent
+        pts = [Vector(v) for v in o.bound_box] if o.type in BAKE_TYPES and o.data is not None else []
+        below = [(ch, boxes[ch]) for ch in kids[o] if boxes.get(ch) is not None]
+        if below:
+            inv = o.matrix_world.inverted_safe()
+            for ch, (lo, hi) in below:
+                to_parent = inv @ ch.matrix_world
+                pts.extend(to_parent @ c for c in _box_corners(lo, hi))
+        boxes[o] = (Vector(tuple(min(p[i] for p in pts) for i in range(3))),
+                    Vector(tuple(max(p[i] for p in pts) for i in range(3)))) if pts else None
+    return boxes[ob]
+
+
+def local_center(ob):
+    """Bounding-box centre in ``ob``'s local space, or None (nothing to centre on).
+
+    Like Maya, the box holds ``ob``'s own data and all its descendants', in ``ob``'s own space (``local_box``).
+    """
+    box = local_box(ob)
+    return None if box is None else (box[0] + box[1]) / 2
 
 
 def shift_pivot(ob, c):
