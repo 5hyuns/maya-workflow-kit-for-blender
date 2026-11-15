@@ -805,6 +805,34 @@ def instance_keys(context):
     return keys
 
 
+def _draw_instance_tip(prefs, region, u, dy, x, y0, y1, ob_name, by_name):
+    """A tooltip box "Instance of <source>" under the hovered instance row (above it at the bottom edge)."""
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    from ..operators.duplicate import instance_source
+    try:
+        ob = object_named(ob_name, by_name)
+        source = instance_source(ob) if ob is not None else ""
+    except ReferenceError:
+        return
+    label = bpy.app.translations.pgettext_iface("Instance of")
+    label = f"{label} {source}" if source else bpy.app.translations.pgettext_iface("Instance")
+    wcol = prefs.themes[0].user_interface.wcol_tooltip
+    pad, w = 0.3 * u, blf.dimensions(0, label)[0]
+    bx0 = max(0.0, min(x, region.width - w - 2 * pad))
+    by1 = y0 - 2 if y0 - u - 2 >= 0 else y1 + u + 2
+    by0 = by1 - u
+    tris, tcol = [], []
+    _quad(tris, tcol, bx0, by0, bx0 + w + 2 * pad, by1, (*tuple(wcol.outline)[:3], 1.0))
+    _quad(tris, tcol, bx0 + 1, by0 + 1, bx0 + w + 2 * pad - 1, by1 - 1, (*tuple(wcol.inner)[:3], 1.0))
+    sh = gpu.shader.from_builtin('SMOOTH_COLOR')
+    batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw(sh)
+    blf.color(0, *tuple(wcol.text)[:3], 1.0)
+    blf.position(0, round(bx0 + pad), round((by0 + by1) / 2 - dy), 0)
+    blf.draw(0, label)
+
+
 def eye_x(region, u, n, first):
     """Centre x of the last restriction column, left of the scrollbar."""
     bar = scrollbar(region, u, n, first)
@@ -945,6 +973,7 @@ def _draw(context, space, region, area):
     cols = column_xs(space, region, u, n, first)
     tris, tcol, lines, lcol, textures, names, icons = [], [], [], [], [], [], []
     seen, drawn = [], []
+    tip = None                 # the hovered instance row: (name x, y0, y1, object name) for its "Instance of" tip
     r_icon = 0.36 * u
     for k in range(first, last):
         row = rows[k]
@@ -975,6 +1004,13 @@ def _draw(context, space, region, area):
             rgb = INSTANCE_RGB if row.key in instances else JOINT_RGB if row.icon == 'JOINT' else ICON_RGB
             _icon(tris, tcol, lines, lcol, row.icon, ix, cy, r_icon * (0.8 if row.kind == 'SHAPE' else 1.0),
                   (*rgb, alpha))
+            if row.key in instances:     # chain-link badge on the icon's lower right corner
+                bx, by, br = ix + 0.6 * r_icon, cy - 0.55 * r_icon, 0.75 * r_icon
+                under = (act_rgba if act else sel_rgba)[:3] if sel else back
+                _icon(tris, tcol, lines, lcol, 'INSTANCE_BACK', bx, by, br, (*under, 1.0))
+                _icon(tris, tcol, lines, lcol, 'INSTANCE', bx, by, br, (*INSTANCE_RGB, alpha))
+                if HOVER.get(area.as_pointer()) == k:
+                    tip = (x + 2.25 * u, y0, y1, row.ob)
         if is_live:
             rgb = live.COLOR
         elif act and row.kind in ('OBJECT', 'JOINT'):
@@ -1025,6 +1061,8 @@ def _draw(context, space, region, area):
         blf.color(0, *rgba)
         blf.position(0, round(x), round(cy - dy), 0)
         blf.draw(0, label)
+    if tip is not None:
+        _draw_instance_tip(prefs, region, u, dy, *tip, by_name)
     gpu.state.blend_set('NONE')
     SEEN[region.as_pointer()] = seen
     DRAWN[region.as_pointer()] = drawn

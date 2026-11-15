@@ -55,6 +55,15 @@ def test_outliner_marks_only_the_instance_copies():
         assert _key(ob) not in keys, ob.name
 
 
+def test_instance_source_names_the_original():
+    grp, kids, copy = _instance_pair()
+    source = _mod("operators.duplicate").instance_source
+    assert source(copy) == grp.name                       # a group: the name recorded at the copy
+    by_base = {c.name.rstrip("0123456789"): c for c in copy.children}
+    kids[0].name = "renamed"                               # a mesh: follows the shared data, so renames too
+    assert source(by_base["pCube"]) == "renamed"
+
+
 def test_plain_copy_of_an_instance_is_unmarked():
     grp, kids, copy = _instance_pair()
     for ob in bpy.context.scene.objects:

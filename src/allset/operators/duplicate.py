@@ -49,6 +49,17 @@ _POINT_TYPES = {'CURVE', 'SURFACE', 'LATTICE'}
 INSTANCE_TAG = "allset_instance"
 
 
+def instance_source(ob):
+    """Name of the object ``ob`` is an instance of, or "" if unknown: an object sharing its data that is no copy
+    itself (follows renames), else the name recorded when the copy was made (groups have no data to follow)."""
+    if ob.data is not None:
+        for other in bpy.data.objects:
+            if other.data is ob.data and other is not ob and not other.get(INSTANCE_TAG):
+                return other.name
+    name = ob.get(INSTANCE_TAG)
+    return name if isinstance(name, str) and name in bpy.data.objects else ""
+
+
 def is_instance(ob):
     """``ob`` shares its data with another object (Duplicate Special > Instance, Blender linked duplicate)."""
     data = ob.data
@@ -86,7 +97,7 @@ def copy_subtree(root, instance=False, inputs=PLAIN):
     for ob in hierarchy([root]):
         new = ob.copy()
         if instance:
-            new[INSTANCE_TAG] = True
+            new[INSTANCE_TAG] = ob.name     # the source, for the Outliner's "Instance of" tip
         else:
             new.pop(INSTANCE_TAG, None)     # a plain copy of an instance is no instance
         if ob.data is not None and not instance:
