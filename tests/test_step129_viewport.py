@@ -112,7 +112,7 @@ def test_camera_buttons_need_a_camera_view():
 
 def test_gate_buttons_look_through_the_persp_camera():
     # Maya's persp panel is the persp camera: a gate button in Blender's persp view looks through it, placed where
-    # the view looked; Film Gate / Resolution Gate are exclusive and set Overscan 1.3, like Maya
+    # the view looked; Film Gate / Resolution Gate are exclusive, like Maya, and leave the camera's Overscan
     space = _space()
     area = next(a for s in bpy.data.screens for a in s.areas if space in a.spaces[:])
     rv3d = space.region_3d
@@ -127,16 +127,17 @@ def test_gate_buttons_look_through_the_persp_camera():
     fwd = cam.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0))
     assert (fwd - rot @ Vector((0.0, 0.0, -1.0))).length < 1e-4     # placed where the view looked
     assert (cam.matrix_world.translation + fwd * dist - loc).length < 1e-3
-    assert cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    overscan = cam.data.allset_overscan
+    assert cam.data.show_sensor
     # the startup camera (Maya Visibility off) must still be evaluated, or navigating through it can't move the view
     assert not cam.hide_viewport and cam.hide_get()
     cam.location.x += 1.0
     bpy.context.view_layer.update()
     assert abs(cam.matrix_world.translation.x - cam.location.x) < 1e-6
     assert pm.apply(ctx, "RES_GATE")
-    assert pm.state(ctx, "RES_GATE") and not cam.data.show_sensor and abs(cam.data.allset_overscan - 1.3) < 1e-6
+    assert pm.state(ctx, "RES_GATE") and not cam.data.show_sensor
     assert pm.apply(ctx, "RES_GATE")
-    assert not pm.state(ctx, "RES_GATE") and abs(cam.data.allset_overscan - 1.0) < 1e-6
+    assert not pm.state(ctx, "RES_GATE") and abs(cam.data.allset_overscan - overscan) < 1e-6
     rv3d.view_perspective = 'PERSP'
 
 
