@@ -64,7 +64,8 @@ def _edit_points(context):
 
 
 def _object_points(context):
-    obs = [ob for ob in context.selected_objects if ob.visible_get()]
+    from ..operators import group           # groups whose locator axes are hidden keep their handles
+    obs = group.selected_objects(context)
     active = context.view_layer.objects.active
     act = active.matrix_world.translation.copy() if active is not None and active in obs else None
     return [ob.matrix_world.translation.copy() for ob in obs], act
@@ -236,7 +237,8 @@ def pivot_edit(context):
 
 def _has_selection(context):
     if context.mode == 'OBJECT':
-        return any(ob.visible_get() for ob in context.selected_objects)
+        from ..operators import group
+        return bool(group.selected_objects(context))
     for ob in context.objects_in_mode_unique_data or ():
         if ob.type == 'MESH' and ob.data.total_vert_sel:
             return True

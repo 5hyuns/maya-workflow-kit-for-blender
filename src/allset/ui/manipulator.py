@@ -30,6 +30,7 @@ register / unregister, and re-exports the names the rest of the kit reads from i
 import bpy
 from bpy.types import Gizmo, GizmoGroup
 from mathutils import Matrix, Vector
+from ..operators import group
 
 # the split-out parts, also read through this module by operators, other UI and the tests
 from .manipulator_shapes import (CENTER_HALF, CONE_LEN, CONE_R, CUBE_AT, CUBE_HALF, PIVOT_RING_R,  # noqa: F401
@@ -340,7 +341,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         self._built_for = (kind, pivot)
         self._ops_for = None
 
-    def _bind_ops(self, kind, otype, frame=None, clamp=False, live_move=False, slide=False):
+    def _bind_ops(self, kind, otype, frame=None, clamp=False, live_move=False, slide=False, groups=False):
         """Point each handle at Blender's transform with its constraint and orientation."""
         op = {'TRANSLATE': "transform.translate", 'ROTATE': "transform.rotate", 'RESIZE': "transform.resize"}[kind]
         if frame is None:
@@ -401,7 +402,19 @@ class ALLSET_GGT_xform(GizmoGroup):
             elif role == 'TRACKBALL':
                 props = gz.target_set_operator("transform.trackball")
                 props.release_confirm = True
-        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move, slide)
+            if groups and props.bl_rna.identifier in {'TRANSFORM_OT_translate', 'TRANSFORM_OT_rotate',
+                                                     'TRANSFORM_OT_trackball'}:
+                operation = props.bl_rna.identifier.split('_OT_')[1]
+                kwargs = {name: getattr(props, name) for name in props.keys()}
+                if 'constraint_axis' in kwargs:
+                    kwargs['constraint_axis'] = tuple(kwargs['constraint_axis'])
+                if 'orient_matrix' in kwargs:
+                    kwargs['orient_matrix'] = kwargs['orient_matrix'].copy()
+                props = gz.target_set_operator("allset.group_transform")
+                props.operation = operation
+                for name, value in kwargs.items():
+                    setattr(props, name, value)
+        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move, slide, groups)
 
     @staticmethod
     def _orient(props, otype, frame):
@@ -438,9 +451,10 @@ class ALLSET_GGT_xform(GizmoGroup):
         live_move = kind == 'TRANSLATE' and not pivot and live_translate.enabled(context)
         from ..operators import xform_constraint
         slide = kind == 'TRANSLATE' and not pivot and xform_constraint.active(context)
-        signature = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move, slide)
+        groups = context.mode == 'OBJECT' and bool(group.hidden_groups(context))
+        signature = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move, slide, groups)
         if self._ops_for != signature and not any(gz.is_modal for gz, _role, _data in self.handles):
-            self._bind_ops(kind, otype, frame=frame, clamp=clamp, live_move=live_move, slide=slide)
+            self._bind_ops(kind, otype, frame=frame, clamp=clamp, live_move=live_move, slide=slide, groups=groups)
         if context.mode != 'OBJECT':
             pts, act = _edit_points(context)
         else:

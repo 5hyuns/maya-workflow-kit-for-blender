@@ -35,6 +35,7 @@ mesh symmetry apply exactly as in its own resize.
 import math
 
 import bpy
+from . import group
 
 # bl_idname of the modal, for code that waits while a transform runs (it is a transform without the TRANSFORM_OT_
 # prefix).
@@ -143,7 +144,7 @@ def supported(context):
     if context.mode == 'OBJECT':
         if ts.use_transform_data_origin or ts.use_transform_skip_children or ts.use_transform_pivot_point_align:
             return False
-        return any(ob.visible_get() for ob in context.selected_objects)
+        return bool(group.selected_objects(context))
     if context.mode == 'EDIT_MESH':
         return True
     return False
@@ -156,7 +157,7 @@ def _other_snap(ts):
 
 def lead_object(context):
     active = context.view_layer.objects.active
-    sel = [ob for ob in context.selected_objects if ob.visible_get()]
+    sel = group.selected_objects(context)
     if active is not None and active in sel:
         return active
     return sel[-1] if sel else None
@@ -443,6 +444,10 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
         return screen_dir(region, rv3d, center, point), view_depth(rv3d, point)
 
     def invoke(self, context, event):
+        with group.selection_context(context):
+            return self._invoke(context, event)
+
+    def _invoke(self, context, event):
         from ..ui import manipulator
         region, rv3d = context.region, context.region_data
         if region is None or rv3d is None or not supported(context) or _other_snap(context.scene.tool_settings):
@@ -521,6 +526,10 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
             context.area.tag_redraw()
 
     def modal(self, context, event):
+        with group.selection_context(context):
+            return self._modal(context, event)
+
+    def _modal(self, context, event):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
             self._update(context, event)
             return {'RUNNING_MODAL'}
