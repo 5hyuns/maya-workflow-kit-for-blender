@@ -10,6 +10,8 @@ import bpy
 from .driven_key_channels import (HELPER, HELPER_NAME, INPUT_PROP, VAR, Chan, _id_type, _inputs, _reads, _target,
                                   chan, curve_scale, input_value, input_x, is_blend, is_sdk)
 
+from .. import update_summary
+
 
 # --- curve shape ----------------------------------------------------------------------------------
 
@@ -374,7 +376,11 @@ def sync_if_changed():
     now = _counts()
     if now == _COUNTS[0]:
         return None
-    out = sync() if helpers() or any(True for _ in _old_layout()) else (0, 0, 0)
+    if helpers() or any(True for _ in _old_layout()):
+        update_summary.wrote()
+        out = sync()
+    else:
+        out = (0, 0, 0)
     _COUNTS[0] = _counts()
     return out
 

@@ -11,6 +11,8 @@ from mathutils import Matrix, Vector
 
 from .pin_geometry import Geo
 
+from .. import update_summary
+
 KIND = "allset_pin"                  # helper empty: "uvPin" | "proximityPin"
 NODE = "allset_pin_node"             # helper empty: Maya node name (uvPin1)
 OWNER = "allset_pin_owner"           # helper empty: the pinned transform
@@ -188,6 +190,7 @@ def update(depsgraph=None):
             new = Matrix(m.tolist()) @ _parent_matrix(owner, depsgraph).inverted_safe()
             old = h.matrix_world
             if max(abs(old[i][j] - new[i][j]) for i in range(4) for j in range(4)) > 1e-7 or h.parent is not None:
+                update_summary.wrote()
                 h.parent = None
                 h.matrix_world = new
     finally:

@@ -34,6 +34,7 @@ from bpy.props import EnumProperty, FloatProperty, FloatVectorProperty
 from mathutils import Vector
 
 from .. import results
+from .. import update_summary
 from . import rig_tools
 from .normal_tangent_math import (QUAD_SPLIT, CurveData, SurfaceData, _dot, _sub, closest_on_triangle,
                                   closest_param, quad_split)  # noqa: F401
@@ -114,6 +115,7 @@ def update(depsgraph=None):
             length = 1000.0 * max(1.0, math.sqrt(_dot(p, p)))     # far away: the float32 helper keeps the angle
             new = Vector(p) + Vector(d) * length
             if (h.location - new).length > 1e-7 * length or h.parent is not None:
+                update_summary.wrote()
                 h.parent = None
                 h.location = new
     finally:

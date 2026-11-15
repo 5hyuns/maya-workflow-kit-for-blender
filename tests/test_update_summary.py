@@ -381,16 +381,66 @@ def test_shared_walk_gives_the_same_results():
 
 
 def test_quiet_rounds_share_one_walk():
-    """A move, a selection and a pose step each walk the update fewer times than handlers ask for it."""
+    """A move, a selection that keeps the lead object, a pose and a skeleton move, where no kit handler writes: one
+    walk over the update for all the kit handlers that read it."""
     path = _scene()
     bpy.ops.wm.open_mainfile(filepath=path)
     _m("ui.layer_joints").state(_ob("joint1"))
-    for step in (lambda: setattr(_ob("pCube1"), "location", (2.0, 0.0, 0.0)), lambda: _select(_ob("pCube1"))):
+    arm, cube, child = _ob("joint1"), _ob("pCube1"), _ob("child1")
+    _select(cube)
+    _update()
+
+    def pose():
+        arm.pose.bones["joint2"].rotation_quaternion.x += 0.01
+
+    def rig():
+        arm.location.z += 0.01
+    steps = (("move", lambda: setattr(cube.location, "x", cube.location.x + 0.1)),
+             ("select", lambda: child.select_set(not child.select_get())), ("pose", pose), ("skeleton move", rig))
+    for name, step in steps:
+        step()
+        _update()
         walks, reuses = us.STATS["walks"], us.STATS["reuses"]
         step()
         _update()
         walks, reuses = us.STATS["walks"] - walks, us.STATS["reuses"] - reuses
-        assert walks >= 1 and reuses >= 1, (walks, reuses)
+        assert walks == 1 and reuses >= 8, (name, walks, reuses)
+
+
+def test_a_kit_handler_that_writes_during_the_round():
+    """A normal constraint's helper follows its object in the round that moved the object: a kit handler writes
+    during the round. The kit handlers after it see the helper move, as when each walks the update itself; without
+    the walk again rule they would miss it."""
+    _clear()
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=5.0)
+    sphere = bpy.context.active_object
+    loc = _link(bpy.data.objects.new("locator1", None))
+    loc.location = (0.0, 0.0, 9.0)
+    _update()
+    for o in bpy.context.scene.objects:
+        o.select_set(False)
+    sphere.select_set(True)
+    loc.select_set(True)
+    bpy.context.view_layer.objects.active = loc
+    assert bpy.ops.allset.normal_constraint() == {'FINISHED'}
+    _update()
+    _update()
+    helpers = [h.name for h in _m("operators.constrain_199").helpers()]
+    assert len(helpers) == 1, helpers
+    so = _m("ui.soft_overlay")
+    seen = {}
+    for label, enabled, recompute in (("off", False, True), ("on", True, True), ("rule off", True, False)):
+        us.ENABLED, us.RECOMPUTE = enabled, recompute
+        try:
+            so._dirty["any"].clear()
+            loc.location.x += 0.5
+            _update()
+            seen[label] = sorted(so._dirty["any"])
+        finally:
+            us.ENABLED, us.RECOMPUTE = True, True
+        _update()
+    assert seen["off"] == seen["on"] == sorted(["locator1"] + helpers), seen
+    assert helpers[0] not in seen["rule off"], f"without the rule the helper's move is missed: {seen}"
 
 
 def _seen_by_the_last(lst_pos, act, recompute=True, enabled=True):

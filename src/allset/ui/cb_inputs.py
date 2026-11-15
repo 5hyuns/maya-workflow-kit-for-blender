@@ -13,6 +13,8 @@ from .cb_nodes import _drawing_lead, _generation, is_bone, lead
 from .cb_pane import _scroll
 from .cb_keys import BLEND_PREFIX, MAIN_BY_KEY, custom_keys, is_blend_key
 
+from .. import update_summary
+
 
 def blend_target(ob, key):
     """The shape key behind blendShape weight channel ``key`` on ``ob`` (None: ob has no target of that name)."""
@@ -478,6 +480,7 @@ def rebuild_rows(context=None):
     sig = rows_signature(ob)
     if cb.rows_sig == sig:
         return False
+    update_summary.wrote()
     _rows_state["busy"] = True
     try:
         cb.rows.clear()

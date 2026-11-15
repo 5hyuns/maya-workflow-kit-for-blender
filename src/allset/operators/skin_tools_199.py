@@ -167,8 +167,10 @@ def _sync_sum_modifiers(scene, depsgraph):
         if md is None:
             continue
         if skin.armature_modifier(ob) is None:
+            update_summary.wrote()
             remove_sum_modifier(ob)
         elif md.node_group.get(SUM_TAG) != _sum_signature(ob):
+            update_summary.wrote()
             ensure_sum_modifier(ob)
 
 

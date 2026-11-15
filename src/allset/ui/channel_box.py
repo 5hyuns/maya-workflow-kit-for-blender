@@ -26,6 +26,7 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty
 
 from .. import depsgraph_filter, live_refs
+from .. import update_summary
 from ..operators import auto_key
 from . import cb_entry
 
@@ -429,6 +430,7 @@ def _on_depsgraph(_scene, depsgraph):
     from .maya_joints import transforming
     if not transforming():             # a drag changes values only: the selection and the rows stay
         if selected_channels() and _nothing_selected(bpy.context):
+            update_summary.wrote()
             set_selected_channels([])      # Maya: deselecting everything also deselects the channels
         rebuild_rows()
     # The dock is a custom PROPERTIES-area UI, not Blender's native transform

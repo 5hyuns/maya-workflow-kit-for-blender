@@ -297,6 +297,7 @@ def _keep_marked_hidden(scene, view_layer):
             continue
         try:
             if not ob.hide_get(view_layer=view_layer):
+                update_summary.wrote()
                 ob.hide_set(True, view_layer=view_layer)
                 changed += 1
         except RuntimeError:          # not in this view layer
@@ -321,6 +322,7 @@ def _on_depsgraph(scene, _depsgraph=None):
         except (AttributeError, ReferenceError, RuntimeError, TypeError):
             what = _FULL
         if what == _FULL:
+            update_summary.wrote()
             sync(scene)
         elif what == _MARKED:
             _keep_marked_hidden(scene, view_layer)

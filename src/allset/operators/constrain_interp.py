@@ -38,6 +38,8 @@ import bpy
 from bpy.app.handlers import persistent
 from mathutils import Quaternion, Vector
 
+from .. import update_summary
+
 NO_FLIP, AVERAGE, SHORTEST, LONGEST, CACHE = range(5)
 NAMES = ("No Flip", "Average", "Shortest", "Longest", "Cache")
 INTERP = "allset_interp_"
@@ -518,6 +520,7 @@ def _on_update(*_args):
         for h in blend_helpers():
             owner = owner_of_helper(h)
             if owner is not None and blend_constraint(owner, h[H_GROUP]) is not None:
+                update_summary.wrote()
                 update(owner, h[H_GROUP])
     except (ReferenceError, AttributeError, RuntimeError, KeyError, TypeError):
         pass

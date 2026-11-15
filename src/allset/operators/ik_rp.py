@@ -36,6 +36,8 @@ from mathutils import Matrix, Quaternion, Vector
 
 from . import units
 
+from .. import update_summary
+
 PV = ("poleVectorX", "poleVectorY", "poleVectorZ")
 TWIST = "twist"
 HELPER = "allset_pole_helper"          # handle -> its pole helper empty
@@ -353,9 +355,11 @@ def _update(depsgraph=None, frame=False):
             if count != _count[0]:
                 _count[0] = count
                 if count < _count[1]:
+                    update_summary.wrote()
                     drop_orphan_rotations()    # a handle deleted some other way than the kit's Delete
                 _count[1] = count
         for handle in _handles():
+            update_summary.wrote()
             update_handle(handle)
     except (ReferenceError, AttributeError, RuntimeError):
         _found[0] = None

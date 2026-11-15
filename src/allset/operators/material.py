@@ -21,6 +21,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import undo_steps
+from .. import update_summary
 from .. import compat, depsgraph_filter
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
@@ -398,6 +399,7 @@ def _on_depsgraph(scene, depsgraph):
     if _busy[0]:
         return
     if depsgraph.id_type_updated('MATERIAL') or depsgraph.id_type_updated('NODETREE'):
+        update_summary.wrote()
         _busy[0] = True
         try:
             for mat in bpy.data.materials:
@@ -420,6 +422,7 @@ def _on_depsgraph(scene, depsgraph):
     _known[key] = now
     if known is None or not (now - known) or not _maya_scene():
         return
+    update_summary.wrote()
     _busy[0] = True
     try:
         for ob in scene.objects:

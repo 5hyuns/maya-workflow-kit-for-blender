@@ -11,9 +11,9 @@ the update: Blender reads each data-block's flags as the update is walked, so a 
 the round adds it to what the handlers after it see, and one that evaluates the depsgraph again
 (``view_layer.update()`` runs a nested round) leaves the rest of the round an empty update. So every handler in
 between must be declared here: ``READERS`` write nothing during a round, ``REPORTERS`` call ``wrote()`` before they
-write. Any other handler (another add-on's, a test's, a kit handler not listed) makes the next asker walk again, as do
-``wrote()`` and the end of a nested round. Outside a round (a handler called directly, a stand-in depsgraph) and when
-the asker isn't in the list, ``updates`` is ``depsgraph.updates`` itself.
+write. Any other handler (another add-on's, a test's, a kit handler listed in ``WRITERS`` or not listed) makes the
+next asker walk again, as do ``wrote()`` and the end of a nested round. Outside a round (a handler called directly, a
+stand-in depsgraph) and when the asker isn't in the list, ``updates`` is ``depsgraph.updates`` itself.
 
 ``ENABLED`` False (``ALLSET_UPDATE_SUMMARY=0``): every asker walks the update itself. ``CHECK``
 (``ALLSET_UPDATE_SUMMARY_CHECK=1``): each reuse is compared with a new walk; a difference goes to ``MISMATCHES`` (and
@@ -51,12 +51,9 @@ READERS = frozenset((
     "operators.skin_layers:on_depsgraph", "ui.soft_overlay:_on_depsgraph", "command_line.undo_text:_on_depsgraph",
     "operators.joint_marquee:_count"))
 
-# Kit depsgraph_update_post handlers that call ``wrote()`` before anything they write during a round.
-REPORTERS = frozenset()
-
-# Kit depsgraph_update_post handlers that can write during a round without saying so: the handlers after them walk
-# the update again, as after any handler that isn't declared.
-WRITERS = frozenset((
+# Kit depsgraph_update_post handlers that call ``wrote()`` before anything they write during a round (most write only
+# what differs, so a round with nothing to change keeps the walk).
+REPORTERS = frozenset((
     "operators.constrain_interp:_on_update", "operators.ik_rp:_on_update", "operators.live:changed",
     "operators.driven_key:_after_update", "operators.graph_key_menu:_keys_depsgraph",
     "operators.symmetry:_on_depsgraph", "operators.soft_select:_on_depsgraph", "operators.pivot:_on_depsgraph",
@@ -65,6 +62,10 @@ WRITERS = frozenset((
     "operators.pins_205:_on_depsgraph", "operators.deformers_205b:_on_depsgraph",
     "operators.deformers_205a:_on_depsgraph", "operators.curves_207:_on_depsgraph",
     "operators.type_manip:_on_depsgraph", "operators.playback_maya:_on_depsgraph", "ui.channel_box:_on_depsgraph"))
+
+# Kit depsgraph_update_post handlers that can write during a round without saying so: the handlers after them walk
+# the update again, as after any handler that isn't declared.
+WRITERS = frozenset()
 
 
 class Update:

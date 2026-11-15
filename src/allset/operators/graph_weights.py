@@ -360,6 +360,7 @@ def _on_depsgraph(scene, depsgraph):
             if not isinstance(idd, bpy.types.Action):
                 continue
             action = idd.original
+            update_summary.wrote()
             adopt(action, scene)
             changed += apply_rules(action)
         if changed:

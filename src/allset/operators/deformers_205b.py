@@ -31,6 +31,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 
 from .. import compat
+from .. import update_summary
 from . import deformers, wire_deformer
 
 MORPH_GROUP = ".Allset Morph"
@@ -482,6 +483,7 @@ def sync_rest():
     for ob in _rest_helpers():
         owner = ob.get(REST_OF) if REST_OF in ob else None
         if owner is not None and getattr(owner, "data", None) is not None and ob.data != owner.data:
+            update_summary.wrote()
             ob.data = owner.data
             ob.show_only_shape_key = True
             ob.active_shape_key_index = 0

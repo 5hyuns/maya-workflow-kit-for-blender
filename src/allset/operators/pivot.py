@@ -26,6 +26,7 @@ from bpy.props import BoolProperty
 from mathutils import Matrix, Quaternion, Vector
 
 from .. import live_refs, results
+from .. import update_summary
 from . import freeze
 from .manip_scale import TRANSFORM_MODALS
 
@@ -372,6 +373,7 @@ def maya_pivot_point(ts, mode):
     if want is None or ts.transform_pivot_point == want:
         return False
     if ts.transform_pivot_point in MAYA_PIVOT_POINT.values():
+        update_summary.wrote()
         ts.transform_pivot_point = want
         return True
     return False
@@ -391,6 +393,7 @@ def follow_lead(context, scene):
     _last_lead[0] = key
     if ob is None or not any(scene.transform_orientation_slots[index].type == ORIENT_NAME for index in PIVOT_SLOTS):
         return
+    update_summary.wrote()
     if PROP in ob:
         orient = _orientation(scene)
         if orient is not None:

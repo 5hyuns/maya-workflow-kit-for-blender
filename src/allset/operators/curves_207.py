@@ -180,6 +180,7 @@ def _on_depsgraph(scene, depsgraph):
         return
     if not datas:
         return
+    update_summary.wrote()
     _busy[0] = True
     try:
         for data in datas:

@@ -17,6 +17,8 @@ import bpy
 import numpy as np
 from bpy.app.handlers import persistent
 
+from .. import update_summary
+
 STATE = {"on": False}          # off by default
 
 FLAGS = ("use_proportional_edit_objects", "use_proportional_edit")
@@ -42,6 +44,7 @@ def push():
         ts = sc.tool_settings
         for f in FLAGS:
             if getattr(ts, f) != on:
+                update_summary.wrote()
                 setattr(ts, f, on)
 
 

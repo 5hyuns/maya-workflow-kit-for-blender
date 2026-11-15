@@ -570,6 +570,7 @@ def _on_depsgraph(scene, depsgraph):
         me = ob.data
         if (any(kind_of(md) in ("tension", "solidify") for md in ob.modifiers) or TOPO_PROP in me
                 or SLOT_COUNT in me.attributes or any(a.name.startswith(REST) for a in me.attributes)):
+            update_summary.wrote()
             try:
                 sync(ob)
             except (AttributeError, ReferenceError, RuntimeError):

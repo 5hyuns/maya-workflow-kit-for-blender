@@ -193,6 +193,7 @@ def _keys_depsgraph(scene, depsgraph):
                 continue
             action = idd.original
             if fresh and action.library is None and action.override_library is None:
+                update_summary.wrote()
                 tangent_blender_keys(action)
             _frames[action.name] = _curve_frames(action)
     except Exception as exc:        # a handler must never raise
