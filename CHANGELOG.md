@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.17.0] — unreleased
+## [0.17.0] — 2026-11-16
 
 Blender 5.3 support and a batch of fixes and Maya behaviours from a contributor. Thanks to @AlexBarbulescu for
 #366 and #372: the Blender 5.3 changes (keymap data, Outliner sorting, the Properties tab flags, the text size
@@ -47,8 +47,7 @@ with their translations.
 - Chamfer off keeps the original surface: the support edges stay on the original faces, the corners stay and the
   volume is unchanged (#368); like Maya the step count is even (2 segments give the 1-segment shape, 4 the 3-segment
   one).
-- Faster scene updates: the kit's update handlers share one pass over each update instead of each walking it again
-  (about 40 % less handler time per update in a scene with thousands of objects).
+- Faster scene updates: the kit's update handlers share one pass over each update instead of each walking it again.
 
 ### Fixed
 - The Maya grid stays behind meshes in Material Preview and EEVEE Rendered, like Maya, instead of showing through
