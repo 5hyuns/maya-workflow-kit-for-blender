@@ -439,7 +439,7 @@ def _finish_box():
     if p is None:
         return None
     wm = bpy.context.window_manager
-    running = any(op.bl_idname == "GRAPH_OT_select_box" for w in wm.windows for op in w.modal_operators)
+    running = any(op.bl_idname == "GRAPH_OT_select_box" for w in wm.windows for op in live_refs.running_modals(w))
     if not p["started"]:
         last = wm.operators[-1].as_pointer() if len(wm.operators) else 0
         p["started"] = running or last != p["last"]

@@ -25,7 +25,7 @@ import numpy as np
 from bpy.props import BoolProperty
 
 from . import uv_arrays
-from .. import compat
+from .. import compat, live_refs
 
 FLAG = "allset_uv_shell_mask"
 BOX_OPS = ("VIEW3D_OT_select_box", "VIEW3D_OT_select_lasso", "UV_OT_select_box", "UV_OT_select_lasso",
@@ -249,7 +249,8 @@ def grow_box(context, before, shift, ctrl):
 
 def _box_running():
     try:
-        return any(op.bl_idname in BOX_OPS for w in bpy.context.window_manager.windows for op in w.modal_operators)
+        return any(op.bl_idname in BOX_OPS for w in bpy.context.window_manager.windows
+                   for op in live_refs.running_modals(w))
     except (AttributeError, ReferenceError):
         return False
 

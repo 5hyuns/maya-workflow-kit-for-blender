@@ -8,6 +8,8 @@ tumble under Emulate 3 Button Mouse, and Alt+Shift drags locked to one axis. Ent
 import bpy
 from mathutils import Vector
 
+from .. import live_refs
+
 # --- tumble -------------------------------------------------------------------
 
 
@@ -128,8 +130,7 @@ class ALLSET_OT_nav_chord(bpy.types.Operator):
 
     def modal(self, context, event):
         window = context.window
-        ops = getattr(window, "modal_operators", None) if window is not None else None
-        if ops is not None and not any(op.bl_idname in NAV_MODALS for op in ops):
+        if window is not None and not any(op.bl_idname in NAV_MODALS for op in live_refs.running_modals(window)):
             return {'FINISHED', 'PASS_THROUGH'}      # the navigation ended some other way
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
             return {'FINISHED', 'PASS_THROUGH'}

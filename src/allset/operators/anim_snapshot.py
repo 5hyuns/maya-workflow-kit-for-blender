@@ -26,6 +26,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty
 from bpy.app.handlers import persistent
 
+from .. import live_refs
 from .. import results
 from .. import undo_steps
 
@@ -297,7 +298,7 @@ def _on_depsgraph(scene, depsgraph):
 def _transforming():
     wm = bpy.context.window_manager
     for win in wm.windows if wm else ():
-        for op in win.modal_operators:
+        for op in live_refs.running_modals(win):
             if op.bl_idname.startswith("TRANSFORM_OT") or op.bl_idname.startswith("transform."):
                 return True
     return False

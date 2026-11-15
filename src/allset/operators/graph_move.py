@@ -21,6 +21,8 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
+from .. import live_refs
+
 DECIDE_PX = 3          # Maya: the first move reaching 3 px from the press decides the axis
 WHOLE_EPS = 1e-4       # a time this close to a whole frame counts as that frame
 SCALE_PX = 100.0       # Scale Keys tool: px of drag per 1.0 of scale
@@ -526,7 +528,7 @@ def drop_fractions(fcurves):
 
 
 def _transform_running(wm):
-    return any(op.bl_idname.startswith("TRANSFORM_OT") for w in wm.windows for op in w.modal_operators)
+    return any(op.bl_idname.startswith("TRANSFORM_OT") for w in wm.windows for op in live_refs.running_modals(w))
 
 
 def _finish_move():

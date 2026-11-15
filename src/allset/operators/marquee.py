@@ -85,7 +85,7 @@ def _running(win_ptr):
     if window is None:
         return False
     try:
-        return any(op.bl_idname in SELECT_MODALS for op in window.modal_operators)
+        return any(op.bl_idname in SELECT_MODALS for op in live_refs.running_modals(window))
     except ReferenceError:
         return False
 

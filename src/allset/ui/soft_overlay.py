@@ -23,6 +23,8 @@ import gpu
 import numpy as np
 from gpu_extras.batch import batch_for_shader
 
+from .. import live_refs
+
 LINE_PX = 2.0
 POINT_PX = 5.0
 CIRCLE_RGBA = (1.0, 1.0, 1.0, 0.85)
@@ -89,7 +91,7 @@ def _transform_running():
         return False
     try:
         from ..operators.manip_scale import TRANSFORM_MODALS
-        return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in win.modal_operators)
+        return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in live_refs.running_modals(win))
     except (AttributeError, ReferenceError):
         return False
 

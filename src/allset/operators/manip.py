@@ -286,7 +286,7 @@ def _last_is_transform():
 
 def _transform_running(window):
     from .manip_scale import TRANSFORM_MODALS
-    return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in window.modal_operators)
+    return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in live_refs.running_modals(window))
 
 
 # --- the active handle (Maya MMB drag anywhere) -------------------------------------

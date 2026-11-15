@@ -25,7 +25,7 @@ import bpy
 from bpy.props import BoolProperty
 from mathutils import Matrix, Quaternion, Vector
 
-from .. import results
+from .. import live_refs, results
 from . import freeze
 from .manip_scale import TRANSFORM_MODALS
 
@@ -257,7 +257,7 @@ def _op_key():
 
 def _transform_running():
     for window in bpy.context.window_manager.windows:
-        if any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in window.modal_operators):
+        if any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in live_refs.running_modals(window)):
             return True
     return False
 

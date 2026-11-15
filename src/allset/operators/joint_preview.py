@@ -23,6 +23,8 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
+from .. import live_refs
+
 
 LEAD = (0x43 / 255, 1.0, 0xa3 / 255)       # Maya's lead (last selected) green
 UNSELECTED = (0x26 / 255, 0.0, 0x43 / 255)  # Maya's unselected joint colour: the joints placed before the current one
@@ -132,7 +134,7 @@ _stale = []
 
 def _tool_running(context):
     wm = getattr(context, "window_manager", None)
-    return wm is not None and any(op.bl_idname == TOOL for w in wm.windows for op in w.modal_operators)
+    return wm is not None and any(op.bl_idname == TOOL for w in wm.windows for op in live_refs.running_modals(w))
 
 
 def _drop_stale():

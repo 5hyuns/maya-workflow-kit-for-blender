@@ -12,7 +12,7 @@ runs the entry (``runner.prepare``).
 import bpy
 from bpy.props import StringProperty
 
-from .. import results
+from .. import live_refs, results
 from . import runner, undo_text
 from ..ui import own_draw
 
@@ -160,7 +160,7 @@ def modal_help(context):
     window = getattr(context, "window", None)
     if window is None or not MODAL_HELP:
         return ""
-    for op in window.modal_operators:
+    for op in live_refs.running_modals(window):
         text = MODAL_HELP.get(op.bl_idname)
         if text:
             return text

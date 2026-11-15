@@ -25,7 +25,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty
 
-from .. import depsgraph_filter
+from .. import depsgraph_filter, live_refs
 from ..operators import auto_key
 from . import cb_entry
 
@@ -456,7 +456,7 @@ def _transforming():
     wm = bpy.context.window_manager
     from ..operators.manip_scale import TRANSFORM_MODALS
     return wm is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS)
-                                  for w in wm.windows for op in w.modal_operators)
+                                  for w in wm.windows for op in live_refs.running_modals(w))
 
 
 def _poll_transform_values():

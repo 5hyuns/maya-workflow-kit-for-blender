@@ -31,7 +31,7 @@ keys are left unkeyed.
 import bpy
 from bpy.app.handlers import persistent
 
-from .. import compat
+from .. import compat, live_refs
 from . import playback_maya
 
 EPS = 1e-5
@@ -67,7 +67,7 @@ def waits_for(bl_idname):
 def _transforming():
     wm = bpy.context.window_manager
     for w in (wm.windows if wm else ()):
-        for op in w.modal_operators:
+        for op in live_refs.running_modals(w):
             if waits_for(op.bl_idname):
                 return True
     return False

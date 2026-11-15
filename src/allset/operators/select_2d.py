@@ -16,7 +16,7 @@ without a mouse.
 import bpy
 from bpy.props import EnumProperty
 
-from .. import compat
+from .. import compat, live_refs
 
 EDITORS = {   # editor -> (area type, click operator, box operator bl_idname as listed in Window.modal_operators)
     'OUTLINER': ('OUTLINER', "outliner.item_activate", "OUTLINER_OT_select_box"),
@@ -258,7 +258,7 @@ def _last_pointer(wm):
 
 
 def _modal_running(wm, idname):
-    return any(op.bl_idname == idname for win in wm.windows for op in win.modal_operators)
+    return any(op.bl_idname == idname for win in wm.windows for op in live_refs.running_modals(win))
 
 
 def _finish_box():

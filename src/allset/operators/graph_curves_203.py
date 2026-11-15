@@ -34,7 +34,7 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
-from .. import compat, results, undo_steps
+from .. import compat, live_refs, results, undo_steps
 from .. import i18n
 
 EPS = 1e-4
@@ -651,7 +651,7 @@ SYNC_DELAY = 0.1
 def _transform_running():
     wm = bpy.context.window_manager
     for w in getattr(wm, "windows", ()):
-        for op in w.modal_operators:
+        for op in live_refs.running_modals(w):
             if op.bl_idname.startswith("TRANSFORM_OT"):
                 return True
     return False

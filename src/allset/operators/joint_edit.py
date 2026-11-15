@@ -16,6 +16,7 @@ head / tail change) and kit commands that write MAYA_FRAME are left alone; the J
 import bpy
 from mathutils import Matrix, Quaternion
 
+from .. import live_refs
 from . import joints
 
 TRANSLATE_OPS = frozenset({"TRANSFORM_OT_translate"})
@@ -149,7 +150,7 @@ def process(context):
     if ob is None:
         _snap.update(ob=None, bones={})
         return []
-    running = [op.bl_idname for w in wm.windows for op in w.modal_operators]
+    running = [op.bl_idname for w in wm.windows for op in live_refs.running_modals(w)]
     if any(i.startswith("TRANSFORM_OT_") for i in running):
         return []                                   # a move is running: keep the snapshot from before it
     if any(i.startswith(SKIP_MODALS[1:]) for i in running):

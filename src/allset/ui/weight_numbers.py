@@ -19,6 +19,8 @@ import blf
 import bpy
 import numpy as np
 
+from .. import live_refs
+
 LIMIT = 2000
 FONT = 0
 _handles = []
@@ -34,7 +36,7 @@ def settings(context):
 def _stroke_running(context):
     win = context.window
     return win is not None and any(op.bl_idname in {"PAINT_OT_weight_paint", "PAINT_OT_weight_gradient"}
-                                   for op in win.modal_operators)
+                                   for op in live_refs.running_modals(win))
 
 
 def format_weight(w, places):

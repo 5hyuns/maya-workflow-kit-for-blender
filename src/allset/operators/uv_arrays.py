@@ -20,7 +20,7 @@ from itertools import chain
 
 import numpy as np
 
-from .. import compat
+from .. import compat, live_refs
 from .uv_tools import EPS
 
 
@@ -126,7 +126,7 @@ EDIT_MODALS = ("TRANSFORM_OT", "UV_OT", "SCULPT_OT", "MESH_OT")
 def editing_now(wm):
     """A transform / UV / mesh modal operator runs in some window (the edit mesh is being changed)."""
     try:
-        return any(op.bl_idname.startswith(EDIT_MODALS) for w in wm.windows for op in w.modal_operators)
+        return any(op.bl_idname.startswith(EDIT_MODALS) for w in wm.windows for op in live_refs.running_modals(w))
     except (AttributeError, ReferenceError):
         return True
 

@@ -33,7 +33,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 from mathutils import Matrix, Vector
 
-from .. import results
+from .. import live_refs, results
 
 # kind -> its steps. The first step places the primitive; the others size it along the plane normal or in the plane.
 STEPS = {
@@ -360,7 +360,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         if CURRENT["pick"] != self._pick or not tool_active(context):
             return True
         me = self.as_pointer()
-        for op in context.window.modal_operators:
+        for op in live_refs.running_modals(context.window):
             if op.as_pointer() == me:
                 return False                 # this one comes first: nothing newer
             if op.bl_idname == self.bl_idname or op.bl_idname.endswith("_TOOL"):
