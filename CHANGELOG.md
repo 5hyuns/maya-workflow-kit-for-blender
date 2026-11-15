@@ -70,8 +70,8 @@ with their translations.
   constraint group and Component Editor watchers start again after a file is opened.
 - The Tension and Solidify rest-position handler keeps running after a file is opened.
 - Finished modal tools are no longer counted as running wherever the kit checks a window's modal tools.
-- The Maya layout is ready before its first frame (sizes, Outliner, icons, Time Slider), instead of settling over
-  the first second; the Range Slider starts at its settled width.
+- Switching to Maya mode shows the Maya layout ready before its first frame (sizes, Outliner, icons, Time
+  Slider), instead of settling over the first second; the Range Slider starts at its settled width.
 
 ## [0.16.0] — 2026-11-14
 

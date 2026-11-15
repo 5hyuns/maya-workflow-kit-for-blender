@@ -54,8 +54,8 @@ extension until they are tested.
 - File dialog: a folder pasted into the file name field opens that folder.
 - With Show > Locators off, a selected group still shows its Move / Rotate / Scale manipulators and its contents'
   selection wire.
-- The Maya layout is ready before its first frame (sizes, Outliner, icons, Time Slider) instead of settling over the
-  first second.
+- Switching to Maya mode shows the Maya layout ready before its first frame (sizes, Outliner, icons, Time Slider)
+  instead of settling over the first second.
 - Fixed: Alt+RMB dolly no longer jumps the wrong way when the cursor wraps at the edge of the view or a pen tablet
   jumps; a window reopened at its remembered place no longer resizes the Outliner or the dock; the ViewCube's face
   names lie on their faces; in the right dock's tab stack a section header no longer takes the click meant for the
