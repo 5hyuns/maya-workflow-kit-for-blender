@@ -6,7 +6,7 @@
 
 **The whole Maya workflow in Blender, in one install.**
 
-[![Blender 5.2 LTS](https://img.shields.io/badge/Blender-5.2%20LTS-5285a6)](#requirements)
+[![Blender 5.2 LTS | 5.3](https://img.shields.io/badge/Blender-5.2%20LTS%20%7C%205.3-5285a6)](#requirements)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 ![Maya Workflow Kit — for Maya users, in Blender. The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
@@ -244,7 +244,7 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
   menu bars: UV Editor 85 %, Graph Editor 77 %, Shape Editor 77 %, Script Editor 76 %, Dope Sheet 72 %, Reference
   Editor 71 %, Hypershade 58 %. What is done and what comes next is tracked in the roadmap issue
   [#108](https://github.com/5hyuns/maya-workflow-kit-for-blender/issues/108).
-- Blender versions after 5.2 are not offered the extension until they are tested.
+- Blender versions after 5.3 are not offered the extension until they are tested.
 
 ---
 
@@ -252,9 +252,9 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 
 ### Requirements
 
-- **Supported: Blender 5.2 LTS. Other versions are not tested.** Every test runs on Blender 5.2 LTS. The extension
-  still installs on Blender 5.0 and 5.1 (`blender_version_min = "5.0.0"`), but they are not tested and may have
-  problems; use 5.2 LTS if you can. Blender 4.5 LTS is no longer supported: **0.6.2 is the last version for Blender 4.5** —
+- **Supported: Blender 5.2 LTS and 5.3. Other versions are not tested.** Every test runs on both Blender 5.2 LTS and
+  5.3. The extension still installs on Blender 5.0 and 5.1 (`blender_version_min = "5.0.0"`), but they are not tested
+  and may have problems; use 5.2 LTS or 5.3 if you can. Blender 4.5 LTS is no longer supported: **0.6.2 is the last version for Blender 4.5** —
   keep using 0.6.2 there.
 - Pure Python, no compiled code, no network access. On Windows, hold keys read the keyboard state with one read-only
   system call; elsewhere Blender's own key-release event is used. Development and testing so far have been on Windows
@@ -434,8 +434,9 @@ unregistered, and nothing else was changed. See
 Yes — switch to Blender, follow along with Blender's own keys, and switch back to Maya.
 
 **Which Blender versions are supported?**
-Supported: Blender 5.2 LTS. Other versions are not tested. The extension still installs on 5.0 and 5.1, but they
-may have problems. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.2 are added once they are tested.
+Supported: Blender 5.2 LTS and 5.3. Other versions are not tested. The extension still installs on 5.0 and 5.1, but
+they may have problems. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.3 are added once they are
+tested.
 
 **Where are Blender's modifiers?**
 In Maya mode they work like Maya's construction history. Every modifier on the selected object is a history node
