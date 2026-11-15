@@ -792,13 +792,14 @@ INSTANCE_RGB = (0.78, 0.58, 1.0)      # soft purple: an instance (shared data) o
 
 
 def instance_keys(context):
-    """Row keys of the objects that share their data (instances) and of the groups above them."""
-    from ..operators.duplicate import is_instance
+    """Row keys of the instance copies (made by Duplicate Special > Instance, still sharing their data) and of the
+    instance groups above them; the originals and the groups holding them stay unmarked."""
+    from ..operators.duplicate import INSTANCE_TAG, is_instance
     keys = set()
     # shortcut: walks every object of the view layer per redraw; cache on the depsgraph if big scenes stutter
     for ob in context.view_layer.objects:
-        if is_instance(ob):
-            while ob is not None and ('O', ob.session_uid) not in keys:
+        if ob.get(INSTANCE_TAG) and is_instance(ob):
+            while ob is not None and ob.get(INSTANCE_TAG) and ('O', ob.session_uid) not in keys:
                 keys.add(('O', ob.session_uid))
                 ob = ob.parent
     return keys

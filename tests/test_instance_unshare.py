@@ -41,14 +41,29 @@ def _key(ob):
     return ('O', ob.session_uid)
 
 
-def test_outliner_marks_instances_and_their_groups():
+def test_outliner_marks_only_the_instance_copies():
     grp, kids, copy = _instance_pair()
     lone = bpy.data.objects.new("plain", bpy.data.meshes.new("plainShape"))
     bpy.context.scene.collection.objects.link(lone)
+    fix = bpy.data.objects.new("fix", None)      # a group above both: unmarked
+    bpy.context.scene.collection.objects.link(fix)
+    grp.parent = copy.parent = fix
     keys = _mod("ui.outliner_tree").instance_keys(bpy.context)
-    for ob in (grp, copy, *kids, *copy.children):
+    for ob in (copy, *copy.children):
         assert _key(ob) in keys, ob.name
-    assert _key(lone) not in keys
+    for ob in (grp, *kids, fix, lone):            # the originals share the mesh but aren't instances
+        assert _key(ob) not in keys, ob.name
+
+
+def test_plain_copy_of_an_instance_is_unmarked():
+    grp, kids, copy = _instance_pair()
+    for ob in bpy.context.scene.objects:
+        ob.select_set(False)
+    copy.select_set(True)
+    bpy.context.view_layer.objects.active = copy
+    assert bpy.ops.allset.duplicate() == {'FINISHED'}
+    plain = bpy.context.view_layer.objects.active
+    assert not any(ob.get("allset_instance") for ob in (plain, *plain.children))
 
 
 def _check_plain(grp, kids, copy):

@@ -45,6 +45,10 @@ PLAIN, INPUT_GRAPH, INPUT_CONNECTIONS = 'PLAIN', 'INPUT_GRAPH', 'INPUT_CONNECTIO
 _POINT_TYPES = {'CURVE', 'SURFACE', 'LATTICE'}
 
 
+# Set on the objects a Duplicate Special > Instance made (not on the originals): the Outliner marks only these
+INSTANCE_TAG = "allset_instance"
+
+
 def is_instance(ob):
     """``ob`` shares its data with another object (Duplicate Special > Instance, Blender linked duplicate)."""
     data = ob.data
@@ -56,6 +60,7 @@ def unshare(objects):
     show on them (Freeze / Delete History on an instance). Returns how many were copied."""
     n = 0
     for ob in hierarchy(objects):
+        ob.pop(INSTANCE_TAG, None)
         if is_instance(ob):          # checked per object: the last one sharing a mesh keeps the original
             ob.data = ob.data.copy()
             n += 1
@@ -80,6 +85,10 @@ def copy_subtree(root, instance=False, inputs=PLAIN):
     new_of = {}
     for ob in hierarchy([root]):
         new = ob.copy()
+        if instance:
+            new[INSTANCE_TAG] = True
+        else:
+            new.pop(INSTANCE_TAG, None)     # a plain copy of an instance is no instance
         if ob.data is not None and not instance:
             new.data = ob.data.copy()
         if not instance and inputs != INPUT_GRAPH:   # no polyCube1 on pCube2: the creation node is an input
