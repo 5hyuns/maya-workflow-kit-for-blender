@@ -45,6 +45,23 @@ PLAIN, INPUT_GRAPH, INPUT_CONNECTIONS = 'PLAIN', 'INPUT_GRAPH', 'INPUT_CONNECTIO
 _POINT_TYPES = {'CURVE', 'SURFACE', 'LATTICE'}
 
 
+def is_instance(ob):
+    """``ob`` shares its data with another object (Duplicate Special > Instance, Blender linked duplicate)."""
+    data = ob.data
+    return data is not None and data.users - data.use_fake_user > 1
+
+
+def unshare(objects):
+    """Give ``objects`` and their descendants their own copy of shared data, so edits on the original no longer
+    show on them (Freeze / Delete History on an instance). Returns how many were copied."""
+    n = 0
+    for ob in hierarchy(objects):
+        if is_instance(ob):          # checked per object: the last one sharing a mesh keeps the original
+            ob.data = ob.data.copy()
+            n += 1
+    return n
+
+
 def selected_roots(objects):
     chosen = set(objects)
     out = []

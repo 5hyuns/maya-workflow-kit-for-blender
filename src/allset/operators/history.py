@@ -265,10 +265,18 @@ class ALLSET_OT_delete_history(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        baked, notes = delete_history(context, context.selected_objects, self.non_deformer, self.before_only)
+        from .duplicate import unshare
+        from .group import selected_objects
+        objects = selected_objects(context)   # with groups a 3D View hides by its Locators filter
+        # an instance becomes a plain object first: baking into a shared mesh would change the original too
+        copies = unshare(objects)
+        baked, notes = delete_history(context, objects, self.non_deformer, self.before_only)
         for note in notes:
             self.report({'WARNING'}, note)
-        results.result(self, f"Deleted history on {baked} object(s)")
+        msg = f"Deleted history on {baked} object(s)"
+        if copies:
+            msg += f"; {copies} instance(s) made plain objects"
+        results.result(self, msg)
         return {'FINISHED'}
 
 

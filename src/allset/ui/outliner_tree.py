@@ -788,6 +788,20 @@ def _triangle(tris, tcol, cx, cy, r, down, rgba):
 ICON_RGB = (0.741, 0.741, 0.741)      # kit icon grey
 JOINT_RGB = (0.282, 0.667, 0.710)     # kit icon teal
 CHILD_SELECTED = 0.33                 # share of the selection highlight on a row with a selected node below it
+INSTANCE_RGB = (0.78, 0.58, 1.0)      # soft purple: an instance (shared data) or a group holding one
+
+
+def instance_keys(context):
+    """Row keys of the objects that share their data (instances) and of the groups above them."""
+    from ..operators.duplicate import is_instance
+    keys = set()
+    # shortcut: walks every object of the view layer per redraw; cache on the depsgraph if big scenes stutter
+    for ob in context.view_layer.objects:
+        if is_instance(ob):
+            while ob is not None and ('O', ob.session_uid) not in keys:
+                keys.add(('O', ob.session_uid))
+                ob = ob.parent
+    return keys
 
 
 def eye_x(region, u, n, first):
@@ -925,6 +939,7 @@ def _draw(context, space, region, area):
     back = tuple(th.space.back)[:3]
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
+    instances = instance_keys(context)
     by_name = object_names()
     cols = column_xs(space, region, u, n, first)
     tris, tcol, lines, lcol, textures, names, icons = [], [], [], [], [], [], []
@@ -956,7 +971,7 @@ def _draw(context, space, region, area):
         if row.icon in ('SET', 'CAMERA_ROW'):
             textures.append(("outliner:SET" if row.icon == 'SET' else "outliner:CAMERA", ix, cy, hidden and not sel))
         else:
-            rgb = JOINT_RGB if row.icon == 'JOINT' else ICON_RGB
+            rgb = INSTANCE_RGB if row.key in instances else JOINT_RGB if row.icon == 'JOINT' else ICON_RGB
             _icon(tris, tcol, lines, lcol, row.icon, ix, cy, r_icon * (0.8 if row.kind == 'SHAPE' else 1.0),
                   (*rgb, alpha))
         if is_live:
@@ -965,6 +980,8 @@ def _draw(context, space, region, area):
             rgb = act_text
         elif sel and row.kind in ('OBJECT', 'JOINT'):
             rgb = sel_text
+        elif row.key in instances:
+            rgb = INSTANCE_RGB
         else:
             rgb = text_hi if sel else text
         names.append((x + 2.25 * u, cy, row.label, (*rgb, alpha)))
