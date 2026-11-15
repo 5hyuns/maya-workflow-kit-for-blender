@@ -82,6 +82,33 @@ def test_template_views_are_maya_views():
         bpy.ops.wm.read_homefile()
 
 
+def test_view_cube_camera_buttons_only_with_their_preference():
+    """Off (default): no Blender buttons under the ViewCube. The Camera / Projection Buttons preference shows the
+    camera view and perspective / orthographic toggles below the cube, their icons following the view."""
+    from types import SimpleNamespace
+    from mathutils import Matrix
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    area = next(a for a in bpy.context.window.screen.areas if a.type == 'VIEW_3D')
+    region = next(r for r in area.regions if r.type == 'WINDOW')
+    group = SimpleNamespace(camera_button=SimpleNamespace(matrix_basis=Matrix.Identity(4)),
+                            projection_button=SimpleNamespace(matrix_basis=Matrix.Identity(4)))
+    assert prefs.show_view_cube_buttons is False
+    try:
+        with bpy.context.temp_override(area=area, region=region):
+            vf.ALLSET_GGT_view_cube.draw_prepare(group, bpy.context)
+            assert group.camera_button.hide and group.projection_button.hide
+            prefs.show_view_cube_buttons = True
+            vf.ALLSET_GGT_view_cube.draw_prepare(group, bpy.context)
+            assert not group.camera_button.hide and not group.projection_button.hide
+            rv3d = bpy.context.region_data
+            assert group.projection_button.icon == ('VIEW_PERSPECTIVE' if rv3d.is_perspective else 'VIEW_ORTHO')
+            assert group.camera_button.icon.startswith('VIEW_CAMERA')
+            # below the cube, the projection button under the camera button
+            assert group.projection_button.matrix_basis.translation.y < group.camera_button.matrix_basis.translation.y
+    finally:
+        prefs.show_view_cube_buttons = False
+
+
 def test_registration_and_hud_menu():
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences
     assert prefs.maya_viewcube and prefs.maya_camera_names and prefs.maya_view_axis

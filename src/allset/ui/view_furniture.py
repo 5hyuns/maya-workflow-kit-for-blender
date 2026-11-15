@@ -40,7 +40,8 @@ from .view_furniture_state import (_APPLY_LATER, _HANDLERS, _HIDDEN, _PENDING, _
                                    _spaces, _strip_later, _toggle_strip, apply_navigation, blender_gizmo_wanted,
                                    cube_wanted, maya_view, strip_action)
 from .view_furniture_draw import (_batches, _cached_batch, _cube_face_batch, _cube_plan, _draw_controls,  # noqa: F401
-                                  _draw_hud, _draw_strip, _face_label, _fill, _hud_callback, _lines, _plan,
+                                  _draw_hud, _draw_strip, _face_label, _face_label_matrix, _fill, _hud_callback,
+                                  _lines, _plan,
                                   _plans, _sh, _shader, _strip_batch, _text, _triad_plan, draw_cube)
 
 # Four view: the ViewCube shows in one panel only (Maya: the active panel), the last one the mouse was in.
@@ -412,6 +413,31 @@ class ALLSET_GGT_view_cube(bpy.types.GizmoGroup):
 
     def setup(self, context):
         self.gizmos.new(ALLSET_GT_view_cube.bl_idname)
+        self.camera_button = self.gizmos.new('GIZMO_GT_button_2d')
+        self.projection_button = self.gizmos.new('GIZMO_GT_button_2d')
+        for button, operator in ((self.camera_button, 'view3d.view_camera'),
+                                 (self.projection_button, 'view3d.view_persportho')):
+            button.draw_options = {'OUTLINE', 'BACKDROP'}
+            button.show_drag = False
+            button.color = (0.0, 0.0, 0.0)
+            button.alpha = 0.0
+            button.color_highlight = (0.5, 0.5, 0.5)
+            button.alpha_highlight = 0.5
+            button.target_set_operator(operator)
+
+    def draw_prepare(self, context):
+        s = _scale()
+        region, rv = context.region, context.region_data
+        size = cube_size(region.width, region.height, s)
+        centre, _label, _triad = layout(_bounds(context), s, size)
+        hide = not _cube_here(context) or not _prefs().show_view_cube_buttons
+        for i, button in enumerate((self.camera_button, self.projection_button)):
+            button.hide = hide
+            button.scale_basis = 14 * s
+            button.matrix_basis.translation = (centre[0] + size * .5,
+                                                centre[1] - size * .8 - (18 + 30 * i) * s, 0)
+        self.camera_button.icon = 'VIEW_CAMERA' if rv.view_perspective == 'CAMERA' else 'VIEW_CAMERA_UNSELECTED'
+        self.projection_button.icon = 'VIEW_PERSPECTIVE' if rv.is_perspective else 'VIEW_ORTHO'
 
 
 classes = (ALLSET_OT_view_cube_face, ALLSET_OT_view_cube_control, ALLSET_MT_view_cube, ALLSET_GT_view_cube, ALLSET_GGT_view_cube)
