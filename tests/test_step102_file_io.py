@@ -99,6 +99,25 @@ def test_format_by_extension_and_files_of_type():
     assert file_io.IMPORT_TYPES[0][0] == 'AUTO'
 
 
+def test_folder_typed_in_the_file_name_opens_it():
+    """A folder pasted into the dialog's file name field (with a separator) becomes the browser's folder."""
+    import tempfile
+    from types import SimpleNamespace
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "sub"))
+        params = SimpleNamespace(filename="sub/", directory=os.fsencode(d))
+        ctx = SimpleNamespace(space_data=SimpleNamespace(type='FILE_BROWSER', params=params))
+        op = SimpleNamespace(filepath="", mode='IMPORT', export_type='FBX')
+        assert file_io._FileDialog.check(op, ctx) is True
+        assert op.filepath == os.path.join(os.path.abspath(os.path.join(d, "sub")), "")
+        params.filename, op.filepath = '"' + os.path.join(d, "sub") + '"', ""      # a pasted absolute path, quoted
+        assert file_io._FileDialog.check(op, ctx) is True and op.filepath.startswith(os.path.join(d, "sub"))
+        params.filename, op.filepath = "scene.fbx", ""         # a plain file name: the folder stays
+        assert file_io._FileDialog.check(op, ctx) is False and op.filepath == ""
+        params.filename = "no_such_folder/"
+        assert file_io._FileDialog.check(op, ctx) is False
+
+
 def test_file_menu_runs_the_dialog_and_option_boxes_are_live():
     for path, op in (("File/Import...", "file_import"), ("File/Export All...", "file_export_all"),
                      ("File/Export Selection...", "file_export_selection")):
