@@ -218,9 +218,15 @@ def _diff_dump(a, b, skip=()):
 
 
 def _install_use(root, env):
-    rc, log = _run([bpy.app.binary_path, "--command", "extension", "install-file", "-r", "user_default", "--enable",
-                    _zip()], env)
+    # Windows: a virus scanner holding a just-unpacked file fails Blender's "allset@" rename at random
+    # ("Access is denied"), and Blender still exits 0; another try gets through
+    for _ in range(3):
+        rc, log = _run([bpy.app.binary_path, "--command", "extension", "install-file", "-r", "user_default",
+                        "--enable", _zip()], env)
+        if rc != 0 or os.path.isfile(os.path.join(root, "extensions", "user_default", "allset", "__init__.py")):
+            break
     assert rc == 0, log[-3000:]
+    assert os.path.isfile(os.path.join(root, "extensions", "user_default", "allset", "__init__.py")), log[-3000:]
     _session(root, env, "cycle", "maya_cycle", "save")         # Maya mode on and off, preferences saved
     _session(root, env, "on", "maya_on", "save")               # the user quits in Maya mode, preferences saved
 

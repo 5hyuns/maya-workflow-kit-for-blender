@@ -180,6 +180,8 @@ PIXEL_MOVE_KEYS = (("UP_ARROW", 0, 1), ("DOWN_ARROW", 0, -1), ("LEFT_ARROW", -1,
 
 
 def patch_view_keys_3(kd):
+    for km in ("Vertex Paint", "Weight Paint"):   # Blender 5.3 Alt+A pie; Maya's Alt+A wins in the kit
+        kd.remove(km, "wm.call_menu_pie", optional=True, type="A", alt=True)
     _add(kd, "3D View", "allset.cycle_display", make_event("A", alt=True), shadows=VIEW3_SHADOWS)
     _add(kd, "3D View", "allset.camera_mode_toggle", make_event("P", alt=True), shadows=VIEW3_SHADOWS)
     for key, dx, dy in PIXEL_MOVE_KEYS:

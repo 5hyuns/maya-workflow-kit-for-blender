@@ -374,6 +374,8 @@ def patch_repeat(kd):
     """G = Maya repeat last, menu / shelf / marking commands too (operators/repeat_maya.py); Blender's
     screen.repeat_last only knows registered operators. Graph Editor G stays anim.scene_range_frame."""
     kd.remove("Screen", "screen.repeat_last", type="G")
+    # Blender 5.3 Grease Pencil Draw Mode G move; Maya's G (repeat) wins in the kit
+    kd.remove("Grease Pencil Draw Mode", "transform.translate", optional=True, type="G")
     repeat_maps = ("Screen", "3D View", "Object Mode", "Mesh")
     _add(kd, "Screen", "allset.repeat_last", make_event("G"),
          shadows=repeat_maps + ("Graph Editor", "Dopesheet", "Grease Pencil Edit Mode"))  # their own G wins

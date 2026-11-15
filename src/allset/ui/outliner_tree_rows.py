@@ -34,9 +34,10 @@ _cache = {}               # (structure, expand, scene, view layer, options) -> h
 # --- row model -----------------------------------------------------------------------------------------------------
 
 def options(space):
+    from .. import compat           # Blender's sort flag differs by version (this module is otherwise bpy-free)
     types = frozenset(t for t, prop in TYPE_PROPS if getattr(space, prop, True))
-    return Options(space.use_filter_children, space.use_sort_alpha, space.use_filter_object_content, types,
-                   space.filter_text, space.use_filter_case_sensitive, space.use_filter_complete)
+    return Options(space.use_filter_children, compat.outliner_sort_alpha(space), space.use_filter_object_content,
+                   types, space.filter_text, space.use_filter_case_sensitive, space.use_filter_complete)
 
 
 def default_options(**kw):

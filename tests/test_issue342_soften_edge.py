@@ -591,7 +591,8 @@ def test_undo_history_lines_and_where_each_one_lands():
     steps = _undo_steps()
     active = next(i for i, s in enumerate(steps) if s[2])
     assert active == len(steps) - 1
-    tail = [(n, t) for n, t, _a in steps[active - 3:active + 1]]
+    # Blender 5.3 prints the step type's identifier (EDIT_MESH), earlier versions its name (Edit Mesh)
+    tail = [(n, t.replace("_", " ").title()) for n, t, _a in steps[active - 3:active + 1]]
     assert tail == [("Select", "Edit Mesh"), ("Object Mode", "Global Undo"), ("Edit Mode", "Edit Mesh"),
                     ("Soften Edge", "Global Undo")], tail
     select_line, object_line, edit_line, result_line = active - 3, active - 2, active - 1, active

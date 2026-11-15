@@ -211,6 +211,8 @@ def patch_key_batch_3(kd):
     kd.remove("Screen", "screen.userpref_show", type="COMMA", ctrl=True)
 
     # menu bars and background
+    # Blender 5.3 Grease Pencil Draw Mode Ctrl+M mirror; Maya's Ctrl+M wins in the kit
+    kd.remove("Grease Pencil Draw Mode", "transform.mirror", optional=True, type="M", ctrl=True)
     _add(kd, "Screen", "allset.main_menubar_toggle", make_event("M", ctrl=True), shadows=("Grease Pencil Edit Mode",))
     _add(kd, "Screen", "wm.context_toggle", make_event("M", shift=True), {"data_path": "area.show_menus"},
          shadows=("Sequencer",))

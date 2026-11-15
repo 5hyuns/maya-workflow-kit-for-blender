@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Blender version differences in one place.
 
-The kit's main target is Blender 5.2; it supports 5.0.0 - 5.2.x (0.6.2 is the
+The kit's main target is Blender 5.2; it supports 5.0.0 - 5.3.x (0.6.2 is the
 last version for Blender 4.5, and the 4.5 paths are gone). Every check of "which Blender is this" lives here;
 feature code calls these helpers and stays the same on every version.
 """
@@ -19,7 +19,41 @@ IS_STRICT = VERSION in STRICT_VERSIONS
 
 # Properties tab flags newer than 4.5: the Maya Workflow Kit template is still a 4.5-saved file
 # and opens in 5.x with them on, so they carry no meaning in a kit dock's role (ui/maya_dock_roles.role).
-LATER_PROPERTIES_TABS = frozenset({"show_properties_strip", "show_properties_strip_modifier"})
+# Only the flags this Blender has: 5.3 added the Compositor tab.
+_LATER_TABS = ("show_properties_strip", "show_properties_strip_modifier", "show_properties_compositor")
+LATER_PROPERTIES_TABS = frozenset(n for n in _LATER_TABS if n in bpy.types.SpaceProperties.bl_rna.properties)
+
+
+# --- Outliner sort -----------------------------------------------------------------------------------------------
+# Blender 5.3 replaced the Outliner's use_sort_alpha bool with the sort_method enum (ALPHA / CUSTOM / NONE).
+
+def outliner_sort_alpha(space):
+    """The Outliner sorts its rows by name."""
+    return space.sort_method == 'ALPHA' if hasattr(space, "sort_method") else space.use_sort_alpha
+
+
+def set_outliner_sort_alpha(space, on):
+    """Sort by name, or keep the rows in their own order (off)."""
+    if hasattr(space, "sort_method"):
+        space.sort_method = 'ALPHA' if on else 'NONE'
+    else:
+        space.use_sort_alpha = on
+
+
+def draw_outliner_sort(layout, space):
+    """The sort row of a menu: 5.3's enum as a submenu row (``layout.prop`` would split the menu in two), else the
+    Sort Alphabetically check box."""
+    if hasattr(space, "sort_method"):
+        layout.prop_menu_enum(space, "sort_method")
+    else:
+        layout.prop(space, "use_sort_alpha", text="Sort Alphabetically")
+
+
+def primitive_add_args(add, kw):
+    """``kw`` for the add operator ``add``: Blender 5.3 renamed text_add's ``radius`` to ``size``."""
+    if "radius" in kw and "radius" not in add.get_rna_type().properties:
+        kw["size"] = kw.pop("radius")
+    return kw
 
 
 def own_annotations(cls):
