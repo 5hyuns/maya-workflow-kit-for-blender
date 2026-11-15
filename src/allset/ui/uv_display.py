@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor display keys and Move UV Shell.
 
-Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
+Maya UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
 
 - 4 Wireframe / 5 Shaded (Display Mode radio) -> ``SpaceUVEditor.show_faces`` off / on (Shaded also sets
   ``uv_face_opacity`` 1). ``uv_face_opacity`` 0 alone still draws grey face fills (GUI shot): no wireframe.

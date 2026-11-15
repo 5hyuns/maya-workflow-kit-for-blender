@@ -46,7 +46,7 @@ def test_wheel_is_three_lines():
 
 
 def test_no_split_faces_by_edges():
-    """'Split Faces by Edges' is Blender's name, in no Maya Edit Mesh menu (2022-2027); Maya's tool is Detach."""
+    """'Split Faces by Edges' is Blender's name, in no Maya Edit Mesh menu; Maya's tool is Detach."""
     data = import_module(kit.MODULE + ".ui.menu_data")
     mm = import_module(kit.MODULE + ".ui.menu_map")
     labels = [it[0] for it in data.MENUS["mainEditMeshMenu"][3]]

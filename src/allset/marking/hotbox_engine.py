@@ -154,7 +154,7 @@ class HotboxLayout:
         return "E" if dx > 0 else "W"
 
 
-TAP_TIME = 0.4  # Maya 2022 hotbox tap time
+TAP_TIME = 0.4  # Maya hotbox tap time
 
 
 def is_tap(press_t, release_t, clicked):

@@ -150,7 +150,7 @@ def _reflect(v, axis):
 
 
 # Maya Mirror Skin Weights Options: Influence Association 1 = Closest joint / One to one /
-# Label (factory Closest joint), 2 = None / the same (factory None). One to one pairs a joint with itself inside one
+# Label (default Closest joint), 2 = None / the same (default None). One to one pairs a joint with itself inside one
 # skeleton, so the kit offers Closest joint and Label.
 MIRROR_INFLUENCE = (("CLOSEST_JOINT", "Closest joint", "The joint nearest the mirrored place of the joint"),
                     ("LABEL", "Label", "The joint with the same type label on the other side (Skeleton > Joint "
@@ -233,11 +233,11 @@ def surface_weights(mesh, points, groups, w):
 
 def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOINT",), unmatched=None, only=None,
                    normalize=False):
-    """Copy the weights of one side onto the other (Maya Mirror Skin Weights, factory Closest point on surface): each
+    """Copy the weights of one side onto the other (Maya Mirror Skin Weights, default Closest point on surface): each
     destination vertex takes the weights at the closest surface point to its mirror image (barycentric), every joint
     renamed to its mirror partner; vertices on the plane are left alone. ``only`` = Maya filterSelected: just these
     destination vertices are written (a selected source vertex writes nothing);
-    ``normalize`` = the option's Normalize (factory off). Count of vertices written."""
+    ``normalize`` = the option's Normalize (default off). Count of vertices written."""
     import numpy as np
     from . import skin_basics
     mod = armature_modifier(mesh)

@@ -202,7 +202,7 @@ def _hole_merge(target, stamp, mode):
 
 
 def make_hole(bm, target, stamp, merge_mode="None"):
-    """Cut ``stamp``'s outline into ``target`` (Maya Make Hole; factory merge mode None: the stamp keeps its position):
+    """Cut ``stamp``'s outline into ``target`` (Maya Make Hole; default merge mode None: the stamp keeps its position):
     both faces go, the two loops are bridged with quads. Returns the new faces."""
     _hole_merge(target, stamp, merge_mode)
     outer = list(target.edges)

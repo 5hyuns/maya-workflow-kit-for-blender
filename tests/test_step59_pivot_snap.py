@@ -267,7 +267,7 @@ def test_make_live():
     assert (ts.use_snap, set(ts.snap_elements)) == before
 
 
-# --- manipulator (M1-M7) ----------------------------------------------------------------------
+# --- manipulator ------------------------------------------------------------------------------
 
 def test_tools_use_the_maya_manipulator():
     from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active

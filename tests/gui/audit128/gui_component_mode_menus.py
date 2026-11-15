@@ -1,5 +1,5 @@
 """Audit 128 repro (menu sweep follow-up): Edit / Select / Modify menu items a Maya user clicks while in component
-mode, run through the real menu button operator (allset.menu_item, as a click does). Maya 2022 runs all of these
+mode, run through the real menu button operator (allset.menu_item, as a click does). Maya runs all of these
 in component mode (Select > All / Inverse / Deselect All act on components, Edit > Delete deletes the selected
 components, Undo / Redo / Repeat always work, Group / Parent / Freeze act on the objects that own the components).
 PASSes when each item changes something (or, for Undo, undoes)."""

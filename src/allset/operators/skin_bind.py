@@ -17,7 +17,7 @@ from .skin_cluster import (NORMALIZE, NORMALIZE_PROP, PAINT_SEEN, _cb, armature_
 
 # Maya Bind Skin "Bind method". Closest distance is the default method (like Maya): weight of joint i on a vertex is
 # distance(world vertex, joint i's segments) ** -dropoff, the segments run from the joint to each child joint (an end
-# joint is a point), dropoff = skinCluster dropoffRate (factory 4), the largest ``max influences`` kept, normalised.
+# joint is a point), dropoff = skinCluster dropoffRate (default 4), the largest ``max influences`` kept, normalised.
 # World space: an object's non-uniform scale doesn't matter (#94 - Blender's bone heat on a mesh with Scale Y 8 and
 # one height subdivision left joint2 with no weights). Heat Map = Blender's automatic weights (bone heat).
 BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Default bind (like Maya): weights fall off with the distance to "
@@ -76,7 +76,7 @@ def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5
 
 
 def hierarchy_candidates(dist, names, hierarchy, max_influences):
-    """Maya Closest in hierarchy (bind_hier2, error <= 3.9e-16): per vertex the
+    """Maya Closest in hierarchy: per vertex the
     closest joint *with children*; candidates = its breadth-first list (each listed joint's children, then its parent,
     at most ``max_influences`` joints) plus every end joint. (V, J) bool mask."""
     import numpy as np
@@ -320,7 +320,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
     bind_method: EnumProperty(name="Bind method", items=BIND_METHODS, default="CLOSEST_DISTANCE")
     skinning: EnumProperty(name="Skinning method", items=SKINNING, default="CLASSIC_LINEAR")
     max_influences: IntProperty(name="Max Influences", default=5, min=1, max=30)
-    # Maya 2026 Bind Skin Options factory (Maintain max influences on, dropoff 4.0, slider 0.1-10)
+    # Bind Skin Options defaults (Maintain max influences on, dropoff 4.0, slider 0.1-10)
     maintain_max: BoolProperty(name="Maintain max influences", default=True)
     dropoff: FloatProperty(name="Dropoff rate", default=DROPOFF, min=0.1, max=100.0, soft_max=10.0, precision=1)
     normalize: EnumProperty(name="Normalize weights", items=NORMALIZE, default="INTERACTIVE")

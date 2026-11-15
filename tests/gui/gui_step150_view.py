@@ -1,4 +1,4 @@
-"""Lane A (#96) in a real UI: Maya Workflow Kit layout, pCube1 Translate X / Y keyed, Graph Editor from
+"""#96 in a real UI: Maya Workflow Kit layout, pCube1 Translate X / Y keyed, Graph Editor from
 Windows > Animation Editors. View > Curve Name > Always writes "pCube1.translateX" / "pCube1.translateY" beside the
 last keys in the curve colours (Never: nothing); View > Auto Frame (on by default, like Maya) refits the value axis when
 the selection changes to pCube2 (keys at 40 .. 200, values 0 .. 50; the time range stays)."""

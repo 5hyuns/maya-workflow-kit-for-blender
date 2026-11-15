@@ -10,7 +10,7 @@ import bpy
 
 
 # --- Symmetrize --------------------------------------------------------------------------------
-# Maya 2022: with symmetry off (factory) Edit Mesh > Symmetrize enters "Select Symmetry
+# Maya: with symmetry off (as in a new scene) Edit Mesh > Symmetrize enters "Select Symmetry
 # Edge" ("Select a mesh edge for symmetry"), the mesh unchanged; the clicked edge = a topological symmetry seam, then
 # each selected component's counterpart takes the mirrored position (the selected side drives; with both sides
 # selected the side of the lowest-index selected vertex drives, Maya's -X side on a cube).

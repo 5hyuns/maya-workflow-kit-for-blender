@@ -45,7 +45,7 @@ def listed_objects(context, space):
 
 
 # --- List > Load / Add Selected Objects, Auto Load, Pin Channel, Show filters (#110) --------------------
-# Maya 2022: Auto Load Selected Objects is on by
+# Maya: Auto Load Selected Objects is on by
 # default and the list follows the selection; unchecking it freezes the list shown then; Load / Add Selected Objects
 # are greyed while Auto Load is on (the kit's poll fails) and replace / append the frozen list (nothing selected =
 # empty list), Auto Load stays off. Maya's first Add right after a Load drops the loaded objects — the kit appends

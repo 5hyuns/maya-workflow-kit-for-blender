@@ -10,7 +10,7 @@ from .surfaces_math_base import (Crv, EPS, add, mul, _dist, _from_lines_u, trans
                                  open_periodic_curve)
 
 
-# --- 4.7 Attach --------------------------------------------------------------------------------------------------
+# --- Attach ------------------------------------------------------------------------------------------------------
 
 def _edges(s):
     """(name, CV line) of the four edges: U start / end run along V, V start / end run along U."""
@@ -20,7 +20,7 @@ def _edges(s):
 
 
 def reverse(s, mode="U"):
-    """Maya Reverse Direction: "U" (factory) = CV rows reversed, U knots mirrored; "V";
+    """Maya Reverse Direction: "U" (default) = CV rows reversed, U knots mirrored; "V";
     "BOTH"; "SWAP" = transpose (knots swapped)."""
     mode = mode.upper()
     if mode == "SWAP":
@@ -90,7 +90,7 @@ def attach(a, b, method="BLEND", bias=0.5):
     return _from_lines_u(lines, knots, A, periodic_u=False)
 
 
-# --- 4.8 Insert / Detach / patch ---------------------------------------------------------------------------------
+# --- Insert / Detach / patch -------------------------------------------------------------------------------------
 
 def open_periodic(s, direction, at=None):
     """A periodic direction re-written as an open (clamped) one over one period starting at ``at`` (default its
@@ -151,11 +151,11 @@ def sub_patch(s, u0, u1, v0, v1):
     return out
 
 
-# --- 4.9 Rebuild (Maya algorithm) -----------------------------------------------------------------------------
+# --- Rebuild ---------------------------------------------------------------------------------------------------
 
 def rebuild(s, spans_u=4, spans_v=4, degree_u=3, degree_v=3):
-    """Maya Rebuild (factory Uniform, 4 x 4 spans, cubic, range 0..1, keep ends) [U algorithm]: per direction, every
-    CV line is mapped linearly onto 0..1 and interpolated at the Greville points of the default knots (clamped
+    """Maya Rebuild (default Uniform, 4 x 4 spans, cubic, range 0..1, keep ends; the kit's own algorithm): per
+    direction, every CV line is mapped linearly onto 0..1 and interpolated at the Greville points of the default knots (clamped
     uniform over 0..1, exact). Exact when the new space contains the old one (e.g. 2 -> 4 spans); otherwise
     an approximation (the curve model, equal-arc-length least squares per line, fits worse: per-line arc
     lengths disagree)."""
@@ -188,7 +188,7 @@ def isoparm(s, direction, t):
 
 
 def visible_isoparms(s):
-    """Maya "Visible surface isoparms" (factory) with the surface selected: every span boundary, ends included, U first."""
+    """Maya "Visible surface isoparms" (default) with the surface selected: every span boundary, ends included, U first."""
     out = []
     for direction, knots, degree in (("U", s.knots_u, s.degree_u), ("V", s.knots_v, s.degree_v)):
         lo, hi = knots[degree - 1], knots[len(knots) - degree]

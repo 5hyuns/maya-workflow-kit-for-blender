@@ -135,7 +135,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "bones hidden one by one (H) are still walked into, and an armature with controller tags "
                     "(Control > Tag As Controller) follows its controller hierarchy instead. Off: plain hierarchy",
         default=True)
-    # PR #125 extras with no Maya counterpart (no Maya 2022-2027 viewport header has a mode picker or a pulse):
+    # PR #125 extras with no Maya counterpart (no Maya viewport header has a mode picker or a pulse):
     # off by default.
     armature_mode_header: bpy.props.BoolProperty(
         name="Armature Mode Picker",
@@ -211,7 +211,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Auto Frame", default=True,
         description="When the selection changes, the Graph Editor refits its value axis to the curves it shows "
                     "(Maya View > Auto Frame)")
-    # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, factory off in the Dope Sheet)
+    # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, off by default in the Dope Sheet)
     dope_auto_frame: bpy.props.BoolProperty(
         name="Dope Sheet Auto Frame",
         description="When the selection changes, the Dope Sheet frames all the keys it shows (Maya Dope Sheet "
@@ -249,8 +249,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a "
                     "side to scale them in time or value, a corner for both")
 
-    # Graph Editor depth 2: View > Show Buffer Curves (factory off),
-    # Curves > Default Tangent Weight (factory Non-weighted), Retime Tool Snap On Frame (factory off), Edit > Set Curve
+    # Graph Editor depth 2: View > Show Buffer Curves (default off),
+    # Curves > Default Tangent Weight (default Non-weighted), Retime Tool Snap On Frame (default off), Edit > Set Curve
     # Colors... rules (Maya curveRGBColor: attribute name -> colour; JSON list of [attribute, r, g, b]).
     graph_show_buffers: bpy.props.BoolProperty(
         name="Show Buffer Curves",
@@ -327,7 +327,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Joint Size of scenes whose length unit is metres or larger, until Display > Animation > "
                     "Joint Size sets one for the scene (a joint Radius is in centimetres, so Radius 1 is 1 cm "
                     "across: 1 = like Maya)")
-    # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
+    # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, all on by default;
     # Maya Graph Editor Select menu, operators/graph_select_masks.py).
     graph_select_curve: bpy.props.BoolProperty(
         name="Curve", default=True, description="Clicking or dragging in the Graph Editor can pick curves")
@@ -337,7 +337,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="In Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick in tangents")
     graph_select_out: bpy.props.BoolProperty(
         name="Out Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick out tangents")
-    # Tangents > Default In / Out Tangent (Maya keyTangent -global, factory Auto / Auto):
+    # Tangents > Default In / Out Tangent (Maya's global key tangents, default Auto / Auto):
     # the tangents of the keys the kit sets (S, Shift+W/E/R, Channel Box keys, Auto Key). Blender's own preference
     # is never written (#40).
     default_in_tangent: bpy.props.EnumProperty(

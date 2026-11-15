@@ -1,4 +1,4 @@
-"""Maya menu items and keys in component mode (#39, #17, #18; Maya 2022),
+"""Maya menu items and keys in component mode (#39, #17, #18),
 Paint Skin Weights normalization (#20) and the switch to Blender in the Maya
 Workflow Kit template file (#19). GUI: tests/gui/gui_step129_*.py."""
 

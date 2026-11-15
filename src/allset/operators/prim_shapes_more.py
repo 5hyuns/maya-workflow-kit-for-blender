@@ -68,8 +68,8 @@ NODES = {
     "polyPrimitiveMisc": [*AXIS, _a("radius", "Radius", 1.0, "length", 0.01),
                           _a("sideLength", "Side Length", 0.4036, "length", 0.01)],
 }
-# Soccer Ball: Maya keeps Side Length = Radius * 0.4036 (both ways: radius 2 -> 0.8072, side 1 -> radius 2.4777;
-# Maya 2022); the shape follows the radius.
+# Soccer Ball: Maya keeps Side Length = Radius * 0.4036 (both ways: radius 2 -> side 0.8072, side 1 -> radius 2.4777);
+# the shape follows the radius.
 SOCCER_SIDE = 0.4036
 
 

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Tool Settings as a docked column left of the viewport.
 
-Maya's Tool Settings is a dock control on the left of the main window (docked
-left in Maya 2022). The kit's dock is a
+Maya's Tool Settings is a dock control on the left of the main window. The kit's dock is a
 Properties editor on its Tool tab, split off the left edge of the main 3D View, with its header and navigation bar
 hidden: the Tool tab draws the 3D View "Tool" panels, i.e. ``tool_settings.ALLSET_PT_tool_settings`` (Maya sections)
 and, for tools without Maya sections, Blender's own tool panels. The dock is recognised by its state (Tool tab and no

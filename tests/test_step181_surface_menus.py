@@ -156,7 +156,7 @@ def test_windows_bound_with_maya_titles_and_factory_values():
 
 def test_window_fields_follow_maya():
     d = ow._BY_KEY
-    # non-factory choices reach the operator
+    # non-default choices reach the operator
     assert _call(d["loft"], {"parameterization": "Chord length", "degree": "Linear", "close": True,
                              "section_spans": 3})[2] == dict(uniform=False, auto_reverse=True, close=True, degree='1',
                                                              section_spans=3)

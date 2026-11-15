@@ -2,7 +2,7 @@
 """Maya UV Editor heads-up displays: View > Heads-Up Display > Isolate Select / UV Position / UV Statistics.
 
 Maya:
-all three are on in the factory UV Editor. Kit drawing: text #cfcfcf, ~10 px caps, 5 px from
+all three are on in a new UV Editor. Kit drawing: text #cfcfcf, ~10 px caps, 5 px from
 the view's left / right edge, baseline 7 px above its bottom; a second line 20 px higher.
 
 - UV Statistics, bottom right: "(a/b) UV shells, (c/d) overlapping UVs, (e/f) reversed UVs" — first number = among

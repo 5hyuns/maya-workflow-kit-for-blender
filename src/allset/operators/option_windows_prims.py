@@ -307,7 +307,7 @@ WINDOWS = [
     _super("poly_spherical_harmonics", "Spherical Harmonics"),
     _super("poly_ultra_shape", "Ultra Shape"),
 
-    # --- NURBS (factory: pivot Object, axis Y, cubic, no tolerance) -------------
+    # --- NURBS (default: pivot Object, axis Y, cubic, no tolerance) -------------
     Window("nurbs_sphere", "NURBS Sphere Options", "Create", ("allset.create", {"kind": 'NURBS_SPHERE'}), [
         *_pivot_fields(), *_axis_fields(), *_sweep_fields(),
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=1000), _degree_field(), *_sections(4, 2)],

@@ -1,4 +1,4 @@
-"""Lane MEDIA (#41): the store / marketing / release media generators never apply a theme.
+"""#41: the store / marketing / release media generators never apply a theme.
 
 The kit ships no theme (#40); the promotional shots use Blender's factory theme and get a flat
 #5c5c5c viewport from view / scene data (tools/marketing/scene.py ``maya_look``). This test fails when a generator

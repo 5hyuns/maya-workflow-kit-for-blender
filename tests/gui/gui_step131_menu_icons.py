@@ -1,4 +1,4 @@
-"""Lane MENU (#23) in a real UI: Maya menus show the kit-drawn picture of the same command beside the items
+"""#23 in a real UI: Maya menus show the kit-drawn picture of the same command beside the items
 Maya draws with an icon (Create > Polygon / NURBS Primitives, Mesh, Edit Mesh, Mesh Tools, Deform, Constrain, Key,
 Windows > General Editors), made at the menu icon size before any menu opens; labels, the right-aligned Maya
 hotkeys and the option-box marks stay aligned. Screenshots go to ALLSET_GUI_SHOTS (run once

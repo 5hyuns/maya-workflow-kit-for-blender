@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Mesh Display colour commands: Apply Color, Rename / Modify Current Set, Set Keyframe for
+"""Maya Mesh Display colour commands: Apply Color, Rename / Modify Current Set, Set Keyframe for
 Vertex Color, Prelight (Maya), vertex bake sets (Assign New / Existing, Edit Assigned Set), Select Shared Instances.
 
 A Maya colour set = a Blender colour attribute, the current set = the active colour attribute; Maya colours live per
@@ -31,7 +31,7 @@ BAKE_DEFAULTS = {"bakeColor": True, "bakeAlpha": False, "colorBlending": 0, "alp
 PRELIGHT_SAMPLES = 16          # Cycles bake samples [Maya's polyGeoSampler samples the shading network once]
 
 
-# --- pure rules (tests/test_step189_colors.py) ---------------------------------------------------------------
+# --- pure rules (no bpy) ---------------------------------------------------------------------------------------
 
 def apply(rgba, color, alpha, operation, channels=(True, True, True, True)):
     """Maya Apply Color on one corner (polyColorPerVertex -r -g -b -a [-rel] / -rem): None = Maya's uncoloured."""

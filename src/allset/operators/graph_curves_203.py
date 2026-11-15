@@ -114,7 +114,7 @@ def continuous(quats):
 
 
 def squad_controls(quats):
-    """Shoemake's inner quadrangle points; an end key counts itself as its missing neighbour (close to Maya 2022's
+    """Shoemake's inner quadrangle points; an end key counts itself as its missing neighbour (close to Maya's
     quaternionSquad; mirrored ends are not)."""
     out = []
     n = len(quats)

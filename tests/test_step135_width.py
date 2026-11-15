@@ -1,4 +1,4 @@
-"""Lane WIDTH (#60): the Maya tab stack width follows the UI scale — wide enough for its tab row, the Channel
+"""#60: the Maya tab stack width follows the UI scale — wide enough for its tab row, the Channel
 Box labels and the AE menu bar (blf widths), between the Channel Box stack (277 px) and the stack with the
 Attribute Editor raised (480 px) times the scale. GUI side:
 tests/gui/gui_step135_width.py."""

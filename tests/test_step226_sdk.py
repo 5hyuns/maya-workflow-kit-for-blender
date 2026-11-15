@@ -1,4 +1,4 @@
-"""Lane D (Issue #136): Set Driven Key like Maya (operators/driven_key.py).
+"""Issue #136: Set Driven Key like Maya (operators/driven_key.py).
 
 Expected: curve shapes
 of 2 / 3 / 4 keys (29 samples each, auto tangents, infinity Constant), two drivers on one channel = blendWeighted sum
@@ -222,7 +222,7 @@ def test_constraint_weight_is_a_driven_node():
     bpy.ops.allset.sdk_key()
     cb.set_value(drv, "cp:curl", 5.0)
     assert abs(_read(con, "cw") - 0.5) < TOL
-    # a multi-target group's Maya weight property (lane C) is driven instead of the influence
+    # a multi-target group's Maya weight property is driven instead of the influence
     tgt["allset_w_Copy Location"] = 1.0
     c = sdk.chan(con, "cw")
     assert c.path == '["allset_w_Copy Location"]' and c.struct == tgt

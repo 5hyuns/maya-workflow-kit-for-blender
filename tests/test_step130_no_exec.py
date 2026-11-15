@@ -26,8 +26,7 @@ PATTERNS = {
     "importlib": re.compile(r"\bimportlib\b"),
 }
 
-# Files other lanes clean up (keymap = lane K). The main session makes this empty after merging the lanes:
-# then every hit fails.
+# Files still to be cleaned up (the keymap data). Once this is empty, every hit fails.
 PENDING_OTHER_LANES = {"keymap/ic_data.py"}
 
 

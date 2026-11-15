@@ -206,7 +206,7 @@ _ANIM_LAYER = ("Animation Layer", "Set layer to override")
 WINDOWS = [
     # Skeleton > Create Joints: Tool Settings "Joint Tool"
     # Orientation section of Maya 2026: Orient Joint to World, Secondary
-    # Axis, its world orientation, Auto orient secondary axis (factory on since 2025)
+    # Axis, its world orientation, Auto orient secondary axis (on by default since Maya 2025)
     Window("joint_tool", "Joint Tool", "Create Joints", None, [
         F("orient_world", "", "bool", False, text="Orient Joint to World"),
         F("secondary_axis", "Secondary Axis:", "enum", "Y", items=("X", "Y", "Z", "None")),

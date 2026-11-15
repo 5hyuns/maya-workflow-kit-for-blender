@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya animation layers on Blender NLA tracks.
 
-Maya 2022: BaseAnimation = the plain anim curves; an Additive
+Maya: BaseAnimation = the plain anim curves; an Additive
 layer adds weight x its curve (rotations Euler component-wise, scale multiplies: below x layer^weight), an Override
 layer replaces ((1 - w) below + w layer); mute drops a layer, solo keeps BaseAnimation + the soloed layers; a key set
 on the selected layer is the curve value that makes the result the displayed value.

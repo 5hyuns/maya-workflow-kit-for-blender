@@ -1,4 +1,4 @@
-"""In a real UI: the top area reads like Maya 2022.
+"""In a real UI: the top area reads like Maya.
 
 The user's path: Maya mode switched off and on again in a factory session (Blender's theme) — the switch appends the
 Maya layout and keeps the user's theme. Then: menu bar without the menu set dropdown and with every Maya menu on

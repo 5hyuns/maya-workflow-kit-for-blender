@@ -1,4 +1,4 @@
-"""Lane WIDTH (#60) in a real UI: a new Maya scene fits the Maya tab stack to the running UI scale
+"""#60 in a real UI: a new Maya scene fits the Maya tab stack to the running UI scale
 (layout_fit.dock_width: Channel Box labels left of the vertical tab strip; between 277 and 480 px
 times the scale) through
 ALLSET_OT_fit_columns, the viewport takes the remaining width, the AE menu bar is one row, the longest Channel Box

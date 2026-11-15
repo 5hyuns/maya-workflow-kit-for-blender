@@ -1,4 +1,4 @@
-"""Real Maya option windows (Maya 2022 fields and defaults),
+"""Real Maya option windows (their fields and defaults),
 option boxes as Maya's right-side square, every mapped option box opens something.
 GUI: tests/gui/gui_step103_option_windows.py."""
 

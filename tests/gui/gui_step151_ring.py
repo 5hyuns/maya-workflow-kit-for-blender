@@ -1,4 +1,4 @@
-"""Lane A (#99) in a real UI: RMB on pCube1 and Shift+RMB with nothing selected draw Maya 2022's compact ring
+"""#99 in a real UI: RMB on pCube1 and Shift+RMB with nothing selected draw Maya's compact ring
 (radius 55 x UI scale, boxes text + 2 x 25 px, UV with a submenu arrow, the list 21 px under the ring).
 Screenshots of the object marking menu and the Shift+RMB menu:
 gui_step151_rmb.png, gui_step151_shift_rmb.png (run with ALLSET_GUI_UI_SCALE=0.8 on a 125 % display = scale 1.0)."""

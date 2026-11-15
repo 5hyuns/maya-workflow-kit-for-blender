@@ -23,7 +23,7 @@ from .in_view_target import _redraw, _scale, _state, arrow_visible, cap_frame, r
 
 YELLOW = (1.0, 1.0, 0.0)
 
-# Maya 2022 polyExtrudeFace manipulator (top face of a cube,
+# Maya polyExtrudeFace manipulator (top face of a cube,
 # local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
 # plane handles centred 0.5 / 0.5 between two axes (half 0.08, translucent with a full-colour rim), hollow centre square
 # half 0.12 (20 px at an 83 px Z arrow) in #64dcff, screen facing. Axis colours = the kit Move manipulator's Maya

@@ -19,7 +19,7 @@ LINE_START = 0.0
 PLANE_AT, PLANE_HALF = 0.60, 0.08
 CUBE_AT, CUBE_HALF = 0.85, 0.05
 CENTER_CUBE_HALF = 0.06
-PIVOT_RING_R = 0.32      # pivot orientation rings (M7, offset 50)
+PIVOT_RING_R = 0.32      # pivot orientation rings
 PICK_R = 0.05            # half width of the invisible pick shape around a thin line
 
 

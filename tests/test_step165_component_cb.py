@@ -1,5 +1,5 @@
 """The Channel Box in component mode (Maya: the shape, the CVs line / table, INPUTS — no transform rows) and the
-RMB list's DG Traversal / Inputs / Outputs submenus, following Maya 2022.
+RMB list's DG Traversal / Inputs / Outputs submenus, following Maya.
 """
 
 from importlib import import_module

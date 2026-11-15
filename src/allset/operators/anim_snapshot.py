@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Visualize > Create Animation Snapshot / Update Snapshot.
 
-Maya rules (Maya 2022):
+Maya rules:
 - Visualize > Create Animation Snapshot with the default options: Time range Start/End 1 – 10, Increment 1,
   Update "Fast (update only when keyframes change)".
 - Result: a top-level group ``snapshot<N>Group`` with one child per sampled frame, ``transform<N>_<k>`` /

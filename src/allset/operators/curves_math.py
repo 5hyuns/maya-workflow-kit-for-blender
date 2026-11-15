@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 NURBS curve maths, bpy-free.
+"""Maya NURBS curve maths, bpy-free.
 
 A curve here = (cvs, knots, degree[, weights]); ``cvs`` are 3-tuples, ``knots`` are Maya's knot list (no phantom end
 knots: len = len(cvs) + degree - 1). Coordinates are whatever the caller uses (the tests feed Maya's Y-up numbers,

@@ -79,7 +79,7 @@ def _flip_footer(window, area):
 
 def setup_toolbar_row(window, area):
     """Maya Graph Editor / Dope Sheet layout of one editor, once per session: toolbar row on top; the Graph Editor
-    draws tangent handles on selected keys only (Maya View > Tangents factory = On Active Keys)."""
+    draws tangent handles on selected keys only (Maya View > Tangents, default On Active Keys)."""
     key = area.as_pointer()
     if key in _set_up:
         return False

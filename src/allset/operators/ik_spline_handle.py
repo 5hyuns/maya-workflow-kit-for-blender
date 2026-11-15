@@ -54,7 +54,7 @@ def fit_cubic(points):
 
 def fit_spans(points, spans=1):
     """Clamped uniform cubic with ``spans`` spans (spans + 3 CVs), ends on the first / last point, inner CVs a
-    least-squares fit of the polyline (Maya IK Spline Handle Tool "Number of spans", factory 1; 1 = ``fit_cubic``)."""
+    least-squares fit of the polyline (Maya IK Spline Handle Tool "Number of spans", default 1; 1 = ``fit_cubic``)."""
     if spans <= 1:
         return fit_cubic(points)
     from . import curves_math as cm
@@ -191,7 +191,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
     snap_curve: BoolProperty(name="Snap curve to root", default=False, options={'SKIP_SAVE'})
     create_curve: BoolProperty(name="Auto create curve", default=True, options={'SKIP_SAVE'})
     spans: bpy.props.IntProperty(name="Number of spans", default=1, min=1, max=4, options={'SKIP_SAVE'})
-    # Maya Twist type of the tool (factory Linear) = the new handle's Twist Type
+    # Maya Twist type of the tool (default Linear) = the new handle's Twist Type
     twist_type: bpy.props.IntProperty(name="Twist type", default=0, min=0, max=3, options={'SKIP_SAVE'})
     curve: bpy.props.StringProperty(name="Curve", default="", options={'SKIP_SAVE', 'HIDDEN'},
                                     description="Existing curve object (Auto create curve off); empty = the "

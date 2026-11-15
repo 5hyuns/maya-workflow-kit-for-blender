@@ -5,7 +5,7 @@ Maya's Tool Settings window has the tool name, Reset Tool / Tool Help above the 
 The kit's Tool Settings is a dock
 left of the viewport (``ui/tool_dock.py``: a Properties editor on its Tool tab) that draws ``ALLSET_PT_tool_settings``:
 the head row, then for the Move / Rotate / Scale tools Maya's sections in Maya's order with Maya's rows bound to kit
-state (Maya 2022's rows; rows the kit can't do are greyed with a tooltip).
+state (Maya's rows; rows the kit can't do are greyed with a tooltip).
 Other tools keep Blender's tool panels under the head row; the Reset Tool row is also prepended to
 ``VIEW3D_PT_active_tool`` for Blender's own Tool tab / popups.
 Reset = the active tool's operator options back to their defaults (every operator of the tool's keymap) and, for
@@ -36,7 +36,7 @@ TOOL_OPERATORS = {"builtin.move": ("transform.translate",), "builtin.rotate": ("
                   "builtin.loop_cut": ("mesh.loopcut_slide",), "builtin.edge_slide": ("transform.edge_slide",)}
 
 # the other tools with Maya Tool Settings sections. Maya tool
-# (Maya runTimeCommand) -> Blender tool; sections as in Maya 2022.
+# (Maya runTimeCommand) -> Blender tool; sections as in Maya.
 TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT',               # SelectTool (Marquee / Tweak)
          "builtin.select_lasso": 'LASSO', "builtin.select_circle": 'PAINT_SELECT',  # LassoTool, ArtPaintSelectTool
          # SplitEdgeRingTool, SlideEdgeTool, the kit tools of ui/mesh_tools_loop.py
@@ -188,15 +188,15 @@ def draw_reset_row(self, context):
 
 
 # --- Tool Settings dock: Maya sections -------------------------------------------------------------
-# Section order, default open state and rows as in Maya 2022 (Move / Rotate / Scale Tool Settings).
+# Section order, default open state and rows as in Maya (Move / Rotate / Scale Tool Settings).
 # Rows without kit state are greyed with a tooltip (TS_NOTICES).
 
 TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scale Tool",
-              # Maya 2022 Tool Settings titles
+              # Maya Tool Settings titles
               'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
               'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
               'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool",
-              # Maya 2022 Tool Settings titles
+              # Maya Tool Settings titles
               'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append To Polygon Tool",
               'OFFSET_EDGE_LOOP': "Offset Edge Loop Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
@@ -257,7 +257,7 @@ TS_NOTICES = {
     f"{TS}/Free Rotate": ("the white ring / trackball",
                           "Blender's rotate manipulator has the free trackball rotation built in"),
 }
-# greyed rows of the other tools (Maya 2022 rows) -> (substitute, one line).
+# greyed rows of the other tools (Maya rows) -> (substitute, one line).
 _SPACE = "Blender's selection tools work in screen space"
 TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
     "Lasso/Open": ("Closed lasso", "Blender's lasso always closes the shape from the last point to the first"),
@@ -685,7 +685,7 @@ OTHER_SECTIONS = {"lasso": draw_lasso, "brush": draw_brush, "paint_ops": draw_pa
                   "description": draw_description, "tool": draw_tool, "slide_snap": draw_slide_snap,
                   "live": draw_live, "shortcuts": draw_shortcuts}
 
-_paint_add = [True]    # Maya "Add to current selection" kept while Unselect is picked (factory: on)
+_paint_add = [True]    # Maya "Add to current selection" kept while Unselect is picked (default: on)
 
 
 def _select_all(context, action):

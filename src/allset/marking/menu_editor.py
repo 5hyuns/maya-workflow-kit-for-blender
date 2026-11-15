@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Marking Menu Editor window (Windows > Settings/Preferences > Marking Menu Editor).
 
-Maya 2022's Marking Menu Editor lists the marking menus, edits one in a 3×3 grid of its radial positions (the centre is
+Maya's Marking Menu Editor lists the marking menus, edits one in a 3×3 grid of its radial positions (the centre is
 the menu itself) plus the list under it, gives each item a label, a command and an option box, makes new menus
 (Create Marking Menu) and binds a menu to a hotkey (Settings > Use marking menu in: Hotkey Editor; hold the key, press
 LMB). Here the kit's own menus can be edited too (Maya's Restore Default puts one back) and a submenu is opened in

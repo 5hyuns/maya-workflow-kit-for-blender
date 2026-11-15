@@ -1,4 +1,4 @@
-"""Lane B (Issue #136): Maya control colours — Display > Wireframe Color... and the Attribute
+"""Issue #136: Maya control colours — Display > Wireframe Color... and the Attribute
 Editor's Drawing Overrides (operators/wire_color.py).
 
 Maya: the colorIndex palette 1-31, user palette 1-8 = indices 24-31, user colour 3 ->

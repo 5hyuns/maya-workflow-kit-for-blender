@@ -40,7 +40,7 @@ PROPERTY_ROW_HEIGHT = 22
 
 def open_editor(context):
     _start_draft(context)
-    # Use the requested 800 x 1000 Maya-style default independent of the source 3D View size.
+    # Open at 800 x 1000, whatever the size of the 3D View it is opened from.
     # A one-time marker migrates older oversized saved rectangles while preserving
     # any user-resized dimensions on subsequent launches.
     from . import window_places

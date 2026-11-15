@@ -992,7 +992,7 @@ OBJECT_MODE = {
     "Edit Mesh/Wedge": "No faces selected to wedge. Select faces and one or more edges from the selected faces "
                        "to wedge about.",
     "Edit Mesh/Connect": "Can't perform polyConnectComponents1 on selection",
-    "Edit Mesh/Symmetrize": "No components selected for Symmetrize.",     # Maya 2022
+    "Edit Mesh/Symmetrize": "No components selected for Symmetrize.",     # Maya's message
     "Edit Mesh/Flip Triangle Edge": "Select edges to flip.",
     "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
@@ -1007,7 +1007,7 @@ OBJECT_MODE = {
     "UV/Spherical": ('ALL', 'FACE'),
 }
 
-# Edit / Select / Modify items run in component (mesh edit) mode the way Maya 2022 runs them there (#39 /
+# Edit / Select / Modify items run in component (mesh edit) mode the way Maya runs them there (#39 /
 # #17 / #18; with pCube1.f[1] selected after F11):
 # ("run", action) = this action instead of the object one; ("object", action) = back to object mode, then the
 # action; ("owner", action) = the action on the objects whose components are selected, then back to component mode

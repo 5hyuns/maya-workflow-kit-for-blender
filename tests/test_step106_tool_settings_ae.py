@@ -60,7 +60,7 @@ class Recorder:
 # --- Tool Settings -------------------------------------------------------------------------------------------------
 
 def test_sections_follow_maya():
-    # Maya 2022 frames: order and the one open section
+    # Maya frames: order and the one open section
     assert [s[1] for s in ts_mod.sections('TRANSLATE')] == [
         "Move Settings", "Joint Orient Settings", "Move Snap Settings", "Common Selection Options", "Soft Selection",
         "Symmetry Settings", "Smart Duplicate Settings"]

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya viewport panel bar in the Maya Workflow Kit layout: the panel menu bar alone, and the panel toolbar under it.
 
-Maya 2022: every model panel has a menu bar
+Maya: every model panel has a menu bar
 (View Shading Lighting Show Renderer Panels) and under it a toolbar of small icons in groups —
 camera, gates and grid, shading modes and lights, effects, isolate / X-ray — then exposure and gamma fields and the
 colour management view. Blender's 3D View header mixed Maya's menus with its own editor-type button, mode selector,
@@ -308,7 +308,7 @@ def g_more(cv):
 GLYPHS = {name[2:]: fn for name, fn in globals().items() if name.startswith("g_")}
 
 
-# --- the toolbar (Maya 2022 order) -----
+# --- the toolbar (Maya order) -----
 
 # The toolbar rows: ui/panel_menu_data.TOOLBAR (bpy-free, counted by tools/menu_count.py).
 from . import panel_menu_data  # noqa: E402

@@ -1,4 +1,4 @@
-"""Lane B (#110): Graph Editor / Dope Sheet List > Load / Add Selected Objects with Auto Load, Curves > Pin /
+"""#110: Graph Editor / Dope Sheet List > Load / Add Selected Objects with Auto Load, Curves > Pin /
 Unpin Channel, Show > Attributes filters (Hidden, Driven by Anim Curve / Expression / Driven Key, User Defined),
 Show > Objects > IkHandles / Sets / Characters, List > Show Upstream Curves / Hierarchy Below (ui/graph_list.py),
 like Maya."""
@@ -116,7 +116,7 @@ def test_auto_load_off_freezes_the_list_and_add_appends():
 
 
 def test_load_and_add_greyed_while_auto_load_is_on():
-    # Maya: Load / Add Selected Objects are disabled while Auto Load Selected Objects is checked (factory)
+    # Maya: Load / Add Selected Objects are disabled while Auto Load Selected Objects is checked (the default)
     _clear()
     a = _cube("pCube1")
     sp = _space()

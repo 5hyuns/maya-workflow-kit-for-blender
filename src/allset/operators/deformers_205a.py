@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Lane A (issue #112): Maya Deform > Tension, Solidify, Sculpt (+ Paint Weights > Tension, Prune Membership >
+"""Issue #112: Maya Deform > Tension, Solidify, Sculpt (+ Paint Weights > Tension, Prune Membership >
 Sculpt).
 
-Maya 2022 facts: nodes / names / selection / Channel Box rows / option windows, Tension, Solidify, Sculpt.
+Like Maya: the nodes, names, selection, Channel Box rows and option windows of Tension, Solidify and Sculpt.
 Blender has none of these deformers, so
 each is a Geometry Nodes modifier named like the Maya node (``tension1``) on a shared node group built here (the
 pattern of operators/wire_deformer.py); it reads its input from the modifiers above it (Maya: the upstream
@@ -16,19 +16,19 @@ not rest); a topology change (Delete Non-Deformer History of a bevel, ...) re-ta
   (Bend Strength) as hidden INT point attributes ``.allset_tension_p<k>`` = partner · 8 + flags (1 edge, 2 diagonal,
   4 bend, -1 none), computed from the topology in Python (operators can't build variable lists in Geometry Nodes).
   Vertex normals = Maya's corner rule (cross(f[k+h] - p, f[k-h] - p), h = max(1, m // 2 - 1)), recomputed each pass.
-- **Solidify** : the known parts — membership = the vertex group (points selected at creation) picks
+- **Solidify**: membership = the vertex group (points selected at creation) picks
   the solid region; Full on the whole mesh = a rigid transform of the rest region onto the input with translation =
   input centroid; Borders on the whole mesh = nothing moves; a region's border ring stays (falloff on) / moves too
-  (falloff off); envelope blends linearly. Unknown: the rotation is the least-squares (Kabsch / polar)
-  fit, Stabilization Level n divides the angle by 1 + n/2 (Maya: level 2 halves it), the
+  (falloff off); envelope blends linearly. The kit's own model for the rest: the rotation is the least-squares
+  (Kabsch / polar) fit, Stabilization Level n divides the angle by 1 + n/2 (Maya: level 2 halves it), the
   border falloff is Blender's Blur Attribute of the inside weights, Scale Mode Edge / Edge Global = uniform scale by
   the region's edge-length ratio (× Scale Envelope), Normal / Tangent Plane Scale scale the normal / tangent part.
 - **Sculpt**: sculptor = an Empty ``sculptor1`` (display Sphere, radius 1 Maya unit: Maya's implicit sphere;
   delta scale = maya_unit so the Channel Box shows Maya's Scale 1) and ``sculpt1StretchOrigin`` (plain axes), both at
   the deformed points' bounding-box centre ("Center within selection"); the rule =
-  a model ("O": Stretch / Even, Flip / Ring, Project at the sculptor); Stretch with the origin moved off the
-  sculptor, Flip / Even, Stretch / Ring, scaled sculptors and dropoff type None are (the same rule, gaps recorded
-  in tests/test_step205_deform_a.py). Maximum Displacement is a length (× maya_unit) in Stretch / Flip and a
+  the kit's model (Stretch / Even, Flip / Ring and Project at the sculptor work like Maya); Stretch with the origin
+  moved off the sculptor, Flip / Even, Stretch / Ring, scaled sculptors and dropoff type None use the same rule, where
+  Maya may differ. Maximum Displacement is a length (× maya_unit) in Stretch / Flip and a
   fraction in Project (Maya: the same attribute).
 
 Delete Non-Deformer History keeps all three (history.is_deformer: every kit deformer in deformers.BASES); Delete

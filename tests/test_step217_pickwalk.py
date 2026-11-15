@@ -101,7 +101,7 @@ def test_visible_below_order_is_depth_first_by_name():
 def test_h_hidden_bone_is_walked_into():
     ob = _rig()
     ob.data.collections["MCH"].is_visible = True
-    ob.data.bones["mch_a"].hide = True               # Maya h: pickWalk goes into hidden nodes (M3)
+    ob.data.bones["mch_a"].hide = True               # Maya h: pickWalk goes into hidden nodes
     assert _walk(ob, "ctrl_b", "UP") == "mch_a"
     assert _walk(ob, "root", "DOWN") == "mch_a"
     ob.data.collections["MCH"].is_visible = False
@@ -130,7 +130,7 @@ def test_operator_follows_the_preference():
 def test_controller_tags():
     ob = _rig()
     bones = ob.data.bones
-    # Tag As Controller alone leaves the parent controller empty: Up = DAG parent, hidden or not (Maya M4)
+    # Tag As Controller alone leaves the parent controller empty: Up = DAG parent, hidden or not (like Maya)
     _select(ob, {"root", "ctrl_e", "ctrl_b"}, "ctrl_e")
     assert bpy.ops.allset.tag_controller() == {'FINISHED'}
     assert all(bones[n].get(joints.CONTROLLER) for n in ("root", "ctrl_e", "ctrl_b"))

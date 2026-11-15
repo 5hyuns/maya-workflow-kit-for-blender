@@ -1,4 +1,4 @@
-"""Lane B (Issue #155): rig polish — root joint Translate, Outliner name, Orient Joint / Ghost Selected output,
+"""Issue #155: rig polish — root joint Translate, Outliner name, Orient Joint / Ghost Selected output,
 menu items that left pose mode, the Channel Box joint hint.
 
 Maya: a new root joint is ``joint1`` in

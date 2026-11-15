@@ -6,7 +6,7 @@ ICONS = {Maya menu path: picture}; picture = ("shelf", shelf file, button label,
 button's kit drawing (``shelf_icons.draw``), like Maya shows the shelf picture of the same command in its
 menus; ("status", glyph) = a ``status_icons`` glyph, ("kit", glyph) = a ``kit_icons`` glyph (the same
 Maya picture on the Status Line / Tool Box); ("menu", name) = a ``menu_drawings`` drawing (
-#54: items on no shelf). Only items Maya 2022 draws with an icon are listed.
+#54: items on no shelf). Only items Maya draws with an icon are listed.
 """
 
 ICONS = {

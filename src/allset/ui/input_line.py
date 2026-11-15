@@ -2,7 +2,7 @@
 """Maya's Status Line Input Line.
 
 A mode button (Absolute transform / Relative transform / Rename / Select by name) and either three
-X / Y / Z fields or one text field. Behaves like Maya 2022's Status Line
+X / Y / Z fields or one text field. Behaves like Maya's Status Line
 input field:
 
 - Abs / Rel apply the current tool (Move / Rotate / Scale; any other tool = Move) to the selection on
@@ -289,7 +289,7 @@ class ALLSET_PG_input_line(bpy.types.PropertyGroup):
 # --- drawing ------------------------------------------------------------------------------------------
 
 def draw_history(layout, context):
-    """Maya's Construction History toggle (Maya 2022 Status Line): pressed = on."""
+    """Maya's Construction History toggle (Maya Status Line): pressed = on."""
     layout.operator(ALLSET_OT_construction_history.bl_idname, text="", icon='RECOVER_LAST',
                     depress=context.window_manager.allset_construction_history)
 

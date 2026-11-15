@@ -175,7 +175,7 @@ def test_menu_item_is_the_kit_command():
 def test_default_object_manipulator():
     _clear()
     a, b = _cube("pCube1"), _cube("pCube2")
-    assert modify.show_manip_tool(a) == "builtin.transform"     # factory None = the kit's T tool
+    assert modify.show_manip_tool(a) == "builtin.transform"     # default None = the kit's T tool
     _select(a, b)
     for value, tool in ((1, "builtin.move"), (2, "builtin.rotate"), (3, "builtin.scale"), (4, "builtin.transform")):
         assert bpy.ops.allset.default_manip(value=value) == {'FINISHED'}

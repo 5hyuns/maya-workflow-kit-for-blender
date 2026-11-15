@@ -1,6 +1,6 @@
 """#121: Maya's Preferences window (ui/maya_prefs.py, ui/maya_prefs_data.py).
 
-Category tree = Maya 2022's (38 rows, Interface / Display / Settings /
+Category tree = Maya's (38 rows, Interface / Display / Settings /
 Security / Modules / Applications). Rows are kit add-on preferences, scene values, read-only Blender preferences (the
 kit never writes them, decisions 13 / 14) or greyed Maya controls."""
 

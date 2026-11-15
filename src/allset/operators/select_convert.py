@@ -3,7 +3,7 @@
 Grow / Shrink Along Loop, To Vertex / Edge / Face Perimeter, To Face Path, To Shell Border, To UV Shell Border,
 To UVs, To UV Perimeter, To UV Edge Loop.
 
-Every rule is Maya 2022's, checked on a 4 x 4 plane, a 6 x 6 plane and a cube.
+Every rule follows Maya's.
 
 - Grow Along Loop (PolySelectTraverse 5): a face / vertex / edge with a selected neighbour grows one step past each
   end of that line (faces: the face across the quad's opposite edge; vertices: through the selected edges between

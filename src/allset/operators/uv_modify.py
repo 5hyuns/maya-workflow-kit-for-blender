@@ -19,9 +19,9 @@ from . import uv_shells
 from .uv_shells import _index_loops, _meshes, shells, target_shells, uv_points
 from .uv_tools import sync, uv_bounds
 
-GRID = 256                 # Match Grid factory: polyGridUV 256 256 1
-STACK_TOLERANCE = 0.1      # Stack Similar factory: stackSimilarToleranceOptVar 0.1
-GAP_TOLERANCE = 5          # Straighten Border factory: -gt 5
+GRID = 256                 # Match Grid default: 256 x 256
+STACK_TOLERANCE = 0.1      # Stack Similar default tolerance 0.1
+GAP_TOLERANCE = 5          # Straighten Border default gap tolerance 5
 
 
 # --- Maya UVs ------------------------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ def _mel_str(value):
 
 
 def distribute_uvs(items, axis=0):
-    """Maya Distribute UVs, factory Distance = bounding box: the selected UVs (``items`` = [(name, uv layer, point)]
+    """Maya Distribute UVs, default Distance = bounding box: the selected UVs (``items`` = [(name, uv layer, point)]
     in selection order) sorted by position along ``axis`` — Maya sorts the strings "<pos + offset> <name>", so ties
     go by name — keep the first, and step the others by width / (count - 1)."""
     n = len(items)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Preferences window, page by page (Issue #121) — pure data, no bpy.
+"""Maya Preferences window, page by page (Issue #121) — pure data, no bpy.
 
-Category tree, page titles and control labels follow Maya 2022's
+Category tree, page titles and control labels follow Maya's
 Preferences window. The kit never writes
 Blender's preferences, so a page row is one of:
 

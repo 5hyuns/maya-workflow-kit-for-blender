@@ -32,7 +32,7 @@ def _hex(s):
     return tuple(int(s[i:i + 2], 16) / 255 for i in (1, 3, 5))
 
 
-# Maya 2022 icon hues (colour values only).
+# One hue per kind of shelf button (colour values only).
 BLUE = _hex("#57a4cb")       # Curves / Surfaces, NURBS
 ORANGE = _hex("#da9355")     # Poly Modeling, Sculpting
 GREEN = _hex("#5eac87")      # UV tools

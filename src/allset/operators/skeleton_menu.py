@@ -9,7 +9,7 @@ Maya:
   joint's skin influence is dropped and the other weights are left as they are (not renormalised).
 - Disconnect Joint: the joint becomes a root (world kept), a new end joint stays at its old place under the old
   parent with the joint's world frame.
-- Connect Joint: the first joint must be a root ("The child joint must be a root joint."). Connect mode (factory)
+- Connect Joint: the first joint must be a root ("The child joint must be a root joint."). Connect mode (default)
   moves that skeleton (pure translation, world frames kept) so its root sits on the second joint and parents it to
   the second joint's parent; parent mode parents it under the second joint keeping its world.
 

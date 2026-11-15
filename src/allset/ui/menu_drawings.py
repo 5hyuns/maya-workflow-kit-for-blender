@@ -2,7 +2,7 @@
 """Kit-drawn pictures for Maya menu items that have no shelf button (issue #54).
 
 A Maya menu item gets the kit drawing of the shelf button / Status Line / Tool Box glyph of the same command
-(``menu_icon_data``). Maya 2022 also draws an icon on many items that are on no shelf (Deform deformers, Mesh Display,
+(``menu_icon_data``). Maya also draws an icon on many items that are on no shelf (Deform deformers, Mesh Display,
 Effects, Fields, Edit Mesh / Mesh Tools tools ...). This module draws those, from scratch, in the shelf's vocabulary
 (``shelf_icons``: one hue per kind, dark outline, light from the upper left, tool parts light grey, the action mark
 small in a corner) and following each Maya icon's subject, colour and composition as described by looking at it

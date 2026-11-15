@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Kit-drawn icons on Maya menu items (issue #23).
 
-Maya 2022 draws the shelf picture of a command beside its menu item (Create > Polygon Primitives, Mesh, Edit Mesh,
+Maya draws the shelf picture of a command beside its menu item (Create > Polygon Primitives, Mesh, Edit Mesh,
 Deform ...). ``menu_icon_data.ICONS`` (a generated table, not edited by hand)
 links such an item to the kit's own drawing of the same command: a shelf button (``shelf_icons``), a Status Line
 glyph (``status_icons``), a Tool Box glyph (``kit_icons``) or, for items on no shelf, a menu-only drawing

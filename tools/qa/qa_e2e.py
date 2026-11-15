@@ -454,7 +454,7 @@ def stage_rig():
     ob = O(arm_name)
     select_only(ob)
     bpy.ops.object.mode_set(mode='POSE')
-    joints.orient(ob, [names[0]], "Y+", True)                  # Orient Joint (factory) on the chain
+    joints.orient(ob, [names[0]], "Y+", True)                  # Orient Joint (default) on the chain
     obj_mode()
     push("orient joint")
     ob = O(arm_name)

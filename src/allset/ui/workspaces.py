@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya workspaces: Windows > Workspaces, the Status Line "Workspace:" dropdown, Reset Current Workspace (#81).
 
-Maya 2022 lists its factory workspaces in this order (Windows > Workspaces;
+Maya lists its built-in workspaces in this order (Windows > Workspaces;
 dividers after General, XGen - Interactive Groom, Animation and Rendering - Expert), then the actions Reset /
 Save / Import / Delete Current Workspace and Disable Docking/Undocking. "General" is shown as "Maya Classic".
 Choosing one switches the menu set to its ``linkedMenu``. The kit's template (tools/make_startup.MAYA_WORKSPACES) carries eight of them; a file without one gets it
@@ -133,7 +133,7 @@ def label_of(ws):
 
 
 def reset_label(ws):
-    """Maya's item text for a factory workspace (Windows > Workspaces menu)."""
+    """Maya's item text for a built-in workspace (Windows > Workspaces menu)."""
     return f'Reset "{label_of(ws)}" to Factory Default' if switch.template_of(ws) else "Reset Current Workspace"
 
 

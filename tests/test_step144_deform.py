@@ -1,4 +1,4 @@
-"""Lane DEFORM (#34): Maya Deform menu items create Maya-like deformers (operators/deformers.py) with
+"""#34: Maya Deform menu items create Maya-like deformers (operators/deformers.py) with
 Maya option windows (operators/option_windows_deform.py), Channel Box INPUTS rows and Paint Weights targets.
 
 The Deform option windows (fields, defaults) and the deformers created with default options

@@ -44,7 +44,7 @@ from .armature_modes import (ALLSET_MT_armature_modes, ALLSET_OT_armature_mode, 
                              _last_armature_target, _other_object_under_click, _outliner_watch_areas,
                              _pose_watch_areas)
 
-# Maya 2022 Tool Box order: Select, Lasso, Paint Select, Move, Rotate, Scale.
+# Maya Tool Box order: Select, Lasso, Paint Select, Move, Rotate, Scale.
 MAYA_TOOLS = ("builtin.select_box", "builtin.select_lasso", "builtin.select_circle",
               "builtin.move", "builtin.rotate", "builtin.scale")
 
@@ -126,7 +126,7 @@ def _tools_from_context(cls, context, mode=None):
     yield from original(cls, context, mode)
 
 
-# --- double-click a tool = its Tool Settings (#3; Maya 2022 Tool Box) -------------------------------------
+# --- double-click a tool = its Tool Settings (#3; Maya Tool Box) -------------------------------------
 # A toolbar icon is a UI button: a double click never reaches a keymap, but each click runs wm.tool_set_by_id, whose
 # execute imports bl_ui.space_toolsystem_common.activate_by_id when it runs ($S\startup\bl_operators\wm.py:2338-2347;
 # a DOUBLE_CLICK the button doesn't take comes back as a PRESS). That module function is wrapped: the same tool set

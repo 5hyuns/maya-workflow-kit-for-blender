@@ -6,12 +6,12 @@ changed: thick axes, small cones, a white centre
 circle. Maya's:
 
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
-  plane handles (normal-axis colour), the active handle drawn yellow (M2).
+  plane handles (normal-axis colour), the active handle drawn yellow.
 - Rotate: axis rings drawn on their front half only, a larger view ring, a grey trackball outline (a drag
   inside it rotates freely). The handles use Maya's own axis colours (``MAYA_AXIS``).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
-- Pivot edit mode (D / Insert): Move plus small rings to orient the pivot (M7).
-- Constant screen size: 108 px for the Move Y arrow (M3, M4).
+- Pivot edit mode (D / Insert): Move plus small rings to orient the pivot.
+- Constant screen size: 108 px for the Move Y arrow.
 
 ``ALLSET_GGT_xform`` draws that and runs Blender's own transform operators from each
 handle (``target_set_operator``), so snapping, constraints, numeric input, Smart

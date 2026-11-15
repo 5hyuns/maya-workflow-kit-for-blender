@@ -138,10 +138,10 @@ def _material_items():
 
 
 # --- RMB: RMB_MESH --------------------------
-# Mesh radials follow Maya 2022's RMB marking menu over a mesh and its object select masks;
+# Mesh radials follow Maya's RMB marking menu over a mesh and its object select masks;
 # NE "Object Mode".
 
-# The list under the ring, Maya 2022 order
+# The list under the ring, Maya order
 #. The first row is the object's name
 # (``OBJECT_TITLE`` is replaced by it when the menu opens). An empty ``Sub`` is a greyed submenu: Maya's
 # dependency-graph / metadata / set editors have no Blender counterpart here.
@@ -200,7 +200,7 @@ def _object_items(mesh=True):
         (OBJECT_TITLE, ("allset.object_attributes", {"rmb": True})),
         DIVIDER,
         ("Select", ("allset.mm_component", {"type": 'NONE'})),
-        # SelectAll / SelectNone / InvertSelection = the Select menu's runTimeCommands (Maya 2022 RMB menu):
+        # SelectAll / SelectNone / InvertSelection = the Select menu's runTimeCommands (Maya RMB menu):
         # the same items, so component mode follows menu_map.EDIT_MODE (#62)
         ("Select All", _item("Select/All")),
         ("Deselect All", _item("Select/Deselect All")),
@@ -237,7 +237,7 @@ RMB_MESH = MarkingMenu(
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        # A submenu, like Maya 2022's: the component at its own position, UV Shell at S (like Maya 2022's
+        # A submenu, like Maya's: the component at its own position, UV Shell at S (like Maya's
         # RMB marking menu); both open the UV Editor.
         "E": ("UV", Sub(radial={"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
                                 "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))})),
@@ -248,7 +248,7 @@ RMB_MESH = MarkingMenu(
     items=_object_items(),
     options=("Select Similar",))
 
-# Curve: N curve point, W CV, S edit point, E hull (Maya 2022 RMB marking menu over a curve). Blender
+# Curve: N curve point, W CV, S edit point, E hull (Maya RMB marking menu over a curve). Blender
 # curves edit control points only.
 RMB_CURVE = MarkingMenu(
     "RMB_CURVE", "Curve", "maya",
@@ -398,7 +398,7 @@ PIVOT_EDIT = MarkingMenu(
 
 # --- Shift+RMB: Maya's polygon tool marking menus -------------------------------------
 
-SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
+SOFT_HARD = Sub(radial={  # Maya Shift+RMB object / edge marking menus
     "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
     "SE": ("Harden Edge", _item("Mesh Display/Harden Edge")),
     "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),   # PolygonSoftenHarden

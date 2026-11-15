@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya animation layer commands, part 4 (Issue #111).
 
-Maya 2022 Layer Editor Anim tab (its menus and labels),
+Maya Layer Editor Anim tab (its menus and labels),
 re-implemented on the kit's NLA layers (operators/anim_layers.py):
 
 - Extract Selected Objects: per selected layer L a new layer
@@ -20,7 +20,7 @@ re-implemented on the kit's NLA layers (operators/anim_layers.py):
   ``allset_anim_layer_index`` (keys and the Graph Editor's editable curves), ui/graph_layers.py draws the
   other selected layers' curves.
 
-Maya 2022:
+Maya:
 new layers (extract / copy) get weight 1.0 whatever L's weight (so an extract from a layer of weight != 1 changes the
 result, like Maya), go directly above L and are not selected; an Override copy without animation holds L's value at
 the current time; Delete Empty Layers deletes the layers without member attributes (keys don't count).

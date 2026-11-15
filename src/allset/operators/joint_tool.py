@@ -231,7 +231,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     def invoke(self, context, event):
         if context.window is None:
             return {'CANCELLED'}
-        # Maya 2022-2027 never branch from a joint selected before the tool starts (joint1 selected, two
+        # Maya never branches from a joint selected before the tool starts (joint1 selected, two
         # clicks -> an unparented chain); clicking an existing joint with the tool does
         # (``_branch_from``).
         self._names, self._ob, self._parent, self._top = [], None, None, None

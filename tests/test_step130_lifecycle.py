@@ -30,7 +30,7 @@ ROOT = os.path.dirname(HERE)
 PREF_STRUCTS = ("inputs", "view", "edit", "system", "filepaths", "keymap", "experimental", "apps")
 # Window dependent values (0 in background)
 VOLATILE = ("system.ui_scale", "system.pixel_size", "system.ui_line_width")
-# The active keyconfig is lane K's (the Maya keys move into the add-on keyconfig and the active keyconfig
+# The active keyconfig (the Maya keys move into the add-on keyconfig and the active keyconfig
 # is never changed). Until that lands, Maya mode still switches it; everything else must stay put even in Maya mode.
 LANE_K_PENDING = ("keymap.active_keyconfig",)
 

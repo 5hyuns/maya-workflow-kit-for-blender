@@ -203,7 +203,7 @@ def test_delete_keys_ranges_hierarchy_methods():
     _select(a)
     _run("delete_keys", time_range="Start/End", start=4, end=12)
     _close(_keys(a), [[0, 0], [15, 10], [20, 0]])                       # Maya clear_keys
-    _run("delete_keys")                                                  # Time range All (factory)
+    _run("delete_keys")                                                  # Time range All (default)
     assert _keys(a) is None, "every key goes, the curve too"
 
     _clear()
@@ -242,7 +242,7 @@ def test_cut_copy_paste_options():
     _select(src)
     _run("copy_keys", time_range="Start/End", start=4, end=16)           # keys 5 (10), 10 (0), 15 (10)
     _select(dst)
-    _run("paste_keys", time_range="Start", start=3)                     # Merge (factory)
+    _run("paste_keys", time_range="Start", start=3)                     # Merge (default)
     _close(_keys(dst), [[0, 1], [3, 2], [4, 10], [6, 3], [9, 0], [12, 5], [14, 10], [20, 6]])   # paste_merge_at3
     for method, region, kw, want in (
             ("Insert", "Time range", dict(time_range="Start", start=3),
@@ -358,7 +358,7 @@ def test_parent_unparent_preserve_off():
     _run("unparent", preserve=False)
     bpy.context.view_layer.update()
     assert child.parent is None and (child.matrix_world.translation - Vector((1, 2, 3))).length < 1e-6
-    # factory Preserve position: the world position stays
+    # default Preserve position: the world position stays
     _select(child, par)
     _run("parent")
     bpy.context.view_layer.update()
@@ -581,7 +581,7 @@ def _hole_scene():
 
 def test_make_hole_merge_modes():
     ob = _hole_scene()
-    _run("make_hole")                                       # None (factory): nothing moves
+    _run("make_hole")                                       # None (default): nothing moves
     bm = bmesh.from_edit_mesh(ob.data)
     assert any((v.co - Vector((1.0, 0.25, 0.5))).length < 1e-5 for v in bm.verts)
     bpy.ops.object.mode_set(mode='OBJECT')

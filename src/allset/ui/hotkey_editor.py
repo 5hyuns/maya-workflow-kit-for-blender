@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Hotkey Editor window (Issue #121; Windows > Settings/Preferences > Hotkey Editor).
 
-Maya 2022's Hotkey Editor lists the commands of the current hotkey set with their keys, searches them by name or by
+Maya's Hotkey Editor lists the commands of the current hotkey set with their keys, searches them by name or by
 hotkey, filters by category, and lets a key be assigned (warning when another command already uses it). The kit's
 list = Maya's standard hotkeys (``keymap/hotkey_rows``: Maya's standard hotkey list joined with ``keymap/mapping.py``) with what
 the kit binds for each one.

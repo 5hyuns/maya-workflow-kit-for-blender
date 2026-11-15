@@ -10,7 +10,7 @@ from .ae_nodes import ae_node, hidden_types, tabs
 
 
 # --- Maya AE chrome ---------------------------------------------------------------------------------
-# Menus, buttons and tooltips like Maya 2022's Attribute Editor (bars, widgets).
+# Menus, buttons and tooltips like Maya's Attribute Editor (bars, widgets).
 
 ATTRIBUTE_NAMES = (('NICE', "Nice", "Readable names (Translate X)"),
                    ('LONG', "Long", "Property names (location)"),

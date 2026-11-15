@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polyExtrudeFace and the "last kit modeling operation" history.
 
-Maya 2022: Edit Mesh > Extrude = a zero-length extrusion
+Maya's Edit Mesh > Extrude = a zero-length extrusion
 (Thickness 0, Local Translate Z 0, Offset 0, Divisions 1, Keep Faces Together on); Local Translate Z moves each face along
 its normal (a vertex shared by several extruded faces moves by the average), Thickness offsets every face plane by the
 same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides.
@@ -18,7 +18,7 @@ vertices extrude at once, no drag) and polyBevel3 in operators/bevel_maya.py - e
 operator and arrow field.
 
 The extrude manipulator's other handles drive polyExtrudeFace Local Translate X / Y and Local
-Scale X / Y / Z (Maya 2022, data in tests/test_step151_extrude_manip.py): every extruded face has its own frame
+Scale X / Y / Z the way Maya does (tests/test_step151_extrude_manip.py): every extruded face has its own frame
 - Z = its normal, X = Maya world X (``localDirection`` 1 0 0, in world space) projected into the face plane
 (Maya world Z = Blender -Y when the face faces X), Y = Z x X; Local Translate moves the face along X / Y, Local Scale scales it about its vertex mean along its X / Y / Z
 (Z does nothing on a flat face); a vertex shared by several extruded faces takes the mean of their moves (Keep Faces

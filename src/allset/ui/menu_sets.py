@@ -37,7 +37,7 @@ from .menu_tree import (BOX_MARK, COMMON_SET, DEFAULT_SET, OPTION_BOXES, SET_ITE
 
 def _dynamic_label(path, label):
     """The label a menu row shows, in the interface language. Maya labels built when the menu opens:
-    Edit > Repeat = 'Repeat "<last command>"' (Maya 2022 Edit menu)."""
+    Edit > Repeat = 'Repeat "<last command>"' (Maya Edit menu)."""
     if path == "Edit/Repeat":
         from ..operators import repeat_maya
         try:

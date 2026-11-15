@@ -1,9 +1,10 @@
 """Issue #141: Orient Joint runs on a plain click, and the FBX jointOrient equals Maya's.
 
 Maya 2026: the same three joints
-(cm, Maya Y-up), ``joint -e -oj xyz -sao yup -ch -zso`` (Joint Tool finish, then Skeleton > Orient Joint factory),
-then ``mirrorJoint -mirrorYZ -mirrorBehavior``. The kit file is read back with its own FBX reader (PreRotation =
-Maya jointOrient); audit 0.5.0 ③-15 had the root at (-90, 7, 0) and the end joint at (0, 0, 0).
+(cm, Maya Y-up), finished with the Joint Tool, then Skeleton > Orient Joint with its default options (XYZ,
+secondary axis Y up, children too), then Mirror Joints across YZ with Behavior. The kit file is read back with its
+own FBX reader (PreRotation = Maya jointOrient); an earlier kit had the root at (-90, 7, 0) and the end joint at
+(0, 0, 0).
 """
 
 import math

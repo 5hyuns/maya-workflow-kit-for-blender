@@ -2,9 +2,9 @@
 """Issue #112: Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects,
 Deform > Wrap > Add / Remove Influence.
 
-Maya 2022 behaviour (Maya's option windows):
+Maya behaviour (Maya's option windows):
 
-- UV Pin: factory = Pin locations
+- UV Pin: default = Pin locations
   *Transforms*, Output *Existing Transform*, Normal axis X, Tangent axis Y, UV set "" (current), Normalize isoparms on.
   The geometry is selected first, then the transforms. For each transform the UV at the closest point of the
   geometry becomes an input of one uvPin node (``uvPin1``); the transform's translate /
@@ -12,7 +12,7 @@ Maya 2022 behaviour (Maya's option windows):
   and inheritsTransform is turned off ("Inherit transform has been turned off for [...]"). Components mode (option)
   pins new ``pinOutput`` transforms / locators to the selected vertices' UVs, faces' mean UV, edges' mid UV;
   with Existing Transform it errors "Output mode does not work with this creation mode".
-- Proximity Pin: factory = Setup Transforms,
+- Proximity Pin: default = Setup Transforms,
   Output Existing Transform, Input *New Locator*, Maintain offset on, Mode Edge, axes X / Y. One proximityPin node; per
   transform a ``pinInput`` locator holding the transform's matrix relative to the geometry, the transform cleared and
   driven by the node. Components setup: "Not yet implemented...".

@@ -125,7 +125,7 @@ def _show(objects, view_layer, select=True):
 
 
 def toggle_dependent():
-    """The saved First Selection of Maya's Toggle Visibility Options: True = Dependent (factory Independent)."""
+    """The saved First Selection of Maya's Toggle Visibility Options: True = Dependent (default Independent)."""
     from . import option_windows
     v = option_windows.saved(TOGGLE_KEY) or {}
     return v.get("first_selection") == "Dependent"

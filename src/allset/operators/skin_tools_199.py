@@ -2,12 +2,12 @@
 """Maya Skin menu tools: Move Weights to Influences, Normalize Weights > Disable / Enable / Enable Post,
 Export Weight Maps... / Import Weights Maps..., Substitute Geometry, Bake Deformation to Skin Weights...
 
-Every rule here follows Maya 2022.
+Every rule here follows Maya.
 A kit skin = the Armature modifier + vertex groups named after
 its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex group's ``lock_weight``.
 
-- Move Weights to Influences (Maya runs
-  ``cmds.skinPercent(transformMoveWeights=[source, target, ...])``): on each selected vertex every unlocked target gets
+- Move Weights to Influences (the first selected joint is the source, the others the targets): on each
+  selected vertex every unlocked target gets
   the **source's weight** (set, not added), the source gets 0; with Interactive normalisation the unlocked weights are
   then scaled to fill 1 - (locked weights). None / Post leave the sums as they are.
 - Normalize Weights modes (skinCluster.normalizeWeights 0 / 1 / 2): Maya deforms
@@ -17,14 +17,13 @@ its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex
   after the Armature modifier that multiplies the world position by the weight sum.
 - Weight maps (Maya Export / Import Skin Weight Maps): a ``<name>.weightMap`` text file (two comment lines, then
   ``<skin>\\t<influence>\\t<image>`` per weighted influence) and a ``<name>/`` folder with one grey image per influence
-  in UV space (factory 512 x 512, luminance). Import: every weight of the skins in the file is cleared
-  (``cmds.skinPercent(pruneWeights=1.1)``), each listed influence takes the image value at the vertex UVs, then the
-  weights are normalised.
-- Substitute Geometry (``cmds.substituteGeometry(old, new, wdt=1)``): the skinned object
+  in UV space (default 512 x 512, luminance). Import: every weight of the skins in the file is cleared, each listed
+  influence takes the image value at the vertex UVs, then the weights are normalised.
+- Substitute Geometry (reweighting distance 1 by default): the skinned object
   keeps its name, transform and skin and takes the new mesh's object-space points; each new vertex takes the old
   weights interpolated at the closest point of the old surface (bilinear on quads, barycentric on triangles) when that
   point is within the reweighting distance, else the weights of the nearest old vertex.
-- Bake Deformation to Skin Weights (``bakeDeformer``): per vertex the weights are the
+- Bake Deformation to Skin Weights: per vertex the weights are the
   least-squares fit, over a range of motion, of linear blend skinning of the **source rest point** to the source's
   deformed points, constrained to w >= 0 and sum(w) = 1. The kit's range of motion samples each joint rotated
   +-45 degrees about its X / Y / Z axes.

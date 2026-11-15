@@ -5,8 +5,8 @@ Conventions (Maya's):
 - knot lists are Maya lists (no phantom end knots: len = CVs + degree - 1);
 - ``Surf.cvs[u][v]`` is u-major like Maya ``.cv[u][v]`` (cvs[i] = the CV row of U index i, running along V);
 - periodic directions carry the ``degree`` wrapping CVs (the last ``degree`` CVs repeat the first ones);
-- every rule is rotation-free, so it works in any right-handed frame (the tests feed Maya's Y-up numbers, Blender feeds
-  its Z-up ones: Maya (X, Y, Z) -> Blender (X, -Z, Y) is a rotation). Revolve takes its axis, Extrude Distance its
+- every rule is rotation-free, so it works in any right-handed frame (Y-up coordinates as in Maya, or Blender's
+  Z-up ones: Maya (X, Y, Z) -> Blender (X, -Z, Y) is a rotation). Revolve takes its axis, Extrude Distance its
   direction, as vectors in the caller's frame.
 Outputs are non-rational (Maya's outputs here all have weight 1).
 
@@ -28,7 +28,7 @@ from .surfaces_math_blender import (_direction_mode, _bezier_lines, _open_any, _
                                     _knots_from_flags, from_blender_grid)  # noqa: F401
 
 
-# --- 4.1 Loft ------------------------------------------------------------------------------------------
+# --- Loft ----------------------------------------------------------------------------------------------
 
 def _circle_tangent(P0, P1, P2, at=0):
     a, b = sub(P1, P0), sub(P2, P0)
@@ -99,7 +99,8 @@ def _interp_periodic(P, knots):
 
 
 def _auto_reverse(curves):
-    """Factory Auto reverse [I criterion]: flip a curve whose ends are nearer the previous curve's opposite ends."""
+    """Auto reverse (on by default; the kit's criterion): flip a curve whose ends are nearer the previous curve's
+    opposite ends."""
     out = [curves[0]]
     for c in curves[1:]:
         a0, a1 = out[-1].cvs[0], out[-1].cvs[-1]
@@ -167,7 +168,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
     return s
 
 
-# --- 4.3 Revolve ----------------------------------------------------------------------------------------
+# --- Revolve --------------------------------------------------------------------------------------------
 
 def revolve(profile, axis=(0.0, 1.0, 0.0), pivot=(0.0, 0.0, 0.0), start=0.0, end=360.0, segments=8, degree=3):
     """Maya Revolve. U = the profile, V = around ``axis`` through ``pivot``; the point at sweep
@@ -223,7 +224,7 @@ def revolve(profile, axis=(0.0, 1.0, 0.0), pivot=(0.0, 0.0, 0.0), start=0.0, end
     return Surf(rows, pr.knots, kv, pr.degree, 3, pr.periodic, False)
 
 
-# --- 4.4 Extrude ----------------------------------------------------------------------------------------
+# --- Extrude --------------------------------------------------------------------------------------------
 
 def newell(P):
     """Unit Newell normal of the polygon P (right-hand rule)."""
@@ -346,7 +347,7 @@ def extrude_distance(profile, direction=None, length=1.0):
     return Surf(rows, pr.knots, [0.0, 1.0], pr.degree, 1, pr.periodic, False)
 
 
-# --- 4.5 Birail 1 ------------------------------------------------------------------------------------------
+# --- Birail 1 ----------------------------------------------------------------------------------------------
 
 def birail1(profile, rail1, rail2, proportional=True):
     """Maya Birail 1: U = rails (knots normalised 0..1), V = profile (normalised). At each rail Greville
@@ -390,7 +391,7 @@ def birail1(profile, rail1, rail2, proportional=True):
     return Surf(rows, _normalise(knots_u), _normalise(pr.knots), du, pr.degree, periodic_u, pr.periodic)
 
 
-# --- 4.6 Boundary / Square ------------------------------------------------------------------------------------
+# --- Boundary / Square ----------------------------------------------------------------------------------------
 
 def order_boundary(curves):
     """Maya "Automatic" curve ordering: start with curves[0] as drawn, then chain the remaining curves
@@ -429,7 +430,7 @@ def _domain(c):
 
 
 def boundary(curves, square=False):
-    """Maya Boundary / Square (factory, no neighbouring surfaces): 3 or 4 curves head to tail in the order given
+    """Maya Boundary / Square (default, no neighbouring surfaces): 3 or 4 curves head to tail in the order given
     (c1..c4). 4 curves: v = 0 edge = c1, u = 1 edge = c2, v = 1 edge = c3 reversed, u = 0 edge = c4 reversed.
     3 curves: v = 0 edge = c1, v = 1 edge = c2 reversed, u = 0 edge = c3 reversed, u = 1 edge collapsed to the
     c1-end corner. Opposite sides are made compatible (loft rule), CVs = Coons blend. Knot range of a direction =

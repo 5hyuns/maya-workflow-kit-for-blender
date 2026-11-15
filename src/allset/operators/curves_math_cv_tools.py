@@ -227,7 +227,7 @@ def align_ends(a, b):
 def keep_leg_lengths(old, new):
     """After CVs of a length-locked curve moved (``old`` -> ``new``), the moved CVs stay and every other CV follows
     its neighbour towards the moved ones so each CV leg keeps its old length (Maya's locked curve keeps its length
-    under the CV manipulator; the exact solver is)."""
+    under the CV manipulator; this solver is the kit's own)."""
     old = [tuple(p) for p in old]
     new = [tuple(p) for p in new]
     if len(old) != len(new) or len(old) < 2:

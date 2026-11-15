@@ -106,14 +106,14 @@ class Drawing:
 
 def make(context, kind, points, degree=3, sections=8):
     """Make the Maya curve for the clicked ``points`` through curves_maya; named ``curveN``. Arcs: Maya's Arc
-    Settings degree 1 / 3 and sections (factory 3 / 8)."""
+    Settings degree 1 / 3 and sections (default 3 / 8)."""
     pts = [Vector(p) for p in points]
     if kind == CV:
         ob = curves_maya.make_cv_curve(context, pts, degree)
     elif kind == EP:
         ob = curves_maya.make_ep_curve(context, pts, degree)
     else:
-        kw = {} if (degree, sections) == (3, 8) else {"sections": sections, "degree": degree}   # factory: as before
+        kw = {} if (degree, sections) == (3, 8) else {"sections": sections, "degree": degree}   # default: as before
         if kind == ARC3:
             ob = curves_maya.make_arc3(context, pts[0], pts[1], pts[2], **kw)
         else:
@@ -144,7 +144,7 @@ def plane_point(region, rv3d, coord):
 
 
 def grid_step(scene=None):
-    """Maya X snap step in scene units: grid line spacing / subdivisions (factory 5 / 5 = 1 Maya unit)."""
+    """Maya X snap step in scene units: grid line spacing / subdivisions (default 5 / 5 = 1 Maya unit)."""
     try:
         from . import option_windows_display
         g = option_windows_display.grid_settings()

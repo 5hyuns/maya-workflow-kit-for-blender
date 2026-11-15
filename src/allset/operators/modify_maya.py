@@ -3,7 +3,7 @@
 Object Manipulator / Show Manipulator Tool, Align Tool, Snap Align Objects > Position Along Curve, Convert >
 Geometry to Bounding Box and the Evaluate Nodes check items.
 
-Maya 2022 rules. Option window of Geometry to
+Maya rules. Option window of Geometry to
 Bounding Box: operators/option_windows_modify.py.
 """
 

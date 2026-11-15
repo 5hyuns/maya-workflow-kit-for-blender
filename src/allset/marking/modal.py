@@ -3,7 +3,7 @@
 
 ``allset.mm_engine``: one marking menu (``marking/menus.py``) drawn with the
 GPU, driven by ``engine.Session``. ``allset.hotbox``: Space hold (menu rows,
-centre and N/S/E/W zones); a quick tap toggles the pane (Maya 2022 hotbox).
+centre and N/S/E/W zones); a quick tap toggles the pane (Maya hotbox).
 Plus the small operators the hotbox zone menus run.
 """
 
@@ -337,7 +337,7 @@ def open_menu(menu_name, button, origin=None):
 # --- hotbox ---------------------------------------------------------------------------
 
 def hotbox_rows(context, area_type=None):
-    """(rows above, cursor row sides, rows below) like Maya 2022's hotbox:
+    """(rows above, cursor row sides, rows below) like Maya's hotbox:
     common menus (+ Cache, Help), the 3D View's panel menus, then the menu set rows (every set when
     Hotbox Controls > Show All Menu Sets is on, the default like Maya; else the current one)."""
     prefs = _prefs(context)

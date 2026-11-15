@@ -56,7 +56,7 @@ VIEW = [
     _grey("View Sequence Time"),
 ]
 
-# Maya viewSet -vx = seen from +X (Maya 2022 panel View menu); axis names as Blender's
+# Maya viewSet -vx = seen from +X (Maya panel View menu); axis names as Blender's
 # (X = X, Y = Y, Z = Z).
 VIEW_AXIS = [_view("X", 'RIGHT'), _view("Y", 'BACK'), _view("Z", 'TOP'),
              _view("-X", 'LEFT'), _view("-Y", 'FRONT'), _view("-Z", 'BOTTOM')]
@@ -197,7 +197,7 @@ LAYOUTS = [
     ("set", "LAYOUT_FOUR", "Four View"),
 ]
 
-# The menu bar, in Maya 2022's order.
+# The menu bar, in Maya's order.
 BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
        ("Lighting", "ALLSET_MT_panel_lighting"), ("Show", "ALLSET_MT_panel_show"),
        ("Renderer", "ALLSET_MT_panel_renderer"), ("Panels", "ALLSET_MT_panel_panels"))

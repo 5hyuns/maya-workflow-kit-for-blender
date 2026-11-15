@@ -33,7 +33,7 @@ class ALLSET_PG_layer(bpy.types.PropertyGroup):
     playback: BoolProperty(name="Playback", default=True, update=_update,
                            description="Show the layer's objects during playback (Maya P)")
     display_type: EnumProperty(name="Display Type", items=TYPES, default="NORMAL", update=_update)
-    # list position: Maya lists the newest layer on top and Move Up / Down reorders (Maya 2022 Layer Editor)
+    # list position: Maya lists the newest layer on top and Move Up / Down reorders (Maya Layer Editor)
     order: IntProperty(options={'HIDDEN'})
 
 

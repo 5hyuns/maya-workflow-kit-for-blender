@@ -2,7 +2,7 @@
 """Maya viewport panel menu bar: View, Shading, Lighting, Show, Renderer, Panels.
 
 Every Maya modelPanel has its own menu bar. Menu contents
-follow Maya 2022's panel menus (View, Shading, Lighting,
+follow Maya's panel menus (View, Shading, Lighting,
 Show, Renderer, Panels); only labels and order.
 
 Only the menu part of the 3D View header changes: ``VIEW3D_MT_editor_menus.draw_collapsible``

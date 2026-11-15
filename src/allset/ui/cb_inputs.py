@@ -111,7 +111,7 @@ def shape_label(ob, prop):
 
 
 # --- INPUTS node expansion (#55) -------------------------------------------------------------------------
-# Maya 2022: every INPUTS node starts collapsed (polyCube1, polyExtrudeFace1), a click on
+# Maya: every INPUTS node starts collapsed (polyCube1, polyExtrudeFace1), a click on
 # its name shows its attributes under it and a second click hides them; a new lead shows every node collapsed again,
 # also when the earlier lead comes back. This is UI state, not scene data: kept in Python (never
 # Blender's ``Modifier.show_expanded``, which is the Properties editor's panel state, saved and undone), not undone,

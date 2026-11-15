@@ -1,4 +1,4 @@
-"""Lane ITEMS (#74 #62): marking-menu entries run their main-menu items, greyed entries have notices,
+"""#74 #62: marking-menu entries run their main-menu items, greyed entries have notices,
 component-mode RMB Select All / Deselect All / Invert follow the main menu's component rules."""
 
 from importlib import import_module

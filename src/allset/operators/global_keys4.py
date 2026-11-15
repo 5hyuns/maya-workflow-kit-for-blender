@@ -2,7 +2,7 @@
 """Global key batch 4: Ctrl+X cut / Ctrl+V paste, Alt+\\ playback range = animation range,
 Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X walk is Blender's view3d.walk.
 
-Maya 2022 behaviour:
+Maya behaviour:
 - PasteSelected = Edit > Paste: import the clipboard file with every node renamed
   ``pasted__<name>``, grouped under a new ``group``.
 - CutSelected = Edit > Cut: export the selection (with its hierarchy) to the clipboard file, then delete it.

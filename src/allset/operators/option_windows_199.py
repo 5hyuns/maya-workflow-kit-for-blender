@@ -58,7 +58,7 @@ def _run_substitute(context, v):
 
 
 WINDOWS = [
-    # Normal Constraint Options (factory aim 1 0 0, up 0 1 0, world up Vector 0 1 0, weight 1)
+    # Normal Constraint Options (default aim 1 0 0, up 0 1 0, world up Vector 0 1 0, weight 1)
     Window("normal_constraint", "Normal Constraint Options", "Add", ("allset.normal_constraint", {}), _aim_fields(),
            _aim_like("normal_constraint"), paths=("Constrain/Normal",), missing=_AIM_MISSING),
     Window("tangent_constraint", "Tangent Constraint Options", "Add", ("allset.tangent_constraint", {}),

@@ -1,4 +1,4 @@
-"""Lane A (#96): Maya Graph Editor View / Show items — Auto Frame, Auto Frame Time, Curve Name, Show >
+"""#96: Maya Graph Editor View / Show items — Auto Frame, Auto Frame Time, Curve Name, Show >
 Clear Below / Subdiv Objects mapped (ui/graph_view.py); the rest greyed with a one-line notice."""
 
 from importlib import import_module

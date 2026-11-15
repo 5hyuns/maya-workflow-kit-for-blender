@@ -802,7 +802,7 @@ PANEL_NOTICES = {}
 
 # Greyed rows of the viewport panel menus, the panel toolbar and the Status Line (ui/panel_menu_data.leaves()):
 # same (substitute, line) form; keys = their ``allset.menu_unavailable`` items. Not Maya main-menu paths, so kept out
-# of NOTICES (test_step54 checks those against menus.json); tests/test_step177_panel_menus.py: every greyed row has one.
+# of NOTICES (every NOTICES key is a Maya menu path); tests/test_step177_panel_menus.py: every greyed row has one.
 _PM, _PT, _SL = "Panel menu/", "Panel toolbar/", "Status Line/"
 _PER_OBJECT = ("Object Properties > Viewport Display", "Blender sets this per object, not per view: Object Properties > "
                "Viewport Display > Display As (Bounds / Wire / Solid).")
@@ -934,7 +934,7 @@ def unregister():
     _current.update(text="", until=0.0)
     _status_area.clear()
 
-# Mapped editor items that run a near substitute: Maya 2022's newer auto tangents are one Blender handle.
+# Mapped editor items that run a near substitute: Maya's newer auto tangents are one Blender handle.
 NOTICES.update({
     f"{ed}/Tangents/{sub}Auto/{kind}": (
         "Auto Clamped handles", "Blender has one auto tangent (Auto Clamped): Maya's Ease / Mix / Custom weights "

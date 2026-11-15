@@ -1,4 +1,4 @@
-"""Lane CB (#55) in a real UI: new scene in the Maya layout, a kit cube selected -> the dock's Layer Editor
+"""#55 in a real UI: new scene in the Maya layout, a kit cube selected -> the dock's Layer Editor
 (Display / Anim tabs) is on screen at Maya's split, Channel Box INPUTS shows polyCube1 collapsed; a click on the name
 expands it (Width ... rows) and the Layer Editor stays where it was; a second click collapses it. A long history
 (six expanded bevel nodes) scrolls inside the Channel Box part (wheel) and the Layer Editor still stays.

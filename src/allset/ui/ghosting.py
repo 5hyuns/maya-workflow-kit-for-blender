@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya ghosting (Visualize > Ghost Selected / Unghost Selected / Unghost All / Open Ghosting Editor).
 
-Maya 2022 rules:
-- Ghost Selected turns ``ghosting`` on for the selection and, with Include Hierarchy (factory on), everything under
+Maya rules:
+- Ghost Selected turns ``ghosting`` on for the selection and, with Include Hierarchy (on by default), everything under
   it; Unghost Selected / Unghost All turn it off. Each ghosted node carries its own settings, copied from the
   Ghosting Editor's values when it was ghosted (an editor change applies to every current ghost).
 - Default settings: mode Pre And Post Frames, Pre Frames 3, Post Frames 3, Step: 1 (presets 1s / 2s / 4s / 5s / 10s
@@ -35,9 +35,9 @@ MODES = ("Pre And Post Frames", "Pre Frames", "Post Frames", "Custom Frames", "P
          "All Keyframes")                                  # ghostingMode enum
 MODE_IDS = ("PRE_POST", "PRE", "POST", "CUSTOM", "KEYS_PRE_POST", "KEYS_ALL")
 PRESETS = ("1s", "2s", "4s", "5s", "10s", "Custom")
-PRE_COLOR = (0.447, 1.0, 1.0)                              # ghostColorPre factory
-POST_COLOR = (0.878, 0.678, 0.663)                         # ghostColorPost factory
-NEAR, FAR = 0.5, 0.15                                      # ghostNearOpacity / ghostFarOpacity factory
+PRE_COLOR = (0.447, 1.0, 1.0)                              # ghostColorPre default
+POST_COLOR = (0.878, 0.678, 0.663)                         # ghostColorPost default
+NEAR, FAR = 0.5, 0.15                                      # ghostNearOpacity / ghostFarOpacity default
 # Maya's ghosting command error when nothing selected can be ghosted
 NOTHING_TO_GHOST = "Nothing selected can be ghosted using the current settings."
 FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3, "custom_post": 3, "custom_step": 1,

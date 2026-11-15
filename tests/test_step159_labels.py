@@ -266,7 +266,7 @@ def test_mirror_skin_weights_operator_label_mode():
         ws = {plane.vertex_groups[g.group].name: round(g.weight, 6) for g in plane.data.vertices[i].groups
               if g.weight > 0}
         assert ws == {n[4]: 1.0}, ("Left Knee mirrors onto Right Knee", ws)
-    # Closest joint (factory) sends Left Knee (4, 0, 0) to the joint nearest (-4, 0, 0) = Right Hip
+    # Closest joint (default) sends Left Knee (4, 0, 0) to the joint nearest (-4, 0, 0) = Right Hip
     assert bpy.ops.allset.mirror_skin_weights() == {'FINISHED'}
     ws = {plane.vertex_groups[g.group].name for g in plane.data.vertices[neg[0]].groups if g.weight > 0}
     assert ws == {n[3]}, ws

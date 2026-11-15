@@ -15,7 +15,7 @@ from .time_slider_view import _is_timeline, playback_range
 
 # --- Time Slider hand feel ---------------------------------------------------------------
 # Maya: LMB anywhere on the Time Slider moves the time, Shift+LMB drag highlights a range, RMB = the
-# Time Slider menu (Maya 2022 labels).
+# Time Slider menu (Maya labels).
 # Blender's timeline is a Dope Sheet mode, so these sit first in the "Dopesheet" keymap and pass
 # through in the Dope Sheet itself (keys are clicked there in Maya too).
 

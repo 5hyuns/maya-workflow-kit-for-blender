@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Component Editor window (Issue #119).
 
-Maya 2022: menu bar Options /
+Maya: menu bar Options /
 Layout / Help, a tab bar (CE2), a table — Smooth Skins: one column per skinCluster influence + Total, a Hold row, a
 shape row, one row per selected vertex (CE3); Polygons: vertex.x / y / z (+ red / green / blue) in object space (CE6) —
 and the bottom row "Auto Normalization: Interactive", Load Components / Close (CE4).

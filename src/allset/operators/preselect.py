@@ -5,7 +5,7 @@ Maya highlights the component under the mouse before you click (``preSelectHilit
 following the select mode, also while the
 Move / Rotate / Scale tool is active: a vertex = 5 px red
 square, an edge = 2 px red line (an edge also near its vertices), a face = red outline + red stipple.
-Maya 2022 doesn't highlight objects in object mode (pre_01), so neither does the kit,
+Maya doesn't highlight objects in object mode, so neither does the kit,
 except for component targets while editing a custom pivot.
 
 Blender's ``GIZMO_GT_mesh_preselect_elem_3d`` picks the nearest vertex in every select

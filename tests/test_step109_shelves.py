@@ -298,7 +298,7 @@ def test_fluid_collide_and_ncloth_display():
 # --- icons ------------------------------------------------------------------------------------
 
 def test_icons_use_maya_hues_and_fade_when_greyed():
-    # hues of Maya 2022's icons
+    # shelves of one kind share a hue
     assert shelf_icons.SHELF_COLOURS["Polygons"] == shelf_icons.SHELF_COLOURS["Sculpting"]
     assert shelf_icons.SHELF_COLOURS["Curves"] == shelf_icons.SHELF_COLOURS["Surfaces"]
     r, g, b = shelf_icons.SHELF_COLOURS["Curves"]

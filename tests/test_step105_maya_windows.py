@@ -1,4 +1,4 @@
-"""Hypershade and Script Editor look — Maya menu bars like Maya 2022's, Render Settings = Blender's render
+"""Hypershade and Script Editor look — Maya's menu bars, Render Settings = Blender's render
 tab, the new Create shader kinds, the Browser tabs, Script Editor run / echo."""
 
 from importlib import import_module
@@ -17,7 +17,7 @@ material = import_module(kit.MODULE + ".operators.material")
 attribute_editor = import_module(kit.MODULE + ".ui.attribute_editor")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
-# Maya 2022 menu bars of these windows
+# Maya menu bars of these windows
 MAYA_BARS = {"Hypershade": ["File", "Edit", "View", "Create", "Tabs", "Graph", "Window", "Options", "Help"],
              "Script Editor": ["File", "Edit", "History", "Command", "Tabs", "Help"]}
 

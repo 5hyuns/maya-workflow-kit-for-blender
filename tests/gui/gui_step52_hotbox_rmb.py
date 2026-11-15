@@ -1,5 +1,5 @@
 """In a real UI (Maya Workflow Kit layout, Channel Box dock open): the hotbox shows Maya's rows (all menu sets,
-"Maya" in the centre) and draws over the sidebar too; RMB on pCube1 shows the Maya 2022 list under the ring.
+"Maya" in the centre) and draws over the sidebar too; RMB on pCube1 shows the Maya list under the ring.
 Screenshots: gui_step52_hotbox.png, gui_step52_rmb.png."""
 
 import os

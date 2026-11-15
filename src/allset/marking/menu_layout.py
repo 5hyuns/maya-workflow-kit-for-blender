@@ -17,7 +17,7 @@ _UNIT = {name: (math.cos(math.radians(45 * i)), math.sin(math.radians(45 * i)))
 
 class Params:
     """Sizes in pixels at UI scale 1 (``scaled`` multiplies them)."""
-    # Radial ring = Maya 2022's (#99):
+    # Radial ring = Maya's (#99):
     # N / S box centres and E / W near sides ``radius`` from the press point, diagonal boxes with their corner at
     # (±d, ±d), d = radius·cos 45°; boxes 21 px high, text + 2 × 25 px wide (+ 5 with an option box).
     radius = 55.0          # centre -> radial item anchor
@@ -145,7 +145,7 @@ class Layout:
                 y -= h
 
     def ring_rect(self, key, text_w, opt=False):
-        """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya 2022's placement.
+        """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya's placement.
         y is up here, so N is +y."""
         p = self.params
         r, h = p.radius, p.ring_h

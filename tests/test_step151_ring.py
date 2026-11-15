@@ -1,4 +1,4 @@
-"""Lane A (#99): the marking-menu ring has Maya-style geometry — radius 55, diagonal boxes with their corner
+"""#99: the marking-menu ring has Maya-style geometry — radius 55, diagonal boxes with their corner
 on the diagonal, boxes 21 px high and text + 2 x 25 px wide, the submenu arrow inside the right padding, the list
 21 px under the ring. Numbers of the object marking menu and the Shift+RMB menu.
 Engine only (no bpy UI)."""

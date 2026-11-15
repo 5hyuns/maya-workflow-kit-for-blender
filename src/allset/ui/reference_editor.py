@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Reference Editor window (Issue #116).
 
-Maya 2022: menu
+Maya: menu
 bar File / Reference / Proxy / View / Help, an icon row, File Particulars (Unresolved name, Resolved name with Reload,
 Namespace, Read Only, Sharing) and the reference list — a load check box and "<reference node> <file>" per row.
 

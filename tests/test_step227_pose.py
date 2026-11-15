@@ -1,4 +1,4 @@
-"""Lane B (Issue #137): Pose Space Deformation — Create Pose Interpolator, poses,
+"""Issue #137: Pose Space Deformation — Create Pose Interpolator, poses,
 corrective shapes (operators/pose_space_227.py) and the Pose Editor window (ui/pose_editor.py).
 
 Expected (``pose_one`` / ``pose_two`` / ``pose_one_gaussian``):

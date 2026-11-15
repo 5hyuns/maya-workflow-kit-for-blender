@@ -288,8 +288,8 @@ class ALLSET_MT_symmetry(bpy.types.Menu):
 def draw_symmetry(layout, context):
     """▾ list with the mode text + a toggle that is blue (pressed) while symmetry is on.
 
-    Maya: LMB ▾ = list, MMB = toggle, the text box turns blue when on (Maya 2022
-    Status Line). A Blender menu button has no MMB action, so the toggle is its own button.
+    Maya: LMB ▾ = list, MMB = toggle, the text box turns blue when on.
+    A Blender menu button has no MMB action, so the toggle is its own button.
     """
     from ..operators import symmetry
     sym = symmetry.state(context.scene)

@@ -1,4 +1,4 @@
-"""Lane A (#112): Maya Deform > Tension / Solidify / Sculpt as kit Geometry Nodes deformers
+"""#112: Maya Deform > Tension / Solidify / Sculpt as kit Geometry Nodes deformers
 (operators/deformers_205a.py) against the expected results;
 every "O" case must match within its tol (1e-4); "U" cases only print their residual."""
 
@@ -37,7 +37,7 @@ def _select(*obs):
 # --- Tension: every "O" case -------------------------------------------------------------------------------------
 
 
-# --- Sculpt: every "O" case ----------------------------------------------------------------------------------------
+# --- Sculpt: the cases that work like Maya -------------------------------------------------------------------------
 
 
 # --- Solidify: modelled rule; Maya's facts ----------------------------------------------------------------------------

@@ -481,7 +481,7 @@ def _draw():
     # #8bffd0 without the conversion; built-in shaders convert by themselves)
     lead, other = wire_colors()
     # view_layer.depsgraph: already evaluated for this redraw; evaluated_depsgraph_get() inside a draw
-    # callback re-evaluates and broke a timer-set region flag (gui_step11 Ctrl+A sidebar)
+    # callback re-evaluates and broke a region flag set from a timer (the Attribute Editor sidebar Ctrl+A opens)
     depsgraph = context.view_layer.depsgraph
     sh = _sh()
     # X-ray wireframe (Blender's default in wireframe shading) shows the hidden edges too, like Maya's wireframe

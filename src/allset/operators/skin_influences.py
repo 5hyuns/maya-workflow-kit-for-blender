@@ -42,8 +42,8 @@ def normalize(mesh, groups=None):
 
 # Maya Add Influence without Lock weights: the skin's
 # weights are recomputed by the closest-distance rule of Bind Skin (skin_bind.closest_distance_weights) over the old and
-# the new influences, each with its own dropoff (old = the bind's, new = the option's Dropoff, factory 4).
-MAX_INFLUENCES_PROP = "allset_max_influences"   # Maya skinCluster maxInfluences (Bind Skin factory 5)
+# the new influences, each with its own dropoff (old = the bind's, new = the option's Dropoff, default 4).
+MAX_INFLUENCES_PROP = "allset_max_influences"   # Maya skinCluster maxInfluences (Bind Skin default 5)
 DROPOFF_PROP = "allset_dropoff"                 # {influence: dropoff} of influences added with another dropoff
 MAX_INFLUENCES = 5
 
@@ -156,7 +156,7 @@ def _add_by_distance(mesh, names, dropoff):
 
 
 def add_influence(mesh, bone_names, lock=False, weight=0.0, dropoff=4.0):
-    """Maya Add Influence. Factory (Lock weights off): the skin weights are recomputed by distance with the new
+    """Maya Add Influence. Default (Lock weights off): the skin weights are recomputed by distance with the new
     joints (``maya_add_weights``). Option window Lock weights:
     the new influence weighs ``weight`` on every vertex, the other influences are scaled
     by 1 - weight, and it is locked (Blender's vertex group lock)."""

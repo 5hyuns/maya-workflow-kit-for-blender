@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polyAutoProjection "Into square" shell layout (UV > Automatic, default options), bpy-free.
 
-Behaviour: Maya 2026's (tests/test_step257_uv_layout.py).
+Behaviour: Maya 2026's.
 
 The default UV > Automatic runs the packed layout with Layout 2 (Into square), Scale Mode 1 (Uniform), Shell
 stacking 0 (Bounding box = brick rows), sort by size on, back-and-forth rows on, no prescale, rotate mode 1 (a

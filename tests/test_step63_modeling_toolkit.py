@@ -70,7 +70,7 @@ def test_mtk_buttons_are_menu_actions():
 
 
 def test_combine_maya_name_and_centre_pivot():
-    """Maya 2022: pCube1 + pSphere1 -> pCube2, pivot at the bounding-box centre, translate 0."""
+    """Maya: pCube1 + pSphere1 -> pCube2, pivot at the bounding-box centre, translate 0."""
     _clear()
     cube = _create('CUBE', 0.0)
     sphere = _create('SPHERE', 3.0)

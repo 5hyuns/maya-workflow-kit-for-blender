@@ -61,7 +61,7 @@ MORPH_INPUTS = (
     ("Morph Space", 'NodeSocketInt', 0, 0, 1),
     ("Mirror Direction", 'NodeSocketInt', 0, 0, 8),
     ("Use Original Morph Target", 'NodeSocketBool', False, None, None),
-    # Maya attributes Maya's modes don't use (Retarget's scaling rules are): kept for the Channel Box
+    # Maya attributes the kit's modes don't use (Retarget's scaling rules are the kit's own): kept for the Channel Box
     ("Scale Envelope", 'NodeSocketFloat', 1.0, None, None),
     ("Uniform Scale Weight", 'NodeSocketFloat', 1.0, None, None),
     ("Normal Scale", 'NodeSocketFloat', 1.0, None, None),

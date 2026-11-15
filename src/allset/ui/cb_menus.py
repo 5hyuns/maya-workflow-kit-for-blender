@@ -324,6 +324,6 @@ class ALLSET_MT_cb_show(bpy.types.Menu):
             chrome.grey(lay, label)
 
 
-# Maya Channel Box menu bar, left to right (Maya 2022).
+# Maya Channel Box menu bar, left to right.
 MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit"),
             ("Object", "ALLSET_MT_cb_object"), ("Show", "ALLSET_MT_cb_show"))

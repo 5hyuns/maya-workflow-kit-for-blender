@@ -413,7 +413,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             draw_anim_tab(layout, context)    # Maya animation layers on NLA tracks
             return
         # Maya's toolbar, right-aligned, frameless icon buttons in Maya's order: move up, move down, create
-        # empty layer, create layer from selected (Maya 2022 Layer Editor)
+        # empty layer, create layer from selected (Maya Layer Editor)
         row = layout.row(align=True)
         row.alignment = 'RIGHT'
         row.emboss = 'NONE'

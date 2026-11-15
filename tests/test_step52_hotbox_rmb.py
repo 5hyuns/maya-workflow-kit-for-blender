@@ -1,4 +1,4 @@
-"""Hotbox and RMB marking menu as Maya 2022 shows them.
+"""Hotbox and RMB marking menu as Maya shows them.
 GUI: tests/gui/gui_step52_hotbox_rmb.py."""
 
 from importlib import import_module
@@ -14,7 +14,7 @@ mm = import_module(kit.MODULE + ".marking.menus")
 modal = import_module(kit.MODULE + ".marking.modal")
 draw = import_module(kit.MODULE + ".marking.draw")
 
-# Maya 2022 hotbox rows (top to bottom). MASH is a plug-in menu (no kit data).
+# Maya hotbox rows (top to bottom). MASH is a plug-in menu (no kit data).
 MAYA_ABOVE = [["File", "Edit", "Create", "Select", "Modify", "Display", "Windows", "Cache", "Help"],
               ["View", "Shading", "Lighting", "Show", "Renderer", "Panels"]]
 MAYA_SIDES = ["Recent Commands", "Hotbox Controls"]

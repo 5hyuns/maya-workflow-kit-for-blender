@@ -122,7 +122,7 @@ def patch_view_history(kd):
 # --- 11. Space tap = four views, Ctrl+Space = full screen -------------------
 # Maya: Space tap = four views. Space hold = hotbox.
 
-# Space = hotbox (tap = pane toggle, Maya 2022 hotbox). Also in the editors
+# Space = hotbox (tap = pane toggle, Maya hotbox). Also in the editors
 # the hotbox South zone switches a pane to, so the hotbox can switch it back; Space is
 # free there since patch_space (IC used it only in "Frames"). Not in text editors.
 HOTBOX_KEYMAPS = ("3D View", "Outliner", "Graph Editor", "Dopesheet", "Node Editor", "Image")

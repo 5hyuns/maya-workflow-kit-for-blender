@@ -1,4 +1,4 @@
-"""Lane GRID (#59): the Maya grid is drawn in a fixed #404040 whatever the theme
+"""#59: the Maya grid is drawn in a fixed #404040 whatever the theme
 (the kit ships none), the Maya layout views hide the 3D cursor, and the component pivot edit (D /
 Insert) shows it only while the cursor is the pivot."""
 

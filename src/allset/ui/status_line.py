@@ -101,7 +101,7 @@ GROUPS = (
     ("INPUT", "Input line: absolute / relative transform, rename, select by name"),
     ("EDITORS", "Editor toggles"),
 )
-# Groups Maya 2022 shows collapsed on a factory Status Line (only the bar
+# Groups Maya shows collapsed on a new Status Line (only the bar
 # and arrow between selection modes and snaps, after symmetry and after render).
 DEFAULT_COLLAPSED = ("MASKS", "HISTORY", "INPUT")
 _collapsed = set(DEFAULT_COLLAPSED)
@@ -177,8 +177,8 @@ def _field(layout, owner, prop, units):
 
 
 def draw_status_line(layout, context, compact=False):
-    """The Maya Status Line, left to right (Maya 2022:
-    menu set combo, then groups of bar + buttons + collapse arrow, sidebar toggles at the right end). ``compact``
+    """The Maya Status Line, left to right:
+    menu set combo, then groups of bar + buttons + collapse arrow, sidebar toggles at the right end. ``compact``
     (the 3D View tool header of other layouts, which overflows): the input line goes after the editor toggles
    ."""
     from .. import preferences
@@ -251,7 +251,7 @@ def draw_status_line(layout, context, compact=False):
         sub = row.row(align=True)
         sub.emboss = 'NONE'
         sub.menu(ALLSET_MT_symmetry.bl_idname, text="", icon='DOWNARROW_HLT')
-        # Maya's symmetry box is a drop-down (Maya 2022 Status Line): a click on the text opens the list, it is
+        # Maya's symmetry box is a drop-down (Maya Status Line): a click on the text opens the list, it is
         # never a text field (Issue #155: the read-only text property took a text cursor)
         box = row.row(align=True)
         box.ui_units_x = 5

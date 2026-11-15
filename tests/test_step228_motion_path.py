@@ -1,4 +1,4 @@
-"""Lane A (Issue #138): Constrain > Motion Paths > Attach to Motion Path / Set Motion Path Key
+"""Issue #138: Constrain > Motion Paths > Attach to Motion Path / Set Motion Path Key
 (operators/motion_path_228.py).
 
 Expected (rows =

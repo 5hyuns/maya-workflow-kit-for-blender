@@ -10,7 +10,7 @@ from ..operators import view
 from .toolbox_column import GAP_PX, OUTLINER_PX, _enabled, is_toolbox
 
 
-# --- quick layouts (Maya 2022 Tool Box) ---------------------------------------------------
+# --- quick layouts (Maya Tool Box) ---------------------------------------------------
 
 class ALLSET_OT_quick_layout(bpy.types.Operator):
     """Maya Tool Box quick layout button"""

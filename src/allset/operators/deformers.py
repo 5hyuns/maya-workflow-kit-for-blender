@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Deform menu deformers (issue #34).
 
-Maya 2022 facts: the Deform option windows (fields / defaults), the deformers made with default options
+Like Maya: the Deform option windows (fields / defaults), the deformers made with default options
 (nodes, names, selection afterwards, Channel Box rows, Paint Weights targets) and the handle position / size.
 Each Maya deformer becomes the Blender
 modifier that does the same job, named like the Maya node (``ffd1``, ``deltaMush1``, ``bend1``), plus the Maya

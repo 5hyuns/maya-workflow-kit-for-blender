@@ -1,4 +1,4 @@
-"""Lane X (issue #109, audit 15 NB7-NB9): Delete Non-Deformer History keeps the kit's Geometry Nodes deformers
+"""Issue #109: Delete Non-Deformer History keeps the kit's Geometry Nodes deformers
 (wire, skin weight sum), deleting a Normal / Tangent constrained object or its constraints takes the hidden helper
 empty with it, Select / Delete All by Type > Wires, nCloths, nParticles, nRigids act on the nodes the kit makes.
 Maya: Non-Deformer History keeps deformers; Select / Delete All by Type

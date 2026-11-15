@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Hypershade window layout as Blender area splits (no bpy: tested headless).
+"""Maya Hypershade window layout as Blender area splits (no bpy: tested headless).
 
 Maya's standard Hypershade is a
 menu bar over five docked panels: Browser top-left, Material Viewer top-right, Create
