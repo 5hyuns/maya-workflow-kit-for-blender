@@ -170,10 +170,12 @@ RENDERER = [
     _grey("Legacy Default Viewport"),
     _grey("Legacy High Quality Viewport"),
     _sep(),
-    # Maya lists render overrides here (Arnold); these set the scene engine + Rendered shading
+    ("set", "RENDER_ENGINE", "{engine}"),   # Maya lists render overrides here (Arnold)
+    # Renderer Engine Items preference (off by default): these set the scene engine + Rendered shading instead
     ("set", "RENDER_EEVEE", "Eevee"),
     ("set", "RENDER_CYCLES", "Cycles"),
 ]
+ENGINE_ROWS = {"RENDER_EEVEE", "RENDER_CYCLES"}
 
 PANELS = [
     ("menu", "Perspective", "ALLSET_MT_panel_perspective"),

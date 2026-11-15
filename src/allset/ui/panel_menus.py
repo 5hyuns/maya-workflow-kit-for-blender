@@ -34,7 +34,8 @@ GREY_OP = "allset.menu_unavailable"
 
 # Row tables live in panel_menu_data (bpy-free: menu_count / menu_consistency / notice rules walk them).
 from .panel_menu_data import (_view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, ALL_TYPES,
-                              _show_row, SHOW, ISOLATE, RENDERER, PANELS, PANEL_TYPES, LAYOUTS, BAR, item_path)  # noqa: F401
+                              _show_row, SHOW, ISOLATE, RENDERER, ENGINE_ROWS, PANELS, PANEL_TYPES, LAYOUTS, BAR,  # noqa: F401
+                              item_path)
 from .. import i18n
 # the split-out parts, also read through this module by other UI and the tests
 from .panel_cameras import (ALLSET_MT_panel_new_ortho, ALLSET_MT_panel_ortho_new,  # noqa: F401
@@ -193,6 +194,13 @@ def draw_rows(layout, context, rows, idname=""):
                 layout.prop(_owner(space, context, owner), prop, text=label)
         elif kind == "set":
             _k, key, label = row
+            if key == "RENDER_ENGINE" or key in ENGINE_ROWS:
+                # the Renderer Engine Items preference: Eevee / Cycles rows, else one row for the scene's engine
+                from .. import preferences
+                if (key in ENGINE_ROWS) != bool(preferences.get(context).renderer_engines):
+                    continue
+            if key == "RENDER_ENGINE":
+                label = context.engine.replace("BLENDER_", "").replace("_NEXT", "").title()
             on = state(context, key)
             if on is None:
                 icon = 'NONE'

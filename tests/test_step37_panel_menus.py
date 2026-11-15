@@ -146,16 +146,46 @@ def test_shading_and_lighting_radios():
     pm.apply(ctx, "LIGHT_ALL")
     assert sh.type == 'MATERIAL' and sh.use_scene_lights and pm.state(ctx, "LIGHT_ALL")
     assert pm.state(ctx, "RENDER_VP2")
-    pm.apply(ctx, "RENDER_EEVEE")
-    assert sh.type == 'RENDERED' and pm.state(ctx, "RENDER_EEVEE") and not pm.state(ctx, "RENDER_CYCLES")
-    if pm.apply(ctx, "RENDER_CYCLES") is not False:   # skipped when the Cycles add-on is off
-        assert pm.state(ctx, "RENDER_CYCLES") and not pm.state(ctx, "RENDER_EEVEE")
+    pm.apply(ctx, "RENDER_ENGINE")
+    assert sh.type == 'RENDERED' and pm.state(ctx, "RENDER_ENGINE")
     pm.apply(ctx, "LIGHT_DEFAULT")
     assert sh.type == 'SOLID' and sh.light == 'STUDIO' and pm.state(ctx, "LIGHT_DEFAULT")
     pm.apply(ctx, "DEFAULT_MATERIAL")
     assert sh.color_type == 'SINGLE' and pm.state(ctx, "DEFAULT_MATERIAL")
     pm.apply(ctx, "DEFAULT_MATERIAL")
     assert sh.color_type == 'MATERIAL'
+
+
+def test_renderer_engine_items_only_with_their_preference():
+    """Off (default): the Renderer menu has one row for Rendered shading with the scene's engine (its name as the
+    label). The Renderer Engine Items preference lists Eevee and Cycles instead, which set the scene's engine."""
+    space = _space()
+    ctx = Ctx(space)
+    sh = space.shading
+    scene = bpy.context.scene
+    engine0, shading0 = scene.render.engine, sh.type
+
+    def rows():
+        log = []
+        pm.draw_rows(Layout(log), ctx, pm.RENDERER, "ALLSET_MT_panel_renderer")
+        return [e[2] for e in log if e[0] == "op" and e[1] == pm.ALLSET_OT_panel_set.bl_idname]
+
+    assert _prefs().renderer_engines is False
+    got = rows()
+    assert len(got) == 2, got                     # Viewport 2.0 + one row named after the scene's engine
+    assert got[1] == bpy.context.engine.replace("BLENDER_", "").replace("_NEXT", "").title(), got
+    try:
+        _prefs().renderer_engines = True
+        got = rows()
+        assert got[1:] == ["Eevee", "Cycles"], got
+        assert pm.apply(ctx, "RENDER_EEVEE")
+        assert sh.type == 'RENDERED' and scene.render.engine.startswith('BLENDER_EEVEE')
+        assert pm.state(ctx, "RENDER_EEVEE") and not pm.state(ctx, "RENDER_CYCLES")
+        if pm.apply(ctx, "RENDER_CYCLES") is not False:   # skipped when the Cycles add-on is off
+            assert pm.state(ctx, "RENDER_CYCLES") and not pm.state(ctx, "RENDER_EEVEE")
+    finally:
+        _prefs().renderer_engines = False
+        scene.render.engine, sh.type = engine0, shading0
 
 
 def test_show_all_none():

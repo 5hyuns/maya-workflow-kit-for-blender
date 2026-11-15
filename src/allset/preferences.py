@@ -462,6 +462,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Camera / Projection Buttons",
         description="Show the Camera View and Perspective/Orthographic buttons under the ViewCube",
         default=False, update=_update_selection_wire)
+    renderer_engines: bpy.props.BoolProperty(
+        name="Renderer Engine Items",
+        description="The panel Renderer menu lists Eevee and Cycles, which set the scene's render engine for "
+                    "Rendered shading (off: one item, Rendered shading with the scene's engine; Maya's panel "
+                    "renderer changes only that panel)",
+        default=False)
     material_preview_hdri: bpy.props.BoolProperty(
         name="Material Preview HDRI",
         description="A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev "
@@ -779,6 +785,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "show_viewport_shading")
         row.prop(self, "show_view_cube_buttons")
         row.prop(self, "material_preview_hdri")
+        row.prop(self, "renderer_engines")
         row = box.row()
         row.prop(self, "outliner_columns")
         sub = row.row()

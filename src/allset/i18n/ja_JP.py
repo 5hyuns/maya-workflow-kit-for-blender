@@ -6418,6 +6418,8 @@ STRINGS = {
     'Toggle Section': 'セクションの切り替え',
     'Transform Group': 'トランスフォームグループ',
     'Viewport Shading Controls': 'ビューポートのシェーディングコントロール',
+    'Renderer Engine Items': 'レンダラーのエンジン項目',
+    "The panel Renderer menu lists Eevee and Cycles, which set the scene's render engine for Rendered shading (off: one item, Rendered shading with the scene's engine; Maya's panel renderer changes only that panel)": 'パネルの Renderer メニューに Eevee と Cycles を表示し、レンダーシェーディングのためにシーンのレンダーエンジンを設定します (オフ: シーンのエンジンでのレンダーシェーディング 1 項目のみ。Maya のパネルのレンダラーはそのパネルだけを変えます)',
     "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)": 'Maya の新しいパネルのマテリアルプレビューで、Blender の HDRI を背景にし、ルックデブの球を表示します (オフ: Maya のビュー背景)',
     'Blender Controls (Maya has none of these)': 'Blender のコントロール (Maya にはないもの)',
     "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder": 'Maya の各パネルの表示設定 (シェーディング、オーバーレイ、Show フィルタ) を次の Blender セッションでも戻します。キットの拡張機能フォルダのファイルに保存します',

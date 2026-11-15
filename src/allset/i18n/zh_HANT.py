@@ -6517,6 +6517,8 @@ STRINGS = {
     'Toggle Section': '切換區段',
     'Transform Group': '變換分組',
     'Viewport Shading Controls': '視口著色控制',
+    'Renderer Engine Items': '算繪器引擎項目',
+    "The panel Renderer menu lists Eevee and Cycles, which set the scene's render engine for Rendered shading (off: one item, Rendered shading with the scene's engine; Maya's panel renderer changes only that panel)": '面板的 Renderer 選單列出 Eevee 與 Cycles，為算繪著色設定場景的算繪引擎 (關閉: 只有一項，用場景的引擎進行算繪著色；Maya 的面板算繪器只改變該面板)',
     "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)": '新的 Maya 面板在材質預覽中以 Blender 的 HDRI 作為背景，並顯示外觀開發球體 (關閉: Maya 視圖背景)',
     'Blender Controls (Maya has none of these)': 'Blender 控制項 (Maya 沒有這些)',
     "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder": '每個 Maya 面板的顯示設定 (著色、疊加層、Show 篩選) 在下一次 Blender 工作階段中恢復；儲存在套件擴充資料夾中的檔案裡',

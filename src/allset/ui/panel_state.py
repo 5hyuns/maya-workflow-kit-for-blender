@@ -149,6 +149,8 @@ def state(context, key):
         return sh.type in ('SOLID', 'WIREFRAME') and sh.light == 'FLAT'
     if key == "RENDER_VP2":
         return sh.type != 'RENDERED'
+    if key == "RENDER_ENGINE":
+        return sh.type == 'RENDERED'
     if key in RENDER_ENGINES:
         return sh.type == 'RENDERED' and context.scene.render.engine.startswith(RENDER_ENGINES[key])
     if key == "TUMBLE_SELECTION":
@@ -178,7 +180,7 @@ def state(context, key):
 
 
 RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT", "RENDER_VP2",
-         "RENDER_EEVEE", "RENDER_CYCLES", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
+         "RENDER_ENGINE", "RENDER_EEVEE", "RENDER_CYCLES", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
@@ -277,6 +279,8 @@ def apply(context, key):
         sh.light = 'FLAT'
     elif key == "RENDER_VP2":
         leave_rendered(space)
+    elif key == "RENDER_ENGINE":
+        enter_rendered(space)
     elif key in RENDER_ENGINES:
         if not set_engine(context.scene, key):
             return False
