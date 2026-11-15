@@ -123,3 +123,14 @@ def test_cancelled_repeated_command_reports_cancelled():
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
         assert bpy.ops.allset.repeat_last() == {'CANCELLED'}
+
+
+def test_cancelled_modal_pointer_reuse_does_not_hide_a_new_command():
+    from types import SimpleNamespace
+    op = SimpleNamespace(bl_idname='MESH_OT_knife_tool', as_pointer=lambda: 42)
+    context = SimpleNamespace(window_manager=SimpleNamespace(operators=[op]))
+    mark = (0, 0, 42)
+    action = ('mesh.knife_tool', {})
+    assert rep._blender_after(context, mark, action) is None
+    op.bl_idname = 'MESH_OT_subdivide'
+    assert rep._blender_after(context, mark, action) == 0
