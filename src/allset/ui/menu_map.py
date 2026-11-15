@@ -588,7 +588,7 @@ MAP = {
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with
 # items like menu_data's ((label,) or ("-", section label)). Modify's Pivot / Naming / Attributes
-# sections now come from tools/gen_menu_data.py RUNTIME_LABELS.
+# sections now come from the generated menu data (ui/menu_data.py).
 EXTRA = {
     # The kit's own switch back to plain Blender (switch.py): found by the menu search too.
     "Windows/Settings/Preferences": [("Switch to Blender",)],
@@ -1183,7 +1183,7 @@ from .editor_menu_map import GREY_ON_POLL  # noqa: E402,F401  (menu_item_draw.dr
 MAP.update(_EDITOR_MAP)
 
 # the same Maya command greyed in one menu while it works in another
-# (tools/menu_consistency.py finds them: label + runTimeCommand / annotation) gets the working item's action.
+# (same label and runTimeCommand / annotation) gets the working item's action.
 # UV Editor Tools > Unfold / Cut / Sew / Pin are Maya's brush tools; the kit runs the command on the selection
 # (Blender's UV editor has no unfold / cut / sew brush).
 TWINS = {
@@ -1199,7 +1199,7 @@ TWINS = {
     "UV Editor/Tools/Cut": "UV Editor/Cut/Sew/Cut",
     "UV Editor/Tools/Sew": "UV Editor/Cut/Sew/Sew",
     "UV Editor/Tools/Pin": "UV Editor/Edit/Pin Selection",
-    # runTimeCommand aliases (tools/menu_consistency.py module doc) — the main UV > Delete UVs runs
+    # runTimeCommand aliases — the main UV > Delete UVs runs
     # DeleteUVsWithoutHotkey = the marking menu's DeleteUVs (polyMapDel on the selected faces, Maya UV marking menu);
     # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (Maya 2026 nHair menu)
     "nHair/Modify Curves/Smooth": "Curves/Smooth",
