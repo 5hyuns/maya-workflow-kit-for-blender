@@ -212,8 +212,10 @@ class ALLSET_MT_prefs_help(bpy.types.Menu):
     bl_label = "Help"
 
     def draw(self, _context):
+        from .. import compat
         from .editor_menu_map import _MANUAL
-        self.layout.operator("wm.url_open", text="Help on Preferences...").url = _MANUAL + "editors/preferences/index.html"
+        self.layout.operator("wm.url_open", text="Help on Preferences...").url = \
+            compat.docs_url(_MANUAL + "editors/preferences/index.html")
 
 
 class ALLSET_PT_maya_prefs(bpy.types.Panel):

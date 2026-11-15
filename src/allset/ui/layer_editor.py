@@ -27,7 +27,7 @@ elsewhere are importable from here too.
 import bpy
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 
-from .. import i18n
+from .. import compat, i18n
 from . import chrome, layer_joints
 # the split-out parts, also read through this module by other UI and the tests
 from .display_layers import (ROOT_NAME, TYPES, TYPE_LETTER, ALLSET_PG_layer, root, layers,  # noqa: F401
@@ -373,7 +373,8 @@ class ALLSET_MT_le_help(bpy.types.Menu):
     bl_label = "Help"
 
     def draw(self, context):
-        self.layout.operator("wm.url_open", text="Help on Display Layers (Blender collections)").url = HELP_URL
+        self.layout.operator("wm.url_open", text="Help on Display Layers (Blender collections)").url = \
+            compat.docs_url(HELP_URL)
 
 
 HELP_URL = "https://docs.blender.org/manual/en/5.2/scene_layout/collections/collections.html"

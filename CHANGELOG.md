@@ -16,7 +16,9 @@ with their translations.
 - **Blender 5.3 support**: Blender 5.3 is supported alongside 5.2 LTS, and every test and release check runs on
   both (Industry Compatible keymap data of 5.3, its Outliner sorting, its new Properties tab, the renamed text size;
   Maya keys keep winning over 5.3's new Weight / Vertex Paint Alt+A pie and Grease Pencil Draw Ctrl+M / G). Blender
-  versions after 5.3 are not offered the extension until they are tested.
+  versions after 5.3 are not offered the extension until they are tested. Help links (Help menus, marking menus, the
+  shelf, the Layer Editor, Outliner and Preferences help) open the manual, API and release notes of the running
+  Blender: 5.3's pages on Blender 5.3.
 - Maya Outliner: Alt+middle-drag pans the rows both ways, so a deep joint chain can be seen (#365); the search field
   is a row under the menu bar, like Maya; right-click > Set Active Camera on a camera row.
 - Panel toolbar: Resolution Gate and Film Gate, one at a time like Maya (on sets the camera's Overscan to 1.3, off to

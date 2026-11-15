@@ -25,6 +25,7 @@ extension until they are tested.
 - Paint Skin Weights on 5.3 draws its brush panels, starts with a brush that sets the value, and its Value / Opacity
   follow the brush's shared settings; shelf tab text uses a readable colour on light themes; the Range Slider's
   Keying item opens the whole Keyframing popover.
+- Help links open the Blender 5.3 manual, API and release notes on Blender 5.3 (the 5.2 pages on 5.2).
 
 ## New
 

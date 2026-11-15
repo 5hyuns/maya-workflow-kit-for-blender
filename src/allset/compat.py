@@ -6,6 +6,7 @@ Supported: Blender 5.2 LTS (the main target) and 5.3, each checked by every test
 lives here; feature code calls these helpers and stays the same on every version.
 """
 
+import re
 from operator import attrgetter
 
 import bpy
@@ -16,6 +17,20 @@ SUPPORTED = ((5, 2), (5, 3))            # the supported minors
 STRICT_VERSIONS = SUPPORTED             # keymap patches must all apply to these minors' IC data
 IS_TARGET = VERSION == TARGET
 IS_STRICT = VERSION in STRICT_VERSIONS
+
+
+# --- Help links ------------------------------------------------------------------------------------------------------
+# The kit's tables name the main target's Blender manual / API / release notes (".../5.2/..."); a link opens the pages
+# of the running Blender when it is a supported one (5.3 -> 5.3), else the main target's.
+DOCS_VERSION = "%d.%d" % (VERSION if VERSION in SUPPORTED else TARGET)
+_DOCS_LINK = re.compile(r"(docs\.blender\.org/(?:manual/[A-Za-z_]+|api)|developer\.blender\.org/docs/release_notes)"
+                        r"/\d+\.\d+/")
+
+
+def docs_url(url):
+    """``url`` with the version of a Blender manual / API / release notes link set to ``DOCS_VERSION``; any other
+    link as it is."""
+    return _DOCS_LINK.sub(lambda m: f"{m.group(1)}/{DOCS_VERSION}/", url)
 
 
 # Properties tab flags newer than 4.5: the Maya Workflow Kit template is still a 4.5-saved file

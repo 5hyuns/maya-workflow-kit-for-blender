@@ -11,6 +11,7 @@ and default sets); Display > Shapes adds the shape rows, Show filters the object
 
 import bpy
 
+from .. import compat
 from . import chrome, own_draw
 
 HELP_URL = "https://docs.blender.org/manual/en/5.2/editors/outliner/index.html"
@@ -114,7 +115,7 @@ class ALLSET_MT_outliner_help(bpy.types.Menu):
     bl_label = "Help"
 
     def draw(self, context):
-        self.layout.operator("wm.url_open", text="Help on Outliner").url = HELP_URL
+        self.layout.operator("wm.url_open", text="Help on Outliner").url = compat.docs_url(HELP_URL)
 
 
 def is_collection_view(space):

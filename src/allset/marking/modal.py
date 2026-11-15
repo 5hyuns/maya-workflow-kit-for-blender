@@ -89,6 +89,7 @@ def run_action(context, action, option=False, path=None):
     menu item runs with its option values); ``path`` = the Maya menu path, for windows tied to a path. A finished
     command is one undo step named after the item (``undo_steps.command``)."""
     from .. import undo_steps
+    action = for_this_blender(action)
     outer = undo_steps.depth() == 0
     label = _label(action, path)
     res = undo_steps.command(label, lambda: _run_action(context, action, option, path))
@@ -99,6 +100,20 @@ def run_action(context, action, option=False, path=None):
         from ..operators import repeat_maya       # Maya G / Recent Commands
         repeat_maya.record(label, action, path, context)
     return res
+
+
+def for_this_blender(action):
+    """``action`` as it runs here: a link to Blender's manual / API / release notes opens the running Blender's pages
+    (``compat.docs_url``: the tables name the main target's). Every menu, marking menu, hotbox, option box, shelf and
+    repeat run comes through ``run_action``."""
+    try:
+        kind, target, props = menu_map.normalize(action)
+    except (TypeError, ValueError, IndexError, KeyError):
+        return action
+    if kind == "op" and target == "wm.url_open" and "url" in props:
+        from .. import compat
+        return (target, dict(props, url=compat.docs_url(props["url"])))
+    return action
 
 
 def _label(action, path):

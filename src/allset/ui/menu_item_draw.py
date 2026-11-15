@@ -81,6 +81,9 @@ def draw_spec(layout, label, s, path, icon='NONE', icon_value=0, translate=True)
         op.props = json.dumps(props)
         op.item = path
     else:
+        if target == "wm.url_open" and "url" in props:     # the running Blender's manual / API pages
+            from .. import compat
+            props = dict(props, url=compat.docs_url(props["url"]))
         op = draw_safe.op(layout, target, text=label, **iv)
         for key, value in props.items():
             setattr(op, key, value)
