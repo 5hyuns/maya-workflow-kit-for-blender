@@ -52,7 +52,8 @@ def closes():
 
 
 def dark_share(point, half=None):
-    """Share of dark pixels (menu background, < 45 / 255) in a box around a window point: a screenshot read back."""
+    """Share of menu background pixels (the theme's menu back colour, Maya's grey while Maya mode shows Maya's look)
+    in a box around a window point: a screenshot read back."""
     import tempfile
     import numpy as np
     half = half or px(30)
@@ -67,7 +68,8 @@ def dark_share(point, half=None):
     a = a.reshape(h, w, 4)[:, :, :3].mean(axis=2)
     x, y = point
     box = a[max(0, y - half):y + half, max(0, x - half):x + half]
-    return float((box < 45 / 255).mean())
+    back = sum(bpy.context.preferences.themes[0].user_interface.wcol_menu_back.inner[:3]) / 3
+    return float((np.abs(box - back) < 12 / 255).mean())
 
 
 def first_row(menu):
@@ -177,11 +179,11 @@ def hold_case(menu, path):
         mod(".ui.menu_option_box").AWAY_TICK = 0.05
         share = dark_share((C["row"][0] - px(200), C["row"][1]), px(20))
         if closes():
-            check(f"{path}: the Maya menu is closed after the option window (dark share {share:.2f} at the item)",
+            check(f"{path}: the Maya menu is closed after the option window (menu share {share:.2f} at the item)",
                   share < 0.3)
         else:   # Blender 5.x default (menu_close_leave off): no Python call closes it (compat.menus_close_on_leave)
             check(f"{path}: 5.x: the Maya menu stays open under the option window until a click / Esc "
-                  f"(dark share {share:.2f} at the item)", share > 0.5)
+                  f"(menu share {share:.2f} at the item)", share > 0.5)
 
     def s_close():
         shot(f"146_{tag}_after_esc2.png")

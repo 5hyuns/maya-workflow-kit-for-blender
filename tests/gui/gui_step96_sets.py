@@ -100,8 +100,9 @@ def s_row_drawn():
     r = rows()
     _a, region = outl()
     u = unit()
-    # Maya's order: the 4 startup cameras, the 3 cubes, defaultLightSet, defaultObjectSet, then set1 (row 9)
-    top9 = region.height - 9 * u
+    # Maya's order: the 4 startup cameras, the 3 cubes, defaultLightSet, defaultObjectSet, then set1 (row 9); the
+    # rows start under Maya's search row
+    top9 = mod("ui.outliner_tree").top(region, u) - 9 * u
     check(f"the Outliner draws one set row after the cameras, the three DAG rows and the two default sets "
           f"({[(x[0], x[1], x[2], x[3]) for x in r]}, row 9 top {top9})",
           len(r) == 1 and r[0][2] == 'SET' and r[0][3] == "set1" and abs(r[0][1] - top9) <= 1)
@@ -170,7 +171,7 @@ def s_object_row():
     # (persp top front side pCube1 pCube2 pCube3)
     _a, region = outl()
     u = unit()
-    p = (region.x + int(4 * u), region.y + int(region.height - 6.5 * u))
+    p = (region.x + int(4 * u), region.y + int(mod("ui.outliner_tree").top(region, u) - 6.5 * u))
     click(p)
 
 

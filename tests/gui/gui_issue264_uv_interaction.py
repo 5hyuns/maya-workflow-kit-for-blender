@@ -86,6 +86,10 @@ def s_cube():
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.view3d.view_selected()
         bpy.ops.mesh.select_all(action='DESELECT')
+    # a tight frame puts a top corner under the ViewCube in the corner of the view: step back so every vertex
+    # read below lies on the open view
+    rv3d = view3d()[0].spaces.active.region_3d
+    rv3d.view_distance *= 1.6
 
 
 @step
