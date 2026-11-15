@@ -7,7 +7,7 @@ the chord buttons and the Invert Zoom reading come from view_nav.
 
 import bpy
 
-from .view_nav import CHORD_BUTTONS, DOLLY_PX_PER_DOUBLING, chord_held, invert_zoom
+from .view_nav import CHORD_BUTTONS, DOLLY_PX_PER_DOUBLING, chord_held, drag_jump, invert_zoom
 
 # --- Alt+RMB dolly in the UV / Image Editor (B4) ---------------------------------
 # Maya dollies 2D panels with Alt+RMB too. IC's image.view_zoom reads the drag axis
@@ -67,7 +67,8 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
         if event.type == 'MOUSEMOVE':
             dx, dy = event.mouse_x - self._last[0], event.mouse_y - self._last[1]
             self._last = (event.mouse_x, event.mouse_y)
-            self.step(context, dx, dy)
+            if not drag_jump(context.region, dx, dy):
+                self.step(context, dx, dy)
             context.area.tag_redraw()
         elif event.type == self._button and event.value == 'RELEASE':
             return {'FINISHED'}

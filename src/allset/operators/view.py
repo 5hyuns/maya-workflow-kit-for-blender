@@ -14,9 +14,9 @@ from . import units
 from .view_nav import (ALLSET_OT_dolly, ALLSET_OT_emulated_tumble, ALLSET_OT_nav_chord,  # noqa: F401
                        ALLSET_OT_track_view, ALLSET_OT_tumble, ALLSET_OT_view_axis_lock, AXIS_THRESHOLD,
                        CHORD_BUTTONS, CHORD_MODES, CHORD_STARTS, DOLLY_PX_PER_DOUBLING, NAV_MODALS,
-                       camera_navigation, choose_axis, chord_held, chord_mode, dolly_distance, emulated_alt_drag,
-                       invert_zoom, locked_offset, start_chord_dolly, start_track, start_tumble, tumble_locked,
-                       tumble_rotation)
+                       camera_navigation, choose_axis, chord_held, chord_mode, dolly_distance, drag_jump,
+                       emulated_alt_drag, invert_zoom, locked_offset, start_chord_dolly, start_track, start_tumble,
+                       tumble_locked, tumble_rotation)
 from .view_nav_2d import (ALLSET_OT_dolly_2d, ALLSET_OT_nav_2d, NAV2D_RULES, NAV2D_ZOOM_PER_PX,  # noqa: F401
                           V2D_CLIPPED, dolly_2d_factor, dolly_2d_step, dolly_zoom_factor, nav2d_editor,
                           nav2d_mode, nav2d_rule, nav2d_zoom_delta, view2d_range)
