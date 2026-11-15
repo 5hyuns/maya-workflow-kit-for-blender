@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Blender version differences in one place.
 
-The kit's main target is Blender 5.2; it supports 5.0.0 - 5.3.x (0.6.2 is the
-last version for Blender 4.5, and the 4.5 paths are gone). Every check of "which Blender is this" lives here;
-feature code calls these helpers and stays the same on every version.
+Supported: Blender 5.2 LTS (the main target) and 5.3, each checked by every test; 5.0.x / 5.1.x still install
+(0.6.2 is the last version for Blender 4.5, and the 4.5 paths are gone). Every check of "which Blender is this"
+lives here; feature code calls these helpers and stays the same on every version.
 """
 
 from operator import attrgetter
@@ -12,7 +12,8 @@ import bpy
 
 VERSION = tuple(bpy.app.version[:2])
 TARGET = (5, 2)                         # main target (Blender 5.2 LTS)
-STRICT_VERSIONS = ((5, 2),)             # keymap patches must all apply to these minors' IC data
+SUPPORTED = ((5, 2), (5, 3))            # the supported minors
+STRICT_VERSIONS = SUPPORTED             # keymap patches must all apply to these minors' IC data
 IS_TARGET = VERSION == TARGET
 IS_STRICT = VERSION in STRICT_VERSIONS
 

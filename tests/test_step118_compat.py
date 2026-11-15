@@ -28,8 +28,9 @@ def test_version_checks_only_in_compat():
                 bad.append(f"{path.relative_to(ROOT)}:{n}")
     assert not bad, bad
     assert compat.IS_TARGET == (tuple(bpy.app.version[:2]) == (5, 2))      # main target
-    assert compat.IS_STRICT == (tuple(bpy.app.version[:2]) == (5, 2))
-    assert compat.STRICT_VERSIONS == ((5, 2),) and compat.VERSION >= (5, 0)
+    assert compat.SUPPORTED == ((5, 2), (5, 3))                              # 5.2 LTS and 5.3
+    assert compat.IS_STRICT == (tuple(bpy.app.version[:2]) in ((5, 2), (5, 3)))
+    assert compat.STRICT_VERSIONS == compat.SUPPORTED and compat.VERSION >= (5, 0)
 
 
 def test_action_fcurves_on_layered_actions():

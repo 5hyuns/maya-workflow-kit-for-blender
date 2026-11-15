@@ -1,8 +1,9 @@
 """Blender version compatibility and a safe install.
 
-Runs on the main target Blender 5.2 and on 5.0 / 5.1 (BLENDER=... python tests/run.py): the keymap patches are
-strict on 5.2 and only show the known Industry Compatible drift elsewhere, the manifest declares the tested
-range (5.0 - 5.2), the timeline header wrap is undone on disable. (The kit ships no theme, so there is no theme round trip.)"""
+Runs on the supported Blender 5.2 LTS and 5.3 (``python tests/run.py --blenders 5.2,5.3``) and on 5.0 / 5.1
+(``--blender 5.1``): the keymap patches are strict on 5.2 and 5.3 and only show the known Industry Compatible drift
+elsewhere, the manifest declares the tested range (5.0 - 5.3: its maximum is the minor after the newest supported
+one), the timeline header wrap is undone on disable. (The kit ships no theme, so there is no theme round trip.)"""
 
 import tomllib
 from importlib import import_module
@@ -37,6 +38,8 @@ def test_manifest_declares_the_tested_range():
     data = tomllib.loads((ROOT / "src" / "allset" / "blender_manifest.toml").read_text(encoding="utf-8"))
     assert data["blender_version_min"] == "5.0.0", "0.6.2 is the last version for 4.5"
     assert data["blender_version_max"] == "5.4.0", "5.0.x-5.3.x checked; test a new version before raising"
+    major, minor = max(compat.SUPPORTED)
+    assert data["blender_version_max"] == f"{major}.{minor + 1}.0", "the maximum excludes the next, untested minor"
     v = tuple(bpy.app.version)
     assert (5, 0, 0) <= v < (5, 4, 0), v
 

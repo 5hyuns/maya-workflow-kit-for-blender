@@ -1,5 +1,5 @@
 """Help links (main menu Help, editor Help menus, Layer Editor, Outliner) open the Blender manual / API / release
-notes of the supported Blender version."""
+notes of the main target, Blender 5.2 LTS (on 5.3 too: the links are plain table data)."""
 
 import os
 import re
@@ -7,12 +7,12 @@ import re
 import kit  # noqa: F401  (enables the kit)
 
 SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "allset")
-SUPPORTED = "5.2"
+TARGET = "5.2"
 LINK = re.compile(r"(?:docs\.blender\.org/(?:manual/[a-z_A-Z]+|api)|developer\.blender\.org/docs/release_notes)/"
                   r"(\d+\.\d+)/")
 
 
-def test_every_versioned_blender_link_is_the_supported_version():
+def test_every_versioned_blender_link_is_the_main_target():
     found, wrong = 0, []
     for root, _dirs, files in os.walk(SRC):
         for name in files:
@@ -23,7 +23,7 @@ def test_every_versioned_blender_link_is_the_supported_version():
                 for n, line in enumerate(fh, 1):
                     for version in LINK.findall(line):
                         found += 1
-                        if version != SUPPORTED:
+                        if version != TARGET:
                             wrong.append(f"{os.path.relpath(path, SRC)}:{n} {version}")
     assert found >= 5, found
     assert not wrong, wrong

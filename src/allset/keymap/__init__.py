@@ -72,16 +72,16 @@ def add_item(km_name, idname, type, value, space_type="EMPTY", region_type="WIND
 
 
 def generate_data():
-    """IC data with the Maya patches applied (fresh list each call). Strict on Blender 5.2 (the kit's
-    own static IC data of that minor); elsewhere IC differences are collected in ``patch.DRIFT``
-   ."""
+    """IC data with the Maya patches applied (fresh list each call). Strict on the supported Blender 5.2 and 5.3
+    (the kit's own static IC data of each minor, ``compat.STRICT_VERSIONS``); elsewhere IC differences are collected
+    in ``patch.DRIFT``."""
     from . import ic_data, maya_patches, patch
     patch.STRICT = compat.IS_STRICT
     patch.DRIFT.clear()
     data = maya_patches.apply(ic_data.generate())
     if patch.DRIFT:
         print(f"Maya Workflow Kit: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
-              "(made for 5.2):", *patch.DRIFT[:20], sep="\n  ")
+              "(made for 5.2 and 5.3):", *patch.DRIFT[:20], sep="\n  ")
     return data
 
 
