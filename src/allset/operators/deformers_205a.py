@@ -41,6 +41,7 @@ menu paths and option windows.
 
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.props import EnumProperty
 from mathutils import Vector
 
@@ -551,6 +552,7 @@ def windows():
 
 # --- register --------------------------------------------------------------------------------------------------------
 
+@persistent
 def _on_depsgraph(scene, depsgraph):
     seen = set()
     obs = []
