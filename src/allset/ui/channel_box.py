@@ -359,13 +359,24 @@ def _redraw_all():
 
 
 def _entry_text_get(_self):
-    return ""
+    return _edit["text"]
+
+
+def _enter_held():
+    from ..operators import keystate
+    return bool(keystate.is_down('RET') or keystate.is_down('NUMPAD_ENTER'))
 
 
 def _entry_text_set(_self, text):
-    # empty: the popover closed by a click elsewhere (Blender commits the text on click-out), nothing typed
-    if text.strip() and _edit["key"] is not None:
-        apply_entry(_edit["key"], text)
+    # Blender commits a text field on Enter and on a click away alike. Like Maya, Enter writes the text into every
+    # selected channel also when it is unchanged, a click away only a changed text. Where the OS can't tell whether
+    # Enter is held, an unchanged text writes nothing.
+    key = _edit["key"]
+    if key is None or not text.strip():
+        return
+    if text == _edit["text"] and not _enter_held():
+        return
+    apply_entry(key, text)
 
 
 def _make_proxy_annotations():

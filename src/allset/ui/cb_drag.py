@@ -497,7 +497,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             if part == "VALUE" and not (shift or ctrl):
                 # #375, Maya: after a drag over the values, typing goes straight into every selected channel
                 try:
-                    edit_field(context, self._extended or self._key, blank=True)
+                    edit_field(context, self._extended or self._key)
                 except RuntimeError:
                     pass
         elif part == "VALUE" and (shift or ctrl):
@@ -532,17 +532,19 @@ def field_owner(context, key):
     return None, None
 
 
-_edit = {"key": None, "blank": False}
+_edit = {"key": None, "text": ""}
 
 
-def edit_field(context, key, blank=False):
-    """Edit channel ``key``'s field in a popover at the mouse with the text active at once (Maya: a click into a
-    field edits it); Enter writes the text into every selected channel (apply_entry) and closes it, like F2.
-    ``blank`` (after a drag over the values, #375): an empty field, so a click away changes no channel."""
-    if field_owner(context, key)[0] is None:
+def edit_field(context, key):
+    """Edit channel ``key``'s value in a popover at the mouse, its text selected so typing replaces it (Maya: a click
+    into a field, or the end of a drag over the values, edits that cell). Like Maya, Enter writes the text into every
+    selected channel (apply_entry), also when it is unchanged; a click away writes it only when it was changed, and
+    Esc writes nothing (``Scene.allset_cb.entry_text``)."""
+    owner, prop = field_owner(context, key)
+    if owner is None:
         return False
     _edit["key"] = key
-    _edit["blank"] = blank
+    _edit["text"] = getattr(owner, prop)
     bpy.ops.wm.call_panel(name=ALLSET_PT_cb_field.__name__, keep_open=False)
     return True
 
@@ -555,11 +557,8 @@ class ALLSET_PT_cb_field(bpy.types.Panel):
     bl_ui_units_x = 6
 
     def draw(self, context):
-        owner, prop = field_owner(context, _edit["key"] or "")
-        if owner is None:
+        if field_owner(context, _edit["key"] or "")[0] is None:
             return
-        if _edit["blank"]:
-            owner, prop = context.scene.allset_cb, "entry_text"
         row = self.layout.row()
         row.activate_init = True
-        row.prop(owner, prop, text="")
+        row.prop(context.scene.allset_cb, "entry_text", text="")
