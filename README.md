@@ -236,8 +236,8 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 - **No middle-drag on fields.** Select channels in the Channel Box and middle-drag in the viewport instead.
 - **No MEL.** Scripting is Python, with a small `maya.cmds` look-alike.
 - **No Maya scene files.** `.ma` / `.mb` can't be read — export FBX (or OBJ / Alembic / USD) from Maya.
-- **No theme in the add-on.** Maya's grey UI comes from a theme you install yourself, such as the separate Maya
-  Workflow Kit Theme ([Recommended setup](#recommended-setup)); extensions.blender.org add-ons may not change themes.
+- **No theme.** Maya's grey UI and green lead selection come from a theme you install yourself
+  ([Recommended setup](#recommended-setup)); extensions.blender.org add-ons may not change themes.
 - **Docking stays inside Blender's areas.** Maya's side tabs and OS-level docking of panels are not imitated.
 - Not every Maya menu item has a Blender counterpart; those items are greyed with a note. Today 1,015 of the 1,895
   main menu items run a kit or Blender command and the other 880 are greyed with a note (none without one). Editor
@@ -326,13 +326,8 @@ The kit never saves your preferences.
 
 Optional — the kit leaves your theme and preferences to you. Maya users usually like:
 
-- **A Maya-grey theme.** The *Maya Workflow Kit Theme* is a separate theme extension with Maya's interface greys:
-  #444444 panels and menu bars, #2b2b2b fields, #5d5d5d buttons, #525252 menus, the #5285a6 selection blue and pale
-  yellow tooltips. Install it like any theme (*Edit > Preferences > Get Extensions*, or *Install from Disk* with
-  `maya-workflow-kit-theme-<version>.zip`); Blender switches to it when it is installed. To keep your current theme
-  first, save it with the **+** next to the theme menu in *Preferences > Themes*; that menu switches back at any time.
-  Removing the theme while it is in use gives Blender's default theme. The add-on itself never changes the theme, so
-  any other theme works as well.
+- **A dark grey theme.** *Edit > Preferences > Get Extensions*, filter by *Themes*, and install a dark grey theme you
+  like (or pick one in *Preferences > Themes > Presets*).
 - **Navigation** (*Preferences > Navigation*): Orbit Method *Turntable*, Orbit Around Selection *off*, Zoom to Mouse
   Position *off*, Auto Perspective *on*, Zoom Method *Dolly* with Zoom Axis *Horizontal*.
 - **Undo Steps: 256** (*Edit > Preferences > System > Memory & Limits > Undo Steps*) — Maya's undo queue is unlimited,
