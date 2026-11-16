@@ -4,7 +4,7 @@
 
 Runs with a sandbox BLENDER_USER_CONFIG (the caller creates it under tmp/), WITHOUT --factory-startup so the saved
 preferences of the previous session are read. Actions: enable, edit, take381 (test_issue381_hotkey_conflict.py),
-maya_off, maya_on, disable, save.
+untick_ctrl_z, keys_again (test_issue381_blender_keys.py), maya_off, maya_on, disable, save.
 Writes {"state": ...} after the actions.
 """
 
@@ -45,7 +45,26 @@ def observe():
     on = kit.is_enabled() and mod("switch").is_on()
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences if kit.is_enabled() else None
     return {"maya_mode": on, "keys": keys, "kit_items": len(kit_user),
-            "kept": prefs.user_keys if prefs is not None else None, "y": hotkeys_381() if on else None}
+            "kept": prefs.user_keys if prefs is not None else None, "y": hotkeys_381() if on else None,
+            "ctrl_z": sorted([k.idname, bool(k.active), bool(k.is_user_modified)]
+                             for k in kcs.user.keymaps["Screen"].keymap_items
+                             if k.type == 'Z' and k.ctrl and not k.shift and not k.alt and k.idname == "ed.undo")}
+
+
+def untick_ctrl_z():
+    """#381: the Maya Ctrl+Z (Screen Undo) unticked in Preferences > Keymap."""
+    kcs = bpy.context.window_manager.keyconfigs
+    kcs.update()
+    addon = kcs.addon.keymaps["Screen"]
+    base = next(k for k in addon.keymap_items if k.idname == "ed.undo" and k.type == 'Z' and k.ctrl and not k.shift)
+    kcs.user.keymaps["Screen"].keymap_items.find_match(addon, base).active = False
+
+
+def keys_again():
+    """The Maya keys out and in again over the filled keyconfig (Blender's own items switched off, as in the UI)."""
+    keymap = mod("keymap")
+    keymap.deactivate()
+    keymap.activate()
 
 
 def _row381(command, maya_key):
@@ -97,6 +116,10 @@ def main():
             edit()
         elif action == "take381":
             take381()
+        elif action == "untick_ctrl_z":
+            untick_ctrl_z()
+        elif action == "keys_again":
+            keys_again()
         elif action == "maya_off":
             mod("switch").set_mode(False, layout=False)
         elif action == "maya_on":

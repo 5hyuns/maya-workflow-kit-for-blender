@@ -16,6 +16,11 @@ back, they are given again on the user keymap items, the way Preferences > Keyma
 Blender's items are kept from Maya keys on until off and given back if they were dropped. A key is only given back
 while the item is as the kit / Blender made it, so an edit Blender kept itself always wins. Nothing else changes:
 the record holds only what the user changed, and it is empty (unset) when there is nothing to keep.
+
+Many Maya keys are the same item as a Blender key (Undo on Ctrl+Z), and Blender keeps a keymap edit as "change / remove
+the item equal to this one", applied to the first equal item it finds. So a Maya key the user removed would remove
+Blender's own key once the Maya keys are gone: taking the edits out leaves no such edit behind (``reset_keymap``),
+and Blender mode always has Blender's keys.
 """
 
 import json
@@ -261,13 +266,14 @@ def capture_maya(kcs, ptrs):
 
 def take_out_maya(kcs, ptrs, entries):
     """The user keymap without the entries' edits (Blender would otherwise keep differences to keys that are about
-    to go, and lose the properties of kit commands with them). Removed keys stay removed: no item is left."""
+    to go, and lose the properties of kit commands with them, or apply them to Blender's own equal keys)."""
     for (name, space, region), group in _group(entries).items():
         ukm = _find(kcs.user.keymaps, name, space, region)
         akm = _find(kcs.addon.keymaps, name, space, region)
         if ukm is None:
             continue
         bases = _bases(akm, keep=lambda k: k.as_pointer() in ptrs) if akm is not None else []
+        removed = False
         for e in group:
             if "added" in e:
                 kmi = next((k for k in ukm.keymap_items if k.is_user_defined and same(state(k), e["added"])), None)
@@ -277,7 +283,42 @@ def take_out_maya(kcs, ptrs, entries):
                 kmi = _user_item(akm, ukm, bases, e)
                 if kmi is not None and same(state(kmi), e["state"]):
                     ukm.restore_item_to_default(kmi)
+            else:
+                removed = True
+        if removed:
+            reset_keymap(kcs, ptrs, name, space, region)
     kcs.update()
+
+
+def reset_keymap(kcs, ptrs, name, space, region):
+    """A removed Maya key stays in Blender's keymap edits as "remove the item equal to this one", which with the Maya
+    keys gone is Blender's own item of the same key, and Blender has no way to take back one removal. So the keymap
+    goes back to its items and the user's other edits of it are given again: Blender's items, other add-ons' items,
+    keys the user added (the Maya keys' own edits are already in the entries). The Hotkey Editor's Restore All uses it
+    too: a Maya key switched off or removed in Preferences > Keymap has no item of its own to restore."""
+    kcs.update()
+    ukm = _find(kcs.user.keymaps, name, space, region)
+    akm = _find(kcs.addon.keymaps, name, space, region)
+    bkm = _find(kcs.active.keymaps, name, space, region) if kcs.active is not None else None
+    if ukm is None:
+        return
+
+    def others(k):
+        return k.as_pointer() not in ptrs
+    blender = _edits(bkm, ukm) if bkm is not None else []
+    addons = _edits(akm, ukm, keep=others) if akm is not None else []
+    added = [state(k) for k in ukm.keymap_items if k.is_user_defined]
+    ukm.restore_to_default()
+    kcs.update()
+    ukm = _find(kcs.user.keymaps, name, space, region)
+    if ukm is None:
+        return
+    if bkm is not None and blender:
+        _give(bkm, ukm, blender)
+    if akm is not None and addons:
+        _give(akm, ukm, addons, keep=others)
+    for st in added:
+        write(ukm.keymap_items.new(st["idname"], st["type"], st["value"]), st)
 
 
 def put_back_maya(kcs, ptrs, entries):

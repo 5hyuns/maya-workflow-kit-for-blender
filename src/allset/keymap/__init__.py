@@ -416,7 +416,11 @@ def _give_blender_edits():
 
 
 def _keep_maya_edits():
-    """Maya keys going out: the user's edits of them into the add-on preferences, out of the user keymap."""
+    """Maya keys going out: the user's edits of them into the add-on preferences, out of the user keymap. Runs with
+    Blender's own items on again (``deactivate``): Blender applies a keymap edit to the first item equal to the edited
+    one, and while Blender's equal item is switched off, a Maya key the user switched off has no item of its own (the
+    switched-off Blender item stands for it), so the edit could be neither kept nor taken out and Blender mode got it:
+    Blender's own key stayed off."""
     from . import user_keys
     if not _state["applied"] or _state["give_pending"]:
         return                       # nothing on, or the kept edits were never given back: they stay as kept
@@ -485,9 +489,9 @@ def deactivate():
     edits of the Maya keys are kept in the add-on preferences until the Maya keys are on again."""
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)
-    _keep_maya_edits()
     was_applied = _state["applied"]
-    _restore_active()
+    _restore_active()                # first: see _keep_maya_edits
+    _keep_maya_edits()
     _restore_addon()
     _state["applied"] = False
     _state["give_pending"] = False

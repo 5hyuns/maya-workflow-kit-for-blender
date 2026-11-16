@@ -416,7 +416,7 @@ def restore_all(context):
     akms, ukms = _addon_keymaps(context), _user_keymaps(context)
     if not ptrs or akms is None or ukms is None:
         return 0
-    items = {}
+    items, gone = {}, []
     for akm in akms:
         if akm.is_modal:
             continue
@@ -426,13 +426,21 @@ def restore_all(context):
         for a in akm.keymap_items:
             if a.as_pointer() in ptrs:
                 u = ukm.keymap_items.find_match(akm, a)
-                if u is not None and u.is_user_modified:
+                if u is None:               # switched off or removed in Preferences > Keymap (user_keys)
+                    gone.append((akm.name, akm.space_type, akm.region_type))
+                elif u.is_user_modified:
                     items[u.as_pointer()] = (ukm, u)      # rows of several Maya contexts can share one item
     for ukm, u in items.values():
         ukm.restore_item_to_default(u)
+    kcs = context.window_manager.keyconfigs
     if items:
-        context.window_manager.keyconfigs.update()
-    return len(items)
+        kcs.update()
+    if gone:
+        from ..keymap import user_keys
+        for where in dict.fromkeys(gone):
+            user_keys.reset_keymap(kcs, ptrs, *where)
+        kcs.update()
+    return len(items) + len(gone)
 
 
 # --- the list ---------------------------------------------------------------------------------------------------
