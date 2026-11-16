@@ -3,6 +3,110 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] — 2026-11-16
+
+Fixes and Maya behaviours for the issues reported after 0.17.0 (#344, #363, #367, #369, #370, #371, #373, #374,
+#375), Maya's Distance Tool, sets that hold components, and a long list of Maya menu items that now work. Thanks to
+@AlexBarbulescu for #376: the Channel Box multi-value typing (#375), Ctrl+D in the Outliner, the Hide / Show
+submenus, Time Slider Bookmarks, the new Booleans, the heads-up display lines, All Components, Clipboard Actions,
+Transfer Attribute Values, LOD, Displacement to Polygons, the Interactive Grooming brushes, hidden groups in
+Duplicate / Freeze / Delete History and the instance marks, with their translations; and for his comment on #374
+that led to the camera view F fix.
+
+### Added
+- **Distance Tool** (#370): Create > Measure Tools > Distance Tool works like Maya's. Click two points in a view to
+  get locator1, locator2 and distanceDimension1, all in the Outliner (the dimension with its own ruler icon). The
+  views draw the dimension line with arrowheads, dotted lines and the distance in the scene's Maya units, and the
+  number follows when either locator moves. Hold X, C or V while clicking to snap to the grid, a curve or edge, or a
+  point; a click on an existing locator measures from it, and the tool stays on for the next measurement. One
+  measurement is one undo step, deleting a locator (any way) deletes its dimension, and the measurements are saved
+  with the file. Before, the item opened Blender's ruler, whose measurements didn't show in the Outliner.
+- **Sets with components** (#373): Create > Sets > Set and Quick Select Set keep a vertex, edge or face selection
+  (on one or more meshes, whole objects can be mixed in), like Maya. Selecting the set (Edit > Quick Select Sets,
+  its Outliner row, Select Set Members) picks the components again in the matching component mode; the Outliner
+  lists the members by their Maya names (`pCube1.vtx[0:3]`); Add / Remove, Remove From Current Set, Delete Set and
+  the command line's sets work with them, and they are saved with the scene. Sets of whole objects work as before.
+- **Channel Box multi-value typing** (#375): drag down over the values, type a number and press Enter, and it goes
+  into every selected channel of every selected object, like Maya, without clicking a field again.
+- Maya menu items that now work (#376): Display > Hide and Show open their submenus again with the by-type items;
+  Visualize > Time Slider Bookmarks (Create, Next / Previous, Frame, Unframe, Delete, Delete All); Mesh > Booleans
+  Slice, Hole Punch, Cut Out and Split Edges (also in the Shift+RMB marking menu); Set Range to > Sound Length;
+  Display > Heads Up Display > Current Frame, Focal Length and Scene Timecode, and In-view Messages; Display >
+  Animation with Joint Labels; Display > Show > All Components (every mesh, also from Object Mode, like Maya);
+  Mesh > Clipboard Actions; Edit > Transfer Attribute Values; Edit > LOD (Create LOD Group, Generate LOD Meshes,
+  Ungroup LOD Group); Modify > Convert > Displacement to Polygons; the Generate > Interactive Grooming Tools
+  brushes (on Blender's hair sculpt brushes).
+- Outliner: Ctrl+D runs Edit > Duplicate (groups with their children), like Maya (#376).
+- Preferences, off by default (Maya has neither): Mark Instances in the Outliner (purple rows, a chain-link badge
+  and an "Instance of" tip) and Freeze / Delete History Unshare Instances (#376).
+- Windows > Settings/Preferences > Preferences > Time Slider > Playback > Update View (Active / All) for playback
+  in the four view (#344).
+
+### Changed
+- **Tool Settings opens in its own window** (#367): double-clicking a tool (also Windows > General Editors > Tool
+  Settings, the Status Line button, a tool's option box, Paint Skin Weights) opens the Tool Settings as a floating
+  window at the top left of the viewport, like Maya, in the four view and in a single view, and again where it was
+  put last. The window's handle > Dock puts it left of the viewport (in the four view left of all four panels) until
+  it is torn off again; tearing it off or closing it gives the width back to the viewport.
+- **Four view playback** (#344): like Maya's Playback > Update View: Active, only the panel the mouse was last in
+  is redrawn while playing, and every panel when playback stops; set Update View to All for all four. Changing the
+  frame without playing still redraws every panel.
+- **Playback redraws less** (#344): while playing, only the viewports and the Time Slider are redrawn, no longer
+  the Tool Box column and the shelf; Alt+V, the Time Slider's play buttons and Playback > Play start playback from
+  the viewport. What you see doesn't change.
+- **Delete History on a deformed mesh** (#369): like Maya, the deformer goes together with its handle or lattice
+  (nonlinears, cluster, softMod, ffd), its weights and the animation curves that drove it, so no keys are left for
+  a deformer that is gone. The mesh keeps the shape of the current frame and its own keys; a handle another mesh
+  still uses stays. With only the handle selected, Delete History changes nothing, like Maya.
+- **Time Slider keys** (#369): like Maya, the Time Slider shows, steps through (. and ,) and edits the keys of the
+  selected nodes only: a deformer's keys and a blendShape's weight keys belong to that node, so selecting the mesh
+  or the handle doesn't show them (they stay in the Graph Editor and the Dope Sheet). . and , go round from the last
+  key to the first.
+- **Channel Box selection** (#375): like Maya, the value cells of selected channels are blue, in the column the
+  selection was made in (a drag over the values marks the values, a pick on the names marks the names), also on
+  creation history rows. The value editor shows the cell's value, selected so typing replaces it: Enter writes it
+  into every selected channel, also when unchanged; a click away writes only a changed value; Esc writes nothing.
+- **Freeze Transformations on a group**: the group, and groups and locators inside it, read 0 / 0 / 1 like Maya;
+  each child's pivot is its place in the group's frame, so the Attribute Editor and Unparent show Maya's values.
+  Cameras, lights, armatures, light probes and speakers are not frozen and take the group's change into their
+  channels. Reset Transformations also puts the pivot back at the frame origin. Center Pivot, Reset / Match Pivot,
+  a pivot moved with D and Bake Pivot on a parent keep the children's values (like Maya, where a pivot edit changes
+  no child's channels). Nothing moves in the view.
+- **Instances, Freeze / Delete History**: like Maya, Freeze leaves an instance as it is, with a warning, and Delete
+  History on an instance bakes the shared mesh once for every object that shares it. Before, both gave the instance
+  a mesh of its own (now the Unshare preference).
+- HUD Focal Length shows the view's lens on 36 mm film like Maya's cameras, written without trailing zeros; looking
+  through a camera it shows that camera's focal length.
+- Duplicate, Duplicate with Transform, Duplicate Special, Freeze Transformations and Delete History include a
+  selected group that Show > Locators hides, like Maya (#376).
+
+### Fixed
+- Four view with Tool Settings (#367): the Tool Settings no longer goes into one of the four panels, so Space over
+  a panel keeps it alone and brings the four view back again, also with the window open or torn off; switching to
+  Blender closes the floating Tool Settings window.
+- Kit windows and docks never split a panel of the four view (#367): a window that fits in a panel is cut out of
+  that panel alone for one redraw, docked editors (Channel Box, Outliner, editors docked from their window, the
+  shelf) go beside the whole four view, and the four view keeps its panel sizes after a window, a dock or a Space
+  tap. Opening a kit window over a viewport can no longer crash Blender while a manipulator tooltip is waiting.
+- Your own changes to the kit's keys stay after switching Maya → Blender → Maya and after restarting Blender in
+  Blender mode, and a Blender key changed in Blender mode stays changed after using Maya mode (#363).
+- Alt+RMB in a view that looks through a camera, or through a light with Look Through Selected, dollies with a
+  left / right drag too, like in the perspective view (#371): the camera moves along its view direction (an
+  orthographic camera changes its width), Esc puts it back and Ctrl+Z undoes it.
+- F in a view that looks through a camera fills the whole view like Maya, with or without a gate shown, instead of
+  fitting the selection to the camera's frame (#374).
+- Channel Box: with several objects selected, a click on a value and then a click away no longer writes the first
+  object's value into the others.
+- A tab stack the kit makes opens at the width its tab needs, like Maya: Windows > UI Elements > Attribute Editor
+  on Blender's own screen no longer opens a narrow column with its menu bar in three rows, and Ctrl+A resizes it.
+- Japanese and Chinese: every string of the kit has a translation (the Channel Box value tooltip and the Distance
+  Tool's points had none, and Japanese missed the Shelf Editor, Range Slider and Playblast file strings).
+
+### Known differences
+- Sets hold mesh vertices, edges and faces; curve CVs and lattice points can't be put in a set yet.
+- Update View: Active applies while playing; scrubbing the Time Slider still redraws every panel of the four view.
+- A kit window bigger than a panel of the four view folds the view for two redraws while its place is cut out.
+
 ## [0.17.0] — 2026-11-16
 
 Blender 5.3 support and a batch of fixes and Maya behaviours from a contributor. Thanks to @AlexBarbulescu for
