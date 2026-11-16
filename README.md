@@ -95,9 +95,7 @@ one-line note saying why and what to use instead.
   tear off into floating windows by their `:::::` handle; Outliner and Tool Settings dock on the left.
 - The Maya **Move / Rotate / Scale manipulator** (= / - resize it).
 - **Alt+B** cycles the background of every 3D view through Maya's solid background colours.
-- **Maya's interface colours** while Maya mode is on: grey panels, menu bars, fields and menus, Maya's selection blue
-  and pale yellow tooltips, set in the Blender theme. Maya mode off, disabling or removing the kit, and quitting
-  Blender put your own theme back, also in the saved preferences.
+- The kit uses your own Blender theme; see [Recommended setup](#recommended-setup) for a Maya-like look.
 - **Languages**: the kit's menus, marking menus, shelves and tooltips follow Blender's *Preferences > Interface >
   Language* — Japanese (日本語), Simplified Chinese (简体中文) and Traditional Chinese (繁體中文) so far, with Blender's
   *Translate* switches for interface and tooltips. Corrections from native speakers are welcome. To add your own
@@ -221,9 +219,7 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
 - A **Maya | Blender** switch at the right of the top bar, an Edit menu entry and **Ctrl+Alt+Shift+M**.
 - Switching to Blender unregisters the Maya keys and Maya UI and gives Blender's own back — with the same scene open;
   switch again whenever you like.
-- Maya mode never changes your preferences or active keymap. It puts Maya's colours into the theme only while it is
-  on and puts your theme back when it is off, when the kit is disabled or removed and when Blender quits; Save
-  Preferences while Maya mode is on still saves your own theme.
+- Maya mode never changes your preferences, theme or active keymap, so there is nothing to restore.
 
 ![Maya or Blender, one click](docs/distribution/marketing/gif/07_switch.gif)
 
@@ -240,8 +236,8 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 - **No middle-drag on fields.** Select channels in the Channel Box and middle-drag in the viewport instead.
 - **No MEL.** Scripting is Python, with a small `maya.cmds` look-alike.
 - **No Maya scene files.** `.ma` / `.mb` can't be read — export FBX (or OBJ / Alembic / USD) from Maya.
-- **Theme colours only.** Maya mode changes theme colours and widget roundness; Blender's rounded editor corners have
-  no setting and stay as they are.
+- **No theme in the add-on.** Maya's grey UI comes from a theme you install yourself, such as the separate Maya
+  Workflow Kit Theme ([Recommended setup](#recommended-setup)); extensions.blender.org add-ons may not change themes.
 - **Docking stays inside Blender's areas.** Maya's side tabs and OS-level docking of panels are not imitated.
 - Not every Maya menu item has a Blender counterpart; those items are greyed with a note. Today 1,015 of the 1,895
   main menu items run a kit or Blender command and the other 880 are greyed with a note (none without one). Editor
@@ -305,8 +301,7 @@ switch at the right of the top bar, an Edit menu entry, the shortcut **Ctrl+Alt+
 **Turn Maya mode on** — click **Make Blender feel like Maya** in the welcome dialog or in
 *Preferences > Add-ons > Maya Workflow Kit*, or click **Maya** in the top-bar switch. The kit then adds its Maya-style
 keys (as add-on keymap items: your active keymap stays selected), its Maya menus and panels, and the Maya layout as
-workspaces appended to the open file. It also sets Maya's interface colours in the theme while Maya mode is on, and
-puts your own theme back when you go back; your other Blender preferences stay as they are.
+workspaces appended to the open file. It does not change your theme or your Blender preferences.
 
 **Go back** — any of these:
 
@@ -329,8 +324,15 @@ The kit never saves your preferences.
 
 ## Recommended setup
 
-Optional — the kit leaves your preferences to you. Maya users usually like:
+Optional — the kit leaves your theme and preferences to you. Maya users usually like:
 
+- **A Maya-grey theme.** The *Maya Workflow Kit Theme* is a separate theme extension with Maya-like interface greys
+  for panels, menu bars, fields, buttons and menus, a blue selection colour and pale yellow tooltips. Install it like
+  any theme (*Edit > Preferences > Install from Disk* with
+  `maya-workflow-kit-theme-<version>.zip`); Blender switches to it when it is installed. To keep your current theme
+  first, save it with the **+** next to the theme menu in *Preferences > Themes*; that menu switches back at any time.
+  Removing the theme while it is in use gives Blender's default theme. The add-on itself never changes the theme, so
+  any other theme works as well.
 - **Navigation** (*Preferences > Navigation*): Orbit Method *Turntable*, Orbit Around Selection *off*, Zoom to Mouse
   Position *off*, Auto Perspective *on*, Zoom Method *Dolly* with Zoom Axis *Horizontal*.
 - **Undo Steps: 256** (*Edit > Preferences > System > Memory & Limits > Undo Steps*) — Maya's undo queue is unlimited,
@@ -420,8 +422,7 @@ attributes share the same preview and commit rules across the Channel Box and At
 
 **Does it change my Blender settings?**
 No. Maya mode adds add-on keymap items, menus, panels and layout workspaces in the open file; it never writes your
-preferences or active keymap, and sets Maya's colours in the theme only while Maya mode is on (your theme comes back
-when it is off, also in the saved file). The settings Maya users usually change are listed under
+preferences, theme or active keymap. The settings Maya users usually change are listed under
 [Recommended setup](#recommended-setup) for you to set yourself.
 
 **Is it reversible?**

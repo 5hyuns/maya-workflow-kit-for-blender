@@ -36,10 +36,6 @@ with their translations.
   render columns in the Maya Outliner, Tool Settings as a tab of the right dock, panel display settings kept across
   sessions, and Eevee / Cycles items in the panel Renderer menu that set the scene engine (Maya's Renderer menu only
   changes the panel).
-- **Maya's interface colours in Maya mode**: grey panels, menu bars, fields, buttons and menus, Maya's selection
-  blue, square scroll bars and pale yellow tooltips. Only theme values change. Maya mode off, disable, Remove and
-  quitting Blender put your own theme back; a theme edit or a theme picked while Maya mode is on stays; Save
-  Preferences while on still saves your own theme; Load Factory Preferences keeps the factory theme.
 
 ### Changed
 - Center Pivot centres on the object's own geometry and all its children, like Maya, the box built level by level in
