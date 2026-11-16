@@ -8909,6 +8909,11 @@
    "Panel Toolbar Hover": "Panel Toolbar Hover",
    "Stereo Cameras": "Stereo Cameras"
   },
+  "Labels/ui/playback_redraw": {
+   "Play / Stop": "Play / Stop",
+   "Play backwards": "Play backwards",
+   "Reverse": "Reverse"
+  },
   "Labels/ui/pose_editor": {
    "Add Pose": "Add Pose",
    "Add Shape": "Add Shape",
@@ -10912,6 +10917,9 @@
    "Panel toolbar: watch for a right-click on the camera icon": "Panel toolbar: watch for a right-click on the camera icon",
    "Right-click on the panel toolbar's camera, Bookmarks or 2D Pan/Zoom icon: its menu": "Right-click on the panel toolbar's camera, Bookmarks or 2D Pan/Zoom icon: its menu",
    "The scene's cameras: pick one to look through it in this view": "The scene's cameras: pick one to look through it in this view"
+  },
+  "Tooltips/ui/playback_redraw": {
+   "Play the animation, or stop it when it plays (Maya Play / Stop)": "Play the animation, or stop it when it plays (Maya Play / Stop)"
   },
   "Tooltips/ui/pose_editor": {
    "Maya's Pose Editor (a marked Properties Tool tab in its own window)": "Maya's Pose Editor (a marked Properties Tool tab in its own window)"

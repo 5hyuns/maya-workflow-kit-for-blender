@@ -500,8 +500,8 @@ MAP = {
     "Key/Scale Keys": "allset.opt_scale_keys",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "allset.playblast", {}),
-    "Playback/Play": "screen.animation_play",
-    "Playback/Backward": ("screen.animation_play", {"reverse": True}),
+    "Playback/Play": "allset.play",             # from the viewport (ui/playback_redraw.py)
+    "Playback/Backward": ("allset.play", {"reverse": True}),
     "Playback/Stop": ("screen.animation_cancel", {"restore_frame": False}),
     "Playback/Next Key": ("allset.key_jump", {"next": True}),
     "Playback/Prev Key": ("allset.key_jump", {"next": False}),

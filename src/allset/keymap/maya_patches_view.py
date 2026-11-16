@@ -36,7 +36,7 @@ def patch_display(kd):
 
 def patch_space(kd):
     kd.remove("Frames", "screen.animation_play", type="SPACE")  # IC:2258
-    _add(kd, "Frames", "screen.animation_play", make_event("V", alt=True))
+    _add(kd, "Frames", "allset.play", make_event("V", alt=True))       # Blender's play, from the viewport
     _add(kd, "Frames", "screen.frame_jump", make_event("V", alt=True, shift=True), {"end": False})
 
 

@@ -84,7 +84,7 @@ ENTRIES = {
     "DisplayShadedAndTextured": _e("KIT", (V3D, "allset.display_mode", {"mode": "TEXTURED"})),
     "DisplayLight": _e("KIT", (V3D, "allset.display_mode", {"mode": "LIGHTS"}),
                        note="Material Preview + 씬 라이트 (근사)"),
-    "PlaybackToggle": _e("KIT", ("Frames", "screen.animation_play", {})),
+    "PlaybackToggle": _e("KIT", ("Frames", "allset.play", {})),
     "GoToMinFrame": _e("KIT", ("Frames", "screen.frame_jump", {"end": False})),
     "SelectToggleMode": _e("KIT", (OBJ_NM, "allset.toggle_sel_mode", {}),
                            note="오브젝트 ↔ 마지막 컴포넌트 모드"),

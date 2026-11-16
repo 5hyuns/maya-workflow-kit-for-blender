@@ -168,7 +168,7 @@ def test_space_is_free_for_hotbox():
     # Space = hotbox (tap = four views / maximize) in 3D View and the panel editors.
     for km in ("3D View", "Outliner", "Graph Editor", "Dopesheet", "Node Editor", "Image"):
         assert _any_event(km, "SPACE") == ["allset.hotbox"], (km, _any_event(km, "SPACE"))
-    assert _one("Frames", "screen.animation_play", "V", alt=True)
+    assert _one("Frames", "allset.play", "V", alt=True)
     assert not _one("Frames", "screen.frame_jump", "V", alt=True, shift=True).properties.end
 
 
