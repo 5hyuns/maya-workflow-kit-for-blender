@@ -146,6 +146,9 @@ def watch_off(label):
 def ts_open(remember=None):
     def go():
         wp = mod("ui.window_places")
+        # what is on disk is read first (an earlier test file in the same sandbox may have left a tall Tool Settings
+        # window there), then forgotten: else the first lookup reads it back after the pop
+        wp.place(mod("ui.tool_dock").KIND)
         wp._places.pop(mod("ui.tool_dock").KIND, None)
         if remember:
             w = win()
