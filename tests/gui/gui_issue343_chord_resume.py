@@ -158,9 +158,7 @@ def add_sequence(label, actions, through_camera=False):
         def verify():
             ch = changes(S["before"], state(), through_camera)
             nav = sorted(n for n in S["modals"] if n in NAV_OPS)
-            runs = RUNS.get(kind)
-            if through_camera and kind == "DOLLY":
-                runs = "VIEW3D_OT_zoom"          # through a camera the dolly is Blender's zoom (it moves the camera)
+            runs = RUNS.get(kind)            # through a camera the dolly moves the camera (#371)
             others = [n for n in nav if n != runs and n != "ALLSET_OT_nav_chord"]
             amounts = ", ".join(f"{k} {v:.4f}" for k, v in ch.items())
             after = " ".join(S["done"]) or "start"

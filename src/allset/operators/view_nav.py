@@ -199,6 +199,73 @@ def invert_zoom(context):
     return bool(getattr(context.preferences.inputs, "invert_mouse_zoom", False))
 
 
+class CameraDolly:
+    """Alt+RMB in a view that looks through a camera, or through a light (Look Through Selected), moves that object
+    like the dolly of the perspective view (#371): along its view axis toward the point the view turns around, by the
+    same left / right or up / down drag. An orthographic camera changes its width instead (Maya Orthographic Width).
+    Its top parent moves when the camera's Camera Parent Lock is on, locked Translate channels stay. Every step is
+    taken from the press, so Esc puts it back exactly."""
+
+    def __init__(self, context, ob):
+        rv = context.region_data
+        self.view = (rv.view_location.copy(), rv.view_distance)
+        self.d0 = max(rv.view_distance, 1e-4)
+        self.ortho = ob.type == 'CAMERA' and ob.data.type == 'ORTHO'
+        self.camera = ob.name
+        self.width0 = ob.data.ortho_scale if self.ortho else None
+        m = ob.matrix_world.normalized()
+        self.forward = (m.to_quaternion() @ Vector((0.0, 0.0, -1.0))).normalized()
+        self.pivot = m.translation + self.forward * self.d0
+        target = ob
+        if ob.use_camera_lock_parent:
+            while target.parent is not None:
+                target = target.parent
+        self.name = target.name
+        self.basis = target.matrix_basis.copy()
+        self.location = target.location.copy()
+        # world -> the target's own Translate channels (parents, parent inverse)
+        above = target.matrix_world @ target.matrix_basis.inverted_safe()
+        self.to_local = above.to_3x3().inverted_safe()
+
+    def apply(self, context, distance):
+        """The camera (or its width) for the view distance ``distance`` (``dolly_distance`` of the drag)."""
+        ob = bpy.data.objects.get(self.camera)
+        if ob is None:
+            return
+        if self.ortho:
+            ob.data.ortho_scale = self.width0 * distance / self.d0
+            return
+        target = bpy.data.objects.get(self.name)
+        if target is None:
+            return
+        step = self.to_local @ (self.forward * (self.d0 - distance))
+        for i in range(3):
+            if not target.lock_location[i]:
+                target.location[i] = self.location[i] + step[i]
+        # the point the view turns around stays where it was (Alt+LMB after the dolly turns around it)
+        rv = context.region_data
+        rv.view_location, rv.view_distance = self.pivot, distance
+
+    def moved(self):
+        ob = bpy.data.objects.get(self.camera)
+        if ob is None:
+            return False
+        if self.ortho:
+            return ob.data.ortho_scale != self.width0
+        target = bpy.data.objects.get(self.name)
+        return target is not None and target.location != self.location
+
+    def cancel(self, context):
+        ob = bpy.data.objects.get(self.camera)
+        if ob is not None and self.ortho:
+            ob.data.ortho_scale = self.width0
+        target = bpy.data.objects.get(self.name)
+        if target is not None and not self.ortho:
+            target.location = self.location
+        rv = context.region_data
+        rv.view_location, rv.view_distance = self.view
+
+
 class ALLSET_OT_dolly(bpy.types.Operator):
     """Dolly the view in / out with a left / right drag (Maya Alt+RMB)"""
     bl_idname = "allset.dolly"
@@ -214,13 +281,18 @@ class ALLSET_OT_dolly(bpy.types.Operator):
 
     def invoke(self, context, event):
         rv3d = context.region_data
+        self._camera = None
         if rv3d.view_perspective == 'CAMERA':
-            camera_navigation(context)           # through a camera: Blender's zoom moves it (#9)
-            bpy.ops.view3d.zoom('INVOKE_DEFAULT')
-            return {'FINISHED'}
+            # through a camera: Maya's dolly moves it, with the same drag as in the perspective view (#9, #371)
+            from .view_frame import view_camera
+            camera_navigation(context)
+            ob = view_camera(context, context.space_data)
+            if ob is None:
+                return {'CANCELLED'}
+            self._camera = CameraDolly(context, ob)
         self._last = (event.mouse_x, event.mouse_y)
         self._drag = [0, 0]
-        self._d0 = rv3d.view_distance
+        self._d0 = self._camera.d0 if self._camera is not None else rv3d.view_distance
         # the button that started it: RMB for Alt+RMB, LMB for the Dolly Tool (ui/camera_tools.py)
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'} else 'RIGHTMOUSE'
         self._ends = {'LEFTMOUSE', 'MIDDLEMOUSE'} if self.chord else {self._button}
@@ -236,13 +308,22 @@ class ALLSET_OT_dolly(bpy.types.Operator):
             if not drag_jump(context.region, dx, dy):
                 self._drag[0] += dx
                 self._drag[1] += dy
-            rv3d.view_distance = dolly_distance(self._d0, self._drag[0], self._drag[1],
-                                                context.preferences.system.ui_scale or 1.0, invert_zoom(context))
+            distance = dolly_distance(self._d0, self._drag[0], self._drag[1],
+                                      context.preferences.system.ui_scale or 1.0, invert_zoom(context))
+            if self._camera is not None:
+                self._camera.apply(context, distance)
+            else:
+                rv3d.view_distance = distance
             context.area.tag_redraw()
         elif event.type in self._ends and event.value == 'RELEASE':
+            if self._camera is not None and self._camera.moved() and not context.mode.startswith('EDIT'):
+                bpy.ops.ed.undo_push(message="Dolly")      # one undo step for the camera move, like Alt+LMB
             return {'FINISHED'}
         elif event.type == 'ESC' and event.value == 'PRESS':
-            rv3d.view_distance = self._d0
+            if self._camera is not None:
+                self._camera.cancel(context)
+            else:
+                rv3d.view_distance = self._d0
             context.area.tag_redraw()
             return {'CANCELLED'}
         return {'RUNNING_MODAL'}
