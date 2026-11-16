@@ -42,8 +42,10 @@ def redraw_ae():
     for area in win().screen.areas:
         area.tag_redraw()
 
-# the Translate row (by its middle field), then its first field along that row
-step(find_button(dock,lambda path,command:path.endswith('allset_cb.ty_text'),C,'ae_row',x_frac=.45,step_px=8))
+# the Translate row (by whichever of its fields is under the sweep: that depends on the stack's width, which a
+# fresh sandbox and one left by earlier files give differently), then its first field along that row
+step(find_button(dock,lambda path,command:path.endswith(('allset_cb.tx_text','allset_cb.ty_text','allset_cb.tz_text')),
+                 C,'ae_row',x_frac=.45,step_px=8))
 step(find_button(dock,lambda path,command:path.endswith('allset_cb.tx_text'),C,'ae_field',y_from='ae_row',step_px=4))
 
 @step
