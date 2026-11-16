@@ -132,8 +132,9 @@ def make_group(context, objects):
     if parent is not None:
         # Under the common parent with an identity local transform, so the
         # group pivot sits at the parent's origin (Maya zeroPivot).
+        from .freeze import frame_inverse
         grp.parent = parent
-        grp.matrix_parent_inverse = Matrix.Identity(4)
+        grp.matrix_parent_inverse = frame_inverse(parent)     # a frozen parent's frame, like Maya
     grp.matrix_basis = Matrix.Identity(4)
     context.view_layer.update()
 

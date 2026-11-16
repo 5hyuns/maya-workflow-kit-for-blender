@@ -220,7 +220,7 @@ def test_freeze_shared_mesh_made_single_user_with_the_preference():
     assert _close_vs(_world_verts(b), b_before)
 
 
-def test_freeze_empty_group_only_translates_and_children_stay():
+def test_freeze_empty_group_zeroes_all_channels_and_children_stay():
     _fresh()
     grp = bpy.data.objects.new("group1", None)
     bpy.context.scene.collection.objects.link(grp)
@@ -229,13 +229,12 @@ def test_freeze_empty_group_only_translates_and_children_stay():
     kid.parent = grp
     _update()
     kid_before = _world_verts(kid)
-    grp_world = grp.matrix_world.copy()
+    grp_pivot = grp.matrix_world.translation.copy()
     _select([grp])
     bpy.ops.allset.freeze_transform()
     _update()
-    assert _close_v(grp.location, (0, 0, 0))
-    assert _close_v(grp.rotation_euler, (0.4, -0.3, 0.7)) and _close_v(grp.scale, (2.0, 0.5, 1.5))
-    assert _close_m(grp.matrix_world, grp_world)
+    assert _is_zero(grp), _channels(grp)                 # like Maya: rotate and scale too, not only translate
+    assert _close_m(grp.matrix_world, Matrix.Translation(grp_pivot))    # the pivot stays
     assert _close_vs(_world_verts(kid), kid_before) and _is_zero(kid)
 
 
