@@ -38,6 +38,7 @@ from . import uv_manipulator  # Maya-style Move / Rotate / Scale handles in the 
 from . import node_attributes, attribute_fields, option_editor, bridge_editor, history_rebind  # shared attribute editing, option windows, Bridge, modeling history (#326)
 from . import trax_editor  # Trax Editor: NLA Editor with the Maya menu bar + clip library (#287)
 from . import camera_aim_lines  # camera-to-aim lines in the Maya layout views (#299)
+from . import distance_dimensions  # Distance Tool and the distance dimensions it makes (#370)
 from . import rigify_menu  # Skeleton > HumanIK leads to Rigify (#319)
 from . import camera_bookmarks  # panel toolbar Bookmarks / 2D Pan/Zoom, View > Bookmarks (#346)
 from . import render_settings_panel  # Render Settings > Common in Maya mode (#252)
@@ -45,7 +46,7 @@ from . import blue_pencil  # Visualize > Blue Pencil: frames on the Time Slider,
 from . import viewport_settings  # panel display preferences survive Blender restarts
 
 _modules = (window_places, status_icons, kit_icons, notices, input_line, cb_points, channel_box, cb_channels, creation_inputs, layer_editor, attribute_editor, outliner, menu_sets, workspaces, rigify_menu, file_project, status_line, shelf,
-            time_slider, blue_pencil, panel_menus, panel_toolbar, camera_bookmarks, camera_tools, interactive_tool, universal_manip, maya_grid, view_furniture, selection_wire, maya_joints, camera_aim_lines, component_colors, ghosting, toolbox, dock_tabs, maya_outliner, outliner_sets, outliner_order, outliner_tree, outliner_tree_edit,
+            time_slider, blue_pencil, panel_menus, panel_toolbar, camera_bookmarks, camera_tools, interactive_tool, universal_manip, maya_grid, view_furniture, selection_wire, maya_joints, camera_aim_lines, distance_dimensions, component_colors, ghosting, toolbox, dock_tabs, maya_outliner, outliner_sets, outliner_order, outliner_tree, outliner_tree_edit,
             paint_weights, weight_numbers, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, uv_display, uv_shell_preview, uv_hud, uv_manipulator, hypershade, hs_drag, render_view, render_settings_panel, graph_editor, graph_units, graph_view, graph_keys_draw, graph_handles, editor_panels, editor_chrome, script_editor, reference_editor, marked_window, component_editor, shape_editor, connection_editor, hypergraph, hotkey_editor, maya_prefs, skin_tools, ipr_window,
             view_message, range_bar, tool_settings, maya_dock, soft_overlay, save_prompt, scene_carry, armature_mode_pulse, smart_extrude, trax_editor, shelf_editor,
             node_attributes, attribute_fields, option_editor, bridge_editor, history_rebind, viewport_settings)

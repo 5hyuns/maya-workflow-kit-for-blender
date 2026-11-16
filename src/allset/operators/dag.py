@@ -355,6 +355,8 @@ def delete_hierarchy(context, objects):
     from . import constrain_199, startup_cameras
     # Maya refuses to delete its startup cameras ("Non-deletable node 'persp' cannot be deleted.")
     obs = [ob for ob in hierarchy(objects) if not startup_cameras.is_startup(ob)]
+    from . import distance_tool
+    obs += distance_tool.dimensions_of(obs)  # a deleted locator takes its distance dimensions with it, like Maya
     # Maya's normal / tangent constraint node is a child of the constrained object: its kit helper empty goes too
     # (#109; the helper has no parent — constrain_199.update clears it — so hierarchy() misses it)
     helpers = [h for h in constrain_199.helpers_owned_by(obs) if h not in obs]

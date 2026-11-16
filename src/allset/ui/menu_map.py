@@ -217,7 +217,7 @@ MAP = {
     "Create/Free Image Plane": _create('IMAGE_PLANE'),
     "Create/Locator": _create('LOCATOR'),
     "Create/Annotation...": ("tool", "builtin.annotate", False),
-    "Create/Measure Tools/Distance Tool": ("tool", "builtin.measure", False),
+    "Create/Measure Tools/Distance Tool": ("tool", "allset.distance_tool", False),   # locators + distanceDimension
     "Create/Empty Group": _create('EMPTY_GROUP'),
     "Create/Sets/Set": "allset.create_set",                       # kit sets (operators/sets.py)
     "Create/Sets/Quick Select Set...": "allset.create_quick_select_set",

@@ -6530,4 +6530,5 @@ STRINGS = {
     'Remember Panel Settings': '記住面板設定',
     'Tool Settings Tab': '工具設置分頁',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': '工具設置作為右側 Maya 停靠區的分頁開啟，位於通道盒與屬性編輯器旁 (關閉: 視口左側的獨立停靠區)',
+    'Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)': '距離工具點擊：第一次點擊放置一個定位器，第二次點擊放置另一個定位器及兩者之間的\n距離尺寸 (Maya 距離工具)',
 }

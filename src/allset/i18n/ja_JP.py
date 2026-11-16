@@ -6431,4 +6431,5 @@ STRINGS = {
     'Remember Panel Settings': 'パネル設定を記憶',
     'Tool Settings Tab': 'ツール設定タブ',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': 'ツール設定を右の Maya ドックのタブとして、チャンネルボックスとアトリビュートエディタの隣に開きます (オフ: ビューポートの左の専用ドック)',
+    'Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)': '距離ツールのクリック: 1 回目でロケータを置き、2 回目でもう 1 つのロケータとその間の\n距離寸法を作成 (Maya の距離ツール)',
 }

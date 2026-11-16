@@ -241,6 +241,9 @@ def hits(context, region, rv3d, mouse):
         for (row, _a, _b), d in zip(thin, near):
             name, pri, _none = out[row]
             out[row] = (name, pri, max(float(d), 0.0))
+    # a distance dimension is picked on its drawn dimension line (#370), like a curve
+    from ..ui import distance_dimensions
+    out += [(name, CURVE, d) for name, d in distance_dimensions.hits(context, region, rv3d, mouse)]
     return out
 
 

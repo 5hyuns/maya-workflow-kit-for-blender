@@ -226,6 +226,8 @@ from . import graph_bookmarks  # noqa: E402  Graph Editor List > Bookmarks
 classes += graph_bookmarks.classes
 from . import fill_bridge  # noqa: E402  Mesh > Fill Hole / Edit Mesh > Bridge with Maya's selection rules (#337)
 classes += fill_bridge.classes
+from . import distance_tool  # noqa: E402  Create > Measure Tools > Distance Tool (#370)
+classes += distance_tool.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
