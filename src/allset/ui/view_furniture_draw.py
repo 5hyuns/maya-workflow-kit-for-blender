@@ -276,12 +276,22 @@ def hud_lines(prefs, scene, frame, lens):
     return out
 
 
+def hud_lens(space, rv3d, scene):
+    """Maya focal length of the view: the camera's when looking through one, else the view's lens on Maya's 36 mm
+    film (Blender's viewport lens is on a 72 mm sensor: 70 there = Maya's 35)."""
+    from ..operators.key_batch import VIEW_SENSOR
+    from ..operators.startup_cameras import MAYA_FILM_MM
+    cam = label_camera(space, scene) if rv3d.view_perspective == 'CAMERA' else None
+    if cam is not None and cam.type == 'CAMERA':
+        return cam.data.lens
+    return space.lens * MAYA_FILM_MM / VIEW_SENSOR
+
+
 def _draw_hud_lines(context, prefs, s):
     if not (prefs.maya_hud_current_frame or prefs.maya_hud_focal_length or prefs.maya_hud_scene_timecode):
         return
     space, rv3d, scene = context.space_data, context.region_data, context.scene
-    cam = label_camera(space, scene) if rv3d.view_perspective == 'CAMERA' else None
-    lens = cam.data.lens if cam is not None and cam.type == 'CAMERA' else space.lens
+    lens = hud_lens(space, rv3d, scene)
     lines = hud_lines(prefs, scene, scene.frame_current + scene.frame_subframe, lens)
     import blf
     px = round(LABEL_PX * s)

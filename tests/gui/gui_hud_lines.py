@@ -75,7 +75,10 @@ def s_check():
     on = corner_ink("gui_hud_lines_on.png")
     check(f"the view's HUD draw handler is still there with the three lines on ({len(vf._handle)})",
           len(vf._handle) == 1)
-    lines = vf.hud_lines(prefs(), bpy.context.scene, 37.0, 35.0)
+    area = area3d()
+    lens = vf.hud_lens(area.spaces.active, area.spaces.active.region_3d, bpy.context.scene)
+    check(f"the persp view's focal length reads like Maya's persp camera ({lens:g})", abs(lens - 35.0) < 1e-6)
+    lines = vf.hud_lines(prefs(), bpy.context.scene, 37.0, lens)
     check(f"three lines, bottom first: {[a for a, _b in lines]}",
           [a for a, _b in lines] == ["Frame:", "Focal Length:", "Scene Timecode:"])
     check(f"text in the bottom right corner only while the lines are on ({C['off']} -> {on} bright pixels)",
