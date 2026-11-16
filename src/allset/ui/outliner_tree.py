@@ -47,9 +47,9 @@ from .outliner_tree_rows import (ALL_TYPES, CAMERAS, DEFAULT_SETS, EXPANDED, Opt
                                  natural_key, options, set_expanded, subtree_keys, tail_rows, type_group)
 from .outliner_tree_select import (_keep_hidden, active_row, deselect_all, is_picked, picked_unselectable,  # noqa: F401
                                    select_row, unselectable, visible_signature)
-from .outliner_tree_geometry import (CHILD_SELECTED, COLUMNS, ICON_RGB, JOINT_RGB, SCROLL, SCROLLBAR,  # noqa: F401
-                                     SCROLL_X, SEARCH_ROW, _ICON_PARTS, _draw_restrict, _font_size, _icon, _quad,
-                                     _restrict_textures, _triangle, column_xs, eye_x, first_row, page_rows,
+from .outliner_tree_geometry import (CHILD_SELECTED, COLUMNS, ICON_RGB, INSTANCE_RGB, JOINT_RGB, SCROLL,  # noqa: F401
+                                     SCROLLBAR, SCROLL_X, SEARCH_ROW, _ICON_PARTS, _draw_restrict, _font_size, _icon,
+                                     _quad, _restrict_textures, _triangle, column_xs, eye_x, first_row, page_rows,
                                      restrict_texture, row_index_at, row_rect, scrollbar, shift_x, top, unit)
 
 # The kit tree replaces Blender's rows in Maya Outliners (tests switch it off to see Blender's rows).
@@ -362,6 +362,48 @@ def draw():
             traceback.print_exc()
 
 
+def instance_keys(context):
+    """Row keys of the instance copies (made by Duplicate Special > Instance, still sharing their data) and of the
+    instance groups above them; the originals and the groups holding them stay unmarked."""
+    from ..operators.duplicate import INSTANCE_TAG, is_instance
+    keys = set()
+    for ob in context.view_layer.objects:
+        if ob.get(INSTANCE_TAG) and is_instance(ob):
+            while ob is not None and ob.get(INSTANCE_TAG) and ('O', ob.session_uid) not in keys:
+                keys.add(('O', ob.session_uid))
+                ob = ob.parent
+    return keys
+
+
+def _draw_instance_tip(prefs, region, u, dy, x, y0, y1, ob_name, by_name):
+    """A tooltip box "Instance of <source>" under the hovered instance row (above it at the bottom edge)."""
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    from ..operators.duplicate import instance_source
+    try:
+        ob = object_named(ob_name, by_name)
+        source = instance_source(ob) if ob is not None else ""
+    except ReferenceError:
+        return
+    from .. import i18n
+    label = bpy.app.translations.pgettext_iface(i18n.mark("Instance of"))
+    label = f"{label} {source}" if source else bpy.app.translations.pgettext_iface(i18n.mark("Instance"))
+    wcol = prefs.themes[0].user_interface.wcol_tooltip
+    pad, w = 0.3 * u, blf.dimensions(0, label)[0]
+    bx0 = max(0.0, min(x, region.width - w - 2 * pad))
+    by1 = y0 - 2 if y0 - u - 2 >= 0 else y1 + u + 2
+    by0 = by1 - u
+    tris, tcol = [], []
+    _quad(tris, tcol, bx0, by0, bx0 + w + 2 * pad, by1, (*tuple(wcol.outline)[:3], 1.0))
+    _quad(tris, tcol, bx0 + 1, by0 + 1, bx0 + w + 2 * pad - 1, by1 - 1, (*tuple(wcol.inner)[:3], 1.0))
+    sh = gpu.shader.from_builtin('SMOOTH_COLOR')
+    batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw(sh)
+    blf.color(0, *tuple(wcol.text)[:3], 1.0)
+    blf.position(0, round(bx0 + pad), round((by0 + by1) / 2 - dy), 0)
+    blf.draw(0, label)
+
+
 def _draw(context, space, region, area):
     import blf
     import gpu
@@ -395,10 +437,14 @@ def _draw(context, space, region, area):
     back = tuple(th.space.back)[:3]
     child_rgba = (*(b + (c - b) * CHILD_SELECTED for b, c in zip(back, sel_rgba[:3])), 1.0)
     above = selected_ancestors(context)
+    from .. import preferences
+    # instance copies purple with a chain-link badge: an add-on preference (Maya draws them like other objects)
+    instances = instance_keys(context) if preferences.get(context).outliner_instance_marks else ()
     by_name = object_names()
     cols = column_xs(space, region, u, n, first)
     tris, tcol, lines, lcol, textures, names, icons = [], [], [], [], [], [], []
     seen, drawn = [], []
+    tip = None                 # the hovered instance row: (name x, y0, y1, object name) for its "Instance of" tip
     r_icon = 0.36 * u
     for k in range(first, last):
         row = rows[k]
@@ -426,15 +472,24 @@ def _draw(context, space, region, area):
         if row.icon in ('SET', 'CAMERA_ROW'):
             textures.append(("outliner:SET" if row.icon == 'SET' else "outliner:CAMERA", ix, cy, hidden and not sel))
         else:
-            rgb = JOINT_RGB if row.icon == 'JOINT' else ICON_RGB
+            rgb = INSTANCE_RGB if row.key in instances else JOINT_RGB if row.icon == 'JOINT' else ICON_RGB
             _icon(tris, tcol, lines, lcol, row.icon, ix, cy, r_icon * (0.8 if row.kind == 'SHAPE' else 1.0),
                   (*rgb, alpha))
+            if row.key in instances:     # chain-link badge on the icon's lower right corner
+                bx, by, br = ix + 0.6 * r_icon, cy - 0.55 * r_icon, 0.75 * r_icon
+                under = (act_rgba if act else sel_rgba)[:3] if sel else back
+                _icon(tris, tcol, lines, lcol, 'INSTANCE_BACK', bx, by, br, (*under, 1.0))
+                _icon(tris, tcol, lines, lcol, 'INSTANCE', bx, by, br, (*INSTANCE_RGB, alpha))
+                if HOVER.get(area.as_pointer()) == k:
+                    tip = (x + 2.25 * u, y0, y1, row.ob)
         if is_live:
             rgb = live.COLOR
         elif act and row.kind in ('OBJECT', 'JOINT'):
             rgb = act_text
         elif sel and row.kind in ('OBJECT', 'JOINT'):
             rgb = sel_text
+        elif row.key in instances:
+            rgb = INSTANCE_RGB
         else:
             rgb = text_hi if sel else text
         names.append((x + 2.25 * u, cy, row.label, (*rgb, alpha)))
@@ -477,6 +532,8 @@ def _draw(context, space, region, area):
         blf.color(0, *rgba)
         blf.position(0, round(x), round(cy - dy), 0)
         blf.draw(0, label)
+    if tip is not None:
+        _draw_instance_tip(prefs, region, u, dy, *tip, by_name)
     gpu.state.blend_set('NONE')
     SEEN[region.as_pointer()] = seen
     DRAWN[region.as_pointer()] = drawn

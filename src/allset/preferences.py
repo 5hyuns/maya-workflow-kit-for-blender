@@ -506,6 +506,17 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                 if area.type == 'OUTLINER':
                     area.tag_redraw()
 
+    outliner_instance_marks: bpy.props.BoolProperty(
+        name="Mark Instances in the Outliner",
+        description="Instance copies (Duplicate Special > Instance) and their groups show purple in the Maya "
+                    "Outliner, with a chain-link badge and an \"Instance of <source>\" tip on hover (off: like "
+                    "Maya, they look like other objects)",
+        default=False, update=_update_outliner)
+    unshare_instances: bpy.props.BoolProperty(
+        name="Freeze / Delete History Unshare Instances",
+        description="Freeze Transformations and Delete History first give an instance its own data, so edits on the "
+                    "original no longer show on it (off: like Maya, the instance keeps sharing its data)",
+        default=False)
     outliner_columns: bpy.props.BoolProperty(
         name="Outliner Column Icons", description="Blender's selectable / eye / render icons at the right of the "
                                                   "Maya Outliner rows (each one also has its own toggle)",
@@ -796,6 +807,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         sub.prop(self, "outliner_select_column")
         sub.prop(self, "outliner_eye_column")
         sub.prop(self, "outliner_render_column")
+        row = box.row()
+        row.prop(self, "outliner_instance_marks")
+        row.prop(self, "unshare_instances")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps

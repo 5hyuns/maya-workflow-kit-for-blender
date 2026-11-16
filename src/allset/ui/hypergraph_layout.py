@@ -229,6 +229,10 @@ def icon_shapes(kind):
                 ("line", 0.62, 0.0, 0.95, 0.0), ("line", -0.62, 0.0, -0.95, 0.0)]
     if kind == 'LOCATOR':
         return [("line", -0.9, 0.0, 0.9, 0.0), ("line", 0.0, -0.9, 0.0, 0.9), ("line", -0.5, -0.5, 0.5, 0.5)]
+    if kind == 'INSTANCE_BACK':     # the instance badge's backdrop, so it reads over the node icon
+        return [("disc", 0.0, 0.0, 1.0)]
+    if kind == 'INSTANCE':   # instance badge: two chain links (it shares its geometry)
+        return [("ring", -0.32, 0.0, 0.5), ("ring", 0.32, 0.0, 0.5)]
     if kind == 'LATTICE':
         return [("frame", -0.8, -0.8, 0.8, 0.8), ("line", 0.0, -0.8, 0.0, 0.8), ("line", -0.8, 0.0, 0.8, 0.0)]
     if kind == 'DISTANCE':   # a distance dimension (Distance Tool): a ruler with its marks

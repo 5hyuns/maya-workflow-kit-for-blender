@@ -6537,4 +6537,9 @@ STRINGS = {
     "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender 的精確布林運算，立即套用；第二個物件會被刪除，與 Maya 關閉建構歷史時相同。',
     'Boolean modifier (applied)': '布林修改器（已套用）',
     'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '刪除目前時間的時間滑桿書籤，或刪除所有書籤（Maya 刪除 / 刪除所有書籤）',
+    'Mark Instances in the Outliner': '在大綱視圖中標記實例',
+    'Instance copies (Duplicate Special > Instance) and their groups show purple in the Maya Outliner, with a chain-link badge and an "Instance of <source>" tip on hover (off: like Maya, they look like other objects)': '實例副本 (特殊複製 > 實例) 及其群組在 Maya 大綱視圖中顯示為紫色，帶有鏈環標記，懸停時顯示「<來源> 的實例」提示 (關閉: 與 Maya 相同，與其他物件顯示一樣)',
+    'Freeze / Delete History Unshare Instances': '凍結 / 刪除歷史時取消實例共用',
+    'Freeze Transformations and Delete History first give an instance its own data, so edits on the original no longer show on it (off: like Maya, the instance keeps sharing its data)': '凍結變換和刪除歷史會先給實例一份自己的資料，原始物件上的編輯不再顯示在它上面 (關閉: 與 Maya 相同，實例繼續共用資料)',
+    'Instance of': '實例來源:',
 }

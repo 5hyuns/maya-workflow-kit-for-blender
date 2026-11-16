@@ -157,6 +157,7 @@ def _triangle(tris, tcol, cx, cy, r, down, rgba):
 ICON_RGB = (0.741, 0.741, 0.741)      # kit icon grey
 JOINT_RGB = (0.282, 0.667, 0.710)     # kit icon teal
 CHILD_SELECTED = 0.33                 # share of the selection highlight on a row with a selected node below it
+INSTANCE_RGB = (0.78, 0.58, 1.0)      # soft purple: an instance copy or an instance group (preference)
 
 
 def eye_x(region, u, n, first):

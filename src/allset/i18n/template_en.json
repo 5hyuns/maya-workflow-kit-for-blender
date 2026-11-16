@@ -7695,6 +7695,8 @@
    "Fast": "Fast",
    "Fixed-length Tangents": "Fixed-length Tangents",
    "Flat": "Flat",
+   "Freeze / Delete History Unshare Instances": "Freeze / Delete History Unshare Instances",
+   "Freeze Transformations and Delete History first give an instance its own data, so edits on the original no longer show on it (off: like Maya, the instance keeps sharing its data)": "Freeze Transformations and Delete History first give an instance its own data, so edits on the original no longer show on it (off: like Maya, the instance keeps sharing its data)",
    "Ghost Next": "Ghost Next",
    "Ghost Previous": "Ghost Previous",
    "Grid Behind Surfaces": "Grid Behind Surfaces",
@@ -7720,6 +7722,7 @@
    "In-View Editor Speed Pie": "In-View Editor Speed Pie",
    "In-View Editors": "In-View Editors",
    "In-View Messages": "In-View Messages",
+   "Instance copies (Duplicate Special > Instance) and their groups show purple in the Maya Outliner, with a chain-link badge and an \"Instance of <source>\" tip on hover (off: like Maya, they look like other objects)": "Instance copies (Duplicate Special > Instance) and their groups show purple in the Maya Outliner, with a chain-link badge and an \"Instance of <source>\" tip on hover (off: like Maya, they look like other objects)",
    "Interactive Creation": "Interactive Creation",
    "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives": "Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives",
    "Interval (minutes)": "Interval (minutes)",
@@ -7737,6 +7740,7 @@
    "Lock Tumble in Ortho Views": "Lock Tumble in Ortho Views",
    "Make Blender feel like Maya": "Make Blender feel like Maya",
    "Manipulators": "Manipulators",
+   "Mark Instances in the Outliner": "Mark Instances in the Outliner",
    "Marking Menus": "Marking Menus",
    "Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after a pause; a hidden mark picks radial items only, by the stroke's latest direction, also in submenus, and shows the names of the menus it passed (off: the menu shows a moment after the press, like Maya)": "Marking menus and the hotbox's menus stay hidden while the pointer keeps moving and show after a pause; a hidden mark picks radial items only, by the stroke's latest direction, also in submenus, and shows the names of the menus it passed (off: the menu shows a moment after the press, like Maya)",
    "Marquee Selects Hidden Components": "Marquee Selects Hidden Components",
@@ -8782,6 +8786,8 @@
    "Show Set Members": "Show Set Members"
   },
   "Labels/ui/outliner_tree": {
+   "Instance": "Instance",
+   "Instance of": "Instance of",
    "Outliner Hover": "Outliner Hover",
    "Outliner Pan": "Outliner Pan",
    "Outliner Scroll": "Outliner Scroll",

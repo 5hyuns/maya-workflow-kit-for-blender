@@ -261,12 +261,17 @@ class ALLSET_OT_freeze_transform(_SelectedObjectsOp, bpy.types.Operator):
     scale: BoolProperty(name="Scale", default=True)
 
     def execute(self, context):
+        from .duplicate import unshare
         from .group import selected_objects
         obs = selected_objects(context)       # with groups a 3D View hides by its Locators filter
         if not obs:
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
-        count, copies = freeze(obs, self.translate, self.rotate, self.scale)
+        from .. import preferences
+        # preference (off: an instance keeps sharing its data unless the freeze has something to bake into it)
+        copies = unshare(obs) if preferences.get(context).unshare_instances else 0
+        count, baked = freeze(obs, self.translate, self.rotate, self.scale)
+        copies += baked
         msg = f"Froze {count} object(s)"
         if copies:
             msg += f"; {copies} shared data block(s) made single user"

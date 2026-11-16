@@ -6438,4 +6438,9 @@ STRINGS = {
     "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender の Exact ブーリアンをすぐに適用し、2 番目のオブジェクトを削除します (Maya でコンストラクション ヒストリをオフにした場合と同じ)。',
     'Boolean modifier (applied)': 'ブーリアンモディファイア (適用済み)',
     'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '現在の時間のタイムスライダ ブックマーク、またはすべてのブックマークを削除します (Maya の削除 / すべてのブックマークを削除)',
+    'Mark Instances in the Outliner': 'アウトライナでインスタンスを示す',
+    'Instance copies (Duplicate Special > Instance) and their groups show purple in the Maya Outliner, with a chain-link badge and an "Instance of <source>" tip on hover (off: like Maya, they look like other objects)': 'インスタンスのコピー (特殊な複製 > インスタンス) とそのグループを Maya のアウトライナで紫色にし、チェーンのバッジと、ホバー時に「<元> のインスタンス」のヒントを表示します (オフ: Maya と同じく、ほかのオブジェクトと同じ表示)',
+    'Freeze / Delete History Unshare Instances': 'フリーズ / ヒストリの削除でインスタンスを解除',
+    'Freeze Transformations and Delete History first give an instance its own data, so edits on the original no longer show on it (off: like Maya, the instance keeps sharing its data)': 'トランスフォームのフリーズとヒストリの削除で、先にインスタンスに専用のデータを持たせ、元への編集が反映されないようにします (オフ: Maya と同じく、インスタンスはデータを共有したまま)',
+    'Instance of': 'インスタンス元:',
 }
