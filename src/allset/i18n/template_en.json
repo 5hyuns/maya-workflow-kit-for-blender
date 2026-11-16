@@ -5615,6 +5615,11 @@
    "Smooth Mesh Preview": "Smooth Mesh Preview",
    "Smoothing Level": "Smoothing Level"
   },
+  "Labels/operators/distance_tool": {
+   "Distance Tool": "Distance Tool",
+   "End Point": "End Point",
+   "Start Point": "Start Point"
+  },
   "Labels/operators/dome_light": {
    "Dome Light": "Dome Light"
   },
@@ -9860,6 +9865,9 @@
    "Raise or lower the smooth preview level of the selection (Maya PgUp / PgDn)": "Raise or lower the smooth preview level of the selection (Maya PgUp / PgDn)",
    "Switch the 3D view's display like Maya's 4/5/6/7 keys": "Switch the 3D view's display like Maya's 4/5/6/7 keys",
    "Toggle a component type in the pick mask (Maya Shift+Q marking menu)": "Toggle a component type in the pick mask (Maya Shift+Q marking menu)"
+  },
+  "Tooltips/operators/distance_tool": {
+   "Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)": "Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)"
   },
   "Tooltips/operators/dome_light": {
    "Dome light: an image (HDRI) around the scene lights it, Blender's World environment. Rotate the domeLight\nlocator to turn the image; its Intensity attribute is the brightness": "Dome light: an image (HDRI) around the scene lights it, Blender's World environment. Rotate the domeLight\nlocator to turn the image; its Intensity attribute is the brightness"
