@@ -162,7 +162,8 @@ def s_auto_frame():
     x0, x1 = view_x(r)
     v = r.view2d
     y0, y1 = v.region_to_view(0, 0)[1], v.region_to_view(0, r.height)[1]
-    top = 50 * mod(".operators.units").maya_unit()
+    # 50 cm where the value axis shows it (Blender 5.3 draws lengths in the scene's unit, 5.2 as stored)
+    top = 50 * mod(".operators.units").maya_unit() * mod(".compat").graph_length_factor(bpy.context.scene.unit_settings)
     # Maya's Auto Frame refits the value axis to the curves shown and keeps the time range
     check(f"Auto Frame: pCube2 selected -> time kept {x0:.1f} .. {x1:.1f} (was {C['x'][0]:.1f} .. {C['x'][1]:.1f}), "
           f"values {y0:.3f} .. {y1:.3f} refit to its keys 0 .. {top:.3f}",

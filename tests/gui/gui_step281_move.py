@@ -10,7 +10,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout, graph_value  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -39,9 +39,10 @@ def px_per_frame():
 
 
 def view_dv(dy):
-    """Value change of a vertical drag of dy px in this view."""
+    """Value change of the Translate X curve for a vertical drag of dy px in this view (the value axis may show
+    lengths in the scene's unit)."""
     v2d = region().view2d
-    return v2d.region_to_view(0, 300 + dy)[1] - v2d.region_to_view(0, 300)[1]
+    return (v2d.region_to_view(0, 300 + dy)[1] - v2d.region_to_view(0, 300)[1]) / graph_value(curve(), 1.0)
 
 
 def reset_key(x=10.0, y=0.05):
@@ -161,7 +162,8 @@ def _mid():
 
 def _key_px():
     kp = key10()
-    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, kp.co.y, clip=False))
+    return tuple(int(round(v)) for v in region().view2d.view_to_region(kp.co.x, graph_value(curve(), kp.co.y),
+                                                                       clip=False))
 
 
 _case("shift_mmb_time", 'MIDDLEMOUSE', lambda: [(3, 0), (3 + C["n2"], 0), (3 + C["n2"], -2)], _mid,
