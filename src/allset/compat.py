@@ -593,13 +593,6 @@ def header_text_colours(space_theme):
     return tuple(space_theme.text)[:3], tuple(space_theme.text_hi)[:3]
 
 
-def theme_has(struct, prop):
-    """``struct`` (a theme struct) has the property ``prop`` in this Blender. Maya mode's look (maya_look.py) sets
-    only these: 5.3 dropped the editors' ``header_text`` / ``header_text_hi`` (header text then follows the editor's
-    ``text``, which the look leaves alone)."""
-    return struct is not None and prop in struct.bl_rna.properties
-
-
 # Graph Editor value axis: Blender 5.3 draws length curves in the scene's length unit (Unit Scale included), so a
 # curve of 0.05 BU reads 5 in a centimetre scene; earlier versions draw lengths as stored. Rotations are in degrees on
 # both.

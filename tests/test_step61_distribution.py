@@ -78,13 +78,8 @@ def test_writes_outside_the_extension_folder_are_known():
     of the extension (no app template), the switch keeps no snapshot and the shelf's legacy-build fallback is a
     folder inside the add-on (#42): no user_resource() call is left. A new one must be reviewed first."""
     known = set()
-    # maya_look.py only reads userpref.blend's time stamp (Save Preferences while Maya mode is on), never writes there
-    read_only = {"maya_look.py"}
-    for rel in read_only:
-        text = dict(_sources())[rel]
-        assert text.count("user_resource(") == 1 and "os.stat(path)" in text, rel
     found = {rel for rel, text in _sources()
-             if rel not in read_only and any("user_resource(" in code for code in _code_lines(text))}
+             if any("user_resource(" in code for code in _code_lines(text))}
     assert found <= known, f"new write location outside extension_path_user: {sorted(found - known)}"
     for rel in found:
         text = dict(_sources())[rel]
