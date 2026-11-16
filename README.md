@@ -326,9 +326,9 @@ The kit never saves your preferences.
 
 Optional — the kit leaves your theme and preferences to you. Maya users usually like:
 
-- **A Maya-grey theme.** The *Maya Workflow Kit Theme* is a separate theme extension with Maya-like interface greys
-  for panels, menu bars, fields, buttons and menus, a blue selection colour and pale yellow tooltips. Install it like
-  any theme (*Edit > Preferences > Install from Disk* with
+- **A Maya-grey theme.** The *Maya Workflow Kit Theme* is a separate theme extension with Maya's interface greys:
+  #444444 panels and menu bars, #2b2b2b fields, #5d5d5d buttons, #525252 menus, the #5285a6 selection blue and pale
+  yellow tooltips. Install it like any theme (*Edit > Preferences > Get Extensions*, or *Install from Disk* with
   `maya-workflow-kit-theme-<version>.zip`); Blender switches to it when it is installed. To keep your current theme
   first, save it with the **+** next to the theme menu in *Preferences > Themes*; that menu switches back at any time.
   Removing the theme while it is in use gives Blender's default theme. The add-on itself never changes the theme, so
