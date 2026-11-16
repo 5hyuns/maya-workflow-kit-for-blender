@@ -74,6 +74,17 @@ def test_every_key_is_a_kit_string():
             assert not en.endswith("...") or tr.endswith("..."), (locale, en, tr)
 
 
+def test_every_template_string_has_a_text_in_every_language():
+    """Each shipped language has a text for every string of the English template (labels, tooltips, notices)."""
+    import json
+    with open(os.path.join(os.path.dirname(i18n.__file__), "template_en.json"), encoding="utf-8") as fh:
+        sections = json.load(fh)["sections"]
+    every = set().union(*(set(block) for block in sections.values()))
+    for locale in LOCALES:
+        missing = sorted(s for s in every if s not in i18n.LANGUAGES[locale])
+        assert not missing, (locale, len(missing), missing[:10])
+
+
 def test_main_menus_fully_covered():
     tool = _tool()
     cov = tool.coverage()

@@ -6559,4 +6559,7 @@ STRINGS = {
     'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': '用此毛发雕刻笔刷修饰毛发（Maya 生成 > 交互式修饰工具）',
     'Grooming Tool': '梳理工具',
     'Not frozen, an instance shares its geometry: {names}': '未冻结，实例共享其几何体: {names}',
+    'A value for every selected channel: Enter sets it': '所有选中通道的值：按 Enter 设置',
+    'Start Point': '起点',
+    'End Point': '终点',
 }
