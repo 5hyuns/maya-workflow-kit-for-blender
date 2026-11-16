@@ -25,6 +25,11 @@ SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 LEAD = np.array([0x43, 0xff, 0xa3]) / 255.0
 C = {"views": [], "many": 0}
 BOX = [(x, y, z) for x in (-.5, .5) for y in (-.5, .5) for z in (-.5, .5)]
+# Pixels two redraws of the very same drawing may differ by: on Vulkan now and then a few neighbouring pixels of one
+# view change in one picture, one by one or instanced alike (up to 7 seen, most runs none). So every picture is taken
+# twice, a difference between the two drawings counts only where it shows in every pair of pictures, and the two
+# pictures of one drawing may differ by this many pixels at most.
+REDRAW_NOISE = 7
 FACES = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
 
 
@@ -50,6 +55,24 @@ def shot(name):
     bpy.data.images.remove(img)
     _area, region = view3d()
     return px.reshape(h, w, 4)[region.y:region.y + region.height, region.x:region.x + region.width, :3].copy()
+
+
+def differ(pictures_a, pictures_b):
+    """Pixels where every picture of ``pictures_a`` differs from every picture of ``pictures_b``: a drawing difference
+    shows in all of them; a pixel that changes from one redraw of the same drawing to the next does not."""
+    out = None
+    for a in pictures_a:
+        for b in pictures_b:
+            d = np.abs(a - b).max(axis=-1) > 0
+            out = d if out is None else out & d
+    return out
+
+
+def noise_at(pictures):
+    """(x, y) of the first few pixels the pictures don't all agree on, with their colours (0-255)."""
+    ys, xs = np.nonzero(np.any([np.abs(p - pictures[0]).max(axis=-1) > 0 for p in pictures[1:]], axis=0))
+    return [((int(x), int(y)), [tuple(int(round(255 * v)) for v in p[y, x]) for p in pictures])
+            for x, y in list(zip(xs, ys))[:3]]
 
 
 def _mesh(name, verts, faces):
@@ -180,22 +203,22 @@ for _name, _persp, _rot, _dist, _shading, _xray in VIEWS:
 
     def _shot_old(name=_name):
         C["many"] = 0
-        C["old"] = shot(name + "_one_by_one")
-        C["still"] = int((np.abs(shot(name + "_one_by_one_again") - C["old"]).max(axis=-1) > 0).sum())
+        C["old"] = [shot(name + "_one_by_one"), shot(name + "_one_by_one_again")]
         C["old_many"] = C["many"]
         sw().INSTANCE_FROM = C["default_from"]
         redraw()
 
     def _shot_new(name=_name):
         C["many"] = 0
-        new = shot(name + "_instanced")
+        new = [shot(name + "_instanced"), shot(name + "_instanced_again")]
         old = C["old"]
-        diff = int((np.abs(new - old).max(axis=-1) > 0).sum())
-        lead = int((np.abs(new - LEAD).max(axis=-1) < 0.02).sum())
-        white = int((new.min(axis=-1) > 0.98).sum())
-        C["views"].append((name, diff, lead, white, C["old_many"], C["many"], C["still"]))
+        diff = int(differ(old, new).sum())
+        still = max(int(differ(old[:1], old[1:]).sum()), int(differ(new[:1], new[1:]).sum()))
+        lead = int((np.abs(new[0] - LEAD).max(axis=-1) < 0.02).sum())
+        white = int((new[0].min(axis=-1) > 0.98).sum())
+        C["views"].append((name, diff, lead, white, C["old_many"], C["many"], still))
         print("VIEW", name, "diff", diff, "lead px", lead, "white px", white, "many", C["old_many"], C["many"],
-              "still", C["still"])
+              "still", still, "first pictures", int(differ(old[:1], new[:1]).sum()), "noise at", noise_at(old + new))
     _old.__name__, _shot_old.__name__, _shot_new.__name__ = f"s_{_name}", f"s_{_name}_old", f"s_{_name}_new"
     step(_old)
     step(_shot_old)
@@ -268,7 +291,8 @@ def s_report_views():
     print("GPU", gpu.platform.backend_type_get(), gpu.platform.renderer_get(), gpu.platform.version_get())
     for name, diff, lead, white, old_many, many, still in C["views"]:
         check(f"{name}: the instanced wire draws the same pixels as one by one ({diff} differ, {still} between two "
-              f"pictures one by one; {lead} lead, {white} white pixels)", diff == 0 and still == 0 and white > 300)
+              f"pictures of one drawing; {lead} lead, {white} white pixels)",
+              diff == 0 and still <= REDRAW_NOISE and white > 300)
         check(f"{name}: one by one, then instanced ({old_many} / {many} instanced draws)", old_many == 0 and many >= 1)
     leads = [lead for _name, _diff, lead, *_rest in C["views"]]
     check(f"the lead wire is in the pictures ({leads} lead pixels)", sum(lead > 100 for lead in leads) >= 4)
