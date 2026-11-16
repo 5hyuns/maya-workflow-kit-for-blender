@@ -53,7 +53,7 @@ def test_dolly_modal_follows_preference():
         for value in (False, True):
             inputs.invert_mouse_zoom = value
             rv3d.view_distance = 10.0
-            op = SimpleNamespace(_last=(100, 100), _drag=[0, 0], _d0=10.0, _button='RIGHTMOUSE')
+            op = SimpleNamespace(_last=(100, 100), _drag=[0, 0], _d0=10.0, _button='RIGHTMOUSE', _camera=None)
             with bpy.context.temp_override(window=win, area=area, region=region, space_data=area.spaces.active):
                 ctx = bpy.context
                 view.ALLSET_OT_dolly.modal(op, ctx, Event('MOUSEMOVE', 'NOTHING', 250, 100))

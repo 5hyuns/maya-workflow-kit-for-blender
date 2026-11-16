@@ -221,7 +221,6 @@ class CameraDolly:
             while target.parent is not None:
                 target = target.parent
         self.name = target.name
-        self.basis = target.matrix_basis.copy()
         self.location = target.location.copy()
         # world -> the target's own Translate channels (parents, parent inverse)
         above = target.matrix_world @ target.matrix_basis.inverted_safe()
