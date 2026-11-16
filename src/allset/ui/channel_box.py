@@ -108,6 +108,14 @@ def _sel_set(key):
     return set_
 
 
+def _on_get(_self):
+    return True
+
+
+def _on_set(_self, _value):
+    pass
+
+
 # --- proxies -------------------------------------------------------------------------------------
 
 def _proxy_get(key):
@@ -296,6 +304,7 @@ class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
     mod_type: StringProperty()    # INPUT: modifier type, CONSTRAINT: constraint type
     nth: IntProperty()            # position among the lead's modifiers / constraints of that type
     text: StringProperty(get=_row_get, set=_row_set)
+    text_on: BoolProperty(name="Value", get=_on_get, set=_on_set)
     sel: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
                       description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
     sel_on: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
@@ -373,6 +382,7 @@ def _make_proxy_annotations():
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
         ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
+        ann[key + "_text_on"] = BoolProperty(name=label, get=_on_get, set=_on_set)
         for suffix in ("_sel", "_sel_on"):
             ann[key + suffix] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
                                              description="Select this channel: click, Ctrl toggle, Shift range, "

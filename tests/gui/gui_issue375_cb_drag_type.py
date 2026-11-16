@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, dock_region, ev, find_button, run, setup, step, tap, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, run, screenshot, setup, step, tap, win  # noqa: E402
 
 C = {}
 GUI_TIMEOUT = 240
@@ -164,6 +164,23 @@ def s_name_only_selects():
     a, _b = cubes()
     check(f"after a name drag, typing opens no field (Translate {tuple(a.location)})",
           tuple(a.location) == (0.0, 0.0, 0.0))
+
+
+
+# Maya: a selected channel's value cell is blue too (a pressed toggle of the twin ``<key>_text_on``)
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.ty_text_on"), C, "ty_blue", x_frac=0.7, step_px=4))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sx_text"), C, "sx_plain", x_frac=0.7, step_px=4))
+
+
+@step
+def s_blue_cells():
+    check(f"a selected channel's value cell is drawn selected (Translate Y: {C.get('ty_blue')})",
+          C.get("ty_blue") is not None)
+    check(f"an unselected channel's value cell stays a text field (Scale X: {C.get('sx_plain')})",
+          C.get("sx_plain") is not None)
+    shots = os.environ.get("ALLSET_GUI_SHOTS", "")
+    if shots:
+        screenshot(os.path.join(shots, "gui_issue375_blue_values.png"))
 
 
 run()

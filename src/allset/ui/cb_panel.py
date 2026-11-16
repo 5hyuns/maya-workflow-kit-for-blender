@@ -20,7 +20,7 @@ from .cb_inputs import (SHAPE_PROPS, _drawing_sigs, _inputs, _modifier_props, _n
                         rebuild_rows, row_for, shape_label, weight_name)
 from .cb_values import (_held_states, _holding, _holds_states, channel_label, entry_kind, get_value, has_channel,
                         row_state)
-from .cb_selection import sel_toggle, selected_channels
+from .cb_selection import sel_toggle, selected_channels, value_cell
 from .cb_menus import ALLSET_OT_cb_rotate_order, MENU_BAR
 
 
@@ -150,7 +150,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
         row.label(text="", icon='CONSTRAINT')
         return row
     right.alert = state_alert(state)
-    right.prop(value_owner, value_prop, text="")
+    value_cell(right, value_owner, value_prop, selected)
     # Proxy fields get no automatic keyframe colouring: show the lead object's state.
     row.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
     return row
@@ -175,7 +175,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         right = split.row(align=True)
         state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
-        right.prop(row, "text", text="")
+        value_cell(right, row, "text", key in selected_channels(context))
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
         return
     name = split.row(align=True)
@@ -407,7 +407,7 @@ def draw_blend_shape(lines, context, ob, key):
         right = split.row(align=True)
         state = row_state(ob, key)
         right.alert = state in _ALERT_STATES
-        right.prop(row, "text", text="")
+        value_cell(right, row, "text", key in selected_channels(context))
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
 
 
