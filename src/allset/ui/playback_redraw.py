@@ -14,6 +14,12 @@ Animation Editors, ...). Two kit parts were redrawn too although nothing in them
 - playback started from the Time Slider / an animation editor makes Blender redraw every 3D View and every Image
   Editor on each frame; the kit's shelf and Status Line rows are Image Editors drawn by the kit, so the Time Slider's
   play buttons and Maya's Play key (``allset.play``) start playback from the main viewport instead.
+
+Maya's Playback > Update View is Active by default: while playing, only the active panel is redrawn, and every panel
+once playback stops. In the four view the kit does the same (preference ``playback_update_view``; changing the frame
+without playing still redraws every panel): the active panel is the one the mouse was last in (``note_panel``, from
+the ViewCube's hover test and the Play key), else persp; playback starts from it, so Blender's own "redraw where
+playback started" is that panel too.
 """
 
 import bpy
@@ -21,7 +27,34 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty
 
 MARK = "allset_play_3d"      # Screen ID property: the kit turned "3D Viewport" playback redraws off for this playback
-_state = {"on": False, "skip": set()}      # on = the kit redraws the viewports; skip = Tool Box area pointers
+_state = {"on": False, "skip": set(), "only": {}}
+# on = the kit redraws the viewports; skip = Tool Box area pointers; only = screen pointer -> the one panel redrawn
+_last = {"panel": 0}         # the four view panel the mouse was last in (area pointer)
+
+
+def note_panel(area):
+    """The mouse is in ``area`` (a 3D View): the active panel for Update View: Active."""
+    if area is not None:
+        _last["panel"] = area.as_pointer()
+
+
+def update_active():
+    """Maya Playback > Update View is Active (the kit preference)."""
+    from .. import preferences
+    try:
+        return preferences.get().playback_update_view == 'ACTIVE'
+    except (AttributeError, KeyError):
+        return True
+
+
+def active_panel(screen):
+    """The active panel of the four view on ``screen`` (the one the mouse was last in, else persp), None without a
+    four view."""
+    from . import four_view
+    four = four_view.block(screen) if screen is not None else {}
+    if not four:
+        return None
+    return next((a for a in four.values() if a.as_pointer() == _last["panel"]), four.get("persp"))
 
 
 def _toolbox_areas(screen):
@@ -29,16 +62,19 @@ def _toolbox_areas(screen):
     return [a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)]
 
 
-def views_to_redraw(windows, skip):
+def views_to_redraw(windows, skip, only=None):
     """The main regions of the 3D Views in ``windows`` whose area pointer is not in ``skip`` (the Tool Box columns):
-    what Blender's "3D Viewport" playback setting redraws, without the columns."""
+    what Blender's "3D Viewport" playback setting redraws, without the columns. ``only``: screen pointer -> the one
+    area redrawn on that screen (the active panel of a four view)."""
     out = []
+    only = only or {}
     for window in windows:
         screen = window.screen
         if screen is None:
             continue
+        one = only.get(screen.as_pointer())
         for area in screen.areas:
-            if area.type != 'VIEW_3D' or area.as_pointer() in skip:
+            if area.type != 'VIEW_3D' or area.as_pointer() in skip or (one is not None and area.as_pointer() != one):
                 continue
             out.extend(r for r in area.regions if r.type == 'WINDOW')
     return out
@@ -55,40 +91,49 @@ def restore(screens=None):
     return n
 
 
-def turn_off(windows, columns=None):
-    """Turn "3D Viewport" playback redraws off on the screens of ``windows`` that have a Tool Box column (only where
-    the user left both "3D Viewport" and "Animation Editors" on: the Time Slider's playhead needs one of them) and
-    mark them. Returns the pointers of their Tool Box areas (empty: nothing turned off). ``columns(screen)``: the
-    Tool Box areas of a screen (tests)."""
+def turn_off(windows, columns=None, active=None):
+    """Turn "3D Viewport" playback redraws off on the screens of ``windows`` that have a Tool Box column or, with
+    ``active(screen)`` giving their active panel (Update View: Active), a four view (only where the user left both
+    "3D Viewport" and "Animation Editors" on: the Time Slider's playhead needs one of them) and mark them. Returns
+    (Tool Box area pointers, {screen pointer: active panel pointer}); both empty: nothing turned off.
+    ``columns(screen)``: the Tool Box areas of a screen (tests)."""
     columns = columns or _toolbox_areas
-    skip = set()
+    skip, only = set(), {}
     for window in windows:
         screen = window.screen
         if screen is None or not (screen.use_play_3d_editors and screen.use_play_animation_editors):
             continue
         found = columns(screen)
-        if not found:
+        panel = active(screen) if active is not None else None
+        if not found and panel is None:
             continue
         screen.use_play_3d_editors = False
         screen[MARK] = 1
         skip.update(a.as_pointer() for a in found)
-    return skip
+        if panel is not None:
+            only[screen.as_pointer()] = panel.as_pointer()
+    return skip, only
 
 
 @persistent
 def _on_playback_pre(*_args):
     restore()
     wm = bpy.context.window_manager
-    skip = turn_off(wm.windows if wm is not None else ())
-    _state["skip"] = skip
-    _state["on"] = bool(skip)
+    skip, only = turn_off(wm.windows if wm is not None else (), active=active_panel if update_active() else None)
+    _state.update(skip=skip, only=only, on=bool(skip or only))
 
 
 @persistent
 def _on_playback_post(*_args):
-    _state["on"] = False
-    _state["skip"].clear()
+    every = bool(_state["only"])
+    _state.update(on=False, skip=set(), only={})
     restore()
+    if every:                   # Update View: Active: every panel shows the frame playback stopped on
+        try:
+            for region in views_to_redraw(bpy.context.window_manager.windows, set()):
+                region.tag_redraw()
+        except (AttributeError, ReferenceError):
+            pass
 
 
 @persistent
@@ -96,7 +141,7 @@ def _on_frame(*_args):
     if not _state["on"]:
         return
     try:
-        for region in views_to_redraw(bpy.context.window_manager.windows, _state["skip"]):
+        for region in views_to_redraw(bpy.context.window_manager.windows, _state["skip"], _state["only"]):
             region.tag_redraw()
     except (AttributeError, ReferenceError):
         pass
@@ -110,24 +155,28 @@ def _on_save_pre(*_args):
 @persistent
 def _on_save_post(*_args):
     if _state["on"]:            # still playing: marked again, so that stopping puts the switch back
-        turn_off(bpy.context.window_manager.windows)
+        turn_off(bpy.context.window_manager.windows, active=active_panel if _state["only"] else None)
 
 
 @persistent
 def _on_load(*_args):
-    _state["on"] = False
-    _state["skip"].clear()
+    _state.update(on=False, skip=set(), only={})
+    _last["panel"] = 0
     restore()
 
 
 def main_view(context):
-    """(window, area, region) of the main viewport to start playback from: the largest 3D View of the context's
-    window, else of the first window that has one."""
+    """(window, area, region) of the viewport to start playback from: in a four view with Update View: Active its
+    active panel, else the largest 3D View of the context's window, else of the first window that has one."""
     from .status_line import main_view3d
     windows = [context.window] if context.window is not None else []
     windows += [w for w in context.window_manager.windows if w not in windows]
     for window in windows:
-        area, region = main_view3d(window.screen)
+        area = active_panel(window.screen) if update_active() else None
+        if area is not None and area.type == 'VIEW_3D':
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+        else:
+            area, region = main_view3d(window.screen)
         if area is not None and region is not None:
             return window, area, region
     return None, None, None
@@ -139,6 +188,12 @@ class ALLSET_OT_play(bpy.types.Operator):
     bl_label = "Play / Stop"
 
     reverse: BoolProperty(name="Reverse", description="Play backwards", options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        area = context.area
+        if area is not None and area.type == 'VIEW_3D':
+            note_panel(area)            # Alt+V over a panel: that panel is the active one
+        return self.execute(context)
 
     def execute(self, context):
         if any(w.screen is not None and w.screen.is_animation_playing for w in context.window_manager.windows):
@@ -169,8 +224,8 @@ def unregister():
         handlers = getattr(bpy.app.handlers, name)
         if fn in handlers:
             handlers.remove(fn)
-    _state["on"] = False
-    _state["skip"].clear()
+    _state.update(on=False, skip=set(), only={})
+    _last["panel"] = 0
     try:
         restore()
     except AttributeError:              # restricted bpy.data (quit)

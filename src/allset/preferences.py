@@ -310,6 +310,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     cb_sync_graph: bpy.props.BoolProperty(
         name="Sync Selection in Graph Editor",
         description="Selecting channels in the Channel Box selects their curves, and S keys only the selected channels")
+    # Maya Preferences > Time Slider > Playback > Update View (ui/playback_redraw.py)
+    playback_update_view: bpy.props.EnumProperty(
+        name="Update View", default='ACTIVE',
+        items=(('ACTIVE', "Active", "While playing, only the active panel of the four view is redrawn (the one the mouse "
+                                    "was last in); every panel when playback stops, like Maya"),
+               ('ALL', "All", "Every panel is redrawn while playing")))
     cb_sync_timeline: bpy.props.BoolProperty(
         name="Sync Timeline Display",
         description="The Time Slider shows only the keys of the channels selected in the Channel Box")

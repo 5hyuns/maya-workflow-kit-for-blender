@@ -49,6 +49,11 @@ from .view_furniture_draw import (_batches, _cached_batch, _cube_face_batch, _cu
 _ACTIVE = {"region": None}
 
 
+def _note_panel(area):
+    from . import playback_redraw
+    playback_redraw.note_panel(area)
+
+
 def _cube_here(context):
     space, region = context.space_data, context.region
     if not space.region_quadviews:
@@ -379,6 +384,7 @@ class ALLSET_GT_view_cube(bpy.types.Gizmo):
     def test_select(self, context, location):
         _ensure_cube_controls(self)
         space, region = context.space_data, context.region
+        _note_panel(context.area)          # the mouse is in this panel: Update View: Active redraws it
         if space.region_quadviews and _ACTIVE["region"] != region.as_pointer():
             _ACTIVE["region"] = region.as_pointer()
             context.area.tag_redraw()

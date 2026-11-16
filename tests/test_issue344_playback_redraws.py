@@ -4,7 +4,9 @@ The Tool Box column is a narrow 3D View: while playing, Blender's "3D Viewport" 
 that have it (marked, so stopping, saving and loading put them back) and the kit redraws the other 3D Views' main
 regions after each frame. The user's own playback settings are left alone. Maya's Play key (Alt+V), the Time Slider's
 play buttons and Playback > Play start playback from the main viewport (``allset.play``), so a playback started over
-the Time Slider doesn't redraw the kit's shelf and Status Line rows (Image Editors) on every frame."""
+the Time Slider doesn't redraw the kit's shelf and Status Line rows (Image Editors) on every frame. Maya's Playback >
+Update View is Active by default: in the four view only its active panel (the one the mouse was last in, else persp)
+is redrawn while playing, and playback starts from it."""
 
 from importlib import import_module
 from types import SimpleNamespace
@@ -21,6 +23,7 @@ mapping = import_module(kit.MODULE + ".keymap.mapping")
 class _Screen(dict):
     def __init__(self, areas, play_3d=True, play_anim=True):
         super().__init__()
+        self.as_pointer = lambda: id(self)
         self.areas = areas
         self.use_play_3d_editors = play_3d
         self.use_play_animation_editors = play_anim
@@ -37,9 +40,9 @@ def _columns(screen):
 def test_turn_off_only_screens_with_the_column():
     layout = _Screen([_area('VIEW_3D', 1, ('TOOLS', 'WINDOW')), _area('VIEW_3D', 2), _area('OUTLINER', 3)])
     plain = _Screen([_area('VIEW_3D', 4)])
-    skip = pr.turn_off([SimpleNamespace(screen=layout), SimpleNamespace(screen=plain), SimpleNamespace(screen=None)],
-                       columns=_columns)
-    assert skip == {1}
+    skip, only = pr.turn_off([SimpleNamespace(screen=layout), SimpleNamespace(screen=plain),
+                              SimpleNamespace(screen=None)], columns=_columns)
+    assert skip == {1} and only == {}
     assert not layout.use_play_3d_editors and layout.get(pr.MARK) == 1
     assert plain.use_play_3d_editors and pr.MARK not in plain
     regions = pr.views_to_redraw([SimpleNamespace(screen=layout), SimpleNamespace(screen=plain)], skip)
@@ -49,9 +52,34 @@ def test_turn_off_only_screens_with_the_column():
 def test_users_playback_settings_are_left_alone():
     for play_3d, play_anim in ((False, True), (True, False), (False, False)):
         screen = _Screen([_area('VIEW_3D', 1), _area('VIEW_3D', 2)], play_3d, play_anim)
-        assert pr.turn_off([SimpleNamespace(screen=screen)], columns=_columns) == set()
+        assert pr.turn_off([SimpleNamespace(screen=screen)], columns=_columns) == (set(), {})
         assert (screen.use_play_3d_editors, screen.use_play_animation_editors) == (play_3d, play_anim)
         assert pr.MARK not in screen
+
+
+def test_update_view_active_redraws_one_panel_of_the_four_view():
+    panes = [_area('VIEW_3D', p) for p in (11, 12, 13, 14)]
+    four = _Screen([_area('VIEW_3D', 1, ('TOOLS', 'WINDOW')), *panes])
+    four.as_pointer = lambda: 100
+    other = _Screen([_area('VIEW_3D', 21)])            # another window's viewport: as Blender would
+    other.as_pointer = lambda: 200
+    wins = [SimpleNamespace(screen=four), SimpleNamespace(screen=other)]
+    skip, only = pr.turn_off(wins, columns=_columns, active=lambda sc: panes[1] if sc is four else None)
+    assert skip == {1} and only == {100: 12} and four.get(pr.MARK) == 1 and pr.MARK not in other
+    assert [r.ptr for r in pr.views_to_redraw(wins, skip, only)] == [12, 21]
+    assert [r.ptr for r in pr.views_to_redraw(wins, skip)] == [11, 12, 13, 14, 21]       # Update View: All
+    # a four view without a Tool Box column still turns the switch off for its active panel
+    bare = _Screen(list(panes))
+    assert pr.turn_off([SimpleNamespace(screen=bare)], columns=lambda sc: [], active=lambda sc: panes[0])[1]
+
+
+def test_update_view_preference_is_active_by_default():
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    assert prefs.bl_rna.properties["playback_update_view"].default == 'ACTIVE'
+    assert pr.update_active()
+    pr.note_panel(SimpleNamespace(as_pointer=lambda: 12))
+    assert pr._last["panel"] == 12
+    assert pr.active_panel(bpy.data.screens[0]) is None            # no four view: no active panel
 
 
 def test_restore_puts_the_switch_back_on_marked_screens():

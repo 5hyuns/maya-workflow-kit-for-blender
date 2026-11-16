@@ -3113,6 +3113,8 @@ STRINGS = {
     'Playback': '播放',
     'Play / Stop': '播放 / 停止',
     'Play backwards': '倒放',
+    'Update View': '更新視圖',
+    'Active': '作用中',
     'Playback Looping': '循環播放',
     'Playback Range = Animation Range': '播放範圍 = 動畫範圍',
     'Playback Speed': '播放速度',

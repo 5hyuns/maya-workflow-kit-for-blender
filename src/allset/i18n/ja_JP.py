@@ -3113,6 +3113,8 @@ STRINGS = {
     'Playback': '再生',
     'Play / Stop': '再生 / 停止',
     'Play backwards': '逆再生',
+    'Update View': 'ビューの更新',
+    'Active': 'アクティブ',
     'Playback Looping': 'ループ再生',
     'Playback Range = Animation Range': '再生範囲 = アニメーション範囲',
     'Playback Speed': '再生速度',

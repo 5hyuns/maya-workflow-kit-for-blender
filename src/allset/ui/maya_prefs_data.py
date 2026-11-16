@@ -219,6 +219,7 @@ PAGES = (
         ("Playback", [
             ("scene", "sync_mode", "Playback speed"),
             ("scene", "allset_playback_loop", "Looping"),
+            ("pref", "playback_update_view", "Update view"),
         ]),
     ]),
     ("UNDO", "Undo", 1, "Undo: Undo Queue Settings", [

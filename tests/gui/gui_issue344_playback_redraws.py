@@ -5,9 +5,11 @@ A keyed cube plays (every frame) in the Maya layout three ways: the Time Slider'
 an animation editor makes Blender redraw every 3D View and Image Editor), Blender's own play from the viewport, and
 Maya's Play key (Alt+V) with the mouse over the Time Slider. Each time the main viewport is drawn on (nearly) every
 frame, while the Tool Box column (a narrow 3D View) and the shelf (an Image Editor) are not; afterwards the screen's
-playback settings are as before. In the four view all four panels are drawn on every frame. Last, played as fast as the
-PC draws (scene rate 1000, VSync off), a frame started by the Time Slider's play button costs about what a frame
-started over the viewport does (a loose 30 % margin: other programs on the PC move the numbers)."""
+playback settings are as before. In the four view, with Maya's Update View: Active (the default), only the panel the
+mouse was last in is drawn on every frame and every panel once playback stops; changing the frame without playing
+draws every panel; with Update View: All all four are drawn on every frame, and a frame costs less with Active. Last,
+played as fast as the PC draws (scene rate 1000, VSync off), a frame started by the Time Slider's play button costs
+about what a frame started over the viewport does (a loose 30 % margin: other programs on the PC move the numbers)."""
 
 import os
 import sys
@@ -118,7 +120,7 @@ def s_scene():
           toolbox() is not None and shelf() is not None and len(views()) == 1)
 
 
-def play_and_check(label, start, stop, four=False):
+def play_and_check(label, start, stop, four=False, active=None):
     def go():
         start_counting()
         C["t0"] = time.perf_counter()
@@ -141,8 +143,17 @@ def play_and_check(label, start, stop, four=False):
         vs = views()
         main = [draws(a) for a in vs]
         check(f"{label}: playback ran ({n} frames, playing {C['playing']})", C["playing"] and n >= 10)
-        check(f"{label}: the viewport{'s' if four else ''} drawn on each frame ({main} draws, {n} frames)",
-              all(d >= 0.8 * n for d in main) and len(vs) == (4 if four else 1))
+        if active is None:
+            check(f"{label}: the viewport{'s' if four else ''} drawn on each frame ({main} draws, {n} frames)",
+                  all(d >= 0.8 * n for d in main) and len(vs) == (4 if four else 1))
+        else:
+            one = active()
+            others = [draws(a) for a in vs if a != one]
+            after = [C["draws"].get(a.as_pointer(), 0) - draws(a) for a in vs]
+            check(f"{label}: only the active panel drawn on each frame ({draws(one) if one else None} draws, the others "
+                  f"{others}, {n} frames)", one is not None and draws(one) >= 0.8 * n and all(d <= 3 for d in others)
+                  and len(vs) == 4)
+            check(f"{label}: every panel drawn once playback stopped ({after})", all(d >= 1 for d in after))
         check(f"{label}: the Tool Box column not drawn on each frame ({draws(toolbox())} draws)", draws(toolbox()) <= 3)
         check(f"{label}: the shelf not drawn on each frame ({draws(shelf())} draws)", draws(shelf()) <= 3)
         check(f"{label}: playback settings as before afterwards ({(scr.use_play_3d_editors, scr.use_play_animation_editors)}"
@@ -219,7 +230,57 @@ step(redraw)
 @step
 def s_four_check():
     check(f"four view on ({len(views())} viewports)", len(views()) == 4)
-play_and_check("four view, Time Slider play button", time_slider_button, time_slider_stop, four=True)
+    prefs = mod("preferences").get()
+    check(f"Update View: {prefs.playback_update_view} by default", prefs.playback_update_view == 'ACTIVE')
+
+
+def role(name):
+    return fv_roles()[name]
+
+
+def fv_roles():
+    return mod("ui.four_view").roles(win().screen)
+
+
+@step
+def s_mouse_to_side():
+    r = region(role("side"))
+    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)
+
+
+@step
+def s_mouse_in_side():
+    r = region(role("side"))
+    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2 + 3, y=r.y + r.height // 2 + 3)
+
+
+play_and_check("four view, Update View: Active, mouse last in side, Time Slider play button", time_slider_button,
+               time_slider_stop, four=True, active=lambda: role("side"))
+
+
+@step
+def s_active_ms():
+    start_counting()
+    bpy.context.scene.frame_current += 5          # a frame change without playback (scrubbing)
+
+
+step(redraw)
+
+
+@step
+def s_scrub():
+    got = [C["draws"].get(a.as_pointer(), 0) for a in views()]
+    check(f"four view: a frame change without playback draws every panel ({got})", all(d >= 1 for d in got))
+    mod("preferences").get().playback_update_view = 'ALL'
+
+
+play_and_check("four view, Update View: All, Time Slider play button", time_slider_button, time_slider_stop,
+               four=True)
+
+
+@step
+def s_all_back():
+    mod("preferences").get().playback_update_view = 'ACTIVE'
 
 
 def timed(label, start, stop):
@@ -242,6 +303,26 @@ def timed(label, start, stop):
 @step
 def s_fast():
     bpy.context.scene.render.fps = 1000
+
+
+timed("four active", time_slider_button, time_slider_stop)
+
+
+@step
+def s_fast_all():
+    mod("preferences").get().playback_update_view = 'ALL'
+
+
+timed("four all", time_slider_button, time_slider_stop)
+
+
+@step
+def s_fast_four_check():
+    mod("preferences").get().playback_update_view = 'ACTIVE'
+    one, every = C["ms"].get("four active"), C["ms"].get("four all")
+    print(f"PLAYBACK four view ms/frame: Update View Active {one}, All {every}", flush=True)
+    check(f"four view: a frame costs less with Update View: Active ({one} ms) than with All ({every} ms)",
+          one and every and one <= every)
     with over(views()[0]):
         mod("ui.four_view").toggle(bpy.context, views()[0], win())        # back to one viewport
 
