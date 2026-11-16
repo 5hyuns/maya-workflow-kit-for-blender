@@ -564,14 +564,61 @@ def draw(layout, context):
 classes = (ALLSET_MT_weight_influences, ALLSET_UL_influences)
 
 
+# --- no brush shelf under the view -------------------------------------------------------------------------------
+# Maya's Paint Skin Weights has no brush strip under the view (the kit's Tool Settings pick the brush). Blender 5.3
+# opens its weight paint brush shelf the first time a view is in Weight Paint (``compat.weight_shelf_shown_first``):
+# in Maya mode that shelf type is registered again without that option, so Weight Paint opens without the shelf as
+# on 5.2 (it can still be opened, and the kit's brush picker still shows it as a popup). Blender mode gets the
+# type's own options back. Nothing in the file or the preferences changes.
+_shelf = {}
+
+
+def _register_shelf(cls, options):
+    """``cls`` (a registered asset shelf type) registered again with ``bl_options`` = ``options`` (None: its own)."""
+    bpy.utils.unregister_class(cls)
+    try:
+        if options is None:
+            if "bl_options" in cls.__dict__:
+                del cls.bl_options
+        else:
+            cls.bl_options = options
+    finally:
+        bpy.utils.register_class(cls)
+
+
+def hide_brush_shelf():
+    cls = compat.weight_shelf_shown_first()
+    if cls is None or _shelf:
+        return
+    own = cls.__dict__.get("bl_options")
+    try:
+        _register_shelf(cls, set(cls.bl_options) - {'DEFAULT_VISIBLE'})
+    except (RuntimeError, ValueError, TypeError) as ex:
+        print("Maya Workflow Kit: weight paint brush shelf left as it is:", ex)
+        return
+    _shelf.update(cls=cls, own=own)
+
+
+def restore_brush_shelf():
+    if not _shelf:
+        return
+    cls, own = _shelf.pop("cls"), _shelf.pop("own")
+    try:
+        _register_shelf(cls, own)
+    except (RuntimeError, ValueError, TypeError) as ex:
+        print("Maya Workflow Kit: could not give the weight paint brush shelf its options back:", ex)
+
+
 def register():
     status_icons.EXTRA['skin_weights'] = _weight_icon
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.UI_MT_list_item_context_menu.append(draw_list_item_menu)
+    hide_brush_shelf()
 
 
 def unregister():
+    restore_brush_shelf()
     bpy.types.UI_MT_list_item_context_menu.remove(draw_list_item_menu)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

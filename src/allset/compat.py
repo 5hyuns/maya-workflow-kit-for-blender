@@ -541,6 +541,20 @@ def keep_unified_switches(ups, brush, switches):
             set_unified(ups, brush, name, on)
 
 
+# --- Weight paint brush asset shelf ----------------------------------------------------------------------------
+# Up to 5.2 the weight paint brushes' asset shelf (``VIEW3D_AST_brush_weight_paint``) is hidden by default: a 3D View
+# shows it only once the user opens it. 5.3 gave it the default-visible option of the other paint modes' shelves: the
+# first time a view is in Weight Paint, Blender opens the shelf under it.
+WEIGHT_SHELF_TYPE = "VIEW3D_AST_brush_weight_paint"
+
+
+def weight_shelf_shown_first():
+    """The weight paint brush shelf type when Blender opens it the first time a view is in Weight Paint (5.3), else
+    None."""
+    cls = getattr(bpy.types, WEIGHT_SHELF_TYPE, None)
+    return cls if cls is not None and 'DEFAULT_VISIBLE' in getattr(cls, "bl_options", ()) else None
+
+
 # --- Essentials weight paint brushes -------------------------------------------------------------------------
 # 5.3 renamed the essentials draw brush "Paint" (blend Mix, strength 1) to "Set Weight" and gives new scenes, and
 # files that painted with "Paint", "Add Weight" (blend Add, strength 0.05, accumulating); 5.0 - 5.2 start with "Paint".
