@@ -2,7 +2,11 @@
 
 At larger UI scales the gaps between the four panels are wider, the four view was not found, and every tap split the
 panel under the mouse into four more. Here: at UI scale 1, 2 and 3 a Space tap gives four panels, the next tap over
-a panel keeps that panel alone, the next tap gives four again (never more than four 3D View panels)."""
+a panel keeps that panel alone, the next tap gives four again (never more than four 3D View panels).
+
+The window is taller than the layout's 1600 x 900: at UI scale 3 the layout's rows (Status Line, shelf, Time Slider
+with its ruler of that scale, Range Slider, Command Line) leave a 900 px window a viewport of about 150 px, less than
+the two panel headers a split into rows needs, so the tap leaves it one panel (with a warning) there."""
 
 import os
 import sys
@@ -15,6 +19,7 @@ from sim import MODULE, check, load_maya_layout, run, setup, step, view3d, win  
 
 C = {}
 SCALES = (1.0, 2.0, 3.0)
+GUI_GEOMETRY = "0 0 1600 1100"
 
 
 def fv():
@@ -74,7 +79,8 @@ def one_scale(scale):
         screen = win().screen
         n = len(fv().panes(screen))
         placed = fv().block(screen)
-        g = gaps(placed or fv().roles(screen, fv().panes(screen)))
+        found = placed or fv().roles(screen, fv().panes(screen))
+        g = gaps(found) if len(found) == 4 else None
         print(f"ISSUE302 scale={scale} pixel_size={bpy.context.preferences.system.pixel_size} panes={n} gaps={g}")
         check(f"scale {scale}: four panels ({n})", n == 4)
         check(f"scale {scale}: the four view is found (gaps {g})", len(placed) == 4)
