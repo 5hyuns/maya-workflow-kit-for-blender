@@ -598,12 +598,12 @@ def time_dependent(ob, data_memo=None):
     return False
 
 
-# The kit's frame change handlers that write nothing to the file during a frame change (they clear a cache or start a
-# timer), as "<module under the package>:<function>".
+# The kit's frame change handlers that write nothing to the file during a frame change (they clear a cache, start a
+# timer or ask for a redraw), as "<module under the package>:<function>".
 _FRAME_READERS = frozenset((
     "operators.live:frame_changed", "operators.auto_key:_on_frame", "operators.playback_maya:_on_frame",
     "ui.time_slider:_drop_keys", "ui.maya_joints:_frame_post", "ui.ghosting:_on_frame", "ui.selection_wire:_on_frame",
-    "ui.maya_grid_depth:_depth_on_frame"))
+    "ui.maya_grid_depth:_depth_on_frame", "ui.playback_redraw:_on_frame"))
 _PACKAGE = __name__.rsplit(".ui.", 1)[0]
 
 
