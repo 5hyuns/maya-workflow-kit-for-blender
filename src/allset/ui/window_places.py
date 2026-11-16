@@ -261,7 +261,7 @@ class _Carve:
                 return self.finish(window, ok=False)
             self.fold = 2
             self.source = self.piece = kept.as_pointer()
-            return TICK_FAST
+            return TICK_FAST                   # the joined panel gets its size on the next tick
         piece = _area(window, self.piece)
         if piece is None:
             return self.finish(window, ok=False)
@@ -342,17 +342,22 @@ def _close_later(win_ptr, joins, folded=0):
     try:
         _join_back(window, joins)
     finally:
-        if folded:                       # the four view comes back once the pieces are joined (next tick)
-            bpy.app.timers.register(lambda: _unfold_later(win_ptr, folded), first_interval=TICK_FAST)
+        if folded:                       # the four view comes back once the pieces are joined: now when laid out
+            _unfold_later(win_ptr, folded)
     return None
 
 
-def _unfold_later(win_ptr, panel_ptr):
+def _unfold_later(win_ptr, panel_ptr, tries=3):
     from . import four_view
     window, panel = live_refs.find_area(panel_ptr, win_ptr)
     window = window or live_refs.window(win_ptr)
     if window is None:
         four_view._folded.discard(win_ptr)
+        return None
+    whole = four_view.state(window.screen).get("rect")
+    if panel is not None and whole and not four_view.laid_out(panel, whole) and tries > 0:
+        # the joined panel gets its rect on the next tick
+        bpy.app.timers.register(lambda: _unfold_later(win_ptr, panel_ptr, tries - 1), first_interval=TICK_FAST)
         return None
     try:
         with bpy.context.temp_override(window=window):

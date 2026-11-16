@@ -42,6 +42,9 @@ AXIS = {"top": Quaternion(), "front": Euler((math.pi / 2, 0.0, 0.0)).to_quaterni
 # Shading of a new four view, like Maya: every panel Smooth Shade All (= Blender Solid)
 DEFAULT_SHADING = {"top": 'SOLID', "persp": 'SOLID', "front": 'SOLID', "side": 'SOLID'}
 SPLITS = (0.5001, 0.4999)            # HORIZONTAL (new on top), VERTICAL (new on the left)
+# Blender's area_split makes the smaller part the new area: HORIZONTAL above 0.5 = new on top, VERTICAL below 0.5 =
+# new on the left. The four view's own proportions (``state["split"]``: bottom row share, top row's left share,
+# bottom row's left share) are kept across four <-> one, like Maya's panel layout keeps its pane sizes.
 
 _SPACE_PROPS = ("lens", "clip_start", "clip_end", "use_local_camera", "lock_camera")
 _SKIP = {"rna_type"}
@@ -358,13 +361,39 @@ def _place_later(win_ptr, area_ptr, role):
     bpy.app.timers.register(tick, first_interval=0.0)
 
 
-def enter(context, area, window=None):
-    """``area`` (one panel, any editor) becomes the four view. Returns the roles placed now ({} when it can't split: always
-    in background mode, where a split-off area stays 0 x 0).
+def _factor(f, default):
+    """A split factor kept off the middle (Blender's side rule needs it) and off the edges."""
+    try:
+        f = min(0.85, max(0.15, float(f)))
+    except (TypeError, ValueError):
+        return default
+    if abs(f - 0.5) < 1e-4:
+        f = default
+    return f
 
-    Splits: ``area`` top / bottom, then the bottom left / right (front / side). A just-split area has no size until
-    the next redraw (in the GUI too: splitting it in the same call fails), so the top part is split into
-    top / persp from a timer one tick later (``_split_top_later``; pointers only, #36)."""
+
+def proportions(placed):
+    """[bottom row share, top row's left share, bottom row's left share] of a four view {role: area}."""
+    t, p, f, s = placed["top"], placed["persp"], placed["front"], placed["side"]
+
+    def share(a, b):
+        return a / max(a + b, 1)
+    return [round(share(f.height, t.height), 4), round(share(t.width, p.width), 4), round(share(f.width, s.width), 4)]
+
+
+def factors(st):
+    """(HORIZONTAL factor, top row VERTICAL factor, bottom row VERTICAL factor) of the four view recorded in ``st``."""
+    y, xt, xb = (st.get("split") or [SPLITS[0], SPLITS[1], SPLITS[1]])[:3]
+    return _factor(y, SPLITS[0]), _factor(xt, SPLITS[1]), _factor(xb, SPLITS[1])
+
+
+def enter(context, area, window=None):
+    """``area`` (one panel, any editor) becomes the four view, in the proportions it had (``factors``). Returns the
+    roles placed now ({} when it can't split: always in background mode, where a split-off area stays 0 x 0).
+
+    Splits: ``area`` into its two rows, then the row ``area`` keeps into left / right. A just-split area has no size
+    until the next redraw (in the GUI too: splitting it in the same call fails), so the other row is split from a
+    timer one tick later (``_split_row_later``; pointers only, #36)."""
     window = window or context.window
     screen = window.screen
     if bpy.app.background:
@@ -374,37 +403,43 @@ def enter(context, area, window=None):
     single = st.get("single", "persp")
     saved[single] = {**saved.get(single, {}), **capture_area(area)}
     whole = list(rect(area))
-    top = _split(context, window, area, 'HORIZONTAL', SPLITS[0])
-    if top is None:
+    fy, ft, fb = factors(st)
+    other = _split(context, window, area, 'HORIZONTAL', fy)
+    if other is None:
         return {}
-    bottom_left = _split(context, window, area, 'VERTICAL', SPLITS[1])
-    if bottom_left is None:
+    other_is_top = fy > 0.5                       # the new area is the smaller row
+    f_now, roles_now, f_later, roles_later = ((fb, ("front", "side"), ft, ("top", "persp")) if other_is_top
+                                              else (ft, ("top", "persp"), fb, ("front", "side")))
+    new = _split(context, window, area, 'VERTICAL', f_now)
+    if new is None:
         return {}
-    placed = {"persp": top, "front": bottom_left, "side": area}
+    left, right = (new, area) if f_now < 0.5 else (area, new)
+    placed = {roles_now[0]: left, roles_now[1]: right, roles_later[1]: other}    # the other row: one panel for now
     st.update(on=True, panes=saved, rect=whole)
     _save_state(screen, st)
     for role, a in placed.items():
         _place(context, role, a, saved, window)
-    _split_top_later(window.as_pointer(), top.as_pointer())
+    _split_row_later(window.as_pointer(), other.as_pointer(), f_later, roles_later)
     return placed
 
 
-def _split_top_later(win_ptr, top_ptr, tries=20):
+def _split_row_later(win_ptr, row_ptr, factor, roles_lr, tries=20):
     from .. import live_refs
 
     def tick():
-        window, top = live_refs.find_area(top_ptr, win_ptr)
-        if window is None or top is None:
+        window, row = live_refs.find_area(row_ptr, win_ptr)
+        if window is None or row is None:
             return None                                    # the window / panel went away
-        if top.width < 2 or top.height < 2:
+        if row.width < 2 or row.height < 2:
             nonlocal tries
             tries -= 1
             return 0.05 if tries > 0 else None
-        left = _split(bpy.context, window, top, 'VERTICAL', SPLITS[1])
-        if left is not None:
+        new = _split(bpy.context, window, row, 'VERTICAL', factor)
+        if new is not None:
+            left, right = (new, row) if factor < 0.5 else (row, new)
             saved = state(window.screen).get("panes", {})
-            _place(bpy.context, "top", left, saved, window)
-            _place(bpy.context, "persp", top, saved, window)
+            _place(bpy.context, roles_lr[0], left, saved, window)
+            _place(bpy.context, roles_lr[1], right, saved, window)
         return None
     bpy.app.timers.register(tick, first_interval=0.0)
 
@@ -420,6 +455,7 @@ def remember(screen):
         saved[role] = {**saved.get(role, {}), **capture_area(a)}     # a Graph Editor keeps its old 3D settings
     st["panes"] = saved
     st["rect"] = list(union(rect(a) for a in placed.values()))
+    st["split"] = proportions(placed)
     _save_state(screen, st)
     return placed
 
@@ -585,10 +621,18 @@ def unfold(context, window, panel):
     bpy.app.timers.register(whole, first_interval=0.02)
 
 
+def laid_out(area, r, tol=4):
+    """True when ``area`` covers the rect ``r``. A joined area gets its rect when the screen is next laid out (between
+    ticks), not in the call that joined it."""
+    return area is not None and abs(area.width - (r[2] - r[0])) <= tol and abs(area.height - (r[3] - r[1])) <= tol
+
+
 def in_one_panel(context, window, action, keep=None):
     """Run ``action(context, window, panel)`` with the four view folded into one panel, then open the four view again
-    in that panel (one step per tick: Blender lays areas out between ticks). Used for a dock beside the whole four
-    view, never inside one of its panels. False when the four view could not be folded."""
+    in that panel, with its proportions. Used for a dock beside the whole four view, never inside one of its panels.
+    The folded panel gets its size on the next tick (the action sizes the dock from it), and the action and the new
+    four view run in that tick; the four view's last row is split one tick later (``enter``): two ticks folded.
+    False when the four view could not be folded."""
     from .. import live_refs
     kept = fold(context, window, keep)
     if kept is None:
@@ -618,8 +662,7 @@ def in_one_panel(context, window, action, keep=None):
                 action(bpy.context, win, panel)
         except (ReferenceError, RuntimeError):
             pass
-        bpy.app.timers.register(again, first_interval=0.0)
-        return None
+        return again()                 # the panel the action split keeps its place: the four view now
     bpy.app.timers.register(act, first_interval=0.0)
     return True
 

@@ -1,5 +1,5 @@
-"""#36 crash class: the four view splits its top row from a timer one tick later
-(ui/four_view.py ``_split_top_later``). A second window enters the four view and closes before that tick runs; the
+"""#36 crash class: the four view splits one of its rows from a timer one tick later
+(ui/four_view.py ``_split_row_later``). A second window enters the four view and closes before that tick runs; the
 tick must find the window gone (pointers + live_refs) instead of touching the freed window. PASSES when Blender is
 still running afterwards."""
 
