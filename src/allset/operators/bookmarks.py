@@ -129,4 +129,35 @@ class ALLSET_OT_bookmark_frame(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_bookmark_create, ALLSET_OT_bookmark_frame)
+def delete(scene, targets):
+    """Remove bookmark markers and their kept range ends; the number removed."""
+    ends = dict(scene.get(ENDS) or {})
+    for m in targets:
+        ends.pop(m.name, None)
+        scene.timeline_markers.remove(m)
+    scene[ENDS] = ends
+    return len(targets)
+
+
+class ALLSET_OT_bookmark_delete(bpy.types.Operator):
+    """Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)"""
+    bl_idname = "allset.bookmark_delete"
+    bl_label = "Delete Bookmark"
+    bl_options = {'UNDO'}
+
+    all: BoolProperty(options={'SKIP_SAVE'}, description="Every bookmark (Maya Delete All Bookmarks)")
+
+    def execute(self, context):
+        scene = context.scene
+        cur = current(scene)
+        if cur is not None and bookmark_range(scene, cur)[1] < scene.frame_current:
+            cur = None                                  # past that bookmark's end: none at the current time
+        n = delete(scene, list(scene.timeline_markers) if self.all else ([cur] if cur is not None else []))
+        if not n:
+            self.report({'WARNING'}, "No bookmark at the current time")
+            return {'CANCELLED'}
+        results.result(self, f"{n} bookmark(s) deleted")
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_bookmark_create, ALLSET_OT_bookmark_frame, ALLSET_OT_bookmark_delete)

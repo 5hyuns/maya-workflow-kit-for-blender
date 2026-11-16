@@ -6435,4 +6435,7 @@ STRINGS = {
     'Tool Settings Tab': 'ツール設定タブ',
     'Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)': '距離ツールのクリック: 1 回目でロケータを置き、2 回目でもう 1 つのロケータとその間の\n距離寸法を作成 (Maya の距離ツール)',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own window, or a dock left of the viewport once docked)': 'ツール設定を右の Maya ドックのタブとして、チャンネルボックスとアトリビュートエディタの隣に開きます (オフ: 専用のウィンドウ、ドックした後はビューポートの左のドック)',
+    "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender の Exact ブーリアンをすぐに適用し、2 番目のオブジェクトを削除します (Maya でコンストラクション ヒストリをオフにした場合と同じ)。',
+    'Boolean modifier (applied)': 'ブーリアンモディファイア (適用済み)',
+    'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '現在の時間のタイムスライダ ブックマーク、またはすべてのブックマークを削除します (Maya の削除 / すべてのブックマークを削除)',
 }

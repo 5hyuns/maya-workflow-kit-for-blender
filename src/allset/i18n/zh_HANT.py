@@ -6534,4 +6534,7 @@ STRINGS = {
     'Tool Settings Tab': '工具設置分頁',
     'Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)': '距離工具點擊：第一次點擊放置一個定位器，第二次點擊放置另一個定位器及兩者之間的\n距離尺寸 (Maya 距離工具)',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own window, or a dock left of the viewport once docked)': '工具設置作為右側 Maya 停靠區的分頁開啟，位於通道盒與屬性編輯器旁 (關閉: 獨立視窗，停靠後為視口左側的停靠區)',
+    "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": 'Blender 的精確布林運算，立即套用；第二個物件會被刪除，與 Maya 關閉建構歷史時相同。',
+    'Boolean modifier (applied)': '布林修改器（已套用）',
+    'Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)': '刪除目前時間的時間滑桿書籤，或刪除所有書籤（Maya 刪除 / 刪除所有書籤）',
 }

@@ -25,6 +25,9 @@ METRE_SCENES = ("Blender simulates one unit as one metre: FX works in metre scen
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
+    **{f"Mesh/Booleans/{item}": ("Boolean modifier (applied)", "Blender's Exact Boolean, applied at once; the second object is "
+                                 "deleted, like Maya with construction history off.")
+       for item in ("Slice", "Hole Punch", "Cut Out", "Split Edges")},
     "Mesh Display/Assign Existing Set/No bakesets defined": ("Render Properties > Bake", "Maya lists the scene's bake sets here; Blender bakes from Render Properties > Bake (Cycles)."),
     # Skin
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "

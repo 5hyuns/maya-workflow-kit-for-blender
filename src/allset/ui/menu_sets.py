@@ -57,7 +57,7 @@ def menu_rows(items, prefix):
 def _draw_items(layout, items, prefix, submenus):
     kids = menu_rows(items, prefix)
     texts = item_texts([(path, it[0], path in OPTION_BOXES) for path, it in kids
-                        if path is not None and not (sub_items(path, it) and path not in menu_map.MAP)])
+                        if path is not None and not menu_map.is_submenu(path, sub_items(path, it))])
     for path, it in kids:
         if path is None:
             layout.separator()
@@ -67,7 +67,7 @@ def _draw_items(layout, items, prefix, submenus):
                 _section_label(layout, it[1])
             continue
         iv = menu_icons.icon_value(path)
-        if sub_items(path, it) and path not in menu_map.MAP:
+        if menu_map.is_submenu(path, sub_items(path, it)):
             layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""), icon_value=iv,
                         translate=False)
         elif path in OPTION_BOXES:
@@ -94,7 +94,7 @@ def _make_menu(idname, label, prefix, items, top_label=None):
     submenus = {}
     classes = []
     for path, it in iter_items(items, prefix):
-        if sub_items(path, it) and path not in submenus and path not in menu_map.MAP:
+        if path not in submenus and menu_map.is_submenu(path, sub_items(path, it)):
             submenus[path] = f"{idname}_{len(submenus)}"
     # Build the submenu classes (each draws its own children).
     SUBMENU_IDS.update(submenus)
