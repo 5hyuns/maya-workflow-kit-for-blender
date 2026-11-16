@@ -13,8 +13,8 @@ dock survives saving and reloading the file.
   of the viewport), carved out of a viewport panel and given back afterwards (``window_places``), so no panel of the
   layout changes.
 - Docked (``open_dock``): split off the left edge of the main 3D View. In the four view the four panels are folded
-  into one first, the dock is split off it and the four view comes back in the rest (``_in_one_panel``; the panels
-  keep their settings). Closing gives the dock's width back to the panel right of it.
+  into one first, the dock is split off it and the four view comes back in the rest (``four_view.in_one_panel``;
+  the panels keep their settings). Closing gives the dock's width back to the panel right of it.
 - The window's handle docks it (``maya_dock.dock``), the dock's handle tears it off (``maya_dock.tear_off``); the
   next opening follows (``set_docked``). ToggleToolSettings shows / hides it (Maya: visible -> hidden -> visible).
 
@@ -146,7 +146,8 @@ def open_dock(context, window=None, width=None):
     from . import four_view
     if four_view.is_four(screen) and not bpy.app.background:
         # Maya docks beside the whole four view, never inside one of its panels (#367)
-        return True if _in_one_panel(context, window, lambda ctx, win, _panel: open_dock(ctx, win, width)) else None
+        return True if four_view.in_one_panel(context, window,
+                                              lambda ctx, win, _panel: open_dock(ctx, win, width)) else None
     area, region = _main_view(screen)
     if area is None or region is None:
         return None
@@ -218,44 +219,9 @@ def close_dock(context, window=None):
             dock = next((a for a in win.screen.areas if a.as_pointer() == ptr), None)
             if dock is not None and not _join_into_view(ctx, win, dock):
                 _area_close(ctx, win, dock)
-        if _in_one_panel(context, window, give_back):
+        if four_view.in_one_panel(context, window, give_back):
             return True
     _area_close(context, window, area)
-    return True
-
-
-def _in_one_panel(context, window, action):
-    """Run ``action(context, window, panel)`` with the four view folded into its persp panel, then open the four view
-    again in that panel (one step per tick: Blender lays areas out between ticks). The panels keep their settings
-    (``four_view.leave`` / ``enter``). False when the four view could not be folded."""
-    from . import four_view
-    kept = four_view.leave(context, window=window, role="persp")
-    if kept is None:
-        return False
-    win_ptr, kept_ptr = live_refs.pointer(window), kept.as_pointer()
-
-    def unfold():
-        win, panel = live_refs.find_area(kept_ptr, win_ptr or None)
-        if panel is not None:
-            try:
-                with bpy.context.temp_override(window=win):
-                    four_view.enter(bpy.context, panel, win)
-            except (ReferenceError, RuntimeError):
-                pass
-        return None
-
-    def act():
-        win, panel = live_refs.find_area(kept_ptr, win_ptr or None)
-        if panel is None:
-            return None
-        try:
-            with bpy.context.temp_override(window=win):
-                action(bpy.context, win, panel)
-        except (ReferenceError, RuntimeError):
-            pass
-        bpy.app.timers.register(unfold, first_interval=0.0)
-        return None
-    bpy.app.timers.register(act, first_interval=0.0)
     return True
 
 

@@ -78,6 +78,10 @@ def dock_outliner(context, window):
     """Split the area right of the Tool Box column (without a column: the main 3D View, e.g. Blender's own layouts)
     and put a Maya Outliner on its left. The new area or None."""
     screen = window.screen
+    from . import four_view
+    if four_view.is_four(screen) and not bpy.app.background:
+        # left of the whole four view, never inside one of its panels (it comes on a later tick)
+        return True if four_view.in_one_panel(context, window, lambda ctx, win, _p: dock_outliner(ctx, win)) else None
     area = _beside_column(screen)
     if area is None:
         from .status_line import main_view3d
@@ -128,9 +132,8 @@ class ALLSET_OT_toggle_outliner(bpy.types.Operator):
         if docked:
             if bpy.app.background:      # screen.area_close hangs without a UI
                 return {'CANCELLED'}
-            area = docked[0]
-            with context.temp_override(window=window, screen=screen, area=area):
-                bpy.ops.screen.area_close()
+            from .maya_dock_windows import close_area      # beside the four view: the view stays four panels
+            close_area(context, window, docked[0])
             return {'FINISHED'}
         floating = floating_outliners(context)
         if floating:

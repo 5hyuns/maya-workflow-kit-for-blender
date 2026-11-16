@@ -67,7 +67,6 @@ class ALLSET_OT_shelf_strip_toggle(bpy.types.Operator):
     bl_label = "Shelf"
 
     def execute(self, context):
-        from .status_line import main_view3d
         screen = context.screen
         win = context.window
         area = strip_area(screen)
@@ -79,21 +78,34 @@ class ALLSET_OT_shelf_strip_toggle(bpy.types.Operator):
                 with context.temp_override(window=win, screen=screen, area=area, region=region):
                     bpy.ops.screen.area_close()
             return {'FINISHED'}
-        view3d, region = main_view3d(screen)
-        if view3d is None:
+        from . import four_view
+        if four_view.is_four(screen):          # over the whole four view, never over one of its panels
+            done = four_view.in_one_panel(context, win, lambda ctx, w, _p: _strip_over(ctx, w))
+            return {'FINISHED'} if done else {'CANCELLED'}
+        if _strip_over(context, win) is None:
             self.report({'WARNING'}, "No 3D View to put the shelf over")
             return {'CANCELLED'}
-        before = {a.as_pointer() for a in screen.areas}
-        px = STRIP_PX * context.preferences.system.ui_scale
-        factor = max(0.5, 1.0 - px / max(view3d.height, 1))
-        with context.temp_override(window=win, screen=screen, area=view3d, region=region):
-            bpy.ops.screen.area_split(direction='HORIZONTAL', factor=factor)
-        new = next((a for a in screen.areas if a.as_pointer() not in before), None)
-        if new is None:
-            return {'CANCELLED'}
-        new.type = 'IMAGE_EDITOR'
-        make_strip(new.spaces.active)
         return {'FINISHED'}
+
+
+def _strip_over(context, win):
+    """Split the Status Line + Shelf strip off the top of ``win``'s largest 3D View; the new area or None."""
+    from .status_line import main_view3d
+    screen = win.screen
+    view3d, region = main_view3d(screen)
+    if view3d is None:
+        return None
+    before = {a.as_pointer() for a in screen.areas}
+    px = STRIP_PX * context.preferences.system.ui_scale
+    factor = max(0.5, 1.0 - px / max(view3d.height, 1))
+    with context.temp_override(window=win, screen=screen, area=view3d, region=region):
+        bpy.ops.screen.area_split(direction='HORIZONTAL', factor=factor)
+    new = next((a for a in screen.areas if a.as_pointer() not in before), None)
+    if new is None:
+        return None
+    new.type = 'IMAGE_EDITOR'
+    make_strip(new.spaces.active)
+    return new
 
 
 # Shelf buttons are 35x34 with 32 px icons.

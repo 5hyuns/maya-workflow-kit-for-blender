@@ -15,6 +15,9 @@ without reading rects (areas get their rects one tick after a split).
 
 Space tap / Panels > Layouts > Single Perspective View leave the four view by joining the other three areas into the
 panel under the mouse (or the persp panel) with ``screen.area_join`` (GUI only).
+A panel of the four view is never split for anything else: a dock (Tool Settings, the Channel Box stack, the Outliner,
+a docked editor, the shelf) goes beside the whole four view and a kit window's place is carved out of the whole view,
+both with the four view folded into one panel for a moment (``in_one_panel``; a Space tap waits meanwhile).
 A panel of the four view may be any editor (Graph Editor, render view, Outliner ...), like a Maya panel: the four view
 is the 2 x 2 block of areas inside the rectangle recorded on the screen (``rect``, window px), whatever their editor
 types, and each role keeps its editor type across four <-> one. Outside that block a Space tap maximizes the pane.
@@ -486,13 +489,15 @@ def _join_into(context, window, placed, keep_role):
 def tap(context, area=None, window=None):
     """Maya Space tap over ``area``: in the four view the panel under the mouse (any editor) stays alone; the panel
     the four view was folded into (or any 3D View panel) becomes the four view again. Returns 'single' / 'four' when
-    done, 'failed' when Blender refused the split / join, None when ``area`` is no panel of the layout (the caller
-    maximizes it)."""
+    done, 'failed' when Blender refused the split / join (or the four view is folded for a moment, ``busy``), None
+    when ``area`` is no panel of the layout (the caller maximizes it)."""
     window = window or context.window
     area = area or context.area
     from .toolbox import is_toolbox
     if window is None or area is None or (area.type == 'VIEW_3D' and is_toolbox(area.spaces.active)):
         return None
+    if busy(window):
+        return "failed"
     screen = window.screen
     four = block(screen)
     if four:
@@ -540,6 +545,105 @@ def set_layout(context, window, four, area=None):
     if kept is not None and kept.type != 'VIEW_3D':
         kept.ui_type = 'VIEW_3D'          # Maya Single Perspective View = the persp camera's panel
     return kept
+
+
+# --- docks and kit windows beside the whole four view ----------------------------------------------------------
+
+_folded = set()          # window pointers whose four view is folded into one panel for a moment
+
+
+def busy(window):
+    return window is not None and window.as_pointer() in _folded
+
+
+def fold(context, window, keep=None):
+    """Fold the four view of ``window`` into one panel for a moment (``keep``: the panel that stays, else persp). The
+    panel, or None. ``unfold`` brings the four view back."""
+    kept = leave(context, keep=keep, window=window, role=None if keep is not None else "persp")
+    if kept is not None:
+        _folded.add(window.as_pointer())
+    return kept
+
+
+def unfold(context, window, panel):
+    """The four view again in ``panel`` (``fold``); its panels get their settings back. ``busy`` until the four view
+    is whole (its top row is split a tick later)."""
+    ptr = window.as_pointer()
+    if panel is None or is_four(window.screen) or not enter(context, panel, window):
+        _folded.discard(ptr)
+        return
+    from .. import live_refs
+    tries = [25]
+
+    def whole():
+        win = live_refs.window(ptr)
+        tries[0] -= 1
+        if win is None or len(block(win.screen)) == 4 or tries[0] <= 0:
+            _folded.discard(ptr)
+            return None
+        return 0.02
+    bpy.app.timers.register(whole, first_interval=0.02)
+
+
+def in_one_panel(context, window, action, keep=None):
+    """Run ``action(context, window, panel)`` with the four view folded into one panel, then open the four view again
+    in that panel (one step per tick: Blender lays areas out between ticks). Used for a dock beside the whole four
+    view, never inside one of its panels. False when the four view could not be folded."""
+    from .. import live_refs
+    kept = fold(context, window, keep)
+    if kept is None:
+        return False
+    win_ptr, kept_ptr = live_refs.pointer(window), kept.as_pointer()
+
+    def again():
+        win, panel = live_refs.find_area(kept_ptr, win_ptr or None)
+        win = win or live_refs.window(win_ptr)
+        try:
+            if win is not None:
+                with bpy.context.temp_override(window=win):
+                    unfold(bpy.context, win, panel)
+            else:
+                _folded.discard(win_ptr)
+        except (ReferenceError, RuntimeError):
+            _folded.discard(win_ptr)
+        return None
+
+    def act():
+        win, panel = live_refs.find_area(kept_ptr, win_ptr or None)
+        if panel is None:
+            _folded.discard(win_ptr)
+            return None
+        try:
+            with bpy.context.temp_override(window=win):
+                action(bpy.context, win, panel)
+        except (ReferenceError, RuntimeError):
+            pass
+        bpy.app.timers.register(again, first_interval=0.0)
+        return None
+    bpy.app.timers.register(act, first_interval=0.0)
+    return True
+
+
+def beside(screen, area):
+    """True when ``area`` (not a panel) shares most of one side of the four view on ``screen``: a dock column or row
+    beside the whole view."""
+    four = block(screen) if screen is not None else {}
+    if not four or area is None or area.as_pointer() in {a.as_pointer() for a in four.values()}:
+        return False
+    r, q, gap = union(rect(a) for a in four.values()), rect(area), border_gap()
+
+    def shared(lo0, hi0, lo1, hi1):
+        return min(hi0, hi1) - max(lo0, lo1)
+    if abs(q[2] - r[0]) <= gap or abs(q[0] - r[2]) <= gap:            # left / right of the view
+        return shared(q[1], q[3], r[1], r[3]) > 0.6 * (r[3] - r[1])
+    if abs(q[3] - r[1]) <= gap or abs(q[1] - r[3]) <= gap:            # below / above it
+        return shared(q[0], q[2], r[0], r[2]) > 0.6 * (r[2] - r[0])
+    return False
+
+
+def pane_of(screen, area):
+    """True when ``area`` is one of the panels of the four view on ``screen``."""
+    return area is not None and area.as_pointer() in {a.as_pointer() for a in block(screen).values()}
 
 
 def collapse_all(context):
