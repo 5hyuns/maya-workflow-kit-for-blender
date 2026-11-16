@@ -20,7 +20,7 @@ def draw_transport(layout, context):
     row = layout.row(align=True)
     row.operator("screen.frame_jump", text="", icon='REW').end = False
     row.operator("screen.frame_offset", text="", icon='TRIA_LEFT_BAR').delta = -1
-    row.operator("screen.keyframe_jump", text="", icon='PREV_KEYFRAME').next = False
+    row.operator("allset.key_jump", text="", icon='PREV_KEYFRAME').next = False
     if screen.is_animation_playing:
         row.scale_x = 2
         row.operator("screen.animation_play", text="", icon='PAUSE')
@@ -28,7 +28,7 @@ def draw_transport(layout, context):
     else:
         row.operator("screen.animation_play", text="", icon='PLAY_REVERSE').reverse = True
         row.operator("screen.animation_play", text="", icon='PLAY')
-    row.operator("screen.keyframe_jump", text="", icon='NEXT_KEYFRAME').next = True
+    row.operator("allset.key_jump", text="", icon='NEXT_KEYFRAME').next = True
     row.operator("screen.frame_offset", text="", icon='TRIA_RIGHT_BAR').delta = 1
     row.operator("screen.frame_jump", text="", icon='FF').end = True
 

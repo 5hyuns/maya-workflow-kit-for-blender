@@ -20,8 +20,10 @@ def patch_key_stepping(kd):
     kd.remove("3D View", "wm.call_menu_pie", type="COMMA")       # orientation pie
     kd.remove("Image", "wm.call_menu_pie", type="PERIOD")        # UV pivot pie
     keep = ("Outliner", "Clip Editor")
-    _add(kd, "Frames", "screen.keyframe_jump", make_event("PERIOD"), {"next": True}, shadows=keep)
-    _add(kd, "Frames", "screen.keyframe_jump", make_event("COMMA"), {"next": False}, shadows=keep)
+    # . , step through the keys the Time Slider shows (Maya findKeyframe -timeSlider): not a deformer's keys on the
+    # deformed object, round from the last key to the first
+    _add(kd, "Frames", "allset.key_jump", make_event("PERIOD"), {"next": True}, shadows=keep)
+    _add(kd, "Frames", "allset.key_jump", make_event("COMMA"), {"next": False}, shadows=keep)
     _add(kd, "Frames", "screen.frame_offset", make_event("PERIOD", alt=True, repeat=True), {"delta": 1})
     _add(kd, "Frames", "screen.frame_offset", make_event("COMMA", alt=True, repeat=True), {"delta": -1})
     # Maya Previous / Next Blue Pencil Frame = Alt+< / Alt+> (the < > characters as for Grow / Shrink: Shift+, /

@@ -20,7 +20,7 @@ def _kmis(km, type, **mods):
 def test_stepping_keys():
     for key, nxt in (("PERIOD", True), ("COMMA", False)):
         k = _kmis("Frames", key)
-        assert [i.idname for i in k] == ["screen.keyframe_jump"] and k[0].properties.next is nxt, key
+        assert [i.idname for i in k] == ["allset.key_jump"] and k[0].properties.next is nxt, key
         k = _kmis("Frames", key, alt=True)
         assert [i.idname for i in k] == ["screen.frame_offset"], key
         assert k[0].properties.delta == (1 if nxt else -1) and k[0].repeat, key

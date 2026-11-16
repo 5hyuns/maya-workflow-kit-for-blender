@@ -382,7 +382,8 @@ def test_big_edit_mesh_without_point_keys_is_not_walked():
 
 def test_time_slider_skips_the_curves_of_objects_without_animation():
     """Thousands of selected props: an object without animation data is not looked through for its curves or
-    animation layers; keyed objects and keyed blendShape weights of an unkeyed mesh still give their ticks."""
+    animation layers; keyed objects still give their ticks (the keyed blendShape weights of an unkeyed mesh don't: like
+    Maya, they are the blendShape node's keys)."""
     al = import_module(kit.MODULE + ".operators.anim_layers")
     _clear()
     scene = bpy.context.scene
@@ -408,7 +409,6 @@ def test_time_slider_skips_the_curves_of_objects_without_animation():
         for fc in tk.node_fcurves(ob):
             for kp in fc.keyframe_points:
                 want[round(kp.co.x, 3)] = False
-    want[17.0] = False
     with _Count(tk, "node_fcurves") as looks, _Count(al, "hidden_base_curves") as layers:
         got = ts.key_frames(nodes)
     assert got == sorted(want.items()), got

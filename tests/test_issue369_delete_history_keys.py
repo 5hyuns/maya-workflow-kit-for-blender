@@ -162,3 +162,51 @@ def test_time_slider_does_not_show_the_deformer_keys_with_mesh_or_handle():
     assert _ticks(cube, handle) == [12]
     # the deformer's curves are still there for the Graph Editor / Dope Sheet
     assert 'modifiers["squash1"].factor' in _paths(cube)
+
+
+def _jump(nxt):
+    assert bpy.ops.allset.key_jump(next=nxt) in ({'FINISHED'}, {'CANCELLED'})
+    return bpy.context.scene.frame_current
+
+
+def test_next_previous_key_step_through_the_time_slider_keys():
+    """. / , go to the keys the Time Slider shows: with the cube selected its own keys only, round from the last key
+    to the first; with the handle selected there is none (the time stays)."""
+    _fresh()
+    cube = _cube("pCube1")
+    handle = _squash(cube)
+    cube.keyframe_insert("location", index=1, frame=16)
+    _select(cube)
+    bpy.context.scene.frame_set(1)
+    assert [_jump(True) for _ in range(3)] == [12, 16, 12], "the factor keys (5, 20) are skipped, round to 12"
+    bpy.context.scene.frame_set(24)
+    assert [_jump(False) for _ in range(3)] == [16, 12, 16]
+    _select(handle)
+    bpy.context.scene.frame_set(3)
+    assert _jump(True) == 3 and _jump(False) == 3, "no keys: the time stays"
+    menu_map = import_module(kit.MODULE + ".ui.menu_map")
+    assert menu_map.MAP["Playback/Next Key"] == ("allset.key_jump", {"next": True})
+
+
+def test_time_slider_edits_leave_the_deformer_keys():
+    """The Time Slider menu acts on the selection's own keys: Delete at frame 5 with the cube selected keeps the
+    factor key there; Set Range to Min/Max spans the cube's keys only; Copy takes no factor key."""
+    _fresh()
+    cube = _cube("pCube1")
+    _squash(cube)
+    _select(cube)
+    bpy.context.scene.frame_set(5)
+    bpy.ops.allset.time_keys(action="DELETE")
+    fc = next(f for f in compat.id_fcurves(cube) if f.data_path == 'modifiers["squash1"].factor')
+    assert [round(k.co.x) for k in fc.keyframe_points] == [5, 20], "the factor key at 5 stays"
+    bpy.context.scene.frame_set(12)
+    bpy.ops.allset.time_keys(action="DELETE")
+    assert "location" not in _paths(cube), "the cube's own key at 12 goes"
+    cube.keyframe_insert("location", index=0, frame=8)
+    cube.keyframe_insert("location", index=0, frame=14)
+    bpy.ops.allset.time_set_range(mode="MIN_MAX")
+    sc = bpy.context.scene
+    assert (sc.frame_preview_start, sc.frame_preview_end) == (8, 14), "not stretched to the factor keys (5, 20)"
+    time_keys = import_module(kit.MODULE + ".operators.time_keys")
+    assert time_keys.copy_keys(bpy.context, 5, 5) == 0, "no key of the cube's own at 5 to copy"
+    assert time_keys.copy_keys(bpy.context, 8, 8) == 1

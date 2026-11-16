@@ -164,7 +164,7 @@ class ALLSET_OT_time_range_drag(bpy.types.Operator):
         a, b = sorted(wm.allset_time_range)
         curves, seen = [], set()
         for node in time_keys.nodes(context):
-            for fc in time_keys.node_fcurves(node):
+            for fc in time_keys.slider_fcurves(node):
                 if fc.as_pointer() in seen:
                     continue
                 seen.add(fc.as_pointer())

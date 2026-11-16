@@ -184,15 +184,25 @@ def test_drawn_row_is_a_selectable_channel():
     assert texts == ["smile", "frown"], texts
 
 
-def test_time_slider_ticks_show_weight_keys():
+def test_time_slider_leaves_out_weight_keys():
+    """Like Maya, the weight keys belong to the blendShape node: the Time Slider of the selected mesh shows, steps
+    through and copies the mesh's own keys only (the weight keys stay in the Graph Editor / Dope Sheet)."""
     a, _b = _scene()
     ts = import_module(kit.MODULE + ".ui.time_slider")
+    time_keys = import_module(kit.MODULE + ".operators.time_keys")
     kb = a.data.shape_keys.key_blocks["smile"]
     kb.value = 0.5
     a.data.shape_keys.keyframe_insert(cb.blend_path("smile"), frame=7)
+    a.keyframe_insert("location", index=0, frame=3)
+    for o in bpy.context.scene.objects:
+        o.select_set(o == a)
+    bpy.context.view_layer.objects.active = a
     frames = [f for f, _bd in ts.key_frames([a])]
-    assert 7.0 in frames, frames
-    # the Basis (not a target) never adds ticks
-    a.data.shape_keys.key_blocks["Basis"].keyframe_insert("value", frame=12)
-    frames = [f for f, _bd in ts.key_frames([a])]
-    assert 12.0 not in frames, frames
+    assert frames == [3.0], frames
+    bpy.context.scene.frame_set(1)
+    bpy.ops.allset.key_jump(next=True)
+    assert bpy.context.scene.frame_current == 3
+    bpy.ops.allset.key_jump(next=True)
+    assert bpy.context.scene.frame_current == 3, "round to the only key, the weight key at 7 is skipped"
+    assert time_keys.copy_keys(bpy.context, 7, 7) == 0
+    assert compat.id_fcurves(a.data.shape_keys), "the weight curve stays"

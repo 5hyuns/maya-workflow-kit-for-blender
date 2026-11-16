@@ -249,9 +249,9 @@ ENTRIES = {
     "EnterEditMode": _e("KIT", (OBJ, "allset.pivot_toggle", {}),
                         note="피벗 편집 토글: 오브젝트 모드 = Translate 불변; 편집 모드 = 3D 커서 피벗 + 커서 툴, 면 클릭 방향 = Maya Pivot"),
     # --- key / frame keys ---
-    "NextKey": _e("KIT", ("Frames", "screen.keyframe_jump", {"next": True}),
+    "NextKey": _e("KIT", ("Frames", "allset.key_jump", {"next": True}),
                   note="Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로"),
-    "PreviousKey": _e("KIT", ("Frames", "screen.keyframe_jump", {"next": False}),
+    "PreviousKey": _e("KIT", ("Frames", "allset.key_jump", {"next": False}),
                       note="3D View 방향 파이는 헤더로"),
     "NextFrame": _e("KIT", ("Frames", "screen.frame_offset", {"delta": 1}), note="누르고 있으면 반복"),
     "PreviousFrame": _e("KIT", ("Frames", "screen.frame_offset", {"delta": -1})),

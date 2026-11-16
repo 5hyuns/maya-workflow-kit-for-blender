@@ -7,7 +7,7 @@ used by option_windows_edit, graph_key_menu and time_keys (which re-exports thes
 
 import math
 
-from .key_nodes import _cb, _move, node_fcurves, nodes, prefix
+from .key_nodes import _cb, _move, node_fcurves, nodes, prefix, slider_fcurves
 
 _CLIPBOARD = {"nodes": [], "span": 0.0, "start": 0.0}
 
@@ -30,10 +30,12 @@ class KeyScope:
     NAMES = ("objects", "hierarchy", "channels", "driven", "shapes", "time_range", "start", "end")
 
     def __init__(self, objects="Selected", hierarchy="Selected", channels="All keyable", driven=False, shapes=True,
-                 time_range="All", start=0.0, end=10.0):
+                 time_range="All", start=0.0, end=10.0, slider=False):
         self.objects, self.hierarchy, self.channels = objects, hierarchy, channels
         self.driven, self.shapes = driven, shapes
         self.time_range, self.start, self.end = time_range, start, end
+        # a Time Slider edit: the curves the Time Slider shows (no deformer node's, no blendShape weight's)
+        self.slider = slider
 
     @classmethod
     def of(cls, values):
@@ -103,7 +105,7 @@ def scope_curves(context, scope):
         pre = prefix(node)
         allowed = _channel_filter(context, node) if scope.channels == "From Channel Box" else None
         coll = _cb()._fcurves(node)
-        for fc in node_fcurves(node):
+        for fc in (slider_fcurves(node) if scope.slider else node_fcurves(node)):
             if allowed is None or (fc.data_path, fc.array_index) in allowed:
                 add(node, "node", coll, fc, fc.data_path[len(pre):])
         ad = node.id_data.animation_data
@@ -115,7 +117,7 @@ def scope_curves(context, scope):
         if scope.shapes and allowed is None and not _cb().is_bone(node):
             data = getattr(node, "data", None)
             for part, idb in (("data", data), ("shape", getattr(data, "shape_keys", None))):
-                if idb is None:
+                if idb is None or (part == "shape" and scope.slider):    # Time Slider: not the blendShape node's
                     continue
                 for fc in compat.id_fcurves(idb):
                     add(node, part, compat.id_fcurve_collection(idb), fc, fc.data_path)

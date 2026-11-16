@@ -7292,7 +7292,9 @@
    "Breakdown": "Breakdown",
    "Channels": "Channels",
    "Global Key": "Global Key",
+   "Jump to Key": "Jump to Key",
    "Min/Max": "Min/Max",
+   "Next": "Next",
    "Rotate": "Rotate",
    "Run from a global hotkey: only in object / pose mode (S also in component mode)": "Run from a global hotkey: only in object / pose mode (S also in component mode)",
    "Scale": "Scale",
@@ -10413,6 +10415,7 @@
   },
   "Tooltips/operators/time_keys": {
    "Edit the selection's keys in the Time Slider range (Shift-drag), else at the current frame (Maya Time Slider menu)": "Edit the selection's keys in the Time Slider range (Shift-drag), else at the current frame (Maya Time Slider menu)",
+   "Go to the next / previous key the Time Slider shows (Maya . / ,)": "Go to the next / previous key the Time Slider shows (Maya . / ,)",
    "Set a key on every keyable channel of the selection (Maya S); the active keying set if there is one": "Set a key on every keyable channel of the selection (Maya S); the active keying set if there is one",
    "Set the playback range (Maya Time Slider > Set Range to)": "Set the playback range (Maya Time Slider > Set Range to)"
   },
