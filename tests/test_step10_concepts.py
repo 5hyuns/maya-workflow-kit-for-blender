@@ -188,15 +188,34 @@ def test_freeze_negative_scale_keeps_normals_out():
     assert _outward(ob)
 
 
-def test_freeze_shared_mesh_made_single_user():
+def _shared_pair():
     _fresh()
     a = _transformed(_cube("a"))
     b = bpy.data.objects.new("b", a.data)
     bpy.context.scene.collection.objects.link(b)
     _update()
-    b_before = _world_verts(b)
+    return a, b
+
+
+def test_freeze_leaves_a_shared_mesh_alone_by_default():
+    a, b = _shared_pair()           # like Maya: an instance is not frozen (a warning), it keeps sharing its mesh
+    loc, a_before, b_before = tuple(a.location), _world_verts(a), _world_verts(b)
     _select([a])
     bpy.ops.allset.freeze_transform()
+    assert a.data is b.data and tuple(a.location) == loc
+    assert _close_vs(_world_verts(a), a_before) and _close_vs(_world_verts(b), b_before)
+
+
+def test_freeze_shared_mesh_made_single_user_with_the_preference():
+    a, b = _shared_pair()
+    prefs = bpy.context.preferences.addons[kit.MODULE].preferences
+    b_before = _world_verts(b)
+    _select([a])
+    prefs.unshare_instances = True
+    try:
+        bpy.ops.allset.freeze_transform()
+    finally:
+        prefs.unshare_instances = False
     assert a.data is not b.data
     assert _close_vs(_world_verts(b), b_before)
 

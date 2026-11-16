@@ -5790,6 +5790,7 @@
   "Labels/operators/freeze": {
    "Center Pivot": "Center Pivot",
    "Freeze Transformations": "Freeze Transformations",
+   "Not frozen, an instance shares its geometry: {names}": "Not frozen, an instance shares its geometry: {names}",
    "Reset Transformations": "Reset Transformations",
    "Rotate": "Rotate",
    "Scale": "Scale",

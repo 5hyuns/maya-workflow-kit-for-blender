@@ -6558,4 +6558,5 @@ STRINGS = {
     'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '将选定网格的置换修改器烘焙到新的多边形对象中；原对象保留（Maya 修改 > 转化 > 置换到多边形）',
     'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': '用此毛发雕刻笔刷修饰毛发（Maya 生成 > 交互式修饰工具）',
     'Grooming Tool': '梳理工具',
+    'Not frozen, an instance shares its geometry: {names}': '未冻结，实例共享其几何体: {names}',
 }

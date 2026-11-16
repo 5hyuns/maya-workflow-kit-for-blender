@@ -6459,4 +6459,5 @@ STRINGS = {
     'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '選択したメッシュのディスプレイスモディファイアを新しいポリゴン オブジェクトにベイクします。元のオブジェクトは残ります (Maya の修正 > 変換 > ディスプレイスメントをポリゴンに)',
     'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': 'このヘアスカルプトブラシでヘアをグルーミングします (Maya の生成 > インタラクティブグルーミングツール)',
     'Grooming Tool': 'グルーミングツール',
+    'Not frozen, an instance shares its geometry: {names}': 'フリーズしません。インスタンスはジオメトリを共有しています: {names}',
 }

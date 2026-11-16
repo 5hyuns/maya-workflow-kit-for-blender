@@ -20,7 +20,7 @@ import bpy
 from bpy.props import BoolProperty
 from mathutils import Matrix, Vector
 
-from .. import results
+from .. import i18n, results
 
 # Object types whose data can absorb a matrix (``ID.transform``).
 BAKE_TYPES = {'MESH', 'CURVE', 'SURFACE', 'LATTICE', 'META'}
@@ -112,16 +112,28 @@ def bake_into_data(ob, matrix):
     return copied
 
 
-def freeze(objects, translate=True, rotate=True, scale=True):
-    """Freeze ``objects`` and their descendants. Returns (frozen count, data copies)."""
+def freeze(objects, translate=True, rotate=True, scale=True, refuse=()):
+    """Freeze ``objects`` and their descendants. Returns (frozen count, data copies, objects not frozen).
+
+    ``refuse``: objects left as they are with everything below them, like Maya's instances; one under a frozen parent
+    takes the parent's change into its channels so it stays in place."""
     obs = hierarchy(objects)
     w_old = {ob: ob.matrix_world.copy() for ob in obs}
     w_new = {}
     copies = 0
+    skipped, refused = set(), []
     for ob in obs:
         frame = parent_frame(ob, w_old, w_new)
         moved = ob.parent in w_new and not _same(w_new[ob.parent], w_old[ob.parent])
         b_eff = frame.inverted_safe() @ w_old[ob] if moved else ob.matrix_basis.copy()
+        if ob.parent in skipped or ob in refuse:
+            if ob.parent not in skipped:
+                refused.append(ob)
+                if moved:
+                    ob.matrix_basis = b_eff
+            skipped.add(ob)
+            w_new[ob] = w_old[ob]
+            continue
         bake = ob.type in BAKE_TYPES and ob.data is not None
         t, q, s = b_eff.decompose()
 
@@ -148,7 +160,18 @@ def freeze(objects, translate=True, rotate=True, scale=True):
         if bake and not _is_identity(d):
             copies += bake_into_data(ob, d)
         w_new[ob] = frame @ b_new
-    return len(obs), copies
+    return len(obs) - len(skipped), copies, refused
+
+
+def instanced(ob):
+    """An instance Freeze leaves alone, like Maya: an object sharing its data with another one, or a group made by
+    (or copied by) Duplicate Special > Instance."""
+    from .duplicate import INSTANCE_TAG, is_instance
+    if ob.data is not None:
+        return is_instance(ob)
+    if ob.get(INSTANCE_TAG):
+        return True
+    return any(o.data is None and o.get(INSTANCE_TAG) == ob.name for o in bpy.data.objects)
 
 
 def reset(objects, translate=True, rotate=True, scale=True):
@@ -268,10 +291,17 @@ class ALLSET_OT_freeze_transform(_SelectedObjectsOp, bpy.types.Operator):
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
         from .. import preferences
-        # preference (off: an instance keeps sharing its data unless the freeze has something to bake into it)
-        copies = unshare(obs) if preferences.get(context).unshare_instances else 0
-        count, baked = freeze(obs, self.translate, self.rotate, self.scale)
+        refuse = ()
+        if preferences.get(context).unshare_instances:     # an instance becomes a plain object, then freezes
+            copies = unshare(obs)
+        else:                                               # like Maya: an instance is not frozen (a warning)
+            copies = 0
+            refuse = {ob for ob in hierarchy(obs) if instanced(ob)}
+        count, baked, refused = freeze(obs, self.translate, self.rotate, self.scale, refuse)
         copies += baked
+        if refused:
+            self.report({'WARNING'}, i18n.compose("Not frozen, an instance shares its geometry: {names}",
+                                                  names=", ".join(ob.name for ob in refused)))
         msg = f"Froze {count} object(s)"
         if copies:
             msg += f"; {copies} shared data block(s) made single user"

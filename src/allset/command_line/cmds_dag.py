@@ -48,7 +48,7 @@ def delete(*args, **kwargs):
     obs = _objects(names)
     if ch:
         from ..operators import history
-        history.delete_history(context, obs)
+        history.delete_history(context, obs, share=True)      # an instance's shared mesh, for all of them
         return None
     from ..operators import dag
     dag.delete_hierarchy(context, obs)

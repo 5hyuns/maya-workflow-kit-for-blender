@@ -70,7 +70,9 @@ def makeIdentity(*args, **kwargs):
         t = r = s = True
     _view_layer()
     if apply:
-        freeze.freeze(obs, translate=bool(t), rotate=bool(r), scale=bool(s))
+        # like Maya, an instance and what is below it is not frozen
+        freeze.freeze(obs, translate=bool(t), rotate=bool(r), scale=bool(s),
+                      refuse={o for o in freeze.hierarchy(obs) if freeze.instanced(o)})
     else:
         freeze.reset(freeze.hierarchy(obs), translate=bool(t), rotate=bool(r), scale=bool(s))
     _view_layer()

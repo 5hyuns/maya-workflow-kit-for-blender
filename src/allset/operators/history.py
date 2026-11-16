@@ -117,11 +117,14 @@ def drop_modifier_curves(ob, names):
     return n
 
 
-def _bake(context, ob, keep):
+def _bake(context, ob, keep, share=False):
     """Replace ``ob``'s mesh with its evaluated result, with the modifiers in ``keep``
     (names) switched off for the evaluation and kept afterwards. The removed modifiers' animation curves go too, and
-    so do the handles / lattices and the weights of the removed kit deformers (Maya deletes them with the node)."""
+    so do the handles / lattices and the weights of the removed kit deformers (Maya deletes them with the node).
+    ``share``: the other objects using the same mesh (instances) get the baked mesh too and lose the same modifiers,
+    like the shared shape of Maya's instances losing its history."""
     from . import deformers
+    sharers = [o for o in bpy.data.objects if o is not ob and o.data is ob.data] if share else []
     removed = [md for md in ob.modifiers if md.name not in keep]
     removed_names = [md.name for md in removed]
     helpers = [h for h in (_helper(md) for md in removed) if h is not None]
@@ -148,6 +151,11 @@ def _bake(context, ob, keep):
         if not mesh_maya.bool_users(operand):
             mesh_maya.delete_bool_input(operand)
     ob.data = mesh  # the evaluated copy has no shape keys: the mix is baked in
+    for other in sharers:
+        for md in [m for m in other.modifiers if m.name in removed_names]:
+            other.modifiers.remove(md)
+        other.data = mesh
+        drop_modifier_curves(other, removed_names)
     name = old.name
     if old.users == 0:
         bpy.data.meshes.remove(old)
@@ -161,8 +169,8 @@ def _bake(context, ob, keep):
             bpy.data.objects.remove(helper)
 
 
-def delete_history(context, objects, non_deformer=False, before_only=False):
-    """Bake history on mesh ``objects``. Returns (baked, notes).
+def delete_history(context, objects, non_deformer=False, before_only=False, share=False):
+    """Bake history on mesh ``objects``. Returns (baked, notes). ``share``: see ``_bake``.
 
     ``non_deformer``: Maya Delete Non-Deformer History keeps the deformers. Its option window:
     "All non-deformer history" (default, ``bakePartialHistory
@@ -195,7 +203,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             notes.append(f"{ob.name}: not a mesh, modifiers kept")
             continue
         if not non_deformer:
-            _bake(context, ob, keep=preview)
+            _bake(context, ob, share=share, keep=preview)
             from . import skin_follow
             skin_follow.detach(ob, keep_shape=True)      # the baked skin stays where it shows
             baked += 1
@@ -207,7 +215,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             if ob.data.shape_keys:
                 notes.append(f"{ob.name}: has shape keys, modelling modifiers kept")
                 continue
-            _bake(context, ob, keep=deformers | preview)
+            _bake(context, ob, share=share, keep=deformers | preview)
             baked += 1
             continue
         prefix = []
@@ -223,7 +231,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
         rest = [md.name for md in history if md.name not in prefix]
         if any(not is_deformer(ob.modifiers[n]) for n in rest):
             notes.append(f"{ob.name}: modifiers after a deformer kept")
-        _bake(context, ob, keep=set(rest) | preview)
+        _bake(context, ob, share=share, keep=set(rest) | preview)
         baked += 1
     return baked, notes
 
@@ -284,7 +292,8 @@ def delete_by_type(context, kind, objects):
     """Delete ``kind`` from ``objects``. Returns (count, notes)."""
     objects = list(objects)
     if kind in ('HISTORY', 'NON_DEFORMER_HISTORY'):
-        return delete_history(context, objects, kind == 'NON_DEFORMER_HISTORY')
+        # an instance's shared mesh loses its history for every object that shares it, like Maya
+        return delete_history(context, objects, kind == 'NON_DEFORMER_HISTORY', share=True)
     n = 0
     if kind in ('CLUSTERS', 'IK_HANDLES'):     # the kit's cluster / IK handle nodes with their handles
         from . import by_type
@@ -358,10 +367,11 @@ class ALLSET_OT_delete_history(bpy.types.Operator):
         from .group import selected_objects
         objects = selected_objects(context)   # with groups a 3D View hides by its Locators filter
         # preference: an instance becomes a plain object first, so the original keeps its history (off: like Maya,
-        # the shared data loses its history, on the original too)
+        # the shared mesh loses its history, on every object that shares it)
         from .. import preferences
-        copies = unshare(objects) if preferences.get(context).unshare_instances else 0
-        baked, notes = delete_history(context, objects, self.non_deformer, self.before_only)
+        unshare_first = preferences.get(context).unshare_instances
+        copies = unshare(objects) if unshare_first else 0
+        baked, notes = delete_history(context, objects, self.non_deformer, self.before_only, share=not unshare_first)
         for note in notes:
             self.report({'WARNING'}, note)
         msg = f"Deleted history on {baked} object(s)"
