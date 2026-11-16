@@ -104,9 +104,18 @@ def foreign_result():
     check('Object G reaches Repeat ahead of foreign G menus', count() == C['before_foreign'] + 1 and C['foreign_calls'] == 0)
     tap('ESC')
     with override():
-        # In Edit Mesh, a repeated extrusion changes the new face selection.
+        # In Edit Mesh, a repeated extrusion extrudes the new face again. One face of the cube: extruding every face
+        # of a closed mesh leaves two closed shells (the moved faces and the old ones as a bottom), and extruding a
+        # closed shell again only moves it, like Maya (no new points to count).
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+        me = bpy.context.edit_object.data
+        bm = bmesh.from_edit_mesh(me)
+        for f in bm.faces:
+            f.select_set(False)
+        bm.faces.ensure_lookup_table()
+        bm.faces[0].select_set(True)
+        bmesh.update_edit_mesh(me)
         bpy.ops.allset.extrude('EXEC_DEFAULT', True)
     C['verts'] = len(bmesh.from_edit_mesh(bpy.context.edit_object.data).verts)
     hover()
