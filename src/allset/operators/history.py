@@ -41,9 +41,91 @@ def is_deformer(md):
     return deformers.base_of(md) is not None
 
 
+# Kit deformer nodes whose handle / lattice object goes with the node (Maya deletes bend1Handle, cluster1Handle,
+# softMod1Handle, ffd1Lattice + ffd1Base with their node; a wire's curves and a wrap's influence stay): node base ->
+# (modifier property holding the object, object types)
+_HELPERS = {"bend": ("origin", {'EMPTY'}), "twist": ("origin", {'EMPTY'}), "squash": ("origin", {'EMPTY'}),
+            "flare": ("origin", {'EMPTY'}), "sine": ("start_position_object", {'EMPTY'}),
+            "wave": ("start_position_object", {'EMPTY'}), "cluster": ("object", {'EMPTY'}),
+            "softMod": ("object", {'EMPTY'}), "ffd": ("object", {'LATTICE'})}
+_REFS = ("object", "origin", "start_position_object", "target", "texture_coords_object", "mirror_object",
+         "offset_object", "auxiliary_target")
+
+
+def _helper(md):
+    """The handle / lattice object Maya deletes with kit deformer ``md``, or None."""
+    from . import deformers
+    rule = _HELPERS.get(deformers.base_of(md))
+    if rule is None:
+        return None
+    ob = getattr(md, rule[0], None)
+    return ob if ob is not None and ob.type in rule[1] else None
+
+
+def _used(ob, scene):
+    """Something still points at ``ob``: a modifier or a constraint, or it has children."""
+    if ob.children:
+        return True
+    for o in scene.objects:
+        if o == ob:
+            continue
+        for md in getattr(o, "modifiers", ()):
+            if any(getattr(md, p, None) == ob for p in _REFS):
+                return True
+        cons = list(getattr(o, "constraints", ()))
+        if o.type == 'ARMATURE' and o.pose is not None:
+            cons += [c for pb in o.pose.bones for c in pb.constraints]
+        if any(getattr(c, "target", None) == ob for c in cons):
+            return True
+    return False
+
+
+def drop_modifier_curves(ob, names):
+    """Delete ``ob``'s F-curves and drivers of the modifiers ``names`` (removed modifiers: Maya deletes the
+    animation curves of the history nodes it deletes), then the channel groups left empty, and the object's action
+    when nothing is left in it. Returns the number of curves deleted."""
+    ad = ob.animation_data
+    if ad is None or not names:
+        return 0
+    heads = tuple(f'modifiers["{bpy.utils.escape_identifier(n)}"]' for n in names)
+    from .. import compat
+    n = 0
+    bags = []
+    if ad.action is not None and ad.action_slot is not None:
+        bags.append((ad.action, compat.channelbag(ad.action, ad.action_slot)))
+    for track in ad.nla_tracks:          # animation layers keep their keys in strips
+        for strip in track.strips:
+            if strip.action is not None and strip.action_slot is not None:
+                bags.append((strip.action, compat.channelbag(strip.action, strip.action_slot)))
+    for _action, bag in bags:
+        if bag is None:
+            continue
+        for fc in [f for f in bag.fcurves if f.data_path.startswith(heads)]:
+            bag.fcurves.remove(fc)
+            n += 1
+        for group in [g for g in bag.groups if not g.channels]:
+            bag.groups.remove(group)
+    for fc in [d for d in ad.drivers if d.data_path.startswith(heads)]:
+        ad.drivers.remove(fc)
+    action = ad.action
+    if n and action is not None and action.users == 1 and not action.use_fake_user \
+            and not compat.action_fcurves(action):
+        ad.action = None
+        bpy.data.actions.remove(action)
+        if not ad.drivers and not ad.nla_tracks:
+            ob.animation_data_clear()
+    return n
+
+
 def _bake(context, ob, keep):
     """Replace ``ob``'s mesh with its evaluated result, with the modifiers in ``keep``
-    (names) switched off for the evaluation and kept afterwards."""
+    (names) switched off for the evaluation and kept afterwards. The removed modifiers' animation curves go too, and
+    so do the handles / lattices and the weights of the removed kit deformers (Maya deletes them with the node)."""
+    from . import deformers
+    removed = [md for md in ob.modifiers if md.name not in keep]
+    removed_names = [md.name for md in removed]
+    helpers = [h for h in (_helper(md) for md in removed) if h is not None]
+    weights = [md.name for md in removed if deformers.base_of(md) is not None and md.name in ob.vertex_groups]
     saved = {}
     for md in ob.modifiers:
         if md.name in keep:
@@ -70,6 +152,13 @@ def _bake(context, ob, keep):
     if old.users == 0:
         bpy.data.meshes.remove(old)
     mesh.name = name
+    drop_modifier_curves(ob, removed_names)
+    for group in weights:
+        if group in ob.vertex_groups and not any(getattr(md, "vertex_group", "") == group for md in ob.modifiers):
+            ob.vertex_groups.remove(ob.vertex_groups[group])
+    for helper in dict.fromkeys(helpers):
+        if helper.name in bpy.data.objects and not _used(helper, context.scene):
+            bpy.data.objects.remove(helper)
 
 
 def delete_history(context, objects, non_deformer=False, before_only=False):

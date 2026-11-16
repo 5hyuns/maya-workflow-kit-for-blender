@@ -338,6 +338,7 @@ def key_frames(nodes, keep=False):
                     # the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
                     from ..operators import anim_layers
                     curves = list(curves) + anim_layers.hidden_base_curves(node, bpy.context.scene)
+                    curves = without_deformer_curves(node, curves)
             if isinstance(node, object_type):
                 curves = list(curves) + blend_weight_curves(node)
                 # component mode: the keys of the selected points (vertices / CVs / lattice points)
@@ -402,6 +403,20 @@ def _breakdown_value():
     if not _BREAKDOWN:
         _BREAKDOWN.append(bpy.types.Keyframe.bl_rna.properties["type"].enum_items["BREAKDOWN"].value)
     return _BREAKDOWN[0]
+
+
+def without_deformer_curves(ob, curves):
+    """``curves`` without those of ``ob``'s deformer nodes (``modifiers["squash1"].factor``): Maya's Time Slider shows
+    a deformer's keys while the deformer node itself is selected, not with the deformed object or the handle."""
+    mods = getattr(ob, "modifiers", None)
+    if not mods or not curves:
+        return curves
+    from ..operators import deformers
+    heads = tuple(f'modifiers["{bpy.utils.escape_identifier(md.name)}"]' for md in mods
+                  if deformers.base_of(md) is not None)
+    if not heads:
+        return curves
+    return [fc for fc in curves if not fc.data_path.startswith(heads)]
 
 
 def blend_weight_curves(ob):
