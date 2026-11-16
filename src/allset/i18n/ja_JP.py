@@ -6429,5 +6429,4 @@ STRINGS = {
     'Remember Panel Settings': 'パネル設定を記憶',
     'Tool Settings Tab': 'ツール設定タブ',
     'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': 'ツール設定を右の Maya ドックのタブとして、チャンネルボックスとアトリビュートエディタの隣に開きます (オフ: ビューポートの左の専用ドック)',
-    "Save the preferences. While Maya mode shows Maya's colours, the file gets your own theme": 'プリファレンスを保存します。Maya モードで Maya の色が表示されている間も、ファイルには自分のテーマが保存されます',
 }
