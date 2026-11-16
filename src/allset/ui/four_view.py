@@ -387,13 +387,15 @@ def factors(st):
     return _factor(y, SPLITS[0]), _factor(xt, SPLITS[1]), _factor(xb, SPLITS[1])
 
 
-def enter(context, area, window=None):
+def enter(context, area, window=None, whole=None):
     """``area`` (one panel, any editor) becomes the four view, in the proportions it had (``factors``). Returns the
     roles placed now ({} when it can't split: always in background mode, where a split-off area stays 0 x 0).
+    ``whole``: the panel's rect when its own is not laid out yet (a panel joined in this call keeps its old rect until
+    the screen is next laid out; splitting goes by the screen's corners, not by that rect).
 
-    Splits: ``area`` into its two rows, then the row ``area`` keeps into left / right. A just-split area has no size
-    until the next redraw (in the GUI too: splitting it in the same call fails), so the other row is split from a
-    timer one tick later (``_split_row_later``; pointers only, #36)."""
+    Splits: ``area`` into its two rows, then the row ``area`` keeps into left / right, then the other row (the area
+    the first split made already has its size) — all in this call, so the screen never shows a half-made four view;
+    a row without a size yet is split from a timer one tick later (``_split_row_later``; pointers only, #36)."""
     window = window or context.window
     screen = window.screen
     if bpy.app.background:
@@ -402,7 +404,7 @@ def enter(context, area, window=None):
     saved = st.get("panes", {})
     single = st.get("single", "persp")
     saved[single] = {**saved.get(single, {}), **capture_area(area)}
-    whole = list(rect(area))
+    whole = list(whole or rect(area))
     fy, ft, fb = factors(st)
     other = _split(context, window, area, 'HORIZONTAL', fy)
     if other is None:
@@ -414,12 +416,16 @@ def enter(context, area, window=None):
     if new is None:
         return {}
     left, right = (new, area) if f_now < 0.5 else (area, new)
-    placed = {roles_now[0]: left, roles_now[1]: right, roles_later[1]: other}    # the other row: one panel for now
+    placed = {roles_now[0]: left, roles_now[1]: right, roles_later[1]: other}    # the other row: one panel so far
     st.update(on=True, panes=saved, rect=whole)
     _save_state(screen, st)
+    third = _split(context, window, other, 'VERTICAL', f_later) if other.width > 1 and other.height > 1 else None
+    if third is not None:
+        placed[roles_later[0]], placed[roles_later[1]] = (third, other) if f_later < 0.5 else (other, third)
     for role, a in placed.items():
         _place(context, role, a, saved, window)
-    _split_row_later(window.as_pointer(), other.as_pointer(), f_later, roles_later)
+    if third is None:
+        _split_row_later(window.as_pointer(), other.as_pointer(), f_later, roles_later)
     return placed
 
 
@@ -601,30 +607,31 @@ def fold(context, window, keep=None):
     return kept
 
 
-def unfold(context, window, panel):
-    """The four view again in ``panel`` (``fold``); its panels get their settings back. ``busy`` until the four view
-    is whole (its top row is split a tick later)."""
+def unfold(context, window, panel, whole=None):
+    """The four view again in ``panel`` (``fold``); its panels get their settings back. ``whole``: the panel's rect
+    when it was just joined (``enter``). ``busy`` until the four view is whole."""
     ptr = window.as_pointer()
-    if panel is None or is_four(window.screen) or not enter(context, panel, window):
+    if panel is None or is_four(window.screen) or not enter(context, panel, window, whole):
         _folded.discard(ptr)
         return
+    release_when_whole(window)
+
+
+def release_when_whole(window, tries=25):
+    """``busy`` ends once the screen shows four whole panels again (areas changed in a call get their rects when the
+    screen is next laid out, between ticks)."""
     from .. import live_refs
-    tries = [25]
+    ptr = window.as_pointer()
+    left = [tries]
 
     def whole():
         win = live_refs.window(ptr)
-        tries[0] -= 1
-        if win is None or len(block(win.screen)) == 4 or tries[0] <= 0:
+        left[0] -= 1
+        if win is None or len(block(win.screen)) == 4 or left[0] <= 0:
             _folded.discard(ptr)
             return None
         return 0.02
-    bpy.app.timers.register(whole, first_interval=0.02)
-
-
-def laid_out(area, r, tol=4):
-    """True when ``area`` covers the rect ``r``. A joined area gets its rect when the screen is next laid out (between
-    ticks), not in the call that joined it."""
-    return area is not None and abs(area.width - (r[2] - r[0])) <= tol and abs(area.height - (r[3] - r[1])) <= tol
+    bpy.app.timers.register(whole, first_interval=0.0)
 
 
 def in_one_panel(context, window, action, keep=None):

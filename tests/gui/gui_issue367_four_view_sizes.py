@@ -1,10 +1,13 @@
-"""Issue #367 follow-up: the four view keeps its panel sizes, like Maya's panel layout.
+"""Issue #367 follow-up: the four view keeps its panel sizes and barely changes on screen while a kit window opens or
+a dock is put beside it, like Maya's panel layout.
 
 The four view gets uneven proportions (rows 35 / 65, top row 62 / 38, bottom row 41 / 59). They stay the same (within
-a pixel or two) after a Space tap round trip, after a Cube option window opened from the persp panel, after the Tool
-Settings window opened from the four view (its place is carved out of the view folded into one panel for a moment) and after the Channel Box tab stack is hidden and shown
-(a dock beside the whole view). A fast timer measures how long the view is folded each time: two ticks for a dock,
-a few for a window's carve (printed; the bound is loose, a tick is one redraw of the layout)."""
+a pixel or two) after a Space tap round trip, after the Tool Settings window opens at a size that fits in the panel
+(its place is cut out of that panel alone: the other three panels never change), after it opens at a remembered size
+bigger than the panel (cut out of the whole view, folded into one panel for a moment, so the window keeps its size)
+and after the Channel Box tab stack is hidden and shown (a dock beside the whole view). A fast timer records every
+tick in which the screen shows something else than four whole panels and which panels changed; the times are printed
+(a tick is one redraw of the layout) and loosely bounded. A Space tap still works after each."""
 
 import os
 import sys
@@ -17,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim  # noqa: E402
 from sim import MODULE, check, ev, load_maya_layout, run, setup, step, win  # noqa: E402
 
-GUI_TIMEOUT = 240
+GUI_TIMEOUT = 300
 C = {}
 WANT = [0.35, 0.62, 0.41]           # bottom row share, top row's left share, bottom row's left share
 
@@ -73,25 +76,94 @@ def space_over(get):
     step(redraw)
 
 
+def space_round_trip(label):
+    space_over(lambda: fv().roles(win().screen)["side"])
+
+    def one():
+        check(f"{label}: Space keeps one panel", fv().single(win().screen) is not None
+              and len(fv().panes(win().screen)) == 1)
+    step(one)
+    space_over(lambda: fv().single(win().screen))
+
+    def four():
+        check(f"{label}: Space brings the four view back with its proportions ({props()} vs {C['p0']})",
+              len(fv().block(win().screen)) == 4 and near(props(), C["p0"]))
+    step(four)
+
+
+def _rects():
+    return {fv().rect(a) for a in win().screen.areas if a.type == 'VIEW_3D'}
+
+
 def _watch():
+    """Every tick: what the screen shows differs from four whole panels -> which of the first panels are gone."""
     if not C.get("watch"):
         return None
-    folded = len(fv().block(win().screen)) != 4 or fv().busy(win())
     now = time.perf_counter()
-    if folded:
-        C["folded"] = C.get("folded", 0.0) + (now - C["last"])
+    whole = len(fv().block(win().screen)) == 4 and not fv().busy(win())
+    if not whole:
+        C["ms"] += now - C["last"]
+        C["ticks"] += 1
+        C["changed"] |= C["panes"] - _rects()
     C["last"] = now
-    return 0.002
+    return 0.0
+
+
+def _drawn():
+    """A draw of the main window: when the screen it draws is not four whole panels, that frame shows the change."""
+    if C.get("watch") and bpy.context.window == win() and len(fv().block(win().screen)) != 4:
+        C["drawn"].append(time.perf_counter())
+
+
+def frames(times, gap=0.04):
+    """Draw passes among draw callback times (one pass draws many regions within a few ms)."""
+    n, last = 0, None
+    for t in sorted(times):
+        if last is None or t - last > gap:
+            n += 1
+        last = t
+    return n
 
 
 def watch_on():
-    C["folded"], C["last"], C["watch"] = 0.0, time.perf_counter(), True
+    C.update(ms=0.0, ticks=0, changed=set(), last=time.perf_counter(), watch=True, drawn=[],
+             panes={fv().rect(a) for a in fv().block(win().screen).values()})
+    if "handles" not in C:
+        C["handles"] = [(cls, cls.draw_handler_add(_drawn, (), 'WINDOW', 'POST_PIXEL'))
+                        for cls in (bpy.types.SpaceView3D, bpy.types.SpaceInfo, bpy.types.SpaceProperties,
+                                    bpy.types.SpaceOutliner)]
     bpy.app.timers.register(_watch, first_interval=0.0)
 
 
-def watch_off():
+def watch_off(label):
     C["watch"] = False
-    return round(1000 * C.get("folded", 0.0))
+    ms, panes, shown = round(1000 * C["ms"]), len(C["changed"]), frames(C["drawn"])
+    print(f"CHANGED {label}: {ms} ms busy ({C['ticks']} ticks), {shown} frames drawn with the change, {panes} panels",
+          flush=True)
+    return ms, panes
+
+
+def ts_open(remember=None):
+    def go():
+        wp = mod("ui.window_places")
+        wp._places.pop(mod("ui.tool_dock").KIND, None)
+        if remember:
+            w = win()
+            top = fv().roles(w.screen)["top"]
+            wp.remember(mod("ui.tool_dock").KIND, (w.x + top.x, w.y + top.y, *remember))
+        mod("ui.tool_dock").set_docked(False)
+        watch_on()
+        with override(fv().roles(win().screen)["persp"]):
+            bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')      # Maya's floating Tool Settings window
+    return go
+
+
+def ts_close():
+    win_ts, _area = mod("ui.tool_dock").find_any()
+    if win_ts is not None and win_ts != win():
+        with bpy.context.temp_override(window=win_ts):
+            bpy.ops.wm.window_close()
+    return win_ts
 
 
 @step
@@ -121,51 +193,45 @@ def s_uneven_check():
     check(f"the four view comes back with its proportions ({C['p0']} vs {WANT})", near(C["p0"], WANT, 0.02))
 
 
-space_over(lambda: fv().roles(win().screen)["side"])
-space_over(lambda: fv().single(win().screen))
+space_round_trip("round trip")
 
-
-@step
-def s_space_check():
-    check(f"a Space tap round trip keeps them ({props()} vs {C['p0']})", near(props(), C["p0"]))
-    watch_on()
-    with override(fv().roles(win().screen)["persp"]):
-        bpy.ops.allset.option_editor_open(key='poly_cube')
-
-
-wait(6)
-
-
-@step
-def s_option_check():
-    ms = watch_off()
-    print(f"FOLDED option window: {ms} ms", flush=True)
-    check(f"a window carved from the persp panel keeps them ({props()} vs {C['p0']})", near(props(), C["p0"]))
-    check(f"... the view is folded only for a few ticks ({ms} ms)", ms <= 600)
-    w = mod("ui.option_editor").find(bpy.context, 'poly_cube')
-    if w is not None:
-        with bpy.context.temp_override(window=w):
-            bpy.ops.wm.window_close()
-    watch_on()
-    mod("ui.tool_dock").set_docked(False)
-    with override(fv().roles(win().screen)["persp"]):
-        bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')      # Maya's floating Tool Settings window
-
-
+# --- the Tool Settings window at a size that fits in the top panel: only that panel is cut ------------------------
+step(ts_open())
 wait(8)
 
 
 @step
-def s_tool_settings_check():
-    ms = watch_off()
-    print(f"FOLDED Tool Settings window: {ms} ms", flush=True)
-    win_ts, area = mod("ui.tool_dock").find_any()
-    check(f"the Tool Settings window opened ({win_ts})", win_ts is not None and win_ts != win())
-    check(f"a window carved out of the folded view keeps them ({props()} vs {C['p0']})", near(props(), C["p0"]))
-    check(f"... the view is folded only for a few ticks ({ms} ms)", ms <= 600)
-    if win_ts is not None and win_ts != win():
-        with bpy.context.temp_override(window=win_ts):
-            bpy.ops.wm.window_close()
+def s_fit_check():
+    ms, panes = watch_off("Tool Settings window that fits in the panel")
+    w = ts_close()
+    check(f"the Tool Settings window opened ({w and (w.width, w.height)})", w is not None and w != win())
+    check(f"its place was cut out of one panel only ({panes} panels changed, {ms} ms)", panes <= 1 and ms <= 400)
+    check(f"... the proportions stay ({props()} vs {C['p0']})", near(props(), C["p0"]))
+
+
+space_round_trip("after a window that fits")
+
+# --- a remembered size bigger than the panel: the whole view folds for a moment, the window keeps its size --------
+step(ts_open((360, 600)))
+wait(8)
+
+
+@step
+def s_big_check():
+    ms, panes = watch_off("Tool Settings window bigger than the panel")
+    w = ts_close()
+    check(f"the window keeps its remembered size ({w and (w.width, w.height)} vs (360, 600))",
+          w is not None and w != win() and abs(w.width - 360) <= 8 and abs(w.height - 600) <= 8)
+    check(f"... the proportions stay ({props()} vs {C['p0']})", near(props(), C["p0"]))
+    check(f"... folded only for a few ticks ({ms} ms)", ms <= 600)
+
+
+space_round_trip("after a bigger window")
+
+
+# --- a dock beside the whole view ---------------------------------------------------------------------------------
+@step
+def s_stack_hide():
     watch_on()
     with override(fv().roles(win().screen)["persp"]):
         bpy.ops.allset.editor_toggle(editor='CHANNEL_BOX')        # the tab stack goes
@@ -176,10 +242,9 @@ wait(4)
 
 @step
 def s_stack_hidden():
-    ms = watch_off()
-    print(f"FOLDED stack hidden: {ms} ms", flush=True)
-    check(f"hiding the tab stack keeps them ({props()} vs {C['p0']})", near(props(), C["p0"]))
-    check(f"... the view is folded for two ticks ({ms} ms)", ms <= 300)
+    ms, panes = watch_off("tab stack hidden")
+    check(f"hiding the tab stack keeps them ({props()} vs {C['p0']}), folded {ms} ms",
+          near(props(), C["p0"]) and ms <= 300)
     watch_on()
     with override(fv().roles(win().screen)["persp"]):
         bpy.ops.allset.editor_toggle(editor='CHANNEL_BOX')        # and comes back
@@ -190,11 +255,12 @@ wait(4)
 
 @step
 def s_stack_shown():
-    ms = watch_off()
-    print(f"FOLDED stack shown: {ms} ms", flush=True)
-    check(f"showing the tab stack keeps them ({props()} vs {C['p0']})", near(props(), C["p0"]))
-    check(f"... the view is folded for two ticks ({ms} ms)", ms <= 300)
+    ms, panes = watch_off("tab stack shown")
+    check(f"showing the tab stack keeps them ({props()} vs {C['p0']}), folded {ms} ms",
+          near(props(), C["p0"]) and ms <= 300)
     check("the tab stack is back", mod("ui.maya_dock").find_stack(win().screen) is not None)
 
+
+space_round_trip("after the dock")
 
 run()
