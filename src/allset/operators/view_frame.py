@@ -101,7 +101,7 @@ def frame_region(context, area, region, selected=True, children=False):
         points = frame_points(context, v3d, selected, children, exclude=cam)
         if not points:
             return False
-        if not frame_camera(context, cam, points):
+        if not frame_camera(context, cam, points, area, region):
             return False
         try:
             bpy.ops.ed.undo_push(message="Frame Camera")
@@ -142,23 +142,30 @@ def camera_projection(context, cam):
     return win, (w, h)
 
 
-def frame_camera(context, cam, points):
-    """Move ``cam`` so ``points`` fill 0.95 of its frame, keeping its orientation (Maya framing in a camera
-    view dollies / tracks the camera; an orthographic camera changes its width). A locked camera (Maya Lock Camera,
-    ui/panel_cameras.camera_locked) stays. Returns True when the camera moved."""
-    if all(cam.lock_location):
+def frame_camera(context, cam, points, area=None, region=None):
+    """Move ``cam`` so ``points`` fill 0.95 of what the view shows, keeping its orientation (Maya framing in a
+    camera view dollies / tracks the camera; an orthographic camera changes its width). ``region``: the camera view
+    that frames, whose whole visible part is filled like Maya's panel, also the room an Overscan above 1 leaves
+    around the gate (Resolution / Film Gate shown); without one the camera's frame is filled. A locked camera (Maya
+    Lock Camera, ui/panel_cameras.camera_locked) stays. Returns True when the camera moved."""
+    if all(cam.lock_location) or cam.type != 'CAMERA':
         return False
     mw = cam.matrix_world
     loc0, rot, scale = mw.decompose()
     rot = rot.normalized()
-    ortho = cam.type == 'CAMERA' and cam.data.type == 'ORTHO'
-    win, size = camera_projection(context, cam) if cam.type == 'CAMERA' else (None, None)
-    if win is None:
-        return False
+    ortho = cam.data.type == 'ORTHO'
+    rv3d = region.data if region is not None else None
+    if area is not None and rv3d is not None and rv3d.view_perspective == 'CAMERA' \
+            and region.width > 1 and region.height > 1:
+        win, size = rv3d.window_matrix.copy(), (region.width, region.height)
+        rect = visible_bounds(area, region)
+    else:
+        win, size = camera_projection(context, cam)
+        rect = (0.0, 0.0, size[0], size[1])
     centre = sum((Vector(p) for p in points), Vector()) / len(points)
     forward = rot @ Vector((0.0, 0.0, -1.0))
     dist0 = max((centre - loc0).dot(forward), 1e-3)
-    loc, dist = framing.fit(points, rot, win, dist0, ortho, size, (0.0, 0.0, size[0], size[1]),
+    loc, dist = framing.fit(points, rot, win, dist0, ortho, size, rect,
                             min_half=framing.MIN_HALF * units.maya_unit(context.scene))
     if ortho:
         cam.data.ortho_scale *= dist / dist0

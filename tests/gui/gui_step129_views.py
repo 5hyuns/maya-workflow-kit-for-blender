@@ -156,12 +156,14 @@ def s_f_check():
     from bpy_extras.object_utils import world_to_camera_view
     bpy.context.view_layer.update()
     from mathutils import Vector
-    uv = [world_to_camera_view(bpy.context.scene, cam, cube.matrix_world @ Vector(c)) for c in cube.bound_box]
-    p = Vector(((min(q.x for q in uv) + max(q.x for q in uv)) / 2, (min(q.y for q in uv) + max(q.y for q in uv)) / 2))
+    # like Maya, the camera aims at the centre of the cube's box (seen at an angle, the near side looks bigger, so the
+    # drawn cube itself is not exactly centred)
+    centre = sum((cube.matrix_world @ Vector(c) for c in cube.bound_box), Vector()) / 8.0
+    p = world_to_camera_view(bpy.context.scene, cam, centre)
     check(f"#9 F in camera1's view keeps the camera view ({sp.region_3d.view_perspective})",
           sp.region_3d.view_perspective == 'CAMERA' and sp.camera == cam)
     check(f"#9 F moved camera1 to frame the cube (moved {moved(C['m0'], cam.matrix_world):.2f}, box centre at {p.x:.2f}, "
-          f"{p.y:.2f})", moved(C["m0"], cam.matrix_world) > 1e-3 and abs(p.x - 0.5) < 0.05 and abs(p.y - 0.5) < 0.05)
+          f"{p.y:.2f})", moved(C["m0"], cam.matrix_world) > 1e-3 and abs(p.x - 0.5) < 0.01 and abs(p.y - 0.5) < 0.01)
     shot("camera_f")
     C["m0"] = cam.matrix_world.copy()
 
