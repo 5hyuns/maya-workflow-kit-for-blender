@@ -105,6 +105,34 @@ def test_pivot_move_keeps_translate_geometry_children():
     assert (ob.matrix_world.translation - Vector((1.5, 0.5, 0.5))).length < TOL
 
 
+def test_pivot_edits_keep_the_childrens_values():
+    """Like Maya, moving or baking a parent's pivot changes none of its children's channels (they stay in place)."""
+    for parent_rot in (0.0, 45.0):
+        _fresh()
+        grp = bpy.data.objects.new("group1", None)
+        bpy.context.scene.collection.objects.link(grp)
+        grp.location = (5, 0, 0)
+        grp.rotation_euler.z = math.radians(parent_rot)
+        child = _cube("pCube1")
+        child.parent = grp
+        child.location = (0, 0, 3)
+        child.rotation_euler.x = 0.3
+        bpy.context.view_layer.update()
+        _select(grp)
+        values = (tuple(child.location), tuple(child.rotation_euler), tuple(child.delta_location))
+        child_w = child.matrix_world.copy()
+        _origin_transform("translate", value=(-3, 1, 0))
+        assert (tuple(child.location), tuple(child.rotation_euler), tuple(child.delta_location)) == values, (
+            parent_rot, child.location[:])
+        assert (child.matrix_world.translation - child_w.translation).length < TOL, "child moved"
+        assert (Vector(grp.location) - Vector((5, 0, 0))).length < TOL, grp.location[:]
+        _origin_transform("rotate", value=math.radians(30), orient_axis='Z')
+        bpy.ops.allset.bake_pivot()
+        bpy.context.view_layer.update()
+        assert (tuple(child.location), tuple(child.rotation_euler)) == values[:2], child.location[:]
+        assert (child.matrix_world.translation - child_w.translation).length < TOL, "child moved after the bake"
+
+
 def test_pivot_rotate_becomes_custom_orientation_then_bake():
     _fresh()
     ob = _cube(loc=(1, 0, 0))
