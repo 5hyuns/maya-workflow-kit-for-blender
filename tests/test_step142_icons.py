@@ -105,7 +105,7 @@ def test_drawings_and_table_agree():
     for path, name in md.PATHS.items():
         assert data.ICONS.get(path) == ("menu", name), (path, name, data.ICONS.get(path))
     unused = set(md.DRAWINGS) - {pic[1] for pic in pics.values()}
-    assert not unused, f"drawings no menu item uses (rerun tools/gen_menu_icons.py): {sorted(unused)}"
+    assert not unused, f"drawings no menu item uses: {sorted(unused)}"
     kit_paths = {p for p, _it in ms.iter_items()}
     stray = sorted(set(md.PATHS) - kit_paths)
     assert not stray, stray
