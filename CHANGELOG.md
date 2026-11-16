@@ -3,15 +3,15 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.18.0] — 2026-11-16
+## [0.18.0] — 2026-11-17
 
-Fixes and Maya behaviours for the issues reported after 0.17.0 (#344, #363, #367, #369, #370, #371, #373, #374,
-#375), Maya's Distance Tool, sets that hold components, and a long list of Maya menu items that now work. Thanks to
-@AlexBarbulescu for #376: the Channel Box multi-value typing (#375), Ctrl+D in the Outliner, the Hide / Show
-submenus, Time Slider Bookmarks, the new Booleans, the heads-up display lines, All Components, Clipboard Actions,
-Transfer Attribute Values, LOD, Displacement to Polygons, the Interactive Grooming brushes, hidden groups in
-Duplicate / Freeze / Delete History and the instance marks, with their translations; and for his comment on #374
-that led to the camera view F fix.
+Fixes and Maya behaviours for the issues reported since 0.17.0 (#344, #363, #367, #369, #370, #371, #373, #374,
+#375, #377, #378, #379, #380, #381) and for two older ones checked again (#292, #334), Maya's Distance Tool, sets
+that hold components, and a long list of Maya menu items that now work. Thanks to @AlexBarbulescu for #376: the
+Channel Box multi-value typing (#375), Ctrl+D in the Outliner, the Hide / Show submenus, Time Slider Bookmarks, the
+new Booleans, the heads-up display lines, All Components, Clipboard Actions, Transfer Attribute Values, LOD,
+Displacement to Polygons, the Interactive Grooming brushes, hidden groups in Duplicate / Freeze / Delete History and
+the instance marks, with their translations; and for his comment on #374 that led to the camera view F fix.
 
 ### Added
 - **Distance Tool** (#370): Create > Measure Tools > Distance Tool works like Maya's. Click two points in a view to
@@ -43,6 +43,22 @@ that led to the camera view F fix.
   in the four view (#344).
 
 ### Changed
+- **Nonlinear Bend works like Maya's** (#379): Curvature is in degrees (with the bounds at -1 / 1, 180 rolls a plane
+  into a full cylinder and 90 into a half one), Low Bound and High Bound can reach past the object, and the bend
+  works along the handle's length, so a flat object bends instead of spinning in its own plane. In the Maya layout
+  views the handle draws Maya's lines: the straight line between the bounds, the same line bent, and a short line
+  towards the side it bends to. The Channel Box and the Attribute Editor show Envelope, Curvature, Low Bound and
+  High Bound. Like Maya, every nonlinear deformer's handle takes its size from the object's longest side, so on a
+  flat plane the bend handle stands upright and bends nothing until it is turned to lie along the plane. A bend on a
+  lattice, curve or surface follows its handle too. Bends made with earlier versions keep their values.
+- **Hotkey Editor** (#381): like Maya, giving a command a key that other kit commands already use takes the key from
+  them, so the new key works in the viewport right away. The editor warns first (Return assigns, Esc cancels), and
+  the details show "Also used by" with a Remove From Others button. A command with two Maya hotkeys shows two rows,
+  "Undo" and "Undo (2nd hotkey)", and each row changes only its own key. A hotkey the kit binds in several modes
+  (NonSacredTool, the last tool, in Object Mode and in mesh Edit Mode) is one row, and searching "last tool" finds
+  it. Restore and Restore All Maya Hotkeys give taken keys back.
+- **Extrude Local Translate Z**: like Maya, a vertex inside the extruded faces moves along its own normal, so the
+  corner of a cube with all three faces extruded moves straight out along the corner by the full distance.
 - **Tool Settings opens in its own window** (#367): double-clicking a tool (also Windows > General Editors > Tool
   Settings, the Status Line button, a tool's option box, Paint Skin Weights) opens the Tool Settings as a floating
   window at the top left of the viewport, like Maya, in the four view and in a single view, and again where it was
@@ -53,7 +69,8 @@ that led to the camera view F fix.
   frame without playing still redraws every panel.
 - **Playback redraws less** (#344): while playing, only the viewports and the Time Slider are redrawn, no longer
   the Tool Box column and the shelf; Alt+V, the Time Slider's play buttons and Playback > Play start playback from
-  the viewport. What you see doesn't change.
+  the viewport. The ViewCube's buttons, the Range Slider and the background colour check also do less on each
+  frame. What you see doesn't change.
 - **Delete History on a deformed mesh** (#369): like Maya, the deformer goes together with its handle or lattice
   (nonlinears, cluster, softMod, ffd), its weights and the animation curves that drove it, so no keys are left for
   a deformer that is gone. The mesh keeps the shape of the current frame and its own keys; a handle another mesh
@@ -65,7 +82,8 @@ that led to the camera view F fix.
 - **Channel Box selection** (#375): like Maya, the value cells of selected channels are blue, in the column the
   selection was made in (a drag over the values marks the values, a pick on the names marks the names), also on
   creation history rows. The value editor shows the cell's value, selected so typing replaces it: Enter writes it
-  into every selected channel, also when unchanged; a click away writes only a changed value; Esc writes nothing.
+  into every selected channel, also when unchanged, on Windows, macOS and Linux alike; a click away writes only a
+  changed value; Esc writes nothing.
 - **Freeze Transformations on a group**: the group, and groups and locators inside it, read 0 / 0 / 1 like Maya;
   each child's pivot is its place in the group's frame, so the Attribute Editor and Unparent show Maya's values.
   Cameras, lights, armatures, light probes and speakers are not frozen and take the group's change into their
@@ -79,15 +97,37 @@ that led to the camera view F fix.
   through a camera it shows that camera's focal length.
 - Duplicate, Duplicate with Transform, Duplicate Special, Freeze Transformations and Delete History include a
   selected group that Show > Locators hides, like Maya (#376).
+- Blender 5.3: Weight Paint in Maya mode opens without 5.3's brush shelf under the views, like Maya's Paint Skin
+  Weights (the shelf can still be opened, and the kit's brush picker shows it as a popup).
 
 ### Fixed
+- **Extruding a whole mesh** (#377, #378): when every face of a mesh is extruded (a plane with divisions, or Edit
+  Mesh > Extrude on the object), the old faces stay as the bottom, turned the other way, like Maya: a plane becomes a
+  closed slab, and Thickness on an open shell (a tube, a box without a lid) gives a wall with both sides and rim
+  faces. Before, the old faces were deleted and their edges and vertices were left behind without faces, so they
+  couldn't be dissolved, and Thickness lost the original side.
+- **A click after an extrusion** (#380): on Blender 5.3, once an extrusion was changed (its manipulator, the In-View
+  Editor or the Channel Box INPUTS), a click on a face, edge or vertex selected nothing until the component mode
+  changed; only a marquee worked. The same could happen after Smart Extrude, Connect Tool, Insert / Offset Edge Loop
+  drags, Quad Draw and primitive values in component mode.
+- **Time Slider numbers** (#292): the mouse wheel (also with Ctrl or Shift), trackpad zoom and scroll, numpad + / -
+  and Ctrl / Shift + middle drag no longer zoom or scroll the Time Slider for a moment, like Maya (a plain middle
+  drag still moves the time). The frame numbers fit a short Time Slider instead of being cut off at the top.
+- **Time Slider height** on Blender 5.x: with a UI scale above 1.0 the Time Slider keeps a ruler tall enough for its
+  numbers; before, it got thinner as the scale grew and almost vanished at 2.0.
+- **Narrow windows**: the Range Slider row keeps every Time Slider button in view from 1280 to 1920 px wide at UI
+  scales 1.0 to 2.0, four-digit frames included (on Blender 5.x the play buttons could be pushed out of sight).
+- **Dragging a window to another monitor** (#334): the kit no longer moves the mouse pointer while a window is
+  dragged or resized, which could make the dragged window jump on Windows; the Maya layout is fitted once the windows
+  stand still.
 - Four view with Tool Settings (#367): the Tool Settings no longer goes into one of the four panels, so Space over
   a panel keeps it alone and brings the four view back again, also with the window open or torn off; switching to
   Blender closes the floating Tool Settings window.
 - Kit windows and docks never split a panel of the four view (#367): a window that fits in a panel is cut out of
   that panel alone for one redraw, docked editors (Channel Box, Outliner, editors docked from their window, the
-  shelf) go beside the whole four view, and the four view keeps its panel sizes after a window, a dock or a Space
-  tap. Opening a kit window over a viewport can no longer crash Blender while a manipulator tooltip is waiting.
+  shelf) go beside the whole four view, and the four view keeps its panel sizes, to the pixel, after a window, a
+  dock or any number of Space taps. Opening a kit window over a viewport can no longer crash Blender while a
+  manipulator tooltip is waiting.
 - Your own changes to the kit's keys stay after switching Maya → Blender → Maya and after restarting Blender in
   Blender mode, and a Blender key changed in Blender mode stays changed after using Maya mode (#363).
 - Alt+RMB in a view that looks through a camera, or through a light with Look Through Selected, dollies with a
@@ -95,6 +135,7 @@ that led to the camera view F fix.
   orthographic camera changes its width), Esc puts it back and Ctrl+Z undoes it.
 - F in a view that looks through a camera fills the whole view like Maya, with or without a gate shown, instead of
   fitting the selection to the camera's frame (#374).
+- Graph Editor and Dope Sheet windows opened small start at frame 1 instead of showing frame 0 at the left.
 - Channel Box: with several objects selected, a click on a value and then a click away no longer writes the first
   object's value into the others.
 - A tab stack the kit makes opens at the width its tab needs, like Maya: Windows > UI Elements > Attribute Editor
@@ -104,6 +145,8 @@ that led to the camera view F fix.
 
 ### Known differences
 - Sets hold mesh vertices, edges and faces; curve CVs and lattice points can't be put in a set yet.
+- A bend on a lattice or a surface has no Envelope yet.
+- Extrude Thickness where faces of very different sizes meet at a vertex can come out slightly different from Maya.
 - Update View: Active applies while playing; scrubbing the Time Slider still redraws every panel of the four view.
 - A kit window bigger than a panel of the four view folds the view for two redraws while its place is cut out.
 
