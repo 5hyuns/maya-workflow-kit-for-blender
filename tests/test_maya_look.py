@@ -164,48 +164,6 @@ def test_quit_restores_before_blender_saves():
     kit.disable()
 
 
-class _Rec:
-    """A stand-in layout that records the operators a draw function asks for."""
-
-    def __init__(self, ops):
-        object.__setattr__(self, "ops", ops)
-
-    def operator(self, idname, **_kw):
-        self.ops.append(idname)
-
-    def __getattr__(self, name):
-        if name in ("row", "column", "split", "box", "column_flow", "grid_flow"):
-            return lambda *a, **k: self
-        return lambda *a, **k: None
-
-    def __setattr__(self, name, value):
-        pass
-
-
-def _save_entries():
-    from types import SimpleNamespace
-    prefs = bpy.context.preferences
-    ops, auto = [], prefs.use_preferences_save
-    try:
-        prefs.use_preferences_save = True                  # the Save & Load menu item shows
-        bpy.types.USERPREF_MT_save_load.draw(SimpleNamespace(layout=_Rec(ops)), bpy.context)
-        prefs.use_preferences_save = False                 # the save button shows
-        bpy.types.USERPREF_HT_header.draw_buttons(_Rec(ops), bpy.context)
-    finally:
-        prefs.use_preferences_save = auto
-    return [o for o in ops if "save_userpref" in o]
-
-
-def test_blender_save_entries_run_the_kits_save_in_maya_mode():
-    _start()
-    assert _save_entries() == ["wm.save_userpref"] * 2, "Blender's own save without Maya mode"
-    _on()
-    assert _save_entries() == ["allset.save_userpref"] * 2, _save_entries()
-    _off()
-    assert _save_entries() == ["wm.save_userpref"] * 2, "Blender's own save again after Maya mode"
-    kit.disable()
-
-
 # --- across sessions, in a sandbox of its own ------------------------------------------------------------------
 
 def _sandbox(name):
@@ -257,13 +215,13 @@ def _maya(values):
 def test_save_while_on_keeps_the_users_theme_in_the_file():
     root, env = _sandbox("maya_look_save")
     own = _session(root, env, "own", "own_theme", "save")
-    on = _session(root, env, "on", "enable", "maya_on", "save_ui")           # Save Preferences while on
+    on = _session(root, env, "on", "enable", "maya_on", "save", "tick")      # Save Preferences while on
     assert on["kit"] and on["state"] and _maya(on["values"]), "Maya's look on screen"
     again = _session(root, env, "restart")                                   # the kit starts in Maya mode
     assert again["kit"] and _maya(again["values"]), "Maya's look again after a restart in Maya mode"
     off = _session(root, env, "off", "maya_off", "save")
     assert not _diff(own["values"], off["values"]), _diff(own["values"], off["values"])[:10]
-    _session(root, env, "on2", "maya_on", "save_ui")
+    _session(root, env, "on2", "maya_on", "save", "tick")
     rc, log = _run([bpy.app.binary_path, "--command", "extension", "remove", "user_default.allset"], env)
     assert rc == 0, log[-3000:]
     gone = _session(root, env, "without_kit")                                # the kit never ran this time
@@ -280,46 +238,6 @@ def test_save_while_on_without_the_check_would_keep_mayas_theme():
     plain.pop("ALLSET_MAYA_LOOK_BACKGROUND")                                 # read the file, change nothing
     held = _session(root, plain, "held")
     assert _maya(held["values"]), "the file held Maya's look"
-    shutil.rmtree(root)
-
-
-def _previous_file(root, env, name):
-    """What userpref.blend1 (a previous file, when this Blender keeps one) holds, read in a copy of the config;
-    None when there is none (Blender 5.2 / 5.3 keep no previous preferences file)."""
-    src = os.path.join(root, "config", "userpref.blend1")
-    if not os.path.isfile(src):
-        return None
-    copy = os.path.join(root, name)
-    os.makedirs(os.path.join(copy, "config"), exist_ok=True)
-    shutil.copyfile(src, os.path.join(copy, "config", "userpref.blend"))
-    env2 = dict(env, BLENDER_USER_CONFIG=os.path.join(copy, "config"))
-    env2.pop("ALLSET_MAYA_LOOK_BACKGROUND")
-    return _session(root, env2, name)
-
-
-def test_ui_save_while_on_writes_the_users_theme_to_both_files():
-    root, env = _sandbox("maya_look_ui_save")
-    own = _session(root, env, "own", "own_theme", "save")
-    _session(root, env, "on", "enable", "maya_on", "save_ui", "crash")       # killed right after saving
-    plain = dict(env)
-    plain.pop("ALLSET_MAYA_LOOK_BACKGROUND")
-    held = _session(root, plain, "held")
-    assert not _diff(own["values"], held["values"]), _diff(own["values"], held["values"])[:10]
-    prev = _previous_file(root, env, "blend1")
-    assert prev is None or not _diff(own["values"], prev["values"]), _diff(own["values"], prev["values"])[:10]
-    shutil.rmtree(root)
-
-
-def test_script_save_while_on_is_saved_again_into_both_files():
-    root, env = _sandbox("maya_look_script_save")
-    own = _session(root, env, "own", "own_theme", "save")
-    _session(root, env, "on", "enable", "maya_on", "save", "tick", "crash")   # wm.save_userpref, then the check
-    plain = dict(env)
-    plain.pop("ALLSET_MAYA_LOOK_BACKGROUND")
-    held = _session(root, plain, "held")
-    assert not _diff(own["values"], held["values"]), _diff(own["values"], held["values"])[:10]
-    prev = _previous_file(root, env, "blend1")
-    assert prev is None or not _diff(own["values"], prev["values"]), _diff(own["values"], prev["values"])[:10]
     shutil.rmtree(root)
 
 

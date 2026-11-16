@@ -1,7 +1,6 @@
 """In a real UI: Maya mode puts Maya's interface look into the theme (maya_look.py) and Maya mode off puts the
 user's theme back. Screen pixels with the Maya layout: menu bar, shelf row, Channel Box dock and Outliner in Maya's
-greys. Save Preferences while on: the kit's save (Blender's save button / menu item in Maya mode) writes the user's
-theme in one call; a script's own wm.save_userpref is saved again by the once-a-second check.
+greys. Save Preferences while on: the kit's once-a-second check writes the file again with the user's theme.
 Screenshots on / off for the side-by-side with Maya."""
 
 import os
@@ -129,18 +128,6 @@ def s_after_save():
     check("the kit wrote it again with the user's theme within a second",
           state is not None and state["saved"] == look._userpref_mtime() and state["saved"] != C["user_save"])
     check("Maya's look still on screen", look.is_applied() and theme_hash() != C["user"])
-
-
-@step
-def s_ui_save():
-    look = mod("maya_look")
-    before = look._userpref_mtime()
-    bpy.ops.allset.save_userpref()      # what Blender's save button and Save & Load menu item run in Maya mode
-    state = look.read_state()
-    check("the kit's Save Preferences wrote the file", look._userpref_mtime() != before)
-    check("... in one call, with Maya's look back on screen",
-          state is not None and state["saved"] == look._userpref_mtime() and look.is_applied()
-          and theme_hash() != C["user"])
 
 
 @step

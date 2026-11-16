@@ -143,7 +143,7 @@ MAP = {
     "File/Save Scene": "allset.save_scene",
     "File/Save Scene As...": "allset.save_scene_as",
     "File/Increment and Save": "allset.increment_save",
-    "File/Save Preferences": "allset.save_userpref",
+    "File/Save Preferences": "wm.save_userpref",
     "File/Optimize Scene Size": "outliner.orphans_purge",
     # one Maya file dialog (Files of type + Options, cm / Y-up presets; operators/file_io.py)
     "File/Import...": "allset.file_import",
