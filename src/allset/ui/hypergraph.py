@@ -124,8 +124,8 @@ def layer_colour(ob, scene):
 
 
 def node_kind(ob):
-    from ..operators import create
-    return hl.node_kind(ob.type, bool(ob.get(create.LOCATOR_PROP)))
+    from ..operators import create, distance_tool
+    return hl.node_kind(ob.type, bool(ob.get(create.LOCATOR_PROP)), distance_tool.is_dimension(ob))
 
 
 def redraw_all(context=None):

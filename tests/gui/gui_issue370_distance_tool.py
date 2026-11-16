@@ -227,6 +227,40 @@ def s_esc():
 def s_esc_check():
     check("Esc stops the measurement and keeps the locator", not running() and obj("locator3") is not None
           and obj("distanceDimension2") is None)
+    if SHOTS:
+        screenshot(os.path.join(SHOTS, "gui_issue370_outliner.png"))
+    rows = mod("ui.outliner_tree_rows")
+    check(f"the Outliner draws distanceDimension1 with the distance icon ({rows.icon_kind(obj('distanceDimension1'))})",
+          rows.icon_kind(obj("distanceDimension1")) == 'DISTANCE')
+    # Blender's own Delete (not the kit's) of locator1
+    set_tool("builtin.select_box")
+    for o in list(bpy.context.view_layer.objects):
+        o.select_set(o.name == "locator1")
+    area, region = main_view()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.object.delete('EXEC_DEFAULT', True)
+
+
+@step
+def s_blender_delete_check():
+    names = sorted(o.name for o in bpy.data.objects if o.name.startswith(("locator", "distanceDimension")))
+    check(f"Blender's Delete of locator1 takes distanceDimension1 along ({names})",
+          names == ["locator2", "locator3"])
+    check("nothing drawn for it", items() == [])
+    _area, region = main_view()
+    x, y = region.x + region.width // 2, region.y + region.height // 2
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('Z', 'PRESS', x=x, y=y, ctrl=True)
+    ev('Z', 'RELEASE', x=x, y=y, ctrl=True)
+
+
+@step
+def s_undo_delete_check():
+    names = sorted(o.name for o in bpy.data.objects if o.name.startswith(("locator", "distanceDimension")))
+    check(f"Ctrl+Z brings locator1 and distanceDimension1 back ({names})",
+          names == ["distanceDimension1", "locator1", "locator2", "locator3"])
+    check(f"and it is drawn again ({[n for n, _t, _a, _b in items()]})",
+          [n for n, _t, _a, _b in items()] == ["distanceDimension1"])
 
 
 run()

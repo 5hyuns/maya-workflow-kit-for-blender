@@ -66,22 +66,23 @@ def natural_key(name):
 
 
 def icon_kind(ob):
-    from ..operators import create
+    from ..operators import create, distance_tool
     from .hypergraph_layout import node_kind
-    return node_kind(ob.type, bool(ob.get(create.LOCATOR_PROP)))
+    return node_kind(ob.type, bool(ob.get(create.LOCATOR_PROP)), distance_tool.is_dimension(ob))
 
 
 def _icon_kinds():
     """``icon_kind`` as a function of (object, its type) for one rows build: the imports are done once, and only an
-    empty's kind depends on the locator property (``node_kind``), so only empties read it."""
-    from ..operators import create
+    empty's kind depends on its properties (locator, distance dimension: ``node_kind``), so only empties read them."""
+    from ..operators import create, distance_tool
     from .hypergraph_layout import node_kind
     prop = create.LOCATOR_PROP
+    is_dimension = distance_tool.is_dimension
     kinds = {}
 
     def kind(ob, t):
         if t == 'EMPTY':
-            return node_kind(t, bool(ob.get(prop)))
+            return node_kind(t, bool(ob.get(prop)), is_dimension(ob))
         got = kinds.get(t)
         if got is None:
             got = kinds[t] = node_kind(t)

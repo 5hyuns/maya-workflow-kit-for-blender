@@ -87,10 +87,12 @@ def test_selection_rules():
 
 
 def test_icons_differ_by_kind():
-    kinds = ('GROUP', 'MESH', 'CURVE', 'SURFACE', 'JOINT', 'CAMERA', 'LIGHT', 'LOCATOR', 'LATTICE', 'OTHER')
+    kinds = ('GROUP', 'MESH', 'CURVE', 'SURFACE', 'JOINT', 'CAMERA', 'LIGHT', 'LOCATOR', 'LATTICE', 'DISTANCE',
+             'OTHER')
     shapes = [repr(hl.icon_shapes(k)) for k in kinds]
     assert len(set(shapes)) == len(kinds)
     assert hl.node_kind('EMPTY') == 'GROUP' and hl.node_kind('EMPTY', True) == 'LOCATOR'
+    assert hl.node_kind('EMPTY', False, True) == 'DISTANCE'
     assert hl.node_kind('ARMATURE') == 'JOINT'
 
 

@@ -129,6 +129,58 @@ def test_deleting_a_locator_deletes_its_dimensions():
     assert names == ["distanceDimension2", "locator2", "locator3"], names
 
 
+def test_any_delete_takes_the_dimension_along_and_undo_brings_all_back():
+    """Blender's own delete (or a script's) of a locator: like Maya, its dimensions go too (scheduled by the next
+    update, run here in place of the timer); one undo brings the locator and the dimension back."""
+    _clear()
+    dt, dd_ui = _dt(), m("ui.distance_dimensions")
+    bpy.ops.ed.undo_push(message="start")
+    _measure((0, 0, 0), (2, 0, 0))
+    for ob in bpy.context.view_layer.objects:
+        ob.select_set(ob.name == "locator1")
+    assert bpy.ops.object.delete('EXEC_DEFAULT', True) == {'FINISHED'}     # Blender's Delete, an undo step
+    bpy.context.view_layer.update()
+    try:
+        assert bpy.app.timers.is_registered(dd_ui._clean_up_later), "the update schedules the clean up"
+    finally:
+        if bpy.app.timers.is_registered(dd_ui._clean_up_later):
+            bpy.app.timers.unregister(dd_ui._clean_up_later)
+    dd_ui._clean_up_later()
+    names = sorted(ob.name for ob in bpy.data.objects)
+    assert names == ["locator2"], names
+    bpy.ops.ed.undo()
+    names = sorted(ob.name for ob in bpy.data.objects)
+    assert names == ["distanceDimension1", "locator1", "locator2"], names
+    dd = bpy.data.objects["distanceDimension1"]
+    assert [o.name for o in dt.ends(dd)] == ["locator1", "locator2"] and abs(dt.distance(dd) - 2.0) < 1e-6
+    assert not dd_ui.orphaned()
+    # a script's bpy.data.objects.remove of a locator
+    bpy.data.objects.remove(bpy.data.objects["locator2"])
+    assert [o.name for o in dd_ui.orphaned()] == ["distanceDimension1"]
+    assert dd_ui.clean_up() == ["distanceDimension1"]
+    assert sorted(ob.name for ob in bpy.data.objects) == ["locator1"]
+    # an update that adds or deletes nothing doesn't look again
+    bpy.context.view_layer.update()
+    seen = dd_ui._seen[0]
+    bpy.data.objects["locator1"].location.x += 1.0
+    bpy.context.view_layer.update()
+    assert dd_ui._seen[0] == seen and not bpy.app.timers.is_registered(dd_ui._clean_up_later)
+
+
+def test_outliner_icon():
+    _clear()
+    _measure((0, 0, 0), (1, 0, 0))
+    hl, rows = m("ui.hypergraph_layout"), m("ui.outliner_tree_rows")
+    dd, loc = bpy.data.objects["distanceDimension1"], bpy.data.objects["locator1"]
+    assert rows.icon_kind(dd) == 'DISTANCE' and rows.icon_kind(loc) == 'LOCATOR'
+    assert m("ui.hypergraph").node_kind(dd) == 'DISTANCE'
+    group = bpy.data.objects.new("null", None)
+    assert rows.icon_kind(group) == 'GROUP'
+    bpy.data.objects.remove(group)
+    shapes = {repr(hl.icon_shapes(k)) for k in ('GROUP', 'LOCATOR', 'LATTICE', 'SURFACE', 'OTHER')}
+    assert repr(hl.icon_shapes('DISTANCE')) not in shapes, "a drawing of its own"
+
+
 def test_screen_geometry():
     dd = m("ui.distance_dimensions")
     # region y up (height 698): for a line drawn from upper left to lower right on screen, the dimension line is

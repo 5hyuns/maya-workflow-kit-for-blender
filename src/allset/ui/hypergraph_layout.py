@@ -199,9 +199,9 @@ def strip_rects(widths, top, height, x0=6.0, gap=4.0):
 
 # --- node icons ----------------------------------------------------------------------------------------------------
 
-def node_kind(ob_type, is_locator=False):
+def node_kind(ob_type, is_locator=False, is_dimension=False):
     if ob_type == 'EMPTY':
-        return 'LOCATOR' if is_locator else 'GROUP'
+        return 'DISTANCE' if is_dimension else 'LOCATOR' if is_locator else 'GROUP'
     return {'MESH': 'MESH', 'CURVE': 'CURVE', 'SURFACE': 'SURFACE', 'ARMATURE': 'JOINT', 'CAMERA': 'CAMERA',
             'LIGHT': 'LIGHT', 'LATTICE': 'LATTICE'}.get(ob_type, 'OTHER')
 
@@ -231,6 +231,9 @@ def icon_shapes(kind):
         return [("line", -0.9, 0.0, 0.9, 0.0), ("line", 0.0, -0.9, 0.0, 0.9), ("line", -0.5, -0.5, 0.5, 0.5)]
     if kind == 'LATTICE':
         return [("frame", -0.8, -0.8, 0.8, 0.8), ("line", 0.0, -0.8, 0.0, 0.8), ("line", -0.8, 0.0, 0.8, 0.0)]
+    if kind == 'DISTANCE':   # a distance dimension (Distance Tool): a ruler with its marks
+        return [("frame", -0.9, -0.35, 0.9, 0.35), ("line", -0.6, 0.35, -0.6, 0.0), ("line", -0.3, 0.35, -0.3, 0.12),
+                ("line", 0.0, 0.35, 0.0, 0.0), ("line", 0.3, 0.35, 0.3, 0.12), ("line", 0.6, 0.35, 0.6, 0.0)]
     return [("tri", 0.0, 0.8, 0.8, 0.0, 0.0, -0.8), ("tri", 0.0, 0.8, -0.8, 0.0, 0.0, -0.8)]
 
 

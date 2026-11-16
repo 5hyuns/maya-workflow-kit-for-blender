@@ -9,9 +9,16 @@ The distance is in Maya units (``operators/units.maya_unit``) and follows the lo
 
 Every 3D View with overlays on draws them (its Object Types: Empty on). A click on a dimension line selects the
 dimension (``operators/select_priority.py``).
+
+Like Maya, deleting a locator deletes the distance dimensions that measure from or to it, whichever way it is deleted:
+the kit's Delete takes them along (``operators/dag.py``); after any other delete (Blender's, the Outliner's, a script)
+a depsgraph update that changed which objects exist schedules ``clean_up`` (a timer, outside the update). Undo brings
+the locator and its dimensions back together. Blender's delete keeps a locator a dimension still points at as an
+object in no collection: that counts as deleted, and it goes too.
 """
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
@@ -205,6 +212,82 @@ def _draw():
         gpu.state.blend_set('NONE')
 
 
+# --- a deleted locator takes its dimensions along ------------------------------------------------------------------
+
+def _gone(ob):
+    """A dimension's locator is deleted: missing, or kept only by the dimension (in no collection)."""
+    try:
+        return ob is None or not ob.users_collection
+    except ReferenceError:
+        return True
+
+
+def orphaned(objects=None):
+    """The distance dimensions (of ``objects``, default every object) one of whose locators is deleted."""
+    from ..operators.distance_tool import ends, is_dimension
+    out = []
+    for ob in (bpy.data.objects if objects is None else objects):
+        try:
+            if is_dimension(ob) and any(_gone(e) for e in ends(ob)):
+                out.append(ob)
+        except ReferenceError:
+            continue
+    return out
+
+
+def clean_up():
+    """Delete the distance dimensions whose locator was deleted, and the locators only they still kept. Returns the
+    names deleted."""
+    from ..operators.distance_tool import ends
+    names, kept = [], []
+    for dd in orphaned():
+        for end in ends(dd):
+            if end is not None and _gone(end):
+                kept.append(end)
+        names.append(dd.name)
+        bpy.data.objects.remove(dd, do_unlink=True)
+    for ob in kept:
+        try:
+            if ob.users == 0:
+                names.append(ob.name)
+                bpy.data.objects.remove(ob)
+        except ReferenceError:          # kept by two dimensions: gone already
+            pass
+    if names:
+        _DIMS.clear()
+    return names
+
+
+def _clean_up_later():
+    try:
+        clean_up()
+    except (ReferenceError, RuntimeError, AttributeError):
+        _DIMS.clear()
+    return None
+
+
+_seen = [None]              # the ``objects_version`` the delete check last looked at
+
+
+@persistent
+def _on_depsgraph(_scene, _depsgraph=None):
+    """After an update that changed which objects exist: a dimension of the view layer with a deleted locator
+    schedules ``clean_up``. Other updates (a move, playback) cost one number compare."""
+    from .outliner import objects_version
+    version = objects_version()
+    if version == _seen[0]:
+        return
+    _seen[0] = version
+    try:
+        view_layer = bpy.context.view_layer
+        bad = view_layer is not None and bool(orphaned(dimensions(view_layer)))
+    except (ReferenceError, AttributeError):
+        _DIMS.clear()
+        return
+    if bad and not bpy.app.timers.is_registered(_clean_up_later):
+        bpy.app.timers.register(_clean_up_later, first_interval=0.0)
+
+
 # --- the tool -----------------------------------------------------------------------------------------------------
 
 def _tool_class(mode):
@@ -226,9 +309,16 @@ def register():
         _handle.append(bpy.types.SpaceView3D.draw_handler_add(_draw, (), 'WINDOW', 'POST_PIXEL'))
     for tool in TOOLS:
         bpy.utils.register_tool(tool, after={"builtin.measure"})
+    _seen[0] = None             # a locator deleted in Blender mode: looked at with the next update
+    if _on_depsgraph not in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
 
 
 def unregister():
+    while _on_depsgraph in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
+    if bpy.app.timers.is_registered(_clean_up_later):
+        bpy.app.timers.unregister(_clean_up_later)
     for tool in reversed(TOOLS):
         bpy.utils.unregister_tool(tool)
     while _handle:
