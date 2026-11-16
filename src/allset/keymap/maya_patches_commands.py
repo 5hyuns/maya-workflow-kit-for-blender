@@ -206,6 +206,9 @@ def patch_undo_visibility(kd):
         kd.remove("Outliner", "outliner.delete", type=key)
         # with the hierarchy; the kit tree's own Delete item comes first (patch_outliner_tree)
         _add(kd, "Outliner", "allset.outliner_delete", make_event(key), shadows=("Outliner",))
+    # Maya Outliner Ctrl+D = Edit > Duplicate (groups with their children); IC Ctrl+D there adds drivers
+    kd.remove("Outliner", "outliner.drivers_add_selected", type="D", ctrl=True)
+    _add(kd, "Outliner", "allset.duplicate", make_event("D", ctrl=True), shadows=("Outliner",))
 
     _add(kd, "Object Mode", "object.select_all", make_event("I", ctrl=True, shift=True),
          {"action": 'INVERT'})
