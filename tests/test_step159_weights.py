@@ -173,7 +173,7 @@ def test_kit_deformer_round_trip():
     md = next(m for m in mesh.modifiers if m.name.startswith("bend"))
     found = dw.deformers_of(mesh)
     assert [(n, k) for n, _m, k in found] == [(md.name, 'GROUP')], found
-    vg = mesh.vertex_groups[md.vertex_group]
+    vg = mesh.vertex_groups[deformers.weight_group(md)]
     vg.add([0, 1], 0.25, 'REPLACE')
     vg.remove([2])
     before = _weights(mesh)

@@ -29,12 +29,16 @@ BASES = {
     "ffd": ('LATTICE', "ffd"), "deltaMush": ('CORRECTIVE_SMOOTH', "deltaMush"), "wrap": ('SURFACE_DEFORM', "wrap"),
     "proximityWrap": ('SURFACE_DEFORM', "proximityWrap"), "shrinkWrap": ('SHRINKWRAP', "shrinkWrap"),
     "cluster": ('HOOK', "cluster"), "softMod": ('HOOK', "softMod"),
-    "bend": ('SIMPLE_DEFORM', "nonLinear"), "twist": ('SIMPLE_DEFORM', "nonLinear"),
+    "bend": ('NODES', "nonLinear"),       # on a mesh: Geometry Nodes, operators/bend_deformer.py
+    "twist": ('SIMPLE_DEFORM', "nonLinear"),
     "squash": ('SIMPLE_DEFORM', "nonLinear"), "flare": ('SIMPLE_DEFORM', "nonLinear"),
     "sine": ('WAVE', "nonLinear"), "wave": ('WAVE', "nonLinear"),
     "textureDeformer": ('DISPLACE', "textureDeformer"), "curveWarp": ('CURVE', "curveWarp"),
     "wire": ('NODES', "wire"),            # Geometry Nodes, operators/wire_deformer.py
 }
+# a node that can also be another modifier type: a bend on a lattice / curve / surface (no Geometry Nodes there), and
+# every bend made by earlier versions, is a Simple Deform
+OTHER_TYPES = {"bend": 'SIMPLE_DEFORM'}
 _NAME = re.compile(r"^([A-Za-z]+?)(\d+)$")
 
 
@@ -43,7 +47,8 @@ def base_of(md):
     m = _NAME.match(md.name)
     if m is None or m.group(1) not in BASES:
         return None
-    return m.group(1) if BASES[m.group(1)][0] == md.type else None
+    base = m.group(1)
+    return base if md.type in (BASES[base][0], OTHER_TYPES.get(base)) else None
 
 
 def node_type(md):
@@ -166,8 +171,113 @@ def _wire_input(name):
     return get, set_
 
 
+class _BendInput(Attr):
+    """A Maya attribute of the kit bend, held by an input of its node group (operators/bend_deformer.py); ``lo`` /
+    ``hi``: the attribute's limits in Maya."""
+
+    def __init__(self, key, label, kind, socket, lo=None, hi=None):
+        self.key, self.label, self.kind = key, label, kind
+        self.socket, self.lo, self.hi = socket, lo, hi
+
+    def get(self, md):
+        from . import bend_deformer
+        v = bend_deformer.get(md, self.socket)
+        return float(v) if v is not None else 0.0
+
+    def set(self, md, v):
+        from . import bend_deformer
+        v = float(v)
+        if self.lo is not None:
+            v = max(self.lo, v)
+        if self.hi is not None:
+            v = min(self.hi, v)
+        bend_deformer.set_(md, self.socket, v)
+
+    @property
+    def paths(self):
+        """Every kit bend shares one node group: the data path of this input on any of them."""
+        from . import bend_deformer
+        from .. import compat
+        ng = bpy.data.node_groups.get(bend_deformer.GROUP)
+        item = ng.interface.items_tree.get(self.socket) if ng is not None else None
+        return ((compat.gn_input_path(item.identifier), -1),) if item is not None else ()
+
+
+# A Simple Deform bend made like Maya (deform axis Y: it bends along the handle's Z, Maya's Y, towards its X) on a
+# lattice / curve / surface. Blender spreads its angle over the part of the object between its limits, and the limits
+# are fractions of the object's own extent along the bend, so the Maya values are read through that extent: Curvature =
+# angle / the limited length (handle units), Low / High Bound = the limit ends. Bounds beyond the object stop at its
+# ends.
+
+def _sd_points(ob):
+    """The local points a Simple Deform reads on ``ob``."""
+    if ob.type == 'MESH':
+        return [v.co for v in ob.data.vertices]
+    if ob.type == 'LATTICE':
+        return [p.co_deform for p in ob.data.points]
+    pts = []
+    for sp in getattr(ob.data, "splines", ()):
+        pts += [p.co for p in sp.bezier_points] if sp.type == 'BEZIER' else [p.co.xyz for p in sp.points]
+    return pts or [Vector(c) for c in ob.bound_box]
+
+
+def _sd_extent(md):
+    """(lowest, highest) handle-space Maya Y (the handle's local Z) of the points the bend reads, or None."""
+    h = md.origin
+    if h is None:
+        return None
+    m = h.matrix_world.inverted_safe() @ md.id_data.matrix_world
+    zs = [(m @ p).z for p in _sd_points(md.id_data)]
+    return (min(zs), max(zs)) if zs else None
+
+
+def _sd_range(md):
+    """(extent low, extent span, limited low, limited high) in handle units, or None."""
+    ext = _sd_extent(md)
+    if ext is None:
+        return None
+    span = ext[1] - ext[0]
+    return ext[0], span, ext[0] + span * md.limits[0], ext[0] + span * md.limits[1]
+
+
+def sd_bend_values(md):
+    """(Curvature in radians, Low Bound, High Bound) of a Simple Deform bend made like Maya."""
+    r = _sd_range(md)
+    if r is None:
+        return 0.0, -1.0, 1.0
+    _e, _s, a, b = r
+    return (md.angle / (b - a) if b - a > 1e-9 else 0.0), min(a, 0.0), max(b, 0.0)
+
+
+def sd_bend_set(md, curvature=None, low=None, high=None):
+    """Set a Simple Deform bend made like Maya to these Maya values (None: keep)."""
+    c0, lo0, hi0 = sd_bend_values(md)
+    c = c0 if curvature is None else float(curvature)
+    lo = lo0 if low is None else min(0.0, float(low))
+    hi = hi0 if high is None else max(0.0, float(high))
+    r = _sd_range(md)
+    if r is None or r[1] <= 1e-9:
+        md.angle = 0.0
+        return
+    e, span = r[0], r[1]
+    a, b = max(lo, e), min(hi, e + span)
+    if b < a:
+        a = b = min(max(0.0, e), e + span)
+    md.limits = ((a - e) / span, (b - e) / span)
+    md.angle = c * (b - a)
+
+
+_SD_BEND = [Attr("curvature", "Curvature", "ROTATION", lambda md: sd_bend_values(md)[0],
+                 lambda md, v: sd_bend_set(md, curvature=v), (("angle", -1),)),
+            Attr("lowBound", "Low Bound", "NONE", lambda md: sd_bend_values(md)[1],
+                 lambda md, v: sd_bend_set(md, low=v), (("limits", 0), ("angle", -1))),
+            Attr("highBound", "High Bound", "NONE", lambda md: sd_bend_values(md)[2],
+                 lambda md, v: sd_bend_set(md, high=v), (("limits", 1), ("angle", -1)))]
+
 _ENVELOPE = _prop("envelope", "Envelope", "NONE", "strength")
 _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", "High Bound", "NONE", *_limit(1))]
+# a bend made by earlier versions (Simple Deform, deform axis Z): its own angle and limits
+_OLD_BEND = [_prop("curvature", "Curvature", "NONE", "angle")] + _BOUNDS
 
 # Maya deformers made with default options: their Channel Box rows (only those Blender can hold)
 ATTRS = {
@@ -186,7 +296,11 @@ ATTRS = {
                    _prop("alongZ", "Along Z", "BOOL", "use_project_y")],
     "cluster": [_ENVELOPE],
     "softMod": [_ENVELOPE, _prop("falloffRadius", "Falloff Radius", "LENGTH", "falloff_radius")],
-    "bend": [_prop("curvature", "Curvature", "NONE", "angle")] + _BOUNDS,
+    # Maya: Envelope -2..2, Low Bound <= 0, High Bound >= 0; Curvature in degrees (held in radians)
+    "bend": [_BendInput("envelope", "Envelope", "NONE", "Envelope", -2.0, 2.0),
+             _BendInput("curvature", "Curvature", "ROTATION", "Curvature"),
+             _BendInput("lowBound", "Low Bound", "NONE", "Low Bound", hi=0.0),
+             _BendInput("highBound", "High Bound", "NONE", "High Bound", lo=0.0)],
     "twist": [_prop("endAngle", "End Angle", "ROTATION", "angle")] + _BOUNDS,
     "squash": [_prop("factor", "Factor", "NONE", "factor")] + _BOUNDS,
     "flare": [_prop("endFlareX", "End Flare X", "NONE", "factor", offset=-1.0),
@@ -209,6 +323,8 @@ PREFIX = "maya:"
 def attrs(md):
     """The Maya attributes of a kit deformer modifier, or None (not a kit deformer)."""
     base = base_of(md)
+    if base == "bend" and md.type == 'SIMPLE_DEFORM':
+        return _SD_BEND if md.deform_axis == 'Y' else _OLD_BEND
     return ATTRS.get(base) if base else None
 
 
@@ -226,10 +342,21 @@ HANDLE_TYPES = {'EMPTY', 'LATTICE'}
 _HANDLE_FIELDS = ("object", "origin", "start_position_object")
 
 
+def handle_of(md):
+    """The lattice / handle object kit deformer modifier ``md`` takes, or None."""
+    if md.type == 'NODES':
+        from . import bend_deformer
+        return bend_deformer.handle_of(md)
+    return next((h for p in _HANDLE_FIELDS for h in [getattr(md, p, None)] if h is not None), None)
+
+
 def drives(md, ob):
     """Kit deformer modifier ``md`` takes ``ob`` as its lattice / handle."""
     if base_of(md) is None:
         return False
+    if md.type == 'NODES':
+        from . import bend_deformer
+        return bend_deformer.handle_of(md) == ob
     return any(getattr(md, p, None) == ob for p in _HANDLE_FIELDS)
 
 
@@ -501,16 +628,29 @@ def _nonlinear(context, kind, v):
     items = _deformed(context)
     lo, hi = _bounds(items)
     name = new_name(base)
-    # Maya: the handle at the bounding-box centre, pointing up (Maya +Y = Blender +Z),
-    # uniform scale = half the height; handle scale 0.5 on the unit cube
+    # Maya: the handle at the bounding-box centre, pointing up (Maya +Y = Blender +Z), uniform scale = half the
+    # bounding box's longest side (0.5 on the unit cube; a flat plane's width, not its zero height)
     handle = _link(context, bpy.data.objects.new(f"{name}Handle", None))
     handle.empty_display_type = 'SINGLE_ARROW'
     handle.empty_display_size = 1.0
     handle.location = (lo + hi) / 2
-    s = max((hi.z - lo.z) / 2, 1e-6)
+    s = max(max(hi - lo) / 2, 1e-6)
     handle.scale = (s, s, s)
     context.view_layer.update()
     for ob, idx in items:
+        if kind == 'BEND':
+            c = math.radians(float(v.get("curvature", 0.0)))           # the option window's degrees
+            low, high = float(v.get("low", -1.0)), float(v.get("high", 1.0))
+            if ob.type == 'MESH':
+                from . import bend_deformer
+                bend_deformer.add(ob, name, handle, _weights(ob, name, idx), c, low, high)
+                continue
+            md = _add(ob, name, 'SIMPLE_DEFORM', idx)       # a lattice / curve / surface: no Geometry Nodes there
+            md.deform_method = 'BEND'
+            md.deform_axis = 'Y'
+            md.origin = handle
+            sd_bend_set(md, c, low, high)
+            continue
         if method is not None:
             md = _add(ob, name, 'SIMPLE_DEFORM', idx)
             md.deform_method = method
@@ -520,9 +660,7 @@ def _nonlinear(context, kind, v):
             md.factor = 0.0
             md.limits = (min(1.0, max(0.0, (v.get("low", -1.0) + 1) / 2)),
                          min(1.0, max(0.0, (v.get("high", 1.0) + 1) / 2)))
-            if kind == 'BEND':
-                md.angle = float(v.get("curvature", 0.0))
-            elif kind == 'TWIST':
+            if kind == 'TWIST':
                 md.angle = math.radians(float(v.get("end_angle", 0.0)))
             elif kind == 'SQUASH':
                 md.factor = float(v.get("factor", 0.0))
@@ -661,6 +799,12 @@ def _paint_candidates(context):
     return out
 
 
+def weight_group(md):
+    """The vertex group name that holds kit deformer ``md``'s weights ('' = none): its own, or for a Geometry Nodes
+    deformer (a mesh's bend, a wire) the group of its name."""
+    return getattr(md, "vertex_group", "") or (md.name if md.type == 'NODES' else "")
+
+
 def paint_group(ob, kind, prefer=()):
     """The vertex group that holds ``ob``'s weights of its newest deformer of Maya type ``kind`` (``prefer``:
     these modifiers first; None: no such deformer)."""
@@ -678,7 +822,7 @@ def paint_group(ob, kind, prefer=()):
                 kb.vertex_group = vg.name
         return vg.name
     for md in list(prefer) + list(reversed(ob.modifiers)):
-        group = getattr(md, "vertex_group", "") or (md.name if md.type == 'NODES' else "")   # a kit wire: its name
+        group = weight_group(md)
         if node_type(md) == kind and group in ob.vertex_groups:
             return group
     return None

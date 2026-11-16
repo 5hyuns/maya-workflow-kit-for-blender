@@ -295,23 +295,26 @@ def test_nonlinear_names_handles_selection_inputs():
     _clear()
     bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=4, location=(1, 0, 2))
     cyl = bpy.context.active_object
-    for kind, base, mtype in (('BEND', "bend", 'SIMPLE_DEFORM'), ('TWIST', "twist", 'SIMPLE_DEFORM'),
+    for kind, base, mtype in (('BEND', "bend", 'NODES'), ('TWIST', "twist", 'SIMPLE_DEFORM'),
                               ('SQUASH', "squash", 'SIMPLE_DEFORM'), ('FLARE', "flare", 'SIMPLE_DEFORM'),
                               ('SINE', "sine", 'WAVE'), ('WAVE', "wave", 'WAVE')):
         _select(cyl)
         assert bpy.ops.allset.deformer(kind=kind) == {'FINISHED'}, kind
         h = bpy.data.objects[f"{base}1Handle"]
         md = cyl.modifiers[f"{base}1"]
-        assert md.type == mtype and md.vertex_group == f"{base}1", kind
+        assert md.type == mtype and getattr(md, "vertex_group", f"{base}1") == f"{base}1", kind
+        assert f"{base}1" in cyl.vertex_groups, kind
         assert (h.location - Vector((1, 0, 2))).length < 1e-5                     # bbox centre
-        assert all(abs(s - 2.0) < 1e-5 for s in h.scale), kind                    # half the height
+        assert all(abs(s - 2.0) < 1e-5 for s in h.scale), kind                    # half the longest side
         assert bpy.context.active_object == h, kind                               # Maya: bend1Handle selected
         assert ae.modifier_node(cyl, md) == (f"{base}1", "nonLinear"), kind
         assert cb.mod_node(md) in {cb.mod_node(m) for m in cb._inputs(h)}, kind   # handle CB shows bend1
     bend = cyl.modifiers["bend1"]
-    assert bend.deform_method == 'BEND' and bend.origin.name == "bend1Handle" and bend.deform_axis == 'Z'
-    assert tuple(round(x, 6) for x in bend.limits) == (0.0, 1.0) and bend.angle == 0.0
-    assert _rows(cyl, bend) == [("Curvature", "0"), ("Low Bound", "-1"), ("High Bound", "1")], \
+    bd = import_module(kit.MODULE + ".operators.bend_deformer")
+    assert bd.is_bend(bend) and bd.get(bend, "Handle").name == "bend1Handle"
+    assert (bd.get(bend, "Curvature"), bd.get(bend, "Low Bound"), bd.get(bend, "High Bound"),
+            bd.get(bend, "Envelope")) == (0.0, -1.0, 1.0, 1.0)
+    assert _rows(cyl, bend) == [("Envelope", "1"), ("Curvature", "0"), ("Low Bound", "-1"), ("High Bound", "1")], \
         _rows(cyl, bend)
     assert _rows(cyl, cyl.modifiers["squash1"])[0] == ("Factor", "0")
     assert _rows(cyl, cyl.modifiers["flare1"])[0] == ("End Flare X", "1")
@@ -320,12 +323,12 @@ def test_nonlinear_names_handles_selection_inputs():
     assert sine.use_x and not sine.use_y and sine.speed == 0.0 and sine.height == 0.0
     assert abs(sine.width - 4.0) < 1e-5                                           # wavelength 2 × handle 2
     assert wave.use_x and wave.use_y and abs(wave.width - 2.0) < 1e-5 and abs(wave.falloff_radius - 2.0) < 1e-5
-    # an INPUTS row writes the Maya value back: Low Bound -0.5 = limits 0.25
+    # an INPUTS row writes the Maya value back: Low Bound -0.5
     _rows(cyl, bend)
-    row = next(r for r in bpy.context.scene.allset_cb.rows if r.kind == "INPUT" and r.mod_type == 'SIMPLE_DEFORM'
-               and cb.input_label(bend, r.name) == "Low Bound" and r.nth == 0)
+    row = next(r for r in bpy.context.scene.allset_cb.rows if r.kind == "INPUT" and r.mod_type == 'NODES'
+               and cb.input_label(bend, r.name) == "Low Bound" and r.nth == cb._nth_of_type(cyl, bend))
     row.text = "-0.5"
-    assert abs(bend.limits[0] - 0.25) < 1e-6, tuple(bend.limits)
+    assert abs(bd.get(bend, "Low Bound") + 0.5) < 1e-6
 
 
 def test_nonlinear_window_values():
@@ -335,9 +338,10 @@ def test_nonlinear_window_values():
     _run("deform_twist", end_angle=90.0)
     assert abs(cyl.modifiers["twist1"].angle - math.radians(90.0)) < 1e-6
     _select(cyl)
-    _run("deform_bend", curvature=1.2, low=0.0)
+    _run("deform_bend", curvature=90.0, low=0.0)             # degrees, like Maya
     md = cyl.modifiers["bend1"]
-    assert abs(md.angle - 1.2) < 1e-6 and abs(md.limits[0] - 0.5) < 1e-6
+    bd = import_module(kit.MODULE + ".operators.bend_deformer")
+    assert abs(bd.get(md, "Curvature") - math.pi / 2) < 1e-6 and bd.get(md, "Low Bound") == 0.0
     _select(cyl)
     _run("deform_flare", end_flare=1.5)
     assert abs(cyl.modifiers["flare1"].factor - 0.5) < 1e-6

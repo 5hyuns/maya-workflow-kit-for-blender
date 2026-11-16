@@ -22,9 +22,9 @@ compat = import_module(kit.MODULE + ".compat")
 auto_key = import_module(kit.MODULE + ".operators.auto_key")
 
 # Deform > Nonlinear kind, the Maya attribute typed and keyed, text at frame 1, text at frame 10, the attribute's value
-# for those texts (Twist's End Angle is typed in degrees and read in radians)
+# for those texts (Bend's Curvature and Twist's End Angle are typed in degrees and read in radians)
 CASES = (
-    ('BEND', "curvature", "0", "1.5", (0.0, 1.5)),
+    ('BEND', "curvature", "0", "90", (0.0, math.radians(90.0))),
     ('TWIST', "endAngle", "0", "90", (0.0, math.radians(90.0))),
     ('SQUASH', "factor", "0", "0.8", (0.0, 0.8)),
     ('FLARE', "endFlareX", "1", "2", (1.0, 2.0)),
@@ -226,12 +226,13 @@ def test_auto_key_keys_a_keyed_deformer_channel():
         _key("K", 1, "curvature", "0")
         bpy.context.scene.allset_auto_key = True
         bpy.context.scene.frame_set(8)
-        _type("curvature", "1.2")
+        _type("curvature", "60")
         if bpy.app.timers.is_registered(auto_key._flush):      # the Auto Key timer, run now (none in background)
             bpy.app.timers.unregister(auto_key._flush)
         auto_key._flush()
         fc = cb.fcurve(lead, key)
-        assert fc is not None and _keys(fc) == [(1, 0.0), (8, 1.2)], (lead_is_handle, fc and _keys(fc))
+        want = [(1, 0.0), (8, round(math.radians(60.0), 5))]
+        assert fc is not None and _keys(fc) == want, (lead_is_handle, fc and _keys(fc))
         assert cb.fcurve(lead, "tx") is None, "Auto Key keys only the changed channel"
         bpy.context.scene.allset_auto_key = False
 
@@ -241,7 +242,8 @@ def test_break_connections_on_a_driven_deformer_channel_from_the_handle():
     from the deformed mesh."""
     mesh, handle, md, lead = _make('BEND')
     key = cb.row_key(_row("curvature"))
-    d = md.driver_add("angle")
+    path, index = cb.input_curve_paths(handle, key)[0]     # the bend's Curvature input, on the mesh
+    d = mesh.driver_add(path, index)
     d.driver.expression = "0.5"
     assert cb.driver(handle, key) is not None and cb.channel_state(handle, key) == 'DRIVEN'
     cb.set_selected_channels([key])

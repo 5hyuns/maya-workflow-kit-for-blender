@@ -161,9 +161,10 @@ WINDOWS = [
                  "Color Feedback", "Preserve history", "Mask unselected", "Falloff around selection",
                  "Falloff based on X / Y / Z")),
     # Nonlinear: Bend / Flare / Sine / Squash / Twist / Wave Options
+    # Curvature in degrees (Maya slider -180..180)
     Window("deform_bend", "Bend Options", "Create", _match('BEND'), _bounds() + [
-        F("curvature", "Curvature:", "float", 0.0, lo=-4.0, hi=4.0)], _create('BEND'),
-        paths=("Deform/Nonlinear/Bend",), missing=(_BOUNDS_NOTE, ENVELOPE) + ADVANCED),
+        F("curvature", "Curvature:", "float", 0.0, lo=-180.0, hi=180.0)], _create('BEND'),
+        paths=("Deform/Nonlinear/Bend",), missing=ADVANCED),
     Window("deform_flare", "Flare Options", "Create", _match('FLARE'), _bounds() + [
         F("end_flare", "End flare X:", "float", 1.0, lo=0.0, hi=10.0)], _create('FLARE'),
         paths=("Deform/Nonlinear/Flare",),

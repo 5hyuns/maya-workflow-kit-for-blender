@@ -58,19 +58,20 @@ def _helper(md):
     rule = _HELPERS.get(deformers.base_of(md))
     if rule is None:
         return None
-    ob = getattr(md, rule[0], None)
+    ob = deformers.handle_of(md) if md.type == 'NODES' else getattr(md, rule[0], None)      # a mesh's bend: nodes
     return ob if ob is not None and ob.type in rule[1] else None
 
 
 def _used(ob, scene):
     """Something still points at ``ob``: a modifier or a constraint, or it has children."""
+    from . import deformers
     if ob.children:
         return True
     for o in scene.objects:
         if o == ob:
             continue
         for md in getattr(o, "modifiers", ()):
-            if any(getattr(md, p, None) == ob for p in _REFS):
+            if any(getattr(md, p, None) == ob for p in _REFS) or (md.type == 'NODES' and deformers.drives(md, ob)):
                 return True
         cons = list(getattr(o, "constraints", ()))
         if o.type == 'ARMATURE' and o.pose is not None:
@@ -308,8 +309,10 @@ def delete_by_type(context, kind, objects):
             bpy.data.objects.remove(ob)
             n += 1
     elif kind in _REMOVE_MODIFIERS:
+        from . import bend_deformer
         for ob in objects:
-            for md in [m for m in ob.modifiers if m.type in _REMOVE_MODIFIERS[kind]]:
+            for md in [m for m in ob.modifiers if m.type in _REMOVE_MODIFIERS[kind]
+                       or (kind == 'NONLINEARS' and bend_deformer.is_bend(m))]:     # a mesh's bend: nodes
                 ob.modifiers.remove(md)
                 n += 1
     elif kind == 'CHANNELS':

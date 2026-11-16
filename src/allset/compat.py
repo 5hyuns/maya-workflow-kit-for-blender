@@ -440,6 +440,13 @@ def gn_input_set(md, key, value):
     md[key] = value
 
 
+def gn_input_path(key):
+    """The data path, on the modifier, of the value of input ``key`` (what a key on that input animates)."""
+    if GN_INPUT_STRUCT:
+        return f"properties.inputs.{key}.value"
+    return f'["{key}"]'
+
+
 def gn_input_attribute(md, key, attribute):
     """Make input ``key`` read the named attribute ``attribute`` (a vertex group) instead of a value."""
     if GN_INPUT_STRUCT:

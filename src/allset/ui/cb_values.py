@@ -79,6 +79,15 @@ def input_owner(ob, key):
     return row_owner(ob, "INPUT", name, mod_type, nth)
 
 
+def path_struct(owner, path):
+    """(struct, property name) of ``path`` on ``owner``: a path through nested structs (a Geometry Nodes input's
+    ``properties.inputs.Socket_2.value``) resolves to its last struct, which keys and names it."""
+    head, dot, prop = path.rpartition(".")
+    if not dot or path.startswith("["):
+        return owner, path
+    return owner.path_resolve(head), prop
+
+
 def input_paths(owner, key):
     """[(path on the modifier, index)] a key on an INPUTS channel sets."""
     name = input_parts(key)[2]
@@ -130,7 +139,7 @@ def input_curve_paths(ob, key):
     if prop is not None:
         from ..operators import constrain_multi
         return [(constrain_multi.weight_path(ob, prop), -1)]
-    return [(owner.path_from_id(p), i) for p, i in input_paths(owner, key)]
+    return [(sub.path_from_id(name), i) for p, i in input_paths(owner, key) for sub, name in [path_struct(owner, p)]]
 
 
 def history_node_of(ob, key):
@@ -363,10 +372,11 @@ def keyframe(ob, key, keytype='KEYFRAME'):
         done = False
         for p, i in (shape_paths(owner, key) if kind == "SHAPE" else input_paths(owner, key)):
             try:
-                if owner.keyframe_insert(p, index=i, keytype=keytype):
-                    graph_key_menu.after_insert(owner, p, i, bpy.context.scene.frame_current)
+                sub, name = path_struct(owner, p)
+                if sub.keyframe_insert(name, index=i, keytype=keytype):
+                    graph_key_menu.after_insert(sub, name, i, bpy.context.scene.frame_current)
                     done = True
-            except (TypeError, RuntimeError):
+            except (TypeError, RuntimeError, ValueError):
                 pass
         return done
     from ..operators import anim_layers
