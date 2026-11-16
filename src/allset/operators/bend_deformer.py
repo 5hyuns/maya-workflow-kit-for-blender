@@ -146,6 +146,29 @@ def add(ob, name, handle, group_name, curvature=0.0, low=-1.0, high=1.0, envelop
     return md
 
 
+AE_ROWS = ("Envelope", "Curvature", "Low Bound", "High Bound")
+
+
+def draw_ae(layout, md):
+    """Draw a kit bend's Maya attributes in its Attribute Editor tab (Curvature in degrees); False for other
+    modifiers."""
+    if not is_bend(md):
+        return False
+    from . import wire_deformer
+    from .. import compat
+    for name in AE_ROWS:
+        key = wire_deformer.ident(md, name)
+        if key is None:
+            continue
+        if compat.GN_INPUT_STRUCT:
+            item = compat._gn_input(md, key)
+            if item is not None:
+                layout.prop(item, "value", text=name)
+        else:
+            layout.prop(md, f'["{key}"]', text=name)
+    return True
+
+
 # --- the bend in the handle's space (also what the handle draws) -----------------------------------------------
 
 def bent(x, y, curvature, low, high):

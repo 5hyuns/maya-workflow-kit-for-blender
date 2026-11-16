@@ -356,3 +356,24 @@ def test_bend_of_earlier_versions_keeps_its_rows():
     assert [a.key for a in deformers.attrs(md)] == ["curvature", "lowBound", "highBound"]
     assert abs(deformers.attr(md, deformers.PREFIX + "curvature").get(md) - 1.2) < 1e-6
     assert not handles.segments(bpy.context.view_layer), "no Maya lines for Blender's own angle"
+
+
+def test_attribute_editor_tab_shows_the_maya_attributes():
+    """The bend1 tab of the Attribute Editor draws Envelope, Curvature (degrees), Low Bound and High Bound, not the
+    Geometry Nodes modifier's own settings."""
+    _fresh()
+    col = _column()
+    _handle, md = _make(col)
+
+    class Layout:
+        def __init__(self):
+            self.rows = []
+
+        def prop(self, data, prop, text=""):
+            self.rows.append((text, data.bl_rna.properties[prop].subtype if prop in data.bl_rna.properties else None))
+
+    lay = Layout()
+    assert bend.draw_ae(lay, md)
+    assert [t for t, _s in lay.rows] == ["Envelope", "Curvature", "Low Bound", "High Bound"], lay.rows
+    assert dict(lay.rows)["Curvature"] == 'ANGLE', lay.rows
+    assert not bend.draw_ae(Layout(), col.modifiers.new("Bevel", 'BEVEL'))
