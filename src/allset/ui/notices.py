@@ -28,6 +28,9 @@ NOTICES = {
     **{f"Mesh/Booleans/{item}": ("Boolean modifier (applied)", "Blender's Exact Boolean, applied at once; the second object is "
                                  "deleted, like Maya with construction history off.")
        for item in ("Slice", "Hole Punch", "Cut Out", "Split Edges")},
+    **{f"Edit/LOD (Level of Detail)/{item}": ("Empty + Decimate modifier", "Blender has no level of detail "
+                                              "switching: every level stays visible; hide the ones you don't need.")
+       for item in ("Create LOD Group", "Generate LOD Meshes", "Ungroup LOD Group")},
     "Mesh Display/Assign Existing Set/No bakesets defined": ("Render Properties > Bake", "Maya lists the scene's bake sets here; Blender bakes from Render Properties > Bake (Cycles)."),
     # Skin
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
@@ -631,8 +634,6 @@ CATEGORIES = {
                      "data-blocks as assets, expose values with library overrides or custom properties."),
     "Modify/Convert": ("Object > Convert", "Blender converts curves, text, meshes and Grease Pencil; subdiv surfaces, "
                        "Paint Effects, displacement and fluids aren't separate types."),
-    "Edit": ("Edit menu", "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data "
-             "copies data between objects."),
     **{f"Edit/{sub}": ("Outliner / Purge", "Blender has no node of this type: delete it in the Outliner, or File > "
                        "Clean Up > Purge for unused data.") for sub in ("Delete All by Type", "Delete by Type")},
     "File": ("File menu", "Blender has no ATOM files or After Effects Live Link: move animation with "

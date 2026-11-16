@@ -317,7 +317,7 @@ MAP = {
     "Display/Show/Show Selection": ("allset.visibility", {"action": 'SHOW_SELECTED'}),
     "Display/Show/Show Last Hidden": ("allset.visibility", {"action": 'SHOW_LAST'}),
     "Display/Show/All": ("allset.visibility", {"action": 'SHOW_ALL'}),
-    "Display/Show/All Components": ("mesh.reveal", {"select": False}),   # Maya showAllComponents
+    "Display/Show/All Components": "allset.show_all_components",     # every mesh, also from object mode
     # Maya Hide / Show > <type>: the visibility of every node of the type (operators/visibility.py)
     **{f"Display/{verb}/{label}": ("allset.visibility", {"action": f'{verb.upper()}_TYPE', "kind": kind})
        for verb in ("Hide", "Show")
@@ -536,6 +536,14 @@ MAP = {
     "Playback/Set Range to/Start/End": ("allset.time_set_range", {"mode": "START_END"}),
     "Playback/Set Range to/Min/Max": ("allset.time_set_range", {"mode": "MIN_MAX"}),
     "Playback/Set Range to/Selected": ("allset.time_set_range", {"mode": "SELECTED"}),
+    "Playback/Set Range to/Sound Length": ("allset.time_set_range", {"mode": "SOUND"}),
+    "Mesh/Clipboard Actions/Copy Attributes": ("allset.mesh_clipboard", {"action": 'COPY'}),
+    "Mesh/Clipboard Actions/Paste Attributes": ("allset.mesh_clipboard", {"action": 'PASTE'}),
+    "Mesh/Clipboard Actions/Clear Clipboard": ("allset.mesh_clipboard", {"action": 'CLEAR'}),
+    "Edit/Transfer Attribute Values": "allset.transfer_values",
+    "Edit/LOD (Level of Detail)/Create LOD Group": ("allset.lod", {"action": 'CREATE'}),
+    "Edit/LOD (Level of Detail)/Generate LOD Meshes": ("allset.lod", {"action": 'GENERATE'}),
+    "Edit/LOD (Level of Detail)/Ungroup LOD Group": ("allset.lod", {"action": 'UNGROUP'}),
     "Playback/Set Range to/Enabled Clips": ("allset.trax_tracks", {"action": "RANGE"}),    # Trax clips (#287)
     "Playback/Playback Speed/Real-time": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
                                                                    "value": "FRAME_DROP"}),
@@ -642,6 +650,10 @@ MAP.update({
     "Display/Heads Up Display/View Axis": _kit_pref("maya_view_axis"),
     "Display/Heads Up Display/ViewCube": _kit_pref("maya_viewcube"),
     "Display/Heads Up Display/In-View Editors": _kit_pref("inview_editors"),
+    "Display/Heads Up Display/In-view Messages": _kit_pref("in_view_messages"),
+    "Display/Heads Up Display/Current Frame": _kit_pref("maya_hud_current_frame"),
+    "Display/Heads Up Display/Focal Length": _kit_pref("maya_hud_focal_length"),
+    "Display/Heads Up Display/Scene Timecode": _kit_pref("maya_hud_scene_timecode"),
 })
 
 
@@ -754,6 +766,7 @@ MAP.update({
     "Display/Polygons/Edge Width...": ("allset.theme_setting", {"name": "Edge Width"}),
     "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
     "Display/Animation/Joint Size...": "allset.joint_size",              # Maya jointDisplayScale
+    "Display/Animation/Joint Labels": "allset.joint_label_toggle",       # the selected joints and the joints below them
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
     # #136: Maya's Wireframe Color window (user palette 1-8 / RGB, Apply / Default / Close)
     "Display/Wireframe Color...": ("allset.wireframe_color", {}),
@@ -1260,7 +1273,7 @@ for _twin, _source in TWINS.items():
 
 
 # Maya submenus drawn with their items although their own path is mapped (shelf buttons saved with that path)
-SUBMENUS = frozenset({"Display/Hide", "Display/Show"})
+SUBMENUS = frozenset({"Display/Hide", "Display/Show", "Display/Animation"})
 
 
 def is_submenu(path, kids):

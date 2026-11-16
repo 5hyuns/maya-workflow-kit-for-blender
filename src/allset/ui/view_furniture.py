@@ -42,7 +42,8 @@ from .view_furniture_state import (_APPLY_LATER, _HANDLERS, _HIDDEN, _PENDING, _
 from .view_furniture_draw import (_batches, _cached_batch, _cube_face_batch, _cube_plan, _draw_controls,  # noqa: F401
                                   _draw_hud, _draw_strip, _face_label, _face_label_matrix, _fill, _hud_callback,
                                   _lines, _plan,
-                                  _plans, _sh, _shader, _strip_batch, _text, _triad_plan, draw_cube)
+                                  _plans, _sh, _shader, _strip_batch, _text, _triad_plan, draw_cube, hud_lines,
+                                  timecode)
 
 # Four view: the ViewCube shows in one panel only (Maya: the active panel), the last one the mouse was in.
 _ACTIVE = {"region": None}

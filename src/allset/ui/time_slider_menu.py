@@ -15,7 +15,6 @@ TIME_NOTICES = {
     "Paste Connect": "Blender pastes keys as they were copied: no connect (offset) paste.",
     "Play Every Frame, Free": "Blender never plays faster than the scene frame rate.",
     "Enabled Clips": "Blender has no Time Editor clips (NLA strips instead).",
-    "Sound Length": "Use the sound strip's length in the Video Sequencer.",
 }
 
 
@@ -140,10 +139,10 @@ class ALLSET_MT_time_slider_range(bpy.types.Menu):
 
     def draw(self, context):
         lay = self.layout
-        for mode, label in (("START_END", "Start/End"), ("MIN_MAX", "Min/Max"), ("SELECTED", "Selected")):
+        for mode, label in (("START_END", "Start/End"), ("MIN_MAX", "Min/Max"), ("SELECTED", "Selected"),
+                            ("SOUND", "Sound Length")):
             lay.operator("allset.time_set_range", text=label).mode = mode
         _grey(lay, "Enabled Clips")
-        _grey(lay, "Sound Length")
 
 
 TIME_SLIDER_MENUS = (ALLSET_MT_time_slider, ALLSET_MT_time_slider_paste, ALLSET_MT_time_slider_keys,

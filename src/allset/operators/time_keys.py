@@ -347,6 +347,21 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def sound_span(scene):
+    """(start, end) of the Time Slider sound: from the sound's offset to the whole frame its end falls in, like Maya.
+    Blender has no "displayed" sound: the active sound strip, else the first one."""
+    from .. import compat
+    if scene.sequence_editor is None:
+        return None
+    sounds = sorted((s for s in compat.strips(scene.sequence_editor) if s.type == 'SOUND'),
+                    key=lambda s: s.frame_final_start)
+    if not sounds:
+        return None
+    act = scene.sequence_editor.active_strip
+    s = act if act in sounds else sounds[0]
+    return int(s.frame_final_start), int(s.frame_final_end)
+
+
 class ALLSET_OT_time_set_range(bpy.types.Operator):
     """Set the playback range (Maya Time Slider > Set Range to)"""
     bl_idname = "allset.time_set_range"
@@ -355,7 +370,8 @@ class ALLSET_OT_time_set_range(bpy.types.Operator):
 
     mode: EnumProperty(items=(("START_END", "Start/End", "Playback range = animation range"),
                               ("MIN_MAX", "Min/Max", "Playback range = first and last keys of the selection"),
-                              ("SELECTED", "Selected", "Playback range = the Shift-dragged Time Slider range")),
+                              ("SELECTED", "Selected", "Playback range = the Shift-dragged Time Slider range"),
+                              ("SOUND", "Sound Length", "Playback range = the sound's start to its end")),
                        options={'SKIP_SAVE'})
 
     def execute(self, context):
@@ -366,6 +382,13 @@ class ALLSET_OT_time_set_range(bpy.types.Operator):
             span = key_span(context)
             if span is None:
                 self.report({'WARNING'}, "No keys found. Cannot determine min/max of animation range.")
+                return {'CANCELLED'}
+            a, b = span
+        elif self.mode == "SOUND":
+            span = sound_span(scene)
+            if span is None:
+                self.report({'ERROR'}, "No sound to take the range from: import a sound first (Audio > Import "
+                                       "Audio...)")
                 return {'CANCELLED'}
             a, b = span
         else:

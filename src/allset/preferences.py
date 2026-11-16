@@ -436,6 +436,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_dock_colors)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
+    # Maya Heads Up Display lines in the bottom right of the view (ui/view_furniture.hud_lines), off like Maya's
+    maya_hud_current_frame: bpy.props.BoolProperty(
+        name="Current Frame", description="Heads Up Display: the current frame in the bottom right of the view")
+    maya_hud_focal_length: bpy.props.BoolProperty(
+        name="Focal Length", description="Heads Up Display: the view's focal length in the bottom right of the view")
+    maya_hud_scene_timecode: bpy.props.BoolProperty(
+        name="Scene Timecode", description="Heads Up Display: the current time as hh:mm:ss:ff in the bottom right "
+                                           "of the view")
     # Maya in-view messages (on by default).
     in_view_messages: bpy.props.BoolProperty(
         name="In-View Messages", description="Short fading messages in the view when you group, hide, toggle "

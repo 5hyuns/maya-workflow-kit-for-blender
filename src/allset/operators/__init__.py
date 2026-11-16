@@ -228,6 +228,10 @@ from . import fill_bridge  # noqa: E402  Mesh > Fill Hole / Edit Mesh > Bridge w
 classes += fill_bridge.classes
 from . import distance_tool  # noqa: E402  Create > Measure Tools > Distance Tool (#370)
 classes += distance_tool.classes
+from . import attr_clipboard  # noqa: E402  Mesh > Clipboard Actions, Edit > Transfer Attribute Values
+classes += attr_clipboard.classes
+from . import lod  # noqa: E402  Edit > LOD (Level of Detail)
+classes += lod.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

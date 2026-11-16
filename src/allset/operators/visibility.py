@@ -320,4 +320,37 @@ def message(action, had_selection, changed):
     return None
 
 
-classes = (ALLSET_OT_visibility,)
+def reveal_components(meshes):
+    """Unhide every vertex, edge and face of ``meshes`` (mesh data, object mode); returns how many had hidden ones."""
+    n = 0
+    for me in meshes:
+        changed = False
+        for elems in (me.vertices, me.edges, me.polygons):
+            flags = [False] * len(elems)
+            elems.foreach_get("hide", flags)
+            if any(flags):
+                elems.foreach_set("hide", [False] * len(elems))
+                changed = True
+        if changed:
+            me.update()
+            n += 1
+    return n
+
+
+class ALLSET_OT_show_all_components(bpy.types.Operator):
+    """Show every hidden vertex, edge and face of every mesh in the scene, selected or not (Maya Display > Show >
+    All Components, also from object mode)"""
+    bl_idname = "allset.show_all_components"
+    bl_label = "All Components"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        editing = {ob.data for ob in context.objects_in_mode_unique_data} if context.mode == 'EDIT_MESH' else set()
+        if editing:
+            bpy.ops.mesh.reveal(select=False)         # the meshes in Edit Mode keep their data in the edit mesh
+        others = {ob.data for ob in context.view_layer.objects if ob.type == 'MESH'} - editing
+        reveal_components(m for m in others if not m.library)
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_visibility, ALLSET_OT_show_all_components)
