@@ -129,11 +129,6 @@ def flow():
     mdt._list_hole, sw.template_of, wsm.entries = hole, template_of, entries
     swap(get_value=get_value, bone_selected=bone_selected)
     handle = bpy.types.SpaceProperties.draw_handler_add(dock_drawn, (), 'WINDOW', 'POST_PIXEL')
-    # Maya mode's look already gives the dock Maya's grey, so the dock draws no lift and reads no pixels: a darker
-    # Properties background brings the lift (and its one read per drag) back for this test
-    space_theme = bpy.context.preferences.themes[0].properties.space
-    back = tuple(space_theme.back)
-    space_theme.back = (0x30 / 255,) * 3
     try:
         area = _view()
         region = next(r for r in area.regions if r.type == 'WINDOW')
@@ -188,7 +183,6 @@ def flow():
         check(f"a redraw after the drag reads the pixels again ({counts['hole'] - holes} reads) and keeps nothing "
               f"of the drag", counts["hole"] > holes and not md._hole_kept)
     finally:
-        space_theme.back = back
         mdt._list_hole, sw.template_of, wsm.entries = real["hole"], real["template"], real["entries"]
         swap(get_value=real["get"], bone_selected=real["bone"])
         bpy.types.SpaceProperties.draw_handler_remove(handle, 'WINDOW')

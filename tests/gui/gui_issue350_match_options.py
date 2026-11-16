@@ -74,8 +74,8 @@ def _open(label):
           mod("ui.menu_sets").option_kind(path) == "window" and res in ({'FINISHED'}, {'RUNNING_MODAL'}))
 
 
-def _box(name):
-    """Grey levels of the middle of the viewport in a window screenshot."""
+def _dialog_shown(name):
+    """The option window darkens the middle of the viewport (a dialog under the pointer)."""
     import numpy as np
     import tempfile
     path = os.path.join(SHOTS or tempfile.gettempdir(), name)
@@ -87,18 +87,8 @@ def _box(name):
     bpy.data.images.remove(img)
     a = a.reshape(h, w, 4)[:, :, :3].mean(axis=2)
     x, y = C["mid"]
-    return a[y - 60:y + 60, x - 120:x + 120]
-
-
-def _base(name):
-    """The middle of the viewport before the option window opens (whatever the theme's colours are)."""
-    C["base"] = _box(name)
-
-
-def _dialog_shown(name):
-    """Share of the middle of the viewport that the option window (a dialog under the pointer) changed."""
-    import numpy as np
-    return float((np.abs(_box(name) - C["base"]) > 8 / 255).mean())
+    box = a[y - 60:y + 60, x - 120:x + 120]
+    return float((box < 45 / 255).mean())
 
 
 @step
@@ -118,11 +108,6 @@ def s_setup():
 def s1_open():
     _scene()
     mod("operators.option_windows").store("match_translation", {"all": False, "x": True, "y": False, "z": False})
-
-
-@step
-def s1_base():
-    _base("350_match_translation_before.png")
     _open("Match Translation")
 
 
@@ -134,7 +119,7 @@ def s1_away():
 @step
 def s1_shot():
     share = _dialog_shown("350_match_translation_window.png")
-    check(f"Match Translation Options is shown (changed share {share:.2f})", share > 0.3)
+    check(f"Match Translation Options is shown (dark share {share:.2f})", share > 0.3)
     key('RET')                                   # the window's command button: Match Translation
 
 
@@ -152,11 +137,6 @@ def s1_done():
 @step
 def s2_open():
     _scene()
-
-
-@step
-def s2_base():
-    _base("350_match_all_before.png")
     _open("Match All Transforms")
 
 
@@ -168,7 +148,7 @@ def s2_away():
 @step
 def s2_shot():
     share = _dialog_shown("350_match_all_window.png")
-    check(f"Match All Transforms Options is shown (changed share {share:.2f})", share > 0.3)
+    check(f"Match All Transforms Options is shown (dark share {share:.2f})", share > 0.3)
     key('RET')
 
 
@@ -194,11 +174,6 @@ def s3_open():
     src = bpy.data.objects["src"]
     C["verts"] = [src.matrix_world @ v.co for v in src.data.vertices]
     mod("operators.option_windows").store("match_pivots", {"rotate": True, "scale": True, "orient": True})
-
-
-@step
-def s3_base():
-    _base("350_match_pivots_before.png")
     _open("Match Pivots")
 
 
@@ -210,7 +185,7 @@ def s3_away():
 @step
 def s3_shot():
     share = _dialog_shown("350_match_pivots_window.png")
-    check(f"Match Pivots Options is shown (changed share {share:.2f})", share > 0.3)
+    check(f"Match Pivots Options is shown (dark share {share:.2f})", share > 0.3)
     key('RET')
 
 
