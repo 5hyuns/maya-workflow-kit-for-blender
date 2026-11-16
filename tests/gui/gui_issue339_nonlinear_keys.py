@@ -1,9 +1,11 @@
 """Issue #339 in a real UI: Deform > Nonlinear > Bend on a tall box; the handle is selected afterwards and bend1 is
 expanded in its Channel Box INPUTS. RMB on Curvature's name > Key Selected (K) keys it at frame 1 (the row reads
-keyed); at frame 10 type a Curvature and press S with the mouse over the Channel Box, at frame 20 type another and
-press S over the viewport. Scrubbing the Time Slider plays the bend: Curvature follows its keys and the box bends with
-it. Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
+keyed); at frame 10 type a Curvature (degrees, like Maya) and press S with the mouse over the Channel Box, at frame 20
+type another and press S over the viewport. The bend on a mesh is a Geometry Nodes modifier: the keys animate its
+Curvature input (radians) on the box. Scrubbing the Time Slider plays the bend: Curvature follows its keys and the box
+bends with it. Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
 
+import math
 import os
 import re
 import sys
@@ -20,8 +22,8 @@ from sim import (MODULE, check, dock_area, dock_region, ev, find_button, run, sc
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 GUI_TIMEOUT = 300
-KEY = "in:SIMPLE_DEFORM:0:maya:curvature"
-LOW = "in:SIMPLE_DEFORM:0:maya:lowBound"
+KEY = "in:NODES:0:maya:curvature"
+LOW = "in:NODES:0:maya:lowBound"
 
 
 def shot(name):
@@ -39,6 +41,12 @@ def cb():
 
 def mesh():
     return bpy.data.objects[C["mesh"]]
+
+
+def curvature():
+    """bend1's Curvature (radians), as the Channel Box reads it."""
+    md = mesh().modifiers["bend1"]
+    return import_module(MODULE + ".operators.deformers").attr(md, "maya:curvature").get(md)
 
 
 def handle():
@@ -166,7 +174,8 @@ def s_picked():
     fc = cb().fcurve(handle(), KEY)
     check(f"Channels > Key Selected keys Curvature at frame 1 ({keys}), on pCube1's bend1 "
           f"({fc.data_path if fc else None})", keys == [(1, 0.0)] and fc is not None
-          and fc.data_path == 'modifiers["bend1"].angle')
+          and fc.data_path.startswith('modifiers["bend1"]') and any(
+              f.as_pointer() == fc.as_pointer() for f in import_module(MODULE + ".compat").id_fcurves(mesh())))
     state = cb().channel_state(handle(), KEY)
     check(f"the Curvature row reads keyed ({state})", state == 'KEYED')
     check("only the selected channel: the handle's own channels stay unkeyed", handle().animation_data is None)
@@ -252,9 +261,9 @@ def type_curvature(text, frame, where):
         tap('RET')
 
     def s_typed():
-        v = mesh().modifiers["bend1"].angle
-        check(f"typing {text} at frame {frame} sets Curvature ({v:.3f}; the box bends {bend():.3f})",
-              abs(v - float(text)) < 1e-5 and bend() > 0.01)
+        v = curvature()
+        check(f"typing {text} at frame {frame} sets Curvature ({math.degrees(v):.3f} degrees; the box bends "
+              f"{bend():.3f})", abs(v - math.radians(float(text))) < 1e-5 and bend() > 0.01)
         if where == "view":
             hover_view()
         else:
@@ -268,7 +277,7 @@ def type_curvature(text, frame, where):
         keys = curve_keys(handle(), KEY)
         over = "the viewport" if where == "view" else "the Channel Box"
         check(f"S over {over} keys the open bend1's Curvature at frame {frame} ({keys})",
-              keys is not None and (frame, float(text)) in keys)
+              keys is not None and (frame, round(math.radians(float(text)), 5)) in keys)
         low = curve_keys(handle(), LOW)
         check(f"... and its Low Bound ({low})", low is not None and frame in [f for f, _v in low])
         tx_keys = curve_keys(handle(), "tx") or []
@@ -281,9 +290,9 @@ def type_curvature(text, frame, where):
 
 
 goto(10)
-type_curvature("1.5", 10, "cb")
+type_curvature("90", 10, "cb")
 goto(20)
-type_curvature("0.5", 20, "view")
+type_curvature("30", 20, "view")
 
 SCRUB = (1, 5, 10, 15, 20, 3, 1)
 
@@ -291,7 +300,8 @@ SCRUB = (1, 5, 10, 15, 20, 3, 1)
 @step
 def s_scrub_start():
     keys = curve_keys(handle(), KEY)
-    check(f"Curvature's curve holds the three keys ({keys})", keys == [(1, 0.0), (10, 1.5), (20, 0.5)])
+    check(f"Curvature's curve holds the three keys ({keys})",
+          keys == [(1, 0.0), (10, round(math.pi / 2, 5)), (20, round(math.pi / 6, 5))])
     C["scrub"] = [tx(f) for f in SCRUB]
     C["seen"] = []
     x, y = C["scrub"][0]
@@ -314,7 +324,7 @@ def scrub_to(i, frame):
         sc = bpy.context.scene
         fc = cb().fcurve(handle(), KEY)
         want = fc.evaluate(sc.frame_current) if fc is not None else None
-        v = mesh().modifiers["bend1"].angle
+        v = curvature()
         row = next(r for r in bpy.context.scene.allset_cb.rows if r.name == "maya:curvature")
         b = bend()
         C["seen"].append((v, b))
@@ -322,7 +332,7 @@ def scrub_to(i, frame):
         check(f"scrubbing to frame {frame} ({sc.frame_current}): Curvature follows its keys ({v:.3f}, Channel Box "
               f"{row.text}, curve {want if want is None else round(want, 3)}) and the box bends {b:.3f}",
               sc.frame_current == frame and want is not None and abs(v - want) < 1e-5
-              and abs(float(row.text) - want) < 1e-3 and ((b < 1e-4) == (abs(v) < 1e-6)))
+              and abs(math.radians(float(row.text)) - want) < 1e-3 and ((b < 1e-4) == (abs(v) < 1e-6)))
         redraw()
 
     step(s_move)
