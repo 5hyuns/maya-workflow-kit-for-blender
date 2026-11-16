@@ -89,6 +89,9 @@ def s_scene():
     in_v3d(bpy.ops.allset.extrude, local_translate_z=0.5)
 
 
+step(redraw)          # the mode change's tool carry runs from a timer (operators/tool_keys)
+
+
 @step
 def s_move_tool():
     # a tick after the mode change: Edit Mode first takes Object Mode's tool (Maya's one tool, operators/tool_keys)
@@ -96,6 +99,9 @@ def s_move_tool():
     C["areas"] = len(win().screen.areas)
     C["main_w"] = v3d()[0].width
     menu("Windows/General Editors/Tool Settings")
+
+
+step(redraw)          # the window opens over a few timer ticks (its place is carved out first)
 
 
 @step
@@ -142,6 +148,9 @@ def s_toggle2_check():
           and len(bpy.context.window_manager.windows) == 1)
     # (wider is fine: the Tool Box column may have been fitted to one toolbar column meanwhile, toolbox_column.settle)
     in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
+
+
+step(redraw)
 
 
 @step

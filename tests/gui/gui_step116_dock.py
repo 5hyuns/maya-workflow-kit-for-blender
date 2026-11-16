@@ -144,6 +144,9 @@ def s_docked():
     in_area(win(), stack(), bpy.ops.allset.dock_handle, )
 
 
+step(redraw)          # a torn-off window opens over a few timer ticks
+
+
 @step
 def s_ae_torn():
     fl = floating()
@@ -168,6 +171,9 @@ def s_ae_closed():
 @step
 def s_tool_wait():
     pass
+
+
+step(redraw)          # the Tool Settings window opens over a few timer ticks (its place is carved out first)
 
 
 @step
