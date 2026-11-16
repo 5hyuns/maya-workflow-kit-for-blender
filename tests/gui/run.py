@@ -70,6 +70,8 @@ def run_matrix(args):
 
 # per-file limit: a hung Blender is killed and reported as TIMEOUT, the run goes on with the next file
 TIMEOUT = int(os.environ.get("ALLSET_GUI_TIMEOUT", "180"))
+# where the kit keeps the last place and size of its floating windows (ui/window_places.py)
+PLACES = headless.SANDBOX / "extensions" / ".user" / headless.REPO_ID / headless.PKG_ID / "window_places.json"
 
 
 def file_timeout(path):
@@ -144,6 +146,9 @@ def main(argv=None):
             continue
         out = headless.SANDBOX / "results" / f"{path.stem}.json"
         log = headless.SANDBOX / "logs" / f"{path.stem}.log"
+        # every file starts with no remembered kit window places, as when it runs alone: a place an earlier file
+        # left (a small Graph Editor, a tall Tool Settings window) would change the size its windows open at
+        PLACES.unlink(missing_ok=True)
         cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("ALLSET_GUI_ARGS", "").split(),
                *file_args(path),
                # ALLSET_GUI_GEOMETRY="2048 0 1600 900": open the window on a second monitor
