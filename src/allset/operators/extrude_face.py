@@ -64,6 +64,19 @@ def _face_parts(f, v, direction, fallback):
     return x, y, x * r.dot(x), y * r.dot(y), n * r.dot(n)
 
 
+def _translate_dir(v, faces, normals, perps):
+    """Local Translate Z of vertex ``v`` per unit (Maya): on the border of the extruded region the mean of its faces'
+    normals; inside it (no border edge) the unit normal with each face weighted by its corner angle at ``v``."""
+    if perps:
+        return sum(normals, Vector()) / len(normals)
+    n = Vector()
+    for g, gn in zip(faces, normals):
+        loop = next((lp for lp in g.loops if lp.vert is v), None)
+        if loop is not None:
+            n += gn * loop.calc_angle()
+    return n.normalized() if n.length > 1e-12 else sum(normals, Vector()) / len(normals)
+
+
 def _mean(vectors):
     return sum(vectors, Vector()) / len(vectors)
 
@@ -86,9 +99,8 @@ def _vectors(faces, together, direction=WORLD_X, fallback=MAYA_Z):
                     if len(ef) == 1:              # a border edge of the extruded region
                         perps.append(_inward(ef[0], e))
                 parts = [_face_parts(g, v, direction, fallback) for g in vf]
-                out[v.index] = (v.co.copy(), _thickness_dir(normals),
-                                sum(normals, Vector()) / len(normals), _offset_dir(perps),
-                                *(_mean([p[i] for p in parts]) for i in range(5)))
+                out[v.index] = (v.co.copy(), _thickness_dir(normals), _translate_dir(v, vf, normals, perps),
+                                _offset_dir(perps), *(_mean([p[i] for p in parts]) for i in range(5)))
     else:
         for f in faces:
             n = f.normal.copy()

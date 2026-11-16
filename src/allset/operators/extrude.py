@@ -3,8 +3,9 @@
 
 Maya's Edit Mesh > Extrude = a zero-length extrusion
 (Thickness 0, Local Translate Z 0, Offset 0, Divisions 1, Keep Faces Together on); Local Translate Z moves each face along
-its normal (a vertex shared by several extruded faces moves by the average), Thickness offsets every face plane by the
-same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides.
+its normal (a border vertex shared by several extruded faces moves by the average, an inner one along its unit normal),
+Thickness offsets every face plane by the same distance (shell), Offset shrinks the extruded faces in their plane (no new
+faces), Divisions = rings along the sides.
 
 Blender keeps no history in edit mode. The kit remembers the last extrusion per object:
 its node name (``polyExtrudeFaceN``), the mesh before it and the values; changing a value rebuilds the extrusion from that

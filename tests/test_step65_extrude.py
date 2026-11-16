@@ -43,6 +43,39 @@ def test_fast_path_equals_rebuild():
     bm.free()
 
 
+def test_local_translate_z_inner_vertex_moves_along_its_normal():
+    """Local Translate Z: a vertex on the border of the extruded faces moves by the mean of their normals, one
+    inside them (no border edge) along its unit normal (faces weighted by their corner angle)."""
+    bm, picked = _bm_cube(["top", "+x"])
+    picked += [f for f in bm.faces if f.normal.y > 0.9]          # three faces around the (+, +, +) corner
+    corner = next(v for v in bm.verts if min(v.co) > 0.4).co.copy()
+    ex.extrude(bm, picked, local_translate_z=1.0)
+    moved = [v for v in bm.verts if all(abs(c) > 0.6 for c in v.co)]
+    assert len(moved) == 1, [tuple(v.co) for v in moved]
+    d = moved[0].co - corner
+    assert (d - Vector((1.0, 1.0, 1.0)).normalized()).length < 1e-6, tuple(d)
+    edge_mid = sorted(_points(bm))
+    assert (1.0, 1.0, -0.5) in edge_mid, "top + x corner on the border: the mean of two normals"
+    bm.free()
+    # an uneven inner vertex: unit length along the corner-angle weighted normal
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=2, y_segments=2, size=1.0)
+    centre = min(bm.verts, key=lambda v: v.co.length)
+    centre.co.z = 0.3
+    next(v for v in bm.verts if v.co.x > 0.4 and v.co.y > 0.4).co.z = -0.2
+    bm.normal_update()
+    want = Vector()
+    for f in centre.link_faces:
+        loop = next(lp for lp in f.loops if lp.vert is centre)
+        want += f.normal * loop.calc_angle()
+    want.normalize()
+    start = centre.co.copy()
+    caps, _m = ex.extrude(bm, list(bm.faces), local_translate_z=1.0)
+    top = next(v for f in caps for v in f.verts if (v.co - start - want).length < 1e-5)
+    assert abs((top.co - start).length - 1.0) < 1e-6
+    bm.free()
+
+
 def test_whole_plane_keeps_its_bottom():
     """Every face of the mesh: the old faces stay as the bottom (#377); part of it: no bottom."""
     bm = bmesh.new()
