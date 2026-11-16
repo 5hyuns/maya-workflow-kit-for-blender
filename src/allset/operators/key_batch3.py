@@ -65,10 +65,16 @@ def background_state(shading):
     return v
 
 
+_GRADIENT_LINEAR = []      # GRADIENT_BASE in linear values (worked out on first use)
+
+
 def is_gradient(shading):
     """True when ``shading`` (a 3D View's) shows the kit's Maya gradient."""
-    return (shading.background_type == 'VIEWPORT'
-            and all(abs(a - srgb_to_linear(b)) < 1e-4 for a, b in zip(shading.background_color, GRADIENT_BASE)))
+    if shading.background_type != 'VIEWPORT':
+        return False
+    if not _GRADIENT_LINEAR:
+        _GRADIENT_LINEAR.extend(srgb_to_linear(b) for b in GRADIENT_BASE)
+    return all(abs(a - b) < 1e-4 for a, b in zip(shading.background_color, _GRADIENT_LINEAR))
 
 
 def next_state(state):

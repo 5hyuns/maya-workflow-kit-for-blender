@@ -24,9 +24,12 @@ HANDLE_RGB = (0x91 / 255, 0x91 / 255, 0x91 / 255, 1.0)
 TEXT_RGB = (0.8, 0.8, 0.8, 1.0)            # light grey of the frame numbers
 
 
-def _themed(color, field):
-    """A Range Slider colour moved with the Blender theme's Timeline colours (ui/theme_follow.py)."""
+def _themed(color, field, theme=None):
+    """A Range Slider colour moved with the Blender theme's Timeline colours (ui/theme_follow.py). ``theme``: {field:
+    the theme colour} already read for this draw."""
     from . import theme_follow
+    if theme is not None:
+        return theme_follow.follow(color, "dopesheet_editor", field, theme[field])
     return theme_follow.follow(color, "dopesheet_editor", field)
 
 
@@ -407,22 +410,25 @@ def draw():
 
     import blf
     import gpu
+    from . import theme_follow
+    theme = {f: theme_follow.theme_color("dopesheet_editor", f) for f in ("back", "text")}
     k = unit / MAYA_BAR_H
     gpu.state.blend_set('ALPHA')
-    _rounded(x0, y0, x1, y1, 4 * k, _themed(TRACK_RGB, "back"))
+    back = _themed(TRACK_RGB, "back", theme)
+    _rounded(x0, y0, x1, y1, 4 * k, back)
     ps, pe = playback(scene)
     hw, hh = HANDLE[0] * k, HANDLE[1] * k
     bar["handle_w"] = (HANDLE_INSET + HANDLE[0]) * k
     xs, xe = visual_segment(bar, ps, pe, bar["handle_w"])
     inset = SEG_INSET * k
-    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, _themed(SEGMENT_RGB, "back"))
+    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, _themed(SEGMENT_RGB, "back", theme))
     hy0 = (y0 + y1 - hh) / 2.0
     hx0, hx1 = xs + HANDLE_INSET * k, xe - HANDLE_INSET * k - hw
-    handle = _themed(HANDLE_RGB, "back")
+    handle = _themed(HANDLE_RGB, "back", theme)
     _rounded(hx0, hy0, hx0 + hw, hy0 + hh, 3 * k, handle)
     _rounded(hx1, hy0, hx1 + hw, hy0 + hh, 3 * k, handle)
     blf.size(0, TEXT_PX * scale)
-    blf.color(0, *_themed(TEXT_RGB, "text"))
+    blf.color(0, *_themed(TEXT_RGB, "text", theme))
     ty = (y0 + y1) / 2.0 - TEXT_PX * scale * 0.35
     a_txt, b_txt = f"{ps:g}", f"{pe:g}"
     wa, wb = blf.dimensions(0, a_txt)[0], blf.dimensions(0, b_txt)[0]
