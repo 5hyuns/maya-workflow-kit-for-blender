@@ -458,6 +458,11 @@ def is_applied():
     return _state["applied"]
 
 
+def kit_item_pointers():
+    """Pointers of the Maya keys' items in the add-on keyconfig (empty while the Maya keys are off)."""
+    return set(_state["addon_items"])
+
+
 def activate():
     """Put the Maya keymap in place (idempotent). Never changes which keyconfig is active."""
     if _state["applied"]:

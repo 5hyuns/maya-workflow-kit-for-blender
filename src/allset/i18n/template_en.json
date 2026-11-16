@@ -8481,8 +8481,10 @@
    "Hotkey": "Hotkey",
    "Hotkey Editor": "Hotkey Editor",
    "Import...": "Import...",
+   "Key in Use": "Key in Use",
    "Kit hotkey: — (Maya mode off or the item was removed)": "Kit hotkey: — (Maya mode off or the item was removed)",
    "Press a key... (Esc cancels)": "Press a key... (Esc cancels)",
+   "Remove From Others": "Remove From Others",
    "Restore": "Restore",
    "Restore All Maya Hotkeys": "Restore All Maya Hotkeys",
    "Search": "Search",
@@ -10807,13 +10809,14 @@
    "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel": "Choose replacement components on the proposed input, then Enter to apply or Esc to cancel"
   },
   "Tooltips/ui/hotkey_editor": {
-   "Assign a new key to this command: press the key (with Ctrl / Alt / Shift), Esc cancels": "Assign a new key to this command: press the key (with Ctrl / Alt / Shift), Esc cancels",
+   "Assign a new key to this command: press it (with Ctrl / Alt / Shift); a key in use asks first, Esc cancels": "Assign a new key to this command: press it (with Ctrl / Alt / Shift); a key in use asks first, Esc cancels",
    "Give this command its Maya hotkey back": "Give this command its Maya hotkey back",
    "Import a hotkey set exported from Maya's Hotkey Editor (.mhk) or the kit's Export (.json): its keys replace\nthe kit keys of the same commands (only key bindings are read; nothing in the file is run)": "Import a hotkey set exported from Maya's Hotkey Editor (.mhk) or the kit's Export (.json): its keys replace\nthe kit keys of the same commands (only key bindings are read; nothing in the file is run)",
    "Maya's Hotkey Editor (a marked Properties Tool tab in its own window)": "Maya's Hotkey Editor (a marked Properties Tool tab in its own window)",
    "Maya's Hotkey Editor list: command, Maya key, the kit's key, status": "Maya's Hotkey Editor list: command, Maya key, the kit's key, status",
    "Open Blender's Preferences > Keymap (every Blender and add-on key)": "Open Blender's Preferences > Keymap (every Blender and add-on key)",
-   "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys": "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys"
+   "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys": "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys",
+   "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)": "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)"
   },
   "Tooltips/ui/hs_drag": {
    "Maya Hypershade: drag a material swatch with the middle mouse button onto an object to assign it": "Maya Hypershade: drag a material swatch with the middle mouse button onto an object to assign it"

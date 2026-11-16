@@ -100,7 +100,9 @@ def test_export_then_import_brings_everything_back():
         assert data["preferences"]["select_through"] is False
         assert json.loads(data["preferences"]["option_settings"]) == {"issue275": {"size": 3}}
         assert "maya_mode" not in data["preferences"]
-        assert [h["command"] for h in data["hotkeys"]] == ["SelectToggleMode"], data["hotkeys"]
+        # Ctrl+F9 was Maya's ConvertSelectionToVertices key: it moved to SelectToggleMode (#381)
+        assert [(h["command"], h.get("removed", False)) for h in data["hotkeys"]] == [
+            ("SelectToggleMode", False), ("ConvertSelectionToVertices", True)], data["hotkeys"]
         assert data["hotkeys"][0]["key"] == {"type": "F9", "ctrl": True, "alt": False, "shift": False,
                                              "oskey": False}
         assert "issue275" in [s["name"] for s in data["shelves"]["shelves"]]
@@ -118,6 +120,7 @@ def test_export_then_import_brings_everything_back():
         assert p.maya_mode
         ev, changed = _key(_row("SelectToggleMode"))
         assert (ev["type"], ev["ctrl"], changed) == ("F9", True, True), ev
+        assert m("ui.hotkey_editor").kit_text(bpy.context, _row("ConvertSelectionToVertices")) == "— *"
         assert "issue275" in [s["name"] for s in m("ui.shelf").user_data()["shelves"]]
         assert "issue275menu" in m("marking.user_menus").document()["custom"]
         assert "issue275menu" in m("marking.menus").MENUS

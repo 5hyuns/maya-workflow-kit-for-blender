@@ -48,6 +48,9 @@ def _config_files():
 
 def _setup():
     populate()
+    keymap = m("keymap")
+    keymap.deactivate()          # the Maya keys again over the filled keyconfig (its own items switched off, as in
+    keymap.activate()            # the UI)
     bpy.context.window_manager.keyconfigs.update()
 
 
@@ -166,13 +169,18 @@ def test_conflict_warning_and_non_kit_rows():
     he = _he()
     ctx = bpy.context
     row = _row("SelectToggleMode")
+    undo = next(r for r in he.rows() if r["command"] == "Undo" and r["maya_key"] == "Ctrl+Z")
+    assert he.conflicts(ctx, row, {"type": "Z", "ctrl": True}), "the details warn before the key is given"
     ok, clash = he.assign(ctx, row, {"type": "Z", "ctrl": True})     # Maya Undo's key (Screen ed.undo)
     try:
-        assert ok and any(km == "Screen" for km, _n in clash), clash
+        # Maya: the key moves, Undo loses Ctrl+Z (#381)
+        assert ok and ("Screen", "Undo (2nd hotkey)") in clash, clash
         _km, kmi = he.editable_item(ctx, row)
-        assert he.conflicts(ctx, row, he.item_event(kmi), exclude=kmi), "conflict shown in the details"
+        assert not he.conflicts(ctx, row, he.item_event(kmi), exclude=kmi), "no conflict left"
+        assert he.kit_text(ctx, undo) == "— *", he.kit_text(ctx, undo)
     finally:
         assert he.restore(ctx, row)
+        assert he.restore(ctx, undo) and he.kit_text(ctx, undo) == "Ctrl+Z"
     ok, clash = he.assign(ctx, row, {"type": "F6", "ctrl": True, "alt": True, "shift": True})
     assert ok and not clash, clash
     assert he.restore(ctx, row)

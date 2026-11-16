@@ -3,7 +3,8 @@
     blender -b --python tests/i363_session.py -- <out.json> <action> [<action> ...]
 
 Runs with a sandbox BLENDER_USER_CONFIG (the caller creates it under tmp/), WITHOUT --factory-startup so the saved
-preferences of the previous session are read. Actions: enable, edit, maya_off, maya_on, disable, save.
+preferences of the previous session are read. Actions: enable, edit, take381 (test_issue381_hotkey_conflict.py),
+maya_off, maya_on, disable, save.
 Writes {"state": ...} after the actions.
 """
 
@@ -44,7 +45,27 @@ def observe():
     on = kit.is_enabled() and mod("switch").is_on()
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences if kit.is_enabled() else None
     return {"maya_mode": on, "keys": keys, "kit_items": len(kit_user),
-            "kept": prefs.user_keys if prefs is not None else None}
+            "kept": prefs.user_keys if prefs is not None else None, "y": hotkeys_381() if on else None}
+
+
+def _row381(command, maya_key):
+    he = mod("ui.hotkey_editor")
+    return next(r for r in he.rows() if r["command"] == command and r["maya_key"] == maya_key)
+
+
+def hotkeys_381():
+    """#381: the Hotkey Editor's keys of the second Undo row and of NonSacredTool (Last Tool)."""
+    he = mod("ui.hotkey_editor")
+    text = lambda r: he.kit_text(bpy.context, r).replace(" *", "")      # noqa: E731
+    return {"undo": text(_row381("Undo", "Ctrl+Z")), "last_tool": text(_row381("NonSacredTool", "Y"))}
+
+
+def take381():
+    """#381: the second Undo row (Ctrl+Z) given Y in the Hotkey Editor: Last Tool loses Y."""
+    kcs = bpy.context.window_manager.keyconfigs
+    kcs.update()
+    ok, taken = mod("ui.hotkey_editor").assign(bpy.context, _row381("Undo", "Ctrl+Z"), {"type": "Y"})
+    assert ok and taken, taken
 
 
 def edit():
@@ -74,6 +95,8 @@ def main():
             kit.disable()
         elif action == "edit":
             edit()
+        elif action == "take381":
+            take381()
         elif action == "maya_off":
             mod("switch").set_mode(False, layout=False)
         elif action == "maya_on":

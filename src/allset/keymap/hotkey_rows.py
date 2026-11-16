@@ -106,7 +106,8 @@ def build_rows(platform="windows"):
     index, command (runTimeCommand / nameCommand, "" for an explicitly empty binding), release, maya_key (Maya key
     text), event (Blender event dict of the Maya key), context, category (Maya Hotkey Editor category path, "" if
     none), status (KIT / IC / STEP / NO / MAC / None), status_text, check ((keymap, idname, props) or None), step,
-    note, line (row number in Maya's standard hotkey list), editable (the kit binds it: IC / KIT with a check)."""
+    note, line (row number in Maya's standard hotkey list), editable (the kit binds it: IC / KIT with a check),
+    number / label (see ``_number``)."""
     rows = []
     for i, raw in enumerate(hotkey_data.HOTKEYS):
         hk = _hotkey(raw)
@@ -127,7 +128,24 @@ def build_rows(platform="windows"):
             "status_text": STATUS_TEXT.get(status, str(status)), "check": check, "step": step, "note": note,
             "line": hk["line"], "editable": status in ("KIT", "IC") and check is not None,
         })
+    _number(rows)
     return rows
+
+
+_ORDINAL = {2: "2nd", 3: "3rd"}
+
+
+def _number(rows):
+    """A command with more than one Maya hotkey in one context (Undo: z and Ctrl+Z) has a row per hotkey, each
+    changing its own key: ``number`` = which of the command's hotkeys the row is (1, 2, ...), ``label`` = the list
+    text, "Undo" then "Undo (2nd hotkey)"."""
+    seen = {}
+    for r in rows:
+        key = (r["command"], r["context"])
+        n = seen[key] = seen.get(key, 0) + 1 if r["command"] else 1
+        r["number"] = n
+        name = r["command"] or "(none)"
+        r["label"] = f"{name} ({_ORDINAL.get(n, f'{n}th')} hotkey)" if n > 1 else name
 
 
 def categories(rows):
@@ -153,10 +171,11 @@ def _squash(text):
     return "".join(ch for ch in text.lower() if ch.isalnum())
 
 
-def matches(row, text, by="NAME", live_events=()):
-    """Maya's Hotkey Editor search: by NAME = the command name contains the text (case, spaces and punctuation
-    ignored: "select toggle" finds SelectToggleMode); by HOTKEY = the Maya key or one of ``live_events`` (the kit's
-    current events of the row) is that hotkey ("ctrl+z", "Shift+Q", "F8")."""
+def matches(row, text, by="NAME", live_events=(), names=()):
+    """Maya's Hotkey Editor search: by NAME = the command name or one of ``names`` (the kit command's own name,
+    "Last Tool" for NonSacredTool) contains the text (case, spaces and punctuation ignored: "select toggle" finds
+    SelectToggleMode); by HOTKEY = the Maya key or one of ``live_events`` (the kit's current events of the row) is
+    that hotkey ("ctrl+z", "Shift+Q", "F8")."""
     if not text.strip():
         return True
     if by == "HOTKEY":
@@ -166,13 +185,16 @@ def matches(row, text, by="NAME", live_events=()):
         want = event_key(ev)
         return event_key(row["event"]) == want or any(event_key(e) == want for e in live_events)
     q = _squash(text)
-    return q in _squash(row["command"]) or (row["release"] and q in _squash(row["release"]))
+    return (q in _squash(row["command"]) or bool(row["release"] and q in _squash(row["release"]))
+            or any(q in _squash(n) for n in names if n))
 
 
-def search(rows, text="", by="NAME", category="ALL", live=None):
-    """Rows matching ``text`` / ``category``; ``live`` = {row index: [event dicts]} for hotkey search."""
-    live = live or {}
-    return [r for r in rows if in_category(r, category) and matches(r, text, by, live.get(r["index"], ()))]
+def search(rows, text="", by="NAME", category="ALL", live=None, names=None):
+    """Rows matching ``text`` / ``category``; ``live`` = {row index: [event dicts]} for hotkey search, ``names`` =
+    {row index: [other names]} for name search."""
+    live, names = live or {}, names or {}
+    return [r for r in rows if in_category(r, category)
+            and matches(r, text, by, live.get(r["index"], ()), names.get(r["index"], ()))]
 
 
 def same_event(a, b):
