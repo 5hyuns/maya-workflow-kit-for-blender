@@ -204,10 +204,14 @@ class _BendInput(Attr):
 
 
 # A Simple Deform bend made like Maya (deform axis Y: it bends along the handle's Z, Maya's Y, towards its X) on a
-# lattice / curve / surface. Blender spreads its angle over the part of the object between its limits, and the limits
-# are fractions of the object's own extent along the bend, so the Maya values are read through that extent: Curvature =
-# angle / the limited length (handle units), Low / High Bound = the limit ends. Bounds beyond the object stop at its
-# ends.
+# lattice / surface (no Geometry Nodes there). Blender spreads its angle over the part of the object between its limits,
+# and the limits are fractions of the object's own extent along the bend. So the Maya values (Curvature in radians,
+# Low / High Bound in handle units) are kept on the handle (``SD_PROPS``, keyable like the node's attributes) and the
+# angle / limits are worked out from them and the points' extent in the handle's space whenever the handle, the object
+# or a value changes (operators/bend_deformer.py handlers): angle = Curvature x the limited length, limits = the bounds
+# held to the object's ends (points beyond the object don't exist, so that is the same bend).
+SD_PROPS = ("allset_bend_curvature", "allset_bend_low_bound", "allset_bend_high_bound")
+SD_WRITTEN = {}     # (object pointer, modifier name) -> (angle, limits) as last worked out (an edit elsewhere differs)
 
 def _sd_points(ob):
     """The local points a Simple Deform reads on ``ob``."""
@@ -240,8 +244,34 @@ def _sd_range(md):
     return ext[0], span, ext[0] + span * md.limits[0], ext[0] + span * md.limits[1]
 
 
+def _held(md):
+    """The Maya values kept on the bend's handle, or None (no handle, or a bend made without them)."""
+    h = md.origin
+    if h is None or any(k not in h for k in SD_PROPS):
+        return None
+    try:
+        return tuple(float(h[k]) for k in SD_PROPS)
+    except (TypeError, ValueError):
+        return None
+
+
 def sd_bend_values(md):
     """(Curvature in radians, Low Bound, High Bound) of a Simple Deform bend made like Maya."""
+    held = _held(md)
+    return held if held is not None else sd_bend_from_fields(md)
+
+
+def sd_bend_adopt(md):
+    """Keep the Maya values that the modifier's own angle / limits give now (an edit made in Blender's modifier
+    panel), so the handle doesn't put the old ones back."""
+    h = md.origin
+    if h is not None:
+        for k, v in zip(SD_PROPS, sd_bend_from_fields(md)):
+            h[k] = v
+
+
+def sd_bend_from_fields(md):
+    """(Curvature, Low Bound, High Bound) read from the Simple Deform's angle and limits on the points' extent."""
     r = _sd_range(md)
     if r is None:
         return 0.0, -1.0, 1.0
@@ -249,30 +279,49 @@ def sd_bend_values(md):
     return (md.angle / (b - a) if b - a > 1e-9 else 0.0), min(a, 0.0), max(b, 0.0)
 
 
-def sd_bend_set(md, curvature=None, low=None, high=None):
-    """Set a Simple Deform bend made like Maya to these Maya values (None: keep)."""
-    c0, lo0, hi0 = sd_bend_values(md)
-    c = c0 if curvature is None else float(curvature)
-    lo = lo0 if low is None else min(0.0, float(low))
-    hi = hi0 if high is None else max(0.0, float(high))
+def sd_bend_apply(md):
+    """Work out the Simple Deform's angle and limits from the Maya values and where the points are in the handle's
+    space now. Writes only what changed (a depsgraph handler calls this); True when something was written."""
+    c, lo, hi = sd_bend_values(md)
     r = _sd_range(md)
     if r is None or r[1] <= 1e-9:
-        md.angle = 0.0
-        return
-    e, span = r[0], r[1]
-    a, b = max(lo, e), min(hi, e + span)
-    if b < a:
-        a = b = min(max(0.0, e), e + span)
-    md.limits = ((a - e) / span, (b - e) / span)
-    md.angle = c * (b - a)
+        want_limits, want_angle = tuple(md.limits), 0.0
+    else:
+        e, span = r[0], r[1]
+        a, b = max(lo, e), min(hi, e + span)
+        if b < a:
+            a = b = min(max(0.0, e), e + span)
+        want_limits, want_angle = ((a - e) / span, (b - e) / span), c * (b - a)
+    done = False
+    if any(abs(x - y) > 1e-7 for x, y in zip(md.limits, want_limits)):
+        md.limits = want_limits
+        done = True
+    if abs(md.angle - want_angle) > 1e-7:
+        md.angle = want_angle
+        done = True
+    SD_WRITTEN[(md.id_data.as_pointer(), md.name)] = (md.angle, tuple(md.limits))
+    return done
+
+
+def sd_bend_set(md, curvature=None, low=None, high=None):
+    """Set a Simple Deform bend made like Maya to these Maya values (None: keep): kept on its handle, then applied."""
+    c0, lo0, hi0 = sd_bend_values(md)
+    vals = (c0 if curvature is None else float(curvature), lo0 if low is None else min(0.0, float(low)),
+            hi0 if high is None else max(0.0, float(high)))
+    h = md.origin
+    if h is not None:
+        for k, v in zip(SD_PROPS, vals):
+            h[k] = v
+        h.update_tag()
+    sd_bend_apply(md)
 
 
 _SD_BEND = [Attr("curvature", "Curvature", "ROTATION", lambda md: sd_bend_values(md)[0],
-                 lambda md, v: sd_bend_set(md, curvature=v), (("angle", -1),)),
+                 lambda md, v: sd_bend_set(md, curvature=v), ((f'origin["{SD_PROPS[0]}"]', -1),)),
             Attr("lowBound", "Low Bound", "NONE", lambda md: sd_bend_values(md)[1],
-                 lambda md, v: sd_bend_set(md, low=v), (("limits", 0), ("angle", -1))),
+                 lambda md, v: sd_bend_set(md, low=v), ((f'origin["{SD_PROPS[1]}"]', -1),)),
             Attr("highBound", "High Bound", "NONE", lambda md: sd_bend_values(md)[2],
-                 lambda md, v: sd_bend_set(md, high=v), (("limits", 1), ("angle", -1)))]
+                 lambda md, v: sd_bend_set(md, high=v), ((f'origin["{SD_PROPS[2]}"]', -1),))]
 
 _ENVELOPE = _prop("envelope", "Envelope", "NONE", "strength")
 _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", "High Bound", "NONE", *_limit(1))]
@@ -641,11 +690,11 @@ def _nonlinear(context, kind, v):
         if kind == 'BEND':
             c = math.radians(float(v.get("curvature", 0.0)))           # the option window's degrees
             low, high = float(v.get("low", -1.0)), float(v.get("high", 1.0))
-            if ob.type == 'MESH':
+            if ob.type in ('MESH', 'CURVE'):                 # a curve's control points bend the same way
                 from . import bend_deformer
                 bend_deformer.add(ob, name, handle, _weights(ob, name, idx), c, low, high)
                 continue
-            md = _add(ob, name, 'SIMPLE_DEFORM', idx)       # a lattice / curve / surface: no Geometry Nodes there
+            md = _add(ob, name, 'SIMPLE_DEFORM', idx)       # a lattice / surface: no Geometry Nodes there
             md.deform_method = 'BEND'
             md.deform_axis = 'Y'
             md.origin = handle

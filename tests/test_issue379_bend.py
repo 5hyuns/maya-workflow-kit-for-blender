@@ -322,7 +322,15 @@ def test_delete_history_takes_the_handle():
     assert deformers.driven_modifiers(bpy.data.objects["bend1Handle"]) == [b.modifiers["bend1"]]
 
 
-def test_lattice_bend_bends_the_same_way():
+def _lattice_points(lat, evaluated=True):
+    dg = bpy.context.evaluated_depsgraph_get()
+    src = lat.evaluated_get(dg) if evaluated else lat
+    return np.array([tuple(lat.matrix_world @ p.co_deform) for p in src.data.points])
+
+
+def test_lattice_bend_follows_its_handle_like_maya():
+    """A lattice can't take Geometry Nodes: its bend is a Simple Deform whose angle / limits follow the Maya values kept
+    on the handle and the handle itself — moved, turned, scaled, keyed — like Maya's bend on lattice points."""
     _fresh()
     bpy.ops.object.add(type='LATTICE')
     lat = bpy.context.active_object
@@ -334,15 +342,138 @@ def test_lattice_bend_bends_the_same_way():
     handle = bpy.context.view_layer.objects.active
     md = lat.modifiers["bend1"]
     assert md.type == 'SIMPLE_DEFORM' and md.deform_axis == 'Y'
+    rest = _lattice_points(lat, evaluated=False)
     _type(handle, md, "curvature", "90")
     assert abs(deformers.sd_bend_values(md)[0] - math.pi / 2) < 1e-6
-    dg = bpy.context.evaluated_depsgraph_get()
-    ev = lat.evaluated_get(dg)
-    got = np.array([tuple(lat.matrix_world @ p.co_deform) for p in ev.data.points])
-    rest = np.array([tuple(lat.matrix_world @ p.co_deform) for p in lat.data.points])
-    want = _expected(rest, handle, math.pi / 2, -1.0, 1.0)
-    assert np.abs(got - want).max() < 1e-4, np.abs(got - want).max()
+    assert np.abs(_lattice_points(lat) - _expected(rest, handle, math.pi / 2, -1.0, 1.0)).max() < 1e-4
     assert _rows(handle, md) == [("Curvature", "90"), ("Low Bound", "-1"), ("High Bound", "1")], _rows(handle, md)
+    # the handle moved / turned / scaled after the bend was made: the bend follows it (the bounds stay in handle units)
+    for loc, rot, scale in (((0.0, 0.0, 0.6), (0.0, 0.0, 0.0), (2.0, 2.0, 2.0)),
+                            ((0.1, -0.2, 0.3), (0.2, 0.35, 0.5), (1.5, 1.5, 1.5)),
+                            ((0.0, 0.0, -0.4), (0.0, 0.0, 0.0), (1.0, 1.0, 3.0))):
+        handle.location, handle.rotation_euler, handle.scale = loc, Euler(rot), scale
+        bpy.context.view_layer.update()
+        want = _expected(rest, handle, math.pi / 2, -1.0, 1.0)
+        assert np.abs(_lattice_points(lat) - want).max() < 1e-4, (loc, rot, scale)
+    _type(handle, md, "lowBound", "-0.3")
+    _type(handle, md, "highBound", "2.5")          # past the lattice's end: the same as its end
+    want = _expected(rest, handle, math.pi / 2, -0.3, 2.5)
+    assert np.abs(_lattice_points(lat) - want).max() < 1e-4
+    assert dict(_rows(handle, md))["High Bound"] == "2.5"
+    # the lattice moved: the bend stays in the handle's space
+    lat.location = (0.3, 0.0, 0.2)
+    bpy.context.view_layer.update()
+    rest = _lattice_points(lat, evaluated=False)
+    assert np.abs(_lattice_points(lat) - _expected(rest, handle, math.pi / 2, -0.3, 2.5)).max() < 1e-4
+    # keyed Curvature (on the handle, like the node's own attribute) and a keyed handle play back
+    sc = bpy.context.scene
+    row = _type(handle, md, "curvature", "0")
+    key = cb.row_key(row)
+    for frame, text in ((1, "0"), (10, "120")):
+        sc.frame_set(frame)
+        _type(handle, md, "curvature", text)
+        cb.set_selected_channels([key])
+        assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
+    cb.set_selected_channels([])
+    fc = cb.fcurve(handle, key)
+    assert fc is not None and fc.id_data == handle.animation_data.action, "keyed on the handle"
+    handle.rotation_euler = Euler((0.0, 0.0, 0.0))
+    handle.keyframe_insert("rotation_euler", index=1, frame=1)
+    handle.rotation_euler = Euler((0.0, 0.6, 0.0))
+    handle.keyframe_insert("rotation_euler", index=1, frame=10)
+    for frame in (10, 4, 1, 7):
+        sc.frame_set(frame)
+        c = fc.evaluate(frame)
+        assert abs(deformers.sd_bend_values(md)[0] - c) < 1e-5
+        want = _expected(rest, handle, c, -0.3, 2.5)
+        assert np.abs(_lattice_points(lat) - want).max() < 1e-4, frame
+        assert cb.channel_state(handle, key) == ('KEYED' if frame in (1, 10) else 'ANIMATED'), frame
+    # the handle draws Maya's lines from the values it keeps
+    sc.frame_set(10)
+    segs = handles.segments(bpy.context.view_layer)
+    tick = segs[-1]
+    assert (tick[1] - handle.matrix_world @ Vector((0.2 * math.radians(120.0), 0, 0))).length < 1e-5
+
+
+def test_surface_bend_follows_its_handle():
+    """A NURBS surface: also a Simple Deform kept in step with the handle (angle = Curvature x the bounded length of the
+    surface along the handle, limits = the bounds on the surface's extent)."""
+    _fresh()
+    bpy.ops.surface.primitive_nurbs_surface_surface_add()
+    surf = bpy.context.active_object
+    surf.scale = (1.0, 1.0, 1.0)
+    surf.rotation_euler = Euler((math.radians(90.0), 0.0, 0.0))     # standing: its extent along Z
+    bpy.context.view_layer.update()
+    _select(surf)
+    assert bpy.ops.allset.deformer(kind='BEND') == {'FINISHED'}
+    handle = bpy.context.view_layer.objects.active
+    md = surf.modifiers["bend1"]
+    assert md.type == 'SIMPLE_DEFORM' and md.deform_axis == 'Y'
+    _type(handle, md, "curvature", "60")
+
+    def want():
+        m = handle.matrix_world.inverted() @ surf.matrix_world
+        zs = [(m @ p.co.xyz).z for sp in surf.data.splines for p in sp.points]
+        e0, e1 = min(zs), max(zs)
+        a, b = max(-1.0, e0), min(1.0, e1)
+        return ((a - e0) / (e1 - e0), (b - e0) / (e1 - e0)), math.radians(60.0) * (b - a)
+
+    for loc in ((0.0, 0.0, 0.0), (0.0, 0.0, 0.7), (0.2, 0.0, -0.5)):
+        handle.location = loc
+        bpy.context.view_layer.update()
+        limits, angle = want()
+        assert abs(md.angle - angle) < 1e-5 and all(abs(x - y) < 1e-5 for x, y in zip(md.limits, limits)), loc
+    # an angle typed in Blender's modifier panel is kept: it becomes the Curvature, and the bend still follows the handle
+    a, b = (lambda r: (r[2], r[3]))(deformers._sd_range(md))
+    md.angle = 1.0
+    bpy.context.view_layer.update()
+    assert abs(md.angle - 1.0) < 1e-6
+    assert abs(deformers.sd_bend_values(md)[0] - 1.0 / (b - a)) < 1e-5
+    curv = deformers.sd_bend_values(md)[0]
+    handle.location = (0.0, 0.0, 0.3)
+    bpy.context.view_layer.update()
+    m = handle.matrix_world.inverted() @ surf.matrix_world
+    zs = [(m @ p.co.xyz).z for sp in surf.data.splines for p in sp.points]
+    assert abs(md.angle - curv * (min(1.0, max(zs)) - max(-1.0, min(zs)))) < 1e-5
+
+
+def _curve_points(cu, evaluated=True):
+    if evaluated:
+        dg = bpy.context.evaluated_depsgraph_get()
+        geo = cu.evaluated_get(dg).evaluated_geometry()
+        pos = geo.curves.attributes["position"]
+        co = [tuple(cu.matrix_world @ Vector(d.vector)) for d in pos.data]
+    else:
+        co = [tuple(cu.matrix_world @ p.co.xyz) for sp in cu.data.splines for p in sp.points]
+    return np.array(co)
+
+
+def test_curve_bend_moves_its_control_points_like_maya():
+    """A curve takes the same Geometry Nodes bend as a mesh: its control points bend by Maya's rule, also after the
+    handle moved and turned."""
+    _fresh()
+    cu_data = bpy.data.curves.new("curveShape1", 'CURVE')
+    cu_data.dimensions = '3D'
+    sp = cu_data.splines.new('NURBS')
+    sp.points.add(8)
+    for i, p in enumerate(sp.points):
+        p.co = (0.2, 0.1, i * 0.5 - 2.0, 1.0)
+    sp.order_u = 4
+    cu = bpy.data.objects.new("curve1", cu_data)
+    bpy.context.scene.collection.objects.link(cu)
+    bpy.context.view_layer.update()
+    _select(cu)
+    assert bpy.ops.allset.deformer(kind='BEND') == {'FINISHED'}
+    handle = bpy.context.view_layer.objects.active
+    md = cu.modifiers["bend1"]
+    assert bend.is_bend(md) and bend.get(md, "Handle") == handle
+    rest = _curve_points(cu, evaluated=False)
+    _type(handle, md, "curvature", "90")
+    assert np.abs(_curve_points(cu) - _expected(rest, handle, math.pi / 2, -1.0, 1.0)).max() < 1e-4
+    handle.location = (-0.1, 0.0, 0.4)
+    handle.rotation_euler = Euler((0.0, math.radians(25.0), 0.0))
+    bpy.context.view_layer.update()
+    assert np.abs(_curve_points(cu) - _expected(rest, handle, math.pi / 2, -1.0, 1.0)).max() < 1e-4
 
 
 def test_bend_of_earlier_versions_keeps_its_rows():

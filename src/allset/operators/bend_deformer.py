@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's bend deformer (Deform > Nonlinear > Bend) on a mesh (#379).
+"""Maya's bend deformer (Deform > Nonlinear > Bend) on a mesh or a curve (#379).
 
 Maya bends in its handle's space. The handle's Y axis is the length that bends and its X axis the side it bends to.
 A point (x, y, z) of that space whose y, held between Low Bound and High Bound, is y_c turns by t = Curvature * y_c
@@ -16,7 +16,10 @@ points with a uniform scale of half their bounding box's longest side, so on a f
 bends nothing until it is turned to lie along the plane.
 
 Blender's Simple Deform spreads its angle over the object's own extent between its limits (fractions of that extent),
-so the kit bend on a mesh is a Geometry Nodes modifier named like the Maya node (``bend1``) on a shared node group.
+so the kit bend on a mesh or a curve (its control points) is a Geometry Nodes modifier named like the Maya node
+(``bend1``) on a shared node group. A lattice or a surface can't take Geometry Nodes: there the bend is a Simple Deform
+whose angle and limits the handlers below keep worked out from the Maya values on the handle (operators/deformers.py
+``SD_PROPS``) whenever the handle, the object or a value changes.
 The kit handle is an empty whose local +Z (its arrow) is Maya's Y, +X Maya's X and -Y Maya's Z. Curvature is held
 in radians and shown in degrees. The weights are the vertex group ``bend1`` (weight 1 on the deformed points), which
 Deform > Paint Weights > Nonlinear paints.
@@ -200,3 +203,81 @@ def handle_lines(curvature, low, high):
     if abs(curvature) > 1e-12:
         out.append((to_kit(0.0, 0.0), to_kit(TICK * curvature, 0.0)))
     return out
+
+
+# --- Simple Deform bends (lattice / surface) follow their handle ----------------------------------------------------
+
+_SD = {"version": None, "items": ()}      # (objects_version, ((object, modifier name), ...)) of those bends
+_busy = [False]
+
+
+def _sd_items():
+    """(object, modifier name) of every Simple Deform bend made like Maya, looked up again only when objects came or
+    went (a bend comes with its handle), so an update reads nothing when there is none."""
+    from . import deformers
+    from ..ui import outliner
+    key = outliner.objects_version()
+    if _SD["version"] != key:
+        items = []
+        for ob in bpy.data.objects:
+            for md in getattr(ob, "modifiers", ()):
+                if (md.type == 'SIMPLE_DEFORM' and md.deform_axis == 'Y' and deformers.base_of(md) == "bend"
+                        and deformers._held(md) is not None):
+                    items.append((ob, md.name))
+        _SD["version"], _SD["items"] = key, tuple(items)
+    return _SD["items"]
+
+
+def sync_simple_deforms():
+    """Work the Simple Deform bends' angle / limits out again (only what changed is written). An angle / limits that
+    differ from what was last worked out were edited in Blender's modifier panel: they become the Maya values."""
+    if _busy[0]:
+        return
+    from . import deformers
+    _busy[0] = True
+    try:
+        for ob, name in _sd_items():
+            md = ob.modifiers.get(name)
+            if md is None:
+                continue
+            now = (md.angle, tuple(md.limits))
+            last = deformers.SD_WRITTEN.get((ob.as_pointer(), name))
+            if last is not None and (abs(now[0] - last[0]) > 1e-6
+                                     or any(abs(a - b) > 1e-6 for a, b in zip(now[1], last[1]))):
+                deformers.sd_bend_adopt(md)
+            deformers.sd_bend_apply(md)
+    except ReferenceError:              # an object removed before the next update: look again then
+        _SD["version"] = None
+    finally:
+        _busy[0] = False
+
+
+@bpy.app.handlers.persistent
+def _on_update(_scene, _depsgraph=None):
+    sync_simple_deforms()
+
+
+@bpy.app.handlers.persistent
+def _on_load(*_args):
+    from . import deformers
+    _SD["version"], _SD["items"] = None, ()
+    deformers.SD_WRITTEN.clear()
+
+
+_HANDLERS = (("depsgraph_update_post", _on_update), ("frame_change_post", _on_update), ("load_post", _on_load),
+             ("undo_post", _on_load), ("redo_post", _on_load))
+
+
+def register_handlers():
+    for attr, fn in _HANDLERS:
+        lst = getattr(bpy.app.handlers, attr)
+        if fn not in lst:
+            lst.append(fn)
+
+
+def unregister_handlers():
+    for attr, fn in _HANDLERS:
+        lst = getattr(bpy.app.handlers, attr)
+        if fn in lst:
+            lst.remove(fn)
+    _on_load()

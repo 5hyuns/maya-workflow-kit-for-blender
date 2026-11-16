@@ -84,6 +84,11 @@ def path_struct(owner, path):
     ``properties.inputs.Socket_2.value``) resolves to its last struct, which keys and names it."""
     head, dot, prop = path.rpartition(".")
     if not dot or path.startswith("["):
+        i = path.find("[")
+        if i > 0:       # an ID property of an object the owner points at (a lattice bend's handle: origin["..."])
+            sub = owner.path_resolve(path[:i])
+            if sub is not None:
+                return sub, path[i:]
         return owner, path
     return owner.path_resolve(head), prop
 
@@ -125,9 +130,19 @@ def _own_weight(ob, key):
 
 def input_curve_id(ob, key):
     """The ID whose animation holds INPUTS channel ``key`` of ``ob``: the node's own, or for a deformer a handle or
-    lattice shows (bend1 in the INPUTS of bend1Handle) the deformed object's, where the modifier is."""
+    lattice shows (bend1 in the INPUTS of bend1Handle) the deformed object's, where the modifier is; a deformer value
+    kept on its handle (a lattice bend's Curvature) the handle's."""
     owner = input_owner(ob, key)
-    return owner.id_data if owner is not None else None
+    if owner is None:
+        return None
+    if isinstance(owner, bpy.types.Modifier):
+        paths = input_paths(owner, key)
+        if paths:
+            try:
+                return path_struct(owner, paths[0][0])[0].id_data
+            except (ValueError, AttributeError):
+                pass
+    return owner.id_data
 
 
 def input_curve_paths(ob, key):
