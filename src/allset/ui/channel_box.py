@@ -60,7 +60,8 @@ from .cb_values import (model_node, shape_owner, shape_paths, input_owner, input
 from .cb_selection import (selected_channels, set_selected_channels, _slider, _view3d_tool, arm_slider, disarm_slider,
                            slider_armed, select_channel, drawn_keys, shown_weight_keys, shown_deformer_keys,
                            history_keys, channel_range, select_range, cell_key, sel_toggle, entry_keys,
-                           SELECTION_EDITORS, redraw_selection, _visible_channels)
+                           SELECTION_EDITORS, redraw_selection, _visible_channels, value_cell, selection_column,
+                           set_selection_column)
 from .cb_slider import (SLIDER_STEP, SPEEDS, SPEED_FACTOR, slider_delta, slider_targets, drag_limit, ROT_DEG_PER_PX,
                         AXIS_MIN_SHARE, node_axes, screen_axis, projected_delta, rotate_delta, slider_apply, _unit_dirs,
                         ALLSET_OT_cb_virtual_slider)

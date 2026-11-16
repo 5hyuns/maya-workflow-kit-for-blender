@@ -20,7 +20,22 @@ def selected_channels(context=None):
     return [s for s in wm.allset_cb_selected.split(",") if s]
 
 
+# Like Maya, a channel selection shows in the column it was picked in: blue names after a pick on the names, blue
+# value cells after a pick or a drag on the values. The channels are the same either way. A selection made any other
+# way shows on the names.
+_column = {"part": "NAME"}
+
+
+def selection_column():
+    return _column["part"]
+
+
+def set_selection_column(part):
+    _column["part"] = "VALUE" if part == "VALUE" else "NAME"
+
+
 def set_selected_channels(keys, context=None):
+    _column["part"] = "NAME"
     wm = (context or bpy.context).window_manager
     wm.allset_cb_selected = ",".join(dict.fromkeys(keys))
     if keys:
@@ -159,9 +174,9 @@ def cell_key(path, scene=None):
     m = re.match(r"^allset_cb\.([a-z]+)_(text|text_on|sel|sel_on)$", path or "")
     if m and m.group(1) in MAIN_BY_KEY:
         return m.group(1), ("VALUE" if m.group(2).startswith("text") else "NAME")
-    m = re.match(r"^allset_creation\.([A-Za-z0-9]+?)_(text|sel|sel_on)$", path or "")
+    m = re.match(r"^allset_creation\.([A-Za-z0-9]+?)_(text|text_on|sel|sel_on)$", path or "")
     if m:
-        return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
+        return HISTORY_PREFIX + m.group(1), ("VALUE" if m.group(2).startswith("text") else "NAME")
     m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|text_on|sel|sel_on)$", path or "")
     if m and scene is not None:
         rows = scene.allset_cb.rows
@@ -175,7 +190,9 @@ def sel_toggle(layout, owner, prop, selected, text, translate=True):
     """A Channel Box name cell: a toggle of the channel's selection, pressed (embossed) when selected. A selected
     cell draws the twin property ``<prop>_on``: Blender keeps the button under the mouse from the last redraw
     (with its old emboss), so the same property would show the new selection only after the mouse leaves the
-    row (#316); another property is another button."""
+    row (#316); another property is another button. Pressed only while the selection shows on the names
+    (selection_column)."""
+    selected = selected and _column["part"] == "NAME"
     layout.prop(owner, prop + "_on" if selected else prop, text=text, toggle=True, emboss=selected,
                 translate=translate)
 
@@ -201,10 +218,10 @@ def _left_pad(text):
 
 def value_cell(layout, owner, prop, selected):
     """A Channel Box value field; selected (#375), Maya's blue value cell: a pressed toggle of the twin ``<prop>_on``
-    showing the value (UILayout can't colour a text field). The drag watcher eats the press either way and edits
-    ``prop`` (edit_field)."""
+    showing the value (UILayout can't colour a text field), while the selection shows on the values
+    (selection_column). The drag watcher eats the press either way and edits ``prop`` (edit_field)."""
     twin = prop + "_on"
-    if selected and twin in owner.bl_rna.properties:
+    if selected and _column["part"] == "VALUE" and twin in owner.bl_rna.properties:
         # one pressed toggle (two joined buttons draw a divider, and a narrow one drops its text); a toggle centres
         # its text, so trailing spaces push the value to the cell's left edge like the text field's
         val = getattr(owner, prop)

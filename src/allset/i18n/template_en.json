@@ -8158,12 +8158,14 @@
    "Channel Box Virtual Slider": "Channel Box Virtual Slider"
   },
   "Labels/ui/channel_box": {
+   "A value for every selected channel: Enter sets it": "A value for every selected channel: Enter sets it",
    "Channel Box Wheel Navigation": "Channel Box Wheel Navigation",
    "Name": "Name",
    "Select this channel: click, Ctrl toggle, Shift range, drag over the rows": "Select this channel: click, Ctrl toggle, Shift range, drag over the rows",
    "Selected": "Selected",
    "Selected Channels": "Selected Channels",
-   "The lead's name: Enter renames it": "The lead's name: Enter renames it"
+   "The lead's name: Enter renames it": "The lead's name: Enter renames it",
+   "Value": "Value"
   },
   "Labels/ui/component_editor": {
    "Auto Normalization:": "Auto Normalization:",

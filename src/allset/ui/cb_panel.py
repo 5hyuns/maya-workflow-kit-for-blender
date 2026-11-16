@@ -20,7 +20,7 @@ from .cb_inputs import (SHAPE_PROPS, _drawing_sigs, _inputs, _modifier_props, _n
                         rebuild_rows, row_for, shape_label, weight_name)
 from .cb_values import (_held_states, _holding, _holds_states, channel_label, entry_kind, get_value, has_channel,
                         row_state)
-from .cb_selection import sel_toggle, selected_channels, value_cell
+from .cb_selection import sel_toggle, selected_channels, selection_column, value_cell
 from .cb_menus import ALLSET_OT_cb_rotate_order, MENU_BAR
 
 
@@ -129,6 +129,7 @@ def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
         sel_toggle(sub, sel_owner, sel_prop, selected, i18n.iface(label) if key in MAIN_BY_KEY else label,
                    translate=key not in MAIN_BY_KEY)
         return
+    selected = selected and selection_column() == "NAME"
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
                       emboss=selected)
     op.key = key

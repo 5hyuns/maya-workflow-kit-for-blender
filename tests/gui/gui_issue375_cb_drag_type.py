@@ -1,6 +1,7 @@
 """#375 in a real UI: Maya Channel Box, drag down over the value fields Scale X -> Scale Z, release, then just type
-a value and Enter (no second click): the value goes into every selected channel of both selected cubes. A drag over
-the names only selects (no field editor opens)."""
+a value and Enter (no second click): the value goes into every selected channel of both selected cubes. The selection
+shows where it was made, like Maya: after the drag over the values their cells are blue and the names are not. A drag
+over the names only selects (no field editor opens); then the names are blue and the values stay text fields."""
 
 import os
 import sys
@@ -130,6 +131,24 @@ def s_applied():
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
 
 
+# Maya: the cells of a drag over the values are blue (a pressed toggle of the twin ``<key>_text_on``), their names not
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sy_text_on"), C, "sy_blue", x_frac=0.7, step_px=4))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sy_sel"), C, "sy_name", y_from="sy_blue", step_px=8))
+
+
+@step
+def s_value_cells_blue():
+    check(f"after a drag over the values, a selected value cell is blue (Scale Y: {C.get('sy_blue')})",
+          C.get("sy_blue") is not None)
+    check(f"after a drag over the values, the selected channel's name is not pressed (Scale Y: {C.get('sy_name')})",
+          C.get("sy_name") is not None)
+    shots = os.environ.get("ALLSET_GUI_SHOTS", "")
+    if shots:
+        screenshot(os.path.join(shots, "gui_issue375_blue_values.png"))
+    x, y = C["tx_name"]
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
 @step
 def s_name_hover():
     x, y = C["tx_name"]
@@ -167,20 +186,21 @@ def s_name_only_selects():
 
 
 
-# Maya: a selected channel's value cell is blue too (a pressed toggle of the twin ``<key>_text_on``)
-step(find_button(dock, lambda p, _c: p.endswith("allset_cb.ty_text_on"), C, "ty_blue", x_frac=0.7, step_px=4))
-step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sx_text"), C, "sx_plain", x_frac=0.7, step_px=4))
+# Maya: after a drag over the names, the names are blue and the value cells stay text fields
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.ty_text"), C, "ty_plain", x_frac=0.7, step_px=4))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.ty_sel_on"), C, "ty_name_on", y_from="ty_plain",
+                 step_px=8))
 
 
 @step
-def s_blue_cells():
-    check(f"a selected channel's value cell is drawn selected (Translate Y: {C.get('ty_blue')})",
-          C.get("ty_blue") is not None)
-    check(f"an unselected channel's value cell stays a text field (Scale X: {C.get('sx_plain')})",
-          C.get("sx_plain") is not None)
+def s_name_cells_blue():
+    check(f"after a drag over the names, a selected name is pressed (Translate Y: {C.get('ty_name_on')})",
+          C.get("ty_name_on") is not None)
+    check(f"after a drag over the names, its value cell stays a text field (Translate Y: {C.get('ty_plain')})",
+          C.get("ty_plain") is not None)
     shots = os.environ.get("ALLSET_GUI_SHOTS", "")
     if shots:
-        screenshot(os.path.join(shots, "gui_issue375_blue_values.png"))
+        screenshot(os.path.join(shots, "gui_issue375_blue_names.png"))
 
 
 run()

@@ -91,10 +91,20 @@ def _sel_set(name):
     return set_
 
 
+def _on_get(_self):
+    return True
+
+
+def _on_set(_self, _value):
+    pass
+
+
 class ALLSET_PG_creation(bpy.types.PropertyGroup):
     __annotations__ = {
         **{f"{n}_text": StringProperty(name=n, get=_text_get(n), set=_text_set(n), options={'SKIP_SAVE'})
            for n in ALL_ATTRS},
+        # a selected attribute's blue value cell (cb_selection.value_cell)
+        **{f"{n}_text_on": BoolProperty(name=n, get=_on_get, set=_on_set, options={'SKIP_SAVE'}) for n in ALL_ATTRS},
         **{f"{n}{suffix}": BoolProperty(name=n, get=_sel_get(n), set=_sel_set(n), options={'SKIP_SAVE'},
                                     description="Select this attribute: click, Ctrl toggle, Shift range, drag "
                                                 "over the rows; then middle-drag in the viewport changes it")
@@ -126,7 +136,7 @@ def draw_cb(layout, context, ob):
         channel_box.sel_toggle(split, props, f"{name}_sel", selected, prim_shapes.spec(node["type"], name)[1])
         cell = split.row()
         cell.enabled = not channel_box.is_locked(ob, channel_box.HISTORY_PREFIX+name)
-        cell.prop(props, f"{name}_text", text="")
+        channel_box.value_cell(cell, props, f"{name}_text", selected)
     return True
 
 

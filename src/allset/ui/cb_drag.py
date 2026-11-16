@@ -20,7 +20,7 @@ from .cb_inputs import constrained_keys
 from .cb_values import (_non_euler_rot, auto_keys, driver, entry_kind, get_value, has_channel, keyframe, set_value,
                         shape_owner, shape_paths)
 from .cb_selection import (cell_key, drawn_keys, entry_keys, redraw_selection, select_channel, select_range,
-                           selected_channels, set_selected_channels)
+                           selected_channels, selection_column, set_selected_channels, set_selection_column)
 from .cb_slider import drag_limit
 from .cb_menus import ALLSET_MT_cb_channels, ALLSET_MT_cb_edit
 
@@ -352,6 +352,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             return self._on_release(context, event)
         if event.type == 'ESC' and event.value == 'PRESS':
             set_selected_channels(self._base)
+            set_selection_column(self._column)
             self._press = None
             redraw_selection()
             return {'RUNNING_MODAL'}
@@ -382,9 +383,10 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
             return {'RUNNING_MODAL'}
         if hit is not None:
-            key, _part = hit
+            key, part = hit
             if key not in selected_channels(context):
                 set_selected_channels([key], context)
+                set_selection_column(part)
                 _anchor["key"] = key
                 redraw_selection()
         self._menu_beside(context, y)
@@ -421,6 +423,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         self._extended = None
         self._ctrl = event.ctrl
         self._base = selected_channels(context)
+        self._column = selection_column()
         self._anchor = key
         self._part = part
         self._key = key
@@ -432,6 +435,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         elif part == 'VALUE':
             if key not in self._base:
                 set_selected_channels([key], context)
+                set_selection_column('VALUE')
                 _anchor["key"] = key
         elif event.shift and _anchor["key"] is not None:
             select_range(ob, _anchor["key"], key, "SET", context=context)
@@ -469,6 +473,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         self._extended = cur
         base = self._base if self._ctrl else None
         select_range(self._ob, self._anchor, cur, "ADD" if self._ctrl else "SET", base=base, context=context)
+        set_selection_column(self._part)
         redraw_selection()
 
     def _on_move(self, context, event):
@@ -502,6 +507,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             else:
                 select_channel(self._key, "TOGGLE", context)
                 _anchor["key"] = self._key
+            set_selection_column('VALUE')
         elif part == "VALUE" and not (event.ctrl or event.shift):
             # a click on a field: Maya edits it in place. The press was eaten, so the field is edited in a popup
             # over it (text active at once); Enter writes the text into every selected channel (apply_entry).
