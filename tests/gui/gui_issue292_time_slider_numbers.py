@@ -287,15 +287,14 @@ def s_scale():
     redraw()
 
 
-@step
-def s_scale_wait():
-    redraw()
+for _i in range(4):            # the regions take a few redraws to settle at the new scale (the view is fitted after)
+    step(redraw)
 
 
 @step
 def s_scale_check():
+    # the window keeps its size, so the bigger header squeezes the Time Slider (a few px): only the numbers count
     text_check("UI scale 1.6")
-    check_view("UI scale 1.6")
     shot("gui_issue292_time_slider_scale.png")
     bpy.context.preferences.view.ui_scale = C["scale0"]
     bpy.types.SpaceDopeSheetEditor.draw_handler_remove(C["handle"], 'WINDOW')

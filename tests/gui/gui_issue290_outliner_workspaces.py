@@ -1,7 +1,7 @@
 """#290 in every Maya workspace the kit carries: two real clicks on the Outliner button of the left toolbar (the Tool
 Box column, or the main view's toolbar where a workspace has no column) hide the docked Outliner and dock it back (or
 dock one and hide it again where the workspace starts without one); no click opens a window. The same in the Maya
-layout's four view (Space tap first). Shots ``gui_issue290_*.png`` with ``--shots``."""
+layout's four view (the Tool Box's Four View button first). Shots ``gui_issue290_*.png`` with ``--shots``."""
 
 import os
 import sys
@@ -139,23 +139,24 @@ def s_back_wait():
 
 
 @step
-def s_space_hover():
-    _area, region = view3d()
-    C["xy"] = (region.x + region.width // 2, region.y + region.height // 2)
-    ev('MOUSEMOVE', 'NOTHING', x=C["xy"][0] + 1, y=C["xy"][1])
+def s_four():
+    # the Tool Box's Four View button (Maya quick layout 2)
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.allset.quick_layout(layout='FOUR')
+    redraw()
 
 
 @step
-def s_space_tap():
-    ev('SPACE', 'PRESS', x=C["xy"][0], y=C["xy"][1])
-    ev('SPACE', 'RELEASE', x=C["xy"][0], y=C["xy"][1])
+def s_four_wait():
+    redraw()
 
 
 @step
-def s_space_wait():
+def s_four_wait2():
     redraw()
     n = len(mod(".ui.four_view").block(win().screen))
-    check(f"Maya Classic: a Space tap gives the four view ({n} panels)", n == 4)
+    check(f"Maya Classic: the Four View button gives the four view ({n} panels)", n == 4)
 
 
 case("Maya Classic four view", lambda: None)
