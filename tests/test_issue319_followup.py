@@ -113,6 +113,27 @@ def test_row_plan_fits_short_headers():
     assert ts.row_plan(60.0, transport=True)[0] < ts.row_plan(60.0)[0]
 
 
+def test_narrow_row_with_the_transport_buttons_keeps_every_control():
+    """Blender 5.x puts the current time field and the transport buttons in the Range Slider row: on a narrow row the
+    fields narrow to their numbers, then the icon buttons a little, and only on the narrowest the current time field
+    goes (the Time Slider shows the current frame). The planned row never needs more than its width."""
+    th = import_module(f"{MODULE}.ui.time_slider_header")
+    floor = 2.55
+    for width in (31.4, 35.0, 39.4, 47.4, 63.0):
+        bar, shown, field, icons, clock = th.row_layout(width, transport=True, floor=floor)
+        assert bar >= rb.MIN_BAR_UNITS and not shown or width >= 47.4, (width, shown)
+        assert field >= floor and icons >= th.ICON_FLOOR, (width, field, icons)
+        fixed = th.ROW_CORE_UNITS - th.ROW_FIELDS * th.FIELD_UNITS + th.ROW_TRANSPORT_UNITS - th.FIELD_UNITS
+        used = (fixed - (1.0 - icons) * th.ROW_ICONS + th.ROW_FIELDS * field + clock + bar
+                + sum(u for n, u in th.ROW_OPTIONAL if n in shown))
+        assert used <= width + 1e-6 or bar == rb.MIN_BAR_UNITS and clock == 0, (width, used)
+    assert th.row_layout(31.4, True, floor)[4] == 0.0                     # the narrowest: no current time field
+    assert th.row_layout(39.4, True, floor)[4] >= floor                   # it comes back with a little more room
+    assert th.row_layout(63.0, True, floor)[2:] == (th.FIELD_UNITS, 1.0, th.FIELD_UNITS)
+    assert th.row_layout(30.0)[2:] == (th.FIELD_UNITS, 1.0, 0.0)          # no transport in the row: as before
+    assert th.field_floor((1, 120, 1), 1.0) < th.field_floor((1001, 1250), 1.0)
+
+
 def test_next_extra_floor():
     unit = 20
     assert rb.next_extra(0, 0, unit) == 0                      # the old floor

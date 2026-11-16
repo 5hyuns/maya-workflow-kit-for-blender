@@ -11,21 +11,23 @@ from .. import compat, i18n
 from .time_slider_view import playback_range
 
 
-def draw_transport(layout, context):
-    """Current frame field + the 8 Maya transport buttons."""
+def draw_transport(layout, context, field=4.5, icons=1.0):
+    """Current frame field + the 8 Maya transport buttons (``field`` / ``icons``: a narrow row's sizes, row_layout)."""
     scene, screen = context.scene, context.screen
-    row = layout.row()
-    row.ui_units_x = 4.5    # current time field width 90 px
-    row.prop(scene, "frame_current", text="")
+    if field > 0:
+        row = layout.row()
+        row.ui_units_x = field    # current time field width 90 px
+        row.prop(scene, "frame_current", text="")
     row = layout.row(align=True)
+    row.scale_x = icons
     row.operator("screen.frame_jump", text="", icon='REW').end = False
     row.operator("screen.frame_offset", text="", icon='TRIA_LEFT_BAR').delta = -1
     row.operator("allset.key_jump", text="", icon='PREV_KEYFRAME').next = False
     # allset.play: playback started from the viewport (ui/playback_redraw.py: the shelf isn't redrawn every frame)
     if screen.is_animation_playing:
-        row.scale_x = 2
+        row.scale_x = 2 * icons
         row.operator("allset.play", text="", icon='PAUSE')
-        row.scale_x = 1
+        row.scale_x = icons
     else:
         row.operator("allset.play", text="", icon='PLAY_REVERSE').reverse = True
         row.operator("allset.play", text="", icon='PLAY')
@@ -58,10 +60,30 @@ ROW_CORE_UNITS = 29.0        # editor-type menu, the four range fields (4 x 4.5)
 ROW_TRANSPORT_UNITS = 14.0   # current frame field + 8 transport buttons when they sit in the header
 ROW_OPTIONAL = (("fps", 5.0), ("character_set", 6.0), ("anim_layer", 6.0))
 ROW_MIN_BAR = 8.0            # keep this much bar before dropping an optional item
+# With the Time Slider's buttons in the same row (Blender 5.x) a narrow row (a small window, a large UI scale) still
+# shows every control: once the optional items are gone and the bar is at its minimum, the four range fields and the
+# current time field narrow to what their numbers need, then the icon buttons (8 transport + key, loop, sound,
+# preferences) narrow a little.
+FIELD_UNITS = 4.5            # a range field / the current time field
+FIELD_FLOOR_UNITS = 1.8      # the narrowest field
+FIELD_MARGIN_UNITS = 1.5     # a number field's text margins (its number shows whole only with them)
+ROW_FIELDS = 4
+ROW_ICONS = 12
+ICON_FLOOR = 0.85            # icon buttons keep their icon whole (16 px x scale in a 20 px x scale button)
 
 
-def row_plan(width_units, transport=False):
-    """(bar label units, names of the optional items shown) for a Range Slider row ``width_units`` wide."""
+def field_floor(values, scale=1.0):
+    """Narrowest field (ui units) that still shows the longest of these frame numbers whole at UI ``scale``."""
+    from .layout_fit import text_px
+    longest = max((str(int(v)) for v in values), key=len, default="000")
+    return max(FIELD_FLOOR_UNITS, text_px(longest, scale) / (20.0 * scale) + FIELD_MARGIN_UNITS)
+
+
+def row_layout(width_units, transport=False, floor=FIELD_FLOOR_UNITS):
+    """(bar label units, names of the optional items shown, range field units, icon button scale, current time field
+    units, 0 = not shown) for a Range Slider row ``width_units`` wide (``transport``: the current time field and the
+    transport buttons are in the row too). The current time field goes last, on the narrowest rows only: the Time
+    Slider shows the current frame too."""
     from . import range_bar
     shown = {name for name, _units in ROW_OPTIONAL}
     bar = width_units - ROW_CORE_UNITS - (ROW_TRANSPORT_UNITS if transport else 0.0) - sum(u for _n, u in ROW_OPTIONAL)
@@ -70,8 +92,26 @@ def row_plan(width_units, transport=False):
             break
         shown.discard(name)
         bar += units
+    field, icons = FIELD_UNITS, 1.0
+    clock = FIELD_UNITS if transport else 0.0
+    if transport and bar < range_bar.MIN_BAR_UNITS:
+        fields = ROW_FIELDS + 1
+        field = max(min(floor, FIELD_UNITS), FIELD_UNITS - (range_bar.MIN_BAR_UNITS - bar) / fields)
+        clock = field
+        bar += (FIELD_UNITS - field) * fields
+        if bar < range_bar.MIN_BAR_UNITS:
+            icons = max(ICON_FLOOR, 1.0 - (range_bar.MIN_BAR_UNITS - bar) / ROW_ICONS)
+            bar += (1.0 - icons) * ROW_ICONS
+        if bar < range_bar.MIN_BAR_UNITS:
+            bar += clock
+            clock = 0.0
     bar = max(float(range_bar.MIN_BAR_UNITS), min(float(range_bar.BAR_UNITS), bar))
-    return bar, shown
+    return bar, shown, field, icons, clock
+
+
+def row_plan(width_units, transport=False):
+    """(bar label units, names of the optional items shown) for a Range Slider row ``width_units`` wide."""
+    return row_layout(width_units, transport)[:2]
 
 
 def _row_plan(context):
@@ -80,9 +120,11 @@ def _row_plan(context):
     width = region.width if region is not None and region.type == 'HEADER' else 0
     if width <= 0:
         from . import range_bar
-        return float(range_bar.BAR_UNITS), {name for name, _u in ROW_OPTIONAL}
-    space, area = context.space_data, context.area
-    return row_plan(width / unit, transport=not has_slider_panel(space, area))
+        return float(range_bar.BAR_UNITS), {name for name, _u in ROW_OPTIONAL}, FIELD_UNITS, 1.0, FIELD_UNITS
+    space, area, scene = context.space_data, context.area, context.scene
+    floor = field_floor((scene.frame_start, scene.frame_end, scene.frame_current, *playback_range(scene)),
+                        context.preferences.system.ui_scale or 1.0)
+    return row_layout(width / unit, transport=not has_slider_panel(space, area), floor=floor)
 
 
 def draw_header(context, layout):
@@ -92,7 +134,8 @@ def draw_header(context, layout):
         # factory file): one row, Range Slider first, the Time Slider buttons at the right end
         draw_range_slider(layout, context)
         layout.separator_spacer()
-        draw_transport(layout, context)
+        _bar, _shown, _field, icons, clock = _row_plan(context)
+        draw_transport(layout, context, clock, icons)
         return
     if not has_slider_panel(space, area):
         layout.separator_spacer()
@@ -103,14 +146,14 @@ def draw_header(context, layout):
 
 def draw_range_slider(layout, context):
     scene = context.scene
-    bar_units, shown = _row_plan(context)
+    bar_units, shown, field, icons, _clock = _row_plan(context)
     # animation start | playback start [range bar] playback end | animation end
     # (the playback fields are the range that plays: ui/range_bar.py's allset_playback_start / _end)
     row = layout.row(align=True)
-    row.ui_units_x = 4.5
+    row.ui_units_x = field
     row.prop(scene, "frame_start", text="")
     row = layout.row(align=True)
-    row.ui_units_x = 4.5
+    row.ui_units_x = field
     row.prop(scene, "allset_playback_start", text="")
     # Maya's range bar. In the Maya Workflow Kit layout an empty label holds its place and
     # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
@@ -127,14 +170,15 @@ def draw_range_slider(layout, context):
         bar.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
         bar.operator("anim.scene_range_frame", text=f"{a}" + " " * 40 + f"{b}")
     row = layout.row(align=True)
-    row.ui_units_x = 4.5
+    row.ui_units_x = field
     row.prop(scene, "allset_playback_end", text="")
     row = layout.row(align=True)
-    row.ui_units_x = 4.5
+    row.ui_units_x = field
     row.prop(scene, "frame_end", text="")
 
     layout.separator_spacer()
     row = layout.row(align=True)
+    row.scale_x = icons
     # Maya auto key: Maya's key button, red while on (issue #37: Blender's record circle wasn't recognised)
     # The kit's own Maya Auto Key (operators/auto_key.py): keys only already keyed channels without
     # Blender's "Only Insert Available" preference.
@@ -167,6 +211,7 @@ def draw_range_slider(layout, context):
         fps = scene.render.fps / scene.render.fps_base
         row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
     row = layout.row(align=True)
+    row.scale_x = icons
     from ..operators import playback_maya
     loop = getattr(scene, "allset_playback_loop", 'CONTINUOUS')
     row.operator("allset.playback_loop_cycle", text="", icon=playback_maya.LOOP_ICONS[loop])
