@@ -114,28 +114,34 @@ def _closed(faces):
     return bool(faces) and all(sum(1 for g in e.link_faces if g in sel) == 2 for f in faces for e in f.edges)
 
 
-def _region(bm, faces, keep_bottom=False):
+def _whole(bm, faces):
+    """``faces`` are every face of the mesh: like Maya, their extrusion keeps the old faces, turned inside out, as
+    the bottom (a plane becomes a closed slab, an open shell gets its thickness on both sides)."""
+    return bool(faces) and len(set(faces)) == len(bm.faces)
+
+
+def _region(bm, faces, keep=False):
     edges = {e for f in faces for e in f.edges}
-    closed = _closed(faces)
     ret = bmesh.ops.extrude_face_region(bm, geom=list(faces) + list(edges))
     caps = _caps(ret["geom"])
+    # bmesh keeps (and turns inside out) the old faces of a region with no other face around it
     gone = [f for f in faces if f.is_valid]
-    if gone and closed:
-        # whole closed shells: Maya keeps the old faces, turned inside out;
-        # bmesh has already turned them (Blender 4.5)
-        pass
-    elif gone and not keep_bottom:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
-        bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
+    if gone and not keep:
+        # Maya moves them: delete them with the inner edges and vertices nothing else uses
+        bmesh.ops.delete(bm, geom=gone, context='FACES')
     return caps
 
 
 def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, fallback=MAYA_Z, keep_bottom=False):
     """Zero-length extrusion of ``faces``, ``divisions`` times. Returns (caps, levels, vectors) where
-    levels[k-1] maps a vertex key to the level-k vertex (level ``divisions`` = the caps). ``keep_bottom``: faces
-    with no neighbours keep their original face as a bottom (Maya's extrusion along a curve)."""
+    levels[k-1] maps a vertex key to the level-k vertex (level ``divisions`` = the caps). The extrusion of the whole
+    mesh keeps the old faces as its bottom; ``keep_bottom``: so do faces with no neighbours (Maya's extrusion along
+    a curve)."""
     bm.verts.index_update()
     bm.faces.index_update()
     faces = [f for f in faces if f.is_valid]
+    # Faces apart: each face is its own extrusion, the whole mesh only when it has one face
+    whole = _whole(bm, faces) and (together or len(faces) == 1)
     vectors = _vectors(faces, together, direction, fallback)
     if together:
         by_co = {_key(co): k for k, (co, *_r) in vectors.items()}
@@ -147,15 +153,15 @@ def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, f
     levels = []
     caps = faces
     if together and _closed(faces):
-        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says
+        divisions = 1        # Maya extrudes closed shells once whatever Divisions says
     for level in range(max(1, divisions)):
-        if level == 0 and not together:
+        if level == 0 and not together and not whole:
             caps = bmesh.ops.extrude_discrete_faces(bm, faces=caps)["faces"]
             gone = [f for f in faces if f.is_valid]
             if gone and not keep_bottom:
                 bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
         else:
-            caps = _region(bm, caps, keep_bottom and level == 0)
+            caps = _region(bm, caps, (keep_bottom or whole) and level == 0)
         found = {}
         if together:
             for f in caps:
@@ -268,8 +274,8 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
 
 
 # --- Maya's numbering of the result (#149) ---------------------------------------------------------------
-# polyExtrudeFacet (Maya 2026): vertices, edges and faces by index, with a border and for whole closed
-# shells. The mesh's edge index is taken as Maya's edge id: kit
+# polyExtrudeFacet (Maya 2026): vertices, edges and faces by index, with a border, for closed shells and
+# for the whole mesh. The mesh's edge index is taken as Maya's edge id: kit
 # primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_numbering.maya_edge_ids).
 
 def maya_plan(bm, picked, divisions=1, together=True):
@@ -295,11 +301,13 @@ def maya_plan(bm, picked, divisions=1, together=True):
         f = F[fi]
         return [(f[k], f[(k + 1) % len(f)]) for k in range(len(f))]
     div = max(1, int(divisions))
-    whole = set(sel)
-    closed = together and all(len([x for x in efaces[frozenset(c)] if x in whole]) == 2
+    picked_set = set(sel)
+    closed = together and all(len([x for x in efaces[frozenset(c)] if x in picked_set]) == 2
                               for fi in sel for c in corner_edges(fi))
     if closed:
         div = 1
+    # the whole mesh extruded as one: the old faces stay (turned inside out), no old vertex or edge goes
+    keep = len(sel) == len(F) and (together or len(sel) == 1)
     groups = [sel] if together else [[fi] for fi in sel]
     new_verts, new_edges, side_faces, removed, gone = [], [], [], set(), set()
     out_faces = [[("o", v) for v in f] for f in F]
@@ -337,22 +345,22 @@ def maya_plan(bm, picked, divisions=1, together=True):
                     else:                   # an inner (or closed-shell) vertex: one new vertex, the old one goes
                         chain[x] = [("n", tag(x), 0)]
                         new_verts.append(chain[x][0])
-                        if not closed:
+                        if not keep:
                             gone.add(x)
                 if key not in done:
                     done.add(key)
                     if border(key):
                         new_edges += [(lev(v0, j), lev(v1, j)) for j in range(1, div + 1)]
                     else:
-                        if not closed:
+                        if not keep:
                             removed.add(eid[key])
                         new_edges.append((lev(v0, div), lev(v1, div)))
                 if border(key):
                     side_faces += [[lev(a, j), lev(b, j), lev(b, j + 1), lev(a, j + 1)] for j in range(div)]
         for fi in grp:
             out_faces[fi] = [lev(v, div) for v in F[fi]]
-    if closed:
-        side_faces = [[("o", F[fi][0])] + [("o", v) for v in reversed(F[fi][1:])] for fi in sel]
+    if keep:      # the old faces, turned inside out, come before the side faces
+        side_faces = [[("o", F[fi][0])] + [("o", v) for v in reversed(F[fi][1:])] for fi in sel] + side_faces
     return {"verts": [("o", v) for v in range(len(bm.verts)) if v not in gone] + new_verts,
             "edges": [(("o", p[0]), ("o", p[1])) for i, p in enumerate(E) if i not in removed] + new_edges,
             "faces": out_faces + side_faces, "div": div}

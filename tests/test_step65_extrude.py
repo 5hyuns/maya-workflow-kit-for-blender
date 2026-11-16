@@ -43,11 +43,18 @@ def test_fast_path_equals_rebuild():
     bm.free()
 
 
-def test_isolated_plane_has_no_bottom():
+def test_whole_plane_keeps_its_bottom():
+    """Every face of the mesh: the old faces stay as the bottom (#377); part of it: no bottom."""
     bm = bmesh.new()
     bmesh.ops.create_grid(bm, x_segments=2, y_segments=2, size=1.0)
     caps, _m = ex.extrude(bm, list(bm.faces), local_translate_z=1.0)
-    assert len(caps) == 4 and len(bm.faces) == 4 + 8, len(bm.faces)
+    assert len(caps) == 4 and len(bm.faces) == 4 + 4 + 8, len(bm.faces)
+    assert all(len(e.link_faces) == 2 for e in bm.edges)
+    bm.free()
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=3, y_segments=1, size=1.0)
+    caps, _m = ex.extrude(bm, [f for f in bm.faces if abs(f.calc_center_median().x) < 1e-6], local_translate_z=1.0)
+    assert len(caps) == 1 and len(bm.faces) == 3 + 4, len(bm.faces)
     bm.free()
 
 

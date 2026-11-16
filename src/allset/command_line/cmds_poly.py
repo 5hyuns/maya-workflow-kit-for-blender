@@ -94,12 +94,16 @@ def _extrude_object(context, ob, ids, params, world_t, name, history):
             local = ob.matrix_world.to_3x3().inverted_safe() @ (world_t * unit)
             for v in {v for cap in caps for v in cap.verts}:
                 v.co += local
-        # Maya ids: the extruded faces keep theirs, new faces go after the old ones (bmesh made new caps)
+        # Maya ids: the extruded faces keep theirs, new faces go after the old ones (bmesh made new caps); an
+        # extrusion of the whole mesh keeps the old faces as its bottom, first among the new ones
         big = len(keep_index) + len(bm.faces) + 1
+        bottoms = {fc for fc in faces if fc.is_valid}
         order = {}
         for i, fc in enumerate(bm.faces):
             if fc in cap_index and cap_index[fc] is not None:
                 order[fc] = cap_index[fc]
+            elif fc in bottoms:
+                order[fc] = len(keep_index) + keep_index[fc]
             elif fc in keep_index:
                 order[fc] = keep_index[fc]
             else:
