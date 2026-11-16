@@ -4,13 +4,12 @@ Text for the GitHub release of v0.17.0. Full list: the 0.17.0 section of `CHANGE
 
 ---
 
-**0.17.0 — Blender 5.3 support, Maya's interface colours in Maya mode, and a big set of Maya behaviours from a contributor: an Outliner that pans and searches like Maya, Chamfer off that keeps the shape, camera gates and Field Chart, G that repeats modal tools, and more** (Blender 5.2 LTS and 5.3)
+**0.17.0 — Blender 5.3 support and a big set of Maya behaviours from a contributor: an Outliner that pans and searches like Maya, Chamfer off that keeps the shape, camera gates and Field Chart, G that repeats modal tools, and more** (Blender 5.2 LTS and 5.3)
 
-Hello everyone, and thank you. This version brings three things you asked for. The kit now supports Blender 5.3 as
-well as 5.2 LTS, and every test and release check runs on both. Maya mode now also looks like Maya: Blender's
-interface takes Maya's greys while it is on, and your own theme comes back when you leave it. And many of the
-changes in this release come from @AlexBarbulescu, who sent them as pull requests (#366, #372): we brought his work
-into the kit with him credited as co-author of those commits. The full thanks are at the end of these notes.
+Hello everyone, and thank you. The kit now supports Blender 5.3 as well as 5.2 LTS, and every test and release
+check runs on both. Many of the changes in this release come from @AlexBarbulescu, who sent them as pull requests
+(#366, #372): we brought his work into the kit with him credited as co-author of those commits. The full thanks are
+at the end of these notes.
 
 Install it over 0.16.0 (or 0.8.0 – 0.15.0) as usual; shelves, hotkeys, scenes and the kit's settings are kept.
 (Removing the kit before installing deletes them: use Export Settings first.)
@@ -29,14 +28,6 @@ extension until they are tested.
 - Help links open the Blender 5.3 manual, API and release notes on Blender 5.3 (the 5.2 pages on 5.2).
 - In the Graph Editor, Blender 5.3 shows Translate curves in the scene's unit (centimetres in a Maya scene): the kit's
   keys, tangents, key drags, Scale Keys box and Sculpting Tools follow it.
-
-## Maya's interface colours in Maya mode
-
-- While Maya mode is on, Blender's interface takes Maya's look: grey panels, menu bars, fields, buttons and menus,
-  Maya's selection blue, square scroll bars and pale yellow tooltips. Only theme colours change.
-- Your own theme is never lost: switch to Blender, disable or remove the kit, or quit Blender, and your theme is
-  back as it was. Save Preferences while Maya mode is on saves your own theme, not Maya's. A colour you change or a
-  theme you pick while Maya mode is on is kept as yours, and Load Factory Preferences gives Blender's factory theme.
 
 ## From @AlexBarbulescu's pull requests (#366, #372)
 
