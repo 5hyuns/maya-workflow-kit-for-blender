@@ -93,6 +93,8 @@ def s_scene():
         c.select_set(True)
         bpy.context.view_layer.objects.active = c
         bpy.ops.allset.frame(selected=False)
+        # Tool Settings docked (a place the user can choose): simulated clicks reach the main window only
+        mod(".ui.tool_dock").set_docked(True)
         bpy.ops.allset.weight_workspace()          # paint + Tool Settings (the option box)
     c = cyl()
     c.vertex_groups.active_index = c.vertex_groups["joint2"].index

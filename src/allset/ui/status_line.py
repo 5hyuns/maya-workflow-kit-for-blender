@@ -39,7 +39,7 @@ EDITORS = (
     # Maya order: Modeling Toolkit first
     ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit", 'EDITMODE_HLT'),
     ("ATTRIBUTE", "Show or hide the Attribute Editor", 'PROPERTIES'),
-    ("TOOL_SETTINGS", "Show or hide the Tool Settings of the active tool (dock left of the viewport)", 'TOOL_SETTINGS'),
+    ("TOOL_SETTINGS", "Show or hide the Tool Settings of the active tool", 'TOOL_SETTINGS'),
     ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor", 'MENU_PANEL'),
 )
 # Status Line toggle -> Maya panel of the tab stack (ui/maya_dock.py)
@@ -48,9 +48,9 @@ DOCK_KINDS = {"MODELING_TOOLKIT": 'MODELING_TOOLKIT', "ATTRIBUTE": 'ATTRIBUTE_ED
 
 def editor_shown(screen, editor, docks=None):
     """``docks``: ``maya_dock_roles.visible_kinds()`` already read for this draw."""
-    if editor == "TOOL_SETTINGS":    # the dock left of the viewport (ui/tool_dock.py)
+    if editor == "TOOL_SETTINGS":    # the floating window or the dock left of the viewport (ui/tool_dock.py)
         from . import tool_dock
-        return tool_dock.shown(screen)
+        return tool_dock.shown(screen) or tool_dock.shown_anywhere()
     if docks is not None:
         return DOCK_KINDS[editor] in docks
     from . import maya_dock
@@ -74,7 +74,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
 
     def execute(self, context):
         if self.editor == "TOOL_SETTINGS":
-            # Maya ToggleToolSettings: the dock left of the viewport (ui/tool_dock.py)
+            # Maya ToggleToolSettings: a floating window, or the dock once docked (ui/tool_dock.py)
             from . import tool_dock
             tool_dock.toggle(context, show_only=self.show)
             return {'FINISHED'}

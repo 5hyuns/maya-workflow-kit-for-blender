@@ -136,7 +136,7 @@ def floating_kinds(wm=None):
 
 def tab_kinds():
     """The panels the tab stack can show: Tool Settings only with the Tool Settings Tab preference (off: the kit's
-    Tool Settings dock left of the viewport, ``tool_dock``)."""
+    Tool Settings window or dock, ``tool_dock``)."""
     from .. import preferences
     if preferences.get().tool_settings_tab:
         return KINDS

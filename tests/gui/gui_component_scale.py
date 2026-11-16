@@ -266,6 +266,7 @@ def s_done():
     check('native cancellation keeps the previous result', same(coords(), C['after']))
     with override():
         bpy.ops.allset.prevent_negative_scale()
+        import_module(MODULE + '.ui.tool_dock').set_docked(True)      # docked: in the main window's screenshot
         bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')
 
 

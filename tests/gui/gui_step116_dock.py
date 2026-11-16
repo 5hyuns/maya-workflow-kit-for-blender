@@ -1,7 +1,9 @@
 """In a real UI: Maya's docking model. The Maya Workflow Kit layout has the Channel Box / Layer Editor | Attribute Editor
 | Modeling Toolkit tab stack in its own area right of the viewport (no sidebar, no overlap). Clicking the stack's
 ::::: handle tears the Channel Box off into a floating window that shows only it; Dock puts it back; a floating
-Attribute Editor closed by its window docks back by itself; Tool Settings and the Outliner tear off and dock back;
+Attribute Editor closed by its window docks back by itself; Tool Settings opens as a floating window, docks left of
+the viewport, tears off again (the viewport, not the Outliner, gets its width back) and docks back; the Outliner tears
+off and docks back;
 a menu tears off into a floating window; with no stack, Windows > General Editors > Attribute Editor opens a
 floating Attribute Editor. Screenshots: gui_step116_*.png."""
 
@@ -158,7 +160,9 @@ def s_ae_closed():
     check(f"closing the floating window docks it back ({dock().stack_tabs(wm)})",
           not floating() and 'ATTRIBUTE_EDITOR' in dock().stack_tabs(wm))
     wm.allset_dock = 'CHANNEL_BOX'
-    bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')      # Tool Settings dock left of the viewport
+    C["view_w"] = view().width
+    C["outliner_w"] = next((a.width for a in win().screen.areas if a.type == 'OUTLINER'), None)
+    bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')      # Maya's Tool Settings window
 
 
 @step
@@ -169,8 +173,24 @@ def s_tool_wait():
 @step
 def s_tool_open():
     td = mod(".ui.tool_dock")
+    fl = floating()
+    check(f"Tool Settings opens as a floating window ({len(fl)}), not docked in the layout",
+          len(fl) == 1 and td.is_dock(fl[0].screen.areas[0]) and td.find(win().screen) is None)
+    if fl:
+        in_area(fl[0], fl[0].screen.areas[0], bpy.ops.allset.dock_back, action='DOCK')
+
+
+@step
+def s_tool_dock_wait():
+    pass
+
+
+@step
+def s_tool_docked():
+    td = mod(".ui.tool_dock")
     area = td.find(win().screen)
-    check("Tool Settings dock is open", area is not None and td.is_dock(area))
+    check(f"Dock puts Tool Settings left of the viewport ({area and (area.x, area.width)}, view {view().x})",
+          not floating() and area is not None and td.is_dock(area) and area.x + area.width <= view().x + 4)
     if area is not None:
         in_area(win(), area, bpy.ops.allset.dock_handle)
 
@@ -179,8 +199,12 @@ def s_tool_open():
 def s_tool_torn():
     td = mod(".ui.tool_dock")
     fl = floating()
+    outl = next((a.width for a in win().screen.areas if a.type == 'OUTLINER'), None)
     check("Tool Settings tears off into a floating window (and leaves the layout)",
           len(fl) == 1 and td.is_dock(fl[0].screen.areas[0]) and td.find(win().screen) is None)
+    check(f"the viewport gets the dock's width back ({view().width} px vs {C['view_w']}), the Outliner keeps its own "
+          f"({outl} vs {C['outliner_w']})",
+          abs(view().width - C["view_w"]) <= 4 and outl == C["outliner_w"])
     redraw()
 
 

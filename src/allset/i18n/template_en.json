@@ -7855,7 +7855,7 @@
    "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both": "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both",
    "The panel Renderer menu lists Eevee and Cycles, which set the scene's render engine for Rendered shading (off: one item, Rendered shading with the scene's engine; Maya's panel renderer changes only that panel)": "The panel Renderer menu lists Eevee and Cycles, which set the scene's render engine for Rendered shading (off: one item, Rendered shading with the scene's engine; Maya's panel renderer changes only that panel)",
    "Tool Settings Tab": "Tool Settings Tab",
-   "Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)": "Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)",
+   "Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own window, or a dock left of the viewport once docked)": "Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own window, or a dock left of the viewport once docked)",
    "Top bar shows the Maya menus, menu sets and Status Line instead of Blender's menus and workspace tabs (Blender menus stay as submenus)": "Top bar shows the Maya menus, menu sets and Status Line instead of Blender's menus and workspace tabs (Blender menus stay as submenus)",
    "Transform Constraint": "Transform Constraint",
    "UI Elements": "UI Elements",

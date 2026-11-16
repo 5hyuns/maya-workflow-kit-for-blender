@@ -481,7 +481,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     tool_settings_tab: bpy.props.BoolProperty(
         name="Tool Settings Tab",
         description="Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the "
-                    "Attribute Editor (off: their own dock left of the viewport)",
+                    "Attribute Editor (off: their own window, or a dock left of the viewport once docked)",
         default=False, update=_update_dock_colors)
 
     def _update_panel_memory(self, context):

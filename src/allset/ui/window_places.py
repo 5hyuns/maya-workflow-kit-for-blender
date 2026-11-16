@@ -152,9 +152,10 @@ def carved(got, rect, slack=CARVE_SLACK):
     return all(abs(g - t) <= slack for g, t in zip(got, rect))
 
 
-def target_in_window(kind, window, area):
-    """The remembered rect of ``kind`` in ``window``-relative px, fitted inside ``area``; None = no place."""
-    rect = place(kind)
+def target_in_window(kind, window, area, default=None):
+    """The remembered rect of ``kind`` (else ``default``, screen px) in ``window``-relative px, fitted inside ``area``;
+    None = no place."""
+    rect = place(kind) or default
     if rect is None:
         return None
     rel = (rect[0] - window.x, rect[1] - window.y, rect[2], rect[3])
@@ -226,10 +227,13 @@ def calling_operator():
 class _Carve:
     """Splits ``area`` one cut per tick (Blender lays the areas out only between ticks) until one piece covers the
     target rect, then runs the opening operator again, which copies that piece (``open_at``), and rejoins the pieces
-    afterwards."""
+    afterwards. ``op_call`` is (operator idname, keywords), or a function that gets the new window (None when it
+    could not open) instead of the operator running again. ``piece_type``: each area split off becomes that editor
+    at once, so the pieces joined back afterwards are never a 3D View (a gizmo tooltip waiting on a freed 3D View
+    region crashed Blender)."""
 
-    def __init__(self, kind, window, area, rect, op_call):
-        self.kind, self.rect, self.call = kind, rect, op_call
+    def __init__(self, kind, window, area, rect, op_call, piece_type=None):
+        self.kind, self.rect, self.call, self.piece_type = kind, rect, op_call, piece_type
         self.win, self.source = window.as_pointer(), area.as_pointer()
         self.piece, self.made, self.last = area.as_pointer(), [], None
         self.joins = []
@@ -266,6 +270,8 @@ class _Carve:
                 bpy.ops.screen.area_split(direction=direction, factor=factor)
             new = [a for a in window.screen.areas if a.as_pointer() not in before]
             if new:
+                if self.piece_type:
+                    new[0].ui_type = self.piece_type
                 self.last = new[0].as_pointer()
                 self.made.append(self.last)
                 self.joins.append((piece.as_pointer(), self.last))
@@ -285,16 +291,21 @@ class _Carve:
         else:
             _ready[self.kind] = self.piece if ok else None
         source = _area(window, self.source) or max(window.screen.areas, key=lambda a: a.width * a.height)
-        idname, kwargs = self.call
-        module, _sep, name = idname.partition("_OT_")
-        op = getattr(getattr(bpy.ops, module.lower()), name)
         try:
-            with bpy.context.temp_override(window=window, screen=window.screen, area=source):
-                try:
-                    op('EXEC_DEFAULT', **kwargs)
-                except RuntimeError:
-                    op('INVOKE_DEFAULT', **kwargs)
-        except (RuntimeError, TypeError) as ex:
+            if callable(self.call):
+                with bpy.context.temp_override(window=window, screen=window.screen, area=source):
+                    new = open_at(bpy.context, source, self.kind)
+                self.call(new)
+            else:
+                idname, kwargs = self.call
+                module, _sep, name = idname.partition("_OT_")
+                op = getattr(getattr(bpy.ops, module.lower()), name)
+                with bpy.context.temp_override(window=window, screen=window.screen, area=source):
+                    try:
+                        op('EXEC_DEFAULT', **kwargs)
+                    except RuntimeError:
+                        op('INVOKE_DEFAULT', **kwargs)
+        except (RuntimeError, TypeError, ReferenceError) as ex:
             print("Maya Workflow Kit: reopening a window failed:", ex)
         finally:
             _ready.pop(self.kind, None)
@@ -345,10 +356,11 @@ def reopening(kind):
     return kind in _ready
 
 
-def open_at(context, area, kind):
-    """A new window copying ``area``: at the remembered place of ``kind`` when there is one. When that place
-    first has to be carved out of ``area``, None is returned (``deferred()`` True) and the calling kit operator
-    runs again once the piece is ready."""
+def open_at(context, area, kind, default=None, then=None, piece_type=None):
+    """A new window copying ``area``: at the remembered place of ``kind`` (else at ``default``, screen px) when there
+    is one. When that place first has to be carved out of ``area``, None is returned (``deferred()`` True) and the
+    calling kit operator runs again once the piece is ready — or, given ``then``, ``then(new window)`` is called
+    instead. ``piece_type``: the editor the pieces split off become (``_Carve``)."""
     _deferred[0] = False
     window = context.window
     if kind in _ready:                         # the second run: copy the carved piece
@@ -358,10 +370,16 @@ def open_at(context, area, kind):
             return None
         new = dupli(context, window, piece or area)
     else:
-        rect = target_in_window(kind, window, area) if kind and not bpy.app.background else None
-        op = calling_operator() if rect is not None and rect != _rect(area) else None
-        if op is not None and kind not in _pending:
-            carve = _pending[kind] = _Carve(kind, window, area, rect, (op.bl_idname, op.as_keywords()))
+        rect = target_in_window(kind, window, area, default) if kind and not bpy.app.background else None
+        call = None
+        if rect is not None and rect != _rect(area):
+            if then is not None:
+                call = then
+            else:
+                op = calling_operator()
+                call = (op.bl_idname, op.as_keywords()) if op is not None else None
+        if call is not None and kind not in _pending:
+            carve = _pending[kind] = _Carve(kind, window, area, rect, call, piece_type)
             bpy.app.timers.register(carve.tick, first_interval=0.0)
             _deferred[0] = True
             return None

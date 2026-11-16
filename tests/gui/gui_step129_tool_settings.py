@@ -1,7 +1,7 @@
 """#3, #29: in a real UI: the Maya Workflow Kit layout, edit mode. One click on the Tool Box's Lasso icon only
-sets the tool; a second click within the double-click time (Maya double-click) opens the Tool Settings dock with the
-Lasso Tool's Maya sections; the Select Tool shows Common Selection Options / Soft Selection / Symmetry Settings; Paint
-Selection and Insert Edge Loop get their Maya sections too (screenshots of the dock)."""
+sets the tool; a second click within the double-click time (Maya double-click) opens the Tool Settings (Maya's
+floating window) with the Lasso Tool's Maya sections; the Select Tool shows Common Selection Options / Soft Selection / Symmetry Settings; Paint
+Selection and Insert Edge Loop get their Maya sections too (screenshots of the window)."""
 
 import os
 import sys
@@ -23,7 +23,7 @@ def mod(name):
 
 def shot(name):
     if SHOTS:
-        with bpy.context.temp_override(window=win()):
+        with bpy.context.temp_override(window=mod(".ui.tool_dock").find_any()[0] or win()):
             bpy.ops.screen.screenshot(filepath=os.path.join(SHOTS, name))
 
 
@@ -45,7 +45,8 @@ def toolbox():
 
 
 def dock():
-    return mod(".ui.tool_dock").find(win().screen)
+    """The Tool Settings area in any window (Maya's floating window), or None."""
+    return mod(".ui.tool_dock").find_any()[1]
 
 
 def redraw():
@@ -59,9 +60,9 @@ def tool_id():
 
 def dock_state():
     """(tool kind, Blender panels hidden, section titles) as the dock sees them."""
-    d = dock()
+    w, d = mod(".ui.tool_dock").find_any()
     ts = mod(".ui.tool_settings")
-    with bpy.context.temp_override(window=win(), area=d, region=next(r for r in d.regions if r.type == 'WINDOW'),
+    with bpy.context.temp_override(window=w, area=d, region=next(r for r in d.regions if r.type == 'WINDOW'),
                                    space_data=d.spaces.active):
         kind = ts.tool_kind(bpy.context)
         hidden = ts.hides_blender_panels(bpy.context)
@@ -84,7 +85,7 @@ def s_scene():
     in_v3d(bpy.ops.allset.create, kind='CUBE')
     in_v3d(bpy.ops.object.mode_set, mode='EDIT')
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.move")
-    check("no Tool Settings dock at the start", dock() is None)
+    check("no Tool Settings at the start", dock() is None)
     redraw()
 
 
@@ -141,15 +142,16 @@ def s_wait2():
 @step
 def s_double_check():
     d = dock()
-    check("double-click on the Lasso icon opens the Tool Settings dock", d is not None)
+    check("double-click on the Lasso icon opens the Tool Settings", d is not None)
     if d is None:
         return
     kind, hidden, titles = dock_state()
-    check(f"dock shows the Lasso Tool's Maya sections ({kind}, {titles}), Blender's panels hidden",
+    check(f"Tool Settings show the Lasso Tool's Maya sections ({kind}, {titles}), Blender's panels hidden",
           kind == 'LASSO' and hidden and titles[0] == "Lasso Settings")
     shot("gui_step129_ts_lasso.png")
     C["areas"] = len(win().screen.areas)
-    # a second double-click keeps the one dock (focus, not a second dock)
+    C["windows"] = len(bpy.context.window_manager.windows)
+    # a second double-click keeps the one Tool Settings (focus, not a second one)
     ev('LEFTMOUSE', 'PRESS')
     ev('LEFTMOUSE', 'RELEASE')
 
@@ -163,8 +165,10 @@ def s_again():
 @step
 def s_again_check():
     redraw()
-    check(f"double-click with the dock open keeps one dock ({len(win().screen.areas)} areas)",
-          dock() is not None and len(win().screen.areas) == C["areas"])
+    check(f"double-click with the Tool Settings open keeps one ({len(win().screen.areas)} areas, "
+          f"{len(bpy.context.window_manager.windows)} windows)",
+          dock() is not None and len(win().screen.areas) == C["areas"]
+          and len(bpy.context.window_manager.windows) == C["windows"])
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.select_box")
     redraw()
 

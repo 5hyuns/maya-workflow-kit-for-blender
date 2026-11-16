@@ -452,6 +452,7 @@ def s_deleted():
     ob = bpy.data.objects[C["ob"]]
     n = mesh_counts(ob)
     check(f"Ctrl+Shift+click a face = it goes ({n}, faces {C['n'][2]})", n[2] == C["n"][2])
+    import_module(MODULE + ".ui.tool_dock").set_docked(True)      # docked: in the main window's screenshot
     with override():
         bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS', show=True)
 

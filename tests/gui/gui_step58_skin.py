@@ -181,6 +181,8 @@ def s_tool_settings():
     # Maya: the plain menu item only starts the tool (the Channel Box stays); its settings, influence list included,
     # are Tool Settings (PR #125 follow-up) -- open them like the option box / tool double-click does
     area, region = main_view()
+    # docked (a place the user can choose): simulated clicks reach the main window only
+    import_module(MODULE + ".ui.tool_dock").set_docked(True)
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.weight_workspace()
 

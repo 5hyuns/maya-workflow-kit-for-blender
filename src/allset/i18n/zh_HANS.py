@@ -6529,6 +6529,6 @@ STRINGS = {
     "Material Preview and EEVEE Rendered: the Maya grid doesn't show through the seams of opaque meshes (one more depth pass over the visible meshes each redraw)": '材质预览和 EEVEE 渲染: Maya 栅格不会从不透明网格的接缝中透出 (每次重绘对可见网格多做一次深度绘制)',
     'Remember Panel Settings': '记住面板设置',
     'Tool Settings Tab': '工具设置标签页',
-    'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own dock left of the viewport)': '工具设置作为右侧 Maya 停靠区的标签页打开，位于通道盒和属性编辑器旁边 (关闭: 视口左侧的独立停靠区)',
     'Distance Tool click: the first click places a locator, the second one another locator and a distance\ndimension between them (Maya Distance Tool)': '距离工具单击：第一次单击放置一个定位器，第二次单击放置另一个定位器及两者之间的\n距离尺寸 (Maya 距离工具)',
+    'Tool Settings open as a tab of the Maya dock on the right, next to the Channel Box and the Attribute Editor (off: their own window, or a dock left of the viewport once docked)': '工具设置作为右侧 Maya 停靠区的标签页打开，位于通道盒和属性编辑器旁边 (关闭: 独立窗口，停靠后为视口左侧的停靠区)',
 }

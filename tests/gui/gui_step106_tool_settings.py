@@ -1,5 +1,5 @@
 """In a real UI: the Maya Workflow Kit layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
-Tool Settings (ToggleToolSettings) opens the dock left of the viewport with Maya's Move Settings, a second toggle
+Tool Settings (ToggleToolSettings) opens Maya's floating Tool Settings window with Maya's Move Settings, a second toggle
 closes it (the old popup stayed open: audit 7 c03), a third opens it again; Rotate / Scale show their sections;
 the Attribute Editor shows the history / material tabs, menu bar, buttons and Notes (screenshots beside audit-7
 pairs c02 / c03)."""
@@ -24,7 +24,8 @@ def mod(name):
 
 def shot(name):
     if SHOTS:
-        with bpy.context.temp_override(window=win()):
+        # the floating Tool Settings window while it is open, else the main window
+        with bpy.context.temp_override(window=mod(".ui.tool_dock").find_any()[0] or win()):
             bpy.ops.screen.screenshot(filepath=os.path.join(SHOTS, name))
 
 
@@ -44,7 +45,12 @@ def menu(path):
 
 
 def dock():
-    return mod(".ui.tool_dock").find(win().screen)
+    """The Tool Settings area in any window (floating or docked), or None."""
+    return mod(".ui.tool_dock").find_any()[1]
+
+
+def ts_window():
+    return mod(".ui.tool_dock").find_any()[0]
 
 
 def redraw():
@@ -57,6 +63,10 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     load_maya_layout()
+
+
+for _i in range(8):        # the layout is fitted to the UI scale in the first seconds after a load
+    step(redraw)
 
 
 @step
@@ -77,6 +87,11 @@ def s_scene():
     bmesh.update_edit_mesh(ob.data)
     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
     in_v3d(bpy.ops.allset.extrude, local_translate_z=0.5)
+
+
+@step
+def s_move_tool():
+    # a tick after the mode change: Edit Mode first takes Object Mode's tool (Maya's one tool, operators/tool_keys)
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.move")
     C["areas"] = len(win().screen.areas)
     C["main_w"] = v3d()[0].width
@@ -90,24 +105,26 @@ def s_opened():
 
 @step
 def s_opened_check():
-    d = dock()
-    check("toggle 1: the Tool Settings dock is open", d is not None)
+    d, w = dock(), ts_window()
+    check("toggle 1: the Tool Settings window is open", d is not None)
     if d is None:
         return
     sp = d.spaces.active
     nav = next((r for r in d.regions if r.type == 'NAVIGATION_BAR'), None)
-    main = v3d()[0]
-    check(f"dock = Properties Tool tab, no header / tab column, left of the viewport ({d.x}+{d.width} <= {main.x})",
-          sp.context == 'TOOL' and not sp.show_region_header and (nav is None or nav.width <= 1)
-          and d.x + d.width <= main.x + 2 and d.height == main.height)
-    check(f"dock width {d.width} px (280 x UI scale, <= 35 % of the viewport)",
-          150 <= d.width <= 0.36 * C["main_w"] + 4)
+    check(f"a floating window of its own ({len(w.screen.areas)} area), the layout unchanged "
+          f"({len(win().screen.areas)} areas vs {C['areas']}, viewport {v3d()[0].width} px vs {C['main_w']})",
+          w != win() and len(w.screen.areas) == 1 and len(win().screen.areas) == C["areas"]
+          and v3d()[0].width >= C["main_w"] - 4)
+    check(f"Properties Tool tab, no header / tab column ({sp.context}, header {sp.show_region_header})",
+          sp.context == 'TOOL' and not sp.show_region_header and (nav is None or nav.width <= 1))
+    check(f"window width {w.width} px (280 x UI scale, narrower than the viewport {C['main_w']})",
+          150 <= w.width <= 0.5 * C["main_w"])
     ts = mod(".ui.tool_settings")
-    with bpy.context.temp_override(window=win(), area=d, region=next(r for r in d.regions if r.type == 'WINDOW'),
+    with bpy.context.temp_override(window=w, area=d, region=next(r for r in d.regions if r.type == 'WINDOW'),
                                    space_data=sp):
         kind = ts.tool_kind(bpy.context)
         hidden = ts.hides_blender_panels(bpy.context)
-    check(f"Move tool: Maya sections ({kind}), Blender's tool panels hidden in the dock", kind == 'TRANSLATE' and hidden)
+    check(f"Move tool: Maya sections ({kind}), Blender's tool panels hidden there", kind == 'TRANSLATE' and hidden)
     shot("gui_step106_ts_move.png")
 
 
@@ -119,9 +136,10 @@ def s_toggle2():
 @step
 def s_toggle2_check():
     redraw()
-    check(f"toggle 2: the dock is closed, the layout is back ({len(win().screen.areas)} areas vs {C['areas']}, viewport "
-          f"{v3d()[0].width} px vs {C['main_w']})",
-          dock() is None and len(win().screen.areas) == C["areas"] and v3d()[0].width >= C["main_w"] - 4)
+    check(f"toggle 2: the window is closed, the layout as it was ({len(win().screen.areas)} areas vs {C['areas']}, "
+          f"viewport {v3d()[0].width} px vs {C['main_w']}, {len(bpy.context.window_manager.windows)} windows)",
+          dock() is None and len(win().screen.areas) == C["areas"] and v3d()[0].width >= C["main_w"] - 4
+          and len(bpy.context.window_manager.windows) == 1)
     # (wider is fine: the Tool Box column may have been fitted to one toolbar column meanwhile, toolbox_column.settle)
     in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
 
@@ -147,7 +165,7 @@ def s_rotate_shot():
 @step
 def s_select_shot():
     shot("gui_step106_ts_select.png")
-    check("Select tool: dock still open (Blender's tool panels under the head row)", dock() is not None)
+    check("Select tool: Tool Settings still open (Blender's tool panels under the head row)", dock() is not None)
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.move")
     in_v3d(bpy.ops.object.mode_set, mode='OBJECT')
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.move")
@@ -171,7 +189,7 @@ def s_ae_wait():
 
 @step
 def s_ae_shot():
-    check("dock closed before the AE shot", dock() is None)
+    check("Tool Settings closed before the AE shot", dock() is None)
     shot("gui_step106_ae.png")        # pair with audit-7 c03
     ob = bpy.data.objects[C["ob"]]
     ae = mod(".ui.attribute_editor")

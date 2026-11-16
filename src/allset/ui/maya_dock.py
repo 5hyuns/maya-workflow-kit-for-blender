@@ -106,7 +106,10 @@ def tear_off(context, area=None):
         if outliner:
             from . import maya_outliner
             maya_outliner.setup(new.screen.areas[0].spaces.active)
-        close_area(bpy.context, window, _area_by_pointer(window, area_ptr))
+            close_area(bpy.context, window, _area_by_pointer(window, area_ptr))
+            return
+        tool_dock.set_docked(False)                # Tool Settings opens floating next time, like Maya's window
+        tool_dock.close_dock(bpy.context, window)  # the viewport (the four view) gets the dock's width back
     return True if sized_window(context, window, area, height, then) else None
 
 

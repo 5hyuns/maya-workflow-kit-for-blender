@@ -249,6 +249,8 @@ def dock(context, window=None):
         if kind is None or main is None:
             return False
         close_window_later(window)
+        if kind == 'TOOL_SETTINGS':
+            tool_dock.set_docked(True)          # it opens docked again next time, like a docked Maya panel
 
         def back():
             main = live_refs.window(main_ptr)
@@ -273,9 +275,12 @@ def dock(context, window=None):
 
 
 def close_floating():
-    """Switch to Blender: close windows whose only area is a kit role (they would show Blender's Tool tab)."""
+    """Switch to Blender: close windows whose only area is a kit role or the Tool Settings (they would show Blender's
+    Tool tab)."""
+    from . import tool_dock
     wm = bpy.context.window_manager
     for window in list(wm.windows):
-        if is_floating(window, wm) and role(window.screen.areas[0]) is not None:
+        if is_floating(window, wm) and (role(window.screen.areas[0]) is not None
+                                        or tool_dock.is_dock(window.screen.areas[0])):
             close_window_later(window)
     _torn_menus.clear()
