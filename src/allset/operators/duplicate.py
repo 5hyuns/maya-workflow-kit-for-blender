@@ -34,7 +34,7 @@ from mathutils import Euler, Quaternion, Vector
 from .. import results, undo_steps
 from . import naming, prim_history
 from .freeze import hierarchy
-from .group import make_group
+from .group import make_group, selected_objects as group_selection   # + groups the Locators filter hides
 
 # Last duplicates made by this module: {copy name: source name} (smart transform).
 PAIRS = {}
@@ -425,7 +425,7 @@ def offset_channels(ob, k, translate, rotate, scale):
 
 
 def _select(context, objects):
-    for ob in context.selected_objects:
+    for ob in list(context.view_layer.objects.selected):     # also a group the Locators filter hides
         ob.select_set(False)
     for ob in objects:
         ob.select_set(True)
@@ -436,7 +436,7 @@ def _select(context, objects):
 def duplicate(context, instance=False):
     """Copy every selected root with its subtree in place, Maya names; returns the copies (Maya Duplicate: the
     geometry as it shows now, no inputs). Records source pairs so a following Shift+D repeats the move between them."""
-    roots = selected_roots(context.selected_objects)
+    roots = selected_roots(group_selection(context))
     made, pairs = [], {}
     for root in roots:
         new = copy_subtree(root, instance)
@@ -509,7 +509,7 @@ class ALLSET_OT_duplicate_special(bpy.types.Operator):
     def execute(self, context):
         if context.mode != 'OBJECT':
             return self._joints(context)
-        roots = selected_roots(context.selected_objects)
+        roots = selected_roots(group_selection(context))
         if not roots:
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
@@ -578,7 +578,7 @@ class ALLSET_OT_duplicate_with_transform(bpy.types.Operator):
                 self.report({'WARNING'}, "Nothing selected")
                 return {'CANCELLED'}
             return {'FINISHED'}
-        roots = selected_roots(context.selected_objects)
+        roots = selected_roots(group_selection(context))
         if not roots:
             self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}

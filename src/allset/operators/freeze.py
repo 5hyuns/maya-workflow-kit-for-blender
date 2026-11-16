@@ -261,8 +261,10 @@ class ALLSET_OT_freeze_transform(_SelectedObjectsOp, bpy.types.Operator):
     scale: BoolProperty(name="Scale", default=True)
 
     def execute(self, context):
-        obs = self.objects(context)
+        from .group import selected_objects
+        obs = selected_objects(context)       # with groups a 3D View hides by its Locators filter
         if not obs:
+            self.report({'WARNING'}, "Nothing selected")
             return {'CANCELLED'}
         count, copies = freeze(obs, self.translate, self.rotate, self.scale)
         msg = f"Froze {count} object(s)"
