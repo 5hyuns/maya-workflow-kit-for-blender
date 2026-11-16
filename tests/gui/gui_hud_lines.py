@@ -77,7 +77,7 @@ def s_check():
           len(vf._handle) == 1)
     area = area3d()
     lens = vf.hud_lens(area.spaces.active, area.spaces.active.region_3d, bpy.context.scene)
-    check(f"the persp view's focal length reads like Maya's persp camera ({lens:g})", abs(lens - 35.0) < 1e-6)
+    check(f"the persp view's focal length is the view lens on a 36 mm film ({lens:g})", abs(lens - 35.0) < 1e-6)
     lines = vf.hud_lines(prefs(), bpy.context.scene, 37.0, lens)
     check(f"three lines, bottom first: {[a for a, _b in lines]}",
           [a for a, _b in lines] == ["Frame:", "Focal Length:", "Scene Timecode:"])

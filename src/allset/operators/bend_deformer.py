@@ -9,8 +9,8 @@ around the centre (1 / Curvature, 0):
     y' = sin t / Curvature - x sin t + (y - y_c) cos t
     z' = z
 
-and the result is blended in by Envelope times the point's weight. A line from -1 to 1 along the handle (the bounds
-Maya starts with) bends into an arc of 2 * Curvature: Curvature 180 degrees closes a full circle, 90 a half circle.
+and the result is blended in by Envelope times the point's weight. A line from -1 to 1 along the handle (a new bend's
+bounds) bends into an arc of 2 * Curvature: Curvature 180 degrees closes a full circle, 90 a half circle.
 The parts beyond the bounds go on straight from the bent ends. The handle is made at the centre of the deformed
 points with a uniform scale of half their bounding box's longest side, so on a flat plane it stands upright and
 bends nothing until it is turned to lie along the plane.

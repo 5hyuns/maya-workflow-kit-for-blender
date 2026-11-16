@@ -1,5 +1,5 @@
 """The Maya layout's Time Slider at UI scales 1.0, 1.25, 1.5 and 2.0 (a new scene at that scale, the kit's cursor
-fit on like in a real session): its ruler is at least Maya's (32 px x the scale; the template's 36 px stays at 1.0),
+fit on like in a real session): its ruler is at least 32 px x the scale (the template's 36 px stays at 1.0),
 the frame numbers and the current frame number sit inside it, and the Range Slider row under it draws its bar inside
 the header. Blender 5.x snaps a moved edge to an animation editor's "header + time scrub" height, which used to pull
 the fitted Time Slider back to a 29 px ruler at 1.25 and 2 px at 2.0. Shots ``gui_time_slider_ui_scale_*.png`` with
@@ -82,7 +82,7 @@ def at(scale):
               f"{hdr_r.height}", flush=True)
         if abs(s - 1.0) < 0.01:
             check(f"{tag}: the template's ruler stays ({h} px, 36)", abs(h - 36) <= 2)
-        check(f"{tag}: the ruler is at least Maya's ({h} px >= {round(32 * s)})", h >= round(32 * s) - 2)
+        check(f"{tag}: the ruler is at least 32 px x the scale ({h} px >= {round(32 * s)})", h >= round(32 * s) - 2)
         check(f"{tag}: and not far over the kit's {round(36 * s)} px ({h})", h <= round(36 * s) + hdr_r.height)
         blf.size(0, ruler_mod.label_font_size(h, s))
         th = blf.dimensions(0, "120")[1]
