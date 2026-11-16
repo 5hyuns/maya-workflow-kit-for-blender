@@ -559,17 +559,20 @@ class ALLSET_OT_cb_wheel(bpy.types.Operator):
                     if x >= region.x + region.width - maya_dock.area_reserved_px(ctx):
                         return {'PASS_THROUGH'}
                     from types import SimpleNamespace
-                    if not over_pane(ctx, SimpleNamespace(mouse_region_y=y - region.y)):
-                        return {'PASS_THROUGH'}
                     if event.ctrl or event.shift or event.alt:
+                        # Ctrl+wheel over a value steps it, also over a selected value's blue cell (a toggle,
+                        # which Blender's own Ctrl+wheel would only flip) and when the rows fit
                         hit = _hover.get(self._window_ptr)
                         if (event.ctrl and event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}
                                 and hit is not None and hit[1] == 'VALUE'
+                                and maya_dock.shown_kind(ctx) == 'CHANNEL_BOX'
                                 and field_drag_starts(ctx, hit[0])):
                             start_field_drag(ctx, event, hit[0], event.mouse_x)
                             # The gesture belongs to the field even at a limit or
                             # on a rounded no-op; don't send it on to the UI too.
                             return {'RUNNING_MODAL'}
+                        return {'PASS_THROUGH'}
+                    if not over_pane(ctx, SimpleNamespace(mouse_region_y=y - region.y)):
                         return {'PASS_THROUGH'}
                     if event.type == 'TRACKPADPAN':
                         ptr = area.as_pointer()

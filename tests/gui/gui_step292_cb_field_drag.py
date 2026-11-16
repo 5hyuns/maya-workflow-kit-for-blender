@@ -255,6 +255,9 @@ def s_vsel():
           sel == ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
     x = cube().location.x
     check(f"the vertical drag changed no value ({x:.4f})", near(x, 0.3, 0.02) or near(x, 0.0))
+    # #375: the drag over the values opened the value editor for typing; Esc closes it without a change
+    ev('ESC', 'PRESS')
+    ev('ESC', 'RELEASE')
 
 
 # a Ctrl click (no drag) on a value toggles that channel like a Ctrl click on its name
