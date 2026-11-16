@@ -10,6 +10,10 @@ from .. import live_refs
 
 # --- opening an editor the Maya way ----------------------------------------------------------------------------
 
+def _left(region):
+    return region.view2d.region_to_view(0, 0)[0]
+
+
 def frame_playback_range(context, area):
     """Horizontal view = the playback range from frame 1 (Maya: no frame 0 / out-of-range area at the left)."""
     region = next((r for r in area.regions if r.type == 'WINDOW'), None)
@@ -21,13 +25,29 @@ def frame_playback_range(context, area):
         bpy.ops.anim.scene_range_frame()
         sc = context.scene
         start = sc.frame_preview_start if sc.use_preview_range else sc.frame_start
-        lo, _ = region.view2d.region_to_view(0, 0)
+        target = start - 0.5
+        lo = _left(region)
         hi, _ = region.view2d.region_to_view(region.width, 0)
         per_px = (hi - lo) / region.width if hi > lo else 0
         if per_px > 0:
-            dx = int(round(((start - 0.5) - lo) / per_px))
+            dx = int(round((target - lo) / per_px))
             if dx:
                 bpy.ops.view2d.pan(deltax=dx, deltay=0)
+            # A pan moves the view by whole pixels: in a narrow editor (a small window) one pixel spans more than a
+            # frame and frame 0 could stay in view. What is left is taken up by a zoom step that moves the left
+            # edge by that much (the right edge moves by as much the other way; well under a pixel's width).
+            # Its delta is scaled by the UI scale: the second step corrects by what the first one did.
+            scale = 1.0
+            for _ in range(2):
+                lo = _left(region)
+                rest = target - lo
+                if abs(rest) < 0.01:
+                    break
+                bpy.ops.view2d.zoom(deltax=rest * scale, deltay=0.0, use_cursor_init=False)
+                moved = _left(region) - lo
+                if abs(moved) < 1e-6:
+                    break
+                scale *= rest / moved
     return True
 
 

@@ -227,6 +227,41 @@ def s_uv_shot():
           f"({sp.show_region_tool_header}, {sp.show_region_ui}, {ui.active_panel_category})",
           sp.show_region_tool_header and sp.show_region_ui and ui.active_panel_category == "UV Toolkit")
     shot("gui_step104_uv_editor.png", w)
+    close_extra_windows()
+    # a Graph Editor window last left small: its curve view is narrower than the playback range has frames
+    wp = mod(".ui.window_places")
+    area, _region = v3d()
+    C["place"] = wp.place("editor:FCURVES")
+    wp.remember("editor:FCURVES", (win().x + area.x + 40, win().y + area.y + 60, 350, 254))
+    C["small"] = menu("Windows/Animation Editors/Graph Editor")
+
+
+@step
+def s_small_graph():
+    redraw()
+
+
+@step
+def s_small_graph_wait():
+    redraw()
+
+
+@step
+def s_small_graph_check():
+    w, a = editor('FCURVES')
+    check(f"small Graph Editor window opened ({C['small']}, {w and (w.width, w.height)})",
+          a is not None and w.width < 400)
+    lo, hi = view_range(a)
+    width = next(r for r in a.regions if r.type == 'WINDOW').width
+    check(f"... it opens on the playback range from frame 1 too, no frame 0 (view {lo:.2f} .. {hi:.1f}, "
+          f"{width} px)", 0.0 < lo < 1.0 and hi > 100)
+    close_extra_windows()
+    wp = mod(".ui.window_places")        # the place the Graph Editor had before (the next test files open it there)
+    if C["place"] is None:
+        wp._places.pop("editor:FCURVES", None)
+    else:
+        wp._places["editor:FCURVES"] = C["place"]
+    wp.save()
 
 
 run()
