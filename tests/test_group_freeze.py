@@ -172,3 +172,33 @@ def test_parenting_into_a_frozen_group_uses_its_frame():
     bpy.context.view_layer.update()
     assert other.parent is g and _close(other.location, (2, 0, 0))      # the frozen group's frame is the world
     assert _close(other.matrix_world.translation, Vector((2, 0, 0)))
+
+
+def _sorted_world(ob):
+    bpy.context.view_layer.update()
+    return sorted(tuple(round(c, 4) for c in ob.matrix_world @ v.co) for v in ob.data.vertices)
+
+
+def test_separate_pieces_sit_in_the_groups_frame():
+    """Mesh > Separate of a moved, turned mesh with its pivot away from its origin: the pieces read translate 0 and
+    pivot 0 in the new group's frame, nothing moves; Ungroup then keeps them in place."""
+    _clear()
+    for x in (0.0, 3.0):
+        _cube(f"part{int(x)}", t=(x, 0, 0))
+    _pick(*bpy.context.scene.objects)
+    assert bpy.ops.allset.combine() == {'FINISHED'}
+    ob = bpy.context.view_layer.objects.active
+    ob.location = (1, 2, 0)
+    ob.rotation_euler.z = math.radians(30)
+    before = _sorted_world(ob)
+    _pick(ob)
+    assert bpy.ops.allset.separate() == {'FINISHED'}
+    grp = next(o for o in bpy.context.scene.objects if o.type == 'EMPTY')
+    pieces = list(grp.children)
+    assert len(pieces) == 2
+    assert sorted(sum((_sorted_world(p) for p in pieces), [])) == before
+    for p in pieces:
+        assert _zero(p) and _close(p.delta_location, (0, 0, 0)), (p.name, p.location[:])
+    _pick(grp)
+    assert bpy.ops.allset.ungroup() == {'FINISHED'}
+    assert sorted(sum((_sorted_world(p) for p in pieces), [])) == before
