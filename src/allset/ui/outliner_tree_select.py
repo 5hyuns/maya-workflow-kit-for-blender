@@ -172,6 +172,12 @@ def _select_row(context, rows, index, mode, anchor=None):
             sets.select_members(context, coll, {'TOGGLE': 'TOGGLE', 'RANGE': 'ADD', 'RANGE_ADD': 'ADD'}.get(
                 mode, 'REPLACE'))
         return
+    if kind == 'MEMBER' and row.label != row.ob:        # a component member row (pCube1.vtx[0:3])
+        coll, ob = sets.get(row.sub), bpy.data.objects.get(row.ob)
+        if coll is not None and ob is not None:
+            sets.select_members(context, coll, {'TOGGLE': 'TOGGLE', 'RANGE': 'ADD', 'RANGE_ADD': 'ADD'}.get(
+                mode, 'REPLACE'), only=ob)
+        return
     ranged = mode in ('RANGE', 'RANGE_ADD') and anchor is not None and 0 <= anchor < len(rows)
     span = rows[min(anchor, index):max(anchor, index) + 1] if ranged else ()
     # a range over joints of one skeleton picks those joints; a range that also holds other rows picks objects (a

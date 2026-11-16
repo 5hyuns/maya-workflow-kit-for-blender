@@ -272,12 +272,16 @@ def tail_rows(scene, opts):
             if match is None or match(n)]
     for coll in sets.all_sets():
         mem = sets.members(coll, scene)
-        opened = bool(mem) and (coll.allset_expanded or match is not None)
+        parts = sets.part_objects(coll, scene)
+        opened = bool(mem or parts) and (coll.allset_expanded or match is not None)
         below = [Row('MEMBER', ob.name, coll.name, 1, False, False, ob.name, icon_kind(ob), None) for ob in mem
                  if match is None or match(ob.name)] if opened else []
+        # component members: one row per Maya name (pCube1.vtx[0:3]); the row's object is the mesh
+        below += [Row('MEMBER', ob.name, coll.name, 1, False, False, label, icon_kind(ob), None) for ob in parts
+                  for label in sets.component_names(coll, ob) if match is None or match(label)] if opened else []
         if match is not None and not match(coll.name) and not below:
             continue
-        rows.append(Row('SET', coll.name, "", 0, bool(mem), opened, coll.name, 'SET', ('S', coll.name)))
+        rows.append(Row('SET', coll.name, "", 0, bool(mem or parts), opened, coll.name, 'SET', ('S', coll.name)))
         rows += below
     return rows
 

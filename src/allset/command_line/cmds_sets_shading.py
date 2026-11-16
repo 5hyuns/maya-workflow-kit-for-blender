@@ -16,7 +16,9 @@ from .cmds_attributes import _COLOR_ATTRS
 def _set_members(found):
     if found.kind == 'SET':
         from ..operators import sets
-        return [o.name for o in sets.members(found.data, bpy.context.scene)]
+        scene = bpy.context.scene
+        return [o.name for o in sets.members(found.data, scene)] + [
+            n for o in sets.part_objects(found.data, scene) for n in sets.component_names(found.data, o)]
     if found.kind == 'SG':
         mat = found.data
         return [_shim.shape_of(o) or o.name for o in bpy.context.scene.objects
@@ -69,15 +71,20 @@ def sets(*args, **kwargs):
         found = _set_node(clear)
         if found.kind == 'SET':
             kit_sets.remove(found.data, list(found.data.objects))
+            for o in kit_sets.part_objects(found.data):
+                kit_sets.remove_components(found.data, o)
         return found.name
+    parts = {}
     if empty:
         obs = []
     elif names:
         obs = [_shim._object(n) for n in names]
+    elif bpy.context.mode == 'EDIT_MESH':          # Maya: the selected components (and objects)
+        obs, parts = kit_sets.gather(bpy.context)
     else:
         obs = list(reversed(_shim._selection()))   # Maya: from the selection (b, c) -> [c, b]
     new_name = unique_node_name(str(name)) if name else kit_sets.next_name()
-    coll = kit_sets.create(new_name, obs, text=str(text or ""))
+    coll = kit_sets.create(new_name, obs, text=str(text or ""), parts=parts)
     return coll.name
 
 
