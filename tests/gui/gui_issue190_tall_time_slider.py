@@ -85,6 +85,10 @@ def s_scene():
     redraw()
 
 
+for _i in range(9):         # the layout's load fit (3 s) is over: it may fit the Time Slider while the mouse is in a gap
+    step(redraw)
+
+
 @step
 def s_before():
     area, region = slider()

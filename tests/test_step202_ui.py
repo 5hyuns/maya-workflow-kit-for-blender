@@ -49,9 +49,9 @@ def test_time_slider_area_and_its_fitted_height():
     screen = bpy.data.workspaces["General"].screens[0]
     area = _template_time_slider(screen)
     assert area is not None, "the General layout has the Time Slider timeline (sidebar on)"
-    # Blender 5.x keeps the template's timeline sidebar 1 px wide: the Time Slider buttons go to the header
-    # and the sized Time Slider lookup finds nothing (the GUI chrome test checks the same)
-    assert toolbox.time_slider_area(screen) is None
+    # Blender 5.x keeps the template's timeline sidebar 1 px wide (the Time Slider buttons go to the header): the
+    # fit still finds the Time Slider by its shown sidebar
+    assert toolbox.time_slider_area(screen) == area
     # the generator and the fit use the same ruler height (36 px at scale 1)
     src = (ROOT / "tools" / "make_startup.py").read_text(encoding="utf-8")
     assert int(re.search(r"^TIME_SLIDER_PX = (\d+)", src, re.M).group(1)) == toolbox.TIME_SLIDER_PX
@@ -59,6 +59,20 @@ def test_time_slider_area_and_its_fitted_height():
     for a in screen.areas:
         if a.type == 'DOPESHEET_EDITOR' and a != area:
             assert toolbox.time_slider_area(SimpleNamespace(areas=[a])) is None
+
+
+def test_time_slider_goal_keeps_out_of_the_edge_snap():
+    """Blender snaps a moved edge to an animation editor's header + time scrub strip (23 px x scale) within 0.6 header
+    heights: the goal height lies outside that band, at least the ruler TIME_SLIDER_PX x scale, at most one band
+    plus the 4 px grid above it."""
+    lf = import_module(kit.MODULE + ".ui.layout_fit")
+    for scale, hdr in ((1.0, 26), (1.25, 32), (1.5, 38), (2.0, 52), (2.5, 64)):
+        goal = lf.time_slider_goal(scale, hdr)
+        snap, band = hdr + int(23 * scale), int(hdr * 0.6)
+        assert goal - lf.AREA_GRID + 1 - snap >= band, (scale, hdr, goal)        # still outside after the grid
+        assert goal - hdr >= round(lf.TIME_SLIDER_PX * scale), (scale, goal)      # at least the ruler height
+        assert goal - hdr <= round(lf.TIME_SLIDER_PX * scale) + band, (scale, goal)
+    assert lf.time_slider_goal(1.25, 32) == 32 + 28 + 19 + 4                      # a 51 px ruler at UI 1.25
 
 
 def test_channel_box_menu_bar_keeps_all_menus():

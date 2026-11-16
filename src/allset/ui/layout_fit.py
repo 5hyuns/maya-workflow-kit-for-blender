@@ -17,10 +17,33 @@ TIME_SLIDER_PX = 36  # = tools/make_startup.py TIME_SLIDER_PX (the Time Slider r
 
 
 def time_slider_area(screen):
-    """The Maya Workflow Kit layout's Time Slider: a Timeline with the Time Slider buttons in its sidebar."""
+    """The Maya Workflow Kit layout's Time Slider: a Timeline with its sidebar shown (Blender 5.x opens the
+    template's sidebar 1 px wide and the Time Slider buttons sit in the header; it is the Time Slider all the same)."""
     from .time_slider import has_slider_panel
     return next((a for a in screen.areas if a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE'
-                 and has_slider_panel(a.spaces.active, a)), None)
+                 and has_slider_panel(a.spaces.active)), None)
+
+
+# Blender 5.x snaps a moved horizontal edge to the height "header + time scrub strip" (23 px x the UI scale) of an
+# animation editor below it whenever the edge lands within 0.6 header heights of that height, and keeps edge
+# positions on a 4 px grid (Blender's screen.area_move, also from Python). The Time Slider's ruler of
+# TIME_SLIDER_PX x the scale always lies in that band, so moving its top edge there snapped back and the Time Slider
+# kept the template's height (a 29 px ruler at UI 1.25, 2 px at 2.0). The fit takes the nearest height outside the
+# band instead.
+AREA_GRID = 4
+TIME_SCRUB_PX = 23
+
+
+def time_slider_goal(scale, hdr):
+    """Area height the fit gives the Time Slider whose header is ``hdr`` px at UI ``scale``: its ruler
+    TIME_SLIDER_PX x scale over the header, or the nearest height above Blender's edge snap band around
+    "header + time scrub strip" when that height lies in it."""
+    want = round(TIME_SLIDER_PX * scale) + hdr
+    snap = hdr + int(TIME_SCRUB_PX * scale)
+    band = int(hdr * 0.6)
+    if abs(want - snap) < band + AREA_GRID:
+        want = snap + band + AREA_GRID
+    return want
 _FIT_TICK = 0.5
 _fallback = set()   # screens whose main view shows its toolbar because the column is too narrow
 
@@ -310,12 +333,13 @@ def fit_columns(start_fit=True):
                            (row.x + row.width // 2, row.y - 1), pending)
         # the Time Slider (#109): its ruler keeps 36 px times the UI scale. The template area has a
         # fixed height, so at UI 1.25 the taller header left a 29 px ruler that Blender's current-frame box filled:
-        # grow it upwards
+        # grow it upwards (to time_slider_goal: a height Blender's edge snap doesn't pull back)
         slider = time_slider_area(screen)
         if slider is not None:
             hdr = next((r.height for r in slider.regions if r.type == 'HEADER'), 0)
-            d = round(TIME_SLIDER_PX * scale) + hdr - slider.height
-            if abs(d) > 2 and armed:
+            off = abs(round(TIME_SLIDER_PX * scale) + hdr - slider.height) >= AREA_GRID
+            d = time_slider_goal(scale, hdr) - slider.height if off else 0
+            if abs(d) >= AREA_GRID and armed:
                 needed = True
                 top = slider.y + slider.height
                 _move_edge(window, slider, slider.x + slider.width // 2, top, d,
