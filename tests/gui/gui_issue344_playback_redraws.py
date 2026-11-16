@@ -5,7 +5,7 @@ A keyed cube plays (every frame) in the Maya layout three ways: the Time Slider'
 an animation editor makes Blender redraw every 3D View and Image Editor), Blender's own play from the viewport, and
 Maya's Play key (Alt+V) with the mouse over the Time Slider. Each time the main viewport is drawn on (nearly) every
 frame, while the Tool Box column (a narrow 3D View) and the shelf (an Image Editor) are not; afterwards the screen's
-playback settings are as before. In the four view, with Maya's Update View: Active (the default), only the panel the
+playback settings are as before. In the four view, with Update View: Active (as the kit ships, like Maya), only the panel the
 mouse was last in is drawn on every frame and every panel once playback stops; changing the frame without playing
 draws every panel; with Update View: All all four are drawn on every frame, and a frame costs less with Active. Last,
 played as fast as the PC draws (scene rate 1000, VSync off), a frame started by the Time Slider's play button costs

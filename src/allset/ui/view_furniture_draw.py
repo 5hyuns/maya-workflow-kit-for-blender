@@ -277,8 +277,8 @@ def hud_lines(prefs, scene, frame, lens):
 
 
 def hud_lens(space, rv3d, scene):
-    """Maya focal length of the view: the camera's when looking through one, else the view's lens on Maya's 36 mm
-    film (Blender's viewport lens is on a 72 mm sensor: 70 there = Maya's 35)."""
+    """Maya focal length of the view: the camera's when looking through one, else the view's lens on a 36 mm film
+    (Blender's viewport lens is on a 72 mm sensor, so its value is halved), like Maya's persp camera."""
     from ..operators.key_batch import VIEW_SENSOR
     from ..operators.startup_cameras import MAYA_FILM_MM
     cam = label_camera(space, scene) if rv3d.view_perspective == 'CAMERA' else None

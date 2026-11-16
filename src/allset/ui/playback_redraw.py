@@ -15,8 +15,8 @@ Animation Editors, ...). Two kit parts were redrawn too although nothing in them
   Editor on each frame; the kit's shelf and Status Line rows are Image Editors drawn by the kit, so the Time Slider's
   play buttons and Maya's Play key (``allset.play``) start playback from the main viewport instead.
 
-Maya's Playback > Update View is Active by default: while playing, only the active panel is redrawn, and every panel
-once playback stops. In the four view the kit does the same (preference ``playback_update_view``; changing the frame
+Playback > Update View: Active, like Maya: while playing, only the active panel is redrawn, and every panel once
+playback stops. In the four view the kit does the same (preference ``playback_update_view``; changing the frame
 without playing still redraws every panel): the active panel is the one the mouse was last in (``note_panel``, from
 the ViewCube's hover test and the Play key), else persp; playback starts from it, so Blender's own "redraw where
 playback started" is that panel too.
