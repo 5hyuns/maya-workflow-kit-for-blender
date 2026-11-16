@@ -219,15 +219,16 @@ def s_offset_dragged():
     check(f"a short drag = a smaller offset, the same fraction of both side edges ({got})", ok)
     shot("gui_step144_loop_offset_drag.png")
     b = bmesh.from_edit_mesh(cube().data)        # select the middle loop (the one inserted first)
-    for e in b.edges:
-        e.select = False
     zs = {round(v.co.z, 6) for v in b.verts}
     z = min(zs, key=lambda h: abs(h - z))       # the click lands a hair apart per version (5.2.3: -0.2962)
     C["z"] = z
-    for v in b.verts:
-        v.select = abs(v.co.z - z) < 1e-4
+    # deselect everything first: in vertex select mode, deselecting an edge also deselects its vertices
+    for seq in (b.faces, b.edges, b.verts):
+        for el in seq:
+            el.select = False
     for e in b.edges:
-        e.select = all(v.select for v in e.verts)
+        if all(abs(v.co.z - z) < 1e-4 for v in e.verts):
+            e.select = True
     b.select_flush_mode()
     bmesh.update_edit_mesh(cube().data)
     menu("Mesh Tools/Slide Edge")
