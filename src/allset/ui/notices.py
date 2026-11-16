@@ -1244,9 +1244,6 @@ MARKING.update({
     "SHIFT_OBJECT/Transfer Vertex Order": (
         "Sort Mesh Elements", "Blender can't copy another mesh's vertex order: Mesh > Sort Elements reorders vertices "
         "by a rule."),
-    **{f"SHIFT_OBJECT/Booleans/{label}": ("Boolean modifier", "Blender's Boolean modifier does Union, Difference "
-                                          "and Intersect only: split pieces with Separate after a Difference.")
-       for label in ("Slice", "Hole Punch", "Cut Out", "Split Edges")},
     "SHIFT_OBJECT/Polygon Display/Toggle Border Edges": _BORDER,
     "SHIFT_EDGE/Polygon Display/Toggle Border Edges": _BORDER,
     "SHIFT_DEFAULT/Polygon Display All/Toggle All Geometry Border Edges": _BORDER,

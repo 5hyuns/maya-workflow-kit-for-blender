@@ -83,6 +83,16 @@ def test_quant_25_mapped():
     assert len(via_menu) >= 22, via_menu   # Reverse Normals etc. may stay direct operators
 
 
+def test_object_marking_booleans_run_the_main_menu_items():
+    """Shift+RMB object menu > Booleans: every item runs the Mesh > Booleans item of the same name."""
+    entries = _entries()
+    for label in ("Union", "Difference (A - B)", "Difference (B - A)", "Intersection", "Slice", "Hole Punch",
+                  "Cut Out", "Split Edges"):
+        action = entries[f"SHIFT_OBJECT/Booleans/{label}"]
+        assert _item_path(action) == f"Mesh/Booleans/{label}", (label, action)
+        assert f"Mesh/Booleans/{label}" in menu_map.MAP, label
+
+
 def _cube_edit():
     kit_clear()
     bpy.ops.mesh.primitive_cube_add(size=2.0)
