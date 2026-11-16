@@ -43,6 +43,16 @@ def patch_key_stepping(kd):
 # S (Maya Set Key) = every keyable channel, not IC's LocRotScale (IC:2463, :2536).
 
 TIME_SLIDER_SHADOWS = ("Dopesheet", "View2D", "Screen")   # Screen: the Range Slider click
+# every View2D zoom / scroll event (wheel, tilt wheel, trackpad, Ctrl / Shift + MMB drag, numpad +/-)
+TIME_VIEW_LOCK_EVENTS = (
+    *(make_event(wheel, **mods) for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE")
+      for mods in ({}, {"ctrl": True}, {"shift": True})),
+    make_event("WHEELLEFTMOUSE"), make_event("WHEELRIGHTMOUSE"),
+    make_event("MIDDLEMOUSE", ctrl=True), make_event("MIDDLEMOUSE", shift=True),
+    make_event("TRACKPADZOOM", value="ANY"), make_event("TRACKPADPAN", value="ANY"),
+    make_event("TRACKPADPAN", value="ANY", ctrl=True),
+    make_event("NUMPAD_PLUS"), make_event("NUMPAD_MINUS"))
+TIME_VIEW_LOCK_SHADOWS = ("View2D", "View2D Buttons List", "Animation Channels")
 
 
 def patch_time_slider(kd):
@@ -53,13 +63,12 @@ def patch_time_slider(kd):
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "allset.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)
-    # Maya's Time Slider never zooms or scrolls (the Range Slider sets what it shows): View2D's wheel zoom /
-    # scroll and Ctrl+MMB zoom are swallowed in the Timeline, passed through in the Dope Sheet
-    # (any "Dopesheet" item runs before the region's View2D keymap, so these need not be first)
-    for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
-        for mods in ({}, {"ctrl": True}, {"shift": True}):
-            _add(kd, "Dopesheet", "allset.time_view_lock", make_event(wheel, **mods), shadows=TIME_SLIDER_SHADOWS)
-    _add(kd, "Dopesheet", "allset.time_view_lock", make_event("MIDDLEMOUSE", ctrl=True), shadows=TIME_SLIDER_SHADOWS)
+    # Maya's Time Slider never zooms or scrolls (the Range Slider sets what it shows): View2D's wheel, trackpad,
+    # Ctrl+MMB and numpad +/- zoom / scroll are swallowed in the Timeline, passed through elsewhere. Over the
+    # Timeline these events reach the region's "View2D" keymap before "Dopesheet" (#292), so the items sit first
+    # in View2D.
+    for ev in TIME_VIEW_LOCK_EVENTS:
+        _add(kd, "View2D", "allset.time_view_lock", ev, first=True, shadows=TIME_VIEW_LOCK_SHADOWS)
     # a double-click highlights the whole visible range (Maya); Blender's double-click item here toggles the
     # channel editability and left its redo panel over the Time Slider (#335)
     _add(kd, "Dopesheet", "allset.time_range_all", make_event("LEFTMOUSE", value="DOUBLE_CLICK"), first=True,
@@ -173,8 +182,10 @@ def patch_graph_keys_2(kd):
         _add(kd, km, "allset.set_key", make_event("S"))
     # #192: Maya Shift+MMB anywhere / Shift+LMB drag on a selected key = move along time or value only
     # (the first 3 px pick the axis); Blender binds no Shift+MMB here and its Shift+LMB drag is the marquee, which
-    # still runs off the selected keys (the operator passes through)
-    _add(kd, "Graph Editor", "allset.graph_axis_drag", make_event("MIDDLEMOUSE", shift=True), {"button": 'MIDDLE'})
+    # still runs off the selected keys (the operator passes through). The Time Slider's view lock on Shift+MMB in
+    # View2D passes through outside a Timeline.
+    _add(kd, "Graph Editor", "allset.graph_axis_drag", make_event("MIDDLEMOUSE", shift=True), {"button": 'MIDDLE'},
+         shadows=("View2D",))
     _add(kd, "Graph Editor", "allset.graph_axis_drag", make_event("LEFTMOUSE", "CLICK_DRAG", shift=True),
          {"button": 'LEFT'}, first=True, shadows=("Graph Editor",))
     # Maya time snap: Blender's MMB / LMB key moves land on whole frames (the operator only watches, PASS_THROUGH)

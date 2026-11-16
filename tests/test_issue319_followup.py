@@ -77,10 +77,13 @@ def test_fit_timelines_records_and_runs_headless():
 def test_view_lock_operator_and_keymap():
     assert "allset.time_view_lock" in mp.PASS_THROUGH_FIRST
     locks = [(km, ev) for km, idname, ev, _p, _s in mp.ADDED if idname == "allset.time_view_lock"]
-    assert len(locks) == 7, locks
-    assert all(km == "Dopesheet" for km, _ev in locks)
+    assert len(locks) == 15, locks
+    # over the Timeline the wheel / trackpad / zoom keys reach "View2D" before "Dopesheet" (#292)
+    assert all(km == "View2D" for km, _ev in locks)
     types_ = sorted({ev["type"] for _km, ev in locks})
-    assert types_ == ["MIDDLEMOUSE", "WHEELDOWNMOUSE", "WHEELUPMOUSE"]
+    assert types_ == ["MIDDLEMOUSE", "NUMPAD_MINUS", "NUMPAD_PLUS", "TRACKPADPAN", "TRACKPADZOOM", "WHEELDOWNMOUSE",
+                      "WHEELLEFTMOUSE", "WHEELRIGHTMOUSE", "WHEELUPMOUSE"], types_
+    assert not [ev for _km, ev in locks if ev["type"] == "MIDDLEMOUSE" and not (ev.get("ctrl") or ev.get("shift"))],         "a plain MMB stays the Time Slider's Maya middle drag"
     assert bpy.ops.allset.time_view_lock.get_rna_type() is not None
 
 

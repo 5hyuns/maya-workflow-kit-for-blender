@@ -62,6 +62,11 @@ def fit_timeline(win, area, region, scene):
             v = region.view2d
             x0 = v.view_to_region(lo, 0, clip=False)[0]
             x1 = v.view_to_region(hi, 0, clip=False)[0]
+            if x1 - x0 < 2 and bpy.ops.anim.scene_range_frame.poll():
+                # zoomed out so far that the range is under two pixels: bring it near first, then frame it exactly
+                bpy.ops.anim.scene_range_frame()
+                x0 = v.view_to_region(lo, 0, clip=False)[0]
+                x1 = v.view_to_region(hi, 0, clip=False)[0]
             if x1 - x0 >= 2:
                 bpy.ops.view2d.zoom_border(xmin=int(round(x0)), xmax=int(round(x1)), ymin=0, ymax=region.height,
                                            wait_for_input=False, zoom_out=False)

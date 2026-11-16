@@ -96,6 +96,12 @@ def ruler_ticks(step, lo, hi):
 TICK_HALF_PAD = 2.33
 
 
+def label_font_size(h, scale=1.0):
+    """BLF size of the frame numbers in a ruler ``h`` px tall: the UI-scaled size, smaller in a ruler shorter than
+    Maya's at this scale, like its rows (``_rows``), so the numbers never stand out of the ruler (#292)."""
+    return RULER_FONT_SIZE * min(h / MAYA_RULER_H, scale)
+
+
 def _rows(name, h, rows=None, scale=1.0):
     """(y0, y1) region rows (bottom-up) of a ruler row band at region height ``h``, UI-scaled: the label rows keep
     their place under the top edge, the band and the current frame number theirs above the bottom edge, and the
@@ -186,7 +192,7 @@ def _draw_ruler(context, region):
     # labels: 2 px + a fifth of a frame right of the tick
     l0, _l1 = _rows("label", h, rows, s)
     # The same UI-scaled font is used for the current-frame number.
-    blf.size(0, RULER_FONT_SIZE * s)
+    blf.size(0, label_font_size(h, s))
     off = 2 * s + 0.2 * pxf
     blf.color(0, *_themed(RULER_LABEL, "text"))
     for f, x in lefts.items():
