@@ -73,7 +73,7 @@ from .cb_menus import (_ChannelAction, _op, _act_key, _act_breakdown, _act_mute,
 from .cb_drag import (ALLSET_OT_cb_select_channel, ALLSET_OT_cb_deselect_channels, _watching, _anchor, _field_handoff,
                       start_field_drag, _field_is_driven, field_drag_starts, ALLSET_OT_cb_field_drag, _hovered_cell,
                       ALLSET_OT_cb_hover, MENU_ROOM, MENU_GAP, ALLSET_OT_cb_channel_drag, field_owner, _edit,
-                      edit_field, ALLSET_PT_cb_field)
+                      edit_field, ALLSET_PT_cb_field, ALLSET_OT_cb_entry_enter)
 from .cb_panel import (CATEGORY, AE_CATEGORY, MTK_CATEGORY, ALLSET_PT_cb_name, ALLSET_OT_cb_rename, EMPTY_TEXT,
                        PLACING_TEXT, POSE_HINT, draw_joint_translate, draw_empty, _STATE_ICON, _ALERT_STATES,
                        state_alert, _row_label, draw_channel_row, _draw_text_row, node_row, ALLSET_OT_cb_node_toggle,
@@ -362,19 +362,16 @@ def _entry_text_get(_self):
     return _edit["text"]
 
 
-def _enter_held():
-    from ..operators import keystate
-    return bool(keystate.is_down('RET') or keystate.is_down('NUMPAD_ENTER'))
-
-
 def _entry_text_set(_self, text):
-    # Blender commits a text field on Enter and on a click away alike. Like Maya, Enter writes the text into every
-    # selected channel also when it is unchanged, a click away only a changed text. Where the OS can't tell whether
-    # Enter is held, an unchanged text writes nothing.
-    key = _edit["key"]
+    # Blender commits a text field on Enter and on a click away alike; the editor's watcher (ALLSET_OT_cb_entry_enter)
+    # has noted an Enter press by then. Like Maya, Enter writes the text into every selected channel also when it is
+    # unchanged, a click away only a changed text.
+    key, enter = _edit["key"], _edit["enter"]
+    _edit["enter"] = False
+    _edit["watch"] += 1                   # committed: the watcher ends
     if key is None or not text.strip():
         return
-    if text == _edit["text"] and not _enter_held():
+    if text == _edit["text"] and not enter:
         return
     apply_entry(key, text)
 
@@ -619,7 +616,7 @@ def _ensure_wheel_watch():
 
 classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider, ALLSET_OT_cb_select_channel,
            ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag, ALLSET_OT_cb_field_drag,
-           ALLSET_PT_cb_field, ALLSET_PT_cb_name, ALLSET_OT_cb_rename, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, ALLSET_OT_cb_wheel, *CHANNEL_OPS,
+           ALLSET_PT_cb_field, ALLSET_OT_cb_entry_enter, ALLSET_PT_cb_name, ALLSET_OT_cb_rename, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, ALLSET_OT_cb_wheel, *CHANNEL_OPS,
            ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_freeze, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit, ALLSET_MT_cb_interp,

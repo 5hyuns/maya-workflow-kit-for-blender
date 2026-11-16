@@ -5199,6 +5199,8 @@ STRINGS = {
     'Knots added at each point (Between selections: knots between two points)': '在每个点添加的节点数 (在选择之间: 两点之间的节点数)',
     'Leave the curve as it is and make a new curve with the knots': '保留原曲线，并创建插入节点后的新曲线',
     'Channel Box: remember the channel under the mouse and watch for a drag over the rows': '通道盒：记住鼠标下的通道，并监视在行上的拖动',
+    "Channel Box value editor: note an Enter press before the editor's field takes it (Enter writes an unchanged value, a click away doesn't)": '通道盒值编辑器：在字段接收之前记录 Enter 按下（Enter 也会写入未更改的值，在外部单击则不会）',
+    'Value Editor Enter': '值编辑器 Enter',
     'Choose an existing center edge to establish topology correspondence': '选择一条现有的中心边来建立拓扑对应关系',
     'Choose the project folder: file dialogs open in its scenes folder, renders go to its images folder\n(Maya File > Set Project; Blender has no projects)': '选择项目文件夹：文件对话框在其 scenes 文件夹中打开，渲染输出到其 images 文件夹\n(Maya 文件 > 设置项目；Blender 没有项目)',
     'Choose the shelf (Maya shelf tabs)': '选择工具架 (Maya 工具架选项卡)',

@@ -532,7 +532,8 @@ def field_owner(context, key):
     return None, None
 
 
-_edit = {"key": None, "text": ""}
+# the open value editor: its channel, the text it opened with, whether Enter was pressed, and its watcher's number
+_edit = {"key": None, "text": "", "enter": False, "watch": 0}
 
 
 def edit_field(context, key):
@@ -545,8 +546,35 @@ def edit_field(context, key):
         return False
     _edit["key"] = key
     _edit["text"] = getattr(owner, prop)
+    _edit["enter"] = False
     bpy.ops.wm.call_panel(name=ALLSET_PT_cb_field.__name__, keep_open=False)
+    # Blender commits the field the same way on Enter and on a click away; a window handler added after the popover
+    # gets each event before it, so this one notes the Enter press first
+    _edit["watch"] += 1
+    bpy.ops.allset.cb_entry_enter('INVOKE_DEFAULT')
     return True
+
+
+class ALLSET_OT_cb_entry_enter(bpy.types.Operator):
+    """Channel Box value editor: note an Enter press before the editor's field takes it (Enter writes an unchanged value, a click away doesn't)"""
+    bl_idname = "allset.cb_entry_enter"
+    bl_label = "Value Editor Enter"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        self._watch = _edit["watch"]
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if self._watch != _edit["watch"]:        # the editor committed, or a newer one opened
+            return {'FINISHED', 'PASS_THROUGH'}
+        if event.value == 'PRESS':
+            if event.type in {'RET', 'NUMPAD_ENTER'}:
+                _edit["enter"] = True
+            elif event.type == 'ESC':            # the editor closes without writing
+                return {'FINISHED', 'PASS_THROUGH'}
+        return {'PASS_THROUGH'}
 
 
 class ALLSET_PT_cb_field(bpy.types.Panel):

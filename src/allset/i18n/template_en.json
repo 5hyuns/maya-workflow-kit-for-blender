@@ -8120,7 +8120,8 @@
    "Select Channel": "Select Channel",
    "Select Channels": "Select Channels",
    "Set": "Set",
-   "Toggle": "Toggle"
+   "Toggle": "Toggle",
+   "Value Editor Enter": "Value Editor Enter"
   },
   "Labels/ui/cb_keys": {
    "Rotate X": "Rotate X",
@@ -10710,6 +10711,7 @@
    "Set a breakdown key on every channel shown (Maya Channels > Breakdown All)": "Set a breakdown key on every channel shown (Maya Channels > Breakdown All)"
   },
   "Tooltips/ui/cb_drag": {
+   "Channel Box value editor: note an Enter press before the editor's field takes it (Enter writes an unchanged value, a click away doesn't)": "Channel Box value editor: note an Enter press before the editor's field takes it (Enter writes an unchanged value, a click away doesn't)",
    "Channel Box: remember the channel under the mouse and watch for a drag over the rows": "Channel Box: remember the channel under the mouse and watch for a drag over the rows",
    "Clear the Channel Box channel selection": "Clear the Channel Box channel selection",
    "Drag a numeric Channel Box value horizontally": "Drag a numeric Channel Box value horizontally",

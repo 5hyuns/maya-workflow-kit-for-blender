@@ -5199,6 +5199,8 @@ STRINGS = {
     'Knots added at each point (Between selections: knots between two points)': '各ポイントに追加するノット数 (選択の間: 2 点の間のノット数)',
     'Leave the curve as it is and make a new curve with the knots': '元のカーブをそのまま残し、ノットを挿入した新しいカーブを作成',
     'Channel Box: remember the channel under the mouse and watch for a drag over the rows': 'チャンネルボックス: マウス下のチャンネルを記憶し、行の上でのドラッグを監視',
+    "Channel Box value editor: note an Enter press before the editor's field takes it (Enter writes an unchanged value, a click away doesn't)": 'チャンネルボックスの値エディタ: フィールドが受け取る前に Enter の押下を記録 (Enter は変更していない値も書き込み、外側のクリックは書き込まない)',
+    'Value Editor Enter': '値エディタの Enter',
     'Choose an existing center edge to establish topology correspondence': 'トポロジの対応を確立するため、既存の中央エッジを選択',
     'Choose the project folder: file dialogs open in its scenes folder, renders go to its images folder\n(Maya File > Set Project; Blender has no projects)': 'プロジェクトフォルダを選択: ファイルダイアログはその scenes フォルダで開き、レンダーはその images フォルダへ\n(Maya の ファイル > プロジェクトの設定。Blender にはプロジェクトがありません)',
     'Choose the shelf (Maya shelf tabs)': 'シェルフを選択 (Maya シェルフタブ)',

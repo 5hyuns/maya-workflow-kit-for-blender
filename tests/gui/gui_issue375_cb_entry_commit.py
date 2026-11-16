@@ -1,7 +1,8 @@
 """#375 in a real UI, the value editor like Maya's Channel Box: after a drag down over the values Rotate X -> Rotate Z
 the editor shows the last value (Rotate Z) ready to be replaced; Esc writes nothing, a click away writes only a
 changed text, Enter writes the text into every selected channel of both selected cubes (also when it is unchanged).
-A single click on one value and then a click away changes nothing either."""
+A single click on one value and then a click away changes nothing either. The key state the OS reports is made
+unknown here (as on systems where the kit can't ask it): telling Enter from a click away must not depend on it."""
 
 import math
 import os
@@ -60,6 +61,7 @@ def s_setup():
     bpy.context.scene.collection.objects.link(b)
     reset()
     dock_area('CHANNEL_BOX')
+    import_module(MODULE + ".operators.keystate").is_down = lambda _type: None    # "can't tell", like other OSes
     redraw()
 
 
@@ -195,11 +197,7 @@ value_drag("enter")
 @step
 def s_enter():
     ev('RET', 'PRESS')
-
-
-@step
-def s_enter_release():
-    ev('RET', 'RELEASE')
+    ev('RET', 'RELEASE')      # a quick tap: both in one tick
 
 
 @step
