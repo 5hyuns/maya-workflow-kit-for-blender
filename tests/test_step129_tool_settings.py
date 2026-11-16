@@ -55,6 +55,16 @@ FAKE = ("allset.insert_edge_loop_tool", "allset.slide_edge_tool", "allset.quad_d
 _REAL_ACTIVE = ts_mod.active_tool
 
 
+class _Untouched:
+    """A tool's properties of a registered operator no option was set on."""
+
+    def __init__(self, rna):
+        self.bl_rna = rna
+
+    def is_property_set(self, _name):
+        return False
+
+
 class FakeTool:
     """Tool operator properties as Blender's tools hold them (defaults read with bpy.ops ... get_rna_type)."""
 
@@ -68,7 +78,16 @@ class FakeTool:
         }
 
     def operator_properties(self, op):
-        return self._ops[op]
+        """Like ``WorkSpaceTool.operator_properties``: the properties of any registered operator (the operators of
+        the tool's own keymap among them), RuntimeError for an operator that doesn't exist."""
+        if op in self._ops:
+            return self._ops[op]
+        mod, _dot, name = op.partition(".")
+        try:
+            rna = getattr(getattr(bpy.ops, mod), name).get_rna_type()
+        except (AttributeError, KeyError):
+            raise RuntimeError(f"Error: Operator '{op}' not found!") from None
+        return _Untouched(rna)
 
 
 def _set_tool(idname, mode='EDIT_MESH'):
