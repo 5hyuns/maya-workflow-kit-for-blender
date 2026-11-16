@@ -26,22 +26,23 @@ def main_window(wm=None):
     return wm.windows[0] if wm.windows else None
 
 
-def split_side(context, window, side, width, ui_type, then=None):
+def split_side(context, window, side, width, ui_type, then=None, max_share=0.4):
     """Split ``window``'s main viewport and return the new area on ``side`` ('LEFT' / 'RIGHT') of ``width`` unscaled
-    px (VERTICAL factor < 0.5 = new area left, factor > 0.5 = new area right, ``1 - factor`` wide); ``then(new)``
-    finishes it. In the four view the area goes beside the whole view, never inside one of its panels: it comes on a
-    later tick (``four_view.in_one_panel``) and True is returned."""
+    px, at most ``max_share`` of the viewport (VERTICAL factor < 0.5 = new area left, factor > 0.5 = new area right,
+    ``1 - factor`` wide); ``then(new)`` finishes it. In the four view the area goes beside the whole view, never
+    inside one of its panels: it comes on a later tick (``four_view.in_one_panel``) and True is returned."""
     screen = window.screen
     from . import four_view
     if four_view.is_four(screen) and not bpy.app.background:
         done = four_view.in_one_panel(
-            context, window, lambda ctx, win, _panel: split_side(ctx, win, side, width, ui_type, then))
+            context, window,
+            lambda ctx, win, _panel: split_side(ctx, win, side, width, ui_type, then, max_share))
         return True if done else None
     area, region = _main_view(screen)
     if area is None or region is None:
         return None
     scale = context.preferences.system.ui_scale or 1.0
-    share = min(0.4, width * scale / max(area.width, 1))
+    share = min(max_share, width * scale / max(area.width, 1))
     factor = share if side == 'LEFT' else 1.0 - share
     before = {a.as_pointer() for a in screen.areas}
     with context.temp_override(window=window, screen=screen, area=area, region=region):
@@ -55,17 +56,34 @@ def split_side(context, window, side, width, ui_type, then=None):
     return new
 
 
+def stack_width(context, window):
+    """(unscaled px, share of the viewport at most) for a new tab stack: the width the tab it raises needs, like
+    Maya (the Attribute Editor's stack is wider than the Channel Box's; layout_fit.dock_width), leaving the viewport
+    at least layout_fit.MIN_VIEW_PX like a tab change's resize does, so a later tab change resizes it the same way."""
+    from . import layout_fit
+    system = context.preferences.system
+    scale = system.ui_scale or 1.0
+    kind = getattr(context.window_manager, "allset_dock", 'CHANNEL_BOX')
+    want = layout_fit.dock_width(scale, system.pixel_size, kind=kind)
+    area = _main_view(window.screen)[0]
+    if area is None or area.width - round(layout_fit.MIN_VIEW_PX * scale) < want:
+        return want / scale, 0.4         # a small window: the stack takes at most 40 % of the viewport
+    return want / scale, 1.0
+
+
 def open_stack(context, window=None):
-    """The stack area right of ``window``'s viewport (made if missing)."""
+    """The stack area right of ``window``'s viewport (made if missing), as wide as its raised tab needs."""
     window = window or main_window(context.window_manager)
     if window is None:
         return None
     stack = find_stack(window.screen)
     if stack is not None:
         return stack
+    width, max_share = stack_width(context, window)
     win_ptr = live_refs.pointer(window)
-    return split_side(context, window, 'RIGHT', WIDTH, 'PROPERTIES',
-                      then=lambda new: set_role_later(new, 'STACK', live_refs.window(win_ptr) or window))
+    return split_side(context, window, 'RIGHT', width, 'PROPERTIES',
+                      then=lambda new: set_role_later(new, 'STACK', live_refs.window(win_ptr) or window),
+                      max_share=max_share)
 
 
 def close_area(context, window, area):
