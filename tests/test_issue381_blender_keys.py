@@ -153,6 +153,39 @@ def test_restore_all_brings_them_back():
     _kcs().update()
 
 
+def test_hotkey_editor_shows_and_restores_a_key_off_in_preferences():
+    """The Hotkey Editor shows a Maya key switched off (or removed) in Preferences > Keymap as "Ctrl+Z (off) *", and
+    that row's Restore gives it back, leaving the other rows' changes of the keymap; Assign works on it too."""
+    _setup()
+    he, ctx = m("ui.hotkey_editor"), bpy.context
+    row = lambda c, k: next(r for r in he.rows() if r["command"] == c and r["maya_key"] == k)  # noqa: E731
+    undo1, undo2, nst = row("Undo", "Z"), row("Undo", "Ctrl+Z"), row("NonSacredTool", "Y")
+    assert he.assign(ctx, undo1, {"type": "F7"})[0]          # another row of the same keymap, changed
+    _kit_undo(ctrl=True).active = False                       # Preferences > Keymap
+    _kcs().update()
+    assert he.kit_text(ctx, undo2) == "Ctrl+Z (off) *", he.kit_text(ctx, undo2)
+    assert undo2 in he.changed_rows(ctx)
+    data = {(h["command"], h["maya_key"]): h for h in m("settings_io").export_hotkeys(ctx)}
+    assert data[("Undo", "Ctrl+Z")].get("removed") is True, data
+    assert he.restore(ctx, undo2)
+    assert he.kit_text(ctx, undo2) == "Ctrl+Z" and _kit_undo(ctrl=True).active, he.kit_text(ctx, undo2)
+    assert he.kit_text(ctx, undo1) == "F7 *", he.kit_text(ctx, undo1)
+    # removed (X) shows the same and comes back the same; Assign on it gives the new key
+    _screen().keymap_items.remove(_kit_undo(ctrl=True))
+    _kcs().update()
+    assert he.kit_text(ctx, undo2) == "Ctrl+Z (off) *", he.kit_text(ctx, undo2)
+    assert he.assign(ctx, undo2, {"type": "F9", "ctrl": True, "alt": True})[0]
+    assert he.kit_text(ctx, undo2) == "Ctrl+Alt+F9 *" and he.kit_text(ctx, undo1) == "F7 *"
+    # a Maya key without a Blender twin switched off stays an item: "(off)", Restore gives it back
+    for _km, k in he.row_items(ctx, nst):
+        k.active = False
+    _kcs().update()
+    assert he.kit_text(ctx, nst) == "Y (off) *", he.kit_text(ctx, nst)
+    assert he.restore(ctx, nst) and he.kit_text(ctx, nst) == "Y"
+    assert he.restore_all(ctx) >= 2
+    assert not any(km.is_user_modified for km in _kcs().user.keymaps)
+
+
 def test_unticked_maya_key_across_restarts():
     root = os.path.abspath(os.path.join(bpy.utils.user_resource('CONFIG'), "..", "i381b"))
     assert "tmp" in root.replace("\\", "/").split("/"), root

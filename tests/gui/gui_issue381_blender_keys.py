@@ -1,6 +1,7 @@
 """#381 follow-up in a real UI: the Maya Ctrl+Z (Undo) unticked in Preferences > Keymap (the user keymap item's
 checkbox) while Blender's own Ctrl+Z is switched off by the Maya keys. In Blender mode Ctrl+Z over the viewport still
-undoes (Blender's own key); back in Maya mode the user's untick is kept: Ctrl+Z does nothing, z undoes."""
+undoes (Blender's own key); back in Maya mode the user's untick is kept: Ctrl+Z does nothing, z undoes. The Hotkey
+Editor shows that key as "Ctrl+Z (off) *" and the row's Restore gives it back: Ctrl+Z undoes again."""
 
 import os
 import sys
@@ -131,6 +132,54 @@ def s_maya_ctrl_z_done():
 @step
 def s_maya_z_done():
     check(f"Maya mode again: z undoes (x -> {cube_x()})", abs(cube_x() - C["x1"]) < 1e-4)
+    with v3d_override():
+        C["open"] = bpy.ops.allset.menu_item(item="Windows/Settings/Preferences/Hotkey Editor")
+
+
+def hk():
+    mw = import_module(MODULE + ".ui.marked_window")
+    w = mw.find_window(bpy.context, "HOTKEY_EDITOR")
+    if w is None:
+        return None, None, None
+    area = next(a for a in w.screen.areas if mw.kind_of(a) == "HOTKEY_EDITOR")
+    return w, area, next(r for r in area.regions if r.type == 'WINDOW')
+
+
+@step
+def s_editor_row():
+    wm = bpy.context.window_manager
+    check(f"the Hotkey Editor opens ({C['open']})", hk()[0] is not None)
+    wm.allset_hk_search = "undo"
+    shown = {r.command: r.kit_key for r in wm.allset_hk_rows}
+    check(f"the Hotkey Editor shows the switched-off key with its name ({shown.get('Undo (2nd hotkey)')!r})",
+          shown.get("Undo (2nd hotkey)") == "Ctrl+Z (off) *")
+    i = next((i for i, r in enumerate(wm.allset_hk_rows) if r.command == "Undo (2nd hotkey)"), -1)
+    wm.allset_hk_active = i
+    w, area, region = hk()
+    if w is not None and i >= 0:
+        with bpy.context.temp_override(window=w, area=area, region=region):
+            C["restore"] = bpy.ops.allset.hotkey_restore(row=wm.allset_hk_rows[i].index)    # the row's Restore
+
+
+@step
+def s_editor_restored():
+    wm = bpy.context.window_manager
+    shown = {r.command: r.kit_key for r in wm.allset_hk_rows}
+    check(f"the row's Restore gives Ctrl+Z back ({C.get('restore')}, {shown.get('Undo (2nd hotkey)')!r}, "
+          f"{ctrl_z_items()})", shown.get("Undo (2nd hotkey)") == "Ctrl+Z" and (True, False) in ctrl_z_items())
+    w = hk()[0]
+    if w is not None:
+        with bpy.context.temp_override(window=w):
+            bpy.ops.wm.window_close()
+    to_viewport()
+    C["x2"] = move_cube()
+    ev('Z', 'PRESS', ctrl=True)
+    ev('Z', 'RELEASE', ctrl=True)
+
+
+@step
+def s_restored_ctrl_z_done():
+    check(f"Maya mode: Ctrl+Z undoes again (x {C['x2']} + 2 -> {cube_x()})", abs(cube_x() - C["x2"]) < 1e-4)
     screen().restore_to_default()
     kcs().update()
 

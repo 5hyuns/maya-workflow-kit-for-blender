@@ -188,6 +188,24 @@ def row_items(context, row, index=None):
     The add-on item of the row's operator, properties and Maya key (add-on items keep the kit's key: the user's change
     is on the user keymap item ``find_match`` gives), in the row's keymap and, for an object-mode keymap, in the other
     object modes' keymaps (one Maya hotkey works in every mode: Y = Last Tool in Object Mode and in Mesh)."""
+    out = []
+    for name, _akm, _a, ukm, u in _row_pairs(context, row, index):
+        if u is not None:
+            out.append((ukm, u))
+        elif name == row["check"][0]:
+            return []
+    return out
+
+
+def row_gone(context, row, index=None):
+    """[(add-on KeyMap, item)] of ``row``'s Maya keys that Blender's user keymap no longer shows: switched off or
+    removed in Preferences > Keymap (a switched-off Maya key that is the same item as a Blender key the Maya keys
+    switch off is shown as that Blender item, see keymap/user_keys)."""
+    return [(akm, a) for _name, akm, a, _ukm, u in _row_pairs(context, row, index) if u is None]
+
+
+def _row_pairs(context, row, index=None):
+    """[(keymap name, add-on KeyMap, add-on item, user KeyMap, user item or None)] of ``row``, own keymap first."""
     if not row or not row["check"]:
         return []
     kms = _user_keymaps(context)
@@ -198,19 +216,15 @@ def row_items(context, row, index=None):
     key = hotkey_rows.event_key(row["event"])
     out = []
     for name in _row_keymaps(km_name):
-        ukm = kms.get(name)
-        found = None
         if name != km_name and (_sig((name, idname, want)), key) in _PRIMARY:
             continue                # that mode's item is another Maya hotkey row's own
-        if ukm is not None:
-            for akm, a in _addon_candidates(context, name, idname, index):
-                if hotkey_rows.event_key(item_event(a)) == key and _props_match(a, want):
-                    found = ukm.keymap_items.find_match(akm, a)
-                    break
-        if found is not None:
-            out.append((ukm, found))
-        elif name == km_name:
-            return []
+        ukm = kms.get(name)
+        if ukm is None:
+            continue
+        for akm, a in _addon_candidates(context, name, idname, index):
+            if hotkey_rows.event_key(item_event(a)) == key and _props_match(a, want):
+                out.append((name, akm, a, ukm, ukm.keymap_items.find_match(akm, a)))
+                break
     return out
 
 
@@ -245,15 +259,24 @@ def kit_name(row):
     return name
 
 
+def key_text(kmi):
+    """The kit key of an item: "Ctrl+Z", "Ctrl+Z (off)" when switched off, "—" when its key was taken."""
+    if kmi.type == 'NONE':
+        return "—"
+    text = hotkey_rows.event_text(item_event(kmi))
+    return text if kmi.active else text + " (off)"
+
+
 def kit_text(context, row, index=None):
-    """The list's Kit Hotkey cell ("—" when the kit has no key for it or its key was taken; " *" = changed)."""
+    """The list's Kit Hotkey cell ("—" when the kit has no key for it or its key was taken, "(off)" when it is
+    switched off; " *" = changed)."""
     if not row["editable"]:
         return "—"
     items = row_items(context, row, index)
     if not items:
-        return "—"
-    kmi = items[0][1]
-    text = hotkey_rows.event_text(item_event(kmi)) if has_key(kmi) else "—"
+        gone = row_gone(context, row, index)
+        return hotkey_rows.event_text(item_event(gone[0][1])) + " (off) *" if gone else "—"
+    text = key_text(items[0][1])
     return text + " *" if any(k.is_user_modified for _km, k in items) else text
 
 
@@ -361,6 +384,7 @@ def take(context, row, event, items=None, changed_only=False):
 def assign(context, row, event):
     """Bind ``row``'s kit items to ``event`` (type + modifiers) in the user keyconfig; the kit items of the row's
     Maya context that used it lose it (``take``). Returns (ok, [(keymap name, command)] that lost it)."""
+    _bring_back(context, row)
     items = row_items(context, row)
     if not items:
         return False, []
@@ -386,11 +410,31 @@ def unbind(context, row):
     return bool(items)
 
 
+def _bring_back(context, row):
+    """Give ``row``'s Maya keys that Blender's keymap no longer shows (``row_gone``) the kit's key again. True if
+    there were any."""
+    gone = row_gone(context, row)
+    if not gone:
+        return False
+    from .. import keymap as kit_keymap
+    from ..keymap import user_keys
+    kcs = context.window_manager.keyconfigs
+    ptrs = kit_keymap.kit_item_pointers()
+    where = {}
+    for akm, a in gone:
+        where.setdefault((akm.name, akm.space_type, akm.region_type), set()).add(a.as_pointer())
+    for (name, space, region), back in where.items():
+        user_keys.restore_items(kcs, ptrs, name, space, region, back)
+    return True
+
+
 def restore(context, row):
-    """Give ``row``'s kit items their Maya key back (Blender's Restore Item); a key the user gave another command
-    moves back here. True if something was restored."""
+    """Give ``row``'s kit items their Maya key back (Blender's Restore Item; a key switched off or removed in
+    Preferences > Keymap too); a key the user gave another command moves back here. True if something was
+    restored."""
+    back = _bring_back(context, row)
     changed = [(km, k) for km, k in row_items(context, row) if k.is_user_modified]
-    if not changed:
+    if not changed and not back:
         return False
     for km, kmi in changed:
         km.restore_item_to_default(kmi)
@@ -405,7 +449,8 @@ def restore(context, row):
 def changed_rows(context):
     index = addon_index(context)
     return [row for row in rows() if row["editable"]
-            and any(k.is_user_modified for _km, k in row_items(context, row, index))]
+            and (any(k.is_user_modified for _km, k in row_items(context, row, index))
+                 or row_gone(context, row, index))]
 
 
 def restore_all(context):
@@ -586,7 +631,7 @@ class ALLSET_OT_hotkey_assign(bpy.types.Operator):
         if self.key:
             return self.execute(context)
         row = self._row(context)
-        if row is None or editable_item(context, row)[1] is None:
+        if row is None or (editable_item(context, row)[1] is None and not row_gone(context, row)):
             self.report({'WARNING'}, "Pick a command the kit binds (status Kit / Blender (IC))")
             return {'CANCELLED'}
         self.row = row["index"]
@@ -773,16 +818,17 @@ def _details(layout, context, row):
         col.label(text=row["note"])
     if not row["editable"]:
         return
-    if not items:
+    gone = row_gone(context, row) if not items else []
+    if not items and not gone:
         box.label(text="Kit hotkey: — (Maya mode off or the item was removed)", icon='INFO')
         return
-    kmi = items[0][1]
+    kmi = items[0][1] if items else gone[0][1]
     ev = item_event(kmi)
-    changed = any(k.is_user_modified for _km, k in items)
+    changed = bool(gone) or any(k.is_user_modified for _km, k in items)
     wm = _wm(context)
     line = box.row(align=True)
-    line.label(text="Kit hotkey: " + (hotkey_rows.event_text(ev) if has_key(kmi) else "none")
-                    + ("  (changed)" if changed else ""))
+    shown = key_text(kmi) if items else hotkey_rows.event_text(ev) + " (off)"
+    line.label(text="Kit hotkey: " + ("none" if shown == "—" else shown) + ("  (changed)" if changed else ""))
     act = line.row(align=True)
     if wm.allset_hk_capture:
         act.alert = True
@@ -798,7 +844,7 @@ def _details(layout, context, row):
         warn.label(text=wm.allset_hk_pending, icon='ERROR')
         warn.label(text=CONFIRM_NOTE, icon='BLANK1')
         return
-    found = clashes(context, row, ev, items) if has_key(kmi) else []
+    found = clashes(context, row, ev, items) if items and has_key(kmi) else []
     if found:
         from .. import keymap as kit_keymap
         ptrs = kit_keymap.kit_item_pointers()

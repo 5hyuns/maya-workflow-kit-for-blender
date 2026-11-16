@@ -96,10 +96,10 @@ def export_hotkeys(context):
     out = []
     for row in he.changed_rows(context):
         _km, kmi = he.editable_item(context, row)
-        ev = he.item_event(kmi)
+        ev = he.item_event(kmi) if kmi is not None else row["event"]      # None: switched off in Preferences
         entry = {"context": row["context"], "command": row["command"], "maya_key": row["maya_key"],
                  "key": {"type": ev["type"], **{m: bool(ev.get(m)) for m in MODIFIERS}}}
-        if not he.has_key(kmi):
+        if kmi is None or not he.has_key(kmi):
             entry["removed"] = True
         out.append(entry)
     return out

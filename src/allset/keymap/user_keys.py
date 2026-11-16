@@ -321,6 +321,27 @@ def reset_keymap(kcs, ptrs, name, space, region):
         write(ukm.keymap_items.new(st["idname"], st["type"], st["value"]), st)
 
 
+def restore_items(kcs, ptrs, name, space, region, back):
+    """Give the Maya keys ``back`` (add-on item pointers of one keymap) the kit's key again when the user keymap no
+    longer shows them (switched off or removed in Preferences > Keymap, see ``reset_keymap``): the keymap is reset and
+    every other edit of it is given again, the other Maya keys' edits included."""
+    akm = _find(kcs.addon.keymaps, name, space, region)
+    ukm = _find(kcs.user.keymaps, name, space, region)
+    if akm is None or ukm is None:
+        return False
+
+    def kit(k):
+        return k.as_pointer() in ptrs
+    skip = {(_norm(st), n) for k, st, n in _bases(akm, kit) if k.as_pointer() in back}
+    rest = [e for e in _edits(akm, ukm, keep=kit) if (_norm(e["base"]), e["n"]) not in skip]
+    reset_keymap(kcs, ptrs, name, space, region)
+    ukm = _find(kcs.user.keymaps, name, space, region)
+    if ukm is not None and rest:
+        _give(akm, ukm, rest, keep=kit)
+    kcs.update()
+    return True
+
+
 def put_back_maya(kcs, ptrs, entries):
     """Give the kept edits of the Maya keys again. False when the user keyconfig doesn't hold the Maya keys yet."""
     if kcs.addon is None or kcs.user is None:
