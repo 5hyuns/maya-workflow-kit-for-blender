@@ -5,7 +5,8 @@ The four view gets uneven proportions (rows 35 / 65, top row 62 / 38, bottom row
 a pixel or two) after a Space tap round trip, after the Tool Settings window opens at a size that fits in the panel
 (its place is cut out of that panel alone: the other three panels never change), after it opens at a remembered size
 bigger than the panel (cut out of the whole view, folded into one panel for a moment, so the window keeps its size)
-and after the Channel Box tab stack is hidden and shown (a dock beside the whole view). A fast timer records every
+and after the Channel Box tab stack is hidden and shown (a dock beside the whole view); ten Space round trips leave
+every panel where it was and the windows and the dock every border where it was across the view (within a pixel). A fast timer records every
 tick in which the screen shows something else than four whole panels and which panels changed; the times are printed
 (a tick is one redraw of the layout) and loosely bounded. A Space tap still works after each."""
 
@@ -47,6 +48,17 @@ def wait(n=3):
 def props():
     b = fv().block(win().screen)
     return fv().proportions(b) if len(b) == 4 else None
+
+
+def panel_rects():
+    return {role: (a.x, a.y, a.width, a.height) for role, a in fv().block(win().screen).items()}
+
+
+def rects_off():
+    """Largest px difference of any panel's place / size from the first four view's (``C["r0"]``)."""
+    now = panel_rects()
+    return max((abs(a - b) for role in C["r0"] for a, b in zip(C["r0"][role], now.get(role, (10 ** 6,) * 4))),
+               default=10 ** 6)
 
 
 def near(a, b, tol=0.015):
@@ -193,10 +205,21 @@ space_over(lambda: fv().single(win().screen))
 @step
 def s_uneven_check():
     C["p0"] = props()
+    C["r0"] = panel_rects()
     check(f"the four view comes back with its proportions ({C['p0']} vs {WANT})", near(C["p0"], WANT, 0.02))
 
 
 space_round_trip("round trip")
+for _i in range(9):
+    space_over(lambda: fv().roles(win().screen)["side"])
+    space_over(lambda: fv().single(win().screen))
+
+
+@step
+def s_ten_round_trips():
+    off = rects_off()
+    check(f"after 10 Space round trips every panel has the same place and size (off by {off} px; {panel_rects()} "
+          f"vs {C['r0']})", off <= 1)
 
 # --- the Tool Settings window at a size that fits in the top panel: only that panel is cut ------------------------
 step(ts_open())
@@ -262,6 +285,11 @@ def s_stack_shown():
     check(f"showing the tab stack keeps them ({props()} vs {C['p0']}), folded {ms} ms",
           near(props(), C["p0"]) and ms <= 300)
     check("the tab stack is back", mod("ui.maya_dock").find_stack(win().screen) is not None)
+    # the tab stack comes back at its tab's width, so the view's width may change: the borders are compared across it
+    x0, y0, x1, y1 = fv().union(fv().rect(a) for a in fv().block(win().screen).values())
+    off = max(abs(a - b) * size for a, b, size in zip(props(), C["p0"], (y1 - y0, x1 - x0, x1 - x0)))
+    check(f"after the windows and the dock every border lies where it was across the view (off by {off:.1f} px)",
+          off <= 1.0)
 
 
 space_round_trip("after the dock")

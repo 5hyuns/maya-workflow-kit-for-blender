@@ -373,12 +373,24 @@ def _factor(f, default):
 
 
 def proportions(placed):
-    """[bottom row share, top row's left share, bottom row's left share] of a four view {role: area}."""
+    """[bottom row share, top row's left share, bottom row's left share] of a four view {role: area}: where each
+    border lies across the panel it splits, in the terms ``screen.area_split`` takes its factor in (``enter``), so a
+    four view made again from them has the same borders. Shares of the panels' own sizes would leave out the pixels
+    of the borders and moved a border by a pixel on every Space round trip.
+
+    An area's rect lies ``pad`` px inside its edges on every side, the window's edges too (half the gap between two
+    neighbours). Blender puts a split ``round(factor * size)`` px from the split area's first edge; the share is
+    taken against a size half a pixel short of that, so it rounds back to the same border."""
     t, p, f, s = placed["top"], placed["persp"], placed["front"], placed["side"]
 
-    def share(a, b):
-        return a / max(a + b, 1)
-    return [round(share(f.height, t.height), 4), round(share(t.width, p.width), 4), round(share(f.width, s.width), 4)]
+    def share(lo, cut, after, hi):
+        """``lo`` .. ``cut``: the first panel (px, end excluded), ``after`` .. ``hi``: the second one."""
+        pad = max(0, (after - cut + 1) // 2)
+        v0, v1, line = lo - pad, hi - 1 + pad, cut - 1 + pad
+        return round((line - v0) / max(v1 - v0 + 0.5, 1.0), 4)
+    return [share(f.y, f.y + f.height, t.y, t.y + t.height),
+            share(t.x, t.x + t.width, p.x, p.x + p.width),
+            share(f.x, f.x + f.width, s.x, s.x + s.width)]
 
 
 def factors(st):
