@@ -41,6 +41,10 @@ def register():
 
 
 def unregister():
+    try:
+        keymap.deactivate()       # the user's edits of the Maya keys go into the preferences before their backup
+    except (ReferenceError, RuntimeError):
+        pass                      # keyconfigs already freed (Blender quitting)
     preferences.save_backup()     # before any module runs: Blender may delete the preferences after this
     switch.unregister_mode()      # whatever Maya mode modules are registered (none after a failed start)
     for mod in reversed(CORE):

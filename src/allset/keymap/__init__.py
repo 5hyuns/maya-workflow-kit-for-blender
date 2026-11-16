@@ -50,6 +50,7 @@ _state = {
     "modal_made": [],            # (name, space, region) of modal keymaps created there (none in a GUI session)
     "addon_count": -1,           # add-on keyconfig item count _keep_first last saw
     "overlay_items": {},         # set_overlay owner -> pointers of its items (also in addon_items)
+    "give_pending": False,       # the user's kept Maya key edits still wait for the user keyconfig (user_keys)
 }
 
 # set_overlay owner -> [(km name, space, idname, type, value, {modifiers}, {properties})], kept while Maya mode is off
@@ -364,9 +365,91 @@ def _watch():
         return None
     if _active_changed():
         _restore_active()
-        _apply_active(generate_data())
+        data = generate_data()
+        _keep_blender_edits(data)    # a preset loaded after the add-on (startup) or picked by the user
+        _apply_active(data)
     _keep_first()
+    if _state["give_pending"]:
+        _give_maya_edits()
     return WATCH_INTERVAL
+
+
+# --- the user's own edits (user_keys, GitHub #363) -------------------------------------------------------------
+
+def _user_keys_failed(ex):
+    if isinstance(ex, ReferenceError) or bpy.context.window_manager is None:
+        return                       # keyconfigs already freed (Blender quitting): what is saved stays as saved
+    import traceback
+    print("Maya Workflow Kit: keeping your key edits failed:", ex)
+    traceback.print_exc()
+
+
+def _keep_blender_edits(data):
+    """Maya keys going on: remember the user's edits of the active keyconfig's items they switch off (a record
+    from an earlier session that was not given back yet stays)."""
+    from . import user_keys
+    try:
+        record = user_keys.load()
+        if record["blender"]:
+            return
+        names = [(name, *_where(km_args)) for name, km_args, _c in data if not km_args.get("modal")]
+        entries = user_keys.capture_blender(bpy.context.window_manager.keyconfigs, names)
+        if entries:
+            record["blender"] = entries
+            user_keys.save(record)
+    except Exception as ex:          # never stop the Maya keys for this
+        _user_keys_failed(ex)
+
+
+def _give_blender_edits():
+    """Maya keys gone: Blender's items are on again; give back the user's edits a change in Maya mode dropped."""
+    from . import user_keys
+    try:
+        record = user_keys.load()
+        if not record["blender"]:
+            return
+        if user_keys.put_back_blender(bpy.context.window_manager.keyconfigs, record["blender"]) is not None:
+            record["blender"] = []
+            user_keys.save(record)
+    except Exception as ex:
+        _user_keys_failed(ex)
+
+
+def _keep_maya_edits():
+    """Maya keys going out: the user's edits of them into the add-on preferences, out of the user keymap."""
+    from . import user_keys
+    if not _state["applied"] or _state["give_pending"]:
+        return                       # nothing on, or the kept edits were never given back: they stay as kept
+    try:
+        kcs = bpy.context.window_manager.keyconfigs
+        entries = user_keys.capture_maya(kcs, _state["addon_items"])
+        if entries is None:
+            return
+        record = user_keys.load()
+        record["maya"] = entries
+        user_keys.save(record)
+        if entries:
+            user_keys.take_out_maya(kcs, _state["addon_items"], entries)
+    except Exception as ex:
+        _user_keys_failed(ex)
+
+
+def _give_maya_edits():
+    """Maya keys on: the user's kept edits of them again (retried by the watch timer while the user keyconfig
+    isn't built, at startup)."""
+    from . import user_keys
+    _state["give_pending"] = False
+    try:
+        record = user_keys.load()
+        if not record["maya"]:
+            return
+        if not user_keys.put_back_maya(bpy.context.window_manager.keyconfigs, _state["addon_items"], record["maya"]):
+            _state["give_pending"] = True
+            return
+        record["maya"] = []
+        user_keys.save(record)
+    except Exception as ex:
+        _user_keys_failed(ex)
 
 
 # --- public ----------------------------------------------------------------------------------------------------
@@ -380,23 +463,31 @@ def activate():
     if _state["applied"]:
         return
     data = generate_data()
+    _keep_blender_edits(data)
     _apply_addon(data)
     for owner in _overlays:
         _add_overlay(owner)
     _apply_active(data)
     _state["applied"] = True
     keep_first_now()
+    _give_maya_edits()
     if not bpy.app.timers.is_registered(_watch):
         bpy.app.timers.register(_watch, first_interval=0.0, persistent=True)
 
 
 def deactivate():
-    """Take the Maya keymap out again: add-on items removed, the active keyconfig's items as they were."""
+    """Take the Maya keymap out again: add-on items removed, the active keyconfig's items as they were. The user's
+    edits of the Maya keys are kept in the add-on preferences until the Maya keys are on again."""
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)
+    _keep_maya_edits()
+    was_applied = _state["applied"]
     _restore_active()
     _restore_addon()
     _state["applied"] = False
+    _state["give_pending"] = False
+    if was_applied:
+        _give_blender_edits()
 
 
 def wants_maya_keys():

@@ -34,7 +34,7 @@ FORMAT = "maya-workflow-kit-settings"
 VERSION = 1
 DEFAULT_NAME = "maya_workflow_kit_settings.json"
 PARTS = ("preferences", "hotkeys", "shelves", "marking_menus")
-SKIP_PREFS = frozenset(("maya_mode",))
+SKIP_PREFS = frozenset(("maya_mode", "user_keys"))   # user_keys: kept key edits, not a setting
 MODIFIERS = ("ctrl", "alt", "shift", "oskey")
 
 

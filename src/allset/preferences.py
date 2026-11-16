@@ -615,6 +615,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Autosave folder when the destination is Named Folder")
     # Maya option window values (operators/option_windows.py).
     option_settings: bpy.props.StringProperty(options={'HIDDEN'})   # JSON {window key: {field: value}}
+    # The user's own edits of the Maya keys while they are out (Blender mode), and of Blender's keys the Maya keys
+    # switch off while they are on (keymap/user_keys.py); unset when there is nothing to keep.
+    user_keys: bpy.props.StringProperty(options={'HIDDEN'})   # JSON {"maya": [...], "blender": [...]}
 
     # Scene concepts.
     parent_mode: bpy.props.EnumProperty(
