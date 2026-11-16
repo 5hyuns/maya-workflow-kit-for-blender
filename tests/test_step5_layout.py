@@ -22,8 +22,7 @@ def test_bundled_layout_files():
 # --- theme --------------------------------------------------------------------------------
 
 def test_no_theme_in_the_kit():
-    """#40: the kit ships no theme file and has no theme operators. Theme values change only while Maya mode is on
-    and are all put back (maya_look.py, tests/test_maya_look.py)."""
+    """#40: the kit ships no theme and has no theme operators; the user's theme is never written."""
     import importlib.util
     assert importlib.util.find_spec(kit.MODULE + ".theme") is None
     assert not hasattr(bpy.types, "ALLSET_OT_theme_apply") and not hasattr(bpy.types, "ALLSET_OT_theme_restore")

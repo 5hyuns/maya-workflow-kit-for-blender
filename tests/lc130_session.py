@@ -30,9 +30,6 @@ def main():
     for action in actions:
         if action == "save":
             bpy.ops.wm.save_userpref()
-            if kit.is_enabled():
-                # the kit's once-a-second look at userpref.blend (a timer, which a headless session doesn't run)
-                import_module(kit.MODULE + ".maya_look").check_saved()
         elif action in ("maya_cycle", "maya_on"):
             assert kit.is_enabled(), "installed with --enable"
             sw = import_module(kit.MODULE + ".switch")
