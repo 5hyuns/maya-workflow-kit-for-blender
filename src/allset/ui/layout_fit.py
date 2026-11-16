@@ -100,6 +100,25 @@ _state = {}          # screen name -> [ui scale, area pointers, armed, monotonic
 # Time Slider jumped under the pointer. The fit is a load-time adjustment: it only runs within FIT_WINDOW seconds
 # of the screen being loaded / first seen / the UI scale changing.
 FIT_WINDOW = 3.0
+# #334: a cursor-warp fit never starts while a window is being dragged or resized. On Windows a pointer warp during a
+# title-bar drag moves the dragged window with it, and a window dragged onto a monitor with other display scaling
+# changes Blender's UI scale (one for all windows), which arms the fit. The warp waits until the UI scale and every
+# window's place and size are what the previous fit tick saw; until then FIT_WINDOW counts from now.
+_still = {"snap": None}
+
+
+def _windows_still(context):
+    """True when the UI scale and the place and size of every window seen by the previous call (a fit tick) are
+    unchanged (a window that opened or closed meanwhile doesn't count)."""
+    snap = (context.preferences.system.ui_scale,
+            {w.as_pointer(): (w.x, w.y, w.width, w.height) for w in context.window_manager.windows})
+    prev = _still["snap"]
+    _still["snap"] = snap
+    if prev is None:
+        return True
+    if prev[0] != snap[0]:
+        return False
+    return all(prev[1][ptr] == rect for ptr, rect in snap[1].items() if ptr in prev[1])
 
 
 def _armed(screen, scale):
@@ -245,6 +264,13 @@ def fit_columns(start_fit=True):
     poll failed; with ``start_fit`` a ALLSET_OT_fit_columns is started for the first of them."""
     from .status_line import main_view3d
     context = bpy.context
+    still = _windows_still(context) if start_fit else True
+    if not still:
+        import time
+        now = time.monotonic()
+        for state in _state.values():      # armed fits wait: their window counts from when the windows stand still
+            if state[2]:
+                state[3] = now
     want = column_width(context)
     pending = {}
     from .shelf import shelf_row_area, strip_area
@@ -342,7 +368,7 @@ def fit_columns(start_fit=True):
             with context.temp_override(window=window, screen=screen, area=main):
                 main.spaces.active.show_region_toolbar = False
             _fallback.discard(key)
-    if start_fit and pending and not _running[0] and auto_warp():
+    if start_fit and still and pending and not _running[0] and auto_warp():
         window, edge = next(iter(pending.values()))
         key = window.screen.name
         if _warps.get(key, 0) < MAX_WARPS:
