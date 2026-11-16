@@ -348,6 +348,16 @@ def _redraw_all():
             area.tag_redraw()
 
 
+def _entry_text_get(_self):
+    return ""
+
+
+def _entry_text_set(_self, text):
+    # empty: the popover closed by a click elsewhere (Blender commits the text on click-out), nothing typed
+    if text.strip() and _edit["key"] is not None:
+        apply_entry(_edit["key"], text)
+
+
 def _make_proxy_annotations():
     ann = {}
     for key, label, _path, _idx, kind in MAIN:
@@ -369,6 +379,8 @@ def _make_proxy_annotations():
                                                          "drag over the rows")
     ann["lead_name"] = StringProperty(name="Name", get=_lead_name_get, set=_lead_name_set,
                                       description="The lead's name: Enter renames it")
+    ann["entry_text"] = StringProperty(name="Value", get=_entry_text_get, set=_entry_text_set,
+                                       description="A value for every selected channel: Enter sets it")
     ann["rows"] = CollectionProperty(type=ALLSET_PG_cb_row)
     ann["rows_sig"] = StringProperty(options={'HIDDEN'})
     return ann

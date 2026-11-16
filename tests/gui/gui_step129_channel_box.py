@@ -1,6 +1,7 @@
 """In a real UI:
 - #6: drag down over the Channel Box names Translate X -> Scale Z selects that range (blue name cells); a drag that
-  starts on a value field selects too; then one value typed into a selected field goes into every selected channel
+  starts on a value field selects too and opens an empty value editor (#375: type at once; a click away changes
+  nothing); then one value typed into a selected field goes into every selected channel
   of both selected cubes.
 - #7: the Layer Editor with three display layers (Maya-like rows: V / P / type boxes, swatch, name) for a look at the
   dock.
@@ -174,6 +175,23 @@ def s_fields_selected():
     check(f"the drag changed no value (Cube x {a.location.x:.4f}, Cube2 x {b.location.x:.4f})",
           abs(a.location.x - 1.0) < 1e-6 and abs(b.location.x - 4.0) < 1e-6)
     shot("gui_step129_cb_fields_drag.png")
+    x, y = C["ty_field"]
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+@step
+def s_click_away():
+    # #375: the drag opened an empty value editor; a click away closes it
+    x, y = C["ty_field"]
+    ev('LEFTMOUSE', 'PRESS', x=x + 1, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x + 1, y=y)
+
+
+@step
+def s_click_away_kept():
+    a, b = cubes()
+    check(f"a click away from the editor opened by the drag changes no value (Cube {tuple(a.location)}, "
+          f"Cube2 {tuple(b.location)})", tuple(a.location) == (1.0, 0.0, 0.0) and tuple(b.location) == (4.0, 0.0, 0.0))
     x, y = C["ty_field"]
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
 
