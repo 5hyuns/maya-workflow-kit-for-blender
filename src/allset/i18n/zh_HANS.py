@@ -6550,4 +6550,12 @@ STRINGS = {
     'Heads Up Display: the current time as hh:mm:ss:ff in the bottom right of the view': '平视显示: 在视图右下角以 hh:mm:ss:ff 显示当前时间',
     "Heads Up Display: the view's focal length in the bottom right of the view": '平视显示: 在视图右下角显示视图的焦距',
     'Show every hidden vertex, edge and face of every mesh in the scene, selected or not (Maya Display > Show >\nAll Components, also from object mode)': '显示场景中所有网格 (无论是否选中) 的所有隐藏顶点、边和面 (Maya 的显示 > 显示 >\n所有组件，也可在对象模式下使用)',
+    'Blender bakes the Displace modifiers into a new mesh; material displacement only shows in renders and is not baked.': 'Blender 将置换修改器烘焙到新网格中；材质置换只在渲染中显示，不会被烘焙。',
+    'Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, Grab = Pull Tips, Clump = Pinch.': 'Blender 在雕刻模式下修饰毛发曲线：放置 = 添加，长度 = 生长/收缩，抓取 = 拉动发梢，聚拢 = 捏合。',
+    "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry Nodes hair modifiers.": 'Blender 的毛发雕刻笔刷没有宽度、扭曲、噪波、分缝或冻结笔刷：请使用几何节点毛发修改器。',
+    'Displace modifier (baked copy)': '置换修改器（烘焙副本）',
+    'Hair sculpt brushes': '毛发雕刻笔刷',
+    'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '将选定网格的置换修改器烘焙到新的多边形对象中；原对象保留（Maya 修改 > 转化 > 置换到多边形）',
+    'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': '用此毛发雕刻笔刷修饰毛发（Maya 生成 > 交互式修饰工具）',
+    'Grooming Tool': '梳理工具',
 }

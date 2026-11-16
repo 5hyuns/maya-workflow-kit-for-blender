@@ -734,6 +734,13 @@ MAP.update({
     "Modify/Align Tool": "allset.align_tool",
     "Modify/Snap Align Objects/Position Along Curve": "allset.position_along_curve",
     "Modify/Convert/Geometry to Bounding Box": "allset.geometry_to_bbox",
+    "Modify/Convert/Displacement to Polygons": "allset.displacement_to_polygons",
+    # Maya Interactive Grooming brush -> Blender hair (Curves) sculpt brush; Width / Twist / Noise / Part / Freeze
+    # have none and stay greyed
+    **{f"Generate/Interactive Grooming Tools/{maya} Brush": ("allset.groom_brush", {"brush": brush})
+       for maya, brush in (("Density", "Density"), ("Place", "Add"), ("Length", "Grow/Shrink"), ("Cut", "Cut"),
+                           ("Comb", "Comb"), ("Grab", "Pull Tips"), ("Smooth", "Smooth"), ("Clump", "Pinch"),
+                           ("Select", "Select"))},
     # Display
     # Blender's playback frame rate display is a preference (#43): open it, don't write it
     "Display/Heads Up Display/Frame Rate": ("screen.userpref_show", {"section": 'VIEWPORT'}),

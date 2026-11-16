@@ -6451,4 +6451,12 @@ STRINGS = {
     'Heads Up Display: the current time as hh:mm:ss:ff in the bottom right of the view': 'ヘッドアップディスプレイ: ビューの右下に現在の時間を hh:mm:ss:ff で',
     "Heads Up Display: the view's focal length in the bottom right of the view": 'ヘッドアップディスプレイ: ビューの右下にビューの焦点距離',
     'Show every hidden vertex, edge and face of every mesh in the scene, selected or not (Maya Display > Show >\nAll Components, also from object mode)': 'シーン内のすべてのメッシュ (選択の有無を問わず) の非表示の頂点、エッジ、面をすべて表示します (Maya の表示 > 表示 >\nすべてのコンポーネント。オブジェクトモードからも)',
+    'Blender bakes the Displace modifiers into a new mesh; material displacement only shows in renders and is not baked.': 'Blender はディスプレイスモディファイアを新しいメッシュにベイクします。マテリアルのディスプレイスメントはレンダリングでのみ表示され、ベイクされません。',
+    'Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, Grab = Pull Tips, Clump = Pinch.': 'Blender ではヘアカーブをスカルプトモードでグルーミングします: 配置 = 追加、長さ = 伸縮、グラブ = 毛先を引っ張る、クランプ = つまむ。',
+    "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry Nodes hair modifiers.": 'Blender のヘアスカルプトブラシには幅、ねじり、ノイズ、分け目、フリーズのブラシがありません。ジオメトリノードのヘアモディファイアを使用してください。',
+    'Displace modifier (baked copy)': 'ディスプレイスモディファイア (ベイクしたコピー)',
+    'Hair sculpt brushes': 'ヘアスカルプトブラシ',
+    'Bake the Displace modifiers of the selected meshes into new polygon objects; the originals stay\n(Maya Modify > Convert > Displacement to Polygons)': '選択したメッシュのディスプレイスモディファイアを新しいポリゴン オブジェクトにベイクします。元のオブジェクトは残ります (Maya の修正 > 変換 > ディスプレイスメントをポリゴンに)',
+    'Groom the hair with this hair sculpt brush (Maya Generate > Interactive Grooming Tools)': 'このヘアスカルプトブラシでヘアをグルーミングします (Maya の生成 > インタラクティブグルーミングツール)',
+    'Grooming Tool': 'グルーミングツール',
 }

@@ -31,6 +31,17 @@ NOTICES = {
     **{f"Edit/LOD (Level of Detail)/{item}": ("Empty + Decimate modifier", "Blender has no level of detail "
                                               "switching: every level stays visible; hide the ones you don't need.")
        for item in ("Create LOD Group", "Generate LOD Meshes", "Ungroup LOD Group")},
+    **{f"Generate/Interactive Grooming Tools/{item} Brush": (
+        "Hair sculpt brushes", "Blender grooms hair Curves in Sculpt mode: Place = Add, Length = Grow/Shrink, "
+        "Grab = Pull Tips, Clump = Pinch.")
+       for item in ("Density", "Place", "Length", "Cut", "Comb", "Grab", "Smooth", "Clump", "Select")},
+    **{f"Generate/Interactive Grooming Tools/{item} Brush": (
+        "none", "Blender's hair sculpt brushes have no width, twist, noise, part or freeze brush: use Geometry "
+        "Nodes hair modifiers.")
+       for item in ("Width", "Twist", "Noise", "Part", "Freeze")},
+    "Modify/Convert/Displacement to Polygons": (
+        "Displace modifier (baked copy)", "Blender bakes the Displace modifiers into a new mesh; material "
+        "displacement only shows in renders and is not baked."),
     "Mesh Display/Assign Existing Set/No bakesets defined": ("Render Properties > Bake", "Maya lists the scene's bake sets here; Blender bakes from Render Properties > Bake (Cycles)."),
     # Skin
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
@@ -511,12 +522,13 @@ NOTICES.update({
 # Greyed items (no Blender action in Maya Workflow Kit) by Maya menu path prefix: (closest Blender feature, one line).
 # notices.category picks the longest matching prefix; tests/test_step101_menu_honesty.py checks that every
 # greyed menu item has a notice and that every rule here matches at least one greyed item.
-# (Create Description... / Create Interactive Groom Splines are mapped to a new hair Curves object.)
+# (Create Description... / Create Interactive Groom Splines are mapped to a new hair Curves object, the Interactive
+# Grooming Tools brushes to the hair sculpt brushes or their own notice.)
 _XGEN_ITEMS = ("XGen Editor", "XGen Library", "Import Collections or Descriptions...",
                "Export Collections or Descriptions...", "Export Selection as Archive(s)...",
                "Batch Convert Scenes to Archives...", "Convert XGen Primitives to Polygons...",
                "Convert to Interactive Groom...", "Import Preset...", "Export as Preset...",
-               "Interactive Groom Editor", "Interactive Grooming Tools", "Cache",
+               "Interactive Groom Editor", "Cache",
                "Convert Interactive Groom to Polygons...", "Display HUD")
 CATEGORIES = {
     # whole Maya-only systems
