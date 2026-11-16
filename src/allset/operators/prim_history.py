@@ -15,6 +15,7 @@ import hashlib
 
 import bpy
 
+from .. import compat
 from . import naming, prim_shapes, units
 
 KEY = "allset_history"        # the node, on the shape data or the group empty
@@ -213,7 +214,7 @@ def _write_mesh(me, shape, k, uvs):
     ob = next((o for o in bpy.data.objects if o.data is me and o.mode == 'EDIT'), None)
     if ob is not None:
         bm = bmesh.from_edit_mesh(me)
-        bm.clear()
+        compat.clear_bmesh(bm)
         for layer in list(bm.loops.layers.uv.values()):
             bm.loops.layers.uv.remove(layer)
         fill_bmesh(bm, shape, k, uvs)

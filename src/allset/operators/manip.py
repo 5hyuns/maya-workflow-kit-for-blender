@@ -15,7 +15,7 @@ waits for the transform to end and takes the copy / extrusion back when nothing 
 import bmesh
 import bpy
 
-from .. import results
+from .. import compat, results
 from .. import live_refs
 from . import duplicate, keystate
 
@@ -261,8 +261,7 @@ def revert(state):
         if ob is None or saved is None or ob.mode != 'EDIT':
             continue
         bm = bmesh.from_edit_mesh(ob.data)
-        bm.clear()
-        bm.from_mesh(saved)
+        compat.refill_bmesh(bm, saved)
         bmesh.update_edit_mesh(ob.data)
 
 

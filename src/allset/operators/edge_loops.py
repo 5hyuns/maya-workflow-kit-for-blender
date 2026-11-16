@@ -26,6 +26,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, St
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
+from .. import compat
 from . import mesh_tools
 from .menu_items import edge_flow
 from .select_convert import loop_next
@@ -489,8 +490,7 @@ class _PreMesh:
         bm.to_mesh(self.me)
 
     def restore(self, bm):
-        bm.clear()
-        bm.from_mesh(self.me)
+        compat.refill_bmesh(bm, self.me)
         bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()

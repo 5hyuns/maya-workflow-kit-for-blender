@@ -34,6 +34,7 @@ from bpy.props import BoolProperty
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
+from .. import compat
 from . import preselect, quad_draw_symmetry
 # the split-out parts, also read through this module by other operators, the UI and the tests
 from .quad_draw_geometry import (DOT_LAYER, _area, _indices, add_dot, border_chain, border_loop,  # noqa: F401
@@ -300,7 +301,7 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
             if self._sym is not None:self._sym.rollback();self._sym=None
             elif backup is not None:
                 mesh=bpy.data.meshes.new('_quad_draw_cut_rollback')
-                try:backup.to_mesh(mesh);bm.clear();bm.from_mesh(mesh)
+                try:backup.to_mesh(mesh);compat.refill_bmesh(bm,mesh)
                 finally:bpy.data.meshes.remove(mesh)
             bmesh.update_edit_mesh(ob.data);_geometry_reset(None)
             self.report({'WARNING'},str(ex));return {'CANCELLED'}

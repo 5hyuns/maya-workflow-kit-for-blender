@@ -18,6 +18,8 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 
+from .. import compat
+
 TOOL = "allset.connect_tool"
 HINT = ("Connect Tool: click vertices or edges one after another to connect them, Ctrl+click an edge to connect its "
         "ring, middle-drag to change Segments (or Slide / Pinch, see the Tool Settings), Enter / Esc to end the path")
@@ -79,8 +81,7 @@ def _restore(bm, pre):
     me = bpy.data.meshes.new(".allset_connect_pre")
     try:
         pre.to_mesh(me)
-        bm.clear()
-        bm.from_mesh(me)
+        compat.refill_bmesh(bm, me)
     finally:
         bpy.data.meshes.remove(me)
     bm.verts.ensure_lookup_table()
