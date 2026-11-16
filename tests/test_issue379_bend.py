@@ -508,3 +508,46 @@ def test_attribute_editor_tab_shows_the_maya_attributes():
     assert [t for t, _s in lay.rows] == ["Envelope", "Curvature", "Low Bound", "High Bound"], lay.rows
     assert dict(lay.rows)["Curvature"] == 'ANGLE', lay.rows
     assert not bend.draw_ae(Layout(), col.modifiers.new("Bevel", 'BEVEL'))
+
+
+def test_lattice_bend_says_when_it_writes_during_an_update():
+    """The handler that keeps a lattice bend in step with its handle writes the Simple Deform's angle / limits during
+    a depsgraph update (also on a frame change, while playing): it tells the kit's shared update round first, so the
+    kit handlers after it see the lattice change as if each walked the update itself, and a frame change with such a
+    bend in the file counts as one where a handler writes. With no lattice / surface bend it writes nothing."""
+    us = import_module(kit.MODULE + ".update_summary")
+    wire = import_module(kit.MODULE + ".ui.selection_wire")
+    key = "operators.bend_deformer:_on_update"
+    assert key in us.REPORTERS
+    _fresh()
+    sc = bpy.context.scene
+    sc.frame_set(2)
+    assert wire._idle_writer(key, sc, []), "no bend: the frame change handler writes nothing"
+    bpy.ops.object.add(type='LATTICE')
+    lat = bpy.context.active_object
+    lat.data.points_w = 9
+    lat.scale = (1.0, 1.0, 4.0)
+    bpy.context.view_layer.update()
+    _select(lat)
+    assert bpy.ops.allset.deformer(kind='BEND') == {'FINISHED'}
+    handle = bpy.context.view_layer.objects.active
+    md = lat.modifiers["bend1"]
+    _type(handle, md, "curvature", "90")
+    us.MISMATCHES.clear()
+    us.CHECK = True
+    try:
+        for z in (0.6, -0.4, 0.2):
+            limits = tuple(md.limits)
+            handle.location.z = z
+            bpy.context.view_layer.update()
+            assert tuple(md.limits) != limits, (z, "the handle moved: the bend wrote new limits")
+        assert not us.MISMATCHES, us.MISMATCHES[:2]
+    finally:
+        us.CHECK = False
+    sc.frame_set(3)
+    assert not wire._idle_writer(key, sc, []), "a lattice bend may write on a frame change"
+    for ob in (lat, handle):
+        bpy.data.objects.remove(ob)
+    bpy.context.view_layer.update()
+    sc.frame_set(4)
+    assert wire._idle_writer(key, sc, []), "the bend is gone: nothing to write"

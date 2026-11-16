@@ -281,7 +281,9 @@ def sd_bend_from_fields(md):
 
 def sd_bend_apply(md):
     """Work out the Simple Deform's angle and limits from the Maya values and where the points are in the handle's
-    space now. Writes only what changed (a depsgraph handler calls this); True when something was written."""
+    space now. Writes only what changed (a depsgraph handler calls this, and says so to the update round before it
+    writes); True when something was written."""
+    from .. import update_summary
     c, lo, hi = sd_bend_values(md)
     r = _sd_range(md)
     if r is None or r[1] <= 1e-9:
@@ -294,9 +296,11 @@ def sd_bend_apply(md):
         want_limits, want_angle = ((a - e) / span, (b - e) / span), c * (b - a)
     done = False
     if any(abs(x - y) > 1e-7 for x, y in zip(md.limits, want_limits)):
+        update_summary.wrote()
         md.limits = want_limits
         done = True
     if abs(md.angle - want_angle) > 1e-7:
+        update_summary.wrote()
         md.angle = want_angle
         done = True
     SD_WRITTEN[(md.id_data.as_pointer(), md.name)] = (md.angle, tuple(md.limits))

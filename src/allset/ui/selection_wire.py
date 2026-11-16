@@ -621,6 +621,11 @@ def _idle_writer(key, scene, count):
     if key == "operators.constrain_interp:_on_update":
         from ..operators import constrain_interp
         return not constrain_interp._state["armed"]
+    if key == "operators.bend_deformer:_on_update":
+        # lattice / surface bends follow their handle (and write) on a frame change too
+        from .outliner import objects_version
+        from ..operators import bend_deformer
+        return bend_deformer._SD["version"] == objects_version() and not bend_deformer._SD["items"]
     if not count:
         count.append(len(bpy.data.objects))
     if key == "operators.ik_rp:_on_frame":

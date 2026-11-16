@@ -62,7 +62,8 @@ REPORTERS = frozenset((
     "operators.skin_tools_199:_sync_sum_modifiers", "operators.constrain_199:_on_depsgraph",
     "operators.pins_205:_on_depsgraph", "operators.deformers_205b:_on_depsgraph",
     "operators.deformers_205a:_on_depsgraph", "operators.curves_207:_on_depsgraph",
-    "operators.type_manip:_on_depsgraph", "operators.playback_maya:_on_depsgraph", "ui.channel_box:_on_depsgraph"))
+    "operators.type_manip:_on_depsgraph", "operators.playback_maya:_on_depsgraph", "ui.channel_box:_on_depsgraph",
+    "operators.bend_deformer:_on_update"))
 
 # Kit depsgraph_update_post handlers that can write during a round without saying so: the handlers after them walk
 # the update again, as after any handler that isn't declared.

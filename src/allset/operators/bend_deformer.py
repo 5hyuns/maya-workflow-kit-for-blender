@@ -230,10 +230,13 @@ def _sd_items():
 
 def sync_simple_deforms():
     """Work the Simple Deform bends' angle / limits out again (only what changed is written). An angle / limits that
-    differ from what was last worked out were edited in Blender's modifier panel: they become the Maya values."""
+    differ from what was last worked out were edited in Blender's modifier panel: they become the Maya values.
+    Everything written during a depsgraph update is reported to the update round first (``update_summary.wrote``):
+    with no such bend in the file, the handler writes nothing."""
     if _busy[0]:
         return
     from . import deformers
+    from .. import update_summary
     _busy[0] = True
     try:
         for ob, name in _sd_items():
@@ -244,6 +247,7 @@ def sync_simple_deforms():
             last = deformers.SD_WRITTEN.get((ob.as_pointer(), name))
             if last is not None and (abs(now[0] - last[0]) > 1e-6
                                      or any(abs(a - b) > 1e-6 for a, b in zip(now[1], last[1]))):
+                update_summary.wrote()
                 deformers.sd_bend_adopt(md)
             deformers.sd_bend_apply(md)
     except ReferenceError:              # an object removed before the next update: look again then
