@@ -4,12 +4,14 @@ Text for the GitHub release of v0.17.0. Full list: the 0.17.0 section of `CHANGE
 
 ---
 
-**0.17.0 — Blender 5.3 support and a big set of Maya behaviours from a contributor: an Outliner that pans and searches like Maya, Chamfer off that keeps the shape, camera gates and Field Chart, G that repeats modal tools, and more** (Blender 5.2 LTS and 5.3)
+**0.17.0 — Blender 5.3 support and a big set of Maya behaviours from contributor @AlexBarbulescu: an Outliner that pans and searches like Maya, Chamfer off that keeps the shape, camera gates and Field Chart, G that repeats modal tools, and more** (Blender 5.2 LTS and 5.3)
 
-Hello everyone, and thank you. The kit now supports Blender 5.3 as well as 5.2 LTS, and every test and release
-check runs on both. Many of the changes in this release come from @AlexBarbulescu, who sent them as pull requests
-(#366, #372): we brought his work into the kit with him credited as co-author of those commits. The full thanks are
-at the end of these notes.
+Hello everyone, and thank you. This release is here thanks to @AlexBarbulescu: he did the Blender 5.3 support and
+sent a large set of Maya behaviours and fixes as pull requests (#366, #372). We brought his work into the kit with
+him credited as co-author of those commits. A few parts were changed or became options that are off by default, so
+the kit keeps behaving like Maya out of the box; the reasons for each are in #372. Thank you, Alex!
+
+The kit now supports Blender 5.3 as well as 5.2 LTS, and every test and release check runs on both.
 
 Install it over 0.16.0 (or 0.8.0 – 0.15.0) as usual; shelves, hotkeys, scenes and the kit's settings are kept.
 (Removing the kit before installing deletes them: use Export Settings first.)
@@ -69,8 +71,8 @@ extension until they are tested.
 
 ## Thank you
 
-Thanks to @AlexBarbulescu for the Blender 5.3 support and the many fixes and Maya behaviours in #366 and #372 (and
-#364 before them): a large part of this release is his work. Thanks also to @tristratos for asking for Blender 5.3 (#360),
+Thanks to @AlexBarbulescu: 0.17.0 would not be here without his Blender 5.3 support and the many fixes and Maya
+behaviours in #366 and #372 (and #364 before them). Thanks also to @tristratos for asking for Blender 5.3 (#360),
 and to @cluckn0rris-ch (#365) and @invaderzod (#368) for the reports his changes answer.
 Please keep telling us what breaks or feels off in real work.
 
