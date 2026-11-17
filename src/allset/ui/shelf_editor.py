@@ -13,6 +13,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
 
 from . import marked_window, shelf, shelf_editor_draft, window_places
+from . import shelf_editor_drag
 from .shelf_editor_buttons import (ALLSET_MT_shelf_editor_add_action, ALLSET_OT_shelf_editor_add_button,
                                    ALLSET_OT_shelf_editor_apply_button, ALLSET_OT_shelf_editor_create_action,
                                    ALLSET_OT_shelf_editor_delete_button, ALLSET_OT_shelf_editor_move_button,
@@ -166,6 +167,7 @@ class ALLSET_UL_shelf_editor_contents(bpy.types.UIList):
             return
 
         icon_kwargs = shelf.shelf_icons.icon_ui_kwargs(item.icon if item.icon != 'NONE' else 'DOT')
+        shelf_editor_drag.draw_grip(row, item.button_index)
         op = row.operator(
             ALLSET_OT_shelf_editor_select_button.bl_idname,
             text=item.label,
@@ -348,6 +350,7 @@ classes = (
     ALLSET_OT_shelf_editor_apply_button,
     ALLSET_OT_shelf_editor_delete_button,
     ALLSET_OT_shelf_editor_move_button,
+    *shelf_editor_drag.classes,
     ALLSET_OT_shelf_editor_save,
     ALLSET_OT_shelf_editor_cancel,
     ALLSET_PG_shelf_editor_list_item,
@@ -540,6 +543,7 @@ def unregister():
     shelf_editor_draft._draft_base = None
     marked_window.KINDS.pop(KIND, None)
     window_places.STRICT.discard(f"marked:{KIND}")
+    shelf_editor_drag.unregister()
     for name in _WM_PROPS:
         if hasattr(bpy.types.WindowManager, name):
             delattr(bpy.types.WindowManager, name)

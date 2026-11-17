@@ -6569,4 +6569,7 @@ STRINGS = {
     'A value for every selected channel: Enter sets it': '所有选中通道的值：按 Enter 设置',
     'Start Point': '起点',
     'End Point': '终点',
+    'Drag Button': '拖动按钮',
+    'Shelf Editor Drag': '工具架编辑器拖动',
+    'Press and hold, move the mouse up/down, release to drop the button there': '按住并上下移动鼠标，松开即可将按钮放到该位置',
 }

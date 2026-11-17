@@ -9253,6 +9253,10 @@
    "Shelf Name": "Shelf Name",
    "Up": "Up"
   },
+  "Labels/ui/shelf_editor_drag": {
+   "Drag Button": "Drag Button",
+   "Shelf Editor Drag": "Shelf Editor Drag"
+  },
   "Labels/ui/shelf_editor_icon_picker": {
    "All Icons": "All Icons",
    "Blender Built-in": "Blender Built-in",
@@ -11077,6 +11081,9 @@
   },
   "Tooltips/ui/shelf_editor_buttons": {
    "Apply edited Shelf button properties without changing unrelated button data.": "Apply edited Shelf button properties without changing unrelated button data."
+  },
+  "Tooltips/ui/shelf_editor_drag": {
+   "Press and hold, move the mouse up/down, release to drop the button there": "Press and hold, move the mouse up/down, release to drop the button there"
   },
   "Tooltips/ui/shelf_editor_icon_picker": {
    "Change the page in the currently open Shelf icon picker.": "Change the page in the currently open Shelf icon picker.",

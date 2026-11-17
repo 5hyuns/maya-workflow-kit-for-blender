@@ -6568,4 +6568,7 @@ STRINGS = {
     'Video Sequencer': 'ビデオシーケンサー',
     'Weight Paint': 'ウェイトペイント',
     'Write the movie to the file below instead of the temporary folder': '一時フォルダではなく下のファイルにムービーを書き出します',
+    'Drag Button': 'ボタンをドラッグ',
+    'Shelf Editor Drag': 'シェルフエディタのドラッグ',
+    'Press and hold, move the mouse up/down, release to drop the button there': '押したままマウスを上下に動かし、離すとボタンをその位置に置きます',
 }
