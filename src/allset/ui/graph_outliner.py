@@ -10,7 +10,8 @@ import gpu
 from bpy.props import BoolProperty, IntProperty
 from gpu_extras.batch import batch_for_shader
 
-from . import graph_layers
+from . import draw_replay, graph_layers
+from .draw_replay import call
 from .editor_kinds import enabled, is_graph
 from .graph_channels import TEXT, _themed, attr_color, attr_label, node_key, node_name
 from .graph_list import (ATTR_KINDS, _expanded, _pinned, _up_label, is_pinned, listed_curves, listed_nodes, row_id,
@@ -109,8 +110,8 @@ def row_at(context, region, y):
 def _rect(x0, y0, x1, y1, color):
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     batch = batch_for_shader(shader, 'TRIS', {"pos": ((x0, y0), (x1, y0), (x1, y1), (x0, y0), (x1, y1), (x0, y1))})
-    shader.uniform_float("color", color)
-    batch.draw(shader)
+    call(shader.uniform_float, "color", color)
+    call(batch.draw, shader)
 
 
 PIN = (0.85, 0.85, 0.85, 1.0)
@@ -139,11 +140,19 @@ def draw_channels():
     top, h = metrics(region)
     s = context.preferences.system.ui_scale
     pins = getattr(context.window_manager, "allset_show_pins", True)      # Maya 2026 View > Show Pins
-    gpu.state.blend_set('ALPHA')
+    key = ("graph outliner", region.as_pointer())
+    if draw_replay.again(key, (region.width, region.height, s, pins)):     # a window moves: the list as drawn last
+        return
+    with draw_replay.recording(key, (region.width, region.height, s, pins)):
+        _draw_list(context, space, region, top, h, s, pins)
+
+
+def _draw_list(context, space, region, top, h, s, pins):
+    call(gpu.state.blend_set, 'ALPHA')
     text = _themed(TEXT, "text", space)
     _rect(0, 0, region.width, top, _themed(BACK, "back", space))
     font = 0
-    blf.size(font, 12 * s)
+    call(blf.size, font, 12 * s)
     all_rows = rows(context, space)
     picked = picked_ids(context, all_rows)
     first = scroll_offset(context, region, len(all_rows))
@@ -160,22 +169,22 @@ def draw_channels():
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
         if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows, indented under their channel
-            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else text))
-            blf.position(font, 66 * s, y - h + 6 * s, 0)
-            blf.draw(font, _up_label.get((kind, fc.as_pointer()), ""))
+            call(blf.color, font, *(attr_color(fc) if kind == "UP_SDK" else text))
+            call(blf.position, font, 66 * s, y - h + 6 * s, 0)
+            call(blf.draw, font, _up_label.get((kind, fc.as_pointer()), ""))
             if pins:
                 _draw_pin(56 * s, y - h / 2, s, False)
         elif kind != "ATTR":
             sign = "−" if _expanded.get(node_key(node), True) else "+"
-            blf.color(font, *text)
-            blf.position(font, 6 * s, y - h + 6 * s, 0)
-            blf.draw(font, sign)
-            blf.position(font, 22 * s, y - h + 6 * s, 0)
-            blf.draw(font, node_name(node))
+            call(blf.color, font, *text)
+            call(blf.position, font, 6 * s, y - h + 6 * s, 0)
+            call(blf.draw, font, sign)
+            call(blf.position, font, 22 * s, y - h + 6 * s, 0)
+            call(blf.draw, font, node_name(node))
         else:
-            blf.color(font, *attr_color(fc))
-            blf.position(font, 44 * s, y - h + 6 * s, 0)
-            blf.draw(font, attr_label(fc))
+            call(blf.color, font, *attr_color(fc))
+            call(blf.position, font, 44 * s, y - h + 6 * s, 0)
+            call(blf.draw, font, attr_label(fc))
             if pins:
                 _draw_pin(34 * s, y - h / 2, s, is_pinned(node, fc))
         y -= h
@@ -184,7 +193,7 @@ def draw_channels():
         span = top / len(all_rows)
         x1 = region.width - 2 * s
         _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, _themed(THUMB, "back", space))
-    gpu.state.blend_set('NONE')
+    call(gpu.state.blend_set, 'NONE')
 
 
 def show_rows(context, chosen):

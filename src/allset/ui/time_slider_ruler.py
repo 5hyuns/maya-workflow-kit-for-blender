@@ -5,6 +5,7 @@ marks. Shares the row bands (``_rows``) and the cached triangle batches (``_tris
 ``time_slider``.
 """
 
+from .draw_replay import call
 from .time_slider_view import playback_range
 
 
@@ -160,12 +161,12 @@ def _draw_ruler(context, region):
         for x0, y0, x1, y1 in rs:
             tris += [(x0, y0), (x1, y0), (x1, y1), (x0, y0), (x1, y1), (x0, y1)]
         if tris:
-            shader.uniform_float("color", colour)
-            _tris_batch(shader, tris).draw(shader)
+            call(shader.uniform_float, "color", colour)
+            call(_tris_batch(shader, tris).draw, shader)
     from ..operators import bookmarks
     marks = bookmarks.shown(context)
     rows = ROWS_BOOKMARKS if marks else ROWS
-    gpu.state.blend_set('ALPHA')
+    call(gpu.state.blend_set, 'ALPHA')
     rects([(0, 0, w, h)], _themed(RULER_BG, "back"))
     b0, b1 = _rows("band", h, rows, s)
     rects([(0, b0, w, b1)], _themed(RULER_BAND, "back"))
@@ -189,17 +190,17 @@ def _draw_ruler(context, region):
     # labels: 2 px + a fifth of a frame right of the tick
     l0, _l1 = _rows("label", h, rows, s)
     # The same UI-scaled font is used for the current-frame number.
-    blf.size(0, label_font_size(h, s))
+    call(blf.size, 0, label_font_size(h, s))
     off = 2 * s + 0.2 * pxf
-    blf.color(0, *_themed(RULER_LABEL, "text"))
+    call(blf.color, 0, *_themed(RULER_LABEL, "text"))
     for f, x in lefts.items():
-        blf.position(0, x + off, l0, 0)
-        blf.draw(0, str(f))
+        call(blf.position, 0, x + off, l0, 0)
+        call(blf.draw, 0, str(f))
     c0, _c1 = _rows("current_label", h, rows, s)
-    blf.color(0, *_themed(RULER_CURRENT_LABEL, "text"))
-    blf.position(0, round(cx0) + off, c0, 0)
-    blf.draw(0, str(cur))
-    gpu.state.blend_set('NONE')
+    call(blf.color, 0, *_themed(RULER_CURRENT_LABEL, "text"))
+    call(blf.position, 0, round(cx0) + off, c0, 0)
+    call(blf.draw, 0, str(cur))
+    call(gpu.state.blend_set, 'NONE')
 
 
 def blue_pencil_marks(region, frames, y0, scale):
@@ -233,5 +234,5 @@ def _draw_blue_pencil(context, region):
     if not tris:
         return
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    shader.uniform_float("color", bp.FRAME_RGB)
-    batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+    call(shader.uniform_float, "color", bp.FRAME_RGB)
+    call(batch_for_shader(shader, 'TRIS', {"pos": tris}).draw, shader)

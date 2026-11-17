@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""GPU drawing for the shelf row: cached shaders and batches (``_draw_rect``, ``_triangle``), colours from the
+"""GPU drawing for the shelf row: cached shaders and batches (``_draw_rect``, ``_triangle``; their calls go through
+``draw_replay.call``, so a redraw while a window moves draws them again as they were), colours from the
 user's Image Editor header theme, the tab strip (``tab_rects``, ``_draw_tabs``, gear glyph) and the dimmed tab-row
 header (``draw_tab_row``). ``_hover`` / ``_tab_rects`` are shared with the gizmos in shelf.py."""
 
 import bpy
 
 from .. import compat
+from .draw_replay import call
 from .shelf_strip import is_shelf_row, TAB_PX, TAB_LEFT_PX, TAB_PAD_PX, TAB_FONT_PX
 from .shelf_store import shelves, current
 
@@ -45,18 +47,17 @@ def _draw_rect(x, y, w, h, colour, texture=None):
     """A rectangle in region pixels (POST_PIXEL draw handler)."""
     import gpu
     coords = ((x, y), (x + w, y), (x + w, y + h), (x, y + h))
-    gpu.state.blend_set('ALPHA')
+    call(gpu.state.blend_set, 'ALPHA')
     if texture is None:
         sh = _shelf_shader('UNIFORM_COLOR')
         batch = _shelf_batch('UNIFORM_COLOR', 'TRI_FAN', coords)
-        sh.uniform_float("color", colour)
+        call(sh.uniform_float, "color", colour)
     else:
-        from .. import compat
         sh = _shelf_shader(compat.LINEAR_IMAGE_SHADER)
         batch = _shelf_batch(compat.LINEAR_IMAGE_SHADER, 'TRI_FAN', coords, _TEX_COORDS)
-        sh.uniform_sampler("image", texture)
-    batch.draw(sh)
-    gpu.state.blend_set('NONE')
+        call(sh.uniform_sampler, "image", texture)
+    call(batch.draw, sh)
+    call(gpu.state.blend_set, 'NONE')
 
 
 def _theme_colour(context):
@@ -148,10 +149,10 @@ def tab_rects(context, region, tabs=None):
 
 def _text(x, y, text, colour, size):
     import blf
-    blf.size(0, size)
-    blf.color(0, *colour)
-    blf.position(0, x, y, 0)
-    blf.draw(0, text)
+    call(blf.size, 0, size)
+    call(blf.color, 0, *colour)
+    call(blf.position, 0, x, y, 0)
+    call(blf.draw, 0, text)
 
 
 def _draw_tabs(context, region, base, cur=None):
@@ -212,7 +213,7 @@ def _triangle(cx, cy, half, up, colour):
         ((cx - half, cy + half / 2), (cx + half, cy + half / 2), (cx, cy - half / 2))
     sh = _shelf_shader('UNIFORM_COLOR')
     batch = _shelf_batch('UNIFORM_COLOR', 'TRIS', pts)
-    gpu.state.blend_set('ALPHA')
-    sh.uniform_float("color", colour)
-    batch.draw(sh)
-    gpu.state.blend_set('NONE')
+    call(gpu.state.blend_set, 'ALPHA')
+    call(sh.uniform_float, "color", colour)
+    call(batch.draw, sh)
+    call(gpu.state.blend_set, 'NONE')

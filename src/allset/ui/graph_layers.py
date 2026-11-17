@@ -19,6 +19,8 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
+from .draw_replay import call
+
 KINDS = ("LAYER", "LAYER_ATTR")     # kit outliner rows: a selected layer's name, its curves
 DIM = 0.6                           # other selected layers: Maya colours, dimmer
 PICK_PX = 8                         # curve pick distance in region pixels
@@ -252,13 +254,13 @@ def draw_row(row, y, h, s, font, width):
     from .editor_chrome import TEXT, attr_color, attr_label
     kind, _ob, item = row
     if kind == "LAYER":
-        blf.color(font, *TEXT)
-        blf.position(font, 22 * s, y - h + 6 * s, 0)
-        blf.draw(font, layer_of_row(row) or "")
+        call(blf.color, font, *TEXT)
+        call(blf.position, font, 22 * s, y - h + 6 * s, 0)
+        call(blf.draw, font, layer_of_row(row) or "")
     else:
-        blf.color(font, *dim(attr_color(item)))
-        blf.position(font, 44 * s, y - h + 6 * s, 0)
-        blf.draw(font, attr_label(item))
+        call(blf.color, font, *dim(attr_color(item)))
+        call(blf.position, font, 44 * s, y - h + 6 * s, 0)
+        call(blf.draw, font, attr_label(item))
 
 
 _handle = []

@@ -41,6 +41,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import IntProperty
 
+from . import draw_replay
+from .draw_replay import call
 from .outliner_tree_rows import (ALL_TYPES, CAMERAS, DEFAULT_SETS, EXPANDED, Options, Row, STATS,  # noqa: F401
                                  TYPE_PROPS, WHEEL_ROWS, _Bones, _bump_expand, _cache, _drop_old_heads, _state, build,
                                  default_options, default_set_members, icon_kind, is_kit_skeleton, kit_skeleton_name,
@@ -398,19 +400,28 @@ def _draw_instance_tip(prefs, region, u, dy, x, y0, y1, ob_name, by_name):
     _quad(tris, tcol, bx0, by0, bx0 + w + 2 * pad, by1, (*tuple(wcol.outline)[:3], 1.0))
     _quad(tris, tcol, bx0 + 1, by0 + 1, bx0 + w + 2 * pad - 1, by1 - 1, (*tuple(wcol.inner)[:3], 1.0))
     sh = gpu.shader.from_builtin('SMOOTH_COLOR')
-    batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw(sh)
-    blf.color(0, *tuple(wcol.text)[:3], 1.0)
-    blf.position(0, round(bx0 + pad), round((by0 + by1) / 2 - dy), 0)
-    blf.draw(0, label)
+    call(batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw, sh)
+    call(blf.color, 0, *tuple(wcol.text)[:3], 1.0)
+    call(blf.position, 0, round(bx0 + pad), round((by0 + by1) / 2 - dy), 0)
+    call(blf.draw, 0, label)
 
 
 def _draw(context, space, region, area):
+    STATS["draws"] += 1
+    key = ("outliner", region.as_pointer())
+    sig = (region.width, region.height, context.preferences.system.ui_scale, HOVER.get(area.as_pointer()))
+    if draw_replay.again(key, sig):     # a window moves: the rows as drawn last
+        return
+    with draw_replay.recording(key, sig):
+        _draw_rows(context, space, region, area)
+
+
+def _draw_rows(context, space, region, area):
     import blf
     import gpu
     from gpu_extras.batch import batch_for_shader
     from . import kit_icons
     from ..operators import live
-    STATS["draws"] += 1
     prefs = context.preferences
     u = unit(prefs)
     rows = rows_for(context, space)
@@ -515,26 +526,26 @@ def _draw(context, space, region, area):
     query = space.filter_text
     names.append((pad + 1.3 * u, fcy, query or bpy.app.translations.pgettext_iface("Search..."),
                   (*tuple(field.text)[:3], 1.0 if query else 0.5)))
-    gpu.state.blend_set('ALPHA')
+    call(gpu.state.blend_set, 'ALPHA')
     if tris:
         sh = gpu.shader.from_builtin('SMOOTH_COLOR')
-        batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw(sh)
+        call(batch_for_shader(sh, 'TRIS', {"pos": tris, "color": tcol}).draw, sh)
     if lines:
         sh = gpu.shader.from_builtin('SMOOTH_COLOR')
-        batch_for_shader(sh, 'LINES', {"pos": lines, "color": lcol}).draw(sh)
+        call(batch_for_shader(sh, 'LINES', {"pos": lines, "color": lcol}).draw, sh)
     for name, cx, cy, greyed in textures:
         size = kit_icons.size_for(name, prefs.system.ui_scale)
         kit_icons.draw_texture(name, math.floor(cx - size / 2), math.floor(cy - size / 2), size, greyed)
     _draw_restrict(icons, text, u)
-    blf.size(0, _font_size(prefs))
+    call(blf.size, 0, _font_size(prefs))
     dy = 0.32 * blf.dimensions(0, "Xg")[1] + 1
     for x, cy, label, rgba in names:
-        blf.color(0, *rgba)
-        blf.position(0, round(x), round(cy - dy), 0)
-        blf.draw(0, label)
+        call(blf.color, 0, *rgba)
+        call(blf.position, 0, round(x), round(cy - dy), 0)
+        call(blf.draw, 0, label)
     if tip is not None:
         _draw_instance_tip(prefs, region, u, dy, *tip, by_name)
-    gpu.state.blend_set('NONE')
+    call(gpu.state.blend_set, 'NONE')
     SEEN[region.as_pointer()] = seen
     DRAWN[region.as_pointer()] = drawn
     for d in (SEEN, DRAWN):

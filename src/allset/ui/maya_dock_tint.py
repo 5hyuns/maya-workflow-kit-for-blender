@@ -7,6 +7,7 @@ maya_dock.py's Properties draw callback; maya_dock.py re-exports these names.
 
 import bpy
 
+from .draw_replay import call
 from .maya_dock_roles import KINDS, role, shown_kind
 
 
@@ -49,12 +50,12 @@ def draw_tint():
     w, h = region.width, region.height
     hole = _kept_hole(context, region) if shown_kind(context) == 'CHANNEL_BOX' else None
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    gpu.state.blend_set('ADDITIVE')
+    call(gpu.state.blend_set, 'ADDITIVE')
     try:
         for x0, y0, x1, y1 in _around(hole, w, h):
             _fill(shader, x0, y0, x1, y1, (d, d, d, 1.0))
     finally:
-        gpu.state.blend_set('NONE')
+        call(gpu.state.blend_set, 'NONE')
 
 
 def _around(hole, w, h):
@@ -172,5 +173,5 @@ def _fill(shader, x0, y0, x1, y1, rgba):
             _rects.clear()
         batch = _rects[key] = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]},
                                                indices=[(0, 1, 2), (0, 2, 3)])
-    shader.uniform_float("color", rgba)
-    batch.draw(shader)
+    call(shader.uniform_float, "color", rgba)
+    call(batch.draw, shader)

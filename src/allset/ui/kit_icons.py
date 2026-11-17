@@ -25,6 +25,7 @@ import math
 
 import numpy as np
 
+from .draw_replay import call
 from .status_icons import SS, Canvas
 
 LIGHT = (0.741, 0.741, 0.741)      # #bdbdbd  Maya icon grey
@@ -677,9 +678,9 @@ def draw_texture(name, x, y, n, greyed=False):
             _quads.clear()
         batch = _quads[key] = batch_for_shader(sh, 'TRI_FAN', {"pos": coords,
                                                               "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
-    sh.uniform_sampler("image", texture(name, n, greyed))
-    gpu.state.blend_set('ALPHA')
-    batch.draw(sh)
+    call(sh.uniform_sampler, "image", texture(name, n, greyed))
+    call(gpu.state.blend_set, 'ALPHA')
+    call(batch.draw, sh)
 
 
 def register():

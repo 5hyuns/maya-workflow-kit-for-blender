@@ -1,9 +1,9 @@
 """#334: while a window is dragged, Blender redraws every window at each step of the drag. The Maya layout's dock tint
 (the Layer Editor list left unlifted) and the Time Slider's Range Slider find their place in the drawn pixels, and a
 framebuffer read waits for the GPU: at a drag step nothing in the main window moved, so they use what they found at
-their previous draw and read nothing. A redraw of the main window outside a drag still reads, finds the same Layer
-Editor list, and draws the same Range Slider. Windows only (the drag is the move state Windows gives a title-bar
-drag)."""
+their previous draw (the dock draws its tint as drawn last) and read nothing. A redraw of the main window outside a
+drag still reads, finds the same Layer Editor list, and draws the same Range Slider. Windows only (the drag is the
+move state Windows gives a title-bar drag)."""
 
 import ctypes
 import ctypes.wintypes as wt
@@ -100,6 +100,17 @@ def s_setup():
             C["bars"].append(bar())
         return hole
     tint._kept_hole = kept
+    replay = mod(".ui.draw_replay")
+    C["again"] = replay.again
+
+    def again(key, sig):           # a drag step that draws the tint and the tab strip as drawn last
+        done = C["again"](key, sig)
+        window = bpy.context.window
+        if done and key[0] == "dock draw" and window is not None and window.as_pointer() == win().as_pointer():
+            C["draws"] += 1
+            C["bars"].append(bar())
+        return done
+    replay.again = again
     mod(".ui.window_places")._places.clear()     # no remembered place: the window opens at once
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
@@ -129,6 +140,9 @@ def s_drag():
     C["reads"], C["draws"] = 0, 0
     C["holes"].clear()
     C["bars"].clear()
+    motion = mod(".ui.window_motion")
+    C["settle"] = motion._settle_later
+    motion._settle_later = lambda: None      # the full redraw once the windows stand still comes after the count
     h = graph_hwnd()
     check("the Graph Editor window's OS handle", h is not None)
     if h is None:
@@ -163,8 +177,9 @@ def s_drag_check():
     check(f"the main window redrew during the drag ({draws} dock draws)", draws >= MOVES // 2)
     check(f"no framebuffer read at the drag steps ({reads} reads)", reads == 0)
     check("the dock kept the Layer Editor list where it was found",
-          C["holes"] and all(hole == C["hole0"] for hole in C["holes"]))
+          all(hole == C["hole0"] for hole in C["holes"]))
     check("the Range Slider stays where it was drawn", all(b == C["bar0"] for b in C["bars"]))
+    mod(".ui.window_motion")._settle_later = C["settle"]
     C["reads"], C["draws"] = 0, 0
     C["holes"].clear()
     redraw_main()
@@ -176,6 +191,7 @@ def s_after():
           C["reads"] >= 1 and C["holes"] and C["holes"][-1] == C["hole0"] and bar() == C["bar0"])
     gpu.state.active_framebuffer_get = _framebuffer
     mod(".ui.maya_dock_tint")._kept_hole = C["kept"]
+    mod(".ui.draw_replay").again = C["again"]
     for x in others():
         with bpy.context.temp_override(window=x):
             bpy.ops.wm.window_close()

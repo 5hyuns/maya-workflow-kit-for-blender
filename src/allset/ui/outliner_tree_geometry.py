@@ -11,6 +11,8 @@ import math
 
 import bpy
 
+from .draw_replay import call
+
 SCROLL = {}               # area pointer -> first shown row
 SCROLL_X = {}             # area pointer -> pixels the rows are panned left (Alt+middle-drag, #365)
 
@@ -202,8 +204,8 @@ def _draw_restrict(icons, rgb, u):
         pos.extend((a, b, c, a, c, d))
         uv.extend(((0, 0), (1, 0), (1, 1), (0, 0), (1, 1), (0, 1)))
     for (col, on, alpha), (pos, uv) in quads.items():
-        sh.uniform_sampler("image", restrict_texture(u, col, on, rgb, alpha)[1])
-        batch_for_shader(sh, 'TRIS', {"pos": pos, "texCoord": uv}).draw(sh)
+        call(sh.uniform_sampler, "image", restrict_texture(u, col, on, rgb, alpha)[1])
+        call(batch_for_shader(sh, 'TRIS', {"pos": pos, "texCoord": uv}).draw, sh)
 
 
 # Blender's restriction columns, left to right (Display menu, kit preference); EYE is the kit's visibility

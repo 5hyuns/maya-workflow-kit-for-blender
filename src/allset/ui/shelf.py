@@ -40,7 +40,7 @@ import bpy
 from bpy.props import IntProperty
 
 from .. import i18n
-from . import own_draw, shelf_data, shelf_icons
+from . import draw_replay, own_draw, shelf_data, shelf_icons
 
 from .shelf_strip import (MARKER, SHELF_MARKER, STRIP_PX, is_strip, is_shelf_row, is_kit_row, strip_area,
                           shelf_row_area, marker_mask, make_strip, ALLSET_OT_shelf_strip_toggle, ICON_PX, PITCH_PX,
@@ -328,6 +328,15 @@ def draw_row():
         return
     region = context.region
     s = context.preferences.system.ui_scale
+    key = ("shelf", region.as_pointer())
+    sig = (region.width, region.height, s, _hover.get(region.as_pointer()))
+    if draw_replay.again(key, sig):     # a window moves: the row as drawn last
+        return
+    with draw_replay.recording(key, sig):
+        _draw_row(context, region, s)
+
+
+def _draw_row(context, region, s):
     base = _theme_colour(context)
     _draw_rect(0, 0, region.width, region.height, base)
     tabs = tabs_in_window(context.space_data)

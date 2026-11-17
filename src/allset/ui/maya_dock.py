@@ -32,7 +32,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import i18n
-from . import window_motion
+from . import draw_replay, window_motion
 # the split-out parts, also read through this module by other UI, tools and the tests
 from .maya_dock_roles import (KINDS, LABELS, ROLE_FLAGS, WIDTH, _MARK_FLAGS, _flags, _mark_flags,  # noqa: F401
                               _pending, _torn_menus, area_role, current_tab, find_stack, floating_kinds,
@@ -263,8 +263,17 @@ def _strip_callback():
     from . import channel_box
     channel_box.region_drawn()      # the region's buttons are drawn: the Channel Box's draw-time lead ends here
     try:
-        draw_tint()
-        draw_strip()
+        context = bpy.context
+        region = context.region
+        if region is None:
+            return
+        key = ("dock draw", region.as_pointer())
+        sig = (region.width, region.height, context.preferences.system.ui_scale)
+        if draw_replay.again(key, sig):     # a window moves: the tint and the tab strip as drawn last
+            return
+        with draw_replay.recording(key, sig):
+            draw_tint()
+            draw_strip()
     except Exception:     # a draw error would repeat every redraw
         import traceback
         traceback.print_exc()

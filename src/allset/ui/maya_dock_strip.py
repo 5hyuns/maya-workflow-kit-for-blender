@@ -11,6 +11,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .. import i18n
+from .draw_replay import call
 from .maya_dock_roles import LABELS, area_role, current_tab, redraw, role, stack_tabs
 from .maya_dock_tint import _fill, dock_lift
 
@@ -195,24 +196,24 @@ def draw_strip():
     tabs = strip_tabs(stack_tabs(context.window_manager), region.width, region.height, scale)
     back, text = _strip_colours(context)
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    gpu.state.blend_set('ALPHA')
+    call(gpu.state.blend_set, 'ALPHA')
     x0 = region.width - strip_px(scale)
     _fill(shader, x0, 0, region.width, region.height, (*(c * STRIP_SHADE for c in back), 1.0))
-    blf.size(0, 11.0 * scale)
+    call(blf.size, 0, 11.0 * scale)
     cap = blf.dimensions(0, "X")[1]
-    blf.enable(0, blf.ROTATION)
-    blf.rotation(0, -math.pi / 2)     # clockwise: reads top to bottom, letter tops to the right (Maya)
+    call(blf.enable, 0, blf.ROTATION)
+    call(blf.rotation, 0, -math.pi / 2)     # clockwise: reads top to bottom, letter tops to the right (Maya)
     try:
         for kind, tx0, ty0, tx1, ty1 in tabs:
             raised = kind == current
             _fill(shader, tx0, ty0, tx1, ty1, (*(back if raised else tuple(c * TAB_SHADE for c in back)), 1.0))
             colour = text if raised else tuple(c * TEXT_LOWERED for c in text)
-            blf.color(0, *colour, 1.0)
-            blf.position(0, round((tx0 + tx1) / 2 - cap / 2), ty1 - round(TAB_END_PX * scale), 0)
-            blf.draw(0, i18n.iface(LABELS[kind]))
+            call(blf.color, 0, *colour, 1.0)
+            call(blf.position, 0, round((tx0 + tx1) / 2 - cap / 2), ty1 - round(TAB_END_PX * scale), 0)
+            call(blf.draw, 0, i18n.iface(LABELS[kind]))
     finally:
-        blf.disable(0, blf.ROTATION)
-        gpu.state.blend_set('NONE')
+        call(blf.disable, 0, blf.ROTATION)
+        call(gpu.state.blend_set, 'NONE')
 
 
 class ALLSET_OT_dock_strip_click(bpy.types.Operator):
