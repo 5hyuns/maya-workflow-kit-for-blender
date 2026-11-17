@@ -3,11 +3,12 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.19.0] — 2026-11-18
 
-Maya's IK/FK switching, the rest of the Time Slider Bookmarks, new Graph Editor and Dope Sheet tools, a Shelf Editor
-drag, smoother window drags in Maya mode, faster joint drawing while playing, and fixes for #320 and #334. Thanks to
-@AlexBarbulescu for the Shelf Editor drag in #382.
+Thank you for the reports and the help. This release brings Maya's IK/FK switching, the rest of the Time Slider
+Bookmarks, new Graph Editor and Dope Sheet tools, smoother window drags and lighter joint drawing in Maya mode, and
+fixes for #320 and #334. Thanks to @AlexBarbulescu for the Shelf Editor drag in #382, and to @AlEuf01,
+@GIBBETGAMES and @pixelkeyblade18 for reports that showed what to fix.
 
 ### Added
 - **IK/FK switching**: Skeleton > Enable IK/FK Control and Enable IK Handle Snap work like Maya. With Snap on, turning
