@@ -18,6 +18,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import sim  # noqa: E402
 from sim import MODULE, check, load_maya_layout, run, setup, step, view3d, win  # noqa: E402
 
 GUI_TIMEOUT = 300
@@ -187,8 +188,13 @@ def s_idle_check():
     threading.Thread(target=drag, daemon=True).start()
 
 
-for _i in range(8):             # the drag thread moves the window meanwhile (about 2.5 s)
-    step(lambda: None)
+@step
+def s_wait_drag():
+    """The drag thread moves the window meanwhile (a few seconds; one move can take a second): wait until it is
+    done, at most 60 ticks."""
+    C["wait"] = C.get("wait", 0) + 1
+    if C.get("mixed") and not C.get("dragged") and C["wait"] < 60:
+        sim._steps.insert(0, s_wait_drag)
 
 
 @step
