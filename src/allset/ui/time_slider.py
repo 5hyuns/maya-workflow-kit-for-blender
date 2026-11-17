@@ -103,10 +103,11 @@ def _draw_range():
     _check_view(context, region)
     key = ("time slider", region.as_pointer())
     sig = (region.width, region.height, context.preferences.system.ui_scale)
-    if draw_replay.again(key, sig):     # a window moves: the Time Slider as drawn last
-        return
-    with draw_replay.recording(key, sig):
-        _draw_slider(context, region, wm)
+    if not draw_replay.again(key, sig):     # a window moves: the Time Slider as drawn last
+        with draw_replay.recording(key, sig):
+            _draw_slider(context, region, wm)
+    if has_slider_panel(context.space_data):
+        time_slider_bookmarks.draw_tip(context, region)    # follows the mouse: drawn anew every time
 
 
 def _draw_slider(context, region, wm):
@@ -116,7 +117,6 @@ def _draw_slider(context, region, wm):
     _draw_keys(context, region, maya)
     if maya:
         _draw_blue_pencil(context, region)
-        time_slider_bookmarks.draw_tip(context, region)
     if not getattr(wm, "allset_time_range_on", False):
         return
     import gpu

@@ -17,12 +17,21 @@ drag, smoother window drags in Maya mode, faster joint drawing while playing, an
   and Ik Blend 1 → 0 keeps the IK pose instead of jumping back to old FK values.
 - Key > IK/FK Keys > **Connect to IK/FK**: the selected objects get an Ik Blend that follows the IK handle; selecting
   such an object works for Set IK/FK Key (its translate is keyed too), Enable IK Solver and Move IK to FK.
+- A turned joint of an IK chain stays turned like Maya (Enable IK/FK Control on, or Enable IK Handle Snap off, and
+  with snap too) until the chain is solved again: the handle moves or turns, its Ik Blend, Pole Vector, Twist or
+  Solver Enable changes, the time changes while the handle has keys, or the scene is opened again. Selecting, moving
+  the skeleton or turning other joints keeps the turned pose.
+- With Enable IK Handle Snap at Ik Blend 1, turning a joint of an RP chain turns the handle's Pole Vector with the
+  start joint like Maya, so moving the handle afterwards keeps the arm in the plane it was turned into.
 - **Time Slider Bookmarks**: Visualize > Time Slider Bookmarks > Edit, Show Bookmarks and Bookmark Manager work like
   Maya. Edit changes the name, colour, start and end of the bookmark at the current time; Show Bookmarks hides them
   on the Time Slider; the Bookmark Manager window lists every bookmark to rename, recolour, retime, update from the
   selected range, frame or delete, frames all of them and adds new ones.
 - Each Time Slider bookmark has its own colour on the Time Slider (a random one of Maya's colours, or the one picked
   in the Create dialog) and keeps its range and colour when renamed.
+- On the Time Slider, like Maya: the mouse over a bookmark shows its name and range; a right-click on the bookmark
+  strip opens the bookmark menu, whose actions work on the bookmark under the mouse; a click on a bookmark leaves the
+  time where it is; Ctrl + double-click highlights the bookmark's range.
 - Graph Editor: Edit > Transformation Tools > **Region Keys Tool** (and its toolbar button): a marquee leaves its
   region as a box; drag a side or corner to scale the keys inside, drag inside it to move them, like Maya.
 - Graph Editor: Select > **Pre-Select Highlight** draws the curve under the mouse brighter before you click it (off
@@ -38,13 +47,18 @@ drag, smoother window drags in Maya mode, faster joint drawing while playing, an
 ### Changed
 - A bookmark made without a selected range covers the current frame only, the time moves to its end, and Frame
   Next / Frame Previous Bookmark wrap round, like Maya.
-- Dragging or resizing a window in Maya mode: the Channel Box dock and the Time Slider's Range Slider no longer read
-  back the screen at every step of the drag, so a drag is smoother (#334).
+- Next Bookmark / Previous Bookmark wrap round like Maya: after the last bookmark Next goes back to the first one.
+- Graph Editor Pre-Select Highlight: the highlight goes as soon as the mouse leaves the curve view.
+- Dragging or resizing a window in Maya mode is smoother (#334): the Channel Box dock and the Time Slider's Range
+  Slider no longer read back the screen at every step, and the shelf, the Outliner, the dock's tabs, the Time Slider
+  and the Graph Editor draw what they drew before instead of working it out again.
 - Joints with controls draw faster while playing: controls are placed in runs and their custom shape values are
   worked out once (#344).
 
 ### Fixed
 - Joints keep their Radius size when the armature object is scaled (#320).
+- RP handles with Twist and IK chains of three or more bones write the solved rotation into the joints right after
+  the handle moves.
 - Layout fit: with windows on displays of different scaling, each window is fitted at its own scaling (#334).
 
 ## [0.18.0] — 2026-11-17
