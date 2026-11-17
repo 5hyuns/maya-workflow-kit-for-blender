@@ -969,6 +969,9 @@ MAP.update({
     "Visualize/Time Slider Bookmarks/Unframe": "allset.playback_range_anim",
     "Visualize/Time Slider Bookmarks/Delete": "allset.bookmark_delete",
     "Visualize/Time Slider Bookmarks/Delete All Bookmarks": ("allset.bookmark_delete", {"all": True}),
+    "Visualize/Time Slider Bookmarks/Edit": "allset.bookmark_edit",
+    "Visualize/Time Slider Bookmarks/Show Bookmarks": ("prop", "addon_prefs.show_time_slider_bookmarks", {}),
+    "Visualize/Time Slider Bookmarks/Bookmark Manager": "allset.bookmark_manager",
     # Audio: sounds are Video Sequencer sound strips
     "Audio/Import Audio...": "allset.import_audio",
     "Audio/Import Audio Clip to Time Editor...": "allset.import_audio",

@@ -481,7 +481,7 @@ def _draw_keys(context, region, maya=False):
     h = region.height
     if maya:
         from ..operators import bookmarks
-        if bookmarks.markers(context.scene):     # Maya: keys stay under the bookmark strip
+        if bookmarks.shown(context):     # Maya: keys stay under the bookmark strip
             h = _rows("strip", h, ROWS_BOOKMARKS, context.preferences.system.ui_scale or 1.0)[0]
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     current = context.scene.frame_current

@@ -331,9 +331,11 @@ def register():
     playback_maya.register_props()
     playback_maya.register_handlers()
     graph_sculpt.register_props()
+    bookmarks.register_props()         # Time Slider bookmark end / colour on timeline markers
 
 
 def unregister():
+    bookmarks.unregister_props()
     connect_tool.unregister_handlers()
     graph_sculpt.unregister()
     playback_maya.unregister()

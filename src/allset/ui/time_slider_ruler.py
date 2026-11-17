@@ -41,7 +41,6 @@ def _themed(color, field):
     return theme_follow.follow(color, "dopesheet_editor", field)
 
 
-BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # bookmark colour (Maya picks one per bookmark)
 TICK_PX = 2.0
 # Eight-pixel label row in the 32 px ruler, converted to BLF size.
 RULER_FONT_SIZE = 8.0 / 0.72
@@ -164,7 +163,7 @@ def _draw_ruler(context, region):
             shader.uniform_float("color", colour)
             _tris_batch(shader, tris).draw(shader)
     from ..operators import bookmarks
-    marks = bookmarks.markers(scene)
+    marks = bookmarks.shown(context)
     rows = ROWS_BOOKMARKS if marks else ROWS
     gpu.state.blend_set('ALPHA')
     rects([(0, 0, w, h)], _themed(RULER_BG, "back"))
@@ -174,14 +173,12 @@ def _draw_ruler(context, region):
         s0, s1 = _rows("strip", h, rows, s)
         rects([(0, s0, w, s1)], _themed(BOOKMARK_STRIP, "back"))
         m0, m1 = _rows("bookmark", h, rows, s)
-        bars, edges = [], []
-        for m in marks:
+        for m in marks:      # each bookmark in its own colour, later starts over earlier ones
             a, b = bookmarks.bookmark_range(scene, m)
             x0, x1 = round(x_of(a - 0.5)), round(x_of(b + 0.5))
-            bars.append((x0, m0, x1, m1))
-            edges.append((x0, s0, x0 + max(1.0, round(s)), s1))
-        rects(bars, (*BOOKMARK_RGB, 0.8))
-        rects(edges, (*BOOKMARK_RGB, 1.0))
+            rgb = bookmarks.color(m)
+            rects([(x0, m0, x1, m1)], (*rgb, 0.8))
+            rects([(x0, s0, x0 + max(1.0, round(s)), s1)], (*rgb, 1.0))
     tw = max(1.0, round(TICK_PX * s))
     t0, t1 = _rows("tick", h, rows, s)
     lefts = {f: round(x_of(f - 0.5)) for f in frames}
@@ -229,7 +226,7 @@ def _draw_blue_pencil(context, region):
     from gpu_extras.batch import batch_for_shader
     from ..operators import bookmarks
     s = context.preferences.system.ui_scale or 1.0
-    rows = ROWS_BOOKMARKS if bookmarks.markers(context.scene) else ROWS
+    rows = ROWS_BOOKMARKS if bookmarks.shown(context) else ROWS
     y0 = _rows("tick", region.height, rows, s)[0]
     k = min(region.height / MAYA_RULER_H, s)
     tris = blue_pencil_marks(region, frames, y0, k)

@@ -5281,15 +5281,25 @@
    "Use the selected meshes as in-between shapes": "Use the selected meshes as in-between shapes"
   },
   "Labels/operators/bookmarks": {
+   "All": "All",
+   "Color": "Color",
+   "Colour of this Time Slider bookmark": "Colour of this Time Slider bookmark",
    "Create Bookmark": "Create Bookmark",
    "Current": "Current",
    "Delete Bookmark": "Delete Bookmark",
+   "Edit Bookmark": "Edit Bookmark",
+   "End": "End",
    "Every bookmark (Maya Delete All Bookmarks)": "Every bookmark (Maya Delete All Bookmarks)",
    "Frame Bookmark": "Frame Bookmark",
+   "Last frame of this Time Slider bookmark": "Last frame of this Time Slider bookmark",
    "Name": "Name",
    "Next": "Next",
    "No dialog (Maya Quick Create)": "No dialog (Maya Quick Create)",
-   "Previous": "Previous"
+   "Previous": "Previous",
+   "Start": "Start",
+   "The bookmark (default: the current one)": "The bookmark (default: the current one)",
+   "This bookmark (Bookmark Manager row)": "This bookmark (Bookmark Manager row)",
+   "Update Bookmark with Selection": "Update Bookmark with Selection"
   },
   "Labels/operators/by_type": {
    "Select All by Type": "Select All by Type",
@@ -7716,6 +7726,7 @@
    "Dope Sheet Auto Frame": "Dope Sheet Auto Frame",
    "Dragging the In-View Editor's title moves the editor; it then keeps that offset from its place beside the manipulator / object and follows it (off: the editor stays at its place beside its object)": "Dragging the In-View Editor's title moves the editor; it then keeps that offset from its place beside the manipulator / object and follows it (off: the editor stays at its place beside its object)",
    "Draw each buffered curve's snapshot behind it in the Graph Editor (Maya View > Show Buffer Curves)": "Draw each buffered curve's snapshot behind it in the Graph Editor (Maya View > Show Buffer Curves)",
+   "Draw the Time Slider bookmarks (timeline markers) as coloured ranges above the Time Slider ruler": "Draw the Time Slider bookmarks (timeline markers) as coloured ranges above the Time Slider ruler",
    "Draw the zero line and the lowest / highest value of the selected curves in the Graph Editor": "Draw the zero line and the lowest / highest value of the selected curves in the Graph Editor",
    "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder": "Each Maya panel's display settings (shading, overlays, Show filters) come back in the next Blender session; kept in a file in the kit's extension folder",
    "Echo All Commands": "Echo All Commands",
@@ -7861,6 +7872,7 @@
    "Short fading messages in the view when you group, hide, toggle object/component selection (F8), soft select or Make Live, like Maya": "Short fading messages in the view when you group, hide, toggle object/component selection (F8), soft select or Make Live, like Maya",
    "Show All Menu Sets": "Show All Menu Sets",
    "Show Blender's shading modes and settings at the right of the Maya viewport toolbar": "Show Blender's shading modes and settings at the right of the Maya viewport toolbar",
+   "Show Bookmarks": "Show Bookmarks",
    "Show Both": "Show Both",
    "Show Buffer Curves": "Show Buffer Curves",
    "Show MEL Only": "Show MEL Only",
@@ -8058,6 +8070,18 @@
    "Blue Pencil Frame": "Blue Pencil Frame",
    "Frames": "Frames",
    "Next": "Next"
+  },
+  "Labels/ui/bookmark_manager": {
+   "Add": "Add",
+   "Bookmark Manager": "Bookmark Manager",
+   "Color": "Color",
+   "End": "End",
+   "First frame (empty: the selected range or the current frame)": "First frame (empty: the selected range or the current frame)",
+   "Last frame (empty: the selected range or the current frame)": "Last frame (empty: the selected range or the current frame)",
+   "Name": "Name",
+   "No bookmarks": "No bookmarks",
+   "Start": "Start",
+   "Tool": "Tool"
   },
   "Labels/ui/bridge_editor": {
    "Bridge Path Curve": "Bridge Path Curve",
@@ -9720,6 +9744,8 @@
   "Tooltips/operators/bookmarks": {
    "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time": "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time",
    "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)": "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)",
+   "Edit the Time Slider bookmark at the current time: its name, colour, start and end": "Edit the Time Slider bookmark at the current time: its name, colour, start and end",
+   "Set a Time Slider bookmark's start and end to the selected Time Slider range (else the current frame)": "Set a Time Slider bookmark's start and end to the selected Time Slider range (else the current frame)",
    "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)": "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)"
   },
   "Tooltips/operators/by_type": {
@@ -10684,6 +10710,10 @@
   },
   "Tooltips/ui/blue_pencil": {
    "Go to the next or previous Blue Pencil (annotation) frame (Maya Next / Previous Blue Pencil Frame)": "Go to the next or previous Blue Pencil (annotation) frame (Maya Next / Previous Blue Pencil Frame)"
+  },
+  "Tooltips/ui/bookmark_manager": {
+   "Add a Time Slider bookmark from this line: its colour and name, Start / End (empty = the selected Time Slider\nrange, else the current frame)": "Add a Time Slider bookmark from this line: its colour and name, Start / End (empty = the selected Time Slider\nrange, else the current frame)",
+   "Open the Bookmark Manager: every Time Slider bookmark to rename, recolour, retime, frame or delete": "Open the Bookmark Manager: every Time Slider bookmark to rename, recolour, retime, frame or delete"
   },
   "Tooltips/ui/bridge_editor": {
    "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel": "Click to add, drag to move, X to delete, 1-4 to interpolate, Enter to apply, Esc to cancel",

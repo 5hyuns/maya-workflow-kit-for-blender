@@ -201,6 +201,11 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Exit On Completion", default=True,
         description="Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives")
 
+    # Visualize > Time Slider Bookmarks > Show Bookmarks (on by default, like Maya; operators/bookmarks.py)
+    show_time_slider_bookmarks: bpy.props.BoolProperty(
+        name="Show Bookmarks", default=True, update=lambda self, context: _redraw_time_slider(context),
+        description="Draw the Time Slider bookmarks (timeline markers) as coloured ranges above the Time Slider ruler")
+
     # Graph Editor View > Snap Time To Selection (default off; Alt+/ toggles it).
     snap_time_to_selection: bpy.props.BoolProperty(
         name="Snap Time To Selection",
@@ -994,6 +999,13 @@ def register():
 
 def unregister():
     _unregister_classes()
+
+
+def _redraw_time_slider(context):
+    for win in context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type in {'DOPESHEET_EDITOR', 'PROPERTIES'}:
+                area.tag_redraw()
 
 
 def get(context=None):
