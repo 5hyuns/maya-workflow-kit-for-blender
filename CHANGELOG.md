@@ -115,8 +115,8 @@ the instance marks, with their translations; and for his comment on #374 that le
   drag still moves the time). The frame numbers fit a short Time Slider instead of being cut off at the top.
 - **Time Slider height** on Blender 5.x: with a UI scale above 1.0 the Time Slider keeps a ruler tall enough for its
   numbers; before, it got thinner as the scale grew and almost vanished at 2.0.
-- **Narrow windows**: the Range Slider row keeps every Time Slider button in view from 1280 to 1920 px wide at UI
-  scales 1.0 to 2.0, four-digit frames included (on Blender 5.x the play buttons could be pushed out of sight).
+- **Narrow windows**: the Range Slider row keeps every Time Slider button in view in narrow windows and at large
+  UI scales, four-digit frames included (on Blender 5.x the play buttons could be pushed out of sight).
 - **Dragging a window to another monitor** (#334): the kit no longer moves the mouse pointer while a window is
   dragged or resized, which could make the dragged window jump on Windows; the Maya layout is fitted once the windows
   stand still.

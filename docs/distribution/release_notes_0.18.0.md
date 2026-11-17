@@ -63,8 +63,8 @@ extension until they are tested.
   panel the mouse was last in is redrawn, like Maya's Playback > Update View: Active (Windows >
   Settings/Preferences > Preferences > Time Slider > Playback, or All for all four).
 - **Time Slider numbers (#292):** the mouse wheel, a trackpad and the zoom keys no longer zoom or scroll the Time
-  Slider, like Maya, so its numbers don't jump any more; the numbers also fit when the display scaling is above
-  100 %.
+  Slider, like Maya, so its numbers don't jump any more; the numbers also fit when the display scaling is turned
+  up.
 - **Dragging a window to another monitor (#334):** the kit no longer moves the mouse pointer while a window is
   dragged or resized, which could make the window jump on Windows.
 
