@@ -164,13 +164,13 @@ def frame_all(scene):
     return True
 
 
-def neighbour(scene, previous):
-    """Maya's next / previous bookmark from the current time: the first one starting after it (the last one starting
-    before it), wrapping round to the first (last) one."""
+def neighbour(scene, previous, t=None):
+    """Maya's next / previous bookmark from the time ``t`` (default the current time): the first one starting after
+    it (the last one starting before it), wrapping round to the first (last) one."""
     ms = markers(scene)
     if not ms:
         return None
-    t = scene.frame_current
+    t = scene.frame_current if t is None else t
     if previous:
         before = [m for m in ms if m.frame < t]
         return before[-1] if before else ms[-1]
@@ -182,6 +182,17 @@ def _redraw(context):
         for area in win.screen.areas:
             if area.type in {'DOPESHEET_EDITOR', 'GRAPH_EDITOR', 'NLA_EDITOR', 'SEQUENCE_EDITOR', 'PROPERTIES'}:
                 area.tag_redraw()
+
+
+class _AtTime:
+    """A bookmark action at a given frame instead of the current time (the Time Slider bookmark strip's right-click
+    menu acts at the frame under the mouse, like Maya)."""
+    at_frame: IntProperty(options={'SKIP_SAVE', 'HIDDEN'}, description="The frame to act at")
+    use_at_frame: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'},
+                               description="Act at the given frame instead of the current time")
+
+    def time(self, scene):
+        return self.at_frame if self.use_at_frame else scene.frame_current
 
 
 class _BookmarkFields:
@@ -226,7 +237,7 @@ class ALLSET_OT_bookmark_create(_BookmarkFields, bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ALLSET_OT_bookmark_edit(_BookmarkFields, bpy.types.Operator):
+class ALLSET_OT_bookmark_edit(_AtTime, _BookmarkFields, bpy.types.Operator):
     """Edit the Time Slider bookmark at the current time: its name, colour, start and end"""
     bl_idname = "allset.bookmark_edit"
     bl_label = "Edit Bookmark"
@@ -236,7 +247,7 @@ class ALLSET_OT_bookmark_edit(_BookmarkFields, bpy.types.Operator):
 
     def _target(self, context):
         scene = context.scene
-        return find(scene, self.bookmark) if self.bookmark else bookmark_at(scene)
+        return find(scene, self.bookmark) if self.bookmark else bookmark_at(scene, self.time(scene))
 
     def invoke(self, context, event):
         marker = self._target(context)
@@ -262,7 +273,7 @@ class ALLSET_OT_bookmark_edit(_BookmarkFields, bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ALLSET_OT_bookmark_update(bpy.types.Operator):
+class ALLSET_OT_bookmark_update(_AtTime, bpy.types.Operator):
     """Set a Time Slider bookmark's start and end to the selected Time Slider range (else the current frame)"""
     bl_idname = "allset.bookmark_update"
     bl_label = "Update Bookmark with Selection"
@@ -272,7 +283,7 @@ class ALLSET_OT_bookmark_update(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        marker = find(scene, self.bookmark) if self.bookmark else bookmark_at(scene)
+        marker = find(scene, self.bookmark) if self.bookmark else bookmark_at(scene, self.time(scene))
         if marker is None:
             return {'CANCELLED'}
         set_range(marker, *current_range(context))
@@ -280,7 +291,7 @@ class ALLSET_OT_bookmark_update(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ALLSET_OT_bookmark_frame(bpy.types.Operator):
+class ALLSET_OT_bookmark_frame(_AtTime, bpy.types.Operator):
     """Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)"""
     bl_idname = "allset.bookmark_frame"
     bl_label = "Frame Bookmark"
@@ -303,13 +314,34 @@ class ALLSET_OT_bookmark_frame(bpy.types.Operator):
         if self.bookmark:
             target = find(scene, self.bookmark)
         elif self.which == "CURRENT":
-            target = bookmark_at(scene)
+            target = bookmark_at(scene, self.time(scene))
         else:
-            target = neighbour(scene, self.which == "PREVIOUS")
+            target = neighbour(scene, self.which == "PREVIOUS", self.time(scene))
         if target is None:
             self.report({'WARNING'}, "There is no bookmark to frame at the current time")
             return {'CANCELLED'}
         frame(scene, target)
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_bookmark_go(_AtTime, bpy.types.Operator):
+    """Move the current time to the start of the next or previous Time Slider bookmark (wrapping round, like Maya)"""
+    bl_idname = "allset.bookmark_go"
+    bl_label = "Next / Previous Bookmark"
+    bl_options = {'UNDO_GROUPED'}
+    bl_undo_group = "Frames"          # like Blender's own frame jumps
+
+    previous: BoolProperty(name="Previous", options={'SKIP_SAVE'},
+                           description="The previous bookmark instead of the next one")
+
+    def execute(self, context):
+        scene = context.scene
+        target = neighbour(scene, self.previous, self.time(scene))
+        if target is None:
+            self.report({'WARNING'}, "There is no bookmark")
+            return {'CANCELLED'}
+        scene.frame_current = target.frame
         _redraw(context)
         return {'FINISHED'}
 
@@ -325,7 +357,7 @@ def delete(scene, targets):
     return len(targets)
 
 
-class ALLSET_OT_bookmark_delete(bpy.types.Operator):
+class ALLSET_OT_bookmark_delete(_AtTime, bpy.types.Operator):
     """Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)"""
     bl_idname = "allset.bookmark_delete"
     bl_label = "Delete Bookmark"
@@ -341,7 +373,7 @@ class ALLSET_OT_bookmark_delete(bpy.types.Operator):
         elif self.bookmark:
             targets = [m for m in [find(scene, self.bookmark)] if m is not None]
         else:
-            cur = bookmark_at(scene)
+            cur = bookmark_at(scene, self.time(scene))
             targets = [cur] if cur is not None else []
         n = delete(scene, targets)
         if not n:
@@ -353,7 +385,7 @@ class ALLSET_OT_bookmark_delete(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_bookmark_create, ALLSET_OT_bookmark_edit, ALLSET_OT_bookmark_update, ALLSET_OT_bookmark_frame,
-           ALLSET_OT_bookmark_delete)
+           ALLSET_OT_bookmark_go, ALLSET_OT_bookmark_delete)
 
 _MARKER_PROPS = ("allset_end", "allset_end_value", "allset_has_end", "allset_color")
 

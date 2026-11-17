@@ -204,6 +204,27 @@ def test_hover_picks_the_curve_under_the_mouse():
         assert gh.pick(ctx, x, y) in (_fc(b).as_pointer(), _fc(a, 1).as_pointer()), "B's X and A's Y meet here"
 
 
+def test_hover_goes_once_the_mouse_is_outside_the_curve_view():
+    """Like Maya: a move anywhere outside the Graph Editor's curve view (its channel list, another area) drops the
+    highlight at once; a move inside keeps it."""
+    km = kit.maya_kc().keymaps["Window"]
+    assert any(i.idname == "allset.hover_leave" and i.type == 'MOUSEMOVE' and i.active
+               for i in km.keymap_items), "a Window keymap item sees moves over every area"
+    assert gh.inside(5, 5, (0, 0, 10, 10)) and not gh.inside(10, 5, (0, 0, 10, 10))
+    wm = bpy.context.window_manager
+    window = wm.windows[0]
+    area = max(window.screen.areas, key=lambda a: a.width * a.height)
+    region = next(r for r in area.regions if r.type == 'WINDOW')
+    try:
+        gh._hover[area.as_pointer()] = 1
+        mid = (region.x + region.width // 2, region.y + region.height // 2)
+        assert gh.forget_outside(wm, window, *mid) == [] and gh._hover, "inside the curve view: kept"
+        gone = gh.forget_outside(wm, window, region.x - 1, mid[1])
+        assert gone == [area] and not gh._hover, "outside: dropped, that editor redraws"
+    finally:
+        gh._hover.clear()
+
+
 # --- Dope Sheet Offset Keys ---------------------------------------------------------------------------------------
 
 def test_dope_sheet_offset_keys_moves_the_selected_keys():

@@ -5,7 +5,9 @@ click it.
 Add-on pref ``graph_preselect`` (off by default, like Maya). ``allset.graph_hover`` watches the Graph Editor's mouse
 moves (always PASS_THROUGH) and keeps, per editor, the shown curve whose line passes within ``HOVER_PX`` of the
 mouse (the nearest one); the editor redraws only when that curve changes. ``_draw`` draws it again over the editor
-in a lighter tint of its own colour. Pure rules: ``segment_distance``, ``nearest_curve``, ``lighter``.
+in a lighter tint of its own colour. Like Maya, the highlight goes as soon as the mouse is outside the curve view:
+``allset.hover_leave`` (a "Window" keymap mouse-move item, so it sees moves over every other area and region) drops
+it (and the Time Slider's bookmark name, ``ui/time_slider_bookmarks.py``). Pure rules: ``segment_distance``, ``nearest_curve``, ``lighter``, ``inside``.
 """
 
 import math
@@ -46,6 +48,12 @@ def nearest_curve(p, polylines, tol):
         if d <= best_d:
             best, best_d = key, d
     return best
+
+
+def inside(x, y, rect):
+    """True when window (x, y) lies in ``rect`` = (x, y, width, height)."""
+    rx, ry, rw, rh = rect
+    return rx <= x < rx + rw and ry <= y < ry + rh
 
 
 def lighter(rgb, amount=0.6):
@@ -134,6 +142,43 @@ class ALLSET_OT_graph_hover(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
+def forget_outside(wm, window, x, y):
+    """Drop every remembered curve whose Graph Editor curve view does not hold window (x, y) of ``window`` (one in
+    another window never does); the areas to redraw."""
+    gone = []
+    for win in wm.windows:
+        for area in win.screen.areas if win.screen is not None else ():
+            key = area.as_pointer()
+            if key not in _hover:
+                continue
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+            if (win != window or region is None
+                    or not inside(x, y, (region.x, region.y, region.width, region.height))):
+                _hover.pop(key, None)
+                gone.append(area)
+    return gone
+
+
+class ALLSET_OT_hover_leave(bpy.types.Operator):
+    """Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside
+    them"""
+    bl_idname = "allset.hover_leave"
+    bl_label = "Hover Leave"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        from ..ui import time_slider_bookmarks as tsb
+        for table, forget in ((_hover, forget_outside), (tsb._hover, tsb.forget_outside)):
+            if not table:
+                continue
+            try:
+                for area in forget(context.window_manager, context.window, event.mouse_x, event.mouse_y):
+                    area.tag_redraw()
+            except (AttributeError, ReferenceError):
+                table.clear()
+        return {'PASS_THROUGH'}
+
+
 def _draw():
     context = bpy.context
     try:
@@ -169,7 +214,7 @@ def _draw():
     gpu.state.blend_set('NONE')
 
 
-classes = (ALLSET_OT_graph_hover,)
+classes = (ALLSET_OT_graph_hover, ALLSET_OT_hover_leave)
 
 
 def register_handlers():

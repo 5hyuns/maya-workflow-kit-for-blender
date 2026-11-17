@@ -5,7 +5,8 @@ simulated mouse events:
   the region's left side (a single key has no box of its own), and the box follows the keys.
 - Prefer Selected Curves: with a key of curve Y selected, a click nearer to a key of curve X than to one of Y picks the
   Y key; with the option off the same click picks the X key.
-- Pre-Select Highlight: the curve under the mouse is the hovered one, none away from the curves.
+- Pre-Select Highlight: the curve under the mouse is the hovered one, none away from the curves, and none as soon
+  as the mouse moves out of the curve view (onto the channel list or another area).
 """
 
 import os
@@ -288,6 +289,48 @@ def _hover_case(name, point, want):
 _hover_case("hover_x", lambda: to_px(5, 5.0 * 4 / 9), lambda: curve(0).as_pointer())
 _hover_case("hover_y", lambda: to_px(15, curve(1).evaluate(15)), lambda: curve(1).as_pointer())
 _hover_case("hover_none", lambda: to_px(15, 0.2), lambda: None)
+
+
+def _other_region_xy(kind):
+    """Window point in the middle of the Graph Editor's channel list ('CHANNELS') or of another area ('AREA')."""
+    if kind == 'CHANNELS':
+        r = next(r for r in C["area"].regions if r.type == 'CHANNELS')
+        return r.x + r.width // 2, r.y + r.height // 2
+    a = max((a for a in win().screen.areas if a != C["area"] and a.type != 'GRAPH_EDITOR'),
+            key=lambda a: a.width * a.height)
+    return a.x + a.width // 2, a.y + a.height // 2
+
+
+def _leave_case(name, kind):
+    """Hover curve X, then one mouse move straight out of the curve view: the highlight goes at once (Maya)."""
+    def go():
+        prefs().graph_preselect = True
+        _move(*to_px(5, 5.0 * 4 / 9))
+    step(go)
+    _idle(2)
+
+    def hovered_now():
+        gh = import_module(MODULE + ".operators.graph_hover")
+        a = C["area"]
+        with bpy.context.temp_override(window=win(), area=a, region=region(), space_data=a.spaces.active):
+            return gh.hovered(bpy.context)
+
+    def before():
+        C["leave_before"] = hovered_now()
+        x, y = _other_region_xy(kind)
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    step(before)
+    _idle(2)
+
+    def verify():
+        got = hovered_now()
+        check(f"{name}: X was highlighted ({C['leave_before'] is not None}), none after one move out ({got})",
+              C["leave_before"] == curve(0).as_pointer() and got is None)
+    step(verify)
+
+
+_leave_case("leave_to_channels", 'CHANNELS')
+_leave_case("leave_to_other_area", 'AREA')
 
 
 @step

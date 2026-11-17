@@ -158,6 +158,15 @@ def patch_time_range(kd):
     _add(kd, "Time Scrub", "allset.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=shadows)
     _add(kd, "Time Scrub", "allset.time_range_all", make_event("LEFTMOUSE", value="DOUBLE_CLICK"), first=True,
          shadows=shadows)
+    # the bookmark strip (Maya layout): a click on a bookmark doesn't move the time, Ctrl + double-click highlights
+    # its range; the mouse over a bookmark shows its name and range (gone once the mouse leaves the Time Slider)
+    for mods in ({}, {"shift": True}, {"ctrl": True}):
+        _add(kd, "Time Scrub", "allset.time_slider_bookmark_click", make_event("LEFTMOUSE", **mods), first=True,
+             shadows=shadows)
+    _add(kd, "Time Scrub", "allset.time_slider_bookmark_click", make_event("LEFTMOUSE", value="DOUBLE_CLICK",
+                                                                           ctrl=True),
+         {"double": True}, first=True, shadows=shadows)
+    _add(kd, "Time Scrub", "allset.time_slider_bookmark_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
 
 
 # --- 44. Graph Editor key batch ---------------------------------------------------------------
@@ -334,6 +343,9 @@ def patch_graph_handles(kd):
 
 def patch_graph_tools(kd):
     _add(kd, "Graph Editor", "allset.graph_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
+    # the pre-selection highlight (and the Time Slider's bookmark name) goes once the mouse is anywhere outside
+    # them (Window: every area)
+    _add(kd, "Window", "allset.hover_leave", make_event("MOUSEMOVE", "ANY", any=True))
     _add(kd, "Graph Editor", "allset.graph_marquee_watch", make_event("LEFTMOUSE", "CLICK_DRAG", any=True),
          first=True, shadows=("Graph Editor",))
 

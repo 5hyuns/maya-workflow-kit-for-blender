@@ -5281,6 +5281,7 @@
    "Use the selected meshes as in-between shapes": "Use the selected meshes as in-between shapes"
   },
   "Labels/operators/bookmarks": {
+   "Act at the given frame instead of the current time": "Act at the given frame instead of the current time",
    "All": "All",
    "Color": "Color",
    "Colour of this Time Slider bookmark": "Colour of this Time Slider bookmark",
@@ -5294,10 +5295,13 @@
    "Last frame of this Time Slider bookmark": "Last frame of this Time Slider bookmark",
    "Name": "Name",
    "Next": "Next",
+   "Next / Previous Bookmark": "Next / Previous Bookmark",
    "No dialog (Maya Quick Create)": "No dialog (Maya Quick Create)",
    "Previous": "Previous",
    "Start": "Start",
    "The bookmark (default: the current one)": "The bookmark (default: the current one)",
+   "The frame to act at": "The frame to act at",
+   "The previous bookmark instead of the next one": "The previous bookmark instead of the next one",
    "This bookmark (Bookmark Manager row)": "This bookmark (Bookmark Manager row)",
    "Update Bookmark with Selection": "Update Bookmark with Selection"
   },
@@ -5919,7 +5923,8 @@
    "Toggle": "Toggle"
   },
   "Labels/operators/graph_hover": {
-   "Graph Editor Hover": "Graph Editor Hover"
+   "Graph Editor Hover": "Graph Editor Hover",
+   "Hover Leave": "Hover Leave"
   },
   "Labels/operators/graph_key_menu": {
    "Add Inbetween": "Add Inbetween",
@@ -9418,6 +9423,23 @@
    "A Shift-dragged Time Slider range is highlighted": "A Shift-dragged Time Slider range is highlighted",
    "Time Range": "Time Range"
   },
+  "Labels/ui/time_slider_bookmarks": {
+   "A double-click": "A double-click",
+   "Bookmark Manager": "Bookmark Manager",
+   "Create": "Create",
+   "Delete": "Delete",
+   "Edit": "Edit",
+   "Frame Bookmark": "Frame Bookmark",
+   "Frame Next Bookmark": "Frame Next Bookmark",
+   "Frame Previous Bookmark": "Frame Previous Bookmark",
+   "Next Bookmark": "Next Bookmark",
+   "Previous Bookmark": "Previous Bookmark",
+   "Time Slider Bookmark Click": "Time Slider Bookmark Click",
+   "Time Slider Bookmark Hover": "Time Slider Bookmark Hover",
+   "Time Slider Bookmarks": "Time Slider Bookmarks",
+   "Unframe": "Unframe",
+   "Update Bookmark with selection": "Update Bookmark with selection"
+  },
   "Labels/ui/time_slider_header": {
    "Animation Preferences": "Animation Preferences",
    "Keying": "Keying",
@@ -9761,6 +9783,7 @@
    "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time": "Create a Time Slider bookmark (a timeline marker) at the selected range or the current time",
    "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)": "Delete the Time Slider bookmark at the current time, or every bookmark (Maya Delete / Delete All Bookmarks)",
    "Edit the Time Slider bookmark at the current time: its name, colour, start and end": "Edit the Time Slider bookmark at the current time: its name, colour, start and end",
+   "Move the current time to the start of the next or previous Time Slider bookmark (wrapping round, like Maya)": "Move the current time to the start of the next or previous Time Slider bookmark (wrapping round, like Maya)",
    "Set a Time Slider bookmark's start and end to the selected Time Slider range (else the current frame)": "Set a Time Slider bookmark's start and end to the selected Time Slider range (else the current frame)",
    "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)": "Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)"
   },
@@ -10029,6 +10052,7 @@
    "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)": "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)"
   },
   "Tooltips/operators/graph_hover": {
+   "Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside\nthem": "Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside\nthem",
    "Graph Editor: remember the curve under the mouse for the pre-selection highlight": "Graph Editor: remember the curve under the mouse for the pre-selection highlight"
   },
   "Tooltips/operators/graph_key_menu": {
@@ -11178,6 +11202,11 @@
    "Open an Outliner window that lists only the scene's lights (Blender has no Light Editor)": "Open an Outliner window that lists only the scene's lights (Blender has no Light Editor)",
    "Toggle a Maya snap mode": "Toggle a Maya snap mode",
    "Toggle whether this kind of object can be selected (all 3D Views)": "Toggle whether this kind of object can be selected (all 3D Views)"
+  },
+  "Tooltips/ui/time_slider_bookmarks": {
+   "Maya's Time Slider bookmark menu (right-click on the bookmark strip): the actions work at the frame under the\nmouse": "Maya's Time Slider bookmark menu (right-click on the bookmark strip): the actions work at the frame under the\nmouse",
+   "Time Slider bookmark: a click does not move the time; Ctrl + double-click highlights the bookmark's range": "Time Slider bookmark: a click does not move the time; Ctrl + double-click highlights the bookmark's range",
+   "Time Slider: remember the bookmark under the mouse to show its name and range": "Time Slider: remember the bookmark under the mouse to show its name and range"
   },
   "Tooltips/ui/time_slider_header": {
    "Animation preferences (Maya's button at the right end of the Range Slider): Blender's\ntimeline Playback, Keying, View and Marker menus": "Animation preferences (Maya's button at the right end of the Range Slider): Blender's\ntimeline Playback, Keying, View and Marker menus",

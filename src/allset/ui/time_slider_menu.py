@@ -27,6 +27,9 @@ class ALLSET_OT_time_slider_menu(bpy.types.Operator):
     def invoke(self, context, event):
         if not _is_timeline(context):
             return {'PASS_THROUGH'}
+        from . import time_slider_bookmarks
+        if time_slider_bookmarks.open_menu(context, event):     # on the bookmark strip: Maya's bookmark menu
+            return {'FINISHED'}
         bpy.ops.wm.call_menu(name=ALLSET_MT_time_slider.__name__)
         return {'FINISHED'}
 

@@ -961,8 +961,8 @@ MAP.update({
     "Playback/Enable Stepped Preview": ("prop", "scene.allset_stepped_preview", {}),
     # the same actions as the Maya bookmark hotkeys (keymap/mapping.py, operators/bookmarks.py)
     "Visualize/Time Slider Bookmarks/Create": "allset.bookmark_create",
-    "Visualize/Time Slider Bookmarks/Next Bookmark": ("screen.marker_jump", {"next": True}),
-    "Visualize/Time Slider Bookmarks/Previous Bookmark": ("screen.marker_jump", {"next": False}),
+    "Visualize/Time Slider Bookmarks/Next Bookmark": "allset.bookmark_go",
+    "Visualize/Time Slider Bookmarks/Previous Bookmark": ("allset.bookmark_go", {"previous": True}),
     "Visualize/Time Slider Bookmarks/Frame Bookmark": ("allset.bookmark_frame", {"which": 'CURRENT'}),
     "Visualize/Time Slider Bookmarks/Frame Previous Bookmark": ("allset.bookmark_frame", {"which": 'PREVIOUS'}),
     "Visualize/Time Slider Bookmarks/Frame Next Bookmark": ("allset.bookmark_frame", {"which": 'NEXT'}),

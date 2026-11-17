@@ -169,8 +169,15 @@ def patch_attribute_edit(kd):
     hover_maps = ('Property Editor', 'View2D Buttons List', 'User Interface')
     for i, (km, idname, event, props, shadows) in enumerate(ADDED):
         if patch.event_key(event) == patch.event_key(hover):
-            ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_maps)))
+            ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_maps, 'Window')))
     for km in hover_maps:
         _add(kd, km, 'allset.attribute_field_hover', hover, first=True,
              shadows=(*hover_maps, '3D View Generic', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint',
-                      'Graph Editor'))
+                      'Graph Editor', 'Time Scrub', 'Window'))
+    # the "Window" hover-leave item (operators/graph_hover.py) runs after every one of them and after the File
+    # Browser's highlight (all pass the move on): no shadow either way
+    hover_key = patch.event_key(hover)
+    hover_kms = tuple(dict.fromkeys(km for km, _i, ev, _p, _s in ADDED if patch.event_key(ev) == hover_key))
+    for i, (km, idname, event, props, shadows) in enumerate(ADDED):
+        if km == 'Window' and patch.event_key(event) == patch.event_key(hover):
+            ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_kms, 'File Browser Main')))

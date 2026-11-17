@@ -158,8 +158,8 @@ SEARCH_SHADOWS = ("Property Editor", "Outliner", "Graph Editor Generic", "Node E
                   "Preferences", "Preferences_nav")   # Blender 5.x: Ctrl+F filter in Preferences
 BOOKMARK_KEYS = (("T", {"alt": True}, "allset.bookmark_create", {}),
                  ("T", {"alt": True, "shift": True}, "allset.bookmark_create", {"quick": True}),
-                 ("QUOTE", {}, "screen.marker_jump", {"next": True}),
-                 ("SEMI_COLON", {}, "screen.marker_jump", {"next": False}),
+                 ("QUOTE", {}, "allset.bookmark_go", {}),
+                 ("SEMI_COLON", {}, "allset.bookmark_go", {"previous": True}),
                  ("BACK_SLASH", {"shift": True}, "allset.bookmark_frame", {"which": "CURRENT"}),
                  ("QUOTE", {"shift": True}, "allset.bookmark_frame", {"which": "NEXT"}),
                  ("SEMI_COLON", {"shift": True}, "allset.bookmark_frame", {"which": "PREVIOUS"}))

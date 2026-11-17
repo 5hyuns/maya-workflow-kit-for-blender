@@ -47,6 +47,7 @@ from .time_slider_mouse import (ALLSET_OT_time_scrub, ALLSET_OT_time_range_all, 
 from .time_slider_menu import (ALLSET_MT_time_slider, ALLSET_MT_time_slider_looping,  # noqa: F401
                                ALLSET_MT_time_slider_tangents, ALLSET_OT_time_slider_menu,
                                ALLSET_OT_time_slider_unavailable, TIME_SLIDER_MENUS)
+from . import time_slider_bookmarks
 from .time_slider_ruler import (MAYA_RULER_H, ROWS, ROWS_BOOKMARKS, RULER_BG, RULER_CURRENT,  # noqa: F401
                                 RULER_FONT_SIZE, RULER_LABEL, STEP_DEVIATIONS, STEP_MATCHES, TICK_HALF_PAD, _TRIS,
                                 _draw_blue_pencil, _draw_ruler, _rows, _themed, _tris_batch, blue_pencil_marks,
@@ -104,6 +105,7 @@ def _draw_range():
     _draw_keys(context, region, maya)
     if maya:
         _draw_blue_pencil(context, region)
+        time_slider_bookmarks.draw_tip(context, region)
     if not getattr(wm, "allset_time_range_on", False):
         return
     import gpu
@@ -522,7 +524,7 @@ def _on_load(_dummy=None):
 
 classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scrub, ALLSET_OT_time_range_all,
            ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu, ALLSET_OT_time_view_lock,
-           ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
+           ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS, *time_slider_bookmarks.classes)
 
 
 # Maya's undo never moves the current time (a time change isn't an undo step there); Blender's memfile undo restores
@@ -595,6 +597,7 @@ def unregister():
     if bpy.app.timers.is_registered(restore_frame):
         bpy.app.timers.unregister(restore_frame)
     _KEEP.clear()
+    time_slider_bookmarks.clear()
     _HELD.clear()
     _KEYS.clear()
     _PARTS.clear()
