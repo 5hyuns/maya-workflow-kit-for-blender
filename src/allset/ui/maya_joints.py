@@ -44,11 +44,11 @@ from .maya_joints_shapes import (AXIS_COLORS, bbone_lines, bone_lines, _box_line
                                  shape_lines, _shape_matrix, SHAPE_TYPES, _shown, _SIN, sphere_lines, STICK_TYPES,
                                  UNSELECTED)  # noqa: F401
 from .maya_joints_arrays import (_BONE_INDEX, _bone_index, _bone_rows, _BONE_SEGMENTS, _box_array, _COLOURS,
-                                 _control_placement, _control_points, _distinct_points, _euler_xyz, _FORMATS, _join,
-                                 _join_view, joined_segments, _joint_rgba, _joint_selection, JointList, _Lines, _owner,
-                                 _paint, _part_arrays, _pose_raw, _pose_read, _RING, _RING_INDEX, _segments,
-                                 shape_moves, _sphere_index, _sphere_owner, _STILL_MODIFIERS,
-                                 _vertex_buffer)  # noqa: F401
+                                 _control_placement, _control_points, _distinct_points, _euler_xyz,
+                                 _FORMATS, _join, _join_view, joined_segments, _joint_rgba, _joint_selection,
+                                 JointList, _Lines, _owner, _paint, _part_arrays, placed_points, _pose_raw,
+                                 _pose_read, _RING, _RING_INDEX, _segments, shape_moves, _sphere_index, _sphere_owner,
+                                 _STILL_MODIFIERS, _vertex_buffer)  # noqa: F401
 from .maya_joints_cache import (_ALL_EDITS, _Build, _build_key, _BUILDS, changed, _DATA_USERS, _drop_widget,
                                 _edit_signature, edit_stamp, _EDITS, _forget_build, _GEN, _JOINED, _LEVELS, light_stamp,
                                 _lines_hold, _mark, _moved_bones, _moved_skeletons, _note, _PARTS, _PICK, _register,
@@ -477,11 +477,13 @@ def _widget_segments(shape, depsgraph):
 
 
 def _widget_plan(jl, depsgraph):
-    """The controls' shape lines joined in their own space: (points, shape per point, points per shape, the shapes
-    that change with the frame [(shape, start, count)], widget generation, int32 line index into the points of every
-    shape's segments in order). A shape that can't change with the frame keeps each of its points once; one that can
-    keeps its segments' end points. Joined once per joint list and kept while no shape's own geometry changed; the
-    shapes that change with the frame are read again in place."""
+    """The controls' shape lines joined in their own space: (points, control per point, points per control (in
+    control order), the shapes that change with the frame [(shape, start, count)], widget generation, int32 line index
+    into the points of every shape's segments, runs [(start, stop, controls, points each)]). The controls' points
+    follow one another by their point count (``placed_points`` places each run of equal counts at once). A shape that
+    can't change with the frame keeps each of its points once; one that can keeps its segments' end points. Joined
+    once per joint list and kept while no shape's own geometry changed; the shapes that change with the frame are read
+    again in place."""
     import numpy as np
     plan = jl.widgets
     if plan is not None and plan[4] != _WIDGET_GEN[0]:
@@ -495,21 +497,31 @@ def _widget_plan(jl, depsgraph):
                 break
             p[start:start + count] = segs
     if plan is None:
-        pts, index, moving, start = [], [], [], 0
+        shapes = []
         for shape in jl.ctrl_shapes:
             s, m = _widget_segments(shape, depsgraph)
-            if m:
+            shapes.append((shape, s, None) if m else (shape, *_distinct_points(s)))   # None: read every frame
+        counts = np.fromiter((len(t[1]) for t in shapes), np.intp, len(shapes))
+        order = np.argsort(counts, kind='stable')
+        pts, index, moving, runs, start = [], [], [], [], 0
+        for k in order.tolist():
+            shape, s, at = shapes[k]
+            if at is None:
                 moving.append((shape, start, len(s)))
                 at = np.arange(len(s), dtype=np.intc)
-            else:
-                s, at = _distinct_points(s)
             pts.append(s)
             index.append(at + start)
-            start += len(s)
-        counts = np.fromiter((len(s) for s in pts), np.intp, len(pts))
-        p = np.concatenate(pts) if counts.sum() else np.zeros((0, 3))
+            c = len(s)
+            if c and runs and runs[-1][3] == c:
+                runs[-1][1] = start + c
+                runs[-1][2].append(k)
+            elif c:
+                runs.append([start, start + c, [k], c])
+            start += c
+        runs = [(a, b, np.array(ks, np.intp), c) for a, b, ks, c in runs]
+        p = np.concatenate(pts) if start else np.zeros((0, 3))
         index = np.concatenate(index).astype(np.intc) if index else np.zeros(0, np.intc)
-        plan = jl.widgets = (p, np.repeat(np.arange(len(pts)), counts), counts, moving, _WIDGET_GEN[0], index)
+        plan = jl.widgets = (p, np.repeat(order, counts[order]), counts, moving, _WIDGET_GEN[0], index, runs)
     return plan
 
 
@@ -520,7 +532,7 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
     as ``_pose_raw`` read them) are read every time. The controls a display layer hides keep their points but have
     no lines."""
     import numpy as np
-    p, owner, _counts, _moving, _gen, index = _widget_plan(jl, depsgraph)
+    p, owner, _counts, _moving, _gen, index, runs = _widget_plan(jl, depsgraph)
     if not len(p):
         return None
     pbs = ob.pose.bones
@@ -535,14 +547,14 @@ def _control_lines(ob, jl, w, allm, depsgraph, props=None):
         pbs.foreach_get("use_custom_shape_bone_size", use)
         props.append(use)
     lin, off = _control_placement(jl, w, allm, props, n)
-    pts = np.einsum('kij,kj->ki', lin[owner], p) + off[owner]
+    pts = placed_points(p, lin, off, runs, owner)
     got = jl.owners.get("ctrl")
     if got is None or got[0] is not owner:
         if not jl.shown.all():                       # controls a display layer hides draw nothing
             pairs = index.reshape(-1, 2)
             index = np.ascontiguousarray(pairs[jl.shown[jl.ctrl][owner][pairs[:, 0]]].reshape(-1))
         got = jl.owners["ctrl"] = (owner, jl.ctrl[owner], index)
-    return pts.astype(np.float32), got[1], got[2]
+    return pts, got[1], got[2]
 
 
 def _own_lines(ob, jl, w, allm, kind):

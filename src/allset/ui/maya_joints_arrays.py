@@ -77,17 +77,50 @@ def _pose_raw(ob, scene, jl):
     pbs.foreach_get("matrix", mat)
     head = np.empty(n * 3, np.float32)
     pbs.foreach_get("head", head)
-    shape = None
-    if len(jl.ctrl):
-        shape = []
-        for prop in ("custom_shape_translation", "custom_shape_rotation_euler", "custom_shape_scale_xyz"):
-            a = np.empty(n * 3, np.float32)
-            pbs.foreach_get(prop, a)
-            shape.append(a)
-        use = np.zeros(n, bool)
-        pbs.foreach_get("use_custom_shape_bone_size", use)
-        shape.append(use)
+    shape = _shape_props(ob, pbs, n) if len(jl.ctrl) else None
     return mat, head, np.array(mw, np.float64), k, shape
+
+
+_SHAPE_PROPS = {}   # skeleton object pointer -> (edit stamps, custom shape offset / turn / scale / use bone size)
+
+
+def _shape_props_move(ob):
+    """Can the custom shape offset / turn / scale of ``ob``'s pose bones change with the frame or another object?
+    Keyed or driven, or an NLA strip plays an action on the object."""
+    from .. import compat
+    ad = ob.animation_data
+    if ad is None:
+        return False
+    if any(len(t.strips) for t in ad.nla_tracks):
+        return True
+    return any("custom_shape" in fc.data_path for fc in (*compat.id_fcurves(ob), *ad.drivers))
+
+
+def _shape_props(ob, pbs, n):
+    """[offset, turn, scale (n * 3 float32), use bone size (n bool)] of the custom shapes of every pose bone. Kept
+    while nothing updated the skeleton (any update to it reads them again) and nothing keys or drives them."""
+    import numpy as np
+    from .maya_joints_cache import _ALL_EDITS, _SKEL_EDITS, _SKEL_LIGHT
+    ptr = ob.as_pointer()
+    key = (n, _ALL_EDITS[0], _SKEL_EDITS.get(ptr, 0), _SKEL_LIGHT.get(ptr, 0))
+    got = _SHAPE_PROPS.get(ptr)
+    if got is not None and got[0] == key:
+        return got[1]
+    shape = []
+    for prop in ("custom_shape_translation", "custom_shape_rotation_euler", "custom_shape_scale_xyz"):
+        a = np.empty(n * 3, np.float32)
+        pbs.foreach_get(prop, a)
+        shape.append(a)
+    use = np.zeros(n, bool)
+    pbs.foreach_get("use_custom_shape_bone_size", use)
+    shape.append(use)
+    if len(_SHAPE_PROPS) > 64:
+        _SHAPE_PROPS.clear()
+    if _shape_props_move(ob):
+        _SHAPE_PROPS.pop(ptr, None)
+    else:
+        _SHAPE_PROPS[ptr] = (key, shape)
+    return shape
 
 
 def _pose_read(ob, scene, jl, raw=None, only=None):
@@ -224,15 +257,46 @@ def _control_placement(jl, w, allm, props, n, which=None):
 
 def _control_points(jl, w, allm, props, plan, which):
     """(bool per control shape point, float32 points) of the controls ``which`` (indices, sorted) alone: their points
-    in ``_control_lines`` and those points worked out again (the same numbers; every control shown)."""
+    in ``_control_lines`` and those points worked out again (each control placed as among all of them: the same
+    numbers; every control shown)."""
     import numpy as np
     p, owner = plan[0], plan[1]
     chosen = np.zeros(len(jl.ctrl), bool)
     chosen[which] = True
     at = chosen[owner]
     lin, off = _control_placement(jl, w, allm, props, len(props[3]), which)
-    local = (np.cumsum(chosen) - 1)[owner[at]]          # position in ``which`` of each point's control
-    return at, (np.einsum('kij,kj->ki', lin[local], p[at]) + off[local]).astype(np.float32)
+    slot = np.cumsum(chosen) - 1                           # position in ``which`` of each chosen control
+    if not _by_runs(plan[6], len(jl.ctrl)):
+        local = slot[owner[at]]
+        return at, (np.einsum('kij,kj->ki', lin[local], p[at]) + off[local]).astype(np.float32)
+    lt, out = lin.transpose(0, 2, 1), []
+    for start, stop, ks, c in plan[6]:
+        mine = chosen[ks]
+        if mine.any():
+            k = slot[ks[mine]]
+            q = p[start:stop].reshape(len(ks), c, 3)[mine]
+            out.append((q @ lt[k] + off[k][:, None, :]).reshape(-1, 3))
+    return at, (np.concatenate(out) if out else np.zeros((0, 3))).astype(np.float32)
+
+
+def _by_runs(runs, k):
+    """Place ``k`` controls run by run (``placed_points``): not when there are many short runs (a few controls whose
+    shapes have many different point counts), each point with its control's matrix then."""
+    return len(runs) * 8 <= k
+
+
+def placed_points(p, lin, off, runs, owner):
+    """float32 points ``p`` of the controls' shapes (``_widget_plan``, ``owner``: control per point) placed by each
+    control's linear part ``lin`` (K, 3, 3) and offset ``off`` (K, 3): each run of controls with the same point count
+    at once, one matrix product per control (no 3 x 3 matrix copied per point)."""
+    import numpy as np
+    if not _by_runs(runs, len(lin)):
+        return (np.einsum('kij,kj->ki', lin[owner], p) + off[owner]).astype(np.float32)
+    lt = lin.transpose(0, 2, 1)
+    out = np.empty((len(p), 3))
+    for start, stop, ks, c in runs:
+        out[start:stop] = (p[start:stop].reshape(len(ks), c, 3) @ lt[ks] + off[ks][:, None, :]).reshape(-1, 3)
+    return out.astype(np.float32)
 
 
 def _box_array(frames, corners):

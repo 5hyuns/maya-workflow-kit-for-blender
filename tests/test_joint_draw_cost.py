@@ -513,6 +513,42 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
         mj.transforming = real
 
 
+def test_a_limb_drag_among_many_controls_of_several_shapes_keeps_every_bit():
+    """Dragging a limb of a skeleton with many controls whose shapes have different point counts (placed run by run)
+    works out again only the controls that moved, and their points are the ones of a build from scratch, bit for
+    bit."""
+    _clear()
+    shapes = [_circle("ctrl4", n=4), _circle("ctrl12", n=12), _circle("ctrl20", n=20)]
+    a = _rig(0.0, count=90)
+    for i, pb in enumerate(a.pose.bones):
+        pb.rotation_mode = 'XYZ'
+        if i % 3 == 1:
+            pb.custom_shape = shapes[(i // 3) % 3]
+            pb.custom_shape_scale_xyz = (1.0, 1.0 + 0.01 * i, 0.8)
+    bpy.context.view_layer.update()
+    view = _view([a])
+    jl = mj.joint_list(a)
+    arrays = import_module(kit.MODULE + ".ui.maya_joints_arrays")
+    plan = mj._widget_plan(jl, bpy.context.evaluated_depsgraph_get())
+    assert arrays._by_runs(plan[6], len(jl.ctrl)) and len(plan[6]) == 3, (len(jl.ctrl), len(plan[6]))
+    real = mj.transforming
+    try:
+        mj.transforming = lambda: True            # a drag runs: only poses change
+        mj._joined(view)
+        for step, bone in enumerate((80, 85, 61)):
+            a.pose.bones[bone].rotation_euler.x += 0.2
+            bpy.context.view_layer.update()
+            with _Count(mj, "_control_lines") as n:
+                got = mj._joined(view)
+            assert not n["_control_lines"], f"step {step}: only the moved controls ({n.calls})"
+            pts, cols = mj.joined_segments(got)
+            want = _fresh(view)
+            assert _bits(pts, want[0]) and _bits(cols, want[1]), f"step {step}: the lines of a build from scratch"
+            mj._joined(view)
+    finally:
+        mj.transforming = real
+
+
 def test_a_selection_or_pose_mode_keeps_the_label_joints():
     """Selecting joints, the active joint and switching between Object and Pose Mode keep the Draw Label joints found
     (they are not looked for again); a rename, a hidden joint or a new label finds them again. The labels are the ones
