@@ -322,3 +322,24 @@ def patch_graph_handles(kd):
         _add(kd, "Graph Editor", "allset.graph_handle_box", make_event("LEFTMOUSE", "CLICK_DRAG", shift=shift,
                                                                        ctrl=ctrl),
              {"mode": mode}, first=True, shadows=("Graph Editor",))
+
+
+# --- Graph Editor Region Keys tool, Pre-Select Highlight, Prefer Selected Curves ----------------------------------
+# The mouse moves are watched for the curve under the mouse; a marquee is read when it ends (the Region Keys tool
+# keeps its region, Prefer Selected Curves drops the other curves' keys); with Prefer Selected Curves a press near a
+# key of a curve with selected keys picks it (Graph Editor rules: Ctrl = plain click, Shift toggles, Ctrl+Shift adds).
+# All pass through when they don't apply. The watchers go in front of every Graph Editor item; the click goes in
+# front of the Graph Editor's click select but behind the kit's tangent handle, Scale Keys box and Shift press items
+# (``patch_graph_prefer_click`` runs early in PATCHES).
+
+def patch_graph_tools(kd):
+    _add(kd, "Graph Editor", "allset.graph_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
+    _add(kd, "Graph Editor", "allset.graph_marquee_watch", make_event("LEFTMOUSE", "CLICK_DRAG", any=True),
+         first=True, shadows=("Graph Editor",))
+
+
+def patch_graph_prefer_click(kd):
+    for shift, ctrl, mode in ((False, False, 'SET'), (False, True, 'SET'), (True, False, 'TOGGLE'),
+                              (True, True, 'ADD')):
+        _add(kd, "Graph Editor", "allset.graph_prefer_click", make_event("LEFTMOUSE", shift=shift, ctrl=ctrl),
+             {"mode": mode}, first=True, shadows=("Graph Editor", "Screen", "View2D"))

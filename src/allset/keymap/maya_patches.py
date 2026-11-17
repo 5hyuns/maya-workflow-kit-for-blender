@@ -31,6 +31,7 @@ from .maya_patches_mesh import (  # noqa: F401
     patch_component_pick_walk, patch_key_batch_3, patch_mesh_components, patch_uv, patch_weight_paint_exit)
 from .maya_patches_anim import (
     patch_global_set_key, patch_graph_handles, patch_graph_key_tool_everywhere, patch_graph_keys,
+    patch_graph_prefer_click, patch_graph_tools,
     patch_graph_keys_2, patch_graph_outliner, patch_key_insert, patch_key_stepping, patch_motion_trail_keys,
     patch_motion_trail_mmb, patch_time_range, patch_time_slider)
 from .maya_patches_editors import (
@@ -54,7 +55,8 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.hg_click", "allset.hg_mmb", "allset.hg_rmb", "allset.hg_zoom",
                       "allset.hg_frame", "allset.marking_menu",
                       "allset.graph_handle_drag", "allset.graph_handle_box", "allset.motion_trail_key",
-                      "allset.nav_2d")
+                      "allset.nav_2d", "allset.graph_hover", "allset.graph_marquee_watch",
+                      "allset.graph_prefer_click")
 PASS_THROUGH_FIRST += ('allset.attribute_field_hover', 'allset.option_editor_key')
 PASS_THROUGH_FIRST += OUTLINER_TREE_ITEMS
 
@@ -83,7 +85,7 @@ def patch_numpad_digits(kd):
 
 # Order matters: a later patch's ``first=True`` items go in front of earlier ones in the same keymap, and
 # the last passes read or rewrite what the earlier ones put in ``ADDED``.
-PATCHES = (patch_tweak_fallback, patch_selection, patch_display, patch_group, patch_space,
+PATCHES = (patch_tweak_fallback, patch_selection, patch_graph_prefer_click, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_motion_trail_mmb, patch_in_view_mmb, patch_cb_slider, patch_marking_menus,
@@ -102,6 +104,7 @@ PATCHES += (patch_weight_paint_exit, patch_global_set_key, patch_graph_key_tool_
 PATCHES += (patch_component_slide,)
 PATCHES += (patch_uv_shell_hover,)
 PATCHES += (patch_graph_handles,)
+PATCHES += (patch_graph_tools,)
 PATCHES += (patch_numpad_digits,)
 PATCHES += (patch_attribute_edit,)
 

@@ -5918,6 +5918,9 @@
    "Set": "Set",
    "Toggle": "Toggle"
   },
+  "Labels/operators/graph_hover": {
+   "Graph Editor Hover": "Graph Editor Hover"
+  },
   "Labels/operators/graph_key_menu": {
    "Add Inbetween": "Add Inbetween",
    "Clamp": "Clamp",
@@ -5998,6 +6001,10 @@
    "Shift Press on Keys": "Shift Press on Keys",
    "Tool": "Tool",
    "What a middle-mouse drag does to the selected keys in the Graph Editor": "What a middle-mouse drag does to the selected keys in the Graph Editor"
+  },
+  "Labels/operators/graph_region": {
+   "Graph Editor Marquee": "Graph Editor Marquee",
+   "Select Key": "Select Key"
   },
   "Labels/operators/graph_retime": {
    "Retime Tool": "Retime Tool"
@@ -7846,7 +7853,9 @@
    "Plateau": "Plateau",
    "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed": "Playback speed of a new scene made with File > New Scene / Ctrl+N in Maya mode (like Maya's New Scene Options). The open scene and Blender's startup file are not changed",
    "Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size": "Polygon primitives from the Create menu and shelf are drawn in a view: drag to place and size",
+   "Pre-Select Highlight": "Pre-Select Highlight",
    "Pre-selection Highlight": "Pre-selection Highlight",
+   "Prefer Selected Curves": "Prefer Selected Curves",
    "Prevent Negative Scale": "Prevent Negative Scale",
    "Previous Frames": "Previous Frames",
    "Project": "Project",
@@ -7914,6 +7923,7 @@
    "Tangent weight of new animation curves, keyed in any way (Maya Curves > Default Tangent Weight)": "Tangent weight of new animation curves, keyed in any way (Maya Curves > Default Tangent Weight)",
    "The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn in Maya's lighter grey": "The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn in Maya's lighter grey",
    "The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end": "The Graph Editor draws and drags tangent handles like Maya: a non-weighted tangent at a fixed length on screen along its direction, a weighted one at its real end",
+   "The Graph Editor draws the curve under the mouse brighter before you click it": "The Graph Editor draws the curve under the mouse brighter before you click it",
    "The Time Slider shows only the keys of the channels selected in the Channel Box": "The Time Slider shows only the keys of the channels selected in the Channel Box",
    "The UV Editor's Move / Rotate / Scale tools show Maya-style handles: U / V arrows, a rotate ring, U / V scale boxes": "The UV Editor's Move / Rotate / Scale tools show Maya-style handles: U / V arrows, a rotate ring, U / V scale boxes",
    "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both": "The keys Maya mode uses. The Maya / Blender switch shortcut (Ctrl+Alt+Shift+M) works with both",
@@ -7940,6 +7950,7 @@
    "When the selection changes, the Graph Editor also refits its time axis to the curves it shows (Maya View > Auto Frame Time)": "When the selection changes, the Graph Editor also refits its time axis to the curves it shows (Maya View > Auto Frame Time)",
    "When the selection changes, the Graph Editor refits its value axis to the curves it shows (Maya View > Auto Frame)": "When the selection changes, the Graph Editor refits its value axis to the curves it shows (Maya View > Auto Frame)",
    "Where autosaves go": "Where autosaves go",
+   "While some curves have selected keys or tangents, Graph Editor clicks and marquees pick the keys of those curves first": "While some curves have selected keys or tangents, Graph Editor clicks and marquees pick the keys of those curves first",
    "With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a side to scale them in time or value, a corner for both": "With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a side to scale them in time or value, a corner for both",
    "Write each curve's Maya name (pCube1.translateX) beside its last key in the Graph Editor": "Write each curve's Maya name (pCube1.translateX) beside its last key in the Graph Editor",
    "Write every command run from a menu, shelf or marking menu into the Script Editor history (as the Python call the kit runs)": "Write every command run from a menu, shelf or marking menu into the Script Editor history (as the Python call the kit runs)",
@@ -10017,6 +10028,9 @@
    "Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)": "Select and drag a tangent handle in the Graph Editor (a non-weighted tangent only turns)",
    "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)": "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)"
   },
+  "Tooltips/operators/graph_hover": {
+   "Graph Editor: remember the curve under the mouse for the pre-selection highlight": "Graph Editor: remember the curve under the mouse for the pre-selection highlight"
+  },
   "Tooltips/operators/graph_key_menu": {
    "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)": "Add or remove an inbetween: the keys after the current time on the curves shown move one frame later or\nearlier (Maya Keys > Add / Remove Inbetween)",
    "Choose what a click or drag picks in the Graph Editor (Maya Select > All / Only Curve)": "Choose what a click or drag picks in the Graph Editor (Maya Select > All / Only Curve)",
@@ -10050,6 +10064,10 @@
    "Middle-mouse drag in the Graph Editor: move / turn / scale the selected keys with the current key tool,\ncounted from the press": "Middle-mouse drag in the Graph Editor: move / turn / scale the selected keys with the current key tool,\ncounted from the press",
    "Pick what a middle-mouse drag does to the selected keys: move, turn their tangents or scale them\n(w / e / r in the Graph Editor, like Maya)": "Pick what a middle-mouse drag does to the selected keys: move, turn their tangents or scale them\n(w / e / r in the Graph Editor, like Maya)",
    "Shift+press on a selected key: remember the key selection for a Shift+drag that moves the keys": "Shift+press on a selected key: remember the key selection for a Shift+drag that moves the keys"
+  },
+  "Tooltips/operators/graph_region": {
+   "Prefer Selected Curves: a Graph Editor click picks a key of the curves with selected keys first": "Prefer Selected Curves: a Graph Editor click picks a key of the curves with selected keys first",
+   "Region Keys tool / Prefer Selected Curves: read the Graph Editor's marquee when it ends (passes through)": "Region Keys tool / Prefer Selected Curves: read the Graph Editor's marquee when it ends (passes through)"
   },
   "Tooltips/operators/graph_retime": {
    "Maya Retime Tool: double-click in the curve area to add retime markers, drag a marker's handle to scale and\nripple the keys of the displayed curves, the ✕ deletes a marker. Esc or Q/W/E/R/T ends the tool": "Maya Retime Tool: double-click in the curve area to add retime markers, drag a marker's handle to scale and\nripple the keys of the displayed curves, the ✕ deletes a marker. Esc or Q/W/E/R/T ends the tool"

@@ -30,7 +30,9 @@ ROTATE_DEG_PER_PX = 0.5   # rotate tool on keys: tangent turn per px of drag
 
 TOOLS = (('MOVE', "Move Keys", "Middle-mouse drags move the selected keys (w)"),
          ('ROTATE', "Rotate Tangents", "Middle-mouse drags turn the selected keys' tangents (e)"),
-         ('SCALE', "Scale Keys", "Middle-mouse drags scale the selected keys around the press point (r)"))
+         ('SCALE', "Scale Keys", "Middle-mouse drags scale the selected keys around the press point (r)"),
+         ('REGION', "Region Keys", "A marquee leaves its region as a box: drag a side or corner to scale the keys "
+          "inside, drag inside it to move them"))
 
 
 # --- pure rules -------------------------------------------------------------------------------------------------
@@ -437,6 +439,8 @@ class ALLSET_OT_graph_key_drag(bpy.types.Operator):
         region = self._region = context.region
         self._press = (event.mouse_x - region.x, event.mouse_y - region.y)
         self._tool = key_tool(context)
+        if self._tool == 'REGION':
+            self._tool = 'MOVE'                 # the Region Keys tool's middle drag moves the keys
         self._lock = not unconstrained(context) and self._tool != 'ROTATE'
         self._axis = None
         self._origin = self._press

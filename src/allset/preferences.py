@@ -260,6 +260,15 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Scale Keys Manipulator", default=True,
         description="With the Scale Keys tool (r) the Graph Editor draws a box around the selected keys: drag a "
                     "side to scale them in time or value, a corner for both")
+    # Graph Editor Select > Pre-Select Highlight / Prefer Selected Curves (Maya check items, off like Maya;
+    # operators/graph_hover.py, operators/graph_region.py)
+    graph_preselect: bpy.props.BoolProperty(
+        name="Pre-Select Highlight", default=False,
+        description="The Graph Editor draws the curve under the mouse brighter before you click it")
+    graph_prefer_selected: bpy.props.BoolProperty(
+        name="Prefer Selected Curves", default=False,
+        description="While some curves have selected keys or tangents, Graph Editor clicks and marquees pick the "
+                    "keys of those curves first")
 
     # Graph Editor depth 2: View > Show Buffer Curves (default off),
     # Curves > Default Tangent Weight (default Non-weighted), Retime Tool Snap On Frame (default off), Edit > Set Curve

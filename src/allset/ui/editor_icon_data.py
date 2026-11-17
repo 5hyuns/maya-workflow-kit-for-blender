@@ -24,7 +24,8 @@ GRAPH_ICONS = (
     ("key_nearest_tool", 'RESTRICT_SELECT_OFF', None, "Move Nearest Picked Key Tool"),
     ("key_insert_tool", 'KEY_HLT', "allset.insert_key_tool", "Insert Keys Tool"),
     ("key_lattice_tool", 'MOD_LATTICE', None, "Lattice Deform Keys"),
-    ("key_region_tool", 'FULLSCREEN_ENTER', "transform.resize", "Region Tool: Scale or move keys"),
+    ("key_region_tool", 'FULLSCREEN_ENTER', ("prop", "window_manager.allset_graph_key_tool", {"value": 'REGION'}),
+     "Region Tool: Scale or move keys"),
     ("key_retime_tool", 'TIME', "allset.retime_tool", "Retime Tool: scale and ripple keys"),
     "|",
     # Maya's curve sculpting group (the w / e / r key tools are keys and Edit > Transformation Tools items)

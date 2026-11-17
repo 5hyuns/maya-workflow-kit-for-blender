@@ -291,6 +291,13 @@ MAP = {
     f"{GE}/Select/In Tangent": _prop("addon_prefs.graph_select_in"),
     f"{GE}/Select/Out Tangent": _prop("addon_prefs.graph_select_out"),
     f"{GE}/Select/Snap time to selection": _prop("addon_prefs.snap_time_to_selection"),
+    # the curve under the mouse drawn brighter; clicks / marquees prefer the curves with selected keys
+    # (operators/graph_hover.py, operators/graph_region.py)
+    f"{GE}/Select/Pre-Select Highlight": _prop("addon_prefs.graph_preselect"),
+    f"{GE}/Select/Prefer Selected Curves": _prop("addon_prefs.graph_prefer_selected"),
+    # Maya's Region Keys tool: the marquee's region is a box whose sides scale the keys inside (operators/graph_region)
+    f"{GE}/Edit/Transformation Tools/Region Keys Tool": ("prop", "window_manager.allset_graph_key_tool",
+                                                         {"value": 'REGION'}),
     # #105: Graph Editor depth 2 (Dope Sheet twins below)
     **_depth2(GE),
     f"{GE}/View/Show Buffer Curves": _prop("addon_prefs.graph_show_buffers"),
@@ -315,6 +322,8 @@ MAP = {
     **_keys_menu(DS, False),
     **_list_show_menus(DS),
     f"{DS}/Edit/Select Unsnapped": "allset.select_unsnapped",
+    # Maya's Dope Sheet Offset Keys = the Graph Editor's Offset Curves command on the Dope Sheet's keys
+    f"{DS}/Channels/Offset Keys": "allset.offset_curves",
     **_help_menu(DS, "editors/dope_sheet/index.html"),
 
     # --- UV Editor (textureWindow menus); kit UV commands ---

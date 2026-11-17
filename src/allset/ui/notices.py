@@ -656,8 +656,8 @@ def _anim_editor_categories(ed):
     """Greyed items of the Graph Editor / Dope Sheet menu bars (Maya 2026's menus)."""
     m = {
         f"{ed}/Edit/Transformation Tools": (
-            "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice or "
-            "region key tool (the Retime Tool is the kit's)."),
+            "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice for "
+            "keys (the Region and Retime tools are the kit's)."),
         f"{ed}/Edit/Scene Time Warp": (
             "Time Stretching", "Blender has no time warp curve: Output Properties > Frame Range > Time Stretching "
             "remaps the whole scene."),
@@ -743,9 +743,6 @@ CATEGORIES.update({
     "Graph Editor/View/Theme": (
         "Themes", "Blender's colours come from the theme: Preferences > Themes (install a Maya-like theme there if you want "
         "Maya's colours)."),
-    "Graph Editor/Select/Pre-Select Highlight": (
-        "Hover", "Blender's Graph Editor doesn't highlight the curve under the mouse: the picked curve is drawn "
-        "brighter once selected."),
     "Dope Sheet/View": (
         "View menu", "Blender's Dope Sheet has no scene summary, channel sets or key value display: a key's value "
         "shows in the Graph Editor."),
@@ -950,14 +947,8 @@ _SHAPES = ("Shape Keys filter", "Blender shows shape key channels or not (header
 NOTICES.update({
     **{f"{ed}/List/Show Animated Shapes/{item}": _SHAPES for ed in ("Graph Editor", "Dope Sheet")
        for item in ("One", "None")},
-    "Graph Editor/Select/Prefer Selected Curves": (
-        "Hide unselected (Shift+H)", "Blender picks keys on every curve it shows: hide the unselected curves "
-        "(Shift+H) to pick only on the selected ones."),
     "Graph Editor/View/Channel Sets": (
         "Not in Blender", "Blender's channel list has no channel sets."),
-    "Dope Sheet/Channels/Offset Keys": (
-        "G with a number", "Blender moves the selected keys by a typed number of frames: G, then the amount, then "
-        "Enter."),
     "Dope Sheet/Edit/Transformation Tools/Select Tool": (
         "Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
     "Dope Sheet/Edit/Transformation Tools/Select Keys": (

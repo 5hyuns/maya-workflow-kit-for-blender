@@ -198,6 +198,10 @@ from . import graph_scale_box  # noqa: E402  Graph Editor Scale Keys manipulator
 classes += graph_scale_box.classes
 from . import graph_handle_drag  # noqa: E402  Graph Editor tangent handles like Maya (#296)
 classes += graph_handle_drag.classes
+from . import graph_region  # noqa: E402  Graph Editor Region Keys tool, Select > Prefer Selected Curves
+classes += graph_region.classes
+from . import graph_hover  # noqa: E402  Graph Editor Select > Pre-Select Highlight
+classes += graph_hover.classes
 from . import pan_zoom  # noqa: E402  Maya 2D Pan/Zoom: the \ key and the 2D Pan/Zoom Tool's drags
 classes += pan_zoom.classes
 from . import poly_display  # noqa: E402  Display > Polygons Normals Size / Reset Display
@@ -315,6 +319,7 @@ def register():
     graph_menu_198.register_props()
     graph_move.register_props()
     graph_scale_box.register_handlers()
+    graph_hover.register_handlers()
     skin_tools_199.register_handlers()
     constrain_199.register_handlers()
     graph_curves_203.register_handlers()
@@ -380,6 +385,8 @@ def unregister():
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
     graph_scale_box.unregister_handlers()
+    graph_hover.unregister_handlers()
+    graph_region.unregister_timers()
     graph_handle_drag.unregister_timers()
     graph_move.unregister_timers()
     graph_move.unregister_props()

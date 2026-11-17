@@ -17,7 +17,7 @@ a side whose keys all sit on one frame / value has no extent and doesn't scale. 
 
 import bpy
 
-from . import graph_move
+from . import graph_move, graph_region
 
 HANDLE_PX = 4.0          # half size of a handle square (x UI scale)
 HIT_PX = 6.0             # how close to a side / handle a press must be (x UI scale)
@@ -106,8 +106,15 @@ def factor(edge, pivot, delta, min_span=MIN_EXTENT):
 
 # --- the box in a Graph Editor ------------------------------------------------------------------------------------
 
+def _tool(context):
+    return getattr(context.window_manager, "allset_graph_key_tool", 'MOVE')
+
+
 def enabled(context):
-    if getattr(context.window_manager, "allset_graph_key_tool", 'MOVE') != 'SCALE':
+    tool = _tool(context)
+    if tool == 'REGION':
+        return True                     # the Region Keys tool is the box itself
+    if tool != 'SCALE':
         return False
     from .. import preferences
     try:
@@ -156,7 +163,9 @@ def current_boxes(context):
     """(box in region pixels, box in view units) of this Graph Editor region, None when it isn't shown."""
     if not graph_move._graph_window(context) or not enabled(context):
         return None
-    view = box_of(_selected_points(context))
+    view = graph_region.region_of(context) if _tool(context) == 'REGION' else None
+    if view is None:
+        view = box_of(_selected_points(context))
     if view is None:
         return None
     v2d = context.region.view2d
@@ -239,6 +248,9 @@ class ALLSET_OT_graph_scale_box(bpy.types.Operator):
             px, py, ex, ey, _t, _v = pivot_of(view, name)
             self._edge, self._pivot = (ex, ey), (px, py)
         self._region = region
+        # the Region Keys tool's marquee region follows the drag (graph_region)
+        self._region_view = view if _tool(context) == 'REGION' and graph_region.region_of(context) else None
+        self._last = None
         self._press_px = (x, y)
         self._press = region.view2d.region_to_view(x, y)
         self._axes = (time, value)
@@ -264,11 +276,20 @@ class ALLSET_OT_graph_scale_box(bpy.types.Operator):
             dt = mx - self._press[0] if time else 0.0
             dv = my - self._press[1] if value else 0.0
             self._keys.apply(dt, dv, self._snap, time_axis=time)
+            self._last = ('MOVE', dt, dv)
             return
         ex, ey = self._edge
         sx = factor(ex, self._pivot[0], mx - self._press[0], 1e-9) if time else 1.0
         sy = factor(ey, self._pivot[1], my - self._press[1], 1e-9) if value else 1.0
         self._keys.apply_scale(self._pivot, sx, sy, self._snap)
+        self._last = ('SCALE', sx, sy)
+
+    def _keep_region(self, context):
+        if self._region_view is None or self._last is None:
+            return
+        kind, a, b = self._last
+        view = graph_region.region_moved(self._region_view, a, b) if kind == 'MOVE' else             graph_region.region_scaled(self._region_view, self._pivot, a, b)
+        graph_region.store(context, view)
 
     def modal(self, context, event):
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
@@ -296,6 +317,7 @@ class ALLSET_OT_graph_scale_box(bpy.types.Operator):
                         pass
                 return {'CANCELLED'}
             self._keys.finish()
+            self._keep_region(context)
             graph_move._redraw(context)
             return {'FINISHED'}
         return {'RUNNING_MODAL'}

@@ -172,4 +172,5 @@ def patch_attribute_edit(kd):
             ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_maps)))
     for km in hover_maps:
         _add(kd, km, 'allset.attribute_field_hover', hover, first=True,
-             shadows=(*hover_maps, '3D View Generic', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint'))
+             shadows=(*hover_maps, '3D View Generic', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint',
+                      'Graph Editor'))
