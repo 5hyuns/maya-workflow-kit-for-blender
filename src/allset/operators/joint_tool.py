@@ -155,10 +155,10 @@ def joint_sphere_radius(arm, bone):
     scale = max(arm.matrix_world.to_scale())
     maya = bone.get(RADIUS)
     if maya is not None:     # the Maya joint radius (Joint Tool variable bone size) is the click sphere
-        # x Display > Animation > Joint Size (Maya jointDisplayScale)
-        from .joint_display import joint_size
+        # x Display > Animation > Joint Size (Maya jointDisplayScale); the armature's own scale leaves it alone
+        from .joint_display import joint_size, skeleton_scale
         size = joint_size(bpy.context.scene)
-        return float(maya) * units.radius_unit(bpy.context.scene) * scale * size
+        return float(maya) * units.radius_unit(bpy.context.scene) * skeleton_scale(arm) * size
     if arm.data.display_type != 'OCTAHEDRAL':
         return 0.0
     src = bone.parent if bone.parent is not None and bone.use_connect else bone

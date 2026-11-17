@@ -85,13 +85,13 @@ def skeleton(ob, scene):
     """{name: Joint} of armature object ``ob`` in world space: the joints not hidden by their own flags, with their
     display layer state (a joint a layer hides is kept for its parent's bone, ``joint_segments`` draws nothing for
     it)."""
-    from ..operators import joints
+    from ..operators import joint_display, joints
     from ..operators.joint_edit import local_frame
     from . import layer_joints
     layered = layer_joints.state(ob)
     mw = ob.matrix_world
     m3 = mw.to_3x3()
-    s = max(mw.to_scale())
+    s = joint_display.skeleton_scale(ob)
     scale = _radius_scale(scene)
     out = {}
     if ob.mode == 'EDIT':

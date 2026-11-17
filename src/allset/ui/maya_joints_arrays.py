@@ -72,7 +72,7 @@ def _pose_raw(ob, scene, jl):
     pbs = ob.pose.bones
     n = len(pbs)
     mw = ob.matrix_world
-    k = 0.5 * joint_display.joint_size(scene) * units.radius_unit(scene) * max(mw.to_scale())
+    k = 0.5 * joint_display.joint_size(scene) * units.radius_unit(scene) * joint_display.skeleton_scale(ob)
     mat = np.empty(n * 16, np.float32)
     pbs.foreach_get("matrix", mat)
     head = np.empty(n * 3, np.float32)

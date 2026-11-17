@@ -103,7 +103,8 @@ def _world_radius(ob, name):
     bone = bones.get(name)
     if bone is None:
         return 0.0
-    return maya_joints.drawn_radius(bone, bpy.context.scene, max(ob.matrix_world.to_scale()))
+    from .joint_display import skeleton_scale
+    return maya_joints.drawn_radius(bone, bpy.context.scene, skeleton_scale(ob))
 
 
 def _circle(c, r):

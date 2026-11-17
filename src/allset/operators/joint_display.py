@@ -137,6 +137,15 @@ def joint_size(scene):
     return 1.0
 
 
+def skeleton_scale(ob):
+    """How much the joints of skeleton object ``ob`` grow with its transforms: by the scale of what the object sits
+    under (a scaled parent, like a Maya group above the skeleton), not by the object's own scale. Like Maya, where a
+    joint's own scale leaves its sphere alone and the joints below keep their size (Segment Scale Compensate): an
+    armature scaled to fit a character keeps Radius-sized joints."""
+    mw = ob.matrix_world
+    return max((mw @ ob.matrix_basis.inverted_safe()).to_scale())
+
+
 classes = (ALLSET_OT_local_rotation_axes, ALLSET_OT_joint_size)
 
 
