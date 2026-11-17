@@ -32,6 +32,10 @@ drag, smoother window drags in Maya mode, faster joint drawing while playing, an
 - On the Time Slider, like Maya: the mouse over a bookmark shows its name and range; a right-click on the bookmark
   strip opens the bookmark menu, whose actions work on the bookmark under the mouse; a click on a bookmark leaves the
   time where it is; Ctrl + double-click highlights the bookmark's range.
+- Time Slider bookmarks: Ctrl + drag a bookmark to move it, or near its start or end to move that end; the time goes
+  to the frame under the mouse, like Maya.
+- Time Slider bookmarks: the mouse over a bookmark draws its two end lines down through the Time Slider in its colour,
+  and each bookmark shows a line at both ends, like Maya.
 - Graph Editor: Edit > Transformation Tools > **Region Keys Tool** (and its toolbar button): a marquee leaves its
   region as a box; drag a side or corner to scale the keys inside, drag inside it to move them, like Maya.
 - Graph Editor: Select > **Pre-Select Highlight** draws the curve under the mouse brighter before you click it (off
@@ -48,7 +52,8 @@ drag, smoother window drags in Maya mode, faster joint drawing while playing, an
 - A bookmark made without a selected range covers the current frame only, the time moves to its end, and Frame
   Next / Frame Previous Bookmark wrap round, like Maya.
 - Next Bookmark / Previous Bookmark wrap round like Maya: after the last bookmark Next goes back to the first one.
-- Graph Editor Pre-Select Highlight: the highlight goes as soon as the mouse leaves the curve view.
+- Graph Editor Pre-Select Highlight, like Maya: the highlight stays when the mouse leaves the curve view and goes as
+  soon as a drag starts there (moving keys, a marquee, panning); the mouse must be on the curve line, not just near it.
 - Dragging or resizing a window in Maya mode is smoother (#334): the Channel Box dock and the Time Slider's Range
   Slider no longer read back the screen at every step, and the shelf, the Outliner, the dock's tabs, the Time Slider
   and the Graph Editor draw what they drew before instead of working it out again.
