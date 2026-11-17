@@ -125,23 +125,45 @@ _state = {}          # screen name -> [ui scale, area pointers, armed, monotonic
 FIT_WINDOW = 3.0
 # #334: a cursor-warp fit never starts while a window is being dragged or resized. On Windows a pointer warp during a
 # title-bar drag moves the dragged window with it, and a window dragged onto a monitor with other display scaling
-# changes Blender's UI scale (one for all windows), which arms the fit. The warp waits until the UI scale and every
-# window's place and size are what the previous fit tick saw; until then FIT_WINDOW counts from now.
+# changes its UI scale, which arms the fit. The warp waits until every window's place, size and own UI scale are
+# what the previous fit tick saw; until then FIT_WINDOW counts from now.
 _still = {"snap": None}
+# #334: Blender keeps one UI scale for all its windows and sets it to a window's own (the display scaling of the
+# monitor the window is on) each time that window is drawn or moved. With windows on monitors of different scaling, a
+# timer reads the scale of whichever window was drawn last: a Graph Editor window on a 100 % monitor made the fit
+# resize the Maya layout of the main window on a 125 % monitor for 100 % (and back once the main window drew again),
+# warping the pointer to the main window for it. Each window's own scale is taken when it draws its 3D View toolbar
+# (the Tool Box column; ``note_scale``), and the fit leaves a window alone while the scale is another window's.
+_drawn = {}          # window pointer -> (UI scale, pixel size) at its last toolbar draw
+
+
+def note_scale(context):
+    """Called while a window draws a 3D View toolbar: remember that window's own UI scale."""
+    window = context.window
+    if window is not None:
+        system = context.preferences.system
+        _drawn[window.as_pointer()] = (system.ui_scale, system.pixel_size)
+
+
+def _scale_is_own(window, system):
+    """False while Blender's UI scale is not the one ``window`` last drew with (another window on a monitor with
+    other display scaling drew after it). A window that never drew a toolbar counts as current."""
+    own = _drawn.get(window.as_pointer())
+    return own is None or own == (system.ui_scale, system.pixel_size)
 
 
 def _windows_still(context):
-    """True when the UI scale and the place and size of every window seen by the previous call (a fit tick) are
+    """True when the place, size and own UI scale of every window seen by the previous call (a fit tick) are
     unchanged (a window that opened or closed meanwhile doesn't count)."""
-    snap = (context.preferences.system.ui_scale,
-            {w.as_pointer(): (w.x, w.y, w.width, w.height) for w in context.window_manager.windows})
+    windows = {w.as_pointer(): w for w in context.window_manager.windows}
+    for ptr in [p for p in _drawn if p not in windows]:     # closed (a new window may reuse the pointer)
+        del _drawn[ptr]
+    snap = {ptr: (w.x, w.y, w.width, w.height, _drawn.get(ptr)) for ptr, w in windows.items()}
     prev = _still["snap"]
     _still["snap"] = snap
     if prev is None:
         return True
-    if prev[0] != snap[0]:
-        return False
-    return all(prev[1][ptr] == rect for ptr, rect in snap[1].items() if ptr in prev[1])
+    return all(prev[ptr] == rect for ptr, rect in snap.items() if ptr in prev)
 
 
 def _armed(screen, scale):
@@ -268,6 +290,8 @@ def _tab_fit(window, old, new):
         return
     context = bpy.context
     system = context.preferences.system
+    if not _scale_is_own(window, system):
+        return
     scale, pixel = system.ui_scale, system.pixel_size
     before = _dock_target(window, scale, pixel, old)
     if before is None or abs(before[0].width - before[1]) > 3:
@@ -299,6 +323,8 @@ def fit_columns(start_fit=True):
     from .shelf import shelf_row_area, strip_area
     scale = context.preferences.system.ui_scale
     for window in context.window_manager.windows:
+        if not _scale_is_own(window, context.preferences.system):
+            continue         # the scale is another window's now: fit this one at a tick where it is its own
         screen = window.screen
         loaded = _armed(screen, scale)
         resized = _resized(window)

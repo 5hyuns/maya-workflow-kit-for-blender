@@ -33,8 +33,9 @@ from .toolbox_column import (GAP_PX, OUTLINER_PX, RETINA_EXTRA_PX, TOOLBAR_PX, _
                              column_width, is_toolbox, settle)
 from .layout_fit import (ALLSET_OT_fit_columns, DOCK_MAX_PX, DOCK_MAYA_PX, FIT_WINDOW,  # noqa: F401
                          LONG_LABELS, MIN_VIEW_PX, SHELF_PX, TIME_SLIDER_PX, WIDE_KINDS, _FIT_TICK, _armed,
-                         _dock_target, _fit_after_load, _fit_tick, _running, _state, _tab_target, _unit,
-                         auto_warp, dock_need, dock_width, fit_columns, tab_changed, text_px, time_slider_area)
+                         _dock_target, _drawn, _fit_after_load, _fit_tick, _running, _state, _tab_target, _unit,
+                         auto_warp, dock_need, dock_width, fit_columns, note_scale, tab_changed, text_px,
+                         time_slider_area)
 from .toolbox_layouts import (ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner,  # noqa: F401
                               ALLSET_OT_viewport_search, ALLSET_PT_toolbox_layouts, dock_outliner,
                               floating_outliners, outliner_areas, outliner_shown)
@@ -186,8 +187,9 @@ def _make_activate_by_id(original):
 def _draw_begin(self, context):
     """Prepended to the toolbar's draw: Blender's own draw (ToolSelectPanelHelper.draw) lists the Maya tools while
     the flag is on. A prepend / append pair, not a replaced draw. Also marks the toolbar's buttons for the
-    double-click watch."""
+    double-click watch, and notes the window's own UI scale for the layout fit."""
     _drawing[0] = _enabled(context)
+    note_scale(context)
     if context.space_data is not None and context.space_data.type == 'VIEW_3D':
         self.layout.context_pointer_set(TOOLBAR_MEMBER, context.space_data)
 
@@ -232,6 +234,7 @@ def register():
 def unregister():
     _running[0] = False
     _tab_target.clear()
+    _drawn.clear()
     _last_armature_target.clear()
     _pose_watch_areas.clear()
     _outliner_watch_areas.clear()
