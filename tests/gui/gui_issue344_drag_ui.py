@@ -181,7 +181,7 @@ def flow():
         md.redraw()
         yield 0.5
         check(f"a redraw after the drag reads the pixels again ({counts['hole'] - holes} reads) and keeps nothing "
-              f"of the drag", counts["hole"] > holes and not md._hole_kept)
+              f"of the drag", counts["hole"] > holes and all(kept[0] is None for kept in md._hole_kept.values()))
     finally:
         mdt._list_hole, sw.template_of, wsm.entries = real["hole"], real["template"], real["entries"]
         swap(get_value=real["get"], bone_selected=real["bone"])

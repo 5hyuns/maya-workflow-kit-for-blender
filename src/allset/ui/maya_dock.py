@@ -32,6 +32,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import i18n
+from . import window_motion
 # the split-out parts, also read through this module by other UI, tools and the tests
 from .maya_dock_roles import (KINDS, LABELS, ROLE_FLAGS, WIDTH, _MARK_FLAGS, _flags, _mark_flags,  # noqa: F401
                               _pending, _torn_menus, area_role, current_tab, find_stack, floating_kinds,
@@ -44,7 +45,7 @@ from .maya_dock_menus import (ALLSET_OT_menu_tear_off, TEAR_LINE, _CENTRED, _Hol
                               _close_stale_menus, _drawing_torn, draw_tear_line, draw_torn_menu, drawing_torn,
                               menu_rows, tear_menu)
 from .maya_dock_tint import (MAYA_DOCK_GREY, TINTED_ROLES, _around, _fill, _hole_kept, _hole_row,  # noqa: F401
-                             _kept_hole, _list_hole, _rects, _reds, dark_span, dark_top, dock_lift, draw_tint)
+                             _kept_hole, _list_hole, _rects, dark_span, dark_top, dock_lift, draw_tint)
 from .maya_dock_strip import (PANEL_MARGIN_U, STRIP_GAP_PX, STRIP_PX, STRIP_SHADE, STRIP_TOP_PX,  # noqa: F401
                               TAB_END_PX, TAB_GAP_PX, TAB_SHADE, TEXT_LOWERED, ALLSET_OT_dock_section,
                               ALLSET_OT_dock_strip_click, StripClear, _drawn, _sections_open, _strip_colours,
@@ -350,6 +351,7 @@ def unregister():
     _drawn.clear()
     _hole_kept.clear()
     _rects.clear()
+    window_motion.forget()
     _MARK_FLAGS.clear()
     _torn_menus.clear()
     _pending.clear()

@@ -172,7 +172,9 @@ def s_fresh():
         fb = gpu.state.active_framebuffer_get()
         y = region.height // 3
         listed = [px[0] for px in fb.read_color(0, y, region.width, 1, 4, 0, 'UBYTE').to_list()[0]]
-        reds = md._reds(fb.read_color(0, y, region.width, 1, 4, 0, 'UBYTE'), region.width)
+        import numpy as np
+        buf = fb.read_color(0, y, region.width, 1, 4, 0, 'UBYTE')
+        reds = np.frombuffer(buf, dtype=np.uint8)[0:4 * region.width:4].tolist()   # the bytes as the dock reads them
         counts["holes"].append((old, new, listed == reds))
 
     C["handle"] = bpy.types.SpaceProperties.draw_handler_add(hole_check, (), 'WINDOW', 'POST_PIXEL')

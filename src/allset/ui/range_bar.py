@@ -346,9 +346,9 @@ def _codes(row):
 
 def find_gap(area, region, unit, playing):
     """(span, spare) of the bar's gap in the header just drawn: ``bar_span`` and ``spare_after`` of one header row
-    (``row_reads[0]`` counts the reads). While playback or a transform (a drag) runs the header keeps its layout, so
-    the gap found for the same header size and bar width is used again instead of reading the row on every redraw
-    (a framebuffer read and a scan of every pixel)."""
+    (``row_reads[0]`` counts the reads). While playback or a transform (a drag) runs, or a window is dragged or
+    resized, the header keeps its layout, so the gap found for the same header size and bar width is used again
+    instead of reading the row on every redraw (a framebuffer read waits for the GPU, then a scan of every pixel)."""
     key = (region.width, region.height, unit, plan_units(area), extra_units(area))
     got = _gaps.get(area.as_pointer())
     if playing and got is not None and got[0] == key:
@@ -374,8 +374,10 @@ def draw():
     unit = round(20 * scale)
     screen = context.screen
     from .maya_joints import scrubbing, transforming
+    from . import window_motion
+    moved = window_motion.moved(("range", region.as_pointer()))
     found = find_gap(area, region, unit, (screen is not None and screen.is_animation_playing) or transforming()
-                     or scrubbing())
+                     or scrubbing() or moved)
     if found is None:
         return
     span, spare = found
@@ -540,5 +542,7 @@ def unregister():
     _planned.clear()
     _gaps.clear()
     _shapes.clear()
+    from . import window_motion
+    window_motion.forget()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

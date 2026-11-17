@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Lifts the Maya dock areas to Maya's dock grey with one additive pass after drawing (``dock_lift``, ``draw_tint``),
-leaving the Layer Editor list body as it is: found in the drawn pixels (``_list_hole``) and kept for the length of a
-transform (``_kept_hole``). Also ``_fill``, the cached rect batches the tab strip draws with. Drawn from
+leaving the Layer Editor list body as it is: found in the drawn pixels (``_list_hole``) and kept while a transform runs or a
+window is dragged or resized (``_kept_hole``). Also ``_fill``, the cached rect batches the tab strip draws with. Drawn from
 maya_dock.py's Properties draw callback; maya_dock.py re-exports these names.
 """
 
@@ -86,39 +86,36 @@ def dark_top(values, start, limit, gap):
 
 
 _hole_row = {}    # region pointer -> framebuffer row that last crossed the list body
-_hole_kept = {}   # region pointer -> (transform pointer, region size, list body rect) found during that transform
+_hole_kept = {}   # region pointer -> (transform pointer or None, region size and UI scale, list body rect) last found
 
 
 def _kept_hole(context, region):
-    """``_list_hole``; while a transform runs the rect found at its first redraw is used again: until it ends the
-    selection and so the Channel Box rows and the Layer Editor list stay where they are (only values change), and
-    reading the drawn pixels back on every redraw of a drag cost more than the rest of the tint."""
+    """``_list_hole``, or the rect found at an earlier redraw of the same region size when nothing in the region can
+    have moved since: while a transform runs (until it ends the selection and so the Channel Box rows and the Layer
+    Editor list stay where they are, only values change) and while a window is dragged or resized (every window
+    redraws at each step with the same contents). Reading the drawn pixels back waits for the GPU on every such
+    redraw."""
+    from . import window_motion
     from .maya_joints import transform_op
     key = region.as_pointer()
     op = transform_op()
-    if op is None:
-        _hole_kept.pop(key, None)
-        return _list_hole(context, region)
-    stamp = (op.as_pointer(), region.width, region.height)
+    op_ptr = op.as_pointer() if op is not None else None
+    size = (region.width, region.height, context.preferences.system.ui_scale)
+    moved = window_motion.moved(("dock", key))
     got = _hole_kept.get(key)
-    if got is not None and got[0] == stamp:
-        return got[1]
+    if got is not None and got[1] == size and (moved or (op_ptr is not None and got[0] == op_ptr)):
+        return got[2]
     hole = _list_hole(context, region)
-    _hole_kept[key] = (stamp, hole)
+    _hole_kept[key] = (op_ptr, size, hole)
     return hole
-
-
-def _reds(buf, n):
-    """The red byte (0-255) of the ``n`` pixels of a one-row or one-column framebuffer read (RGBA bytes), bottom /
-    left first: the read's bytes go to numpy directly instead of a Python list per pixel."""
-    import numpy as np
-    return np.frombuffer(buf, dtype=np.uint8)[0:4 * n:4].tolist()
 
 
 def _list_hole(context, region):
     """The Layer Editor list body (Blender's list grey is already as dark): left unlifted. Found in the drawn
-    pixels — one row near the region bottom for its sides, one column inside its left edge for its top."""
+    pixels of the Layer Editor part, read back once: a row near the region bottom for its sides, a column inside its
+    left edge for its top."""
     import gpu
+    import numpy as np
     scale = context.preferences.system.ui_scale or 1.0
     try:
         back = max(tuple(context.preferences.themes[0].properties.space.back)[:3])
@@ -127,9 +124,16 @@ def _list_hole(context, region):
     limit = back * 255.0 - 4.0
     from . import channel_box
     le_top = int(region.height * (1.0 - channel_box.cb_share(region, channel_box._unit(context))))
+    width = region.width
+    if le_top < 1 or width < 1:
+        return None
+    try:
+        buf = gpu.state.active_framebuffer_get().read_color(0, 0, width, le_top, 4, 0, 'UBYTE')
+    except ValueError:
+        return None
+    reds = np.frombuffer(buf, dtype=np.uint8)[0:4 * width * le_top:4].reshape(le_top, width)
     # the list ends 14 px x scale above the region bottom in a tall dock, higher in a shorter one (the
     # Time Slider grew at UI 1.25 and the list bottom left the sampled row): sample upwards, the last hit first
-    fb = gpu.state.active_framebuffer_get()
     key = region.as_pointer()
     first = max(1, round(14 * scale))
     rows = [_hole_row.get(key)] + list(range(first, round(64 * scale), max(1, round(4 * scale))))
@@ -137,11 +141,7 @@ def _list_hole(context, region):
     for ys in rows:
         if ys is None or le_top <= ys + 10:
             continue
-        try:
-            row = _reds(fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE'), region.width)
-        except ValueError:
-            return None
-        span = dark_span(row, limit)
+        span = dark_span(reds[ys].tolist(), limit)
         if span is not None and span[1] - span[0] >= 40 * scale:
             break
         span = None
@@ -150,10 +150,7 @@ def _list_hole(context, region):
         return None
     _hole_row[key] = ys
     x0, x1 = span
-    try:
-        values = _reds(fb.read_color(x0 + 1, 0, 1, le_top, 4, 0, 'UBYTE'), le_top)
-    except ValueError:
-        return None
+    values = reds[:, x0 + 1].tolist()
     if values[ys] >= limit:
         return None
     top = dark_top(values, ys, limit, round(30 * scale))
