@@ -5,8 +5,9 @@ simulated mouse events:
   the region's left side (a single key has no box of its own), and the box follows the keys.
 - Prefer Selected Curves: with a key of curve Y selected, a click nearer to a key of curve X than to one of Y picks the
   Y key; with the option off the same click picks the X key.
-- Pre-Select Highlight: the curve under the mouse is the hovered one, none away from the curves, and none as soon
-  as the mouse moves out of the curve view (onto the channel list or another area).
+- Pre-Select Highlight: the curve under the mouse is the hovered one, none away from the curves; it stays when the
+  mouse moves out of the curve view (onto the channel list or another area) until the mouse moves over the curve
+  view again, and it goes for a drag in the curve view (back with the next move after the drag).
 """
 
 import os
@@ -301,36 +302,91 @@ def _other_region_xy(kind):
     return a.x + a.width // 2, a.y + a.height // 2
 
 
+def _hovered_now():
+    gh = import_module(MODULE + ".operators.graph_hover")
+    a = C["area"]
+    with bpy.context.temp_override(window=win(), area=a, region=region(), space_data=a.spaces.active):
+        return gh.hovered(bpy.context)
+
+
 def _leave_case(name, kind):
-    """Hover curve X, then one mouse move straight out of the curve view: the highlight goes at once (Maya)."""
+    """Hover curve X, then one mouse move straight out of the curve view: the highlight stays (Maya); the next move
+    over empty curve view drops it."""
     def go():
         prefs().graph_preselect = True
         _move(*to_px(5, 5.0 * 4 / 9))
     step(go)
     _idle(2)
 
-    def hovered_now():
-        gh = import_module(MODULE + ".operators.graph_hover")
-        a = C["area"]
-        with bpy.context.temp_override(window=win(), area=a, region=region(), space_data=a.spaces.active):
-            return gh.hovered(bpy.context)
-
     def before():
-        C["leave_before"] = hovered_now()
+        C["leave_before"] = _hovered_now()
         x, y = _other_region_xy(kind)
         ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     step(before)
     _idle(2)
 
     def verify():
-        got = hovered_now()
-        check(f"{name}: X was highlighted ({C['leave_before'] is not None}), none after one move out ({got})",
-              C["leave_before"] == curve(0).as_pointer() and got is None)
+        C["leave_after"] = _hovered_now()
+        _move(*to_px(15, 0.2))
     step(verify)
+    _idle(2)
+
+    def back():
+        got = _hovered_now()
+        check(f"{name}: X highlighted ({C['leave_before'] is not None}), still after the move out "
+              f"({C['leave_after'] is not None}), none after a move back over empty curve view ({got})",
+              C["leave_before"] == curve(0).as_pointer() and C["leave_after"] == curve(0).as_pointer()
+              and got is None)
+    step(back)
 
 
 _leave_case("leave_to_channels", 'CHANNELS')
 _leave_case("leave_to_other_area", 'AREA')
+
+
+def _drag_case(name):
+    """Hover curve X, press on it and drag (a marquee) along it: no highlight during the drag nor after the
+    release; the next move over X shows it again (Maya)."""
+    def go():
+        prefs().graph_preselect = True
+        select_only(0, ())
+        _move(*to_px(5, 5.0 * 4 / 9))
+    step(go)
+    _idle(2)
+
+    def press():
+        C["drag_before"] = _hovered_now()
+        x, y = to_px(5, 5.0 * 4 / 9)
+        ev('LEFTMOUSE', 'PRESS', x=win_xy(x, y)[0], y=win_xy(x, y)[1])
+    step(press)
+    for i in range(1, 7):     # along curve X (a straight line there): still no highlight while the button is down
+        step(lambda i=i: _move(*[a + (b - a) * i / 6 for a, b in zip(to_px(5, 5.0 * 4 / 9), to_px(9, 5.0 * 8 / 9))]))
+    _idle(2)
+
+    def mid():
+        C["drag_mid"] = _hovered_now()
+        ev('LEFTMOUSE', 'RELEASE')
+    step(mid)
+    _idle(3)
+
+    def after():
+        C["drag_after"] = _hovered_now()
+        x, y = to_px(9, 5.0 * 8 / 9)
+        _move(x + 1, y)
+    step(after)
+    _idle(2)
+
+    def verify():
+        got = _hovered_now()
+        check(f"{name}: X before the press ({C['drag_before'] is not None}), none during the drag "
+              f"({C['drag_mid']}) and after the release ({C['drag_after']}), X with the next move ({got is not None})",
+              C["drag_before"] == curve(0).as_pointer() and C["drag_mid"] is None and C["drag_after"] is None
+              and got == curve(0).as_pointer())
+        select_only(0, ())
+    step(verify)
+
+
+_drag_case("drag_drops_highlight")
 
 
 @step

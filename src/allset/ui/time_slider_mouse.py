@@ -32,17 +32,21 @@ def set_range(wm, a, b, on=True):
 _LAST_PRESS = None   # (time, window x, region pointer) of the last plain Time Slider press
 
 
-def _second_press(context, event, region):
+def _second_press(context, event, region, record=True):
     """True for a second plain press within the double-click time near the first: a double-click. Blender's own
-    DOUBLE_CLICK event goes to allset.time_range_all before this; simulated events never become one."""
+    DOUBLE_CLICK event goes to allset.time_range_all before this; simulated events never become one. ``record``
+    False only asks (the press is not remembered)."""
     global _LAST_PRESS
     now = time.monotonic()
-    last, _LAST_PRESS = _LAST_PRESS, (now, event.mouse_x, region.as_pointer())
+    last = _LAST_PRESS
+    if record:
+        _LAST_PRESS = (now, event.mouse_x, region.as_pointer())
     if last is None or last[2] != region.as_pointer():
         return False
     limit = getattr(context.preferences.inputs, "mouse_double_click_time", 350) / 1000.0
     if now - last[0] <= limit and abs(event.mouse_x - last[1]) <= 4 * (context.preferences.system.ui_scale or 1.0):
-        _LAST_PRESS = None
+        if record:
+            _LAST_PRESS = None
         return True
     return False
 

@@ -189,6 +189,10 @@ def test_hover_rules():
     assert gh.nearest_curve((5, 3), lines, 6) == "b"
     assert gh.nearest_curve((5, 20), lines, 6) is None
     assert gh.lighter((0.0, 0.5, 1.0), 0.5) == (0.5, 0.75, 1.0)
+    # like Maya the mouse must be on the line: about 2 px off it still picks, 3 px off no longer
+    flat = {"a": [(0, 0), (10, 0)]}
+    assert gh.nearest_curve((5, 2), flat, gh.HOVER_PX) == "a"
+    assert gh.nearest_curve((5, 3), flat, gh.HOVER_PX) is None
 
 
 def test_hover_picks_the_curve_under_the_mouse():
@@ -204,23 +208,50 @@ def test_hover_picks_the_curve_under_the_mouse():
         assert gh.pick(ctx, x, y) in (_fc(b).as_pointer(), _fc(a, 1).as_pointer()), "B's X and A's Y meet here"
 
 
-def test_hover_goes_once_the_mouse_is_outside_the_curve_view():
-    """Like Maya: a move anywhere outside the Graph Editor's curve view (its channel list, another area) drops the
-    highlight at once; a move inside keeps it."""
+def test_hover_stays_when_the_mouse_leaves_the_curve_view():
+    """Like Maya: a move outside the Graph Editor's curve view (its channel list, another area) keeps the highlight
+    (the next move over the curve view decides again); the "Window" item only drops the Time Slider's bookmark
+    name."""
+    from types import SimpleNamespace
     km = kit.maya_kc().keymaps["Window"]
     assert any(i.idname == "allset.hover_leave" and i.type == 'MOUSEMOVE' and i.active
                for i in km.keymap_items), "a Window keymap item sees moves over every area"
     assert gh.inside(5, 5, (0, 0, 10, 10)) and not gh.inside(10, 5, (0, 0, 10, 10))
+    tsb = import_module(kit.MODULE + ".ui.time_slider_bookmarks")
     wm = bpy.context.window_manager
     window = wm.windows[0]
     area = max(window.screen.areas, key=lambda a: a.width * a.height)
     region = next(r for r in area.regions if r.type == 'WINDOW')
     try:
         gh._hover[area.as_pointer()] = 1
-        mid = (region.x + region.width // 2, region.y + region.height // 2)
-        assert gh.forget_outside(wm, window, *mid) == [] and gh._hover, "inside the curve view: kept"
-        gone = gh.forget_outside(wm, window, region.x - 1, mid[1])
-        assert gone == [area] and not gh._hover, "outside: dropped, that editor redraws"
+        tsb._hover[area.as_pointer()] = ("alpha", 0)
+        outside = SimpleNamespace(mouse_x=region.x - 1, mouse_y=region.y + region.height // 2)
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            gh.ALLSET_OT_hover_leave.invoke(None, bpy.context, outside)
+        assert gh._hover == {area.as_pointer(): 1}, "the curve stays highlighted"
+        assert not tsb._hover, "the bookmark name goes"
+    finally:
+        gh._hover.clear()
+        tsb._hover.clear()
+
+
+def test_a_drag_drops_the_highlight():
+    """Maya shows no pre-selection highlight while a drag runs in the curve view: a left-button drag start and a
+    middle-button press (any modifiers) drop it in front of the Graph Editor's own items; it passes them on."""
+    km = kit.maya_kc().keymaps["Graph Editor"]
+    items = [i for i in km.keymap_items if i.active]
+    drops = [(i.type, i.value, i.any) for i in items if i.idname == "allset.graph_hover_drop"]
+    assert sorted(drops) == [('LEFTMOUSE', 'CLICK_DRAG', True), ('MIDDLEMOUSE', 'PRESS', True)], drops
+    first_other = next(n for n, i in enumerate(items) if i.type in {'LEFTMOUSE', 'MIDDLEMOUSE'}
+                       and i.idname != "allset.graph_hover_drop" and i.idname != "allset.graph_marquee_watch")
+    assert all(n < first_other for n, i in enumerate(items) if i.idname == "allset.graph_hover_drop")
+    wm = bpy.context.window_manager
+    area = max(wm.windows[0].screen.areas, key=lambda a: a.width * a.height)
+    try:
+        gh._hover[area.as_pointer()] = 1
+        with bpy.context.temp_override(window=wm.windows[0], area=area):
+            assert gh.ALLSET_OT_graph_hover_drop.invoke(None, bpy.context, None) == {'PASS_THROUGH'}
+        assert not gh._hover
     finally:
         gh._hover.clear()
 

@@ -103,11 +103,16 @@ def _draw_range():
     _check_view(context, region)
     key = ("time slider", region.as_pointer())
     sig = (region.width, region.height, context.preferences.system.ui_scale)
-    if not draw_replay.again(key, sig):     # a window moves: the Time Slider as drawn last
+    moving = draw_replay.again(key, sig)     # a window moves: the Time Slider as drawn last
+    if not moving:
         with draw_replay.recording(key, sig):
             _draw_slider(context, region, wm)
     if has_slider_panel(context.space_data):
-        time_slider_bookmarks.draw_tip(context, region)    # follows the mouse: drawn anew every time
+        if moving:
+            # the mouse holds a window's frame, off the Time Slider: the bookmark name goes, like Maya
+            time_slider_bookmarks.forget(context.area)
+        else:
+            time_slider_bookmarks.draw_tip(context, region)    # follows the mouse: drawn anew every time
 
 
 def _draw_slider(context, region, wm):

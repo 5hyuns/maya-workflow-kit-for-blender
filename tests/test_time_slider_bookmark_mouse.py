@@ -1,7 +1,7 @@
 """Time Slider bookmarks like Maya: Next / Previous Bookmark move the current time to the start of the next / previous
 bookmark and wrap round; on the Time Slider's bookmark strip the mouse over a bookmark shows its name and range, a
 right-click opens the bookmark menu whose actions work at the frame under the mouse, a click on a bookmark leaves the
-time where it is."""
+time where it is; Ctrl + drag moves a bookmark or one of its ends."""
 
 from importlib import import_module
 from types import SimpleNamespace
@@ -150,3 +150,74 @@ def test_strip_keymap_items():
     first_scrub = next(n for n, i in enumerate(ids) if i[0] == "allset.time_scrub")
     assert all(ids.index(c) < first_scrub for c in clicks), "in front of the scrub"
     assert any(i[0] == "allset.time_slider_bookmark_hover" and i[1] == 'MOUSEMOVE' for i in ids)
+
+
+def test_ctrl_drag_zone_rule():
+    """Like Maya: on a 20-frame bookmark 20..40 a Ctrl + drag pressed in about its first two and a half frames takes
+    the start, in its last frame before the end line the end, between them the whole bookmark; past the end line
+    (the rest of its last frame) nothing; the zones follow the length (10 frames: half as wide)."""
+    z = tsb.drag_zone
+    for t, want in ((20.06, 'START'), (21.5, 'START'), (22.2, 'START'), (22.6, 'MOVE'), (30.5, 'MOVE'),
+                    (38.5, 'MOVE'), (38.8, 'MOVE'), (39.15, 'END'), (39.7, 'END'), (40.0, 'END'), (40.1, 'END'),
+                    (40.19, None), (40.8, None), (19.8, None), (41.2, None)):
+        assert z(t, 20, 40, past=0.13) == want, (t, z(t, 20, 40, past=0.13), want)
+    for t, want in ((80.6, 'START'), (81.0, 'START'), (81.4, 'MOVE'), (89.4, 'MOVE'), (89.6, 'END')):
+        assert z(t, 80, 90) == want, (t, z(t, 80, 90), want)
+    assert z(5.5, 5, 6) == 'MOVE', "a short bookmark only moves"
+
+
+def test_ctrl_drag_result_rule():
+    d = tsb.dragged
+    assert d('MOVE', 20, 40, 10) == (30, 50) and d('MOVE', 20, 40, -25) == (-5, 15)
+    assert d('START', 20, 40, -5) == (15, 40) and d('START', 20, 40, 3) == (23, 40)
+    assert d('START', 20, 40, 30) == (39, 40), "the start stops a frame before the end"
+    assert d('END', 20, 40, 5) == (20, 45) and d('END', 20, 40, -30) == (20, 21)
+    assert d(None, 20, 40, 7) == (20, 40)
+
+
+def test_ctrl_drag_keymap_item():
+    """The Ctrl + drag item runs before the Ctrl click item (a second press, the Ctrl + double-click, passes on)."""
+    km = kit.maya_kc().keymaps["Time Scrub"]
+    ids = [(i.idname, i.type, i.value, bool(i.ctrl)) for i in km.keymap_items if i.active]
+    drag = ("allset.time_slider_bookmark_drag", 'LEFTMOUSE', 'PRESS', True)
+    click = ("allset.time_slider_bookmark_click", 'LEFTMOUSE', 'PRESS', True)
+    assert drag in ids and ids.index(drag) < ids.index(click), ids
+
+
+def test_tip_is_drawn_outside_the_kept_ruler_draw():
+    """The hovered bookmark's name box and end lines are drawn anew at every draw, outside the kept ruler calls (a
+    kept call list never holds them). While a window is dragged or resized (the ruler drawn again from its kept
+    calls) the mouse holds the window's frame, off the Time Slider: the name goes, like Maya."""
+    ts = import_module(kit.MODULE + ".ui.time_slider")
+    replay = import_module(kit.MODULE + ".ui.draw_replay")
+    region = SimpleNamespace(width=800, height=32, as_pointer=lambda: 1234, type='WINDOW')
+    area = SimpleNamespace(as_pointer=lambda: 4321)
+    fake = SimpleNamespace(window_manager=bpy.context.window_manager, region=region, area=area, space_data=None,
+                           preferences=bpy.context.preferences)
+    seen = []
+    saved = {n: getattr(ts, n) for n in ("_is_timeline", "_check_view", "_redo_panel_shown", "_draw_slider",
+                                        "has_slider_panel")}
+    saved_tip, saved_again = tsb.draw_tip, replay.again
+    try:
+        ts._is_timeline = lambda c: True
+        ts._check_view = lambda c, r: None
+        ts._redo_panel_shown = lambda c: False
+        ts.has_slider_panel = lambda sp: True
+        ts._draw_slider = lambda c, r, wm: seen.append(("slider", len(replay._lists)))
+        tsb.draw_tip = lambda c, r: seen.append(("tip", len(replay._lists)))
+        ts.bpy = SimpleNamespace(context=fake, app=bpy.app, types=bpy.types, props=bpy.props)
+        tsb._hover[4321] = ("alpha", 10)
+        replay.again = lambda key, sig: False
+        ts._draw_range()
+        assert tsb._hover, "a plain draw keeps the name"
+        replay.again = lambda key, sig: True
+        ts._draw_range()
+    finally:
+        for n, v in saved.items():
+            setattr(ts, n, v)
+        tsb.draw_tip, replay.again = saved_tip, saved_again
+        ts.bpy = bpy
+        left = dict(tsb._hover)
+        tsb._hover.clear()
+    assert seen == [("slider", 1), ("tip", 0)], seen
+    assert not left, "a window drag drops the name"

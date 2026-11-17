@@ -29,7 +29,7 @@ RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
 # (top row, bottom row) of the 32 px ruler. With Time Slider bookmarks
 # (kit: timeline markers, operators/bookmarks.py) the ruler gets a strip on top and moves labels / ticks down:
 # strip #454545 rows 0-8, each bookmark's colour at 80 % over
-# it in rows 0-4 with a solid 1 px left edge over the strip height.
+# it in rows 0-4 with a solid 1 px line at both ends over the strip height.
 ROWS = {"label": (1, 8), "tick": (13, 27), "current_label": (16, 23), "band": (29, 31)}
 ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26), "band": (29, 31),
                   "strip": (0, 8), "bookmark": (0, 4)}
@@ -179,7 +179,8 @@ def _draw_ruler(context, region):
             x0, x1 = round(x_of(a - 0.5)), round(x_of(b + 0.5))
             rgb = bookmarks.color(m)
             rects([(x0, m0, x1, m1)], (*rgb, 0.8))
-            rects([(x0, s0, x0 + max(1.0, round(s)), s1)], (*rgb, 1.0))
+            edge = max(1.0, round(s))      # a line down the strip at both ends, like Maya
+            rects([(x0, s0, x0 + edge, s1), (x1 - edge, s0, x1, s1)], (*rgb, 1.0))
     tw = max(1.0, round(TICK_PX * s))
     t0, t1 = _rows("tick", h, rows, s)
     lefts = {f: round(x_of(f - 0.5)) for f in frames}

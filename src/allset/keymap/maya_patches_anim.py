@@ -166,6 +166,10 @@ def patch_time_range(kd):
     _add(kd, "Time Scrub", "allset.time_slider_bookmark_click", make_event("LEFTMOUSE", value="DOUBLE_CLICK",
                                                                            ctrl=True),
          {"double": True}, first=True, shadows=shadows)
+    # Ctrl + drag on a bookmark moves it or one of its ends (in front of the Ctrl click item; a second press = the
+    # Ctrl + double-click passes on to it)
+    _add(kd, "Time Scrub", "allset.time_slider_bookmark_drag", make_event("LEFTMOUSE", ctrl=True), first=True,
+         shadows=shadows)
     _add(kd, "Time Scrub", "allset.time_slider_bookmark_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
 
 
@@ -343,8 +347,13 @@ def patch_graph_handles(kd):
 
 def patch_graph_tools(kd):
     _add(kd, "Graph Editor", "allset.graph_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
-    # the pre-selection highlight (and the Time Slider's bookmark name) goes once the mouse is anywhere outside
-    # them (Window: every area)
+    # a drag in the curve view (left-button drag start, middle-button press, any modifiers) drops the highlight
+    _add(kd, "Graph Editor", "allset.graph_hover_drop", make_event("LEFTMOUSE", "CLICK_DRAG", any=True), first=True,
+         shadows=("Graph Editor",))
+    _add(kd, "Graph Editor", "allset.graph_hover_drop", make_event("MIDDLEMOUSE", any=True), first=True,
+         shadows=("Graph Editor",))
+    # the Time Slider's bookmark name goes once the mouse is anywhere outside the Time Slider (Window: every area);
+    # the pre-selection highlight stays, like Maya
     _add(kd, "Window", "allset.hover_leave", make_event("MOUSEMOVE", "ANY", any=True))
     _add(kd, "Graph Editor", "allset.graph_marquee_watch", make_event("LEFTMOUSE", "CLICK_DRAG", any=True),
          first=True, shadows=("Graph Editor",))

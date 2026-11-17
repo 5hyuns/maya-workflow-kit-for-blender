@@ -5,7 +5,9 @@
 - a click on a bookmark leaves the time where it is, a click below the coloured bar (still on the strip) moves it;
 - a second Ctrl click on a bookmark (a Ctrl double-click) highlights the bookmark's range;
 - a right-click on the strip opens the bookmark menu for the frame under the mouse, below the strip the Time Slider
-  menu.
+  menu;
+- Ctrl + drag on a bookmark moves it, pressed at its start or end it moves that end; the time ends at the frame under
+  the mouse; one undo step puts the bookmark back.
 """
 
 import os
@@ -196,4 +198,93 @@ def s_rmb_ruler_check():
 
 
 _idle()
+def _reset():
+    bm = import_module(MODULE + ".operators.bookmarks")
+    scene = bpy.context.scene
+    bm.set_range(scene.timeline_markers["alpha"], 20, 40)
+    scene.frame_current = 1
+    bpy.ops.ed.undo_push(message="test reset")
+
+
+def _alpha():
+    bm = import_module(MODULE + ".operators.bookmarks")
+    scene = bpy.context.scene
+    return bm.bookmark_range(scene, scene.timeline_markers["alpha"])
+
+
+def _ctrl_drag(name, f0, f1, row, want, frame, undo=False):
+    def press():
+        _reset()
+        x, y = at(f0, row)
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True)
+        ev('LEFTMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+    step(press)
+    for i in range(1, 7):
+        def mv(i=i):
+            x0, y = at(f0, row)
+            x1, _y = at(f1, row)
+            ev('MOUSEMOVE', 'NOTHING', x=int(x0 + (x1 - x0) * i / 6), y=y, ctrl=True)
+        step(mv)
+    step(lambda: C.__setitem__("mid_" + name, _alpha()))
+    step(lambda: SHOTS and screenshot(os.path.join(SHOTS, f"time_slider_bookmark_{name}.png")))
+    step(lambda: ev('LEFTMOUSE', 'RELEASE', x=at(f1, row)[0], y=at(f1, row)[1], ctrl=True))
+    _idle()
+
+    def verify():
+        got = (_alpha(), bpy.context.scene.frame_current)
+        check(f"{name}: alpha during the drag {C['mid_' + name]}, after {got} (want {want}, frame {frame})",
+              C["mid_" + name] == want and got == (want, frame))
+        if undo:
+            bpy.ops.ed.undo()
+    step(verify)
+    if undo:
+        _idle()
+        step(lambda: check(f"{name}: one undo puts alpha back ({_alpha()})", _alpha() == (20, 40)))
+
+
+_ctrl_drag("ctrl_drag_move", 30, 40, 'BAR', (30, 50), 40, undo=True)
+_ctrl_drag("ctrl_drag_start", 20, 15, 'STRIP', (15, 40), 15)
+_ctrl_drag("ctrl_drag_end", 39, 44, 'BAR', (20, 45), 44)
+_ctrl_drag("ctrl_drag_ruler_nothing", 30, 40, 'RULER', (20, 40), 1)
+
+
+@step
+def s_leave_to_buttons():
+    """From a bookmark straight onto the buttons next to the Time Slider (another region, whose buttons take the
+    mouse moves): the name goes."""
+    move(30, 'BAR')
+
+
+_idle()
+
+
+@step
+def s_leave_to_buttons_move():
+    C["before_buttons"] = shown()
+    a, r = timeline()
+    others = [x for x in a.regions if x.type != 'WINDOW' and x.width > 4 and x.height > 4]
+    C["buttons_region"] = others[0].type if others else None
+    if others:
+        o = others[0]
+        ev('MOUSEMOVE', 'NOTHING', x=o.x + min(o.width - 2, 12), y=o.y + o.height // 2)
+    else:     # the Maya layout's Time Slider has no header: the area above it
+        ev('MOUSEMOVE', 'NOTHING', x=r.x + 12, y=r.y + r.height + 12)
+
+
+_idle()
+step(lambda: check(f"onto the {C['buttons_region']} region next to the Time Slider the name goes "
+                   f"({C['before_buttons']} -> {shown()})", C["before_buttons"] is not None and shown() is None))
+
+
+@step
+def s_hover_lines():
+    _reset()
+    move(30, 'BAR')
+
+
+_idle()
+step(lambda: SHOTS and screenshot(os.path.join(SHOTS, "time_slider_bookmark_hover_lines.png")))
+step(lambda: check(f"over alpha again its name shows ({shown()})", shown() is not None and shown()[0] == "alpha"))
+
+
 run()

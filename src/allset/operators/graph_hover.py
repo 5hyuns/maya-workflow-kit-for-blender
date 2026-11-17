@@ -5,9 +5,13 @@ click it.
 Add-on pref ``graph_preselect`` (off by default, like Maya). ``allset.graph_hover`` watches the Graph Editor's mouse
 moves (always PASS_THROUGH) and keeps, per editor, the shown curve whose line passes within ``HOVER_PX`` of the
 mouse (the nearest one); the editor redraws only when that curve changes. ``_draw`` draws it again over the editor
-in a lighter tint of its own colour. Like Maya, the highlight goes as soon as the mouse is outside the curve view:
+in a lighter tint of its own colour. Like Maya, the highlight stays when the mouse leaves the curve view (onto the
+channel list, another editor or out of the window) until the mouse moves over the curve view again, and it goes
+while a drag runs there (moving keys, a marquee, panning): ``allset.graph_hover_drop`` (a left-button drag start,
+a middle-button press) drops it and it comes back with the next mouse move after the drag.
 ``allset.hover_leave`` (a "Window" keymap mouse-move item, so it sees moves over every other area and region) drops
-it (and the Time Slider's bookmark name, ``ui/time_slider_bookmarks.py``). Pure rules: ``segment_distance``, ``nearest_curve``, ``lighter``, ``inside``.
+the Time Slider's bookmark name (``ui/time_slider_bookmarks.py``) once the mouse is outside the Time Slider. Pure
+rules: ``segment_distance``, ``nearest_curve``, ``lighter``, ``inside``.
 """
 
 import math
@@ -16,7 +20,7 @@ import bpy
 
 from . import graph_move
 
-HOVER_PX = 6.0           # how close to a curve line the mouse must be (x UI scale)
+HOVER_PX = 2.5           # how close to a curve line the mouse must be (x UI scale), about as close as in Maya
 WIDTH_PX = 2.5           # width of the highlight line (x UI scale)
 SAMPLES = 8              # curve samples around the mouse for the pick
 STEP_PX = 2.0            # one curve sample every this many pixels when drawing
@@ -142,40 +146,35 @@ class ALLSET_OT_graph_hover(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
-def forget_outside(wm, window, x, y):
-    """Drop every remembered curve whose Graph Editor curve view does not hold window (x, y) of ``window`` (one in
-    another window never does); the areas to redraw."""
-    gone = []
-    for win in wm.windows:
-        for area in win.screen.areas if win.screen is not None else ():
-            key = area.as_pointer()
-            if key not in _hover:
-                continue
-            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
-            if (win != window or region is None
-                    or not inside(x, y, (region.x, region.y, region.width, region.height))):
-                _hover.pop(key, None)
-                gone.append(area)
-    return gone
-
-
 class ALLSET_OT_hover_leave(bpy.types.Operator):
-    """Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside
-    them"""
+    """Drop the Time Slider's bookmark name once the mouse is outside the Time Slider (the Graph Editor's
+    pre-selection highlight stays, like Maya)"""
     bl_idname = "allset.hover_leave"
     bl_label = "Hover Leave"
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
         from ..ui import time_slider_bookmarks as tsb
-        for table, forget in ((_hover, forget_outside), (tsb._hover, tsb.forget_outside)):
-            if not table:
-                continue
+        if tsb._hover:
             try:
-                for area in forget(context.window_manager, context.window, event.mouse_x, event.mouse_y):
+                for area in tsb.forget_outside(context.window_manager, context.window, event.mouse_x, event.mouse_y):
                     area.tag_redraw()
             except (AttributeError, ReferenceError):
-                table.clear()
+                tsb._hover.clear()
+        return {'PASS_THROUGH'}
+
+
+class ALLSET_OT_graph_hover_drop(bpy.types.Operator):
+    """Graph Editor: a drag starts (a key move, a marquee, a pan): no pre-selection highlight until the next mouse
+    move after it, like Maya"""
+    bl_idname = "allset.graph_hover_drop"
+    bl_label = "Graph Editor Hover Drop"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        area = context.area
+        if area is not None and _hover.pop(area.as_pointer(), None) is not None:
+            area.tag_redraw()
         return {'PASS_THROUGH'}
 
 
@@ -214,7 +213,7 @@ def _draw():
     gpu.state.blend_set('NONE')
 
 
-classes = (ALLSET_OT_graph_hover, ALLSET_OT_hover_leave)
+classes = (ALLSET_OT_graph_hover, ALLSET_OT_hover_leave, ALLSET_OT_graph_hover_drop)
 
 
 def register_handlers():
