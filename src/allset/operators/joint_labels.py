@@ -469,7 +469,7 @@ class ALLSET_OT_ik_handle_enable(bpy.types.Operator):
     @i18n.translated
     def description(cls, context, properties):
         return ("Turn the IK of the selected IK handles on" if properties.enable
-                else "Turn the IK of the selected IK handles off (the joints keep their FK rotation)")
+                else "Turn the IK of the selected IK handles off (the joints keep the IK pose)")
 
     def execute(self, context):
         cons = selected_ik_constraints(context)

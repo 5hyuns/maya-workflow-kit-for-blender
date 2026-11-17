@@ -98,6 +98,12 @@ def draw_prop(layout, label, target, props, path="", translate=True):
     if owner is None:
         draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label, **tr).item = path
         return
+    if props.get("off_while"):
+        # Maya greys this check item while another check is on (Enable IK Handle Snap under IK/FK control)
+        o2, a2 = prop_owner(bpy.context, props["off_while"])
+        if o2 is not None and getattr(o2, a2, False):
+            layout = layout.row()
+            layout.enabled = False
     if "value" not in props:
         from . import maya_dock
         current = getattr(owner, attr)

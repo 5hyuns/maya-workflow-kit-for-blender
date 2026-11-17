@@ -23,6 +23,11 @@ Maya 2026 rules:
   joints' rotation (so switching IK off keeps the IK pose). Nothing selected: Maya's error.
 - **Move IK to FK**: the handle moves to the FK end joint (the chain evaluated without IK); Ik Blend
   stays as it is.
+- **Connect to IK/FK**: the selected objects (the IK handle last) get a keyable ``ikBlend`` connected (driven) from the
+  handle's; such an *ikfk connected object* selects its handle for the three commands above, and Set IK/FK Key also
+  keys its translate.
+
+Enable IK/FK Control / Enable IK Handle Snap and the joints' solved rotation: operators/ik_fk_control.py.
 """
 
 import bpy
@@ -49,16 +54,55 @@ def ik_constraints(context):
 
     for ob in context.selected_objects:
         if ob.type != 'ARMATURE':
-            for arm, pb, con in skin.ik_constraints_on(ob):
+            found = skin.ik_constraints_on(ob)
+            if not found:
+                handle = connected_handle(ob)          # an ikfk connected object (Connect to IK/FK)
+                found = skin.ik_constraints_on(handle) if handle is not None else ()
+            for arm, pb, con in found:
                 add(arm, pb, con)
     arm = context.active_object
     if arm is not None and arm.type == 'ARMATURE' and arm.mode == 'POSE':
         picked = {pb.name for pb in (context.selected_pose_bones or ())}
+        in_chain = set()
         for pb in arm.pose.bones:
             for con in pb.constraints:
                 if con.type == 'IK' and con.target is not None and con.target.type != 'ARMATURE':
-                    if picked & {b.name for b in chain(pb, con)}:
+                    names = {b.name for b in chain(pb, con)}
+                    if picked & names:
                         add(arm, pb, con)
+                        in_chain |= picked & names
+        for name in picked - in_chain:
+            handle = connected_handle(arm.pose.bones[name])
+            for a, pb, con in (skin.ik_constraints_on(handle) if handle is not None else ()):
+                add(a, pb, con)
+    return out
+
+
+def connected_handle(owner):
+    """The IK handle whose Ik Blend ``owner`` (an object or pose bone) reads through Connect to IK/FK, else None."""
+    if IK_BLEND not in owner.keys():
+        return None
+    ad = owner.id_data.animation_data
+    path = f'["{IK_BLEND}"]' if owner is owner.id_data else owner.path_from_id(f'["{IK_BLEND}"]')
+    fc = ad.drivers.find(path) if ad is not None else None
+    if fc is None:
+        return None
+    for var in fc.driver.variables:
+        t = var.targets[0].id if var.type == 'SINGLE_PROP' else None
+        if (isinstance(t, bpy.types.Object) and t.type != 'ARMATURE' and IK_BLEND in t.keys()
+                and var.targets[0].data_path == f'["{IK_BLEND}"]'):
+            return t
+    return None
+
+
+def connected_objects(context):
+    """Selected ikfk connected objects and pose bones that are no handle (Set IK/FK Key keys their translate)."""
+    from . import skin
+    out = [ob for ob in context.selected_objects
+           if ob.type != 'ARMATURE' and not skin.ik_constraints_on(ob) and connected_handle(ob) is not None]
+    arm = context.active_object
+    if arm is not None and arm.type == 'ARMATURE' and arm.mode == 'POSE':
+        out += [pb for pb in (context.selected_pose_bones or ()) if connected_handle(pb) is not None]
     return out
 
 
@@ -289,6 +333,9 @@ class ALLSET_OT_ik_fk_key(bpy.types.Operator):
             self.report({'ERROR'}, NO_HANDLE)
             return {'CANCELLED'}
         set_ik_fk_key(context, found)
+        frame = context.scene.frame_current
+        for owner in connected_objects(context):      # Maya keys the connected object's translate too
+            _key(owner, "location", frame, owner.name)
         context.view_layer.update()
         results.result(self, f"Set IK/FK key on {len(found)} handle(s)")
         return {'FINISHED'}
@@ -343,6 +390,72 @@ class ALLSET_OT_move_ik_to_fk(bpy.types.Operator):
         return {'FINISHED'}
 
 
+CONNECT_SELECT_TWO = "At least two items need to be selected."        # Maya's error texts
+CONNECT_LAST_HANDLE = "The last selected item must be an IK handle."
+
+
+def _is_handle(ob):
+    from . import skin
+    return isinstance(ob, bpy.types.Object) and ob.type != 'ARMATURE' and bool(skin.ik_constraints_on(ob))
+
+
+def connect_items(context):
+    """(selected items, handle) for Connect to IK/FK: objects (pose bones in pose mode) and the IK handle. Maya
+    takes the last selected item as the handle (the active object here); with two items the other one may be it.
+    Blender keeps no selection order beyond the active object, so a single handle among the items also counts."""
+    arm = context.active_object
+    pose = arm is not None and arm.type == 'ARMATURE' and arm.mode == 'POSE'
+    items = [ob for ob in context.selected_objects if not (pose and ob is arm)]
+    if pose:
+        items += list(context.selected_pose_bones or ())
+    if len(items) < 2:
+        return items, None
+    if arm in items and _is_handle(arm):
+        return items, arm
+    handles = [it for it in items if _is_handle(it)]
+    return items, (handles[0] if len(handles) == 1 else None)
+
+
+def connect_to_ik_fk(items, handle):
+    """Maya Connect to IK/FK: every item but the handle gets a keyable ``ikBlend`` that reads the handle's Ik Blend.
+    Returns (connections made, warnings)."""
+    made, warnings = 0, []
+    path = f'["{IK_BLEND}"]'
+    for it in items:
+        if it is handle:
+            continue
+        if IK_BLEND not in it.keys():
+            it[IK_BLEND] = float(handle.get(IK_BLEND, 1.0))
+        if connected_handle(it) is handle:
+            warnings.append(f"{it.name}.{IK_BLEND} is already connected to {handle.name}.{IK_BLEND}")
+            continue
+        _drive(it, path, handle)
+        made += 1
+    return made, warnings
+
+
+class ALLSET_OT_connect_ik_fk(bpy.types.Operator):
+    """Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)"""
+    bl_idname = "allset.connect_ik_fk"
+    bl_label = "Connect to IK/FK"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        items, handle = connect_items(context)
+        if len(items) < 2:
+            self.report({'ERROR'}, CONNECT_SELECT_TWO)
+            return {'CANCELLED'}
+        if handle is None:
+            self.report({'ERROR'}, CONNECT_LAST_HANDLE)
+            return {'CANCELLED'}
+        made, warnings = connect_to_ik_fk(items, handle)
+        for text in warnings:
+            self.report({'WARNING'}, text)
+        context.view_layer.update()
+        results.result(self, f"{made} connections were made." if made else "No connections were made.")
+        return {'FINISHED'}
+
+
 # Issue #146: Maya draws Enable IK Solver as a check item, so the hand
 # sees the state. The menu draws it as this WindowManager property (``("prop", ...)`` kind, ui/menu_map.py); a click
 # runs the operator above (undo step, report) instead of only flipping the value.
@@ -370,4 +483,4 @@ def unregister_props():
     del bpy.types.WindowManager.allset_ik_solver
 
 
-classes = (ALLSET_OT_ik_fk_key, ALLSET_OT_ik_solver_toggle, ALLSET_OT_move_ik_to_fk)
+classes = (ALLSET_OT_ik_fk_key, ALLSET_OT_ik_solver_toggle, ALLSET_OT_move_ik_to_fk, ALLSET_OT_connect_ik_fk)

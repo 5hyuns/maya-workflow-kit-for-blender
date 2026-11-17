@@ -4747,9 +4747,7 @@
    "Add menu (Shift+A)": "Add menu (Shift+A)",
    "Alembic / Mesh Sequence Cache": "Alembic / Mesh Sequence Cache",
    "Alembic import": "Alembic import",
-   "Always on": "Always on",
    "Area light": "Area light",
-   "Armature edit / pose mode": "Armature edit / pose mode",
    "Asset Browser": "Asset Browser",
    "Asset Browser / library overrides": "Asset Browser / library overrides",
    "Baked caches": "Baked caches",
@@ -4758,7 +4756,6 @@
    "Blender X-rays the whole view (X-Ray), not only the components being edited.": "Blender X-rays the whole view (X-Ray), not only the components being edited.",
    "Blender always draws anti-aliased wires (a preference: Viewport > Quality > Anti-Aliasing).": "Blender always draws anti-aliased wires (a preference: Viewport > Quality > Anti-Aliasing).",
    "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11.": "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11.",
-   "Blender always lets you rotate joints in an IK chain: the rotation shows where the handle's Ik Blend is 0 (Key > IK/FK Keys).": "Blender always lets you rotate joints in an IK chain: the rotation shows where the handle's Ik Blend is 0 (Key > IK/FK Keys).",
    "Blender always lights both sides of a face in the viewport (Backface Culling hides back faces).": "Blender always lights both sides of a face in the viewport (Backface Culling hides back faces).",
    "Blender always plays a baked cache: Delete Cache to simulate again.": "Blender always plays a baked cache: Delete Cache to simulate again.",
    "Blender assets are data-blocks marked as assets (Asset Browser), not containers.": "Blender assets are data-blocks marked as assets (Asset Browser), not containers.",
@@ -4792,7 +4789,6 @@
    "Blender hair is a Curves object groomed in Sculpt mode: on the selected mesh the kit adds an empty hair object (or picks its hair) and switches to it; paint follicles with the Add brush.": "Blender hair is a Curves object groomed in Sculpt mode: on the selected mesh the kit adds an empty hair object (or picks its hair) and switches to it; paint follicles with the Add brush.",
    "Blender has no ATOM files or After Effects Live Link: move animation with Append / Link or FBX / Alembic export.": "Blender has no ATOM files or After Effects Live Link: move animation with Append / Link or FBX / Alembic export.",
    "Blender has no Autodesk account, product research or analytics services; Blender's Help menu has the manual and bug reports.": "Blender has no Autodesk account, product research or analytics services; Blender's Help menu has the manual and bug reports.",
-   "Blender has no Connect to IK/FK: drive the handle's Ik Blend from a control with Key > Set Driven Key or a driver.": "Blender has no Connect to IK/FK: drive the handle's Ik Blend from a control with Key > Set Driven Key or a driver.",
    "Blender has no GPU cache node: reload an imported Alembic from its Cache File properties.": "Blender has no GPU cache node: reload an imported Alembic from its Cache File properties.",
    "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a meta-rig fitted to the mesh (Generate Rig).": "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a meta-rig fitted to the mesh (Generate Rig).",
    "Blender has no HumanIK character controls: rig with armatures (Skeleton menu).": "Blender has no HumanIK character controls: rig with armatures (Skeleton menu).",
@@ -4927,7 +4923,6 @@
    "Blender's views always light the scene (studio, flat or scene lights): Use Flat Lighting shows the plain colours.": "Blender's views always light the scene (studio, flat or scene lights): Use Flat Lighting shows the plain colours.",
    "Blender's views filter by object type only (mesh, curve, light, camera, empty ...): this Maya node type has no type of its own, so it shows with its object type.": "Blender's views filter by object type only (mesh, curve, light, camera, empty ...): this Maya node type has no type of its own, so it shows with its object type.",
    "Blender's views have no points-only display mode: Wireframe is the nearest (Object Properties > Viewport Display > Display As shows one object as Bounds / Wire).": "Blender's views have no points-only display mode: Wireframe is the nearest (Object Properties > Viewport Display > Display As shows one object as Bounds / Wire).",
-   "Blender: IK handles are IK constraints (switch with Influence), joints are bone heads edited in armature edit mode.": "Blender: IK handles are IK constraints (switch with Influence), joints are bone heads edited in armature edit mode.",
    "Blender: invisible faces = delete or hide faces, reorder vertices = Mesh > Sort Elements, project a curve = Knife Project.": "Blender: invisible faces = delete or hide faces, reorder vertices = Mesh > Sort Elements, project a curve = Knife Project.",
    "Blender: paint reduce / transfer weights = vertex groups on Decimate / Data Transfer modifiers.": "Blender: paint reduce / transfer weights = vertex groups on Decimate / Data Transfer modifiers.",
    "Bone collections": "Bone collections",
@@ -4978,7 +4973,6 @@
    "Hook modifier": "Hook modifier",
    "Hook with falloff": "Hook with falloff",
    "Ik Blend + joint keys": "Ik Blend + joint keys",
-   "Ik Blend property": "Ik Blend property",
    "Indices overlay": "Indices overlay",
    "Interactive Bind Skin": "Interactive Bind Skin",
    "Interactive Bind Skin Tool": "Interactive Bind Skin Tool",
@@ -6040,10 +6034,17 @@
    "Toggle Pivot Edit": "Toggle Pivot Edit"
   },
   "Labels/operators/ik_fk": {
+   "Connect to IK/FK": "Connect to IK/FK",
    "Enable IK Solver": "Enable IK Solver",
    "Move IK to FK": "Move IK to FK",
    "Set IK/FK Key": "Set IK/FK Key",
    "Switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping the pose (Maya Key > IK/FK Keys > Enable IK Solver)": "Switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping the pose (Maya Key > IK/FK Keys > Enable IK Solver)"
+  },
+  "Labels/operators/ik_fk_control": {
+   "Enable IK Handle Snap": "Enable IK Handle Snap",
+   "Enable IK/FK Control": "Enable IK/FK Control",
+   "Let the joints of an IK chain turn even when the IK handle has keys; the handle stays where it is (Maya Skeleton > Enable IK/FK Control)": "Let the joints of an IK chain turn even when the IK handle has keys; the handle stays where it is (Maya Skeleton > Enable IK/FK Control)",
+   "The IK handle follows the end joint when a joint of its chain is turned, and stays on it at Ik Blend 0 (Maya Skeleton > Enable IK Handle Snap)": "The IK handle follows the end joint when a joint of its chain is turned, and stays on it at Ik Blend 0 (Maya Skeleton > Enable IK Handle Snap)"
   },
   "Labels/operators/ik_handle": {
    "Current solver": "Current solver",
@@ -10046,6 +10047,7 @@
    "Toggle pivot edit mode (Maya Insert): objects = transform affects only origins; mesh edit mode =\nplace the component pivot with the 3D cursor": "Toggle pivot edit mode (Maya Insert): objects = transform affects only origins; mesh edit mode =\nplace the component pivot with the 3D cursor"
   },
   "Tooltips/operators/ik_fk": {
+   "Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)": "Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)",
    "Maya Enable IK Solver: switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping\nthe pose": "Maya Enable IK Solver: switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping\nthe pose",
    "Maya Move IK to FK: move the selected IK handles to the end of their FK chains": "Maya Move IK to FK: move the selected IK handles to the end of their FK chains",
    "Maya Set IK/FK Key: key the selected IK handles (Ik Blend included) and their joints' rotation": "Maya Set IK/FK Key: key the selected IK handles (Ik Blend included) and their joints' rotation"

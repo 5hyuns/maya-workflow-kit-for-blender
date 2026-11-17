@@ -521,6 +521,7 @@ MAP = {
     "Key/IK/FK Keys/Set IK/FK Key": "allset.ik_fk_key",
     "Key/IK/FK Keys/Enable IK Solver": ("prop", "window_manager.allset_ik_solver", {}),   # Maya check item
     "Key/IK/FK Keys/Move IK to FK": "allset.move_ik_to_fk",
+    "Key/IK/FK Keys/Connect to IK/FK": "allset.connect_ik_fk",
     "Key/Scale Keys": "allset.opt_scale_keys",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "allset.playblast", {}),
@@ -1154,6 +1155,10 @@ MAP.update({
     "Skeleton/Joint Labelling/Hide All Labels": ("allset.joint_label_show_all", {"show": False}),
     "Skeleton/Joint Labelling/Rename Joints From Labels": "allset.rename_joints_from_labels",
     "Skeleton/Joint Labelling/Label Based on Joint Names": "allset.label_from_joint_names",
+    # Maya check items (operators/ik_fk_control.py); Snap is greyed out while IK/FK control is on
+    "Skeleton/Enable IK Handle Snap": ("prop", "window_manager.allset_ik_handle_snap",
+                                       {"off_while": "window_manager.allset_ik_fk_control"}),
+    "Skeleton/Enable IK/FK Control": ("prop", "window_manager.allset_ik_fk_control", {}),
     "Skeleton/Enable Selected IK Handles": ("allset.ik_handle_enable", {"enable": True}),
     "Skeleton/Disable Selected IK Handles": ("allset.ik_handle_enable", {"enable": False}),
     # Maya deformerWeights XML (operators/deformer_weights.py)
