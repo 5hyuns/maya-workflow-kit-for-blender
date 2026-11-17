@@ -5924,6 +5924,7 @@
   },
   "Labels/operators/graph_hover": {
    "Graph Editor Hover": "Graph Editor Hover",
+   "Graph Editor Hover Drop": "Graph Editor Hover Drop",
    "Hover Leave": "Hover Leave"
   },
   "Labels/operators/graph_key_menu": {
@@ -9432,6 +9433,7 @@
    "Frame Bookmark": "Frame Bookmark",
    "Frame Next Bookmark": "Frame Next Bookmark",
    "Frame Previous Bookmark": "Frame Previous Bookmark",
+   "Move Bookmark": "Move Bookmark",
    "Next Bookmark": "Next Bookmark",
    "Previous Bookmark": "Previous Bookmark",
    "Time Slider Bookmark Click": "Time Slider Bookmark Click",
@@ -10052,7 +10054,8 @@
    "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)": "The Graph Editor marquee also picks the tangent handle ends the kit draws (passes through to the marquee)"
   },
   "Tooltips/operators/graph_hover": {
-   "Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside\nthem": "Drop the Graph Editor's pre-selection highlight and the Time Slider's bookmark name once the mouse is outside\nthem",
+   "Drop the Time Slider's bookmark name once the mouse is outside the Time Slider (the Graph Editor's\npre-selection highlight stays, like Maya)": "Drop the Time Slider's bookmark name once the mouse is outside the Time Slider (the Graph Editor's\npre-selection highlight stays, like Maya)",
+   "Graph Editor: a drag starts (a key move, a marquee, a pan): no pre-selection highlight until the next mouse\nmove after it, like Maya": "Graph Editor: a drag starts (a key move, a marquee, a pan): no pre-selection highlight until the next mouse\nmove after it, like Maya",
    "Graph Editor: remember the curve under the mouse for the pre-selection highlight": "Graph Editor: remember the curve under the mouse for the pre-selection highlight"
   },
   "Tooltips/operators/graph_key_menu": {
@@ -11205,6 +11208,7 @@
   },
   "Tooltips/ui/time_slider_bookmarks": {
    "Maya's Time Slider bookmark menu (right-click on the bookmark strip): the actions work at the frame under the\nmouse": "Maya's Time Slider bookmark menu (right-click on the bookmark strip): the actions work at the frame under the\nmouse",
+   "Time Slider bookmark: Ctrl + drag moves it (near an end: moves that end); the time goes to the frame under\nthe mouse": "Time Slider bookmark: Ctrl + drag moves it (near an end: moves that end); the time goes to the frame under\nthe mouse",
    "Time Slider bookmark: a click does not move the time; Ctrl + double-click highlights the bookmark's range": "Time Slider bookmark: a click does not move the time; Ctrl + double-click highlights the bookmark's range",
    "Time Slider: remember the bookmark under the mouse to show its name and range": "Time Slider: remember the bookmark under the mouse to show its name and range"
   },
