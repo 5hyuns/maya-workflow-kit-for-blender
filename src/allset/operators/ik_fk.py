@@ -36,6 +36,8 @@ from mathutils import Vector
 from .. import results
 
 IK_BLEND = "ikBlend"
+# handle: 1 while a turned joint of its chain is shown (Maya solves the chain again only when the handle changes)
+HOLD = "allset_ik_hold"
 NO_HANDLE = "Select a handle, joint or an ikfk connected object."     # Maya's error text
 
 
@@ -155,6 +157,51 @@ def ensure_blend(arm, pb, con):
             bone.id_properties_ui(IK_BLEND).update(min=0.0, max=1.0, default=1.0)
         if not _driven(arm, bone.path_from_id(f'["{IK_BLEND}"]')):
             _drive(bone, f'["{IK_BLEND}"]', handle)
+    return handle
+
+
+def blend_expression(handle):
+    """The IK part of an influence driver: Ik Blend, off while the chain shows a turned joint (``HOLD``)."""
+    return "ikBlend * (1 - hold)" if HOLD in handle.keys() else "ikBlend"
+
+
+def add_blend_variables(drv, handle):
+    """The driver variables ``blend_expression`` reads."""
+    names = (("ikBlend", IK_BLEND), ("hold", HOLD)) if HOLD in handle.keys() else (("ikBlend", IK_BLEND),)
+    for name, prop in names:
+        var = drv.variables.new()
+        var.name = name
+        var.type = 'SINGLE_PROP'
+        var.targets[0].id_type = 'OBJECT'
+        var.targets[0].id = handle
+        var.targets[0].data_path = f'["{prop}"]'
+
+
+def ensure_hold(arm, pb, con):
+    """Give the handle its ``HOLD`` switch and put it into the chain's IK influence driver (the kit's Maya RP solve
+    of a 3+ bone chain adds it to its own drivers). Returns the handle."""
+    handle = con.target
+    if HOLD not in handle.keys():
+        handle[HOLD] = 0.0
+    from . import ik_rp
+    if handle.get(ik_rp.MULTI):
+        ik_rp.solve_multi(handle)               # its drivers carry the switch from now on
+        return handle
+    path = con.path_from_id("influence")
+    ad = arm.animation_data
+    fc = ad.drivers.find(path) if ad is not None else None
+    want = blend_expression(handle)
+    if fc is not None and fc.driver.type == 'SCRIPTED' and fc.driver.expression == want:
+        return handle
+    if fc is not None and "ikBlend" not in {v.name for v in fc.driver.variables}:
+        return handle                           # someone else's driver: leave it
+    fc = con.driver_add("influence")
+    drv = fc.driver
+    for v in list(drv.variables):
+        drv.variables.remove(v)
+    add_blend_variables(drv, handle)
+    drv.type = 'SCRIPTED'
+    drv.expression = want
     return handle
 
 

@@ -6,7 +6,7 @@ import math
 from importlib import import_module
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 import kit
 import test_step223_ik_fk as IK
@@ -23,6 +23,8 @@ GOAL = IK.bl((6, 0, 2))
 def _update(n=3):
     for _ in range(n):
         bpy.context.view_layer.update()
+        if ctl._pending[0]:
+            ctl._rerun()                    # what the kit's one-shot timer does after the update
 
 
 def _reset_state(control=False, snap=True):
@@ -142,7 +144,7 @@ def test_control_on_lets_the_joint_turn():
     before = tuple(arm.pose.bones["shoulder"].rotation_euler)
     _turn_shoulder(arm)
     pb = arm.pose.bones["shoulder"]
-    # the channel took the turn (Blender's IK keeps the chain on the handle at Ik Blend 1)
+    # the channel took the turn and the turned arm is shown until the handle changes
     assert not _close(tuple(pb.rotation_euler), before, 1e-3)
     assert _close(handle.matrix_world.translation, GOAL)
 
@@ -300,3 +302,219 @@ def test_blend_drop_after_load_keeps_ik_pose():
     handle.update_tag()
     _update()
     assert _close(_wrist(arm), at_ik), (_wrist(arm), at_ik)
+
+
+# --- a turned joint stays turned until the chain is solved again ----------------------------------------------------
+
+def _turn(arm, name, axis, deg):
+    """Turn a joint about ``axis`` (armature space) through its head, like Maya's rotate tool on that joint."""
+    pb = arm.pose.bones[name]
+    h = pb.head.copy()
+    pb.matrix = (Matrix.Translation(h) @ Matrix.Rotation(math.radians(deg), 4, Vector(axis).normalized())
+                 @ Matrix.Translation(-h) @ pb.matrix)
+    _update()
+
+
+def _held(handle):
+    return bool(handle.get(ik_fk.HOLD))
+
+
+def _turned_arm(**kw):
+    arm, handle, con = _rig(**kw)
+    _turn_shoulder(arm, 25.0)
+    end = ik_fk.fk_end(arm, arm.pose.bones["elbow"], con)
+    return arm, handle, con, end
+
+
+def test_turned_joint_stays_until_the_handle_moves():
+    """Snap off: the turned arm is shown (not pulled back to the handle) until the handle moves; selecting, moving the
+    skeleton and turning another joint keep it."""
+    arm, handle, con, end = _turned_arm(snap=False)
+    assert _held(handle)
+    assert _close(_wrist(arm), end, 1e-3) and not _close(end, GOAL, 0.1), (_wrist(arm), end)
+    IK._select(handle)
+    _update()
+    assert _close(_wrist(arm), end, 1e-3)
+    arm.location.x += 0.5                               # the skeleton moves: the turned arm goes along
+    _update()
+    assert _held(handle) and _close(_wrist(arm), end + Vector((0.5, 0.0, 0.0)), 1e-3), _wrist(arm)
+    arm.location.x -= 0.5
+    _update()
+    _turn(arm, "elbow", (0.0, 0.0, 1.0), 10.0)          # another joint
+    assert _held(handle)
+    assert _close(_wrist(arm), ik_fk.fk_end(arm, arm.pose.bones["elbow"], con), 1e-3)
+    handle.location = GOAL + Vector((0.0, 0.0, 0.2))    # the handle moves: IK solves again
+    _update()
+    assert not _held(handle)
+    assert _close(_wrist(arm), handle.matrix_world.translation, 1e-2), (_wrist(arm), handle.matrix_world.translation)
+
+
+def test_control_on_keyed_handle_solves_at_time_change():
+    """IK/FK control on, keyed handle: the turned joint shows until the time changes."""
+    arm, handle, con = _rig(control=True)
+    handle.keyframe_insert("location", frame=1)
+    handle.keyframe_insert("location", frame=10)
+    _update()
+    _turn_shoulder(arm, 25.0)
+    assert _held(handle) and not _close(_wrist(arm), GOAL, 0.1)
+    bpy.context.scene.frame_set(2)
+    _update()
+    assert not _held(handle)
+    assert _close(_wrist(arm), GOAL, 1e-2), _wrist(arm)
+    bpy.context.scene.frame_set(1)
+
+
+def test_time_change_keeps_turn_of_unkeyed_handle():
+    arm, handle, con, end = _turned_arm(snap=False)
+    bpy.context.scene.frame_set(2)
+    _update()
+    bpy.context.scene.frame_set(1)
+    _update()
+    assert _held(handle) and _close(_wrist(arm), end, 1e-3)
+
+
+def test_handle_channels_solve_again():
+    """Ik Blend, Pole Vector, Twist, Solver Enable and a handle turn each solve the chain again (Maya)."""
+    def blend(h, c):
+        h[ik_fk.IK_BLEND] = 0.5
+
+    def pole(h, c):
+        h["poleVectorX"] = float(h["poleVectorX"]) + 0.1
+
+    def twist(h, c):
+        h["twist"] = 10.0
+
+    def mute(h, c):
+        c.mute = True
+
+    def turn(h, c):
+        h.rotation_euler.z += 0.2
+
+    for change in (blend, pole, twist, mute, turn):
+        arm, handle, con, end = _turned_arm(snap=False)
+        assert _held(handle), change.__name__
+        change(handle, con)
+        handle.update_tag()
+        _update()
+        assert not _held(handle), change.__name__
+
+
+def test_blend_drop_from_turned_keeps_the_ik_pose():
+    """Turned joint (handle not moved), then Ik Blend 1 -> 0: Maya solves first, so the arm shows the IK pose."""
+    arm, handle, con, end = _turned_arm(snap=False)
+    ik_fk.set_blend(arm, arm.pose.bones["elbow"], con, 0.0)
+    _update()
+    assert _close(_wrist(arm), GOAL, 1e-2), (_wrist(arm), GOAL)
+
+
+def test_snap_keeps_the_turned_pose():
+    """Snap on: the handle goes to the end joint and the chain shows exactly the turned joints (an out-of-plane turn
+    of the elbow is not solved back into the pole plane)."""
+    arm, handle, con = _rig()
+    _turn(arm, "elbow", (1.0, 0.0, 0.0), 35.0)           # out of the arm's plane
+    elbow = arm.pose.bones["elbow"]
+    end = ik_fk.fk_end(arm, elbow, con)
+    assert _held(handle)
+    assert _close(handle.matrix_world.translation, end)
+    assert _close(_wrist(arm), end, 1e-3), (_wrist(arm), end)
+    basis = arm.convert_space(pose_bone=elbow, matrix=elbow.matrix, from_space='POSE', to_space='LOCAL')
+    assert basis.to_quaternion().rotation_difference(elbow.rotation_euler.to_quaternion()).angle < 1e-4
+
+
+def test_open_file_solves_again():
+    arm, handle, con, end = _turned_arm(snap=False)
+    ctl._on_load()
+    _update()
+    assert not _held(handle)
+    assert _close(_wrist(arm), GOAL, 1e-2)
+
+
+def test_pole_vector_follows_a_turned_start_joint():
+    """RP handle, snap on: the shoulder turned about the shoulder -> wrist line takes the pole vector along (about the
+    shoulder -> goal line only, its length and its part along that line stay), so a later handle move keeps the elbow
+    in the turned plane."""
+    rp = import_module(kit.MODULE + ".operators.ik_rp")
+    arm, handle, con = _rig()
+    shoulder, wrist = arm.pose.bones["shoulder"].head.copy(), arm.pose.bones["wrist"].head.copy()
+    root_w = arm.matrix_world @ shoulder
+    pv0 = rp.pole_vector(handle)
+    plane0 = (handle.matrix_world.translation - root_w).cross(pv0).normalized()
+    _turn(arm, "shoulder", wrist - shoulder, 40.0)
+    assert _held(handle)
+    goal = handle.matrix_world.translation.copy()
+    u = (goal - root_w).normalized()
+    pv1 = rp.pole_vector(handle)
+    assert abs(pv1.length - pv0.length) < 1e-6 and abs(pv1.dot(u) - pv0.dot(u)) < 1e-6, (pv0, pv1)
+    elbow = arm.matrix_world @ arm.pose.bones["elbow"].head
+    plane1 = (goal - root_w).cross(pv1).normalized()
+    assert abs((elbow - root_w).dot(plane1)) < 1e-3, (elbow, plane1)        # the plane went with the elbow
+    assert abs(plane1.dot(plane0)) < math.cos(math.radians(35.0))
+    handle.location = goal + Vector((0.0, 0.0, 0.3))
+    _update()
+    _update()
+    elbow = arm.matrix_world @ arm.pose.bones["elbow"].head
+    plane = (handle.matrix_world.translation - root_w).cross(rp.pole_vector(handle)).normalized()
+    assert abs((elbow - root_w).dot(plane)) < 1e-2
+    assert abs((elbow - root_w).dot(plane0)) > 0.3, elbow    # not back in the first plane
+
+
+def test_pole_vector_stays_without_snap_or_below_full_blend():
+    rp = import_module(kit.MODULE + ".operators.ik_rp")
+    arm, handle, con = _rig(snap=False)
+    pv0 = rp.pole_vector(handle)
+    s, w = arm.pose.bones["shoulder"].head.copy(), arm.pose.bones["wrist"].head.copy()
+    _turn(arm, "shoulder", w - s, 40.0)
+    assert (rp.pole_vector(handle) - pv0).length < 1e-9
+    arm, handle, con = _rig()
+    ik_fk.set_blend(arm, arm.pose.bones["elbow"], con, 0.5)
+    _update()
+    pv0 = rp.pole_vector(handle)
+    _turn(arm, "shoulder", w - s, 40.0)
+    assert (rp.pole_vector(handle) - pv0).length < 1e-9
+
+
+def _long_arm():
+    """A 4-joint RP chain (the kit solves it Maya's way)."""
+    _reset_state()
+    IK._arm()
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    arm = bpy.data.objects.new("skeleton1", bpy.data.armatures.new("skeleton1"))
+    bpy.context.scene.collection.objects.link(arm)
+    bpy.context.view_layer.objects.active = arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    pts = [IK.bl(p) for p in ((0, 0, 0), (4, 0, -1), (8, 0, -1), (12, 0, 0), (13, 0, 0))]
+    prev = None
+    for i in range(4):
+        eb = arm.data.edit_bones.new(f"j{i + 1}")
+        eb.head, eb.tail = pts[i], pts[i + 1]
+        if prev is not None:
+            eb.parent, eb.use_connect = prev, True
+        prev = eb
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for pb in arm.pose.bones:
+        pb.rotation_mode = 'XYZ'
+    handle = IK.skin.create_ik(bpy.context, arm, ("j1", 'HEAD'), ("j4", 'HEAD'))
+    con = arm.pose.bones["j3"].constraints[0]
+    _update()
+    handle.location = IK.bl((10, 3, 0))
+    _update()
+    return arm, handle, con
+
+
+def test_long_chain_keeps_the_turned_pose():
+    rp = import_module(kit.MODULE + ".operators.ik_rp")
+    arm, handle, con = _long_arm()
+    assert handle.get(rp.MULTI) == 1
+    end0 = arm.matrix_world @ arm.pose.bones["j4"].head
+    assert _close(end0, handle.matrix_world.translation, 1e-2), end0
+    _turn(arm, "j2", (1.0, 0.0, 0.0), 30.0)
+    assert _held(handle)
+    end = ik_fk.fk_end(arm, arm.pose.bones["j3"], con)
+    assert _close(arm.matrix_world @ arm.pose.bones["j4"].head, end, 1e-3)
+    handle.location = handle.location + Vector((0.0, 0.0, 0.3))
+    _update()
+    _update()
+    assert not _held(handle)
+    assert _close(arm.matrix_world @ arm.pose.bones["j4"].head, handle.matrix_world.translation, 1e-2)

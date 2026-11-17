@@ -11,8 +11,12 @@ Rotating a joint of an IK chain, Maya 2026:
 - Enable IK/FK Control off (the default) and the handle keyed: the joint does not turn.
 - Enable IK/FK Control off and Enable IK Handle Snap on (the default), handle not keyed: the joint turns and the handle
   follows the end joint; at Ik Blend 0 the handle stays on the end joint.
-- otherwise the joint turns and the handle stays where it is (Blender's IK takes the chain back to the handle at once;
-  Maya shows the turned joint until the handle moves).
+- otherwise the joint turns and the handle stays where it is.
+
+A turned joint stays turned (with snap too) until the chain is solved again: the handle moves or turns, its Ik Blend,
+Pole Vector, Twist or Solver Enable changes, the time changes while the handle has keys, or the file is opened again.
+With snap at Ik Blend 1 an RP handle's pole vector turns about the start -> goal line with the start joint, so the
+next solve keeps the plane the start joint was turned into.
 
 Enable IK Handle Snap is greyed out while Enable IK/FK Control is on (it has no effect then). Both are global checks
 (kit session state, like Enable IK Solver).
@@ -26,6 +30,7 @@ from . import ik_fk
 
 _STATE = {"control": False, "snap": True}
 _seen = {}                 # constraint pointer -> {bone name: channel values} last seen or written
+_held = {}                 # handle name -> its state when the chain was held (a change solves the chain again)
 _found = [None, []]        # (objects_version, object count) of the last look, [(armature, bone, IK constraint)]
 _busy = []
 ROT_EPS = 1e-4             # channel change that counts (radians / quaternion units)
@@ -118,14 +123,106 @@ def _set_channels(pb, values):
     setattr(pb, ik_fk.rotation_path(pb), values)
 
 
-def update_chain(arm, pb, con, animated):
+# --- a turned joint stays turned until the handle changes ------------------------------------------------------------
+# Maya solves an IK chain again only when its handle changes (translate, rotate, Ik Blend, pole vector, twist, Solver
+# Enable) or, for a handle with keys, when the time changes; until then a turned joint of the chain stays turned
+# (selecting, moving the skeleton, turning or keying other joints solve nothing). The kit shows the turned pose by
+# switching the chain's IK influence off with the handle's hold switch (``ik_fk.HOLD``) and on again at those changes.
+
+def held(handle):
+    return bool(handle.get(ik_fk.HOLD))
+
+
+def _signature(handle, con):
+    from . import ik_rp
+    vals = [v for row in handle.matrix_world for v in row]
+    vals.append(ik_fk.blend_of(con))
+    vals += [float(handle.get(n, 0.0)) for n in ik_rp.PV]
+    vals.append(float(handle.get(ik_rp.TWIST, 0.0)))
+    vals.append(1.0 if con.mute else 0.0)
+    return tuple(vals)
+
+
+def _same(a, b):
+    return len(a) == len(b) and all(abs(x - y) <= POS_EPS for x, y in zip(a, b))
+
+
+def _hold(arm, pb, con, handle):
+    if not held(handle):
+        update_summary.wrote()
+        ik_fk.ensure_hold(arm, pb, con)
+        handle[ik_fk.HOLD] = 1.0
+        handle.update_tag()
+    _held[handle.name] = _signature(handle, con)
+
+
+def release(handle):
+    """Solve the chain again (the handle changed)."""
+    if held(handle):
+        update_summary.wrote()
+        handle[ik_fk.HOLD] = 0.0
+        handle.update_tag()
+    _held.pop(handle.name, None)
+
+
+def _handle_animated(handle):
+    from .. import compat
+    if any(True for _fc in compat.id_fcurves(handle)):
+        return True
+    ad = handle.animation_data
+    return ad is not None and len(ad.drivers) > 0
+
+
+def _check_release(handle, con, frame):
+    """Release a held chain whose handle changed. True when released."""
+    if not held(handle):
+        return False
+    sig = _signature(handle, con)
+    old = _held.get(handle.name)
+    if old is None:
+        _held[handle.name] = sig            # after undo / redo: changes count from here
+        return False
+    if _same(old, sig) and not (frame and _handle_animated(handle)):
+        return False
+    release(handle)
+    return True
+
+
+# --- the start joint's solve plane (RP handles, Maya's pole vector follows a turned joint with snap) -----------------
+
+def _normal_local(arm, bones, handle):
+    """The RP solve plane's normal in the start joint's frame, read from the solved (shown) pose."""
+    from . import ik_rp
+    if ik_rp.HELPER not in handle.keys():
+        return None
+    root = bones[0]
+    root_w = arm.matrix_world @ root.head
+    n = ik_rp.solve_plane_normal(handle, root_w, handle.matrix_world.translation)
+    if n.length < 1e-9:
+        return None
+    rot = (arm.matrix_world.to_3x3() @ root.matrix.to_3x3()).normalized()
+    return rot.inverted() @ n.normalized()
+
+
+def _fk_start_rot(arm, root):
+    """World rotation (3x3) of the start joint posed by its own channels."""
+    if root.parent is not None:
+        m = root.parent.matrix @ (root.parent.bone.matrix_local.inverted() @ root.bone.matrix_local)
+    else:
+        m = root.bone.matrix_local.copy()
+    return (arm.matrix_world.to_3x3() @ (m @ root.matrix_basis).to_3x3()).normalized()
+
+
+def update_chain(arm, pb, con, animated, frame=False):
     """Apply Maya's IK / FK rules to one kit chain. Returns True when something was written."""
     handle = con.target
     key = con.as_pointer()
     bones = ik_fk.chain(pb, con)
+    released = _check_release(handle, con, frame)
+    hold = held(handle)
     if con.mute or any(b.path_from_id(ik_fk.rotation_path(b)) in animated for b in bones):
         _seen.pop(key, None)            # keyed joints: their curves give the FK values (Maya keeps them too)
-        return False
+        return released
     cur = {b.name: channels(b) for b in bones}
     seen = _seen.get(key)
     if seen is not None and seen["ch"].keys() != cur.keys():
@@ -133,7 +230,7 @@ def update_chain(arm, pb, con, animated):
     prev = seen["ch"] if seen is not None else None
     blend = ik_fk.blend_of(con)
     full = blend >= 1.0 - 1e-6
-    wrote = False
+    wrote = released
     changed = prev is not None and any(_differ(cur[n], prev[n]) for n in cur)
     if (seen is not None and not full and seen["blend"] >= 1.0 - 1e-6 and not changed and seen["ik"] is not None
             and any(_differ(cur[n], seen["ik"][n]) for n in cur)):
@@ -143,28 +240,45 @@ def update_chain(arm, pb, con, animated):
         cur = dict(seen["ik"])
         wrote = True
     snap = snap_on() and not handle_keyed(handle)
+    normal = seen.get("n") if seen is not None else None
     if blend <= 1e-6:                   # FK: the joints turn freely; with snap the handle sits on the end joint
-        _seen[key] = {"ch": cur, "ik": None, "blend": blend}
+        _seen[key] = {"ch": cur, "ik": None, "blend": blend, "n": normal}
         return (snap and _move_handle(handle, ik_fk.fk_end(arm, pb, con))) or wrote
     bases = ik_fk.visual_bases(arm, bones)
     shown = {b.name: basis_channels(b, bases[b.name]) for b in bones}
-    ik = shown if full else None
-    if changed and any(_differ(cur[n], shown[n]) for n in cur):
+    if changed and (hold or any(_differ(cur[n], shown[n]) for n in cur)):
         # a joint of the chain was turned
         if not control_on() and handle_keyed(handle):
             for b in bones:             # Maya: the joint doesn't turn
                 if _differ(cur[b.name], prev[b.name]):
                     _set_channels(b, prev[b.name])
             return True
-        _seen[key] = {"ch": cur, "ik": None, "blend": blend}
-        return (snap and _move_handle(handle, ik_fk.fk_end(arm, pb, con))) or wrote
+        moved = False
+        if snap:
+            end = ik_fk.fk_end(arm, pb, con)
+            if full and normal is not None:
+                from . import ik_rp
+                if ik_rp.follow_turn(handle, arm.matrix_world @ bones[0].head, normal,
+                                     _fk_start_rot(arm, bones[0]), end):
+                    update_summary.wrote()
+                    wrote = True
+            moved = _move_handle(handle, end)
+        _hold(arm, pb, con, handle)     # Maya shows the turned pose until the handle changes
+        ik = seen["ik"] if (seen is not None and not moved) else None
+        _seen[key] = {"ch": cur, "ik": ik, "blend": blend, "n": normal}
+        return True
+    if hold or released:                # the turned pose is shown (released: IK is back from the next update)
+        _seen[key] = {"ch": cur, "ik": seen["ik"] if seen is not None else None, "blend": blend, "n": normal}
+        return wrote
+    ik = shown if full else None
+    normal = _normal_local(arm, bones, handle) if full else normal
     if prev is not None and full and any(_differ(cur[n], shown[n]) for n in cur):
         for b in bones:                 # Maya: the solved rotation is the joints' rotate value
             if _differ(cur[b.name], shown[b.name]):
                 _set_channels(b, shown[b.name])
-        _seen[key] = {"ch": shown, "ik": ik, "blend": blend}
+        _seen[key] = {"ch": shown, "ik": ik, "blend": blend, "n": normal}
         return True
-    _seen[key] = {"ch": cur, "ik": ik, "blend": blend}
+    _seen[key] = {"ch": cur, "ik": ik, "blend": blend, "n": normal}
     return wrote
 
 
@@ -173,11 +287,15 @@ def _playing():
     return wm is not None and any(w.screen is not None and w.screen.is_animation_playing for w in wm.windows)
 
 
-def update():
+def update(frame=False):
     if _busy:
         return
     from . import anim_snapshot
-    if anim_snapshot._busy or _playing():
+    if anim_snapshot._busy:
+        return
+    if _playing():
+        if frame:
+            _release_on_frame()
         return
     _busy.append(1)
     try:
@@ -189,20 +307,65 @@ def update():
             paths = animated.get(arm.name)
             if paths is None:
                 paths = animated[arm.name] = _animated_paths(arm)
-            wrote |= update_chain(arm, pb, con, paths)
+            wrote |= update_chain(arm, pb, con, paths, frame)
         if wrote:
             for arm in {a for a, _p, _c in _found[1]}:
                 arm.update_tag()
     except (ReferenceError, AttributeError, RuntimeError):
         _found[0] = None
         _seen.clear()
+        _held.clear()
     finally:
         _busy.clear()
+
+
+def _release_on_frame():
+    """Playback: a held chain whose handle has keys is solved again (Maya evaluates the keyed handle each frame)."""
+    _busy.append(1)
+    try:
+        for arm, _pb, con in _chains():
+            handle = con.target
+            if held(handle) and _handle_animated(handle):
+                release(handle)
+                arm.update_tag()
+    except (ReferenceError, AttributeError, RuntimeError):
+        _found[0] = None
+    finally:
+        _busy.clear()
+
+
+def release_all():
+    """Solve every held chain again (a file is opened: Maya evaluates every handle)."""
+    for ob in bpy.data.objects:
+        if ob.get(ik_fk.HOLD):
+            ob[ik_fk.HOLD] = 0.0
+            ob.update_tag()
+    _held.clear()
+
+
+_pending = [False]
+
+
+def _rerun():
+    _pending[0] = False
+    update()
+    return None
+
+
+def pole_moved():
+    """An RP handle's pole or bone helpers moved inside an update: Blender evaluates them once more without update
+    handlers, so the solved pose is read again right after (a one-shot timer)."""
+    if _pending[0]:
+        return
+    _pending[0] = True
+    if not bpy.app.timers.is_registered(_rerun):
+        bpy.app.timers.register(_rerun, first_interval=0.0)
 
 
 def forget():
     """Undo, redo and load: start again from the channels as they are."""
     _seen.clear()
+    _held.clear()
     _found[0] = None
 
 
@@ -213,12 +376,18 @@ def _on_update(_scene=None, _depsgraph=None):
 
 @persistent
 def _on_frame(_scene=None, _depsgraph=None):
-    update()
+    update(frame=True)
 
 
 @persistent
 def _on_reset(*_args):
     forget()
+
+
+@persistent
+def _on_load(*_args):
+    forget()
+    release_all()
 
 
 # --- menu check items -----------------------------------------------------------------------------------------------
@@ -244,7 +413,7 @@ def _set_snap(_self, value):
 
 
 _HANDLERS = (("depsgraph_update_post", _on_update), ("frame_change_post", _on_frame),
-             ("undo_post", _on_reset), ("redo_post", _on_reset), ("load_post", _on_reset))
+             ("undo_post", _on_reset), ("redo_post", _on_reset), ("load_post", _on_load))
 
 
 def register():
@@ -269,4 +438,11 @@ def unregister():
             hs.remove(fn)
     del bpy.types.WindowManager.allset_ik_handle_snap
     del bpy.types.WindowManager.allset_ik_fk_control
+    if bpy.app.timers.is_registered(_rerun):
+        bpy.app.timers.unregister(_rerun)
+    _pending[0] = False
+    try:
+        release_all()                   # Blender mode: the chains follow their IK again
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass                            # no file data while Blender starts or quits
     forget()

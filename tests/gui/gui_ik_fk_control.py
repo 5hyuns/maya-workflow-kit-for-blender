@@ -1,7 +1,8 @@
 """Maya IK / FK in a real UI: rotating a joint of an IK chain with Blender's rotate (R) in Pose mode turns the joint
 and the IK handle follows the end joint while the mouse moves (Enable IK Handle Snap, IK/FK control off); the arm
 then settles (no endless updates); one undo takes back the turn and the handle move together. The Skeleton menu's
-Enable IK/FK Control check greys out Enable IK Handle Snap."""
+Enable IK/FK Control check greys out Enable IK Handle Snap. With snap off the turned arm stays turned until the handle
+moves."""
 
 import os
 import sys
@@ -207,6 +208,68 @@ def s_menu_grey():
     draw.draw_prop(L(), "Enable IK Handle Snap", s[1], s[2], "Skeleton/Enable IK Handle Snap")
     wm.allset_ik_fk_control = False
     check(f"Enable IK Handle Snap is greyed while IK/FK control is on ({got})", got.get("enabled") is False)
+
+
+# --- Snap off: the turned arm stays turned until the handle moves -----------------------------------------------------
+
+@step
+def s_snap_off():
+    ctl = mod(".operators.ik_fk_control")
+    ctl._STATE["control"], ctl._STATE["snap"] = False, False
+    ctl.forget()
+    C["h1"] = handle().matrix_world.translation.copy()
+    x, y = screen_of(arm().matrix_world @ arm().pose.bones["elbow"].head)
+    C["drag"] = (x + 120, y)
+    ev('MOUSEMOVE', 'NOTHING', x=x + 120, y=y)
+    with ov():
+        bpy.ops.transform.rotate('INVOKE_DEFAULT')
+
+
+for _i in range(1, 5):
+    def s_move_b(i=_i):
+        x, y = C["drag"]
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 25 * i)
+    s_move_b.__name__ = f"s_move_b{_i}"
+    step(s_move_b)
+
+
+@step
+def s_confirm_b():
+    x, y = C["drag"]
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y + 100)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y + 100)
+
+
+@step
+def s_idle_b():
+    ev('MOUSEMOVE', 'NOTHING', x=C["drag"][0] + 3, y=C["drag"][1])
+
+
+@step
+def s_turned_shown():
+    ik_fk = mod(".operators.ik_fk")
+    ob = arm()
+    end = ik_fk.fk_end(ob, ob.pose.bones["elbow"], con())
+    wrist = ob.matrix_world @ ob.pose.bones["wrist"].head
+    check(f"snap off: the handle stays ({(handle().matrix_world.translation - C['h1']).length:.5f})",
+          (handle().matrix_world.translation - C["h1"]).length < 1e-4 * C["k"])
+    check(f"snap off: the turned arm stays turned ({tuple(wrist)} / FK end {tuple(end)})",
+          (wrist - end).length < 1e-2 * C["k"] and (end - C["h1"]).length > 0.1 * C["k"])
+    handle().location = handle().location + C["k"] * Vector((0.0, 0.0, 0.3))
+
+
+@step
+def s_idle_c():
+    ev('MOUSEMOVE', 'NOTHING', x=C["drag"][0], y=C["drag"][1] + 3)
+
+
+@step
+def s_solved_again():
+    ob = arm()
+    wrist = ob.matrix_world @ ob.pose.bones["wrist"].head
+    goal = handle().matrix_world.translation
+    check(f"moving the handle solves the arm again ({tuple(wrist)} / {tuple(goal)})",
+          (wrist - goal).length < 1e-2 * C["k"])
 
 
 run()
