@@ -442,8 +442,10 @@ def _widget(name, points, edges):
     return ob
 
 
-def _circle(name, n=12, r=1.0):
-    pts = [(r * math.cos(2 * math.pi * i / n), r * math.sin(2 * math.pi * i / n), 0.0) for i in range(n)]
+def _circle(name, n=12, r=1.0, lift=0.0):
+    """A circle of ``n`` points; ``lift``: its points go up and down that much out of its plane."""
+    pts = [(r * math.cos(2 * math.pi * i / n), r * math.sin(2 * math.pi * i / n), lift * math.sin(4 * math.pi * i / n))
+           for i in range(n)]
     return _widget(name, pts, [(i, (i + 1) % n) for i in range(n)])
 
 
@@ -517,7 +519,8 @@ def _many_controls_rig():
     and two with a shape that has shape keys (read again every frame)."""
     _clear()
     arm, names = _rig(count=120)
-    shapes = [_circle("ctrl4", n=4), _circle("ctrl12", n=12, r=0.5), _circle("ctrl20", n=20, r=0.3)]
+    shapes = [_circle("ctrl4", n=4, lift=0.2), _circle("ctrl12", n=12, r=0.5, lift=0.1),
+              _circle("ctrl20", n=20, r=0.3, lift=0.1)]
     keyed = _circle("ctrl_keyed", n=8, r=0.4)
     keyed.shape_key_add(name="Basis")
     key = keyed.shape_key_add(name="Wide")

@@ -479,9 +479,12 @@ def _widget_segments(shape, depsgraph):
 def _widget_plan(jl, depsgraph):
     """The controls' shape lines joined in their own space: (points, control per point, points per control (in
     control order), the shapes that change with the frame [(shape, start, count)], widget generation, int32 line index
-    into the points of every shape's segments, runs [(start, stop, controls, points each)]). The controls' points
-    follow one another by their point count (``placed_points`` places each run of equal counts at once). A shape that
-    can't change with the frame keeps each of its points once; one that can keeps its segments' end points. Joined
+    into the points of every shape's segments, runs [(start, stop, controls, points each, one shared shape)]). The
+    controls' points follow one another by their point count (``placed_points`` places each run of equal counts at
+    once), control by control; a shape that can't change with the frame and that ``SHARED_SHAPE`` or more controls
+    show gets a run of its own, stored point by point (its first point in every control of the run, then its second
+    ...). A shape that can't change with the frame keeps each of its points once; one that can keeps its segments' end
+    points. Joined
     once per joint list and kept while no shape's own geometry changed; the shapes that change with the frame are read
     again in place."""
     import numpy as np
@@ -497,32 +500,54 @@ def _widget_plan(jl, depsgraph):
                 break
             p[start:start + count] = segs
     if plan is None:
-        shapes = []
+        shapes, users = [], {}
         for shape in jl.ctrl_shapes:
             s, m = _widget_segments(shape, depsgraph)
             shapes.append((shape, s, None) if m else (shape, *_distinct_points(s)))   # None: read every frame
+            if not m:
+                users[shape.session_uid] = users.get(shape.session_uid, 0) + 1
         counts = np.fromiter((len(t[1]) for t in shapes), np.intp, len(shapes))
-        order = np.argsort(counts, kind='stable')
-        pts, index, moving, runs, start = [], [], [], [], 0
+        group = {uid: g for g, uid in enumerate(sorted(u for u, c in users.items() if c >= SHARED_SHAPE), 1)}
+        shared = np.fromiter((0 if at is None else group.get(shape.session_uid, 0) for shape, _s, at in shapes),
+                             np.intp, len(shapes))
+        order = np.lexsort((shared, counts))
+        groups = []                                  # [points each, shared shape group, [controls]]
         for k in order.tolist():
-            shape, s, at = shapes[k]
-            if at is None:
-                moving.append((shape, start, len(s)))
-                at = np.arange(len(s), dtype=np.intc)
-            pts.append(s)
-            index.append(at + start)
-            c = len(s)
-            if c and runs and runs[-1][3] == c:
-                runs[-1][1] = start + c
-                runs[-1][2].append(k)
-            elif c:
-                runs.append([start, start + c, [k], c])
-            start += c
-        runs = [(a, b, np.array(ks, np.intp), c) for a, b, ks, c in runs]
-        p = np.concatenate(pts) if start else np.zeros((0, 3))
+            c, g = int(counts[k]), int(shared[k])
+            if not c:
+                continue
+            if groups and groups[-1][0] == c and groups[-1][1] == g:
+                groups[-1][2].append(k)
+            else:
+                groups.append([c, g, [k]])
+        pts, index, owners, moving, runs, start = [], [], [], [], [], 0
+        for c, g, ks in groups:
+            ks = np.array(ks, np.intp)
+            n = len(ks)
+            if g:                                    # one shape: stored point by point (point i of every control)
+                _shape, s, at = shapes[ks[0]]
+                pts.append(np.repeat(s, n, axis=0))
+                owners.append(np.tile(ks, c))
+                index.append((at[None, :] * n + np.arange(n, dtype=np.intc)[:, None]).reshape(-1) + start)
+            else:                                    # control by control
+                for j, k in enumerate(ks.tolist()):
+                    shape, s, at = shapes[k]
+                    if at is None:
+                        moving.append((shape, start + j * c, c))
+                        at = np.arange(c, dtype=np.intc)
+                    pts.append(s)
+                    index.append(at + (start + j * c))
+                owners.append(np.repeat(ks, c))
+            runs.append((start, start + n * c, ks, c, bool(g)))
+            start += n * c
+        p = np.concatenate(pts).astype(np.float32) if start else np.zeros((0, 3), np.float32)   # the shapes' own precision
         index = np.concatenate(index).astype(np.intc) if index else np.zeros(0, np.intc)
-        plan = jl.widgets = (p, np.repeat(order, counts[order]), counts, moving, _WIDGET_GEN[0], index, runs)
+        owner = np.concatenate(owners) if owners else np.zeros(0, np.intp)
+        plan = jl.widgets = (p, owner, counts, moving, _WIDGET_GEN[0], index, runs)
     return plan
+
+
+SHARED_SHAPE = 8      # controls showing one unchanging shape that get a run of their own (``_widget_plan``)
 
 
 def _control_lines(ob, jl, w, allm, depsgraph, props=None):

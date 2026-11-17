@@ -72,9 +72,11 @@ def _clear():
     mj._forget()
 
 
-def _circle(name, n=12, r=0.15):
+def _circle(name, n=12, r=0.15, lift=0.0):
+    """A circle of ``n`` points; ``lift``: its points go up and down that much out of its plane."""
     me = bpy.data.meshes.new(name)
-    me.from_pydata([(r * math.cos(2 * math.pi * i / n), r * math.sin(2 * math.pi * i / n), 0.0) for i in range(n)],
+    me.from_pydata([(r * math.cos(2 * math.pi * i / n), r * math.sin(2 * math.pi * i / n),
+                     lift * math.sin(4 * math.pi * i / n)) for i in range(n)],
                    [(i, (i + 1) % n) for i in range(n)], [])
     ob = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(ob)
@@ -514,28 +516,31 @@ def test_a_limb_drag_works_out_only_the_joints_that_moved():
 
 
 def test_a_limb_drag_among_many_controls_of_several_shapes_keeps_every_bit():
-    """Dragging a limb of a skeleton with many controls whose shapes have different point counts (placed run by run)
+    """Dragging a limb of a skeleton with many controls whose shapes have different point counts (placed run by run:
+    a shape many controls show in a run of its own, a shape of the same point count that few show in another)
     works out again only the controls that moved, and their points are the ones of a build from scratch, bit for
     bit."""
     _clear()
-    shapes = [_circle("ctrl4", n=4), _circle("ctrl12", n=12), _circle("ctrl20", n=20)]
-    a = _rig(0.0, count=90)
+    shapes = [_circle("ctrl4", n=4, lift=0.05), _circle("ctrl12", n=12, lift=0.05), _circle("ctrl20", n=20, lift=0.05)]
+    few = _circle("ctrl12_few", n=12, r=0.4, lift=0.1)
+    a = _rig(0.0, count=120)
     for i, pb in enumerate(a.pose.bones):
         pb.rotation_mode = 'XYZ'
         if i % 3 == 1:
-            pb.custom_shape = shapes[(i // 3) % 3]
+            pb.custom_shape = few if i in (94, 103, 112) else shapes[(i // 3) % 3]
             pb.custom_shape_scale_xyz = (1.0, 1.0 + 0.01 * i, 0.8)
     bpy.context.view_layer.update()
     view = _view([a])
     jl = mj.joint_list(a)
     arrays = import_module(kit.MODULE + ".ui.maya_joints_arrays")
     plan = mj._widget_plan(jl, bpy.context.evaluated_depsgraph_get())
-    assert arrays._by_runs(plan[6], len(jl.ctrl)) and len(plan[6]) == 3, (len(jl.ctrl), len(plan[6]))
+    assert arrays._by_runs(plan[6], len(jl.ctrl)), (len(jl.ctrl), len(plan[6]))
+    assert [(r[3], r[4]) for r in plan[6]] == [(4, True), (12, False), (12, True), (20, True)],         [(r[3], r[4]) for r in plan[6]]
     real = mj.transforming
     try:
         mj.transforming = lambda: True            # a drag runs: only poses change
         mj._joined(view)
-        for step, bone in enumerate((80, 85, 61)):
+        for step, bone in enumerate((100, 105, 81)):
             a.pose.bones[bone].rotation_euler.x += 0.2
             bpy.context.view_layer.update()
             with _Count(mj, "_control_lines") as n:
