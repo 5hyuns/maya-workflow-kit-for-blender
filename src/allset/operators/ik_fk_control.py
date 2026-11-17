@@ -253,11 +253,15 @@ def update_chain(arm, pb, con, animated, frame=False):
                 if _differ(cur[b.name], prev[b.name]):
                     _set_channels(b, prev[b.name])
             return True
+        from . import ik_rp
+        if isinstance(handle.get(ik_rp.POLE_OBJECT), bpy.types.Object):
+            # a Pole Vector constraint drives the handle: Maya solves the chain again right away
+            _seen[key] = {"ch": cur, "ik": seen["ik"] if seen is not None else None, "blend": blend, "n": normal}
+            return wrote
         moved = False
         if snap:
             end = ik_fk.fk_end(arm, pb, con)
             if full and normal is not None:
-                from . import ik_rp
                 if ik_rp.follow_turn(handle, arm.matrix_world @ bones[0].head, normal,
                                      _fk_start_rot(arm, bones[0]), end):
                     update_summary.wrote()

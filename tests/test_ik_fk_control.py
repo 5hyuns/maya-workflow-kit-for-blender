@@ -518,3 +518,19 @@ def test_long_chain_keeps_the_turned_pose():
     _update()
     assert not _held(handle)
     assert _close(arm.matrix_world @ arm.pose.bones["j4"].head, handle.matrix_world.translation, 1e-2)
+
+
+def test_pole_vector_constraint_solves_at_once():
+    """An RP handle with a Pole Vector constraint: the chain is solved again right away and the handle stays."""
+    rp = import_module(kit.MODULE + ".operators.ik_rp")
+    arm, handle, con = _rig()
+    pole = _ctrl("pole")
+    pole.location = IK.bl((4, 0, -6))
+    _update()
+    rp.set_pole_object(handle, pole)
+    _update()
+    goal = handle.matrix_world.translation.copy()
+    _turn_shoulder(arm, 25.0)
+    assert not _held(handle)
+    assert _close(handle.matrix_world.translation, goal)
+    assert _close(_wrist(arm), goal, 1e-2), _wrist(arm)
