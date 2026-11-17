@@ -633,6 +633,12 @@ def _idle_writer(key, scene, count):
         from ..operators import ik_rp as rp
         return (isinstance(rp._found[1], list) and not rp._found[1] and rp._count[0] == count[0]
                 and rp._found[0] == (objects_version(), count[0]))
+    if key == "operators.ik_fk_control:_on_frame":
+        # IK / FK rules run only on the kit's IK chains: idle while its last look is current and found none
+        from .outliner import objects_version
+        from ..operators import ik_fk_control as ikfk
+        return (isinstance(ikfk._found[1], list) and not ikfk._found[1]
+                and ikfk._found[0] == (objects_version(), count[0]))
     if key in ("operators.constrain_199:_on_frame", "operators.pins_205:_on_frame"):
         from ..operators import constrain_199, pins_205
         state = (constrain_199 if key.startswith("operators.constrain_199") else pins_205)._state

@@ -253,13 +253,14 @@ def test_a_window_on_another_view_layer_brings_back_the_object_by_object_look():
 
 
 def test_a_kit_frame_handler_with_an_old_look_for_its_helpers_counts_as_writing():
-    """The skeleton RP handles, normal / tangent constraints and pins look for their helpers again on a frame change
+    """The skeleton RP handles, the IK / FK rules, normal / tangent constraints and pins look for their helpers again on a frame change
     when objects came or went since their last look, and may write then."""
     _scene()
     sc = bpy.context.scene
     sc.frame_set(1)           # each handler looks at the file as it is now
     assert wire._frame_writers_idle(sc)
-    keys = ("operators.ik_rp:_on_frame", "operators.constrain_199:_on_frame", "operators.pins_205:_on_frame")
+    keys = ("operators.ik_rp:_on_frame", "operators.ik_fk_control:_on_frame", "operators.constrain_199:_on_frame",
+            "operators.pins_205:_on_frame")
     for key in keys:
         assert wire._idle_writer(key, sc, []), key
     extra = bpy.data.objects.new("made_since", None)
