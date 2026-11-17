@@ -3,6 +3,50 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Maya's IK/FK switching, the rest of the Time Slider Bookmarks, new Graph Editor and Dope Sheet tools, a Shelf Editor
+drag, smoother window drags in Maya mode, faster joint drawing while playing, and fixes for #320 and #334. Thanks to
+@AlexBarbulescu for the Shelf Editor drag in #382.
+
+### Added
+- **IK/FK switching**: Skeleton > Enable IK/FK Control and Enable IK Handle Snap work like Maya. With Snap on, turning
+  a joint of an IK chain takes the IK handle along to the end joint (and keeps it there at Ik Blend 0); with IK/FK
+  control off, a keyed handle keeps its joints from turning; Snap is greyed out while IK/FK control is on.
+- IK chain joints hold the IK solution in their rotate channels like Maya: the Channel Box shows the solved rotation,
+  and Ik Blend 1 → 0 keeps the IK pose instead of jumping back to old FK values.
+- Key > IK/FK Keys > **Connect to IK/FK**: the selected objects get an Ik Blend that follows the IK handle; selecting
+  such an object works for Set IK/FK Key (its translate is keyed too), Enable IK Solver and Move IK to FK.
+- **Time Slider Bookmarks**: Visualize > Time Slider Bookmarks > Edit, Show Bookmarks and Bookmark Manager work like
+  Maya. Edit changes the name, colour, start and end of the bookmark at the current time; Show Bookmarks hides them
+  on the Time Slider; the Bookmark Manager window lists every bookmark to rename, recolour, retime, update from the
+  selected range, frame or delete, frames all of them and adds new ones.
+- Each Time Slider bookmark has its own colour on the Time Slider (a random one of Maya's colours, or the one picked
+  in the Create dialog) and keeps its range and colour when renamed.
+- Graph Editor: Edit > Transformation Tools > **Region Keys Tool** (and its toolbar button): a marquee leaves its
+  region as a box; drag a side or corner to scale the keys inside, drag inside it to move them, like Maya.
+- Graph Editor: Select > **Pre-Select Highlight** draws the curve under the mouse brighter before you click it (off
+  by default, like Maya).
+- Graph Editor: Select > **Prefer Selected Curves**: while some curves have selected keys or tangents, clicks and
+  marquees pick the keys of those curves first (off by default, like Maya).
+- Dope Sheet: Channels > **Offset Keys** moves the selected keys by a number of frames (option box: offset to a
+  frame, time range), like Maya.
+- Shelf Editor: with the new preference Shelf Editor Drag (off by default), each Shelf Contents row has a grip:
+  click it, move the mouse up or down and click again to put the button there (Esc puts it back). Thanks to Alex
+  Barbulescu (#382).
+
+### Changed
+- A bookmark made without a selected range covers the current frame only, the time moves to its end, and Frame
+  Next / Frame Previous Bookmark wrap round, like Maya.
+- Dragging or resizing a window in Maya mode: the Channel Box dock and the Time Slider's Range Slider no longer read
+  back the screen at every step of the drag, so a drag is smoother (#334).
+- Joints with controls draw faster while playing: controls are placed in runs and their custom shape values are
+  worked out once (#344).
+
+### Fixed
+- Joints keep their Radius size when the armature object is scaled (#320).
+- Layout fit: with windows on displays of different scaling, each window is fitted at its own scaling (#334).
+
 ## [0.18.0] — 2026-11-17
 
 Fixes and Maya behaviours for the issues reported since 0.17.0 (#344, #363, #367, #369, #370, #371, #373, #374,
