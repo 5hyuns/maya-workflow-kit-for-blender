@@ -214,12 +214,16 @@ def test_status_line_looks_at_the_docks_once():
 # --- dock tint pixel reads -------------------------------------------------------------------------------------
 
 def test_dock_pixel_reads_give_the_same_values():
-    """``_reds`` of a one-row / one-column RGBA byte read = the red values the per-pixel lists gave (a framebuffer
-    read is [rows][columns][RGBA] bytes; the real reads are compared in the GUI test)."""
+    """The dock tint reads the Layer Editor part once ([rows][columns][RGBA] bytes) and takes the red of a row and of
+    a column from it: those equal the per-pixel lists of that row / column (the real reads are compared in the GUI
+    test)."""
+    import numpy as np
     rnd = random.Random(7)
-    for h, w in ((1, 346), (412, 1), (1, 1)):
+    for h, w in ((3, 346), (412, 2), (1, 1)):
         data = bytes(rnd.randrange(256) for _ in range(h * w * 4))
         listed = [[list(data[(y * w + x) * 4:(y * w + x) * 4 + 4]) for x in range(w)] for y in range(h)]
-        old = [px[0] for px in listed[0]] if h == 1 else [c[0][0] for c in listed]
-        assert md._reds(data, h * w) == old, (h, w)
-        assert md._reds(data + bytes(8), h * w) == old, "only the read's own pixels"
+        reds = np.frombuffer(data + bytes(8), dtype=np.uint8)[0:4 * w * h:4].reshape(h, w)
+        for y in range(h):
+            assert reds[y].tolist() == [px[0] for px in listed[y]], (h, w, y)
+        for x in range(w):
+            assert reds[:, x].tolist() == [listed[y][x][0] for y in range(h)], (h, w, x)
