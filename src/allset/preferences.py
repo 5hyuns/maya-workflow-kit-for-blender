@@ -201,6 +201,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Exit On Completion", default=True,
         description="Interactive Creation switches to the Select tool after one primitive; off, the tool keeps drawing primitives")
 
+    # Shelf Editor: a grip on each Shelf Contents row to move the button with the mouse (ui/shelf_editor_drag.py;
+    # off by default: Maya reorders Shelf Contents with Move Up / Move Down)
+    shelf_editor_drag: bpy.props.BoolProperty(
+        name="Shelf Editor Drag", update=lambda self, context: _redraw_all(context),
+        description="A grip on each Shelf Contents row of the Shelf Editor: click it, move the mouse up or down and "
+                    "click again to put the button there")
+
     # Visualize > Time Slider Bookmarks > Show Bookmarks (on by default, like Maya; operators/bookmarks.py)
     show_time_slider_bookmarks: bpy.props.BoolProperty(
         name="Show Bookmarks", default=True, update=lambda self, context: _redraw_time_slider(context),
@@ -829,6 +836,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "outliner_instance_marks")
         row.prop(self, "unshare_instances")
+        row = box.row()
+        row.prop(self, "shelf_editor_drag")
 
 
 # Undo depth (B6): Maya's undo queue is infinite, Blender keeps 32 steps
@@ -999,6 +1008,12 @@ def register():
 
 def unregister():
     _unregister_classes()
+
+
+def _redraw_all(context):
+    for win in context.window_manager.windows:
+        for area in win.screen.areas:
+            area.tag_redraw()
 
 
 def _redraw_time_slider(context):

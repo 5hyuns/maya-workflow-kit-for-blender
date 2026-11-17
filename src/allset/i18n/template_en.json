@@ -7672,6 +7672,7 @@
    "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)": "3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, Panels) instead of Blender's (Blender menus stay as a submenu)",
    "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)": "3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, Paint Select, Move, Rotate, Scale, the last other tool and quick layout buttons (other tools stay on keys, menus and the shelf)",
    "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)": "A Radius typed in the Channel Box also goes to every joint below the selected joints (off: the selected joints only, like Maya)",
+   "A grip on each Shelf Contents row of the Shelf Editor: click it, move the mouse up or down and click again to put the button there": "A grip on each Shelf Contents row of the Shelf Editor: click it, move the mouse up or down and click again to put the button there",
    "A menu item's option box opens its options in a floating window that stays open, with Apply, Save Settings, Reset Settings and Close, and several can stay open together (off: a dialog that closes when the command runs)": "A menu item's option box opens its options in a floating window that stays open, with Apply, Save Settings, Reset Settings and Close, and several can stay open together (off: a dialog that closes when the command runs)",
    "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)": "A new Maya panel's Material Preview shows Blender's HDRI as its background and the look-dev spheres (off: the Maya view background)",
    "A pie at the right end of the In-View Editor's title sets how fast a drag changes its values: click or drag round it, from 2 % (empty) to full speed (full) (off: no pie, the values change at full speed)": "A pie at the right end of the In-View Editor's title sets how fast a drag changes its values: click or drag round it, from 2 % (empty) to full speed (full) (off: no pie, the values change at full speed)",
@@ -7867,6 +7868,7 @@
    "Selecting keys in the Graph Editor moves the current time to the earliest selected key": "Selecting keys in the Graph Editor moves the current time to the earliest selected key",
    "Selection Priority": "Selection Priority",
    "Selection Wireframe": "Selection Wireframe",
+   "Shelf Editor Drag": "Shelf Editor Drag",
    "Shift+drag a Move/Rotate/Scale manipulator duplicates the selection and transforms the copy": "Shift+drag a Move/Rotate/Scale manipulator duplicates the selection and transforms the copy",
    "Shift+drag a Move/Rotate/Scale manipulator on faces or edges extrudes them and transforms the new ones": "Shift+drag a Move/Rotate/Scale manipulator on faces or edges extrudes them and transforms the new ones",
    "Short fading messages in the view when you group, hide, toggle object/component selection (F8), soft select or Make Live, like Maya": "Short fading messages in the view when you group, hide, toggle object/component selection (F8), soft select or Make Live, like Maya",
@@ -9277,6 +9279,9 @@
    "Select Shelf": "Select Shelf",
    "Shelf Name": "Shelf Name",
    "Up": "Up"
+  },
+  "Labels/ui/shelf_editor_drag": {
+   "Drag Button": "Drag Button"
   },
   "Labels/ui/shelf_editor_icon_picker": {
    "All Icons": "All Icons",
@@ -11109,6 +11114,9 @@
   },
   "Tooltips/ui/shelf_editor_buttons": {
    "Apply edited Shelf button properties without changing unrelated button data.": "Apply edited Shelf button properties without changing unrelated button data."
+  },
+  "Tooltips/ui/shelf_editor_drag": {
+   "Click, move the mouse up or down and click again to drop the button there (Esc puts it back)": "Click, move the mouse up or down and click again to drop the button there (Esc puts it back)"
   },
   "Tooltips/ui/shelf_editor_icon_picker": {
    "Change the page in the currently open Shelf icon picker.": "Change the page in the currently open Shelf icon picker.",
