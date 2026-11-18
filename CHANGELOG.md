@@ -66,6 +66,8 @@ fixes for #320 and #334. Thanks to @AlexBarbulescu for the Shelf Editor drag in 
 - RP handles with Twist and IK chains of three or more bones write the solved rotation into the joints right after
   the handle moves.
 - Layout fit: with windows on displays of different scaling, each window is fitted at its own scaling (#334).
+- Moving UVs in the UV Editor while the 3D View shows the UV selection (the UV component) can no longer crash
+  Blender; playback with a selection no longer rebuilds the wires of objects that don't move.
 
 ## [0.18.0] — 2026-11-17
 

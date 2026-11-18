@@ -94,6 +94,37 @@ def test_uv_click_changes_the_signature():
     assert cc._selection_signature(bm, True) != before, "a UV pick redraws the 3D View"
 
 
+
+def test_no_uv_loop_is_read_while_a_transform_runs():
+    """While a transform runs (a UV Editor move), drawing the 3D View reads no UV loop of the mesh: the first Python
+    look at a loop adds a layer to the BMesh's loops, which moves the loop data the transform writes to. The points
+    keep the UV selection read before the transform."""
+    ob, vi = _cube_in_uv_mode()
+    dg = bpy.context.view_layer.depsgraph
+    cc._cache.clear()
+    st = cc.state(ob, dg, faces=False, uv=True)
+    assert np.flatnonzero(st.arrays.vsel).tolist() == [vi]
+    real_ptr, real_uv = cc._transform_ptr, cc.uv_selected_verts
+    reads = []
+
+    def counted(bm):
+        reads.append(1)
+        return real_uv(bm)
+    cc._transform_ptr = lambda: 12345
+    cc.uv_selected_verts = counted
+    try:
+        cc._dirty.add(ob.name)                          # a transform step: the points moved
+        st = cc.state(ob, dg, faces=False, uv=True)
+        cc._dirty_sel.add(ob.name)
+        st = cc.state(ob, dg, faces=False, uv=True)
+    finally:
+        cc._transform_ptr, cc.uv_selected_verts = real_ptr, real_uv
+    assert not reads, f"{len(reads)} UV loop reads while a transform ran"
+    assert np.flatnonzero(st.arrays.vsel).tolist() == [vi], "the UV selection from before the transform"
+    cc._dirty.add(ob.name)
+    st = cc.state(ob, dg, faces=False, uv=True)         # the transform ended: read again
+    assert np.flatnonzero(st.arrays.vsel).tolist() == [vi]
+
 # --- pre-selection of single UVs, edges and faces in the UV Editor -------------------------------------------
 
 pv = import_module(kit.MODULE + ".ui.uv_shell_preview")

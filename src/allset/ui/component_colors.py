@@ -300,7 +300,8 @@ def counts_signature(me, bm):
 
 
 class _State:
-    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv", "op", "sel", "wire", "counts")
+    __slots__ = ("arrays", "faces", "batches", "bkey", "name", "me_name", "uv", "op", "sel", "wire", "counts",
+                 "uvsel")
 
     def __init__(self, ob):
         self.arrays = None
@@ -314,6 +315,7 @@ class _State:
         self.op = 0                 # the transform running when the arrays were read in full (0: none)
         self.sel = set()            # selection_kinds whose flags in arrays are current
         self.counts = None          # (vertices, edges, faces) of the BMesh the arrays were read from
+        self.uvsel = None           # (vertex count, uv_selected_verts) read last while no transform ran
 
 
 def _transform_ptr():
@@ -493,6 +495,21 @@ def _read(st, ob, depsgraph, bm, faces, uv):
     return True
 
 
+def _uv_selection(st, bm):
+    """uv_selected_verts, or during a transform the one read before it (a transform changes no selection). While
+    a transform runs the mesh's UV loops are not read at all: Python's first look at a loop of a BMesh adds a layer
+    to the loops (and takes it away again when the BMesh is let go), which moves the loop data the transform holds
+    (a UV Editor move writes to freed memory and Blender crashes)."""
+    n = len(bm.verts)
+    if _transform_ptr():
+        if st.uvsel is not None and st.uvsel[0] == n:
+            return st.uvsel[1].copy()
+        return np.zeros(n, bool)
+    out = uv_selected_verts(bm)
+    st.uvsel = (n, out.copy())
+    return out
+
+
 def _select(st, me, bm, need):
     """Make the selection flags in ``need`` (selection_kinds) current: read from the BMesh, the evaluated mesh's
     selection stays as it was at its last geometry update."""
@@ -501,7 +518,7 @@ def _select(st, me, bm, need):
         return
     m = st.arrays
     if "uv" in missing:
-        m.vsel = uv_selected_verts(bm)
+        m.vsel = _uv_selection(st, bm)
         m.esel = np.zeros(len(m.esel), bool)
         m.fsel = np.zeros(len(m.fsel), bool)
         st.sel = {"uv"}
@@ -562,7 +579,7 @@ def state(ob, depsgraph, faces=True, uv=False, select_mode=None):
     _select(st, ob.data, bm, need)
     # The selection poll compares with what was drawn last
     if uv:
-        if len(bm.verts) <= BMESH_LIMIT:
+        if len(bm.verts) <= BMESH_LIMIT and not op:     # (no element is read while a transform runs)
             bm.verts.index_update()
             bm.edges.index_update()
             bm.faces.index_update()

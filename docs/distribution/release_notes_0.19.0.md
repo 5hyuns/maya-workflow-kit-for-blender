@@ -50,6 +50,7 @@ extension until they are tested.
 - **Playback (#344):** joints with controls draw faster while playing.
 - RP handles with Twist and IK chains of three or more bones write the solved rotation into the joints right after
   the handle moves.
+- Moving UVs in the UV Editor while the 3D View shows the UV selection can no longer crash Blender.
 
 ## Known differences
 
