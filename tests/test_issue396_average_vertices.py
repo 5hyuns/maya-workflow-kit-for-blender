@@ -104,6 +104,15 @@ def test_iterations_stay_editable():
     assert np.abs(_co(ob2) - two).max() < 1e-6                 # the edit = a fresh run with that value
 
 
+def test_option_box_runs_then_shows_iterations():
+    # the menu's option box runs the command, then Adjust Last Operation shows its settings: Iterations
+    assert _mod(".ui.menu_option_box").option_kind(ITEM) == "redo"
+    rna = bpy.ops.allset.average_vertices.get_rna_type()
+    shown = [p.identifier for p in rna.properties if p.identifier != "rna_type" and not p.is_hidden]
+    assert shown == ["iterations"] and rna.properties["iterations"].default == 10, shown
+    assert {'REGISTER', 'UNDO'} <= set(bpy.types.ALLSET_OT_average_vertices.bl_options)
+
+
 def test_object_mode_averages_the_whole_mesh():
     ob = _cube(3)
     bpy.ops.object.mode_set(mode='OBJECT')
