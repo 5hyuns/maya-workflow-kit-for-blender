@@ -337,9 +337,10 @@ class Session:
             return None
         if item is not None and item.sub is None:
             return self._finish(item, opt)
-        if item is not None and item.sub is not None:
-            self._click_mode(t)   # released on a submenu: keep it open to pick from
+        if item is not None and item.sub is not None and item.kind != "radial":
+            self._click_mode(t)   # released on a list row's submenu: keep it open to pick from
             return None
+        # nothing there, or a radial submenu that didn't open (no rest on it): nothing runs, the menu closes (Maya)
         return self._cancel()
 
     def _click_mode(self, t):
