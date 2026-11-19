@@ -166,6 +166,7 @@ class Session:
             seeds=component_ids(c,comp)
             if not seeds:return []
             ids,self.weights=soft_area(context,c,seeds)
+            ids=self._seen(context,ids)
         elif self.owner.middle:
             comp=q.component_at(context,context.region,context.region_data,mouse,self.ob)
             ids=component_ids(c,comp)
@@ -177,7 +178,8 @@ class Session:
 
     def _seen(self,context,ids):
         """The vertices of ``ids`` the view shows, like the ones the hover picks: one hidden behind the mesh or on
-        the far side of the live surface is not under the brush (it was pulled through to the front)."""
+        the far side of the live surface is not relaxed, by the brush or inside the Soft Selection radius (it was
+        pulled through to the front)."""
         from . import multi_cut, quad_draw as q
         r,rv=context.region,context.region_data
         xray=preselect._xray(context.space_data);cs=[(self.ob,self.c)];refs=self.owner._refs
