@@ -398,7 +398,6 @@ def straighten_shells(context, ob, synced):
         return len(chosen), 0
     restore = [(f.index, n, old_pins[l]) for f in faces for n, l in enumerate(f.loops) if l in old_pins]
     shells = len({owner[f] for f in faces})
-    picked = _selection(bm)
     uv_tools.mark_shell_borders(bm, uv, faces)
     mark_uv_cuts(faces, uv)
     bmesh.update_edit_mesh(ob.data)
@@ -415,7 +414,6 @@ def straighten_shells(context, ob, synced):
                 for l in f.loops:
                     p = l[uv].uv
                     l[uv].uv = (2 * at - p.x, p.y) if along_v else (p.x, 2 * at - p.y)
-    _set_selection(bm, picked)
     bmesh.update_edit_mesh(ob.data)
     return len(chosen), shells
 
@@ -427,26 +425,6 @@ def signed_area(faces, uv):
         p = [l[uv].uv for l in f.loops]
         total += sum(p[i - 1].x * p[i].y - p[i].x * p[i - 1].y for i in range(len(p)))
     return total / 2
-
-
-def _selection(bm):
-    """The mesh and UV selection of ``bm`` (the unwrap changes both)."""
-    return ([v.select for v in bm.verts], [e.select for e in bm.edges], [f.select for f in bm.faces],
-            [f.uv_select for f in bm.faces],
-            [(l.uv_select_vert, l.uv_select_edge) for f in bm.faces for l in f.loops])
-
-
-def _set_selection(bm, picked):
-    verts, edges, faces, face_uv, loops = picked
-    # faces first: setting a face's flag sets its edges and vertices too
-    for seq, flags in ((bm.faces, faces), (bm.edges, edges), (bm.verts, verts)):
-        for el, on in zip(seq, flags):
-            el.select = on
-    for f, on in zip(bm.faces, face_uv):
-        f.uv_select = on
-    for l, (vert, edge) in zip((l for f in bm.faces for l in f.loops), loops):
-        l.uv_select_vert = vert
-        l.uv_select_edge = edge
 
 
 @undo_steps.no_redo_panel

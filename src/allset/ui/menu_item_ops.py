@@ -226,15 +226,16 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
             if s[0] == "v3d" and not op.poll():
                 # Blender runs it only in a 3D View (Camera-based maps from the view): the largest one, as the
                 # menu item does in component mode (allset.menu_run)
-                area, region = _view3d(context)
+                window, area, region = _view3d(context)
                 if area is None:
-                    raise RuntimeError("No 3D View to run this in")
-                with context.temp_override(window=context.window, area=area, region=region):
+                    raise RuntimeError(NO_3D_VIEW)
+                with context.temp_override(window=window, screen=window.screen, area=area, region=region):
                     op('EXEC_DEFAULT', **props)
             else:
                 op('EXEC_DEFAULT', **props)
         except (RuntimeError, TypeError) as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            return {'CANCELLED'}
         finally:
             bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
@@ -343,10 +344,25 @@ def _call(op_id, props):
     return getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT', **props)
 
 
+NO_3D_VIEW = "No 3D View to run this in"
+
+
 def _view3d(context):
-    """(area, WINDOW region) of the largest 3D View of the window the menu runs in."""
+    """(window, area, WINDOW region) of the largest 3D View of the window the menu runs in, else of any window (a
+    separate UV Editor window has none of its own); (None, None, None) without one."""
     from .status_line import main_view3d
-    return main_view3d(context.window.screen if context.window else None)
+    windows = list(context.window_manager.windows)
+    if context.window in windows:
+        windows.remove(context.window)
+        windows.insert(0, context.window)
+    best = (None, None, None)
+    for k, window in enumerate(windows):
+        area, region = main_view3d(window.screen)
+        if area is not None and (best[1] is None or area.width * area.height > best[1].width * best[1].height):
+            best = (window, area, region)
+        if k == 0 and best[1] is not None:
+            break
+    return best
 
 
 class ALLSET_OT_menu_run(bpy.types.Operator):
@@ -374,12 +390,12 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
     def execute(self, context):
         if add_to_shelf_if_asked(self, context, self.item):
             return {'FINISHED'}
-        area, region = _view3d(context)
+        window, area, region = _view3d(context)
         if area is None:
-            self.report({'ERROR'}, "No 3D View to run this in")
+            self.report({'ERROR'}, NO_3D_VIEW)
             return {'CANCELLED'}
         try:
-            with context.temp_override(window=context.window, area=area, region=region):
+            with context.temp_override(window=window, screen=window.screen, area=area, region=region):
                 _call(self.op, json.loads(self.props))
         except RuntimeError as ex:  # poll failed etc.
             text = str(ex).strip()

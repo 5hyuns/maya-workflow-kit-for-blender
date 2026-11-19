@@ -122,47 +122,61 @@ def uv_bounds(island, uv):
 
 # --- a Blender UV operator on chosen faces (Unfold / Layout / Contour Stretch) ----------------------
 
+def selection_state(bm):
+    """The mesh and UV selection of ``bm`` and whether Blender's own UV selection (UV Sync Selection) is in use."""
+    return ([v.select for v in bm.verts], [e.select for e in bm.edges], [f.select for f in bm.faces],
+            [f.uv_select for f in bm.faces],
+            [(l.uv_select_vert, l.uv_select_edge) for f in bm.faces for l in f.loops],
+            getattr(bm, "uv_select_sync_valid", None))
+
+
+def restore_selection(bm, state):
+    verts, edges, faces, face_uv, loops, sync_valid = state
+    # faces first: a face's flag sets its edges and vertices too
+    for seq, flags in ((bm.faces, faces), (bm.edges, edges), (bm.verts, verts)):
+        for el, on in zip(seq, flags):
+            el.select = on
+    for f, on in zip(bm.faces, face_uv):
+        f.uv_select = on
+    for l, (vert, edge) in zip((l for f in bm.faces for l in f.loops), loops):
+        l.uv_select_vert = vert
+        l.uv_select_edge = edge
+    if sync_valid is not None:
+        bm.uv_select_sync_valid = sync_valid
+
+
 def _with_faces(context, ob, faces, call):
     """Run ``call`` with UV sync on and exactly ``faces`` of ``ob`` selected (Blender's unwrap / pack use that), then put
-    the selection and sync back. Those Blender operators work on every mesh in edit mode: the other meshes have
-    nothing selected meanwhile (their picked faces were unwrapped / packed on their own, tearing them off their
-    shells)."""
+    the selection, the UV selection and sync back, like Maya keeps the selection through its UV commands. Those
+    Blender operators work on every mesh in edit mode: the other meshes have nothing selected meanwhile (their
+    picked faces were unwrapped / packed on their own, tearing them off their shells). Blender's own UV selection
+    is set aside meanwhile, so the operators read the face selection."""
     ts = context.scene.tool_settings
     old_sync = ts.use_uv_select_sync
     old_mode = tuple(ts.mesh_select_mode)
     others = [o for o in _edit_meshes(context) if o.data.as_pointer() != ob.data.as_pointer()]
-    saved = []
-    for o in [ob] + others:
-        bm = bmesh.from_edit_mesh(o.data)
-        for seq in (bm.verts, bm.edges, bm.faces):
-            seq.index_update()
-        saved.append((o, [[el.index for el in seq if el.select] for seq in (bm.verts, bm.edges, bm.faces)]))
+    saved = [(o, selection_state(bmesh.from_edit_mesh(o.data))) for o in [ob] + others]
     want = {f.index for f in faces}
     ts.use_uv_select_sync = True
     for o in [ob] + others:
         bm = bmesh.from_edit_mesh(o.data)
+        bm.faces.index_update()
         for f in bm.faces:
             f.select_set(False)
         if o is ob:
             for f in bm.faces:
                 if f.index in want:
                     f.select_set(True)
+        if hasattr(bm, "uv_select_sync_valid"):
+            bm.uv_select_sync_valid = False
         bmesh.update_edit_mesh(o.data)
     try:
         return call()
     finally:
-        for o, old in saved:
-            bm = bmesh.from_edit_mesh(o.data)
-            for seq, keep in zip((bm.verts, bm.edges, bm.faces), old):
-                seq.ensure_lookup_table()
-                for el in seq:
-                    el.select = False
-                for i in keep:
-                    if i < len(seq):
-                        seq[i].select = True
         ts.mesh_select_mode = old_mode
         ts.use_uv_select_sync = old_sync
-        for o, _old in saved:
+        for o, state in saved:
+            restore_selection(bmesh.from_edit_mesh(o.data), state)
             bmesh.update_edit_mesh(o.data)
 
 
