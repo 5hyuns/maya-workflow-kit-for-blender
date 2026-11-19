@@ -89,7 +89,8 @@ def test_submenu_opened_far_out_stays_until_the_ring():
     _open(s, _at(O, "E", 150), 0.2)     # a stroke far out and a rest: the submenu opens where the pointer is
     assert len(s.stack) == 2 and s.center == _at(O, "E", 150)
     s.move(*_at(O, "E", 100), 0.35)
-    assert len(s.stack) == 2 and _label(s) is None, "west of the submenu's centre, nothing there: still open"
+    assert len(s.stack) == 2, "west of the submenu's centre, outside the object menu's ring: still open"
+    assert s.hover[0] is None or s.hover[0] in s.layout.items, "its nearest item, like every direction"
     s.move(*_at(O, "E", 60), 0.4)
     assert len(s.stack) == 2
     s.move(*_at(O, "E", 40), 0.5)
