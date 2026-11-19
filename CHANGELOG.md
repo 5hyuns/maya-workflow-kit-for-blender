@@ -3,6 +3,25 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Edit Mesh > Average Vertices and the vertex marking menu's Average Vertices round the selected vertices at once,
+  like Maya: Blender's Smooth Vertices drag with no amount used to move nothing and wait for the mouse, which felt frozen on a
+  heavy mesh. The polyAverageVertex node keeps its Iterations (10) editable in the In-View Editor and Channel Box INPUTS, and
+  the option box shows Iterations. (#396)
+- Quad Draw: a Shift+drag relax on a live surface (also with Soft Selection) no longer pulls the mesh's far side through to the
+  front, and relaxed vertices stay where they were on the surface instead of sliding toward the camera near the outline. (#389)
+- In Isolate Select, RMB on an object seen through a hole in another opens the marking menu for the object you see, not for one
+  Isolate Select hides, so Vertex / Edge / Face work from any angle. (#395)
+- An object-mode click no longer stops on "'NoneType' object has no attribute 'vertices'" when the scene has a curve with no
+  splines or one whose Geometry Nodes output is only instances, and selecting such a curve no longer stops the selected-object
+  wire from drawing. (#390)
+- Hotkey Editor: every keyboard key Blender has can be assigned, including the "<" key of German and other European
+  keyboards, "+", the Menu key and the media keys; the list shows "<" and "+" for them. (#386)
+- Marking menus: like Maya, a radial submenu opens when the pointer rests on it for a moment; a stroke that keeps
+  moving goes over it, so list rows beyond it can be reached (Ctrl+RMB: To Shell under To Faces). (#387)
+
 ## [0.19.0] — 2026-11-18
 
 Thank you for the reports and the help. This release brings Maya's IK/FK switching, the rest of the Time Slider
