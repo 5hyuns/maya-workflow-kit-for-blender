@@ -1,6 +1,7 @@
 """#387: in a real UI, Ctrl+RMB on a vertex (Convert Selection) and a stroke straight down that keeps moving goes
 over "To Faces" (a radial submenu) to the list row "To Shell" under it; the release converts the vertex to its
-shell. A rest on "To Faces" opens its submenu, like Maya."""
+shell. A rest on "To Faces" opens its submenu, and a quick stroke released on "To Faces" closes the menu and runs
+nothing, like Maya."""
 
 import os
 import sys
@@ -140,6 +141,33 @@ def s_rested():
 @step
 def s_closed():
     check("Esc closes the menu", not draw().ACTIVE)
+    one_vertex()
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+    ev('RIGHTMOUSE', 'PRESS', x=C["x"], y=C["y"], ctrl=True)
+
+
+@step
+def s_quick_to_faces():
+    s = session()
+    if s is None:
+        check("Ctrl+RMB opens the menu a third time", False)
+        return
+    it = s.stack[0][0].radial["S"]
+    fx, fy = center_of(it.rect, s)
+    # a quick stroke onto To Faces and the release, within one tick: no rest on it
+    for k in range(1, 7):
+        ev('MOUSEMOVE', 'NOTHING', x=round(C["x"] + (fx - C["x"]) * k / 6), y=round(C["y"] + (fy - C["y"]) * k / 6),
+           ctrl=True)
+    ev('RIGHTMOUSE', 'RELEASE', x=fx, y=fy, ctrl=True)
+
+
+@step
+def s_quick_closed():
+    check("a quick stroke released on To Faces closes the menu (no click mode)", not draw().ACTIVE)
+    n = selected_verts()
+    check(f"... and runs nothing: still one vertex ({n} of {C['total']})", n == 1)
+    if draw().ACTIVE:
+        tap('ESC')
     if bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
 

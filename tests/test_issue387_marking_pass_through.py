@@ -161,3 +161,59 @@ def test_click_mode_hover_passes_over_and_a_click_opens():
     box = _box(s, "S")
     t = _stroke(s, shell, box, t)
     assert s.click(*box, t + 0.01) is None and len(s.stack) == 2
+
+
+def _quick_release_on(s, key, t0, speed_dt):
+    """A stroke from the press point to radial ``key``'s box (beyond the ring in its direction), released at once."""
+    box = _box(s, key)
+    a = math.atan2(box[1] - O[1], box[0] - O[0])
+    end = (O[0] + (R + 12) * math.cos(a), O[1] + (R + 12) * math.sin(a))
+    t = _stroke(s, O, end, t0, px=12.0, dt=speed_dt)
+    return end, t
+
+
+def test_a_stroke_released_at_once_on_a_radial_submenu_closes_the_menu():
+    """Like Maya: a stroke that ends on a radial submenu item and lets go without a rest runs nothing and closes the
+    menu, before and after the menu is drawn (it doesn't stay open in click mode)."""
+    for key in ("S", "SE", "N", "E"):
+        for t0, dt in ((0.0, 0.01), (SHOWN, 0.01)):
+            s = _session()
+            end, t = _quick_release_on(s, key, t0, dt)
+            want = s.stack[0][0].radial[key].label
+            assert len(s.stack) == 1 and _label(s) == want, (key, t0, len(s.stack), _label(s))
+            res = s.release(*end, t + 0.01)
+            assert res is not None and res[0] == "CANCEL", (key, t0, res)
+            assert s.mode == "PRESS", (key, t0, s.mode)
+
+
+def test_a_release_on_a_radial_submenu_that_did_not_open_closes_the_menu():
+    """Resting where the item is hovered but its submenu doesn't open (inside the ring, off its box), then letting
+    go: nothing runs and the menu closes, like Maya."""
+    s = _session()
+    p = (O[0], O[1] - (R - P.ring_h / 2 - 4))
+    t = _stroke(s, O, p, SHOWN)
+    s.tick(t + 1.0)
+    assert len(s.stack) == 1 and _label(s) == "To Faces"
+    res = s.release(*p, t + 1.01)
+    assert res is not None and res[0] == "CANCEL", res
+
+
+def test_a_quick_click_still_keeps_the_menu_in_click_mode():
+    s = _session()
+    s.move(O[0] + 2, O[1] - 1, 0.04)
+    assert s.release(O[0] + 2, O[1] - 1, 0.08) is None and s.mode == "CLICK"
+    # in click mode a click on To Faces opens it, a rest on it too
+    box = _box(s, "S")
+    t = _stroke(s, (O[0] + 2, O[1] - 1), box, 0.3)
+    assert s.click(*box, t + 0.01) is None and len(s.stack) == 2
+
+
+def test_a_rest_then_release_on_the_opened_submenu_centre_runs_nothing():
+    """After a rest opened To Faces' submenu, letting go where it opened (its centre) runs nothing."""
+    s = _session()
+    p = (O[0], O[1] - R - 5)
+    t = _stroke(s, O, p, SHOWN)
+    s.tick(t + P.open_dwell + 0.01)
+    assert len(s.stack) == 2
+    res = s.release(*p, t + P.open_dwell + 0.02)
+    assert res is not None and res[0] == "CANCEL", res
