@@ -91,3 +91,17 @@ def test_click_with_such_curves_in_the_scene():
     assert _best(_px(0.0, 0.0)) is None                    # on the cube: Blender's own pick, no error
     assert _best(_px(-1.0, 0.0)) is None                   # where the scatter curve's spline lies: not a curve hit
     assert _best(_px(3.5, 0.0)) == circle.name             # a curve that draws its wire still wins
+
+
+def test_selected_wire_of_such_curves_is_empty():
+    """The selected-object wire reads no edges from these curves instead of raising (which removed its draw handler)."""
+    edges = import_module(kit.MODULE + ".ui.selection_wire_edges")
+    _cube, empty, scatter, circle = _scene()
+    dg = bpy.context.evaluated_depsgraph_get()
+    for ob in (empty, scatter):
+        co, ed = edges.edges_of(ob, dg)
+        if len(co) or len(ed):
+            raise AssertionError(f"{ob.name}: expected no wire, got {len(co)} points {len(ed)} edges")
+    co, ed = edges.edges_of(circle, dg)
+    if not len(ed):
+        raise AssertionError("a bezier circle still has its wire")
