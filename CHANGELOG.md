@@ -21,6 +21,8 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   keyboards, "+", the Menu key and the media keys; the list shows "<" and "+" for them. (#386)
 - Marking menus: like Maya, a radial submenu opens when the pointer rests on it for a moment; a stroke that keeps
   moving goes over it, so list rows beyond it can be reached (Ctrl+RMB: To Shell under To Faces). (#387)
+- Marking menus: like Maya, a stroke that lets go on a radial submenu item before its submenu opens runs nothing and
+  closes the menu, instead of leaving the menu open; a quick click still keeps the menu up (#387).
 - UV > Camera-based (and UV Editor > Create > Camera-based) with an object selected in object mode maps the whole
   object from the 3D View, like Maya; it only showed a warning. Camera-based also works from a separate UV Editor
   window, in object and component mode. (#392)
