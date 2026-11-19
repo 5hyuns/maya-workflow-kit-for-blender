@@ -65,6 +65,7 @@ def reset():
         b.verts.ensure_lookup_table()
         for v, co in zip(b.verts, C['start']):
             v.co = co
+        b.normal_update()       # the next drag reads the normals of the restored cube
         bmesh.update_edit_mesh(bpy.context.edit_object.data)
 
 

@@ -6231,6 +6231,7 @@
    "Manipulator Press": "Manipulator Press",
    "Manipulator Release": "Manipulator Release",
    "Manipulator Size": "Manipulator Size",
+   "Manipulator Slide": "Manipulator Slide",
    "Smart Duplicate": "Smart Duplicate",
    "Smart Duplicate / Extrude": "Smart Duplicate / Extrude",
    "Smart Extrude": "Smart Extrude"
@@ -7735,6 +7736,8 @@
    "Component Colors": "Component Colors",
    "Create menu names objects pCube1 / pCubeShape1 (otherwise Blender names)": "Create menu names objects pCube1 / pCubeShape1 (otherwise Blender names)",
    "Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. Blender's own preferences are never changed.": "Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. Blender's own preferences are never changed.",
+   "Ctrl+Drag on a Move Axis Snaps": "Ctrl+Drag on a Move Axis Snaps",
+   "Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)": "Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)",
    "Current Frame": "Current Frame",
    "Current Project": "Current Project",
    "Curve": "Curve",
@@ -10213,7 +10216,8 @@
    "Maya double-click: an edge selects its loop, a vertex or face its shell; Shift: the components between the\nlast pick and this one along their loop": "Maya double-click: an edge selects its loop, a vertex or face its shell; Shift: the components between the\nlast pick and this one along their loop"
   },
   "Tooltips/operators/manip": {
-   "Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on\nthe Move centre frees the active handle, a Scale axis handle scales the other two axes": "Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on\nthe Move centre frees the active handle, a Scale axis handle scales the other two axes",
+   "Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes": "Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes",
+   "Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)": "Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)",
    "LMB on the manipulator: clicking or dragging a handle makes it the active handle (Maya active handle)": "LMB on the manipulator: clicking or dragging a handle makes it the active handle (Maya active handle)",
    "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click": "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click",
    "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)": "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)",

@@ -1,5 +1,4 @@
-"""In a real UI: Move tool, Ctrl+LMB drag on the X arrow moves along X with grid snapping and makes X the
-active handle,
+"""In a real UI: Move tool, Ctrl+LMB drag on the X arrow moves in the YZ plane and makes it the active handle,
 Ctrl+click on the centre frees it, Shift+MMB drag in the front view picks X (sideways) / Z (up), Scale tool Ctrl+X
 arrow scales Y and Z."""
 
@@ -128,10 +127,10 @@ def s_ctrl_check():
     d = ob1().location - C["start"]
     k = mod("operators.units").maya_unit()
     h = mod("operators.manip").HANDLES.get('TRANSLATE')
-    cm = d.x / k
-    check(f"Ctrl+X arrow drag: X only, whole cm ({d.x / k:.3f}, {d.y / k:.3f}, {d.z / k:.3f} cm)",
-          abs(cm) > 0.5 and abs(cm - round(cm)) < 1e-3 and abs(d.y) < 1e-6 and abs(d.z) < 1e-6)
-    check(f"X is the active handle ({h})", h is not None and tuple(h["constraint_axis"]) == (True, False, False))
+    check(f"Ctrl+X arrow drag: in YZ, X kept ({d.x / k:.3f}, {d.y / k:.3f}, {d.z / k:.3f} cm)",
+          abs(d.x) < 1e-6 and (abs(d.y) > 1e-3 or abs(d.z) > 1e-3))
+    check(f"the YZ plane is the active handle ({h})",
+          h is not None and tuple(h["constraint_axis"]) == (False, True, True))
     C["d"] = d
     redraw()
 

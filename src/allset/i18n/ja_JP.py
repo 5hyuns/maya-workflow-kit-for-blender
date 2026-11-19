@@ -5282,7 +5282,6 @@ STRINGS = {
     'Create an empty layer above the active one': 'アクティブなレイヤの上に空のレイヤを作成',
     'Create this Maya material from Blender nodes without assigning it (Maya Hypershade Create; Env Fog goes on\nthe World)': 'この Maya マテリアルを Blender ノードで割り当てずに作成 (Maya Hypershade の作成。Env Fog は\nワールドに付きます)',
     'Create this texture and connect it to the attribute (Maya Create Render Node)': 'このテクスチャを作成してアトリビュートに接続 (Maya レンダーノードの作成)',
-    'Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on\nthe Move centre frees the active handle, a Scale axis handle scales the other two axes': 'マニピュレータ上で Ctrl+LMB: 移動ハンドルのドラッグはグリッドスナップでそのハンドルに沿って移動、移動の中心で\nCtrl+クリックするとアクティブハンドルを解除、スケールの軸ハンドルは他の 2 軸をスケール',
     'Current tab': '現在のタブ',
     "Current time field and transport buttons at the right of Maya's Time Slider.": 'Maya タイムスライダ右側の現在時間フィールドと再生ボタン。',
     "Curves from the surface's isoparms: every visible isoparm of a selected surface, or the isoparms through the\nselected CV rows / columns in edit mode (Maya Curves > Duplicate Surface Curves)": 'サーフェスのアイソパラムからカーブを作成: 選択サーフェスの表示中のアイソパラムすべて、または編集モードで\n選択した CV の行 / 列を通るアイソパラム (Maya の カーブ > サーフェスカーブの複製)',
@@ -6616,4 +6615,9 @@ STRINGS = {
     'Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)': 'Maya IK/FK に接続: 選択したオブジェクトに IK ハンドルに従う Ik Blend を追加します (ハンドルを最後に選択)',
     'Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)': '選択した頂点を移動し、頂点を増やさずに形を丸める (Maya の メッシュの編集 > 頂点の平均化):\n反復回数はビュー内エディタまたはチャンネルボックスの INPUTS で変更 (polyAverageVertex)',
     'Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed': '最後の頂点の平均化を変更 (Maya: polyAverageVertex ノードを編集)。Blender はヒストリを持たないため、変更できるのは\n最後の 1 つだけ',
+    'Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes': 'マニピュレータ上で Ctrl+LMB: 移動の軸は他の 2 軸の平面で移動 (Ctrl+ドラッグでスナップ の設定時: グリッドスナップで\nその軸に沿って移動)、移動の平面 / 中心のドラッグはスナップ、移動の中心で Ctrl+クリックすると\nアクティブハンドルを解除、スケールの軸ハンドルは他の 2 軸をスケール',
+    'Ctrl+Drag on a Move Axis Snaps': '移動の軸を Ctrl+ドラッグでスナップ',
+    'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': '移動マニピュレータの軸を Ctrl+ドラッグすると、グリッドスナップでその軸に沿って移動 (オフ: Maya と同じく他の 2 軸の平面で移動)',
+    'Manipulator Slide': 'マニピュレータのスライド',
+    'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': 'メッシュ編集モードで移動マニピュレータのハンドルを Ctrl+Shift+ドラッグ: 選択コンポーネントを\nエッジに沿ってスライド (Maya)',
 }

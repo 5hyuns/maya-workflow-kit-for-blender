@@ -5282,7 +5282,6 @@ STRINGS = {
     'Create an empty layer above the active one': '在当前层上方创建一个空层',
     'Create this Maya material from Blender nodes without assigning it (Maya Hypershade Create; Env Fog goes on\nthe World)': '用 Blender 节点创建此 Maya 材质但不指定 (Maya Hypershade 创建；Env Fog 放在\n世界上)',
     'Create this texture and connect it to the attribute (Maya Create Render Node)': '创建此纹理并连接到该属性 (Maya 创建渲染节点)',
-    'Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on\nthe Move centre frees the active handle, a Scale axis handle scales the other two axes': '在操纵器上 Ctrl+LMB：拖动移动控制柄会沿该控制柄移动并捕捉到栅格，在移动中心 Ctrl+单击\n会释放当前控制柄，缩放轴控制柄会缩放另外两个轴',
     'Current tab': '当前选项卡',
     "Current time field and transport buttons at the right of Maya's Time Slider.": 'Maya 时间滑块右侧的当前时间字段和播放控制按钮。',
     "Curves from the surface's isoparms: every visible isoparm of a selected surface, or the isoparms through the\nselected CV rows / columns in edit mode (Maya Curves > Duplicate Surface Curves)": '来自曲面等参线的曲线：选定曲面的每条可见等参线，或编辑模式下穿过\n选定 CV 行 / 列的等参线 (Maya 曲线 > 复制曲面曲线)',
@@ -6617,4 +6616,9 @@ STRINGS = {
     'Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)': 'Maya 连接到 IK/FK：为选定对象添加跟随 IK 控制柄的 Ik Blend (最后选择控制柄)',
     'Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)': '移动选定顶点，不添加顶点而使形状变圆 (Maya 编辑网格 > 平均顶点)：\n可在视图内编辑器或通道盒 INPUTS 中更改其迭代次数 (polyAverageVertex)',
     'Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed': '更改上一次平均顶点 (Maya：编辑 polyAverageVertex 节点)。Blender 不保留历史，因此只能\n更改最后一次',
+    'Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes': '在操纵器上 Ctrl+LMB：移动轴会在另外两个轴的平面内移动 (开启 Ctrl+拖动捕捉 偏好设置时：沿该轴移动并\n捕捉到栅格)，拖动移动平面 / 中心会捕捉，在移动中心 Ctrl+单击\n会释放当前控制柄，缩放轴控制柄会缩放另外两个轴',
+    'Ctrl+Drag on a Move Axis Snaps': 'Ctrl+拖动移动轴时捕捉',
+    'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': 'Ctrl+拖动移动操纵器的轴会沿该轴移动并捕捉到栅格 (关闭：与 Maya 相同，在另外两个轴的平面内移动)',
+    'Manipulator Slide': '操纵器滑动',
+    'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': '在网格编辑模式下 Ctrl+Shift+拖动移动操纵器的控制柄：将选定组件沿其\n边滑动 (Maya)',
 }

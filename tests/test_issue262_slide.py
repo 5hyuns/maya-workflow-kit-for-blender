@@ -64,8 +64,8 @@ def test_reset_tool_turns_it_off():
 
 def test_ctrl_shift_mmb_in_move_tool():
     km = kit.maya_kc().keymaps["3D View Tool: Move"]
-    items = [k for k in km.keymap_items if k.idname == "allset.component_slide" and k.active]
-    assert len(items) == 1
+    items = [k for k in km.keymap_items if k.idname == "allset.component_slide" and k.active and k.shift]
+    assert len(items) == 1      # (Ctrl+MMB without Shift = along normals, #394)
     k = items[0]
     assert (k.type, k.value, k.ctrl, k.shift, k.alt) == ('MIDDLEMOUSE', 'PRESS', True, True, False)
     assert k.properties.mode == 'EDGE'

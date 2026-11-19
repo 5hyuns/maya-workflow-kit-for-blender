@@ -1,5 +1,5 @@
-"""#215 #212 in a real UI: Move tool, Ctrl held before the press on the Z arrow = Z only with grid snapping, Ctrl
-first on the XY plane handle = moves in XY with snapping (no box select), Ctrl+click on the centre keeps the
+"""#215 #212 in a real UI: Move tool, Ctrl held before the press on the Z arrow = Z only with grid snapping (the
+Ctrl+Drag Snaps preference on), Ctrl first on the XY plane handle = moves in XY with snapping (no box select), Ctrl+click on the centre keeps the
 selection; Shift+W / E / R key Translate / Rotate / Scale over the Outliner, Time Slider, Channel Box dock, Graph
 Editor (graph and channel list) and Dope Sheet, never in edit mode; the Attribute Editor shows keyed channels in
 the key colour."""
@@ -110,6 +110,7 @@ def s_cube():
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
     ob1().location = (0.0313, 0.0271, 0.0)      # off the grid: a snapped move lands on whole cm
     C["start"] = ob1().location.copy()
+    mod("preferences").get(bpy.context).manip_ctrl_snap = True     # #215: Ctrl+drag on an axis snaps (option)
     redraw()
 
 
@@ -125,6 +126,7 @@ def s_z_check():
     check(f"#215 ... with grid snapping (Z moved {d.z / k:.4f} cm)", whole_cm(d.z))
     h = mod("operators.manip").HANDLES.get('TRANSLATE')
     check(f"#215 Z is the active handle ({h})", h is not None and tuple(h["constraint_axis"]) == (False, False, True))
+    mod("preferences").get(bpy.context).manip_ctrl_snap = False
     ob1().location = C["start"]
     C["sel"] = [o.name for o in bpy.context.selected_objects]
     redraw()

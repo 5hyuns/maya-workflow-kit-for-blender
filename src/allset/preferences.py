@@ -687,6 +687,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
                                           "or edges extrudes them and transforms the new ones",
         default=True)
+    # Off by default: Ctrl+drag on a Move axis uses the other two axes, like Maya.
+    manip_ctrl_snap: bpy.props.BoolProperty(
+        name="Ctrl+Drag on a Move Axis Snaps",
+        description="Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping "
+                    "(off: it moves in the plane of the other two axes, like Maya)",
+        default=False)
     # Off by default: it keeps extra data in the user's files (operators/model_history.py).
     model_history_files: bpy.props.BoolProperty(
         name="Persistent Modeling History",
@@ -769,6 +775,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_units")
         row.prop(self, "smart_duplicate")
         row.prop(self, "smart_extrude")
+        box.prop(self, "manip_ctrl_snap")
         box.prop(self, "model_history_files")
         box.prop(self, "metre_joint_size")
         box.prop(self, "project_root")

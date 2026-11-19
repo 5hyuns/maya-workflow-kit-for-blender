@@ -49,7 +49,7 @@ def test_keymaps():
     for km, _idname, mode in patches.MMB_TOOLS:
         # the emulated Alt+LMB tumble (#242) leads every MMB list and passes through otherwise
         mmb = [k for k in kc.keymaps[km].keymap_items if k.active and k.type == 'MIDDLEMOUSE' and not k.shift
-               and k.idname != "allset.emulated_tumble"]
+               and k.idname not in ("allset.emulated_tumble", "allset.component_slide")]   # Ctrl+MMB: #394
         # with the Move tool the picked motion trail keys' middle drag comes next (it passes through otherwise)
         trail = ["allset.motion_trail_key"] if km == "3D View Tool: Move" else []
         assert [k.idname for k in mmb] == ["allset.cb_virtual_slider", *trail, "allset.manip_mmb"], (km, mmb)

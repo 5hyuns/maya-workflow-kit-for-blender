@@ -54,6 +54,11 @@ HANDLES = {
     "S": ('CENTER', None, ("local_scale_x", "local_scale_y", "local_scale_z")),
 }
 AXIS_INDEX = {'X': 0, 'Y': 1, 'Z': 2}
+# Ctrl+drag, like Maya: an arrow moves in the plane of the other two axes, a scale cube scales the other two
+CTRL_OTHERS = {
+    "TX": "PYZ", "TY": "PXZ", "TZ": "PXY",
+    "SX": ("SY", "SZ"), "SY": ("SX", "SZ"), "SZ": ("SX", "SY"),
+}
 
 # Transform Component of faces / edges, like Maya's: a light-blue ring past the scale cubes (radius 1.17 arrow units;
 # drag = turn about the view axis by the angle the mouse sweeps round the centre), three rotate rings at the cube
@@ -500,7 +505,16 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
     def invoke(self, context, event):
         ob, rec = target(context)
         world, rings = flags(rec)
-        fields = handle_fields(rec, self.handle, world, rings)
+        handle, others = self.handle, None
+        fields = handle_fields(rec, handle, world, rings)
+        alt = CTRL_OTHERS.get(handle) if event.ctrl else None
+        if isinstance(alt, str) and handle_fields(rec, alt, world, rings):
+            handle = alt            # Ctrl on an arrow: the plane of the other two axes
+            fields = handle_fields(rec, handle, world, rings)
+        elif alt is not None and not isinstance(alt, str):
+            more = tuple(f for h in alt for f in handle_fields(rec, h, world, rings))
+            if len(more) == len(alt):       # Ctrl on a scale cube: the other two cubes, by this cube's drag
+                others, fields = alt, more
         frame = manip_frame(ob, rec, world) if fields else None
         if frame is None:
             return {'CANCELLED'}
@@ -509,8 +523,8 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         self._frame3 = axes.copy()
         self._axes = [axes.col[i].copy() for i in range(3)]
         self._world = world
-        self._role = handle_role(self.handle, world)
-        data = handle_entry(self.handle)[1]
+        self._role = handle_role(handle, world)
+        data = handle_entry(handle)[1]
         self._idx = [AXIS_INDEX[a] for a in data] if data else []
         self._start = dict(extrude.DEFAULTS, **rec.params)
         self._unit = units.maya_unit(context.scene)
@@ -540,6 +554,8 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
             self._h0 = self._on_plane(context, event, normal)
         elif self._role == 'CUBE':
             self._sdir = self._screen_dir(context, self._axes[self._idx[0]])
+            if others:
+                self._idx = [AXIS_INDEX[handle_entry(h)[1]] for h in others]
         self._last = {}
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
         context.window_manager.modal_handler_add(self)

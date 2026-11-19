@@ -600,9 +600,10 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
 
 
 # --- Ctrl+LMB on a handle, Shift+MMB = automatic axis -------------------------
-# Move tool: a drag started with Ctrl held on an axis arrow / plane / the centre moves that handle's way with
-# grid snapping (the same as pressing Ctrl after the drag started), Ctrl+click on the centre frees the active
-# handle; Scale tool: Ctrl+LMB on an axis scales the other two axes; Shift+MMB drag moves along the axis closest
+# Move tool: Ctrl+drag on an axis arrow moves in the plane of the other two axes and makes that plane the active
+# handle, like Maya (the Ctrl+Drag Snaps preference: along the axis with grid snapping); a drag started with Ctrl
+# held on a plane / the centre moves that handle's way with grid snapping, Ctrl+click on the centre frees the
+# active handle; Scale tool: Ctrl+LMB on an axis scales the other two axes; Shift+MMB drag moves along the axis closest
 # to the drag direction.
 
 def plane_of(axis):
@@ -639,9 +640,19 @@ def _highlighted(context):
     return next((gz for gz in group.gizmos if gz.is_highlight and hasattr(gz, "handle_role")), None)
 
 
+def _ctrl_snaps(context):
+    """The Ctrl+Drag on a Move Axis Snaps preference."""
+    from .. import preferences
+    try:
+        return bool(preferences.get(context).manip_ctrl_snap)
+    except AttributeError:
+        return False
+
+
 class ALLSET_OT_manip_ctrl(bpy.types.Operator):
-    """Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on
-    the Move centre frees the active handle, a Scale axis handle scales the other two axes"""
+    """Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps
+    preference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre
+    frees the active handle, a Scale axis handle scales the other two axes"""
     bl_idname = "allset.manip_ctrl"
     bl_label = "Manipulator Ctrl Handle"
     bl_options = {'INTERNAL'}
@@ -664,6 +675,21 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
             self._press = (event.mouse_x, event.mouse_y)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
+        editing = getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True)
+        if (kind == 'TRANSLATE' and role == 'AXIS' and axis in ('X', 'Y', 'Z') and not editing
+                and not _ctrl_snaps(context)):
+            # Maya: the plane of the other two axes moves and becomes the active handle
+            otype = manipulator.slot_type(context.scene, kind)
+            HANDLES[kind] = {"constraint_axis": plane_of(axis), "orient_type": otype}
+            snap_align.apply_active(context)
+            try:
+                from . import live_translate
+                live_translate.start(context, {"constraint_axis": plane_of(axis), "orient_type": otype,
+                                               "release_confirm": True})
+            except RuntimeError:
+                return {'PASS_THROUGH'}
+            context.area.tag_redraw()
+            return {'FINISHED'}
         if kind == 'TRANSLATE':
             # The press goes on to the handle's own drag (the Generic Gizmo keymaps allow Ctrl there): the
             # transform starts with Ctrl held, so it snaps from the start and Ctrl stays its snap toggle.
@@ -702,6 +728,28 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         except RuntimeError:
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+class ALLSET_OT_manip_slide(bpy.types.Operator):
+    """Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their
+    edges (Maya)"""
+    bl_idname = "allset.manip_slide"
+    bl_label = "Manipulator Slide"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, _event):
+        from ..ui import manipulator
+        if context.mode != 'EDIT_MESH' or _highlighted(context) is None:
+            return {'PASS_THROUGH'}
+        if manipulator.tool_kind(context) != 'TRANSLATE':
+            return {'PASS_THROUGH'}
+        if getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True):
+            return {'PASS_THROUGH'}         # the pivot is edited
+        try:
+            res = bpy.ops.allset.component_slide('INVOKE_DEFAULT', mode='EDGE')
+        except RuntimeError:
+            return {'PASS_THROUGH'}
+        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'PASS_THROUGH'}
 
 
 AUTO_PX = 6          # movement that decides the Shift+MMB axis (x UI scale)
@@ -838,4 +886,5 @@ def option_state(option):
 
 
 classes = (ALLSET_OT_manip_duplicate, ALLSET_OT_manip_release, ALLSET_OT_manip_option, ALLSET_OT_manip_size,
-           ALLSET_OT_manip_press, ALLSET_OT_manip_mmb, ALLSET_OT_manip_ctrl, ALLSET_OT_manip_mmb_auto)
+           ALLSET_OT_manip_press, ALLSET_OT_manip_mmb, ALLSET_OT_manip_ctrl, ALLSET_OT_manip_mmb_auto,
+           ALLSET_OT_manip_slide)
