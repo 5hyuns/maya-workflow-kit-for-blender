@@ -2,6 +2,7 @@
 normals with the Move tool.
 GUI: tests/gui/gui_issue383_ctrl_handles.py, gui_issue383_extrude_ctrl.py, gui_issue391_394_slide_normal.py."""
 
+import types
 from importlib import import_module
 
 import bpy
@@ -50,3 +51,38 @@ def test_ctrl_mmb_moves_along_normals():
     # Ctrl+Shift+MMB stays the edge slide (#262)
     cs = [k for k in km.keymap_items if k.active and k.type == 'MIDDLEMOUSE' and k.ctrl and k.shift]
     assert cs and cs[0].idname == "allset.component_slide" and cs[0].properties.mode == 'EDGE'
+
+
+class _Layout:
+    """Records the property names drawn."""
+
+    def __init__(self, log):
+        self.log = log
+
+    def prop(self, _data, name, **_kw):
+        self.log.append(name)
+
+    def operator(self, *_a, **_kw):
+        return types.SimpleNamespace()
+
+    def __getattr__(self, _name):
+        return lambda *_a, **_kw: _Layout(self.log)
+
+
+def test_ctrl_snap_preference_where_maya_users_look():
+    """The preference shows in the Move Tool Settings and the Maya Preferences window (Manipulators); the Move
+    tool's Reset Tool puts it back to off."""
+    ts_ui = import_module(kit.MODULE + ".ui.tool_settings")
+    prefs_data = import_module(kit.MODULE + ".ui.maya_prefs_data")
+    log = []
+    ts_ui.draw_settings(_Layout(log), bpy.context, 'TRANSLATE')
+    assert "manip_ctrl_snap" in log, log
+    log.clear()
+    ts_ui.draw_settings(_Layout(log), bpy.context, 'RESIZE')
+    assert "manip_ctrl_snap" not in log
+    assert any(key == "MANIPULATORS" and row[:2] == ("pref", "manip_ctrl_snap")
+               for key, _section, row in prefs_data.rows())
+    p = preferences.get(bpy.context)
+    p.manip_ctrl_snap = True
+    ts_ui.reset_maya_options(bpy.context, 'TRANSLATE')
+    assert p.manip_ctrl_snap is False

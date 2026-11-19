@@ -158,6 +158,27 @@ def s_slide_check():
     check(f"the edge's two vertices moved and stay on cube edges ({[tuple(round(c, 3) for c in after[i]) for i in moved]})",
           len(moved) == 2 and all(on_an_edge(after[i]) for i in moved))
     reset()
+    select('EDGE', lambda e: all(abs(v.co.x - 1) < 1e-4 and abs(v.co.z - 1) < 1e-4 for v in e.verts))
+    with override():
+        mod('preferences').get(bpy.context).transform_constraint = 'EDGE'
+
+
+# Transform Constraint Edge: a Ctrl+drag on an axis (the other two axes) slides like every handle drag does
+drag('cslide', 'LEFTMOUSE', ('ctrl',), z_arrow, Vector((0, -40)),
+     ('TRANSFORM_OT_edge_slide', 'TRANSFORM_OT_vert_slide'))
+
+
+@step
+def s_cslide_check():
+    after = coords()
+    moved = [i for i, (a, b) in enumerate(zip(C['before'], after)) if (a - b).length > 1e-4]
+    check(f"Transform Constraint Edge: Ctrl+drag on the Z arrow slides ({C.get('cslide_running')})",
+          C.get('cslide_running'))
+    check(f"... the edge's vertices stay on cube edges ({[tuple(round(c, 3) for c in after[i]) for i in moved]})",
+          len(moved) == 2 and all(on_an_edge(after[i]) for i in moved))
+    reset()
+    with override():
+        mod('preferences').get(bpy.context).transform_constraint = 'NONE'
     select('FACE', lambda f: f.normal.z > 0.9)
 
 

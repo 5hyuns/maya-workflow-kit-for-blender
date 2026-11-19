@@ -112,6 +112,40 @@ def s_cube():
         bpy.ops.allset.create(kind='CUBE')
     set_tool("builtin.move")
     C["start"] = ob1().location.copy()
+    C["ops"] = len(bpy.context.window_manager.operators)
+
+
+def ctrl_click(at):
+    """Steps: hover, Ctrl key + press, release + Ctrl up (no movement)."""
+    def s1():
+        hover(at())
+
+    def s2():
+        ev('LEFT_CTRL', 'PRESS', ctrl=True)
+        C["c"] = at()
+        ev('LEFTMOUSE', 'PRESS', x=int(C["c"].x), y=int(C["c"].y), ctrl=True)
+
+    def s3():
+        ev('LEFTMOUSE', 'RELEASE', x=int(C["c"].x), y=int(C["c"].y), ctrl=True)
+        ev('LEFT_CTRL', 'RELEASE')
+    for s in (s1, s2, s3):
+        step(s)
+
+
+ctrl_click(x_arrow)
+
+
+@step
+def s_click_check():
+    h = mod("operators.manip").HANDLES.get('TRANSLATE')
+    ops = [op.bl_idname for op in bpy.context.window_manager.operators][C["ops"]:]
+    check(f"Ctrl+click on the X arrow makes the YZ plane the active handle ({h})",
+          h is not None and tuple(h["constraint_axis"]) == (False, True, True))
+    check(f"... and moves nothing, no undo step ({ops}, {tuple(ob1().location - C['start'])})",
+          not ops and (ob1().location - C["start"]).length < 1e-9)
+    mod("operators.manip").reset_handle('TRANSLATE')
+    ob1().location = (0.0313, 0.0271, 0.0)      # off the grid: a snapped move lands on whole cm
+    C["start"] = ob1().location.copy()
 
 
 ctrl_drag(x_arrow, x_arrow_end)
@@ -123,6 +157,10 @@ def s_plane_check():
     h = mod("operators.manip").HANDLES.get('TRANSLATE')
     check(f"Ctrl+X arrow drag moves in YZ, X kept ({d.x:.4f}, {d.y:.4f}, {d.z:.4f})",
           abs(d.x) < 1e-6 and (abs(d.y) > 1e-3 or abs(d.z) > 1e-3))
+    k = mod("operators.units").maya_unit()
+    cy, cz = d.y / k, d.z / k
+    check(f"... without grid snapping while Ctrl is held ({cy:.4f}, {cz:.4f} cm)",
+          abs(cy - round(cy)) > 1e-3 or abs(cz - round(cz)) > 1e-3)
     check(f"the YZ plane is the active handle ({h})",
           h is not None and tuple(h["constraint_axis"]) == (False, True, True))
     C["l1"] = ob1().location.copy()
