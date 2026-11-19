@@ -52,6 +52,11 @@ def edges_of(ob, depsgraph):
         me, temp = ev.data, False
     else:
         me, temp = ev.to_mesh(), True
+        if me is None:
+            # no splines, or Geometry Nodes that leave no curve or mesh (only instances): no wire to draw
+            import numpy as np
+            ev.to_mesh_clear()
+            return np.empty((0, 3), np.float32), np.empty((0, 2), np.intc)
     try:
         co = _positions(me)
         size = (len(me.vertices), len(me.edges))
