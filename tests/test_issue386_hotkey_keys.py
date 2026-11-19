@@ -55,6 +55,12 @@ def test_special_keys_show_their_character():
     assert rows.parse_hotkey("<") == {"type": "COMMA", "shift": True}, rows.parse_hotkey("<")
 
 
+def test_a_held_less_key_is_known_to_the_os_check():
+    """Hold keys end on the OS key state when a transform drag ate their release: "<" has its key code."""
+    keystate = m("operators.keystate")
+    assert keystate.vk_code("GRLESS") == 0xE2, keystate.vk_code("GRLESS")
+
+
 def test_the_less_key_binds_a_kit_command():
     """The reporter's case: SnapToPointPress (Maya's v hold) on the "<" key."""
     from rt60_dump import populate
