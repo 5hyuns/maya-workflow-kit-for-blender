@@ -321,20 +321,37 @@ def resolve(trigger, context, picked=None):
     return None
 
 
+PICK_HIDDEN_MAX = 32      # objects this view hides that one RMB ray may pass through
+
+
+def _shown_in(ob, space):
+    """``ob`` is drawn in 3D View ``space``: Isolate Select (local view) and the view's object type filter count."""
+    if isinstance(space, bpy.types.SpaceView3D):
+        return ob.visible_get(viewport=space)
+    return ob.visible_get()
+
+
 def pick_object(context, event):
-    """Object under the mouse in the 3D View (ray cast), or None."""
+    """Object under the mouse in the 3D View (ray cast), or None. Like Maya, only what the view shows is picked: an
+    object Isolate Select hides is passed through to the one behind it."""
     from bpy_extras import view3d_utils
     region, rv3d = context.region, context.region_data
     if region is None or rv3d is None or region.type != 'WINDOW':
         return None
     coord = (event.mouse_region_x, event.mouse_region_y)
     origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
-    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
-    hit, _loc, _nor, _idx, ob, _mat = context.scene.ray_cast(
-        context.evaluated_depsgraph_get(), origin, direction)
-    if not hit or ob is None:
-        return None
-    return bpy.data.objects.get(ob.name)
+    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord).normalized()
+    depsgraph = context.evaluated_depsgraph_get()
+    space = getattr(context, "space_data", None)
+    for _ in range(PICK_HIDDEN_MAX):
+        hit, loc, _nor, _idx, ob, _mat = context.scene.ray_cast(depsgraph, origin, direction)
+        if not hit or ob is None:
+            return None
+        ob = bpy.data.objects.get(ob.name)
+        if ob is not None and _shown_in(ob, space):
+            return ob
+        origin = loc + direction * (1e-5 * max(1.0, loc.length))     # just past the hidden surface
+    return None
 
 
 def sculpt_stencil(context):
