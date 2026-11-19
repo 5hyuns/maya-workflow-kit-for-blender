@@ -228,7 +228,7 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
                 # menu item does in component mode (allset.menu_run)
                 window, area, region = _view3d(context)
                 if area is None:
-                    raise RuntimeError(NO_3D_VIEW)
+                    raise RuntimeError(i18n.tip(NO_3D_VIEW))
                 with context.temp_override(window=window, screen=window.screen, area=area, region=region):
                     op('EXEC_DEFAULT', **props)
             else:
@@ -344,7 +344,7 @@ def _call(op_id, props):
     return getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT', **props)
 
 
-NO_3D_VIEW = "No 3D View to run this in"
+NO_3D_VIEW = i18n.mark("No 3D View to run this in")
 
 
 def _view3d(context):
@@ -392,7 +392,7 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
             return {'FINISHED'}
         window, area, region = _view3d(context)
         if area is None:
-            self.report({'ERROR'}, NO_3D_VIEW)
+            self.report({'ERROR'}, i18n.tip(NO_3D_VIEW))
             return {'CANCELLED'}
         try:
             with context.temp_override(window=window, screen=window.screen, area=area, region=region):

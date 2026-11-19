@@ -22,7 +22,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
-from .. import compat, results, undo_steps
+from .. import compat, i18n, results, undo_steps
 from . import uv_tools
 from .uv_modify import all_points, selected_ids
 from .uv_shells import _index_loops, _meshes, _poll, owner_map
@@ -295,8 +295,8 @@ class ALLSET_OT_uv_unfold_along(bpy.types.Operator):
 
 # --- Straighten Shell -------------------------------------------------------------------------------------------
 
-FEW_UVS = "At least two UVs must be selected to perform this operation"
-NOT_A_LOOP = "Select one edge loop (a line of UV edges) on the shell to straighten"
+FEW_UVS = i18n.mark("At least two UVs must be selected to perform this operation")
+NOT_A_LOOP = i18n.mark("Select one edge loop (a line of UV edges) on the shell to straighten")
 
 
 def uv_chain(ids, island, where):
@@ -445,10 +445,10 @@ class ALLSET_OT_uv_straighten_shell(bpy.types.Operator):
             picked += n
             done += got
         if picked < 2:
-            self.report({'WARNING'}, FEW_UVS)
+            self.report({'WARNING'}, i18n.tip(FEW_UVS))
             return {'CANCELLED'}
         if not done:
-            self.report({'WARNING'}, NOT_A_LOOP)
+            self.report({'WARNING'}, i18n.tip(NOT_A_LOOP))
             return {'CANCELLED'}
         return {'FINISHED'}
 

@@ -1,7 +1,8 @@
 """#393 follow-up: the UV commands that run a Blender unwrap / pack on chosen shells (Straighten Shell, Unfold,
 Layout) keep the user's selection like Maya, with UV Sync Selection on or off and with several meshes in edit mode,
 and work on the right shells while Blender keeps a UV selection of its own (``uv_select_sync_valid``, as in a fresh
-UI session). A Maya menu item that can't run in object mode is cancelled (no empty undo step)."""
+UI session). A Maya menu item that can't run in object mode is cancelled (no empty undo step); the new warnings
+are translated."""
 
 import math
 from importlib import import_module
@@ -206,3 +207,12 @@ def test_object_mode_item_without_a_3d_view_is_cancelled():
     assert res == {'CANCELLED'}, res
     assert ob.mode == 'OBJECT'
     assert [tuple(round(c, 5) for c in d.uv) for d in ob.data.uv_layers.active.data] == before
+
+
+def test_new_warnings_are_translated():
+    toolkit = import_module(kit.MODULE + ".operators.uv_toolkit_ops")
+    menu_ops = import_module(kit.MODULE + ".ui.menu_item_ops")
+    tables = [import_module(kit.MODULE + ".i18n." + lang).STRINGS for lang in ("ja_JP", "zh_HANS", "zh_HANT")]
+    texts = [toolkit.FEW_UVS, toolkit.NOT_A_LOOP, menu_ops.NO_3D_VIEW]
+    missing = [(k, t) for k, table in enumerate(tables) for t in texts if t not in table]
+    assert not missing, missing
