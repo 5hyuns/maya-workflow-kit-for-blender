@@ -29,6 +29,17 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   for an active face before. (#393)
 - Unfold, Layout and Straighten Shell keep the mesh and UV selection, with UV Sync Selection on or off and with
   several meshes in edit mode, like Maya; the selection was lost or the whole mesh ended up selected.
+- Move tool: Ctrl+drag on an axis arrow moves freely in the plane of the other two axes and makes that plane the
+  active handle, like Maya; a Ctrl+click only makes it the active handle (#383). Ctrl+drag along the axis with grid
+  snapping is now the preference "Ctrl+Drag on a Move Axis Snaps", off by default: in the Move Tool Settings, in
+  Windows > Settings/Preferences > Preferences > Manipulators and in the add-on preferences.
+- Extrude manipulator: Ctrl+drag on a scale cube scales the other two axes together, Ctrl+drag on an arrow moves in
+  the other two axes, like Maya (#383).
+- Move tool in component mode: Ctrl+Shift+drag on a manipulator handle slides the selected components along their
+  edges, like Maya (#391).
+- Move tool in component mode: Ctrl+middle-drag moves the selected components along their normals, like Maya: a
+  vertex along its own normal, an edge along the edge's normal keeping its length, a face along the face's normal
+  (#394). The Transform Constraint "Along Normals" moves edges the same way.
 
 ## [0.19.0] — 2026-11-18
 
