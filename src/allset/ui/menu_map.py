@@ -1062,6 +1062,8 @@ OBJECT_MODE = {
     # (Maya 2026); Automatic / Contour Stretch / Planar do that in their own operator.
     "UV/Cylindrical": ('ALL', 'FACE'),
     "UV/Spherical": ('ALL', 'FACE'),
+    "UV/Camera-based": ('ALL', 'FACE'),                  # #392: mapped from the 3D View
+    "UV Editor/Create/Camera-based": ('ALL', 'FACE'),
 }
 
 # Edit / Select / Modify items run in component (mesh edit) mode the way Maya runs them there (#39 /

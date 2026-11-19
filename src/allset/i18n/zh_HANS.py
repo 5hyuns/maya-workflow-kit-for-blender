@@ -6111,6 +6111,7 @@ STRINGS = {
     'Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)': '排齐几乎沿 U 或 V (在角度容差内) 的选中 UV 边: 每段相连的边\n变成直线 (Maya 拉直 UV)',
     'Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)': '将每个选中的 UV 壳随机移动、旋转和缩放 (Maya 随机化壳)',
     'Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)': '仅沿 U 或 V 展开选中的 UV 壳 (未选择时为全部): 每个 UV 的另一个\n坐标保持不变 (Maya UV 工具包沿 U / V 展开)',
+    'Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)': '将选定的 UV 循环边沿 U 或 V 拉直，并围绕它展开壳的其余部分，使带状\n壳变成笔直的条带 (Maya 拉直壳)',
     'Marquee on lattice points where they are drawn (Shift toggles, Ctrl removes, Ctrl+Shift adds)': '按晶格点绘制的位置框选 (Shift 切换，Ctrl 取消选择，Ctrl+Shift 添加)',
     'Rename this node (click the name, type, Enter)': '重命名此节点 (单击名称，输入，按 Enter)',
     'The Channel Box name editor popover (called by allset.cb_rename only)': '通道盒名称编辑弹出面板 (仅由 allset.cb_rename 调用)',

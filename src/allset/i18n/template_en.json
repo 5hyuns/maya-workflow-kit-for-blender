@@ -7525,6 +7525,7 @@
    "Percent": "Percent",
    "Randomize Shells": "Randomize Shells",
    "Seed": "Seed",
+   "Straighten Shell": "Straighten Shell",
    "Straighten UVs": "Straighten UVs",
    "Straighten UVs: UV edges this close (degrees) to U or V are lined up": "Straighten UVs: UV edges this close (degrees) to U or V are lined up",
    "Straighten UVs: line up edges along U": "Straighten UVs: line up edges along U",
@@ -10670,6 +10671,7 @@
    "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)": "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)",
    "Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)": "Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)",
    "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)": "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)",
+   "Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)": "Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)",
    "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)": "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)"
   },
   "Tooltips/operators/uv_tools": {

@@ -6111,6 +6111,7 @@ STRINGS = {
     'Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)': 'ほぼ U または V 方向 (角度の許容値以内) の選択 UV エッジを揃えます: つながった各列が\n直線になります (Maya UV の直線化)',
     'Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)': '選択した各 UV シェルをランダムな量だけ移動・回転・スケールします (Maya シェルのランダム化)',
     'Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)': '選択した UV シェル (未選択ならすべて) を U または V 方向だけ展開します: 各 UV のもう一方の\n座標はそのまま (Maya UV ツールキットの U / V に沿って展開)',
+    'Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)': '選択した UV エッジループを U または V に沿って直線化し、シェルの残りをその周りに展開します。リボン状の\nシェルはまっすぐな帯になります (Maya シェルを直線化)',
     'Marquee on lattice points where they are drawn (Shift toggles, Ctrl removes, Ctrl+Shift adds)': 'ラティスの点を描かれている位置でマーキー選択します (Shift で切り替え、Ctrl で解除、Ctrl+Shift で追加)',
     'Rename this node (click the name, type, Enter)': 'このノードの名前を変更します (名前をクリックして入力し、Enter)',
     'The Channel Box name editor popover (called by allset.cb_rename only)': 'チャンネルボックスの名前編集ポップオーバー (allset.cb_rename からのみ呼び出し)',

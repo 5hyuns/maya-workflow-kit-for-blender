@@ -6,6 +6,9 @@
 - Straighten UVs: selected UV edges within the angle tolerance of the U (V) axis are lined up, each connected run
   of them on the centre of its bounding box.
 - Unfold Along U / V: the shells are relaxed along one axis only; the other coordinate of every UV stays.
+- Straighten Shell: the selected UV edge loop becomes a straight line along U or V (its UV length kept, its UVs spaced
+  like their mesh edges) and the rest of its shell is unfolded around it (Blender Unwrap, Angle Based, with the line
+  pinned), so a ribbon shell becomes a straight strip.
 - Randomize Shells: every selected shell is moved, turned and scaled by a random amount in the given ranges.
 
 All of them work on every mesh in edit mode at once, like Maya works on the whole selection.
@@ -22,7 +25,7 @@ from mathutils import Vector
 from .. import compat, results, undo_steps
 from . import uv_tools
 from .uv_modify import all_points, selected_ids
-from .uv_shells import _index_loops, _meshes, _poll
+from .uv_shells import _index_loops, _meshes, _poll, owner_map
 
 AXES = (('U', "U", ""), ('V', "V", ""))
 STRAIGHTEN_TOLERANCE = 30.0          # degrees
@@ -290,6 +293,188 @@ class ALLSET_OT_uv_unfold_along(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Straighten Shell -------------------------------------------------------------------------------------------
+
+FEW_UVS = "At least two UVs must be selected to perform this operation"
+NOT_A_LOOP = "Select one edge loop (a line of UV edges) on the shell to straighten"
+
+
+def uv_chain(ids, island, where):
+    """The UVs ``ids`` of one shell in order along the UV edges between them, from the lower UV index; None when they
+    are not one open line (a branch, a closed loop, or apart)."""
+    link = {i: set() for i in ids}
+    for f in island:
+        for l in f.loops:
+            a, b = where[l], where[l.link_loop_next]
+            if a != b and a in link and b in link:
+                link[a].add(b)
+                link[b].add(a)
+    ends = [i for i, nb in link.items() if len(nb) == 1]
+    if len(ends) != 2 or any(len(nb) > 2 for nb in link.values()):
+        return None
+    order, prev = [min(ends)], None
+    while True:
+        nxt = [j for j in link[order[-1]] if j != prev]
+        if not nxt:
+            break
+        prev = order[-1]
+        order.append(nxt[0])
+    return order if len(order) == len(link) else None
+
+
+def straight_line(points, uv):
+    """Where the UVs ``points`` (a line, in order) go: on a line along the nearer of U and V to the direction from the
+    first to the last, through the middle of those two, as long as the UV line was, each UV as far along as its mesh
+    edges are."""
+    p = [pt[0][uv].uv.copy() for pt in points]
+    steps = [(points[k + 1][0].vert.co - points[k][0].vert.co).length for k in range(len(points) - 1)]
+    total = sum(steps)
+    if total <= 1e-12:
+        return None
+    length = sum((p[k + 1] - p[k]).length for k in range(len(p) - 1)) or total     # UVs on one spot: 3D length
+    chord = p[-1] - p[0]
+    if abs(chord.x) >= abs(chord.y):
+        d = Vector((math.copysign(1.0, chord.x), 0.0))
+    else:
+        d = Vector((0.0, math.copysign(1.0, chord.y)))
+    centre = (p[0] + p[-1]) / 2
+    out, run = [], 0.0
+    for k in range(len(p)):
+        out.append(centre + d * (length * run / total - length / 2))
+        if k < len(steps):
+            run += steps[k]
+    return out
+
+
+def mark_uv_cuts(faces, uv):
+    """Seams on the edges of ``faces`` whose UVs are cut apart inside one shell (a cylinder side cut along one edge
+    line), so the unwrap keeps the cut open."""
+    for f in faces:
+        for l in f.loops:
+            other = l.link_loop_radial_next
+            if other is l or l.edge.seam:
+                continue
+            mine = {l.vert: l[uv].uv, l.link_loop_next.vert: l.link_loop_next[uv].uv}
+            theirs = {other.vert: other[uv].uv, other.link_loop_next.vert: other.link_loop_next[uv].uv}
+            if any((mine[v] - theirs[v]).length > 1e-6 for v in mine):
+                l.edge.seam = True
+
+
+def straighten_shells(context, ob, synced):
+    """Maya Straighten Shell on ``ob``: in every shell whose selected UVs form one line, that line is straightened
+    and pinned, the shell is unfolded around it (Blender Unwrap, Angle Based, the shell's border as seams) and the
+    line's pins go back to what they were. Returns (selected UVs, shells straightened)."""
+    bm = bmesh.from_edit_mesh(ob.data)
+    uv = bm.loops.layers.uv.verify()
+    _index_loops(bm)
+    bm.faces.index_update()
+    pts, where = all_points(bm, uv)
+    chosen = selected_ids(bm, uv, synced, pts)
+    if not chosen:
+        return 0, 0
+    groups = uv_tools.islands(bm, uv, [f for f in bm.faces if not f.hide])
+    owner = owner_map(groups)
+    per = {}
+    for i in chosen:
+        per.setdefault(owner[pts[i][0].face], []).append(i)
+    faces, old_pins, lines = [], {}, []
+    for k, ids in per.items():
+        order = uv_chain(ids, groups[k], where) if len(ids) > 1 else None
+        targets = straight_line([pts[i] for i in order], uv) if order else None
+        if targets is None:
+            continue
+        shell = set(groups[k])
+        faces += groups[k]
+        along_v = abs(targets[-1].x - targets[0].x) < abs(targets[-1].y - targets[0].y)
+        lines.append(([f.index for f in groups[k]], signed_area(groups[k], uv), along_v,
+                      targets[0].x if along_v else targets[0].y))
+        for i, q in zip(order, targets):
+            for l in pts[i]:
+                if l.face in shell:
+                    old_pins.setdefault(l, l[uv].pin_uv)
+                    l[uv].uv = q
+                    l[uv].pin_uv = True
+    if not faces:
+        return len(chosen), 0
+    restore = [(f.index, n, old_pins[l]) for f in faces for n, l in enumerate(f.loops) if l in old_pins]
+    shells = len({owner[f] for f in faces})
+    picked = _selection(bm)
+    uv_tools.mark_shell_borders(bm, uv, faces)
+    mark_uv_cuts(faces, uv)
+    bmesh.update_edit_mesh(ob.data)
+    uv_tools._with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.0))
+    bm = bmesh.from_edit_mesh(ob.data)
+    uv = bm.loops.layers.uv.verify()
+    bm.faces.ensure_lookup_table()
+    for fi, n, pin in restore:
+        bm.faces[fi].loops[n][uv].pin_uv = pin
+    for ids, area, along_v, at in lines:
+        shell = [bm.faces[fi] for fi in ids]
+        if area * signed_area(shell, uv) < 0:       # the unwrap mirrored it: back over the straight line
+            for f in shell:
+                for l in f.loops:
+                    p = l[uv].uv
+                    l[uv].uv = (2 * at - p.x, p.y) if along_v else (p.x, 2 * at - p.y)
+    _set_selection(bm, picked)
+    bmesh.update_edit_mesh(ob.data)
+    return len(chosen), shells
+
+
+def signed_area(faces, uv):
+    """The UV area of ``faces`` with its sign: negative when the faces are mirrored in UV space."""
+    total = 0.0
+    for f in faces:
+        p = [l[uv].uv for l in f.loops]
+        total += sum(p[i - 1].x * p[i].y - p[i].x * p[i - 1].y for i in range(len(p)))
+    return total / 2
+
+
+def _selection(bm):
+    """The mesh and UV selection of ``bm`` (the unwrap changes both)."""
+    return ([v.select for v in bm.verts], [e.select for e in bm.edges], [f.select for f in bm.faces],
+            [f.uv_select for f in bm.faces],
+            [(l.uv_select_vert, l.uv_select_edge) for f in bm.faces for l in f.loops])
+
+
+def _set_selection(bm, picked):
+    verts, edges, faces, face_uv, loops = picked
+    # faces first: setting a face's flag sets its edges and vertices too
+    for seq, flags in ((bm.faces, faces), (bm.edges, edges), (bm.verts, verts)):
+        for el, on in zip(seq, flags):
+            el.select = on
+    for f, on in zip(bm.faces, face_uv):
+        f.uv_select = on
+    for l, (vert, edge) in zip((l for f in bm.faces for l in f.loops), loops):
+        l.uv_select_vert = vert
+        l.uv_select_edge = edge
+
+
+@undo_steps.no_redo_panel
+class ALLSET_OT_uv_straighten_shell(bpy.types.Operator):
+    """Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon
+    shell becomes a straight strip (Maya Straighten Shell)"""
+    bl_idname = "allset.uv_straighten_shell"
+    bl_label = "Straighten Shell"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    poll = classmethod(lambda cls, context: _poll(context))
+
+    def execute(self, context):
+        synced = uv_tools.sync(context)
+        picked = done = 0
+        for ob in _meshes(context):
+            n, got = straighten_shells(context, ob, synced)
+            picked += n
+            done += got
+        if picked < 2:
+            self.report({'WARNING'}, FEW_UVS)
+            return {'CANCELLED'}
+        if not done:
+            self.report({'WARNING'}, NOT_A_LOOP)
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 # --- Randomize Shells -------------------------------------------------------------------------------------------
 
 def randomize_shell(island, uv, rng, translate_u=True, translate_v=True, translate=RANDOM_TRANSLATE,
@@ -382,7 +567,7 @@ def straighten_axis(context):
 
 
 classes = (ALLSET_PG_uv_toolkit, ALLSET_OT_uv_align_to, ALLSET_OT_uv_straighten_uvs, ALLSET_OT_uv_unfold_along,
-           ALLSET_OT_uv_randomize)
+           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize)
 
 
 def register_props():

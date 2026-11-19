@@ -222,7 +222,17 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
         try:
             bpy.ops.mesh.select_mode(type=rule[1])
             bpy.ops.mesh.select_all(action='SELECT')
-            getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', **props)
+            op = getattr(getattr(bpy.ops, mod), name)
+            if s[0] == "v3d" and not op.poll():
+                # Blender runs it only in a 3D View (Camera-based maps from the view): the largest one, as the
+                # menu item does in component mode (allset.menu_run)
+                area, region = _view3d(context)
+                if area is None:
+                    raise RuntimeError("No 3D View to run this in")
+                with context.temp_override(window=context.window, area=area, region=region):
+                    op('EXEC_DEFAULT', **props)
+            else:
+                op('EXEC_DEFAULT', **props)
         except (RuntimeError, TypeError) as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
         finally:
@@ -333,6 +343,12 @@ def _call(op_id, props):
     return getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT', **props)
 
 
+def _view3d(context):
+    """(area, WINDOW region) of the largest 3D View of the window the menu runs in."""
+    from .status_line import main_view3d
+    return main_view3d(context.window.screen if context.window else None)
+
+
 class ALLSET_OT_menu_run(bpy.types.Operator):
     """Run a Blender operator in the largest 3D View (for Maya menu items)"""
     bl_idname = "allset.menu_run"
@@ -358,8 +374,7 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
     def execute(self, context):
         if add_to_shelf_if_asked(self, context, self.item):
             return {'FINISHED'}
-        from .status_line import main_view3d
-        area, region = main_view3d(context.window.screen if context.window else None)
+        area, region = _view3d(context)
         if area is None:
             self.report({'ERROR'}, "No 3D View to run this in")
             return {'CANCELLED'}
