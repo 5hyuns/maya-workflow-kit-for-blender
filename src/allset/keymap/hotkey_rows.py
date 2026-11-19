@@ -25,12 +25,18 @@ _KEY_TEXT = {"SPACE": "Space", "UP_ARROW": "Up", "DOWN_ARROW": "Down", "LEFT_ARR
              "WHEELDOWNMOUSE": "Wheel Down"}
 _KEY_TEXT.update({d: str(i) for i, d in enumerate(mapping._DIGITS)})
 _KEY_TEXT.update({f"NUMPAD_{i}": f"Num {i}" for i in range(10)})
-# Event types a Hotkey Editor key capture accepts (keyboard keys; mouse buttons cancel)
+# Keys of their own on some keyboards: "<" (German / Nordic layouts, the key left of Z), "+", the Menu key. Typed in
+# Search by Hotkey, "<" and "+" stay Maya's keys (Shift + comma, Shift + =), so they are not in _TEXT_KEY.
+_OWN_KEY_TEXT = {"GRLESS": "<", "PLUS": "+", "APP": "Menu"}
+_KEY_TEXT.update(_OWN_KEY_TEXT)
+# Event types a Hotkey Editor key capture accepts: every keyboard key Blender has (mouse buttons cancel, modifier
+# keys are modifiers)
 KEYBOARD = frozenset([chr(c) for c in range(ord("A"), ord("Z") + 1)] + list(mapping._DIGITS)
                      + [f"F{i}" for i in range(1, 25)] + [f"NUMPAD_{i}" for i in range(10)]
                      + [k for k in _KEY_TEXT if not k.endswith("MOUSE")]
-                     + ["NUMPAD_PERIOD", "NUMPAD_SLASH", "NUMPAD_ASTERIX", "NUMPAD_MINUS", "NUMPAD_PLUS", "PAUSE"])
-_TEXT_KEY = {v.lower(): k for k, v in _KEY_TEXT.items()}
+                     + ["NUMPAD_PERIOD", "NUMPAD_SLASH", "NUMPAD_ASTERIX", "NUMPAD_MINUS", "NUMPAD_PLUS", "PAUSE",
+                        "LINE_FEED", "MEDIA_PLAY", "MEDIA_STOP", "MEDIA_FIRST", "MEDIA_LAST"])
+_TEXT_KEY = {v.lower(): k for k, v in _KEY_TEXT.items() if k not in _OWN_KEY_TEXT}
 _TEXT_KEY.update({"pageup": "PAGE_UP", "pagedown": "PAGE_DOWN", "page_up": "PAGE_UP", "page_down": "PAGE_DOWN",
                   "enter": "RET", "return": "RET", "delete": "DEL", "insert": "INSERT", "escape": "ESC",
                   "backspace": "BACK_SPACE", "space": "SPACE"})
