@@ -1,5 +1,5 @@
-"""Blender 5.x pass — unified paint settings (#90), menus that stay open (5.0), radial submenus open only
-from their own sector."""
+"""Blender 5.x pass — unified paint settings (#90), menus that stay open (5.0), radial submenus open from their own
+box or sector."""
 
 import math
 from importlib import import_module
@@ -34,29 +34,54 @@ def _measure(text):
     return 7.0 * len(text)
 
 
-def test_diagonal_gesture_through_a_wide_north_box():
-    # Move Options: N = Symmetry (a submenu) is a Maya-wide box that reaches into the NE sector (Maya ring geometry)
-    p = engine.Params()
-    origin = (500.0, 400.0)
-    s = engine.Session(mm.OPT_MOVE, origin, 0.0, _measure, p)
+def _wide_north_box_point(s, p):
+    """A point of the N box (Symmetry, a submenu) past the ring and in the NE sector: Maya's wide N box reaches into
+    the diagonal sector there (Maya ring geometry)."""
     n = s.stack[0][0].radial["N"]
     assert n.sub is not None
-    # a point of the N box past the ring, in the NE sector
     x0, y0, x1, y1 = n.rect
-    pt = None
     for yy in range(int(y0) + 1, int(y1)):
         for xx in range(int(x1) - 1, 0, -1):
             if math.hypot(xx, yy) >= p.radius and engine.direction(xx, yy, p.dead) == "NE":
-                pt = (xx, yy)
-                break
-        if pt:
-            break
-    assert pt is not None, f"N box {n.rect} doesn't reach the NE sector"
-    s.move(origin[0] + pt[0] / 2, origin[1] + pt[1] / 2, 0.05)
-    s.move(origin[0] + pt[0], origin[1] + pt[1], 0.1)
-    assert len(s.stack) == 1, "crossing the N box on a NE stroke opened the N submenu"
+                return n, (xx, yy)
+    raise AssertionError(f"N box {n.rect} doesn't reach the NE sector")
+
+
+def test_diagonal_rest_on_a_wide_north_box_opens_the_box_item():
+    # Move Options: N = Symmetry (a submenu), NE = Component (a command). Where the N box reaches into the NE sector
+    # the box is what the pointer is on: it is hovered and a rest there opens Symmetry, not anything of NE.
+    p = engine.Params()
+    origin = (500.0, 400.0)
+    s = engine.Session(mm.OPT_MOVE, origin, 0.0, _measure, p)
+    n, pt = _wide_north_box_point(s, p)
+    t = p.show_delay + 0.05
+    s.move(origin[0] + pt[0] / 2, origin[1] + pt[1] / 2, t)
+    s.move(origin[0] + pt[0], origin[1] + pt[1], t + 0.02)
+    assert s.hover[0] is n, s.hover
+    s.tick(t + 0.02 + p.open_dwell + 0.01)
+    assert len(s.stack) == 2 and s.via[1] is n, "a rest on the N box's NE part opens the N submenu"
+    want = sorted(label for label, _a in n.sub.radial.values() if label)
+    got = sorted(it.label for it in s.layout.items if it.kind == "radial")
+    assert got == want, (got, want)
+
+
+def test_diagonal_rest_off_the_box_belongs_to_its_own_sector():
+    # A NE stroke through the N box's NE part and on, past the ring in the NE sector off the N box: NE (Component)
+    # is hovered, a rest there opens nothing (N's submenu only opens from its box or its own sector) and the
+    # release runs Component.
+    p = engine.Params()
+    origin = (500.0, 400.0)
+    s = engine.Session(mm.OPT_MOVE, origin, 0.0, _measure, p)
+    n, pt = _wide_north_box_point(s, p)
     far = max(pt) * 2
-    res = s.release(origin[0] + far, origin[1] + far, 0.2)
+    t = p.show_delay + 0.05
+    s.move(origin[0] + pt[0], origin[1] + pt[1], t)
+    assert s.hover[0] is n, s.hover
+    s.move(origin[0] + far, origin[1] + far, t + 0.02)
+    assert s.hover[0] is not n and s.hover[0].label == "Component", s.hover
+    s.tick(t + 0.02 + p.open_dwell + 0.5)
+    assert len(s.stack) == 1, "a rest in the NE sector off the N box opened a submenu"
+    res = s.release(origin[0] + far, origin[1] + far, t + 0.6)
     assert res and res[0] == "RUN" and res[1].label == "Component", res
 
 
