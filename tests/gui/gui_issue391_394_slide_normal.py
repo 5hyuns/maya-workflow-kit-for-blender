@@ -215,6 +215,25 @@ def s_vert_check():
     check(f"a corner vertex moves along its own normal ({tuple(round(c, 3) for c in d)}, {along:.4f})",
           len(moved) == 1 and abs(along) > 0.99)
     reset()
+    select('EDGE', lambda e: all(abs(v.co.x - 1) < 1e-4 and abs(v.co.z - 1) < 1e-4 for v in e.verts))
+
+
+drag('edge', 'MIDDLEMOUSE', ('ctrl',), empty_spot, Vector((30, 60)),
+     ('TRANSFORM_OT_shrink_fatten', 'ALLSET_OT_edge_normal_move'))
+
+
+@step
+def s_edge_check():
+    after = coords()
+    moved = [i for i, (a, b) in enumerate(zip(C['before'], after)) if (a - b).length > 1e-4]
+    ds = [after[i] - C['before'][i] for i in moved]
+    n = Vector((1, 0, 1)).normalized()      # the edge's normal: the mean of its two faces' normals
+    length = (after[moved[0]] - after[moved[1]]).length if len(moved) == 2 else 0.0
+    check(f"an edge moves along its own normal and keeps its length ({[tuple(round(c, 3) for c in d) for d in ds]}, "
+          f"length {length:.4f})",
+          len(moved) == 2 and all(d.length > 1e-3 and abs(d.normalized().dot(n)) > 0.999 for d in ds)
+          and abs(length - 2.0) < 1e-4)
+    reset()
 
 
 run()
