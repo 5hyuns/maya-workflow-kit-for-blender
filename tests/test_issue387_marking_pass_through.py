@@ -164,10 +164,8 @@ def test_click_mode_hover_passes_over_and_a_click_opens():
 
 
 def _quick_release_on(s, key, t0, speed_dt):
-    """A stroke from the press point to radial ``key``'s box (beyond the ring in its direction), released at once."""
-    box = _box(s, key)
-    a = math.atan2(box[1] - O[1], box[0] - O[0])
-    end = (O[0] + (R + 12) * math.cos(a), O[1] + (R + 12) * math.sin(a))
+    """A stroke from the press point to the middle of radial ``key``'s box, released at once."""
+    end = _box(s, key)
     t = _stroke(s, O, end, t0, px=12.0, dt=speed_dt)
     return end, t
 
