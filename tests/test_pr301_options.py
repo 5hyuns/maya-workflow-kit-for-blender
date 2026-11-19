@@ -135,6 +135,7 @@ def test_quick_gestures_click_in_the_dead_zone_keeps_the_menu():
 
 def _rest_near_the_parent(s):
     s.move(*_at(O, "N", R + 5), 0.2)
+    s.tick(0.2 + engine.Params.open_dwell + 0.01)        # a rest on Merge/Collapse opens it
     assert len(s.stack) == 2 and "Target Weld Tool" in [it.label for it in s.layout.items]
     s.move(O[0] + 12, O[1] - 6, 0.35)      # near the press point, off the submenu's boxes: its S item by direction
     assert len(s.stack) == 2 and _label(s) == "Target Weld Tool"
@@ -165,7 +166,8 @@ def test_return_ring_rest_goes_back():
 def test_return_ring_two_stroke_mark_still_reaches_the_item_behind_the_centre():
     s = _session(mm.SHIFT_EDGE, guides=True)
     s.move(*_at(O, "N", R + 5), 0.2)
-    s.move(*O, 0.25)            # on the submenu's S box, which covers the press point
+    s.tick(0.2 + engine.Params.open_dwell + 0.01)        # a rest at the turn opens Merge/Collapse
+    s.move(*O, 0.35)            # on the submenu's S box, which covers the press point
     assert s.dwell_progress(2.0) is None
     assert s.tick(2.0) is False and len(s.stack) == 2
     res = s.release(*O, 2.1)

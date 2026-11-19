@@ -100,18 +100,21 @@ def test_uv_is_a_submenu_with_the_arrow_in_the_padding():
     assert engine.Layout.ring_text(label, action) == "UV", "the arrow doesn't widen the box"
     assert not engine.Layout.has_arrow(mm.RMB_MESH.radial["N"][1])
     assert engine.Layout.has_arrow(("menu", "X")), "a Blender menu opens as a submenu too"
-    # flick E past the ring: the submenu opens in place, E = UV, S = UV Shell (Maya's RMB marking menu)
+    # E past the ring and a rest there: the submenu opens in place, E = UV, S = UV Shell (Maya's RMB marking menu)
+    rest = engine.Params().show_delay + engine.Params().open_dwell + 0.01
     s = engine.Session(mm.RMB_MESH, (500.0, 400.0), 0.0, lambda t: 7.0 * len(t))
     s.move(530.0, 400.0, 0.05)
     s.move(560.0, 400.0, 0.1)
+    s.tick(rest)
     assert len(s.stack) == 2, "UV submenu open"
     x, y = s.center
-    assert s.release(x + 60.0, y, 0.2)[1].action == ("allset.uv_component", {"mode": 'UV'})
+    assert s.release(x + 60.0, y, 0.4)[1].action == ("allset.uv_component", {"mode": 'UV'})
     s = engine.Session(mm.RMB_MESH, (500.0, 400.0), 0.0, lambda t: 7.0 * len(t))
     s.move(530.0, 400.0, 0.05)
     s.move(560.0, 400.0, 0.1)
+    s.tick(rest)
     x, y = s.center
-    assert s.release(x, y - 60.0, 0.2)[1].action == ("allset.uv_component", {"mode": 'SHELL'})
+    assert s.release(x, y - 60.0, 0.4)[1].action == ("allset.uv_component", {"mode": 'SHELL'})
 
 
 def test_list_starts_21_px_under_the_ring():

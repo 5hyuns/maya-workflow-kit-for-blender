@@ -104,5 +104,6 @@ def test_radial_submenu_still_replaces_the_menu():
     s = engine.Session(mm.MENUS["CTRL_CONVERT"], O, 0.0, measure, None, None, B)
     p = s.params
     s.move(O[0] - p.radius - 5, O[1], 0.3)
+    s.tick(0.3 + p.open_dwell + 0.01)                   # a rest on it opens it (Maya)
     assert len(s.stack) == 2
     assert len(s.layers()) == 1

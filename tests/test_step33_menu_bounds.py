@@ -78,6 +78,7 @@ def test_radial_submenu_in_place_stays_inside():
     p = s.params
     cx, cy = s.center          # = the press point
     s.move(cx - p.radius - 5, cy, 0.3)
+    s.tick(0.3 + p.open_dwell + 0.01)                   # a rest on it opens it (Maya)
     assert len(s.stack) == 2 and w.sub is not None
     for it in s.layout.items:
         assert _inside(_abs(s, it)), it.label

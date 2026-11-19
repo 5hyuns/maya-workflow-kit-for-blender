@@ -64,5 +64,6 @@ def test_straight_stroke_still_opens_the_radial_submenu():
     p = engine.Params()
     origin = (500.0, 400.0)
     s = engine.Session(mm.OPT_MOVE, origin, 0.0, _measure, p)
-    s.move(origin[0], origin[1] + p.radius + 15, 0.1)
+    s.move(origin[0], origin[1] + p.radius + 15, 0.2)
+    s.tick(0.2 + p.open_dwell + 0.01)                   # a rest on it opens it (Maya)
     assert len(s.stack) == 2

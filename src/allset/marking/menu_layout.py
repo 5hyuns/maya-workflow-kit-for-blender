@@ -32,6 +32,11 @@ class Params:
     ring_list_gap = 21.0   # ring bottom -> list top
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
+    # A radial item's submenu opens when the pointer rests on it (its box, or beyond the ring in its direction) for
+    # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
+    # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.
+    open_dwell = 0.1
+    rest_slop = 3.0
     # Options (add-on preferences, both off by default; marking/modal.py copies them in):
     # quick_gestures (mm_quick_gestures): the menu stays hidden while the pointer keeps moving and shows after a
     # pause of ``show_delay`` (then stays); a radial submenu entered by a hidden mark stays hidden too; a hidden mark
@@ -46,8 +51,8 @@ class Params:
     return_dwell = 0.7
 
     SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
-             "ring_list_gap", "anchor_r")
-    FLAGS = ("show_delay", "click_time", "return_dwell", "quick_gestures", "submenu_guides")
+             "ring_list_gap", "anchor_r", "rest_slop")
+    FLAGS = ("show_delay", "click_time", "return_dwell", "quick_gestures", "submenu_guides", "open_dwell")
 
     def scaled(self, k):
         p = Params()

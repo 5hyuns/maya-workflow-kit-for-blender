@@ -34,6 +34,12 @@ def _label(s):
     return s.hover[0].label if s.hover[0] is not None else None
 
 
+def _open(s, p, t):
+    """Onto a radial submenu item and a rest there: it opens (Maya: a stroke that keeps going passes over it)."""
+    s.move(*p, t)
+    s.tick(t + P.open_dwell + 0.01)
+
+
 def _row(s, label, level=0):
     lay, (cx, cy) = s.stack[level]
     it = next(i for i in lay.items if i.label == label)
@@ -42,10 +48,10 @@ def _row(s, label, level=0):
 
 def test_drag_back_inside_the_ring_closes_the_submenu():
     s = _session()
-    s.move(*_at(O, "E", R + 5), 0.2)
+    _open(s, _at(O, "E", R + 5), 0.2)
     assert len(s.stack) == 2 and sorted(it.label for it in s.layout.items) == ["UV", "UV Shell"]
     # the submenu's dead zone / just inside the ring: still the submenu
-    s.move(*_at(O, "E", R - 5), 0.3)
+    s.move(*_at(O, "E", R - 5), 0.35)
     assert len(s.stack) == 2 and _label(s) is None
     # well inside the ring, through the submenu's empty west sector: the object menu again, UV hovered, not reopened
     s.move(*_at(O, "E", R - 20), 0.4)
@@ -60,19 +66,19 @@ def test_drag_back_inside_the_ring_closes_the_submenu():
     assert res[0] == "RUN" and res[1].label == "Vertex", res
     # out again past the ring in the UV sector: the submenu opens once more
     s = _session()
-    s.move(*_at(O, "E", R + 5), 0.2)
-    s.move(*_at(O, "E", R - 20), 0.3)
+    _open(s, _at(O, "E", R + 5), 0.2)
+    s.move(*_at(O, "E", R - 20), 0.35)
     assert len(s.stack) == 1
-    s.move(*_at(O, "E", R + 5), 0.4)
+    _open(s, _at(O, "E", R + 5), 0.4)
     assert len(s.stack) == 2 and s.center == _at(O, "E", R + 5)
 
 
 def test_submenu_item_toward_the_parent_wins():
     s = _session(mm.SHIFT_EDGE)
-    s.move(*_at(O, "N", R + 5), 0.2)
+    _open(s, _at(O, "N", R + 5), 0.2)
     assert len(s.stack) == 2 and "Target Weld Tool" in [it.label for it in s.layout.items]
     # back toward the press point: the submenu's own south item is there, so it stays open
-    s.move(*_at(s.center, "S", 20), 0.3)
+    s.move(*_at(s.center, "S", 20), 0.35)
     assert len(s.stack) == 2 and _label(s) == "Target Weld Tool", (len(s.stack), _label(s))
     res = s.release(*_at(s.center, "S", 20), 0.4)
     assert res[0] == "RUN" and res[1].label == "Target Weld Tool", res
@@ -80,9 +86,9 @@ def test_submenu_item_toward_the_parent_wins():
 
 def test_submenu_opened_far_out_stays_until_the_ring():
     s = _session()
-    s.move(*_at(O, "E", 150), 0.2)      # a fast stroke: the submenu opens where the pointer is
+    _open(s, _at(O, "E", 150), 0.2)     # a stroke far out and a rest: the submenu opens where the pointer is
     assert len(s.stack) == 2 and s.center == _at(O, "E", 150)
-    s.move(*_at(O, "E", 100), 0.3)
+    s.move(*_at(O, "E", 100), 0.35)
     assert len(s.stack) == 2 and _label(s) is None, "west of the submenu's centre, nothing there: still open"
     s.move(*_at(O, "E", 60), 0.4)
     assert len(s.stack) == 2
@@ -93,9 +99,9 @@ def test_submenu_opened_far_out_stays_until_the_ring():
 def test_click_mode_back_and_pick():
     s = _session()
     assert s.release(*O, 0.1) is None and s.mode == "CLICK"
-    s.move(*_at(O, "E", R + 25), 0.3)     # onto the UV box: the submenu opens on hover
+    _open(s, _at(O, "E", R + 25), 0.3)   # onto the UV box and a rest: the submenu opens
     assert len(s.stack) == 2
-    s.move(*_at(O, "E", R - 20), 0.4)
+    s.move(*_at(O, "E", R - 20), 0.45)
     assert len(s.stack) == 1 and s.result is None, "back inside the ring: the object menu again, still open"
     s.move(*_at(O, "W", R + 5), 0.5)
     res = s.click(*_at(O, "W", R + 5), 0.6)
@@ -119,32 +125,32 @@ def test_click_on_a_submenu_box_inside_the_ring():
 
 def test_nested_submenus_go_back_one_level():
     s = _session(mm.OPT_MOVE)
-    s.move(*_at(O, "SW", R + 5), 0.2)                 # Axis
+    _open(s, _at(O, "SW", R + 5), 0.2)                 # Axis
     assert len(s.stack) == 2 and "Custom" in [it.label for it in s.layout.items]
     axis = s.center
-    s.move(*_at(axis, "SW", R + 5), 0.3)              # Axis > Custom
+    _open(s, _at(axis, "SW", R + 5), 0.4)              # Axis > Custom
     assert len(s.stack) == 3
     custom = s.center
     # north-east of Custom's centre (it has no NE item), 15 px from Axis's centre: Axis again, Custom hovered
-    s.move(*_at(custom, "NE", 45), 0.4)
+    s.move(*_at(custom, "NE", 45), 0.6)
     assert len(s.stack) == 2 and _label(s) == "Custom", (len(s.stack), _label(s))
     # through Axis's empty east sector back inside the top menu's ring: the top menu, its south item hovered
-    s.move(O[0] + 10, O[1] - 35, 0.5)
+    s.move(O[0] + 10, O[1] - 35, 0.7)
     assert len(s.stack) == 1 and _label(s) == "Select", (len(s.stack), _label(s))
 
 
 def test_esc_closes_only_the_open_submenu():
     s = _session()
-    s.move(*_at(O, "E", R + 5), 0.2)
+    _open(s, _at(O, "E", R + 5), 0.2)
     assert len(s.stack) == 2
     assert s.escape() is None and len(s.stack) == 1 and s.result is None
     assert _label(s) == "UV", "the item whose submenu closed is hovered, the submenu not reopened"
-    s.move(*_at(O, "E", R + 8), 0.3)
+    _open(s, _at(O, "E", R + 8), 0.35)
     assert len(s.stack) == 1, "still on that item: it doesn't reopen"
-    s.move(*_at(O, "N", R + 5), 0.4)
+    s.move(*_at(O, "N", R + 5), 0.5)
     assert len(s.stack) == 1 and _label(s) == "Edge"
-    s.move(*_at(O, "E", R + 5), 0.5)
-    assert len(s.stack) == 2, "after leaving the item, dragging onto it opens the submenu again"
+    _open(s, _at(O, "E", R + 5), 0.6)
+    assert len(s.stack) == 2, "after leaving the item, a rest on it opens the submenu again"
     assert s.escape() is None and len(s.stack) == 1
     assert s.escape()[0] == "CANCEL", "Esc at the top menu closes it"
     # a list row's cascade closes the same way
