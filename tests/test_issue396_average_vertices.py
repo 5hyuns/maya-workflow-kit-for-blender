@@ -104,6 +104,24 @@ def test_iterations_stay_editable():
     assert np.abs(_co(ob2) - two).max() < 1e-6                 # the edit = a fresh run with that value
 
 
+def test_in_view_editor_and_channel_box_show_and_change_it():
+    ob = _cube(3)
+    assert bpy.ops.allset.menu_item(item=ITEM) == {'FINISHED'}
+    extrude = _mod(".operators.extrude")
+    _ob, rec = extrude.active(bpy.context)
+    assert rec is not None and rec.spec.node == "polyAverageVertex" and rec.spec.view_fields == ("iterations",)
+    assert extrude.caps_selected(ob, rec)                          # the In-View Editor shows while the selection stays
+    cb = _mod(".ui.cb_model_node").cb_record(bpy.context, ob)
+    assert cb is rec                                               # Channel Box INPUTS lists the node
+    ten = _co(ob)
+    assert extrude.set_params(bpy.context, iterations=3) == {'FINISHED'}   # a row drag / Channel Box edit
+    three = _co(ob)
+    assert np.abs(three - ten).max() > 1e-4 and extrude.RECORDS[ob.name].params["iterations"] == 3
+    ob2 = _cube(3)
+    bpy.ops.allset.average_vertices(iterations=3)
+    assert np.abs(_co(ob2) - three).max() < 1e-6
+
+
 def test_option_box_runs_then_shows_iterations():
     # the menu's option box runs the command, then Adjust Last Operation shows its settings: Iterations
     assert _mod(".ui.menu_option_box").option_kind(ITEM) == "redo"
