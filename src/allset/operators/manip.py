@@ -671,6 +671,7 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
             reset_handle(kind)
             context.area.tag_redraw()
             snap_align.apply_active(context)
+            self._plane = None
             self._editing = getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True)
             self._press = (event.mouse_x, event.mouse_y)
             context.window_manager.modal_handler_add(self)
@@ -678,18 +679,16 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         editing = getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True)
         if (kind == 'TRANSLATE' and role == 'AXIS' and axis in ('X', 'Y', 'Z') and not editing
                 and not _ctrl_snaps(context)):
-            # Maya: the plane of the other two axes moves and becomes the active handle
+            # Maya: the plane of the other two axes becomes the active handle (a click does only that) and a drag
+            # past the threshold moves in it, without grid snapping while Ctrl stays held
             otype = manipulator.slot_type(context.scene, kind)
             HANDLES[kind] = {"constraint_axis": plane_of(axis), "orient_type": otype}
-            snap_align.apply_active(context)
-            try:
-                from . import live_translate
-                live_translate.start(context, {"constraint_axis": plane_of(axis), "orient_type": otype,
-                                               "release_confirm": True})
-            except RuntimeError:
-                return {'PASS_THROUGH'}
             context.area.tag_redraw()
-            return {'FINISHED'}
+            snap_align.apply_active(context)
+            self._plane, self._editing = (plane_of(axis), otype), False
+            self._press = (event.mouse_x, event.mouse_y)
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         if kind == 'TRANSLATE':
             # The press goes on to the handle's own drag (the Generic Gizmo keymaps allow Ctrl there): the
             # transform starts with Ctrl held, so it snaps from the start and Ctrl stays its snap toggle.
@@ -718,6 +717,8 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         limit = context.preferences.inputs.drag_threshold_mouse * context.preferences.system.ui_scale
         if max(abs(event.mouse_x - self._press[0]), abs(event.mouse_y - self._press[1])) < limit:
             return {'RUNNING_MODAL'}
+        if self._plane is not None:
+            return self._plane_move(context)
         # the centre's own drag (ui/manipulator.py _bind_ops), started while Ctrl is held: snapped
         try:
             if self._editing:
@@ -728,6 +729,47 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         except RuntimeError:
             return {'CANCELLED'}
         return {'FINISHED'}
+
+    def _plane_move(self, context):
+        """The Ctrl+axis drag: the plane of the other two axes, or the Transform Constraint slide on that plane."""
+        from ..ui import manipulator
+        from . import xform_constraint
+        axes, otype = self._plane
+        try:
+            if xform_constraint.active(context):
+                builtin = {'GLOBAL', 'LOCAL', 'NORMAL', 'GIMBAL', 'VIEW', 'CURSOR', 'PARENT'}
+                frame = manipulator.pivot_frame(context, 'TRANSLATE')[1]
+                kwargs = {"constraint_axis": axes, "orient_type": otype if otype in builtin else 'GLOBAL'}
+                if otype not in builtin and frame is not None:
+                    kwargs["orient_matrix"] = frame
+                bpy.ops.allset.component_slide('INVOKE_DEFAULT', **kwargs)
+            else:
+                from . import live_translate
+                without_ctrl_snap(context, lambda: live_translate.start(
+                    context, {"constraint_axis": axes, "orient_type": otype, "release_confirm": True}))
+        except RuntimeError:
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+SNAP_INVERT_KEYS = {'LEFT_CTRL', 'RIGHT_CTRL'}
+
+
+def without_ctrl_snap(context, start):
+    """Run ``start()`` (a transform invoke) so that the Ctrl held at its start doesn't turn grid snapping on: Blender's
+    transform reads the modifier keys held when it starts against its modal keymap's press items, so the Ctrl snap
+    inversion items are off just for that call (in memory, back on at once). Pressing Ctrl again during the drag
+    snaps, as in every move."""
+    km = context.window_manager.keyconfigs.user.keymaps.get("Transform Modal Map")
+    items = [k for k in km.keymap_items if k.active and k.propvalue == 'SNAP_INV_ON' and k.type in SNAP_INVERT_KEYS
+             and k.value == 'PRESS'] if km is not None else []
+    for k in items:
+        k.active = False
+    try:
+        return start()
+    finally:
+        for k in items:
+            k.active = True
 
 
 class ALLSET_OT_manip_slide(bpy.types.Operator):

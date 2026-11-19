@@ -101,7 +101,7 @@ def reset_maya_options(context, kind):
         from .. import preferences
         prefs = preferences.get(context)
         prefs.transform_constraint = 'NONE'
-        for name in ("smart_duplicate", "smart_extrude"):
+        for name in ("smart_duplicate", "smart_extrude", "manip_ctrl_snap"):
             setattr(prefs, name, prefs.bl_rna.properties[name].default)
 
 
@@ -410,6 +410,9 @@ def draw_settings(layout, context, kind):
     else:
         # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template.
         _labelled(layout, "").label(text="Step: one grid unit", icon='SNAP_INCREMENT')
+        from .. import preferences
+        # off: Ctrl+drag on an axis moves in the other two axes, like Maya
+        _labelled(layout, "").prop(preferences.get(context), "manip_ctrl_snap")
     _labelled(layout, "Preserve Children:").prop(ts, "use_transform_skip_children", text="")
     _labelled(layout, "Preserve UVs:").prop(ts, "use_transform_correct_face_attributes", text="")
     _grey(_labelled(layout, "Tweak Mode:"), "Tweak Mode", text=" ", check=False)

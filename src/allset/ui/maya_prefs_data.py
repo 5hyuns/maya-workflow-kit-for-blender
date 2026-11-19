@@ -87,6 +87,9 @@ PAGES = (
             ("blender", "Global scale", 'VIEWPORT', "view.gizmo_size",
              "Recommended setup: Viewport > Gizmo Size; = / - change the kit manipulator for the session"),
         ]),
+        ("Move Manipulator", [
+            ("pref", "manip_ctrl_snap", "Ctrl+Drag on a Move Axis Snaps"),
+        ]),
     ]),
     ("NURBS", "NURBS", 1, "NURBS: NURBS Display Preferences", [
         ("NURBS", [("missing", "NURBS display for new objects", "Blender surfaces use their own display settings")]),

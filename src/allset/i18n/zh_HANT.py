@@ -6621,4 +6621,6 @@ STRINGS = {
     'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': 'Ctrl+拖動移動操縱器的軸會沿該軸移動並捕捉到柵格 (關閉：與 Maya 相同，在另外兩個軸的平面內移動)',
     'Manipulator Slide': '操縱器滑動',
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': '在網格編輯模式下 Ctrl+Shift+拖動移動操縱器的控制柄：將選定元件沿其\n邊滑動 (Maya)',
+    'Move Edges Along Normals': '沿法線移動邊',
+    'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '沿各自的法線移動選定的邊並保持其長度 (Maya 移動工具的 Ctrl+中鍵拖動)',
 }

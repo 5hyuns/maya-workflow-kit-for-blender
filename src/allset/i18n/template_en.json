@@ -7687,6 +7687,8 @@
    "Wrap Influence": "Wrap Influence"
   },
   "Labels/operators/xform_constraint": {
+   "Distance": "Distance",
+   "Move Edges Along Normals": "Move Edges Along Normals",
    "Slide Components": "Slide Components",
    "Transform Constraint": "Transform Constraint"
   },
@@ -10739,6 +10741,7 @@
    "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)": "Add / remove the last selected object as an influence of the selected surfaces' wrap deformers (Maya Deform >\nWrap > Add Influence / Remove Influence)"
   },
   "Tooltips/operators/xform_constraint": {
+   "Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)": "Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)",
    "Set the Move tool's Transform Constraint (Off / Edge Slide / Surface Slide / Along Normals)": "Set the Move tool's Transform Constraint (Off / Edge Slide / Surface Slide / Along Normals)",
    "Slide the selected components along their edges or the surface (Maya Transform Constraint)": "Slide the selected components along their edges or the surface (Maya Transform Constraint)"
   },

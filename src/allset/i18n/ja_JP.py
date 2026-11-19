@@ -6620,4 +6620,6 @@ STRINGS = {
     'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': '移動マニピュレータの軸を Ctrl+ドラッグすると、グリッドスナップでその軸に沿って移動 (オフ: Maya と同じく他の 2 軸の平面で移動)',
     'Manipulator Slide': 'マニピュレータのスライド',
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': 'メッシュ編集モードで移動マニピュレータのハンドルを Ctrl+Shift+ドラッグ: 選択コンポーネントを\nエッジに沿ってスライド (Maya)',
+    'Move Edges Along Normals': 'エッジを法線に沿って移動',
+    'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '選択したエッジを長さを保ったままそれぞれの法線に沿って移動 (Maya の移動ツールで Ctrl+中ボタンドラッグ)',
 }
