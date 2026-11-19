@@ -169,6 +169,10 @@ def _segments(ob, kind, depsgraph):
     if kind == 'CURVE':
         ev = ob.evaluated_get(depsgraph)
         me = ev.to_mesh()
+        if me is None:
+            # no splines, or Geometry Nodes that leave no curve or mesh (only instances): no curve is drawn
+            ev.to_mesh_clear()
+            return [], [], 0.0
         try:
             co = np.empty(len(me.vertices) * 3)
             me.vertices.foreach_get("co", co)
