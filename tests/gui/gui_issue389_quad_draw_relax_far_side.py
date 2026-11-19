@@ -1,6 +1,7 @@
 """#389 in a real UI: Quad Draw on a live sphere, the retopology mesh wraps the whole sphere. A Shift+drag relax
 stroke on the side facing the camera leaves the far side alone (its vertices were pulled through to the front), and
 the relaxed vertices stay on the live surface where they were, also near the sphere's outline seen from the camera.
+With Soft Selection on and a radius that reaches round to the far side, the far side stays too.
 Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
 
 import math
@@ -145,6 +146,37 @@ def outline_result():
     check(f"... and on the live surface (radius {radius.min():.4f} .. {radius.max():.4f})",
           np.abs(radius - R).max() < 0.02)
     shot("gui_issue389_outline.png")
+
+
+@step
+def soft_stroke():
+    restore()
+    ts = bpy.context.scene.tool_settings
+    C["soft"] = (bpy.context.scene.allset_soft_select, ts.proportional_size, ts.use_proportional_connected,
+                 ts.use_proportional_projected)
+    bpy.context.scene.allset_soft_select = True
+    ts.proportional_size = 5.5             # a Soft Selection radius that reaches round to the far side
+    ts.use_proportional_connected = False
+    ts.use_proportional_projected = False
+    stroke((0.0, -R, 0.0))
+
+
+step(lambda: None)
+
+
+@step
+def soft_result():
+    now, before = co(), C["original"]
+    moved = np.linalg.norm(now - before, axis=1)
+    far = before[:, 1] > 0.5
+    check(f"with Soft Selection the stroke relaxed vertices facing the camera ({int(np.count_nonzero(moved > 1e-6))})",
+          np.count_nonzero(moved[~far] > 1e-6) > 0)
+    check(f"... and the far side's vertices stay where they were (max move {moved[far].max():.4f}, "
+          f"{int(np.count_nonzero(moved[far] > 1e-6))} moved)", moved[far].max() < 1e-6)
+    shot("gui_issue389_soft.png")
+    ts = bpy.context.scene.tool_settings
+    (bpy.context.scene.allset_soft_select, ts.proportional_size, ts.use_proportional_connected,
+     ts.use_proportional_projected) = C["soft"]
     with override():
         bpy.ops.allset.quad_draw_exit()
 
