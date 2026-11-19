@@ -21,6 +21,14 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   keyboards, "+", the Menu key and the media keys; the list shows "<" and "+" for them. (#386)
 - Marking menus: like Maya, a radial submenu opens when the pointer rests on it for a moment; a stroke that keeps
   moving goes over it, so list rows beyond it can be reached (Ctrl+RMB: To Shell under To Faces). (#387)
+- UV > Camera-based (and UV Editor > Create > Camera-based) with an object selected in object mode maps the whole
+  object from the 3D View, like Maya; it only showed a warning. Camera-based also works from a separate UV Editor
+  window, in object and component mode. (#392)
+- Straighten Shell (UV Toolkit, UV Editor > Modify, the UV marking menu) straightens the selected UV edge loop along
+  U or V and unfolds the rest of its shell around it, so a ribbon shell becomes a straight strip, like Maya. It asked
+  for an active face before. (#393)
+- Unfold, Layout and Straighten Shell keep the mesh and UV selection, with UV Sync Selection on or off and with
+  several meshes in edit mode, like Maya; the selection was lost or the whole mesh ended up selected.
 
 ## [0.19.0] — 2026-11-18
 
