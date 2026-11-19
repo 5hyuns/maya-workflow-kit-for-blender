@@ -2,7 +2,8 @@
 """Maya Edit Mesh / Mesh Tools commands with Maya's results
 (Connect / Merge / Smooth / Symmetrize too).
 Circularize, Connect, Make Hole; Connect, Merge, Smooth, Symmetrize. Pure bmesh.
-Code: poly_connect (Connect), poly_smooth (Smooth, polySmoothFace), poly_symmetrize (Symmetrize); this module keeps
+Code: poly_connect (Connect), poly_smooth (Smooth, polySmoothFace), poly_symmetrize (Symmetrize), poly_average
+(Average Vertices, polyAverageVertex); this module keeps
 Circularize, Make Hole, Merge, the classes tuple and re-exports.
 """
 
@@ -15,6 +16,7 @@ from .. import results
 # the split-out commands, also read through this module by other operators and the tests
 from .poly_connect import CONNECT_WARNING, ALLSET_OT_connect, connect, connect_items  # noqa: F401
 from .poly_smooth import SMOOTH, ALLSET_OT_smooth, ALLSET_OT_smooth_edit, smooth, smooth_targets  # noqa: F401
+from .poly_average import AVERAGE, ALLSET_OT_average_vertices, ALLSET_OT_average_vertices_edit, average  # noqa: F401
 from .poly_symmetrize import (SYMMETRIZE_NO_COMPONENTS, SYMMETRIZE_PROMPT, ALLSET_OT_symmetrize,  # noqa: F401
                               mirror_plane, pick_edge, symmetrize, topo_mirror)
 
@@ -329,4 +331,4 @@ class ALLSET_OT_merge(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_circularize, ALLSET_OT_connect, ALLSET_OT_make_hole, ALLSET_OT_merge, ALLSET_OT_smooth,
-           ALLSET_OT_smooth_edit, ALLSET_OT_symmetrize)
+           ALLSET_OT_smooth_edit, ALLSET_OT_symmetrize, ALLSET_OT_average_vertices, ALLSET_OT_average_vertices_edit)

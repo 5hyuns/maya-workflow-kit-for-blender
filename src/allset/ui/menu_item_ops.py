@@ -190,7 +190,6 @@ def _op_description(path):
 # Bevel fraction 0.5, Chamfer Vertices 0.25 (Blender: percent of the adjacent edge).
 WHOLE_MESH_PROPS = {
     "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
-    "Edit Mesh/Average Vertices": {"repeat": 10},
     # Circularize: allset.circularize's own defaults apply; the old LoopTools "value" key made every
     # object-mode Circularize raise TypeError
 }

@@ -4861,6 +4861,7 @@ STRINGS = {
     'polyExtrudeFace': 'polyExtrudeFace',
     'polyExtrudeVertex': 'polyExtrudeVertex',
     'polySmoothFace': 'polySmoothFace',
+    'polyAverageVertex': 'polyAverageVertex',
     'side': 'side',
     'top': 'top',
     '{label} (greyed: no Blender equivalent in Maya Workflow Kit)': '{label}(顯示為灰色：Maya Workflow Kit 中沒有 Blender 對應功能)',
@@ -6610,4 +6611,6 @@ STRINGS = {
     'Let the joints of an IK chain turn even when the IK handle has keys; the handle stays where it is (Maya Skeleton > Enable IK/FK Control)': '即使 IK 控制柄有關鍵格，也可以旋轉 IK 鏈的關節；控制柄留在原處 (Maya 骨架 > 啟用 IK/FK 控制)',
     'The IK handle follows the end joint when a joint of its chain is turned, and stays on it at Ik Blend 0 (Maya Skeleton > Enable IK Handle Snap)': '旋轉鏈中的關節時 IK 控制柄跟隨末端關節，Ik Blend 為 0 時停留在末端關節上 (Maya 骨架 > 啟用 IK 控制柄捕捉)',
     'Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)': 'Maya 連接到 IK/FK：為選定物件加入跟隨 IK 控制柄的 Ik Blend (最後選擇控制柄)',
+    'Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)': '移動選定頂點，不新增頂點而使形狀變圓 (Maya 編輯網格 > 平均頂點)：\n可在視圖內編輯器或通道盒 INPUTS 中更改其迭代次數 (polyAverageVertex)',
+    'Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed': '更改上一次平均頂點 (Maya：編輯 polyAverageVertex 節點)。Blender 不保留歷史，因此只能\n更改最後一次',
 }

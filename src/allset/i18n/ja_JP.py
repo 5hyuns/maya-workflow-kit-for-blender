@@ -4861,6 +4861,7 @@ STRINGS = {
     'polyExtrudeFace': 'polyExtrudeFace',
     'polyExtrudeVertex': 'polyExtrudeVertex',
     'polySmoothFace': 'polySmoothFace',
+    'polyAverageVertex': 'polyAverageVertex',
     'side': 'side',
     'top': 'top',
     '{label} (greyed: no Blender equivalent in Maya Workflow Kit)': '{label} (グレー表示: Maya Workflow Kit に Blender の対応機能がありません)',
@@ -6609,4 +6610,6 @@ STRINGS = {
     'Let the joints of an IK chain turn even when the IK handle has keys; the handle stays where it is (Maya Skeleton > Enable IK/FK Control)': 'IK ハンドルにキーがあっても IK チェーンのジョイントを回転できます。ハンドルはその場に残ります (Maya スケルトン > IK/FK コントロールを有効化)',
     'The IK handle follows the end joint when a joint of its chain is turned, and stays on it at Ik Blend 0 (Maya Skeleton > Enable IK Handle Snap)': 'チェーンのジョイントを回転すると IK ハンドルが終端ジョイントに付いて行き、Ik Blend 0 では終端ジョイントに留まります (Maya スケルトン > IK ハンドルのスナップを有効化)',
     'Maya Connect to IK/FK: the selected objects get an Ik Blend that follows the IK handle (select it last)': 'Maya IK/FK に接続: 選択したオブジェクトに IK ハンドルに従う Ik Blend を追加します (ハンドルを最後に選択)',
+    'Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)': '選択した頂点を移動し、頂点を増やさずに形を丸める (Maya の メッシュの編集 > 頂点の平均化):\n反復回数はビュー内エディタまたはチャンネルボックスの INPUTS で変更 (polyAverageVertex)',
+    'Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed': '最後の頂点の平均化を変更 (Maya: polyAverageVertex ノードを編集)。Blender はヒストリを持たないため、変更できるのは\n最後の 1 つだけ',
 }

@@ -93,7 +93,7 @@ def test_iterations_stay_editable():
     ob = _cube(3)
     assert bpy.ops.allset.menu_item(item=ITEM) == {'FINISHED'}
     rec = _mod(".operators.extrude").RECORDS.get(ob.name)
-    assert rec is not None and rec.name == "polyAverageVertex1", rec and rec.name
+    assert rec is not None and rec.name.startswith("polyAverageVertex"), rec and rec.name   # numbered per scene
     assert rec.params["iterations"] == 10
     ten = _co(ob)
     assert bpy.ops.allset.average_vertices_edit(iterations=2) == {'FINISHED'}

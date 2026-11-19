@@ -548,7 +548,7 @@ SHIFT_VERTEX = MarkingMenu(
             "N": ("Merge Vertices To Center", MERGE_CENTER),
             "S": ("Target Weld Tool", TARGET_WELD),
         }, options={"Merge Vertices", "Target Weld Tool"})),
-        "NE": ("Average Vertices", "mesh.vertices_smooth"),
+        "NE": ("Average Vertices", _item("Edit Mesh/Average Vertices")),
         "W": ("Multi-Cut", MULTI_CUT),
         "NW": ("Paint Select Vertices", PAINT_SELECT),
     },

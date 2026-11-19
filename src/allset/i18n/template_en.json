@@ -6797,6 +6797,11 @@
    "polyBridgeEdge": "polyBridgeEdge",
    "polySubdFace": "polySubdFace"
   },
+  "Labels/operators/poly_average": {
+   "Average Vertices": "Average Vertices",
+   "Iterations": "Iterations",
+   "polyAverageVertex": "polyAverageVertex"
+  },
   "Labels/operators/poly_cleanup": {
    "4-sided faces": "4-sided faces",
    "Apply to all polygonal objects": "Apply to all polygonal objects",
@@ -10354,6 +10359,10 @@
   },
   "Tooltips/operators/poly_attribute_nodes": {
    "Bridge two sets of border edges or faces with faces, as an editable polyBridgeEdge node; one closed loop of\nborder edges is filled with a single face (Maya Edit Mesh > Bridge)": "Bridge two sets of border edges or faces with faces, as an editable polyBridgeEdge node; one closed loop of\nborder edges is filled with a single face (Maya Edit Mesh > Bridge)"
+  },
+  "Tooltips/operators/poly_average": {
+   "Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed": "Change the last Average Vertices (Maya: edit the polyAverageVertex node). Blender keeps no history, so only\nthe last one can be changed",
+   "Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)": "Move the selected vertices to round the shape without adding vertices (Maya Edit Mesh > Average Vertices):\nchange its Iterations in the In-View Editor or Channel Box INPUTS (polyAverageVertex)"
   },
   "Tooltips/operators/poly_cleanup": {
    "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)": "Clean up or select faces and edges that match the chosen criteria (Maya Mesh > Cleanup)"
