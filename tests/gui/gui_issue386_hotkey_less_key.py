@@ -1,6 +1,7 @@
 """#386: in a real UI the kit Hotkey Editor's Assign New Hotkey takes the "<" key of German / Nordic keyboards
-(Blender's GRLESS) and the "+" key (PLUS), like Blender's own keymap editor: SnapToPointPress (the v hold) gets "<",
-its Shift+V row gets "+"; then "<" over the viewport starts the point snap hold."""
+(Blender's GRLESS) and the "+" key (PLUS), like Blender's own keymap editor: SnapToPointPress (the v hold) gets "<"
+(after the "used by" warning, Enter), its Shift+V row gets "+"; then "<" over the viewport starts the point snap
+hold."""
 
 import os
 import sys
@@ -104,6 +105,19 @@ def s_press_less():
     if hk()[0] is not None:
         ev2('GRLESS', 'PRESS')
         ev2('GRLESS', 'RELEASE')
+
+
+@step
+def s_less_pending():
+    """The kit's own "<" keys (Shrink Selection on keyboards with that key) make it a used key: like Maya, a
+    warning first; Enter takes it."""
+    wm = bpy.context.window_manager
+    pending = wm.allset_hk_pending
+    check(f'"<" is taken as the pressed key, with the "used by" warning ({pending!r})',
+          wm.allset_hk_capture and pending.startswith("< is used by"))
+    if hk()[0] is not None:
+        ev2('RET', 'PRESS')
+        ev2('RET', 'RELEASE')
 
 
 @step
