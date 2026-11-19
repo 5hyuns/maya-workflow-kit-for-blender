@@ -248,4 +248,37 @@ def s_camera_based_from_uv_window():
           f"changed {uvs != before}, mode {ob.mode})", res == {'FINISHED'} and uvs != before and ob.mode == 'OBJECT')
 
 
+@step
+def s_camera_based_faces_from_uv_window():
+    """Component mode: the selected faces only, from the separate UV Editor window."""
+    ob = bpy.data.objects[C["cyl"]]
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.scene.tool_settings.use_uv_select_sync = True       # faces picked as in the 3D View
+    b = bmesh.from_edit_mesh(ob.data)
+    b.faces.ensure_lookup_table()
+    for f in b.faces:
+        f.select_set(False)
+    picked = [f.index for f in b.faces if len(f.verts) == 4][:3]
+    for i in picked:
+        b.faces[i].select_set(True)
+    if getattr(b, "uv_select_sync_valid", False):
+        b.uv_select_sync_from_mesh()
+    uv = b.loops.layers.uv.active
+    for f in b.faces:              # off the projection the step before made from the same view
+        for lp in f.loops:
+            lp[uv].uv.x += 0.5
+    bmesh.update_edit_mesh(ob.data)
+    before = {f.index: [lp[uv].uv.copy() for lp in f.loops] for f in b.faces}
+    res = uv_menu("UV Editor/Create/Camera-based")
+    b = bmesh.from_edit_mesh(ob.data)
+    uv = b.loops.layers.uv.active
+    b.faces.ensure_lookup_table()
+    changed = sorted(f.index for f in b.faces
+                     if any((lp[uv].uv - p).length > 1e-6 for lp, p in zip(f.loops, before[f.index])))
+    check(f"Camera-based in component mode from the UV Editor window maps the selected faces ({res}, changed "
+          f"{changed}, picked {picked})", res == {'FINISHED'} and changed == sorted(picked))
+
+
 run()
