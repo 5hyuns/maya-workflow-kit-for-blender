@@ -1,7 +1,7 @@
 """#393: Straighten Shell (UV Toolkit > Unfold, UV Editor > Modify, the UV Shift+RMB menu) works like Maya's: the
 selected UV edge loop becomes a straight line along U or V (its length kept) and the rest of its shell is unfolded
 around it, so a ribbon shell such as a cylinder side becomes a straight strip. It runs at once (no dialog) and needs
-no active face; fewer than two selected UVs is a warning. GUI: tests/gui/gui_issue393_straighten_shell.py."""
+no active face; fewer than two selected UVs is a warning. GUI: tests/gui/gui_issue392_393_uv.py."""
 
 import math
 from importlib import import_module
@@ -167,7 +167,9 @@ def _straighten(sync):
         assert max(vs) - min(vs) < tol, ("level across", i, max(vs) - min(vs))
     # the rings keep their order and spacing (the cylinder side is 2 units tall and 2 pi around)
     xs = [grid[0, j].x for j in range(H + 1)]
-    assert all(b > a for a, b in zip(xs, xs[1:])) or all(b < a for a, b in zip(xs, xs[1:])), xs
+    xs0 = [grid0[0, j].x for j in range(H + 1)]
+    # not mirrored: the rings run across the strip the way they ran before (no reversed UVs)
+    assert all(b > a for a, b in zip(xs, xs[1:])) and all(b > a for a, b in zip(xs0, xs0[1:])), (xs0, xs)
     assert abs(abs(xs[-1] - xs[0]) / _length(line) - 2.0 / (2 * N * math.sin(math.pi / N))) < 1e-3
     assert caps == caps0, "the other shells stay"
     # the selection stays, nothing is left pinned

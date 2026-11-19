@@ -1,7 +1,7 @@
 """#392: UV > Camera-based maps from the view like Maya's camera-based projection. With an object selected in object
 mode it maps every face of the object and comes back to object mode (the main UV menu, the UV Editor's Create menu and
 the marking menu item all run the same item); in component mode it maps the selected faces.
-GUI: tests/gui/gui_issue392_uv_camera_based.py."""
+GUI: tests/gui/gui_issue392_393_uv.py."""
 
 from importlib import import_module
 
