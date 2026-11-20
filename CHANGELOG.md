@@ -3,7 +3,12 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.20.0] — 2026-11-20
+
+Thank you for the reports. This release makes marking menus and the Move tool feel more like Maya, fixes UV Unfold,
+Layout, Straighten Shell and Camera-based mapping, makes Paint Skin Weights easier, and adds Maya's Image Plane menus.
+Thanks to @AlEuf01, @envwarby, @GUYVERZERO, @JinxSwe, @leo2ard, @magmastk, @PucaJam and @suenwaichit for reports that
+showed what to fix.
 
 ### Fixed
 - Edit Mesh > Average Vertices and the vertex marking menu's Average Vertices round the selected vertices at once,
