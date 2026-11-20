@@ -164,6 +164,14 @@ def s_lassoed():
     with override():
         bpy.ops.allset.skin_paint_mode(mode='SELECT', shape='BOX')
     check(f"... and Box again ({tool()})", tool() == 'builtin.select_box' and mode() == 'SELECT')
+    with bpy.context.temp_override(window=win()):
+        mod(".ui.tool_dock").show(bpy.context)
+
+
+@step
+def s_dock_shot():
+    if SHOTS:
+        screenshot(os.path.join(SHOTS, "gui_issue401_dock.png"))
 
 
 run()
