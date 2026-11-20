@@ -831,6 +831,7 @@ class ALLSET_OT_manip_slide_hint(bpy.types.Operator):
 
     def invoke(self, context, event):
         on = event.ctrl and event.shift and _slide_applies(context)
+        MOUSE["held"] = event.ctrl and event.shift      # a key let go: the handle highlight must not bring it back
         region = context.region
         if on and region is not None:
             slide_hint_show(region, (event.mouse_region_x, event.mouse_region_y))
