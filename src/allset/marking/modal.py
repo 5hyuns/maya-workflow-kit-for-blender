@@ -27,9 +27,11 @@ _TIMER = 0.05
 
 # Press clock: Blender gives Python no time for the press event, and a press that comes during a slow frame is
 # handled only after it, so counting from the handling makes a real flick look too quick (``quick_none_time``).
-# A light heartbeat notes when the event loop last ran; a press handled right after a gap in the beats (a slow
-# frame) is taken to have come at the beat before the gap.
+# A light heartbeat notes when the event loop last ran. A press handled while the beats are late (the loop busy
+# since the last beat) is taken to have come at that last beat; one handled right after a gap in the beats (a slow
+# frame the heartbeat already came out of) at the beat before the gap.
 BEAT = 0.02
+STALE = 0.5                  # no beat for this long: the heartbeat is not running
 _beats = [0.0, 0.0]          # the two latest heartbeat times
 
 
@@ -41,9 +43,13 @@ def _beat():
 def press_time(now, beats=None):
     """When the press being handled at ``now`` most likely came (see the press clock above)."""
     prev, last = beats if beats is not None else _beats
-    if now - last > 2 * BEAT or last - prev <= 2 * BEAT:
-        return now           # the loop ran on time (or the heartbeat is not running): handled at once
-    return min(now, prev)
+    if not last or now - last > STALE:
+        return now           # the heartbeat is not running
+    if now - last > 2 * BEAT:
+        return last          # the loop was busy since the last beat: the press came in that time
+    if last - prev > 2 * BEAT:
+        return min(now, prev)    # a slow frame just before: the press came in it
+    return now               # the loop ran on time: handled at once
 
 
 def register_clock():
