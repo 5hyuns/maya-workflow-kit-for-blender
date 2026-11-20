@@ -98,3 +98,22 @@ def test_straight_through_the_diagonal_corner_does_not_open():
     hovered, opened = _rest(x0 * 2.5, y0 * 2.5)
     assert hovered == "Edge Loop Utilities", hovered
     assert opened is None, opened
+
+
+def _jitter(d):
+    """A rest on the E box with the pointer going d px right and back every 0.04 s: did the submenu open?"""
+    s = engine.Session(MENU, O, 0.0, measure, None, None, B)
+    x0, y0, x1, y1 = _rect("E")
+    c = (O[0] + (x0 + x1) / 2, O[1])
+    t = SHOWN
+    s.move(*c, t)
+    for k in range(12):
+        t += 0.04
+        s.move(c[0] + (d if k % 2 == 0 else 0), c[1], t)
+        s.tick(t)
+    return len(s.stack) > 1
+
+
+def test_a_rest_allows_two_px_of_shake_not_three():
+    assert _jitter(1) and _jitter(2)
+    assert not _jitter(3) and not _jitter(4)
