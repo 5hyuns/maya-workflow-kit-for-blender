@@ -73,3 +73,29 @@ def test_a_menu_with_few_items_has_one_in_every_direction():
 def test_the_dead_zone_has_no_item():
     s = _session()
     assert _at(s, 5.0, -5.0) is None
+
+
+def _list_top(s):
+    return max(it.rect[3] for it in s.layout.items if it.kind == "list")
+
+
+def test_below_the_top_of_the_list_only_its_rows_count():
+    """Ctrl+RMB: past the top of the list under the ring, a point beside the rows or in a gap between them has no
+    item (not the SE or S item), the rows are picked as before, and just above the list the ring rule holds."""
+    s = _session()
+    top = _list_top(s)
+    rows = [it for it in s.layout.items if it.kind == "list"]
+    x1 = max(it.rect[2] for it in rows)
+    assert _at(s, x1 + 40.0, top - 10.0) is None, "beside the list, below its top"
+    s = _session()
+    assert _at(s, x1 + 120.0, top - 60.0) is None, "far right of the list, below its top"
+    s = _session()
+    assert _at(s, x1 + 40.0, top + 6.0) == "Edge Loop Utilities", "just above the list: the ring rule"
+    s = _session()
+    row = rows[1]
+    s.move(O[0] + (row.rect[0] + row.rect[2]) / 2, O[1] + (row.rect[1] + row.rect[3]) / 2, SHOWN)
+    assert s.hover[0] is row
+    gaps = [(a.rect[1], b.rect[3]) for a, b in zip(rows, rows[1:]) if a.rect[1] - b.rect[3] > 2.0]
+    if gaps:
+        s = _session()
+        assert _at(s, 0.0, (gaps[0][0] + gaps[0][1]) / 2) is None, "in a divider gap between rows"
