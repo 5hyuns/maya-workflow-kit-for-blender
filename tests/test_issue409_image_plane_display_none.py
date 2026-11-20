@@ -61,3 +61,20 @@ def test_show_image_planes_off_and_on_keeps_display_mode_none():
     assert _drawn(other), "the other image plane is drawn again"
     assert _run(view, "allset.image_plane_display", mode='RGBA') == {'FINISHED'}
     assert _drawn(plane), "RGBA draws it again"
+
+
+def test_display_mode_never_draws_a_plane_while_show_image_planes_is_off():
+    """Show > Image Planes is a view filter: with it off, Display Mode RGBA (or the button) doesn't draw the plane,
+    also when it is the scene's only image plane; turning Show on again draws it."""
+    _cam, view, plane = _camera_with_plane()
+    scene = bpy.context.scene
+    assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is False, "Show > Image Planes off"
+    assert _run(view, "allset.image_plane_display", mode='NONE') == {'FINISHED'}
+    assert not gk4.image_planes_drawn(scene), "Show > Image Planes stays off"
+    assert _run(view, "allset.image_plane_display", mode='RGBA') == {'FINISHED'}
+    assert not _drawn(plane), "RGBA doesn't draw it while Show > Image Planes is off"
+    assert _run(view, "allset.image_plane") == {'FINISHED'}
+    assert _run(view, "allset.image_plane") == {'FINISHED'}
+    assert not _drawn(plane), "nor does the button's hide / show"
+    assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is True, "Show > Image Planes on"
+    assert _drawn(plane), "Show on draws the RGBA plane again"
