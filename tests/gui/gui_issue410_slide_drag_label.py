@@ -135,7 +135,7 @@ def s_drag():
     check(f"the drag is a slide ({ops})", any('slide' in o.lower() for o in ops))
     shown = bright_under_mouse('drag')
     check("during the slide drag the slide label stays on", hint_on())
-    check(f"... drawn under the mouse ({C['plain']} -> {shown} bright pixels)", shown >= C['plain'] + 15)
+    check(f"... drawn under the mouse ({C['plain']} -> {shown} bright pixels)", shown >= C['plain'] + 60)
     x, y = int(C['a'].x), int(C['a'].y)
     ev('MOUSEMOVE', 'NOTHING', x=x + 20, y=y + 15, ctrl=True, shift=True)
     C['a'] = Vector((x + 20, y + 15))
@@ -149,7 +149,7 @@ def s_follow():
     check(f"... and follows the mouse ({pos} ~ {want})", hint_on() and abs(pos[0] - want[0]) <= 2
           and abs(pos[1] - want[1]) <= 2)
     shown = bright_under_mouse('follow')
-    check(f"... drawn at the new mouse position ({shown} bright pixels)", shown >= C['plain'] + 15)
+    check(f"... drawn at the new mouse position ({shown} bright pixels)", shown >= C['plain'] + 60)
     ev('LEFTMOUSE', 'RELEASE', x=int(C['a'].x), y=int(C['a'].y), ctrl=True, shift=True)
 
 
