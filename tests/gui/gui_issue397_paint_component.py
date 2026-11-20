@@ -159,6 +159,21 @@ def s_preselect():
 
 
 @step
+def s_move():
+    """Moving the selected posed vertices moves them where the view shows them (Maya moves deformed components)."""
+    k = C["k"]
+    before = shown_positions()
+    with override():
+        bpy.ops.transform.translate(value=(0.0, 0.0, 0.5 * k))
+    after = shown_positions()
+    moved = [(after[i] - before[i]) for i in C["top"]]
+    worst = max((d - Vector((0.0, 0.0, 0.5 * k))).length for d in moved)
+    check(f"Move: the posed vertices move by the dragged amount ({worst / k:.3f} units off)", worst < 0.05 * k)
+    with override():
+        bpy.ops.transform.translate(value=(0.0, 0.0, -0.5 * k))
+
+
+@step
 def s_paint_again():
     with override():
         bpy.ops.object.mode_set(mode='OBJECT')
