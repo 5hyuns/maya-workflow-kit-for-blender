@@ -92,10 +92,28 @@ def test_below_the_top_of_the_list_only_its_rows_count():
     s = _session()
     assert _at(s, x1 + 40.0, top + 6.0) == "Edge Loop Utilities", "just above the list: the ring rule"
     s = _session()
-    row = rows[1]
+    row = [it for it in s.layout.items if it.kind == "list"][1]
     s.move(O[0] + (row.rect[0] + row.rect[2]) / 2, O[1] + (row.rect[1] + row.rect[3]) / 2, SHOWN)
     assert s.hover[0] is row
     gaps = [(a.rect[1], b.rect[3]) for a, b in zip(rows, rows[1:]) if a.rect[1] - b.rect[3] > 2.0]
     if gaps:
         s = _session()
         assert _at(s, 0.0, (gaps[0][0] + gaps[0][1]) / 2) is None, "in a divider gap between rows"
+
+
+def test_a_radial_item_stays_highlighted_when_the_pointer_goes_on_below_the_list_top():
+    """Ctrl+RMB: down the SE diagonal past the top of the list (beside it) Edge Loop Utilities stays highlighted;
+    leaving a list row sideways highlights nothing."""
+    s = _session()
+    top = _list_top(s)
+    x1 = max(it.rect[2] for it in s.layout.items if it.kind == "list")
+    d = -top + 30.0
+    assert x1 < d, "the diagonal passes beside the list"
+    assert _at(s, -top - 10.0, top + 10.0) == "Edge Loop Utilities"
+    assert _at(s, d, -d, SHOWN + 0.02) == "Edge Loop Utilities"
+    assert _at(s, d + 40.0, -d - 40.0, SHOWN + 0.04) == "Edge Loop Utilities"
+    s = _session()
+    row = [it for it in s.layout.items if it.kind == "list"][0]
+    s.move(O[0] + row.rect[2] - 5.0, O[1] + row.rect[1] + 5.0, SHOWN)
+    assert s.hover[0] is row
+    assert _at(s, row.rect[2] + 30.0, row.rect[1] + 5.0, SHOWN + 0.02) is None
