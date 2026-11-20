@@ -21,7 +21,8 @@ class Params:
     # N / S box centres and E / W near sides ``radius`` from the press point, diagonal boxes with their corner at
     # (±d, ±d), d = radius·cos 45°; boxes 21 px high, text + 2 × 25 px wide (+ 5 with an option box).
     radius = 55.0          # centre -> radial item anchor
-    dead = 12.0            # no direction inside this (= Blender pie_menu_threshold)
+    dead = 12.0            # no direction inside this (= Blender pie_menu_threshold): click mode, back-out, marks
+    pick_dead = 10.0       # like Maya: this near the centre or nearer nothing is highlighted or picked
     item_h = 22.0          # list rows
     pad = 8.0              # text padding inside a list row / hotbox label
     opt_w = 16.0           # option box square
@@ -53,7 +54,7 @@ class Params:
     anchor_r = 33.0
     return_dwell = 0.7
 
-    SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
+    SIZES = ("radius", "dead", "pick_dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
              "ring_list_gap", "anchor_r", "rest_slop")
     FLAGS = ("show_delay", "click_time", "mark_time", "return_dwell", "quick_gestures", "submenu_guides", "open_dwell")
 
@@ -227,8 +228,8 @@ class Layout:
 
     def nearest_radial(self, dx, dy):
         """The radial item whose box centre direction is nearest to (dx, dy) (ties: the first in N, NE, E, ...
-        order), or None in the dead zone or with no radial items."""
-        if math.hypot(dx, dy) < self.params.dead:
+        order), or None within ``pick_dead`` of the centre or with no radial items."""
+        if math.hypot(dx, dy) <= self.params.pick_dead:
             return None
         a = math.atan2(dy, dx)
         best, best_d = None, None
