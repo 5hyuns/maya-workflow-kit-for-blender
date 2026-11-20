@@ -165,6 +165,46 @@ def s_released():
 @step
 def s_keys_up():
     check("with the drag over and the keys let go the label is off", not hint_on())
+    C['a'] = z_arrow()
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x), y=int(C['a'].y))
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x) + 1, y=int(C['a'].y))
+    C['a'].x += 1
+
+
+@step
+def s_again_keys():
+    ev('LEFT_CTRL', 'PRESS', ctrl=True)
+    ev('LEFT_SHIFT', 'PRESS', ctrl=True, shift=True)
+
+
+@step
+def s_again_drag():
+    check("Ctrl+Shift over the handle again: label on", hint_on())
+    x, y = int(C['a'].x), int(C['a'].y)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y, ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 15, ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 30, ctrl=True, shift=True)
+
+
+@step
+def s_cancel():
+    check(f"a second slide drag runs ({running()})", any('slide' in o.lower() for o in running()))
+    ev('RIGHTMOUSE', 'PRESS', ctrl=True, shift=True)
+    ev('RIGHTMOUSE', 'RELEASE', ctrl=True, shift=True)
+
+
+@step
+def s_cancelled_keys_up():
+    check(f"the right button cancelled the slide ({running()})", not any('slide' in o.lower() for o in running()))
+    ev('LEFTMOUSE', 'RELEASE', ctrl=True, shift=True)
+    ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
+    ev('LEFT_CTRL', 'RELEASE')
+
+
+@step
+def s_cancelled_off():
+    bright_under_mouse('cancelled')      # a redraw: the manipulator's draw_prepare runs
+    check("after a cancelled slide and the keys let go (no mouse move) the label is off", not hint_on())
 
 
 run()
