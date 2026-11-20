@@ -4,6 +4,7 @@ closes the submenu and the menu is there again (its own items win first, so one 
 reachable); the same in click mode; nested submenus go back one level at a time; Esc closes only the open submenu
 and the whole menu at the top level (engine, no bpy UI). GUI: tests/gui/gui_issue332_marking_back.py."""
 
+import math
 from importlib import import_module
 
 import kit
@@ -28,6 +29,13 @@ def _session(menu=mm.RMB_MESH):
 
 def _at(center, direction, dist):
     return (center[0] + U[direction][0] * dist, center[1] + U[direction][1] * dist)
+
+
+def _sw(center, dist):
+    """Beyond the SW box, a little off the diagonal toward W: on the line from the centre through the box (a rest
+    straight along the diagonal only grazes the box's corner and opens nothing, like Maya)."""
+    a = math.radians(222.0)
+    return (center[0] + math.cos(a) * dist, center[1] + math.sin(a) * dist)
 
 
 def _label(s):
@@ -126,10 +134,10 @@ def test_click_on_a_submenu_box_inside_the_ring():
 
 def test_nested_submenus_go_back_one_level():
     s = _session(mm.OPT_MOVE)
-    _open(s, _at(O, "SW", R + 5), 0.2)                 # Axis
+    _open(s, _sw(O, R + 5), 0.2)                       # Axis
     assert len(s.stack) == 2 and "Custom" in [it.label for it in s.layout.items]
     axis = s.center
-    _open(s, _at(axis, "SW", R + 5), 0.4)              # Axis > Custom
+    _open(s, _sw(axis, R + 5), 0.4)                    # Axis > Custom
     assert len(s.stack) == 3
     custom = s.center
     # north-east of Custom's centre (it has no NE item), 15 px from Axis's centre: Axis again, Custom hovered
