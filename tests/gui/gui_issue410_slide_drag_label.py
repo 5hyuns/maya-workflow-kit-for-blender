@@ -205,6 +205,93 @@ def s_cancelled_keys_up():
 def s_cancelled_off():
     bright_under_mouse('cancelled')      # a redraw: the manipulator's draw_prepare runs
     check("after a cancelled slide and the keys let go (no mouse move) the label is off", not hint_on())
+    _hover_again()
+
+
+def _hover_again():
+    C['a'] = z_arrow()
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x), y=int(C['a'].y))
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x) + 1, y=int(C['a'].y))
+    C['a'].x += 1
+
+
+def _drag_start():
+    x, y = int(C['a'].x), int(C['a'].y)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y, ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 15, ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 30, ctrl=True, shift=True)
+
+
+@step
+def s_esc_keys():
+    ev('LEFT_CTRL', 'PRESS', ctrl=True)
+    ev('LEFT_SHIFT', 'PRESS', ctrl=True, shift=True)
+
+
+@step
+def s_esc_drag():
+    check("Ctrl+Shift over the handle (Esc case): label on", hint_on())
+    _drag_start()
+
+
+@step
+def s_esc():
+    check(f"a slide drag runs (Esc case) ({running()})", any('slide' in o.lower() for o in running()))
+    ev('ESC', 'PRESS', ctrl=True, shift=True)
+    ev('ESC', 'RELEASE', ctrl=True, shift=True)
+
+
+@step
+def s_esc_keys_up():
+    check(f"Esc cancelled the slide ({running()})", not any('slide' in o.lower() for o in running()))
+    ev('LEFTMOUSE', 'RELEASE', ctrl=True, shift=True)
+    ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
+    ev('LEFT_CTRL', 'RELEASE')
+
+
+@step
+def s_esc_off():
+    bright_under_mouse('esc')
+    check("after Esc and the keys let go (no mouse move) the label is off", not hint_on())
+    _hover_again()
+
+
+@step
+def s_mid_keys():
+    ev('LEFT_CTRL', 'PRESS', ctrl=True)
+    ev('LEFT_SHIFT', 'PRESS', ctrl=True, shift=True)
+
+
+@step
+def s_mid_drag():
+    check("Ctrl+Shift over the handle (keys let go during the drag): label on", hint_on())
+    _drag_start()
+
+
+@step
+def s_mid_keys_up():
+    check(f"a slide drag runs (keys let go during it) ({running()})", any('slide' in o.lower() for o in running()))
+    ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
+    ev('LEFT_CTRL', 'RELEASE')
+
+
+@step
+def s_mid_esc():
+    check("the slide label stays for the rest of the drag", hint_on())
+    ev('ESC', 'PRESS')
+    ev('ESC', 'RELEASE')
+
+
+@step
+def s_mid_button_up():
+    check(f"Esc cancelled that slide ({running()})", not any('slide' in o.lower() for o in running()))
+    ev('LEFTMOUSE', 'RELEASE')
+
+
+@step
+def s_mid_off():
+    bright_under_mouse('mid')
+    check("keys let go during the drag, then Esc (no mouse move): the label is off", not hint_on())
 
 
 run()
