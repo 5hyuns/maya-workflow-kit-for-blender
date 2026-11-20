@@ -294,7 +294,8 @@ def test_right_click_menus_by_button():
         got[item[0]] = pt._rmb_menu(ctx, types.SimpleNamespace(mouse_region_x=x0 + i * u + u // 2))
     assert got["cam_select"] == "ALLSET_MT_panel_cameras"
     assert got["bookmark"] == "ALLSET_MT_pt_bookmarks" and got["pan_zoom"] == "ALLSET_MT_pt_pan_zoom"
-    assert not got["cam_lock"] and not got["image_plane"], got
+    assert got["image_plane"] == "ALLSET_MT_pt_image_plane", got
+    assert not got["cam_lock"], got
     assert pt._rmb_menu(ctx, types.SimpleNamespace(mouse_region_x=x0 - 3)) == ""
     for idname in pt.RMB_MENUS.values():
         assert hasattr(bpy.types, idname), idname
