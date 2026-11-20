@@ -5274,6 +5274,7 @@ STRINGS = {
     'Create a material of a favourite type and assign it (Maya Assign Favorite Material)': 'お気に入りのタイプのマテリアルを作成して割り当て (Maya お気に入りのマテリアルの割り当て)',
     'Create a material of this type without assigning it (Maya Hypershade Create)': 'このタイプのマテリアルを割り当てずに作成 (Maya Hypershade の作成)',
     'Create a pose interpolator on the selected joint (Maya Deform > Pose Space Deformation > Create Pose\nInterpolator)': '選択ジョイントにポーズインターポレータを作成 (Maya の デフォーム > ポーズ空間デフォーメーション > ポーズ\nインターポレータの作成)',
+    'Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya': '画像を読み込み、このビューに向いたイメージプレーンにします (ビューが見ているカメラに付きます)。ビューに既にある時は\nその表示 / 非表示を切り替えます、Maya と同様',
     'Create a primitive, light, camera or locator at the origin with the default\nsize and name, like Maya (Maya Create menu)': 'プリミティブ、ライト、カメラ、ロケータを原点に既定の\nサイズと名前で作成、Maya と同様 (Maya 作成メニュー)',
     "Create a project: a folder with Maya's standard sub-folders (Maya File > Project Window)": 'プロジェクトを作成: Maya の標準サブフォルダを持つフォルダ (Maya の ファイル > プロジェクトウィンドウ)',
     'Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)': '開始ジョイントから終了ジョイントまでスプライン IK を作成: チェーンを通る新しいカーブ、または (カーブの自動作成\nがオフなら) 選択 / クリックしたカーブ (Maya の スケルトン > IK スプラインハンドルの作成)',

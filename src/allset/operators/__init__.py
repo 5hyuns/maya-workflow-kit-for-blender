@@ -190,6 +190,8 @@ classes += manip_scale.classes
 classes += universal_manip.classes
 from . import dome_light  # noqa: E402  #201: Create > Lights > Dome Light = the World environment
 classes += dome_light.classes
+from . import image_plane  # noqa: E402  #398: the panel toolbar's Image Plane button
+classes += image_plane.classes
 from . import graph_move  # noqa: E402  #192: Graph Editor Shift axis lock + time snap to whole frames
 classes += graph_move.classes
 from . import graph_frame  # noqa: E402  Graph Editor F / A frame Maya's rectangle

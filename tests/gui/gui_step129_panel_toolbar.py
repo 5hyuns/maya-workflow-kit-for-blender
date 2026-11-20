@@ -61,7 +61,27 @@ def snapshot():
         "camera_view": sp.region_3d.view_perspective,
         "pan_zoom": mod("ui.camera_bookmarks").pan_zoom_on(sp.region_3d),
         "bookmarks": len(getattr(cam, "allset_view_bookmarks", ())) if cam else 0,
+        "file_browser": file_browser()[0] is not None,      # Image Plane: a view without one picks an image (#398)
     }
+
+
+def file_browser():
+    for w in bpy.context.window_manager.windows:
+        for a in w.screen.areas:
+            if a.type == 'FILE_BROWSER' and a.spaces.active.active_operator is not None:
+                return w, a
+    return None, None
+
+
+def close_file_browser():
+    w, a = file_browser()
+    if w is None:
+        return
+    r = next(r for r in a.regions if r.type == 'WINDOW')
+    x, y = r.x + r.width // 2, r.y + r.height // 2
+    w.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x, y=y)
+    w.event_simulate(type='ESC', value='PRESS', x=x, y=y)
+    w.event_simulate(type='ESC', value='RELEASE', x=x, y=y)
 
 
 def diff(a, b):
@@ -308,6 +328,7 @@ def click_steps():
     def mid():
         if C["queue"]:
             C["s1"] = snapshot()
+            close_file_browser()
             ev('MOUSEMOVE', 'NOTHING', x=C["xy"][0] + 1, y=C["xy"][1])
 
     def end():
@@ -316,6 +337,7 @@ def click_steps():
         close()
         cmd = C["queue"].pop(0)
         s0, s1, s2 = C.pop("s0"), C["s1"], snapshot()
+        close_file_browser()
         C["rows"].append((label_of(cmd), kind_of(cmd), cmd, diff(s0, s1), diff(s1, s2), diff(s0, s2)))
         if "SELECT_CAMERA" in cmd or "wm.tool_set_by_id" in cmd:   # put the cube selection / Move tool back
             scene = bpy.context.scene

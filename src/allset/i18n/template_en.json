@@ -6087,6 +6087,9 @@
    "Snap curve to root": "Snap curve to root",
    "Twist type": "Twist type"
   },
+  "Labels/operators/image_plane": {
+   "Image Plane": "Image Plane"
+  },
   "Labels/operators/interactive_create": {
    "Interactive Creation": "Interactive Creation",
    "JSON: option-window node attributes": "JSON: option-window node attributes",
@@ -10148,6 +10151,9 @@
   },
   "Tooltips/operators/ik_spline_handle": {
    "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)": "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)"
+  },
+  "Tooltips/operators/image_plane": {
+   "Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya": "Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya"
   },
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"

@@ -222,7 +222,7 @@ TOOLBAR = (
      ("cam_lock", "set", "CAMERA_LOCK", "Lock Camera"),
      ("cam_attr", "run", ("allset.camera_attribute_editor", {}), "Camera Attributes"),
      ("bookmark", "set", "BOOKMARK", "Bookmarks"),          # a new camera bookmark (ui/camera_bookmarks.py)
-     ("image_plane", "run", ("allset.create", {"kind": 'IMAGE_PLANE'}), "Image Plane"),
+     ("image_plane", "run", ("allset.image_plane", {}), "Image Plane"),   # import an image / show or hide it
      ("pan_zoom", "set", "PAN_ZOOM", "2D Pan/Zoom"),        # the view's 2D pan / zoom off / on
      ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
     (("grid", "set", "GRID", "Grid"),
