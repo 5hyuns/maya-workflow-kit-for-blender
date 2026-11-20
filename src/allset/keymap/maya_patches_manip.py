@@ -163,6 +163,8 @@ def patch_component_slide(kd):
         # ... and shows a "slide" label under the mouse while Ctrl+Shift is held over a handle (always passes on)
         for key in ("LEFT_CTRL", "RIGHT_CTRL", "LEFT_SHIFT", "RIGHT_SHIFT"):
             _add(kd, km, "allset.manip_slide_hint", make_event(key, "ANY", any=True))
+    # ... also when the mouse comes onto a handle with Ctrl+Shift already held (always passes on)
+    _add(kd, "3D View", "allset.manip_slide_hint_move", make_event("MOUSEMOVE", "ANY", any=True))
     # Maya: Ctrl+middle-drag with the Move tool moves the selected components along their normals
     _add(kd, "3D View Tool: Move", "allset.component_slide", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
          {"mode": 'NORMAL'})

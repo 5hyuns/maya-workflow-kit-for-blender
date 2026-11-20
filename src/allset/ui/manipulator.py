@@ -425,12 +425,26 @@ class ALLSET_GGT_xform(GizmoGroup):
         props.orient_matrix_type = 'GLOBAL'
         props.orient_matrix = Matrix.Identity(3) if otype in builtin else frame
 
-    def draw_prepare(self, context):
+    def _slide_label(self, context):
+        """The slide label follows the handle highlight: off when the mouse leaves the handle, on when it comes onto a
+        Move handle with Ctrl+Shift already held (component mode, the pivot not edited)."""
         from ..operators import manip
-        if (manip.SLIDE_HINT["region"] and context.region is not None
-                and manip.SLIDE_HINT["region"] == context.region.as_pointer()
-                and not any(gz.is_highlight for gz in self.gizmos)):
-            manip.slide_hint_clear()        # the mouse left the handle
+        region = context.region
+        if region is None:
+            return
+        ptr = region.as_pointer()
+        highlighted = any(gz.is_highlight and getattr(gz, "handle_role", None) for gz in self.gizmos)
+        if manip.SLIDE_HINT["region"] == ptr:
+            if not highlighted:
+                manip.slide_hint_clear()        # the mouse left the handle
+        elif (highlighted and manip.MOUSE["held"] and manip.MOUSE["region"] == ptr and context.mode == 'EDIT_MESH'
+              and tool_kind(context) == 'TRANSLATE' and self._built_for != ('TRANSLATE', True)
+              and not any(gz.is_modal for gz in self.gizmos)
+              and manip._modal_count(context) <= manip.MOUSE["modals"]):
+            manip.slide_hint_show(context, region, manip.MOUSE["pos"])
+
+    def draw_prepare(self, context):
+        self._slide_label(context)
         kind = tool_kind(context)
         if kind is None:
             return
@@ -523,8 +537,8 @@ def _draw_slide_label():
     region = bpy.context.region
     if not manip.SLIDE_HINT["region"] or region is None or manip.SLIDE_HINT["region"] != region.as_pointer():
         return
-    if bpy.context.mode != 'EDIT_MESH':
-        manip.SLIDE_HINT["region"] = 0
+    if bpy.context.mode != 'EDIT_MESH' or manip.slide_hint_stale(bpy.context):
+        manip.SLIDE_HINT["region"] = 0      # a drag, a slide or a marking menu took over
         return
     import blf
     s = bpy.context.preferences.system.ui_scale

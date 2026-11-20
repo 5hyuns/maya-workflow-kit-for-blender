@@ -783,8 +783,29 @@ def _slide_applies(context):
 
 
 # Maya shows a "slide" cursor while Ctrl+Shift is held over a Move handle in component mode: the 3D View region
-# (as_pointer) the label is drawn in and its mouse position; region 0 = no label
-SLIDE_HINT = {"region": 0, "pos": (0, 0)}
+# (as_pointer) the label is drawn in and its mouse position; region 0 = no label. "modals": the modal operators
+# already running when it was shown (any other one, a drag or a marking menu, ends it).
+SLIDE_HINT = {"region": 0, "pos": (0, 0), "modals": 0}
+# the last mouse move in a 3D View region: region (as_pointer), position, Ctrl and Shift both held, the modal
+# operators running then (a mouse move reaches the 3D View only while no drag / menu holds the events)
+MOUSE = {"region": 0, "pos": (0, 0), "held": False, "modals": 0}
+
+
+def _modal_count(context):
+    window = getattr(context, "window", None)
+    return len(window.modal_operators) if window is not None else 0
+
+
+def slide_hint_show(context, region, pos):
+    SLIDE_HINT["region"] = region.as_pointer()
+    SLIDE_HINT["pos"] = pos
+    SLIDE_HINT["modals"] = _modal_count(context)
+    region.tag_redraw()
+
+
+def slide_hint_stale(context):
+    """A drag, a slide or a marking menu started since the label was shown."""
+    return _modal_count(context) > SLIDE_HINT["modals"]
 
 
 def slide_hint_clear():
@@ -811,11 +832,33 @@ class ALLSET_OT_manip_slide_hint(bpy.types.Operator):
         on = event.ctrl and event.shift and _slide_applies(context)
         region = context.region
         if on and region is not None:
-            SLIDE_HINT["region"] = region.as_pointer()
-            SLIDE_HINT["pos"] = (event.mouse_region_x, event.mouse_region_y)
-            region.tag_redraw()
+            slide_hint_show(context, region, (event.mouse_region_x, event.mouse_region_y))
         else:
             slide_hint_clear()
+        return {'PASS_THROUGH'}
+
+
+class ALLSET_OT_manip_slide_hint_move(bpy.types.Operator):
+    """Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label
+    shows when the mouse comes onto a Move handle with both keys already held, and follows the mouse"""
+    bl_idname = "allset.manip_slide_hint_move"
+    bl_label = "Manipulator Slide Label Mouse"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        region = context.region
+        if region is None:
+            return {'PASS_THROUGH'}
+        held = event.ctrl and event.shift
+        pos = (event.mouse_region_x, event.mouse_region_y)
+        MOUSE["region"], MOUSE["pos"], MOUSE["held"] = region.as_pointer(), pos, held
+        MOUSE["modals"] = _modal_count(context)
+        if SLIDE_HINT["region"] == MOUSE["region"]:
+            if held:
+                SLIDE_HINT["pos"] = pos
+                region.tag_redraw()
+            else:
+                slide_hint_clear()
         return {'PASS_THROUGH'}
 
 
@@ -972,4 +1015,4 @@ def option_state(option):
 
 classes = (ALLSET_OT_manip_duplicate, ALLSET_OT_manip_release, ALLSET_OT_manip_option, ALLSET_OT_manip_size,
            ALLSET_OT_manip_press, ALLSET_OT_manip_mmb, ALLSET_OT_manip_ctrl, ALLSET_OT_manip_mmb_auto,
-           ALLSET_OT_manip_slide, ALLSET_OT_manip_slide_hint)
+           ALLSET_OT_manip_slide, ALLSET_OT_manip_slide_hint, ALLSET_OT_manip_slide_hint_move)
