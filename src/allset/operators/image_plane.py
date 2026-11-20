@@ -131,6 +131,10 @@ def build(context, target, image):
         ob.empty_display_size = _plane_size(image, w * k)
     if target["key"]:
         ob[TAG] = target["key"]
+    from . import global_keys4
+    if not global_keys4.image_planes_drawn(context.scene, exclude=ob):     # Show > Image Planes is off
+        for flag in global_keys4.IMAGE_FLAGS:
+            setattr(ob, flag, False)
     if image is not None and image.source == 'MOVIE':
         # a movie plays along the frames from the scene's first frame, like a Maya movie image plane
         iu = ob.image_user
