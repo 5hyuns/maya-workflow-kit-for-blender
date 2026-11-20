@@ -61,13 +61,31 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Marking menus: off the item boxes, the highlighted item is the one whose box lies nearest the pointer's direction,
   like Maya: the sectors follow the box sizes and a menu with few items has one in every direction. Below the top of
   the list under the ring only its rows are picked, and a radial item already highlighted stays so there.
-- Marking menus: a stroke released very soon after the press is a mark, like Maya: it runs the item of its
-  direction, never the list row it ends on.
+- Marking menus: a stroke released soon after the press is a mark, like Maya: it runs the item of its
+  direction, never the list row it ends on (a release within 0.1 s of the press runs nothing, see below).
 - Move tool in component mode: while Ctrl+Shift is held over a manipulator handle, a "slide" label shows under the
   mouse, like Maya's slide cursor; a drag then slides the selected components along their edges (#391).
 - Straighten Shell: when the straightened line crosses a ribbon shell of two or more faces, the shell's width moves
   only part of the way from its old layout toward its 3D proportions, like Maya; a line along the ribbon, or across
   a one-face ribbon, still gives the shell its 3D proportions (#413).
+- Move tool in component mode: the "slide" label stays under the mouse for the whole Ctrl+Shift slide drag, like
+  Maya's slide cursor, and goes away when the drag ends or is cancelled and the keys are let go (#410).
+- Marking menus: the centre where nothing is highlighted or picked is 10 px, like Maya (#411).
+- Marking menus: a rest opens the highlighted radial submenu when its box lies on the way from the centre to the
+  pointer, like Maya: beyond a wide box also at a shallow angle, not past the box's far corner; moving 3 px or more
+  starts the rest again (#412).
+- Marking menus: a release within 0.1 s of the press runs nothing, like Maya, also on a radial item, counted from
+  when the press came even when Blender handles it a frame late; a quick click in the centre still keeps the menu
+  up (#414).
+- Skin: with Normalize Weights set to Disable or Enable (Skin > Normalize Weights), a posed skin's components, their
+  colours and preselection stay on the posed mesh in component mode, like Maya (#407).
+- Translations: every option window (Copy / Mirror Skin Weights Options and the others) shows its title, buttons,
+  field names, choices and Not in Blender lines in Japanese and Chinese (Simplified / Traditional), and each
+  "X Options" title uses the menu item's translation; the translation template lists them too (#408).
+- Viewport panels: View > Image Plane (Import Image..., Import Movie..., Image Plane Attributes) and a right-click
+  menu on the panel toolbar's Image Plane button (Import Image..., Display Mode None / RGBA, Delete), like Maya. A
+  plane with Display Mode None is not drawn but stays selectable, so Image Plane Attributes selects it, and no
+  plane is drawn while Show > Image Planes is off (#409).
 
 ## [0.19.0] — 2026-11-18
 
