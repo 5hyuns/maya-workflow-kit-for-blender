@@ -143,6 +143,22 @@ def s_component():
 
 
 @step
+def s_preselect():
+    """The kit's preselection highlight finds a vertex where the posed mesh shows it."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    area, r = main_view()
+    c = cyl()
+    rv = r.data
+    eye = rv.view_matrix.inverted().translation
+    near = min(C["top"], key=lambda i: (c.matrix_world @ C["posed"][i] - eye).length)
+    p = location_3d_to_region_2d(r, rv, c.matrix_world @ C["posed"][near])
+    with override():
+        hit = mod(".operators.preselect").pick(bpy.context, r, rv, (p.x, p.y))
+    check(f"preselection under the posed vertex {near}: {hit[1:] if hit else None}",
+          hit is not None and hit[1] == 'VERT' and hit[2] == near)
+
+
+@step
 def s_paint_again():
     with override():
         bpy.ops.object.mode_set(mode='OBJECT')
