@@ -62,6 +62,16 @@ def test_a_heartbeat_not_running_leaves_the_press_as_handled():
     assert modal.press_time(t, (50.0, 51.0)) == t
 
 
+def test_a_heartbeat_that_just_started_leaves_the_press_as_handled():
+    """Only one beat so far (the other still 0), or a long pause before the latest beat: no slow frame to date the
+    press back to, and an instant click stays a click (the menu stays open)."""
+    t = 30000.0
+    assert modal.press_time(t, (0.0, t - 0.01)) == t
+    assert modal.press_time(t, (t - 5.0, t - 0.01)) == t
+    s = engine.Session(MENU, O, modal.press_time(t, (0.0, t - 0.01)), lambda text: 7.0 * len(text), None, None, B)
+    assert s.release(O[0], O[1], t + 0.002) is None and s.mode == "CLICK"
+
+
 def test_a_busy_loop_still_runs_a_real_flick():
     """A flick released 0.105 s after the press, the press handled 60 ms late before the next beat."""
     press, handled = 99.905, 99.966

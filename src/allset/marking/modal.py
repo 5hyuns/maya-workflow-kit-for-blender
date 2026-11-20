@@ -47,8 +47,9 @@ def press_time(now, beats=None):
         return now           # the heartbeat is not running
     if now - last > 2 * BEAT:
         return last          # the loop was busy since the last beat: the press came in that time
-    if last - prev > 2 * BEAT:
+    if 2 * BEAT < last - prev <= STALE:
         return min(now, prev)    # a slow frame just before: the press came in it
+    # (a longer gap: the heartbeat had just started or was not running then, so it says nothing about the press)
     return now               # the loop ran on time: handled at once
 
 
