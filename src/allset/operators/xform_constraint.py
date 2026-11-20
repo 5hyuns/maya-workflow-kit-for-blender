@@ -155,7 +155,8 @@ class ALLSET_OT_edge_normal_move(bpy.types.Operator):
     bl_label = "Move Edges Along Normals"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING'}
 
-    distance: bpy.props.FloatProperty(name="Distance", subtype='DISTANCE')
+    # hidden: like Maya, the drag leaves no Adjust Last Operation panel behind
+    distance: bpy.props.FloatProperty(name="Distance", subtype='DISTANCE', options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
