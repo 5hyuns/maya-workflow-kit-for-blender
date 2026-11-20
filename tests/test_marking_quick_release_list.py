@@ -67,5 +67,5 @@ def test_a_quick_mark_ending_below_the_list_top_off_the_rows_picks_its_direction
     Vertex (a mark goes by its direction)."""
     s = engine.Session(mm.SHIFT_VERTEX, O, 0.0, measure, None, None, B)
     assert s.layout.below_list(-113.0, -113.0) and s.layout.hit(-113.0, -113.0, rects_only=True)[0] is None
-    _s, res = _stroke(mm.SHIFT_VERTEX, 0.03, [(-113.0, -113.0)])
+    _s, res = _stroke(mm.SHIFT_VERTEX, 0.09, [(-113.0, -113.0)])
     assert res is not None and res[0] == "RUN" and res[1].label == "Delete Vertex", res

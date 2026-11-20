@@ -157,7 +157,7 @@ def test_rmb_marks_work_where_the_list_does_not_fit():
                 continue
             ang = {"N": 90, "S": 270, "W": 180, "NW": 135, "SW": 225}[key]
             dx, dy = 110 * math.cos(math.radians(ang)), 110 * math.sin(math.radians(ang))
-            for t in (0.06, 0.6):       # a quick mark (menu not drawn yet) and a slow drag over the drawn ring
+            for t in (0.09, 0.6):       # a quick mark (menu not drawn yet) and a slow drag over the drawn ring
                 s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
                 s.move(origin[0] + dx / 2, origin[1] + dy / 2, t / 2)
                 res = s.release(origin[0] + dx, origin[1] + dy, t)

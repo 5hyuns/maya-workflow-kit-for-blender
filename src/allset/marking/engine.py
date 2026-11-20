@@ -358,6 +358,8 @@ class Session:
             # quick click: the menu stays up
             self._click_mode(t)
             return None
+        if len(self.stack) == 1 and t - self.t0 < self.params.quick_none_time and not self.params.quick_gestures:
+            return self._cancel()     # released right after the press: nothing runs, like Maya
         if item is not None and item.sub is None:
             return self._finish(item, opt)
         if item is not None and item.sub is not None and item.kind != "radial":
