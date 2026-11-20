@@ -90,3 +90,11 @@ def test_on_the_box_and_straight_out_still_open():
         c = ((x0 + x1) / 2, (y0 + y1) / 2)
         assert _rest(*c)[1] == label, key
         assert _rest(c[0] * 3, c[1] * 3)[1] == label, key
+
+
+def test_straight_through_the_diagonal_corner_does_not_open():
+    """Along the diagonal itself the line only grazes the SE box's outer corner: nothing opens."""
+    x0, y0, x1, y1 = _rect("SE")
+    hovered, opened = _rest(x0 * 2.5, y0 * 2.5)
+    assert hovered == "Edge Loop Utilities", hovered
+    assert opened is None, opened
