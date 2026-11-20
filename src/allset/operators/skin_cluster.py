@@ -28,11 +28,22 @@ def armature_modifiers(mesh):
             and not _skin_part(m)]
 
 
+def is_weight_sum(m):
+    from .skin_normalize_weights import is_part     # Normalize Weights Disable / Enable: part of the skin
+    return is_part(m)
+
+
+def off_the_cage(m):
+    """A skin modifier (Armature with a skeleton, or its weight sum) not shown on the posed edit cage."""
+    return (((m.type == 'ARMATURE' and m.object is not None) or is_weight_sum(m))
+            and not (m.show_in_editmode and m.show_on_cage))
+
+
 def show_pose_in_components(mesh):
-    """Maya draws a skinned mesh's components on the posed mesh: the skin's Armature modifiers stay on in edit mode,
-    on the edit cage (component selection and edits on the posed vertices)."""
+    """Maya draws a skinned mesh's components on the posed mesh: the skin's Armature modifiers (and the weight sum
+    after them) stay on in edit mode, on the edit cage (component selection and edits on the posed vertices)."""
     for m in getattr(mesh, "modifiers", ()):
-        if m.type == 'ARMATURE' and m.object is not None:
+        if off_the_cage(m):
             m.show_in_editmode = True
             m.show_on_cage = True
 

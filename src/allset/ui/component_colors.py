@@ -183,9 +183,11 @@ def face_overlay_action(want_off, show_faces, ours):
 
 
 def use_evaluated(modifiers):
-    """True when the evaluated edit mesh is the cage: no modifier is shown in edit mode, or only skin (Armature)
-    modifiers on the cage (a skinned mesh's components on the posed mesh)."""
-    return all(md.type == 'ARMATURE' and md.show_on_cage
+    """True when the evaluated edit mesh is the cage: no modifier is shown in edit mode, or only skin modifiers
+    (Armature, and the weight sum of Normalize Weights Disable / Enable) on the cage (a skinned mesh's components on
+    the posed mesh)."""
+    from ..operators.skin_normalize_weights import is_part
+    return all((md.type == 'ARMATURE' or is_part(md)) and md.show_on_cage
                for md in modifiers if md.show_viewport and md.show_in_editmode)
 
 

@@ -103,7 +103,7 @@ def ensure_sum_modifier(mesh):
         md = mesh.modifiers.new(f"{arm_md.name}{SUM_SUFFIX}", 'NODES')
         md.node_group = tree
         md.show_in_editmode = arm_md.show_in_editmode
-        md.show_on_cage = False
+        md.show_on_cage = arm_md.show_on_cage            # the posed cage includes the sum (component mode)
         md.show_expanded = False
         target = list(mesh.modifiers).index(arm_md) + 1
         if list(mesh.modifiers).index(md) != target:
