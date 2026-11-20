@@ -18,7 +18,10 @@ from sim import MODULE, check, ev, px, run, setup, screenshot, step, win, load_m
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 DIRS = {"N": (0, 1), "NE": (1, 1), "E": (1, 0), "SE": (1, -1), "S": (0, -1), "SW": (-1, -1), "W": (-1, 0),
-        "NW": (-1, 1)}
+        "NW": (-1, 1),
+        # a little below the NE diagonal: a stroke exactly along it only touches the NE box's inner corner, which
+        # does not open its submenu
+        "NE_LOW": (2, 1)}
 
 
 def draw():
@@ -131,7 +134,7 @@ def s_grow_drag1():
     s = session()
     check("Ctrl+RMB in vertex mode opens the convert menu",
           s is not None and getattr(s.layout.sub, "name", "") == "CTRL_CONVERT")
-    _drag("NE")
+    _drag("NE_LOW")
 
 
 @step
