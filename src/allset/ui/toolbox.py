@@ -40,9 +40,9 @@ from .toolbox_layouts import (ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner,
                               ALLSET_OT_viewport_search, ALLSET_PT_toolbox_layouts, dock_outliner,
                               floating_outliners, outliner_areas, outliner_shown)
 from .armature_modes import (ALLSET_MT_armature_modes, ALLSET_OT_armature_mode,  # noqa: F401
-                             ALLSET_OT_joint_outliner_select, ALLSET_OT_pose_empty_click, _auto_armature_tick,
-                             _draw_armature_mode_header, _ensure_outliner_watch, _ensure_pose_watch,
-                             _last_armature_target, _other_object_under_click, _outliner_watch_areas,
+                             ALLSET_OT_joint_outliner_select, ALLSET_OT_pose_empty_click, ALLSET_OT_skinned_handle_click,
+                             _auto_armature_tick, _draw_armature_mode_header, _ensure_outliner_watch,
+                             _ensure_pose_watch, _last_armature_target, _other_object_under_click, _outliner_watch_areas,
                              _pose_watch_areas)
 
 # Maya Tool Box order: Select, Lasso, Paint Select, Move, Rotate, Scale.
@@ -208,7 +208,7 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
         return {'FINISHED'} if is_toolbox(context.space_data) else {'PASS_THROUGH'}
 
 
-classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
+classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_skinned_handle_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
 
 
 def register():
@@ -219,6 +219,16 @@ def register():
     TOOLBAR.prepend(_draw_begin)
     bpy.types.VIEW3D_HT_header.prepend(_draw_armature_mode_header)
     if not bpy.app.background:
+        from .. import keymap
+        from ..keymap.maya_patches_manip import GIZMO_KEYMAPS
+        # Run the same undoable selection operator in the clicked viewport with either keymap preset.
+        item = keymap.add_item('3D View', 'allset.select_priority', 'LEFTMOUSE', 'CLICK',
+                               space_type='VIEW_3D', head=True)
+        if item is not None:
+            item.properties.skinned_only = True
+        # Handle clicks belong to Move Skinned Joints with either keymap preset.
+        for name in GIZMO_KEYMAPS:
+            keymap.add_item(name, ALLSET_OT_skinned_handle_click.bl_idname, 'LEFTMOUSE', 'CLICK', head=True)
         bpy.app.timers.register(_auto_armature_tick, first_interval=0.5, persistent=True)
         bpy.app.timers.register(_ensure_pose_watch, first_interval=1.0, persistent=True)
         bpy.app.timers.register(_ensure_outliner_watch, first_interval=1.0, persistent=True)

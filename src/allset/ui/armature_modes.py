@@ -239,6 +239,11 @@ class ALLSET_OT_pose_empty_click(bpy.types.Operator):
             return {'CANCELLED'}
         if event.type != 'LEFTMOUSE':
             return {'PASS_THROUGH'}
+        from ..operators import joint_selection
+        # Move Skinned Joints handles clicks in the viewport keymap.
+        if joint_selection.moving_skinned(context):
+            self._press = None
+            return {'PASS_THROUGH'}
         # A click, not a box-select, drag, or transform-gizmo movement.
         if event.value == 'PRESS':
             self._press = (event.mouse_region_x, event.mouse_region_y) if (
@@ -274,7 +279,8 @@ class ALLSET_OT_pose_empty_click(bpy.types.Operator):
                     obj = ctx.view_layer.objects.active
                     # Pose mode: select_priority decides every click (a control stays in Pose; #171 —
                     # head-tail lines missed custom-shape controls and dropped Pose ~60 ms after the pick)
-                    if obj is not None and obj.type == 'ARMATURE' and obj.mode == 'EDIT':
+                    if (obj is not None and obj.type == 'ARMATURE' and obj.mode == 'EDIT'
+                            and not joint_selection.moving_skinned(ctx)):
                         # Give joints priority even if a mesh is visible behind them.
                         if not _click_hits_joint(ctx, obj, x, y):
                             other = _other_object_under_click(ctx, obj, x, y)
@@ -296,6 +302,22 @@ class ALLSET_OT_pose_empty_click(bpy.types.Operator):
 
 
 _pose_watch_areas = set()
+
+
+class ALLSET_OT_skinned_handle_click(bpy.types.Operator):
+    """Keep editing skinned joints when Blender picks a transform handle."""
+    bl_idname = 'allset.skinned_handle_click'
+    bl_label = 'Move Skinned Joints Handle Click'
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        from ..operators import joint_selection, manip
+        return joint_selection.moving_skinned(context) and manip.from_xform_gizmo(context)
+
+    def invoke(self, context, _event):
+        # Consume a handle click before it reaches viewport selection.
+        return {'FINISHED'}
 
 
 def _ensure_pose_watch():

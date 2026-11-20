@@ -280,13 +280,18 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
     bl_label = "Select (Maya Priority)"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
+    skinned_only: bpy.props.BoolProperty(options={'HIDDEN', 'SKIP_SAVE'})
+
     def invoke(self, context, event):
+        from . import joint_selection
         from ..ui import maya_joints
+        if getattr(self, 'skinned_only', False) and not joint_selection.moving_skinned(context):
+            return {'PASS_THROUGH'}
         with maya_joints.pick_memo():          # the coarse test and the joint pick read each skeleton once
             return ALLSET_OT_select_priority._invoke(self, context, event)
 
     def _invoke(self, context, event):
-        from ..ui import toolbox
+        from ..ui import maya_joints, toolbox
         space, region = context.space_data, context.region
         if context.mode == 'EDIT_LATTICE' and space is not None and not toolbox.is_toolbox(space):
             from . import lattice_pick       # #274: lattice points picked where a deformer draws them
@@ -307,6 +312,17 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         # A click away from the skeleton releases the edit-mode lock.
         if context.mode == 'EDIT_ARMATURE':
             ob = context.active_object
+            if joint_selection.moving_skinned(context) and not maya_joints.is_maya_view(space, context.workspace):
+                if event.value == 'PRESS':
+                    return {'PASS_THROUGH'}  # Let the Tweak tool handle drags from the press.
+                # Native picking includes the width of B-Bones. With deselect_all off, even
+                # an already-selected bone counts as a hit, and a miss leaves selection alone.
+                result = bpy.ops.view3d.select(location=mouse, toggle=event.shift and not event.ctrl,
+                                               deselect=event.ctrl and not event.shift,
+                                               extend=event.shift and event.ctrl)
+                if 'FINISHED' not in result:
+                    joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+                return {'FINISHED'}
             name = pick_joint(context, ob, mouse, radius)
             if name is not None:
                 if joint_selection.joint_mode(ob) == 'EDIT':
