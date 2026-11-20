@@ -78,3 +78,16 @@ def test_display_mode_never_draws_a_plane_while_show_image_planes_is_off():
     assert not _drawn(plane), "nor does the button's hide / show"
     assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is True, "Show > Image Planes on"
     assert _drawn(plane), "Show on draws the RGBA plane again"
+
+
+def test_an_image_imported_while_show_image_planes_is_off_is_not_drawn():
+    cam, view, plane = _camera_with_plane()
+    scene = bpy.context.scene
+    assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is False
+    names = {ob.name for ob in bpy.data.objects}
+    from test_issue409_image_plane_menus import _png
+    assert _run(view, "allset.image_plane", import_image=True, filepath=_png(16, 16, "off409.png")) == {'FINISHED'}
+    new = [ob for ob in bpy.data.objects if ob.name not in names]
+    assert len(new) == 1 and not _drawn(new[0]), "Show > Image Planes off: the new plane isn't drawn either"
+    assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is True
+    assert _drawn(new[0]) and _drawn(plane)
