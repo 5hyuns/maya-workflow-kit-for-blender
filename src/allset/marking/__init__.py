@@ -625,6 +625,7 @@ def register():
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.register_binding(cls())
     draw.register()
+    modal.register_clock()
     user_menus.load()
     apply_user_menus()
     menu_editor.register()
@@ -633,6 +634,7 @@ def register():
 def unregister():
     menu_editor.unregister()
     _clear_user_menus()
+    modal.unregister_clock()
     draw.unregister()
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.unregister_binding(cls.name)

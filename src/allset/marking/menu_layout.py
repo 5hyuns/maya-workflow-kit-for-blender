@@ -38,7 +38,7 @@ class Params:
     mark_time = 0.11
     # A release sooner than ``quick_none_time`` s after the press runs nothing at all, like Maya, also on a radial leaf
     # item (a quick click in the centre still keeps the menu up; not with the Quick Gestures option).
-    quick_none_time = 0.07
+    quick_none_time = 0.10
     # A radial item's submenu opens when the pointer rests on it (its box, or beyond the box seen from the centre) for
     # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
     # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.

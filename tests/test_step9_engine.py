@@ -99,9 +99,9 @@ def test_release_in_dead_zone():
 def test_flick_before_menu_is_drawn():
     s = _session(mm.RMB_MESH)
     assert not s.visible(0.05)
-    s.move(*_at("S", 30), 0.04)
-    res = s.release(*_at("S", 45), 0.08)
-    assert not s.visible(0.08) and res[0] == "RUN" and res[1].label == "Face"
+    s.move(*_at("S", 30), 0.06)
+    res = s.release(*_at("S", 45), 0.105)
+    assert not s.visible(0.105) and res[0] == "RUN" and res[1].label == "Face"
     assert s.visible(P.show_delay + 0.01) or s.result
 
 

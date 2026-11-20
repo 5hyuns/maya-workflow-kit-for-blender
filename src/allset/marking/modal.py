@@ -25,6 +25,36 @@ BUTTONS = (("RIGHTMOUSE", "RMB", ""), ("LEFTMOUSE", "LMB", ""), ("MIDDLEMOUSE", 
 MOUSE_BUTTONS = {"LEFTMOUSE", "RIGHTMOUSE", "MIDDLEMOUSE"}
 _TIMER = 0.05
 
+# Press clock: Blender gives Python no time for the press event, and a press that comes during a slow frame is
+# handled only after it, so counting from the handling makes a real flick look too quick (``quick_none_time``).
+# A light heartbeat notes when the event loop last ran; a press handled right after a gap in the beats (a slow
+# frame) is taken to have come at the beat before the gap.
+BEAT = 0.02
+_beats = [0.0, 0.0]          # the two latest heartbeat times
+
+
+def _beat():
+    _beats[0], _beats[1] = _beats[1], time.monotonic()
+    return BEAT
+
+
+def press_time(now, beats=None):
+    """When the press being handled at ``now`` most likely came (see the press clock above)."""
+    prev, last = beats if beats is not None else _beats
+    if now - last > 2 * BEAT or last - prev <= 2 * BEAT:
+        return now           # the loop ran on time (or the heartbeat is not running): handled at once
+    return min(now, prev)
+
+
+def register_clock():
+    if not bpy.app.timers.is_registered(_beat):
+        bpy.app.timers.register(_beat, first_interval=BEAT, persistent=True)
+
+
+def unregister_clock():
+    if bpy.app.timers.is_registered(_beat):
+        bpy.app.timers.unregister(_beat)
+
 
 def _prefs(context):
     from .. import preferences
@@ -242,7 +272,7 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         # run after entering component mode with everything selected (_finish).
         self._from_object = self.menu == CONVERT_FROM_OBJECT and context.mode == 'OBJECT'
         enabled = (lambda a: a is not None and not mm.is_unavailable(a)) if self._from_object else poll_action
-        self._session = engine.Session(menu, origin, time.monotonic(),
+        self._session = engine.Session(menu, origin, press_time(time.monotonic()),
                                        draw.measure, _params(), enabled, bounds, edges)
         self._region = region
         self._shown = False
