@@ -58,6 +58,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   first time on a mesh, and opening it again after Select mode stays in the tool (#397).
 - Option boxes: a command whose settings are its own (Edit Mesh > Add Divisions, Skin > Smooth Skin Weights and
   others) shows them on a click of its option box, like Maya.
+- Marking menus: off the item boxes, the highlighted item is the one whose box lies nearest the pointer's direction,
+  like Maya: the sectors follow the box sizes and a menu with few items has one in every direction. Below the top of
+  the list under the ring only its rows are picked, and a radial item already highlighted stays so there.
+- Marking menus: a stroke released very soon after the press is a mark, like Maya: it runs the item of its
+  direction, never the list row it ends on.
+- Move tool in component mode: while Ctrl+Shift is held over a manipulator handle, a "slide" label shows under the
+  mouse, like Maya's slide cursor; a drag then slides the selected components along their edges (#391).
 
 ## [0.19.0] — 2026-11-18
 
