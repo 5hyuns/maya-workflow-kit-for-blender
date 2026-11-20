@@ -42,6 +42,22 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Move tool in component mode: Ctrl+middle-drag moves the selected components along their normals, like Maya: a
   vertex along its own normal, an edge along the edge's normal keeping its length, a face along the face's normal
   (#394). The Transform Constraint "Along Normals" moves edges the same way.
+- The viewport panel toolbar's Image Plane button picks an image file like Maya: the image becomes an image plane
+  facing that view (top / front / side at the origin; every click there adds another image), attached in front of
+  the camera a camera view looks through; when that camera already has one, the button shows or hides it. It made
+  an empty plane facing front before. (#398)
+- Paint Skin Weights: F frames the selected vertices where the posed mesh shows them (or the painted mesh when none
+  is selected), instead of the selected joints (#399).
+- Paint Skin Weights: Select mode selects vertices with a box or a lasso (Tool Settings > Brush > Select: Box /
+  Lasso); Box stays the first choice (#401).
+- Skin > Mirror Skin Weights: the option box opens Mirror Skin Weights Options (Mirror across, Direction: Positive
+  to negative, Influence Association, Normalize) instead of mirroring +X onto -X at once, so -X onto +X works too
+  (#402).
+- Skin: a skinned mesh keeps its pose in component mode, with its components, colours and preselection on the posed
+  mesh like Maya, also for skins bound before or by Blender's own tools; Paint Skin Weights shows its wireframe the
+  first time on a mesh, and opening it again after Select mode stays in the tool (#397).
+- Option boxes: a command whose settings are its own (Edit Mesh > Add Divisions, Skin > Smooth Skin Weights and
+  others) shows them on a click of its option box, like Maya.
 
 ## [0.19.0] — 2026-11-18
 
