@@ -24,6 +24,7 @@ import json
 import bpy
 from bpy.props import BoolProperty
 
+from .. import i18n
 from . import option_windows_basic
 from .option_windows_basic import (_CON_AXES, _FREEZE_RESET, _run_bake, _run_bevel, _run_combine,  # noqa: F401
                                    _run_extrude, _run_group, _run_new_scene, _run_save, _run_set_key,
@@ -393,12 +394,17 @@ def draw_fields(window, layout, holder):
             cell.prop(holder, f.name, text=f.label.rstrip(":"))
     if window.extra is not None:
         window.extra(layout, bpy.context)
+    draw_missing(window, layout)
+
+
+def draw_missing(window, layout):
+    """The greyed "Not in Blender" lines, indented (the kit translates each line before its indent)."""
     if window.missing:
         sub = layout.column(align=True)
         sub.enabled = False
         sub.label(text="Not in Blender:")
         for name in window.missing:
-            sub.label(text="    " + name)
+            sub.label(text="    " + i18n.iface(name), translate=False)
 
 
 class ALLSET_OT_option_generic(bpy.types.Operator):

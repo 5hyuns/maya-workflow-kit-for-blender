@@ -18,6 +18,8 @@ Runs without Blender. Categories:
 - ``notices``       "not in Blender" notices shown in tooltips (``ui/notices.py``)
 - ``ui``            literal labels in the code: ``text=``, ``bl_label``, ``bl_category``, property ``name=`` /
                     ``description=`` and enum item names
+- ``option_windows`` option window titles, command buttons, field names, choices and "Not in Blender" lines
+                    (``Window(...)`` / ``F(...)`` / ``FText(...)`` specs in ``operators/``)
 - ``tooltips``      docstrings of operator / panel / menu classes (and subclasses that set ``bl_*`` values):
                     Blender shows a class docstring as the tooltip when the class sets no ``bl_description``;
                     classes built with ``type()`` at run time (composed texts) are not listed
@@ -256,6 +258,133 @@ def ui():
     return {s for s in out if _ok(s)} | templates
 
 
+def _texts_of(node, names=None, seen=()):
+    """String constants of a literal, a tuple / list of them, a ``+`` of such tuples or a module-level name bound to
+    one of them (``names``: {name: value node})."""
+    if _is_text(node):
+        yield node.value
+    elif isinstance(node, (ast.Tuple, ast.List)):
+        for e in node.elts:
+            yield from _texts_of(e, names, seen)
+    elif isinstance(node, ast.Starred):
+        yield from _texts_of(node.value, names, seen)
+    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        yield from _texts_of(node.left, names, seen)
+        yield from _texts_of(node.right, names, seen)
+    elif isinstance(node, ast.IfExp):
+        yield from _texts_of(node.body, names, seen)
+        yield from _texts_of(node.orelse, names, seen)
+    elif isinstance(node, ast.Subscript):
+        yield from _texts_of(node.value, names, seen)
+    elif isinstance(node, ast.Call) and _call_name(node) in ("list", "tuple") and node.args:
+        yield from _texts_of(node.args[0], names, seen)
+    elif isinstance(node, (ast.Name, ast.Attribute)) and names:
+        key = node.id if isinstance(node, ast.Name) else (
+            f"{node.value.id}.{node.attr}" if isinstance(node.value, ast.Name) else None)
+        if key in names and key not in seen:
+            yield from _texts_of(names[key], names, seen + (key,))
+
+
+def _assigned(tree):
+    return {t.id: node.value for node in ast.walk(tree) if isinstance(node, ast.Assign)
+            for t in node.targets if isinstance(t, ast.Name)}
+
+
+def _bound_names(path, tree):
+    """{name: value node} for the names a window spec may use: assignments in the file, a function parameter (its
+    default and the constants passed to it in the file), names imported from a kit module (``from ..m import X``,
+    ``from . import m as alias`` then ``alias.X``)."""
+    names = _assigned(tree)
+    calls = [c for c in ast.walk(tree) if isinstance(c, ast.Call)]
+    for fn in ast.walk(tree):
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        params = fn.args.args
+        if params and params[0].arg in ("self", "cls"):
+            continue                    # methods: the field kinds' super().__init__ is read on its own
+        defaults = dict(zip([a.arg for a in params[len(params) - len(fn.args.defaults):]], fn.args.defaults))
+        for i, a in enumerate(params):
+            given = [c.args[i] for c in calls if _call_name(c) == fn.name and len(c.args) > i]
+            given += [kw.value for c in calls if _call_name(c) == fn.name for kw in c.keywords if kw.arg == a.arg]
+            if a.arg in defaults:
+                given.append(defaults[a.arg])
+            if given and a.arg not in names:
+                names[a.arg] = ast.Tuple(elts=given, ctx=ast.Load())
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom) or not node.level:
+            continue
+        base = path.parent
+        for _ in range(node.level - 1):
+            base = base.parent
+        mod = base.joinpath(*node.module.split(".")) if node.module else base
+        for alias in node.names:
+            src = mod.with_suffix(".py") if node.module else (mod / alias.name).with_suffix(".py")
+            if not src.exists():
+                continue
+            other = _assigned(ast.parse(src.read_text(encoding="utf-8")))
+            if node.module and alias.name in other:
+                names.setdefault(alias.asname or alias.name, other[alias.name])
+            elif not node.module:
+                for k, v in other.items():
+                    names.setdefault(f"{alias.asname or alias.name}.{k}", v)
+    return names
+
+
+def _window_texts(path):
+    """What the option windows built in ``path`` show: ``Window(key, title, action, ..., missing=, apply_text=)``,
+    ``F(name, label, ..., items=, text=)`` and the field kinds built on it (``FText(name, label)``, a subclass's
+    ``super().__init__(name, label)``), labels without their colon. Texts computed at run time are marked with
+    ``i18n.mark`` where they are made."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    names = _bound_names(path, tree)
+    # windows made in a comprehension: ``Window(key, title, ...) for key, label, title in ((...), ...)``
+    for comp in ast.walk(tree):
+        if not isinstance(comp, (ast.ListComp, ast.GeneratorExp)):
+            continue
+        for gen in comp.generators:
+            if isinstance(gen.target, ast.Tuple) and isinstance(gen.iter, (ast.Tuple, ast.List)):
+                for i, t in enumerate(gen.target.elts):
+                    if isinstance(t, ast.Name):
+                        names.setdefault(t.id, ast.Tuple(elts=[r.elts[i] for r in gen.iter.elts if isinstance(
+                            r, ast.Tuple) and len(r.elts) > i], ctx=ast.Load()))
+    fields = {c.name for c in ast.walk(tree) if isinstance(c, ast.ClassDef)
+              and any(_base_name(b).startswith("F") for b in c.bases)}
+    inits = {id(call) for c in ast.walk(tree) if isinstance(c, ast.ClassDef) and c.name in fields
+             for call in ast.walk(c) if isinstance(call, ast.Call) and _call_name(call) == "__init__"}
+    out = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        name = _call_name(node)
+        if id(node) in inits or (name[:1] == "F" and (name == "F" or name[1:2].isupper())):
+            name = "F"
+        if name == "Window":
+            for a in node.args[1:3]:
+                out.update(_texts_of(a, names))
+            for kw in node.keywords:
+                if kw.arg in ("missing", "apply_text"):
+                    out.update(_texts_of(kw.value, names))
+        elif name == "F":
+            if len(node.args) > 1:
+                out.update(t.rstrip(":") for t in _texts_of(node.args[1], names))
+            for kw in node.keywords:
+                if kw.arg in ("items", "text"):
+                    out.update(_texts_of(kw.value, names))
+    return out
+
+
+def _window_files():
+    return [p for p in sorted((PKG / "operators").glob("*.py")) if "Window(" in p.read_text(encoding="utf-8")
+            or " F(" in p.read_text(encoding="utf-8")]
+
+
+def option_windows():
+    out = set()
+    for path in _window_files():
+        out |= _window_texts(path)
+    return {s for s in out if _ok(s)}
+
+
 # Blender classes whose docstring becomes the description (tooltip)
 _DOC_BASES = ("Operator", "Macro", "Panel", "Menu", "Header", "UIList", "Gizmo", "GizmoGroup", "PropertyGroup",
               "WorkSpaceTool")
@@ -297,7 +426,7 @@ def tooltips():
 
 
 CATEGORIES = {"menus": menus, "editor_menus": editor_menus, "panel_menus": panel_menus, "marking": marking,
-              "shelf": shelf, "notices": notices, "ui": ui,
+              "shelf": shelf, "notices": notices, "ui": ui, "option_windows": option_windows,
               "tooltips": tooltips}
 
 
@@ -361,6 +490,8 @@ def sections():
         put(f"Labels/{rel[:-3]}", {s for s in found if _ok(s) or _template(s)})
         if rel != "ui/notices.py":
             put(f"Labels/{rel[:-3]}", _table_texts(path), True)
+    for path in _window_files():
+        put(f"Option windows/{path.stem}", _window_texts(path), True)
     for path in files:
         rel = path.relative_to(PKG).as_posix()
         if rel.startswith("i18n/") or rel.startswith("keymap/ic_"):

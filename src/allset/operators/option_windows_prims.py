@@ -90,15 +90,22 @@ def _run_super(context, v):
     return _create(context, _SUPER_KINDS[v["shape"]], over)
 
 
+_HARMONICS_LABELS = ("V Multiplier 1:", "V Exponent 1:", "V Multiplier 2:", "V Exponent 2:", "H Multiplier 1:",
+                     "H Exponent 1:", "H Multiplier 2:", "H Exponent 2:")
+_ULTRA_LABELS = ("Horizontal Multiplier 1:", "Horizontal Exponent 1:", "Horizontal Exponent 2:", "Horizontal Mixer:",
+                 "Horizontal Multiplier 2:", "Horizontal Exponent 3:", "Horizontal Exponent 4:",
+                 "Horizontal Exponent 5:", "Vertical Multiplier 1:", "Vertical Exponent 1:", "Vertical Exponent 2:",
+                 "Vertical Mixer:", "Vertical Multiplier 2:", "Vertical Exponent 3:", "Vertical Exponent 4:",
+                 "Vertical Exponent 5:")
+
+
 def _super_fields(shape):
     """Polygon Super Shape Options: General / Helix / Super Ellipse / Spherical Harmonics / Ultra
     frames (default values like Maya; the menu item sets the Shape)."""
-    sh = [F(f"harmonics{i}", f"{'V' if i < 4 else 'H'} {'Multiplier' if i % 2 == 0 else 'Exponent'} {i % 4 // 2 + 1}:",
-            "float", d, lo=-20.0 if i % 2 == 0 else 0.0, hi=20.0 if i % 2 == 0 else 5.0)
+    sh = [F(f"harmonics{i}", _HARMONICS_LABELS[i], "float", d, lo=-20.0 if i % 2 == 0 else 0.0,
+            hi=20.0 if i % 2 == 0 else 5.0)
           for i, d in enumerate((0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0))]
-    ultra_labels = ("Multiplier 1:", "Exponent 1:", "Exponent 2:", "Mixer:", "Multiplier 2:", "Exponent 3:",
-                    "Exponent 4:", "Exponent 5:")
-    ultra = [F(f"ultra{i}", f"{'Horizontal' if i < 8 else 'Vertical'} {ultra_labels[i % 8]}", "float", d,
+    ultra = [F(f"ultra{i}", _ULTRA_LABELS[i], "float", d,
                lo=-30.0 if i % 4 == 0 else 0.0, hi=30.0 if i % 4 == 0 else (1.0 if i % 8 == 3 else 4.0))
              for i, d in enumerate((0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 1.0) * 2)]
     return [
