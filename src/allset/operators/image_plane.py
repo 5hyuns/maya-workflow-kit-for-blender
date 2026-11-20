@@ -18,6 +18,10 @@ Import Image... (View > Image Plane, the button's right-click menu) always impor
 imports a movie the plane plays along the frames. The button's right-click Display Mode None / RGBA hides / shows the
 camera's first image plane, Delete removes it; View > Image Plane > Image Plane Attributes selects one of the camera's
 planes and shows it in the Attribute Editor (``allset.image_plane_display`` / ``_delete`` / ``_attributes``).
+
+A hidden plane (Display Mode None, the button's show / hide) is not drawn in any view but stays a visible, selectable
+object, like a Maya image plane whose display is off: Image Plane Attributes selects it, and Show > Image Planes off and
+on again leaves it undrawn.
 """
 
 import json
@@ -33,6 +37,7 @@ TAG = "allset_image_plane_view"     # an image plane attached to a camera: that 
 PIXELS_PER_UNIT = 100.0             # the plane is the image's pixel width / 100 units wide
 CAMERA_DEPTH = 100.0                # a camera's plane, units in front of it
 ORTHO_OFFSET = 5.0                  # an orthographic camera's plane (not top / front / side), units in front of it
+NONE_MARK = "allset_image_plane_none"   # Display Mode None: the plane's image is not drawn
 
 
 def _view_target(context):
@@ -135,8 +140,30 @@ def build(context, target, image):
     return ob
 
 
-def toggle(plane):
-    plane.hide_set(not plane.hide_get())
+def shown(plane):
+    """The plane is drawn (not hidden with Display Mode None / the button, nor with Blender's Hide)."""
+    return not plane.get(NONE_MARK) and not plane.hide_get()
+
+
+def set_shown(plane, on, scene):
+    """Display Mode RGBA (``on``) / None of ``plane``: None stops drawing its image in every view and keeps the object
+    selectable; RGBA draws it again, as far as Show > Image Planes draws image planes."""
+    from . import global_keys4
+    if on:
+        drawn = global_keys4.image_planes_drawn(scene, exclude=plane)
+        if NONE_MARK in plane:
+            del plane[NONE_MARK]
+        if plane.hide_get():
+            plane.hide_set(False)
+    else:
+        drawn = False
+        plane[NONE_MARK] = True
+    for flag in global_keys4.IMAGE_FLAGS:
+        setattr(plane, flag, drawn)
+
+
+def toggle(plane, scene):
+    set_shown(plane, not shown(plane), scene)
 
 
 class ALLSET_OT_image_plane(bpy.types.Operator):
@@ -171,7 +198,7 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
         self.view = json.dumps(target)
         plane = view_plane(context, target["key"])
         if plane is not None and not self.filepath and not self.import_image:
-            toggle(plane)
+            toggle(plane, context.scene)
             return {'FINISHED'}
         if self.movie:
             self.filter_image, self.filter_movie = False, True
@@ -193,7 +220,7 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
             if plane is None:
                 self.report({'WARNING'}, "Image Plane: pick an image file")
                 return {'CANCELLED'}
-            toggle(plane)
+            toggle(plane, context.scene)
             return {'FINISHED'}
         if not os.path.isfile(path):
             self.report({'WARNING'}, f"Image Plane: no image file '{self.filepath}'")
@@ -230,7 +257,7 @@ class ALLSET_OT_image_plane_display(bpy.types.Operator):
         plane = _first_plane(self, context)
         if plane is None:
             return {'CANCELLED'}
-        plane.hide_set(self.mode == 'NONE')
+        set_shown(plane, self.mode != 'NONE', context.scene)
         return {'FINISHED'}
 
 

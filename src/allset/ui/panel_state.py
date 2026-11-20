@@ -162,8 +162,7 @@ def state(context, key):
         return maya_grid.visible(space)
     if key == "SHOW_IMAGE_PLANES":
         from ..operators import global_keys4
-        planes = global_keys4.image_planes(context.scene)
-        return not planes or any(getattr(o, f) for o in planes for f in global_keys4.IMAGE_FLAGS)
+        return global_keys4.image_planes_drawn(context.scene)
     if key == "SHOW_NURBS_CURVES":
         return space.show_object_viewport_curve
     if key == "SELECTION_HILITE":

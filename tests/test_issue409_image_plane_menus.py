@@ -91,7 +91,7 @@ def test_import_image_adds_one_more_plane_to_the_camera():
     cam, view, plane = _camera_with_plane()
     names = {ob.name for ob in bpy.data.objects}
     res = _run(view, "allset.image_plane", how='INVOKE_DEFAULT', import_image=True)
-    assert not plane.hide_get(), "Import Image never hides the camera's plane"
+    assert ip.shown(plane), "Import Image never hides the camera's plane"
     assert res != {'FINISHED'} or {ob.name for ob in bpy.data.objects} != names, res
     assert _run(view, "allset.image_plane", import_image=True, filepath=_png(32, 32, "b409.png")) == {'FINISHED'}
     new = [ob for ob in bpy.data.objects if ob.name not in names]
@@ -102,9 +102,9 @@ def test_import_image_adds_one_more_plane_to_the_camera():
 def test_display_mode_none_hides_and_rgba_shows_the_first_plane():
     _cam, view, plane = _camera_with_plane()
     assert _run(view, "allset.image_plane_display", mode='NONE') == {'FINISHED'}
-    assert plane.hide_get()
+    assert not ip.shown(plane)
     assert _run(view, "allset.image_plane_display", mode='RGBA') == {'FINISHED'}
-    assert not plane.hide_get()
+    assert ip.shown(plane)
 
 
 def test_delete_removes_the_first_plane():

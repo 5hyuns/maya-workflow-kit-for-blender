@@ -189,6 +189,18 @@ def image_planes(scene):
     return [o for o in scene.objects if o.type == 'EMPTY' and o.empty_display_type == 'IMAGE']
 
 
+def _shown_planes(scene, exclude=None):
+    """The image planes Show > Image Planes draws: not those hidden with Display Mode None (``image_plane``)."""
+    from .image_plane import NONE_MARK
+    return [o for o in image_planes(scene) if o != exclude and not o.get(NONE_MARK)]
+
+
+def image_planes_drawn(scene, exclude=None):
+    """Show > Image Planes is on (also with no image plane to show)."""
+    planes = _shown_planes(scene, exclude)
+    return not planes or any(getattr(o, f) for o in planes for f in IMAGE_FLAGS)
+
+
 def toggle_show(space, scene, kind):
     """Flip one Maya Show type. Returns the new state (True = shown). Blender has no view filter for image empties
     only (``empty`` also hides groups and locators), so image planes flip their own display flags in every view."""
@@ -200,7 +212,7 @@ def toggle_show(space, scene, kind):
             from ..ui import curve_controls
             curve_controls.sync(space, scene)
         return new
-    planes = image_planes(scene)
+    planes = _shown_planes(scene)          # a Display Mode None plane stays undrawn
     new = not any(getattr(o, f) for o in planes for f in IMAGE_FLAGS)
     for o in planes:
         for f in IMAGE_FLAGS:

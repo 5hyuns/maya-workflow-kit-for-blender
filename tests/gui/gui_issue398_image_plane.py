@@ -133,7 +133,7 @@ def s_again_browser():
     w, a = file_browser()
     ob = bpy.data.objects.get(C.get("plane", ""))
     check("the next click in the top view opens the file browser again", a is not None)
-    check("... and imagePlane1 stays shown", ob is not None and not ob.hide_get())
+    check("... and imagePlane1 stays shown", ob is not None and import_module(MODULE + ".operators.image_plane").shown(ob))
     if a is not None:
         r = next(r for r in a.regions if r.type == 'WINDOW')
         x, y = r.x + r.width // 2, r.y + r.height // 2

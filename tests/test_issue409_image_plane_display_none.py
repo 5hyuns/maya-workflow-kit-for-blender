@@ -50,10 +50,14 @@ def test_the_button_hides_a_plane_that_stays_selectable():
 
 def test_show_image_planes_off_and_on_keeps_display_mode_none():
     _cam, view, plane = _camera_with_plane()
+    other = bpy.data.objects.new("imagePlaneOther", None)
+    other.empty_display_type = 'IMAGE'
+    bpy.context.scene.collection.objects.link(other)
     assert _run(view, "allset.image_plane_display", mode='NONE') == {'FINISHED'}
     scene = bpy.context.scene
     assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is False, "Show > Image Planes off"
     assert gk4.toggle_show(None, scene, 'IMAGE_PLANES') is True, "Show > Image Planes on"
     assert not _drawn(plane), "a Display Mode None plane stays undrawn"
+    assert _drawn(other), "the other image plane is drawn again"
     assert _run(view, "allset.image_plane_display", mode='RGBA') == {'FINISHED'}
     assert _drawn(plane), "RGBA draws it again"

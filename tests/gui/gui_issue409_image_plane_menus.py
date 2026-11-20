@@ -154,7 +154,7 @@ def s_rmb_import():
         return
     ob = bpy.data.objects.get(C["plane"])
     check("the right-click menu's Import Image... opens the file browser", file_browser()[0] is not None)
-    check("... and the camera's image plane stays shown", ob is not None and not ob.hide_get())
+    check("... and the camera's image plane stays shown", ob is not None and mod("operators.image_plane").shown(ob))
     close_browser()
 
 
@@ -193,7 +193,7 @@ def s_done():
     if again(s_done, lambda: file_browser()[0] is None):
         return
     check("nothing made, the image plane still shown",
-          len(bpy.data.objects) == C["n"] and not bpy.data.objects[C["plane"]].hide_get())
+          len(bpy.data.objects) == C["n"] and mod("operators.image_plane").shown(bpy.data.objects[C["plane"]]))
 
 
 run()

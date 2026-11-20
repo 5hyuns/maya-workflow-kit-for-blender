@@ -22,6 +22,7 @@ import kit
 pmd = import_module(kit.MODULE + ".ui.panel_menu_data")
 units = import_module(kit.MODULE + ".operators.units")
 sc = import_module(kit.MODULE + ".operators.startup_cameras")
+ip = import_module(kit.MODULE + ".operators.image_plane")
 
 EPS = 1e-4
 
@@ -112,9 +113,9 @@ def test_the_button_shows_and_hides_the_cameras_image_plane():
     plane = _new_objects(before)[0]
     names = {ob.name for ob in bpy.data.objects}
     assert _click(view) == {'FINISHED'}
-    assert plane.hide_get(), "a second click hides the camera's image plane"
+    assert not ip.shown(plane), "a second click hides the camera's image plane"
     assert _click(view) == {'FINISHED'}
-    assert not plane.hide_get(), "the next click shows it again"
+    assert ip.shown(plane), "the next click shows it again"
     assert {ob.name for ob in bpy.data.objects} == names, "no new object"
 
 
@@ -126,12 +127,12 @@ def test_top_front_side_import_again_on_every_click():
     first = _new_objects(before)[0]
     names = {ob.name for ob in bpy.data.objects}
     assert _click(view) == {'CANCELLED'}, "no image picked: nothing to show / hide"
-    assert not first.hide_get()
+    assert ip.shown(first)
     assert {ob.name for ob in bpy.data.objects} == names
     assert _click(view, filepath=_png(32, 32, "second398.png")) == {'FINISHED'}
     new = _new_objects(names)
     assert len(new) == 1 and new[0].data is not None and new[0] != first, [o.name for o in new]
-    assert not first.hide_get()
+    assert ip.shown(first)
 
 
 def test_blenders_persp_view_and_a_persp_camera_keep_their_own_planes():
@@ -147,10 +148,10 @@ def test_blenders_persp_view_and_a_persp_camera_keep_their_own_planes():
     names = {ob.name for ob in bpy.data.objects}
     view = _view('PERSP', (60, 0, 30))
     assert _click(view) == {'CANCELLED'}
-    assert not cam_plane.hide_get(), "the camera's plane stays shown"
+    assert ip.shown(cam_plane), "the camera's plane stays shown"
     assert _click(view, filepath=_png(64, 64, "view398b.png")) == {'FINISHED'}
     assert len(_new_objects(names)) == 1
-    assert not cam_plane.hide_get()
+    assert ip.shown(cam_plane)
 
 
 def test_a_camera_view_attaches_the_plane_in_front_of_the_camera():
