@@ -68,10 +68,12 @@ def test_a_moving_stroke_passes_over_to_faces_to_the_list():
 
 
 def test_a_quick_stroke_before_the_menu_shows_reaches_the_list():
+    """Released before the menu is drawn but not as soon as a mark (test_marking_quick_release_list)."""
     s = _session()
     shell = _row(s, "To Shell")
-    t = _stroke(s, O, shell, 0.0, px=20.0, dt=0.01)
+    t = _stroke(s, O, shell, 0.0, px=20.0, dt=0.016)
     assert len(s.stack) == 1 and _label(s) == "To Shell"
+    assert P.mark_time <= t + 0.01 < P.show_delay, t
     res = s.release(*shell, t + 0.01)
     assert res[0] == "RUN" and res[1].label == "To Shell", res
 

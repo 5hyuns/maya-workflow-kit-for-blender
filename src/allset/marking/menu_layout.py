@@ -32,6 +32,9 @@ class Params:
     ring_list_gap = 21.0   # ring bottom -> list top
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
+    # A release sooner than ``mark_time`` s after the press is a mark, like Maya: the radial item of its direction,
+    # never a list row it ends on (a submenu item that did not open: nothing runs).
+    mark_time = 0.11
     # A radial item's submenu opens when the pointer rests on it (its box, or beyond the ring in its direction) for
     # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
     # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.
@@ -52,7 +55,7 @@ class Params:
 
     SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
              "ring_list_gap", "anchor_r", "rest_slop")
-    FLAGS = ("show_delay", "click_time", "return_dwell", "quick_gestures", "submenu_guides", "open_dwell")
+    FLAGS = ("show_delay", "click_time", "mark_time", "return_dwell", "quick_gestures", "submenu_guides", "open_dwell")
 
     def scaled(self, k):
         p = Params()
