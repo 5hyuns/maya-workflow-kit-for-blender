@@ -40,7 +40,7 @@ class Params:
     # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
     # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.
     open_dwell = 0.1
-    rest_slop = 3.0
+    rest_slop = 2.0
     # Options (add-on preferences, both off by default; marking/modal.py copies them in):
     # quick_gestures (mm_quick_gestures): the menu stays hidden while the pointer keeps moving and shows after a
     # pause of ``show_delay`` (then stays); a radial submenu entered by a hidden mark stays hidden too; a hidden mark
