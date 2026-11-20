@@ -32,14 +32,15 @@ def _stroke_release(s, dx, dy, t_release):
 
 
 def test_a_release_right_after_the_press_runs_nothing():
-    for dx, dy in ((18, 0), (0, -18), (60, 0), (-13, 13)):
-        s = _session()
-        res = _stroke_release(s, dx, dy, 0.06)
-        assert res == ("CANCEL", None, False), (dx, dy, res)
+    for t in (0.06, 0.095):
+        for dx, dy in ((18, 0), (0, -18), (60, 0), (-13, 13)):
+            s = _session()
+            res = _stroke_release(s, dx, dy, t)
+            assert res == ("CANCEL", None, False), (t, dx, dy, res)
 
 
 def test_a_little_later_the_same_stroke_runs_the_item():
-    for t in (P.mark_time, 0.16, 0.4):
+    for t in (0.105, P.mark_time, 0.16, 0.4):
         s = _session()
         res = _stroke_release(s, 18, 0, t)
         assert res is not None and res[0] == "RUN" and res[1].label == "Item E", (t, res)
