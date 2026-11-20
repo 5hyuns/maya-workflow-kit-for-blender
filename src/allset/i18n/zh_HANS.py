@@ -7349,4 +7349,8 @@ STRINGS = {
     'Select this image plane and show it in the Attribute Editor': '选择此图像平面并在属性编辑器中显示',
     "The image plane of this view's camera (right-click on the panel toolbar's Image Plane button)": '此视图摄影机的图像平面 (右键单击面板工具栏的图像平面按钮)',
     "The image planes of this view's camera: pick one to select it and show it in the Attribute Editor": '此视图摄影机的图像平面: 选取一个以选择它并在属性编辑器中显示',
+    "Hide the first image plane of this view's camera": '隐藏此视图摄影机的第一个图像平面',
+    'Pick a movie file for a new image plane of this view that plays it along the frames': '为此视图的新图像平面选取影片文件 (随帧播放)',
+    'Pick an image file for a new image plane of this view (attached to the camera it looks through)': '为此视图的新图像平面选取图像文件 (附加到视图所看的摄影机)',
+    "Show the first image plane of this view's camera with its colours and alpha": '以颜色和 Alpha 显示此视图摄影机的第一个图像平面',
 }

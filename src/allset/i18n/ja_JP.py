@@ -7348,4 +7348,8 @@ STRINGS = {
     'Select this image plane and show it in the Attribute Editor': 'このイメージプレーンを選択してアトリビュートエディタに表示',
     "The image plane of this view's camera (right-click on the panel toolbar's Image Plane button)": 'このビューのカメラのイメージプレーン (パネルツールバーのイメージプレーンボタンを右クリック)',
     "The image planes of this view's camera: pick one to select it and show it in the Attribute Editor": 'このビューのカメラのイメージプレーン: 1 つ選ぶと選択してアトリビュートエディタに表示',
+    "Hide the first image plane of this view's camera": 'このビューのカメラの最初のイメージプレーンを非表示',
+    'Pick a movie file for a new image plane of this view that plays it along the frames': 'このビューの新しいイメージプレーンにするムービーファイルを選ぶ (フレームに合わせて再生)',
+    'Pick an image file for a new image plane of this view (attached to the camera it looks through)': 'このビューの新しいイメージプレーンにするイメージファイルを選ぶ (ビューが見ているカメラにアタッチ)',
+    "Show the first image plane of this view's camera with its colours and alpha": 'このビューのカメラの最初のイメージプレーンをカラーとアルファで表示',
 }
