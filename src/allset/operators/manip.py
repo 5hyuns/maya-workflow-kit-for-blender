@@ -897,6 +897,9 @@ class ALLSET_OT_manip_slide(bpy.types.Operator):
                    for op in live_refs.running_modals(context.window))
 
     def modal(self, context, event):
+        # the slide takes the Ctrl / Shift key events: note here whether both are still held, so the handle
+        # highlight doesn't bring the label back after the drag when they were let go during it
+        MOUSE["held"] = event.ctrl and event.shift
         if event.type in {'LEFTMOUSE', 'ESC', 'RIGHTMOUSE', 'RET', 'NUMPAD_ENTER'} or not self._sliding(context):
             slide_hint_clear()        # the drag ends with this event (or has ended)
             return {'FINISHED', 'PASS_THROUGH'}
