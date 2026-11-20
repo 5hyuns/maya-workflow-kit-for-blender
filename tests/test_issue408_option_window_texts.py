@@ -83,3 +83,29 @@ def test_not_in_blender_lines_follow_the_language():
             assert line.strip() == want.get(name), (name, line)
     finally:
         view.language, view.use_translate_interface = saved
+
+
+def test_blender_shows_the_window_texts_translated():
+    """Blender translates the title, the field names and the choices it draws (the kit hands it the tables)."""
+    view = bpy.context.preferences.view
+    config = os.path.normcase(os.path.abspath(bpy.utils.user_resource('CONFIG')))
+    assert os.sep + "tmp" + os.sep in config, config
+    saved = (view.language, view.use_translate_interface)
+    bad = []
+    try:
+        for locale in LOCALES:
+            view.language, view.use_translate_interface = locale, True
+            want = i18n.LANGUAGES[locale]
+            for key in ("copy_skin_weights", "mirror_skin_weights"):
+                w = ow._BY_KEY[key]
+                rna = getattr(bpy.ops.allset, "opt_" + key).get_rna_type()
+                for text in (w.title, w.action, "Influence Association 1"):
+                    if bpy.app.translations.pgettext_iface(text) != want[text]:
+                        bad.append((locale, text))
+                prop = rna.properties["influence1"]
+                for item in prop.enum_items:
+                    if bpy.app.translations.pgettext_iface(item.name, prop.translation_context) != want[item.name]:
+                        bad.append((locale, item.name))
+    finally:
+        view.language, view.use_translate_interface = saved
+    assert not bad, bad
