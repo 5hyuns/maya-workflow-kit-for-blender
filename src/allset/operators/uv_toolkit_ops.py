@@ -9,7 +9,7 @@
 - Straighten Shell: the selected UV edge loop becomes a straight line along U or V (its UV length kept, its UVs spaced
   like their mesh edges) and the rest of its shell is unfolded around it (Blender Unwrap, Angle Based, with the line
   pinned), so a ribbon shell becomes a straight strip. Like Maya, a line that crosses a ribbon of two or more faces
-  keeps the strip close to the width it had (``limited_width``).
+  moves the strip's width only part of the way from what it was (``limited_width``).
 - Randomize Shells: every selected shell is moved, turned and scaled by a random amount in the given ranges.
 
 All of them work on every mesh in edit mode at once, like Maya works on the whole selection.
@@ -428,12 +428,12 @@ def straighten_shells(context, ob, synced):
     return len(chosen), shells
 
 
-# How far Straighten Shell lets a shell's width across the line change from its old layout when the line crosses
-# the shell (it is shorter than the shell is wide): by line length in edges, the most it widens and narrows, as a
-# share of the old width. A line of one edge, or one running the long way of the shell, has no limit.
-WIDEN_LIMIT = {2: 0.36}
-WIDEN_LIMIT_MANY = 0.11
-NARROW_SHARE = 0.4
+# How far Straighten Shell moves a shell's width across the line from its old layout toward its 3D proportions when
+# the line crosses the shell (it is shorter than the shell is wide): the share of the way for a line of two edges and
+# for a longer line, and for the longer line a limit on widening (times line length squared over the old width).
+SHARE_TWO_EDGES = 0.64
+SHARE_MANY_EDGES = 0.185
+WIDEN_LIMIT = 0.48
 
 
 def across_extent(faces, uv, line):
@@ -449,12 +449,13 @@ def across_extent(faces, uv, line):
 def limited_width(was, now, steps, length):
     """The width across the line Straighten Shell gives a shell that was ``was`` wide and unfolds to ``now`` (its 3D
     proportions), for a line of ``steps`` edges and UV length ``length``. Like Maya, the shell is unfolded from its
-    own layout with a limited effort: when the line crosses the shell, a line of two or more edges holds the shell
-    close to its old width; otherwise the shell gets its 3D proportions."""
+    own layout with a limited effort: when the line crosses the shell, a line of two or more edges moves the shell's
+    width only part of the way; otherwise the shell gets its 3D proportions."""
     if steps < 2 or now <= length or was <= 1e-12:
         return now
-    grow = WIDEN_LIMIT.get(steps, WIDEN_LIMIT_MANY) * was
-    return was + max(-grow * NARROW_SHARE, min(grow, now - was))
+    if steps == 2:
+        return was + SHARE_TWO_EDGES * (now - was)
+    return was + min(SHARE_MANY_EDGES * (now - was), WIDEN_LIMIT * length * length / was)
 
 
 def signed_area(faces, uv):
