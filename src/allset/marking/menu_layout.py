@@ -191,11 +191,15 @@ class Layout:
         return (rect[2] - s, rect[1] + (rect[3] - rect[1] - s) / 2,
                 rect[2], rect[1] + (rect[3] - rect[1] + s) / 2)
 
-    def hit(self, dx, dy, rects_only=False):
+    def hit(self, dx, dy, rects_only=False, wedges=False):
         """(item, on_option_box) under a point relative to the centre, or (None, False).
 
-        Rectangles win (list rows, option boxes, radial boxes); otherwise the
-        direction picks the radial item of that sector (not with ``rects_only``).
+        Rectangles win (list rows, option boxes, radial boxes); otherwise, outside the dead zone, the radial item
+        whose box centre lies in the direction nearest to the pointer's, like Maya: the sectors follow the boxes
+        (a wide diagonal box takes more of the side next to it) and every direction has an item, also in a menu
+        with few; below the top of the list under the ring, nothing off its rows (``Session`` keeps a radial item
+        highlighted there when the pointer comes to it from that item). Not with ``rects_only``;
+        ``wedges``: the item of the pointer's 45° sector, None for an empty one.
         """
         for it in self.items:
             if it.opt_rect and _inside(it.opt_rect, dx, dy):
@@ -204,7 +208,32 @@ class Layout:
                 return it, False
         if rects_only:
             return None, False
-        d = direction(dx, dy, self.params.dead)
-        if d and d in self.radial:
-            return self.radial[d], False
-        return None, False
+        if wedges:
+            d = direction(dx, dy, self.params.dead)
+            return (self.radial[d], False) if d in self.radial else (None, False)
+        if self.below_list(dx, dy):
+            return None, False     # below the top of the list only its rows count, like Maya
+        return self.nearest_radial(dx, dy), False
+
+    def below_list(self, dx, dy):
+        """(dx, dy) lies below the top of the list hanging under the ring, across the whole menu's width (not
+        when there is no ring or the list was moved beside it to fit the area)."""
+        rows = [it.rect[3] for it in self.items if it.kind == "list"]
+        ring = [it.rect[1] for it in self.items if it.kind == "radial"]
+        return bool(rows and ring) and max(rows) <= min(ring) and dy < max(rows)
+
+    def nearest_radial(self, dx, dy):
+        """The radial item whose box centre direction is nearest to (dx, dy) (ties: the first in N, NE, E, ...
+        order), or None in the dead zone or with no radial items."""
+        if math.hypot(dx, dy) < self.params.dead:
+            return None
+        a = math.atan2(dy, dx)
+        best, best_d = None, None
+        for it in self.items:
+            if it.kind != "radial":
+                continue
+            r = it.rect
+            d = abs((math.atan2((r[1] + r[3]) / 2, (r[0] + r[2]) / 2) - a + math.pi) % (2 * math.pi) - math.pi)
+            if best_d is None or d < best_d - 1e-9:
+                best, best_d = it, d
+        return best

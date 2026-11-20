@@ -139,7 +139,7 @@ class Session:
         if self.params.quick_gestures:
             self._gesture.reset(self.stack[-1][1], self.time)
 
-    def _leave_sub(self, x, y):
+    def _leave_sub(self, x, y, items=True):
         """Back out of an in-place radial submenu: with nothing of it under the pointer and the pointer back
         inside the ring of the menu it opened from, it closes and that menu is there again, like Maya's. Its own
         items are looked at first, so a submenu item lying toward the parent keeps it open and the way back is an
@@ -149,9 +149,11 @@ class Session:
         if len(self.stack) < 2 or self.openers[-1] is not None:
             return False
         p = self.params
-        (_parent, (px, py)), (_sub, (sx, sy)) = self.stack[-2], self.stack[-1]
+        (_parent, (px, py)), (sub, (sx, sy)) = self.stack[-2], self.stack[-1]
         if math.hypot(x - px, y - py) >= min(p.radius, math.hypot(sx - px, sy - py)) - p.dead:
             return False
+        if items and sub.hit(x - sx, y - sy, wedges=True)[0] is not None:
+            return False     # an item of the submenu lies that way (its box, or an item in that 45° sector)
         self._pop_to(len(self.stack) - 2)
         return True
 
@@ -236,6 +238,8 @@ class Session:
         top = len(self.stack) - 1
         lay, (cx, cy) = self.stack[top]
         item, opt = lay.hit(x - cx, y - cy)
+        if item is None and self.hover[0] in lay.radial.values() and lay.below_list(x - cx, y - cy):
+            item, opt = self.hover[0], False   # Maya: a radial item stays highlighted beside / below the list
         level = top
         while item is None and self.openers[level] is not None:
             level -= 1
@@ -291,7 +295,7 @@ class Session:
             level, item, opt = len(self.stack) - 1, lay.radial.get(heading) if heading else None, False
         else:
             level, item, opt = self._hit_stack(x, y)
-        while item is None and self._leave_sub(x, y):
+        while (item is None or not quick) and self._leave_sub(x, y, items=not quick):
             level, item, opt = self._hit_stack(x, y)
         if self.params.submenu_guides and self._dwell_back(x, y, t):
             level, item, opt = self._hit_stack(x, y)
