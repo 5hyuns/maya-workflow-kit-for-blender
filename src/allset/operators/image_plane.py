@@ -6,11 +6,13 @@ image becomes an image plane of that view, a Blender image empty named ``imagePl
 - an orthographic view (top / front / side or an orthographic camera) gets a plane facing it, at the origin for the
   top / front / side views and 5 units in front of any other orthographic camera;
 - a perspective camera the view looks through gets a plane attached to it (parented) 100 units in front, filling its
-  view, so it follows the camera;
+  view, so it follows the camera (a hidden camera, like the startup persp, is shown so the plane is drawn);
 - Blender's own perspective view (no camera object) gets a plane facing the view at the view's centre.
 The plane is as wide as the image's pixel width / 100 (Maya length units), its height follows the image.
 
-A view that has an image plane: the button shows / hides it (Maya's image plane display on / off), nothing is made.
+A camera the view looks through that has an image plane attached: the button shows / hides that plane (Maya's image
+plane display on / off), nothing is made. The other planes (top / front / side, orthographic cameras, Blender's own
+views) aren't attached to a camera, so every click there imports one more image, like Maya.
 """
 
 import json
@@ -22,7 +24,7 @@ from mathutils import Quaternion, Vector
 
 from . import units
 
-TAG = "allset_image_plane_view"     # the view an image plane belongs to: a startup camera name / a camera's name
+TAG = "allset_image_plane_view"     # an image plane attached to a camera: that camera's name
 PIXELS_PER_UNIT = 100.0             # the plane is the image's pixel width / 100 units wide
 CAMERA_DEPTH = 100.0                # a camera's plane, units in front of it
 ORTHO_OFFSET = 5.0                  # an orthographic camera's plane (not top / front / side), units in front of it
@@ -30,7 +32,7 @@ ORTHO_OFFSET = 5.0                  # an orthographic camera's plane (not top / 
 
 def _view_target(context):
     """Where this view's image plane goes, as plain data (kept between the button click and the file browser):
-    ``kind`` ORTHO / CAMERA / VIEW, ``key`` (the view's camera; "" = none to show / hide), ``rot`` (w, x, y, z),
+    ``kind`` ORTHO / CAMERA / VIEW, ``key`` (the camera whose attached plane the button shows / hides; "" = none), ``rot`` (w, x, y, z),
     ``loc`` and ``camera`` (the camera object's name for CAMERA)."""
     from ..ui import panel_cameras
     from . import startup_cameras
@@ -49,20 +51,20 @@ def _view_target(context):
             loc = Vector()
         else:
             loc = cam.matrix_world.translation + rot @ Vector((0.0, 0.0, -ORTHO_OFFSET * k))
-        return {"kind": 'ORTHO', "key": mark or cam.name, "rot": list(rot), "loc": list(loc), "camera": ""}
+        return {"kind": 'ORTHO', "key": "", "rot": list(rot), "loc": list(loc), "camera": ""}
     rot = rv3d.view_rotation
     if rv3d.view_perspective == 'ORTHO':
-        return {"kind": 'ORTHO', "key": panel_cameras._startup_name(context) or "", "rot": list(rot),
-                "loc": [0.0, 0.0, 0.0], "camera": ""}
-    return {"kind": 'VIEW', "key": "persp", "rot": list(rot), "loc": list(rv3d.view_location), "camera": ""}
+        return {"kind": 'ORTHO', "key": "", "rot": list(rot), "loc": [0.0, 0.0, 0.0], "camera": ""}
+    return {"kind": 'VIEW', "key": "", "rot": list(rot), "loc": list(rv3d.view_location), "camera": ""}
 
 
 def view_plane(context, key):
-    """The image plane of the view ``key`` (None: the view has none)."""
-    if not key:
+    """The image plane attached to the camera named ``key`` (None: it has none)."""
+    cam = bpy.data.objects.get(key) if key else None
+    if cam is None:
         return None
-    for ob in context.view_layer.objects:
-        if ob.get(TAG) == key and ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE':
+    for ob in cam.children:
+        if ob.get(TAG) == key and ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE'                 and ob.name in context.view_layer.objects:
             return ob
     return None
 
@@ -95,6 +97,11 @@ def build(context, target, image):
         ob.location = (0.0, 0.0, -depth)
         ob.rotation_euler = (0.0, 0.0, 0.0)
         ob.empty_display_size = _plane_size(image, fw, fh)
+        # Maya shows the camera (Visibility on) so the attached plane is drawn: a hidden camera hides its children
+        if cam.hide_viewport:
+            cam.hide_viewport = False
+        from . import dag
+        dag.sync(context.scene, context.view_layer)
     else:
         w = (image.size[0] if image is not None and image.size[0] else PIXELS_PER_UNIT) / PIXELS_PER_UNIT
         ob.location = target["loc"]
@@ -110,7 +117,7 @@ def toggle(plane):
 
 
 class ALLSET_OT_image_plane(bpy.types.Operator):
-    """Import an image as an image plane facing this view (attached to the camera it looks through); when the view
+    """Import an image as an image plane facing this view (attached to the camera it looks through); when that camera
     has one, show or hide it, like Maya"""
     bl_idname = "allset.image_plane"
     bl_label = "Image Plane"

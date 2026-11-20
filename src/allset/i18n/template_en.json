@@ -10153,7 +10153,7 @@
    "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)": "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)"
   },
   "Tooltips/operators/image_plane": {
-   "Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya": "Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya"
+   "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya": "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya"
   },
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"

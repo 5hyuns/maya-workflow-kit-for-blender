@@ -5274,7 +5274,7 @@ STRINGS = {
     'Create a material of a favourite type and assign it (Maya Assign Favorite Material)': '创建收藏类型的材质并指定 (Maya 指定收藏材质)',
     'Create a material of this type without assigning it (Maya Hypershade Create)': '创建此类型的材质但不指定 (Maya Hypershade 创建)',
     'Create a pose interpolator on the selected joint (Maya Deform > Pose Space Deformation > Create Pose\nInterpolator)': '在选定关节上创建姿势插值器 (Maya 变形 > 姿势空间变形 > 创建姿势\n插值器)',
-    'Import an image as an image plane facing this view (attached to the camera it looks through); when the view\nhas one, show or hide it, like Maya': '导入图像作为面向此视图的图像平面（附加到视图所看的摄像机）；视图已有图像平面时，\n显示或隐藏它，与 Maya 相同',
+    'Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya': '导入图像作为面向此视图的图像平面（附加到视图所看的摄像机）；该摄像机已有图像平面时，\n显示或隐藏它，与 Maya 相同',
     'Create a primitive, light, camera or locator at the origin with the default\nsize and name, like Maya (Maya Create menu)': '在原点以默认大小和名称创建基本体、灯光、摄像机或定位器，\n与 Maya 相同 (Maya 创建菜单)',
     "Create a project: a folder with Maya's standard sub-folders (Maya File > Project Window)": '创建项目：包含 Maya 标准子文件夹的文件夹 (Maya 文件 > 项目窗口)',
     'Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)': '从起始关节到末端关节创建样条 IK：一条穿过关节链的新曲线，或 (关闭自动创建\n曲线时) 选定 / 单击的曲线 (Maya 骨架 > 创建 IK 样条控制柄)',
