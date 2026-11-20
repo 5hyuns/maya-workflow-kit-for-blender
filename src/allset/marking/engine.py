@@ -334,7 +334,9 @@ class Session:
             return self.result
         self.move(x, y, t)
         item, opt = self.hover
-        if item is not None and item.kind == "list" and len(self.stack) == 1 and t - self.t0 < self.params.mark_time:
+        if len(self.stack) == 1 and t - self.t0 < self.params.mark_time and (
+                (item is not None and item.kind == "list")
+                or (item is None and self.layout.below_list(*self._rel(x, y)))):
             item, opt = self.layout.nearest_radial(*self._rel(x, y)), False   # a mark: its direction, not the row
         if len(self.stack) == 1 and self.max_dist < self.params.dead and t - self.t0 < self.params.click_time \
                 and item is None:
