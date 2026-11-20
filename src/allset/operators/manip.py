@@ -783,8 +783,9 @@ def _slide_applies(context):
 
 
 # Maya shows a "slide" cursor while Ctrl+Shift is held over a Move handle in component mode: the 3D View region
-# (as_pointer) the label is drawn in and its mouse position; region 0 = no label
-SLIDE_HINT = {"region": 0, "pos": (0, 0)}
+# (as_pointer) the label is drawn in and its mouse position; region 0 = no label; "drag": a slide drag runs (the
+# label stays on and follows the mouse until it ends, like Maya's cursor)
+SLIDE_HINT = {"region": 0, "pos": (0, 0), "drag": False}
 # the last mouse move in a 3D View region: region (as_pointer), position, Ctrl and Shift both held
 MOUSE = {"region": 0, "pos": (0, 0), "held": False}
 
@@ -808,6 +809,7 @@ def slide_hint_stale(context):
 
 
 def slide_hint_clear():
+    SLIDE_HINT["drag"] = False
     if SLIDE_HINT["region"]:
         SLIDE_HINT["region"] = 0
         _redraw_view3d()
@@ -867,7 +869,7 @@ class ALLSET_OT_manip_slide(bpy.types.Operator):
     bl_label = "Manipulator Slide"
     bl_options = {'INTERNAL'}
 
-    def invoke(self, context, _event):
+    def invoke(self, context, event):
         if not _slide_applies(context):
             return {'PASS_THROUGH'}
         slide_hint_clear()
@@ -875,7 +877,41 @@ class ALLSET_OT_manip_slide(bpy.types.Operator):
             res = bpy.ops.allset.component_slide('INVOKE_DEFAULT', mode='EDGE')
         except RuntimeError:
             return {'PASS_THROUGH'}
-        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'PASS_THROUGH'}
+        if not res & {'RUNNING_MODAL', 'FINISHED'}:
+            return {'PASS_THROUGH'}
+        region = context.region
+        if region is None or not self._sliding(context):
+            return {'FINISHED'}
+        # the slide label stays under the mouse for the whole drag, like Maya's slide cursor: this handler, added
+        # after the slide's, sees each event first and passes it on
+        slide_hint_show(region, (event.mouse_region_x, event.mouse_region_y))
+        SLIDE_HINT["drag"] = True
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    @staticmethod
+    def _sliding(context):
+        from .. import live_refs
+        return any(op.bl_idname.lower().replace("_ot_", ".") in SLIDE_OPS
+                   for op in live_refs.running_modals(context.window))
+
+    def modal(self, context, event):
+        if event.type in {'LEFTMOUSE', 'ESC', 'RIGHTMOUSE', 'RET', 'NUMPAD_ENTER'} or not self._sliding(context):
+            slide_hint_clear()        # the drag ends with this event (or has ended)
+            return {'FINISHED', 'PASS_THROUGH'}
+        if event.type == 'MOUSEMOVE' and context.region is not None:
+            pos = (event.mouse_region_x, event.mouse_region_y)
+            SLIDE_HINT["pos"] = pos
+            MOUSE["region"], MOUSE["pos"], MOUSE["held"] = context.region.as_pointer(), pos, event.ctrl and event.shift
+            context.region.tag_redraw()
+        return {'PASS_THROUGH'}
+
+    def cancel(self, _context):
+        slide_hint_clear()
+
+
+# the transform modes a Ctrl+Shift+drag on a Move handle runs
+SLIDE_OPS = ("transform.edge_slide", "transform.vert_slide", "transform.transform")
 
 
 AUTO_PX = 6          # movement that decides the Shift+MMB axis (x UI scale)

@@ -433,6 +433,8 @@ class ALLSET_GGT_xform(GizmoGroup):
         if region is None:
             return
         ptr = region.as_pointer()
+        if manip.SLIDE_HINT["drag"]:
+            return                              # a slide drag: the label stays until it ends
         highlighted = any(gz.is_highlight and getattr(gz, "handle_role", None) for gz in self.gizmos)
         if manip.SLIDE_HINT["region"] == ptr:
             if not highlighted:
@@ -537,7 +539,7 @@ def _draw_slide_label():
     region = bpy.context.region
     if not manip.SLIDE_HINT["region"] or region is None or manip.SLIDE_HINT["region"] != region.as_pointer():
         return
-    if bpy.context.mode != 'EDIT_MESH' or manip.slide_hint_stale(bpy.context):
+    if bpy.context.mode != 'EDIT_MESH' or (not manip.SLIDE_HINT["drag"] and manip.slide_hint_stale(bpy.context)):
         manip.SLIDE_HINT["region"] = 0      # a drag, a slide or a marking menu took over
         return
     import blf
@@ -574,6 +576,7 @@ def unregister():
         bpy.types.SpaceView3D.draw_handler_remove(_slide_draw.pop(), 'WINDOW')
     from ..operators import manip
     manip.SLIDE_HINT["region"] = 0
+    manip.SLIDE_HINT["drag"] = False
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     if bpy.app.timers.is_registered(_ensure_timer):
