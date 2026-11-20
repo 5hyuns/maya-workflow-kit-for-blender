@@ -172,6 +172,11 @@ AUTO_EDIT = "allset_joint_move_edit"      # Edit mode entered because of the Mov
 POSE_PIN = "allset_joint_pose_pin"        # F8 chose Pose while the Move tool is on
 
 
+def moving_skinned(context):
+    arm = context.active_object
+    return context.mode == 'EDIT_ARMATURE' and arm is not None and bool(arm.get(MOVE_SKINNED))
+
+
 def move_tool_active(context):
     try:
         tools = context.workspace.tools
@@ -767,8 +772,11 @@ def _pick_groups(groups, lead):
 def leave(context, clear_selection=False):
     if clear_selection:
         clear(context)
-    if context.mode != 'OBJECT' and context.active_object is not None:
-        bpy.ops.object.mode_set(mode='OBJECT')
+    ob = context.active_object
+    if context.mode != 'OBJECT' and ob is not None:
+        result = bpy.ops.object.mode_set(mode='OBJECT')
+        if 'FINISHED' in result and ob.type == 'ARMATURE':
+            ob.pop(MOVE_SKINNED, None)
 
 
 def select_object_at(context, mouse, shift=False, ctrl=False):

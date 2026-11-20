@@ -10,7 +10,7 @@ from importlib import import_module
 
 import bpy
 from bpy_extras import view3d_utils
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, load_maya_layout, run, screenshot, setup, step, tap, win  # noqa: E402
@@ -292,6 +292,184 @@ def s_reopened():
         os.remove(C["path"])
     except OSError:
         pass
+
+
+@step
+def s_msj_reenter():
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+    check("Move Skinned Joints re-enters Edit Mode", bpy.context.mode == 'EDIT_ARMATURE')
+    area, _ = main_view()
+    rv3d = area.spaces.active.region_3d
+    C["view_rotation"] = rv3d.view_rotation.copy()
+    rv3d.view_rotation = Quaternion((1, 0, 0, 0))
+    bpy.context.scene.transform_orientation_slots[0].type = 'GLOBAL'
+
+
+def move_handle():
+    x, y = screen_of(bpy.context.scene.cursor.location)
+    prefs = bpy.context.preferences
+    return x + round(0.60 * prefs.view.gizmo_size * prefs.system.ui_scale), y
+
+
+click("s_msj_click_handle", move_handle)
+
+
+@step
+def s_msj_clicked_handle():
+    check("click on the Move handle keeps Edit Mode", bpy.context.mode == 'EDIT_ARMATURE')
+    area, _ = main_view()
+    area.spaces.active.region_3d.view_rotation = C["view_rotation"]
+    x, y = at(0.24, 0.78)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+click("s_msj_click_away", lambda: at(0.24, 0.78))
+
+
+@step
+def s_msj_clicked_away():
+    check("click away from the skeleton returns to Object Mode", bpy.context.mode == 'OBJECT')
+    s_pick_j2()
+
+
+@step
+def s_msj_repicked():
+    check("picking the joint after clicking away enters Pose Mode", rig().mode == 'POSE')
+    bpy.context.scene.allset_joint_size = 4
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+
+
+def root_wire():
+    joints = mod(".ui.maya_joints")
+    root = joints.skeleton(rig(), bpy.context.scene)[C["names"][0]]
+    return max(screen_of(p) for p in joints.sphere_lines(root.centre, root.frame, root.radius))
+
+
+click("s_msj_click_large_joint", root_wire)
+
+
+@step
+def s_msj_large_joint_picked():
+    active = rig().data.edit_bones.active
+    check("the outer wire selects the enlarged root joint in Edit Mode",
+          rig().mode == 'EDIT' and active is not None and active.name == C["names"][0])
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+    prefs = mod(".preferences").get()
+    prefs.keymap_set = 'BLENDER'
+    prefs.maya_toolbox = False
+    x, y = at(0.24, 0.78)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+@step
+def s_msj_without_toolbox():
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+    check("Move Skinned Joints enters Edit Mode with the Tool Box hidden", rig().mode == 'EDIT')
+    x, y = at(0.24, 0.78)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+@step
+def s_msj_empty_without_toolbox():
+    check("the first empty click exits with Blender keys and the Tool Box hidden", bpy.context.mode == 'OBJECT')
+    arm = rig()
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+    s_pick_j2()
+
+
+click("s_msj_native_wire", root_wire)
+
+
+@step
+def s_msj_undo_wire():
+    active = rig().data.edit_bones.active
+    check("the Blender keymap selects the enlarged root joint by its wire",
+          rig().mode == 'EDIT' and active is not None and active.name == C["names"][0] and active.select_head)
+    with ov():
+        bpy.ops.ed.undo()
+
+
+@step
+def s_msj_redo_wire():
+    bones = rig().data.edit_bones
+    check("one undo restores the previous joint selection",
+          bones.active == bones[C["names"][1]] and {b.name for b in bones if b.select_head} == set(C["names"][1:]))
+    with ov():
+        bpy.ops.ed.redo()
+
+
+@step
+def s_msj_split():
+    bones = rig().data.edit_bones
+    check("redo restores the root and its selected subtree",
+          bones.active == bones[C["names"][0]] and all(b.select_head for b in bones))
+    with ov():
+        bpy.ops.screen.area_split(direction='VERTICAL', factor=0.66)
+
+
+def small_view_empty_point():
+    toolbox = mod(".ui.toolbox")
+    views = [a for a in win().screen.areas if a.type == 'VIEW_3D' and not toolbox.is_toolbox(a.spaces.active)]
+    check("the 3D View is split", len(views) == 2)
+    area = min(views, key=lambda a: a.width * a.height)
+    region = next(r for r in area.regions if r.type == 'WINDOW')
+    return region.x + int(region.width * 0.2), region.y + int(region.height * 0.15)
+
+
+click("s_msj_secondary_empty", small_view_empty_point)
+
+
+@step
+def s_msj_secondary_exits():
+    check("an empty click in the smaller 3D View exits Edit Mode", bpy.context.mode == 'OBJECT')
+    arm = rig()
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    with ov():
+        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+        bpy.context.space_data.overlay.show_bones = True
+        bpy.context.space_data.show_gizmo = False
+        arm.show_in_front = True
+        arm.data.display_type = 'BBONE'
+        root = arm.data.edit_bones[C["names"][0]]
+        root.bbone_x = root.bbone_z = 0.45 * root.length
+        bpy.ops.armature.select_all(action='DESELECT')
+
+
+def wide_bone_point():
+    arm = rig()
+    root = arm.data.edit_bones[C["names"][0]]
+    head = Vector(screen_of(arm.matrix_world @ root.head))
+    tail = Vector(screen_of(arm.matrix_world @ root.tail))
+    # Click inside the box drawn by Blender, well away from the thin head-tail segment.
+    across = (tail - head).orthogonal().normalized()
+    return tuple(map(round, (head + tail) / 2 + across * (tail - head).length * 0.25))
+
+
+click("s_msj_click_wide_bone", wide_bone_point)
+
+
+@step
+def s_msj_wide_bone_picked():
+    arm = rig()
+    check("clicking the wide native B-Bone selects it and keeps Edit Mode",
+          arm.mode == 'EDIT' and arm.data.edit_bones[C["names"][0]].select)
+
+
+click("s_msj_native_empty", lambda: at(0.2, 0.15))
+
+
+@step
+def s_msj_native_empty_exits():
+    check("clicking empty space with native bones visible returns to Object Mode", rig().mode == 'OBJECT')
 
 
 run()
