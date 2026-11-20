@@ -68,6 +68,8 @@ def test_option_box_is_the_maya_window():
     assert fields["positive_to_negative"].default is True
     assert fields["normalize"].default is False
     assert fields["influence1"].default == "Closest joint"
+    # "Not in Blender" names only what Maya's Mirror Skin Weights window has and the kit lacks
+    assert w.missing == ("Surface Association: Ray cast / Closest component", "Influence Association: One to one")
 
 
 def test_window_direction_negative_to_positive():
