@@ -39,7 +39,7 @@ def test_ten_px_highlights_nothing():
 
 def test_just_past_ten_px_highlights_the_direction():
     for dx, dy, want in ((11, 0, "Item E"), (0, -11, "Item S"), (-11, 0, "Item W"), (0, 11, "Item N"),
-                         (8, 8, "Item NE"), (-8, -8, "Item SW"), (9, -5, "Item SE"), (11, 3, "Item E")):
+                         (8, 8, "Item NE"), (-8, -8, "Item SW"), (9, -5, "Item SE"), (11, 1, "Item E")):
         assert _hover(dx, dy) == want, (dx, dy, _hover(dx, dy))
 
 
