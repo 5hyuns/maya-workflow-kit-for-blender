@@ -8,7 +8,8 @@
 - Unfold Along U / V: the shells are relaxed along one axis only; the other coordinate of every UV stays.
 - Straighten Shell: the selected UV edge loop becomes a straight line along U or V (its UV length kept, its UVs spaced
   like their mesh edges) and the rest of its shell is unfolded around it (Blender Unwrap, Angle Based, with the line
-  pinned), so a ribbon shell becomes a straight strip.
+  pinned), so a ribbon shell becomes a straight strip. Like Maya, a line that crosses a ribbon of two or more faces
+  keeps the strip close to the width it had (``limited_width``).
 - Randomize Shells: every selected shell is moved, turned and scaled by a random amount in the given ranges.
 
 All of them work on every mesh in edit mode at once, like Maya works on the whole selection.
@@ -387,7 +388,9 @@ def straighten_shells(context, ob, synced):
         faces += groups[k]
         along_v = abs(targets[-1].x - targets[0].x) < abs(targets[-1].y - targets[0].y)
         lines.append(([f.index for f in groups[k]], signed_area(groups[k], uv), along_v,
-                      targets[0].x if along_v else targets[0].y))
+                      targets[0].x if along_v else targets[0].y,
+                      across_extent(groups[k], uv, [pts[i][0][uv].uv for i in order]), len(order) - 1,
+                      (targets[-1] - targets[0]).length))
         for i, q in zip(order, targets):
             for l in pts[i]:
                 if l.face in shell:
@@ -407,15 +410,51 @@ def straighten_shells(context, ob, synced):
     bm.faces.ensure_lookup_table()
     for fi, n, pin in restore:
         bm.faces[fi].loops[n][uv].pin_uv = pin
-    for ids, area, along_v, at in lines:
+    for ids, area, along_v, at, was, steps, length in lines:
         shell = [bm.faces[fi] for fi in ids]
-        if area * signed_area(shell, uv) < 0:       # the unwrap mirrored it: back over the straight line
+        flip = -1.0 if area * signed_area(shell, uv) < 0 else 1.0     # the unwrap mirrored it: back over the line
+        across = [l[uv].uv.x if along_v else l[uv].uv.y for f in shell for l in f.loops]
+        now = max(across) - min(across)
+        factor = flip * limited_width(was, now, steps, length) / now if now > 1e-12 else flip
+        if factor != 1.0:
             for f in shell:
                 for l in f.loops:
                     p = l[uv].uv
-                    l[uv].uv = (2 * at - p.x, p.y) if along_v else (p.x, 2 * at - p.y)
+                    if along_v:
+                        l[uv].uv = (at + (p.x - at) * factor, p.y)
+                    else:
+                        l[uv].uv = (p.x, at + (p.y - at) * factor)
     bmesh.update_edit_mesh(ob.data)
     return len(chosen), shells
+
+
+# How far Straighten Shell lets a shell's width across the line change from its old layout when the line crosses
+# the shell (it is shorter than the shell is wide): by line length in edges, the most it widens and narrows, as a
+# share of the old width. A line of one edge, or one running the long way of the shell, has no limit.
+WIDEN_LIMIT = {2: 0.36}
+WIDEN_LIMIT_MANY = 0.11
+NARROW_SHARE = 0.4
+
+
+def across_extent(faces, uv, line):
+    """How wide ``faces`` are in UV space across the line through the UVs ``line`` (first to last)."""
+    d = line[-1] - line[0]
+    if d.length <= 1e-12:
+        return 0.0
+    n = Vector((-d.y, d.x)) / d.length
+    across = [l[uv].uv.dot(n) for f in faces for l in f.loops]
+    return max(across) - min(across)
+
+
+def limited_width(was, now, steps, length):
+    """The width across the line Straighten Shell gives a shell that was ``was`` wide and unfolds to ``now`` (its 3D
+    proportions), for a line of ``steps`` edges and UV length ``length``. Like Maya, the shell is unfolded from its
+    own layout with a limited effort: when the line crosses the shell, a line of two or more edges holds the shell
+    close to its old width; otherwise the shell gets its 3D proportions."""
+    if steps < 2 or now <= length or was <= 1e-12:
+        return now
+    grow = WIDEN_LIMIT.get(steps, WIDEN_LIMIT_MANY) * was
+    return was + max(-grow * NARROW_SHARE, min(grow, now - was))
 
 
 def signed_area(faces, uv):
