@@ -499,7 +499,7 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
             if self.option:                 # the menu's option box, as Shift / Ctrl+click in the menu
                 if self.double:
                     take_back_run(path)
-                bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=path)
+                bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', True, item=path)
             else:
                 run_action(context, ("item", path))
         except RuntimeError as ex:
@@ -547,6 +547,6 @@ def option_box(context, shelf, label, action, double=False):
     if double:
         take_back_run(path)
     if path:
-        return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=path)
+        return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', True, item=path)
     run_action(context, action, True)
     return {'FINISHED'}

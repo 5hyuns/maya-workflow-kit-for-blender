@@ -137,9 +137,9 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if self.clicked and add_to_shelf_if_asked(self, context, self.item):     # before Shift / Ctrl alone
             return {'FINISHED'}
         if self.item in OPTION_BOXES and modifier_held():      # Shift / Ctrl+click = the option box
-            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)
+            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', True, item=self.item)
         if self.clicked and self.item in OPTION_BOXES and option_click.on_box(context, self.item):
-            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)    # a click on ❒
+            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', True, item=self.item)    # a click on ❒
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode
             try:
                 return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
