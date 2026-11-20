@@ -182,4 +182,29 @@ def s_paint_again():
           bpy.context.mode == 'PAINT_WEIGHT' and far(shown_positions(), C["posed"]) < 1e-4 * C["k"])
 
 
+@step
+def s_older_skin():
+    """A skin bound by an older version (or by Blender's own tools) keeps its pose with F9 too, without Paint Skin
+    Weights first."""
+    with override():
+        bpy.ops.object.mode_set(mode='OBJECT')
+        for ob in bpy.context.selected_objects:
+            ob.select_set(False)
+        c = cyl()
+        c.select_set(True)
+        bpy.context.view_layer.objects.active = c
+    for m in c.modifiers:
+        if m.type == 'ARMATURE':
+            m.show_in_editmode = m.show_on_cage = False
+    key('F9')
+
+
+@step
+def s_older_skin_posed():
+    k = C["k"]
+    now = shown_positions()
+    check(f"older skin, F9 ({bpy.context.mode}): the pose stays ({far(now, C['posed']) / k:.3f} units off)",
+          bpy.context.mode == 'EDIT_MESH' and far(now, C["posed"]) < 1e-4 * k)
+
+
 run()

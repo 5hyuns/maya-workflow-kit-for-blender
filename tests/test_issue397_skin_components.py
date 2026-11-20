@@ -79,3 +79,27 @@ def test_paint_skin_weights_on_an_older_skin():
     assert md.show_in_editmode and md.show_on_cage
     assert cyl.get(psw.PAINT_WIRE)
     bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_component_mode_shows_the_pose_of_any_skin():
+    """A skin bound before (or by Blender's own tools) shows its pose as soon as it goes into component mode."""
+    from math import radians
+    arm, cyl = _scene()
+    _bind(arm, cyl)
+    md = skin.armature_modifier(cyl)
+    md.show_in_editmode = md.show_on_cage = False
+    other = cyl.modifiers.new("Armature", 'ARMATURE')      # a second skin, as Blender's Ctrl+P makes
+    other.object = arm
+    other.show_in_editmode = other.show_on_cage = False
+    pb = arm.pose.bones["joint2"]
+    pb.rotation_mode = 'XYZ'
+    pb.rotation_euler = (radians(90), 0, 0)
+    bpy.ops.object.select_all(action='DESELECT')
+    cyl.select_set(True)
+    bpy.context.view_layer.objects.active = cyl
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.view_layer.update()
+    assert all(m.show_in_editmode and m.show_on_cage for m in (md, other)), [(m.show_in_editmode, m.show_on_cage)
+                                                                             for m in (md, other)]
+    assert cc.use_evaluated(cyl.modifiers)
+    bpy.ops.object.mode_set(mode='OBJECT')
