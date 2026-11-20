@@ -6236,6 +6236,7 @@
    "Manipulator Size": "Manipulator Size",
    "Manipulator Slide": "Manipulator Slide",
    "Manipulator Slide Label": "Manipulator Slide Label",
+   "Manipulator Slide Label Mouse": "Manipulator Slide Label Mouse",
    "Smart Duplicate": "Smart Duplicate",
    "Smart Duplicate / Extrude": "Smart Duplicate / Extrude",
    "Smart Extrude": "Smart Extrude"
@@ -10237,6 +10238,7 @@
    "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click": "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click",
    "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)": "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)",
    "Make the manipulator bigger or smaller (Maya = / -)": "Make the manipulator bigger or smaller (Maya = / -)",
+   "Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse": "Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse",
    "Shift+MMB drag: move / scale along the manipulator axis closest to the drag direction (Maya)": "Shift+MMB drag: move / scale along the manipulator axis closest to the drag direction (Maya)",
    "Shift+drag a manipulator: duplicate the selected objects or extrude the selected\nfaces/edges, then the drag moves, rotates or scales them (Maya Smart Duplicate /\nSmart Extrude)": "Shift+drag a manipulator: duplicate the selected objects or extrude the selected\nfaces/edges, then the drag moves, rotates or scales them (Maya Smart Duplicate /\nSmart Extrude)",
    "Toggle a manipulator option (W/E/R hold menu: Smart Duplicate, Smart Extrude)": "Toggle a manipulator option (W/E/R hold menu: Smart Duplicate, Smart Extrude)"

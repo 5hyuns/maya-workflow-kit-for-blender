@@ -6626,6 +6626,8 @@ STRINGS = {
     'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': 'Ctrl+拖动移动操纵器的轴会沿该轴移动并捕捉到栅格 (关闭：与 Maya 相同，在另外两个轴的平面内移动)',
     'Manipulator Slide': '操纵器滑动',
     'Manipulator Slide Label': '操纵器滑动标签',
+    'Manipulator Slide Label Mouse': '操纵器滑动标签（鼠标）',
+    'Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse': '在 3D 视图中移动鼠标：记录鼠标位置以及是否按住 Ctrl+Shift，使按住两键移到移动控制柄上时\n也显示滑动标签，并跟随鼠标',
     'Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held': '在移动操纵器控制柄上按下或松开 Ctrl / Shift：两者都按住时显示滑动标签',
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': '在网格编辑模式下 Ctrl+Shift+拖动移动操纵器的控制柄：将选定组件沿其\n边滑动 (Maya)',
     'Move Edges Along Normals': '沿法线移动边',

@@ -6625,6 +6625,8 @@ STRINGS = {
     'Ctrl+drag on a Move manipulator axis moves along that axis with grid snapping (off: it moves in the plane of the other two axes, like Maya)': '移動マニピュレータの軸を Ctrl+ドラッグすると、グリッドスナップでその軸に沿って移動 (オフ: Maya と同じく他の 2 軸の平面で移動)',
     'Manipulator Slide': 'マニピュレータのスライド',
     'Manipulator Slide Label': 'マニピュレータのスライド表示',
+    'Manipulator Slide Label Mouse': 'マニピュレータのスライド表示 (マウス)',
+    'Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse': '3D ビューでのマウス移動: マウス位置と Ctrl+Shift を押しているかを記録し、両方を押したまま移動ハンドルに乗ったときも\nスライド表示を出し、マウスに付いて動かす',
     'Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held': '移動マニピュレータのハンドル上で Ctrl / Shift を押す・離す: 両方を押している間スライド表示を出す',
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': 'メッシュ編集モードで移動マニピュレータのハンドルを Ctrl+Shift+ドラッグ: 選択コンポーネントを\nエッジに沿ってスライド (Maya)',
     'Move Edges Along Normals': 'エッジを法線に沿って移動',
