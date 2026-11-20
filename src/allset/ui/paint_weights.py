@@ -314,6 +314,16 @@ def _brush(layout, context):
     row.label(text='Mode:')
     for key in model.PAINT_MODES:
         row.operator('allset.skin_paint_mode', text=model.MODE_LABELS[key], depress=mode == key).mode = key
+    if mode == 'SELECT':
+        # Blender extra: Select mode drags a box (Maya's marquee) or draws a lasso
+        ws = context.workspace
+        tool = ws.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False) if ws is not None else None
+        row = col.row(align=True)
+        row.label(text='Select:')
+        for shape, label in (('BOX', 'Box'), ('LASSO', 'Lasso')):
+            op = row.operator('allset.skin_paint_mode', text=label,
+                              depress=tool is not None and tool.idname == model.SELECT_SHAPES[shape])
+            op.mode, op.shape = 'SELECT', shape
     col.operator('allset.select_geometry')
     col.separator(factor=0.35)
     assets = col.row(align=True)

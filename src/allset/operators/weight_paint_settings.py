@@ -120,6 +120,8 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
                                          ('HIERARCHY', 'By Hierarchy', 'Joint hierarchy order'),
                                          ('INDEX', 'Flat', 'Influence order, no hierarchy')], default='HIERARCHY')
     paint_tool: StringProperty(default='', options={'HIDDEN'})
+    # Select mode's selection shape (Box like Maya's marquee, or a Lasso); kept for the next Select mode
+    select_shape: StringProperty(default='BOX', options={'HIDDEN'})
     show_all: BoolProperty(name='Include non-joint groups', default=False)
     locked_only: BoolProperty(name='Locked influences only', default=False)
     auto_normalize: BoolProperty(name='Auto normalize',

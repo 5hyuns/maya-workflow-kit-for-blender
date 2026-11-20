@@ -367,6 +367,7 @@ class ALLSET_OT_weight_profile(bpy.types.Operator):
 PAINT_MODES = ('PAINT', 'SELECT', 'PAINT_SELECT')
 MODE_LABELS = {'PAINT': 'Paint', 'SELECT': 'Select', 'PAINT_SELECT': 'Paint Select'}
 _MODE_TOOLS = {'SELECT': 'builtin.select_box', 'PAINT_SELECT': 'builtin.select_circle'}
+SELECT_SHAPES = {'BOX': 'builtin.select_box', 'LASSO': 'builtin.select_lasso'}
 
 
 def paint_mode(context):
@@ -395,12 +396,18 @@ class ALLSET_OT_skin_paint_mode(bpy.types.Operator):
                        options={'SKIP_SAVE'})
     step: IntProperty(default=0, options={'SKIP_SAVE', 'HIDDEN'},
                       description='1 = next mode (Ctrl+.), -1 = previous mode (Ctrl+,), 0 = the mode above')
+    shape: EnumProperty(items=[('KEEP', 'Keep', 'The shape Select mode used last'),
+                               ('BOX', 'Box', 'Select vertices inside a dragged box'),
+                               ('LASSO', 'Lasso', 'Select vertices inside a drawn lasso')],
+                        default='KEEP', options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     @i18n.translated
     def description(cls, context, properties):
         if properties.step:
             return 'Next Skin Paint Mode' if properties.step > 0 else 'Previous Skin Paint Mode'
+        if properties.mode == 'SELECT' and properties.shape == 'LASSO':
+            return 'Select vertices by drawing a lasso around them; Flood then fills only the selection'
         return {'PAINT': 'Paint weights with the brush',
                 'SELECT': 'Select vertices (drag a box); Flood then fills only the selection',
                 'PAINT_SELECT': 'Select vertices by brushing over them'}[properties.mode]
@@ -414,6 +421,8 @@ class ALLSET_OT_skin_paint_mode(bpy.types.Operator):
         mode = next_mode(current, self.step) if self.step else self.mode
         mesh = context.active_object
         s = state(context)
+        if mode == 'SELECT' and self.shape != 'KEEP':
+            s.select_shape = self.shape
         try:
             if mode == 'PAINT':
                 skin.set_view_tool(context, s.paint_tool or 'builtin.brush')
@@ -426,7 +435,8 @@ class ALLSET_OT_skin_paint_mode(bpy.types.Operator):
                 from ..ui import toolbox
                 toolbox.KEEP_PAINT[0] = True
                 try:
-                    skin.set_view_tool(context, _MODE_TOOLS[mode])
+                    skin.set_view_tool(context, SELECT_SHAPES.get(s.select_shape, _MODE_TOOLS[mode])
+                                       if mode == 'SELECT' else _MODE_TOOLS[mode])
                 finally:
                     toolbox.KEEP_PAINT[0] = False
         except RuntimeError as ex:
