@@ -31,7 +31,7 @@ def patch_cb_slider(kd):
     # Paint Skin Weights numeric labels around the brush need the pointer (ui/weight_numbers.py)
     # (both hover items pass the move on: the tool header's camera icon watch is in 3D View Generic)
     _add(kd, "Weight Paint", "allset.weight_numbers_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True,
-         shadows=("3D View Generic",))
+         shadows=("3D View Generic", "3D View"))
     # The Channel Box part of the dock scrolls by itself, the Layer Editor below stays (Maya's fixed split,
     # #55); passes through outside an overflowing Channel Box
     for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
@@ -172,7 +172,7 @@ def patch_attribute_edit(kd):
             ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_maps, 'Window')))
     for km in hover_maps:
         _add(kd, km, 'allset.attribute_field_hover', hover, first=True,
-             shadows=(*hover_maps, '3D View Generic', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint',
+             shadows=(*hover_maps, '3D View Generic', '3D View', 'Outliner', UV_KM, 'File Browser Main', 'Weight Paint',
                       'Graph Editor', 'Time Scrub', 'Window'))
     # the "Window" hover-leave item (operators/graph_hover.py) runs after every one of them and after the File
     # Browser's highlight (all pass the move on): no shadow either way
