@@ -51,7 +51,8 @@ def _posed(cyl, indices):
 
 
 def _same(a, b):
-    return len(a) == len(b) and all((p - q).length < 1e-5 for p, q in zip(sorted(map(tuple, a)), sorted(map(tuple, b))))
+    return len(a) == len(b) and all((Vector(p) - Vector(q)).length < 1e-5
+                                            for p, q in zip(sorted(map(tuple, a)), sorted(map(tuple, b))))
 
 
 def test_paint_frame_selected_vertices_posed():

@@ -111,26 +111,33 @@ def s_press():
 
 
 @step
+def s_redraw():
+    main_view()[0].tag_redraw()
+
+
+@step
 def s_framed():
     area, r = main_view()
     rv = r.data
     pts = selected_posed()
     rect = mod(".operators.view_frame").visible_bounds(area, r)
-    xy = [location_3d_to_region_2d(r, rv, p) for p in pts]
+    # Maya aims the view at the centre of the box around the selection and fits the box into the view
+    corners = mod(".operators.framing").box_corners(pts)
+    xy = [location_3d_to_region_2d(r, rv, p) for p in corners]
     check(f"F zooms in on the selection ({C['before']:.3f} -> {rv.view_distance:.3f})",
           rv.view_distance < C["before"] * 0.5)
     ok = all(p is not None for p in xy)
-    check("the selected vertices are in the view", ok and all(rect[0] - 2 <= p.x <= rect[2] + 2
-                                                                and rect[1] - 2 <= p.y <= rect[3] + 2 for p in xy))
+    check("the selection's box is in the view", ok and all(rect[0] - 2 <= p.x <= rect[2] + 2
+                                                           and rect[1] - 2 <= p.y <= rect[3] + 2 for p in xy))
+    mid = location_3d_to_region_2d(r, rv, sum(corners, Vector()) / 8.0)
+    cx, cy = (rect[0] + rect[2]) * .5, (rect[1] + rect[3]) * .5
+    check(f"the posed selection is in the middle ({tuple(mid) if mid else None} vs ({cx:.1f}, {cy:.1f}))",
+          mid is not None and abs(mid.x - cx) < 2 and abs(mid.y - cy) < 2)
     if ok:
-        x = (min(p.x for p in xy) + max(p.x for p in xy)) * .5
-        y = (min(p.y for p in xy) + max(p.y for p in xy)) * .5
-        cx, cy = (rect[0] + rect[2]) * .5, (rect[1] + rect[3]) * .5
-        check(f"the posed selection is centred ({x:.1f}, {y:.1f}) vs ({cx:.1f}, {cy:.1f})",
-              abs(x - cx) < 3 and abs(y - cy) < 3)
-        span = max(max(p.x for p in xy) - min(p.x for p in xy), max(p.y for p in xy) - min(p.y for p in xy))
-        check(f"the selection fills the view ({span:.0f} px of {min(rect[2] - rect[0], rect[3] - rect[1]):.0f})",
-              span > 0.5 * min(rect[2] - rect[0], rect[3] - rect[1]))
+        span_x = max(p.x for p in xy) - min(p.x for p in xy)
+        span_y = max(p.y for p in xy) - min(p.y for p in xy)
+        fill = max(span_x / (rect[2] - rect[0]), span_y / (rect[3] - rect[1]))
+        check(f"the selection fills the view ({fill:.2f})", fill > 0.6)
     check(f"still painting ({bpy.context.mode})", bpy.context.mode == 'PAINT_WEIGHT')
 
 
