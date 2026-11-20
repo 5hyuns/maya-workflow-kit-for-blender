@@ -24,6 +24,21 @@ from .hotbox_engine import (MENU_DRAG, RELEASE_GRACE, TAP_TIME, UP_TIME, HoldKey
                             is_tap, menu_drag, restart_too_soon)
 
 
+def _segment_meets(rect, dx, dy):
+    """The segment from (0, 0) to (dx, dy) touches the rectangle (x0, y0, x1, y1) (edges included)."""
+    lo, hi = 0.0, 1.0
+    for d, a, b in ((dx, rect[0], rect[2]), (dy, rect[1], rect[3])):
+        if abs(d) < 1e-12:
+            if not a <= 0.0 <= b:
+                return False
+            continue
+        t0, t1 = sorted((a / d, b / d))
+        lo, hi = max(lo, t0), min(hi, t1)
+        if lo > hi:
+            return False
+    return True
+
+
 class Session:
     """One marking-menu interaction.
 
@@ -202,11 +217,12 @@ class Session:
         self.move(*self.pos, t)
         return True
 
-    def _may_open(self, item, dx, dy):
-        """The pointer is where a rest opens radial ``item``'s submenu: on its box, or beyond the ring in its own
-        sector (Maya-wide N / S boxes reach into the diagonal sectors: a rest there opens the box's own item)."""
-        return _inside(item.rect, dx, dy) or (math.hypot(dx, dy) >= self.params.radius
-                                              and direction(dx, dy, self.params.dead) == item.key)
+    @staticmethod
+    def _may_open(item, dx, dy):
+        """The pointer is where a rest opens the highlighted radial ``item``'s submenu, like Maya: its box lies on the
+        straight line from the menu centre to the pointer (on the box, or beyond it seen from the centre - also
+        beside the list under the ring - but not short of it or off its far corner)."""
+        return _segment_meets(item.rect, dx, dy)
 
     def _keep_rest(self, item, x, y, t):
         """Note the pointer resting on radial submenu ``item`` (None: on nothing that opens); a move farther than

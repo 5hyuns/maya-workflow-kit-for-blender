@@ -36,7 +36,7 @@ class Params:
     # A release sooner than ``mark_time`` s after the press is a mark, like Maya: the radial item of its direction,
     # never a list row it ends on (a submenu item that did not open: nothing runs).
     mark_time = 0.11
-    # A radial item's submenu opens when the pointer rests on it (its box, or beyond the ring in its direction) for
+    # A radial item's submenu opens when the pointer rests on it (its box, or beyond the box seen from the centre) for
     # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
     # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.
     open_dwell = 0.1
