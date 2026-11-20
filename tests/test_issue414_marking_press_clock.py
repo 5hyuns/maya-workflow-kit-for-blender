@@ -46,3 +46,26 @@ def test_a_delayed_invoke_still_runs_a_real_flick():
     assert res is not None and res[0] == "RUN" and res[1].label == "Item E", res
     res = _flick(handled, release)
     assert res == ("CANCEL", None, False), "counted from the late handling it would run nothing"
+
+
+def test_a_busy_loop_since_the_last_beat_moves_the_press_back():
+    """The press came while the loop was busy and is handled before the heartbeat runs again: beats on time until
+    99.90, then nothing until the press is handled at 99.966. The press came after the last beat."""
+    t = 99.966
+    est = modal.press_time(t, (99.88, 99.90))
+    assert abs(est - 99.90) < 1e-9, est
+
+
+def test_a_heartbeat_not_running_leaves_the_press_as_handled():
+    t = 100.0
+    assert modal.press_time(t, (0.0, 0.0)) == t
+    assert modal.press_time(t, (50.0, 51.0)) == t
+
+
+def test_a_busy_loop_still_runs_a_real_flick():
+    """A flick released 0.105 s after the press, the press handled 60 ms late before the next beat."""
+    press, handled = 99.905, 99.966
+    release = press + 0.105
+    est = modal.press_time(handled, (99.88, 99.90))
+    res = _flick(est, release)
+    assert res is not None and res[0] == "RUN" and res[1].label == "Item E", res
