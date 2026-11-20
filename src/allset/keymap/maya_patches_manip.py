@@ -160,6 +160,9 @@ def patch_component_slide(kd):
     # outside mesh edit mode, so Ctrl+Shift+drag on a handle elsewhere stays as it was)
     for km in GIZMO_KEYMAPS:
         _add(kd, km, "allset.manip_slide", make_event("LEFTMOUSE", "PRESS", shift=True, ctrl=True), first=True)
+        # ... and shows a "slide" label under the mouse while Ctrl+Shift is held over a handle (always passes on)
+        for key in ("LEFT_CTRL", "RIGHT_CTRL", "LEFT_SHIFT", "RIGHT_SHIFT"):
+            _add(kd, km, "allset.manip_slide_hint", make_event(key, "ANY", any=True))
     # Maya: Ctrl+middle-drag with the Move tool moves the selected components along their normals
     _add(kd, "3D View Tool: Move", "allset.component_slide", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
          {"mode": 'NORMAL'})

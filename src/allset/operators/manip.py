@@ -772,6 +772,53 @@ def without_ctrl_snap(context, start):
             k.active = True
 
 
+def _slide_applies(context):
+    """A Ctrl+Shift+drag here slides: mesh edit mode, a kit Move handle under the mouse, the pivot not edited."""
+    from ..ui import manipulator
+    if context.mode != 'EDIT_MESH' or _highlighted(context) is None:
+        return False
+    if manipulator.tool_kind(context) != 'TRANSLATE':
+        return False
+    return getattr(context.gizmo_group, "_built_for", None) != ('TRANSLATE', True)
+
+
+# Maya shows a "slide" cursor while Ctrl+Shift is held over a Move handle in component mode: the 3D View region
+# (as_pointer) the label is drawn in and its mouse position; region 0 = no label
+SLIDE_HINT = {"region": 0, "pos": (0, 0)}
+
+
+def slide_hint_clear():
+    if SLIDE_HINT["region"]:
+        SLIDE_HINT["region"] = 0
+        _redraw_view3d()
+
+
+def _redraw_view3d():
+    wm = getattr(bpy.context, "window_manager", None)
+    for window in getattr(wm, "windows", ()):
+        for area in window.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+
+class ALLSET_OT_manip_slide_hint(bpy.types.Operator):
+    """Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held"""
+    bl_idname = "allset.manip_slide_hint"
+    bl_label = "Manipulator Slide Label"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        on = event.ctrl and event.shift and _slide_applies(context)
+        region = context.region
+        if on and region is not None:
+            SLIDE_HINT["region"] = region.as_pointer()
+            SLIDE_HINT["pos"] = (event.mouse_region_x, event.mouse_region_y)
+            region.tag_redraw()
+        else:
+            slide_hint_clear()
+        return {'PASS_THROUGH'}
+
+
 class ALLSET_OT_manip_slide(bpy.types.Operator):
     """Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their
     edges (Maya)"""
@@ -780,13 +827,9 @@ class ALLSET_OT_manip_slide(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, _event):
-        from ..ui import manipulator
-        if context.mode != 'EDIT_MESH' or _highlighted(context) is None:
+        if not _slide_applies(context):
             return {'PASS_THROUGH'}
-        if manipulator.tool_kind(context) != 'TRANSLATE':
-            return {'PASS_THROUGH'}
-        if getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True):
-            return {'PASS_THROUGH'}         # the pivot is edited
+        slide_hint_clear()
         try:
             res = bpy.ops.allset.component_slide('INVOKE_DEFAULT', mode='EDGE')
         except RuntimeError:
@@ -929,4 +972,4 @@ def option_state(option):
 
 classes = (ALLSET_OT_manip_duplicate, ALLSET_OT_manip_release, ALLSET_OT_manip_option, ALLSET_OT_manip_size,
            ALLSET_OT_manip_press, ALLSET_OT_manip_mmb, ALLSET_OT_manip_ctrl, ALLSET_OT_manip_mmb_auto,
-           ALLSET_OT_manip_slide)
+           ALLSET_OT_manip_slide, ALLSET_OT_manip_slide_hint)
