@@ -287,8 +287,7 @@ WINDOWS = [
         F("influence2", "Influence Association 2:", "enum", "None", items=("None", "Closest joint", "Label")),
         F("normalize", "", "bool", False, text="Normalize")], _run_mirror_weights,
         paths=("Skin/Mirror Skin Weights",),
-        missing=("Surface Association: Ray cast / Closest component / UV space",
-                 "Influence Association: Closest bone / One to one / Name", "Influence Association 3")),
+        missing=("Surface Association: Ray cast / Closest component", "Influence Association: One to one")),
     # Skin > Paint Skin Weights: Tool Settings "Paint Skin Weights Tool"
     Window("paint_skin_weights", "Paint Skin Weights Tool", "Paint Skin Weights", None, [
         F("operation", "Paint operation:", "enum", "Replace", items=("Replace", "Add", "Scale", "Smooth")),
