@@ -42,9 +42,27 @@ def _visible(ob, view_layer, v3d):
         return False
 
 
+def _paint_selection_points(ob, depsgraph):
+    """World points of the vertices a weight-paint selection shows (vertex mask: selected vertices, face mask: the
+    selected faces' vertices), on the deformed mesh when its vertices match the original ones."""
+    me = ob.data
+    if me.use_paint_mask_vertex:
+        idx = [v.index for v in me.vertices if v.select and not v.hide]
+    elif me.use_paint_mask:
+        idx = sorted({i for p in me.polygons if p.select and not p.hide for i in p.vertices})
+    else:
+        return []
+    if not idx:
+        return []
+    shown = ob.evaluated_get(depsgraph).data
+    verts = shown.vertices if len(shown.vertices) == len(me.vertices) else me.vertices
+    mw = ob.matrix_world
+    return [mw @ verts[i].co for i in idx]
+
+
 def frame_points(context, v3d, selected, children, exclude=None):
     """World points to frame (Maya F / Ctrl+Shift+F / A), or None if this mode is left to
-    Blender's own operator (curve/armature edit, pose, paint and sculpt modes). ``exclude``: an object left out
+    Blender's own operator (curve/armature edit, pose, other paint and sculpt modes). ``exclude``: an object left out
     (the camera a view looks through)."""
     vl, dg = context.view_layer, context.evaluated_depsgraph_get()
     mode = context.mode
@@ -61,6 +79,12 @@ def frame_points(context, v3d, selected, children, exclude=None):
             return pts
         # No components selected: frame the objects (Maya frames the whole shape).
         return [p for ob in objs for p in _object_points(ob, dg)] or None
+    if mode == 'PAINT_WEIGHT':
+        ob = context.active_object
+        if ob is None or ob.type != 'MESH':
+            return None
+        # Maya Paint Skin Weights: the selected vertices, else the painted mesh, where the posed mesh shows them
+        return _paint_selection_points(ob, dg) or _object_points(ob, dg)
     if mode != 'OBJECT':
         return None
     objs = [ob for ob in vl.objects if ob != exclude and _visible(ob, vl, v3d)]
