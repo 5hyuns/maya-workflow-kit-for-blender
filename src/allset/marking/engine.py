@@ -35,7 +35,7 @@ def _segment_meets(rect, dx, dy):
             continue
         t0, t1 = sorted((a / d, b / d))
         lo, hi = max(lo, t0), min(hi, t1)
-    return lo < hi
+    return hi - lo > 1e-9
 
 
 class Session:
