@@ -65,6 +65,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   direction, never the list row it ends on.
 - Move tool in component mode: while Ctrl+Shift is held over a manipulator handle, a "slide" label shows under the
   mouse, like Maya's slide cursor; a drag then slides the selected components along their edges (#391).
+- Straighten Shell: when the straightened line crosses a ribbon shell of two or more faces, the shell's width moves
+  only part of the way from its old layout toward its 3D proportions, like Maya; a line along the ribbon, or across
+  a one-face ribbon, still gives the shell its 3D proportions (#413).
 
 ## [0.19.0] — 2026-11-18
 
