@@ -3350,6 +3350,7 @@
    "Default View": "Default View",
    "Frame All": "Frame All",
    "Frame Selection": "Frame Selection",
+   "Image Plane": "Image Plane",
    "Lock Camera": "Lock Camera",
    "Redo View Change": "Redo View Change",
    "Select Camera": "Select Camera",
@@ -3381,6 +3382,29 @@
    "Walk Tool": "Walk Tool",
    "Yaw-Pitch Tool": "Yaw-Pitch Tool",
    "Zoom Tool": "Zoom Tool"
+  },
+  "Panel menus/View/Image Plane": {
+   "Image Plane": "Image Plane",
+   "Image Plane Attributes": "Image Plane Attributes",
+   "Import Image...": "Import Image...",
+   "Import Movie...": "Import Movie...",
+   "View": "View"
+  },
+  "Panel menus/Image Plane button": {
+   "Delete:": "Delete:",
+   "Display Mode": "Display Mode",
+   "Image Plane button": "Image Plane button",
+   "Import Image...": "Import Image..."
+  },
+  "Panel menus/Image Plane button/Display Mode": {
+   "Alpha": "Alpha",
+   "Display Mode": "Display Mode",
+   "Image Plane button": "Image Plane button",
+   "Luminance": "Luminance",
+   "None": "None",
+   "Outline": "Outline",
+   "RGB": "RGB",
+   "RGBA": "RGBA"
   },
   "Panel menus/Shading": {
    "Apply Current to All": "Apply Current to All",
@@ -4774,6 +4798,7 @@
    "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects extension have the closest shapes.": "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects extension have the closest shapes.",
    "Blender doesn't highlight open border edges: select one and use Select > Select Loops > Select Boundary Loop to see the border.": "Blender doesn't highlight open border edges: select one and use Select > Select Loops > Select Boundary Loop to see the border.",
    "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit Mode, and always there: they can't be shown in Object Mode or hidden per view.": "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit Mode, and always there: they can't be shown in Object Mode or hidden per view.",
+   "Blender draws an image plane (an image empty) with its colours and alpha (RGBA) or hides it (None): it has no outline, RGB-only, luminance or alpha-only display.": "Blender draws an image plane (an image empty) with its colours and alpha (RGBA) or hides it (None): it has no outline, RGB-only, luminance or alpha-only display.",
    "Blender draws the control polygon but has no hull component: select its control points.": "Blender draws the control polygon but has no hull component: select its control points.",
    "Blender draws this through the Viewport Overlays popover or Object properties > Viewport Display; there is no per-camera visibility.": "Blender draws this through the Viewport Overlays popover or Object properties > Viewport Display; there is no per-camera visibility.",
    "Blender draws vertices only in edit mode (Tab).": "Blender draws vertices only in edit mode (Tab).",
@@ -4996,6 +5021,7 @@
    "NURBS Hulls": "NURBS Hulls",
    "NURBS cylinder": "NURBS cylinder",
    "NURBS surface edit mode": "NURBS surface edit mode",
+   "None / RGBA": "None / RGBA",
    "Object > Convert": "Object > Convert",
    "Object > Link/Transfer Data": "Object > Link/Transfer Data",
    "Object Properties > Viewport Display": "Object Properties > Viewport Display",
@@ -6088,7 +6114,17 @@
    "Twist type": "Twist type"
   },
   "Labels/operators/image_plane": {
-   "Image Plane": "Image Plane"
+   "Delete Image Plane": "Delete Image Plane",
+   "Display Mode": "Display Mode",
+   "Image Plane": "Image Plane",
+   "Image Plane Attributes": "Image Plane Attributes",
+   "Image Plane Display Mode": "Image Plane Display Mode",
+   "Import": "Import",
+   "Import a movie file": "Import a movie file",
+   "Import one more image, also when the camera has one": "Import one more image, also when the camera has one",
+   "Movie": "Movie",
+   "None": "None",
+   "RGBA": "RGBA"
   },
   "Labels/operators/interactive_create": {
    "Interactive Creation": "Interactive Creation",
@@ -8980,6 +9016,11 @@
    "New Orthographic Camera": "New Orthographic Camera",
    "View": "View"
   },
+  "Labels/ui/panel_image_plane": {
+   "Display Mode": "Display Mode",
+   "Image Plane": "Image Plane",
+   "Image Plane Attributes": "Image Plane Attributes"
+  },
   "Labels/ui/panel_menus": {
    "Blender": "Blender",
    "Copy": "Copy",
@@ -11558,7 +11599,10 @@
    "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)": "Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create\ncurve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)"
   },
   "Tooltips/operators/image_plane": {
-   "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya": "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya"
+   "Delete the first image plane of this view's camera": "Delete the first image plane of this view's camera",
+   "Display Mode of the first image plane of this view's camera: None hides it, RGBA shows it (Blender draws an\nimage empty with its colours and alpha)": "Display Mode of the first image plane of this view's camera: None hides it, RGBA shows it (Blender draws an\nimage empty with its colours and alpha)",
+   "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya": "Import an image as an image plane facing this view (attached to the camera it looks through); when that camera\nhas one, show or hide it, like Maya",
+   "Select this image plane and show it in the Attribute Editor": "Select this image plane and show it in the Attribute Editor"
   },
   "Tooltips/operators/interactive_create": {
    "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)": "Maya Interactive Creation: drag in a view to place and size a polygon primitive (the tool's LMB press)"
@@ -12490,6 +12534,12 @@
    "Make a new perspective camera and look through it in this view": "Make a new perspective camera and look through it in this view",
    "New orthographic camera looking from one side (Maya Panels > Orthographic > New)": "New orthographic camera looking from one side (Maya Panels > Orthographic > New)",
    "New orthographic camera: front, side or top (Maya New Orthographic)": "New orthographic camera: front, side or top (Maya New Orthographic)"
+  },
+  "Tooltips/ui/panel_image_plane": {
+   "Display Mode of the first image plane of this view's camera": "Display Mode of the first image plane of this view's camera",
+   "Maya View > Image Plane: import an image or a movie onto this view's camera": "Maya View > Image Plane: import an image or a movie onto this view's camera",
+   "The image plane of this view's camera (right-click on the panel toolbar's Image Plane button)": "The image plane of this view's camera (right-click on the panel toolbar's Image Plane button)",
+   "The image planes of this view's camera: pick one to select it and show it in the Attribute Editor": "The image planes of this view's camera: pick one to select it and show it in the Attribute Editor"
   },
   "Tooltips/ui/panel_menus": {
    "Blender's own 3D View menus (View, Select, Add, Object ...)": "Blender's own 3D View menus (View, Select, Add, Object ...)",

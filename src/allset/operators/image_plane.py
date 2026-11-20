@@ -13,13 +13,18 @@ The plane is as wide as the image's pixel width / 100 (Maya length units), its h
 A camera the view looks through that has an image plane attached: the button shows / hides that plane (Maya's image
 plane display on / off), nothing is made. The other planes (top / front / side, orthographic cameras, Blender's own
 views) aren't attached to a camera, so every click there imports one more image, like Maya.
+
+Import Image... (View > Image Plane, the button's right-click menu) always imports one more image; Import Movie...
+imports a movie the plane plays along the frames. The button's right-click Display Mode None / RGBA hides / shows the
+camera's first image plane, Delete removes it; View > Image Plane > Image Plane Attributes selects one of the camera's
+planes and shows it in the Attribute Editor (``allset.image_plane_display`` / ``_delete`` / ``_attributes``).
 """
 
 import json
 import os
 
 import bpy
-from bpy.props import BoolProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Quaternion, Vector
 
 from . import units
@@ -58,15 +63,27 @@ def _view_target(context):
     return {"kind": 'VIEW', "key": "", "rot": list(rot), "loc": list(rv3d.view_location), "camera": ""}
 
 
-def view_plane(context, key):
-    """The image plane attached to the camera named ``key`` (None: it has none)."""
+def view_planes(context, key):
+    """The image planes attached to the camera named ``key``, in name order (the first is the one the button shows /
+    hides)."""
     cam = bpy.data.objects.get(key) if key else None
     if cam is None:
-        return None
-    for ob in cam.children:
-        if ob.get(TAG) == key and ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE'                 and ob.name in context.view_layer.objects:
-            return ob
-    return None
+        return []
+    return sorted((ob for ob in cam.children if ob.get(TAG) == key and ob.type == 'EMPTY'
+                   and ob.empty_display_type == 'IMAGE' and ob.name in context.view_layer.objects),
+                  key=lambda ob: ob.name)
+
+
+def view_plane(context, key):
+    """The first image plane attached to the camera named ``key`` (None: it has none)."""
+    planes = view_planes(context, key)
+    return planes[0] if planes else None
+
+
+def camera_planes(context):
+    """The image planes attached to the camera this view looks through ([] in Blender's own views)."""
+    target = _view_target(context)
+    return view_planes(context, target["key"]) if target else []
 
 
 def _plane_size(image, width, height=None):
@@ -109,6 +126,12 @@ def build(context, target, image):
         ob.empty_display_size = _plane_size(image, w * k)
     if target["key"]:
         ob[TAG] = target["key"]
+    if image is not None and image.source == 'MOVIE':
+        # a movie plays along the frames from the scene's first frame, like a Maya movie image plane
+        iu = ob.image_user
+        iu.frame_duration = max(image.frame_duration, 1)
+        iu.frame_start = context.scene.frame_start
+        iu.use_auto_refresh = True
     return ob
 
 
@@ -125,8 +148,12 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
 
     filepath: StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'})
     filter_image: BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
+    filter_movie: BoolProperty(default=False, options={'HIDDEN', 'SKIP_SAVE'})
     filter_folder: BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
     view: StringProperty(options={'HIDDEN', 'SKIP_SAVE'})
+    import_image: BoolProperty(name="Import", description="Import one more image, also when the camera has one",
+                               options={'HIDDEN', 'SKIP_SAVE'})
+    movie: BoolProperty(name="Movie", description="Import a movie file", options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
@@ -143,9 +170,11 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
             return {'CANCELLED'}
         self.view = json.dumps(target)
         plane = view_plane(context, target["key"])
-        if plane is not None and not self.filepath:
+        if plane is not None and not self.filepath and not self.import_image:
             toggle(plane)
             return {'FINISHED'}
+        if self.movie:
+            self.filter_image, self.filter_movie = False, True
         if not self.filepath:
             from . import project
             folder = project.texture_folder(context)     # the project's sourceimages, like Maya's image dialogs
@@ -160,7 +189,7 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
             return {'CANCELLED'}
         path = bpy.path.abspath(self.filepath) if self.filepath else ""
         if not path:
-            plane = view_plane(context, target["key"])
+            plane = None if self.import_image else view_plane(context, target["key"])
             if plane is None:
                 self.report({'WARNING'}, "Image Plane: pick an image file")
                 return {'CANCELLED'}
@@ -180,4 +209,73 @@ class ALLSET_OT_image_plane(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_image_plane,)
+def _first_plane(op, context):
+    plane = next(iter(camera_planes(context)), None)
+    if plane is None:
+        op.report({'WARNING'}, "This view's camera has no image plane")
+    return plane
+
+
+class ALLSET_OT_image_plane_display(bpy.types.Operator):
+    """Display Mode of the first image plane of this view's camera: None hides it, RGBA shows it (Blender draws an
+    image empty with its colours and alpha)"""
+    bl_idname = "allset.image_plane_display"
+    bl_label = "Image Plane Display Mode"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    mode: EnumProperty(name="Display Mode", items=(('NONE', "None", "Hide the image plane"),
+                                                   ('RGBA', "RGBA", "Show the image plane")))
+
+    def execute(self, context):
+        plane = _first_plane(self, context)
+        if plane is None:
+            return {'CANCELLED'}
+        plane.hide_set(self.mode == 'NONE')
+        return {'FINISHED'}
+
+
+class ALLSET_OT_image_plane_delete(bpy.types.Operator):
+    """Delete the first image plane of this view's camera"""
+    bl_idname = "allset.image_plane_delete"
+    bl_label = "Delete Image Plane"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        plane = _first_plane(self, context)
+        if plane is None:
+            return {'CANCELLED'}
+        name = plane.name
+        bpy.data.objects.remove(plane)
+        from .. import results
+        results.result(self, f"Deleted {name}")
+        return {'FINISHED'}
+
+
+class ALLSET_OT_image_plane_attributes(bpy.types.Operator):
+    """Select this image plane and show it in the Attribute Editor"""
+    bl_idname = "allset.image_plane_attributes"
+    bl_label = "Image Plane Attributes"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    name: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        plane = context.view_layer.objects.get(self.name)
+        if plane is None:
+            return {'CANCELLED'}
+        for ob in context.view_layer.objects.selected:
+            ob.select_set(False)
+        try:
+            plane.select_set(True)
+        except RuntimeError:            # hidden by its collection: nothing to select
+            return {'CANCELLED'}
+        context.view_layer.objects.active = plane
+        try:
+            bpy.ops.allset.dock_show(dock='ATTRIBUTE_EDITOR')
+        except (RuntimeError, AttributeError):     # no dock in this window: the selection stays
+            pass
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_image_plane, ALLSET_OT_image_plane_display, ALLSET_OT_image_plane_delete,
+           ALLSET_OT_image_plane_attributes)

@@ -99,7 +99,8 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
 
 
 # rows that change the scene: one undo step named after the command (a Python operator call makes none)
-UNDO_RUNS = {"allset.camera_from_view", "allset.image_plane"}
+UNDO_RUNS = {"allset.camera_from_view", "allset.image_plane", "allset.image_plane_display",
+             "allset.image_plane_delete"}
 
 
 class ALLSET_OT_panel_run(bpy.types.Operator):

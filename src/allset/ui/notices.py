@@ -813,7 +813,10 @@ _PER_OBJECT = ("Object Properties > Viewport Display", "Blender sets this per ob
                "Viewport Display > Display As (Bounds / Wire / Solid).")
 _NO_FILTER = ("Show > All / None", "Blender's views filter by object type only (mesh, curve, light, camera, empty ...): "
               "this Maya node type has no type of its own, so it shows with its object type.")
+_IMAGE_DISPLAY = ("None / RGBA", "Blender draws an image plane (an image empty) with its colours and alpha (RGBA) or "
+                  "hides it (None): it has no outline, RGB-only, luminance or alpha-only display.")
 PANEL_MENU = {
+    **{_PM + f"Image Plane button/Display Mode/{t}": _IMAGE_DISPLAY for t in ("Outline", "RGB", "Luminance", "Alpha")},
     _PM + "View/View Sequence Time": (
         "Timeline markers", "Blender has no camera sequencer view time: bind scene cameras to timeline markers "
         "(Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer."),

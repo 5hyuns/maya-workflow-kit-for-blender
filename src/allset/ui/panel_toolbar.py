@@ -487,13 +487,13 @@ class ALLSET_PT_panel_toolbar_more(bpy.types.Panel):
 # --- right-click menus ----------------------------------------------------------------------------------------
 # Maya: right-click on the camera icon at the left of the panel toolbar lists the scene's cameras (picking one looks
 # through it in that view), on Bookmarks the camera's bookmarks, on 2D Pan/Zoom its 2D bookmarks
-# (ui/camera_bookmarks.py). Blender opens its own button context menu on a right-click over a button before any
+# (ui/camera_bookmarks.py), on Image Plane Import Image / Display Mode / Delete (ui/panel_image_plane.py). Blender opens its own button context menu on a right-click over a button before any
 # keymap runs, so ``allset.pt_hover`` (3D View Generic MOUSEMOVE, first; poll = tool header) remembers which of these
 # buttons the mouse is over and starts ``allset.pt_camera_rmb``, a window modal (window handlers run before the
 # UI) that lives while the mouse is in that tool header and opens the button's menu on a right-click there.
 
 RMB_MENUS = {"cam_select": "ALLSET_MT_panel_cameras", "bookmark": "ALLSET_MT_pt_bookmarks",
-             "pan_zoom": "ALLSET_MT_pt_pan_zoom"}
+             "image_plane": "ALLSET_MT_pt_image_plane", "pan_zoom": "ALLSET_MT_pt_pan_zoom"}
 _over_camera = {}     # window pointer -> the right-click menu of the button under the mouse ("" = none; last move)
 _watching = set()
 

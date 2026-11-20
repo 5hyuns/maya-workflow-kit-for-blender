@@ -53,6 +53,8 @@ VIEW = [
     _run("Camera Attribute Editor...", "allset.camera_attribute_editor"),
     ("menu", "Camera Tools", "ALLSET_MT_panel_camera_tools"),
     _sep(),
+    ("menu", "Image Plane", "ALLSET_MT_panel_image_plane"),    # Maya View > Image Plane (operators/image_plane.py)
+    _sep(),
     _grey("View Sequence Time"),
     _sep(),
     ("prop", "preferences", "show_viewport_shading", "Viewport Shading Controls"),
@@ -63,6 +65,33 @@ VIEW = [
 # (X = X, Y = Y, Z = Z).
 VIEW_AXIS = [_view("X", 'RIGHT'), _view("Y", 'BACK'), _view("Z", 'TOP'),
              _view("-X", 'LEFT'), _view("-Y", 'FRONT'), _view("-Z", 'BOTTOM')]
+
+# View > Image Plane: import an image / a movie onto this view's camera, its image planes in the Attribute Editor
+# (the list of the camera's planes is built when the submenu opens: ui/panel_image_plane.py)
+IMAGE_PLANE = [
+    _run("Import Image...", "allset.image_plane", import_image=True),
+    _run("Import Movie...", "allset.image_plane", import_image=True, movie=True),
+    ("menu", "Image Plane Attributes", "ALLSET_MT_panel_image_plane_attributes"),
+]
+
+# Right-click on the panel toolbar's Image Plane button (the Delete row names the camera's first image plane)
+PT_IMAGE_PLANE = [
+    _run("Import Image...", "allset.image_plane", import_image=True),
+    _sep(),
+    ("menu", "Display Mode", "ALLSET_MT_pt_image_plane_display"),
+    _sep(),
+    _run("Delete:", "allset.image_plane_delete"),
+]
+
+# Display Mode of the camera's first image plane: Blender draws an image empty with its colours and alpha or not at all
+PT_IMAGE_PLANE_DISPLAY = [
+    _run("None", "allset.image_plane_display", mode='NONE'),
+    _grey("Outline"),
+    _grey("RGB"),
+    _run("RGBA", "allset.image_plane_display", mode='RGBA'),
+    _grey("Luminance"),
+    _grey("Alpha"),
+]
 
 CAMERA_TOOLS = [
     # Maya's camera tools (ui/camera_tools.py: LMB drag tumbles / tracks / dollies until another tool)
@@ -256,6 +285,9 @@ MENUS = {
     "ALLSET_MT_panel_view": ("View", VIEW),
     "ALLSET_MT_panel_view_axis": ("View/View Along Axis", VIEW_AXIS),
     "ALLSET_MT_panel_camera_tools": ("View/Camera Tools", CAMERA_TOOLS),
+    "ALLSET_MT_panel_image_plane": ("View/Image Plane", IMAGE_PLANE),
+    "ALLSET_MT_pt_image_plane": ("Image Plane button", PT_IMAGE_PLANE),
+    "ALLSET_MT_pt_image_plane_display": ("Image Plane button/Display Mode", PT_IMAGE_PLANE_DISPLAY),
     "ALLSET_MT_panel_shading": ("Shading", SHADING),
     "ALLSET_MT_panel_lighting": ("Lighting", LIGHTING),
     "ALLSET_MT_panel_show": ("Show", SHOW),
