@@ -8078,6 +8078,7 @@
    "Edit Mode": "Edit Mode",
    "Maya Joint Empty Click Watch": "Maya Joint Empty Click Watch",
    "Maya Joint Outliner Selection Watch": "Maya Joint Outliner Selection Watch",
+   "Move Skinned Joints Handle Click": "Move Skinned Joints Handle Click",
    "Object Mode": "Object Mode",
    "Pose Mode": "Pose Mode"
   },
@@ -10775,6 +10776,7 @@
   },
   "Tooltips/ui/armature_modes": {
    "Exit joint modes on an actual empty click in the main 3D viewport.": "Exit joint modes on an actual empty click in the main 3D viewport.",
+   "Keep editing skinned joints when Blender picks a transform handle.": "Keep editing skinned joints when Blender picks a transform handle.",
    "Leave armature joint mode when a different object is picked in the Outliner.": "Leave armature joint mode when a different object is picked in the Outliner.",
    "Switch joint/object modes from the main viewport header.": "Switch joint/object modes from the main viewport header.",
    "Switch the selected skeleton between Object, Edit, and Pose modes": "Switch the selected skeleton between Object, Edit, and Pose modes"
