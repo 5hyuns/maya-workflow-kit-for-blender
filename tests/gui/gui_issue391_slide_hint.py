@@ -167,8 +167,6 @@ def s_mmb_drag():
 def s_mmb_done():
     ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
     ev('LEFT_CTRL', 'RELEASE')
-    with override():
-        bpy.ops.ed.undo()
 
 
 @step
