@@ -134,6 +134,71 @@ def s_again():
 @step
 def s_left():
     check("moving off the handle with Ctrl+Shift held ends the slide label", not hint_on())
+    C['a'] = z_arrow()
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x), y=int(C['a'].y), ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x) + 1, y=int(C['a'].y), ctrl=True, shift=True)
+    C['a'].x += 1
+
+
+@step
+def s_back():
+    shown = bright_under_mouse('back')
+    check("coming back onto the handle with Ctrl+Shift still held shows the label again", hint_on())
+    check(f"... drawn under the mouse ({shown} bright pixels)", shown >= C['plain'] + 15)
+    ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
+    ev('LEFT_SHIFT', 'PRESS', ctrl=True, shift=True)
+
+
+@step
+def s_mmb():
+    check("label on before the middle-drag", hint_on())
+    ev('MIDDLEMOUSE', 'PRESS', x=int(C['a'].x), y=int(C['a'].y), ctrl=True, shift=True)
+    ev('MOUSEMOVE', 'NOTHING', x=int(C['a'].x), y=int(C['a'].y) - 20, ctrl=True, shift=True)
+
+
+@step
+def s_mmb_drag():
+    running = [op.bl_idname for op in win().modal_operators]
+    check(f"a Ctrl+Shift+middle-drag ends the label ({running})", not hint_on())
+    ev('MIDDLEMOUSE', 'RELEASE', ctrl=True, shift=True)
+
+
+@step
+def s_mmb_done():
+    ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
+    ev('LEFT_CTRL', 'RELEASE')
+    with override():
+        bpy.ops.ed.undo()
+
+
+@step
+def s_rehover():
+    hover()
+
+
+@step
+def s_rekeys():
+    ev('LEFT_CTRL', 'PRESS', ctrl=True)
+    ev('LEFT_SHIFT', 'PRESS', ctrl=True, shift=True)
+
+
+@step
+def s_rmb():
+    check("label on again before the marking menu", hint_on())
+    ev('RIGHTMOUSE', 'PRESS', x=int(C['a'].x), y=int(C['a'].y), ctrl=True, shift=True)
+
+
+@step
+def s_rmb_open():
+    running = [op.bl_idname for op in win().modal_operators]
+    check(f"while the Ctrl+Shift+right-button marking menu is open the label is off ({running})", not hint_on())
+    ev('ESC', 'PRESS', ctrl=True, shift=True)
+    ev('ESC', 'RELEASE', ctrl=True, shift=True)
+    ev('RIGHTMOUSE', 'RELEASE', ctrl=True, shift=True)
+
+
+@step
+def s_rmb_done():
     ev('LEFT_SHIFT', 'RELEASE', ctrl=True)
     ev('LEFT_CTRL', 'RELEASE')
     with override():
