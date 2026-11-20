@@ -2,7 +2,8 @@
 
 - The view has no image plane: the button opens a file browser; picking an image there makes imagePlane1 showing it,
   facing up (the top view) at the origin.
-- The next click hides that plane without a file browser, the one after shows it again; nothing new is made."""
+- The next click opens the file browser again (the top view's planes aren't tied to it, every click imports one
+  more image); imagePlane1 stays shown."""
 
 import os
 import sys
@@ -121,23 +122,31 @@ def s_made():
 
 
 @step
-def s_hide():
+def s_again():
     click_button()
 
 
 @step
-def s_hidden():
+def s_again_browser():
+    if again(s_again_browser, lambda: file_browser()[0] is not None):
+        return
+    w, a = file_browser()
     ob = bpy.data.objects.get(C.get("plane", ""))
-    check("the next click hides the view's image plane", ob is not None and ob.hide_get())
-    check("... without a file browser or a new object", file_browser()[0] is None and len(bpy.data.objects) == C["n"])
-    click_button()
+    check("the next click in the top view opens the file browser again", a is not None)
+    check("... and imagePlane1 stays shown", ob is not None and not ob.hide_get())
+    if a is not None:
+        r = next(r for r in a.regions if r.type == 'WINDOW')
+        x, y = r.x + r.width // 2, r.y + r.height // 2
+        w.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x, y=y)
+        w.event_simulate(type='ESC', value='PRESS', x=x, y=y)
+        w.event_simulate(type='ESC', value='RELEASE', x=x, y=y)
 
 
 @step
-def s_shown():
-    ob = bpy.data.objects.get(C.get("plane", ""))
-    check("the click after shows it again", ob is not None and not ob.hide_get())
-    check("... nothing new", file_browser()[0] is None and len(bpy.data.objects) == C["n"])
+def s_cancelled():
+    if again(s_cancelled, lambda: file_browser()[0] is None):
+        return
+    check("cancelling the browser makes nothing", file_browser()[0] is None and len(bpy.data.objects) == C["n"])
 
 
 run()

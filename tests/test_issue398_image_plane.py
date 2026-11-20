@@ -4,7 +4,8 @@
   Import Image). An orthographic view's plane faces that view at the origin (top: facing up), a camera's plane is
   attached to the camera in front of it and fills its view, Blender's own perspective view gets one facing the view
   at its centre. The plane is as wide as the image's pixel width / 100 (Maya length units).
-- A view that has one: the button shows / hides that image plane, no new object.
+- A camera view whose camera has one: the button shows / hides that image plane, no new object. The top / front /
+  side planes (and those of Blender's own views) aren't tied to the view: every click imports another image.
 - Create > Free Image Plane stays a plane with no image facing the front, like Maya.
 """
 
@@ -20,6 +21,7 @@ import kit
 
 pmd = import_module(kit.MODULE + ".ui.panel_menu_data")
 units = import_module(kit.MODULE + ".operators.units")
+sc = import_module(kit.MODULE + ".operators.startup_cameras")
 
 EPS = 1e-4
 
@@ -101,21 +103,54 @@ def test_ortho_views_import_an_image_facing_the_view():
         assert ob.name.startswith("imagePlane"), ob.name
 
 
-def test_the_button_shows_and_hides_the_views_image_plane():
+def test_the_button_shows_and_hides_the_cameras_image_plane():
+    """A camera the view looks through keeps its image plane: the next click shows / hides it, no new object."""
     before = _fresh()
-    view = _view('ORTHO')
-    path = _png(64, 64, "toggle398.png")
-    assert _click(view, filepath=path) == {'FINISHED'}
+    bpy.context.scene.camera = bpy.data.objects["Camera"]
+    view = _view('CAMERA')
+    assert _click(view, filepath=_png(64, 64, "toggle398.png")) == {'FINISHED'}
     plane = _new_objects(before)[0]
     names = {ob.name for ob in bpy.data.objects}
     assert _click(view) == {'FINISHED'}
-    assert plane.hide_get(), "a second click hides the view's image plane"
+    assert plane.hide_get(), "a second click hides the camera's image plane"
     assert _click(view) == {'FINISHED'}
     assert not plane.hide_get(), "the next click shows it again"
     assert {ob.name for ob in bpy.data.objects} == names, "no new object"
-    # another view (front) has none yet: nothing to show / hide, nothing made without an image
-    assert _click(_view('ORTHO', (90, 0, 0))) == {'CANCELLED'}
+
+
+def test_top_front_side_import_again_on_every_click():
+    """The top / front / side planes aren't the view's own: every click imports one more image, nothing is hidden."""
+    before = _fresh()
+    view = _view('ORTHO')
+    assert _click(view, filepath=_png(64, 64, "first398.png")) == {'FINISHED'}
+    first = _new_objects(before)[0]
+    names = {ob.name for ob in bpy.data.objects}
+    assert _click(view) == {'CANCELLED'}, "no image picked: nothing to show / hide"
+    assert not first.hide_get()
     assert {ob.name for ob in bpy.data.objects} == names
+    assert _click(view, filepath=_png(32, 32, "second398.png")) == {'FINISHED'}
+    new = _new_objects(names)
+    assert len(new) == 1 and new[0].data is not None and new[0] != first, [o.name for o in new]
+    assert not first.hide_get()
+
+
+def test_blenders_persp_view_and_a_persp_camera_keep_their_own_planes():
+    """A plane attached to the persp camera is not the plane of Blender's own perspective view (and the other way
+    round)."""
+    _fresh()
+    persp = next(ob for ob in sc.ensure(bpy.context.scene, bpy.context.view_layer) if ob.get(sc.MARK) == "persp")
+    before = {ob.name for ob in bpy.data.objects}
+    bpy.context.scene.camera = persp
+    assert _click(_view('CAMERA'), filepath=_png(64, 64, "cam398b.png")) == {'FINISHED'}
+    cam_plane = _new_objects(before)[0]
+    assert cam_plane.parent == persp
+    names = {ob.name for ob in bpy.data.objects}
+    view = _view('PERSP', (60, 0, 30))
+    assert _click(view) == {'CANCELLED'}
+    assert not cam_plane.hide_get(), "the camera's plane stays shown"
+    assert _click(view, filepath=_png(64, 64, "view398b.png")) == {'FINISHED'}
+    assert len(_new_objects(names)) == 1
+    assert not cam_plane.hide_get()
 
 
 def test_a_camera_view_attaches_the_plane_in_front_of_the_camera():
