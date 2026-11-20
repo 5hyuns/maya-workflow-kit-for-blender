@@ -4939,6 +4939,7 @@ STRINGS = {
     "Paint and set the active layer's mask instead of a joint": '繪製並設置活動層的遮罩，而非關節',
     'Pick Influence': '選擇影響物',
     'Positive to Negative': '正向到負向',
+    'Positive to negative (+ to -)': '正向到負向 (+ 到 -)',
     'Select a skinned mesh (Skin > Bind Skin first)': '請選擇已蒙皮的網格 (先執行蒙皮 > 綁定蒙皮)',
     'Skin Tools': '蒙皮工具',
     'Skin Tools (layers)': '蒙皮工具 (層)',

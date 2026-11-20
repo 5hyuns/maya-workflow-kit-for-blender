@@ -111,6 +111,17 @@ def _run_copy_weights(context, v):
                                             influence3=_INFLUENCE[v["influence3"]], normalize=v["normalize"])
 
 
+_MIRROR_INFLUENCE = {"Closest joint": "CLOSEST_JOINT", "Label": "LABEL", "None": "NONE"}
+
+
+def _run_mirror_weights(context, v):
+    return bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT', plane=v["mirror_across"],
+                                              positive_to_negative=v["positive_to_negative"],
+                                              influence1=_MIRROR_INFLUENCE[v["influence1"]],
+                                              influence2=_MIRROR_INFLUENCE[v["influence2"]],
+                                              normalize=v["normalize"])
+
+
 _PAINT_OPS = {"Replace": "REPLACE", "Add": "ADD", "Scale": "SCALE", "Smooth": "SMOOTH"}
 _PROFILES = {"Gaussian": "GAUSSIAN", "Soft": "SOFT", "Solid": "SOLID"}
 
@@ -267,6 +278,17 @@ WINDOWS = [
           items=("None", "Closest joint", "Closest bone", "One to one", "Name")),
         F("normalize", "", "bool", False, text="Normalize")], _run_copy_weights, paths=("Skin/Copy Skin Weights",),
         missing=("Surface Association: UV space", "Influence Association: Label")),
+    # Skin > Mirror Skin Weights: Mirror across, Direction (Positive to negative: +X to -X across YZ), Influence
+    # Association
+    Window("mirror_skin_weights", "Mirror Skin Weights Options", "Mirror", ("allset.mirror_skin_weights", {}), [
+        F("mirror_across", "Mirror across:", "enum", "YZ", items=("XY", "YZ", "XZ")),
+        F("positive_to_negative", "Direction:", "bool", True, text="Positive to negative (+ to -)"),
+        F("influence1", "Influence Association 1:", "enum", "Closest joint", items=("Closest joint", "Label")),
+        F("influence2", "Influence Association 2:", "enum", "None", items=("None", "Closest joint", "Label")),
+        F("normalize", "", "bool", False, text="Normalize")], _run_mirror_weights,
+        paths=("Skin/Mirror Skin Weights",),
+        missing=("Surface Association: Ray cast / Closest component / UV space",
+                 "Influence Association: Closest bone / One to one / Name", "Influence Association 3")),
     # Skin > Paint Skin Weights: Tool Settings "Paint Skin Weights Tool"
     Window("paint_skin_weights", "Paint Skin Weights Tool", "Paint Skin Weights", None, [
         F("operation", "Paint operation:", "enum", "Replace", items=("Replace", "Add", "Scale", "Smooth")),

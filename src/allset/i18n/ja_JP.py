@@ -4939,6 +4939,7 @@ STRINGS = {
     "Paint and set the active layer's mask instead of a joint": 'ジョイントの代わりにアクティブレイヤのマスクをペイント・設定',
     'Pick Influence': 'インフルエンスを選ぶ',
     'Positive to Negative': '正から負へ',
+    'Positive to negative (+ to -)': '正から負へ (+ から -)',
     'Select a skinned mesh (Skin > Bind Skin first)': 'スキンメッシュを選択してください (先にスキン > スキンのバインド)',
     'Skin Tools': 'スキンツール',
     'Skin Tools (layers)': 'スキンツール (レイヤ)',
