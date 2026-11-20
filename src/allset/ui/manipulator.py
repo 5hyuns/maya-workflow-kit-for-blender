@@ -440,8 +440,8 @@ class ALLSET_GGT_xform(GizmoGroup):
         elif (highlighted and manip.MOUSE["held"] and manip.MOUSE["region"] == ptr and context.mode == 'EDIT_MESH'
               and tool_kind(context) == 'TRANSLATE' and self._built_for != ('TRANSLATE', True)
               and not any(gz.is_modal for gz in self.gizmos)
-              and manip._modal_count(context) <= manip.MOUSE["modals"]):
-            manip.slide_hint_show(context, region, manip.MOUSE["pos"])
+              and not manip.slide_hint_stale(context)):
+            manip.slide_hint_show(region, manip.MOUSE["pos"])
 
     def draw_prepare(self, context):
         self._slide_label(context)

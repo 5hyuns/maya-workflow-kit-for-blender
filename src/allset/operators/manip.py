@@ -783,29 +783,28 @@ def _slide_applies(context):
 
 
 # Maya shows a "slide" cursor while Ctrl+Shift is held over a Move handle in component mode: the 3D View region
-# (as_pointer) the label is drawn in and its mouse position; region 0 = no label. "modals": the modal operators
-# already running when it was shown (any other one, a drag or a marking menu, ends it).
-SLIDE_HINT = {"region": 0, "pos": (0, 0), "modals": 0}
-# the last mouse move in a 3D View region: region (as_pointer), position, Ctrl and Shift both held, the modal
-# operators running then (a mouse move reaches the 3D View only while no drag / menu holds the events)
-MOUSE = {"region": 0, "pos": (0, 0), "held": False, "modals": 0}
+# (as_pointer) the label is drawn in and its mouse position; region 0 = no label
+SLIDE_HINT = {"region": 0, "pos": (0, 0)}
+# the last mouse move in a 3D View region: region (as_pointer), position, Ctrl and Shift both held
+MOUSE = {"region": 0, "pos": (0, 0), "held": False}
 
 
-def _modal_count(context):
-    window = getattr(context, "window", None)
-    return len(window.modal_operators) if window is not None else 0
-
-
-def slide_hint_show(context, region, pos):
+def slide_hint_show(region, pos):
     SLIDE_HINT["region"] = region.as_pointer()
     SLIDE_HINT["pos"] = pos
-    SLIDE_HINT["modals"] = _modal_count(context)
     region.tag_redraw()
 
 
 def slide_hint_stale(context):
-    """A drag, a slide or a marking menu started since the label was shown."""
-    return _modal_count(context) > SLIDE_HINT["modals"]
+    """A drag, a slide or a marking menu runs (the kit's session-long click listeners don't count)."""
+    from .. import live_refs, modal_listeners
+    window = getattr(context, "window", None)
+    if window is None:
+        return False
+    try:
+        return any(op.bl_idname not in modal_listeners.NAMES for op in live_refs.running_modals(window))
+    except (AttributeError, ReferenceError):
+        return False
 
 
 def slide_hint_clear():
@@ -832,7 +831,7 @@ class ALLSET_OT_manip_slide_hint(bpy.types.Operator):
         on = event.ctrl and event.shift and _slide_applies(context)
         region = context.region
         if on and region is not None:
-            slide_hint_show(context, region, (event.mouse_region_x, event.mouse_region_y))
+            slide_hint_show(region, (event.mouse_region_x, event.mouse_region_y))
         else:
             slide_hint_clear()
         return {'PASS_THROUGH'}
@@ -852,7 +851,6 @@ class ALLSET_OT_manip_slide_hint_move(bpy.types.Operator):
         held = event.ctrl and event.shift
         pos = (event.mouse_region_x, event.mouse_region_y)
         MOUSE["region"], MOUSE["pos"], MOUSE["held"] = region.as_pointer(), pos, held
-        MOUSE["modals"] = _modal_count(context)
         if SLIDE_HINT["region"] == MOUSE["region"]:
             if held:
                 SLIDE_HINT["pos"] = pos
