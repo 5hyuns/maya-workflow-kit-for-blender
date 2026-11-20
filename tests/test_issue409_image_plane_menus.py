@@ -46,11 +46,11 @@ def _view(persp='CAMERA', rot=(0.0, 0.0, 0.0)):
     return window, area, region
 
 
-def _run(view, op, mode='EXEC_DEFAULT', **props):
+def _run(view, op, how='EXEC_DEFAULT', **props):
     window, area, region = view
     mod, name = op.split(".")
     with bpy.context.temp_override(window=window, area=area, region=region):
-        return getattr(getattr(bpy.ops, mod), name)(mode, **props)
+        return getattr(getattr(bpy.ops, mod), name)(how, **props)
 
 
 def _camera_with_plane():
@@ -90,7 +90,7 @@ def test_the_toolbar_button_has_a_right_click_menu():
 def test_import_image_adds_one_more_plane_to_the_camera():
     cam, view, plane = _camera_with_plane()
     names = {ob.name for ob in bpy.data.objects}
-    res = _run(view, "allset.image_plane", 'INVOKE_DEFAULT', import_image=True)
+    res = _run(view, "allset.image_plane", how='INVOKE_DEFAULT', import_image=True)
     assert not plane.hide_get(), "Import Image never hides the camera's plane"
     assert res != {'FINISHED'} or {ob.name for ob in bpy.data.objects} != names, res
     assert _run(view, "allset.image_plane", import_image=True, filepath=_png(32, 32, "b409.png")) == {'FINISHED'}
