@@ -181,18 +181,28 @@ class MeshCache:
             self.vok = np.array([not v.hide for v in bm.verts], dtype=bool)
             self.edges = np.array([(e.verts[0].index, e.verts[1].index) for e in bm.edges],dtype=np.int64).reshape(-1,2)
             self.eok = np.array([not e.hide for e in bm.edges], dtype=bool)
+        # a skinned mesh's components sit on the posed mesh (the skin shown on the edit cage)
+        self.cage = _deformed_cage(ob, len(bm.verts)) if self.editing else None
+        if self.cage is not None:
+            local = self.cage
         self.co = local @ m[:3, :3].T + m[:3, 3]
         hidden = np.flatnonzero(~self.arrays[6]).tolist() if self.arrays else [f.index for f in bm.faces if f.hide]
-        if not hidden:
+        if not hidden and self.cage is None:
             self.bvh_map = None                         # BVH index = face index
             self._bvh = BVHTree.FromBMesh(bm) if len(bm.faces) else None
         else:
             vis = [f.index for f in bm.faces if not f.hide]
             self.bvh_map = vis
-            self._bvh = BVHTree.FromPolygons([v.co.copy() for v in bm.verts],
+            self._bvh = BVHTree.FromPolygons(self._points(),
                                             [self.face_verts(i) for i in vis]) if vis else None
         self._sel = None
         self._bvh_dirty = False
+
+    def _points(self):
+        """Object-space vertex positions as drawn: the posed cage, else the BMesh."""
+        if self.cage is not None:
+            return [Vector(p) for p in self.cage]
+        return [v.co.copy() for v in self.bm.verts]
 
     @property
     def bvh(self):
@@ -200,7 +210,7 @@ class MeshCache:
             if self.bvh_map is None:
                 self._bvh=BVHTree.FromBMesh(self.bm) if len(self.bm.faces) else None
             else:
-                self._bvh=BVHTree.FromPolygons([v.co.copy() for v in self.bm.verts],[self.face_verts(i) for i in self.bvh_map])
+                self._bvh=BVHTree.FromPolygons(self._points(),[self.face_verts(i) for i in self.bvh_map])
             self._bvh_dirty=False
         return self._bvh
 
@@ -226,6 +236,16 @@ class MeshCache:
             if not self.editing:
                 self._sel = ([mw.translation.copy()], mw.translation.copy())
                 return self._sel
+            if self.cage is not None:                    # posed skin: the drawn (world) positions
+                co = self.co
+                pts = [Vector(co[v.index]) for v in bm.verts if v.select and not v.hide]
+                el, active = bm.select_history.active, None
+                if isinstance(el, bmesh.types.BMVert):
+                    active = Vector(co[el.index])
+                elif isinstance(el, (bmesh.types.BMEdge, bmesh.types.BMFace)):
+                    active = Vector(co[[v.index for v in el.verts]].mean(axis=0))
+                self._sel = (pts, active)
+                return self._sel
             pts = [mw @ v.co for v in bm.verts if v.select and not v.hide]
             el, active = bm.select_history.active, None
             if isinstance(el, bmesh.types.BMVert):
@@ -247,6 +267,24 @@ class MeshCache:
         if loc is None:
             return None
         return (self.mw @ loc - origin).length, (idx if self.bvh_map is None else self.bvh_map[idx])
+
+
+def _deformed_cage(ob, n):
+    """(n, 3) object-space positions of an edit mesh whose skin is shown on the edit cage (the posed vertices), or
+    None when the cage is the BMesh itself."""
+    from ..ui.component_colors import use_evaluated
+    if not any(md.show_viewport and md.show_in_editmode for md in ob.modifiers) or not use_evaluated(ob.modifiers):
+        return None
+    ev = ob.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    me = ev.to_mesh()
+    try:
+        if len(me.vertices) != n:
+            return None
+        out = np.empty(n * 3, dtype=np.float64)
+        me.vertices.foreach_get("co", out)
+        return out.reshape(-1, 3)
+    finally:
+        ev.to_mesh_clear()
 
 
 def caches(context):
@@ -318,6 +356,8 @@ def coordinates_changed(ob,verts):
     global _coordinate_session
     c=_cache.get(ob.as_pointer())
     if c is None or not c.editing:return
+    if c.cage is not None:                              # posed skin: read the whole cage again
+        _cache.pop(ob.as_pointer(),None);return
     _coordinate_session=(ob.as_pointer(),ob.data.as_pointer())
     ids=[v.index for v in verts if v.is_valid]
     if ids:

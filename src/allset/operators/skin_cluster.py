@@ -28,6 +28,15 @@ def armature_modifiers(mesh):
             and not _skin_part(m)]
 
 
+def show_pose_in_components(mesh):
+    """Maya draws a skinned mesh's components on the posed mesh: the skin's Armature modifiers stay on in edit mode,
+    on the edit cage (component selection and edits on the posed vertices)."""
+    for m in getattr(mesh, "modifiers", ()):
+        if m.type == 'ARMATURE' and m.object is not None:
+            m.show_in_editmode = True
+            m.show_on_cage = True
+
+
 # Maya Bind Skin options the kit honours: Normalize weights is kept on the
 # mesh (Interactive = Blender's Auto Normalize while painting), Colorize skeleton = a bone colour per joint
 # (Unbind Skin's "Remove joint colors" takes them away), Remove unused influences = drop joints that weigh nothing.

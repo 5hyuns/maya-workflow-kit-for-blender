@@ -10,7 +10,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, St
 
 from .. import results
 from .skin_cluster import (NORMALIZE, NORMALIZE_PROP, PAINT_SEEN, _cb, armature_modifier, colorize, influences,
-                           skinned_mesh)
+                           show_pose_in_components, skinned_mesh)
 
 
 # --- Bind / Unbind Skin -------------------------------------------------------------------------
@@ -198,6 +198,7 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
             mesh[rig_maya.DROPOFF_PROP] = {vg.name: float(dropoff) for vg in influences(mesh)}
         from . import skin_method
         skin_method.set_method(mesh, skinning)       # Classic linear / Dual quaternion / Weight blended
+        show_pose_in_components(mesh)
     context.view_layer.update()
     for mesh in meshes:
         unpose_mesh(arm, mesh)

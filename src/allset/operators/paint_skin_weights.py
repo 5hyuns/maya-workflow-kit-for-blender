@@ -11,7 +11,9 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty
 from .. import compat
 from . import units
 from .skin_cluster import (NORMALIZE, NORMALIZE_PROP, PAINT_SEEN, armature_modifier, influences, normalize_mode,
-                           skinned_mesh)
+                           show_pose_in_components, skinned_mesh)
+
+PAINT_WIRE = "allset_paint_wire"     # mesh ID prop: Paint Skin Weights turned its wireframe on once
 
 
 # --- Paint Skin Weights --------------------------------------------------------------------------
@@ -232,7 +234,15 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         arm.select_set(True)
         mesh.select_set(True)
         context.view_layer.objects.active = mesh
-        bpy.ops.paint.weight_paint_toggle()              # the skeleton goes to pose mode with it
+        # the skeleton goes to pose mode with it. Blender brings back the tool last used in weight paint: a Select
+        # mode's select tool stays in paint here, unlike the Tool Box's Select
+        from ..ui import toolbox
+        toolbox.KEEP_PAINT[0] = True
+        try:
+            bpy.ops.paint.weight_paint_toggle()
+        finally:
+            toolbox.KEEP_PAINT[0] = False
+        show_pose_in_components(mesh)                    # component mode keeps the pose (Maya)
         current = context.workspace.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False)
         # Older sessions may have left a selection/transform tool remembered
         # inside paint mode. Re-entering the paint tool must restore a brush.
@@ -248,6 +258,12 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
             mesh.vertex_groups.active_index = first.index
         _maya_start(context, not seen)
         mesh[PAINT_SEEN] = True
+        if not mesh.get(PAINT_WIRE):                     # Maya's Show wireframe starts on
+            from ..ui.status_line import main_view3d
+            area, _region = main_view3d(context.screen)
+            if area is not None:
+                area.spaces.active.overlay.show_paint_wire = True
+            mesh[PAINT_WIRE] = True
         # Maya keeps a vertex selection made before the tool and floods only it
         # (Maya): Blender shows that selection only with the vertex
         # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then.
