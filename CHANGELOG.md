@@ -3,6 +3,13 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- File > Import with Maya Units and Axes keeps the rest skeleton of a rig whose bones Blender connects (for example an
+  auto-rigged character's spine, arms and legs): those joints no longer land turned 90 degrees with a broken pose, and joints with a
+  slight joint orient keep their exact offset, so the pose channels are 0 at the bind pose. (#416)
+
 ## [0.20.0] — 2026-11-20
 
 Thank you for the reports. This release makes marking menus and the Move tool feel more like Maya, fixes UV Unfold,
