@@ -4901,7 +4901,7 @@
    "Blender shades faces from the mesh normals in every view; there is no faceted display mode (Lighting > Use Flat Lighting is the nearest view setting).": "Blender shades faces from the mesh normals in every view; there is no faceted display mode (Lighting > Use Flat Lighting is the nearest view setting).",
    "Blender shades faces from the mesh normals in every view; there is no per-object faceted display mode.": "Blender shades faces from the mesh normals in every view; there is no per-object faceted display mode.",
    "Blender shows element numbers with the Indices overlay (Preferences > Interface > Developer Extras, then Overlays > Indices).": "Blender shows element numbers with the Indices overlay (Preferences > Interface > Developer Extras, then Overlays > Indices).",
-   "Blender shows motion with Motion Paths (Object properties); there is no turntable camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting).": "Blender shows motion with Motion Paths (Object properties); there is no turntable camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting).",
+   "Blender shows motion with Motion Paths (Object properties); there is no animated sweep surface (the kit has Animation Snapshot, ghosting and Create Turntable).": "Blender shows motion with Motion Paths (Object properties); there is no animated sweep surface (the kit has Animation Snapshot, ghosting and Create Turntable).",
    "Blender shows shape key channels or not (header filters > Shape Keys); it has no auto expand depth for them.": "Blender shows shape key channels or not (header filters > Shape Keys); it has no auto expand depth for them.",
    "Blender shows the input mesh by turning the Cloth modifier off in the viewport.": "Blender shows the input mesh by turning the Cloth modifier off in the viewport.",
    "Blender shows the last render in its Render window (Render > View Render).": "Blender shows the last render in its Render window (Render > View Render).",
@@ -4914,7 +4914,7 @@
    "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that many smooth levels) and stores sqrt(value / 10); see it with 3 (smooth mesh preview).": "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that many smooth levels) and stores sqrt(value / 10); see it with 3 (smooth mesh preview).",
    "Blender tools finish with Enter or a right-click: there is no tool to complete from this menu.": "Blender tools finish with Enter or a right-click: there is no tool to complete from this menu.",
    "Blender toon lines are Line Art (Grease Pencil) or Freestyle; line attributes are Line Art modifiers, not painted maps.": "Blender toon lines are Line Art (Grease Pencil) or Freestyle; line attributes are Line Art modifiers, not painted maps.",
-   "Blender windows are managed by the OS (Window > Toggle Window Fullscreen); there is no Home screen.": "Blender windows are managed by the OS (Window > Toggle Window Fullscreen); there is no Home screen.",
+   "Blender windows are managed by the OS (Window > Toggle Window Fullscreen).": "Blender windows are managed by the OS (Window > Toggle Window Fullscreen).",
    "Blender's Alembic import already keeps the file linked (Mesh Sequence Cache); replace = import again, About = the Blender manual.": "Blender's Alembic import already keeps the file linked (Mesh Sequence Cache); replace = import again, About = the Blender manual.",
    "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane).": "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane).",
    "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.": "Blender's Exact Boolean, applied at once; the second object is deleted, like Maya with construction history off.",
@@ -6541,6 +6541,11 @@
    "Set user normal": "Set user normal",
    "Unlock": "Unlock"
   },
+  "Labels/operators/nurbs_select": {
+   "CV Selection Boundary": "CV Selection Boundary",
+   "Control Vertex": "Control Vertex",
+   "Surface Border": "Surface Border"
+  },
   "Labels/operators/option_windows": {
    "Apply": "Apply",
    "Back to the default settings (like Maya's Edit > Reset Settings)": "Back to the default settings (like Maya's Edit > Reset Settings)",
@@ -7468,6 +7473,14 @@
    "Trax Tracks": "Trax Tracks",
    "Trim After": "Trim After",
    "Trim Before": "Trim Before"
+  },
+  "Labels/operators/turntable": {
+   "Create Turntable": "Create Turntable",
+   "Direction": "Direction",
+   "Frames for one full turn, from frame 1": "Frames for one full turn, from frame 1",
+   "Number of frames": "Number of frames",
+   "Turntable: Active panel must be a 3D viewport.": "Turntable: Active panel must be a 3D viewport.",
+   "Turntable: Select objects to animate camera around.": "Turntable: Select objects to animate camera around."
   },
   "Labels/operators/type_manip": {
    "All Characters": "All Characters",
@@ -9212,6 +9225,7 @@
    "Mirror Target": "Mirror Target",
    "Name": "Name",
    "No blendShape: select a mesh and Create Blend Shape": "No blendShape: select a mesh and Create Blend Shape",
+   "Rebuild Target": "Rebuild Target",
    "Reset": "Reset",
    "Search": "Search",
    "Select Shape": "Select Shape",
@@ -11805,6 +11819,11 @@
    "Lock (freeze) the normals of the selected vertices (Maya Mesh Display > Lock Normals / Unlock Normals)": "Lock (freeze) the normals of the selected vertices (Maya Mesh Display > Lock Normals / Unlock Normals)",
    "Set the normal of the selected vertices to a direction and lock it (Maya Mesh Display > Set Vertex Normal)": "Set the normal of the selected vertices to a direction and lock it (Maya Mesh Display > Set Vertex Normal)"
   },
+  "Tooltips/operators/nurbs_select": {
+   "Keep only the outline of the selected CV region on each surface (Maya Select > CV Selection Boundary)": "Keep only the outline of the selected CV region on each surface (Maya Select > CV Selection Boundary)",
+   "Select the CVs along the borders of the selected surfaces (Maya Select > Surface Border)": "Select the CVs along the borders of the selected surfaces (Maya Select > Surface Border)",
+   "Show the CVs of the selected curves and surfaces to pick them (Maya Select > Components > Control Vertex)": "Show the CVs of the selected curves and surfaces to pick them (Maya Select > Components > Control Vertex)"
+  },
   "Tooltips/operators/option_windows": {
    "Option box of a Maya command whose settings Blender has no equivalent for: the window says so and runs\nthe command (Maya: every option box opens a window)": "Option box of a Maya command whose settings Blender has no equivalent for: the window says so and runs\nthe command (Maya: every option box opens a window)"
   },
@@ -12097,6 +12116,9 @@
    "Place a new instance of this source clip at the current time (Maya Library > Insert Clip)": "Place a new instance of this source clip at the current time (Maya Library > Insert Clip)",
    "Trax track commands": "Trax track commands",
    "Turn the current character's (or the selected objects') keys into a clip on the Trax tracks": "Turn the current character's (or the selected objects') keys into a clip on the Trax tracks"
+  },
+  "Tooltips/operators/turntable": {
+   "Turn a new camera once around the selected objects and look through it (Maya Visualize > Turntable)": "Turn a new camera once around the selected objects and look through it (Maya Visualize > Turntable)"
   },
   "Tooltips/operators/type_manip": {
    "Pick a character of a type whose Type Manipulator is on": "Pick a character of a type whose Type Manipulator is on",
@@ -12641,6 +12663,7 @@
    "Duplicate the selected target: a copy named <target>_Copy (Maya Shapes > Duplicate Target)": "Duplicate the selected target: a copy named <target>_Copy (Maya Shapes > Duplicate Target)",
    "Edit this target: moving the base's vertices in Edit Mode writes into it (Maya Edit / sculptTarget)": "Edit this target: moving the base's vertices in Edit Mode writes into it (Maya Edit / sculptTarget)",
    "Flip the selected targets: their deformation moves to the other side (Maya Shapes > Flip Target)": "Flip the selected targets: their deformation moves to the other side (Maya Shapes > Flip Target)",
+   "Make a mesh of the selected target, where the base is (Maya Shapes > Rebuild Target)": "Make a mesh of the selected target, where the base is (Maya Shapes > Rebuild Target)",
    "Maya's Shape Editor (a marked Properties Tool tab in its own window)": "Maya's Shape Editor (a marked Properties Tool tab in its own window)",
    "Mirror the selected targets: one side's deformation copied onto the other (Maya Shapes > Mirror Target)": "Mirror the selected targets: one side's deformation copied onto the other (Maya Shapes > Mirror Target)",
    "Open the Shape Editor: blendShape nodes (shape keys) with their targets' weights, Edit and Key\n(Maya Windows > Animation Editors > Shape Editor)": "Open the Shape Editor: blendShape nodes (shape keys) with their targets' weights, Edit and Key\n(Maya Windows > Animation Editors > Shape Editor)",

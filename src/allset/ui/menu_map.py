@@ -557,6 +557,7 @@ MAP = {
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
     "Visualize/Motion Trail Editor": "allset.motion_trail_editor",
+    "Visualize/Create Turntable...": "allset.create_turntable",     # operators/turntable.py (#108)
     # snapshots + ghosting
     "Visualize/Create Animation Snapshot": "allset.animation_snapshot",
     "Visualize/Update Snapshot": "allset.update_snapshot",
@@ -709,6 +710,13 @@ MAP.update({
     "Select/All CVs": ("curve.select_all", {"action": 'SELECT'}),
     "Select/First CV": "curve.de_select_first",
     "Select/Last CV": "curve.de_select_last",
+    # NURBS CV mask, Surface Border, CV Selection Boundary (operators/nurbs_select.py, #108)
+    "Select/Components#2/Control Vertex": "allset.nurbs_component",
+    "Select/Components#3/Control Vertex": "allset.nurbs_component",
+    "Select/Surface Border": "allset.select_surface_border",
+    "Select/CV Selection Boundary": "allset.select_cv_boundary",
+    "Edit/Delete All by Type/Sounds": "allset.delete_sounds",       # like Audio > Delete Sounds
+    "Windows/Home": "wm.splash",                                   # Blender's start screen: recent files, new
     "Select/All by Type/Image Planes": ("object.select_by_type", {"type": 'EMPTY'}),
     # Modify
     "Modify/Transformation Tools/Proportional Modification Tool": _PROPORTIONAL,

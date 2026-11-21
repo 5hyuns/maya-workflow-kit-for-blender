@@ -243,6 +243,8 @@ from . import attr_clipboard  # noqa: E402  Mesh > Clipboard Actions, Edit > Tra
 classes += attr_clipboard.classes
 from . import lod  # noqa: E402  Edit > LOD (Level of Detail)
 classes += lod.classes
+from . import nurbs_select, turntable  # noqa: E402  Select > NURBS CVs / Surface Border, Visualize > Turntable (#108)
+classes += nurbs_select.classes + turntable.classes
 from . import ik_fk_control  # noqa: E402  Skeleton > Enable IK/FK Control / Enable IK Handle Snap
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)

@@ -580,8 +580,8 @@ CATEGORIES = {
                             "strip's Scale / Repeat or a Time Offset modifier."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
                "deformer sets or tweak nodes."),
-    "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "
-                  "camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting)."),
+    "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no animated "
+                  "sweep surface (the kit has Animation Snapshot, ghosting and Create Turntable)."),
     "Playback": ("Timeline Playback popover", "Blender's playback options are in the Timeline's Playback popover; "
                  "there is no cached-playback toggle."),
     # rendering
@@ -625,7 +625,7 @@ CATEGORIES = {
                "Linked and Select Similar are the closest."),
     **{f"Select/{sub}": ("Curve edit mode", "Blender selects curve and surface control points in edit mode (Tab); "
                          "hulls, isoparms and edit points aren't separate components.")
-       for sub in ("Components#2", "Components#3", "CV Selection Boundary", "Surface Border", "Cluster Curve")},
+       for sub in ("Components#2", "Components#3", "Cluster Curve")},
     # the conversions work (operators/select_convert.py); Blender has no face-corner (vertex face) selection.
     "Select/Convert Selection": ("Faces / UV Editor", "Blender has no vertex-face component: per-corner normals and "
                                  "colours follow the selected faces (Mesh > Normals > Set from Faces); single "
@@ -646,9 +646,9 @@ CATEGORIES = {
                 "Viewport Display; there is no per-camera visibility."),
     "Windows": ("Blender editors", "Blender has no editor by this name: any area's editor-type menu gives the "
                 "closest editor."),
-    **{f"Windows/{item}": ("Window menu", "Blender windows are managed by the OS (Window > Toggle Window Fullscreen); "
-                           "there is no Home screen.")
-       for item in ("Home", "Minimize Application", "Raise Main Window", "Raise Application Windows")},
+    **{f"Windows/{item}": ("Window menu", "Blender windows are managed by the OS (Window > Toggle Window "
+                           "Fullscreen).")
+       for item in ("Minimize Application", "Raise Main Window", "Raise Application Windows")},
 }
 
 
@@ -1110,8 +1110,6 @@ CATEGORIES.update({
         "Flat target list", "Blender's shape keys are one flat list per mesh: no target groups."),
     "Shape Editor/Shapes/Merge Targets": (
         "New Shape from Mix", "Blender's Shape Keys menu > New Shape from Mix makes one key of the current mix."),
-    "Shape Editor/Shapes/Rebuild Target": (
-        "Duplicate + Apply", "Blender keeps no target mesh to rebuild: duplicate the mesh and apply the key."),
     "Shape Editor/Options/Show Edit HUD": (
         "Edit button", "Blender draws no edit HUD here: the target being edited has the red Edit button."),
     "Shape Editor/Help/What's New/Highlight What's New": (

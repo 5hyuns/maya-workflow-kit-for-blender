@@ -31,6 +31,11 @@ showed what to fix.
   (instead of Alt+E Clear Rotation). Each can be turned off on its own. Keys Maya mode already uses (Ctrl+Tab, Q, W,
   E, R, the period key, F, Space) stay Maya keys, the Quad Draw tool keeps its Tab, and the other editors keep their
   Tab. (#226)
+- More Maya menu items run (#108): Visualize > Create Turntable (a copy of the view's camera turns once around the
+  selection on a group pivoted at its centre, and the view looks through it; the option box sets the frames and the
+  direction), Select > Components > Control Vertex for curves and surfaces, Select > Surface Border and CV Selection
+  Boundary, the Shape Editor's Shapes > Rebuild Target, Edit > Delete All by Type > Sounds, and Windows > Home
+  (Blender's start screen).
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces

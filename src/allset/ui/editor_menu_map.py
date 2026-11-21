@@ -687,6 +687,7 @@ MAP.update({
     f"{SH}/Create/Add Target": "allset.shape_add_target",
     f"{SH}/Create/Add Selection as Target": "allset.shape_add_selection",
     f"{SH}/Shapes/Duplicate Target": "allset.shape_duplicate",
+    f"{SH}/Shapes/Rebuild Target": "allset.shape_rebuild",
     f"{SH}/Shapes/Flip Target": "allset.shape_flip",
     f"{SH}/Shapes/Mirror Target": ("allset.shape_mirror", {"direction": "POSITIVE"}),
     f"{SH}/Shapes/Key": "allset.shape_key",

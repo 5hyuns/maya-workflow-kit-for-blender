@@ -431,7 +431,8 @@ def test_visualize_menu_at_least_sixty_percent():
     working = sum(1 for p in paths if p in menu_map.MAP)
     print(f"Visualize: {working} / {len(paths)} working ({100 * working / len(paths):.0f} %)")
     assert working / len(paths) >= 0.60, (working, len(paths))
-    for path in ("Visualize/Create Turntable...", "Visualize/Create Animated Sweep"):
-        assert path not in menu_map.MAP and notices.greyed_notice(path), path
+    assert "Visualize/Create Animated Sweep" not in menu_map.MAP
+    assert notices.greyed_notice("Visualize/Create Animated Sweep")
+    assert menu_map.spec("Visualize/Create Turntable...")[1] == "allset.create_turntable"     # #108
     kind, target, _p = menu_map.normalize(menu_map.MAP["Modify/Evaluate Nodes/Snapshots"])
     assert (kind, target) == ("prop", "scene.allset_eval.snapshot")
