@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The buttons under the Tool Box's tools (``ALLSET_PT_toolbox_layouts``): Maya's quick layouts (Single
 Perspective, Four View; Front/Persp greyed), the Outliner toggle (docks an Outliner beside the column, or closes the
-docked / floating one) and command Search in the main viewport. Registered by ``toolbox``."""
+docked / floating one) and command Search in the main viewport; also the Tool Box toggle itself
+(``allset.toolbox_toggle``: closes the column or docks it back). Registered by ``toolbox``."""
 
 import bpy
 
@@ -143,6 +144,152 @@ class ALLSET_OT_toggle_outliner(bpy.types.Operator):
             return {'FINISHED'}
         # no 3D View to dock beside (a maximized view ...): the Outliner opens in its own window
         return bpy.ops.allset.open_editor(ui_type='OUTLINER')
+
+
+# --- the Tool Box itself (Maya Windows > UI Elements > Tool Box) --------------------------------------------------
+
+def toolbox_area(screen):
+    """This screen's Tool Box column, or None."""
+    return next((a for a in (screen.areas if screen else ()) if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)),
+                None)
+
+
+def kit_layout(screen):
+    """True for a kit layout (it has the Tool Box column, the Status Line strip or the shelf row), where the Tool Box
+    is the column; in other layouts it is the main 3D View's toolbar."""
+    from .shelf_strip import shelf_row_area, strip_area
+    return toolbox_area(screen) is not None or strip_area(screen) is not None or shelf_row_area(screen) is not None
+
+
+def toolbox_shown(screen):
+    """True while ``screen`` shows the Tool Box: the column in a kit layout, else the main 3D View's toolbar."""
+    if screen is None:
+        return False
+    if kit_layout(screen):
+        return toolbox_area(screen) is not None
+    from .status_line import main_view3d
+    area = main_view3d(screen)[0]
+    return area is not None and area.spaces.active.show_region_toolbar
+
+
+def make_column(space):
+    """Turn a 3D View space into the Tool Box column (= the template's column, ``is_toolbox``)."""
+    space.show_region_toolbar = True
+    space.show_region_header = False
+    space.show_region_tool_header = False
+    space.show_region_ui = False
+    space.show_gizmo = False
+    space.overlay.show_overlays = False
+    for name in dir(space):
+        if name.startswith("show_object_viewport_"):
+            setattr(space, name, False)
+
+
+def _column_target(screen):
+    """The area the column is split off: the docked Outliner left of the main 3D View, else that view."""
+    from .status_line import main_view3d
+    view = main_view3d(screen)[0]
+    if view is None:
+        return None
+    left = [a for a in outliner_areas(screen) if abs(a.x + a.width - view.x) <= GAP_PX
+            and a.y < view.y + view.height and view.y < a.y + a.height]
+    return min(left, key=lambda a: a.x, default=view)
+
+
+def dock_toolbox(context, window):
+    """Split a Tool Box column off the left of the Outliner (or the main 3D View). The new area, True when it comes
+    on a later tick (beside a four view), or None."""
+    screen = window.screen
+    from . import four_view
+    if four_view.is_four(screen) and not bpy.app.background:
+        return True if four_view.in_one_panel(context, window, lambda ctx, win, _p: dock_toolbox(ctx, win)) else None
+    area = _column_target(screen)
+    if area is None:
+        return None
+    from .toolbox_column import column_width, settle
+    region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+    # a few px over one toolbar column (an area edge snaps to a grid; narrower, Blender hides the tools): the
+    # rest is drawn in the toolbar colour (settle)
+    factor = min(0.45, (column_width(context) + GAP_PX) / max(area.width, 1))
+    before = {a.as_pointer() for a in screen.areas}
+    with context.temp_override(window=window, screen=screen, area=area, region=region):
+        if bpy.ops.screen.area_split(direction='VERTICAL', factor=factor) != {'FINISHED'}:
+            return None
+    new = next((a for a in screen.areas if a.as_pointer() not in before), None)
+    if new is None:
+        return None
+    if new.x > area.x:              # the column is the left piece
+        new, area = area, new
+    if new.type != 'VIEW_3D':       # split off the Outliner: the Outliner keeps the right piece
+        new.type = 'VIEW_3D'
+        area.type = 'OUTLINER'
+        from . import maya_outliner
+        maya_outliner.setup(area.spaces.active)
+    make_column(new.spaces.active)
+    settle(new.spaces.active, context.preferences)
+    return new
+
+
+def _undo_fallback(context, window, screen):
+    """The main view's toolbar the kit showed while the column was too narrow goes with the column."""
+    from . import layout_fit
+    from .status_line import main_view3d
+    if screen.name not in layout_fit._fallback:
+        return
+    layout_fit._fallback.discard(screen.name)
+    main = main_view3d(screen)[0]
+    if main is not None:
+        with context.temp_override(window=window, screen=screen, area=main):
+            main.spaces.active.show_region_toolbar = False
+
+
+def toggle_toolbox(context, window):
+    """Show or hide the Tool Box (Maya Windows > UI Elements > Tool Box). True = shown after, None = nothing done."""
+    screen = window.screen
+    from .status_line import main_view3d
+    if not kit_layout(screen):
+        area = main_view3d(screen)[0]
+        if area is None:
+            return None
+        space = area.spaces.active
+        with context.temp_override(window=window, screen=screen, area=area):
+            space.show_region_toolbar = not space.show_region_toolbar
+        return space.show_region_toolbar
+    column = toolbox_area(screen)
+    if column is not None:
+        from .maya_dock_windows import close_area
+        _undo_fallback(context, window, screen)
+        return False if close_area(context, window, column) else None
+    return True if dock_toolbox(context, window) is not None else None
+
+
+class ALLSET_OT_toolbox_toggle(bpy.types.Operator):
+    """Show or hide the Tool Box"""
+    bl_idname = "allset.toolbox_toggle"
+    bl_label = "Tool Box"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        from .maya_dock_windows import main_window
+        from .status_line import main_view3d
+        window = context.window
+        if window is not None and main_view3d(window.screen)[0] is None:
+            window = main_window(context.window_manager)   # run from the Preferences window or another editor window
+        if window is None or bpy.app.background:     # screen.area_close hangs without a UI
+            return {'CANCELLED'}
+        from .. import live_refs
+        win_ptr = live_refs.pointer(window)
+
+        # run after the operator: a toolbar flag set from inside it stayed as it was (marking/modal.py hb_ui), and
+        # a menu or the Preferences window may own the context now
+        def later():
+            win = live_refs.window(win_ptr)
+            if win is not None:
+                with bpy.context.temp_override(window=win, screen=win.screen):
+                    toggle_toolbox(bpy.context, win)
+            return None
+        bpy.app.timers.register(later, first_interval=0.0)
+        return {'FINISHED'}
 
 
 class ALLSET_OT_viewport_search(bpy.types.Operator):

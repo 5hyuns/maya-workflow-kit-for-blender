@@ -8913,6 +8913,7 @@
    "Blender": "Blender",
    "Menus": "Menus",
    "Shelf": "Shelf",
+   "Tool Box": "Tool Box",
    "UI Elements": "UI Elements"
   },
   "Labels/ui/mesh_tools": {
@@ -9677,7 +9678,8 @@
    "Quick Layouts": "Quick Layouts",
    "Search Blender commands in the main modeling viewport (F3)": "Search Blender commands in the main modeling viewport (F3)",
    "Search Commands": "Search Commands",
-   "Single Perspective View": "Single Perspective View"
+   "Single Perspective View": "Single Perspective View",
+   "Tool Box": "Tool Box"
   },
   "Labels/ui/trax_editor": {
    "Blend": "Blend",
@@ -12829,7 +12831,8 @@
   },
   "Tooltips/ui/toolbox_layouts": {
    "Maya Tool Box quick layout button": "Maya Tool Box quick layout button",
-   "Show or hide the Outliner": "Show or hide the Outliner"
+   "Show or hide the Outliner": "Show or hide the Outliner",
+   "Show or hide the Tool Box": "Show or hide the Tool Box"
   },
   "Tooltips/ui/trax_editor": {
    "Maya Trax Library > Insert Clip: the source clips": "Maya Trax Library > Insert Clip: the source clips",

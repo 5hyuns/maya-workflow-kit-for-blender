@@ -158,6 +158,16 @@ class ALLSET_UL_prefs_categories(bpy.types.UIList):
         layout.label(text=("    " * item.depth) + item.name)
 
 
+def _toolbox_shown(context):
+    from .maya_dock_windows import main_window
+    from .toolbox_layouts import toolbox_shown
+    window = main_window(context.window_manager)
+    return window is not None and toolbox_shown(window.screen)
+
+
+OP_STATES = {"allset.toolbox_toggle": _toolbox_shown}    # "op" rows: is the toggle on
+
+
 def _draw_row(layout, context, row):
     kind = row[0]
     if kind in {"pref", "scene"}:
@@ -179,6 +189,10 @@ def _draw_row(layout, context, row):
         note_row = layout.row()
         note_row.enabled = False
         note_row.label(text=note, icon='INFO')
+    elif kind == "op":
+        _k, idname, label = row
+        on = OP_STATES[idname](context)
+        layout.operator(idname, text=label, icon='CHECKBOX_HLT' if on else 'CHECKBOX_DEHLT', emboss=False)
     elif kind == "missing":
         _k, label, note = row
         sub = layout.row()

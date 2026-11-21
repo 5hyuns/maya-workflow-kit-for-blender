@@ -14,7 +14,6 @@ import traceback
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
-from .. import live_refs
 from ..names import PRODUCT
 from ..operators import keystate
 from ..ui import menu_data, menu_map, menu_sets
@@ -697,23 +696,8 @@ class ALLSET_OT_hb_ui(bpy.types.Operator):
             setattr(prefs, attr, not getattr(prefs, attr))
             return {'FINISHED'}
         if self.element == "TOOLBOX":
-            from ..ui.status_line import main_view3d
-            area, _r = main_view3d(context.screen)
-            if area is None:
-                return {'CANCELLED'}
-            # Set from inside an operator (or via screen.region_toggle / wm.context_toggle) the
-            # toolbar stayed visible in the GUI test; set right after the operator it works.
-            area_ptr = area.as_pointer()
-
-            def toggle():
-                # the area's pointer, looked up again: its window may have closed meanwhile (#36)
-                win, area_ = live_refs.find_area(area_ptr)
-                if area_ is not None:
-                    space = area_.spaces.active
-                    with bpy.context.temp_override(window=win, area=area_):
-                        space.show_region_toolbar = not space.show_region_toolbar
-            bpy.app.timers.register(toggle, first_interval=0.0)
-            return {'FINISHED'}
+            # the Tool Box column in a kit layout, else the main 3D View's toolbar (ui/toolbox_layouts.py)
+            return bpy.ops.allset.toolbox_toggle()
         return bpy.ops.allset.editor_toggle(editor=self.element)
 
 

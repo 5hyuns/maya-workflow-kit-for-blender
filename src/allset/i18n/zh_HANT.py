@@ -5777,6 +5777,7 @@ STRINGS = {
     "Open the Shape Editor: blendShape nodes (shape keys) with their targets' weights, Edit and Key\n(Maya Windows > Animation Editors > Shape Editor)": '開啟形狀編輯器：blendShape 節點 (形態鍵) 及其目標的權重、編輯和關鍵格\n(Maya 視窗 > 動畫編輯器 > 形狀編輯器)',
     'Open the welcome dialog once the pointer is in the main window, clear of its menu bar': '當指針位於主視窗內且離開其選單欄後，開啟歡迎對話框',
     'Show or hide the Outliner': '顯示或隱藏大綱視圖',
+    'Show or hide the Tool Box': '顯示或隱藏工具箱',
     "Render with Blender's render; a scene without a camera renders through persp, placed where the view looks\nfrom (like Maya)": '用 Blender 的算圖進行算圖; 沒有攝影機的場景\n通過放在視圖位置的 persp 算圖 (與 Maya 相同)',
     "Render the frame range like Maya's Render > Render Sequence: through the scene camera (without one: persp,\nplaced where the view looks from), or with All Render-Enabled Cameras through every Renderable camera, each into\nits own folder": '像 Maya 的 算圖 > 算圖序列 一樣算圖格範圍: 通過場景攝影機 (沒有時: 放在視圖位置的 persp)，\n或使用「所有可算圖攝影機」通過每台可算圖攝影機，各自存入自己的資料夾',
     'Open this editor in a new window (Maya Windows menu)': '在新視窗中開啟此編輯器 (Maya 視窗選單)',

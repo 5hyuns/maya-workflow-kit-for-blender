@@ -37,7 +37,7 @@ from .layout_fit import (ALLSET_OT_fit_columns, DOCK_MAX_PX, DOCK_MAYA_PX, FIT_W
                          auto_warp, dock_need, dock_width, fit_columns, note_scale, tab_changed, text_px,
                          time_slider_area)
 from .toolbox_layouts import (ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner,  # noqa: F401
-                              ALLSET_OT_viewport_search, ALLSET_PT_toolbox_layouts, dock_outliner,
+                              ALLSET_OT_toolbox_toggle,                               ALLSET_OT_viewport_search, ALLSET_PT_toolbox_layouts, dock_outliner,
                               floating_outliners, outliner_areas, outliner_shown)
 from .armature_modes import (ALLSET_MT_armature_modes, ALLSET_OT_armature_mode,  # noqa: F401
                              ALLSET_OT_joint_outliner_select, ALLSET_OT_pose_empty_click, ALLSET_OT_skinned_handle_click,
@@ -208,7 +208,7 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
         return {'FINISHED'} if is_toolbox(context.space_data) else {'PASS_THROUGH'}
 
 
-classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_skinned_handle_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
+classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_toggle_outliner, ALLSET_OT_toolbox_toggle, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_skinned_handle_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
 
 
 def register():

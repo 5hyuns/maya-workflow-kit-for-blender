@@ -151,6 +151,9 @@ class ALLSET_MT_ui_elements(bpy.types.Menu):
                      icon='CHECKBOX_HLT' if strip_area(context.screen) else 'CHECKBOX_DEHLT')
         layout.prop(prefs, "show_command_line")
         layout.prop(prefs, "show_help_line")
+        from .toolbox_layouts import toolbox_shown
+        draw_safe.op(layout, "allset.toolbox_toggle", text="Tool Box",
+                     icon='CHECKBOX_HLT' if toolbox_shown(context.screen) else 'CHECKBOX_DEHLT')
 
 
 class ALLSET_MT_menu_bar(bpy.types.Menu):

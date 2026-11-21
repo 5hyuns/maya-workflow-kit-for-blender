@@ -10,6 +10,8 @@ Blender's preferences, so a page row is one of:
   ("blender", label, section, path, note)    a Blender preference: shown read-only (``preferences.<path>``) with the
                                              Recommended setup note and a button that opens that Preferences section
   ("missing", label, note)                   a Maya control with no kit / Blender counterpart (greyed + the reason)
+  ("op", idname, label)                      a check box that runs a kit toggle operator (``maya_prefs.OP_STATES``
+                                             tells whether it is on)
 
 ``MAYA_START_VALUES`` = the default value of each scene row, like Maya (Edit > Restore Default Settings).
 """
@@ -45,7 +47,7 @@ PAGES = (
             ("missing", "Time Slider / Range Slider", "Part of the Maya layout's timeline"),
             ("pref", "show_command_line", "Command Line"),
             ("pref", "show_help_line", "Help Line"),
-            ("pref", "maya_toolbox", "Tool Box"),
+            ("op", "allset.toolbox_toggle", "Tool Box"),
         ]),
         ("Panel Configurations", [
             ("pref", "maya_layout_on_open", "When opening: Restore saved layouts from file"),

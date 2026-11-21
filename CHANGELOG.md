@@ -18,6 +18,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Editor, which opens first when none is open (#434).
 - macOS: the kit's own Ctrl keys (such as Ctrl+1 Isolate Select) also answer Cmd, like Blender's, and a Ctrl key the kit
   removed or replaced no longer leaves its Cmd copy behind (#432).
+- Hiding the Tool Box (Preferences > UI Elements, Windows > UI Elements > Tool Box, the hotbox) closes the Tool Box
+  column of the Maya layout instead of leaving Blender's toolbar in it; showing it again puts the column back left of
+  the Outliner. In Blender's own layouts it shows or hides the viewport's toolbar (#437).
 
 ## [0.20.1] — 2026-11-21
 
