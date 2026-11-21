@@ -148,7 +148,7 @@ def patch_in_view_mmb(kd):
     _add(kd, "Mesh", "allset.inview_drag", make_event("MIDDLEMOUSE"), {"row": -1}, shadows=("3D View",))
 
 
-# --- Edge slide / along normals with the Move tool (#262, #391, #394) -------------------------------------------
+# --- Edge slide / along normals with the Move tool (#262, #391, #394); local rotate / scale (#430) ------------
 # Maya: Ctrl+Shift+middle-drag with the Move tool slides the selected components along their edges (the Transform
 # Constraint setting drives the handles and the plain MMB drag), Ctrl+middle-drag moves them along their normals.
 # Outside mesh edit mode the operator's poll fails and the event goes on.
@@ -169,3 +169,9 @@ def patch_component_slide(kd):
     # Maya: Ctrl+middle-drag with the Move tool moves the selected components along their normals
     _add(kd, "3D View Tool: Move", "allset.component_slide", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
          {"mode": 'NORMAL'})
+    # Maya: Ctrl+middle-drag with the Rotate tool turns each selected component group about its own normal (local X),
+    # with the Scale tool scales it across its normal (local YZ); outside mesh edit mode the poll fails, the event goes on
+    _add(kd, "3D View Tool: Rotate", "allset.component_local", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
+         {"mode": 'ROTATE'})
+    _add(kd, "3D View Tool: Scale", "allset.component_local", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
+         {"mode": 'SCALE'})

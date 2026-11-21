@@ -6646,6 +6646,8 @@ STRINGS = {
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': 'メッシュ編集モードで移動マニピュレータのハンドルを Ctrl+Shift+ドラッグ: 選択コンポーネントを\nエッジに沿ってスライド (Maya)',
     'Move Edges Along Normals': 'エッジを法線に沿って移動',
     'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '選択したエッジを長さを保ったままそれぞれの法線に沿って移動 (Maya の移動ツールで Ctrl+中ボタンドラッグ)',
+    'Rotate / Scale Components Locally': 'ローカルにコンポーネントを回転 / スケール',
+    'Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)': '選択したコンポーネントのグループをそれぞれの法線を軸に回転、または法線に垂直な面内でスケール (Maya の回転 / スケールツールで Ctrl+中ボタンドラッグ)',
     '10s': '10 秒',
     '12 fps': '12 fps',
     '15 fps': '15 fps',

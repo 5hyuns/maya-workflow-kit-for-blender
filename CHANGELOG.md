@@ -36,6 +36,10 @@ showed what to fix.
   direction), Select > Components > Control Vertex for curves and surfaces, Select > Surface Border and CV Selection
   Boundary, the Shape Editor's Shapes > Rebuild Target, Edit > Delete All by Type > Sounds, and Windows > Home
   (Blender's start screen).
+- Rotate and Scale tools, mesh components: Ctrl+middle-drag turns each group of connected selected components about
+  its own normal, or scales it across its normal (the face stays in its plane), around the group's centre, like Maya.
+  The drag to the right turns clockwise / grows, to the left the other way; in Object Mode Ctrl+middle-drag is the
+  plain middle drag (#430).
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces

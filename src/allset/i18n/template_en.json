@@ -5437,6 +5437,12 @@
    "World Space": "World Space",
    "polyBevel": "polyBevel"
   },
+  "Labels/operators/component_local": {
+   "Amount": "Amount",
+   "Rotate": "Rotate",
+   "Rotate / Scale Components Locally": "Rotate / Scale Components Locally",
+   "Scale": "Scale"
+  },
   "Labels/operators/component_scale": {
    "Left": "Left",
    "Middle": "Middle",
@@ -11336,6 +11342,9 @@
    "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)": "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)",
    "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)": "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)",
    "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)": "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)"
+  },
+  "Tooltips/operators/component_local": {
+   "Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)": "Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)"
   },
   "Tooltips/operators/component_scale": {
    "Scale components along one axis, stopping at zero without flipping": "Scale components along one axis, stopping at zero without flipping",

@@ -6647,6 +6647,8 @@ STRINGS = {
     'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': '在网格编辑模式下 Ctrl+Shift+拖动移动操纵器的控制柄：将选定组件沿其\n边滑动 (Maya)',
     'Move Edges Along Normals': '沿法线移动边',
     'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '沿各自的法线移动选定的边并保持其长度 (Maya 移动工具的 Ctrl+中键拖动)',
+    'Rotate / Scale Components Locally': '局部旋转 / 缩放组件',
+    'Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)': '将选定的组件组绕各自的法线旋转，或在垂直于法线的平面内缩放 (Maya 旋转 / 缩放工具的 Ctrl+中键拖动)',
     '10s': '10 秒',
     '12 fps': '12 fps',
     '15 fps': '15 fps',
