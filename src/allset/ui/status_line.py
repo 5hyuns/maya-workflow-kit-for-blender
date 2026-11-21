@@ -425,7 +425,10 @@ def _set_workspace(self, value):
 
 def draw_tool_header(self, context):
     """Status Line at the start of the main 3D View's tool header row."""
-    from .. import preferences
+    from .. import preferences, switch
+    if not switch._registered[0]:
+        # left in the header's draw list by another add-on's own header swap after Maya mode went off (#423)
+        return
     try:
         if not preferences.get(context).show_status_line:
             return

@@ -117,3 +117,16 @@ def test_blender_class_lookup():
         assert safe_reg.blender_class("VIEW3D_PT_active_tool") is cls
     finally:
         bpy.utils.register_class(cls)
+
+
+def test_tool_header_left_in_another_list_draws_nothing():
+    """Another add-on that swaps the tool header's own draw can keep the kit's Status Line function in the header's
+    list after Maya mode went off; drawn then, it draws nothing instead of failing on the missing Maya properties."""
+    switch.set_mode(True, layout=False)
+    fn = import_module(kit.MODULE + ".ui.status_line").draw_tool_header
+    switch.set_mode(False, layout=False)
+
+    class Header:
+        layout = None       # any use of the layout would fail
+
+    fn(Header(), bpy.context)
