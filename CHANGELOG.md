@@ -42,12 +42,6 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   leaves alone a layout that another add-on made from the Maya layout (only the kit's own Maya layout goes), no longer
   puts back sidebar panels their add-on took out, and copes when the kit's own panels were taken out and put back.
   (#423)
-- Multi-Cut works with Symmetry like Maya: with Object, World or Topology symmetry on, a cut, a Ctrl+click edge loop
-  and a slice are made on both sides of the mesh, and the preview shows the mirrored side too. A cut that is its own
-  mirror (across the middle) is made once. (#420)
-- Isolate Select stays with its panel when the layout changes, like Maya: a Space tap from the single perspective view to
-  the four view and back used to move the isolation to the side panel and then drop it, so the perspective view showed
-  and marquee-selected the hidden objects again. Each panel of the four view keeps its own Isolate Select. (#422)
 
 ## [0.20.0] — 2026-11-20
 

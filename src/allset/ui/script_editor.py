@@ -21,6 +21,7 @@ import bpy
 from bpy.props import BoolProperty, StringProperty
 
 from .. import undo_steps
+from . import own_draw
 
 _WINDOWS = set()
 LANG_PROP = "allset_script_lang"        # "MEL" / "Python" on the kit's script texts
@@ -247,7 +248,7 @@ def draw_icons(layout):
 
 def _info_header(self, context):
     if not is_script_editor(context):
-        return _orig["info"](self, context)
+        return own_draw.original("INFO_HT_header", _info_header)(self, context)
     from . import editor_chrome
     layout = self.layout
     layout.template_header()
@@ -258,7 +259,7 @@ def _info_header(self, context):
 
 def _text_header(self, context):
     if not is_script_editor(context):
-        return _orig["text"](self, context)
+        return own_draw.original("TEXT_HT_header", _text_header)(self, context)
     layout = self.layout
     space = context.space_data
     layout.template_header()
@@ -311,8 +312,7 @@ def _load_post(*_args):
     _carry["texts"], _carry["shown"] = [], {}
 
 
-_orig = {}
-HEADERS = (("info", "INFO_HT_header", _info_header), ("text", "TEXT_HT_header", _text_header))
+HEADERS = (("INFO_HT_header", _info_header), ("TEXT_HT_header", _text_header))
 
 classes = (ALLSET_OT_script_run, ALLSET_OT_script_echo, ALLSET_OT_script_clear, ALLSET_OT_script_tab)
 
@@ -320,10 +320,8 @@ classes = (ALLSET_OT_script_run, ALLSET_OT_script_echo, ALLSET_OT_script_clear, 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    for key, name, fn in HEADERS:
-        funcs = getattr(bpy.types, name)._dyn_ui_initialize()
-        _orig[key] = funcs[0]
-        funcs[0] = fn
+    for name, fn in HEADERS:
+        own_draw.swap(name, fn)
     bpy.app.handlers.load_pre.append(_load_pre)
     bpy.app.handlers.load_post.append(_load_post)
 
@@ -332,9 +330,8 @@ def unregister():
     for handlers, fn in ((bpy.app.handlers.load_pre, _load_pre), (bpy.app.handlers.load_post, _load_post)):
         if fn in handlers:
             handlers.remove(fn)
-    for key, name, _fn in HEADERS:
-        if key in _orig:
-            getattr(bpy.types, name)._dyn_ui_initialize()[0] = _orig.pop(key)
+    for name, fn in HEADERS:
+        own_draw.restore(name, fn)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     _WINDOWS.clear()

@@ -9,12 +9,10 @@ import bpy
 from .editor_kinds import GE, DS, UV, enabled, is_graph, is_dope, is_uv
 from .editor_menu_bar import draw_menus
 from .editor_icon_row import draw_icons
+from . import own_draw as _own_draw
 
 
 # --- header draws ------------------------------------------------------------------------------------------------
-
-_orig = {}
-
 
 def toolbar_row(area):
     """True when the editor's footer is shown at the top: it holds Maya's toolbar row under the menu bar."""
@@ -25,7 +23,7 @@ def toolbar_row(area):
 
 def _graph_header(self, context):
     if not (enabled(context) and is_graph(context.space_data)):
-        return _orig["graph"](self, context)
+        return _own_draw.original("GRAPH_HT_header", _graph_header)(self, context)
     layout = self.layout
     layout.template_header()
     draw_menus(layout, context, GE)
@@ -37,7 +35,7 @@ def _graph_header(self, context):
 
 def _dope_header(self, context):
     if not (enabled(context) and is_dope(context.space_data)):
-        return _orig["dope"](self, context)
+        return _own_draw.original("DOPESHEET_HT_header", _dope_header)(self, context)
     layout = self.layout
     layout.template_header()
     draw_menus(layout, context, DS)
@@ -53,13 +51,13 @@ def _dope_header(self, context):
 # top and draws the toolbar. Timeline mode keeps Blender's footer.
 def _graph_footer(self, context):
     if not (enabled(context) and is_graph(context.space_data)):
-        return _orig["graph_foot"](self, context)
+        return _own_draw.original("GRAPH_HT_playback_controls", _graph_footer)(self, context)
     draw_icons(self.layout, context, GE)
 
 
 def _dope_footer(self, context):
     if not (enabled(context) and is_dope(context.space_data)):
-        return _orig["dope_foot"](self, context)
+        return _own_draw.original("DOPESHEET_HT_playback_controls", _dope_footer)(self, context)
     draw_icons(self.layout, context, DS)
 
 
@@ -132,9 +130,8 @@ def draw_uv_tool_header(self, context):
     return True
 
 
-HEADERS = (("graph", "GRAPH_HT_header", _graph_header), ("dope", "DOPESHEET_HT_header", _dope_header),
-           ("graph_foot", "GRAPH_HT_playback_controls", _graph_footer),
-           ("dope_foot", "DOPESHEET_HT_playback_controls", _dope_footer))
+HEADERS = (("GRAPH_HT_header", _graph_header), ("DOPESHEET_HT_header", _dope_header),
+           ("GRAPH_HT_playback_controls", _graph_footer), ("DOPESHEET_HT_playback_controls", _dope_footer))
 
 
 def own_draw(cls):
@@ -144,16 +141,12 @@ def own_draw(cls):
 
 
 def patch_headers():
-    """Swap only the class's own draw (the first draw function), so UI appended to the header by others (e.g. the
-    kit's Graph Editor toolbar) keeps drawing after it."""
-    for key, name, fn in HEADERS:
-        funcs = getattr(bpy.types, name)._dyn_ui_initialize()
-        if key not in _orig:
-            _orig[key] = funcs[0]
-        funcs[0] = fn
+    """Swap only Blender's own draw (ui/own_draw.py), so UI appended to the header by others (e.g. the kit's Graph
+    Editor toolbar) keeps drawing after it."""
+    for name, fn in HEADERS:
+        _own_draw.swap(name, fn)
 
 
 def unpatch_headers():
-    for key, name, _fn in HEADERS:
-        if key in _orig:
-            getattr(bpy.types, name)._dyn_ui_initialize()[0] = _orig.pop(key)
+    for name, fn in HEADERS:
+        _own_draw.restore(name, fn)

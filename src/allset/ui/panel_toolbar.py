@@ -20,7 +20,7 @@ import math
 import bpy
 import numpy as np
 
-from . import panel_menus, status_icons, toolbar_fit
+from . import own_draw, panel_menus, status_icons, toolbar_fit
 from .. import preferences
 from .toolbar_fit import BAR_UNITS
 from .status_icons import DARK, DIM, GREY, LIGHT, TEAL, TEAL_DARK, TEAL_LIGHT, letter
@@ -643,7 +643,7 @@ def maya_layout(context):
 
 def _header(self, context):
     if not maya_layout(context):
-        return _orig["header"](self, context)
+        return own_draw.original("VIEW3D_HT_header", _header)(self, context)
     layout = self.layout
     row = layout.row(align=True)
     for label, idname in panel_menus.BAR:
@@ -653,37 +653,22 @@ def _header(self, context):
 
 def _tool_header(self, context):
     if not maya_layout(context):
-        return _orig["tool_header"](self, context)
+        return own_draw.original("VIEW3D_HT_tool_header", _tool_header)(self, context)
     draw_toolbar(self.layout, context)
     return None
 
 
-HEADERS = (("header", "VIEW3D_HT_header", _header), ("tool_header", "VIEW3D_HT_tool_header", _tool_header))
-_orig = {}
-
-
-def _own_index(cls_name, funcs):
-    """Index of the class's own draw among its draw functions (something may have been prepended)."""
-    for i, f in enumerate(funcs):
-        if getattr(f, "__qualname__", "") == f"{cls_name}.draw":
-            return i
-    return 0
+HEADERS = (("VIEW3D_HT_header", _header), ("VIEW3D_HT_tool_header", _tool_header))
 
 
 def patch_headers():
-    for key, name, fn in HEADERS:
-        funcs = getattr(bpy.types, name)._dyn_ui_initialize()
-        i = _own_index(name, funcs)
-        if key not in _orig:
-            _orig[key] = funcs[i]
-        funcs[i] = fn
+    for name, fn in HEADERS:
+        own_draw.swap(name, fn)
 
 
 def unpatch_headers():
-    for key, name, fn in HEADERS:
-        if key in _orig:
-            funcs = getattr(bpy.types, name)._dyn_ui_initialize()
-            funcs[funcs.index(fn)] = _orig.pop(key)
+    for name, fn in HEADERS:
+        own_draw.restore(name, fn)
 
 
 CLASSES = (ALLSET_PT_panel_toolbar_more, ALLSET_MT_panel_cameras, ALLSET_OT_pt_hover, ALLSET_OT_pt_camera_rmb)
