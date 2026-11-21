@@ -7386,4 +7386,11 @@ STRINGS = {
     'Alpha Gain': 'Alpha 增益',
     "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)": '图像平面绘制的不透明度：调低后图像变透明，便于在上面描绘 (Blender: 图像空物体的不透明度)',
     "Display Mode of the image plane, like the Image Plane button's right-click menu": '图像平面的显示模式 (与图像平面按钮的右键菜单相同)',
+    'Edge Loop': '循环边',
+    'Edge Ring': '环形边',
+    'Shell': '壳',
+    'UV Edge Loop': 'UV 循环边',
+    'Selection Constraint': '选择约束',
+    "Angle tolerance in degrees: a pick also selects the connected components whose normal is within this angle of the picked one's (0 = only what is picked)": '角度容差 (度)：选择时，也会选中与所选元素法线夹角在此角度内的相连元素 (0 = 只选所点的)',
+    'Maya selection constraint for picks in component mode': '组件模式下选择时的 Maya 选择约束',
 }

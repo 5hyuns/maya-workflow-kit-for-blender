@@ -1266,9 +1266,10 @@ MARKING.update({
     **{f"{m}/Select/Automatic Camera-Based Selection": (
         "Camera-Based Selection", "Blender has no automatic switch: turn Camera-Based Selection on or off yourself.")
        for m in _TOOLS},
-    **{f"{m}/Selection Constraints": (
-        "Select Loops / Linked", "Blender has no selection constraints: use Select > Select Loops or Select Linked "
-        "after picking.") for m in _TOOLS},
+    **{f"{m}/Selection Constraints/{label}": (
+        "Select Loops / Linked", "Only the Angle constraint is in the kit: for this one use Select > Select Loops "
+        "or Select Linked after picking.")
+       for m in _TOOLS for label in ("Border", "Edge Loop", "Edge Ring", "Shell", "UV Edge Loop")},
 })
 
 

@@ -61,7 +61,9 @@ def test_greyed_counts_and_notices():
         assert substitute and line.endswith("."), key
     # Maya 2026 adds the shared Select / constraint submenus of the tool option menus and Polygon Display lists
     # (104); the three UV Editor Shift+RMB menus add 25 (their shared Tools / Pinning lists repeat per menu)
-    assert len(greyed) <= 129, len(greyed)
+    # #435: Selection Constraints is a submenu now (Off / Angle work; Border, Edge Loop, Edge Ring, Shell,
+    # UV Edge Loop greyed in each tool option menu, +12)
+    assert len(greyed) <= 141, len(greyed)
 
 
 def test_item_paths_are_mapped():

@@ -199,6 +199,9 @@ class ALLSET_OT_uv_shell_pick(bpy.types.Operator):
         region = context.region
         space = context.space_data
         if not active(context) or region is None or region.type != 'WINDOW' or space is None:
+            from . import sel_constraint     # Selection Constraint > Angle grows Blender's pick afterwards (#435)
+            if region is not None and region.type == 'WINDOW':
+                sel_constraint.watch(context, event)
             return {'PASS_THROUGH'}
         xy = (event.mouse_region_x, event.mouse_region_y)
         if space.type == 'VIEW_3D':
@@ -278,6 +281,9 @@ class ALLSET_OT_uv_shell_box(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
+        if not active(context):
+            from . import sel_constraint     # Selection Constraint > Angle grows Blender's marquee afterwards (#435)
+            sel_constraint.watch(context, event)
         if active(context):
             _box["state"] = {"before": _face_sets(context), "shift": event.shift, "ctrl": event.ctrl, "ticks": 0}
             if not bpy.app.timers.is_registered(_box_tick):

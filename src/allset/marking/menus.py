@@ -795,7 +795,12 @@ def _constraints():
     constraint; Transform Constraints = the kit's Move-tool slide setting (operators/xform_constraint.py)."""
     def tc(mode):
         return ("allset.xform_constraint", {"mode": mode})
-    return [("Selection Constraints", unavailable()),
+
+    def sc(mode):          # operators/sel_constraint.py (#435)
+        return ("wm.context_set_enum", {"data_path": "window_manager.allset_sel_constraint", "value": mode})
+    return [("Selection Constraints", Sub(items=[("Off", sc('OFF')), ("Angle", sc('ANGLE')), ("Border", None),
+                                                 ("Edge Loop", None), ("Edge Ring", None), ("Shell", None),
+                                                 ("UV Edge Loop", None)])),
             ("Transform Constraints", Sub(items=[("Off", tc('NONE')), ("Edge Slide", tc('EDGE')),
                                                  ("Surface Slide", tc('SURFACE')),
                                                  ("Along Normals", tc('NORMAL'))]))]

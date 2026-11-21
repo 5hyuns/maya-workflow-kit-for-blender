@@ -31,8 +31,6 @@ UNIT = ("vertex", "edge", "face")
 GREY = {
     "Modeling Toolkit/Highlight Backfaces": (
         "X-ray", "Blender does not highlight back faces separately: use X-ray (Alt+Z) to see and pick them."),
-    "Modeling Toolkit/Selection Constraint": (
-        "Select menu", "Blender has no selection constraint: use Select > Select Loops / Linked / Similar."),
     "Modeling Toolkit/UV": (
         "UV Editor", "UV components are edited in the UV Editor (Windows > Modeling Editors > UV Editor)."),
     "Modeling Toolkit/Soft Selection/Global": (
@@ -226,7 +224,13 @@ def draw(layout, context):
     split.label(text="Symmetry")
     from .status_line import draw_symmetry
     draw_symmetry(split, context)
-    _grey(layout, "Modeling Toolkit/Selection Constraint", "Selection Constraint: Off")
+    split = layout.split(factor=0.4)
+    split.label(text="Selection Constraint")
+    row = split.row(align=True)
+    row.prop(wm, "allset_sel_constraint", text="")
+    sub = row.row(align=True)
+    sub.enabled = wm.allset_sel_constraint == 'ANGLE'      # Maya's number field next to the list: the Angle
+    sub.prop(wm, "allset_sel_constraint_angle", text="")
     split = layout.split(factor=0.4)
     split.label(text="Transform Constraint")
     from .. import preferences

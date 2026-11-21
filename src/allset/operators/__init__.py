@@ -187,6 +187,7 @@ from . import joint_display  # noqa: E402  #165: Radius row, Local Rotation Axes
 classes += joint_display.classes
 from . import skin_method  # noqa: E402  #167: Weight Blended / DQ skinning method
 from . import uv_shell_select  # noqa: E402  #172: Maya UV Shell selection in the 3D View / UV Editor
+from . import sel_constraint  # noqa: E402  #435: Selection Constraint > Angle
 classes += uv_shell_select.classes
 from . import uv_loop_pick  # noqa: E402  UV Editor double-click: UV edge loop / ring, UV shell
 classes += uv_loop_pick.classes
@@ -292,6 +293,7 @@ def register():
     uv_tools.register_props()
     uv_toolkit_ops.register_props()
     uv_shell_select.register_props()
+    sel_constraint.register_props()
     taphold.register_bindings()
     graph_keys.register_bindings()
     graph_key_menu.register_bindings()
@@ -440,6 +442,7 @@ def unregister():
     film_fit.unregister_props()
     camera_overscan.unregister_props()
     material.unregister_props()
+    sel_constraint.unregister_props()
     uv_shell_select.unregister_props()
     uv_toolkit_ops.unregister_props()
     uv_tools.unregister_props()

@@ -8,6 +8,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ### Added
 - Image planes: the Attribute Editor tab of an image plane (imagePlane) has Image Plane Attributes with Display Mode,
   Image Name and Alpha Gain. Lower Alpha Gain to see through a reference image and trace over it (#436).
+- Selection Constraint: Angle, like Maya. Set it in the Modeling Toolkit (Selection Constraint: Angle and the angle
+  next to it) or in the Move / Rotate / Scale / Select tool option menus (Selection Constraints > Angle). A click or
+  marquee on faces, edges or vertices then also selects the connected ones whose normal is within that angle of the
+  picked one, so one click picks a flat or gently curved patch; Shift and Ctrl add and remove whole patches (#435).
 
 ### Fixed
 - UV > 3D Grab UV Tool picked over the 3D View no longer raises a Python error: it sets the Grab tool in the UV

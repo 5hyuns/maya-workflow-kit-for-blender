@@ -7385,4 +7385,11 @@ STRINGS = {
     'Alpha Gain': 'アルファ ゲイン',
     "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)": 'イメージプレーンを描く不透明度です。下げると画像が透けて、上からなぞれます (Blender: 画像エンプティの不透明度)',
     "Display Mode of the image plane, like the Image Plane button's right-click menu": 'イメージプレーンの表示モードです (イメージプレーン ボタンの右クリックメニューと同じ)',
+    'Edge Loop': 'エッジループ',
+    'Edge Ring': 'エッジリング',
+    'Shell': 'シェル',
+    'UV Edge Loop': 'UV エッジループ',
+    'Selection Constraint': '選択の制約',
+    "Angle tolerance in degrees: a pick also selects the connected components whose normal is within this angle of the picked one's (0 = only what is picked)": '角度の許容値 (度) です。選択すると、選んだ要素と法線の角度がこの値以内の、つながった要素も選ばれます (0 = 選んだものだけ)',
+    'Maya selection constraint for picks in component mode': 'コンポーネント モードで選ぶときの Maya の選択の制約',
 }

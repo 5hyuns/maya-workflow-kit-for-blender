@@ -2677,8 +2677,8 @@ def _m63_2_paths():
     missing = [p for p in paths if p not in mm]
     check(f"[M63-2] every Mesh / Components / Tools button runs its Maya menu action (unmapped {missing})", not missing)
     notes = mod("ui.notices").PANEL_NOTICES
-    grey = ["Modeling Toolkit/Highlight Backfaces", "Modeling Toolkit/Selection Constraint", "Modeling Toolkit/UV"]
-    check(f"[M63-2] greyed rows (Highlight Backfaces, Selection Constraint, UV) carry a tooltip / Help Line "
+    grey = ["Modeling Toolkit/Highlight Backfaces", "Modeling Toolkit/UV"]       # Selection Constraint works (#435)
+    check(f"[M63-2] greyed rows (Highlight Backfaces, UV) carry a tooltip / Help Line "
           f"notice ({[g for g in grey if g not in notes]} missing)", all(g in notes for g in grey))
     check("[M63-2] Target Weld is a real tool now, not greyed", mm.get("Mesh Tools/Target Weld", (None,))[0] == "tool")
     ob = edit_cube([0])
