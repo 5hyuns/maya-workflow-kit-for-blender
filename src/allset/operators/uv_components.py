@@ -56,6 +56,41 @@ def find_uv_editor(context):
     return None, None
 
 
+def in_uv_editor(context):
+    from ..ui import shelf
+    area = context.area
+    return area is not None and area.ui_type == 'UV' and not shelf.is_kit_row(area.spaces.active)
+
+
+def set_uv_editor_tool(context, idname, tries=20):
+    """Pick the UV Editor tool ``idname`` from anywhere (a menu run over the 3D View, the shelf): the tool is set in
+    the open UV Editor, which opens first when there is none (the UV tool works in the UV Editor)."""
+    win, area = find_uv_editor(context)
+    if area is None:
+        res = bpy.ops.allset.open_editor(ui_type='UV')
+        if 'FINISHED' not in res:
+            return res
+        win, area = find_uv_editor(context)
+    if area is None:
+        # the new window opens on a later tick: set the tool once it is there
+        def later(left=[tries]):
+            w, a = find_uv_editor(bpy.context)
+            if a is not None:
+                _tool_set_in(w, a, idname)
+                return None
+            left[0] -= 1
+            return 0.1 if left[0] > 0 else None
+        bpy.app.timers.register(later, first_interval=0.1)
+        return {'FINISHED'}
+    return _tool_set_in(win, area, idname)
+
+
+def _tool_set_in(win, area, idname):
+    region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+    with bpy.context.temp_override(window=win, screen=win.screen, area=area, region=region):
+        return bpy.ops.wm.tool_set_by_id(name=idname, space_type='IMAGE_EDITOR')
+
+
 def prepare(context):
     """Edit mode on the active mesh with UV Sync Selection on (the UVs show in the UV Editor at once)."""
     ob = context.view_layer.objects.active

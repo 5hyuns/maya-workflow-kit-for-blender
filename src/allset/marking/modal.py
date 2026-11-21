@@ -213,6 +213,11 @@ def _run_action(context, action, option, path):
         return res
     if kind == "v3d" and (context.area is None or context.area.type != 'VIEW_3D'):
         return bpy.ops.allset.menu_run(op=target, props=json.dumps(props))
+    if target == "wm.tool_set_by_id" and props.get("space_type") == 'IMAGE_EDITOR':
+        # a UV Editor tool picked over another editor (main UV menu over the 3D View): set it in the UV Editor
+        from ..operators import uv_components
+        if not uv_components.in_uv_editor(context):
+            return uv_components.set_uv_editor_tool(context, props["name"])
     mod, name = target.split(".")
     op = getattr(getattr(bpy.ops, mod), name)
     if target == "object.modifier_add":
