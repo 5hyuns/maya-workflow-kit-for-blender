@@ -136,7 +136,7 @@ class ALLSET_OT_component_local(bpy.types.Operator):
 
     mode: bpy.props.EnumProperty(items=(('ROTATE', "Rotate", "Turn about the normal"),
                                         ('SCALE', "Scale", "Scale across the normal")),
-                                 default='ROTATE', options={'SKIP_SAVE'})
+                                 default='ROTATE', options={'HIDDEN', 'SKIP_SAVE'})
     # hidden: like Maya, the drag leaves no Adjust Last Operation panel behind
     amount: bpy.props.FloatProperty(name="Amount", default=0.0, options={'HIDDEN', 'SKIP_SAVE'})
 
