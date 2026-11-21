@@ -3,7 +3,13 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.20.1] — 2026-11-21
+
+Thank you for the quick reports after 0.20.0. This update fixes FBX rigs, floating panels and working next to other
+workflow add-ons, makes Multi-Cut follow Symmetry, adds the Connect Tool's Segments and Maya's Curve options for
+Extrude, and lets Isolate Select show only the faces you picked. Thanks to @cnzim for the Move Skinned Joints fix,
+and to @Darkkanji, @lucafrancescoorlandi, @invaderzod, @suenwaichit, @cookies908 and @NevilArt for reports that
+showed what to fix.
 
 ### Added
 - Edit Mesh > Extrude option box: Maya's Curve rows (Curve: None / Selected / Generated, Taper, Twist; Taper and
