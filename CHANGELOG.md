@@ -11,7 +11,7 @@ Extrude, and lets Isolate Select show only the faces you picked. The Rotate and 
 component group about its own normal with Ctrl+middle-drag, Keep Blender Keys brings back Tab and Alt+E next to the
 Maya keys, and more Maya menu items run. Thanks to @cnzim for the Move Skinned Joints fix, and to @Darkkanji,
 @lucafrancescoorlandi, @invaderzod, @suenwaichit, @cookies908, @NevilArt and @ganesh2004jadhav-boop for reports that
-showed what to fix.
+showed what to fix, and to @scoegrams for the Keep Blender Keys idea.
 
 ### Added
 - Edit Mesh > Extrude option box: Maya's Curve rows (Curve: None / Selected / Generated, Taper, Twist; Taper and
@@ -32,7 +32,7 @@ showed what to fix.
   Tab switches between Object Mode and Edit Mode (the operator search stays on Ctrl+F) and Alt+E toggles Local View
   (instead of Alt+E Clear Rotation). Each can be turned off on its own. Keys Maya mode already uses (Ctrl+Tab, Q, W,
   E, R, the period key, F, Space) stay Maya keys, the Quad Draw tool keeps its Tab, and the other editors keep their
-  Tab. (#226)
+  Tab. Thanks to @scoegrams for the idea and the key list. (#226)
 - More Maya menu items run (#108): Visualize > Create Turntable (a copy of the view's camera turns once around the
   selection on a group pivoted at its centre, and the view looks through it; the option box sets the frames and the
   direction), Select > Components > Control Vertex for curves and surfaces, Select > Surface Border and CV Selection

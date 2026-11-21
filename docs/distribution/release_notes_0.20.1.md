@@ -50,7 +50,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   changes the 3D View sidebar or the editor headers (for example Blenda 4D), and leaves that add-on's layouts and
   headers as they were.
 - **Keep Blender Keys (#226):** a new add-on preference (off by default) keeps Tab (Object / Edit Mode) and Alt+E
-  (Local View) as Blender keys next to the Maya keys in the 3D View.
+  (Local View) as Blender keys next to the Maya keys in the 3D View. Thanks to @scoegrams for the idea.
 - **More Maya menu items (#108):** Visualize > Create Turntable, Control Vertex and Surface Border selection for curves
   and surfaces, the Shape Editor's Rebuild Target, Delete All by Type > Sounds and Windows > Home now run.
 
@@ -62,8 +62,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 
 Thanks to @cnzim (#415) for the pull request, and to @Darkkanji (#416), @lucafrancescoorlandi (#417, #418),
 @invaderzod (#419, #420), @suenwaichit (#421), @cookies908 (#422), @NevilArt (#423) and @ganesh2004jadhav-boop (#428)
-for reports that showed what
-to fix. Please keep telling us what breaks or feels off in real work.
+for reports that showed what to fix, and to @scoegrams (#226) for the Keep Blender Keys idea. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
 goal behind it.
