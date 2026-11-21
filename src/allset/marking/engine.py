@@ -343,17 +343,20 @@ class Session:
             # a list row's submenu opens on hover, beside the row (a Qt menu cascade)
             self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]), cascade=True)
 
-    def release(self, x, y, t):
-        """The button that opened the menu was released."""
+    def release(self, x, y, t, held=None):
+        """The button that opened the menu was released. ``held``: how long the button was down for the quick-click
+        test, when the caller knows it better than ``t - t0`` (the press and the release handled together after a
+        slow frame: ``t0`` is dated back into that frame, the click was still quick)."""
         if self.mode != "PRESS":
             return self.result
         self.move(x, y, t)
+        held = t - self.t0 if held is None else held
         item, opt = self.hover
         if len(self.stack) == 1 and t - self.t0 < self.params.mark_time and (
                 (item is not None and item.kind == "list")
                 or (item is None and self.layout.below_list(*self._rel(x, y)))):
             item, opt = self.layout.nearest_radial(*self._rel(x, y)), False   # a mark: its direction, not the row
-        if len(self.stack) == 1 and self.max_dist < self.params.dead and t - self.t0 < self.params.click_time \
+        if len(self.stack) == 1 and self.max_dist < self.params.dead and held < self.params.click_time \
                 and item is None:
             # quick click: the menu stays up
             self._click_mode(t)

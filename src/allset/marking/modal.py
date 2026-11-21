@@ -53,6 +53,15 @@ def press_time(now, beats=None):
     return now               # the loop ran on time: handled at once
 
 
+def held_time(now, handled, beat_then, beats=None):
+    """How long the button was down for a release handled at ``now`` whose press was handled at ``handled``, the
+    latest beat then being ``beat_then``: with no beat since, both came in during one slow frame and were handled
+    together, so the press lasted about the time between handling them (not since the press dated back into that
+    frame); else None (counted from the press time)."""
+    last = (beats if beats is not None else _beats)[1]
+    return now - handled if last == beat_then else None
+
+
 def register_clock():
     if not bpy.app.timers.is_registered(_beat):
         bpy.app.timers.register(_beat, first_interval=BEAT, persistent=True)
@@ -279,7 +288,9 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         # run after entering component mode with everything selected (_finish).
         self._from_object = self.menu == CONVERT_FROM_OBJECT and context.mode == 'OBJECT'
         enabled = (lambda a: a is not None and not mm.is_unavailable(a)) if self._from_object else poll_action
-        self._session = engine.Session(menu, origin, press_time(time.monotonic()),
+        handled = time.monotonic()
+        self._handled = (handled, _beats[1])
+        self._session = engine.Session(menu, origin, press_time(handled),
                                        draw.measure, _params(), enabled, bounds, edges)
         self._region = region
         self._shown = False
@@ -346,7 +357,7 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
                 draw.redraw()
                 self._show_notice()
             elif event.type == self.button and event.value == 'RELEASE':
-                res = s.release(x, y, now)
+                res = s.release(x, y, now, held_time(now, *self._handled))
                 draw.redraw()
             elif event.type in MOUSE_BUTTONS and event.value == 'PRESS' and s.mode == "CLICK":
                 res = s.click(x, y, now)

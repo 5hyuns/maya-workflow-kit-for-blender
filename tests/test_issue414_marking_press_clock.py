@@ -79,3 +79,35 @@ def test_a_busy_loop_still_runs_a_real_flick():
     est = modal.press_time(handled, (99.88, 99.90))
     res = _flick(est, release)
     assert res is not None and res[0] == "RUN" and res[1].label == "Item E", res
+
+
+def test_a_quick_click_handled_with_its_press_after_a_slow_frame_stays_a_click():
+    """Press and release both come in during a 0.3 s frame and are handled together after it: the press is dated
+    back into the frame, but the click test counts how long the button was down (about the time between handling
+    them), so the menu stays open. A release after a beat counts from the press time as before."""
+    handled = 500.0
+    beats = (499.68, 499.70)             # the last beats before a 0.3 s frame
+    t0 = modal.press_time(handled, beats)
+    assert abs(t0 - 499.70) < 1e-9, t0
+    release = handled + 0.002
+    held = modal.held_time(release, handled, beats[1], beats)
+    assert abs(held - 0.002) < 1e-9, held
+    s = engine.Session(MENU, O, t0, lambda text: 7.0 * len(text), None, None, B)
+    assert s.release(O[0], O[1], release, held) is None and s.mode == "CLICK"
+    s = engine.Session(MENU, O, t0, lambda text: 7.0 * len(text), None, None, B)
+    assert s.release(O[0], O[1], release) == ("CANCEL", None, False), "counted from the dated-back press: closes"
+    # a beat ran between the press and the release: the release came later, counted from the press time
+    assert modal.held_time(release, handled, beats[1], (beats[1], handled + 0.001)) is None
+
+
+def test_a_flick_handled_with_its_press_after_a_slow_frame_still_runs():
+    """The held time only changes the quick-click test: a flick whose press and release were handled together
+    still counts from the dated-back press for the quick-release window and runs its item."""
+    handled = 500.0
+    beats = (499.68, 499.70)
+    t0 = modal.press_time(handled, beats)
+    release = handled + 0.002
+    s = engine.Session(MENU, O, t0, lambda text: 7.0 * len(text), None, None, B)
+    s.move(O[0] + 30, O[1], release - 0.001)
+    res = s.release(O[0] + 60, O[1], release, modal.held_time(release, handled, beats[1], beats))
+    assert res is not None and res[0] == "RUN" and res[1].label == "Item E", res
