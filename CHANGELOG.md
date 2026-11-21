@@ -1197,7 +1197,7 @@ Discussions.
   shape there even when the face angles differ less, and the new corner can sit about 1% of the width away) and
   three-edge corners whose face angles differ by more than about 10%.
 - **Bevel with Segments 2 or more** (#213): every profile is now a circle that touches both faces, cut in equal
-  angle steps, like Maya, also where the faces meet at other angles than 90 degrees (a triangle prism's side
+  angle steps, like Maya. The same holds where the faces are not at a right angle (a triangle prism's side
   edge) and on inner (concave) edges, where the circle becomes a fillet. Depth moves each point straight toward
   the line between the profile's ends (0 = on that line, -1 = mirrored), as in Maya, with any number of
   segments. A corner where three or more bevelled edges meet (all edges of a box) is closed with one polygon
@@ -1622,7 +1622,7 @@ LTS; 5.0 and 5.1 install but are not tested.
   path's start when the path doesn't start at the profile; Extrude (Distance) uses the best-fit plane of a non-planar
   profile; Boundary / Square give each direction the mean parameter range of its two sides; Birail 1 with two
   different curved rails follows the rails exactly.
-- **Loft > Polygons** UVs run along the curves (u) and across them (v), like Maya's Loft, instead of turned 90°.
+- **Loft > Polygons** UVs run along the curves (u) and across them (v), like Maya's Loft. Before, the UV layout came out turned a quarter turn.
 - **UV > Normalize** with UVs or edges selected scales every face those UVs belong to, like Maya, instead of only
   the picked UVs.
 - **Alt+LMB tumble with Emulate 3 Button Mouse on** (#242): Blender turns Alt+left drag into a middle drag when
