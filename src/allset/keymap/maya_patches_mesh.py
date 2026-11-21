@@ -5,6 +5,8 @@ sculpt). Run by ``maya_patches.apply`` in ``PATCHES`` order; shared state: ``may
 line of ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 """
 
+import sys
+
 from . import patch
 from .patch import make_event
 from .maya_patches_base import PICK_WALK_KEYS, UV_KM, VIEW3_SHADOWS, _add
@@ -287,6 +289,9 @@ def patch_key_batch_3(kd):
                       ("NINE", 'TEXTURE_BORDERS')):
         _add(kd, "UV Editor", "allset.uv_display", make_event(key), {"mode": mode})
     _add(kd, "UV Editor", "allset.uv_isolate", make_event("ONE", ctrl=True))
+    if sys.platform == "darwin":        # Maya on macOS: Cmd+1 too (Blender's macOS data copies Ctrl+1 to Cmd+1)
+        kd.remove("UV Editor", "mesh.select_mode", type="ONE", oskey=True, optional=True)
+        _add(kd, "UV Editor", "allset.uv_isolate", make_event("ONE", oskey=True))
     _add(kd, "UV Editor", "allset.uv_delete", make_event("DEL"))
     _add(kd, "UV Editor", "allset.uv_create_shell", make_event("X", ctrl=True, shift=True))
 

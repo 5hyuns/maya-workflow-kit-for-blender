@@ -74,6 +74,11 @@ showed what to fix.
 - Isolate Select stays with its panel when the layout changes, like Maya: a Space tap from the single perspective view to
   the four view and back used to move the isolation to the side panel and then drop it, so the perspective view showed
   and marquee-selected the hidden objects again. Each panel of the four view keeps its own Isolate Select. (#422)
+- macOS: Cmd+1 is Isolate Select too, like Maya on macOS (3D View and UV Editor). It used to switch Edit Mode to
+  vertex selection, so a face click after it picked vertices instead of the face. (#422)
+- Isolate Select: a marquee or lasso without Shift / Ctrl in Object Mode replaces the whole selection, like Maya. An
+  object the view hides (picked in the Outliner, or selected before Ctrl+1) used to stay selected and came back
+  selected when Isolate Select ended. (#422)
 - Maya mode only takes the place of Blender's own draw in the headers it draws (top bar, status bar, 3D View, Outliner,
   UV, Node, Graph Editor, Dope Sheet, Script Editor, Trax Editor). A function another add-on put in front of a header,
   or in the place of Blender's draw, keeps drawing while Maya mode is on, and switching Maya mode off gives each

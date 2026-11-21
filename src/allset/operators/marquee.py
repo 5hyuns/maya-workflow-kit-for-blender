@@ -13,7 +13,8 @@ header button, so it is only set while the drag runs:
 ``allset.select_through`` sits in front of ``view3d.select_box`` /
 ``select_lasso`` in the select tool keymaps (same LMB CLICK_DRAG event), sets
 the flag and returns PASS_THROUGH so the select operator gets the event; a
-timer puts the view back once that operator's modal has ended.
+timer puts the view back once that operator's modal has ended. In an isolated view a replacing Object Mode drag
+first takes the objects the view hides out of the selection (``drop_hidden_selection``).
 """
 
 import bpy
@@ -113,6 +114,22 @@ def restore_all():
         bpy.app.timers.unregister(_watch)
 
 
+def drop_hidden_selection(context, event):
+    """Isolate Select: a replacing marquee / lasso in Object Mode replaces the whole selection, like Maya, also
+    objects the view hides (picked in the Outliner or selected before Ctrl+1). Blender's box and lasso only deselect
+    what the view shows. Returns the number of objects taken out."""
+    space = context.space_data
+    if (event.shift or event.ctrl or context.mode != 'OBJECT' or space is None or space.type != 'VIEW_3D'
+            or space.local_view is None):
+        return 0
+    n = 0
+    for ob in context.view_layer.objects:
+        if ob is not None and ob.select_get() and not ob.local_view_get(space):
+            ob.select_set(False)
+            n += 1
+    return n
+
+
 class ALLSET_OT_select_through(bpy.types.Operator):
     """Let this edit-mode box / lasso drag also select hidden components (Maya marquee)"""
     bl_idname = "allset.select_through"
@@ -121,6 +138,7 @@ class ALLSET_OT_select_through(bpy.types.Operator):
 
     def invoke(self, context, event):
         begin(context)
+        drop_hidden_selection(context, event)
         from . import joint_marquee
         joint_marquee.begin(context)      # joints drawn by the kit: Maya's marquee rules once the drag ends
         from . import lattice_pick         # #274: a deformed lattice's points boxed where they are drawn
