@@ -10,6 +10,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Twist greyed with Curve: None). Curve: Generated makes a straight path curve along the faces' normal and extrudes
   along it, so a straight extrusion can taper and twist; the window's Taper, Twist, Thickness and Divisions now reach
   an extrusion along a selected curve too (#418).
+- Connect Tool: a Segments, Slide or Pinch value typed into the tool's options re-does the connection the tool just
+  made, like Maya. The Modeling Toolkit's Connect button enters the Connect Tool and shows its Connect Options
+  (Slide / Segments / Pinch, Reset Settings, Keyboard/Mouse Shortcuts), and the Tools button of the active tool shows
+  pressed. Reset Tool in the Tool Settings resets the Connect Tool's options too. (#421)
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces
@@ -41,12 +45,6 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Multi-Cut works with Symmetry like Maya: with Object, World or Topology symmetry on, a cut, a Ctrl+click edge loop
   and a slice are made on both sides of the mesh, and the preview shows the mirrored side too. A cut that is its own
   mirror (across the middle) is made once. (#420)
-
-### Added
-- Connect Tool: a Segments, Slide or Pinch value typed into the tool's options re-does the connection the tool just
-  made, like Maya. The Modeling Toolkit's Connect button enters the Connect Tool and shows its Connect Options
-  (Slide / Segments / Pinch, Reset Settings, Keyboard/Mouse Shortcuts), and the Tools button of the active tool shows
-  pressed. Reset Tool in the Tool Settings resets the Connect Tool's options too. (#421)
 
 ## [0.20.0] — 2026-11-20
 
