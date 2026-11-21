@@ -470,7 +470,9 @@ class ALLSET_OT_move_skinned_joints(bpy.types.Operator):
         if not ob.visible_get():
             self.report({'WARNING'}, f"{ob.name} is hidden: show the skeleton first")
             return {'CANCELLED'}
-        on = move_skinned_joints(context, ob, not ob.get(joint_selection.MOVE_SKINNED))
+        # Like choosing Maya's tool again: on unless its joints are being edited now (then off = Pose); a click
+        # elsewhere left Edit Mode with the tool still on, and running it again goes back to editing the joints.
+        on = move_skinned_joints(context, ob, not (ob.get(joint_selection.MOVE_SKINNED) and ob.mode == 'EDIT'))
         results.result(self, "Move Skinned Joints " + ("on: move the joints, run it again to pose" if on else "off"))
         return {'FINISHED'}
 

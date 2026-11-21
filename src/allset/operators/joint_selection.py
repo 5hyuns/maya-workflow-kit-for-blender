@@ -772,11 +772,9 @@ def _pick_groups(groups, lead):
 def leave(context, clear_selection=False):
     if clear_selection:
         clear(context)
-    ob = context.active_object
-    if context.mode != 'OBJECT' and ob is not None:
-        result = bpy.ops.object.mode_set(mode='OBJECT')
-        if 'FINISHED' in result and ob.type == 'ARMATURE':
-            ob.pop(MOVE_SKINNED, None)
+    # Move Skinned Joints stays on, like Maya's tool after a click elsewhere: the next joint pick edits joints again.
+    if context.mode != 'OBJECT' and context.active_object is not None:
+        bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def select_object_at(context, mouse, shift=False, ctrl=False):

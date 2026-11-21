@@ -13,6 +13,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   window comes back to the front when it is asked for again (Windows > General Editors, Ctrl+A, a tool's option box,
   a Tool Box double-click), at the same place and size, like Maya. Windows > General Editors > Tool Settings now only
   shows the Tool Settings, like Maya's item; the Status Line button still shows or hides it. (#417)
+- Skin > Move Skinned Joints: a click on empty space leaves Edit Mode also in a split 3D View, with Blender keys and with
+  the Tool Box hidden; a click on a joint's wire (also at a large Joint Size), inside a wide B-Bone or on the Move handle
+  keeps editing the joints, and one Undo / Redo steps the joint selection back and forth. Move Skinned Joints stays on after
+  a click elsewhere, like Maya's tool: the next joint pick edits joints again, and choosing it again goes back to editing.
+  Thanks to @cnzim. (#415)
 
 ## [0.20.0] — 2026-11-20
 

@@ -335,10 +335,9 @@ def s_msj_clicked_away():
 
 @step
 def s_msj_repicked():
-    check("picking the joint after clicking away enters Pose Mode", rig().mode == 'POSE')
+    check("Move Skinned Joints stays on after a click away: picking the joint edits joints again",
+          rig().mode == 'EDIT' and bool(rig().get(mod(".operators.joint_selection").MOVE_SKINNED)))
     bpy.context.scene.allset_joint_size = 4
-    with ov():
-        bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
 
 
 def root_wire():
@@ -382,6 +381,7 @@ def s_msj_empty_without_toolbox():
     bpy.context.view_layer.objects.active = arm
     with ov():
         bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
+    check("Move Skinned Joints again after a click away goes back to editing the joints", rig().mode == 'EDIT')
     s_pick_j2()
 
 
