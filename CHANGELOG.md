@@ -32,6 +32,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   keeps editing the joints, and one Undo / Redo steps the joint selection back and forth. Move Skinned Joints stays on after
   a click elsewhere, like Maya's tool: the next joint pick edits joints again, and choosing it again goes back to editing.
   Thanks to @cnzim. (#415)
+- With another workflow add-on that clears the 3D View sidebar's Tool tab while its layout is on (Blenda 4D), Maya mode
+  starts again: the kit's tool settings stay on Blender's Active Tool panel while that add-on has it out, and a failed
+  start no longer leaves the Maya top bar over the other add-on's (and Blender's) menu bar. Switching Maya mode off
+  leaves alone a layout that another add-on made from the Maya layout (only the kit's own Maya layout goes), no longer
+  puts back sidebar panels their add-on took out, and copes when the kit's own panels were taken out and put back.
+  (#423)
 
 ## [0.20.0] — 2026-11-20
 

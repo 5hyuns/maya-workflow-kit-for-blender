@@ -5,6 +5,7 @@ workspace with its Status Line / Shelf masks and Maya-unit views), ``reset_works
 deferred delete (``_timers``: stopped by switch.unregister). Leaving the layout, the mode switch: switch.py."""
 
 import os
+import uuid
 
 import bpy
 
@@ -27,9 +28,46 @@ def _window_override(window):
     return {"window": window, "screen": window.screen}
 
 
+# "<run>:<session uid>" on each Maya workspace the kit made or keeps. Blender's Duplicate, or another add-on making
+# its own layout from the window's workspace, copies the kit's keys too; the copy's session uid differs from the one
+# written (#423). ``_RUN`` tells this Blender session's marks from ones saved in a file (session uids start again).
+OWN_KEY = "allset_own"
+_RUN = uuid.uuid4().hex[:12]
+
+
+def mark_own(ws):
+    ws[OWN_KEY] = f"{_RUN}:{ws.session_uid}"
+
+
+def is_copy(ws):
+    """A copy of one of the kit's Maya workspaces made by something else in this session (the kit's own workspace
+    still exists): it carries the kit's keys but is not the kit's."""
+    mark = ws.get(OWN_KEY)
+    if not isinstance(mark, str) or not mark.startswith(_RUN + ":"):
+        return False
+    try:
+        uid = int(mark.split(":", 1)[1])
+    except ValueError:
+        return False
+    return uid != ws.session_uid and any(w.session_uid == uid for w in bpy.data.workspaces)
+
+
+def forget_copies():
+    """Copies of the kit's Maya workspaces lose the kit's keys (a switch to Blender doesn't delete or leave them,
+    #423); the kit's own Maya workspaces get this session's mark. Returns the names of the copies."""
+    copies = [ws for ws in bpy.data.workspaces if ws.library is None and is_copy(ws)]
+    for ws in copies:
+        for key in [k for k in ws.keys() if k.startswith("allset_")]:
+            del ws[key]
+    for ws in bpy.data.workspaces:
+        if ws.library is None and is_maya_workspace(ws) and ws.get(OWN_KEY) != f"{_RUN}:{ws.session_uid}":
+            mark_own(ws)
+    return [ws.name for ws in copies]
+
+
 def is_maya_workspace(ws):
     """A workspace that already is the Maya layout (appended by the switch or a Maya Workflow Kit file)."""
-    if ws is None:
+    if ws is None or is_copy(ws):
         return False
     if PREV_KEY in ws or TEMPLATE_KEY in ws or USER_KEY in ws:     # TEMPLATE_KEY: any Maya workspace of the template
         return True
@@ -70,7 +108,10 @@ def _fit_views(ws, scene, saved_unit=0.01):
 
 def enter_layout(window):
     """Append and activate the Maya layout workspace in ``window`` (unless it already is one)."""
-    if window is None or is_maya_workspace(window.workspace):
+    if window is None:
+        return None
+    forget_copies()
+    if is_maya_workspace(window.workspace):
         return None
     own = [ws for ws in bpy.data.workspaces if PREV_KEY not in ws and is_maya_workspace(ws)]
     own.sort(key=lambda ws: template_of(ws) != TEMPLATE_WORKSPACE)     # Maya Classic first
@@ -148,6 +189,7 @@ def append_workspace(window, template_name, filepath=None, idname=None):
     ws = new[0]
     if template_name is not None:
         ws[TEMPLATE_KEY] = template_name
+    mark_own(ws)
     window.workspace = ws
     # region flag writes call ED_area_init, which reads the context window's workspace (None after a file load in
     # -b crashed Blender)

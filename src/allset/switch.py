@@ -35,8 +35,8 @@ from .switch_layout import (BLENDER_LAYOUT_KEY, BLENDER_PREV_KEY, MASK_KEY, PREV
                             TEMPLATE_KEY, TEMPLATE_WORKSPACE, USER_KEY, USER_UNIT_KEY, WORKSPACE, _delete_later,
                             _delete_workspace, _fit_views, _forget_timer, _linked_from, _mark_strips,
                             _prepare_layout, _template_blend, _timers, _window_override, _windows,
-                            append_workspace, drop_workspace, enter_layout, is_maya_workspace, reset_workspace,
-                            template_of)
+                            append_workspace, drop_workspace, enter_layout, forget_copies, is_copy,
+                            is_maya_workspace, mark_own, reset_workspace, template_of)
 
 
 SHORTCUT = ('M', {"ctrl": True, "alt": True, "shift": True})
@@ -62,11 +62,15 @@ def leave_layout(window):
     workspaces (#282)."""
     if window is None:
         return False
+    forget_copies()
     ws = window.workspace
     if ws is None:
         return False
     if PREV_KEY not in ws:
-        return _leave_template_layout(window) if is_maya_workspace(ws) else False
+        if is_maya_workspace(ws):
+            return _leave_template_layout(window)
+        _drop_unshown(window)
+        return False
     chain, cur = [], ws
     while cur is not None and PREV_KEY in cur and cur not in chain:
         chain.append(cur)
@@ -95,6 +99,18 @@ def leave_layout(window):
     else:
         _delete_workspace(window, name, added)
     return True
+
+
+def _drop_unshown(window):
+    """The window shows a workspace that isn't a Maya one (another add-on's layout made from the Maya layout, #423):
+    the Maya workspaces the switch appended that no window shows are deleted all the same."""
+    shown = {w.workspace for w in _windows()}
+    appended = [w for w in bpy.data.workspaces if PREV_KEY in w and w not in shown]
+    added = []
+    for w in appended:
+        added += [m for m in w.get(MASK_KEY, ()) if m not in added]
+    for w in appended:
+        _delete_workspace(window, w.name, added if w == appended[-1] else [])
 
 
 # Blender's embedded factory startup file: what Add Workspace > General appends from (workspace_edit.cc
@@ -230,6 +246,7 @@ def _drop_new_scene_layouts(window):
     another window shows stays for that window's own switch. Returns the names dropped."""
     if bpy.data.filepath:
         return []
+    forget_copies()
     shown = {w.workspace for w in _windows() if w != window}
     gone = []
     for ws in list(bpy.data.workspaces):
@@ -328,14 +345,29 @@ def register_mode():
     from . import safe_reg
     if _mode_done:                  # a previous half state: start clean
         unregister_mode()
+    safe_reg.release_panels(_mode_panels())
     safe_reg.register_all(_mode_modules(), _mode_done)
+    _panels_on[:] = [cls for cls in _mode_panels() if cls.is_registered]
     _registered[0] = True
+
+
+# The kit's panels registered by ``register_mode``. Another add-on may unregister panels of the sidebar's Tool tab
+# (where the kit's panels are) while it is on and register them again later (#423): ``unregister_mode`` first puts
+# back what was taken, ``register_mode`` first takes out what was put back while Maya mode was off.
+_panels_on = []
+
+
+def _mode_panels():
+    from . import safe_reg
+    return safe_reg.own_panels(tuple(m.__name__ + "." for m in _mode_modules()))
 
 
 def unregister_mode():
     """Take back every Maya mode module that is registered (whatever ``_registered[0]`` says). Returns the names of
     modules whose unregister raised (the others still went)."""
     from . import safe_reg
+    safe_reg.restore_panels(_panels_on)
+    _panels_on.clear()
     failed = safe_reg.unregister_all(_mode_done)
     _registered[0] = False
     return failed

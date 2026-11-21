@@ -99,6 +99,13 @@ def _reregister(cls, kids, poll, raw=None):
 
 
 def unregister():
+    from .. import safe_reg
     for cls, raw, kids in _wrapped:   # forward: the original order again
-        _reregister(cls, kids, raw, raw)   # never raises: one foreign panel can't stop the rest
+        if not cls.is_registered:
+            # its owner took it out while Maya mode was on (another add-on switched off, #423): it gets its own
+            # poll back but stays out; registering it again would bring back a panel of an add-on that is off
+            safe_reg._set_poll(cls, raw)
+            continue
+        # never raises: one foreign panel can't stop the rest
+        _reregister(cls, [k for k in kids if k.is_registered], raw, raw)
     _wrapped.clear()

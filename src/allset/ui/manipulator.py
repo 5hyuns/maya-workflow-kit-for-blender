@@ -30,6 +30,7 @@ register / unregister, and re-exports the names the rest of the kit reads from i
 import bpy
 from bpy.types import Gizmo, GizmoGroup
 from mathutils import Matrix, Vector
+from .. import safe_reg
 from ..operators import group
 
 # the split-out parts, also read through this module by operators, other UI and the tests
@@ -562,7 +563,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     _slide_draw.append(bpy.types.SpaceView3D.draw_handler_add(_draw_slide_label, (), 'WINDOW', 'POST_PIXEL'))
-    bpy.types.VIEW3D_PT_active_tool.append(draw_tool_settings)
+    safe_reg.blender_class("VIEW3D_PT_active_tool").append(draw_tool_settings)
     patch_tools()
     bpy.app.timers.register(_ensure_timer, first_interval=0.1, persistent=True)
     if _on_load_post not in bpy.app.handlers.load_post:
@@ -586,6 +587,6 @@ def unregister():
         ensure_tools(False)
     except (ReferenceError, AttributeError):
         pass
-    bpy.types.VIEW3D_PT_active_tool.remove(draw_tool_settings)
+    safe_reg.blender_class("VIEW3D_PT_active_tool").remove(draw_tool_settings)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -18,7 +18,7 @@ import math
 
 import bpy
 
-from .. import results
+from .. import results, safe_reg
 from ..operators.edge_loops import INSERT_TOOL, OFFSET_TOOL, SLIDE_TOOL
 from ..operators.mesh_tools import CREASE_TOOL, TARGET_WELD_TOOL
 from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
@@ -808,7 +808,7 @@ classes = (ALLSET_OT_reset_tool, ALLSET_OT_ts_option, ALLSET_PT_tool_settings)
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.VIEW3D_PT_active_tool.prepend(draw_reset_row)
+    safe_reg.blender_class("VIEW3D_PT_active_tool").prepend(draw_reset_row)
     from . import notices
     notices.PANEL_NOTICES.update(TS_NOTICES)
 
@@ -817,6 +817,6 @@ def unregister():
     from . import notices
     for key in TS_NOTICES:
         notices.PANEL_NOTICES.pop(key, None)
-    bpy.types.VIEW3D_PT_active_tool.remove(draw_reset_row)
+    safe_reg.blender_class("VIEW3D_PT_active_tool").remove(draw_reset_row)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
