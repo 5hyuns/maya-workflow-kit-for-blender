@@ -69,6 +69,10 @@ from . import dag  # noqa: E402  Maya DAG rules for parents (hide / delete / exp
 
 classes += dag.classes
 
+from . import isolate_parts  # noqa: E402  Isolate Select with components (only their faces)
+
+classes += isolate_parts.classes
+
 from . import by_type  # noqa: E402  Select All by Type for the kit's IK handles / clusters / particles
 
 classes += by_type.classes
@@ -311,6 +315,7 @@ def register():
     undo_pairs.register()
     auto_key.register_handlers()
     dag.register_handlers()
+    isolate_parts.register()
     modify_maya.register_props()
     anim_snapshot.register_handlers()
     repeat_maya.register_handlers()
@@ -393,6 +398,7 @@ def unregister():
     graph_move.unregister_timers()
     graph_move.unregister_props()
     modify_maya.unregister_props()
+    isolate_parts.unregister()
     dag.unregister_handlers()
     curve_draw.unregister_handlers()
     joint_preview.unregister_handlers()

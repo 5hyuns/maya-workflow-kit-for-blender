@@ -3484,7 +3484,9 @@
    "nRigids": "nRigids"
   },
   "Panel menus/Show/Isolate Select": {
+   "Add Selected Objects": "Add Selected Objects",
    "Isolate Select": "Isolate Select",
+   "Remove Selected Objects": "Remove Selected Objects",
    "Show": "Show",
    "View Selected": "View Selected"
   },
@@ -6143,6 +6145,12 @@
   "Labels/operators/intermediate_objects": {
    "Display": "Display",
    "Intermediate Objects": "Intermediate Objects"
+  },
+  "Labels/operators/isolate_parts": {
+   "Action": "Action",
+   "Add Selected Objects": "Add Selected Objects",
+   "Isolate Select Set": "Isolate Select Set",
+   "Remove Selected Objects": "Remove Selected Objects"
   },
   "Labels/operators/joint_display": {
    "Blender draws joints by bone length: this sizes where a click picks them.": "Blender draws joints by bone length: this sizes where a click picks them.",
@@ -11384,7 +11392,7 @@
   },
   "Tooltips/operators/dag": {
    "Delete the selected objects and everything below them (Maya Edit > Delete)": "Delete the selected objects and everything below them (Maya Edit > Delete)",
-   "Isolate Select: show only the selected objects and everything below them (Maya Ctrl+1); again = back": "Isolate Select: show only the selected objects and everything below them (Maya Ctrl+1); again = back"
+   "Isolate Select: show only the selected objects and everything below them, or only the faces of the selected\ncomponents (Maya Ctrl+1); again = back": "Isolate Select: show only the selected objects and everything below them, or only the faces of the selected\ncomponents (Maya Ctrl+1); again = back"
   },
   "Tooltips/operators/deform_edit": {
    "A dropoff locator at the selected point of a wire curve: Percent scales the dropoff distance there\n(Maya Deform > Wire > Wire Dropoff Locator)": "A dropoff locator at the selected point of a wire curve: Percent scales the dropoff distance there\n(Maya Deform > Wire > Wire Dropoff Locator)",
@@ -11627,6 +11635,9 @@
   },
   "Tooltips/operators/intermediate_objects": {
    "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)": "Display / hide the original (undeformed) shape of the selected deformed objects (Maya Deform > Display /\nHide Intermediate Objects)"
+  },
+  "Tooltips/operators/isolate_parts": {
+   "Maya Show > Isolate Select > Add / Remove Selected Objects": "Maya Show > Isolate Select > Add / Remove Selected Objects"
   },
   "Tooltips/operators/joint_display": {
    "Maya Display > Animation > Joint Size: the scene's joint display scale (sizes the joints' click spheres)": "Maya Display > Animation > Joint Size: the scene's joint display scale (sizes the joints' click spheres)",

@@ -476,7 +476,8 @@ step(lambda: None)
 @step
 def s_rmb_iso_marquee_done():
     f = picked_faces()
-    check(f"... a marquee picks its faces ({f})", f is not None and len(f) >= 2)
+    # the face was selected at Ctrl+1: only it is shown, like Maya (#427), so a marquee picks just that face
+    check(f"... a marquee picks the isolated face ({f})", f is not None and len(f) == 1)
     shot("gui_issue422_rmb_iso_marquee.png")
     ctrl_one()
 

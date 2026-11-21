@@ -462,7 +462,8 @@ class ALLSET_OT_delete(bpy.types.Operator):
 
 
 class ALLSET_OT_isolate(bpy.types.Operator):
-    """Isolate Select: show only the selected objects and everything below them (Maya Ctrl+1); again = back"""
+    """Isolate Select: show only the selected objects and everything below them, or only the faces of the selected
+    components (Maya Ctrl+1); again = back"""
     bl_idname = "allset.isolate"
     bl_label = "Isolate Select"
     bl_options = {'REGISTER'}
@@ -472,11 +473,17 @@ class ALLSET_OT_isolate(bpy.types.Operator):
         return context.space_data is not None and context.space_data.type == 'VIEW_3D'
 
     def execute(self, context):
+        from . import isolate_parts
         space = context.space_data
         if space.local_view is not None:
+            isolate_parts.stop([n for n in isolate_parts.active()
+                                if n in bpy.data.objects and isolate_parts.in_view(bpy.data.objects[n], space)])
             return bpy.ops.view3d.localview(frame_selected=False)
         with selected_hierarchy(context):
-            return bpy.ops.view3d.localview(frame_selected=False)
+            result = bpy.ops.view3d.localview(frame_selected=False)
+        if 'FINISHED' in result and context.mode == 'EDIT_MESH' and space.local_view is not None:
+            isolate_parts.start(context, space)     # components selected: only their faces (Maya)
+        return result
 
 
 class ALLSET_OT_outliner_delete(bpy.types.Operator):

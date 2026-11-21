@@ -191,7 +191,9 @@ SHOW = [
 ]
 
 ISOLATE = [
-    _run("View Selected", "allset.isolate"),          # with the children
+    _run("View Selected", "allset.isolate"),          # with the children; components: only their faces
+    _run("Add Selected Objects", "allset.isolate_edit", action='ADD'),
+    _run("Remove Selected Objects", "allset.isolate_edit", action='REMOVE'),
 ]
 
 RENDERER = [

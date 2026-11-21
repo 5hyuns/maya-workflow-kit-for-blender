@@ -14,6 +14,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   made, like Maya. The Modeling Toolkit's Connect button enters the Connect Tool and shows its Connect Options
   (Slide / Segments / Pinch, Reset Settings, Keyboard/Mouse Shortcuts), and the Tools button of the active tool shows
   pressed. Reset Tool in the Tool Settings resets the Connect Tool's options too. (#421)
+- Isolate Select with components: Ctrl+1 (or Show > Isolate Select > View Selected) with faces selected shows only
+  those faces, with vertices or edges selected the faces around them, like Maya; an edited mesh with nothing selected
+  leaves the view. Show > Isolate Select gets Add Selected Objects / Remove Selected Objects, which add or take out
+  objects, or faces with components selected. Leaving Isolate Select shows the faces again and keeps the faces you
+  hid yourself hidden; undo keeps the isolation as it is. Blender hides faces per mesh, so the other 3D Views hide
+  them too while one view isolates them, and Object Mode shows the whole mesh. (#427)
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces
