@@ -40,7 +40,8 @@ from .maya_dock_roles import (KINDS, LABELS, ROLE_FLAGS, WIDTH, _MARK_FLAGS, _fl
                               stack_tabs, tab_kinds, visible_kinds)
 from .maya_dock_windows import (MIN_KEEP_PX, MIN_ROWS, PAD_ROWS, _main_view, close_area,  # noqa: F401
                                 close_floating, close_window_later, content_height, dock, main_window,
-                                open_floating, open_stack, show, sized_window, split_side, toggle)
+                                floating_window, open_floating, open_stack, show, sized_window, split_side,
+                                to_front, toggle)
 from .maya_dock_menus import (ALLSET_OT_menu_tear_off, TEAR_LINE, _CENTRED, _Holder, _LeftItems,  # noqa: F401
                               _close_stale_menus, _drawing_torn, draw_tear_line, draw_torn_menu, drawing_torn,
                               menu_rows, tear_menu)
@@ -202,9 +203,7 @@ class ALLSET_OT_panel_show(bpy.types.Operator):
         wm = context.window_manager
         if self.panel == 'TOOL_SETTINGS':
             from . import tool_dock
-            if any(tool_dock.is_dock(a) for w in wm.windows for a in w.screen.areas):
-                return {'FINISHED'}
-            tool_dock.toggle(context, show_only=True)
+            tool_dock.toggle(context, show_only=True)       # shown already: a floating window comes to the front
             return {'FINISHED'}
         # Outliner: docked in this layout or already floating = shown; else a floating Maya Outliner
         if any(a.type == 'OUTLINER' for w in wm.windows for a in w.screen.areas):

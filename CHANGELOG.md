@@ -9,6 +9,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - File > Import with Maya Units and Axes keeps the rest skeleton of a rig whose bones Blender connects (for example an
   auto-rigged character's spine, arms and legs): those joints no longer land turned 90 degrees with a broken pose, and joints with a
   slight joint orient keep their exact offset, so the pose channels are 0 at the bind pose. (#416)
+- A floating Tool Settings, Channel Box / Layer Editor, Attribute Editor or Modeling Toolkit that went behind the main
+  window comes back to the front when it is asked for again (Windows > General Editors, Ctrl+A, a tool's option box,
+  a Tool Box double-click), at the same place and size, like Maya. Windows > General Editors > Tool Settings now only
+  shows the Tool Settings, like Maya's item; the Status Line button still shows or hides it. (#417)
 
 ## [0.20.0] — 2026-11-20
 

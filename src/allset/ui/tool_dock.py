@@ -109,7 +109,7 @@ def configure(area, window=None):
     return True
 
 
-def _configure_later(area, window):
+def configure_later(area, window):
     """``configure`` from a timer (a Properties editor made in this call has no tabs yet)."""
     key = area.as_pointer()
     win_ptr = live_refs.pointer(window)
@@ -162,7 +162,7 @@ def open_dock(context, window=None, width=None):
         return None
     new.ui_type = 'PROPERTIES'
     if not configure(new, window):
-        _configure_later(new, window)
+        configure_later(new, window)
     return new
 
 
@@ -237,7 +237,7 @@ def _floating_opened(new):
     except (ReferenceError, IndexError, TypeError):
         return None
     if not configure(area, new):
-        _configure_later(area, new)
+        configure_later(area, new)
     return area
 
 
@@ -297,14 +297,25 @@ def close(context, window, area):
     close_dock(context, window)
 
 
+def _to_front(context, window, area):
+    """The Tool Settings shown in ``area`` of ``window``: a floating window is brought to the front
+    (``maya_dock.to_front``), a dock redrawn. Its area now."""
+    from . import maya_dock
+    if maya_dock.is_floating(window, context.window_manager):
+        new = maya_dock.to_front(context, window)
+        if new is not None and new != window and new.screen.areas:
+            return new.screen.areas[0]
+    area.tag_redraw()
+    return area
+
+
 def show(context, width=None):
     """Maya Tool Settings from a Tool Box double-click (#3): the Tool Settings open in any window (docked or
-    floating) is redrawn — Blender can't raise an OS window — else it opens where it was last (Maya: a floating
-    window). Returns its area, True while it opens on a later tick, None when it can't open."""
-    _window, area = find_any(context.window_manager)
+    floating) is shown (a floating window comes to the front, ``_to_front``), else it opens where it was last (Maya:
+    a floating window). Returns its area, True while it opens on a later tick, None when it can't open."""
+    window, area = find_any(context.window_manager)
     if area is not None:
-        area.tag_redraw()
-        return area
+        return _to_front(context, window, area)
     from . import maya_dock
     main = maya_dock.main_window(context.window_manager)
     if 'TOOL_SETTINGS' in maya_dock.tab_kinds() and (
@@ -319,7 +330,7 @@ def toggle(context, show_only=False):
     window, area = find_any(context.window_manager)
     if area is not None:
         if show_only:
-            area.tag_redraw()
+            _to_front(context, window, area)
             return True
         close(context, window, area)
         return False

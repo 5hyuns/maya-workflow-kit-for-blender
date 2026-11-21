@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Opens, closes and moves Maya panels between the layout and floating windows: the main window and viewport, side
 splits and the tab stack (``open_stack``), Maya's Windows menu raise / toggle (``show``, ``toggle``,
-``open_floating``), windows sized to their content (``content_height``, ``sized_window``), docking a floating panel
+``open_floating``), bringing a floating panel to the front (``to_front``), windows sized to their content (``content_height``, ``sized_window``), docking a floating panel
 back (``dock``) and closing kit windows on a switch to Blender (``close_floating``). maya_dock.py re-exports these.
 """
 
@@ -121,11 +121,63 @@ def close_window_later(window):
     bpy.app.timers.register(tick, first_interval=0.0)
 
 
+def floating_window(kind, wm=None):
+    """The floating window showing only ``kind``, or None."""
+    wm = wm or bpy.context.window_manager
+    for window in wm.windows:
+        if is_floating(window, wm) and role(window.screen.areas[0]) == kind:
+            return window
+    return None
+
+
+def to_front(context, window):
+    """Bring the floating panel ``window`` to the front, like Maya raises a floating panel that is asked for.
+
+    Blender has no call that raises a window, but a window it opens comes on top of the others: the panel's area is
+    copied into a new window (``screen.area_dupli`` gives it the place and size of the area, which fills the old
+    window, and keeps the editor's state, so the panel and its role are the same) and the old window is closed.
+    Nothing happens to a window the command runs in (it is in front already). Returns the window showing the panel.
+    """
+    if window is None or bpy.app.background or window == context.window:
+        return window
+    from . import tool_dock, window_places
+    wm = context.window_manager
+    if not is_floating(window, wm):
+        return window
+    area = window.screen.areas[0]
+    kind = role(area)
+    tool = kind is None and tool_dock.is_dock(area)
+    if kind is None and not tool:
+        return window
+    try:
+        new = window_places.dupli(context, window, area)
+    except RuntimeError:
+        new = None
+    if new is None or not new.screen.areas:
+        return window
+    window_places.handed_on(window, new)       # its place is remembered under the same name
+    target = new.screen.areas[0]
+    if kind is not None:
+        if role(target) != kind:
+            set_role_later(target, kind, new)
+    elif not tool_dock.is_dock(target):
+        tool_dock.configure_later(target, new)
+    try:
+        with context.temp_override(window=window):
+            bpy.ops.wm.window_close()
+    except (RuntimeError, ReferenceError):
+        close_window_later(window)
+    redraw()
+    return new
+
+
 def show(context, kind):
-    """Maya Windows > ... : raise the panel (stack tab), else open it floating when the layout has no stack."""
+    """Maya Windows > ... : raise the panel (stack tab, or its floating window to the front), else open it floating
+    when the layout has no stack."""
     wm = context.window_manager
     wm.allset_dock = kind          # the stack's tab (also when the panel floats: it comes back there)
     if kind in floating_kinds(wm):
+        to_front(context, floating_window(kind, wm))
         return 'FLOATING'
     window = main_window(wm)
     if window is not None and find_stack(window.screen) is not None:
@@ -136,6 +188,7 @@ def show(context, kind):
     for w in wm.windows:
         if is_floating(w, wm) and role(w.screen.areas[0]) in KINDS:
             set_role(w.screen.areas[0], kind, w)
+            to_front(context, w)
             redraw()
             return 'FLOATING'
     return 'FLOATING' if open_floating(context, kind) is not None else None
@@ -147,6 +200,7 @@ def toggle(context, kind, show_only=False):
     wm = context.window_manager
     if kind_visible(wm, kind):
         if show_only:
+            to_front(context, floating_window(kind, wm))
             return True
         for window in list(wm.windows):
             if is_floating(window, wm) and role(window.screen.areas[0]) == kind:

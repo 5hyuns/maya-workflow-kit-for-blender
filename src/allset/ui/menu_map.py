@@ -105,7 +105,8 @@ def _kit_pref(prop):
 _WINDOW_EDITORS = {
     "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
     "General Editors/Channel Box / Layer Editor": _dock('CHANNEL_BOX'),
-    "General Editors/Tool Settings": ("allset.editor_toggle", {"editor": 'TOOL_SETTINGS'}),
+    # shows the Tool Settings (a floating window comes to the front), never hides it, like Maya's item
+    "General Editors/Tool Settings": ("allset.editor_toggle", {"editor": 'TOOL_SETTINGS', "show": True}),
     "General Editors/Attribute Spread Sheet": _editor('SPREADSHEET'),
     "General Editors/Display Layer Editor": ("v3d", "allset.dock_show", {"dock": 'CHANNEL_BOX', "le_tab": 'DISPLAY'}),
     "General Editors/Script Editor": "allset.script_editor",

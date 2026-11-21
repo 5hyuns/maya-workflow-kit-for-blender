@@ -1,6 +1,7 @@
 """In a real UI: the Maya Workflow Kit layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
-Tool Settings (ToggleToolSettings) opens Maya's floating Tool Settings window with Maya's Move Settings, a second toggle
-closes it (the old popup stayed open: audit 7 c03), a third opens it again; Rotate / Scale show their sections;
+Tool Settings opens Maya's floating Tool Settings window with Maya's Move Settings, the item again brings it to the
+front, the Status Line button closes it (the old popup stayed open) and opens it again; Rotate / Scale show their
+sections;
 the Attribute Editor shows the history / material tabs, menu bar, buttons and Notes (screenshots beside audit-7
 pairs c02 / c03)."""
 
@@ -135,14 +136,25 @@ def s_opened_check():
 
 
 @step
-def s_toggle2():
+def s_menu_again():
+    C["ts"] = ts_window().as_pointer()
     menu("Windows/General Editors/Tool Settings")
+
+
+@step
+def s_menu_again_check():
+    redraw()
+    w = ts_window()
+    check("the menu item again only shows it (Maya's Tool Settings item): it comes to the front in a new window",
+          dock() is not None and w is not None and w.as_pointer() != C["ts"]
+          and len(bpy.context.window_manager.windows) == 2)
+    in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
 
 
 @step
 def s_toggle2_check():
     redraw()
-    check(f"toggle 2: the window is closed, the layout as it was ({len(win().screen.areas)} areas vs {C['areas']}, "
+    check(f"toggle 2 (Status Line button): the window is closed, the layout as it was ({len(win().screen.areas)} areas vs {C['areas']}, "
           f"viewport {v3d()[0].width} px vs {C['main_w']}, {len(bpy.context.window_manager.windows)} windows)",
           dock() is None and len(win().screen.areas) == C["areas"] and v3d()[0].width >= C["main_w"] - 4
           and len(bpy.context.window_manager.windows) == 1)

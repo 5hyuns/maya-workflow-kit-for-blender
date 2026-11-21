@@ -489,6 +489,13 @@ def track(window, kind):
         bpy.app.timers.register(_tick, first_interval=TICK, persistent=True)
 
 
+def handed_on(old, new):
+    """Window ``new`` replaces the kit window ``old`` (the same panel reopened): it is tracked under ``old``'s name."""
+    kind = _tracked.get(old.as_pointer())
+    if kind is not None:
+        track(new, kind)
+
+
 def settled(ptr, rect):
     """True when ``rect`` is what the previous tick saw of window ``ptr``: it is not being moved or resized now."""
     prev = _last.get(ptr)
