@@ -1012,6 +1012,7 @@ STRINGS = {
     'Connect Joint Options': 'ジョイントの接続オプション',
     'Connect Muscles to KeepOut': 'マッスルを KeepOut に接続',
     'Connect NURBs Curve to Muscle Displace': 'NURBS カーブをマッスルディスプレイスに接続',
+    'Connect Options': '接続のオプション',
     'Connect Selected Mesh to Rest Shape': '選択メッシュをレストシェイプに接続',
     'Connect Selected...': '選択項目を接続...',
     'Connect Texture': 'テクスチャの接続',

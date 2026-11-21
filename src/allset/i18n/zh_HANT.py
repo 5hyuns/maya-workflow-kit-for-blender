@@ -1012,6 +1012,7 @@ STRINGS = {
     'Connect Joint Options': '連接關節選項',
     'Connect Muscles to KeepOut': '將肌肉連接到 KeepOut',
     'Connect NURBs Curve to Muscle Displace': '將 NURBS 曲線連接到肌肉置換',
+    'Connect Options': '連接選項',
     'Connect Selected Mesh to Rest Shape': '將選定網格連接到靜止形狀',
     'Connect Selected...': '連接選定項...',
     'Connect Texture': '連接紋理',

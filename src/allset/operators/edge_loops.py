@@ -49,6 +49,19 @@ CONNECT_MODES = (('SLIDE', "Slide", "A middle-drag moves the connection along th
                  ('PINCH', "Pinch", "A middle-drag pulls the connection's segments together or apart"))
 
 
+def _connect_redo(_self, context):
+    """Like Maya, a new Slide / Segments / Pinch value typed into the Connect options re-does the last connection
+    while the mesh is still as that connection left it."""
+    from . import connect_tool
+    from .. import compat
+    if connect_tool.has_last() and connect_tool.redo_last(context) and not connect_tool.dragging()             and not compat.UI_UNDO_FOR_SCENE_IN_EDIT:
+        # Blender 5.2 keeps no undo step for a Scene value typed in edit mode: one step for the re-done connection
+        try:
+            bpy.ops.ed.undo_push(message="Connect")
+        except RuntimeError:
+            pass
+
+
 class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
     """Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values)."""
     # Insert Edge Loop (SplitEdgeRingTool)
@@ -84,11 +97,11 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
     # Connect Tool (operators/connect_tool.py): Maya's Tool Settings, the radio picks what a middle-drag changes
     ct_mode: EnumProperty(name="Middle-drag changes", items=CONNECT_MODES, default='SEGMENTS',
                           description="The value a middle-drag in the Connect Tool changes")
-    ct_slide: FloatProperty(name="Slide", default=0.5, min=0.0, max=1.0, precision=4,
+    ct_slide: FloatProperty(name="Slide", default=0.5, min=0.0, max=1.0, precision=4, update=_connect_redo,
                             description="Where a connection cuts an edge (0 = its first end, 1 = the other)")
-    ct_segments: IntProperty(name="Segments", default=1, min=1, soft_max=10, max=100,
+    ct_segments: IntProperty(name="Segments", default=1, min=1, soft_max=10, max=100, update=_connect_redo,
                              description="New edges a connection makes between two edges (loops through a ring)")
-    ct_pinch: FloatProperty(name="Pinch", default=0.0, min=-100.0, max=100.0, precision=2,
+    ct_pinch: FloatProperty(name="Pinch", default=0.0, min=-100.0, max=100.0, precision=2, update=_connect_redo,
                             description="Pulls a connection's segments together (positive) or apart (negative)")
 
 

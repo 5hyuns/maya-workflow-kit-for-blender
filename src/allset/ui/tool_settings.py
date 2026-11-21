@@ -125,6 +125,9 @@ def reset_tool(context):
     from ..operators import multi_cut
     if tool.idname == multi_cut.TOOL:       # Multi-Cut keeps its Maya options on the scene
         multi_cut.reset_settings(multi_cut.mesh_tools.settings(context))
+    from ..operators import connect_tool, edge_loops
+    if tool.idname == connect_tool.TOOL:    # so does the Connect Tool
+        edge_loops.reset_settings(edge_loops.settings(context), 'CONNECT')
     return tool.idname, n
 
 

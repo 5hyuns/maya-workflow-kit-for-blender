@@ -42,6 +42,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   and a slice are made on both sides of the mesh, and the preview shows the mirrored side too. A cut that is its own
   mirror (across the middle) is made once. (#420)
 
+### Added
+- Connect Tool: a Segments, Slide or Pinch value typed into the tool's options re-does the connection the tool just
+  made, like Maya. The Modeling Toolkit's Connect button enters the Connect Tool and shows its Connect Options
+  (Slide / Segments / Pinch, Reset Settings, Keyboard/Mouse Shortcuts), and the Tools button of the active tool shows
+  pressed. Reset Tool in the Tool Settings resets the Connect Tool's options too. (#421)
+
 ## [0.20.0] — 2026-11-20
 
 Thank you for the reports. This release makes marking menus and the Move tool feel more like Maya, fixes UV Unfold,

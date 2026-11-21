@@ -17,6 +17,8 @@ SUPPORTED = ((5, 2), (5, 3))            # the supported minors
 STRICT_VERSIONS = SUPPORTED             # keymap patches must all apply to these minors' IC data
 IS_TARGET = VERSION == TARGET
 IS_STRICT = VERSION in STRICT_VERSIONS
+# A Scene value typed into a button in mesh edit mode gets its own undo step from 5.3 on (5.2 skips that step)
+UI_UNDO_FOR_SCENE_IN_EDIT = VERSION >= (5, 3)
 
 
 # --- Help links ------------------------------------------------------------------------------------------------------
