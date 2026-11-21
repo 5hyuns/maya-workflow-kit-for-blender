@@ -10538,7 +10538,7 @@
    "Default weight": "Default weight",
    "Detach": "Detach",
    "Detach Curves Options": "Detach Curves Options",
-   "Dropoff: 4.0 (Maya weighs an unlocked influence by distance; the kit adds it at 0)": "Dropoff: 4.0 (Maya weighs an unlocked influence by distance; the kit adds it at 0)",
+   "Dropoff (the kit adds the influence at its default weight, not by distance)": "Dropoff (the kit adds the influence at its default weight, not by distance)",
    "Dynamic": "Dynamic",
    "Find intersections: In 2D and 3D / In 3D only / Use direction (the kit finds 3D crossings)": "Find intersections: In 2D and 3D / In 3D only / Use direction (the kit finds 3D crossings)",
    "From Channel Box": "From Channel Box",

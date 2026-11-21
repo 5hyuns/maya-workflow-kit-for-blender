@@ -227,6 +227,6 @@ WINDOWS = [
         F("lock_weights", "Weight locking:", "bool", False, text="Lock weights"),
         F("default_weight", "Default weight:", "float", 0.0, lo=0.0, hi=1.0),
     ], _run_add_influence, paths=("Skin/Edit Influences/Add Influence",),
-        missing=("Geometry: Use geometry", "Dropoff: 4.0 (Maya weighs an unlocked influence by distance; the kit adds "
-                 "it at 0)", "Polygon smoothness: 0.0", "NURBS samples: 10")),
+        missing=("Geometry: Use geometry", "Dropoff (the kit adds the influence at its default weight, not by distance)",
+                 "Polygon smoothness: 0.0", "NURBS samples: 10")),
 ]

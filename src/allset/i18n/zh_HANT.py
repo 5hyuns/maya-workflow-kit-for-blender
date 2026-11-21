@@ -6817,7 +6817,7 @@ STRINGS = {
     'Dropoff': '衰減',
     'Dropoff distance': '衰減距離',
     'Dropoff type': '衰減類型',
-    'Dropoff: 4.0 (Maya weighs an unlocked influence by distance; the kit adds it at 0)': '衰減: 4.0 (Maya 按距離為未鎖定的影響物分配權重; 工具包以 0 添加)',
+    'Dropoff (the kit adds the influence at its default weight, not by distance)': '衰減 (工具包按預設權重添加影響物, 不按距離)',
     'Dual quaternion': '雙四元數',
     'Duplicate Special Options': '特殊複製選項',
     'Ease In': '緩入',
