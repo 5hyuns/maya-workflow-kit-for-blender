@@ -1,6 +1,6 @@
 """Issue #397: a skinned mesh's components sit on the posed mesh like Maya: Bind Skin and Paint Skin Weights keep the
 skin shown in edit mode on the edit cage, and the kit's component drawing reads that posed cage. Paint Skin Weights
-turns its wireframe on the first time on a mesh (Maya's Show wireframe starts on).
+turns its wireframe on the first time on a mesh, like Maya.
 GUI: tests/gui/gui_issue397_paint_component.py."""
 
 from importlib import import_module

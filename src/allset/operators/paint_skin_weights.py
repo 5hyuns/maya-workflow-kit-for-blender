@@ -258,7 +258,7 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
             mesh.vertex_groups.active_index = first.index
         _maya_start(context, not seen)
         mesh[PAINT_SEEN] = True
-        if not mesh.get(PAINT_WIRE):                     # Maya's Show wireframe starts on
+        if not mesh.get(PAINT_WIRE):                     # the wireframe is on when painting starts, like Maya
             from ..ui.status_line import main_view3d
             area, _region = main_view3d(context.screen)
             if area is not None:

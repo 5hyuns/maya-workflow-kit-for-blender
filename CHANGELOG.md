@@ -67,7 +67,7 @@ showed what to fix.
   like Maya: the sectors follow the box sizes and a menu with few items has one in every direction. Below the top of
   the list under the ring only its rows are picked, and a radial item already highlighted stays so there.
 - Marking menus: a stroke released soon after the press is a mark, like Maya: it runs the item of its
-  direction, never the list row it ends on (a release within 0.1 s of the press runs nothing, see below).
+  direction, never the list row it ends on (a release right after the press runs nothing, see below).
 - Move tool in component mode: while Ctrl+Shift is held over a manipulator handle, a "slide" label shows under the
   mouse, like Maya's slide cursor; a drag then slides the selected components along their edges (#391).
 - Straighten Shell: when the straightened line crosses a ribbon shell of two or more faces, the shell's width moves
@@ -75,11 +75,11 @@ showed what to fix.
   a one-face ribbon, still gives the shell its 3D proportions (#413).
 - Move tool in component mode: the "slide" label stays under the mouse for the whole Ctrl+Shift slide drag, like
   Maya's slide cursor, and goes away when the drag ends or is cancelled and the keys are let go (#410).
-- Marking menus: the centre where nothing is highlighted or picked is 10 px, like Maya (#411).
+- Marking menus: right around the centre nothing is highlighted or picked, like Maya (#411).
 - Marking menus: a rest opens the highlighted radial submenu when its box lies on the way from the centre to the
-  pointer, like Maya: beyond a wide box also at a shallow angle, not past the box's far corner; moving 3 px or more
+  pointer, like Maya: beyond a wide box also at a shallow angle, not past the box's far corner; moving on
   starts the rest again (#412).
-- Marking menus: a release within 0.1 s of the press runs nothing, like Maya, also on a radial item, counted from
+- Marking menus: a release right after the press runs nothing, like Maya, also on a radial item, counted from
   when the press came even when Blender handles it a frame late; a quick click in the centre still keeps the menu
   up (#414).
 - Skin: with Normalize Weights set to Disable or Enable (Skin > Normalize Weights), a posed skin's components, their

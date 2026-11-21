@@ -1,4 +1,4 @@
-"""Issue #397: Paint Skin Weights on a posed skin shows its wireframe (Maya's Show wireframe is on), and switching to
+"""Issue #397: Paint Skin Weights on a posed skin shows its wireframe, like Maya, and switching to
 vertex component mode (F9) while painting keeps the pose like Maya: the mesh, its vertices and the kit's component
 drawing stay where the posed mesh is, the vertices selected in Select mode stay selected, and painting again (the
 shelf button) still shows the pose."""

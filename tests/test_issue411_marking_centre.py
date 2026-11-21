@@ -1,5 +1,5 @@
-"""#411: the centre of a marking menu where nothing is highlighted or picked is 10 px, like Maya: a pointer 10 px
-or nearer from the press point highlights nothing, a little farther highlights the item of its direction and a
+"""#411: right around the centre of a marking menu nothing is highlighted or picked, like Maya. In the kit a pointer
+10 px or nearer from the press point highlights nothing, a little farther highlights the item of its direction and a
 release there runs it. A quick press and release that stays inside it still keeps the menu up (click mode).
 Engine only."""
 

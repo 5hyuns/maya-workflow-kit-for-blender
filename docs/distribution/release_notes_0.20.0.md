@@ -23,9 +23,9 @@ extension until they are tested.
   stroke that keeps moving goes over it, so list rows beyond it can be reached (Ctrl+RMB: To Shell under To Faces).
   A rest opens the highlighted submenu when its box lies on the way from the centre to the pointer (#412).
 - **Which item is highlighted:** off the item boxes, the highlighted item is the one whose box lies nearest the
-  pointer's direction (#406), and the centre where nothing is highlighted is 10 px, like Maya (#411).
+  pointer's direction (#406), and right around the centre nothing is highlighted, like Maya (#411).
 - **Quick marks (#406):** a stroke released soon after the press runs the item of its direction, never the list row it ends
-  on; a release within 0.1 s of the press runs nothing, like Maya (#414). A quick click in the centre still keeps
+  on; a release right after the press runs nothing, like Maya (#414). A quick click in the centre still keeps
   the menu up.
 - In Isolate Select, RMB on an object seen through a hole in another opens the marking menu for the object you see
   (#395).

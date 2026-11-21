@@ -110,8 +110,8 @@ def s_click_done():
     check("click mode: click West = Vertex mode",
           mode() == 'EDIT_MESH' and tuple(ts().mesh_select_mode) == (True, False, False))
     obj_mode()
-    # Flick: press and move, release 0.105 s later (well under the 0.15 s draw delay; a release right after the
-    # press runs nothing, like Maya).
+    # Flick: press and move, release 0.105 s later (well under the kit's 0.15 s draw delay). A release right after
+    # the press runs nothing, like Maya.
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     ev('RIGHTMOUSE', 'PRESS', x=C["x"], y=C["y"])
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] - 30)

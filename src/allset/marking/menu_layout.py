@@ -22,7 +22,7 @@ class Params:
     # (±d, ±d), d = radius·cos 45°; boxes 21 px high, text + 2 × 25 px wide (+ 5 with an option box).
     radius = 55.0          # centre -> radial item anchor
     dead = 12.0            # no direction inside this (= Blender pie_menu_threshold): click mode, back-out, marks
-    pick_dead = 10.0       # like Maya: this near the centre or nearer nothing is highlighted or picked
+    pick_dead = 10.0       # this near the centre or nearer nothing is highlighted or picked
     item_h = 22.0          # list rows
     pad = 8.0              # text padding inside a list row / hotbox label
     opt_w = 16.0           # option box square
@@ -33,15 +33,15 @@ class Params:
     ring_list_gap = 21.0   # ring bottom -> list top
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
-    # A release sooner than ``mark_time`` s after the press is a mark, like Maya: the radial item of its direction,
-    # never a list row it ends on (a submenu item that did not open: nothing runs).
+    # A quick release is a mark, like Maya: the radial item of its direction, never a list row it ends on (a submenu
+    # item that did not open: nothing runs). The kit counts a release sooner than ``mark_time`` s after the press.
     mark_time = 0.11
-    # A release sooner than ``quick_none_time`` s after the press runs nothing at all, like Maya, also on a radial leaf
-    # item (a quick click in the centre still keeps the menu up; not with the Quick Gestures option).
+    # A release right after the press runs nothing at all, like Maya, also on a radial leaf item (a quick click in the
+    # centre still keeps the menu up; not with the Quick Gestures option). The kit's window: ``quick_none_time`` s.
     quick_none_time = 0.10
-    # A radial item's submenu opens when the pointer rests on it (its box, or beyond the box seen from the centre) for
-    # ``open_dwell`` s while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under
-    # the ring and the other side of the ring stay reachable. Moving less than ``rest_slop`` px is still a rest.
+    # A radial item's submenu opens when the pointer rests on it (its box, or beyond the box seen from the centre)
+    # while the menu is drawn, like Maya: a stroke that keeps moving goes over it, so the list under the ring and the
+    # other side of the ring stay reachable. The kit's rest: ``open_dwell`` s, moving less than ``rest_slop`` px.
     open_dwell = 0.1
     rest_slop = 2.0
     # Options (add-on preferences, both off by default; marking/modal.py copies them in):

@@ -1,4 +1,4 @@
-"""Straighten Shell gives the shell Maya's width. Like Maya, the shell is unfolded around the straightened line starting
+"""Straighten Shell: how wide the shell comes out. Like Maya, the shell is unfolded around the straightened line starting
 from its own UV layout with a limited effort: a line that runs the long way of a ribbon, or crosses a ribbon one face
 tall, lets the shell reach its 3D proportions; a line that crosses a ribbon two or more faces tall changes the shell's
 width across the line only part of the way from what it was. The shell stays a straight strip."""
