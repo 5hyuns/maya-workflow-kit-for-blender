@@ -75,6 +75,35 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                ('BLENDER', "Blender", "Your active Blender keymap, unchanged; the Maya layout, menus and tools stay")),
         default='MAYA', update=_update_keymap_set)
 
+    @_quiet
+    def _update_blender_keys(self, context):
+        if not self.maya_mode:
+            return
+        from . import switch
+        if not switch._registered[0]:
+            return
+        from . import keymap
+        keymap.reapply()
+        bpy.context.window_manager.keyconfigs.update()
+
+    # #226: a few Blender keys next to the Maya keys (keymap/maya_patches_commands.patch_blender_keys), 3D View only.
+    # Off: the Maya keys stay as they are.
+    keep_blender_keys: bpy.props.BoolProperty(
+        name="Keep Blender Keys",
+        description="Keep a few Blender keys next to the Maya keys in the 3D View. Keys Maya mode already uses stay "
+                    "Maya keys",
+        default=False, update=_update_blender_keys)
+    blender_key_tab: bpy.props.BoolProperty(
+        name="Tab: Edit Mode Toggle",
+        description="Tab switches between Object Mode and Edit Mode in the 3D View, as in Blender. The operator "
+                    "search stays on Ctrl+F; with the Quad Draw tool, Tab stays Quad Draw's Tab",
+        default=True, update=_update_blender_keys)
+    blender_key_local_view: bpy.props.BoolProperty(
+        name="Alt+E: Local View",
+        description="Alt+E shows only the selected objects in the 3D View and back (Local View). In Object Mode and "
+                    "Pose Mode it replaces Alt+E Clear Rotation (Modify > Reset Transformations stays)",
+        default=True, update=_update_blender_keys)
+
     # Maya mode on/off (switch.py), kept across restarts. Off after install: enabling the
     # extension changes nothing until the user opts in (welcome dialog / button / switch).
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
@@ -754,6 +783,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.operator("allset.new_maya_scene", icon='FILE_NEW')
         row.operator("allset.maya_layout_here", icon='WORKSPACE')
         box.prop(self, "keymap_set")
+        _draw_blender_keys(self, box)
         box.prop(self, "start_in_maya_layout")
         box.prop(self, "new_scene_time")
         box.prop(self, "maya_layout_on_open")
@@ -1037,6 +1067,23 @@ def _redraw_time_slider(context):
         for area in win.screen.areas:
             if area.type in {'DOPESHEET_EDITOR', 'PROPERTIES'}:
                 area.tag_redraw()
+
+
+def _draw_blender_keys(prefs, layout):
+    """The "Keep Blender Keys" choice (#226), used only with the kit's Maya keys."""
+    col = layout.column(align=True)
+    col.active = prefs.keymap_set == 'MAYA'
+    col.prop(prefs, "keep_blender_keys")
+    if not prefs.keep_blender_keys:
+        return
+    row = col.row(align=True)
+    row.active = prefs.keymap_set == 'MAYA'
+    row.separator(factor=2.0)
+    row.prop(prefs, "blender_key_tab")
+    row.prop(prefs, "blender_key_local_view")
+    row = col.row()
+    row.separator(factor=2.0)
+    row.label(text="Keys Maya mode uses stay Maya keys: Ctrl+Tab, Q, W, E, R, . (period), F, Space", icon='INFO')
 
 
 def get(context=None):

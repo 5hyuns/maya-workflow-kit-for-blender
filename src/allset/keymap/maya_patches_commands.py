@@ -400,3 +400,26 @@ def patch_blender_render(kd):
          shadows=("Object Mode", "Mesh", UV_KM))   # Maya's F12 UV mask wins in the 3D View / UV Editor
     _add(kd, UV_KM, "allset.uv_component", make_event("F12"), {"mode": 'UV'}, shadows=("Screen",))
     _add(kd, "Screen", "render.render", make_event("F12", ctrl=True), {"animation": True, "use_viewport": True})
+
+
+# --- Blender keys next to the Maya keys (#226) -----------------------------------------------------------------
+# Opt-in (add-on preferences "Keep Blender Keys", off by default): a few Blender keys for hands trained on both
+# programs, only where no Maya key uses the same event. Not in ``PATCHES``: ``maya_patches.apply`` runs it last with
+# the keys the preferences ask for. 3D View only; the other editors keep their keys. Keys Maya mode already uses stay
+# Maya keys (Ctrl+Tab pose mode, Q Select tool, . next key, F frame selection), and an active tool's own key runs
+# first (Quad Draw keeps Tab + drag).
+#   TAB         Tab = Edit Mode toggle, as in Blender. Takes the place of the Industry Compatible operator search on
+#               Tab in the 3D View (the search stays on Ctrl+F).
+#   LOCAL_VIEW  Alt+E = Local View toggle. Takes the place of the Industry Compatible Alt+E Clear Rotation of Object
+#               Mode and Pose Mode (Modify > Reset Transformations stays).
+BLENDER_KEYS = ("TAB", "LOCAL_VIEW")
+
+
+def patch_blender_keys(kd, keys=()):
+    if "TAB" in keys:
+        kd.remove("3D View", "wm.search_menu", type="TAB")
+        _add(kd, "Object Non-modal", "object.mode_set", make_event("TAB"), {"mode": 'EDIT', "toggle": True})
+    if "LOCAL_VIEW" in keys:
+        kd.remove("Object Mode", "object.rotation_clear", type="E", alt=True)
+        kd.remove("Pose", "pose.rot_clear", type="E", alt=True)
+        _add(kd, "3D View", "view3d.localview", make_event("E", alt=True))

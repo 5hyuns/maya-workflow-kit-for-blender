@@ -79,7 +79,7 @@ def generate_data():
     from . import ic_data, maya_patches, patch
     patch.STRICT = compat.IS_STRICT
     patch.DRIFT.clear()
-    data = maya_patches.apply(ic_data.generate())
+    data = maya_patches.apply(ic_data.generate(), blender_keys())
     if patch.DRIFT:
         print(f"Maya Workflow Kit: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
               "(made for 5.2 and 5.3):", *patch.DRIFT[:20], sep="\n  ")
@@ -507,6 +507,29 @@ def wants_maya_keys():
         return preferences.get().keymap_set != 'BLENDER'
     except (KeyError, AttributeError):
         return True
+
+
+def blender_keys():
+    """The Blender keys the add-on preferences keep next to the Maya keys (``maya_patches.BLENDER_KEYS`` names; none
+    while "Keep Blender Keys" is off)."""
+    from .. import preferences
+    try:
+        prefs = preferences.get()
+    except (KeyError, AttributeError):
+        return ()
+    if not prefs.keep_blender_keys:
+        return ()
+    return tuple(key for key, on in (("TAB", prefs.blender_key_tab), ("LOCAL_VIEW", prefs.blender_key_local_view))
+                 if on)
+
+
+def reapply():
+    """The Maya keys built again from the data (a preference that changes them, e.g. "Keep Blender Keys"); nothing
+    while they are off. The user's edits of the Maya keys are kept as for a Keyboard switch."""
+    if not _state["applied"]:
+        return
+    deactivate()
+    activate()
 
 
 def sync():

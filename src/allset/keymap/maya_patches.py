@@ -22,10 +22,10 @@ from .maya_patches_manip import (  # noqa: F401
     GIZMO_KEYMAPS, HOLD_KEYS, MMB_TOOLS, patch_active_handle, patch_component_slide, patch_hold_snap,
     patch_in_view_mmb, patch_manip_ctrl, patch_manip_duplicate, patch_soft_select, patch_tap_hold_and_pivot)
 from .maya_patches_commands import (  # noqa: F401
-    CTRL_A_MODES, MM_KEYMAPS, TOOL_KEYS, TOOL_KEY_KEYMAPS, patch_attribute_editor, patch_blender_render,
+    BLENDER_KEYS, CTRL_A_MODES, MM_KEYMAPS, TOOL_KEYS, TOOL_KEY_KEYMAPS, patch_attribute_editor, patch_blender_render,
     patch_concepts, patch_global_keys_4, patch_group, patch_joints, patch_key_batch, patch_key_batch_2,
     patch_marking_menus, patch_materials, patch_menu_shortcuts, patch_pick_walk, patch_pose_joints, patch_repeat,
-    patch_scene_files, patch_undo_visibility)
+    patch_blender_keys, patch_scene_files, patch_undo_visibility)
 from .maya_patches_mesh import (  # noqa: F401
     COMPONENT_KEYS, MODE_KEYMAPS, SCULPT_BRUSHES, patch_component_delete, patch_component_keys,
     patch_component_pick_walk, patch_key_batch_3, patch_mesh_components, patch_uv, patch_weight_paint_exit)
@@ -111,10 +111,12 @@ PATCHES += (patch_numpad_digits,)
 PATCHES += (patch_attribute_edit,)
 
 
-def apply(data):
-    """Apply all patches to IC data in place and return it."""
+def apply(data, blender_keys=()):
+    """Apply all patches to IC data in place and return it. ``blender_keys``: the opt-in Blender keys to keep
+    (``BLENDER_KEYS`` names, add-on preferences "Keep Blender Keys")."""
     ADDED.clear()
     kd = KeyconfigData(data)
     for apply_patch in PATCHES:
         apply_patch(kd)
+    patch_blender_keys(kd, blender_keys)
     return data

@@ -184,11 +184,13 @@ def _conflicts(data):
 
 def test_no_new_conflicts_within_keymaps():
     base = _conflicts(ic_data.generate())
-    # Declared pass-through items placed in front on purpose (maya_patches.PASS_THROUGH_FIRST).
-    maya = {c for c in _conflicts(maya_patches.apply(ic_data.generate()))
-            if c[2] not in maya_patches.PASS_THROUGH_FIRST}
-    new = sorted(maya - base, key=str)
-    assert not new, "new conflicts:\n" + "\n".join(map(str, new))
+    # with and without the opt-in Blender keys (#226, add-on preferences "Keep Blender Keys")
+    for keys in ((), maya_patches.BLENDER_KEYS):
+        # Declared pass-through items placed in front on purpose (maya_patches.PASS_THROUGH_FIRST).
+        patched = {c for c in _conflicts(maya_patches.apply(ic_data.generate(), keys))
+                   if c[2] not in maya_patches.PASS_THROUGH_FIRST}
+        new = sorted(patched - base, key=str)
+        assert not new, f"new conflicts {keys}:\n" + "\n".join(map(str, new))
 
 
 # Keymaps that can handle an event in the same place as the patched keymap.
@@ -253,7 +255,21 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
 
 
 def test_added_bindings_not_shadowed():
-    data = maya_patches.apply(ic_data.generate())
+    _check_not_shadowed(())
+
+
+def test_added_bindings_not_shadowed_with_blender_keys():
+    """The opt-in Blender keys (#226) shadow no Maya key and no Maya key shadows them."""
+    try:
+        _check_not_shadowed(maya_patches.BLENDER_KEYS)
+        assert {(km, idname) for km, idname, *_r in maya_patches.ADDED} >= {
+            ("Object Non-modal", "object.mode_set"), ("3D View", "view3d.localview")}
+    finally:
+        maya_patches.apply(ic_data.generate())      # ADDED as the plain Maya keys leave it
+
+
+def _check_not_shadowed(blender_keys):
+    data = maya_patches.apply(ic_data.generate(), blender_keys)
     assert maya_patches.ADDED, "no added bindings recorded"
     problems = []
     # select tool keymaps that got a Maya marquee item are only active with that tool (own stack)

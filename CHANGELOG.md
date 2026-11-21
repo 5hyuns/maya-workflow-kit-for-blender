@@ -26,6 +26,11 @@ showed what to fix.
   objects, or faces with components selected. Leaving Isolate Select shows the faces again and keeps the faces you
   hid yourself hidden; undo keeps the isolation as it is. Blender hides faces per mesh, so the other 3D Views hide
   them too while one view isolates them, and Object Mode shows the whole mesh. (#427)
+- Add-on preferences: Keep Blender Keys (off by default) keeps two Blender keys next to the Maya keys in the 3D View:
+  Tab switches between Object Mode and Edit Mode (the operator search stays on Ctrl+F) and Alt+E toggles Local View
+  (instead of Alt+E Clear Rotation). Each can be turned off on its own. Keys Maya mode already uses (Ctrl+Tab, Q, W,
+  E, R, the period key, F, Space) stay Maya keys, the Quad Draw tool keeps its Tab, and the other editors keep their
+  Tab. (#226)
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces
