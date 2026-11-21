@@ -35,10 +35,20 @@ def material_type(material):
     return "standardSurface" if principled(material) else "material"
 
 
+def shape_kind(ob):
+    """The ``BY_KIND`` / ``NODE_TYPE`` key of an object's shape: the light type, IMAGE_PLANE for an image empty, else
+    the object type."""
+    if ob.type == 'LIGHT':
+        return ob.data.type
+    if ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE':
+        return 'IMAGE_PLANE'
+    return ob.type
+
+
 def node_type(ob):
     if ob.type == 'LIGHT':
         return ae_layout.light_type(ob.data)
-    return ae_layout.NODE_TYPE.get(ob.type, ob.type.lower())
+    return ae_layout.NODE_TYPE.get(shape_kind(ob), ob.type.lower())
 
 
 # Blender modifier -> the Maya history node that does the same (Maya node type names; where Maya has
@@ -206,7 +216,7 @@ def sections_for(ob, key):
     if kind == "J":
         return ae_layout.BY_KIND["joint"][0], "joint"
     if kind == "S":
-        sub = ob.data.type if ob.type == 'LIGHT' else ob.type
+        sub = shape_kind(ob)
         return ae_layout.BY_KIND.get(sub, ([], None))[0], sub.lower()
     if kind == "MAT":
         mat = tab_target(ob, key)

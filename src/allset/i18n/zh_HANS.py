@@ -7383,4 +7383,7 @@ STRINGS = {
     'Make a mesh of the selected target, where the base is (Maya Shapes > Rebuild Target)': '在基础物体所在处生成选定目标的网格 (Maya 形状 > 重建目标)',
     'Select the CVs along the borders of the selected surfaces (Maya Select > Surface Border)': '选择选定曲面边界上的 CV (Maya 选择 > 曲面边界)',
     'Show the CVs of the selected curves and surfaces to pick them (Maya Select > Components > Control Vertex)': '显示选定曲线和曲面的 CV 以便拾取 (Maya 选择 > 组件 > 控制顶点)',
+    'Alpha Gain': 'Alpha 增益',
+    "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)": '图像平面绘制的不透明度：调低后图像变透明，便于在上面描绘 (Blender: 图像空物体的不透明度)',
+    "Display Mode of the image plane, like the Image Plane button's right-click menu": '图像平面的显示模式 (与图像平面按钮的右键菜单相同)',
 }

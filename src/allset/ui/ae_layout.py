@@ -345,8 +345,17 @@ TYPE = [
                                "text to a mesh (Modify > Convert) and animate that.")),
 ]
 
+# --- image plane (a Blender image empty; the kit's View > Image Plane, Create > Free Image Plane) ------------------
+IMAGE_PLANE = [
+    S("Image Plane Attributes", True,
+      ("prop", "ob", "allset_image_plane_display", "Display Mode"),
+      ("prop", "data", "filepath", "Image Name"),
+      ("prop", "ob", "allset_alpha_gain", "Alpha Gain")),          # #436: see-through reference images
+]
+
 # (sections, Maya template name or None)
 BY_KIND = {
+    "IMAGE_PLANE": (IMAGE_PLANE, None),
     "FONT": (TYPE, None),
     "transform": (TRANSFORM, "transform"),
     "joint": (JOINT, "joint"),
@@ -373,7 +382,7 @@ BY_KIND = {
 # Maya node type shown in the tab header ("transform: [pCube1]").
 NODE_TYPE = {"MESH": "mesh", "CURVE": "nurbsCurve", "SURFACE": "nurbsSurface", "CAMERA": "camera",
              "LIGHT": "light", "LATTICE": "lattice", "ARMATURE": "joint", "FONT": "type",
-             "META": "metaball", "EMPTY": "locator"}
+             "META": "metaball", "EMPTY": "locator", "IMAGE_PLANE": "imagePlane"}
 LIGHT_TYPE = {"POINT": "pointLight", "SUN": "directionalLight", "SPOT": "spotLight",
               "AREA": "areaLight"}
 

@@ -28,7 +28,7 @@ import json
 import os
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 from mathutils import Quaternion, Vector
 
 from . import units
@@ -168,6 +168,48 @@ def set_shown(plane, on, scene):
 
 def toggle(plane, scene):
     set_shown(plane, not shown(plane), scene)
+
+
+# --- Attribute Editor rows of an image plane (#436) ---------------------------------------------------------------
+
+def is_image_plane(ob):
+    return ob is not None and ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE'
+
+
+def _alpha_get(ob):
+    """Alpha Gain: how opaque the plane's image is drawn (1 = as the image is). Blender's Opacity of the image empty:
+    the object colour's alpha, used while the empty's alpha blending is on."""
+    return ob.color[3] if ob.use_empty_image_alpha else 1.0
+
+
+def _alpha_set(ob, value):
+    ob.color[3] = value
+    ob.use_empty_image_alpha = value < 1.0
+
+
+def _display_get(ob):
+    return 0 if ob.get(NONE_MARK) else 1
+
+
+def _display_set(ob, value):
+    set_shown(ob, value == 1, bpy.context.scene)
+
+
+def register_props():
+    bpy.types.Object.allset_alpha_gain = FloatProperty(
+        name="Alpha Gain", min=0.0, max=1.0, get=_alpha_get, set=_alpha_set, subtype='FACTOR',
+        description="How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it "
+                    "(Blender: the image empty's Opacity)")
+    bpy.types.Object.allset_image_plane_display = EnumProperty(
+        name="Display Mode", items=(('NONE', "None", "The image is not drawn"),
+                                    ('RGBA', "RGBA", "The image is drawn with its colours and alpha")),
+        get=_display_get, set=_display_set,
+        description="Display Mode of the image plane, like the Image Plane button's right-click menu")
+
+
+def unregister_props():
+    del bpy.types.Object.allset_image_plane_display
+    del bpy.types.Object.allset_alpha_gain
 
 
 class ALLSET_OT_image_plane(bpy.types.Operator):

@@ -267,6 +267,7 @@ def register():
     flow_path_228.register_props()
     legacy_cleanup.register()
     render_cameras.register_props()
+    image_plane.register_props()
     joint_edit.register()
     joint_display.register_props()
     poly_display.register_props()
@@ -454,6 +455,7 @@ def unregister():
     snap_align.unregister_props()
     pick_order.unregister_handlers()
     legacy_cleanup.unregister()
+    image_plane.unregister_props()
     render_cameras.unregister_props()
     _unregister_classes()
 

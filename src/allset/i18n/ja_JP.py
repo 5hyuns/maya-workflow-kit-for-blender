@@ -7382,4 +7382,7 @@ STRINGS = {
     'Make a mesh of the selected target, where the base is (Maya Shapes > Rebuild Target)': '選択ターゲットのメッシュをベースの位置に作ります (Maya の シェイプ > ターゲットを再構築)',
     'Select the CVs along the borders of the selected surfaces (Maya Select > Surface Border)': '選択サーフェスの境界に沿った CV を選択します (Maya の 選択 > サーフェスの境界)',
     'Show the CVs of the selected curves and surfaces to pick them (Maya Select > Components > Control Vertex)': '選択したカーブとサーフェスの CV を表示して選べるようにします (Maya の 選択 > コンポーネント > コントロール頂点)',
+    'Alpha Gain': 'アルファ ゲイン',
+    "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)": 'イメージプレーンを描く不透明度です。下げると画像が透けて、上からなぞれます (Blender: 画像エンプティの不透明度)',
+    "Display Mode of the image plane, like the Image Plane button's right-click menu": 'イメージプレーンの表示モードです (イメージプレーン ボタンの右クリックメニューと同じ)',
 }

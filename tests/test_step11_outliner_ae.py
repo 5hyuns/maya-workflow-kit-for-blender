@@ -256,7 +256,7 @@ def _rna_owner(owner_name, kind):
         return bpy.types.SpaceView3D
     return {"MESH": bpy.types.Mesh, "CAMERA": bpy.types.Camera, "POINT": bpy.types.PointLight,
             "SUN": bpy.types.SunLight, "SPOT": bpy.types.SpotLight, "AREA": bpy.types.AreaLight,
-            "material": bpy.types.Material, "FONT": bpy.types.TextCurve}.get(kind)
+            "material": bpy.types.Material, "FONT": bpy.types.TextCurve, "IMAGE_PLANE": bpy.types.Image}.get(kind)
 
 
 def test_ae_rows_exist_in_blender():
@@ -293,9 +293,12 @@ def test_ae_draws_every_tab():
     ob["myAttr"] = 2.0
     plain = bpy.data.materials.new("lambert1")
     ob.data.materials.append(plain)
-    for o in (cam, lamp, sun):
+    plane = bpy.data.objects.new("imagePlane1", None)
+    plane.empty_display_type = 'IMAGE'
+    plane.data = bpy.data.images.new("reference", 8, 8)
+    for o in (cam, lamp, sun, plane):
         bpy.context.scene.collection.objects.link(o)
-    for target in (ob, cam, lamp, sun):
+    for target in (ob, cam, lamp, sun, plane):
         _select([target], target)
         for key, _label, _type in ae.tabs(target):
             bpy.ops.allset.ae_tab(key=key)

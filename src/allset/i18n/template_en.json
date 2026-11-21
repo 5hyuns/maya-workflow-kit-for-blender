@@ -6131,8 +6131,11 @@
    "Twist type": "Twist type"
   },
   "Labels/operators/image_plane": {
+   "Alpha Gain": "Alpha Gain",
    "Delete Image Plane": "Delete Image Plane",
    "Display Mode": "Display Mode",
+   "Display Mode of the image plane, like the Image Plane button's right-click menu": "Display Mode of the image plane, like the Image Plane button's right-click menu",
+   "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)": "How opaque the image plane is drawn: lower it to see through the image, e.g. to trace over it (Blender: the image empty's Opacity)",
    "Image Plane": "Image Plane",
    "Image Plane Attributes": "Image Plane Attributes",
    "Image Plane Display Mode": "Image Plane Display Mode",

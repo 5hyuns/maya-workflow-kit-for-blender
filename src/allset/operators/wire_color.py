@@ -129,11 +129,12 @@ def apply(node):
             col.palette = 'DEFAULT'
             del node[SET_KEY]
         return
+    alpha = node.color[3]       # an image plane's Alpha Gain (Opacity) stays
     if c is not None:
-        node.color = _linear(c)
+        node.color = (*_linear(c)[:3], alpha)
         node[SET_KEY] = 1
     elif node.get(SET_KEY):
-        node.color = WHITE
+        node.color = (*WHITE[:3], alpha)
         del node[SET_KEY]
 
 
