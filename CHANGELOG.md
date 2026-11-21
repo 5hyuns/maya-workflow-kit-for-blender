@@ -16,6 +16,8 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ### Fixed
 - UV > 3D Grab UV Tool picked over the 3D View no longer raises a Python error: it sets the Grab tool in the UV
   Editor, which opens first when none is open (#434).
+- macOS: the kit's own Ctrl keys (such as Ctrl+1 Isolate Select) also answer Cmd, like Blender's, and a Ctrl key the kit
+  removed or replaced no longer leaves its Cmd copy behind (#432).
 
 ## [0.20.1] — 2026-11-21
 

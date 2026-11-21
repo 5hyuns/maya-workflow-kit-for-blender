@@ -79,7 +79,7 @@ def generate_data():
     from . import ic_data, maya_patches, patch
     patch.STRICT = compat.IS_STRICT
     patch.DRIFT.clear()
-    data = maya_patches.apply(ic_data.generate(), blender_keys())
+    data = ic_data.for_platform(maya_patches.apply(ic_data.generate(), blender_keys()))
     if patch.DRIFT:
         print(f"Maya Workflow Kit: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
               "(made for 5.2 and 5.3):", *patch.DRIFT[:20], sep="\n  ")

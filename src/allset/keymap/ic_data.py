@@ -26,9 +26,16 @@ def data_version(version=None):
 
 
 def generate():
-    """Return a new list of IC keyconfig data (safe to mutate)."""
+    """Return a new list of IC keyconfig data (safe to mutate), as the kit's patches expect it: Ctrl keys only. On
+    macOS the Cmd copies are made after the patches (``for_platform``)."""
     v = data_version()
-    data = copy.deepcopy(import_module(f".ic_{v[0]}_{v[1]}", __package__).DATA)
+    return copy.deepcopy(import_module(f".ic_{v[0]}_{v[1]}", __package__).DATA)
+
+
+def for_platform(data):
+    """The patched keymap data for this platform: on macOS every Ctrl key also answers Cmd, the kit's own keys too
+    (Blender's macOS rule, which leaves Cmd+H / M / W / Space / Tab and a few more to the system). Made after the
+    patches, so a Ctrl key the kit removed or replaced leaves no Cmd copy behind (#432)."""
     if sys.platform == "darwin":
         from bl_keymap_utils.platform_helpers import keyconfig_data_oskey_from_ctrl_for_macos
         data = keyconfig_data_oskey_from_ctrl_for_macos(data)

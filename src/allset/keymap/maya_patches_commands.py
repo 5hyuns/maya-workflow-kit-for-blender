@@ -5,8 +5,6 @@ render. Run by ``maya_patches.apply`` in ``PATCHES`` order; shared state: ``maya
 line of ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 """
 
-import sys
-
 from .patch import make_event
 from .maya_patches_base import PICK_WALK_KEYS, UV_KM, VIEW3_SHADOWS, _add
 
@@ -200,11 +198,7 @@ def patch_undo_visibility(kd):
     # Ctrl+1 isolate select: local view without moving the camera; again = back.
     kd.remove("Mesh", "mesh.select_mode", type="ONE", ctrl=True)
     # isolating a group shows its children (Maya isolate select)
-    _add(kd, "3D View", "allset.isolate", make_event("ONE", ctrl=True), shadows=("Sculpt",))
-    if sys.platform == "darwin":
-        # Maya on macOS: Cmd+1 isolates too. Blender's macOS data copies IC's Ctrl+1 vertex mode to Cmd+1.
-        kd.remove("Mesh", "mesh.select_mode", type="ONE", oskey=True, optional=True)
-        _add(kd, "3D View", "allset.isolate", make_event("ONE", oskey=True), shadows=("Sculpt",))
+    _add(kd, "3D View", "allset.isolate", make_event("ONE", ctrl=True), shadows=("Sculpt",))   # macOS: Cmd+1 too
     # Maya Delete takes the selected hierarchy with it; Blender's leaves the children
     for key in ("DEL", "BACK_SPACE"):
         kd.remove("Object Mode", "object.delete", type=key)
