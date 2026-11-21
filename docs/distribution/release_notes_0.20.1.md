@@ -28,7 +28,10 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   the faces around them), like Maya. Show > Isolate Select gets Add / Remove Selected Objects. Your own hidden faces
   stay hidden when you leave it.
 - **Isolate Select in the four view (#422):** each panel keeps its own isolation when you switch between one view and
-  four views.
+  four views. A marquee or lasso in an isolated view now replaces the whole selection, so hidden objects no longer
+  stay selected, and on macOS Cmd+1 is Isolate Select too.
+- **Rotate and Scale tools (#430):** Ctrl+middle-drag on mesh components turns each group of connected components
+  about its own normal, or scales it across its normal, like Maya.
 
 ## Rigging
 
@@ -46,6 +49,10 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Next to other workflow add-ons (#423, #425, #426):** Maya mode starts and stops cleanly next to an add-on that
   changes the 3D View sidebar or the editor headers (for example Blenda 4D), and leaves that add-on's layouts and
   headers as they were.
+- **Keep Blender Keys (#226):** a new add-on preference (off by default) keeps Tab (Object / Edit Mode) and Alt+E
+  (Local View) as Blender keys next to the Maya keys in the 3D View.
+- **More Maya menu items (#108):** Visualize > Create Turntable, Control Vertex and Surface Border selection for curves
+  and surfaces, the Shape Editor's Rebuild Target, Delete All by Type > Sounds and Windows > Home now run.
 
 ## Known differences
 
@@ -54,7 +61,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 ## Thank you
 
 Thanks to @cnzim (#415) for the pull request, and to @Darkkanji (#416), @lucafrancescoorlandi (#417, #418),
-@invaderzod (#419, #420), @suenwaichit (#421), @cookies908 (#422) and @NevilArt (#423) for reports that showed what
+@invaderzod (#419, #420), @suenwaichit (#421), @cookies908 (#422), @NevilArt (#423) and @ganesh2004jadhav-boop (#428)
+for reports that showed what
 to fix. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
