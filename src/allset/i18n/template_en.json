@@ -9087,6 +9087,7 @@
   "Labels/ui/panel_state": {
    "2D Pan/Zoom: off shows the view without its 2D pan / zoom (a camera view: the camera's whole frame), on brings it back; the camera doesn't move. Tap \\ to switch it; hold \\ and middle-drag to pan, right-drag to zoom. Right-click: the 2D bookmarks": "2D Pan/Zoom: off shows the view without its 2D pan / zoom (a camera view: the camera's whole frame), on brings it back; the camera doesn't move. Tap \\ to switch it; hold \\ and middle-drag to pan, right-drag to zoom. Right-click: the 2D bookmarks",
    "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks": "Bookmarks: bookmark this view (the camera's place and lens). Right-click: the camera's bookmarks, Create 2D Bookmark, Edit 2D Bookmarks",
+   "Cameras in this view": "Cameras in this view",
    "Colour management on / off (off = Blender's Raw view transform)": "Colour management on / off (off = Blender's Raw view transform)",
    "Cycles is off: enable the Cycles add-on in Preferences > Add-ons": "Cycles is off: enable the Cycles add-on in Preferences > Add-ons",
    "Exposure: switch between 0 and the last exposure": "Exposure: switch between 0 and the last exposure",
@@ -9098,6 +9099,8 @@
    "IK handles (the empties IK constraints follow: shown or hidden in every view)": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
    "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
    "Isolate select": "Isolate select",
+   "Lights: their shapes in this view. Hidden lights still light the view while cameras and locators are hidden too (Blender hides those shapes together); with cameras or locators shown they stop lighting it": "Lights: their shapes in this view. Hidden lights still light the view while cameras and locators are hidden too (Blender hides those shapes together); with cameras or locators shown they stop lighting it",
+   "Locators (empties) in this view": "Locators (empties) in this view",
    "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)",
    "Look through a camera first (Panels > Perspective): Blender's persp view has no camera": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
    "NURBS curves: curve objects in this view, and rig controls drawn as bone shapes (their bones are shown or hidden in every view)": "NURBS curves: curve objects in this view, and rig controls drawn as bone shapes (their bones are shown or hidden in every view)",

@@ -191,10 +191,15 @@ def test_renderer_engine_items_only_with_their_preference():
 def test_show_all_none():
     space = _space()
     ctx = Ctx(space)
+    ps = import_module(kit.MODULE + ".ui.panel_state")
     pm.apply(ctx, "SHOW_NONE")
-    assert not any(getattr(space, f"show_object_viewport_{t}") for t in pm.ALL_TYPES)
+    # Lights are hidden by overlay Extras so they keep lighting the view; their type filter stays on.
+    assert not any(getattr(space, f"show_object_viewport_{t}") for t in pm.ALL_TYPES if t != "light")
+    assert not ps.lights_shown(space)
+    assert space.show_object_viewport_light and not space.overlay.show_extras
     pm.apply(ctx, "SHOW_ALL")
     assert all(getattr(space, f"show_object_viewport_{t}") for t in pm.ALL_TYPES)
+    assert ps.lights_shown(space) and space.overlay.show_extras
 
 
 def test_apply_current_to_all():

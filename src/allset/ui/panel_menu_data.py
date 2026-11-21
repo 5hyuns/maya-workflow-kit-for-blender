@@ -152,11 +152,11 @@ LIGHTING = [
 SHOW_TYPES = (
     ("Controllers", None), ("NURBS Curves", "!SHOW_NURBS_CURVES"), ("NURBS Surfaces", "surf"),
     ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
-    ("Planes", None), ("Lights", "light"), ("Cameras", "camera"), ("Image Planes", "!SHOW_IMAGE_PLANES"),
+    ("Planes", None), ("Lights", "!SHOW_LIGHTS"), ("Cameras", "!SHOW_CAMERAS"), ("Image Planes", "!SHOW_IMAGE_PLANES"),
     ("Joints", "armature"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
     ("Particle Instancers", None), ("Fluids", "volume"), ("Hair Systems", "curves"),
     ("Follicles", None), ("nCloths", None), ("nParticles", None), ("nRigids", None),
-    ("Dynamic Constraints", None), ("Locators", "empty"), ("Dimensions", None),
+    ("Dynamic Constraints", None), ("Locators", "!SHOW_LOCATORS"), ("Dimensions", None),
     ("Pivots", "@show_object_origins"), ("Handles", None), ("Texture Placements", None),
     ("Strokes", None), ("Motion Trails", "@show_motion_paths"), ("Plugin Shapes", None),
     ("Clip Ghosts", None), ("Grease Pencil", "grease_pencil"),

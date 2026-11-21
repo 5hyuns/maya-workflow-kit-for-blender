@@ -137,17 +137,33 @@ _LIGHT_MAIN = (("prop", "data", "type", "Type"),
 # Maya Decay Rate: No Decay / Linear / Quadratic / Cubic, rendered by
 # Cycles with a Light Falloff node; EEVEE / the viewport keep distance squared (operators/lights.py).
 _DECAY = ("draw", "light_decay")
+
+
+def _render_engine(*rows):
+    """The render engine's own light attributes, in a section of their own like Maya's renderer section of a light
+    (Exposure, Normalize, Spread, Max Bounces): Blender's light settings that have no Maya attribute above."""
+    return S("Cycles", False,
+             ("prop", "data", "exposure", "Exposure"),
+             ("prop", "data", "normalize", "Normalize"), *rows,
+             ("prop", "data", "cycles.max_bounces", "Max Bounces"),
+             ("prop", "data", "cycles.use_multiple_importance_sampling", "Multiple Importance"),
+             ("prop", "data", "cycles.is_caustics_light", "Shadow Caustics"))
+
+
+_SOFT_FALLOFF = ("prop", "data", "use_soft_falloff", "Soft Falloff")
 POINT_LIGHT = [
     S("Point Light Attributes", True, *_LIGHT_MAIN, _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
         S("Raytrace Shadow Attributes", True, ("prop", "data", "shadow_soft_size", "Light Radius")),
     ]),
+    _render_engine(_SOFT_FALLOFF),
 ]
 DIRECTIONAL_LIGHT = [
     S("Directional Light Attributes", True, *_LIGHT_MAIN),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
         S("Raytrace Shadow Attributes", True, ("prop", "data", "angle", "Light Angle")),
     ]),
+    _render_engine(),
 ]
 # Spot and area lights: Maya's layout is the point light's.
 SPOT_LIGHT = [
@@ -156,12 +172,14 @@ SPOT_LIGHT = [
       ("prop", "data", "spot_blend", "Penumbra"), _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"),
       ("prop", "data", "shadow_soft_size", "Light Radius")),
+    _render_engine(_SOFT_FALLOFF),
 ]
 AREA_LIGHT = [
     S("Area Light Attributes", True, *_LIGHT_MAIN,
       ("prop", "data", "shape", "Shape"),
       ("prop", "data", "size", "Size"), _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
+    _render_engine(("prop", "data", "spread", "Spread"), ("prop", "data", "cycles.is_portal", "Portal")),
 ]
 
 # --- material: standardSurface (Maya Attribute Editor) on Principled BSDF --------------
