@@ -41,6 +41,13 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   viewport layout and keyboard preset, Undo / Redo steps the joint selection, and the tool stays on until you choose
   another one, like Maya. Thanks to @cnzim for this fix.
 
+## Lights
+
+- **Light settings in the Attribute Editor (#433):** light tabs get a Cycles section with Exposure, Normalize, Spread,
+  Soft Falloff, Max Bounces and the other light settings that have no Maya row.
+- **Lighting without light shapes (#433):** a panel's Show > None, then Show > Polygons, hides the light shapes and the
+  lights keep lighting the view, like Maya.
+
 ## Windows and other add-ons
 
 - **Floating panels (#417):** a floating Tool Settings, Channel Box, Attribute Editor or Modeling Toolkit that went
@@ -49,6 +56,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Next to other workflow add-ons (#423, #425, #426):** Maya mode starts and stops cleanly next to an add-on that
   changes the 3D View sidebar or the editor headers (for example Blenda 4D), and leaves that add-on's layouts and
   headers as they were.
+- **Blender 5.0 (#431):** no more BufferError in the console on every redraw of the Maya layout.
 - **Keep Blender Keys (#226):** a new add-on preference (off by default) keeps Tab (Object / Edit Mode) and Alt+E
   (Local View) as Blender keys next to the Maya keys in the 3D View. Thanks to @scoegrams for the idea.
 - **More Maya menu items (#108):** Visualize > Create Turntable, Control Vertex and Surface Border selection for curves
@@ -61,7 +69,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 ## Thank you
 
 Thanks to @cnzim (#415) for the pull request, and to @Darkkanji (#416), @lucafrancescoorlandi (#417, #418),
-@invaderzod (#419, #420), @suenwaichit (#421), @cookies908 (#422), @NevilArt (#423) and @ganesh2004jadhav-boop (#428)
+@invaderzod (#419, #420), @suenwaichit (#421), @cookies908 (#422), @NevilArt (#423), @ganesh2004jadhav-boop (#428) and @Scorpy-laz (#433)
 for reports that showed what to fix, and to @scoegrams (#226) for the Keep Blender Keys idea. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial

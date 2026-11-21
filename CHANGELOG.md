@@ -10,7 +10,7 @@ workflow add-ons, makes Multi-Cut follow Symmetry, adds the Connect Tool's Segme
 Extrude, and lets Isolate Select show only the faces you picked. The Rotate and Scale tools turn or scale each
 component group about its own normal with Ctrl+middle-drag, Keep Blender Keys brings back Tab and Alt+E next to the
 Maya keys, and more Maya menu items run. Thanks to @cnzim for the Move Skinned Joints fix, and to @Darkkanji,
-@lucafrancescoorlandi, @invaderzod, @suenwaichit, @cookies908, @NevilArt and @ganesh2004jadhav-boop for reports that
+@lucafrancescoorlandi, @invaderzod, @suenwaichit, @cookies908, @NevilArt, @ganesh2004jadhav-boop and @Scorpy-laz for reports that
 showed what to fix, and to @scoegrams for the Keep Blender Keys idea.
 
 ### Added
@@ -42,6 +42,10 @@ showed what to fix, and to @scoegrams for the Keep Blender Keys idea.
   its own normal, or scales it across its normal (the face stays in its plane), around the group's centre, like Maya.
   The drag to the right turns clockwise / grows, to the left the other way; in Object Mode Ctrl+middle-drag is the
   plain middle drag (#430).
+- Attribute Editor, lights: a Cycles section (closed at first) with the light settings that have no Maya attribute
+  row: Exposure, Normalize, Spread (area lights), Soft Falloff (point and spot lights), Portal (area lights), Max
+  Bounces, Multiple Importance and Shadow Caustics, like the render engine's section of a light in Maya. Thanks to
+  @Scorpy-laz. (#433)
 
 ### Changed
 - Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces
@@ -88,6 +92,12 @@ showed what to fix, and to @scoegrams for the Keep Blender Keys idea.
 - A kit header draw that another add-on puts back into a header after Maya mode is off (it took the kit's draw for
   Blender's while Maya mode was on) now draws Blender's own header: no more error from the editor icon row when
   Maya mode is switched next to another workflow add-on (Blenda 4D). (#426)
+- A panel's Show > None, then Show > Polygons, hides the light shapes in that view and the lights still light it,
+  like Maya. Blender hid the lights' light with their shapes. Blender draws light, camera and locator shapes
+  together, so while cameras or locators are shown in the view, Show > Lights off still hides the lights by type
+  and they stop lighting it. (#433)
+- Blender 5.0: the Maya layout no longer prints a BufferError on every redraw of the time range bar and the Channel
+  Box / Layer Editor dock. (#431)
 
 ## [0.20.0] — 2026-11-20
 
