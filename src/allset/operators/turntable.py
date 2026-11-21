@@ -9,12 +9,12 @@ Maya:
   constant infinity: one turn, then the camera stays where it started.
 - The active view then looks through the new camera; the selection, the time range and the current time don't
   change.
-- Nothing selected: "Turntable: Select objects to animate camera around."; no 3D view: "Turntable: Active panel must
-  be a 3D viewport."
+- Nothing selected, or no 3D view to run it from: a message, and nothing is made.
 
 Kit: the group is an Empty whose pivot (origin + ``delta_location``, like every kit pivot) is the bounding-box centre;
 Maya's Rotate Y is the Blender world up axis, rotation Z. The camera is made like View > Create Camera From View
-(operators/camera_copy.py) and keeps its world place under the group.
+(operators/camera_copy.py) and keeps its world place under the group. The messages: "Turntable: select one or more
+objects first." and "Turntable: run it from a 3D View."
 """
 
 import math
@@ -25,8 +25,8 @@ from mathutils import Vector
 
 from .. import i18n, results
 
-NOTHING_SELECTED = i18n.mark("Turntable: Select objects to animate camera around.")
-NO_VIEW = i18n.mark("Turntable: Active panel must be a 3D viewport.")
+NOTHING_SELECTED = i18n.mark("Turntable: select one or more objects first.")
+NO_VIEW = i18n.mark("Turntable: run it from a 3D View.")
 START_FRAME = 1
 DIRECTIONS = (('COUNTERCLOCKWISE', "Counterclockwise", "The camera goes around counterclockwise seen from above"),
               ('CLOCKWISE', "Clockwise", "The camera goes around clockwise seen from above"))

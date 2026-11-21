@@ -242,7 +242,7 @@ def test_turntable_needs_a_selection():
     try:
         _turn(area, region)
     except RuntimeError as ex:
-        assert "Select objects to animate camera around" in str(ex), ex
+        assert "select one or more objects first" in str(ex), ex
     else:
         raise AssertionError("no error without a selection")
     assert {o.name for o in bpy.data.objects} == names

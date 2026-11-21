@@ -16,8 +16,8 @@ Taper and Twist only shape an extrusion that follows a curve (Maya: without one 
 always move as one piece about the centre of all of them (the mean of their vertices) and their summed normal;
 Keep Faces Together off only splits their vertices. Two curves selected: the first selected one is the path, like
 Maya. The Extrude option box's Curve: Generated makes the path itself (``generate_curve``): a straight cubic curve
-``polyExtrudeFaceNCurve`` from the centre of the faces' world bounding box along their summed normal (world X when
-they cancel out), 0.9 x the box's diagonal long.
+from the centre of the faces' world bounding box along their summed normal (world X when they cancel out), its
+length set by the size of that box (``GENERATED_LENGTH``).
 """
 
 import bmesh

@@ -7485,8 +7485,8 @@
    "Direction": "Direction",
    "Frames for one full turn, from frame 1": "Frames for one full turn, from frame 1",
    "Number of frames": "Number of frames",
-   "Turntable: Active panel must be a 3D viewport.": "Turntable: Active panel must be a 3D viewport.",
-   "Turntable: Select objects to animate camera around.": "Turntable: Select objects to animate camera around."
+   "Turntable: run it from a 3D View.": "Turntable: run it from a 3D View.",
+   "Turntable: select one or more objects first.": "Turntable: select one or more objects first."
   },
   "Labels/operators/type_manip": {
    "All Characters": "All Characters",
