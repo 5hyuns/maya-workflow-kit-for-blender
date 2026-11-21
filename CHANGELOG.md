@@ -38,6 +38,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   leaves alone a layout that another add-on made from the Maya layout (only the kit's own Maya layout goes), no longer
   puts back sidebar panels their add-on took out, and copes when the kit's own panels were taken out and put back.
   (#423)
+- Multi-Cut works with Symmetry like Maya: with Object, World or Topology symmetry on, a cut, a Ctrl+click edge loop
+  and a slice are made on both sides of the mesh, and the preview shows the mirrored side too. A cut that is its own
+  mirror (across the middle) is made once. (#420)
 
 ## [0.20.0] — 2026-11-20
 

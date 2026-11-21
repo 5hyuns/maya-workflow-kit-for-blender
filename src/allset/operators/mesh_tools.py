@@ -615,7 +615,12 @@ class ALLSET_OT_multicut_loop(bpy.types.Operator):
         bm.edges.ensure_lookup_table()
         if not 0 <= self.edge < len(bm.edges) or not 0.0 < self.factor < 1.0:
             return {'CANCELLED'}
+        from . import multi_cut_mirror           # symmetry on: the mirrored loop too, like Maya
+        mirror = multi_cut_mirror.for_object(context, ob, bm)
+        partner = multi_cut_mirror.loop_partner(bm, mirror, self.edge, self.factor) if mirror else None
         edges = insert_loop(bm, bm.edges[self.edge], self.factor)
+        if edges and partner is not None:
+            edges += multi_cut_mirror.insert_partner(bm, partner, mirror.eps, insert_loop)
         if not edges:
             return {'CANCELLED'}
         limit = math.radians(settings(context).smoothing_angle)   # Multi-Cut Smoothing Angle

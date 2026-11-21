@@ -13,7 +13,9 @@ points and cuts on completion:
   Position is in Adjust Last Operation; Ctrl+Shift = at the Snap Step, Ctrl+MMB = in the middle); Ctrl hover
   previews the loop;
 - a drag that starts on a face / empty space = slice along the dragged line (Slice Tool options), and with
-  Slice Along Plane YZ / ZX / XY on, a click slices along that world plane.
+  Slice Along Plane YZ / ZX / XY on, a click slices along that world plane;
+- with symmetry on (Object / World / Topology), cuts, loops and slices are made on both sides, and the preview shows
+  the mirrored side too (``multi_cut_mirror``).
 
 The cut itself (``cut``) and the slice (``slice_mesh``) are bmesh-only (tests/test_step129_multi_cut.py); picking
 uses the pre-selection caches (numpy + BVH occlusion).
@@ -132,14 +134,15 @@ def _split_face(bm, a, b, coords):
     return out
 
 
-def cut(bm, points, subdivisions=1, smoothing_angle=math.pi):
+def cut(bm, points, subdivisions=1, smoothing_angle=math.pi, mirrored=None):
     """Maya polySplit: cut ``bm`` along ``points`` (each ``('VERT', i)``, ``('EDGE', i, t)`` with t from
     ``edges[i].verts[0]``, or ``('FACE', i, local co)``). Consecutive vertex / edge points are joined across the face
-    they share; face points in between become vertices inside that face. Returns the new cut edges."""
+    they share; face points in between become vertices inside that face. ``mirrored``: a second path on the same
+    mesh (symmetry), cut together with the first. Returns the new cut edges."""
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
-    points = [normalize(bm, p) for p in points]
+    paths = [[normalize(bm, p) for p in path] for path in ([points] + ([mirrored] if mirrored else []))]
     # resolve every element before the mesh changes (BMesh references survive the splits, indices don't matter)
     chains = {}           # original edge -> [(t, vert)] sorted, ends included
 
@@ -162,29 +165,33 @@ def cut(bm, points, subdivisions=1, smoothing_angle=math.pi):
                 return nv
         return None
 
-    resolved = []         # ('B', vert-getter) / ('F', world-less local co)
-    for p in points:
-        if p[0] == 'VERT':
-            resolved.append(('B', bm.verts[p[1]], None))
-        elif p[0] == 'EDGE':
-            resolved.append(('E', bm.edges[p[1]], p[2]))
-        else:
-            resolved.append(('F', None, Vector(p[2])))
-    verts = []            # boundary vertices in order, with the face coords that lead to them
-    pending = []
-    for kind, el, val in resolved:
-        if kind == 'F':
-            pending.append(val)
-            continue
-        v = el if kind == 'B' else edge_vert(el, val)
-        if v is None:
-            pending = []
-            continue
-        verts.append((v, pending))
-        pending = []
+    every = []            # per path: ('B', vert) / ('E', edge, t) / ('F', None, local co), all before any change
+    for path in paths:
+        resolved = []
+        for p in path:
+            if p[0] == 'VERT':
+                resolved.append(('B', bm.verts[p[1]], None))
+            elif p[0] == 'EDGE':
+                resolved.append(('E', bm.edges[p[1]], p[2]))
+            else:
+                resolved.append(('F', None, Vector(p[2])))
+        every.append(resolved)
     new_edges = []
-    for (a, _c), (b, coords) in zip(verts, verts[1:]):
-        new_edges += _split_face(bm, a, b, divided([a.co, *coords, b.co], subdivisions)[1:-1])
+    for resolved in every:
+        verts = []        # boundary vertices in order, with the face coords that lead to them
+        pending = []
+        for kind, el, val in resolved:
+            if kind == 'F':
+                pending.append(val)
+                continue
+            v = el if kind == 'B' else edge_vert(el, val)
+            if v is None:
+                pending = []
+                continue
+            verts.append((v, pending))
+            pending = []
+        for (a, _c), (b, coords) in zip(verts, verts[1:]):
+            new_edges += _split_face(bm, a, b, divided([a.co, *coords, b.co], subdivisions)[1:-1])
     for e in new_edges:
         if len(e.link_faces) == 2:
             e.smooth = e.calc_face_angle(0.0) <= smoothing_angle + 1e-6
@@ -203,11 +210,16 @@ def divided(chain, subdivisions):
     return out
 
 
-def loop(bm, edge_index, t, smoothing_angle=math.pi):
-    """Maya Ctrl+click: an edge loop through the ring of ``edge_index`` at ``t`` (from its first vertex)."""
+def loop(bm, edge_index, t, smoothing_angle=math.pi, mirror=None):
+    """Maya Ctrl+click: an edge loop through the ring of ``edge_index`` at ``t`` (from its first vertex).
+    ``mirror`` (multi_cut_mirror.Mirror, symmetry on): the mirrored loop too."""
+    from . import multi_cut_mirror
     bm.edges.ensure_lookup_table()
     t = min(max(t, 0.001), 0.999)
+    partner = multi_cut_mirror.loop_partner(bm, mirror, edge_index, t) if mirror is not None else None
     edges = mesh_tools.insert_loop(bm, bm.edges[edge_index], t)
+    if partner is not None:
+        edges += multi_cut_mirror.insert_partner(bm, partner, mirror.eps, mesh_tools.insert_loop)
     for e in edges:
         if len(e.link_faces) == 2:
             e.smooth = e.calc_face_angle(0.0) <= smoothing_angle + 1e-6
@@ -233,6 +245,18 @@ def loop_segments(bm, edge_index, t):
                 seen.add(f)
                 segs.append((pos[e].copy(), pos[others[0]].copy()))
     return segs
+
+
+def slice_mirrored(bm, plane_co, plane_no, faces_of, mirror=None, delete=False, extract=None):
+    """``slice_mesh`` with the faces ``faces_of(bm)`` picks, then (``mirror``, symmetry on) again along the mirrored
+    plane with the mirrored extract offset. Returns the new cut edges."""
+    edges = slice_mesh(bm, plane_co, plane_no, faces_of(bm), delete=delete, extract=extract)
+    other = mirror.plane(plane_co, plane_no) if mirror is not None and mirror.matrix is not None else None
+    if other is not None:
+        ext = None if extract is None else mirror.matrix.to_3x3() @ extract
+        edges = [e for e in edges if e.is_valid]
+        edges += slice_mesh(bm, other[0], other[1], faces_of(bm), delete=delete, extract=ext)
+    return [e for e in edges if e.is_valid]
 
 
 def slice_mesh(bm, plane_co, plane_no, faces=None, delete=False, extract=None):
@@ -265,6 +289,23 @@ def slice_mesh(bm, plane_co, plane_no, faces=None, delete=False, extract=None):
     bm.edges.index_update()
     bm.faces.index_update()
     return [e for e in cut_edges if e.is_valid]
+
+
+def complete(context, ob, points):
+    """Enter / right-click in the tool: cut the edit mesh of ``ob`` along ``points`` with the tool's settings, and
+    along their mirror too while symmetry is on. True when an edge was made."""
+    from . import multi_cut_mirror
+    s = _settings(context)
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    mirror = multi_cut_mirror.for_object(context, ob, bm)
+    other = mirror.path([normalize(bm, p) for p in points]) if mirror is not None else None
+    edges = cut(bm, points, s.subdivisions, math.radians(s.smoothing_angle), mirrored=other)
+    bmesh.update_edit_mesh(ob.data)
+    preselect.invalidate()
+    return bool(edges)
 
 
 # --- picking -------------------------------------------------------------------------------------------
@@ -449,6 +490,56 @@ def _shader_points(pts, rgb, px):
     batch_for_shader(shader, 'POINTS', {"pos": pts}).draw(shader)
 
 
+_preview_mirror = {}
+
+
+def _mirror_of(context, ob):
+    """The symmetry Mirror for the preview, kept while the mesh and the symmetry state stay the same."""
+    from . import multi_cut_mirror, symmetry
+    sym = symmetry.state(context.scene)
+    if not sym.on:
+        return None
+    bm = bmesh.from_edit_mesh(ob.data)
+    key = (ob.name, id(bm), len(bm.verts), len(bm.edges), len(bm.faces), symmetry.mode_of(sym),
+           tuple(tuple(r) for r in ob.matrix_world))
+    if _preview_mirror.get("key") != key:
+        _preview_mirror.clear()
+        _preview_mirror.update(key=key, mirror=multi_cut_mirror.for_object(context, ob, bm))
+    return _preview_mirror["mirror"]
+
+
+def _mirrored_world(context, ob, points):
+    """World positions of the mirrors of ``points`` (None where a point has no partner)."""
+    mirror = _mirror_of(context, ob)
+    if mirror is None:
+        return None
+    out = []
+    for p in points:
+        q = mirror.point(p)
+        out.append(None if q is None else tuple(world_of(ob, q)))
+    return out
+
+
+def _draw_mirror(context, region, scale, ob, pts_points, hover):
+    """The mirrored cut path and hover point (symmetry on)."""
+    if ob is None:
+        return
+    points = list(pts_points) + ([hover] if hover is not None else [])
+    if not points:
+        return
+    world = _mirrored_world(context, ob, points)
+    if world is None:
+        return
+    done = world[:len(pts_points)]
+    if None not in done and len(done) > 1:
+        _shader_lines(region, [q for a, b in zip(done, done[1:]) for q in (a, b)], POINT_RGB, LINE_PX * scale)
+    if hover is not None and world[-1] is not None:
+        if done and done[-1] is not None and STATE["hover_ok"]:
+            _shader_lines(region, [done[-1], world[-1]], PREVIEW_RGB, LINE_PX * scale)
+        _shader_points([world[-1]], PREVIEW_RGB if STATE["hover_ok"] else REJECT_RGB, POINT_PX * scale)
+    _shader_points([w for w in done if w is not None], POINT_RGB, POINT_PX * scale)
+
+
 def _draw_view():
     context = bpy.context
     try:
@@ -463,7 +554,13 @@ def _draw_view():
             ob = bpy.data.objects.get(name)
             if ob is not None:
                 mw = ob.matrix_world
-                segs = loop_segments(bmesh.from_edit_mesh(ob.data), ei, t)
+                bm = bmesh.from_edit_mesh(ob.data)
+                segs = loop_segments(bm, ei, t)
+                mirror = _mirror_of(context, ob)
+                if mirror is not None:
+                    q = mirror.point(('EDGE', ei, t))
+                    if q is not None and not (q[1] == ei and abs(q[2] - t) < 1e-6):
+                        segs = segs + loop_segments(bm, q[1], q[2])
                 _shader_lines(region, [tuple(mw @ p) for s in segs for p in s], LOOP_RGB, LINE_PX * scale)
         ob = bpy.data.objects.get(STATE["ob"]) if STATE["ob"] else None
         pts = [tuple(world_of(ob, p)) for p in STATE["points"]] if ob is not None else []
@@ -479,6 +576,9 @@ def _draw_view():
                     _shader_lines(region, [pts[-1], hp], PREVIEW_RGB, LINE_PX * scale)
                 _shader_points([hp], rgb, POINT_PX * scale)
         _shader_points(pts, POINT_RGB, POINT_PX * scale)
+        hob = bpy.data.objects.get(hover[0]) if hover is not None else None
+        _draw_mirror(context, region, scale, ob or hob, STATE["points"] if ob is not None else [],
+                     hover[1] if hover is not None and (ob is None or hob is ob) else None)
         gpu.state.blend_set('NONE')
     except (ReferenceError, AttributeError, IndexError, ValueError):
         pass
@@ -612,12 +712,7 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
         points = list(STATE["points"])
         if ob is None or len(points) < 2:
             return False
-        s = _settings(context)
-        bm = bmesh.from_edit_mesh(ob.data)
-        edges = cut(bm, points, s.subdivisions, math.radians(s.smoothing_angle))
-        bmesh.update_edit_mesh(ob.data)
-        preselect.invalidate()
-        return bool(edges)
+        return complete(context, ob, points)
 
     def _end(self, context, result):
         reset_state()
@@ -657,17 +752,19 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
             bm = bmesh.from_edit_mesh(ob.data)
             co = inv @ plane_co
             no = (mw.to_3x3().transposed() @ plane_no).normalized()
-            faces = None
-            if s.ignore_backfaces:
-                local_view = (inv.to_3x3() @ view_dir).normalized()
-                faces = [f for f in bm.faces if not f.hide and f.normal.dot(local_view) < 0]
-            else:
-                faces = [f for f in bm.faces if not f.hide]
+            local_view = (inv.to_3x3() @ view_dir).normalized()
+
+            def faces_of(bm, local_view=local_view):
+                if s.ignore_backfaces:
+                    return [f for f in bm.faces if not f.hide and f.normal.dot(local_view) < 0]
+                return [f for f in bm.faces if not f.hide]
             extract = None
             if s.extract_faces:
                 o = Vector(s.extract_offset) * units.maya_unit(context.scene)
                 extract = inv.to_3x3() @ Vector((o.x, -o.z, o.y))   # Maya Y-up -> Blender Z-up
-            edges = slice_mesh(bm, co, no, faces, delete=s.delete_faces, extract=extract)
+            from . import multi_cut_mirror
+            mirror = multi_cut_mirror.for_object(context, ob, bm)
+            edges = slice_mirrored(bm, co, no, faces_of, mirror, delete=s.delete_faces, extract=extract)
             bmesh.update_edit_mesh(ob.data)
             done += len(edges)
         preselect.invalidate()
@@ -853,6 +950,9 @@ def register_handlers():
 
 
 def unregister_handlers():
+    from . import multi_cut_mirror
     while _handles:
         bpy.types.SpaceView3D.draw_handler_remove(_handles.pop(), 'WINDOW')
     reset_state()
+    _preview_mirror.clear()
+    multi_cut_mirror.clear()
