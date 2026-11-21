@@ -132,7 +132,8 @@ def _list_hole(context, region):
         buf = gpu.state.active_framebuffer_get().read_color(0, 0, width, le_top, 4, 0, 'UBYTE')
     except ValueError:
         return None
-    reds = np.frombuffer(buf, dtype=np.uint8)[0:4 * width * le_top:4].reshape(le_top, width)
+    from .. import compat
+    reds = np.frombuffer(compat.flat_buffer(buf), dtype=np.uint8)[0:4 * width * le_top:4].reshape(le_top, width)
     # the list ends 14 px x scale above the region bottom in a tall dock, higher in a shorter one (the
     # Time Slider grew at UI 1.25 and the list bottom left the sampled row): sample upwards, the last hit first
     key = region.as_pointer()

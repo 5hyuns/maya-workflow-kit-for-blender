@@ -313,6 +313,20 @@ def read_region_row(fb, region, y):
         return None
 
 
+def flat_buffer(buf):
+    """``buf`` (a ``gpu.types.Buffer``) as one dimension, so ``numpy.frombuffer`` takes it: 5.0 exports a buffer
+    of more than one dimension as not C-contiguous (BufferError). The bytes stay as they are; any other buffer
+    (no ``dimensions``) is returned unchanged."""
+    dims = getattr(buf, "dimensions", None)
+    if dims is None or isinstance(dims, int):
+        return buf
+    n = 1
+    for d in dims:
+        n *= d
+    buf.dimensions = n
+    return buf
+
+
 # --- Materials ------------------------------------------------------------------------------
 # 5.0: every material uses nodes; ``Material.use_nodes`` is deprecated (prints a warning when set). The helpers
 # stay so callers keep one spelling.

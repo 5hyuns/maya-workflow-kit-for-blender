@@ -330,7 +330,7 @@ def _read_row(region, y):
     buf = compat.read_region_row(fb, region, y)
     if buf is None:
         return []
-    px = np.frombuffer(buf, dtype=np.uint8).reshape(-1, 4)[:region.width].astype(np.int32)
+    px = np.frombuffer(compat.flat_buffer(buf), dtype=np.uint8).reshape(-1, 4)[:region.width].astype(np.int32)
     return px[:, 0] | (px[:, 1] << 8) | (px[:, 2] << 16)
 
 
