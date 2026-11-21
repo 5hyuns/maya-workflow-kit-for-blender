@@ -242,12 +242,87 @@ def capture(space):
             "space": {k: getattr(space, k) for k in _SPACE_PROPS}, "shown": shown, "view": view}
 
 
-def capture_area(area):
-    """One panel's record: its editor type, plus the 3D View settings when it is a 3D View."""
+def capture_area(area, view_layer=None):
+    """One panel's record: its editor type, plus the 3D View settings when it is a 3D View (with the objects its
+    Isolate Select shows)."""
     out = {"ui_type": area.ui_type}
     if area.type == 'VIEW_3D':
         out.update(capture(area.spaces.active))
+        out["isolate"] = isolated(area.spaces.active, view_layer or bpy.context.view_layer)
     return out
+
+
+# --- Isolate Select per panel ---------------------------------------------------------------------------------------
+# Isolate Select (Ctrl+1) belongs to a Maya panel and stays with it when the layout changes. In Blender it is the 3D
+# View's local view, which a split copy of the view doesn't get and which ends with its area, so the four view
+# records each panel's isolated objects and makes the local view again in the area that shows that panel.
+
+def isolated(space, view_layer):
+    """Names of the objects Isolate Select shows in 3D View ``space``; None when the view isolates nothing."""
+    if space is None or space.local_view is None or view_layer is None:
+        return None
+    out = []
+    for ob in view_layer.objects:
+        try:
+            if ob is not None and ob.local_view_get(space):
+                out.append(ob.name)
+        except RuntimeError:
+            pass
+    return out
+
+
+def _localview(context, window, area):
+    region = _window_region(area)
+    if region is None:
+        return False
+    with context.temp_override(window=window, screen=window.screen, area=area, region=region,
+                               space_data=area.spaces.active):
+        try:
+            return bpy.ops.view3d.localview(frame_selected=False) == {'FINISHED'}
+        except RuntimeError:
+            return False
+
+
+def set_isolation(context, window, area, names):
+    """``area``'s Isolate Select shows exactly the objects ``names`` (None or none left: no Isolate Select). The
+    selection, the active object and the camera stay as they are."""
+    if window is None or area is None or area.type != 'VIEW_3D':
+        return
+    space = area.spaces.active
+    view_layer = window.view_layer
+    obs = [ob for ob in view_layer.objects if ob is not None]
+    want = set(names or ())
+    if not any(ob.name in want for ob in obs):
+        if space.local_view is not None:
+            _localview(context, window, area)          # leaves it (the view stays where it is)
+        return
+    if space.local_view is None:
+        editing = any(ob.mode == 'EDIT' for ob in obs)
+        selection = [(ob, ob.select_get(view_layer=view_layer)) for ob in obs]
+        active = view_layer.objects.active
+        if not editing:              # Blender's local view takes the selected objects (in Edit Mode the edited ones)
+            for ob in obs:
+                try:
+                    ob.select_set(ob.name in want, view_layer=view_layer)
+                except RuntimeError:
+                    pass
+        ok = _localview(context, window, area)
+        for ob, was in selection:
+            try:
+                ob.select_set(was, view_layer=view_layer)
+            except RuntimeError:
+                pass
+        if view_layer.objects.active != active:
+            view_layer.objects.active = active
+        if not ok or space.local_view is None:
+            return
+    for ob in obs:
+        try:
+            if ob.local_view_get(space) != (ob.name in want):
+                ob.local_view_set(space, ob.name in want)
+        except RuntimeError:
+            pass
+    area.tag_redraw()
 
 
 def _saved_camera(space, view, scene):
@@ -346,6 +421,7 @@ def _place(context, role, area, saved, window=None):
             apply(space, data, context.scene)
         else:
             default(space, role, context.scene)
+        set_isolation(context, window or context.window, area, data.get("isolate"))
     area.tag_redraw()
 
 
@@ -356,7 +432,7 @@ def _place_later(win_ptr, area_ptr, role):
         window, area = live_refs.find_area(area_ptr, win_ptr)
         if window is not None and area is not None and area.type == 'VIEW_3D' \
                 and area.spaces.active.region_3d is not None:
-            _place(bpy.context, role, area, state(window.screen).get("panes", {}))
+            _place(bpy.context, role, area, state(window.screen).get("panes", {}), window)
         return None
     bpy.app.timers.register(tick, first_interval=0.0)
 
@@ -415,7 +491,7 @@ def enter(context, area, window=None, whole=None):
     st = state(screen)
     saved = st.get("panes", {})
     single = st.get("single", "persp")
-    saved[single] = {**saved.get(single, {}), **capture_area(area)}
+    saved[single] = {**saved.get(single, {}), **capture_area(area, window.view_layer)}
     whole = list(whole or rect(area))
     fy, ft, fb = factors(st)
     other = _split(context, window, area, 'HORIZONTAL', fy)
@@ -471,6 +547,8 @@ def remember(screen):
     saved = st.get("panes", {})
     for role, a in placed.items():
         saved[role] = {**saved.get(role, {}), **capture_area(a)}     # a Graph Editor keeps its old 3D settings
+        if a.type != 'VIEW_3D':
+            saved[role].pop("isolate", None)
     st["panes"] = saved
     st["rect"] = list(union(rect(a) for a in placed.values()))
     st["split"] = proportions(placed)
@@ -494,6 +572,9 @@ def leave(context, keep=None, window=None, role=None):
     if bpy.app.background:           # screen.area_join crashes without a UI
         return None
     keep_ptr = keep.as_pointer()
+    for a in placed.values():        # the panels that go away leave Isolate Select (kept in their record)
+        if a != keep:
+            set_isolation(context, window, a, None)
     _join_into(context, window, placed, keep_role)
     kept = next((a for a in screen.areas if a.as_pointer() == keep_ptr), None)
     st.update(on=False, single=keep_role)
