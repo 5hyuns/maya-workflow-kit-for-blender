@@ -95,11 +95,23 @@ class _ExtrudeProps:
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
     """Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component
-    type; faces with a curve selected: along the curve): change its values with the manipulator, the In-View Editor
-    or Channel Box INPUTS"""
+    type; faces with a curve selected: along the curve, with Taper and Twist): change its values with the
+    manipulator, the In-View Editor or Channel Box INPUTS"""
     bl_idname = "allset.extrude"
     bl_label = "Extrude"
     bl_options = {'REGISTER', 'UNDO'}
+
+    # the Extrude option box's Curve settings (faces): the path and how the faces taper / twist along it
+    curve: bpy.props.EnumProperty(
+        name="Curve", default='SELECTED', options={'SKIP_SAVE'},
+        items=(('NONE', "None", "Extrude straight, even with a curve selected"),
+               ('SELECTED', "Selected", "Extrude along the selected curve (straight when no curve is selected)"),
+               ('GENERATED', "Generated", "Make a straight curve along the faces' normal and extrude along it")))
+    taper: FloatProperty(name="Taper", default=1.0, soft_min=0.0, soft_max=15.0, options={'SKIP_SAVE'},
+                         description="Size of the last step along the curve (the steps between grow evenly)")
+    twist: FloatProperty(name="Twist", default=0.0, soft_min=-180.0, soft_max=180.0, options={'SKIP_SAVE'},
+                         description="Turn of the last step along the curve, in degrees (the steps between turn "
+                                     "evenly)")
 
     @classmethod
     def poll(cls, context):
@@ -126,9 +138,15 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
                     done += 1
                 continue
             from . import extrude_curve
-            path = extrude_curve.path_curve(context)
-            if path is not None:          # faces + a curve selected: extrude along the curve, like Maya
-                if extrude_curve.run(context, ob, bm, path, self.divisions, unit) is not None:
+            path = None
+            if self.curve == 'SELECTED':      # faces + a curve selected: extrude along the curve, like Maya
+                path = extrude_curve.path_curve(context)
+            elif self.curve == 'GENERATED':
+                path = extrude_curve.generate_curve(context, ob, bm)
+            if path is not None:
+                values = {k: getattr(self, k) for k in ("divisions", "taper", "twist", "local_translate_z",
+                                                        "thickness", "keep_faces_together")}
+                if extrude_curve.run(context, ob, bm, path, unit, **values) is not None:
                     done += 1
                 continue
             params = _params(self)

@@ -9,6 +9,13 @@ one (the first chord starts at the faces' centre) and keeps their size. Taper sc
 1 - (1 - Taper) k / N, Twist turns it about its normal by Twist k / N degrees (right-handed). Local Translate Z adds
 the faces' first normal x k / N, Thickness the last step's direction x k / N. Default Divisions 1: the faces go to
 the curve's end at once. The node is editable afterwards like any kit extrusion (In-View Editor, Channel Box INPUTS).
+
+Taper and Twist only shape an extrusion that follows a curve (Maya: without one they change nothing). The faces
+always move as one piece about the centre of all of them (the mean of their vertices) and their summed normal;
+Keep Faces Together off only splits their vertices. Two curves selected: the first selected one is the path, like
+Maya. The Extrude option box's Curve: Generated makes the path itself (``generate_curve``): a straight cubic curve
+``polyExtrudeFaceNCurve`` from the centre of the faces' world bounding box along their summed normal (world X when
+they cancel out), 0.9 x the box's diagonal long.
 """
 
 import bmesh
@@ -19,7 +26,9 @@ from . import curves_math as cm
 from .. import undo_steps
 from . import curves_maya, extrude
 
-FIELDS = ("divisions", "taper", "twist", "local_translate_z", "thickness", "keep_faces_together")
+# Channel Box rows in Maya's order of the node's attributes; the In-View Editor starts with the plain extrusion's rows
+FIELDS = ("local_translate_z", "keep_faces_together", "divisions", "twist", "taper", "thickness")
+VIEW_FIELDS = ("thickness", "local_translate_z", "divisions", "keep_faces_together", "twist", "taper")
 LABELS = {"divisions": "Divisions", "taper": "Taper", "twist": "Twist", "local_translate_z": "Local Translate Z",
           "thickness": "Thickness", "keep_faces_together": "Keep Faces Together"}
 DEFAULTS = {"divisions": 1, "taper": 1.0, "twist": 0.0, "local_translate_z": 0.0, "thickness": 0.0,
@@ -29,11 +38,61 @@ KINDS = {"divisions": "INT", "taper": "NONE", "twist": "NONE", "local_translate_
 
 
 def path_curve(context):
-    """The selected curve object that is not being edited (Maya: the curve selected with the faces), else None."""
-    for ob in getattr(context, "selected_objects", ()) or ():
+    """The first picked selected curve object that is not being edited (Maya: the first curve selected with the
+    faces), else None."""
+    from . import pick_order
+    if not getattr(context, "selected_objects", None):
+        return None
+    for ob in pick_order.ordered(context):
         if ob.type == 'CURVE' and ob.mode != 'EDIT' and ob.data.splines:
             return ob
     return None
+
+
+GENERATED_LENGTH = 0.9     # the generated path's length per unit of the faces' bounding box diagonal
+
+
+def generated_points(world_points, world_normals):
+    """The 4 CVs (world) of the path Curve: Generated makes: a straight line from the centre of the points' bounding
+    box along the summed normal (world X when it is zero), GENERATED_LENGTH x the box's diagonal long. Pure maths."""
+    lo = Vector(tuple(min(p[i] for p in world_points) for i in range(3)))
+    hi = Vector(tuple(max(p[i] for p in world_points) for i in range(3)))
+    start = (lo + hi) / 2.0
+    d = sum(world_normals, Vector())
+    d = d.normalized() if d.length > 1e-9 else Vector((1.0, 0.0, 0.0))
+    length = GENERATED_LENGTH * (hi - lo).length
+    return [start + d * (length * i / 3.0) for i in range(4)]
+
+
+def _node_name(context, ob, bm):
+    """The polyExtrudeFace name the next ``run`` gives (the same node again when it re-runs on the same mesh)."""
+    old = extrude.RECORDS.get(ob.name)
+    if (old is not None and old.spec is SPEC and old.pre is not None and old.mesh_uid == ob.data.session_uid
+            and extrude._pre_signature(old.pre) == extrude._pre_signature(bm)):
+        return old.name
+    return f"{SPEC.node}{int(context.scene.get(SPEC.counter, 0)) + 1}"
+
+
+def generate_curve(context, ob, bm):
+    """Curve: Generated: the path curve object for the selected faces of ``ob`` (edit mode), named after the node
+    it will drive (an earlier one of that name is reshaped). None without selected faces."""
+    faces = [f for f in bm.faces if f.select]
+    if not faces:
+        return None
+    m = ob.matrix_world
+    nm = m.to_3x3().inverted_safe().transposed()
+    points = [m @ v.co for f in faces for v in f.verts]
+    normals = [(nm @ f.normal).normalized() for f in faces]
+    cvs, knots, degree = cm.cv_curve([tuple(p) for p in generated_points(points, normals)], 3)
+    name = _node_name(context, ob, bm) + "Curve"
+    found = bpy.data.objects.get(name)
+    if found is not None and found.type == 'CURVE':
+        curves_maya._replace_splines(found, [curves_maya.MCurve(cvs, knots, degree)])
+        found.matrix_world = Matrix.Identity(4)
+        return found
+    path = curves_maya._new_curve_object(context, name, [curves_maya.MCurve(cvs, knots, degree)], select=False)
+    path.name, path.data.name = name, name + "Shape"
+    return path
 
 
 def path_points(curve_ob, count):
@@ -75,17 +134,15 @@ def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.
 
 
 def _groups(faces, together):
-    """[(centre, normal, [vertex keys])] of the faces before the extrusion (one group, or one per face)."""
-    sets = [faces] if together else [[f] for f in faces]
-    out = []
-    for fs in sets:
-        verts = {v for f in fs for v in f.verts}
-        centre = sum((v.co for v in verts), Vector()) / len(verts)
-        normal = sum((f.normal for f in fs), Vector())
-        normal = normal.normalized() if normal.length > 1e-9 else Vector((0.0, 0.0, 1.0))
-        keys = [v.index for v in verts] if together else [(fs[0].index, v.index) for v in fs[0].verts]
-        out.append((centre.copy(), normal, keys))
-    return out
+    """[(centre, normal, [vertex keys])] of the faces before the extrusion: one group, like Maya, whose centre is
+    the mean of all their vertices and whose normal is their summed normal (Keep Faces Together off: the keys are
+    per face, the vertices apart)."""
+    verts = {v for f in faces for v in f.verts}
+    centre = sum((v.co for v in verts), Vector()) / len(verts)
+    normal = sum((f.normal for f in faces), Vector())
+    normal = normal.normalized() if normal.length > 1e-9 else Vector((0.0, 0.0, 1.0))
+    keys = [v.index for v in verts] if together else [(f.index, v.index) for f in faces for v in f.verts]
+    return [(centre.copy(), normal, keys)]
 
 
 def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0, local_translate_z=0.0,
@@ -141,12 +198,14 @@ def _build(bm, params, unit, ob=None):
 
 SPEC = extrude.add_spec(extrude.Spec(
     'FACE_CURVE', "polyExtrudeFace", FIELDS, LABELS, DEFAULTS, KINDS, None, "extrude_curve_edit", _build,
-    hidden=("curve",), with_object=True, component='FACE'))
+    hidden=("curve",), with_object=True, component='FACE', view_fields=VIEW_FIELDS))
 
 
-def run(context, ob, bm, curve_ob, divisions=1, unit=1.0):
-    """Edit Mesh > Extrude of the selected faces of ``ob`` along ``curve_ob``: a new history node. Record or None."""
-    params = dict(DEFAULTS, divisions=max(1, int(divisions)), curve=curve_ob.name)
+def run(context, ob, bm, curve_ob, unit=1.0, **values):
+    """Edit Mesh > Extrude of the selected faces of ``ob`` along ``curve_ob``: a new history node with ``values``
+    (FIELDS; the rest default). Record or None."""
+    params = dict(DEFAULTS, **{k: v for k, v in values.items() if k in FIELDS}, curve=curve_ob.name)
+    params["divisions"] = max(1, int(params["divisions"]))
     return extrude.record_new(context, ob, bm, SPEC, params, unit)
 
 
@@ -159,8 +218,9 @@ class ALLSET_OT_extrude_curve_edit(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     divisions: bpy.props.IntProperty(name="Divisions", default=1, min=1, soft_max=50, options={'SKIP_SAVE'})
-    taper: bpy.props.FloatProperty(name="Taper", default=1.0, options={'SKIP_SAVE'})
-    twist: bpy.props.FloatProperty(name="Twist", default=0.0, options={'SKIP_SAVE'})
+    taper: bpy.props.FloatProperty(name="Taper", default=1.0, soft_min=0.0, soft_max=15.0, options={'SKIP_SAVE'})
+    twist: bpy.props.FloatProperty(name="Twist", default=0.0, soft_min=-180.0, soft_max=180.0,
+                                   options={'SKIP_SAVE'})
     local_translate_z: bpy.props.FloatProperty(name="Local Translate Z", default=0.0, options={'SKIP_SAVE'})
     thickness: bpy.props.FloatProperty(name="Thickness", default=0.0, options={'SKIP_SAVE'})
     keep_faces_together: bpy.props.BoolProperty(name="Keep Faces Together", default=True, options={'SKIP_SAVE'})

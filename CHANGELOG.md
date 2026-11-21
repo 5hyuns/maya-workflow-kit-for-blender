@@ -5,6 +5,17 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [Unreleased]
 
+### Added
+- Edit Mesh > Extrude option box: Maya's Curve rows (Curve: None / Selected / Generated, Taper, Twist; Taper and
+  Twist greyed with Curve: None). Curve: Generated makes a straight path curve along the faces' normal and extrudes
+  along it, so a straight extrusion can taper and twist; the window's Taper, Twist, Thickness and Divisions now reach
+  an extrusion along a selected curve too (#418).
+
+### Changed
+- Extrude along a curve: with two curves selected the first picked one is the path, like Maya; with Keep Faces
+  Together off the faces taper and twist about the centre of all of them, like Maya; its Channel Box rows follow
+  Maya's attribute order (#418).
+
 ### Fixed
 - File > Import with Maya Units and Axes keeps the rest skeleton of a rig whose bones Blender connects (for example an
   auto-rigged character's spine, arms and legs): those joints no longer land turned 90 degrees with a broken pose, and joints with a

@@ -82,8 +82,11 @@ def _run_smart_bevel(context, v):
 
 def _run_extrude(context, v):
     def go():
+        # Curve: Selected / Generated: along the curve with Taper / Twist (Maya passes them in every case; without
+        # a curve they change nothing)
         return bpy.ops.allset.extrude('EXEC_DEFAULT', thickness=v["thickness"], offset=v["offset"],
-                                        divisions=v["divisions"])
+                                        divisions=v["divisions"], curve=v.get("curve", "Selected").upper(),
+                                        taper=v.get("taper", 1.0), twist=v.get("twist", 0.0))
     if context.mode == 'EDIT_MESH':
         return go()
     meshes = [o for o in context.selected_objects if o.type == 'MESH']
@@ -228,8 +231,11 @@ WINDOWS = [
                                         "Preserve: Geometry / Selection borders")),
     Window("extrude", "Extrude Face Options", "Extrude", ("allset.extrude", {}), [
         F("divisions", "Divisions:", "int", 1, lo=1, hi=50), F("offset", "Offset:", "float", 0.0),
-        F("thickness", "Thickness:", "float", 0.0)], _run_extrude,
-        missing=("Smoothing angle", "Curve", "Taper", "Twist")),
+        F("thickness", "Thickness:", "float", 0.0),
+        F("curve", "Curve:", "enum", "Selected", items=("None", "Selected", "Generated")),
+        F("taper", "Taper:", "float", 1.0, lo=0.0, hi=15.0), F("twist", "Twist:", "float", 0.0, lo=-180.0, hi=180.0)],
+        _run_extrude, missing=("Smoothing angle",),
+        enabled=lambda values, name: name not in ("taper", "twist") or values["curve"] != "None"),
     Window("bevel", "Bevel Options", "Bevel", None, [
         F("offset_type", "Offset type:", "enum", "Fractional (prevents inside out bevels)",
           items=("Fractional (prevents inside out bevels)", "Absolute")),
