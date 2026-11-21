@@ -210,7 +210,8 @@ def test_option_box_runs_the_generated_curve():
 
 def test_channel_box_order():
     # Maya's order of the node's attributes
-    assert ec.SPEC.fields == ("local_translate_z", "keep_faces_together", "divisions", "twist", "taper", "thickness")
+    assert ec.SPEC.fields == ("local_translate_z", "offset", "keep_faces_together", "divisions", "twist",
+                              "taper", "thickness")
     assert set(ec.SPEC.view_fields) == set(ec.SPEC.fields)
 
 

@@ -7,7 +7,9 @@ range (even in parameter, not in length), wherever the curve is in the world (it
 step turns the faces from their first direction straight onto the chord from the previous step's centre to this
 one (the first chord starts at the faces' centre) and keeps their size. Taper scales step k by
 1 - (1 - Taper) k / N, Twist turns it about its normal by Twist k / N degrees (right-handed). Local Translate Z adds
-the faces' first normal x k / N, Thickness the last step's direction x k / N. Default Divisions 1: the faces go to
+the faces' first normal x k / N, Thickness the last step's direction x k / N, and Offset the plain extrusion's offset
+of each vertex x k / N (its border edges move into the faces by Offset x k / N, in the faces' first plane; it is not
+tapered, twisted or turned with the path). Default Divisions 1: the faces go to
 the curve's end at once. The node is editable afterwards like any kit extrusion (In-View Editor, Channel Box INPUTS).
 
 Taper and Twist only shape an extrusion that follows a curve (Maya: without one they change nothing). The faces
@@ -27,14 +29,14 @@ from .. import undo_steps
 from . import curves_maya, extrude
 
 # Channel Box rows in Maya's order of the node's attributes; the In-View Editor starts with the plain extrusion's rows
-FIELDS = ("local_translate_z", "keep_faces_together", "divisions", "twist", "taper", "thickness")
-VIEW_FIELDS = ("thickness", "local_translate_z", "divisions", "keep_faces_together", "twist", "taper")
+FIELDS = ("local_translate_z", "offset", "keep_faces_together", "divisions", "twist", "taper", "thickness")
+VIEW_FIELDS = ("thickness", "local_translate_z", "offset", "divisions", "keep_faces_together", "twist", "taper")
 LABELS = {"divisions": "Divisions", "taper": "Taper", "twist": "Twist", "local_translate_z": "Local Translate Z",
-          "thickness": "Thickness", "keep_faces_together": "Keep Faces Together"}
-DEFAULTS = {"divisions": 1, "taper": 1.0, "twist": 0.0, "local_translate_z": 0.0, "thickness": 0.0,
+          "offset": "Offset", "thickness": "Thickness", "keep_faces_together": "Keep Faces Together"}
+DEFAULTS = {"divisions": 1, "taper": 1.0, "twist": 0.0, "local_translate_z": 0.0, "offset": 0.0, "thickness": 0.0,
             "keep_faces_together": True, "curve": ""}
-KINDS = {"divisions": "INT", "taper": "NONE", "twist": "NONE", "local_translate_z": "NONE", "thickness": "NONE",
-         "keep_faces_together": "BOOL"}
+KINDS = {"divisions": "INT", "taper": "NONE", "twist": "NONE", "local_translate_z": "NONE", "offset": "NONE",
+         "thickness": "NONE", "keep_faces_together": "BOOL"}
 
 
 def path_curve(context):
@@ -110,9 +112,10 @@ def _turn(src, dst):
     return src.rotation_difference(dst.normalized()).to_matrix()
 
 
-def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.0, unit=1.0):
-    """Vertex positions along the path. ``groups`` = [(centre, unit normal, [(level k, vertex, base co)])] in mesh
-    space; ``points`` = the path points for k = 1 .. divisions (mesh space). Returns {vertex: co}. Pure maths."""
+def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.0, unit=1.0, offset=0.0):
+    """Vertex positions along the path. ``groups`` = [(centre, unit normal, [(level k, vertex, base co[, offset
+    direction])])] in mesh space; ``points`` = the path points for k = 1 .. divisions (mesh space). Returns
+    {vertex: co}. Pure maths."""
     n = max(1, divisions)
     out = {}
     for centre, normal, members in groups:
@@ -124,12 +127,14 @@ def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.
             turns.append(_turn(normal, d) if d.length > 1e-12 else (turns[-1] if turns else Matrix.Identity(3)))
             prev = p
         last = dirs[-1] if dirs else normal
-        for k, v, co in members:
+        for k, v, co, *rest in members:
             frac = k / n
             size = 1.0 - (1.0 - taper) * frac
             spin = Matrix.Rotation(twist * frac * 3.141592653589793 / 180.0, 3, normal)
             p = points[k - 1] + turns[k - 1] @ (spin @ ((co - centre) * size))
             out[v] = p + normal * (ltz * frac * unit) + last * (thickness * frac * unit)
+            if rest and offset:
+                out[v] = out[v] + rest[0] * (offset * frac * unit)
     return out
 
 
@@ -146,7 +151,7 @@ def _groups(faces, together):
 
 
 def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0, local_translate_z=0.0,
-                  thickness=0.0, keep_faces_together=True, unit=1.0, direction=extrude.WORLD_X,
+                  thickness=0.0, keep_faces_together=True, unit=1.0, offset=0.0, direction=extrude.WORLD_X,
                   fallback=extrude.MAYA_Z):
     """Extrude ``faces`` (bmesh) along ``curve_ob``; ``matrix`` = the mesh object's world matrix. Returns the moved
     vertices; the end faces end up selected."""
@@ -168,10 +173,11 @@ def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0
     member = []
     for centre, normal, keys in groups:
         wanted = set(keys)
-        rows = [(k, v, vectors[key][0]) for k, found in enumerate(levels, 1)
+        # vectors[key] = (base co, Thickness, Local Translate Z, Offset, ...) of the plain extrusion
+        rows = [(k, v, vectors[key][0], vectors[key][3]) for k, found in enumerate(levels, 1)
                 for key, v in found.items() if key in wanted and v.is_valid]
         member.append((centre, normal, rows))
-    moved = place(member, points, n, taper, twist, local_translate_z, thickness, unit)
+    moved = place(member, points, n, taper, twist, local_translate_z, thickness, unit, offset)
     for v, co in moved.items():
         v.co = co
     bm.normal_update()
@@ -222,6 +228,7 @@ class ALLSET_OT_extrude_curve_edit(bpy.types.Operator):
     twist: bpy.props.FloatProperty(name="Twist", default=0.0, soft_min=-180.0, soft_max=180.0,
                                    options={'SKIP_SAVE'})
     local_translate_z: bpy.props.FloatProperty(name="Local Translate Z", default=0.0, options={'SKIP_SAVE'})
+    offset: bpy.props.FloatProperty(name="Offset", default=0.0, options={'SKIP_SAVE'})
     thickness: bpy.props.FloatProperty(name="Thickness", default=0.0, options={'SKIP_SAVE'})
     keep_faces_together: bpy.props.BoolProperty(name="Keep Faces Together", default=True, options={'SKIP_SAVE'})
     curve: bpy.props.StringProperty(name="Curve", default="", options={'SKIP_SAVE', 'HIDDEN'})

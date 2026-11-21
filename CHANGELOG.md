@@ -17,6 +17,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Maya's attribute order (#418).
 
 ### Fixed
+- Extrude along a curve (a selected curve or Curve: Generated) uses Offset, like Maya: each step's border edges
+  move in by its share of Offset after the taper; the option box's Offset reaches it and the node has an Offset
+  row in the Channel Box and the In-View Editor (#424).
 - File > Import with Maya Units and Axes keeps the rest skeleton of a rig whose bones Blender connects (for example an
   auto-rigged character's spine, arms and legs): those joints no longer land turned 90 degrees with a broken pose, and joints with a
   slight joint orient keep their exact offset, so the pose channels are 0 at the bind pose. (#416)

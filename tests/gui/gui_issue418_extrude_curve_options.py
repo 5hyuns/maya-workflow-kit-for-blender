@@ -1,6 +1,7 @@
 """#418: in a real UI the Edit Mesh > Extrude option box opens Extrude Face Options with Maya's Curve rows
 (Curve: None / Selected / Generated, Taper, Twist), and its command button (Enter) with Curve: Generated and
-Taper 0.5 makes the path curve and extrudes the selected face along it, tapered.
+Taper 0.5 makes the path curve and extrudes the selected face along it, tapered; the window's Offset (#424) goes
+along too and shrinks the end face after the taper.
 Screenshot (ALLSET_GUI_SHOTS): the window."""
 
 import os
@@ -61,7 +62,7 @@ def s_setup():
     bmesh.update_edit_mesh(ob.data)
     C["ob"] = ob.name
     ow = mod("operators.option_windows")
-    ow.store("extrude", {"divisions": 2, "offset": 0.0, "thickness": 0.0, "curve": "Generated", "taper": 0.5,
+    ow.store("extrude", {"divisions": 2, "offset": 0.1, "thickness": 0.0, "curve": "Generated", "taper": 0.5,
                          "twist": 0.0})
 
 
@@ -98,13 +99,14 @@ def s_done():
     check("Curve: Generated made the path curve", path is not None and path.type == 'CURVE')
     rec = mod("operators.extrude").current(ob)
     params = rec.params if rec is not None else {}
-    check(f"the face went along it with the window's Taper / Divisions ({params})",
+    check(f"the face went along it with the window's Taper / Divisions / Offset ({params})",
           rec is not None and rec.spec.kind == 'FACE_CURVE' and params.get("taper") == 0.5
-          and params.get("divisions") == 2)
+          and params.get("divisions") == 2 and abs(params.get("offset", 0.0) - 0.1) < 1e-6)
     bm = bmesh.from_edit_mesh(ob.data)
     caps = [f for f in bm.faces if f.select]
     size = max(abs(v.co.x) for f in caps for v in f.verts) if caps else 0.0
-    check(f"the end face is half size ({size:.4f})", len(caps) == 1 and abs(size - 0.5) < 1e-4)
+    # half size from the taper, then the Offset moves its edges 0.1 in
+    check(f"the end face is half size less the offset ({size:.4f})", len(caps) == 1 and abs(size - 0.4) < 1e-4)
 
 
 run()

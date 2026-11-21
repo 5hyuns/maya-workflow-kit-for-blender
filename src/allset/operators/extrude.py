@@ -145,7 +145,7 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
                 path = extrude_curve.generate_curve(context, ob, bm)
             if path is not None:
                 values = {k: getattr(self, k) for k in ("divisions", "taper", "twist", "local_translate_z",
-                                                        "thickness", "keep_faces_together")}
+                                                        "offset", "thickness", "keep_faces_together")}
                 if extrude_curve.run(context, ob, bm, path, unit, **values) is not None:
                     done += 1
                 continue
