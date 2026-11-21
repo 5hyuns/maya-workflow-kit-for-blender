@@ -21,6 +21,7 @@ def toolbar_row(area):
     return any(r.type == 'FOOTER' and r.alignment == 'TOP' for r in area.regions)
 
 
+@_own_draw.kit_draw("GRAPH_HT_header")
 def _graph_header(self, context):
     if not (enabled(context) and is_graph(context.space_data)):
         return _own_draw.original("GRAPH_HT_header", _graph_header)(self, context)
@@ -33,6 +34,7 @@ def _graph_header(self, context):
     layout.popover(panel="GRAPH_PT_filters", text="", icon='FILTER')
 
 
+@_own_draw.kit_draw("DOPESHEET_HT_header")
 def _dope_header(self, context):
     if not (enabled(context) and is_dope(context.space_data)):
         return _own_draw.original("DOPESHEET_HT_header", _dope_header)(self, context)
@@ -49,12 +51,14 @@ def _dope_header(self, context):
 # the menus the tangent buttons ran past the right edge of a ~750 px editor). Blender gives these editors one header,
 # but their footer (playback controls in 5.x) can sit at the top under it: in a Maya editor the footer is shown, put on
 # top and draws the toolbar. Timeline mode keeps Blender's footer.
+@_own_draw.kit_draw("GRAPH_HT_playback_controls")
 def _graph_footer(self, context):
     if not (enabled(context) and is_graph(context.space_data)):
         return _own_draw.original("GRAPH_HT_playback_controls", _graph_footer)(self, context)
     draw_icons(self.layout, context, GE)
 
 
+@_own_draw.kit_draw("DOPESHEET_HT_playback_controls")
 def _dope_footer(self, context):
     if not (enabled(context) and is_dope(context.space_data)):
         return _own_draw.original("DOPESHEET_HT_playback_controls", _dope_footer)(self, context)

@@ -249,6 +249,7 @@ def draw_command_line(layout, context):
     row.operator(ALLSET_OT_script_editor.bl_idname, text="", icon='CONSOLE')
 
 
+@own_draw.kit_draw("STATUSBAR_HT_header")
 def draw_status_bar(self, context):
     """STATUSBAR_HT_header.draw while the kit is on: Help Line | Command Line, then Blender's
     scene statistics if there is room; Blender's own draw when both are off."""

@@ -8,6 +8,7 @@ Hypershade menus in other Shader Editors (``draw_collapsible``, ``patch_header``
 import bpy
 from bpy.props import EnumProperty
 
+from . import own_draw
 from .hypershade_window import HS, graph_area, is_hypershade, menu_area
 
 
@@ -89,6 +90,7 @@ class ALLSET_OT_hs_graph(bpy.types.Operator):
 
 # --- headers: menu strip and Graph -----------------------------------------------------------------------------
 
+@own_draw.kit_draw("NODE_HT_header")
 def _node_header(self, context):
     """``NODE_HT_header``'s own draw while the kit is on: in a Hypershade window the menu strip shows Maya's menu
     bar, the Graph Maya's graph toolbar; elsewhere Blender's header."""

@@ -620,6 +620,7 @@ class ALLSET_GGT_shelf(bpy.types.GizmoGroup):
             gz.target_set_operator(ALLSET_OT_shelf_scroll.bl_idname).delta = delta
 
 
+@own_draw.kit_draw("IMAGE_HT_header")
 def _draw_image_header(self, context):
     if is_strip(context.space_data):
         from .status_line import draw_status_line
@@ -634,6 +635,7 @@ def _draw_image_header(self, context):
     return own_draw.original("IMAGE_HT_header", _draw_image_header)(self, context)
 
 
+@own_draw.kit_draw("IMAGE_HT_tool_header")
 def _draw_image_tool_header(self, context):
     if is_strip(context.space_data):
         return draw_shelf(self.layout, context)

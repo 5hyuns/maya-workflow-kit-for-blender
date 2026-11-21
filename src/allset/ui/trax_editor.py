@@ -19,6 +19,7 @@ from . import editor_chrome, own_draw
 TX = "Trax Editor"
 
 
+@own_draw.kit_draw("NLA_HT_header")
 def _header(self, context):
     if not editor_chrome.enabled(context):
         return own_draw.original("NLA_HT_header", _header)(self, context)

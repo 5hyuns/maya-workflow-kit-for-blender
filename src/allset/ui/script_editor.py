@@ -246,6 +246,7 @@ def draw_icons(layout):
             setattr(op, k, v)
 
 
+@own_draw.kit_draw("INFO_HT_header")
 def _info_header(self, context):
     if not is_script_editor(context):
         return own_draw.original("INFO_HT_header", _info_header)(self, context)
@@ -257,6 +258,7 @@ def _info_header(self, context):
     draw_icons(layout)
 
 
+@own_draw.kit_draw("TEXT_HT_header")
 def _text_header(self, context):
     if not is_script_editor(context):
         return own_draw.original("TEXT_HT_header", _text_header)(self, context)

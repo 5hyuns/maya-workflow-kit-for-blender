@@ -445,6 +445,7 @@ def draw_tool_header(self, context):
     self.layout.separator(type='LINE')
 
 
+@own_draw.kit_draw("TOPBAR_HT_upper_bar")
 def draw_upper_bar(self, context):
     """The top bar's own draw while the kit is on (as space_topbar.py TOPBAR_HT_upper_bar.draw, with the kit's
     left / right): Blender's ``draw_left`` / ``draw_right`` methods stay untouched."""

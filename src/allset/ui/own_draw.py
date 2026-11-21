@@ -11,7 +11,12 @@ The kit function falls back to Blender's own draw (``original``) outside the kit
 When another add-on has already put its own function in the place of Blender's draw, the kit leaves that function
 alone: its function is added at the end of the list and draws only in the kit's areas (``original`` draws nothing),
 and ``restore`` takes it out again, so the list is back as it was.
+
+Kit draw functions are marked with ``@kit_draw(class name)``: one that another add-on keeps in its list after Maya
+mode is off (it took the kit's function for Blender's) draws Blender's own content instead of the kit's.
 """
+
+import functools
 
 import bpy
 
@@ -34,6 +39,19 @@ def _is_own(cls, f):
     if getattr(f, "__name__", "") != "draw" or g is None:
         return False
     return g.get("__name__") in {c.__module__ for c in cls.__mro__}
+
+
+def kit_draw(cls_name):
+    """Decorator for a kit function swapped in with ``swap``: while it is not swapped in (Maya mode off) it draws
+    what ``original`` gives, never the kit's content (whose operators and properties are gone then)."""
+    def deco(fn):
+        @functools.wraps(fn)
+        def draw(self, context):
+            if (cls_name, draw) not in _saved:
+                return original(cls_name, draw)(self, context)
+            return fn(self, context)
+        return draw
+    return deco
 
 
 def own_index(cls_name, funcs=None):

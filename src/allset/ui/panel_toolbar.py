@@ -641,6 +641,7 @@ def maya_layout(context):
             and panel_menus._enabled(context))
 
 
+@own_draw.kit_draw("VIEW3D_HT_header")
 def _header(self, context):
     if not maya_layout(context):
         return own_draw.original("VIEW3D_HT_header", _header)(self, context)
@@ -651,6 +652,7 @@ def _header(self, context):
     return None
 
 
+@own_draw.kit_draw("VIEW3D_HT_tool_header")
 def _tool_header(self, context):
     if not maya_layout(context):
         return own_draw.original("VIEW3D_HT_tool_header", _tool_header)(self, context)

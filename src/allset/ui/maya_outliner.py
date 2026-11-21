@@ -155,6 +155,7 @@ class ALLSET_OT_outliner_collections(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@own_draw.kit_draw("OUTLINER_HT_header")
 def _draw(self, context):
     space = context.space_data
     if not is_maya_outliner(space):
