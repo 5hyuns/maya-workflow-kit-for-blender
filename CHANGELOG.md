@@ -42,6 +42,19 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   leaves alone a layout that another add-on made from the Maya layout (only the kit's own Maya layout goes), no longer
   puts back sidebar panels their add-on took out, and copes when the kit's own panels were taken out and put back.
   (#423)
+- Multi-Cut works with Symmetry like Maya: with Object, World or Topology symmetry on, a cut, a Ctrl+click edge loop
+  and a slice are made on both sides of the mesh, and the preview shows the mirrored side too. A cut that is its own
+  mirror (across the middle) is made once. (#420)
+- Isolate Select stays with its panel when the layout changes, like Maya: a Space tap from the single perspective view to
+  the four view and back used to move the isolation to the side panel and then drop it, so the perspective view showed
+  and marquee-selected the hidden objects again. Each panel of the four view keeps its own Isolate Select. (#422)
+- Maya mode only takes the place of Blender's own draw in the headers it draws (top bar, status bar, 3D View, Outliner,
+  UV, Node, Graph Editor, Dope Sheet, Script Editor, Trax Editor). A function another add-on put in front of a header,
+  or in the place of Blender's draw, keeps drawing while Maya mode is on, and switching Maya mode off gives each
+  header's draw list back as it was. (#425)
+- A kit header draw that another add-on puts back into a header after Maya mode is off (it took the kit's draw for
+  Blender's while Maya mode was on) now draws Blender's own header: no more error from the editor icon row when
+  Maya mode is switched next to another workflow add-on (Blenda 4D). (#426)
 
 ## [0.20.0] — 2026-11-20
 
