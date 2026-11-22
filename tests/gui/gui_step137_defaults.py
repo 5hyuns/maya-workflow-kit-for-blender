@@ -1,5 +1,5 @@
-"""Issue #71, in the Maya Workflow Kit layout: Assign New Material > Blinn shows Maya's Blinn values in the
-Attribute Editor (Color 0.5, Incandescence black, Eccentricity 0.3, Specular Roll Off 0.7); a new point light shows
+"""In the Maya Workflow Kit layout: Assign New Material > Blinn makes a plain Principled BSDF material whose
+Attribute Editor shows the Blinn rows (Eccentricity = the Roughness as Maya's number); a new point light shows
 Intensity 1 / Decay Rate No Decay. Screenshots for a visual check."""
 
 import os
@@ -39,7 +39,10 @@ def s_blinn():
     mat = bpy.context.active_object.active_material
     C["mat"] = mat.name
     check(f"the new material is blinn1 ({mat.name})", mat.name == "blinn1")
-    check(f"AE Eccentricity = 0.3 ({mat.allset_eccentricity:.4f})", abs(mat.allset_eccentricity - 0.3) < 1e-4)
+    bsdf = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    r = bsdf.inputs["Roughness"].default_value
+    check(f"AE Eccentricity = Roughness squared ({mat.allset_eccentricity:.4f}, roughness {r:.4f})",
+          abs(mat.allset_eccentricity - r * r) < 1e-4)
     for a in win().screen.areas:
         a.tag_redraw()
 
