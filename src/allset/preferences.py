@@ -605,11 +605,19 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                                           "Paint Select, Move, Rotate, Scale, the last other tool and quick layout "
                                           "buttons (other tools stay on keys, menus and the shelf)",
         default=True, update=_update_selection_wire)
+    @_quiet
+    def _update_bottom_row(self, context):
+        from . import switch
+        if switch._registered[0]:          # Help Line and Command Line both off: no status bar (command_line)
+            from .command_line import sync_status_bar
+            sync_status_bar()
+
     show_command_line: bpy.props.BoolProperty(
-        name="Command Line", description="Python command line in the status bar", default=True)
+        name="Command Line", description="Python command line in the status bar", default=True,
+        update=_update_bottom_row)
     show_help_line: bpy.props.BoolProperty(
         name="Help Line", description="Maya-style help for the active tool in the status bar",
-        default=True)
+        default=True, update=_update_bottom_row)
 
     # Marking menus and hotbox.
     marking_menu_style: bpy.props.EnumProperty(
