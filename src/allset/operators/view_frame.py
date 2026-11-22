@@ -28,10 +28,12 @@ _BOX_TYPES = {'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'CURVES', 'POINTCLOUD'
 
 
 def _object_points(ob, depsgraph):
+    """The 8 corners of the object's world-axis bounding box (like Maya, each object keeps its own box: two objects
+    apart frame by their own boxes, not by the box around both), or its origin for an object without a box."""
     mw = ob.matrix_world
     if ob.type in _BOX_TYPES:
         ev = ob.evaluated_get(depsgraph)
-        return [mw @ Vector(c) for c in ev.bound_box]
+        return framing.box_corners([mw @ Vector(c) for c in ev.bound_box], 0.0)
     return [mw.translation.copy()]
 
 
@@ -100,6 +102,11 @@ def frame_points(context, v3d, selected, children, exclude=None):
     return [p for ob in objs for p in _object_points(ob, dg)]
 
 
+def _per_box(context, selected):
+    """True when frame_points gave objects' own box corners (Frame All, objects in Object Mode)."""
+    return not selected or context.mode == 'OBJECT'
+
+
 def _others(area, region):
     return [(r.x, r.y, r.width, r.height) for r in area.regions
             if r.type in {'UI', 'TOOLS', 'HEADER', 'TOOL_HEADER', 'ASSET_SHELF',
@@ -125,7 +132,7 @@ def frame_region(context, area, region, selected=True, children=False):
         points = frame_points(context, v3d, selected, children, exclude=cam)
         if not points:
             return False
-        if not frame_camera(context, cam, points, area, region):
+        if not frame_camera(context, cam, points, area, region, per_box=_per_box(context, selected)):
             return False
         try:
             bpy.ops.ed.undo_push(message="Frame Camera")
@@ -143,7 +150,8 @@ def frame_region(context, area, region, selected=True, children=False):
     loc, dist = framing.fit(points, rv3d.view_rotation, rv3d.window_matrix.copy(),
                             rv3d.view_distance, rv3d.view_perspective == 'ORTHO',
                             (region.width, region.height), rect,
-                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene),
+                            per_box=_per_box(context, selected))
     rv3d.view_location = loc
     rv3d.view_distance = dist
     region.tag_redraw()
@@ -166,7 +174,7 @@ def camera_projection(context, cam):
     return win, (w, h)
 
 
-def frame_camera(context, cam, points, area=None, region=None):
+def frame_camera(context, cam, points, area=None, region=None, per_box=False):
     """Move ``cam`` so ``points`` fill 0.95 of what the view shows, keeping its orientation (Maya framing in a
     camera view dollies / tracks the camera; an orthographic camera changes its width). ``region``: the camera view
     that frames, whose whole visible part is filled like Maya's panel, also the room an Overscan above 1 leaves
@@ -190,7 +198,7 @@ def frame_camera(context, cam, points, area=None, region=None):
     forward = rot @ Vector((0.0, 0.0, -1.0))
     dist0 = max((centre - loc0).dot(forward), 1e-3)
     loc, dist = framing.fit(points, rot, win, dist0, ortho, size, rect,
-                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene), per_box=per_box)
     if ortho:
         cam.data.ortho_scale *= dist / dist0
         dist = dist0

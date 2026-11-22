@@ -26,14 +26,16 @@ def view_mod():
 
 
 def corners(obs):
-    """Maya fits the axis-aligned bounding box of everything framed (fitPanel)."""
+    """Corners of each framed object's own axis-aligned box (a point for an object without one): Maya keeps those in
+    view; the space between objects apart may run past the edges (#473)."""
+    framing = import_module(MODULE + ".operators.framing")
     pts = []
     for ob in obs:
         if ob.type == 'MESH':
-            pts += [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+            pts += framing.box_corners([ob.matrix_world @ Vector(c) for c in ob.bound_box], 0.0)
         else:
             pts.append(ob.matrix_world.translation.copy())
-    return import_module(MODULE + ".operators.framing").box_corners(pts)
+    return pts
 
 
 def maya_fit(inside, ratio, persp=True):
