@@ -658,6 +658,7 @@ def register():
         bpy.utils.register_class(cls)
     _handle[0] = bpy.types.SpaceProperties.draw_handler_add(draw, (), 'WINDOW', 'POST_PIXEL')
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
+    marked_window.AREA_STATE.append(VIEWS)        # the view stays when the window comes to the front
 
 
 def unregister():
@@ -666,6 +667,8 @@ def unregister():
     if _handle[0] is not None:
         bpy.types.SpaceProperties.draw_handler_remove(_handle[0], 'WINDOW')
         _handle[0] = None
+    if VIEWS in marked_window.AREA_STATE:
+        marked_window.AREA_STATE.remove(VIEWS)
     VIEWS.clear()
     OVERLAY.update(area=0, box=None, drag=None)
     for cls in reversed(classes):

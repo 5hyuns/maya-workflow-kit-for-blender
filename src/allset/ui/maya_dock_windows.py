@@ -130,25 +130,29 @@ def floating_window(kind, wm=None):
     return None
 
 
-def to_front(context, window):
+def to_front(context, window, any_editor=False):
     """Bring the floating panel ``window`` to the front, like Maya raises a floating panel that is asked for.
 
     Blender has no call that raises a window, but a window it opens comes on top of the others: the panel's area is
     copied into a new window (``screen.area_dupli`` gives it the place and size of the area, which fills the old
     window, and keeps the editor's state, so the panel and its role are the same) and the old window is closed.
     Nothing happens to a window the command runs in (it is in front already). Returns the window showing the panel.
+    The kit's editor windows (Shelf Editor, Hotkey Editor, ...: ``marked_window`` kinds) come to the front the same
+    way; ``any_editor``: also a one-editor window of no kit kind (a floating UV Editor).
     """
     if window is None or bpy.app.background or window == context.window:
         return window
-    from . import tool_dock, window_places
+    from . import marked_window, tool_dock, window_places
     wm = context.window_manager
     if not is_floating(window, wm):
         return window
     area = window.screen.areas[0]
     kind = role(area)
-    tool = kind is None and tool_dock.is_dock(area)
-    if kind is None and not tool:
+    marked = marked_window.kind_of(area) if kind is None else None     # a kit editor (its Tool tab is no dock)
+    tool = kind is None and marked is None and tool_dock.is_dock(area)
+    if kind is None and not tool and marked is None and not any_editor:
         return window
+    old_area = area.as_pointer()
     try:
         new = window_places.dupli(context, window, area)
     except RuntimeError:
@@ -160,8 +164,13 @@ def to_front(context, window):
     if kind is not None:
         if role(target) != kind:
             set_role_later(target, kind, new)
-    elif not tool_dock.is_dock(target):
-        tool_dock.configure_later(target, new)
+    elif marked is not None:
+        if marked_window.kind_of(target) != marked:
+            marked_window.set_kind_later(new, target, marked)
+        marked_window.handed_on(old_area, target)
+    elif tool:
+        if not tool_dock.is_dock(target):
+            tool_dock.configure_later(target, new)
     try:
         with context.temp_override(window=window):
             bpy.ops.wm.window_close()

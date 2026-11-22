@@ -126,8 +126,13 @@ class ALLSET_OT_reference_editor(bpy.types.Operator):
     def execute(self, context):
         if context.window is None:
             return {'CANCELLED'}
-        if find_window(context) is not None:
-            return {'FINISHED'}            # Maya raises the open one
+        found = find_window(context)
+        if found is not None:
+            from . import maya_dock_windows
+            new = maya_dock_windows.to_front(context, found, any_editor=True)     # Maya raises the open one
+            if new != found and new.screen.areas and not is_pane(new.screen.areas[0]):
+                set_pane_later(new, new.screen.areas[0])
+            return {'FINISHED'}
         if open_window(context) is None:
             from . import window_places
             if not window_places.deferred():     # opens on a later tick (#203)
