@@ -43,12 +43,13 @@ def _edge_ends(e):
 
 
 def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, keep_faces_together=True,
-                  unit=1.0, **_unused):
+                  unit=1.0, levels=None, **_unused):
     """Maya polyExtrudeEdge: every edge gets ``divisions`` quads ``(a, b, b', a')``. Keep Faces Together on (like
     Maya's Edit Mesh > Extrude) = connected edges share their new vertices; off = every edge alone.
     A new vertex moves by Local Translate Z x the mean Z of its edges + Thickness x the unit mean Z + Offset out of
     the face (border edges only, mitred at a corner; an edge between two faces gets none), in Maya units.
-    The outer edges end up selected. Returns the new vertices."""
+    The outer edges end up selected. Returns the new vertices; ``levels`` (a dict) gets {new vertex: (division,
+    vertex it comes from)}."""
     bm.normal_update()
     edges = [e for e in edges if e.is_valid]
     k = max(1, int(divisions))
@@ -75,6 +76,8 @@ def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, d
         disp = {v: move(zs[v], ys.get(v, [])) for v in zs}
         cols = {v: [v] + [bm.verts.new(v.co + disp[v] * (j / k)) for j in range(1, k + 1)] for v in zs}
         new = [c for col in cols.values() for c in col[1:]]
+        if levels is not None:
+            levels.update({c: (j, col[0]) for col in cols.values() for j, c in enumerate(col[1:], 1)})
         ends = [(cols[a], cols[b], e) for e, a, b, _y, _z in plan]
     else:
         new, ends = [], []
@@ -84,6 +87,8 @@ def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, d
             cb = [b] + [bm.verts.new(b.co + d * (j / k)) for j in range(1, k + 1)]
             new += ca[1:] + cb[1:]
             ends.append((ca, cb, e))
+            if levels is not None:
+                levels.update({c: (j, col[0]) for col in (ca, cb) for j, c in enumerate(col[1:], 1)})
     outer = []
     for ca, cb, e in ends:
         example = e.link_faces[0] if e.link_faces else None

@@ -132,6 +132,15 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
             kind = kind_of(bm, mode)
             if kind is None:
                 continue
+            if kind == 'EDGE' and self.curve == 'SELECTED':
+                from . import extrude_curve
+                path = extrude_curve.path_curve(context)     # edges + a curve selected: along it, like faces
+                if path is not None:
+                    values = {k: getattr(self, k) for k in ("divisions", "taper", "twist", "local_translate_z",
+                                                            "offset", "thickness", "keep_faces_together")}
+                    if extrude_curve.run(context, ob, bm, path, unit, edges=True, **values) is not None:
+                        done += 1
+                    continue
             if kind != 'FACE':
                 spec = SPECS[kind]
                 if record_new(context, ob, bm, spec, _params(self, spec), unit) is not None:

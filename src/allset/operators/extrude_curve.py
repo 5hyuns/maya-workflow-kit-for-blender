@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Edit Mesh > Extrude with faces and a curve selected: the faces extrude along the curve (Maya's polyExtrudeFace
-with the curve as its path, the Extrude option box's Curve: Selected).
+"""Edit Mesh > Extrude with faces or edges and a curve selected: they extrude along the curve (Maya's
+polyExtrudeFace / polyExtrudeEdge with the curve as its path, the Extrude option box's Curve: Selected).
 
 Like Maya: step k of ``Divisions`` N puts the faces' centre on the curve point at parameter k / N of the curve's
 range (even in parameter, not in length), wherever the curve is in the world (it is not moved to the faces). Each
-step turns the faces from their first direction straight onto the chord from the previous step's centre to this
-one (the first chord starts at the faces' centre) and keeps their size. Taper scales step k by
+step turns the faces on from the previous step by the smallest turn from the previous chord onto this step's chord
+(from the previous step's centre to this one; the first chord starts at the faces' centre and turns from their
+normal), so the turns add up along the path; the faces keep their size. Taper scales step k by
 1 - (1 - Taper) k / N, Twist turns it about its normal by Twist k / N degrees (right-handed). Local Translate Z adds
 the faces' first normal x k / N, Thickness the last step's direction x k / N, and Offset the plain extrusion's offset
 of each vertex x k / N (its border edges move into the faces by Offset x k / N, in the faces' first plane; it is not
@@ -14,7 +15,9 @@ the curve's end at once. The node is editable afterwards like any kit extrusion 
 
 Taper and Twist only shape an extrusion that follows a curve (Maya: without one they change nothing). The faces
 always move as one piece about the centre of all of them (the mean of their vertices) and their summed normal;
-Keep Faces Together off only splits their vertices. Two curves selected: the first selected one is the path, like
+Keep Faces Together off only splits their vertices. Edges (``extrude_edges_along``) move the same way about the
+mean of their midpoints and the summed normal of their faces; their Thickness, like Local Translate Z, goes along
+that first normal. Two curves selected: the first selected one is the path, like
 Maya. The Extrude option box's Curve: Generated makes the path itself (``generate_curve``): a straight cubic curve
 from the centre of the faces' world bounding box along their summed normal (world X when they cancel out), its
 length set by the size of that box (``GENERATED_LENGTH``).
@@ -112,21 +115,28 @@ def _turn(src, dst):
     return src.rotation_difference(dst.normalized()).to_matrix()
 
 
-def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.0, unit=1.0, offset=0.0):
+def place(groups, points, divisions, taper=1.0, twist=0.0, ltz=0.0, thickness=0.0, unit=1.0, offset=0.0,
+          thickness_along_normal=False):
     """Vertex positions along the path. ``groups`` = [(centre, unit normal, [(level k, vertex, base co[, offset
-    direction])])] in mesh space; ``points`` = the path points for k = 1 .. divisions (mesh space). Returns
+    direction])])] in mesh space; ``points`` = the path points for k = 1 .. divisions (mesh space). Step k turns
+    on from step k - 1 by the smallest turn from the previous chord (the normal for the first) onto its own chord.
+    Thickness goes along the last chord, or along the normal with ``thickness_along_normal`` (edges). Returns
     {vertex: co}. Pure maths."""
     n = max(1, divisions)
     out = {}
     for centre, normal, members in groups:
         prev = centre
         turns, dirs = [], []
+        turn, heading = Matrix.Identity(3), normal
         for p in points:
             d = p - prev
-            dirs.append(d.normalized() if d.length > 1e-12 else (dirs[-1] if dirs else normal))
-            turns.append(_turn(normal, d) if d.length > 1e-12 else (turns[-1] if turns else Matrix.Identity(3)))
+            if d.length > 1e-12:
+                turn = _turn(heading, d) @ turn
+                heading = d.normalized()
+            dirs.append(heading)
+            turns.append(turn)
             prev = p
-        last = dirs[-1] if dirs else normal
+        last = normal if thickness_along_normal else (dirs[-1] if dirs else normal)
         for k, v, co, *rest in members:
             frac = k / n
             size = 1.0 - (1.0 - taper) * frac
@@ -193,6 +203,53 @@ def extrude_along(bm, faces, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0
     return list(moved)
 
 
+def _edge_group(edges):
+    """(centre, normal) of the edges before the extrusion: the mean of their midpoints and the summed normal of
+    their faces (the mesh's Z when they have none or it cancels out)."""
+    centre = sum(((e.verts[0].co + e.verts[1].co) * 0.5 for e in edges), Vector()) / len(edges)
+    normal = sum((f.normal for e in edges for f in e.link_faces), Vector())
+    normal = normal.normalized() if normal.length > 1e-9 else Vector((0.0, 0.0, 1.0))
+    return centre.copy(), normal
+
+
+def extrude_edges_along(bm, edges, curve_ob, matrix, divisions=1, taper=1.0, twist=0.0, local_translate_z=0.0,
+                        thickness=0.0, keep_faces_together=True, unit=1.0, offset=0.0, **_unused):
+    """Extrude ``edges`` (bmesh) along ``curve_ob`` (Maya polyExtrudeEdge with a curve); ``matrix`` = the mesh
+    object's world matrix. Offset moves each new vertex out of the faces like the plain edge extrusion, x k / N and
+    not turned with the path. Returns the new vertices; the outer edges end up selected."""
+    from .extrude_edge_vertex import extrude_edges
+    bm.normal_update()
+    edges = [e for e in edges if e.is_valid]
+    if not edges:
+        return []
+    centre, normal = _edge_group(edges)
+    inv = matrix.inverted_safe()
+    n = max(1, int(divisions))
+    levels = {}
+    # the plain extrusion with only Offset 1: each new vertex sits at its offset direction x k / N
+    new = extrude_edges(bm, edges, offset=1.0, divisions=n, keep_faces_together=keep_faces_together, levels=levels)
+    rows = []
+    for v in new:
+        k, src = levels[v]
+        rows.append((k, v, src.co.copy(), (v.co - src.co) * (n / k)))
+    points = [inv @ p for p in path_points(curve_ob, n)]
+    moved = place([(centre, normal, rows)], points, n, taper, twist, local_translate_z, thickness, unit, offset,
+                  thickness_along_normal=True)
+    for v, co in moved.items():
+        v.co = co
+    bm.normal_update()
+    return list(moved)
+
+
+def _build_edges(bm, params, unit, ob=None):
+    curve = bpy.data.objects.get(params.get("curve") or "")
+    if curve is None or curve.type != 'CURVE' or not curve.data.splines or ob is None:
+        return []
+    edges = [e for e in bm.edges if e.select]
+    values = {k: params[k] for k in FIELDS if k in params}
+    return extrude_edges_along(bm, edges, curve, ob.matrix_world, unit=unit, **values)
+
+
 def _build(bm, params, unit, ob=None):
     curve = bpy.data.objects.get(params.get("curve") or "")
     if curve is None or curve.type != 'CURVE' or not curve.data.splines or ob is None:
@@ -205,14 +262,17 @@ def _build(bm, params, unit, ob=None):
 SPEC = extrude.add_spec(extrude.Spec(
     'FACE_CURVE', "polyExtrudeFace", FIELDS, LABELS, DEFAULTS, KINDS, None, "extrude_curve_edit", _build,
     hidden=("curve",), with_object=True, component='FACE', view_fields=VIEW_FIELDS))
+EDGE_SPEC = extrude.add_spec(extrude.Spec(
+    'EDGE_CURVE', "polyExtrudeEdge", FIELDS, LABELS, DEFAULTS, KINDS, None, "extrude_curve_edit", _build_edges,
+    hidden=("curve",), with_object=True, component='EDGE', view_fields=VIEW_FIELDS))
 
 
-def run(context, ob, bm, curve_ob, unit=1.0, **values):
-    """Edit Mesh > Extrude of the selected faces of ``ob`` along ``curve_ob``: a new history node with ``values``
-    (FIELDS; the rest default). Record or None."""
+def run(context, ob, bm, curve_ob, unit=1.0, edges=False, **values):
+    """Edit Mesh > Extrude of the selected faces (``edges``: edges) of ``ob`` along ``curve_ob``: a new history node
+    with ``values`` (FIELDS; the rest default). Record or None."""
     params = dict(DEFAULTS, **{k: v for k, v in values.items() if k in FIELDS}, curve=curve_ob.name)
     params["divisions"] = max(1, int(params["divisions"]))
-    return extrude.record_new(context, ob, bm, SPEC, params, unit)
+    return extrude.record_new(context, ob, bm, EDGE_SPEC if edges else SPEC, params, unit)
 
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
@@ -248,7 +308,7 @@ class ALLSET_OT_extrude_curve_edit(bpy.types.Operator):
         done = 0
         for ob in context.objects_in_mode_unique_data:
             rec = extrude.RECORDS.get(ob.name)
-            if rec is not None and rec.spec is SPEC and rec.pre is not None and (
+            if rec is not None and rec.spec in (SPEC, EDGE_SPEC) and rec.pre is not None and (
                     rec.live or extrude.current(ob) is not None):
                 params = self._params()
                 params["curve"] = params["curve"] or rec.params.get("curve", "")
