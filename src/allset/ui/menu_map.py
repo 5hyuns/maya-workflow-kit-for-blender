@@ -605,6 +605,7 @@ MAP = {
     "Lighting/Shading/Assign New Material/New Material...": "allset.assign_new_material",
     "Lighting/Shading/Assign Favorite Material": ("menu", "ALLSET_MT_assign_favorite_material"),
     "Lighting/Shading/Assign Existing Material": ("menu", "ALLSET_MT_assign_existing_material"),
+    "Lighting/Shading/Convert Old Kit Materials": "allset.convert_old_materials",   # kit only (EXTRA)
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
     "Render/Render Settings...": "allset.render_settings",
     # Render menu: Blender's own render (INVOKE opens Blender's Render window, Maya's Render View) through the scene
@@ -631,6 +632,8 @@ EXTRA = {
     "Create/Lights/Volume Light": [("-", ""), ("Dome Light",)],
     # Maya 2027's Smart Bevel (#303) right below Bevel (operators/smart_bevel.py)
     "Edit Mesh/Bevel": [("Smart Bevel",)],
+    # Materials of older kit versions -> plain Principled BSDF, once (operators/material.convert_old)
+    "Lighting/Shading/Assign Existing Material": [("Convert Old Kit Materials",)],
 }
 # EXTRA items that have an option box (the static menu data lists the others')
 EXTRA_OPTION_BOXES = frozenset({"Edit Mesh/Smart Bevel"})

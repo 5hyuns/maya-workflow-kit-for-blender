@@ -716,6 +716,31 @@ class ALLSET_OT_material_attributes(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_convert_old_materials(bpy.types.Operator):
+    """Turn the materials made by older kit versions into plain Principled BSDF materials: the Maya Diffuse node in
+    front of Base Color is removed (a plain colour keeps its look, a texture now shows at full brightness)"""
+    bl_idname = "allset.convert_old_materials"
+    bl_label = "Convert Old Kit Materials"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        done = {'COLOR': 0, 'TEXTURE': 0}
+        for mat in bpy.data.materials:
+            kind = convert_old(mat)
+            if kind is not None:
+                done[kind] += 1
+        total = done['COLOR'] + done['TEXTURE']
+        if not total:
+            self.report({'INFO'}, "No old kit materials to convert")
+            return {'CANCELLED'}
+        msg = f"Converted {total} material(s) to plain Principled BSDF"
+        if done['TEXTURE']:
+            msg += (f"; {done['TEXTURE']} with a texture on Color now show it at full brightness "
+                    "(brighter than before)")
+        self.report({'WARNING'} if done['TEXTURE'] else {'INFO'}, msg)
+        return {'FINISHED'}
+
+
 # --- menus -----------------------------------------------------------------------------------
 
 class ALLSET_MT_assign_favorite_material(bpy.types.Menu):
@@ -755,5 +780,5 @@ class ALLSET_MT_assign_existing_material_rmb(ALLSET_MT_assign_existing_material)
 
 
 classes = (ALLSET_OT_shelf_material, ALLSET_OT_assign_new_material, ALLSET_OT_assign_material,
-           ALLSET_OT_material_attributes, ALLSET_MT_assign_favorite_material,
+           ALLSET_OT_material_attributes, ALLSET_OT_convert_old_materials, ALLSET_MT_assign_favorite_material,
            ALLSET_MT_assign_existing_material, ALLSET_MT_assign_existing_material_rmb)

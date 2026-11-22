@@ -6356,6 +6356,7 @@
    "Assign Existing Material": "Assign Existing Material",
    "Assign Favorite Material": "Assign Favorite Material",
    "Assign New Material": "Assign New Material",
+   "Convert Old Kit Materials": "Convert Old Kit Materials",
    "Cosine Power": "Cosine Power",
    "Diffuse": "Diffuse",
    "Eccentricity": "Eccentricity",
@@ -6364,7 +6365,7 @@
    "Material Attributes": "Material Attributes",
    "Maya Blinn eccentricity (size of the highlight); Principled Roughness = sqrt(eccentricity)": "Maya Blinn eccentricity (size of the highlight); Principled Roughness = sqrt(eccentricity)",
    "Maya Phong cosine power (higher = smaller highlight); Principled Roughness = (2 / (power + 2)) ^ 0.25": "Maya Phong cosine power (higher = smaller highlight); Principled Roughness = (2 / (power + 2)) ^ 0.25",
-   "Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the Maya Diffuse node)": "Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the Maya Diffuse node)",
+   "Maya diffuse of a material made by an older kit version: the share of the colour reflected (Base Color = Color x Diffuse through its Maya Diffuse node)": "Maya diffuse of a material made by an older kit version: the share of the colour reflected (Base Color = Color x Diffuse through its Maya Diffuse node)",
    "No materials in the scene": "No materials in the scene",
    "Use the object under the RMB menu when nothing is selected": "Use the object under the RMB menu when nothing is selected"
   },
@@ -11829,12 +11830,13 @@
    "Create a material and assign it to the selected objects or faces (Maya shelf\nmaterial buttons, Assign Favorite Material)": "Create a material and assign it to the selected objects or faces (Maya shelf\nmaterial buttons, Assign Favorite Material)",
    "Create a material of a favourite type and assign it (Maya Assign Favorite Material)": "Create a material of a favourite type and assign it (Maya Assign Favorite Material)",
    "Pick a material type, create it and assign it to the selected objects or faces\n(Maya Assign New Material, Shift+T)": "Pick a material type, create it and assign it to the selected objects or faces\n(Maya Assign New Material, Shift+T)",
-   "Show the object's material in the Attribute Editor (Maya Material Attributes)": "Show the object's material in the Attribute Editor (Maya Material Attributes)"
+   "Show the object's material in the Attribute Editor (Maya Material Attributes)": "Show the object's material in the Attribute Editor (Maya Material Attributes)",
+   "Turn the materials made by older kit versions into plain Principled BSDF materials: the Maya Diffuse node in\nfront of Base Color is removed (a plain colour keeps its look, a texture now shows at full brightness)": "Turn the materials made by older kit versions into plain Principled BSDF materials: the Maya Diffuse node in\nfront of Base Color is removed (a plain colour keeps its look, a texture now shows at full brightness)"
   },
   "Tooltips/operators/menu_extras": {
    "Export only the selected objects (Maya File > Export Selection)": "Export only the selected objects (Maya File > Export Selection)",
    "Open this editor in a new window (Maya Windows menu)": "Open this editor in a new window (Maya Windows menu)",
-   "Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)": "Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)",
+   "Project UVs along the scene's X / Y / Z axis (Maya Planar) or on the plane of the faces' average normal\n(Maya Normal-Based)": "Project UVs along the scene's X / Y / Z axis (Maya Planar) or on the plane of the faces' average normal\n(Maya Normal-Based)",
    "Save under the next version number and keep working in it (Maya Increment and Save)": "Save under the next version number and keep working in it (Maya Increment and Save)"
   },
   "Tooltips/operators/menu_items": {
@@ -12289,7 +12291,7 @@
    "Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)": "Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)",
    "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit": "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit",
    "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)": "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)",
-   "Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one": "Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one",
+   "Sew the UVs along the selected edges (Maya Sew UV Edges): the UVs on each edge meet half-way": "Sew the UVs along the selected edges (Maya Sew UV Edges): the UVs on each edge meet half-way",
    "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places\n(Maya Unfold; Blender Unwrap, Minimum Stretch)"
   },
   "Tooltips/operators/view": {
