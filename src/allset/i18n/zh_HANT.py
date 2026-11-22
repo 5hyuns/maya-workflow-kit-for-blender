@@ -4061,7 +4061,7 @@ STRINGS = {
     'Slice Along Plane:': '沿平面切片：',
     'Slice Tool': '切片工具',
     'Slice: delete the faces on one side of the slice (the side to the right of the drag)': '切片：刪除切片一側的面 (拖動方向右側)',
-    'Slice: how far extracted faces move (Maya X / Y / Z, scene units)': '切片：提取的面移動的距離 (Maya X / Y / Z，場景單位)',
+    'Slice: how far extracted faces move (X / Y / Z, scene units)': '切片：提取的面移動的距離 (X / Y / Z，場景單位)',
     'Slice: only faces facing the camera are cut': '切片：僅切割朝向攝影機的面',
     'Slice: split the faces on one side off and move them by the offset': '切片：將一側的面分離並按偏移移動',
     'Slide': '滑動',

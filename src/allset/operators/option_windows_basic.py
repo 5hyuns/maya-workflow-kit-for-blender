@@ -13,6 +13,7 @@ import bpy
 from mathutils import Vector
 
 from ..preferences import NEW_SCENE_TIMES
+from . import scene_axes
 from .option_windows_spec import AXIS, UVS, F, Window, _components, _constraint, _primitive, _with_hierarchy
 
 # --- run functions ----------------------------------------------------------------------------------
@@ -177,6 +178,10 @@ _CON_AXES = [F("all", "Constraint axes:", "bool", True, text="All"), F("x", "", 
              F("y", "", "bool", False, text="Y"), F("z", "", "bool", False, text="Z"),
              F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)]
 
+
+def _old_con_axes(v):
+    scene_axes.old_swap(v, "y", "z")
+
 WINDOWS = [
     Window("poly_cube", "Polygon Cube Options", "Create", ("allset.create", {"kind": 'CUBE'}), [
         F("width", "Width:", "length", 1.0, lo=0.0001, hi=100), F("height", "Height:", "length", 1.0, lo=0.0001, hi=100),
@@ -296,13 +301,14 @@ WINDOWS = [
         F("all_r", "Rotate:", "bool", True, text="All"), F("rx", "", "bool", False, text="X"),
         F("ry", "", "bool", False, text="Y"), F("rz", "", "bool", False, text="Z"),
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _constraint('CHILD_OF'),
-        missing=("Decompose near object", "Animation Layer")),
+        missing=("Decompose near object", "Animation Layer"),
+        old_axes=lambda v: (scene_axes.old_swap(v, "ty", "tz"), scene_axes.old_swap(v, "ry", "rz"))),
     Window("point_constraint", "Point Constraint Options", "Add", ("allset.constrain", {"type": 'COPY_LOCATION'}),
            [F("maintain_offset", "Maintain offset:", "bool", False)] + _CON_AXES, _constraint('COPY_LOCATION'),
-           missing=("Offset", "Animation Layer")),
+           missing=("Offset", "Animation Layer"), old_axes=_old_con_axes),
     Window("orient_constraint", "Orient Constraint Options", "Add", ("allset.constrain", {"type": 'COPY_ROTATION'}),
            [F("maintain_offset", "Maintain offset:", "bool", False)] + _CON_AXES, _constraint('COPY_ROTATION'),
-           missing=("Offset", "Animation Layer")),
+           missing=("Offset", "Animation Layer"), old_axes=_old_con_axes),
     Window("set_key", "Set Key Options", "Set Key", ("allset.set_key", {}), [
         F("hierarchy", "Hierarchy:", "enum", "Selected", items=("Selected", "Below"))], _run_set_key,
         missing=("Set keys on: manipulator handles", "Set keys at: Prompt", "Set IK/FK keys", "Channels: From Channel Box",

@@ -123,23 +123,23 @@ def test_mirror_maya_defaults():
     xs = [round((cube.matrix_world @ v.co).x, 4) for v in cube.data.vertices]
     assert min(xs) == -0.75 and max(xs) == 0.75, (min(xs), max(xs))
     assert len(cube.data.vertices) == 12, "cut at 0, mirrored, border merged (8 + 8 - 4)"
-    # Y (Maya up) = Blender Z, Combine off = a new object
+    # Z (the scene's up axis, as the Channel Box shows it), Combine off = a new object
     _clear()
     cube = _create('CUBE', 0.0)
     cube.location.z = 2.0
     _select(cube)
-    bpy.ops.allset.mirror(axis='Y', cut=False, combine=False)
+    bpy.ops.allset.mirror(axis='Z', cut=False, combine=False)
     meshes = sorted(o.name for o in bpy.context.scene.objects if o.type == 'MESH')
     assert meshes == ["pCube1", "pCube2"], meshes
     copy = bpy.data.objects["pCube2"]
     zs = [(copy.matrix_world @ v.co).z for v in copy.data.vertices]
     assert abs(max(zs) + 1.5) < 1e-4 and abs(min(zs) + 2.5) < 1e-4, (min(zs), max(zs))
-    # Object position + Z axis = Blender -Y through the origin
+    # Object position + Y axis = the scene's Y through the object's origin
     _clear()
     cube = _create('CUBE', 0.0)
     cube.location.y = 5.0
     _select(cube)
-    bpy.ops.allset.mirror(position='OBJECT', axis='Z', direction='POSITIVE', cut=True)
+    bpy.ops.allset.mirror(position='OBJECT', axis='Y', direction='POSITIVE', cut=True)
     ys = sorted({round((cube.matrix_world @ v.co).y, 4) for v in cube.data.vertices})
     assert ys == [4.5, 5.0, 5.5], ys
 

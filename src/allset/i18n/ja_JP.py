@@ -4061,7 +4061,7 @@ STRINGS = {
     'Slice Along Plane:': '平面に沿ってスライス:',
     'Slice Tool': 'スライスツール',
     'Slice: delete the faces on one side of the slice (the side to the right of the drag)': 'スライス: スライスの片側 (ドラッグ方向の右側) のフェースを削除',
-    'Slice: how far extracted faces move (Maya X / Y / Z, scene units)': 'スライス: 抽出したフェースの移動量 (Maya X / Y / Z、シーン単位)',
+    'Slice: how far extracted faces move (X / Y / Z, scene units)': 'スライス: 抽出したフェースの移動量 (X / Y / Z、シーン単位)',
     'Slice: only faces facing the camera are cut': 'スライス: カメラを向いたフェースだけをカット',
     'Slice: split the faces on one side off and move them by the offset': 'スライス: 片側のフェースを分離してオフセット分移動',
     'Slide': 'スライド',

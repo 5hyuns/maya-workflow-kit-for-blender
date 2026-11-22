@@ -46,6 +46,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Mesh edit mode in Maya mode: the first hover after a move, a click or another edit no longer stalls on a dense mesh
   while the pre-selection highlight reads the mesh again (about a quarter of a second on 130,000 vertices before)
   (#452).
+- Option windows read X / Y / Z as the scene axes the Channel Box and the manipulator show, like Maya, instead of
+  taking Y as the up axis: Edit > Duplicate Special, the Constraint axes and the Scale Constraint Offset, Mesh >
+  Mirror, Skeleton > Mirror Joints, Skin > Mirror Skin Weights, the Multi-Cut slice planes and Extract offset,
+  ShrinkWrap Along X / Y / Z, the Create windows' Axis, Axis definition, Pivot and Center, Surfaces > Revolve /
+  Extrude, Orient Joint and the Joint Tool's world orientation, and the World up vector. The defaults keep their
+  result (Axis Z: a primitive stands upright; World up vector 0 0 1; Mirror Joints across XZ; Revolve about Z), and
+  option values saved by an older version keep doing what they did (#443).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing

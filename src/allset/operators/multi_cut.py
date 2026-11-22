@@ -44,8 +44,8 @@ REJECT_RGB = (0.9, 0.2, 0.2)
 POINT_PX = 7.0
 LINE_PX = 2.0
 
-# Maya Y-up plane names -> Blender plane normal (X -> X, Y -> Z, Z -> -Y)
-PLANE_NORMALS = {'YZ': Vector((1, 0, 0)), 'ZX': Vector((0, 0, 1)), 'XY': Vector((0, 1, 0))}
+# slice plane (scene axes, like the Channel Box) -> plane normal
+PLANE_NORMALS = {'YZ': Vector((1, 0, 0)), 'ZX': Vector((0, 1, 0)), 'XY': Vector((0, 0, 1))}
 
 
 # --- pure: the cut (bmesh) ------------------------------------------------------------------------------
@@ -761,7 +761,7 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
             extract = None
             if s.extract_faces:
                 o = Vector(s.extract_offset) * units.maya_unit(context.scene)
-                extract = inv.to_3x3() @ Vector((o.x, -o.z, o.y))   # Maya Y-up -> Blender Z-up
+                extract = inv.to_3x3() @ o
             from . import multi_cut_mirror
             mirror = multi_cut_mirror.for_object(context, ob, bm)
             edges = slice_mirrored(bm, co, no, faces_of, mirror, delete=s.delete_faces, extract=extract)

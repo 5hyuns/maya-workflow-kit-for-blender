@@ -108,11 +108,14 @@ def test_changed_fields_reach_the_node():
          {"heightRatio": 0.25, "minorSweep": 180.0}),
         ("nurbs_plane", {"width": 2.0, "length": 6.0, "patches_u": 3}, {"width": 2.0, "lengthRatio": 3.0, "patchesU": 3}),
         ("nurbs_cube", {"width": 2.0, "height": 1.0, "patches_v": 2}, {"heightRatio": 0.5, "patchesV": 2}),
-        ("nurbs_circle", {"sections": 12, "sweep": 180.0, "axis": "Z"}, {"sections": 12, "sweep": 180.0, "normalZ": 1.0}),
+        # Normal axis Z = the scene's up = the node's Y-up normal (0, 1, 0)
+        ("nurbs_circle", {"sections": 12, "sweep": 180.0, "axis": "Z"}, {"sections": 12, "sweep": 180.0, "normalY": 1.0}),
+        ("nurbs_circle", {"axis": "Y"}, {"normalY": 0.0, "normalZ": -1.0}),
         ("nurbs_square", {"side1": 3.0, "spans_per_side": 2}, {"sideLength1": 3.0, "spansPerSide": 2}),
+        # scene point / direction (x, y, z) = the node's Y-up (x, z, -y)
         ("nurbs_sphere", {"pivot": "User defined", "pivot_point": (1.0, 2.0, 3.0), "axis": "Free",
                           "axis_definition": (1.0, 1.0, 0.0)},
-         {"pivotX": 1.0, "pivotY": 2.0, "pivotZ": 3.0, "axisX": 1.0, "axisY": 1.0, "axisZ": 0.0}),
+         {"pivotX": 1.0, "pivotY": 3.0, "pivotZ": -2.0, "axisX": 1.0, "axisY": 0.0, "axisZ": -1.0}),
     ]
     for key, values, want in cases:
         ob = _run(key, **values)

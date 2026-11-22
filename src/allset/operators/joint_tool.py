@@ -13,7 +13,7 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 from .. import results
-from . import joint_preview, naming, units
+from . import joint_preview, naming, scene_axes, units
 from .joint_common import SKELETON_BASE, _cb, next_joint_name, stamp_last
 from .joint_frames import RADIUS, orient_new
 
@@ -134,7 +134,7 @@ def view_under(window, x, y):
 
 
 # Maya Joint Tool settings the kit honours: Secondary Axis Y with
-# Secondary Axis World Orientation +Y (Joint Tool default), Create IK handle off. Blender bones point their Y at the
+# Secondary Axis World Orientation + up (Joint Tool default; the scene's +Z here), Create IK handle off. Blender bones point their Y at the
 # child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
 SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "Y", "The bone's Z axis"),
                   ("Z", "Z", "The bone's X axis"), ("NONE", "None", "Leave the bone roll as placed"))
@@ -195,7 +195,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
 
     secondary_axis: EnumProperty(name="Secondary Axis", items=SECONDARY_AXES, default="Y")
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
-                                  items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
+                                  items=[(a, a, f"The scene's {a} axis") for a in ("X", "Y", "Z")], default="Z")
     secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
     # Maya 2025+ Joint Tool default: auto orient secondary on; Orient Joint to World =
     # no orientation
@@ -511,8 +511,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     def _finish(self, context):
         ob, names = self._ob, self._names
         try:
-            orient_new(ob, names, self.secondary_axis, self.secondary_world, self.secondary_sign,
-                       self.auto_secondary, self.orient_world)
+            world, sign = scene_axes.signed_to_yup(self.secondary_world, self.secondary_sign)
+            orient_new(ob, names, self.secondary_axis, world, sign, self.auto_secondary, self.orient_world)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex))
         finish(context, ob, names, getattr(self, "_top", None))

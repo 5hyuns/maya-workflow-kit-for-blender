@@ -8,12 +8,13 @@ Each window fills the kit's Maya creation node (operators/prim_history.py, prim_
 ``create.create(context, kind, overrides)``: values are Maya values, lengths in Maya units (create() scales them).
 Fields Blender / the kit can't follow are listed as ``missing``."""
 
+from . import scene_axes
 from .option_windows import AXIS, UVS, F, Window
+from .option_windows_spec import _AXES     # scene axis -> the creation node's (Y-up) axis
 
 _NORM = ("Normalize", "Preserve aspect ratio")
 _TOL = "Use tolerance: Local / Global, Positional tolerance (None only: sections and spans are used)"
 _VIEW = "Axis: Active view"
-_AXES = {"X": (1.0, 0.0, 0.0), "Y": (0.0, 1.0, 0.0), "Z": (0.0, 0.0, 1.0)}
 
 
 def _create(context, kind, over):
@@ -142,20 +143,22 @@ LINEAR_CUBIC = ("Linear", "Cubic")
 
 def _pivot_fields(label="Pivot:"):
     return [F("pivot", label, "enum", "Object", items=("Object", "User defined")),
-            F("pivot_point", "Pivot point:", "vec3", (0.0, 0.0, 0.0))]
+            F("pivot_point", "Pivot point:", "vec3", (0.0, 0.0, 0.0), old=scene_axes.old_vector)]
 
 
 def _axis_fields(label="Axis:", definition="Axis definition:"):
-    return [F("axis", label, "enum", "Y", items=_AXIS_N),
-            F("axis_definition", definition, "vec3", (0.0, 1.0, 0.0))]
+    return [F("axis", label, "enum", "Z", items=_AXIS_N, old=scene_axes.old_axis),
+            F("axis_definition", definition, "vec3", (0.0, 0.0, 1.0), old=scene_axes.old_vector)]
 
+
+# Axis, Axis definition, Pivot point and Center are scene axes; the creation node keeps them in the Y-up frame
 
 def _axis_of(v):
-    return tuple(v["axis_definition"]) if v["axis"] == "Free" else _AXES[v["axis"]]
+    return scene_axes.to_yup(v["axis_definition"]) if v["axis"] == "Free" else _AXES[v["axis"]]
 
 
 def _pivot_of(v):
-    return tuple(v["pivot_point"]) if v["pivot"] == "User defined" else (0.0, 0.0, 0.0)
+    return scene_axes.to_yup(v["pivot_point"]) if v["pivot"] == "User defined" else (0.0, 0.0, 0.0)
 
 
 def _degree(label):
@@ -210,7 +213,7 @@ def _run_circle(context, v):
 
 
 def _run_square(context, v):
-    c, n = tuple(v["center"]), _axis_of(v)
+    c, n = scene_axes.to_yup(v["center"]), _axis_of(v)
     over = {"centerX": c[0], "centerY": c[1], "centerZ": c[2], "normalX": n[0], "normalY": n[1], "normalZ": n[2],
             "sideLength1": v["side1"], "sideLength2": v["side2"], "spansPerSide": v["spans_per_side"],
             "degree": _degree(v["degree"])}
@@ -356,7 +359,7 @@ WINDOWS = [
         _run_circle, missing=("Normal axis: Active view", _TOL)),
     # Square (defaults like Maya): centre, normal Y, sides 1 x 1, 1 span per side, degree 3
     Window("nurbs_square", "NURBS Square Options", "Create", ("allset.create", {"kind": 'NURBS_SQUARE'}), [
-        F("center", "Center:", "vec3", (0.0, 0.0, 0.0)), *_axis_fields("Normal axis:", "Normal definition:"),
+        F("center", "Center:", "vec3", (0.0, 0.0, 0.0), old=scene_axes.old_vector), *_axis_fields("Normal axis:", "Normal definition:"),
         F("side1", "Length of Side 1:", "length", 1.0, lo=0.1, hi=1000),
         F("side2", "Length of Side 2:", "length", 1.0, lo=0.1, hi=1000),
         F("spans_per_side", "Spans per side:", "int", 1, lo=1, hi=200),

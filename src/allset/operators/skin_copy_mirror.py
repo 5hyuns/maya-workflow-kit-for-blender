@@ -139,8 +139,8 @@ class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Maya mirror plane (Y-up) -> Blender axis index (Z-up): YZ = x, XY = Maya z = Blender y, XZ = Maya y = Blender z
-PLANE_AXIS = {"YZ": 0, "XY": 1, "XZ": 2}
+# mirror plane (scene axes, like the Channel Box) -> the axis it flips
+PLANE_AXIS = {"YZ": 0, "XZ": 1, "XY": 2}
 
 
 def _reflect(v, axis):

@@ -17,7 +17,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Matrix, Vector
 
 from .. import results
-from . import naming
+from . import naming, scene_axes
 from .joint_common import (_cb, CHILD_ORDER, child_order_key, _InEditMode, JOINT_BASE, next_joint_name, SKELETON_BASE,
                            stamp_last, taken_joint_names)  # noqa: F401
 from .joint_frames import (armature_world, _first_child, fix_frames, JOINT_AXES, joint_frame, _maya_axes,
@@ -120,20 +120,24 @@ def with_descendants(ebs, names):
 
 # --- Orient Joint ---------------------------------------------------------------------------
 
-# Maya secondary world orientation (Y-up) -> Blender calculate_roll type (Z-up: Maya X->X, Y->Z, Z->-Y)
-SAO_ROLL = {"X+": 'GLOBAL_POS_X', "X-": 'GLOBAL_NEG_X', "Y+": 'GLOBAL_POS_Z', "Y-": 'GLOBAL_NEG_Z',
-            "Z+": 'GLOBAL_NEG_Y', "Z-": 'GLOBAL_POS_Y'}
+# Secondary Axis World Orientation (scene axes, like the Channel Box; Z+ = up) -> Blender calculate_roll type
+SAO_ROLL = {"X+": 'GLOBAL_POS_X', "X-": 'GLOBAL_NEG_X', "Y+": 'GLOBAL_POS_Y', "Y-": 'GLOBAL_NEG_Y',
+            "Z+": 'GLOBAL_POS_Z', "Z-": 'GLOBAL_NEG_Z'}
 _AXES = [(a, a, "") for a in ("X", "Y", "Z")]
 
 
 def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
     """Maya Skeleton > Orient Joint (``cmds.joint(edit=True, oj=oj, sao=sao, aos=..., ch=True, zso=True)``; default xyz
-    / yup / aos on / children on): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no
+    / yup / aos on / children on): ``sao`` "X+" .. "Z-" (scene axes, "Z+" = up), "NONE" = no
     secondary world axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints
     are skipped (``skipped``). Returns the number oriented."""
     if oj != "none" and sao not in SAO_ROLL and sao != "NONE":
         return 0
-    maya_sao = None if sao == "NONE" else sao[0].lower() + ("up" if sao[1] == "+" else "down")
+    if sao == "NONE":
+        maya_sao = None
+    else:
+        axis, sign = scene_axes.signed_to_yup(sao[0], sao[1])     # the orientation maths works Y up
+        maya_sao = axis.lower() + ("up" if sign == "+" else "down")
     done = {}
     with _InEditMode(ob) as ebs:
         targets = with_descendants(ebs, names) if children else [n for n in names if n in ebs]
@@ -171,7 +175,7 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
     world: EnumProperty(name="Secondary Axis World Orientation",
                         items=[(k, k, "") for k in SAO_ROLL] + [("NONE", "None", "No secondary axis world "
                                                                  "orientation: Maya's orient from the bend alone")],
-                        default="Y+")
+                        default="Z+")
     auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True,
                                  description="Maya 2025+: the secondary axis follows the bend of the chain, turned "
                                              "toward the world orientation")
@@ -231,8 +235,8 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
 
 # --- Mirror Joints ----------------------------------------------------------------------------
 
-# Maya mirror plane (Y-up) -> Blender reflection (Z-up): YZ = x, XY = Maya z = Blender -y, XZ = Maya y = z
-PLANES = {"XY": (1.0, -1.0, 1.0), "YZ": (-1.0, 1.0, 1.0), "XZ": (1.0, 1.0, -1.0)}
+# mirror plane (scene axes, like the Channel Box) -> reflection: YZ flips x, XZ flips y (front / back), XY flips z
+PLANES = {"XY": (1.0, 1.0, -1.0), "YZ": (-1.0, 1.0, 1.0), "XZ": (1.0, -1.0, 1.0)}
 
 
 def mirrored_name(name, search, replace, taken):
@@ -243,7 +247,7 @@ def mirrored_name(name, search, replace, taken):
     return new
 
 
-def mirror(ob, names, plane="XY", behavior=True, search="", replace=""):
+def mirror(ob, names, plane="XZ", behavior=True, search="", replace=""):
     """Mirror the joints and their hierarchies across a plane through the world origin; returns the new names."""
     r = Matrix.Diagonal(PLANES[plane])
     mw = ob.matrix_world
@@ -305,8 +309,8 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
     bl_label = "Mirror Joints Options"
     bl_options = {'UNDO'}
 
-    # default XY
-    plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="XY")
+    # XZ: front and back trade places, the plane Maya mirrors across until another one is picked
+    plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="XZ")
     function: EnumProperty(name="Mirror Function", items=(("BEHAVIOR", "Behavior", "Mirrored joints rotate "
                                                            "the opposite way (Blender symmetrize)"),
                                                           ("ORIENTATION", "Orientation", "Mirrored joints keep the "

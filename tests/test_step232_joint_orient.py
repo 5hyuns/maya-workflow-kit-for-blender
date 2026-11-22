@@ -57,7 +57,7 @@ def _arm(mirror=True, orient_menu=True):
     joints.orient_new(ob, names, aos=False)                       # Joint Tool finish (Y, world +Y)
     joints.finish(bpy.context, ob, names)
     if orient_menu:
-        joints.orient(ob, ["joint1"], "Y+", True, aos=False)      # Skeleton > Orient Joint, no -aos
+        joints.orient(ob, ["joint1"], "Z+", True, aos=False)      # Skeleton > Orient Joint (up), no -aos
     if mirror:
         joints.mirror(ob, ["joint1"], "YZ", True)                 # Mirror Joints YZ, Behavior
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -128,15 +128,15 @@ def test_plain_click_runs_with_the_last_options():
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint1")
     ow = import_module(kit.MODULE + ".operators.option_windows")
-    assert bpy.ops.allset.orient_joint('EXEC_DEFAULT', world="Z+", children=False) == {'FINISHED'}
-    assert ow.saved("op_orient_joint")["world"] == "Z+" and ow.saved("op_orient_joint")["children"] is False
+    assert bpy.ops.allset.orient_joint('EXEC_DEFAULT', world="Y+", children=False) == {'FINISHED'}
+    assert ow.saved("op_orient_joint")["world"] == "Y+" and ow.saved("op_orient_joint")["children"] is False
 
     class Op:
-        primary, secondary, world, children = "X", "Y", "Y+", True
+        primary, secondary, world, children = "X", "Y", "Z+", True
     op = Op()
     joints._load_options(op, "orient_joint", ("primary", "secondary", "world", "children"))
-    assert (op.world, op.children) == ("Z+", False)
-    assert bpy.ops.allset.orient_joint('EXEC_DEFAULT', world="Y+", children=True) == {'FINISHED'}   # back
+    assert (op.world, op.children) == ("Y+", False)
+    assert bpy.ops.allset.orient_joint('EXEC_DEFAULT', world="Z+", children=True) == {'FINISHED'}   # back
     for cls in ("ALLSET_OT_orient_joint", "ALLSET_OT_mirror_joints"):
         rna = getattr(bpy.types, cls)
         assert 'REGISTER' not in rna.bl_options, cls                         # Maya has no redo panel

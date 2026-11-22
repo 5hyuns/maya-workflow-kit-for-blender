@@ -120,11 +120,11 @@ def test_titles_buttons_fields_defaults_are_maya():
     assert (_w("joint_tool").title, _w("ik_handle_tool").title, _w("ik_spline_tool").title,
             _w("paint_skin_weights").title) == ("Joint Tool", "IK Handle Tool", "IK Spline Handle Tool",
                                                 "Paint Skin Weights Tool")
-    # Joint Tool: secondary Y, world orientation +Y, Create IK handle off
+    # Joint Tool: secondary Y, world orientation + up (the scene's +Z), Create IK handle off
     # the Orientation section adds Orient Joint to World (off) and Auto orient secondary axis (on)
     assert _fields("joint_tool")[:6] == [
         ("orient_world", "", False),
-        ("secondary_axis", "Secondary Axis:", "Y"), ("secondary_world", "Secondary Axis World Orientation:", "Y"),
+        ("secondary_axis", "Secondary Axis:", "Y"), ("secondary_world", "Secondary Axis World Orientation:", "Z"),
         ("secondary_sign", "", "+"), ("auto_secondary", "", True), ("create_ik", "", False)]
     # IK Handle Tool: Rotate-Plane solver, Solver enable on, Weight 1
     assert _fields("ik_handle_tool") == [("solver", "Current solver:", "Rotate-Plane Solver"),
@@ -163,7 +163,7 @@ def test_titles_buttons_fields_defaults_are_maya():
     # Aim
     assert _fields("aim_constraint") == [
         ("aim_vector", "Aim vector:", (1.0, 0.0, 0.0)), ("up_vector", "Up vector:", (0.0, 1.0, 0.0)),
-        ("world_up_type", "World up type:", "Vector"), ("world_up_vector", "World up vector:", (0.0, 1.0, 0.0)),
+        ("world_up_type", "World up type:", "Vector"), ("world_up_vector", "World up vector:", (0.0, 0.0, 1.0)),
         ("world_up_object", "World up object:", ""), ("weight", "Weight:", 1.0)]   # + World up object
     # Pole Vector: only Weight 1 (:187-188); Scale: Maintain offset off, Offset 1 1 1, All, Weight 1 (:190-192)
     assert _fields("pole_vector") == [("weight", "Weight:", 1.0)]
@@ -235,9 +235,9 @@ def test_scale_constraint_offset_and_axes():
     _run("scale_constraint", offset=(1.0, 2.0, 0.5), all=False, x=True, y=True)
     bpy.context.view_layer.update()
     con = ob.constraints[-1]
-    assert (con.use_x, con.use_y, con.use_z) == (True, False, True)          # Maya Y = Blender Z
-    # x: 2 x 1, Blender y (Maya Z, not constrained): own 0.5, Blender z (Maya Y): 4 x 2
-    assert (ob.matrix_world.to_scale() - Vector((2, 0.5, 8))).length < 1e-5, tuple(ob.matrix_world.to_scale())
+    assert (con.use_x, con.use_y, con.use_z) == (True, True, False)          # the Channel Box's X / Y / Z
+    # x: 2 x 1, y: 3 x 2, z (not constrained): own 0.5
+    assert (ob.matrix_world.to_scale() - Vector((2, 6, 0.5))).length < 1e-5, tuple(ob.matrix_world.to_scale())
 
 
 def _ik_scene():
@@ -283,11 +283,11 @@ def test_joint_tool_options_reach_the_bones():
     _clear()
     pts = json.dumps([(0, 0, 0), (2, 0, 0), (4, 0, 2)])
     # window values -> tool properties
-    props = rig.joint_tool_props({**_w("joint_tool").defaults(), "secondary_world": "Z", "create_ik": True})
-    assert props["secondary_world"] == "Z" and props["create_ik"] and props["ik_solver"] == "RP"
-    assert bpy.ops.allset.joint_tool(points=pts, secondary_world="Z", secondary_sign="+") == {'FINISHED'}
+    props = rig.joint_tool_props({**_w("joint_tool").defaults(), "secondary_world": "Y", "create_ik": True})
+    assert props["secondary_world"] == "Y" and props["create_ik"] and props["ik_solver"] == "RP"
+    assert bpy.ops.allset.joint_tool(points=pts, secondary_world="Y", secondary_sign="-") == {'FINISHED'}
     arm = bpy.context.active_object
-    # secondary Y (= bone Z) faces Maya +Z = Blender -Y
+    # secondary Y (= bone Z) faces the scene's -Y
     for b in arm.data.bones[:2]:
         z = (arm.matrix_world.to_3x3() @ b.matrix_local.to_3x3()).col[2]
         assert z.dot(Vector((0, -1, 0))) > 0.99, (b.name, tuple(z))

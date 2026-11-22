@@ -42,7 +42,7 @@ WINDOWS = {
     "Surfaces/Loft": ("loft", "Loft Options", "Loft", "loft", dict(
         uniform=True, auto_reverse=True, close=False, degree='3', section_spans=1)),
     "Surfaces/Revolve": ("revolve", "Revolve Options", "Revolve", "revolve", dict(
-        axis='Y', pivot='OBJECT', pivot_point=(0.0, 0.0, 0.0), start_sweep=0.0, end_sweep=360.0, degree='3',
+        axis='Z', pivot='OBJECT', pivot_point=(0.0, 0.0, 0.0), start_sweep=0.0, end_sweep=360.0, degree='3',
         segments=8)),
     "Surfaces/Extrude": ("surface_extrude", "Extrude Options", "Extrude", "surface_extrude", dict(
         style='TUBE', length=1.0, direction='NORMAL', result_position='PROFILE', pivot='CLOSEST')),

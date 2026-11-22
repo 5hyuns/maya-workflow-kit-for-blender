@@ -398,7 +398,8 @@ def test_proximity_wrap_and_shrink_wrap():
     _select(cube, drv)
     _run("deform_shrink_wrap", projection="Parallel To Axes", along_y=True)
     sw3 = cube.modifiers["shrinkWrap3"]
-    assert sw3.wrap_method == 'PROJECT' and sw3.use_project_z and not sw3.use_project_y   # Maya Y = Blender Z
+    assert sw3.wrap_method == 'PROJECT' and sw3.use_project_y and not sw3.use_project_z   # Along Y = the scene's Y
+    assert dict(_rows(cube, sw3))["Along Y"] == "on" and dict(_rows(cube, sw3))["Along Z"] == "off"
 
 
 def test_wrap_needs_two_objects():

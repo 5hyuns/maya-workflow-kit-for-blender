@@ -12,6 +12,7 @@ The deformers themselves: operators/deformers.py.
 import bpy
 from bpy.props import IntVectorProperty
 
+from . import scene_axes
 from .option_windows import F, Window
 from .option_windows_modify import FString
 
@@ -146,6 +147,7 @@ WINDOWS = [
         F("offset", "Offset:", "float", 0.0, lo=-10.0, hi=10.0),
         F("along_x", "", "bool", False, text="Along X"), F("along_y", "", "bool", False, text="Along Y"),
         F("along_z", "", "bool", False, text="Along Z")], _create('SHRINK_WRAP'), paths=("Deform/ShrinkWrap",),
+        old_axes=lambda v: scene_axes.old_swap(v, "along_y", "along_z"),
         missing=("Closest If No Intersection", "Target Inflation", "Bounding Box Center", "Axis Reference",
                  "Single ShrinkWrap Node (one modifier per object)", "Toward Center (Blender: closest point)",
                  ENVELOPE)),

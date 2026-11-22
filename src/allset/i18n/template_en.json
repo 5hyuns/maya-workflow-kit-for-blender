@@ -6458,7 +6458,7 @@
    "Preserve UVs": "Preserve UVs",
    "Slice Along Plane": "Slice Along Plane",
    "Slice: delete the faces on one side of the slice (the side to the right of the drag)": "Slice: delete the faces on one side of the slice (the side to the right of the drag)",
-   "Slice: how far extracted faces move (Maya X / Y / Z, scene units)": "Slice: how far extracted faces move (Maya X / Y / Z, scene units)",
+   "Slice: how far extracted faces move (X / Y / Z, scene units)": "Slice: how far extracted faces move (X / Y / Z, scene units)",
    "Slice: only faces facing the camera are cut": "Slice: only faces facing the camera are cut",
    "Slice: split the faces on one side off and move them by the offset": "Slice: split the faces on one side off and move them by the offset",
    "Smoothing Angle": "Smoothing Angle",

@@ -218,7 +218,7 @@ def test_constraint_windows():
     _select(tgt, drv)
     _run("orient_constraint", all=False, y=True)
     con = drv.constraints[-1]
-    assert con.type == 'COPY_ROTATION' and con.use_z and not con.use_x      # Maya Y = Blender Z
+    assert con.type == 'COPY_ROTATION' and con.use_y and not con.use_x and not con.use_z    # Y = the scene's Y
     _select(tgt, drv)
     _run("parent_constraint", maintain_offset=False)
     assert drv.constraints[-1].type == 'CHILD_OF'

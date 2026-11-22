@@ -159,18 +159,18 @@ def s_mirror_item():
 @step
 def s_dialog():
     shot("gui_step57_mirror_dialog.png")
-    tap('RET')        # Mirror (default XY, Behavior)
+    tap('RET')        # Mirror (default XZ = front and back trade places, Behavior)
 
 
 @step
 def s_mirrored():
     sk = skeleton()
     n = len(sk.data.bones)
-    check(f"Mirror Joints XY: six joints ({n}, {sorted(sk.data.bones.keys())})", n == 6)
+    check(f"Mirror Joints XZ: six joints ({n}, {sorted(sk.data.bones.keys())})", n == 6)
     if n == 6:
         a, b = sk.data.bones["joint1"], sk.data.bones["joint4"]
-        # Maya XY plane = Blender XZ: Blender Y flips (joints.PLANES)
-        check("joint4 = joint1 mirrored across Maya XY", abs(a.head_local.y + b.head_local.y) < 1e-5
+        # the scene's XZ plane: Y flips (joints.PLANES)
+        check("joint4 = joint1 mirrored across XZ", abs(a.head_local.y + b.head_local.y) < 1e-5
               and abs(a.head_local.x - b.head_local.x) < 1e-5)
     for ar in win().screen.areas:
         ar.tag_redraw()

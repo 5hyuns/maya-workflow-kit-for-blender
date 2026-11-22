@@ -13,6 +13,7 @@ import math
 import bpy
 from mathutils import Vector
 
+from . import scene_axes
 from .option_windows import F, Window, _components, _k  # noqa: F401  (option_windows imports this module at its end)
 
 # --- key commands (Key / Edit > Keys) -------------------------------
@@ -216,10 +217,9 @@ def _run_duplicate_special(context, v):
     k = _k(context)
     return bpy.ops.allset.duplicate_special(
         'EXEC_DEFAULT', geometry_type=v["geometry_type"].upper(), group_under=group,
-        # Maya Y up: Maya Y -> Blender Z, Maya Z -> Blender -Y
-        translate=Vector((v["translate"][0], -v["translate"][2], v["translate"][1])) * k,
-        rotate=tuple(math.radians(a) for a in (v["rotate"][0], -v["rotate"][2], v["rotate"][1])),
-        scale=(v["scale"][0], v["scale"][2], v["scale"][1]), copies=v["copies"],
+        # X / Y / Z = the copy's Translate / Rotate / Scale X / Y / Z in the Channel Box
+        translate=Vector(v["translate"]) * k, rotate=tuple(math.radians(a) for a in v["rotate"]),
+        scale=tuple(v["scale"]), copies=v["copies"],
         input_graph=False, input_connections=False)
 
 
@@ -260,6 +260,8 @@ EDIT_WINDOWS = [
         F("input_graph", "", "bool", False, text="Duplicate input graph"),
         F("input_connections", "", "bool", False, text="Duplicate input connections")],
         _run_duplicate_special, paths=("Edit/Duplicate Special",),
+        old_axes=lambda v: (scene_axes.old_vector(v, "translate"), scene_axes.old_vector(v, "rotate"),
+                            scene_axes.old_vector(v, "scale", "scale")),
         missing=("Instance leaf nodes", "Assign unique name to children nodes"),
         enabled=_duplicate_special_enabled),
 ]

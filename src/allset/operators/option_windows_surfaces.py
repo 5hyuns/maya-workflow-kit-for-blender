@@ -7,6 +7,7 @@ operators/surfaces_maya.py. Values are Maya values (lengths in Maya units)."""
 
 import bpy
 
+from . import scene_axes
 from .option_windows import F, Window
 
 _OUTPUT = "Output geometry: NURBS only (Polygons / Bezier not made)"
@@ -95,12 +96,12 @@ WINDOWS = [
     ], _run_loft, paths=("Surfaces/Loft",),
         missing=(_RANGE, "Output geometry: Bezier not made",
                  "Polygon tessellation options: the kit's grid only (Maya General / Standard fit not followed)")),
-    # Surfaces > Revolve (default: axis Y, Object
+    # Surfaces > Revolve (default: axis Z = the scene's up, Object
     # pivot, 0 - 360, cubic, segments 8)
     Window("revolve", "Revolve Options", "Revolve", ("allset.revolve", {}), [
-        F("axis", "Axis preset:", "enum", "Y", items=("X", "Y", "Z")),
+        F("axis", "Axis preset:", "enum", "Z", items=("X", "Y", "Z"), old=scene_axes.old_axis),
         F("pivot", "Pivot:", "enum", "Object", items=("Object", "Preset")),
-        F("pivot_point", "Pivot point:", "vec3", (0.0, 0.0, 0.0)),
+        F("pivot_point", "Pivot point:", "vec3", (0.0, 0.0, 0.0), old=scene_axes.old_vector),
         F("degree", "Surface degree:", "enum", "Cubic", items=("Linear", "Cubic")),
         F("start_sweep", "Start sweep angle:", "float", 0.0, lo=0.0, hi=360.0),
         F("end_sweep", "End sweep angle:", "float", 360.0, lo=0.0, hi=360.0),
@@ -114,7 +115,8 @@ WINDOWS = [
         F("style", "Style:", "enum", "Tube", items=("Distance", "Flat", "Tube")),
         F("length", "Extrude length:", "float", 1.0, lo=0.0, hi=10.0),
         F("direction", "Direction:", "enum", "Profile normal", items=("Specify", "Profile normal")),
-        F("direction_vector", "Direction vector:", "enum", "X axis", items=("X axis", "Y axis", "Z axis")),
+        F("direction_vector", "Direction vector:", "enum", "X axis", items=("X axis", "Y axis", "Z axis"),
+          old=lambda v, n: scene_axes.old_axis(v, n, ("X axis", "Y axis", "Z axis"))),
         F("result_position", "Result position:", "enum", "At profile", items=("At profile", "At path")),
         F("pivot", "Pivot:", "enum", "Closest end point", items=("Closest end point", "Component")),
     ], _run_extrude, paths=("Surfaces/Extrude",),

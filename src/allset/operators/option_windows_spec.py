@@ -9,7 +9,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, StringProperty
 from mathutils import Matrix
 
-from . import units
+from . import scene_axes, units
 
 # --- spec -------------------------------------------------------------------------------------------
 
@@ -17,9 +17,11 @@ from . import units
 class F:
     """One Maya field: ``kind`` float / length (× maya_unit) / int / bool / enum / vec3 / vec3len / angle3."""
 
-    def __init__(self, name, label, kind, default, items=None, lo=None, hi=None, text=None, heading=None):
+    def __init__(self, name, label, kind, default, items=None, lo=None, hi=None, text=None, heading=None, old=None):
         self.name, self.label, self.kind, self.default = name, label, kind, default
         self.items, self.lo, self.hi, self.text, self.heading = items, lo, hi, text, heading
+        # old(values, name): turns this field's value saved with the Y-up reading into scene axes (scene_axes)
+        self.old = old
 
     def prop(self):
         kw = {"name": self.label.rstrip(":"), "default": self.default}
@@ -40,8 +42,11 @@ class F:
 
 class Window:
     def __init__(self, key, title, action, match, fields, run, paths=(), missing=(), width=440, apply_text="Apply",
-                 click_saved=True, pref_fields=None, enabled=None, extra=None):
+                 click_saved=True, pref_fields=None, enabled=None, extra=None, old_axes=None):
         self.key, self.title, self.action = key, title, action
+        # old_axes(values): turns option values saved while the window read X / Y / Z in the Y-up frame into scene
+        # axes in place (scene_axes)
+        self.old_axes = old_axes
         # field -> add-on preference that keeps its value (shown and set elsewhere too), not the saved option values
         self.pref_fields = dict(pref_fields or {})
         # a plain menu click runs the window's command with the saved values (Maya); False = the click keeps running
@@ -70,7 +75,8 @@ def _k(context):
     return units.maya_unit(context.scene)
 
 
-_AXES = {"X": (1.0, 0.0, 0.0), "Y": (0.0, 1.0, 0.0), "Z": (0.0, 0.0, 1.0)}
+# Axis choice (scene axes) -> the creation node's axis, which the node keeps in the Y-up frame (prim_history)
+_AXES = {a: scene_axes.to_yup(v) for a, v in (("X", (1.0, 0.0, 0.0)), ("Y", (0.0, 1.0, 0.0)), ("Z", (0.0, 0.0, 1.0)))}
 # option window field -> Maya creation node attribute (the window fills the node, operators/prim_history.py)
 _NODE_FIELDS = {
     'CUBE': {"width": "width", "height": "height", "depth": "depth", "width_div": "subdivisionsWidth",
@@ -91,7 +97,7 @@ def _primitive(kind):
     def run(context, v):
         from .option_windows_prims import _create
         over = {node: v[field] for field, node in _NODE_FIELDS[kind].items() if field in v}
-        ax = _AXES.get(v.get("axis", "Y"), _AXES["Y"])
+        ax = _AXES.get(v.get("axis", "Z"), _AXES["Z"])
         over.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2], createUVs=int(bool(v.get("create_uvs", True))))
         return _create(context, kind, over)     # at the origin, or drawn with Interactive Creation
     return run
@@ -143,16 +149,14 @@ def _last_constraint(context):
 
 def _group_axes(cons, ctype, v):
     """Constraint axes on every Blender constraint of a kit multi-target group: the parent group's Copy
-    Location members take Translate, its Copy Rotation members Rotate (Maya Z = Blender -Y, Maya Y = Blender Z)."""
+    Location members take Translate, its Copy Rotation members Rotate (X / Y / Z = the scene axes)."""
     for con in cons:
         if ctype == 'CHILD_OF':
             pre = "all_t" if con.type == 'COPY_LOCATION' else "all_r"
-            keys = ("tx", "tz", "ty") if con.type == 'COPY_LOCATION' else ("rx", "rz", "ry")
+            keys = ("tx", "ty", "tz") if con.type == 'COPY_LOCATION' else ("rx", "ry", "rz")
             con.use_x, con.use_y, con.use_z = (v[pre] or v[k] for k in keys)
         else:
-            con.use_x = v["all"] or v["x"]
-            con.use_y = v["all"] or v["z"]
-            con.use_z = v["all"] or v["y"]
+            con.use_x, con.use_y, con.use_z = (v["all"] or v[k] for k in ("x", "y", "z"))
 
 
 def _constraint(ctype):
@@ -173,15 +177,13 @@ def _constraint(ctype):
             if not v["maintain_offset"]:
                 con.inverse_matrix = Matrix.Identity(4)      # snap like Maya without Maintain offset
             con.use_location_x = v["all_t"] or v["tx"]
-            con.use_location_y = v["all_t"] or v["tz"]   # Maya Z = Blender -Y, Maya Y = Blender Z
-            con.use_location_z = v["all_t"] or v["ty"]
+            con.use_location_y = v["all_t"] or v["ty"]
+            con.use_location_z = v["all_t"] or v["tz"]
             con.use_rotation_x = v["all_r"] or v["rx"]
-            con.use_rotation_y = v["all_r"] or v["rz"]
-            con.use_rotation_z = v["all_r"] or v["ry"]
+            con.use_rotation_y = v["all_r"] or v["ry"]
+            con.use_rotation_z = v["all_r"] or v["rz"]
         else:
-            con.use_x = v["all"] or v["x"]
-            con.use_y = v["all"] or v["z"]
-            con.use_z = v["all"] or v["y"]
+            con.use_x, con.use_y, con.use_z = (v["all"] or v[k] for k in ("x", "y", "z"))
             if v["maintain_offset"]:
                 if ctype == 'COPY_LOCATION':
                     con.use_offset = True
@@ -193,5 +195,5 @@ def _constraint(ctype):
 
 # --- shared fields (the primitive windows) ---------------------------------------------------------
 
-AXIS = F("axis", "Axis:", "enum", "Y", items=("X", "Y", "Z"))
+AXIS = F("axis", "Axis:", "enum", "Z", items=("X", "Y", "Z"), old=scene_axes.old_axis)
 UVS = F("create_uvs", "Texture mapping:", "bool", True, text="Create UVs")

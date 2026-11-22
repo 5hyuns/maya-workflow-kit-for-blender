@@ -15,6 +15,7 @@ import bpy
 from bpy.props import StringProperty
 from mathutils import Vector
 
+from . import scene_axes
 from .option_windows import F, Window, _constraint, _last_constraint  # noqa: F401  (imported by option_windows)
 from .option_windows_modify import FString
 
@@ -54,6 +55,12 @@ def joint_tool_props(v):
                 auto_secondary=v.get("auto_secondary", True), orient_world=v.get("orient_world", False),
                 create_ik=v["create_ik"], ik_solver=_SOLVER[v["ik_solver"]],
                 ik_solver_enable=v["ik_solver_enable"], ik_weight=v["ik_weight"])
+
+
+def _old_secondary_world(v):
+    if v.get("secondary_world") in ("X", "Y", "Z"):
+        v["secondary_world"], v["secondary_sign"] = scene_axes.signed_from_yup(v["secondary_world"],
+                                                                               v.get("secondary_sign", "+"))
 
 
 def _run_joint_tool(context, v):
@@ -165,7 +172,8 @@ def _run_aim(context, v):
         return res
     owner = context.active_pose_bone if bone else context.active_object
     cons = owner.constraints
-    if (tuple(v["aim_vector"]), tuple(v["up_vector"]), world_up, tuple(v["world_up_vector"])) != (
+    world_up_vector = scene_axes.to_yup(v["world_up_vector"])     # rig_tools.aim takes it in the Y-up frame
+    if (tuple(v["aim_vector"]), tuple(v["up_vector"]), world_up, tuple(world_up_vector)) != (
             rig_tools.AIM_VECTOR, rig_tools.UP_VECTOR, rig_tools.WORLD_UP, (0.0, 1.0, 0.0)):
         # the operator made the default aim (like Maya); redo it with the window's values on a fresh Track To
         target, sub, name = con.target, getattr(con, "subtarget", ""), con.name
@@ -175,7 +183,7 @@ def _run_aim(context, v):
         if sub:
             con.subtarget = sub
         con = rig_tools.aim(cons, con, v["aim_vector"], v["up_vector"], world_up, bone=bone, up_object=up_object,
-                            world_up_vector=v["world_up_vector"])
+                            world_up_vector=world_up_vector)
     # Maya: any weight above 0 = fully on the target (the Object up turn follows the same weight)
     prop = constrain_multi.set_weight(con, v["weight"], owner)
     companion = cons.get(con.name + rig_tools.UP_SUFFIX)
@@ -190,9 +198,9 @@ def _run_scale(context, v):
     if res != {'FINISHED'} or con is None or con.type != 'COPY_SCALE':
         return res
     owner = context.active_pose_bone if context.mode == 'POSE' else context.active_object
-    # Maya: driven scale = target scale x offset (Maya Y = Blender Z). Blender's Copy Scale with Offset multiplies
-    # the owner's own scale in, so the owner's scale channels become the offset.
-    offset = Vector((v["offset"][0], v["offset"][2], v["offset"][1]))
+    # Maya: driven scale = target scale x offset (X / Y / Z = the Scale X / Y / Z channels). Blender's Copy Scale
+    # with Offset multiplies the owner's own scale in, so the owner's scale channels become the offset.
+    offset = Vector(v["offset"])
     if v["maintain_offset"]:
         target = con.target
         ts = target.pose.bones[con.subtarget].matrix.to_scale() if con.subtarget else target.matrix_world.to_scale()
@@ -221,11 +229,12 @@ WINDOWS = [
     Window("joint_tool", "Joint Tool", "Create Joints", None, [
         F("orient_world", "", "bool", False, text="Orient Joint to World"),
         F("secondary_axis", "Secondary Axis:", "enum", "Y", items=("X", "Y", "Z", "None")),
-        F("secondary_world", "Secondary Axis World Orientation:", "enum", "Y", items=("X", "Y", "Z")),
+        # the world orientation is a scene axis (Z = up)
+        F("secondary_world", "Secondary Axis World Orientation:", "enum", "Z", items=("X", "Y", "Z")),
         F("secondary_sign", "", "enum", "+", items=("+", "-")),
         F("auto_secondary", "", "bool", True, text="Auto orient secondary axis"),
         F("create_ik", "", "bool", False, text="Create IK handle"),
-        *_ik_fields("ik_")], _run_joint_tool, paths=("Skeleton/Create Joints",),
+        *_ik_fields("ik_")], _run_joint_tool, paths=("Skeleton/Create Joints",), old_axes=_old_secondary_world,
         missing=("Degrees of freedom", "Symmetry", "Scale compensate", "Auto joint limits",
                  "Variable Bone Radius Settings / Bone Radius Settings", "Projected Centering",
                  "Primary Axis (always the bone's Y = Maya X)") + _IK_MISSING),
@@ -281,7 +290,7 @@ WINDOWS = [
     # Skin > Mirror Skin Weights: Mirror across, Direction (Positive to negative: +X to -X across YZ), Influence
     # Association
     Window("mirror_skin_weights", "Mirror Skin Weights Options", "Mirror", ("allset.mirror_skin_weights", {}), [
-        F("mirror_across", "Mirror across:", "enum", "YZ", items=("XY", "YZ", "XZ")),
+        F("mirror_across", "Mirror across:", "enum", "YZ", items=("XY", "YZ", "XZ"), old=scene_axes.old_plane),
         F("positive_to_negative", "Direction:", "bool", True, text="Positive to negative (+ to -)"),
         F("influence1", "Influence Association 1:", "enum", "Closest joint", items=("Closest joint", "Label")),
         F("influence2", "Influence Association 2:", "enum", "None", items=("None", "Closest joint", "Label")),
@@ -314,7 +323,7 @@ WINDOWS = [
         F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)), F("up_vector", "Up vector:", "vec3", (0.0, 1.0, 0.0)),
         F("world_up_type", "World up type:", "enum", "Vector",
           items=("Scene up", "Object up", "Object rotation up", "Vector", "None")),
-        F("world_up_vector", "World up vector:", "vec3", (0.0, 1.0, 0.0)),
+        F("world_up_vector", "World up vector:", "vec3", (0.0, 0.0, 1.0), old=scene_axes.old_vector),   # scene axes
         FString("world_up_object", "World up object:"),
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_aim, paths=("Constrain/Aim",),
         missing=("Maintain offset / Offset (Blender's Track To has none)",) + _ANIM_LAYER +
@@ -328,6 +337,7 @@ WINDOWS = [
         F("all", "Constraint axes:", "bool", True, text="All"), F("x", "", "bool", False, text="X"),
         F("y", "", "bool", False, text="Y"), F("z", "", "bool", False, text="Z"),
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_scale, paths=("Constrain/Scale",),
-        missing=_ANIM_LAYER),
+        missing=_ANIM_LAYER,
+        old_axes=lambda v: (scene_axes.old_vector(v, "offset", "scale"), scene_axes.old_swap(v, "y", "z"))),
 ]
 

@@ -343,10 +343,9 @@ ATTRS = {
     "shrinkWrap": [_prop("offset", "Offset", "LENGTH", "offset"),
                    Attr("bidirectional", "Bidirectional", "BOOL", _sw_bidir_get, _sw_bidir_set, _SW_DIRECTIONS),
                    Attr("reverse", "Reverse", "BOOL", _sw_reverse_get, _sw_reverse_set, _SW_DIRECTIONS),
-                   # Maya X / Y / Z = Blender X / Z / Y (Y-up -> Z-up)
                    _prop("alongX", "Along X", "BOOL", "use_project_x"),
-                   _prop("alongY", "Along Y", "BOOL", "use_project_z"),
-                   _prop("alongZ", "Along Z", "BOOL", "use_project_y")],
+                   _prop("alongY", "Along Y", "BOOL", "use_project_y"),
+                   _prop("alongZ", "Along Z", "BOOL", "use_project_z")],
     "cluster": [_ENVELOPE],
     "softMod": [_ENVELOPE, _prop("falloffRadius", "Falloff Radius", "LENGTH", "falloff_radius")],
     # Maya: Envelope -2..2, Low Bound <= 0, High Bound >= 0; Curvature in degrees (held in radians)
@@ -636,7 +635,7 @@ def _shrink_wrap(context, v):
         if method == 'PROJECT':
             md.use_positive_direction, md.use_negative_direction = pos, neg
             if v["projection"] == "Parallel To Axes":
-                md.use_project_x, md.use_project_z, md.use_project_y = v["along_x"], v["along_y"], v["along_z"]
+                md.use_project_x, md.use_project_y, md.use_project_z = v["along_x"], v["along_y"], v["along_z"]
         md.offset = float(v["offset"]) * units.maya_unit(context.scene)
     _select_only(context, [ob for ob, _i in items] + [drv], items[0][0])   # Maya: pCube1, pCube2
     return items[0][0]

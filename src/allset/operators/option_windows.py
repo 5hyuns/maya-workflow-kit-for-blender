@@ -25,7 +25,7 @@ import bpy
 from bpy.props import BoolProperty
 
 from .. import i18n
-from . import option_windows_basic
+from . import option_windows_basic, scene_axes
 from .option_windows_basic import (_CON_AXES, _FREEZE_RESET, _run_bake, _run_bevel, _run_combine,  # noqa: F401
                                    _run_extrude, _run_group, _run_new_scene, _run_save, _run_set_key,
                                    _run_smart_bevel, _run_smooth, _run_uv_auto, _run_uv_planar)
@@ -167,12 +167,59 @@ def _prefs():
         return None
 
 
+AXES_KEY = "_axes"    # in the saved JSON: how its X / Y / Z values read (scene_axes.VERSION); none = the Y-up reading
+
+
+def _old_orient_joint(values):
+    w = values.get("world")
+    if isinstance(w, str) and len(w) == 2:
+        axis, sign = scene_axes.signed_from_yup(w[0], w[1])
+        values["world"] = axis + sign
+
+
+# operator option values kept with the windows' ("op_" + operator key, joints._save_options)
+_OLD_OPS = {"op_orient_joint": _old_orient_joint,
+            "op_mirror_joints": lambda values: scene_axes.old_plane(values, "plane")}
+
+
+def migrate(data):
+    """Saved option values written while the windows read X / Y / Z in the Y-up frame -> scene axes, so every saved
+    choice keeps its result (Axis Y = upright becomes Axis Z, Duplicate Special Translate 0 1 0 becomes 0 0 1)."""
+    out = {}
+    for key, values in data.items():
+        if key == AXES_KEY or not isinstance(values, dict):
+            continue
+        values = dict(values)
+        window = _BY_KEY.get(key)
+        if window is not None:
+            for f in window.fields:
+                if f.old is not None and f.name in values:
+                    f.old(values, f.name)
+            if window.old_axes is not None:
+                window.old_axes(values)
+        if key in _OLD_OPS:
+            _OLD_OPS[key](values)
+        out[key] = values
+    out[AXES_KEY] = scene_axes.VERSION
+    return out
+
+
+def _load(prefs):
+    """The saved option values {key: values} (older Y-up values already turned into scene axes)."""
+    try:
+        data = json.loads(prefs.option_settings) if prefs is not None and prefs.option_settings else {}
+    except ValueError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    if data and data.get(AXES_KEY, 1) < scene_axes.VERSION:
+        data = migrate(data)
+    return data
+
+
 def saved(key):
     prefs = _prefs()
-    try:
-        out = json.loads(prefs.option_settings).get(key) if prefs is not None and prefs.option_settings else None
-    except ValueError:
-        return None
+    out = _load(prefs).get(key) if key != AXES_KEY else None
     window = _BY_KEY.get(key)
     if out is not None and window is not None:
         out = {**out, **_pref_values(window, prefs, out)}
@@ -190,10 +237,8 @@ def store(key, values):
     prefs = _prefs()
     if prefs is None:
         return
-    try:
-        data = json.loads(prefs.option_settings) if prefs.option_settings else {}
-    except ValueError:
-        data = {}
+    data = _load(prefs)
+    data[AXES_KEY] = scene_axes.VERSION
     window = _BY_KEY.get(key)
     for name, attr in (window.pref_fields if window is not None else {}).items():
         if not hasattr(prefs, attr):

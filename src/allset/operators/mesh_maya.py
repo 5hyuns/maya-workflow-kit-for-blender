@@ -19,8 +19,8 @@ from mathutils import Matrix, Vector
 from .. import results
 from . import freeze, naming, units
 
-# Maya Y-up axis -> Blender (axis index, sign): X -> X, Y -> Z, Z -> -Y
-MAYA_AXES = {'X': (0, 1.0), 'Y': (2, 1.0), 'Z': (1, -1.0)}
+# Mirror Axis (scene axes, like the Channel Box) -> (axis index, sign)
+AXES = {"X": (0, 1.0), "Y": (1, 1.0), "Z": (2, 1.0)}
 
 
 def _mesh_selection(context):
@@ -139,8 +139,8 @@ def separate(context, ob):
 # --- Mirror ---------------------------------------------------------------------------------------
 
 def mirror_plane(ob, axis, position, offset, direction):
-    """(point, receiving-side direction) in world space; ``offset`` in Blender units along the Maya axis."""
-    index, sign = MAYA_AXES[axis]
+    """(point, receiving-side direction) in world space; ``offset`` in Blender units along the axis."""
+    index, sign = AXES[axis]
     n = Vector((0.0, 0.0, 0.0))
     n[index] = sign
     d = n if direction == 'POSITIVE' else -n
@@ -199,8 +199,8 @@ class ALLSET_OT_mirror(bpy.types.Operator):
     offset: FloatProperty(name="Offset", description="Plane offset along the axis (Maya units)", default=0.0,
                           precision=4)
     axis: EnumProperty(name="Mirror Axis", default='X',
-                       items=(('X', "X", "Maya X = Blender X"), ('Y', "Y", "Maya Y (up) = Blender Z"),
-                              ('Z', "Z", "Maya Z = Blender -Y")))
+                       items=(('X', "X", "The scene's X axis"), ('Y', "Y", "The scene's Y axis"),
+                              ('Z', "Z", "The scene's Z axis (up)")))
     direction: EnumProperty(name="Mirror Direction", default='NEGATIVE',
                             items=(('POSITIVE', "+", "The copy goes to the + side"),
                                    ('NEGATIVE', "-", "The copy goes to the - side")))

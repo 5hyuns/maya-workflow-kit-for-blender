@@ -93,16 +93,16 @@ def test_orient_joint():
     bpy.ops.object.mode_set(mode='POSE')
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint1")
-    assert bpy.ops.allset.orient_joint(world="Y+", children=False) == {'FINISHED'}
+    assert bpy.ops.allset.orient_joint(world="Z+", children=False) == {'FINISHED'}
     bones = ob.data.bones
     z = lambda b: b.matrix_local.to_3x3().col[2]
-    assert z(bones["joint1"]).dot(Vector((0, 0, 1))) > 0.999, "Maya world up Y+ = Blender +Z"
+    assert z(bones["joint1"]).dot(Vector((0, 0, 1))) > 0.999, "Z+ = the scene's up"
     assert z(bones["joint2"]).dot(Vector((0, 0, 1))) < 0.99, "children untouched without the option"
-    bpy.ops.allset.orient_joint(world="Z+", children=True)
+    bpy.ops.allset.orient_joint(world="Y-", children=True)
     for b in bones:
-        assert z(b).dot(Vector((0, -1, 0))) > 0.999, (b.name, tuple(z(b)))   # Maya Z = Blender -Y
+        assert z(b).dot(Vector((0, -1, 0))) > 0.999, (b.name, tuple(z(b)))   # Y- = the scene's -Y
     assert ob.mode == 'POSE'
-    assert joints.SAO_ROLL["Y+"] == 'GLOBAL_POS_Z'
+    assert joints.SAO_ROLL["Z+"] == 'GLOBAL_POS_Z' and joints.SAO_ROLL["Y-"] == 'GLOBAL_NEG_Y'
 
 
 def test_mirror_joints_yz():
