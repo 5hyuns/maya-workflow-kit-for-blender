@@ -14,7 +14,7 @@ from . import cb_entry
 from .cb_nodes import full_path, is_bone, is_root_joint, lead, root_translate, set_root_translate
 from .cb_keys import (BLEND_PREFIX, CUSTOM_PREFIX, HISTORY_PREFIX, MAIN_BY_KEY, MODEL_PREFIX, SHAPE_PREFIX, blend_path,
                       channel_path, input_parts, is_blend_key, is_constraint_key, is_history_key, is_input_key,
-                      is_keyable, is_shape_key, model_parts, nice_name)
+                      is_keyable, is_locked, is_shape_key, model_parts, nice_name)
 from .cb_inputs import (SHAPE_PROPS, _row_kind, _row_read, _row_write, _virtual, blend_target, input_label, row_owner,
                         shape_label)
 
@@ -345,6 +345,9 @@ def set_value(ob, key, value):
 
 
 def keyframe(ob, key, keytype='KEYFRAME'):
+    if is_locked(ob, key):
+        # like Maya: a locked channel is never keyed (Key Selected, Key All Keyable, S, setKeyframe)
+        return False
     prop = _own_weight(ob, key)
     if prop is not None:
         # a one-target constraint's own weight: an ID property of the node, keyed like a custom attribute
