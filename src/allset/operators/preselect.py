@@ -131,20 +131,24 @@ def mesh_arrays(bm):
     BMesh has no foreach_get. A native copy avoids hundreds of thousands of
     Python corner wrappers on dense retopology, without touching the real mesh.
     """
+    from ..ui.component_colors import _INT, _attr, _ints, _positions
     mesh=bpy.data.meshes.new('_allset_mesh_cache')
     try:
         bm.to_mesh(mesh)
-        def read(collection,name,size,dtype):
-            data=np.empty(size,dtype=dtype);collection.foreach_get(name,data);return data
-        co=read(mesh.vertices,'co',len(mesh.vertices)*3,'float64').reshape(-1,3)
-        edges=read(mesh.edges,'vertices',len(mesh.edges)*2,'int32').reshape(-1,2)
-        vok=~read(mesh.vertices,'hide',len(mesh.vertices),'bool')
-        eok=~read(mesh.edges,'hide',len(mesh.edges),'bool')
-        sizes=read(mesh.polygons,'loop_total',len(mesh.polygons),'int32')
-        starts=read(mesh.polygons,'loop_start',len(mesh.polygons),'int32')
-        shown=~read(mesh.polygons,'hide',len(mesh.polygons),'bool')
-        corners=read(mesh.loops,'vertex_index',len(mesh.loops),'int32')
-        loop_edges=read(mesh.loops,'edge_index',len(mesh.loops),'int32')
+        nv,ne,nf,nl=len(mesh.vertices),len(mesh.edges),len(mesh.polygons),len(mesh.loops)
+        # attributes into C int / float32 / bool buffers: one block copy each (the per-element properties and
+        # numpy int32, a C long on Windows, are copied item by item: a quarter of a second on 130k vertices)
+        co=_positions(mesh,nv).reshape(-1,3).astype(np.float64)
+        edges=_ints(mesh,'.edge_verts',ne*2,lambda out:mesh.edges.foreach_get('vertices',out)).reshape(-1,2)
+        vok=~_attr(mesh,'.hide_vert',nv)
+        eok=~_attr(mesh,'.hide_edge',ne)
+        starts=np.empty(nf,_INT)
+        if nf:
+            mesh.polygons.foreach_get('loop_start',starts)
+        sizes=np.diff(np.append(starts,nl)).astype(_INT)          # face corners are stored face by face
+        shown=~_attr(mesh,'.hide_poly',nf)
+        corners=_ints(mesh,'.corner_vert',nl,lambda out:mesh.loops.foreach_get('vertex_index',out))
+        loop_edges=_ints(mesh,'.corner_edge',nl,lambda out:mesh.loops.foreach_get('edge_index',out))
         counts=np.bincount(loop_edges,minlength=len(edges))
         face_vertex=np.zeros(len(co),dtype=bool);face_vertex[corners]=True
         border=np.zeros(len(co),dtype=bool);border[edges[counts==1].ravel()]=True

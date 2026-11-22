@@ -43,6 +43,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   (Object, World and Topology symmetry). Grow / Shrink and UV picks don't mirror (#445).
 - Mesh edit mode: Ctrl+Shift+click adds the clicked component instead of selecting the shortest path from the active
   one (#445).
+- Mesh edit mode in Maya mode: the first hover after a move, a click or another edit no longer stalls on a dense mesh
+  while the pre-selection highlight reads the mesh again (about a quarter of a second on 130,000 vertices before)
+  (#452).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
