@@ -38,6 +38,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Hiding the Tool Box (Preferences > UI Elements, Windows > UI Elements > Tool Box, the hotbox) closes the Tool Box
   column of the Maya layout instead of leaving Blender's toolbar in it; showing it again puts the column back left of
   the Outliner. In Blender's own layouts it shows or hides the viewport's toolbar (#437).
+- Symmetry: with Symmetry on, clicking, Shift / Ctrl / Ctrl+Shift clicking, a marquee, a lasso and a double-clicked
+  edge loop also pick the mirror partners, like Maya: Shift toggles both, Ctrl removes both, Ctrl+Shift adds both
+  (Object, World and Topology symmetry). Grow / Shrink and UV picks don't mirror (#445).
+- Mesh edit mode: Ctrl+Shift+click adds the clicked component instead of selecting the shortest path from the active
+  one (#445).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing

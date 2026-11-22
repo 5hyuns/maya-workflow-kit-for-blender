@@ -298,6 +298,14 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
             if lattice_pick.click(context, event):
                 return self._finish_pick(context, event, True)
             return {'PASS_THROUGH'}
+        if context.mode == 'EDIT_MESH' and space is not None and not toolbox.is_toolbox(space):
+            from . import symmetry_select     # #445: with Symmetry on a pick takes the mirror partner too
+            if symmetry_select.applies(context) and region is not None and region.type == 'WINDOW':
+                changed = symmetry_select.click(context, event)
+                if event.value == 'PRESS':           # Tweak tool: a drag from here moves the selection
+                    return self._finish_pick(context, event, True)
+                return {'FINISHED'} if changed else {'CANCELLED'}
+            return {'PASS_THROUGH'}
         if (context.mode not in {'OBJECT', 'POSE', 'EDIT_ARMATURE'} or space is None or space.type != 'VIEW_3D' or region is None
                 or region.type != 'WINDOW' or toolbox.is_toolbox(space)):
             return {'PASS_THROUGH'}

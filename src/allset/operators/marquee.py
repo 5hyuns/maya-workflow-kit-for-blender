@@ -141,6 +141,10 @@ class ALLSET_OT_select_through(bpy.types.Operator):
         if edge_marquee.box_takes(context):
             edge_marquee.start_box(context, event)
             return {'FINISHED'}
+        from . import symmetry_select      # #445: with Symmetry on the partners of what the drag picks too
+        if symmetry_select.drag_takes(context):
+            symmetry_select.start_drag(context, event)
+            return {'FINISHED'}
         begin(context)
         drop_hidden_selection(context, event)
         from . import joint_marquee

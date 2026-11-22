@@ -107,7 +107,7 @@ def apply_rect(context, rect, mode):
     persp = rv3d.perspective_matrix
     through = _through(context)
     cs = caches(context)
-    changed = False
+    found = []
     for ob, c in cs:
         if not len(c.edges):
             continue
@@ -118,22 +118,34 @@ def apply_rect(context, rect, mode):
         hits = np.zeros(len(c.edges), dtype=bool)
         for i in np.flatnonzero(ok):
             hits[i] = through or _seen(region, rv3d, cs, persp, c.co[i0[i]], c.co[i1[i]], u0[i], u1[i])
-        bm = c.bm
-        if not bm.is_valid:
-            continue
-        # bm.edges runs in the cache's edge order; hidden edges keep their state
-        new = [e.select if e.hide else combine(e.select, bool(hits[k]), mode) for k, e in enumerate(bm.edges)]
-        if all(e.select == n for e, n in zip(bm.edges, new)):
+        if c.bm.is_valid:
+            found.append((ob, c.bm, hits))
+    # bm.edges runs in the cache's edge order; hidden edges keep their state
+    before = {ob.name: [e.select for e in bm.edges] for ob, bm, _hits in found}
+    from . import symmetry_select       # #445: with Symmetry on the partners of the touched edges too
+    if symmetry_select.applies(context):
+        picked = {ob.name: {int(k) for k in np.flatnonzero(hits)} for ob, _bm, hits in found}
+        for name, idx in symmetry_select.partners(context, 'EDGE', picked).items():
+            for ob, bm, hits in found:
+                if ob.name == name:
+                    for k in idx:
+                        if not bm.edges[k].hide:
+                            hits[k] = True
+    changed = False
+    for ob, bm, hits in found:
+        old = before[ob.name]
+        new = [s if e.hide else combine(s, bool(hits[k]), mode) for k, (e, s) in enumerate(zip(bm.edges, old))]
+        if all(e.select == n for e, n in zip(bm.edges, new)) and new == old:
             continue
         for e, n in zip(bm.edges, new):             # deselect first: a selected edge then keeps its vertices
             if e.select and not n:
                 e.select_set(False)
         for e, n in zip(bm.edges, new):
-            if n and not e.select:
+            if n:
                 e.select_set(True)
         bm.select_flush_mode()
         bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
-        changed = True
+        changed = changed or new != old
     return changed
 
 

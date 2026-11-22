@@ -77,7 +77,10 @@ SELECT_RULES = (
 
 
 SELECT_CTRL_SHIFT_REMOVED = (("Dopesheet", "action.select_leftright"), ("NLA Editor", "nla.select_leftright"),
-                             ("Node Editor", "node.select_link_viewer"))
+                             ("Node Editor", "node.select_link_viewer"),
+                             # mesh edit mode: Ctrl+Shift+click adds the component (and with Symmetry on its
+                             # partner), never Blender's shortest path from the active one (#445)
+                             ("Mesh", "mesh.shortest_path_pick"))
 
 
 def patch_selection(kd):

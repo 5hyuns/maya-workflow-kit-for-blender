@@ -216,6 +216,18 @@ class ALLSET_OT_loop_pick(bpy.types.Operator):
         return {'FINISHED'} if self.between and self._between(context) else {'CANCELLED'}
 
     def invoke(self, context, event):
+        from . import symmetry_select     # #445: with Symmetry on the mirrored loop / shell too
+        if not symmetry_select.applies(context):
+            return self._pick(context, event)
+        dom = symmetry_select.domain(context.tool_settings.mesh_select_mode)
+        before = symmetry_select.snapshot(context, dom)
+        res = self._pick(context, event)
+        if 'FINISHED' in res:
+            replace = not self.between and not shell_mode(context.tool_settings.mesh_select_mode)
+            symmetry_select.after_pick(context, before, dom, 'SET' if replace else 'ADD')
+        return res
+
+    def _pick(self, context, event):
         if self.between and self._between(context):
             return {'FINISHED'}
         # double-click on a vertex / face: its shell (Maya 2026); Shift with no common loop (e.g. another piece)
