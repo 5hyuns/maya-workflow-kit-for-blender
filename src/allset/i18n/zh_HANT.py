@@ -5543,7 +5543,7 @@ STRINGS = {
     'Maya Create Polygon: click to place points, Enter to make the polygon (a new polySurface object).\nBackspace removes the last point, middle-drag moves it, Esc cancels': 'Maya 創建多邊形：單擊放置點，Enter 生成多邊形 (新的 polySurface 對象)。\nBackspace 移除最後一個點，中鍵拖動移動它，Esc 取消',
     "Maya Ctrl+1 in the UV Editor: show only the selected UVs' faces; again = show all": 'UV 編輯器中的 Maya Ctrl+1：只顯示選定 UV 所在的面；再次執行 = 全部顯示',
     'Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected': 'Maya 曲線 > 固定通道 / 取消固定通道：無論選擇什麼，固定的曲線都保持列出和顯示',
-    "Maya Curves > Pre / Post Infinity on the selected curves: Cycle / Cycle with Offset / Oscillate = a Cycles\nmodifier side, Linear / Constant = the curve's extrapolation (Blender's is the same on both sides)": '對選定曲線執行 Maya 曲線 > 前 / 後無限：循環 / 帶偏移的循環 / 往返 = Cycles\n修改器的一側，線性 / 恆定 = 曲線的外插 (Blender 兩側相同)',
+    "Maya Curves > Pre / Post Infinity on the selected curves: Cycle / Cycle with Offset / Oscillate = a Cycles\nmodifier side, Linear / Constant = the curve's extrapolation (each side keeps its own)": '對選定曲線執行 Maya 曲線 > 前 / 後無限：循環 / 帶偏移的循環 / 往返 = Cycles\n修改器的一側，線性 / 恆定 = 曲線的外插 (兩側各自保留)',
     'Maya Custom axis of the Move / Rotate / Scale tool (tool option marking menu > Custom): set it from the\nselection or the object, use it, or reset the tool to its default axis': 'Maya 移動 / 旋轉 / 縮放工具的自訂軸 (工具選項標記選單 > 自訂)：從\n所選項或對象設置、使用，或將工具重置為預設軸',
     "Maya Deform > Jiggle > Jiggle Deformer: a Geometry Nodes modifier jiggle1 that springs the points behind the\nobject's motion (simulated frame by frame from the start frame)": 'Maya 變形 > 抖動 > 抖動變形器：幾何節點修改器 jiggle1，使點在對象運動後\n彈性滯後 (從起始格開始逐格模擬)',
     'Maya Deform > Lattice > Reset Lattice / Remove Lattice Tweaks': 'Maya 變形 > 晶格 > 重置晶格 / 移除晶格調整',

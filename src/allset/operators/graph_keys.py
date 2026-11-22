@@ -503,7 +503,8 @@ class KeyTangentBinding(taphold.TapHoldBinding):
 
 # --- Curves > Pre / Post Infinity, Edit > Change / Remove Curve Color -------------------
 # Maya infinity per side (Cycle, Cycle with Offset, Oscillate, Linear, Constant). Blender: Cycles F-modifier modes per
-# side (REPEAT / REPEAT_OFFSET / MIRROR), extrapolation Linear / Constant for the whole curve (both sides).
+# side (REPEAT / REPEAT_OFFSET / MIRROR); Linear / Constant = the curve's extrapolation, one side only linear through
+# the end keys' outer handles (operators/maya_tangents.linear_sides).
 INFINITY = {"CYCLE": 'REPEAT', "CYCLE_OFFSET": 'REPEAT_OFFSET', "OSCILLATE": 'MIRROR', "LINEAR": 'NONE',
             "CONSTANT": 'NONE'}
 
@@ -515,23 +516,30 @@ def target_curves(context):
 
 
 def set_infinity(fc, side, mode):
+    """One side's Maya infinity; the other side keeps its own."""
+    from . import maya_tangents
+    pre, post = maya_tangents.linear_sides(fc)
+    if side == "PRE":
+        pre = mode == "LINEAR"
+    else:
+        post = mode == "LINEAR"
     cyc = next((m for m in fc.modifiers if m.type == 'CYCLES'), None)
     if mode in {"LINEAR", "CONSTANT"}:
-        fc.extrapolation = mode
         if cyc is not None:
             setattr(cyc, "mode_before" if side == "PRE" else "mode_after", 'NONE')
             if cyc.mode_before == 'NONE' and cyc.mode_after == 'NONE':
                 fc.modifiers.remove(cyc)
-        return
-    if cyc is None:
-        cyc = fc.modifiers.new('CYCLES')
-        cyc.mode_before = cyc.mode_after = 'NONE'
-    setattr(cyc, "mode_before" if side == "PRE" else "mode_after", INFINITY[mode])
+    else:
+        if cyc is None:
+            cyc = fc.modifiers.new('CYCLES')
+            cyc.mode_before = cyc.mode_after = 'NONE'
+        setattr(cyc, "mode_before" if side == "PRE" else "mode_after", INFINITY[mode])
+    maya_tangents.set_linear_sides(fc, pre, post)
 
 
 class ALLSET_OT_curve_infinity(bpy.types.Operator):
     """Maya Curves > Pre / Post Infinity on the selected curves: Cycle / Cycle with Offset / Oscillate = a Cycles
-    modifier side, Linear / Constant = the curve's extrapolation (Blender's is the same on both sides)"""
+    modifier side, Linear / Constant = the curve's extrapolation (each side keeps its own)"""
     bl_idname = "allset.curve_infinity"
     bl_label = "Curve Infinity"
     bl_options = {'REGISTER', 'UNDO'}
@@ -549,8 +557,7 @@ class ALLSET_OT_curve_infinity(bpy.types.Operator):
         for fc in curves:
             set_infinity(fc, self.side, self.mode)
             fc.update()
-        if self.mode in {"LINEAR", "CONSTANT"}:
-            results.result(self, f"{self.mode.title()} infinity: Blender extrapolates both ends the same way")
+            time_keys._maya_auto(fc)        # the end keys' outer tangents (Linear follows them)
         _redraw(context)
         return {'FINISHED'}
 

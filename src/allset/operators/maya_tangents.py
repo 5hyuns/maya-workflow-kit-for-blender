@@ -29,6 +29,12 @@ with chars A / S / C / P / F / L, "-" = told by the handle type ('AUTO' = Spline
 stored Clamped / Plateau side that is no longer 'AUTO_CLAMPED', a Linear side that is no longer 'VECTOR', or a Flat
 side that isn't level any more, is the user's own tangent now (Maya Fixed) and loses its type.
 
+Infinity: Blender extrapolates both ends of a curve the same way, Maya per side. A curve with Linear infinity on
+one side only extrapolates linearly in Blender and keeps the outer handle of the end key on the other side level
+(it shapes nothing between the keys), so that side stays constant. The sides are kept while they differ:
+``Action["allset_infinity"]`` = {"<data_path>|<array_index>": "<pre><post>"} with L = linear, C = not linear.
+Linear infinity follows the end key's outer tangent like Maya: flat for an Auto or a Linear end key.
+
 Blender recomputes automatic handles whenever it edits the curve (a Graph Editor drag), so ``watch`` (every 0.25 s
 from ``ui/graph_view``, never while a modal tool runs) writes Maya's handles again on every curve of an Action
 that carries the property.
@@ -38,6 +44,7 @@ import bpy
 
 AUTO = 'AUTO_CLAMPED'
 PROP = "allset_tangents"
+INF_PROP = "allset_infinity"
 CHARS = {"AUTO": "A", "SPLINE": "S", "CLAMPED": "C", "PLATEAU": "P", "FLAT": "F", "LINEAR": "L"}
 KINDS = {c: k for k, c in CHARS.items()}
 # kinds that keep the key's stored type (they only change the handle type)
@@ -312,6 +319,36 @@ def mark(fc, kp, kind, side="BOTH"):
     _store(fc, frames, chars)
 
 
+def linear_sides(fc):
+    """(pre, post): which ends of ``fc`` have Linear infinity."""
+    if fc.extrapolation != 'LINEAR':
+        return False, False
+    act = _action(fc)
+    data = act.get(INF_PROP) if act is not None else None
+    text = str(data.get(curve_key(fc), "")) if data is not None else ""
+    if len(text) == 2:
+        return text[0] == "L", text[1] == "L"
+    return True, True
+
+
+def set_linear_sides(fc, pre, post):
+    """Linear infinity on the ends ``pre`` / ``post`` of ``fc`` (the others constant or cycled by a modifier).
+    Returns False when the sides differ but the curve has no Action to keep them on (both ends then linear)."""
+    fc.extrapolation = 'LINEAR' if pre or post else 'CONSTANT'
+    act = _action(fc)
+    key = curve_key(fc)
+    if pre == post:
+        if act is not None and INF_PROP in act and key in act[INF_PROP]:
+            del act[INF_PROP][key]
+        return True
+    if act is None:
+        return False
+    if INF_PROP not in act:
+        act[INF_PROP] = {}
+    act[INF_PROP][key] = ("L" if pre else "C") + ("L" if post else "C")
+    return True
+
+
 # --- writing --------------------------------------------------------------------------------------------------
 
 def tolerances(fc):
@@ -379,6 +416,14 @@ def apply(fc):
         current.append((_slope(kp, 0), _slope(kp, 1)))
     tol, eps = tolerances(fc)
     pairs = solve(times, values, kinds, current, tol, eps)
+    pre_lin, post_lin = linear_sides(fc)
+    level = fc.extrapolation == 'LINEAR' and not (pre_lin and post_lin)
+    if level:
+        # the end without Linear infinity extrapolates along a level outer handle: constant
+        if not pre_lin:
+            pairs[0] = (0.0, pairs[0][1])
+        if not post_lin:
+            pairs[-1] = (pairs[-1][0], 0.0)
     n = 0
     for kp, kk, (lx, ly, rx, ry) in zip(pts, kinds, handles_of(times, values, pairs)):
         hit = False
@@ -389,6 +434,14 @@ def apply(fc):
             kp.handle_right = (rx, ry)
             hit = True
         n += hit
+    if level:
+        for kp, side, lin in ((pts[0], 0, pre_lin), (pts[len(pts) - 1], 1, post_lin)):
+            if lin or kinds[0 if side == 0 else len(pts) - 1][side] is not None or _side_type(kp, side) != 'FREE':
+                continue
+            h = kp.handle_left if side == 0 else kp.handle_right
+            if not _level(kp, side):
+                h.y = kp.co.y           # the user's own free outer handle: level too
+                n += 1
     _store(fc, times, kept)
     watch_action(fc)
     return n

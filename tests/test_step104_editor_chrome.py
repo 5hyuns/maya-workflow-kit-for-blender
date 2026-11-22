@@ -150,7 +150,12 @@ def test_curve_infinity_and_in_out_tangents():
     assert fx.extrapolation == 'LINEAR' and cyc[0].mode_after == 'NONE' and cyc[0].mode_before == 'MIRROR'
     with bpy.context.temp_override(selected_editable_fcurves=[fx], editable_fcurves=[fx]):
         bpy.ops.allset.curve_infinity(side='PRE', mode='CONSTANT')
-    assert not [m for m in fx.modifiers if m.type == 'CYCLES'] and fx.extrapolation == 'CONSTANT'
+    # each side keeps its own: post stays linear
+    assert not [m for m in fx.modifiers if m.type == 'CYCLES'] and fx.extrapolation == 'LINEAR'
+    assert import_module(kit.MODULE + ".operators.maya_tangents").linear_sides(fx) == (False, True)
+    with bpy.context.temp_override(selected_editable_fcurves=[fx], editable_fcurves=[fx]):
+        bpy.ops.allset.curve_infinity(side='POST', mode='CONSTANT')
+    assert fx.extrapolation == 'CONSTANT'
     # In / Out tangent on the middle key only
     for i, kp in enumerate(fx.keyframe_points):
         kp.select_control_point = i == 1
