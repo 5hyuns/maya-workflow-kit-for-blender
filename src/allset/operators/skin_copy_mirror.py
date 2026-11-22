@@ -24,7 +24,7 @@ SURFACE_ASSOCIATION = (("CLOSEST_POINT", "Closest point on surface", "Interpolat
                        ("CLOSEST_COMPONENT", "Closest component", "The nearest source vertex"))
 VERT_MAPPING = {"CLOSEST_POINT": 'POLYINTERP_NEAREST', "RAY_CAST": 'POLYINTERP_VNORPROJ', "CLOSEST_COMPONENT": 'NEAREST'}
 INFLUENCE_ASSOCIATION = (("CLOSEST_JOINT", "Closest joint", "The destination joint nearest the source joint"),
-                         ("CLOSEST_BONE", "Closest bone", "The destination bone nearest the source joint"),
+                         ("CLOSEST_BONE", "Closest bone", "The destination bone nearest the source joint's bone"),
                          ("ONE_TO_ONE", "One to one", "The joint at the same place in the hierarchy"),
                          ("NAME", "Name", "The joint with the same name"),
                          ("NONE", "None", "No further association"))
@@ -68,9 +68,37 @@ def associate(src_arm, dst_arm, name, modes=("CLOSEST_JOINT",)):
         if mode == "CLOSEST_JOINT" and len(dst):
             return min(dst, key=lambda b: (dst_arm.matrix_world @ b.head_local - head).length).name
         if mode == "CLOSEST_BONE" and len(dst):
-            mw = dst_arm.matrix_world
-            return min(dst, key=lambda b: _segment_distance(head, mw @ b.head_local, mw @ b.tail_local)).name
+            return _closest_bone(src_arm, bone, dst_arm)
     return None
+
+
+def _bones_of(arm):
+    """(joint name, start, end) of every bone of a skeleton, Maya's way: the segment from a joint to each child joint
+    (an end joint has none), in hierarchy order, world space."""
+    mw = arm.matrix_world
+    out = []
+    for name in _hierarchy_order(arm):
+        b = arm.data.bones[name]
+        out += [(name, mw @ b.head_local, mw @ c.head_local) for c in b.children]
+    return out
+
+
+def _closest_bone(src_arm, bone, dst_arm):
+    """Closest bone (#462): the source joint's place = the middle of its bone (an end joint: the joint itself); its
+    weights go to the destination joint whose bone lies nearest that place (a tie: the first in the hierarchy)."""
+    mw = src_arm.matrix_world
+    head = mw @ bone.head_local
+    points = [(head + mw @ c.head_local) / 2 for c in bone.children] or [head]
+    segments = _bones_of(dst_arm)
+    if not segments:                     # a destination of single joints: the joints themselves
+        segments = [(b.name, dst_arm.matrix_world @ b.head_local, dst_arm.matrix_world @ b.head_local)
+                    for b in dst_arm.data.bones]
+    best, best_d = None, None
+    for name, a, b in segments:
+        d = min(_segment_distance(p, a, b) for p in points)
+        if best_d is None or d < best_d - 1e-9:
+            best, best_d = name, d
+    return best
 
 
 def remap_influences(mesh, src_arm, dst_arm, names, modes):
