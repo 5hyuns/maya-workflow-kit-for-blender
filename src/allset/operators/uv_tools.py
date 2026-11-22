@@ -165,12 +165,17 @@ def sew(bm, uv, edges, move=False):
 # --- Unfold / Layout (Blender operators with the selection set up) -----------------------------------
 
 def mark_shell_borders(bm, uv, faces):
-    """Seams on the borders of the shells of ``faces`` (keeps them apart through an unwrap)."""
+    """Seams on the borders of the shells of ``faces`` and on the cuts inside a shell (an edge whose two faces have
+    different UVs there): an unwrap keeps all of them apart."""
     where = {f: i for i, isl in enumerate(islands(bm, uv, [f for f in bm.faces if not f.hide])) for f in isl}
     fs = set(faces)
     for e in {e for f in faces for e in f.edges}:
         linked = [f for f in e.link_faces if not f.hide]
-        if len(linked) == 2 and (where[linked[0]] != where[linked[1]] or (linked[0] in fs) != (linked[1] in fs)):
+        if len(linked) != 2:
+            continue
+        a, b = linked
+        if where[a] != where[b] or (a in fs) != (b in fs) or \
+                not all(_same(_uv_at(a, v, uv), _uv_at(b, v, uv)) for v in e.verts):
             e.seam = True
 
 

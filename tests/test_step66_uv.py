@@ -6,7 +6,6 @@ from importlib import import_module
 
 import bmesh
 import bpy
-from mathutils import Vector
 
 import kit
 
@@ -161,12 +160,13 @@ def test_unfold_keeps_shells_in_place_and_flat():
     bpy.ops.mesh.select_all(action='SELECT')
     bm, uv = _bm(ob)
     shells = uvt.islands(bm, uv)
-    centres = sorted(tuple(round(c, 3) for c in sum(uvt.uv_bounds(s, uv), Vector((0, 0))) / 2) for s in shells)
+    # each shell keeps the mean of its UVs (its cuts stay cut, so its outline can change)
+    centres = sorted(tuple(round(c, 3) for c in uvt._point_mean(s, uv)) for s in shells)
     assert bpy.ops.allset.uv_unfold() == {'FINISHED'}
     bm, uv = _bm(ob)
     after = uvt.islands(bm, uv)
     assert len(after) == len(shells), "shell borders kept"
-    got = sorted(tuple(round(c, 3) for c in sum(uvt.uv_bounds(s, uv), Vector((0, 0))) / 2) for s in after)
+    got = sorted(tuple(round(c, 3) for c in uvt._point_mean(s, uv)) for s in after)
     assert got == centres, (got, centres)
     assert all(uvt._uv_area(f, uv) > 1e-6 for f in bm.faces), "no collapsed faces"
     assert sum(f.select for f in bm.faces) == 6, "selection back"
