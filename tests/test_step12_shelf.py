@@ -127,7 +127,11 @@ def test_poly_cube_button_creates_maya_cube():
     bpy.ops.allset.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
     assert ob.active_material.name == "lambert2"   # lambert1 = the default material
     node = next(n for n in ob.active_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-    assert node.inputs["Roughness"].default_value == 1.0
+    ref = bpy.data.materials.new("blender_ref")
+    ref.use_nodes = True
+    want = next(n for n in ref.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs["Roughness"].default_value
+    assert node.inputs["Roughness"].default_value == want, "a plain Principled BSDF"
+    bpy.data.materials.remove(ref)
 
 
 # --- user shelves ------------------------------------------------------------------------------------

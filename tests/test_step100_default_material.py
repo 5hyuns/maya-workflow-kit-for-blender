@@ -35,10 +35,15 @@ def test_new_cubes_share_lambert1():
     assert ma == mb, (ma, mb)
     assert len(a.material_slots) == 1 and material.is_default(ma)
     assert ma.get("allset_type") == "lambert" and ma.use_fake_user
-    col = tuple(_principled(ma).inputs["Base Color"].default_value)
-    assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # lambert1.color = (0.5, 0.5, 0.5)
-    inc = tuple(_principled(ma).inputs["Emission Color"].default_value)
-    assert inc[:3] == (0.0, 0.0, 0.0), inc   # lambert1.incandescence = (0, 0, 0)
+    # a plain Principled BSDF with Blender's own values
+    ref = bpy.data.materials.new("blender_ref")
+    ref.use_nodes = True
+    for name in ("Base Color", "Roughness", "Emission Color", "Emission Strength"):
+        got, want = _principled(ma).inputs[name].default_value, _principled(ref).inputs[name].default_value
+        got, want = (tuple(got), tuple(want)) if hasattr(got, "__len__") else ((got,), (want,))
+        assert all(abs(x - y) < 1e-6 for x, y in zip(got, want)), (name, got, want)
+    bpy.data.materials.remove(ref)
+    assert material.diffuse_node(ma) is None
     assert material.shading_group_name(ma) == "initialShadingGroup"
 
 

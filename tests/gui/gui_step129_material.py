@@ -54,7 +54,7 @@ def s_scene():
     mat = material.new_material('LAMBERT')
     ob.data.materials.clear()
     ob.data.materials.append(mat)
-    # the AE Color field writes Maya's Color: the "Maya Diffuse" input (material.color_socket)
+    # the AE Color field writes Principled Base Color (material.color_socket)
     material.color_socket(mat).default_value = (0.8, 0.02, 0.02, 1.0)
     for a in win().screen.areas:
         a.tag_redraw()

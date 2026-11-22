@@ -45,7 +45,8 @@ def test_new_kit_material_shows_its_colour():
     base = tuple(_principled(mat).inputs["Base Color"].default_value)
     assert _close(mat.diffuse_color, base), (tuple(mat.diffuse_color), base)
     lam = material.default_material()
-    assert _close(lam.diffuse_color[:3], (0.5, 0.5, 0.5)), tuple(lam.diffuse_color)
+    lbase = tuple(_principled(lam).inputs["Base Color"].default_value)
+    assert _close(lam.diffuse_color[:3], lbase[:3]), tuple(lam.diffuse_color)
 
 
 def test_colour_edit_reaches_viewport_colour():
@@ -55,7 +56,7 @@ def test_colour_edit_reaches_viewport_colour():
     ob.data.materials.clear()
     ob.data.materials.append(mat)
     bsdf = _principled(mat)
-    # = AE Color (the Maya Diffuse node's B input; Blender's panel shows Base Color as linked)
+    # = AE Color (Principled Base Color)
     material.color_socket(mat).default_value = (0.9, 0.1, 0.05, 1.0)
     bsdf.inputs["Alpha"].default_value = 0.4                           # = AE Transparency
     bpy.context.view_layer.update()
