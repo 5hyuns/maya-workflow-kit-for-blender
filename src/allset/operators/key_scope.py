@@ -281,7 +281,8 @@ def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, 
     * time: Current = the current frame (or ``frame``), Start / Start/End = the Start time field, Clipboard = where
       the keys were copied; copy k (0-based) lands at time + offset + k * (clipboard span + offset).
     * Merge: the pasted keys go in, replacing keys at the same times, every other key stays.
-    * Insert: the key at the paste time goes, keys after it move right by the pasted length.
+    * Insert: the key at the paste time goes, keys after it move right by the pasted length; where two copies meet,
+      the earlier copy's key stays.
     * Replace: keys in the pasted region (Start/End: the fields' range) go first; Entire curve: every key goes.
 
     One copied node goes onto every target node, several in order. Returns the number of pasted keys."""
@@ -319,10 +320,15 @@ def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, 
                 else:
                     lo, hi = (min(start, end), max(start, end)) if time_range == "Start/End" else (t, t + length)
                     _remove_points(fc, [kp for kp in pts if lo - EPS <= kp.co.x <= hi + EPS])
+            placed = []
             for k in range(copies):
                 base = t + time_offset + k * (span + time_offset)
                 for rec in recs:
-                    _insert(fc, base + rec[0], rec[1] + dv, rec)
+                    at = base + rec[0]
+                    if method == "Insert" and any(abs(at - x) <= EPS for x in placed):
+                        continue        # Insert: where two copies meet, the earlier copy's key stays (like Maya)
+                    _insert(fc, at, rec[1] + dv, rec)
+                    placed.append(at)
                     n += 1
             fc.update()
     return n
