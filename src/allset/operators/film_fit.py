@@ -22,12 +22,15 @@ picked for them.
 
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, FloatProperty
 
 from .. import i18n
 
 PROP = "allset_film_fit"
 STATE = "allset_film_fit_state"
+# Horizontal / Vertical Film Aperture in inches, like Maya (Blender's sensor size is in millimetres)
+APERTURE = {"allset_film_aperture_h": "sensor_width", "allset_film_aperture_v": "sensor_height"}
+MM_PER_INCH = 25.4
 DYNAMIC = ('FILL', 'OVERSCAN')       # the fitted side follows the render's shape
 SIDES = ('HORIZONTAL', 'VERTICAL')
 
@@ -193,7 +196,20 @@ def _on_undo(*_args):
 _HANDLERS = (("load_post", _on_load), ("undo_post", _on_undo), ("redo_post", _on_undo))
 
 
+def _aperture_prop(sensor, label):
+    def get(self):
+        return getattr(self, sensor) / MM_PER_INCH
+
+    def set(self, value):
+        setattr(self, sensor, value * MM_PER_INCH)
+    return FloatProperty(name=label, get=get, set=set, min=1.0 / MM_PER_INCH, soft_max=10.0, step=1, precision=3,
+                         description=f"{label} in inches, like Maya (Blender's sensor {sensor.split('_')[1]} in "
+                                     "millimetres)")
+
+
 def register_props():
+    bpy.types.Camera.allset_film_aperture_h = _aperture_prop("sensor_width", "Horizontal Film Aperture")
+    bpy.types.Camera.allset_film_aperture_v = _aperture_prop("sensor_height", "Vertical Film Aperture")
     bpy.types.Camera.allset_film_fit_state = EnumProperty(
         items=[(s, s.replace("_", " ").title(), "") for s in _STATES], default='NONE', options={'HIDDEN'})
     bpy.types.Camera.allset_film_fit = EnumProperty(
@@ -211,6 +227,6 @@ def unregister_props():
         lst = getattr(bpy.app.handlers, name)
         if fn in lst:
             lst.remove(fn)
-    for prop in (PROP, STATE):
+    for prop in (PROP, STATE, *APERTURE):
         if hasattr(bpy.types.Camera, prop):
             delattr(bpy.types.Camera, prop)

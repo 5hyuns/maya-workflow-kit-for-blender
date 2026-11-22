@@ -106,8 +106,8 @@ CAMERA = [
       ("prop", "data", "clip_start", "Near Clip Plane"),
       ("prop", "data", "clip_end", "Far Clip Plane")),
     S("Film Back", True,
-      ("prop", "data", "sensor_width", "Horizontal Film Aperture"),
-      ("prop", "data", "sensor_height", "Vertical Film Aperture"),
+      ("prop", "data", "allset_film_aperture_h", "Horizontal Film Aperture"),    # inches (operators/film_fit.py)
+      ("prop", "data", "allset_film_aperture_v", "Vertical Film Aperture"),
       ("prop", "data", "allset_film_fit", "Fit Resolution Gate"),     # Maya Fill / Horizontal / Vertical / Overscan
       ("prop", "data", "shift_x", "Film Offset X"),
       ("prop", "data", "shift_y", "Film Offset Y")),
