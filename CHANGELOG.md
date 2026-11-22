@@ -58,6 +58,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Twist turns and Flare scales from the Low bound to the High bound, bounds beyond -1 / 1 spread the effect, Squash
   stretches and bulges between the bounds, Sine waves the object sideways along the handle and Wave makes rings
   around it; the Channel Box and the Attribute Editor show the deformers' own attributes (#457, #461).
+- Deform > Nonlinear > Squash has Start Smoothness and End Smoothness (0 to 1): they round the bulge off towards the
+  Low and High bound, easing it into the bound at 1, like Maya (#492).
+- Insert Edge Loop and Offset Edge Loop with "Insert with edge flow" put the new loop on the same curve as Edit Edge
+  Flow, like Maya: halfway along the ring it sits where Edit Edge Flow puts it, nearer an edge it eases towards the
+  straight cut, and several loops at once are cut straight. Edit Edge Flow on a loop next to a border row no longer
+  pushes that loop too far out (#491).
 - Locked channels are no longer keyed by Key Selected, Key All Keyable, Breakdown and Set Key, like Maya (#476).
 - Renaming in the Channel Box, Status Line or Outliner cleans up the typed name like Maya (leading digits dropped,
   other characters turned into _, a trailing # numbered) instead of refusing it; a name like Cube_01 names its shape
