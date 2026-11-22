@@ -149,7 +149,7 @@ def test_snap_step_on_edge_points():
     assert mc.snapped(('VERT', 3), 25, True) == ('VERT', 3)
 
 
-def test_settings_maya_defaults_and_reset():
+def test_settings_starting_values_and_reset():
     s = bpy.context.scene.allset_mesh_tools
     want = {"snap_step": 10, "smoothing_angle": 180.0, "edge_flow": False, "subdivisions": 1,
             "ignore_backfaces": False, "delete_faces": False, "extract_faces": False, "slice_plane": 'NONE'}

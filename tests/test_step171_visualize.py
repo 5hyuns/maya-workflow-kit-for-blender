@@ -398,7 +398,7 @@ def test_ghost_check_survives_selection_and_follows_objects():
 
 # --- windows / menus -----------------------------------------------------------------------------------------------
 
-def test_option_windows_have_maya_defaults():
+def test_option_windows_have_maya_values():
     w = option_windows.find_path("Visualize/Create Animation Snapshot")
     assert w is not None and w.title == "Animation Snapshot Options" and w.action == "Snapshot"
     d = w.defaults()

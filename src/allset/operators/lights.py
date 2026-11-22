@@ -149,7 +149,7 @@ def apply(light, maya_intensity=None, n=None, k=None):
         _falloff_nodes(light, n, k)
 
 
-def maya_defaults(light, k):
+def start_values(light, k):
     """A new Maya light: intensity 1, No Decay; spot cone 40 / penumbra 0; area light 2 x 2 units; a directional light
     with Light Angle 0 (sharp shadows)."""
     if light.type == 'SUN':

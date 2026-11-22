@@ -488,7 +488,7 @@ CREATE_CASES = (
 )
 
 
-def test_create_maya_defaults():
+def test_create_starting_values():
     _fresh()
     for kind, name, data_name, dims, faces in CREATE_CASES:
         assert bpy.ops.allset.create(kind=kind) == {'FINISHED'}, kind

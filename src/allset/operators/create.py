@@ -122,7 +122,7 @@ def _scale_data(ob, k):
         data.shadow_soft_size *= k
         if data.type == 'AREA':
             data.size_y *= k
-        lights.maya_defaults(data, k)     # intensity 1, No Decay, spot cone 40, area 2 x 2 units
+        lights.start_values(data, k)     # intensity 1, No Decay, spot cone 40, area 2 x 2 units
 
 
 def _maya_naming(context):

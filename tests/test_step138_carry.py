@@ -52,7 +52,7 @@ A = ("NORMAL", "GIMBAL", True, 7.5, True, "Z", True)        # the session's sett
 B = ("GLOBAL", "LOCAL", False, 2.0, False, "X", False)       # the file's settings
 
 
-def test_first_maya_scene_starts_from_maya_defaults():
+def test_first_maya_scene_starts_from_maya_values():
     """Right after Maya mode came on in Blender's startup scene (not the Maya layout, nothing loaded yet) its Blender
     settings are not the session's Maya settings: the kit's New Scene keeps the template's Maya settings."""
     assert not carry.carries_from_current()

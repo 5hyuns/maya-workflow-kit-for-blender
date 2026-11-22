@@ -234,7 +234,7 @@ def test_lattice_window_options_and_components():
 
 # --- Delta Mush ------------------------------------------------------------------------------------
 
-def test_delta_mush_maya_defaults_and_inputs():
+def test_delta_mush_starting_values_and_inputs():
     _clear()
     cube = _cube()
     assert bpy.ops.allset.deformer(kind='DELTA_MUSH') == {'FINISHED'}

@@ -113,7 +113,7 @@ def test_separate_maya_group():
     assert bpy.ops.allset.separate() == {'CANCELLED'}, "one shell"
 
 
-def test_mirror_maya_defaults():
+def test_mirror_starting_values():
     """Cut + World + X + direction -: the +X half is copied to -X and merged at x = 0."""
     _clear()
     cube = _create('CUBE', 0.25)      # x from -0.25 to 0.75
