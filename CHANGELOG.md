@@ -61,6 +61,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   unselected branch go to the nearest bound joints, like Maya (#459).
 - Skin > Copy Skin Weights onto a mesh skinned to a skeleton with other joint names replaces the destination's
   weights instead of adding to them (#460).
+- Mesh > Fill Hole with one border edge of a hole selected (or a few) closes that whole hole, like Maya (#463).
+- Edit > Ungroup with Preserve position off keeps the children's local values, so they move by the group's transform,
+  like Maya (#464).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
