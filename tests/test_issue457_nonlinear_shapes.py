@@ -4,7 +4,7 @@ A column of points along the handle (handle at the origin, unit scale): Twist tu
 End Angle at High Bound, Flare scales from the start values to the end values, Squash stretches the length between
 the bounds and narrows the sides most at Max Expand Pos, and bounds beyond -1 / 1 spread the effect over a longer
 range. Sine moves the points sideways along a sine wave of the length, Wave moves them along the handle in rings
-around it. Envelope blends the result in; the Channel Box rows set the node's inputs; a lattice keeps a Simple Deform.
+around it. Envelope blends the result in; the Channel Box rows set the node's inputs; a lattice's node is a Simple Deform.
 """
 
 import math
@@ -204,7 +204,7 @@ def test_option_window_values_and_lattice():
     md = ob.modifiers["twist1"]
     assert abs(deformers.attr(md, "maya:endAngle").get(md) - math.radians(45.0)) < 1e-6
     assert deformers.attr(md, "maya:lowBound").get(md) == -2.0 and deformers.attr(md, "maya:highBound").get(md) == 3.0
-    # a lattice: no Geometry Nodes there, a Simple Deform with the old rows
+    # a lattice: no Geometry Nodes there, a Simple Deform node with the same rows (its shape: test_issue493)
     _fresh()
     lat = bpy.data.objects.new("ffd1Lattice", bpy.data.lattices.new("ffd1LatticeShape"))
     bpy.context.scene.collection.objects.link(lat)
@@ -213,4 +213,5 @@ def test_option_window_values_and_lattice():
     assert bpy.ops.allset.deformer(kind='SQUASH') == {'FINISHED'}
     md = lat.modifiers["squash1"]
     assert md.type == 'SIMPLE_DEFORM' and deformers.base_of(md) == "squash"
-    assert [a.key for a in deformers.attrs(md)] == ["factor", "lowBound", "highBound"]
+    assert [a.key for a in deformers.attrs(md)] == ["envelope", "factor", "expand", "maxExpandPos",
+                                                    "startSmoothness", "endSmoothness", "lowBound", "highBound"]

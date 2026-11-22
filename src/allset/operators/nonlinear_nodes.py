@@ -23,7 +23,7 @@ length the deformer runs along. With y held between Low Bound and High Bound as 
 
 The result is blended in by Envelope times the point's weight. The kit node is a Geometry Nodes modifier named like
 the Maya node (``twist1``) on one shared node group per deformer type; a lattice or a surface (no Geometry Nodes
-there) keeps a Simple Deform / Wave modifier. Angles are held in radians and shown in degrees. The weights are the
+there) gets the same shapes as a shape key (operators/nonlinear_math.py). Angles are held in radians and shown in degrees. The weights are the
 vertex group of the node's name, which Deform > Paint Weights > Nonlinear paints.
 """
 

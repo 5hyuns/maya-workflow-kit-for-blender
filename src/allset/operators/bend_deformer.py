@@ -266,6 +266,8 @@ def sync_simple_deforms():
 @bpy.app.handlers.persistent
 def _on_update(_scene, _depsgraph=None):
     sync_simple_deforms()
+    from . import nonlinear_math
+    nonlinear_math.sync_all()          # Twist / Squash / Flare / Sine / Wave on a lattice / surface
 
 
 @bpy.app.handlers.persistent

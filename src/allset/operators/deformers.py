@@ -36,8 +36,9 @@ BASES = {
     "textureDeformer": ('DISPLACE', "textureDeformer"), "curveWarp": ('CURVE', "curveWarp"),
     "wire": ('NODES', "wire"),            # Geometry Nodes, operators/wire_deformer.py
 }
-# a node that can also be another modifier type: a nonlinear on a lattice / surface (no Geometry Nodes there), and
-# every one made by earlier versions, is a Simple Deform (Sine / Wave: a Wave modifier)
+# a node that can also be another modifier type: a nonlinear on a lattice / surface (no Geometry Nodes there: a
+# Simple Deform / Wave modifier with no effect of its own + a shape key, operators/nonlinear_math.py), and every one
+# made by earlier versions, is a Simple Deform (Sine / Wave: a Wave modifier)
 OTHER_TYPES = {"bend": 'SIMPLE_DEFORM', "twist": 'SIMPLE_DEFORM', "squash": 'SIMPLE_DEFORM',
                "flare": 'SIMPLE_DEFORM', "sine": 'WAVE', "wave": 'WAVE'}
 _NAME = re.compile(r"^([A-Za-z]+?)(\d+)$")
@@ -333,7 +334,7 @@ _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", 
 # a bend made by earlier versions (Simple Deform, deform axis Z): its own angle and limits
 _OLD_BEND = [_prop("curvature", "Curvature", "NONE", "angle")] + _BOUNDS
 
-# Twist / Squash / Flare / Sine / Wave made by earlier versions, and on a lattice / surface: Simple Deform / Wave rows
+# Twist / Squash / Flare / Sine / Wave made by earlier versions as a Simple Deform / Wave: that modifier's rows
 _OLD_NONLINEAR = {
     "twist": [_prop("endAngle", "End Angle", "ROTATION", "angle")] + _BOUNDS,
     "squash": [_prop("factor", "Factor", "NONE", "factor")] + _BOUNDS,
@@ -401,7 +402,8 @@ def attrs(md):
     if base == "bend" and md.type == 'SIMPLE_DEFORM':
         return _SD_BEND if md.deform_axis == 'Y' else _OLD_BEND
     if base in _OLD_NONLINEAR and md.type != 'NODES':
-        return _OLD_NONLINEAR[base]
+        from . import nonlinear_math
+        return nonlinear_math.rows(md) if nonlinear_math.kind_of(md) else _OLD_NONLINEAR[base]
     return ATTRS.get(base) if base else None
 
 
@@ -719,7 +721,7 @@ def _nl_values(kind, v):
 
 
 def _nonlinear(context, kind, v):
-    base, method = NONLINEAR[kind]
+    base, _method = NONLINEAR[kind]
     items = _deformed(context)
     lo, hi = _bounds(items)
     name = new_name(base)
@@ -750,32 +752,9 @@ def _nonlinear(context, kind, v):
             from . import nonlinear_nodes
             nonlinear_nodes.add(ob, name, base, handle, _weights(ob, name, idx), _nl_values(kind, v))
             continue
-        if method is not None:
-            md = _add(ob, name, 'SIMPLE_DEFORM', idx)
-            md.deform_method = method
-            md.deform_axis = 'Z'
-            md.origin = handle
-            md.angle = 0.0
-            md.factor = 0.0
-            md.limits = (min(1.0, max(0.0, (v.get("low", -1.0) + 1) / 2)),
-                         min(1.0, max(0.0, (v.get("high", 1.0) + 1) / 2)))
-            if kind == 'TWIST':
-                md.angle = math.radians(float(v.get("end_angle", 0.0)))
-            elif kind == 'SQUASH':
-                md.factor = float(v.get("factor", 0.0))
-            elif kind == 'FLARE':
-                md.factor = float(v.get("end_flare", 1.0)) - 1.0
-        else:
-            md = _add(ob, name, 'WAVE', idx)
-            md.start_position_object = handle
-            md.use_normal = False
-            md.use_x, md.use_y = True, kind == 'WAVE'
-            md.speed = 0.0                           # Maya's wave is still; Blender's moves with time
-            md.time_offset = 0.0
-            md.height = float(v.get("amplitude", 0.0)) * s
-            md.width = max(1e-6, float(v.get("wavelength", 2.0 if kind == 'SINE' else 1.0)) * s)
-            if kind == 'WAVE':
-                md.falloff_radius = float(v.get("max_radius", 1.0)) * s
+        # a lattice / surface: no Geometry Nodes there; the same shape as a shape key (operators/nonlinear_math.py)
+        from . import nonlinear_math
+        nonlinear_math.add(ob, name, base, handle, _weights(ob, name, idx), _nl_values(kind, v))
     _select_only(context, [handle], handle)          # Maya: bend1Handle, bend1
     return handle
 
