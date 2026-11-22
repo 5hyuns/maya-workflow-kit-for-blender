@@ -66,7 +66,7 @@ def apply(bm, uv, edges, action):
         uv_tools.cut(bm, uv, edges)
         return len(edges)
     if action == "SEW":
-        return uv_tools.sew(bm, uv, edges)
+        return uv_tools.sew(bm, uv, edges, move=True)
     for e in edges:
         e.select_set(True)
     return len(edges)

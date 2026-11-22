@@ -6,7 +6,7 @@
   vertices: Blender needs sync off for that (and then draws only the selected faces' UVs, so every face is selected).
 - UV Shell = Blender UV island. Blender's island operators group UVs by shared coordinates and ignore seams
   (pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
-  2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the smaller shell moved onto the edge.
+  2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the UVs on the edge joined half-way.
 - Unfold = Blender Unwrap (Minimum Stretch) on the chosen shells with their borders kept as seams, each shell put back where
   it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit.
 
@@ -103,9 +103,26 @@ def cut(bm, uv, edges):
     return split
 
 
-def sew(bm, uv, edges):
-    """Maya Sew UVs: clear the seams; a shell on the other side of an edge is moved (rotated, scaled) onto it,
-    the smaller shell onto the bigger one. Returns the number of edges sewn."""
+def weld_edge(e, a, b, uv):
+    """Join the two UVs at each end of ``e`` (one from face ``a``, one from face ``b``) half-way; every UV of the
+    vertex sitting on either of them follows (they are the same UV). Returns whether a UV moved."""
+    moved = False
+    for vert in e.verts:
+        pa, pb = _uv_at(a, vert, uv).copy(), _uv_at(b, vert, uv).copy()
+        if _same(pa, pb):
+            continue
+        moved = True
+        mid = (pa + pb) / 2
+        for loop in vert.link_loops:
+            if not loop.face.hide and (_same(loop[uv].uv, pa) or _same(loop[uv].uv, pb)):
+                loop[uv].uv = mid.copy()
+    return moved
+
+
+def sew(bm, uv, edges, move=False):
+    """Maya Sew UVs: clear the seams and join the UVs on each edge, every pair meeting half-way; the shells stay
+    where they are. ``move`` (the 3D Cut and Sew tool) first moves (rotates, scales) the smaller shell on the other
+    side of an edge onto it. Returns the number of edges sewn."""
     for e in edges:
         e.seam = False
     sewn = 0
@@ -114,19 +131,17 @@ def sew(bm, uv, edges):
         fs = [f for f in e.link_faces if not f.hide]
         if len(fs) != 2:
             continue
+        a, b = fs
+        if not move:
+            weld_edge(e, a, b, uv)
+            sewn += 1
+            continue
         if groups is None:     # islands change only when a shell moves onto another (once per edge was
             groups = islands(bm, uv, [f for f in bm.faces if not f.hide])      # O(edges x mesh))
             where = {f: i for i, isl in enumerate(groups) for f in isl}
-        a, b = fs
         v, w = e.verts
         if where[a] == where[b]:
-            shell = set(groups[where[a]])
-            for vert in (v, w):     # a slit inside one shell: weld the two sides half-way
-                pa, pb = _uv_at(a, vert, uv).copy(), _uv_at(b, vert, uv).copy()
-                mid = (pa + pb) / 2
-                for loop in vert.link_loops:
-                    if loop.face in shell and (_same(loop[uv].uv, pa) or _same(loop[uv].uv, pb)):
-                        loop[uv].uv = mid.copy()
+            weld_edge(e, a, b, uv)      # a slit inside one shell: weld the two sides half-way
             sewn += 1
             continue
         big, small = (a, b) if len(groups[where[a]]) >= len(groups[where[b]]) else (b, a)
@@ -281,7 +296,7 @@ class ALLSET_OT_uv_cut(bpy.types.Operator):
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_sew(bpy.types.Operator):
-    """Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one"""
+    """Sew the UVs along the selected edges (Maya Sew UV Edges): the UVs on each edge meet half-way"""
     bl_idname = "allset.uv_sew"
     bl_label = "Sew UV Edges"
     bl_options = {'REGISTER', 'UNDO'}
@@ -298,7 +313,7 @@ class ALLSET_OT_uv_sew(bpy.types.Operator):
             uv = bm.loops.layers.uv.verify()
             edges = selected_edges(bm, uv, mesh)
             if edges:
-                done += sew(bm, uv, edges)
+                done += sew(bm, uv, edges, move=self.mesh_select)
                 bmesh.update_edit_mesh(ob.data)
         if not done:
             self.report({'WARNING'}, "Select edges between UV shells to sew")
