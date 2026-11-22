@@ -158,10 +158,15 @@ def ungroup(context, groups, world=False, preserve=True):
     transform, then the group goes. Preserve position off keeps each child's local values instead, so the child
     moves by the group's transform (grp t 0 5 0, child t 1 2 3 -> child t 1 2 3 under the new parent).
     A selected object that has data of its own (a mesh with
-    children) only loses its children. Returns the moved children."""
+    children) only loses its children. Returns the moved children; like Maya they are listed last among their new
+    siblings, in the order they had in the group (Outliner order, ui/outliner_order.py)."""
+    from ..ui import outliner_order
+    scene = context.scene
     moved = []
     for grp in groups:
-        kids = list(grp.children)
+        if scene is not None:
+            outliner_order.number_new(list(scene.objects))
+        kids = sorted(grp.children, key=lambda o: o.get(outliner_order.ORDER, 0))
         target = None if world else grp.parent
         for child in kids:
             if not preserve:
@@ -177,6 +182,8 @@ def ungroup(context, groups, world=False, preserve=True):
                 child.parent = None
                 child.matrix_world = world_m
         moved.extend(kids)
+        if scene is not None and kids:
+            outliner_order.to_end(kids, scene)
         if grp.type == 'EMPTY':
             bpy.data.objects.remove(grp)
     return moved
