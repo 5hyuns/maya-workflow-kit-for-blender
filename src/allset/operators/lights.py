@@ -150,8 +150,8 @@ def apply(light, maya_intensity=None, n=None, k=None):
 
 
 def start_values(light, k):
-    """A new Maya light: intensity 1, No Decay; spot cone 40 / penumbra 0; area light 2 x 2 units; a directional light
-    with Light Angle 0 (sharp shadows)."""
+    """The start values of a new Maya light: its intensity and No Decay, the spot cone and penumbra, the area light
+    size and a directional light with sharp shadows."""
     if light.type == 'SUN':
         light.angle = 0.0
     if light.type == 'SPOT':

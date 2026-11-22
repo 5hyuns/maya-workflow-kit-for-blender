@@ -21,7 +21,7 @@ from .uv_islands import _with_faces
 # --- Automatic / Contour Stretch -------------------
 
 def _maya_shells(faces, k_unit, optimize=True, planes=6):
-    """Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the default) for one of
+    """Maya's own plane choice and shells (autoproj_layout.assign_planes, with Fewer pieces on) for one of
     the plane counts in ``autoproj_layout.PLANE_SETS``, fed with the faces in index order and the points in Maya
     axes and units (Blender (x, y, z) = Maya (x, -z, y)). Returns ``[(projector, faces)]``; a projector maps a Blender point to the plane's (u, v)."""
     from . import autoproj_layout
@@ -45,10 +45,10 @@ def _maya_shells(faces, k_unit, optimize=True, planes=6):
 
 
 def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
-    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with the default options: faces take their planes
+    """Maya's UV > Automatic on ``faces`` (object space) with its start options: faces take their planes
     and form shells Maya's way for every Planes choice (``_maya_shells``: candidate planes within the plane count's
     angle, seeds by fewest candidates, flood fill that stops where a shell would overlap itself). Shells are laid out
-    in 0-1 at one scale with ``spacing`` percent between them (default 0.2 %) by Maya's packed "Into square"
+    in 0-1 at one scale with ``spacing`` percent between them by Maya's packed "Into square"
     layout (operators/autoproj_layout.py). ``unit`` = Blender length of one Maya unit
     (``units.maya_unit``): Maya projects and packs in Maya units. Returns the shell count."""
     from . import autoproj_layout
@@ -266,9 +266,9 @@ class ALLSET_OT_uv_automatic_edit(bpy.types.Operator):
 # --- Cylindrical / Spherical (Issue #442) ------------------------------------------------------------
 # Like Maya's UV > Cylindrical / Spherical: the projection sits on the centre of the selection's world bounding box,
 # its axis is the scene's up axis and the 3D View's angle plays no part. Around the axis a half turn spans one UV
-# tile (the projection's horizontal sweep), the front (Maya +Z = Blender -Y) at U 0.5. Cylindrical spans V 0-1 over
-# the selection's height; Spherical spans one tile over a quarter turn up or down (its vertical sweep), the
-# equator at V 0.5.
+# tile (the projection's horizontal sweep), the front (Maya +Z = Blender -Y) in the middle of the tile. Cylindrical
+# spans the tile's height over the selection's height; Spherical spans one tile over a quarter turn up or down (its
+# vertical sweep), the equator in the middle.
 
 HORIZONTAL_SWEEP = math.pi
 VERTICAL_SWEEP = math.pi / 2

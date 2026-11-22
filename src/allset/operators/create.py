@@ -111,11 +111,11 @@ def _scale_data(ob, k):
         film_fit.set_fit(data, 'FILL', bpy.context.scene)
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
-        # F Stop 5.6, Focus Distance 5, Orthographic Width 30, like a camera from Maya's Create > Cameras
+        # F Stop, Focus Distance and Orthographic Width of a camera from Maya's Create > Cameras
         data.dof.aperture_fstop = MAYA_CAMERA_FSTOP
         data.dof.focus_distance = MAYA_CAMERA_FOCUS * k
         data.ortho_scale = MAYA_CAMERA_ORTHO_WIDTH * k
-        # a new Maya camera is not renderable (only the startup persp is) and draws its gate mask at 0.7 opacity
+        # a new Maya camera is not renderable (only the startup persp is) and draws its gate mask partly see-through
         data.allset_renderable = False
         data.passepartout_alpha = MAYA_GATE_MASK_OPACITY
     elif ob.type == 'LIGHT':
