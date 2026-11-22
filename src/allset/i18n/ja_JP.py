@@ -5778,7 +5778,7 @@ STRINGS = {
     "Open the Reference Editor: the scene's references with load state, Reload / Unload / Replace / Import / Remove\n(Maya File > Reference Editor)": 'リファレンスエディタを開く: シーンのリファレンスとロード状態、リロード / アンロード / 置き換え / インポート / 除去\n(Maya ファイル > リファレンスエディタ)',
     "Open the Shape Editor: blendShape nodes (shape keys) with their targets' weights, Edit and Key\n(Maya Windows > Animation Editors > Shape Editor)": 'シェイプエディタを開く: blendShape ノード (シェイプキー) とターゲットのウェイト、編集とキー\n(Maya ウィンドウ > アニメーションエディタ > シェイプエディタ)',
     'Open the welcome dialog once the pointer is in the main window, clear of its menu bar': 'ポインタがメインウィンドウ内、メニューバーから離れた位置に来たらウェルカムダイアログを開く',
-    'Show or hide the Outliner': 'アウトライナを表示 / 非表示',
+    'Open or close the Outliner panel': 'アウトライナ パネルを開く / 閉じる',
     'Show or hide the Tool Box': 'ツールボックスを表示 / 非表示',
     "Render with Blender's render; a scene without a camera renders through persp, placed where the view looks\nfrom (like Maya)": 'Blender のレンダーでレンダリング。カメラのないシーンは\nビューの位置に置いた persp でレンダリングします (Maya と同様)',
     "Render the frame range like Maya's Render > Render Sequence: through the scene camera (without one: persp,\nplaced where the view looks from), or with All Render-Enabled Cameras through every Renderable camera, each into\nits own folder": 'Maya の レンダー > シーケンス レンダー のようにフレーム範囲をレンダー: シーンカメラ (なければビューの位置に置いた persp)、\nまたは「レンダー可能なすべてのカメラ」でレンダー可能な各カメラを、カメラごとのフォルダへ',

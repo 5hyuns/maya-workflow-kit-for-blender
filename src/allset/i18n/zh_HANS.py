@@ -5778,7 +5778,7 @@ STRINGS = {
     "Open the Reference Editor: the scene's references with load state, Reload / Unload / Replace / Import / Remove\n(Maya File > Reference Editor)": '打开参考编辑器：场景中的参考及其加载状态，重新加载 / 卸载 / 替换 / 导入 / 移除\n(Maya 文件 > 参考编辑器)',
     "Open the Shape Editor: blendShape nodes (shape keys) with their targets' weights, Edit and Key\n(Maya Windows > Animation Editors > Shape Editor)": '打开形状编辑器：blendShape 节点 (形态键) 及其目标的权重、编辑和关键帧\n(Maya 窗口 > 动画编辑器 > 形状编辑器)',
     'Open the welcome dialog once the pointer is in the main window, clear of its menu bar': '当指针位于主窗口内且离开其菜单栏后，打开欢迎对话框',
-    'Show or hide the Outliner': '显示或隐藏大纲视图',
+    'Open or close the Outliner panel': '打开或关闭大纲视图面板',
     'Show or hide the Tool Box': '显示或隐藏工具箱',
     "Render with Blender's render; a scene without a camera renders through persp, placed where the view looks\nfrom (like Maya)": '用 Blender 的渲染进行渲染; 没有摄像机的场景\n通过放在视图位置的 persp 渲染 (与 Maya 相同)',
     "Render the frame range like Maya's Render > Render Sequence: through the scene camera (without one: persp,\nplaced where the view looks from), or with All Render-Enabled Cameras through every Renderable camera, each into\nits own folder": '像 Maya 的 渲染 > 渲染序列 一样渲染帧范围: 通过场景摄像机 (没有时: 放在视图位置的 persp)，\n或使用「所有可渲染摄像机」通过每台可渲染摄像机，各自存入自己的文件夹',

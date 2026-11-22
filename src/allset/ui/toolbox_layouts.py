@@ -119,7 +119,7 @@ def _close_windows_later(pointers):
 
 
 class ALLSET_OT_toggle_outliner(bpy.types.Operator):
-    """Show or hide the Outliner"""
+    """Open or close the Outliner panel"""
     bl_idname = "allset.toggle_outliner"
     bl_label = "Outliner"
     bl_options = {'INTERNAL'}

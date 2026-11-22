@@ -12871,7 +12871,7 @@
   },
   "Tooltips/ui/toolbox_layouts": {
    "Maya Tool Box quick layout button": "Maya Tool Box quick layout button",
-   "Show or hide the Outliner": "Show or hide the Outliner",
+   "Open or close the Outliner panel": "Open or close the Outliner panel",
    "Show or hide the Tool Box": "Show or hide the Tool Box"
   },
   "Tooltips/ui/trax_editor": {
