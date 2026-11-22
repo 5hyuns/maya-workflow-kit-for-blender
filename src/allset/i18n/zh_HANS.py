@@ -7399,4 +7399,5 @@ STRINGS = {
     'Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)': '在网格编辑模式下用旋转 / 缩放工具 Ctrl+Shift+中键拖动：沿活动控制柄旋转 / 缩放，\n每个顶点保持在它的某条边上 (Maya)',
     'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': '框选边：选中它碰到的每条边 (Shift 切换，Ctrl 移除，Ctrl+Shift 添加)',
     'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '旋转选定组件，同时让每个顶点保持在它的某条边上 (Maya 中用旋转工具\nCtrl+Shift+拖动)',
+    'Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)': '对称开启时的框选 / 套索：选中内部的组件及其镜像对应组件 (Shift 切换，Ctrl 移除，Ctrl+Shift 添加)',
 }

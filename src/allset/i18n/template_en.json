@@ -7460,6 +7460,11 @@
    "Symmetry: Off": "Symmetry: Off",
    "Use matched regions for Quad Draw topology symmetry": "Use matched regions for Quad Draw topology symmetry"
   },
+  "Labels/operators/symmetry_select": {
+   "Box": "Box",
+   "Box Select": "Box Select",
+   "Lasso": "Lasso"
+  },
   "Labels/operators/taphold": {
    "Binding": "Binding",
    "Maya Tap/Hold Key": "Maya Tap/Hold Key"
@@ -12160,6 +12165,9 @@
   },
   "Tooltips/operators/symmetry": {
    "Maya symmetric modelling: edit-mode transforms move the mirrored components too": "Maya symmetric modelling: edit-mode transforms move the mirrored components too"
+  },
+  "Tooltips/operators/symmetry_select": {
+   "Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)": "Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)"
   },
   "Tooltips/operators/taphold": {
    "Tap for the default action; hold and click for the menu (Maya)": "Tap for the default action; hold and click for the menu (Maya)"

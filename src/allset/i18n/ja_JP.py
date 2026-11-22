@@ -7398,4 +7398,5 @@ STRINGS = {
     'Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)': 'メッシュ編集モードで回転 / スケールツールを Ctrl+Shift+中ドラッグ: アクティブハンドルに沿って回転 / スケールし、\n各頂点を自身のエッジのいずれかの上に保ちます (Maya)',
     'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': 'エッジの範囲選択: 触れたエッジをすべて選択 (Shift で切り替え、Ctrl で除去、Ctrl+Shift で追加)',
     'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '各頂点を自身のエッジのいずれかの上に保ったまま選択コンポーネントを回転 (Maya の回転ツールでの\nCtrl+Shift+ドラッグ)',
+    'Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)': '対称オンの範囲選択・投げ縄: 内側のコンポーネントとそのミラー側の対応コンポーネント (Shift で切り替え、Ctrl で除去、Ctrl+Shift で追加)',
 }
