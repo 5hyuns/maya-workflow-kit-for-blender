@@ -285,7 +285,8 @@ class ALLSET_MT_export_selection(bpy.types.Menu):
 
 def planar_uvs(points, normal):
     """UVs of ``points`` projected on the plane of ``normal``, fitted in 0-1 keeping the
-    aspect ratio (Maya's planar projection with "keep image width/height ratio")."""
+    aspect ratio, like Maya's planar projection with "keep image width/height ratio": the
+    longer side spans 0-1 and the shorter side is centred on 0.5."""
     n = Vector(normal).normalized() if Vector(normal).length > 1e-9 else Vector((0, 0, 1))
     # u = the world axis most perpendicular to the normal, flattened onto the plane, so a
     # face looking along Z gets U = X and V = Y (not a diagonal).
@@ -296,8 +297,16 @@ def planar_uvs(points, normal):
     if not flat:
         return []
     x0, y0 = min(f[0] for f in flat), min(f[1] for f in flat)
-    size = max(max(f[0] for f in flat) - x0, max(f[1] for f in flat) - y0) or 1.0
-    return [((x - x0) / size, (y - y0) / size) for x, y in flat]
+    w, h = max(f[0] for f in flat) - x0, max(f[1] for f in flat) - y0
+    size = max(w, h) or 1.0
+    du, dv = (1.0 - w / size) / 2.0, (1.0 - h / size) / 2.0
+    return [((x - x0) / size + du, (y - y0) / size + dv) for x, y in flat]
+
+
+# Planar X / Y / Z project along the scene's X / Y / Z axis (the axes the Channel Box and the
+# manipulator show); each normal is picked so the projection reads upright: X = U along Y,
+# V along Z; Y = U along X, V along Z; Z = U along X, V along Y.
+AXIS_NORMALS = {'X': Vector((1, 0, 0)), 'Y': Vector((0, -1, 0)), 'Z': Vector((0, 0, 1))}
 
 
 class ALLSET_OT_uv_planar(bpy.types.Operator):
@@ -306,9 +315,10 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
     bl_label = "Planar Projection"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # Maya's Planar Map X / Y / Z (Shift+RMB Mapping submenu) project along a fixed Maya axis (Y up -> Blender Z)
-    axis: EnumProperty(items=(('NORMAL', "Faces", "Plane of the faces' average normal"), ('X', "X", ""),
-                              ('Y', "Y", ""), ('Z', "Z", "")), name="Project Along", options={'SKIP_SAVE'})
+    # Planar Map X / Y / Z (Shift+RMB Mapping submenu) project along the scene's X / Y / Z axis
+    axis: EnumProperty(items=(('NORMAL', "Faces", "Plane of the faces' average normal"),
+                              ('X', "X", "Along the X axis"), ('Y', "Y", "Along the Y axis"),
+                              ('Z', "Z", "Along the Z axis")), name="Project Along", options={'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
@@ -316,7 +326,7 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
         return ob is not None and ob.type == 'MESH' and context.mode in {'EDIT_MESH', 'OBJECT'}
 
     def execute(self, context):
-        fixed = {'X': Vector((1, 0, 0)), 'Y': Vector((0, 0, 1)), 'Z': Vector((0, -1, 0))}.get(self.axis)
+        fixed = AXIS_NORMALS.get(self.axis)
         obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
                if o.type == 'MESH']
         for ob in obs:

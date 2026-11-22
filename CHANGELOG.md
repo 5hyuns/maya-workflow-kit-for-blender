@@ -19,6 +19,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   slides across its neighbours instead of along itself (#429).
 
 ### Fixed
+- UV > Planar (and Planar Map X / Y / Z in the Shift+right-click Mapping menu): the X, Y and Z axis choices project
+  along the scene's X, Y and Z axes, the axes the Channel Box and the manipulator show; Y and Z were swapped (#439).
+- UV > Planar fits the projection like Maya: the longer side spans 0-1 and the shorter side is centred in the UV
+  tile instead of sitting at its bottom or left edge (#440).
 - UV > 3D Grab UV Tool picked over the 3D View no longer raises a Python error: it sets the Grab tool in the UV
   Editor, which opens first when none is open (#434).
 - macOS: the kit's own Ctrl keys (such as Ctrl+1 Isolate Select) also answer Cmd, like Blender's, and a Ctrl key the kit

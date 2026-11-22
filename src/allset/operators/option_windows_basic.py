@@ -115,8 +115,8 @@ def _run_bake(context, v):
 
 
 def _run_uv_planar(context, v):
-    from .menu_extras import planar_uvs
-    axis = {"X axis": Vector((1, 0, 0)), "Y axis": Vector((0, 0, 1)), "Z axis": Vector((0, -1, 0))}
+    from .menu_extras import AXIS_NORMALS, planar_uvs
+    axis = {"X axis": AXIS_NORMALS['X'], "Y axis": AXIS_NORMALS['Y'], "Z axis": AXIS_NORMALS['Z']}
     if v["fit"] == "Best plane" or v["project_from"] == "Camera":
         return bpy.ops.allset.uv_planar('EXEC_DEFAULT')
     normal = axis[v["project_from"]]
