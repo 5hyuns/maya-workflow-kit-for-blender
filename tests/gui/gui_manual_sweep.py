@@ -5033,7 +5033,7 @@ def _m70_2_v3d_check():
     got = kinds()
     check(f"[M70-2] 3D View Shift+S + LMB > Tangents > Linear: the current frame's key only ({C['k0']} -> {got}; "
           f"submenu opened {C['m70_2_v3d_opened']})",
-          C["m70_2_v3d_opened"] and got[10] == 'LINEAR' and got[1] == C["k0"][1] and got[20] == C["k0"][20])
+          C["m70_2_v3d_opened"] and got[10] == 'VECTOR' and got[1] == C["k0"][1] and got[20] == C["k0"][20])
     wm = bpy.context.window_manager
     wm.allset_time_range = (1, 10)
     wm.allset_time_range_on = True

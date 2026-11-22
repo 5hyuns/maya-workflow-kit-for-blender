@@ -30,7 +30,9 @@ from .key_scope import (_CLIPBOARD, copy_scope, CurveRef, delete_scope, EPS, Key
 # (reused by the Graph Editor tangent buttons)
 TANGENTS = {
     "SPLINE": ("BEZIER", 'AUTO'),
-    "LINEAR": ("LINEAR", None),
+    # Linear: a Vector handle side points at the neighbouring key; a segment is straight when both of its keys are
+    # linear on the sides facing it (operators/maya_tangents.py)
+    "LINEAR": ("BEZIER", 'VECTOR'),
     "CLAMPED": ("BEZIER", 'AUTO_CLAMPED'),
     "STEPPED": ("CONSTANT", None),
     "FLAT": ("BEZIER", 'ALIGNED'),

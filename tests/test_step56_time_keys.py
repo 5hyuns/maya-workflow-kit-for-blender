@@ -171,9 +171,14 @@ def test_snap_convert_inbetween_tangents():
     assert {k.type for k in fc.keyframe_points} == {'BREAKDOWN'}
     bpy.ops.allset.time_keys(action='TO_KEY')
     assert {k.type for k in fc.keyframe_points} == {'KEYFRAME'}
-    for kind, interp in (("LINEAR", 'LINEAR'), ("STEPPED", 'CONSTANT'), ("SPLINE", 'BEZIER')):
+    for kind, interp in (("LINEAR", 'BEZIER'), ("STEPPED", 'CONSTANT'), ("SPLINE", 'BEZIER')):
         bpy.ops.allset.time_keys(action='TANGENT', tangent=kind)
         assert {k.interpolation for k in fc.keyframe_points} == {interp}, kind
+        if kind == "LINEAR":     # both keys linear: a straight segment
+            assert {k.handle_right_type for k in fc.keyframe_points} == {'VECTOR'}
+            a, b = fc.keyframe_points
+            mid = (a.co.x + b.co.x) / 2
+            assert abs(fc.evaluate(mid) - (a.co.y + b.co.y) / 2) < 1e-4
     bpy.ops.allset.time_keys(action='TANGENT', tangent='FLAT')
     kp = fc.keyframe_points[1]
     assert abs(kp.handle_left.y - kp.co.y) < 1e-6 and abs(kp.handle_right.y - kp.co.y) < 1e-6

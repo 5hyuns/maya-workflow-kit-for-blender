@@ -1,5 +1,5 @@
 """In a real UI (Maya animation workflow): a cube with two keys -> Windows >
-Animation Editors > Graph Editor -> every key selected -> toolbar Linear -> LINEAR -> Shift+S hold + LMB drag east
+Animation Editors > Graph Editor -> every key selected -> toolbar Linear -> Vector handles -> Shift+S hold + LMB drag east
 (Tangents) and on east (Flat) -> flat tangents -> G = playback range -> Playblast option box (dialog shot) -> Playblast
 -> a movie in the temp folder and Blender's player started (killed afterwards) (screenshots)."""
 
@@ -113,9 +113,9 @@ def s_graph_open():
 @step
 def s_linear():
     w, _a, _r = graph()
-    interp = [kp.interpolation for kp in keys()]
-    check(f"Graph Editor toolbar Linear on the selected keys -> LINEAR (got {C['linear']}, {interp})",
-          interp == ['LINEAR', 'LINEAR'])
+    interp = [(kp.interpolation, kp.handle_left_type, kp.handle_right_type) for kp in keys()]
+    check(f"Graph Editor toolbar Linear on the selected keys -> Vector handles (got {C['linear']}, {interp})",
+          interp == [('BEZIER', 'VECTOR', 'VECTOR')] * 2)
     shot("gui_step70_graph_toolbar.png", w)
     gev('MOUSEMOVE', 'NOTHING')
     gev('S', 'PRESS', shift=True)

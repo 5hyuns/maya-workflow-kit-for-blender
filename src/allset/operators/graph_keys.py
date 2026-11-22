@@ -56,7 +56,8 @@ def apply_side(fc, index, kind, side):
         setattr(kp, "handle_left_type" if side == "IN" else "handle_right_type", handle)
     if kind == "FLAT":
         (kp.handle_left if side == "IN" else kp.handle_right).y = kp.co.y
-    if interp is not None:
+    if interp is not None and not (side == "IN" and kind == "LINEAR"):
+        # a linear in tangent leaves the previous key's out tangent (and so its segment's interpolation) alone
         seg = index - 1 if side == "IN" else index
         if seg >= 0:
             fc.keyframe_points[seg].interpolation = interp

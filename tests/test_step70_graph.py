@@ -51,13 +51,13 @@ def _keys(ob):
 
 def test_tangent_table():
     t = time_keys.TANGENTS
-    assert t["LINEAR"] == ("LINEAR", None) and t["STEPPED"] == ("CONSTANT", None)
+    assert t["LINEAR"] == ("BEZIER", 'VECTOR') and t["STEPPED"] == ("CONSTANT", None)
     assert t["SPLINE"] == ("BEZIER", 'AUTO') and t["AUTO"] == ("BEZIER", 'AUTO_CLAMPED')
     assert t["STEPPED_NEXT"] == ("CONSTANT", None) and t["BREAK"] == (None, 'FREE') and t["UNIFY"] == (None, 'ALIGNED')
     for kind in [k for k, _i in graph_editor.TANGENT_BUTTONS] + [k for k, _i in graph_editor.HANDLE_BUTTONS]:
         assert kind in t and kind in time_keys.TANGENT_LABELS, kind
     tip = graph_keys.ALLSET_OT_set_tangent.description(bpy.context, types.SimpleNamespace(kind="LINEAR"))
-    assert tip.startswith("Linear tangents = Blender Linear"), tip
+    assert tip.startswith("Linear tangents = Blender Bezier + Vector"), tip
 
 
 def test_tangent_on_selected_keys_in_graph_editor():
@@ -74,9 +74,11 @@ def test_tangent_on_selected_keys_in_graph_editor():
     try:
         with bpy.context.temp_override(area=area, region=region):
             assert bpy.ops.allset.set_tangent(kind="LINEAR") == {'FINISHED'}
-            assert k(1).interpolation == 'LINEAR' and k(0).interpolation == 'BEZIER', "only the selected key"
+            assert k(1).handle_left_type == k(1).handle_right_type == 'VECTOR', "only the selected key"
+            assert k(0).handle_right_type == 'AUTO_CLAMPED'
+            bpy.ops.allset.set_tangent(kind="STEPPED")
             bpy.ops.allset.set_tangent(kind="BREAK")
-            assert k(1).handle_left_type == 'FREE' and k(1).interpolation == 'LINEAR', "Break keeps the interpolation"
+            assert k(1).handle_left_type == 'FREE' and k(1).interpolation == 'CONSTANT', "Break keeps the interpolation"
             k(0).select_control_point = True
             bpy.ops.allset.set_tangent(kind="FLAT")
             assert k(0).handle_left_type == 'ALIGNED' and abs(k(0).handle_right.y - k(0).co.y) < 1e-6

@@ -217,7 +217,8 @@ def test_default_tangents_apply_to_kit_keys():
         p.default_in_tangent = p.default_out_tangent = 'LINEAR'
         sc.frame_set(30)
         bpy.ops.allset.set_key(channels="TRANSLATE")
-        assert _tx(ob).keyframe_points[3].interpolation == 'LINEAR'
+        k3 = _tx(ob).keyframe_points[3]
+        assert k3.handle_left_type == k3.handle_right_type == 'VECTOR' and k3.interpolation == 'BEZIER'
     finally:
         p.default_in_tangent = p.default_out_tangent = 'AUTO'
 

@@ -205,7 +205,7 @@ def test_blender_insert_gets_the_default_tangents():
         assert len(fc.keyframe_points) == 2
         for f in (1, 10):
             kp = _key(fc, f)
-            assert kp.interpolation == 'LINEAR', (f, kp.interpolation)
+            assert kp.handle_left_type == kp.handle_right_type == 'VECTOR', (f, kp.handle_left_type)
     with _Tangents('FLAT', 'STEPPED'):
         ob = _object()
         gkm.remember_all_keys()
@@ -225,7 +225,7 @@ def test_blender_insert_on_an_existing_key_keeps_its_tangents():
     with _Tangents('FLAT', 'STEPPED'):
         _blender_insert(1)                               # same frame: Blender replaces the value only
         kp = _key(_curve(ob), 1)
-        assert kp.interpolation == 'LINEAR', kp.interpolation
+        assert kp.handle_left_type == 'VECTOR' and kp.interpolation == 'BEZIER', kp.interpolation
 
 
 def test_auto_tangents_leave_blender_keys_alone():
