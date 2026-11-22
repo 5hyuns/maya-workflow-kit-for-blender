@@ -57,6 +57,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   of the vertices and faces on the open border of a mesh, like Maya (#455).
 - Select > Convert Selection > To Edge Loop on a border edge selects the whole border, round its corners, like Maya
   (#456).
+- Skin > Bind Skin to Selected joints: a joint that isn't bound adds no reach to its parent, so the vertices next to an
+  unselected branch go to the nearest bound joints, like Maya (#459).
+- Skin > Copy Skin Weights onto a mesh skinned to a skeleton with other joint names replaces the destination's
+  weights instead of adding to them (#460).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
