@@ -10,8 +10,10 @@ length the deformer runs along. With y held between Low Bound and High Bound as 
   1 + Curve * sin(pi * u).
 - Squash stretches the length by s = 1 + Factor (Factor >= 0) or 1 / (1 - Factor) (Factor < 0): y moves by
   t * (s - 1), so the parts beyond the bounds move with the ends. The sides scale by
-  1 / (1 + 2 * Expand * (sqrt(s) - 1) * g), where g is a half ellipse over u that is 1 at Max Expand Pos and 0 at
-  the bounds. Its Envelope works between -1 and 1.
+  1 / (1 + 2 * Expand * (sqrt(s) - 1) * g), where g is 1 at Max Expand Pos and 0 at the bounds. With w = the
+  distance from Max Expand Pos towards a bound (0 to 1) and m = that side's Start / End Smoothness, g is
+  (1 - m) * (sqrt(R^2 - w^2) - e) / (R - e) + m * (1 + cos(pi * w)) / 2, R = 1 + m, e = sqrt(R^2 - 1): a half
+  ellipse at 0 that eases into the bound at 1. Its Envelope works between -1 and 1.
 - Sine moves X by Amplitude * k * sin(2 pi (t + Offset) / Wavelength); k = 1 - Dropoff * |t| / m for a positive
   Dropoff and 1 + Dropoff * (1 - |t| / m) for a negative one, m = the larger of High Bound and -Low Bound.
 - Wave moves Y by Amplitude * k * cos(2 pi (r - Min Radius + Offset) / Wavelength), r = the distance from the
@@ -30,13 +32,13 @@ import math
 import bpy
 
 VERSION_PROP = "allset_nonlinear_version"
-VERSION = 1
+VERSION = 2
 _BOUNDS = (("Low Bound", -1.0, None), ("High Bound", 1.0, None))
 # Maya node base -> (node group, [(input, default, subtype)])
 KINDS = {
     "twist": (".Allset Twist", (("Start Angle", 0.0, 'ANGLE'), ("End Angle", 0.0, 'ANGLE')) + _BOUNDS),
-    "squash": (".Allset Squash", (("Factor", 0.0, None), ("Expand", 1.0, None), ("Max Expand Pos", 0.5, None))
-               + _BOUNDS),
+    "squash": (".Allset Squash", (("Factor", 0.0, None), ("Expand", 1.0, None), ("Max Expand Pos", 0.5, None),
+                                    ("Start Smoothness", 0.0, None), ("End Smoothness", 0.0, None)) + _BOUNDS),
     "flare": (".Allset Flare", (("Start Flare X", 1.0, None), ("Start Flare Z", 1.0, None),
                                 ("End Flare X", 1.0, None), ("End Flare Z", 1.0, None), ("Curve", 0.0, None))
               + _BOUNDS),
@@ -48,7 +50,8 @@ KINDS = {
 }
 # Maya's limits of the attributes: (low, high), None = open
 LIMITS = {"Envelope": (-2.0, 2.0), "Low Bound": (None, 0.0), "High Bound": (0.0, None), "Expand": (0.0, None),
-          "Max Expand Pos": (0.01, 0.99), "Dropoff": (-1.0, 1.0), "Dropoff Position": (0.0, 1.0),
+          "Max Expand Pos": (0.01, 0.99), "Start Smoothness": (0.0, 1.0),
+          "End Smoothness": (0.0, 1.0), "Dropoff": (-1.0, 1.0), "Dropoff Position": (0.0, 1.0),
           "Min Radius": (0.0, None), "Max Radius": (0.0, None)}
 WAVELENGTH_MIN = {"sine": 0.001, "wave": 0.1}
 
@@ -87,6 +90,20 @@ def _flare(b, I, x, y, z):
     return b.math('MULTIPLY', x, sx), y, b.math('MULTIPLY', z, sz)
 
 
+def _squash_profile(b, I, up):
+    """The bulge over ``up``: 1 at 0.5, 0 at 0 and 1, rounded off towards each end by its smoothness."""
+    end = b.math('GREATER_THAN', up, 0.5)
+    m = _clamp(b, _lerp(b, I["Start Smoothness"], I["End Smoothness"], end), 0.0, 1.0)
+    w = b.math('MULTIPLY', b.math('ABSOLUTE', b.math('SUBTRACT', up, 0.5)), 2.0)
+    r = b.math('ADD', m, 1.0)
+    e = b.math('SQRT', b.math('MULTIPLY', m, b.math('ADD', m, 2.0)))
+    arc = b.math('SQRT', b.math('MAXIMUM', b.math('SUBTRACT', b.math('MULTIPLY', r, r), b.math('MULTIPLY', w, w)),
+                                0.0))
+    ellipse = b.math('DIVIDE', b.math('SUBTRACT', arc, e), b.math('SUBTRACT', r, e))
+    ease = b.math('MULTIPLY', b.math('ADD', b.math('COSINE', b.math('MULTIPLY', w, math.pi)), 1.0), 0.5)
+    return _lerp(b, ellipse, ease, m)
+
+
 def _squash(b, I, x, y, z):
     t, u = _along(b, I, y)
     f = I["Factor"]
@@ -95,8 +112,7 @@ def _squash(b, I, x, y, z):
     y2 = b.math('ADD', y, b.math('MULTIPLY', t, b.math('SUBTRACT', s, 1.0)))
     m = _clamp(b, I["Max Expand Pos"], 0.01, 0.99)
     up = b.math('POWER', u, b.math('LOGARITHM', 0.5, m))               # the widest point moves to Max Expand Pos
-    g = b.math('MULTIPLY', b.math('SQRT', b.math('MAXIMUM', b.math('MULTIPLY', up, b.math('SUBTRACT', 1.0, up)),
-                                                 0.0)), 2.0)
+    g = _squash_profile(b, I, up)
     k = b.math('MULTIPLY', b.math('MULTIPLY', b.math('MULTIPLY', I["Expand"], 2.0),
                                   b.math('SUBTRACT', b.math('SQRT', s), 1.0)), g)
     side = b.math('DIVIDE', 1.0, b.math('ADD', 1.0, k))

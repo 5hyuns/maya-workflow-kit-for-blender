@@ -119,6 +119,36 @@ def test_squash_stretches_between_the_bounds():
     _close(_result(ob)[20], (0.5, 1.5, 0.3), "Envelope works up to 1")
 
 
+def _bulge(w, m):
+    """The squash bulge at distance ``w`` (0 to 1) from the widest point, smoothness ``m``."""
+    r, e = 1.0 + m, math.sqrt(m * (m + 2.0))
+    return (1.0 - m) * (math.sqrt(r * r - w * w) - e) / (r - e) + m * (1.0 + math.cos(math.pi * w)) / 2.0
+
+
+def test_squash_smoothness_rounds_the_bulge_off():
+    """Issue #492: Start / End Smoothness (0 to 1) ease the bulge into the Low / High bound."""
+    k = 2.0 * (math.sqrt(1.5) - 1.0)
+    ob, md = _make("squash", factor=0.5, startSmoothness=0.3, endSmoothness=1.0)
+    out = _result(ob)
+    for p, q in zip(PTS[12:21], out[12:21]):                            # y from -1 to 1
+        y = p[1]
+        g = _bulge(abs(y), 0.3 if y < 0 else 1.0)
+        assert abs(q[0] / p[0] - 1.0 / (1.0 + k * g)) < 1e-4, (p, q, g)
+    y4 = PTS.index((0.5, 0.75, 0.3))
+    assert abs(out[y4][0] / 0.5 - 1.0 / (1.0 + k * (1 + math.cos(0.75 * math.pi)) / 2)) < 1e-4, "1: a cosine ease"
+    a = deformers.attr(md, "maya:endSmoothness")
+    a.set(md, 1.5)
+    assert a.get(md) == 1.0, "End Smoothness stays at 1 or below"
+    a.set(md, -1.0)
+    assert a.get(md) == 0.0, "End Smoothness stays at 0 or above"
+    names = [r.key for r in deformers.attrs(md)]
+    order = [names.index(n) for n in ("maxExpandPos", "startSmoothness", "endSmoothness", "lowBound")]
+    assert order == sorted(order), names
+    ob0, _md0 = _make("squash", factor=0.5)
+    plain = _result(ob0)
+    assert abs(plain[y4][0] / 0.5 - 1.0 / (1.0 + k * math.sqrt(1 - 0.75 ** 2))) < 1e-4, "0: half ellipse"
+
+
 def test_sine_moves_points_sideways():
     ob, md = _make("sine", amplitude=0.3)
     out = _result(ob)
