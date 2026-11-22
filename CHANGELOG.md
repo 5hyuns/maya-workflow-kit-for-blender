@@ -19,6 +19,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   slides across its neighbours instead of along itself (#429).
 
 ### Fixed
+- Shelf Editor: switching a button's Command Type to Python fills the Python field with that button's own command
+  (a menu item's operator, an operator with its properties, a tool or a menu) instead of the default Add Cube code,
+  so it can be edited from there, for example to add settings to the call (#441).
 - UV > Planar (and Planar Map X / Y / Z in the Shift+right-click Mapping menu): the X, Y and Z axis choices project
   along the scene's X, Y and Z axes, the axes the Channel Box and the manipulator show; Y and Z were swapped (#439).
 - UV > Planar fits the projection like Maya: the longer side spans 0-1 and the shorter side is centred in the UV

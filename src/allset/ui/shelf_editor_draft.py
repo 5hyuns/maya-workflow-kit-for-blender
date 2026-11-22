@@ -10,7 +10,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from . import marked_window, shelf
-from .shelf_editor_commands import _operator_props_to_body
+from .shelf_editor_commands import _operator_props_to_body, _parse_operator_props_body
 from .shelf_editor_document import _copy_document, _merge_documents, _write_document_atomic
 
 
@@ -19,6 +19,51 @@ KIND = "SHELF_EDITOR"
 _draft = None
 _draft_base = None
 _loading = False
+_form_kind = "PYTHON"      # the Command Type the form showed last (#441)
+
+DEFAULT_SCRIPT = "import bpy\n\nbpy.ops.mesh.primitive_cube_add()"
+
+
+def _op_call(idname, props):
+    mod, name = idname.split(".", 1)
+    args = ", ".join(f"{key}={value!r}" for key, value in props.items())
+    return f"bpy.ops.{mod}.{name}({args})"
+
+
+def python_for(wm, kind):
+    """Python that runs what the form's ``kind`` command runs, or None (#441: switching Command Type to Python
+    starts from the button's own command, not from an unrelated default)."""
+    head = "import bpy\n\n"
+    if kind == "MAYA_MENU_ITEM" and wm.allset_se_menu.strip():
+        from . import menu_map
+        path = wm.allset_se_menu.strip()
+        spec = menu_map.spec(path)
+        plain = (spec is not None and spec[0] == "op" and spec[1] != "allset.menu_item" and "." in spec[1]
+                 and path not in menu_map.EDIT_MODE and path not in menu_map.OBJECT_MODE)
+        # a plain operator item: its operator (settings can be added to the call); other items run as the menu does
+        return head + (_op_call(spec[1], spec[2]) if plain else f"bpy.ops.allset.menu_item(item={path!r})")
+    if kind == "OPERATOR" and "." in wm.allset_se_operator.strip():
+        try:
+            props = _parse_operator_props_body(wm.allset_se_props)
+        except ValueError:
+            props = {}
+        return head + _op_call(wm.allset_se_operator.strip(), props)
+    if kind == "TOOL" and wm.allset_se_action_id.strip():
+        return head + f"bpy.ops.wm.tool_set_by_id(name={wm.allset_se_action_id.strip()!r})"
+    if kind == "MENU" and wm.allset_se_action_id.strip():
+        return head + f"bpy.ops.wm.call_menu(name={wm.allset_se_action_id.strip()!r})"
+    return None
+
+
+def on_type_changed(wm, _context):
+    """Command Type switched to Python: fill the Python field with the command the form had."""
+    global _form_kind
+    previous, _form_kind = _form_kind, wm.allset_se_type
+    if _loading or wm.allset_se_type != "PYTHON" or previous == "PYTHON":
+        return
+    code = python_for(wm, previous)
+    if code:
+        wm.allset_se_script = code
 
 
 def _draft_shelves():
@@ -90,7 +135,7 @@ def _load_button(context, index):
     Reset every field first so values from a previously selected button can
     never leak into the next button's editor state.
     """
-    global _loading
+    global _loading, _form_kind
     wm = _wm(context)
     shelf_id = wm.allset_se_shelf
     buttons = _draft_buttons(shelf_id) or []
@@ -102,7 +147,7 @@ def _load_button(context, index):
         wm.allset_se_label = ""
         wm.allset_se_icon = "SCRIPT"
         wm.allset_se_type = "PYTHON"
-        wm.allset_se_script = "import bpy\n\nbpy.ops.mesh.primitive_cube_add()"
+        wm.allset_se_script = DEFAULT_SCRIPT
         wm.allset_se_menu = ""
         wm.allset_se_operator = "mesh.primitive_cube_add"
         wm.allset_se_props = ""
@@ -177,6 +222,7 @@ def _load_button(context, index):
             wm.allset_se_script = button.get("script", "")
     finally:
         _loading = False
+        _form_kind = wm.allset_se_type
 
 
 def _start_draft(context):

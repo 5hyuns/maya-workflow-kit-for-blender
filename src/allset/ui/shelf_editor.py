@@ -394,6 +394,7 @@ def register():
             ("SEPARATOR", "Separator", "Visual separator"),
         ),
         options={'SKIP_SAVE'},
+        update=shelf_editor_draft.on_type_changed,
     )
     wm.allset_se_script = StringProperty(name="Python", options={'SKIP_SAVE'})
     wm.allset_se_menu = StringProperty(name="Maya Menu Item", search=menu_search, options={'SKIP_SAVE'})
