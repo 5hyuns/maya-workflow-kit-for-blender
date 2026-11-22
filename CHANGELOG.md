@@ -64,6 +64,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Flow, like Maya: halfway along the ring it sits where Edit Edge Flow puts it, nearer an edge it eases towards the
   straight cut, and several loops at once are cut straight. Edit Edge Flow on a loop next to a border row no longer
   pushes that loop too far out (#491).
+- Deform > Nonlinear > Twist, Squash, Flare, Sine and Wave on a lattice or a NURBS surface deform it like on a mesh,
+  like Maya: the same shapes in the handle's space, following the handle, the node's attributes in the Channel Box
+  (keyable), Envelope and the node's weights. The shape is a shape key of the node's name, removed with the node
+  (#493).
 - Locked channels are no longer keyed by Key Selected, Key All Keyable, Breakdown and Set Key, like Maya (#476).
 - Renaming in the Channel Box, Status Line or Outliner cleans up the typed name like Maya (leading digits dropped,
   other characters turned into _, a trailing # numbered) instead of refusing it; a name like Cube_01 names its shape
