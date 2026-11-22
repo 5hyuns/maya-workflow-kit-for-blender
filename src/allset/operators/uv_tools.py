@@ -8,7 +8,8 @@
   (pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
   2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the UVs on the edge joined half-way.
 - Unfold = Blender Unwrap (Minimum Stretch) on the chosen shells with their borders kept as seams, each shell put back where
-  it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit.
+  it was; Layout = Average Islands Scale, then Pack Islands without turning, with the shell padding in pixels of the map;
+  Texel Density = px per Maya unit.
 
 Code: uv_islands (shells, UV selection), uv_components (UV component mode, UV Editor), uv_projection (Automatic,
 Contour Stretch, Cylindrical, Spherical); this module keeps the UV settings, Cut / Sew, Unfold / Layout, Texel Density and their operators,
@@ -236,8 +237,13 @@ def layout(context, ob, padding_px, map_size, fallback=True):
         return 0
     faces = [f for isl in shells for f in isl]
     margin = padding_px / max(map_size, 1)
-    _with_faces(context, ob, faces, lambda: bpy.ops.uv.pack_islands(
-        rotate=True, margin_method='FRACTION', margin=margin))
+
+    def run():
+        # like Maya Layout: the shells first scaled to their 3D size ratio (one texel density), then packed as
+        # they are turned
+        bpy.ops.uv.average_islands_scale()
+        return bpy.ops.uv.pack_islands(rotate=False, margin_method='FRACTION', margin=margin)
+    _with_faces(context, ob, faces, run)
     return len(shells)
 
 
