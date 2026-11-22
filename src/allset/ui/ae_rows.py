@@ -307,10 +307,11 @@ def draw_history(layout, context, ob, md):
     if body is not None:
         col = section_body(body)
         col.prop(md, "show_viewport", text="Enabled (Node State)")
-        from ..operators import bend_deformer, deformers_205a, deformers_205b, sweep_mesh
-        # Tension / Solidify / Sculpt, Morph / Jiggle, a mesh's bend and sweepMeshCreator draw their Maya attributes
+        from ..operators import bend_deformer, deformers_205a, deformers_205b, nonlinear_nodes, sweep_mesh
+        # Tension / Solidify / Sculpt, Morph / Jiggle, a mesh's nonlinears and sweepMeshCreator draw their Maya
+        # attributes
         drawn = (deformers_205a.draw_ae(col, md) or deformers_205b.draw_ae(col, md) or bend_deformer.draw_ae(col, md)
-                 or sweep_mesh.draw_ae(col, md))
+                 or nonlinear_nodes.draw_ae(col, md) or sweep_mesh.draw_ae(col, md))
         if md.type == 'ARMATURE' and hasattr(ob, "allset_skinning_method"):
             col.prop(ob, "allset_skinning_method")       # Maya skinCluster Skinning Method
         for ident in ([] if drawn else modifier_props(md)):

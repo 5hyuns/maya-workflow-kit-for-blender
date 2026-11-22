@@ -55,9 +55,10 @@ def _nonlinear_handles(scene):
     from .history import NONLINEARS
     used = {getattr(md, "origin", None) or getattr(md, "start_position_object", None) or getattr(md, "object", None)
             for o in scene.objects for md in getattr(o, "modifiers", ()) if md.type in NONLINEARS}
-    from . import bend_deformer
-    used |= {bend_deformer.handle_of(md) for o in scene.objects for md in getattr(o, "modifiers", ())
-             if bend_deformer.is_bend(md)}                                      # a mesh's bend: nodes
+    from . import bend_deformer, nonlinear_nodes
+    used |= {bend_deformer.handle_of(md) or nonlinear_nodes.handle_of(md) for o in scene.objects
+             for md in getattr(o, "modifiers", ())
+             if bend_deformer.is_bend(md) or nonlinear_nodes.is_nonlinear(md)}  # a mesh's nonlinear: nodes
     return [ob for ob in scene.objects if ob in used]
 
 

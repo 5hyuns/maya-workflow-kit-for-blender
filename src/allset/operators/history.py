@@ -309,10 +309,11 @@ def delete_by_type(context, kind, objects):
             bpy.data.objects.remove(ob)
             n += 1
     elif kind in _REMOVE_MODIFIERS:
-        from . import bend_deformer
+        from . import bend_deformer, nonlinear_nodes
         for ob in objects:
             for md in [m for m in ob.modifiers if m.type in _REMOVE_MODIFIERS[kind]
-                       or (kind == 'NONLINEARS' and bend_deformer.is_bend(m))]:     # a mesh's bend: nodes
+                       or (kind == 'NONLINEARS' and (bend_deformer.is_bend(m)          # a mesh's nonlinear: nodes
+                                                     or nonlinear_nodes.is_nonlinear(m)))]:
                 ob.modifiers.remove(md)
                 n += 1
     elif kind == 'CHANNELS':

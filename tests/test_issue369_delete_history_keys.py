@@ -63,13 +63,21 @@ def _squash(*meshes, own_key=True):
     assert handle.name == "squash1Handle", handle.name
     for ob in meshes:
         md = ob.modifiers["squash1"]
+        a = deformers.attr(md, "maya:factor")
         for frame, value in ((5, 0.0), (20, 1.0)):
-            md.factor = value
-            md.keyframe_insert("factor", frame=frame, group="squash1")
+            a.set(md, value)
+            ob.keyframe_insert(_factor_path(), frame=frame, group="squash1")
     if own_key:
         meshes[0].keyframe_insert("location", index=0, frame=12)
     bpy.context.scene.frame_set(1)
     return handle
+
+
+def _factor_path():
+    """The data path, on the mesh, of the squash's Factor (an input of its node)."""
+    md = next(o.modifiers["squash1"] for o in bpy.data.objects if "squash1" in getattr(o, "modifiers", ()))
+    p = deformers.attr(md, "maya:factor").paths[0][0]
+    return 'modifiers["squash1"]' + (p if p.startswith("[") else "." + p)
 
 
 def _paths(ob):
@@ -123,7 +131,7 @@ def test_delete_history_with_the_handle_selected_changes_nothing():
     _select(handle)
     bpy.ops.allset.delete_history()
     assert "squash1" in cube.modifiers and "squash1Handle" in bpy.data.objects
-    assert 'modifiers["squash1"].factor' in _paths(cube)
+    assert _factor_path() in _paths(cube)
     bpy.context.scene.frame_set(5)
     assert np.abs(_points(cube) - before).max() > 0.1, "still animated"
 
@@ -137,7 +145,7 @@ def test_handle_used_by_another_mesh_stays():
     bpy.ops.allset.delete_history()
     assert "squash1" not in a.modifiers and not compat.id_fcurves(a)
     assert "squash1Handle" in bpy.data.objects, "pCube2 still uses the handle"
-    assert 'modifiers["squash1"].factor' in _paths(b), "pCube2 keeps its keys"
+    assert _factor_path() in _paths(b), "pCube2 keeps its keys"
     _select(b)
     bpy.ops.allset.delete_history()
     assert "squash1Handle" not in bpy.data.objects
@@ -150,7 +158,7 @@ def test_non_deformer_history_keeps_the_keyed_deformer():
     _select(cube)
     bpy.ops.allset.delete_history(non_deformer=True)
     assert "squash1" in cube.modifiers and "squash1Handle" in bpy.data.objects
-    assert 'modifiers["squash1"].factor' in _paths(cube)
+    assert _factor_path() in _paths(cube)
 
 
 def test_time_slider_does_not_show_the_deformer_keys_with_mesh_or_handle():
@@ -161,7 +169,7 @@ def test_time_slider_does_not_show_the_deformer_keys_with_mesh_or_handle():
     assert _ticks(handle) == [], _ticks(handle)
     assert _ticks(cube, handle) == [12]
     # the deformer's curves are still there for the Graph Editor / Dope Sheet
-    assert 'modifiers["squash1"].factor' in _paths(cube)
+    assert _factor_path() in _paths(cube)
 
 
 def _jump(nxt):
@@ -197,7 +205,7 @@ def test_time_slider_edits_leave_the_deformer_keys():
     _select(cube)
     bpy.context.scene.frame_set(5)
     bpy.ops.allset.time_keys(action="DELETE")
-    fc = next(f for f in compat.id_fcurves(cube) if f.data_path == 'modifiers["squash1"].factor')
+    fc = next(f for f in compat.id_fcurves(cube) if f.data_path == _factor_path())
     assert [round(k.co.x) for k in fc.keyframe_points] == [5, 20], "the factor key at 5 stays"
     bpy.context.scene.frame_set(12)
     bpy.ops.allset.time_keys(action="DELETE")

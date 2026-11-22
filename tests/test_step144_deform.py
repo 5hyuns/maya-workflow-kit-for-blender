@@ -295,9 +295,8 @@ def test_nonlinear_names_handles_selection_inputs():
     _clear()
     bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=4, location=(1, 0, 2))
     cyl = bpy.context.active_object
-    for kind, base, mtype in (('BEND', "bend", 'NODES'), ('TWIST', "twist", 'SIMPLE_DEFORM'),
-                              ('SQUASH', "squash", 'SIMPLE_DEFORM'), ('FLARE', "flare", 'SIMPLE_DEFORM'),
-                              ('SINE', "sine", 'WAVE'), ('WAVE', "wave", 'WAVE')):
+    for kind, base, mtype in (('BEND', "bend", 'NODES'), ('TWIST', "twist", 'NODES'), ('SQUASH', "squash", 'NODES'),
+                              ('FLARE', "flare", 'NODES'), ('SINE', "sine", 'NODES'), ('WAVE', "wave", 'NODES')):
         _select(cyl)
         assert bpy.ops.allset.deformer(kind=kind) == {'FINISHED'}, kind
         h = bpy.data.objects[f"{base}1Handle"]
@@ -316,13 +315,14 @@ def test_nonlinear_names_handles_selection_inputs():
             bd.get(bend, "Envelope")) == (0.0, -1.0, 1.0, 1.0)
     assert _rows(cyl, bend) == [("Envelope", "1"), ("Curvature", "0"), ("Low Bound", "-1"), ("High Bound", "1")], \
         _rows(cyl, bend)
-    assert _rows(cyl, cyl.modifiers["squash1"])[0] == ("Factor", "0")
-    assert _rows(cyl, cyl.modifiers["flare1"])[0] == ("End Flare X", "1")
-    assert _rows(cyl, cyl.modifiers["twist1"])[0][0] == "End Angle"
+    assert _rows(cyl, cyl.modifiers["squash1"])[:2] == [("Envelope", "1"), ("Factor", "0")]
+    assert _rows(cyl, cyl.modifiers["flare1"])[1] == ("Start Flare X", "1")
+    assert [r[0] for r in _rows(cyl, cyl.modifiers["twist1"])] == ["Envelope", "Start Angle", "End Angle", "Low Bound",
+                                                                   "High Bound"]
     sine, wave = cyl.modifiers["sine1"], cyl.modifiers["wave1"]
-    assert sine.use_x and not sine.use_y and sine.speed == 0.0 and sine.height == 0.0
-    assert abs(sine.width - 4.0) < 1e-5                                           # wavelength 2 × handle 2
-    assert wave.use_x and wave.use_y and abs(wave.width - 2.0) < 1e-5 and abs(wave.falloff_radius - 2.0) < 1e-5
+    # Maya's values in the handle's space
+    assert [r for r in _rows(cyl, sine)][1:3] == [("Amplitude", "0"), ("Wavelength", "2")], _rows(cyl, sine)
+    assert dict(_rows(cyl, wave))["Max Radius"] == "1" and dict(_rows(cyl, wave))["Wavelength"] == "1"
     # an INPUTS row writes the Maya value back: Low Bound -0.5
     _rows(cyl, bend)
     row = next(r for r in bpy.context.scene.allset_cb.rows if r.kind == "INPUT" and r.mod_type == 'NODES'
@@ -336,7 +336,8 @@ def test_nonlinear_window_values():
     bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=4, location=(0, 0, 2))
     cyl = bpy.context.active_object
     _run("deform_twist", end_angle=90.0)
-    assert abs(cyl.modifiers["twist1"].angle - math.radians(90.0)) < 1e-6
+    tw = cyl.modifiers["twist1"]
+    assert abs(deformers.attr(tw, "maya:endAngle").get(tw) - math.radians(90.0)) < 1e-6
     _select(cyl)
     _run("deform_bend", curvature=90.0, low=0.0)             # degrees, like Maya
     md = cyl.modifiers["bend1"]
@@ -344,7 +345,8 @@ def test_nonlinear_window_values():
     assert abs(bd.get(md, "Curvature") - math.pi / 2) < 1e-6 and bd.get(md, "Low Bound") == 0.0
     _select(cyl)
     _run("deform_flare", end_flare=1.5)
-    assert abs(cyl.modifiers["flare1"].factor - 0.5) < 1e-6
+    fl = cyl.modifiers["flare1"]
+    assert abs(deformers.attr(fl, "maya:endFlareX").get(fl) - 1.5) < 1e-6
 
 
 # --- Wrap / Proximity Wrap / ShrinkWrap / Texture / Curve Warp -----------------------------------------------
