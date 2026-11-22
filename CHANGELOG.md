@@ -19,6 +19,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   slides across its neighbours instead of along itself (#429).
 
 ### Fixed
+- Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
+  border, so a box along a row of faces picks the edges along the row without the ones across it having to be
+  wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
+  X-ray off, only edges seen in front count (#438).
 - Shelf Editor: switching a button's Command Type to Python fills the Python field with that button's own command
   (a menu item's operator, an operator with its properties, a tool or a menu) instead of the default Add Cube code,
   so it can be edited from there, for example to add settings to the call (#441).
