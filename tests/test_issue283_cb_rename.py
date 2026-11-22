@@ -28,7 +28,7 @@ def test_rename_lead_like_maya():
     assert cb.rename_lead(a, "box1") == "box2"            # taken: the lowest free number
     assert a.data.name == "boxShape2"
     assert cb.rename_lead(a, "my box") == "my_box"         # spaces -> "_"
-    assert cb.rename_lead(a, "1box") is None and a.name == "my_box"   # Maya's rule: no leading digit
+    assert cb.rename_lead(a, "1") is None and a.name == "my_box"      # no character a name can use
     assert cb.rename_lead(a, "my_box") is None             # unchanged
 
 

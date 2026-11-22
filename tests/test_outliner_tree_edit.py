@@ -80,7 +80,9 @@ def test_rename_rows_with_maya_names():
     assert edit.rename(('OBJECT', "pCube1", ""), "box") == "box"
     assert cube.name == "box" and cube.data.name == "boxShape", (cube.name, cube.data.name)
     assert edit.rename(('OBJECT', "box", ""), "my box") == "my_box", "spaces become _ (Maya)"
-    assert edit.rename(('OBJECT', "my_box", ""), "1bad") is None and cube.name == "my_box"
+    assert edit.rename(('OBJECT', "my_box", ""), "1") is None and cube.name == "my_box"
+    assert edit.rename(('JOINT', sk.name, names[1]), "2-arm") == "arm", "leading digit dropped, - -> _ (Maya)"
+    assert edit.rename(('JOINT', sk.name, "arm"), names[1]) == names[1]
     tree.EXPANDED.add(('B', sk.session_uid, names[1]))
     assert edit.rename(('JOINT', sk.name, names[1]), "spine") == "spine"
     assert "spine" in sk.data.bones and ('B', sk.session_uid, "spine") in tree.EXPANDED, \

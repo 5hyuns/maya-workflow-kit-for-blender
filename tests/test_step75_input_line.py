@@ -108,7 +108,8 @@ def test_edit_mode_move_components():
 
 def test_rename_rules():
     assert il.clean_name(" my box ") == "my_box"
-    assert il.clean_name("1box") is None and il.clean_name("bad-name") is None
+    assert il.clean_name("1box") == "box" and il.clean_name("bad-name") == "bad_name"
+    assert il.clean_name("1") is None and il.clean_name("#") is None
     assert il.rename_plan("box", ["a", "b", "c"], {"box1"}) == ["box", "box2", "box3"]
     assert il.rename_plan("box", ["a"], {"box"}) == ["box1"]
     assert il.shape_name("box") == "boxShape" and il.shape_name("box12") == "boxShape12"
@@ -127,9 +128,9 @@ def test_rename_selection_and_field_shows_lead():
     assert b.name == "crate" and a.name == "crate1"
     assert b.data.name == "crateShape" and a.data.name == "crateShape1"
     assert inp.text == "crate"
-    inp.text = "2bad"                             # invalid: nothing renamed
+    inp.text = "2"                                # nothing usable: nothing renamed
     assert b.name == "crate"
-    assert "not a valid name" in notices.current()
+    assert "has no characters a name can use" in notices.current()
 
 
 def test_select_by_name_wildcards():

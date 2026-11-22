@@ -61,9 +61,12 @@ def rename(row, text):
         return rename_lead(target, text)
     name = input_line.clean_name(text)
     if name is None:
-        input_line._say(f"Rename: \"{text.strip()}\" is not a valid name (letters, digits and _, "
-                        "not starting with a digit).")
+        input_line._say(input_line.BAD_NAME.format(text.strip()))
         return None
+    taken = {o.name for o in bpy.data.objects}
+    if kind == 'JOINT':
+        taken |= {b.name for b in bpy.data.objects[row[1]].data.bones}
+    name = input_line.number_hash(name, taken - {target.name})
     if name == target.name:
         return None
     old = target.name

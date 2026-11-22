@@ -320,9 +320,13 @@ def rename_lead(ob, text):
     from . import input_line
     name = input_line.clean_name(text)
     if name is None:
-        input_line._say(f"Rename: \"{text.strip()}\" is not a valid name (letters, digits and _, "
-                        "not starting with a digit).")
+        input_line._say(input_line.BAD_NAME.format(text.strip()))
         return None
+    if is_bone(ob):
+        name = input_line.number_hash(name, {b.name for b in ob.id_data.data.bones if b.name != ob.name}
+                                      | {o.name for o in bpy.data.objects})
+    else:
+        name = input_line.number_hash(name, {o.name for o in bpy.data.objects if o != ob})
     if name == ob.name:
         return None
     if is_bone(ob):
