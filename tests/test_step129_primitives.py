@@ -188,7 +188,7 @@ def test_nurbs_circle_inputs_rebuild():
     ob = _make('NURBS_CIRCLE')
     props = bpy.context.scene.allset_creation
     assert props.radius_text == "1" and props.sections_text == "8" and props.degree_text == "Cubic"
-    assert props.normalY_text == "1" and props.sweep_text == "360", (props.normalY_text, props.sweep_text)
+    assert props.normalZ_text == "1" and props.sweep_text == "360", (props.normalZ_text, props.sweep_text)
     props.radius_text = "2"
     pts = ob.data.splines[0].points
     assert abs(pts[0].co.to_3d().length - 2 * 1.108194) < 1e-4

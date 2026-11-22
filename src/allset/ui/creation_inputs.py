@@ -67,7 +67,7 @@ def _text_get(name):
         owner, node = prim_history.node_of(_lead(context))
         if node is None or name not in prim_history.attrs(owner):
             return ""
-        return format_attr(node, name, prim_history.attrs(owner)[name], context.scene)
+        return format_attr(node, name, prim_history.shown_attrs(owner)[name], context.scene)
     return get
 
 

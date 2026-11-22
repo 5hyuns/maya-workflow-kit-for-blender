@@ -85,6 +85,39 @@ def attrs(owner):
     return out
 
 
+# The node keeps Axis / Pivot / Normal / Center in the Y-up frame its shapes are built in (Y up). The Channel Box
+# and the Attribute Editor show them on the scene's axes, like the Create option windows (#454): shown name ->
+# (stored name, sign); shown (x, y, z) = stored (x, -z, y) (scene_axes.from_yup).
+SCENE_VIEW = {f"{base}{shown}": (f"{base}{stored}", sign)
+              for base in ("axis", "pivot", "normal", "center")
+              for shown, stored, sign in (("Y", "Z", -1.0), ("Z", "Y", 1.0))}
+
+
+def to_scene(values):
+    """Node values (Y-up) -> the values the Channel Box / Attribute Editor show."""
+    out = dict(values)
+    for shown, (stored, sign) in SCENE_VIEW.items():
+        if stored in values:
+            out[shown] = sign * values[stored] + 0.0       # + 0.0: no -0
+    return out
+
+
+def from_scene(changes):
+    """Changes typed on the shown (scene axis) attributes -> node attribute changes."""
+    out = {}
+    for name, v in changes.items():
+        if name in SCENE_VIEW:
+            stored, sign = SCENE_VIEW[name]
+            out[stored] = sign * v + 0.0
+        else:
+            out[name] = v
+    return out
+
+
+def shown_attrs(owner):
+    return to_scene(attrs(owner))
+
+
 def uvs_on(values, extra):
     """Whether the shape gets UVs: the node's own Create UVs (polyCylinder), else the stored create option."""
     if "createUVs" in values:

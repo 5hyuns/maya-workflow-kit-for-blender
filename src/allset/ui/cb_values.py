@@ -179,7 +179,7 @@ def _history_get(ob, key):
     from ..operators import prim_history
     owner, node = history_node_of(ob, key)
     name = key[len(HISTORY_PREFIX):]
-    return prim_history.to_entry(node, name, prim_history.attrs(owner)[name])
+    return prim_history.to_entry(node, name, prim_history.shown_attrs(owner)[name])
 
 
 def _history_set(ob, key, value):
@@ -190,8 +190,8 @@ def _history_set(ob, key, value):
     if prim_history.entry_kind(node["type"], name) == "INT":
         value = math.floor(value + 0.5)      # a drag / slider gives floats: integer attributes step
     value = prim_shapes.clamp(node["type"], name, value)
-    if value != prim_history.attrs(owner)[name]:
-        prim_history.rebuild(bpy.context, ob, {name: value})
+    if value != prim_history.shown_attrs(owner)[name]:
+        prim_history.rebuild(bpy.context, ob, prim_history.from_scene({name: value}))
 
 
 def curve_owner(ob, key):
