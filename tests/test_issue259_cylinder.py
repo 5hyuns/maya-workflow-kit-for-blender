@@ -41,7 +41,8 @@ def test_height_baseline():
     assert _range(_cyl(subdivisionsCaps=1, heightBaseline=-1.0)) == (0.0, 4.0)
     assert _range(_cyl(subdivisionsCaps=1, heightBaseline=1.0)) == (-4.0, 0.0)
     assert _range(_cyl(subdivisionsCaps=1, heightBaseline=0.5)) == (-3.0, 1.0)
-    assert _range(_cyl(subdivisionsCaps=0, heightBaseline=2.0)) == (-6.0, -2.0)
+    assert _range(_cyl(subdivisionsCaps=0, heightBaseline=0.5)) == (-3.0, 1.0)
+    assert _range(_cyl(subdivisionsCaps=0, heightBaseline=2.0)) == (-4.0, 0.0), "Height Baseline stops at 1"
 
 
 def test_round_cap_height_compensation():

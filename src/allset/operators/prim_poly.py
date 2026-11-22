@@ -119,7 +119,8 @@ def poly_cube(a):
                      if abs(abs(p[k]) - half) < 1e-7 and abs(abs(q[k]) - half) < 1e-7 and p[k] * q[k] > 0)
             if on >= 2:
                 hard.add(frozenset((f[i], f[i - 1])))
-    return Mesh(_orient(verts, a), faces, uvs, hard, _cube_edges(index, w, h, d, sx, sy, sz))
+    return Mesh(_orient(_shifted(verts, _baseline(a, h / 2)), a), faces, uvs, hard,
+                _cube_edges(index, w, h, d, sx, sy, sz))
 
 
 def _cube_edges(index, w, h, d, sx, sy, sz):
@@ -165,7 +166,7 @@ def poly_sphere(a):
         j = (i + 1) % sx
         faces.append([last + i, last + j, top])
         uvs.append([(i / sx, (sy - 1) / sy), ((i + 1) / sx, (sy - 1) / sy), ((i + 0.5) / sx, 1.0)])
-    return Mesh(_orient(verts, a), faces, uvs, _soft_by_angle(verts, faces))
+    return Mesh(_orient(_shifted(verts, _baseline(a, r)), a), faces, uvs, _soft_by_angle(verts, faces))
 
 
 def _cap(verts, faces, uvs, rim, centre_y, sc, r, top, uv_c, uv_r, dome=0.0, centre_dv=0.0):
@@ -231,6 +232,11 @@ def cylinder_heights(a):
     if dome and a.get("roundCapHeightCompensation"):
         h = max(h - 2.0 * dome, 0.0)
     return h, -a.get("heightBaseline", 0.0) * (h + 2.0 * dome) / 2.0
+
+
+def _baseline(a, half):
+    """Height Baseline shift along the build axis: -baseline x ``half`` (half the shape's extent on that axis)."""
+    return -a.get("heightBaseline", 0.0) * half
 
 
 def _shifted(verts, dy):
@@ -376,7 +382,7 @@ def poly_cone(a):
         uvs.append([side_uv(i, sy - 1), side_uv(i + 1, sy - 1), (0.5, 1.0)])
     hard = set() if dome else {frozenset((i, (i + 1) % sx)) for i in range(sx)}
     hard |= {frozenset((last + i, apex)) for i in range(sx)}   # Maya keeps the apex edges hard
-    return Mesh(_orient(verts, a), faces, uvs, hard)
+    return Mesh(_orient(_shifted(verts, _baseline(a, h / 2)), a), faces, uvs, hard)
 
 
 def poly_torus(a):
@@ -394,7 +400,7 @@ def poly_torus(a):
             faces.append([j * sx + k, j * sx + i, jn * sx + i, jn * sx + k])
             uvs.append([((i + 1) / sx, 1 - j / sy), (i / sx, 1 - j / sy), (i / sx, 1 - (j + 1) / sy),
                         ((i + 1) / sx, 1 - (j + 1) / sy)])
-    return Mesh(_orient(verts, a), faces, uvs, _soft_by_angle(verts, faces))
+    return Mesh(_orient(_shifted(verts, _baseline(a, sr)), a), faces, uvs, _soft_by_angle(verts, faces))
 
 
 def poly_plane(a):
@@ -409,6 +415,9 @@ def poly_plane(a):
             faces.append([v0, v0 + 1, v0 + sx + 2, v0 + sx + 1])
             uvs.append([(su * i / sx, sv * j / sy), (su * (i + 1) / sx, sv * j / sy),
                         (su * (i + 1) / sx, sv * (j + 1) / sy), (su * i / sx, sv * (j + 1) / sy)])
+    dz = -_baseline(a, h / 2)   # the plane's Height runs along Z: -1 puts its -Z edge on the origin
+    if dz:
+        verts = [(x, y, z + dz) for x, y, z in verts]
     return Mesh(_orient(verts, a), faces, uvs, ())
 
 

@@ -41,22 +41,30 @@ NORMAL = [_a("normalX", "Normal X", 0.0, "float"), _a("normalY", "Normal Y", 1.0
 CENTER = [_a("centerX", "Center X", 0.0, "length"), _a("centerY", "Center Y", 0.0, "length"),
           _a("centerZ", "Center Z", 0.0, "length")]
 DEGREE = ("enum", ("Linear", "Cubic"))   # Maya degree 1 / 3 (stored as 1 / 3)
-# Create UVs (polyCylinder): 0 = no UVs; the kit lays out every other choice like the Create menu
-# (Normalize and Preserve Aspect Ratio)
+# Create UVs: 0 = no UVs; the kit lays out every other choice like the Create menu does (each node's default).
+# polyCylinder / polyCone choices; polyCube, polySphere and polyPlane have their own, polyTorus has an on / off.
 CREATE_UVS = ("None", "Normalization Off", "Normalize", "Normalize and Preserve Aspect Ratio")
+CREATE_UVS_CUBE = ("None", "Normalization Off", "Normalize Each Face Separately", "Normalize Collectively",
+                   "Normalize Collectively and Preserve Aspect Ratio")
+CREATE_UVS_SPHERE = ("None", "Pinched at pole", "Sawtooth at pole")
+CREATE_UVS_PLANE = ("None", "Normalization Off", "Normalize and Preserve Aspect Ratio")
+# Height Baseline: -1 puts the bottom on the origin, 1 the top (moves the shape along its axis)
+BASELINE = _a("heightBaseline", "Height Baseline", 0.0, "float", -1.0, 1.0)
 SWEEPS = [_a("startSweep", "Start Sweep", 0.0, "angle", 0.0, 360.0), _a("endSweep", "End Sweep", 360.0, "angle", 0.0, 360.0)]
 
 # Defaults = what the Create menu builds with default option boxes; where
 # that differs from the bare command (polyCylinder subdivisionsCaps 0 -> menu 1) the menu wins.
 NODES = {
-    "polyCube": [*AXIS, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),
+    "polyCube": [*AXIS, BASELINE, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),
                  _a("depth", "Depth", 1.0, "length", 0.0), _a("subdivisionsWidth", "Subdivisions Width", 1, "int", 1),
                  _a("subdivisionsHeight", "Subdivisions Height", 1, "int", 1),
-                 _a("subdivisionsDepth", "Subdivisions Depth", 1, "int", 1)],
-    "polySphere": [*AXIS, _a("radius", "Radius", 1.0, "length", 0.0),
+                 _a("subdivisionsDepth", "Subdivisions Depth", 1, "int", 1),
+                 _a("createUVs", "Create UVs", 4, ("enum", CREATE_UVS_CUBE))],
+    "polySphere": [*AXIS, BASELINE, _a("radius", "Radius", 1.0, "length", 0.0),
                    _a("subdivisionsAxis", "Subdivisions Axis", 20, "int", 3),
-                   _a("subdivisionsHeight", "Subdivisions Height", 20, "int", 2)],
-    "polyCylinder": [*AXIS, _a("heightBaseline", "Height Baseline", 0.0, "float"),
+                   _a("subdivisionsHeight", "Subdivisions Height", 20, "int", 2),
+                   _a("createUVs", "Create UVs", 2, ("enum", CREATE_UVS_SPHERE))],
+    "polyCylinder": [*AXIS, BASELINE,
                      _a("radius", "Radius", 1.0, "length", 0.0), _a("height", "Height", 2.0, "length", 0.0),
                      _a("subdivisionsAxis", "Subdivisions Axis", 20, "int", 3),
                      _a("subdivisionsHeight", "Subdivisions Height", 1, "int", 1),
@@ -64,17 +72,20 @@ NODES = {
                      _a("createUVs", "Create UVs", 3, ("enum", CREATE_UVS)),
                      _a("roundCap", "Round Cap", False, "bool"),
                      _a("roundCapHeightCompensation", "Round Cap Height Compensation", False, "bool")],
-    "polyCone": [*AXIS, _a("radius", "Radius", 1.0, "length", 0.0), _a("height", "Height", 2.0, "length", 0.0),
+    "polyCone": [*AXIS, BASELINE, _a("radius", "Radius", 1.0, "length", 0.0), _a("height", "Height", 2.0, "length", 0.0),
                  _a("subdivisionsAxis", "Subdivisions Axis", 20, "int", 3),
                  _a("subdivisionsHeight", "Subdivisions Height", 1, "int", 1),
-                 _a("subdivisionsCap", "Subdivisions Cap", 0, "int", 0), _a("roundCap", "Round Cap", False, "bool")],
-    "polyTorus": [*AXIS, _a("radius", "Radius", 1.0, "length", 0.0),
+                 _a("subdivisionsCap", "Subdivisions Cap", 0, "int", 0),
+                 _a("createUVs", "Create UVs", 3, ("enum", CREATE_UVS)), _a("roundCap", "Round Cap", False, "bool")],
+    "polyTorus": [*AXIS, BASELINE, _a("radius", "Radius", 1.0, "length", 0.0),
                   _a("sectionRadius", "Section Radius", 0.5, "length", 0.0), _a("twist", "Twist", 0.0, "angle"),
                   _a("subdivisionsAxis", "Subdivisions Axis", 20, "int", 3),
-                  _a("subdivisionsHeight", "Subdivisions Height", 20, "int", 3)],
-    "polyPlane": [*AXIS, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),
+                  _a("subdivisionsHeight", "Subdivisions Height", 20, "int", 3),
+                  _a("createUVs", "Create UVs", True, "bool")],
+    "polyPlane": [*AXIS, BASELINE, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),
                   _a("subdivisionsWidth", "Subdivisions Width", 10, "int", 1),
-                  _a("subdivisionsHeight", "Subdivisions Height", 10, "int", 1)],
+                  _a("subdivisionsHeight", "Subdivisions Height", 10, "int", 1),
+                  _a("createUVs", "Create UVs", 2, ("enum", CREATE_UVS_PLANE))],
     "polyDisc": [_a("sides", "Sides", 3, "int", 3),
                  _a("subdivisionMode", "Subdivision Mode", 4, ("enum", ("Quads", "Triangles", "Pie", "Caps", "Circle"))),
                  _a("subdivisions", "Subdivisions", 3, "int", 0), _a("radius", "Radius", 1.0, "length", 0.0)],

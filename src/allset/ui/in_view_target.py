@@ -32,9 +32,11 @@ def _redraw(context):
 
 def creation_rows(node_type):
     """The In-View Editor rows of a creation node: its Channel Box values without the axis / pivot / normal /
-    centre ones and the choice lists (polyCube: Width, Height, Depth, Subdivisions Width / Height / Depth)."""
+    centre ones and the choice lists (polyCube: Width, Height, Depth, Subdivisions Width / Height / Depth).
+    Height Baseline shows here for the Cylinder only."""
     return tuple(n for n in creation_inputs.node_rows(node_type)
-                 if n not in creation_inputs.AXIS_ATTRS and prim_history.entry_kind(node_type, n) != "ENUM")
+                 if n not in creation_inputs.AXIS_ATTRS and prim_history.entry_kind(node_type, n) != "ENUM"
+                 and (n != "heightBaseline" or node_type == "polyCylinder"))
 
 
 class _CreationSpec:
