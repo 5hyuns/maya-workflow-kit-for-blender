@@ -439,8 +439,8 @@ MAP = {
     "UV/Normal-Based": "allset.uv_planar",
     "UV/Automatic": "allset.uv_automatic",      # Maya polyAutoProjection
     "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
-    "UV/Cylindrical": ("v3d", "uv.cylinder_project", {}),
-    "UV/Spherical": ("v3d", "uv.sphere_project", {}),
+    "UV/Cylindrical": "allset.uv_cylindrical",     # on the selection's centre, around the up axis (#442)
+    "UV/Spherical": "allset.uv_spherical",
     "UV/Cut UV Edges": "allset.uv_cut",          # seam + shells apart in place
     "UV/Sew UV Edges": "allset.uv_sew",
     "UV/3D Cut and Sew UV Tool": "allset.cut_sew_tool_set",   # seam cleared + the smaller shell moved onto the edge

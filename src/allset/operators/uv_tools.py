@@ -11,7 +11,7 @@
   it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit.
 
 Code: uv_islands (shells, UV selection), uv_components (UV component mode, UV Editor), uv_projection (Automatic,
-Contour Stretch); this module keeps the UV settings, Cut / Sew, Unfold / Layout, Texel Density and their operators,
+Contour Stretch, Cylindrical, Spherical); this module keeps the UV settings, Cut / Sew, Unfold / Layout, Texel Density and their operators,
 the classes tuple and re-exports.
 """
 
@@ -33,7 +33,8 @@ from .uv_components import (COMPONENTS, UV_SELECT_MODES, _MESH_SELECTION, _UV_MO
                             forget_uv_mode, in_uv_mode, leave_uv_mode, mesh_selection_wanted, prepare,
                             remember_mesh_selection, set_component)
 from .uv_projection import (AUTOPROJ, PLANE_ITEMS, ALLSET_OT_uv_automatic,  # noqa: F401
-                            ALLSET_OT_uv_automatic_edit, ALLSET_OT_uv_contour, auto_planes, auto_project, fit_unit,
+                            ALLSET_OT_uv_automatic_edit, ALLSET_OT_uv_contour, ALLSET_OT_uv_cylindrical,
+                            ALLSET_OT_uv_spherical, auto_planes, auto_project, fit_unit,
                             note_object_state, object_state_ok)
 
 MAYA_MAP_SIZE = 1024
@@ -402,4 +403,4 @@ class ALLSET_OT_uv_texel_set(bpy.types.Operator):
 
 classes = (ALLSET_OT_uv_cut, ALLSET_OT_uv_sew, ALLSET_OT_uv_unfold, ALLSET_OT_uv_layout, ALLSET_OT_uv_texel_get,
            ALLSET_OT_uv_texel_set, ALLSET_OT_uv_component, ALLSET_OT_uv_automatic, ALLSET_OT_uv_automatic_edit,
-           ALLSET_OT_uv_contour)
+           ALLSET_OT_uv_contour, ALLSET_OT_uv_cylindrical, ALLSET_OT_uv_spherical)

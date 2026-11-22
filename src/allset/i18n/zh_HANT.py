@@ -5799,6 +5799,8 @@ STRINGS = {
     'Pick what a middle-mouse drag does to the selected keys: move, turn their tangents or scale them\n(w / e / r in the Graph Editor, like Maya)': '選擇游標中鍵拖動對選定關鍵格的作用：移動、旋轉其切線或縮放\n(曲線編輯器中的 w / e / r，與 Maya 相同)',
     'Place and align the custom pivot on a vertex, edge or face without changing the selection': '在頂點、邊或面上放置並對齊自訂樞軸，不改變選擇',
     'Previous / next shelf tab': '上一個 / 下一個工具架選項卡',
+    "Project UVs from a cylinder around the scene's up axis, centred on the selection (Maya UV > Cylindrical):\nthe selected faces, or every face of the selected meshes in object mode": '從繞場景向上軸的圓柱投影 UV，以選擇的中心為中心 (Maya UV > 圓柱)：\n選定的面，或在對象模式下選定網格的所有面',
+    "Project UVs from a sphere around the scene's up axis, centred on the selection (Maya UV > Spherical):\nthe selected faces, or every face of the selected meshes in object mode": '從繞場景向上軸的球體投影 UV，以選擇的中心為中心 (Maya UV > 球形)：\n選定的面，或在對象模式下選定網格的所有面',
     'Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode': '同時從多個平面投影 UV (Maya UV > 自動)：選定的面，或在對象模式下\n選定網格的所有面',
     "Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)": '在面的平均法線所在平面上投影 UV (Maya 平面 / 基於法線)',
     'Put a prefix in front of the names of the selected objects and everything under them\n(Maya Modify > Prefix Hierarchy Names)': '在選定對象及其下方所有對象的名稱前添加前綴\n(Maya 修改 > 為層級名稱添加前綴)',

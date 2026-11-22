@@ -5799,6 +5799,8 @@ STRINGS = {
     'Pick what a middle-mouse drag does to the selected keys: move, turn their tangents or scale them\n(w / e / r in the Graph Editor, like Maya)': '中マウスドラッグで選択キーに行う操作を選択: 移動、タンジェントの回転、またはスケール\n(グラフエディタで w / e / r、Maya と同様)',
     'Place and align the custom pivot on a vertex, edge or face without changing the selection': '選択を変えずにカスタムピボットを頂点、エッジ、またはフェースに配置して揃える',
     'Previous / next shelf tab': '前 / 次のシェルフタブ',
+    "Project UVs from a cylinder around the scene's up axis, centred on the selection (Maya UV > Cylindrical):\nthe selected faces, or every face of the selected meshes in object mode": 'シーンの上方向軸を中心とする円柱から UV を投影し、選択範囲の中心に置く (Maya UV > 円柱):\n選択フェース、またはオブジェクトモードでは選択メッシュのすべてのフェース',
+    "Project UVs from a sphere around the scene's up axis, centred on the selection (Maya UV > Spherical):\nthe selected faces, or every face of the selected meshes in object mode": 'シーンの上方向軸を中心とする球から UV を投影し、選択範囲の中心に置く (Maya UV > 球状):\n選択フェース、またはオブジェクトモードでは選択メッシュのすべてのフェース',
     'Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode': '複数の平面から同時に UV を投影 (Maya UV > 自動): 選択フェース、またはオブジェクトモードでは\n選択メッシュのすべてのフェース',
     "Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)": 'フェースの平均法線の平面に UV を投影 (Maya 平面 / 法線ベース)',
     'Put a prefix in front of the names of the selected objects and everything under them\n(Maya Modify > Prefix Hierarchy Names)': '選択オブジェクトとその下のすべての名前の前にプレフィックスを付ける\n(Maya 修正 > 階層名にプレフィックスを付ける)',

@@ -7603,9 +7603,11 @@
    "1 = Fewer pieces, 0 = Less distortion": "1 = Fewer pieces, 0 = Less distortion",
    "Automatic": "Automatic",
    "Contour Stretch": "Contour Stretch",
+   "Cylindrical": "Cylindrical",
    "Optimize": "Optimize",
    "Percentage Space": "Percentage Space",
    "Planes": "Planes",
+   "Spherical": "Spherical",
    "polyAutoProj": "polyAutoProj"
   },
   "Labels/operators/uv_select_178": {
@@ -12244,6 +12246,8 @@
   "Tooltips/operators/uv_projection": {
    "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed": "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed",
    "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode": "Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;\nBlender Follow Active Quads): every face of the selected meshes in object mode",
+   "Project UVs from a cylinder around the scene's up axis, centred on the selection (Maya UV > Cylindrical):\nthe selected faces, or every face of the selected meshes in object mode": "Project UVs from a cylinder around the scene's up axis, centred on the selection (Maya UV > Cylindrical):\nthe selected faces, or every face of the selected meshes in object mode",
+   "Project UVs from a sphere around the scene's up axis, centred on the selection (Maya UV > Spherical):\nthe selected faces, or every face of the selected meshes in object mode": "Project UVs from a sphere around the scene's up axis, centred on the selection (Maya UV > Spherical):\nthe selected faces, or every face of the selected meshes in object mode",
    "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode": "Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the\nselected meshes in object mode"
   },
   "Tooltips/operators/uv_select_178": {

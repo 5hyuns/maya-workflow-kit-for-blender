@@ -2,7 +2,8 @@
 """UV projections: Maya UV > Automatic (``auto_project``: plane choice, shells and their packed layout, with
 operators/autoproj_layout.py; ``allset.uv_automatic``) and its editable polyAutoProj node (the ``AUTOPROJ`` spec of
 operators/extrude_spec.py, ``allset.uv_automatic_edit``), and UV > Contour Stretch (``allset.uv_contour``: Follow Active
-Quads, then 0-1). From object mode both act on every face of the selected meshes (``_ObjectFaces``).
+Quads, then 0-1) and UV > Cylindrical / Spherical (``allset.uv_cylindrical`` / ``allset.uv_spherical``,
+``round_project``). From object mode they act on every face of the selected meshes (``_ObjectFaces``).
 """
 
 import math
@@ -321,6 +322,87 @@ class ALLSET_OT_uv_automatic_edit(bpy.types.Operator):
                 o.select_set(True)
         note_object_state(ob)
         return {'FINISHED'} if ok else {'CANCELLED'}
+
+
+# --- Cylindrical / Spherical (Issue #442) ------------------------------------------------------------
+# Like Maya's UV > Cylindrical / Spherical: the projection sits on the centre of the selection's world bounding box,
+# its axis is the scene's up axis and the 3D View's angle plays no part. Around the axis a half turn spans one UV
+# tile (the projection's horizontal sweep), the front (Maya +Z = Blender -Y) at U 0.5. Cylindrical spans V 0-1 over
+# the selection's height; Spherical spans one tile over a quarter turn up or down (its vertical sweep), the
+# equator at V 0.5.
+
+HORIZONTAL_SWEEP = math.pi
+VERTICAL_SWEEP = math.pi / 2
+
+
+def round_project(faces, uv, matrix, spherical=False):
+    """Cylindrical (or Spherical) UVs on ``faces`` from the world bounding box of their vertices. A face keeps its
+    corners within half a turn of its own centre, so faces across the back seam stay whole."""
+    faces = [f for f in faces if not f.hide]
+    pts = {v: matrix @ v.co for f in faces for v in f.verts}
+    if not pts:
+        return 0
+    lo = Vector([min(p[i] for p in pts.values()) for i in range(3)])
+    hi = Vector([max(p[i] for p in pts.values()) for i in range(3)])
+    c = (lo + hi) / 2
+    height = hi.z - lo.z
+    tiny = max((hi - lo).length, 1e-9) * 1e-6
+
+    def angle(p):
+        return math.atan2(p.x - c.x, c.y - p.y)       # 0 at the front, a quarter turn at +X
+
+    for f in faces:
+        corners = [pts[v] for v in f.verts]
+        ref = angle(sum(corners, Vector()) / len(corners))
+        for lp in f.loops:
+            p = pts[lp.vert]
+            r = math.hypot(p.x - c.x, p.y - c.y)
+            phi = angle(p) if r > tiny else ref           # a point on the axis takes its face's angle
+            phi += 2 * math.pi * math.floor((ref + math.pi - phi) / (2 * math.pi))
+            if spherical:
+                v = 0.5 + math.atan2(p.z - c.z, r) / VERTICAL_SWEEP
+            else:
+                v = 0.5 + (p.z - c.z) / height if height > tiny else 0.5
+            lp[uv].uv = (0.5 + phi / HORIZONTAL_SWEEP, v)
+    return len(faces)
+
+
+class _RoundProjection:
+    bl_options = {'REGISTER', 'UNDO'}
+    spherical = False
+
+    poll = classmethod(lambda cls, context: _mesh_poll(context))
+
+    def execute(self, context):
+        done = 0
+        with _ObjectFaces(context) as obs:
+            for ob in obs:
+                bm = bmesh.from_edit_mesh(ob.data)
+                faces = [f for f in bm.faces if f.select and not f.hide]
+                if not faces:
+                    continue
+                uv = bm.loops.layers.uv.verify()
+                done += bool(round_project(faces, uv, ob.matrix_world, self.spherical))
+                bmesh.update_edit_mesh(ob.data)
+        if not done:
+            self.report({'WARNING'}, "Select faces (or a mesh) to project.")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_OT_uv_cylindrical(_RoundProjection, bpy.types.Operator):
+    """Project UVs from a cylinder around the scene's up axis, centred on the selection (Maya UV > Cylindrical):
+    the selected faces, or every face of the selected meshes in object mode"""
+    bl_idname = "allset.uv_cylindrical"
+    bl_label = "Cylindrical"
+
+
+class ALLSET_OT_uv_spherical(_RoundProjection, bpy.types.Operator):
+    """Project UVs from a sphere around the scene's up axis, centred on the selection (Maya UV > Spherical):
+    the selected faces, or every face of the selected meshes in object mode"""
+    bl_idname = "allset.uv_spherical"
+    bl_label = "Spherical"
+    spherical = True
 
 
 class ALLSET_OT_uv_contour(bpy.types.Operator):

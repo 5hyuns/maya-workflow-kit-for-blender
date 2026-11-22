@@ -127,8 +127,8 @@ BY_COMMAND = {
 
 BY_LABEL = {
     "UVEditing/Planar Mapping": (("v3d", "uv.project_from_view", {}), 'UV_FACESEL'),
-    "UVEditing/Cylindrical Mapping": (("v3d", "uv.cylinder_project", {}), 'MESH_CYLINDER'),
-    "UVEditing/Spherical Mapping": (("v3d", "uv.sphere_project", {}), 'MESH_UVSPHERE'),
+    "UVEditing/Cylindrical Mapping": (("item", "UV/Cylindrical"), 'MESH_CYLINDER'),
+    "UVEditing/Spherical Mapping": (("item", "UV/Spherical"), 'MESH_UVSPHERE'),
     "UVEditing/Automatic Mapping": (("item", "UV/Automatic"), 'UV_DATA'),
     "Rendering/Standard Surface Material": (_shader('STANDARD_SURFACE'), 'MATERIAL'),
     "Rendering/Lambert Material": (_shader('LAMBERT'), 'SHADING_SOLID'),
