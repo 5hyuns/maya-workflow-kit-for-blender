@@ -76,6 +76,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - UV > Planar projects along the scene's axes and fits the selection's box in the scene, also on moved, turned or
   scaled objects; clicking the menu item gives the option window's result (#487).
 - UV Layout keeps every shell's orientation and first scales the shells to one texel density, like Maya (#486).
+- UV > Automatic with 3, 4, 5, 8 or 12 planes groups the faces into shells like Maya, as 6 planes already did: the
+  same planes, the same Fewer pieces angle and shells that stop where they would overlap; with 8 planes a face
+  exactly between two planes, such as a cube side, can still go to another shell (#488).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
