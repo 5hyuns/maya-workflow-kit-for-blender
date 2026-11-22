@@ -167,8 +167,9 @@ def test_channel_menu_ops_on_joints():
     bpy.ops.allset.cb_duplicate_values()
     assert abs(pb3.location[0] - 0.3) < 1e-6
     cb.set_selected_channels([])
-    bpy.ops.allset.cb_key_all()                      # every keyable visible channel
-    assert cb.fcurve(pb2, "sz") is not None and cb.fcurve(pb3, "tx") is None
+    bpy.ops.allset.cb_key_all()                      # every keyable visible channel that isn't locked
+    assert cb.fcurve(pb2, "ry") is not None and cb.fcurve(pb3, "tx") is None
+    assert cb.fcurve(pb2, "sz") is None, "Scale stays locked after Show All: not keyed"
 
 
 def test_custom_attribute_on_joint():
