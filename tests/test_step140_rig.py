@@ -162,7 +162,7 @@ def test_titles_buttons_fields_defaults_are_maya():
                                       ("check_topology", "", True), ("delete_targets", "", False)]
     # Aim
     assert _fields("aim_constraint") == [
-        ("aim_vector", "Aim vector:", (1.0, 0.0, 0.0)), ("up_vector", "Up vector:", (0.0, 1.0, 0.0)),
+        ("aim_vector", "Aim vector:", (1.0, 0.0, 0.0)), ("up_vector", "Up vector:", (0.0, 0.0, 1.0)),
         ("world_up_type", "World up type:", "Vector"), ("world_up_vector", "World up vector:", (0.0, 0.0, 1.0)),
         ("world_up_object", "World up object:", ""), ("weight", "Weight:", 1.0)]   # + World up object
     # Pole Vector: only Weight 1 (:187-188); Scale: Maintain offset off, Offset 1 1 1, All, Weight 1 (:190-192)
@@ -212,9 +212,9 @@ def test_aim_options():
     assert prop is not None and abs(cube[prop] - 0.5) < 1e-6 and abs(con.influence - 1.0) < 1e-6
     assert len(cube.constraints) == 1
     target, cube = _aim_scene()
-    _run("aim_constraint", aim_vector=(0.0, 0.0, 1.0), up_vector=(1.0, 0.0, 0.0))
+    _run("aim_constraint", aim_vector=(0.0, -1.0, 0.0), up_vector=(1.0, 0.0, 0.0))
     con = cube.constraints[-1]
-    assert (con.track_axis, con.up_axis) == ('TRACK_NEGATIVE_Y', 'UP_X'), (con.track_axis, con.up_axis)  # Maya Z = -Y
+    assert (con.track_axis, con.up_axis) == ('TRACK_NEGATIVE_Y', 'UP_X'), (con.track_axis, con.up_axis)  # the object's own -Y
     target, cube = _aim_scene()
     # #168: any world up vector (a hidden empty's Z axis = the vector, Track To uses its Z)
     res = ow.run(_w("aim_constraint"), bpy.context, {"world_up_vector": (1.0, 0.0, 0.0)})

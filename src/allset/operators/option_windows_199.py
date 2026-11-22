@@ -29,7 +29,7 @@ def _aim_like(op_name):
 
 def _aim_fields():
     return [F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)),
-            F("up_vector", "Up vector:", "vec3", (0.0, 1.0, 0.0)),
+            F("up_vector", "Up vector:", "vec3", (0.0, 0.0, 1.0)),      # the object's own Z (#453)
             F("world_up_type", "World up type:", "enum", "Vector", items=WORLD_UP),
             # a world direction in scene axes (default 0 0 1 = the scene's up)
             F("world_up_vector", "World up vector:", "vec3", (0.0, 0.0, 1.0), old=scene_axes.old_vector),

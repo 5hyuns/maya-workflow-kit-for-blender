@@ -184,24 +184,41 @@ _OLD_OPS = {"op_orient_joint": _old_orient_joint,
 
 def migrate(data):
     """Saved option values written while the windows read X / Y / Z in the Y-up frame -> scene axes, so every saved
-    choice keeps its result (Axis Y = upright becomes Axis Z, Duplicate Special Translate 0 1 0 becomes 0 0 1)."""
+    choice keeps its result (Axis Y = upright becomes Axis Z, Duplicate Special Translate 0 1 0 becomes 0 0 1; an
+    aim Up vector 0 1 0 on an object becomes its own 0 0 1)."""
     out = {}
+    version = data.get(AXES_KEY, 1)
     for key, values in data.items():
         if key == AXES_KEY or not isinstance(values, dict):
             continue
         values = dict(values)
         window = _BY_KEY.get(key)
-        if window is not None:
-            for f in window.fields:
-                if f.old is not None and f.name in values:
-                    f.old(values, f.name)
-            if window.old_axes is not None:
-                window.old_axes(values)
-        if key in _OLD_OPS:
-            _OLD_OPS[key](values)
+        if version < 2:
+            if window is not None:
+                for f in window.fields:
+                    if f.old is not None and f.name in values:
+                        f.old(values, f.name)
+                if window.old_axes is not None:
+                    window.old_axes(values)
+            if key in _OLD_OPS:
+                _OLD_OPS[key](values)
+        if version < 3 and key in _OLD_LOCAL:
+            _OLD_LOCAL[key](values)
         out[key] = values
     out[AXES_KEY] = scene_axes.VERSION
     return out
+
+
+def _old_aim_vectors(values):
+    for name in ("aim_vector", "up_vector"):
+        scene_axes.old_vector(values, name)
+
+
+# saved before the aim / motion path vectors read the node's own axes (version 2): an object's Y-up reading
+_OLD_LOCAL = {"aim_constraint": _old_aim_vectors, "normal_constraint": _old_aim_vectors,
+              "tangent_constraint": _old_aim_vectors,
+              "motion_path_attach": lambda v: (scene_axes.old_local_axis(v, "front_axis", "inverse_front"),
+                                               scene_axes.old_local_axis(v, "up_axis", "inverse_up"))}
 
 
 def _load(prefs):

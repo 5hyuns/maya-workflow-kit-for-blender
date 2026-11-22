@@ -318,9 +318,9 @@ WINDOWS = [
         F("delete_targets", "", "bool", False, text="Delete targets")], _run_blend_shape,
         paths=("Deform/Blend Shape",), missing=("Envelope (Blender shape keys have no envelope)",
                                                 "Target shape options: In-between")),
-    # Constrain > Aim: +X at the target, +Y up, world up Vector (0, 1, 0)
+    # Constrain > Aim: +X at the target, the node's Z up, world up Vector 0 0 1 (the node's own axes, #453)
     Window("aim_constraint", "Aim Constraint Options", "Add", ("allset.constrain", {"type": 'TRACK_TO'}), [
-        F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)), F("up_vector", "Up vector:", "vec3", (0.0, 1.0, 0.0)),
+        F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)), F("up_vector", "Up vector:", "vec3", (0.0, 0.0, 1.0)),
         F("world_up_type", "World up type:", "enum", "Vector",
           items=("Scene up", "Object up", "Object rotation up", "Vector", "None")),
         F("world_up_vector", "World up vector:", "vec3", (0.0, 0.0, 1.0), old=scene_axes.old_vector),   # scene axes

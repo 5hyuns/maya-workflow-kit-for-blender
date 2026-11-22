@@ -173,7 +173,7 @@ def test_menu_and_window():
     assert w is not None and w.title == "Attach to Motion Path Options" and w.action == "Attach", w
     d = w.defaults()
     assert d == {"time_range": "Time Slider", "start_time": 1.0, "end_time": 30.0, "parametric": False,
-                 "follow": True, "front_axis": "X", "up_axis": "Y", "inverse_up": False, "inverse_front": False}, d
+                 "follow": True, "front_axis": "X", "up_axis": "Z", "inverse_up": False, "inverse_front": False}, d
 
 
 def test_default_matches_maya():
@@ -271,15 +271,16 @@ def test_3d_path():
 
 
 def test_axes_and_inverse_up():
-    assert mp.axes("X", "Y") == ('FORWARD_X', 'UP_Z', None)
-    assert mp.axes("X", "Z") == ('FORWARD_X', 'UP_Y', "X")
-    assert mp.axes("Y", "X") == ('FORWARD_Z', 'UP_X', None)
+    assert mp.axes("X", "Z") == ('FORWARD_X', 'UP_Z', None)
+    assert mp.axes("X", "Y") == ('FORWARD_X', 'UP_Y', None)
+    assert mp.axes("Z", "X") == ('FORWARD_Z', 'UP_X', None)
+    assert mp.axes("X", "Z", inverse_up=True) == ('FORWARD_X', 'UP_Z', "X")
     assert mp.axes("X", "X") is None
     _scene()
     car, c = _attach(inverse_up=True)
     bpy.context.scene.frame_set(60)
     m = car.matrix_world.to_3x3().normalized()
-    assert (m @ Vector((0, 0, 1))).z < -0.999, m      # Maya up Y inverted = the object's Blender Z points down
+    assert (m @ Vector((0, 0, 1))).z < -0.999, m      # up Z inverted = the object's Z points down
     bpy.context.scene.frame_set(1)
     _scene()
     try:

@@ -7331,7 +7331,7 @@ STRINGS = {
     'Wire Tool': 'ワイヤーツール',
     'World origin': 'ワールドの原点',
     'World up object': 'ワールドアップオブジェクト',
-    'World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 1 0)': 'ワールドアップタイプ オブジェクトアップ / オブジェクトの回転アップ / 法線 (Blender はアップ軸をワールド Z に向ける = シーンアップ / ベクトル 0 1 0)',
+    'World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 0 1)': 'ワールドアップタイプ オブジェクトアップ / オブジェクトの回転アップ / 法線 (Blender はアップ軸をワールド Z に向ける = シーンアップ / ベクトル 0 0 1)',
     'World up type: Object up / Object rotation up': 'ワールドアップタイプ: オブジェクトアップ / オブジェクトの回転アップ',
     'World up vector': 'ワールドアップベクトル',
     'World up vector / object': 'ワールドアップベクトル / オブジェクト',

@@ -9950,7 +9950,7 @@
    "Start time": "Start time",
    "Time range": "Time range",
    "Up axis": "Up axis",
-   "World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 1 0)": "World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 1 0)",
+   "World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 0 1)": "World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 0 1)",
    "World up vector / object": "World up vector / object"
   },
   "Option windows/option_windows_197": {

@@ -8,7 +8,8 @@ so a saved choice keeps its result (an upright Axis Y becomes Axis Z).
 """
 
 AXES = ("X", "Y", "Z")
-VERSION = 2          # saved option values: 1 (no marker) = Y-up X / Y / Z, 2 = scene axes
+VERSION = 3          # saved option values: 1 (no marker) = Y-up X / Y / Z, 2 = scene axes, 3 = also the aim /
+                     # motion path vectors on the node's own axes (an object's Y-up reading before)
 
 
 def to_yup(v):
@@ -51,6 +52,17 @@ def old_vector(values, name, kind="point"):
     if not isinstance(v, (list, tuple)) or len(v) != 3:
         return
     values[name] = (v[0], v[2], v[1]) if kind == "scale" else from_yup(v)
+
+
+def old_local_axis(values, name, inverse):
+    """A saved Motion Path Front / Up axis read on the object's Y-up frame -> its own axis; the old Z (= local -Y)
+    becomes Y with ``inverse`` switched."""
+    v = values.get(name)
+    if v == "Y":
+        values[name] = "Z"
+    elif v == "Z":
+        values[name] = "Y"
+        values[inverse] = not values.get(inverse, False)
 
 
 def old_swap(values, a, b):

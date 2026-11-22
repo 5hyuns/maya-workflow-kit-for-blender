@@ -7332,7 +7332,7 @@ STRINGS = {
     'Wire Tool': '線工具',
     'World origin': '世界原點',
     'World up object': '世界上方向對象',
-    'World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 1 0)': '世界上方向類型 對象向上 / 對象旋轉向上 / 法線 (Blender 使上方向軸朝向世界 Z = 場景向上 / 向量 0 1 0)',
+    'World up type Object up / Object rotation up / Normal (Blender keeps the up axis toward world Z = Scene up / Vector 0 0 1)': '世界上方向類型 對象向上 / 對象旋轉向上 / 法線 (Blender 使上方向軸朝向世界 Z = 場景向上 / 向量 0 0 1)',
     'World up type: Object up / Object rotation up': '世界上方向類型: 對象向上 / 對象旋轉向上',
     'World up vector': '世界上方向向量',
     'World up vector / object': '世界上方向向量 / 對象',

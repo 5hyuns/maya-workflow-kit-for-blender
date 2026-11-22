@@ -197,7 +197,7 @@ class _SurfaceConstraint:
 
     weight: FloatProperty(name="Weight", default=1.0, min=0.0, max=1.0)
     aim_vector: FloatVectorProperty(name="Aim vector", default=(1.0, 0.0, 0.0), size=3)
-    up_vector: FloatVectorProperty(name="Up vector", default=(0.0, 1.0, 0.0), size=3)
+    up_vector: FloatVectorProperty(name="Up vector", default=(0.0, 0.0, 1.0), size=3)
     world_up_type: EnumProperty(name="World up type", items=WORLD_UP_ITEMS, default="Vector")
 
     @classmethod

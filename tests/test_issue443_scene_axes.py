@@ -288,7 +288,7 @@ def test_old_saved_values_keep_their_result():
     # the next save writes the converted values with the marker; reading again doesn't convert twice
     ow.store("poly_cube", {"width": 2.0})
     data = json.loads(prefs.option_settings)
-    assert data[ow.AXES_KEY] == 2
+    assert data[ow.AXES_KEY] == 3
     for key, want in NEW.items():
         _same(data[key], want)
         _same(ow.saved(key), want)
