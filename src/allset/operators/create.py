@@ -93,6 +93,7 @@ LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewp
                 "the distance (the same brightness as Maya at 10 units).")
 
 MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM = 35.0, 36.0, 24.0
+MAYA_CAMERA_FSTOP, MAYA_CAMERA_FOCUS, MAYA_CAMERA_ORTHO_WIDTH = 5.6, 5.0, 30.0
 
 # Operator properties that are lengths (scaled by units.maya_unit).
 LENGTHS = {"size", "radius", "depth", "radius1", "radius2", "major_radius", "minor_radius"}
@@ -109,6 +110,10 @@ def _scale_data(ob, k):
         film_fit.set_fit(data, 'FILL', bpy.context.scene)
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
+        # F Stop 5.6, Focus Distance 5, Orthographic Width 30, like a camera from Maya's Create > Cameras
+        data.dof.aperture_fstop = MAYA_CAMERA_FSTOP
+        data.dof.focus_distance = MAYA_CAMERA_FOCUS * k
+        data.ortho_scale = MAYA_CAMERA_ORTHO_WIDTH * k
     elif ob.type == 'LIGHT':
         data.shadow_soft_size *= k
         if data.type == 'AREA':

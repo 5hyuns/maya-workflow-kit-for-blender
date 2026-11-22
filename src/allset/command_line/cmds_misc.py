@@ -95,8 +95,8 @@ def camera(*args, **kwargs):
         data.clip_end = float(far) * k
     if ortho is not None:
         data.type = 'ORTHO' if ortho else 'PERSP'
-    if width is not None:
-        data.ortho_scale = float(width) * k
+    # the camera command's own Orthographic Width is 10 (the Create menu's camera: 30)
+    data.ortho_scale = (10.0 if width is None else float(width)) * k
     _shim._view_layer()
     _shim._select_only([ob])
     return [ob.name, _shim.shape_of(ob)]
