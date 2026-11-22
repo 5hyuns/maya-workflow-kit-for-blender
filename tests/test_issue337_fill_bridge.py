@@ -135,8 +135,8 @@ def test_fill_hole_without_a_hole_warns_and_changes_nothing():
     assert len(_faces(ob)) == n
     bm = bmesh.from_edit_mesh(ob.data)
     _select(ob, bm, lambda e: _top_rim(e) and e.verts[0].co.x > 0)      # an open chain of border edges
-    assert bpy.ops.allset.fill_hole() == {'CANCELLED'}
-    assert len(_faces(ob)) == n
+    assert bpy.ops.allset.fill_hole() == {'FINISHED'}                 # like Maya: that whole hole is closed
+    assert len(_faces(ob)) == n + 1
 
 
 def test_bridge_fills_one_closed_border_loop_with_one_face():
