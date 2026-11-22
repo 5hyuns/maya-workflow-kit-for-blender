@@ -23,6 +23,22 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   like a Maya scene keeps them: the viewport split into several panels (a perspective and a side view, the Four
   View), each panel's background, grid and other display settings, and its view. They came back as one perspective
   panel with the starting background and the grid on (#458).
+- Marking Menu Editor: a Shelf Button item made from one of several buttons with the same label runs that button;
+  the list tells such buttons apart (#446).
+- Kit editor windows asked for again come to the front, like Maya: Shelf Editor, Hotkey Editor, Marking Menu Editor,
+  Hypergraph and the other kit editor windows (#450).
+- Windows > UI Elements > Status Line closes the Maya layout's Status Line row and the shelf stays; turning it on
+  brings the row back (#447).
+- Help Line and Command Line both off hide the bottom row instead of leaving Blender's status bar there (#448).
+- Show > Joints off in a panel keeps rig controls drawn as curve shapes; they follow Show > NURBS Curves (#451).
+- Channel Box INPUTS and the Attribute Editor show a creation node's Axis / Pivot / Normal / Center on the scene's
+  axes, like the Create option windows (#454).
+- Constrain > Aim / Normal / Tangent (Aim vector, Up vector) and Attach to Motion Path (Front axis, Up axis) name the
+  object's own axes as the Channel Box shows them; the defaults keep an aimed object upright and saved option values
+  keep what they did (#453).
+- Copy Skin Weights with Influence Association Closest bone pairs bones, not joints, like Maya (#462).
+- Frame Selected on several objects apart comes as close as the objects' own boxes allow, like Maya, instead of
+  framing the box around all of them from farther away (#473).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
