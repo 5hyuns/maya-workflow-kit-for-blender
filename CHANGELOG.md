@@ -39,6 +39,21 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Copy Skin Weights with Influence Association Closest bone pairs bones, not joints, like Maya (#462).
 - Frame Selected on several objects apart comes as close as the objects' own boxes allow, like Maya, instead of
   framing the box around all of them from farther away (#473).
+- Graph Editor: a Linear tangent points the key's in and out tangents at the neighbouring keys; a segment is straight
+  only between two linear keys, like Maya (#471).
+- Graph Editor: Linear Pre / Post Infinity follows the end key's tangent (flat after an Auto or Linear end key), and
+  each side keeps its own infinity type, like Maya (#472).
+- Switching to Blender keeps another add-on's wrapper of the timeline header or the toolbar; Maya mode takes back only
+  its own change (#449).
+- UV > Cylindrical / Spherical sit on the selection's centre around the scene's up axis, like Maya: the view angle no
+  longer changes the result, and Cylindrical spans the tile's height over the selection's height (#442).
+- Edit Edge Flow on a loop that runs from border to border keeps the whole loop on the surface: the border vertices
+  follow the curve along the border and the inner ones no longer settle below it, like Maya (#466).
+- Edit Mesh > Extrude with edges and a curve selected extrudes the edges along the curve in Divisions steps with Taper
+  and Twist, like faces; along a curve every step turns on from the previous one, so faces and edges follow a curve
+  that bends in more than one plane, like Maya (#444, #490).
+- Edit Mesh > Circularize on a block of faces puts the circle around the mean of all the selected faces' vertices and
+  moves the vertices inside the block onto the circle's plane, like Maya (#465).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
