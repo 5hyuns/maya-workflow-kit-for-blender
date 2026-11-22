@@ -207,6 +207,48 @@ def _aperture_prop(sensor, label):
                                      "millimetres)")
 
 
+def _nested(path):
+    head, prop = path.split(".")
+
+    def get(cam):
+        return getattr(getattr(cam, head), prop)
+
+    def set_(cam, v):
+        setattr(getattr(cam, head), prop, float(v))
+    return get, set_
+
+
+def channel_attrs():
+    """Maya camera shape channels Blender keeps differently: Horizontal / Vertical Film Aperture (inches over the
+    sensor size in millimetres), F Stop and Focus Distance (depth of field settings) — Channel Box SHAPES rows
+    ``maya:horizontalFilmAperture`` ... (ui/cb_inputs._virtual). ``paths`` = the Blender properties a key keys."""
+    from .deformers import Attr
+    out = []
+    for key, label, sensor in (("horizontalFilmAperture", "Horizontal Film Aperture", "sensor_width"),
+                               ("verticalFilmAperture", "Vertical Film Aperture", "sensor_height")):
+        out.append(Attr(key, label, "NONE", *_nested_sensor(sensor), ((sensor, -1),)))
+    out.append(Attr("fStop", "F Stop", "NONE", *_nested("dof.aperture_fstop"), (("dof.aperture_fstop", -1),)))
+    out.append(Attr("focusDistance", "Focus Distance", "LENGTH", *_nested("dof.focus_distance"),
+                    (("dof.focus_distance", -1),)))
+    return out
+
+
+def _nested_sensor(sensor):
+    def get(cam):
+        return getattr(cam, sensor) / MM_PER_INCH
+
+    def set_(cam, v):
+        setattr(cam, sensor, float(v) * MM_PER_INCH)
+    return get, set_
+
+
+def channel_attr(name):
+    for a in channel_attrs():
+        if name == "maya:" + a.key:
+            return a
+    return None
+
+
 def register_props():
     bpy.types.Camera.allset_film_aperture_h = _aperture_prop("sensor_width", "Horizontal Film Aperture")
     bpy.types.Camera.allset_film_aperture_v = _aperture_prop("sensor_height", "Vertical Film Aperture")

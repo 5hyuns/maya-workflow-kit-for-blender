@@ -70,12 +70,16 @@ def _inputs(ob):
 
 def _virtual(owner, name):
     """The Maya attribute behind an INPUTS row ``maya:<key>`` of a kit deformer (operators/deformers.ATTRS), or a
-    SHAPES row of a light (Color R / G / B, operators/lights.channel_attrs)."""
+    SHAPES row of a light (Color R / G / B, operators/lights.channel_attrs) or a camera (Film Aperture, F Stop,
+    operators/film_fit.channel_attrs)."""
     if not name.startswith("maya:"):
         return None
     if isinstance(owner, bpy.types.Light):
         from ..operators import lights
         return lights.channel_attr(name, owner)
+    if isinstance(owner, bpy.types.Camera):
+        from ..operators import film_fit
+        return film_fit.channel_attr(name)
     if not isinstance(owner, bpy.types.Modifier):
         return None
     from ..operators import deformers
@@ -96,7 +100,7 @@ def input_label(mod, name):
 
 # Maya shape attribute labels of SHAPES rows (ffd1LatticeShape: S / T / U Divisions)
 SHAPE_LABELS = {('LATTICE', "points_u"): "S Divisions", ('LATTICE', "points_w"): "T Divisions",
-                ('LATTICE', "points_v"): "U Divisions"}
+                ('LATTICE', "points_v"): "U Divisions", ('CAMERA', "display_size"): "Locator Scale"}
 
 
 def shape_label(ob, prop):
@@ -398,11 +402,16 @@ def _modifier_props(mod, limit=10):
 
 
 SHAPE_PROPS = {
-    'CAMERA': ("lens", "clip_start", "clip_end"),
+    # Maya camera shape keyable channels that Blender has a setting for (Lens Squeeze Ratio, Shutter Angle and Center
+    # Of Interest have none here)
+    'CAMERA': ("maya:horizontalFilmAperture", "maya:verticalFilmAperture", "lens", "maya:fStop", "maya:focusDistance",
+               "display_size"),
     # Maya light shapes: Color R / G / B, Intensity first (the Maya keyable order); Intensity is the
     # Maya value over Blender's Power (operators/lights.py)
     # + spot Cone Angle / Penumbra Angle (keyable on a Maya spotLight)
-    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity", "maya:coneAngle", "maya:penumbraAngle"),
+    # + Use Ray Trace Shadows (Blender's shadow switch; Maya's depth map shadow rows have no Blender setting)
+    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity", "maya:useRayTraceShadows",
+              "maya:coneAngle", "maya:penumbraAngle"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z)
 }
 
