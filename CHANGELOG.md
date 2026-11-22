@@ -19,6 +19,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   slides across its neighbours instead of along itself (#429).
 
 ### Fixed
+- Switching to Blender and back to Maya, or saving the file and opening it again, keeps the Maya layout's panels
+  like a Maya scene keeps them: the viewport split into several panels (a perspective and a side view, the Four
+  View), each panel's background, grid and other display settings, and its view. They came back as one perspective
+  panel with the starting background and the grid on (#458).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and

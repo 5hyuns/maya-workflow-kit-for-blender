@@ -30,12 +30,13 @@ import bpy
 from . import results
 from . import live_refs
 from . import i18n
+from . import switch_keep
 # the Maya layout workspaces, also read through this module by other UI, tools and the tests
 from .switch_layout import (BLENDER_LAYOUT_KEY, BLENDER_PREV_KEY, MASK_KEY, PREV_KEY, STRIP_MASKS,  # noqa: F401
                             TEMPLATE_KEY, TEMPLATE_WORKSPACE, USER_KEY, USER_UNIT_KEY, WORKSPACE, _delete_later,
                             _delete_workspace, _fit_views, _forget_timer, _linked_from, _mark_strips,
                             _prepare_layout, _template_blend, _timers, _window_override, _windows,
-                            append_workspace, drop_workspace, enter_layout, forget_copies, is_copy,
+                            append_workspace, drop_workspace, enter_layout, forget_copies, is_copy, keep_panels,
                             is_maya_workspace, mark_own, reset_workspace, template_of)
 
 
@@ -463,14 +464,18 @@ def set_mode(on, layout=True):
             maya_dock.close_floating()     # floating Maya panels would show Blender's Tool tab
         except Exception:
             pass
+        kept = _keep_panels() if layout else []
         try:
             from .ui import four_view
             four_view.collapse_all(bpy.context)   # the four panels back to one, the screen as it was
         except Exception:
             pass
         if layout:
+            for window, record in kept:
+                switch_keep.add_four_view(record, window)
             for window in _windows():
                 leave_layout(window)
+            switch_keep.store([record for _window, record in kept])
         prefs.maya_mode = False
         unregister_mode()      # whatever is recorded as registered, also after a half-done switch (#198)
     # The mode is this add-on's own setting: marked for Blender's Auto-Save Preferences like a change made in the
@@ -481,6 +486,22 @@ def set_mode(on, layout=True):
 
 
 _registered = [False]
+
+
+def _keep_panels():
+    """[(window, record)] of the Maya layout panels each window shows (``switch_keep``), first window first; one
+    record per Maya template workspace."""
+    out, seen = [], set()
+    for window in _windows():
+        try:
+            record = switch_keep.capture(window)
+        except Exception as ex:      # never stop the switch for this
+            print("Maya Workflow Kit: Maya panels not kept:", ex)
+            continue
+        if record is not None and record["template"] not in seen:
+            seen.add(record["template"])
+            out.append((window, record))
+    return out
 
 
 def _pending_hotkeys():

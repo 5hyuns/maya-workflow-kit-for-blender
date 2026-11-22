@@ -4,7 +4,7 @@ In the Maya layout's four view a double-click on the Tool Box's Move tool opens 
 window, like Maya: no panel of the four view is split for it. A Space tap over a panel keeps that panel alone and a
 second tap brings the four view back, also while the window is open. Dock (the window's handle) puts the Tool
 Settings left of the whole four view, never inside one panel; tearing it off again gives the four panels their width
-back. Switching to Blender closes the Tool Settings window, and back in Maya the Space tap still works. Real Space key
+back. Switching to Blender closes the Tool Settings window, and back in Maya the four view is back and the Space tap still works. Real Space key
 events and Tool Box clicks. Shots with ``--shots``."""
 
 import os
@@ -353,15 +353,16 @@ wait(8)
 @step
 def s_maya_again():
     print("LAYOUT maya again", layout(), flush=True)
-    check(f"Maya again: no stray window ({len(bpy.context.window_manager.windows)}), the layout has one panel",
-          len(bpy.context.window_manager.windows) == C["windows"] and len(fv().panes(win().screen)) == 1)
-    C["n1b"] = len(win().screen.areas)
+    # the layout as it was before the switch: the four view (#458)
+    check(f"Maya again: no stray window ({len(bpy.context.window_manager.windows)}), the four view is back "
+          f"({len(block())} panels)",
+          len(bpy.context.window_manager.windows) == C["windows"] and len(block()) == 4
+          and len(win().screen.areas) == C["n4"])
 
 
-space_over(lambda: sim.view3d()[0])
-check_four("Maya again: Space over the viewport")
 space_over(role("top"))
-check_single("Maya again: Space over top", "n1b")
-
+check_single("Maya again: Space over top", "n1")
+space_over(only)
+check_four("Maya again: Space again")
 
 run()

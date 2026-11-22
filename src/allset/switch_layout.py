@@ -122,16 +122,32 @@ def enter_layout(window):
         if window.workspace is not None:
             own[BLENDER_PREV_KEY] = window.workspace.name
         _prepare_layout(window, own)
+        keep_panels(window, own, window.workspace, fresh=False)
         window.workspace = own
         return own
-    prev = window.workspace.name
+    shown = window.workspace
+    prev = shown.name
     ws = append_workspace(window, TEMPLATE_WORKSPACE)
     if ws is None:
         return None
     ws[PREV_KEY] = prev
     ws.name = WORKSPACE
     _prepare_layout(window, ws, fresh=True)
+    keep_panels(window, ws, shown, fresh=True)
     return ws
+
+
+def keep_panels(window, ws, shown, fresh):
+    """The Maya panels the switch to Blender kept (#458) back in ``ws``: ``fresh`` = a workspace just appended from
+    the template. ``shown``: the Blender workspace the window showed."""
+    from . import switch, switch_keep
+    if bpy.app.background or not switch._registered[0]:
+        return
+    try:
+        switch_keep.restore(window, ws, switch_keep.find(template_of(ws), shown), fresh)
+    except Exception as ex:          # never stop the switch for this
+        print("Maya Workflow Kit: Maya panels not laid out again:", ex)
+
 
 
 def _prepare_layout(window, ws, fresh=False):

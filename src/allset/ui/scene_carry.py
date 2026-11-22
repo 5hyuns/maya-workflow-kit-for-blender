@@ -230,6 +230,7 @@ def show_maya_layout(window):
     if ws is not None:
         # switch_layout.enter_layout looks only for a workspace without PREV_KEY: a file saved with the appended Maya
         # workspace in the background would get a second one
+        switch.keep_panels(window, ws, window.workspace, fresh=False)     # a Four View a switch folded (#458)
         window.workspace = ws
     else:
         ws = switch.enter_layout(window)
