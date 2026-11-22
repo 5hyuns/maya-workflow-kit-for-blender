@@ -389,8 +389,9 @@ def status_line_shown(context):
     screen = context.screen
     if screen is None:
         return False
-    if strip_area(screen) is not None:
-        return True
+    strip = strip_area(screen)
+    if strip is not None:
+        return strip.spaces.active.show_region_header      # hidden: Status Line off (status_line_row)
     from .. import preferences
     try:
         if not preferences.get(context).show_status_line:

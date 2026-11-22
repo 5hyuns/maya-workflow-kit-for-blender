@@ -69,9 +69,8 @@ class ALLSET_OT_shelf_strip_toggle(bpy.types.Operator):
     def execute(self, context):
         screen = context.screen
         win = context.window
-        area = strip_area(screen)
-        if area is not None:
-            for area in (area, shelf_row_area(screen)):
+        if strip_area(screen) is not None or shelf_row_area(screen) is not None:   # the shelf row alone: Status Line off
+            for area in (strip_area(screen), shelf_row_area(screen)):
                 if area is None:
                     continue
                 region = next(r for r in area.regions if r.type == 'WINDOW')
@@ -85,6 +84,8 @@ class ALLSET_OT_shelf_strip_toggle(bpy.types.Operator):
         if _strip_over(context, win) is None:
             self.report({'WARNING'}, "No 3D View to put the shelf over")
             return {'CANCELLED'}
+        from . import status_line_row
+        status_line_row.sync(win)           # Status Line off: the new strip shows the shelf only
         return {'FINISHED'}
 
 

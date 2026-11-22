@@ -326,6 +326,8 @@ def draw_row():
     context = bpy.context
     if not is_shelf_row(context.space_data):
         return
+    from . import status_line_row
+    status_line_row.check(context)          # Status Line on again: the row comes back over the shelf
     region = context.region
     s = context.preferences.system.ui_scale
     key = ("shelf", region.as_pointer())
@@ -623,6 +625,10 @@ class ALLSET_GGT_shelf(bpy.types.GizmoGroup):
 @own_draw.kit_draw("IMAGE_HT_header")
 def _draw_image_header(self, context):
     if is_strip(context.space_data):
+        from . import status_line_row
+        status_line_row.check(context)      # Status Line off: the row goes (another workspace's screen too)
+        if not status_line_row.wanted(context):
+            return None
         from .status_line import draw_status_line
         return draw_status_line(self.layout, context)
     if is_shelf_row(context.space_data):
@@ -638,6 +644,8 @@ def _draw_image_header(self, context):
 @own_draw.kit_draw("IMAGE_HT_tool_header")
 def _draw_image_tool_header(self, context):
     if is_strip(context.space_data):
+        from . import status_line_row
+        status_line_row.check(context)
         return draw_shelf(self.layout, context)
     from .editor_chrome import draw_uv_tool_header   # Maya UV Editor icon row
     if draw_uv_tool_header(self, context):
@@ -711,6 +719,8 @@ def register():
 
 
 def unregister():
+    from . import status_line_row
+    status_line_row.stop()
     if bpy.app.timers.is_registered(_deferred_redraw):
         bpy.app.timers.unregister(_deferred_redraw)
     if _on_load in bpy.app.handlers.load_post:

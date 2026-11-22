@@ -597,8 +597,16 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     menu_set: bpy.props.EnumProperty(
         name="Menu Set", description="Maya menu set: which menus follow the common ones",
         items=lambda self, context: _menu_set_items(), default=0)
+    @_quiet
+    def _update_status_line(self, context):
+        from . import switch
+        if switch._registered[0]:          # the Status Line row of the kit layouts (ui/status_line_row.py)
+            from .ui import status_line_row
+            status_line_row.sync_main(context)
+
     show_status_line: bpy.props.BoolProperty(
-        name="Status Line", description="Maya Status Line icons in the top bar", default=True)
+        name="Status Line", description="Maya Status Line icons in the top bar", default=True,
+        update=_update_status_line)
     # Maya layout parity.
     maya_toolbox: bpy.props.BoolProperty(
         name="Maya Tool Box", description="3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, "

@@ -629,9 +629,12 @@ def torn_off(context):
 
 
 def maya_screen(context):
-    """The window shows the Maya Workflow Kit layout: its screen has the Maya strip, or it is a panel torn off it."""
-    from .shelf import strip_area
-    return context.screen is not None and (strip_area(context.screen) is not None or torn_off(context))
+    """The window shows the Maya Workflow Kit layout: its screen has the Maya strip or the shelf row (Status Line
+    off), or it is a panel torn off it."""
+    from .shelf import shelf_row_area, strip_area
+    screen = context.screen
+    return screen is not None and (strip_area(screen) is not None or shelf_row_area(screen) is not None
+                                   or torn_off(context))
 
 
 def maya_layout(context):

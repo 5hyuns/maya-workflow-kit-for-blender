@@ -146,9 +146,10 @@ class ALLSET_MT_ui_elements(bpy.types.Menu):
         layout.prop(prefs, "maya_top_bar")
         layout.prop(prefs, "maya_panel_menus")
         layout.prop(prefs, "show_status_line")
-        from .shelf import strip_area
+        from .shelf import shelf_row_area, strip_area
         draw_safe.op(layout, "allset.shelf_strip_toggle", text="Shelf",
-                     icon='CHECKBOX_HLT' if strip_area(context.screen) else 'CHECKBOX_DEHLT')
+                     icon='CHECKBOX_HLT' if strip_area(context.screen) or shelf_row_area(context.screen)
+                     else 'CHECKBOX_DEHLT')
         layout.prop(prefs, "show_command_line")
         layout.prop(prefs, "show_help_line")
         from .toolbox_layouts import toolbox_shown
