@@ -35,7 +35,7 @@ from .uv_components import (COMPONENTS, UV_SELECT_MODES, _MESH_SELECTION, _UV_MO
                             remember_mesh_selection, set_component)
 from .uv_projection import (AUTOPROJ, PLANE_ITEMS, ALLSET_OT_uv_automatic,  # noqa: F401
                             ALLSET_OT_uv_automatic_edit, ALLSET_OT_uv_contour, ALLSET_OT_uv_cylindrical,
-                            ALLSET_OT_uv_spherical, auto_planes, auto_project, fit_unit,
+                            ALLSET_OT_uv_spherical, auto_project, fit_unit,
                             note_object_state, object_state_ok)
 
 MAYA_MAP_SIZE = 1024

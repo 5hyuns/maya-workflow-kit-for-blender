@@ -20,39 +20,10 @@ from .uv_islands import _with_faces
 
 # --- Automatic / Contour Stretch -------------------
 
-def auto_planes(count):
-    """Projection directions of Maya's Automatic mapping (object space). 3 and 6 = the six axis planes (Maya 3 planes
-    also gives 6 shells on a cube / sphere); 4 / 8 / 12 = tetrahedron / octahedron / dodecahedron faces,
-    5 = top, bottom and three around (a kit choice). Order = Maya X, Y, Z (Blender X, Z, -Y):
-    a face that ties goes to the earlier plane (a Maya cylinder's 45-degree sides go to X)."""
-    count = int(count)
-    if count in (3, 6):
-        return [Vector(d) for d in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, -1, 0), (0, 1, 0))]
-    if count == 4:
-        return [Vector(d).normalized() for d in ((1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1))]
-    if count == 5:
-        ring = [Vector((math.cos(a), math.sin(a), 0.0)) for a in (0.0, 2 * math.pi / 3, 4 * math.pi / 3)]
-        return [Vector((0, 0, 1)), Vector((0, 0, -1))] + ring
-    if count == 8:
-        return [Vector((x, y, z)).normalized() for x in (1, -1) for z in (1, -1) for y in (-1, 1)]
-    g = (1 + math.sqrt(5)) / 2       # 12: icosahedron vertices = dodecahedron face normals
-    dirs = []
-    for a, b in ((1, g), (-1, g), (1, -g), (-1, -g)):
-        dirs += [Vector((0, a, b)), Vector((a, b, 0)), Vector((b, 0, a))]
-    return [d.normalized() for d in dirs]
-
-
-def _basis(d):
-    """(U, V) of a projection plane seen from outside along ``-d``: V = up (Blender Z, Y for the top / bottom)."""
-    up = Vector((0, 0, 1)) if abs(d.z) < 0.9 else Vector((0, 1, 0)) * (1 if d.z > 0 else -1)
-    u = (-d).cross(up).normalized()
-    return u, d.cross(u).normalized()
-
-
-def _maya_shells(faces, k_unit, optimize=True):
-    """6 planes: Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the default),
-    fed with the faces in index order and the points in Maya axes and units (Blender (x, y, z) =
-    Maya (x, -z, y)). Returns ``[(projector, faces)]``; a projector maps a Blender point to the plane's (u, v)."""
+def _maya_shells(faces, k_unit, optimize=True, planes=6):
+    """Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the default) for one of
+    the plane counts in ``autoproj_layout.PLANE_SETS``, fed with the faces in index order and the points in Maya
+    axes and units (Blender (x, y, z) = Maya (x, -z, y)). Returns ``[(projector, faces)]``; a projector maps a Blender point to the plane's (u, v)."""
     from . import autoproj_layout
     faces = sorted(faces, key=lambda f: f.index)
     ids = {}
@@ -60,10 +31,12 @@ def _maya_shells(faces, k_unit, optimize=True):
         for v in f.verts:
             ids.setdefault(v, len(ids))
     points = [(v.co.x * k_unit, v.co.z * k_unit, -v.co.y * k_unit) for v in ids]
-    shells = autoproj_layout.assign_planes(points, [[ids[v] for v in f.verts] for f in faces], optimize=optimize)
+    shells = autoproj_layout.assign_planes(points, [[ids[v] for v in f.verts] for f in faces], optimize=optimize,
+                                           planes=planes)
+    frames = autoproj_layout.PLANE_SETS[planes].frames
     out = []
     for plane, group in shells:
-        _n, mu, mv = autoproj_layout.PLANES6[plane]
+        _n, mu, mv = frames[plane]
         # Maya (x, y, z) of a Blender point = (x, z, -y): the frame vectors in Blender axes
         u = Vector((mu[0], -mu[2], mu[1])) * k_unit
         v = Vector((mv[0], -mv[2], mv[1])) * k_unit
@@ -72,61 +45,27 @@ def _maya_shells(faces, k_unit, optimize=True):
 
 
 def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
-    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with the default options: 6 planes assign faces
-    and build shells Maya's way (``_maya_shells``: candidate planes within 60 degrees, seeds by fewest candidates,
-    flood fill that stops where a shell would overlap itself); other
-    plane counts give every face the plane its normal faces most. Shells are laid out in 0-1 at one scale with
-    ``spacing`` percent between them (default 0.2 %) by Maya's packed "Into square"
+    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with the default options: faces take their planes
+    and form shells Maya's way for every Planes choice (``_maya_shells``: candidate planes within the plane count's
+    angle, seeds by fewest candidates, flood fill that stops where a shell would overlap itself). Shells are laid out
+    in 0-1 at one scale with ``spacing`` percent between them (default 0.2 %) by Maya's packed "Into square"
     layout (operators/autoproj_layout.py). ``unit`` = Blender length of one Maya unit
     (``units.maya_unit``): Maya projects and packs in Maya units. Returns the shell count."""
     from . import autoproj_layout
     faces = [f for f in faces if not f.hide]
     k_unit = 1.0 / (unit or 1.0)
-    if int(planes) == 6:
-        shells = _maya_shells(faces, k_unit, optimize)
-        # Maya's shell order for the layout = ascending lowest face index
-        shells.sort(key=lambda s: min(f.index for f in s[1]))
-        flat = [{lp: proj(lp.vert.co) for g in group for lp in g.loops} for proj, group in shells]
-        if not flat:
-            return 0
-        lay = autoproj_layout.layout([autoproj_layout.bbox_of(pts.values()) for pts in flat], max(0.0, spacing))
-        for i, pts in enumerate(flat):
-            for lp, (x, y) in pts.items():
-                lp[uv].uv = lay.transform(i, x, y)
-        return len(flat)
-    dirs = auto_planes(planes)
-    which = {}
-    for f in faces:
-        dots = [f.normal.dot(d) for d in dirs]
-        top = max(dots)
-        which[f] = next(i for i, x in enumerate(dots) if x >= top - 1e-6)
-    seen, shells = set(), []
-    # Maya's shell order = ascending lowest face index (faces visited in index order)
-    for f in sorted(faces, key=lambda f: f.index):
-        if f in seen:
-            continue
-        seen.add(f)
-        group, todo = [], [f]
-        while todo:
-            g = todo.pop()
-            group.append(g)
-            for e in g.edges:
-                for n in e.link_faces:
-                    if n not in seen and n in which and which[n] == which[f]:
-                        seen.add(n)
-                        todo.append(n)
-        shells.append((which[f], group))
-    flat = []
-    for k, group in shells:
-        u, v = _basis(dirs[k])
-        flat.append({lp: (lp.vert.co.dot(u) * k_unit, lp.vert.co.dot(v) * k_unit) for g in group for lp in g.loops})
+    planes = int(planes) if int(planes) in autoproj_layout.PLANE_SETS else 6
+    shells = _maya_shells(faces, k_unit, optimize, planes)
+    # Maya's shell order for the layout = ascending lowest face index
+    shells.sort(key=lambda s: min(f.index for f in s[1]))
+    flat = [{lp: proj(lp.vert.co) for g in group for lp in g.loops} for proj, group in shells]
     if not flat:
         return 0
     lay = autoproj_layout.layout([autoproj_layout.bbox_of(pts.values()) for pts in flat], max(0.0, spacing))
     for i, pts in enumerate(flat):
         for lp, (x, y) in pts.items():
             lp[uv].uv = lay.transform(i, x, y)
-    return len(shells)
+    return len(flat)
 
 
 def fit_unit(loops, uv):
