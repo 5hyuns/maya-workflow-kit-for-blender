@@ -303,13 +303,18 @@ def _rigid_fit(src, dst):
 
 def move_sew(bm, uv, edges):
     """Maya Move and Sew: per pair of shells the one with fewer faces moves rigidly onto the other along the selected
-    seam edges (seams centred), then each seam UV pair merges at its average. Returns the edges sewn."""
+    seam edges (seams centred), then each seam UV pair merges at its average. A border inside one shell is sewn
+    like Sew UV Edges (its UV pairs meet half-way). Returns the edges sewn."""
     groups = shells(bm, uv)
     where = owner_map(groups)
     by_pair = {}
+    inside = []
     for e in sorted(edges, key=lambda e: e.index):
         fs = [f for f in e.link_faces if not f.hide]
-        if len(fs) != 2 or where[fs[0]] == where[fs[1]]:
+        if len(fs) != 2:
+            continue
+        if where[fs[0]] == where[fs[1]]:
+            inside.append((e, fs))
             continue
         by_pair.setdefault(tuple(sorted((where[fs[0]], where[fs[1]]))), []).append((e, fs))
     sewn = 0
@@ -347,6 +352,10 @@ def move_sew(bm, uv, edges):
         for e, _fs in items:
             e.seam = False
         sewn += len(items)
+    for e, (a, b) in inside:
+        if uv_tools.weld_edge(e, a, b, uv):
+            e.seam = False
+            sewn += 1
     return sewn
 
 
