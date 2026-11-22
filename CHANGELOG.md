@@ -54,6 +54,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   that bends in more than one plane, like Maya (#444, #490).
 - Edit Mesh > Circularize on a block of faces puts the circle around the mean of all the selected faces' vertices and
   moves the vertices inside the block onto the circle's plane, like Maya (#465).
+- Deform > Nonlinear > Twist, Squash, Flare, Sine and Wave deform meshes and curves like Maya, in the handle's space:
+  Twist turns and Flare scales from the Low bound to the High bound, bounds beyond -1 / 1 spread the effect, Squash
+  stretches and bulges between the bounds, Sine waves the object sideways along the handle and Wave makes rings
+  around it; the Channel Box and the Attribute Editor show the deformers' own attributes (#457, #461).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
