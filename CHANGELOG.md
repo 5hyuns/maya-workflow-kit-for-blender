@@ -3,7 +3,15 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.21.0] — 2026-11-23
+
+Thank you for the reports since 0.20.1. **Materials change in this version:** new materials are now plain Blender
+Principled BSDF materials, so they render and export like any Blender material (see Changed). This update also
+makes Twist, Squash, Flare, Sine and Wave deform like Maya on meshes, curves, lattices and surfaces, reworks many UV
+tools (Sew, Move and Sew, Unfold, Layout, Planar, Cylindrical, Spherical, Automatic), adds Selection Constraint:
+Angle, edge-sliding Rotate / Scale and image plane attributes, and fixes the Channel Box, keys and tangents, Grow /
+Shrink, Symmetry selection, Ungroup, Fill Hole, skinning and playback. Thanks to @pixelkeyblade18, @suenwaichit,
+@Kill-butterfly, @invader-zimm, @envwarby, @magmastk and @JinxSwe for reports that showed what to fix.
 
 ### Added
 - Image planes: the Attribute Editor tab of an image plane (imagePlane) has Image Plane Attributes with Display Mode,
@@ -55,11 +63,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Edit Mesh > Circularize on a block of faces puts the circle around the mean of all the selected faces' vertices and
   moves the vertices inside the block onto the circle's plane, like Maya (#465).
 - Deform > Nonlinear > Twist, Squash, Flare, Sine and Wave deform meshes and curves like Maya, in the handle's space:
-  Twist turns and Flare scales from the Low bound to the High bound, bounds beyond -1 / 1 spread the effect, Squash
+  Twist turns and Flare scales from the Low bound to the High bound, bounds set further out spread the effect, Squash
   stretches and bulges between the bounds, Sine waves the object sideways along the handle and Wave makes rings
   around it; the Channel Box and the Attribute Editor show the deformers' own attributes (#457, #461).
-- Deform > Nonlinear > Squash has Start Smoothness and End Smoothness (0 to 1): they round the bulge off towards the
-  Low and High bound, easing it into the bound at 1, like Maya (#492).
+- Deform > Nonlinear > Squash has Start Smoothness and End Smoothness: they round the bulge off towards the Low and
+  High bound, and at their highest ease it smoothly into the bound, like Maya (#492).
 - Insert Edge Loop and Offset Edge Loop with "Insert with edge flow" put the new loop on the same curve as Edit Edge
   Flow, like Maya: halfway along the ring it sits where Edit Edge Flow puts it, nearer an edge it eases towards the
   straight cut, and several loops at once are cut straight. Edit Edge Flow on a loop next to a border row no longer
@@ -79,7 +87,7 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Channel Box: a camera's SHAPES shows Film Aperture (inches), Focal Length, F Stop, Focus Distance and Locator Scale
   instead of the clip planes, and lights show Use Ray Trace Shadows, like Maya (#481).
 - Polygon Cube, Sphere, Cone, Plane and Torus have Height Baseline and Create UVs in the Channel Box like the
-  Cylinder, with the same choices and starting values as Maya; Height Baseline stays between -1 and 1 (#480).
+  Cylinder, with the same choices and starting values as Maya; Height Baseline stays within Maya's range (#480).
 - Sew UV Edges keeps the shells where they are and joins the UVs on each edge half-way, like Maya (#483).
 - Move and Sew sews an open border inside one UV shell like Sew UV Edges (#484).
 - Unfold keeps every UV cut, also a cut inside one shell, so a cylinder side unfolds flat like Maya (#485).
@@ -114,8 +122,7 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Mesh edit mode: Ctrl+Shift+click adds the clicked component instead of selecting the shortest path from the active
   one (#445).
 - Mesh edit mode in Maya mode: the first hover after a move, a click or another edit no longer stalls on a dense mesh
-  while the pre-selection highlight reads the mesh again (about a quarter of a second on 130,000 vertices before)
-  (#452).
+  while the pre-selection highlight reads the mesh again (#452).
 - Option windows read X / Y / Z as the scene axes the Channel Box and the manipulator show, like Maya, instead of
   taking Y as the up axis: Edit > Duplicate Special, the Constraint axes and the Scale Constraint Offset, Mesh >
   Mirror, Skeleton > Mirror Joints, Skin > Mirror Skin Weights, the Multi-Cut slice planes and Extract offset,
@@ -136,12 +143,21 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   like Maya (#464).
 - Key > Paste Keys with Paste method Insert and Copies above 1 keeps the earlier copy's key where two copies
   meet, like Maya; Merge still keeps the later one (#467).
-- Create > Cameras > Camera gives the new camera F Stop 5.6, Focus Distance 5 and Orthographic Width 30, like Maya,
+- Create > Cameras > Camera gives the new camera Maya's F Stop, Focus Distance and Orthographic Width,
   so the Attribute Editor shows Maya's values and a switch to orthographic frames the same width (#468).
 - Key > Bake Simulation gives the baked keys the default (Auto) tangents, like any new key in Maya, so with
   Sample by above 1 the values between the baked keys follow a smooth curve instead of straight lines (#469).
 
 ### Changed
+- **Materials are plain Blender materials now.** New materials (shelf buttons, Assign New Material, Assign Favorite
+  Material, the Hypershade, and the lambert1 every new object gets) are plain Principled BSDF materials with Blender's
+  own values, so they look the same in Eevee and Cycles as any Blender material and export to FBX, glTF and USD with
+  their colour and textures. Lambert, Blinn, Phong, Standard Surface and the other kinds give the material its Maya
+  name, labels and Attribute Editor layout; a texture connected to Color goes straight to Base Color. **Scenes saved
+  with earlier versions render as before.** To turn their kit materials into plain Principled materials, use
+  Lighting/Shading > Convert Old Kit Materials once (a texture on Color then shows a little brighter, as Blender's
+  Base Color has no extra diffuse factor). Ramp Shader, Layered Shader and Use Background keep their extra nodes,
+  and Surface Shader its glow, for now. A new Standard Surface no longer changes Roughness and Coat Roughness (#470).
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
   to show (camera aim lines, bend handles, distance dimensions, a polygon being placed, IK / FK chains, Simple Deform
   bends, ghosts, vertex keys, the blue pencil) stop after their cheapest check, and the Range Slider row, the Range
