@@ -193,6 +193,8 @@ from . import uv_loop_pick  # noqa: E402  UV Editor double-click: UV edge loop /
 classes += uv_loop_pick.classes
 from . import manip_scale  # noqa: E402  #200: Maya Scale manipulator centre / axis drag
 classes += manip_scale.classes
+from . import edge_rotate  # noqa: E402  #429: Ctrl+Shift Rotate drag kept on the edges
+classes += edge_rotate.classes
 classes += universal_manip.classes
 from . import dome_light  # noqa: E402  #201: Create > Lights > Dome Light = the World environment
 classes += dome_light.classes

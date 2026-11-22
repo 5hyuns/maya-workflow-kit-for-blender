@@ -41,9 +41,9 @@ from . import group
 # prefix).
 MODAL_ID = "ALLSET_OT_manip_scale"
 # Modal transforms: Blender's and the kit's own drags (manipulator scale, pivot edit, component scale, live move,
-# Universal Manipulator).
+# Universal Manipulator, edge-constrained rotate).
 TRANSFORM_MODALS = ("TRANSFORM_OT_", MODAL_ID, "ALLSET_OT_pivot_translate", "ALLSET_OT_pivot_rotate", "ALLSET_OT_um_",
-                    "ALLSET_OT_component_scale", "ALLSET_OT_live_translate")
+                    "ALLSET_OT_component_scale", "ALLSET_OT_live_translate", "ALLSET_OT_edge_rotate")
 
 MODES = (('CENTER', "Centre", "Uniform scale (centre handle)"),
          ('AXIS', "Axis", "Scale along one axis (axis handle)"),
@@ -413,6 +413,8 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
     orient_type: bpy.props.StringProperty(default="", options={'SKIP_SAVE'})
     button: bpy.props.EnumProperty(items=(('LEFTMOUSE', "Left", ""), ('MIDDLEMOUSE', "Middle", "")),
                                    default='LEFTMOUSE', options={'SKIP_SAVE'})
+    edge: bpy.props.BoolProperty(default=False, options={'SKIP_SAVE'},
+                                 description="Ctrl+Shift: keep every vertex on one of its edges (mesh edit mode)")
 
     @classmethod
     def poll(cls, context):
@@ -494,6 +496,10 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
             px, py = getattr(event, "mouse_prev_press_x", px), getattr(event, "mouse_prev_press_y", py)
         self._press = (px - region.x, py - region.y)
         self._state = save_state(context)
+        self._edge = None
+        if self.edge and context.mode == 'EDIT_MESH':
+            from . import edge_constraint
+            self._edge = edge_constraint.prepare(context)    # the mesh as it is before the drag
         self._zeros = zero_channels(context)
         self._f = 1.0
         self._region_xy = (region.x, region.y)
@@ -514,6 +520,9 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
         try:
             apply(context, f, self._channels, self.orient_type)
             fix_zero(self._zeros, self._channels)
+            if self._edge:
+                from . import edge_constraint
+                edge_constraint.apply(self._edge)
         except RuntimeError as ex:
             print("allset: scale preview failed", ex)
         if context.area is not None:
@@ -536,8 +545,16 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
         if event.type == self.button and event.value == 'RELEASE':
             restore(self._state)
             try:
-                apply(context, self._f, self._channels, self.orient_type, final=True)
-                fix_zero(self._zeros, self._channels)
+                if self._edge:
+                    # the edge slide changes the points after the resize: one undo step for both
+                    from . import edge_constraint
+                    apply(context, self._f, self._channels, self.orient_type)
+                    fix_zero(self._zeros, self._channels)
+                    edge_constraint.apply(self._edge)
+                    bpy.ops.ed.undo_push(message="Scale")
+                else:
+                    apply(context, self._f, self._channels, self.orient_type, final=True)
+                    fix_zero(self._zeros, self._channels)
             except RuntimeError as ex:
                 print("allset: scale failed", ex)
             self._end(context)

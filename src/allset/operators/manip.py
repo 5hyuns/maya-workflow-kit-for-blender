@@ -579,11 +579,11 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
     @staticmethod
-    def _maya_scale(handle):
+    def _maya_scale(handle, edge=False):
         """#200: the active Scale handle drags Maya's way (operators/manip_scale.py); an axis or plane
-        handle at half speed there."""
+        handle at half speed there. ``edge``: every vertex kept on one of its edges (#429)."""
         axes = tuple(bool(a) for a in handle.get("constraint_axis", ())) if handle else ()
-        kwargs = {"button": 'MIDDLEMOUSE'}
+        kwargs = {"button": 'MIDDLEMOUSE', "edge": edge}
         if handle and sum(axes) == 1:
             kwargs.update(mode='AXIS', axis='XYZ'[axes.index(True)])
         elif handle and sum(axes) == 2:
@@ -863,14 +863,55 @@ class ALLSET_OT_manip_slide_hint_move(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
+def rotate_axis(handle):
+    """edge_rotate's axis for a Rotate handle (``handle_from_gizmo`` / ``HANDLES``): 'X' / 'Y' / 'Z', 'VIEW'."""
+    if not handle or (handle.get("orient_type") == 'VIEW' and not any(handle.get("constraint_axis", ()))):
+        return 'VIEW'
+    return handle.get("orient_axis", 'Z')
+
+
+def _edge_rotate_scale(context):
+    """#429: Ctrl+Shift+drag on a Rotate / Scale handle in mesh edit mode rotates / scales with every vertex kept on
+    one of its edges (Maya's edge constraint). None when it doesn't apply (other tools and modes, the Rotate
+    trackball, the pivot being edited), else the started operator's result."""
+    from ..ui import manipulator
+    if context.mode != 'EDIT_MESH':
+        return None
+    gz = _highlighted(context)
+    if gz is None:
+        return None
+    kind, handle = handle_from_gizmo(context, gz)
+    try:
+        if kind == 'ROTATE' and handle is not None:
+            return bpy.ops.allset.edge_rotate('INVOKE_DEFAULT', axis=rotate_axis(handle),
+                                              orient_type=handle.get("orient_type", ""), button='LEFTMOUSE')
+        if kind == 'RESIZE':
+            role = getattr(gz, "handle_role", None)
+            kwargs = {"edge": True, "button": 'LEFTMOUSE', "orient_type": manipulator.slot_type(context.scene, kind)}
+            if role == 'AXIS':
+                kwargs.update(mode='AXIS', axis=gz.handle_axis)
+            elif role == 'PLANE':
+                mask = handle["constraint_axis"]
+                kwargs.update(mode='PLANE', plane="".join(a for a, on in zip('XYZ', mask) if on))
+            elif role != 'CENTER':
+                return None
+            return bpy.ops.allset.manip_scale('INVOKE_DEFAULT', **kwargs)
+    except RuntimeError:
+        return None
+    return None
+
+
 class ALLSET_OT_manip_slide(bpy.types.Operator):
-    """Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their
-    edges (Maya)"""
+    """Ctrl+Shift+drag on a manipulator handle in mesh edit mode: Move slides the selected components along their
+    edges, Rotate / Scale rotate / scale them with every vertex kept on one of its edges (Maya)"""
     bl_idname = "allset.manip_slide"
     bl_label = "Manipulator Slide"
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
+        res = _edge_rotate_scale(context)
+        if res is not None:
+            return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'PASS_THROUGH'}
         if not _slide_applies(context):
             return {'PASS_THROUGH'}
         slide_hint_clear()
@@ -912,6 +953,34 @@ class ALLSET_OT_manip_slide(bpy.types.Operator):
 
     def cancel(self, _context):
         slide_hint_clear()
+
+
+class ALLSET_OT_manip_mmb_edge(bpy.types.Operator):
+    """Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle
+    with every vertex kept on one of its edges (Maya)"""
+    bl_idname = "allset.manip_mmb_edge"
+    bl_label = "Drag Active Handle Along Edges"
+    bl_options = {'INTERNAL'}
+
+    mode: bpy.props.EnumProperty(items=(('ROTATE', "Rotate", ""), ('RESIZE', "Scale", "")), default='ROTATE')
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH' and context.area is not None and context.area.type == 'VIEW_3D'
+
+    def invoke(self, context, _event):
+        from ..ui import manipulator
+        if component_pivot_edit(context) or manipulator.tool_kind(context) != self.mode:
+            return {'PASS_THROUGH'}
+        handle = HANDLES.get(self.mode)
+        if self.mode == 'RESIZE':
+            return ALLSET_OT_manip_mmb._maya_scale(handle, edge=True) or {'PASS_THROUGH'}
+        try:
+            res = bpy.ops.allset.edge_rotate('INVOKE_DEFAULT', axis=rotate_axis(handle), button='MIDDLEMOUSE',
+                                             orient_type=(handle or {}).get("orient_type", ""))
+        except RuntimeError:
+            return {'PASS_THROUGH'}
+        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'PASS_THROUGH'}
 
 
 # the transform modes a Ctrl+Shift+drag on a Move handle runs
@@ -1053,4 +1122,5 @@ def option_state(option):
 
 classes = (ALLSET_OT_manip_duplicate, ALLSET_OT_manip_release, ALLSET_OT_manip_option, ALLSET_OT_manip_size,
            ALLSET_OT_manip_press, ALLSET_OT_manip_mmb, ALLSET_OT_manip_ctrl, ALLSET_OT_manip_mmb_auto,
-           ALLSET_OT_manip_slide, ALLSET_OT_manip_slide_hint, ALLSET_OT_manip_slide_hint_move)
+           ALLSET_OT_manip_slide, ALLSET_OT_manip_slide_hint, ALLSET_OT_manip_slide_hint_move,
+           ALLSET_OT_manip_mmb_edge)

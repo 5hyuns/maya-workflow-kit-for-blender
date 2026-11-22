@@ -12,6 +12,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   next to it) or in the Move / Rotate / Scale / Select tool option menus (Selection Constraints > Angle). A click or
   marquee on faces, edges or vertices then also selects the connected ones whose normal is within that angle of the
   picked one, so one click picks a flat or gently curved patch; Shift and Ctrl add and remove whole patches (#435).
+- Rotate and Scale tools in mesh edit mode: Ctrl+Shift+drag on a manipulator ring or handle, or Ctrl+Shift+middle-drag
+  anywhere, rotates or scales the selection with every vertex sliding along whichever of its own edges best follows
+  the drag, like Maya: a move that points off the surface is put back on it first, a vertex stops at the far end of
+  its edge, and with vertices or edges selected the edges between selected vertices are left out, so an edge loop
+  slides across its neighbours instead of along itself (#429).
 
 ### Fixed
 - UV > 3D Grab UV Tool picked over the 3D View no longer raises a Python error: it sets the Grab tool in the UV

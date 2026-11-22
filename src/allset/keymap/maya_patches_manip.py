@@ -156,8 +156,9 @@ def patch_in_view_mmb(kd):
 def patch_component_slide(kd):
     _add(kd, "3D View Tool: Move", "allset.component_slide", make_event("MIDDLEMOUSE", "PRESS", shift=True, ctrl=True),
          {"mode": 'EDGE'})
-    # Maya: Ctrl+Shift+drag on a Move manipulator handle slides too (first in the gizmo keymaps; passes the press on
-    # outside mesh edit mode, so Ctrl+Shift+drag on a handle elsewhere stays as it was)
+    # Maya: Ctrl+Shift+drag on a Move manipulator handle slides too, on a Rotate / Scale handle it rotates / scales
+    # with every vertex kept on one of its edges (#429) (first in the gizmo keymaps; passes the press on outside mesh
+    # edit mode, so Ctrl+Shift+drag on a handle elsewhere stays as it was)
     for km in GIZMO_KEYMAPS:
         _add(kd, km, "allset.manip_slide", make_event("LEFTMOUSE", "PRESS", shift=True, ctrl=True), first=True)
         # ... and shows a "slide" label under the mouse while Ctrl+Shift is held over a handle (always passes on)
@@ -166,6 +167,12 @@ def patch_component_slide(kd):
     # ... also when the mouse comes onto a handle with Ctrl+Shift already held (always passes on)
     _add(kd, "3D View", "allset.manip_slide_hint_move", make_event("MOUSEMOVE", "ANY", any=True),
          shadows=("3D View Generic", "Weight Paint"))
+    # Maya: Ctrl+Shift+middle-drag with the Rotate / Scale tool rotates / scales along the active handle with every
+    # vertex kept on one of its edges (a Ctrl+Shift+drag on a Rotate / Scale handle does it through manip_slide above)
+    _add(kd, "3D View Tool: Rotate", "allset.manip_mmb_edge", make_event("MIDDLEMOUSE", "PRESS", shift=True, ctrl=True),
+         {"mode": 'ROTATE'})
+    _add(kd, "3D View Tool: Scale", "allset.manip_mmb_edge", make_event("MIDDLEMOUSE", "PRESS", shift=True, ctrl=True),
+         {"mode": 'RESIZE'})
     # Maya: Ctrl+middle-drag with the Move tool moves the selected components along their normals
     _add(kd, "3D View Tool: Move", "allset.component_slide", make_event("MIDDLEMOUSE", "PRESS", ctrl=True),
          {"mode": 'NORMAL'})
