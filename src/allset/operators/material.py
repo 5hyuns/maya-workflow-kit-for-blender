@@ -52,9 +52,8 @@ def cosine_power_roughness(n):
 
 # kind -> (Maya node name, UI label, Principled inputs).
 MATERIALS = {
-    # standardSurface: baseColor 0.8, specularColor / emissionColor white, specularIOR / coatIOR 1.5 (= Principled's);
-    # specularRoughness 0.2, coatRoughness 0.1
-    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {"Roughness": 0.2, "Coat Roughness": 0.1}),
+    # standardSurface: baseColor 0.8 (= Principled's), specularRoughness 0.4, emissionColor white
+    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {"Roughness": 0.4}),
     # Arnold's default material (Maya with mtoa); same Principled stand-in
     'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
     'LAMBERT': ("lambert", "Lambert", {**_COMMON, "Roughness": 1.0, "Specular IOR Level": 0.0}),

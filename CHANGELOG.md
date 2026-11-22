@@ -140,7 +140,6 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   so the Attribute Editor shows Maya's values and a switch to orthographic frames the same width (#468).
 - Key > Bake Simulation gives the baked keys the default (Auto) tangents, like any new key in Maya, so with
   Sample by above 1 the values between the baked keys follow a smooth curve instead of straight lines (#469).
-- A new Standard Surface material starts with Specular Roughness 0.2 and Coat Roughness 0.1, like Maya (#470).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing

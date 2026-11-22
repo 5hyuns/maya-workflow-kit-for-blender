@@ -102,8 +102,7 @@ def test_other_lambert_family_defaults():
     b = _bsdf(material.new_material('ANISOTROPIC'))
     assert _close(b.inputs["Roughness"].default_value, 0.7)
     s = _bsdf(material.new_material('STANDARD_SURFACE'))
-    assert _close(s.inputs["Roughness"].default_value, 0.2), "standardSurface specularRoughness 0.2"
-    assert _close(s.inputs["Coat Roughness"].default_value, 0.1), "standardSurface coatRoughness 0.1"
+    assert _close(s.inputs["Roughness"].default_value, 0.4), "standardSurface specularRoughness 0.4"
     assert _close(s.inputs["Base Color"].default_value, (0.8, 0.8, 0.8, 1.0))
 
 
