@@ -163,9 +163,11 @@ def button_labels(shelf_id):
     return out + [(len(out) + k, b["label"]) for k, b in enumerate(factory_extras(shelf_id) or ())]
 
 
-def button_index(shelf_id, label):
-    """Slot index of the button ``label`` on shelf ``shelf_id`` (the first one of that label), or None."""
-    return next((i for i, lab in button_labels(shelf_id) if lab == label), None)
+def button_index(shelf_id, label, nth=1):
+    """Slot index of the button ``label`` on shelf ``shelf_id`` (the ``nth`` button of that label, the first one by
+    default: a shelf can hold several buttons of one label), or None."""
+    found = [i for i, lab in button_labels(shelf_id) if lab == label]
+    return found[nth - 1] if 1 <= nth <= len(found) else None
 
 
 def factory_buttons(name):

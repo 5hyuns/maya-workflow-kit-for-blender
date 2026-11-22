@@ -158,7 +158,7 @@ def refresh(context, message=None):
         elif e.get("type") == "python":
             vals["allset_mme_code"] = e.get("code", "")
         elif e.get("type") == "shelf":
-            vals["allset_mme_shelf"] = shelf_field(e.get("shelf", ""), e.get("button", ""))
+            vals["allset_mme_shelf"] = shelf_field(e.get("shelf", ""), e.get("button", ""), e.get("nth", 1))
         elif e.get("type") == "kit":
             vals["allset_mme_kit"] = json.dumps(e.get("action"))
     if message is not None:
@@ -191,30 +191,38 @@ def item_search(self, context, edit_text):
     return _matches(edit_text, sorted(menu_map.MAP))
 
 
+def _shelf_rows():
+    """[(text, shelf id, button label, nth)] of every shelf button, in shelf order. A shelf can hold several buttons
+    of one label (each runs its own command): the second one's text ends in " (2)", and so on."""
+    from ..ui import shelf
+    rows = []
+    for sid, tab in shelf.shelves():
+        seen = {}
+        for _i, label in shelf.button_labels(sid):
+            nth = seen[label] = seen.get(label, 0) + 1
+            rows.append((shelf_field(sid, label, nth, tab), sid, label, nth))
+    return rows
+
+
 def shelf_choices():
     """"Shelf / Button" texts of every shelf button, in shelf order."""
-    from ..ui import shelf
-    return [f"{tab}{SHELF_SEP}{label}" for sid, tab in shelf.shelves() for _i, label in shelf.button_labels(sid)]
+    return [row[0] for row in _shelf_rows()]
 
 
 def shelf_search(self, context, edit_text):
     return _matches(edit_text, shelf_choices())
 
 
-def shelf_field(shelf_id, button):
-    from ..ui import shelf
-    tab = next((t for sid, t in shelf.shelves() if sid == shelf_id), um.shelf_text(shelf_id))
-    return f"{tab}{SHELF_SEP}{button}" if shelf_id or button else ""
+def shelf_field(shelf_id, button, nth=1, tab=None):
+    if tab is None:
+        from ..ui import shelf
+        tab = next((t for sid, t in shelf.shelves() if sid == shelf_id), um.shelf_text(shelf_id))
+    return f"{tab}{SHELF_SEP}{button}{um.nth_text({'nth': nth})}" if shelf_id or button else ""
 
 
 def parse_shelf(text):
-    """(shelf id, button label) of a "Shelf / Button" text, or None when no shelf has that button."""
-    from ..ui import shelf
-    for sid, tab in shelf.shelves():
-        prefix = tab + SHELF_SEP
-        if text.startswith(prefix) and shelf.button_index(sid, text[len(prefix):]) is not None:
-            return sid, text[len(prefix):]
-    return None
+    """(shelf id, button label, nth) of a "Shelf / Button" text, or None when no shelf has that button."""
+    return next((row[1:] for row in _shelf_rows() if row[0] == text), None)
 
 
 # --- slot field edits (update callbacks) ------------------------------------------------------------------------
@@ -228,8 +236,11 @@ def _new_entry(wm, kind, label, old):
     if kind == "python":
         return {"label": label, "type": "python", "code": wm.allset_mme_code}, ""
     if kind == "shelf":
-        found = parse_shelf(wm.allset_mme_shelf) or ("", "")
-        return {"label": label, "type": "shelf", "shelf": found[0], "button": found[1]}, ""
+        found = parse_shelf(wm.allset_mme_shelf) or ("", "", 1)
+        entry = {"label": label, "type": "shelf", "shelf": found[0], "button": found[1]}
+        if found[2] > 1:
+            entry["nth"] = found[2]
+        return entry, ""
     if kind == "kit":
         action = old and um.entry_action(old)
         if isinstance(action, mm.Sub) or action is None:
@@ -309,7 +320,7 @@ def _on_field(field):
             if found is None:
                 refresh(context, "Pick a shelf button in the list (type part of its name)")
                 return
-            um.update_entry(menu, path, shelf=found[0], button=found[1])
+            um.update_entry(menu, path, shelf=found[0], button=found[1], nth=found[2])
             if e.get("label") in ("", NEW_LABEL):              # a new item takes the button's name
                 um.update_entry(menu, path, label=found[1])
         elif field == "code":
@@ -761,7 +772,8 @@ def _draw_details(layout, context, sub):
         if um.is_editable_sub(action):
             box.operator(ALLSET_OT_mme_open.bl_idname, text="Open Submenu", icon='RIGHTARROW').path = full_path(context)
     if t == "shelf":        # the shelf's tab name, as in the field
-        box.label(text="Shelf button: " + (shelf_field(e.get("shelf", ""), e.get("button", "")) or "—"))
+        box.label(text="Shelf button: " + (shelf_field(e.get("shelf", ""), e.get("button", ""), e.get("nth", 1))
+                                            or "—"))
     else:
         box.label(text=um.describe(e) or "—")
     row = box.row(align=True)

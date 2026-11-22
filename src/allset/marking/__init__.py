@@ -17,7 +17,7 @@ Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-releas
 """
 
 import bpy
-from bpy.props import EnumProperty, StringProperty
+from bpy.props import EnumProperty, IntProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
@@ -473,10 +473,11 @@ class ALLSET_OT_mm_shelf_button(bpy.types.Operator):
 
     shelf: StringProperty(options={'SKIP_SAVE'})
     button: StringProperty(options={'SKIP_SAVE'})
+    nth: IntProperty(default=1, min=1, options={'SKIP_SAVE'})   # the nth button of that label on the shelf
 
     def execute(self, context):
         from ..ui import shelf
-        index = shelf.button_index(self.shelf, self.button)
+        index = shelf.button_index(self.shelf, self.button, self.nth)
         if index is None:
             self.report({'WARNING'}, f"{self.button}: no longer on the {user_menus.shelf_text(self.shelf)} shelf")
             return {'CANCELLED'}

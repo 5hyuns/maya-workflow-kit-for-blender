@@ -267,7 +267,7 @@ def test_menu_item_search_and_shelf_buttons():
     assert "Edit/Delete by Type/History" in me.item_search(None, bpy.context, "")       # empty text: every path
     # the shelf's Maya tab name (Poly Modeling), not its id (Polygons)
     assert "Poly Modeling / Delete By Type: History" in me.shelf_search(None, bpy.context, "history")
-    assert me.parse_shelf("Poly Modeling / Delete By Type: History") == ("Polygons", "Delete By Type: History")
+    assert me.parse_shelf("Poly Modeling / Delete By Type: History") == ("Polygons", "Delete By Type: History", 1)
     assert me.parse_shelf("Poly Modeling / Nope") is None
     assert shelf.button_index("Polygons", "Delete By Type: History") is not None
     # a user shelf's Python button, run from a marking menu item by its label
@@ -300,6 +300,48 @@ def test_menu_item_search_and_shelf_buttons():
     finally:
         data["shelves"][:] = [s for s in data["shelves"] if s["name"] != "T292"]
         bpy.context.scene.pop("s292", None)
+        _reset()
+
+
+def test_shelf_buttons_of_one_label_each_run_their_own_command():
+    """A shelf can hold several buttons of one label; like Maya, each Shelf Button item runs the button it was made
+    from (the field and the list tell them apart with " (2)", " (3)")."""
+    marking, mm, um, me = _mods()
+    shelf = m("ui.shelf")
+    wm = bpy.context.window_manager
+    _reset()
+    data = shelf.user_data()
+    data["shelves"].append({"name": "T446", "buttons": [
+        {"label": "Planar", "script": f"import bpy\nbpy.context.scene['s446'] = {n}"} for n in (1, 2, 3)]})
+    try:
+        assert [c for c in me.shelf_choices() if c.startswith("T446")] == [
+            "T446 / Planar", "T446 / Planar (2)", "T446 / Planar (3)"]
+        assert me.parse_shelf("T446 / Planar (3)") == ("USER:T446", "Planar", 3)
+        assert shelf.button_index("USER:T446", "Planar", 2) == 1 and shelf.button_index("USER:T446", "Planar", 4) is None
+        bpy.ops.allset.mme_menu(action="NEW", label="Planar Items")
+        name = wm.allset_mme_menu
+        for slot, text in (("N", "T446 / Planar"), ("E", "T446 / Planar (2)"), ("S", "T446 / Planar (3)")):
+            bpy.ops.allset.mme_select(slot=slot)
+            bpy.ops.allset.mme_slot(action="SET")
+            wm.allset_mme_type = "shelf"
+            wm.allset_mme_shelf = text
+            assert wm.allset_mme_shelf == text, (wm.allset_mme_shelf, text)
+        radial = mm.MENUS[name].radial
+        assert radial["N"] == ("Planar", (um.SHELF_OP, {"shelf": "USER:T446", "button": "Planar"})), radial["N"]
+        assert radial["E"][1] == (um.SHELF_OP, {"shelf": "USER:T446", "button": "Planar", "nth": 2}), radial["E"]
+        for slot, want in (("N", 1), ("E", 2), ("S", 3)):
+            op, props = radial[slot][1]
+            assert bpy.ops.allset.mm_shelf_button(**props) == {'FINISHED'}
+            assert bpy.context.scene["s446"] == want, (slot, bpy.context.scene["s446"])
+        assert any("Shelf button: T446 / Planar (3)" in t for t in _draw(me.ALLSET_PT_marking_menu_editor).texts())
+        # picking the first button again drops the later number
+        wm.allset_mme_shelf = "T446 / Planar"
+        assert mm.MENUS[name].radial["S"][1] == (um.SHELF_OP, {"shelf": "USER:T446", "button": "Planar"})
+        assert um.describe({"type": "shelf", "shelf": "USER:T446", "button": "Planar", "nth": 2}) == \
+            "Shelf button: T446 / Planar (2)"
+    finally:
+        data["shelves"][:] = [s for s in data["shelves"] if s["name"] != "T446"]
+        bpy.context.scene.pop("s446", None)
         _reset()
 
 
