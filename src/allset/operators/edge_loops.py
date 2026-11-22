@@ -249,7 +249,7 @@ def insert_loops(bm, edge, t, position='RELATIVE', count=2, smoothing=math.radia
     points = _cut_points(bm, items, fractions)
     new = _connect(bm, points, len(faces), closed)
     _smooth(new, smoothing)
-    if flow is not None and new:
+    if flow is not None and new and position != 'MULTIPLE':     # Maya: several loops are cut straight
         edge_flow(bm, new, flow)
     _select_only(bm, new)
     return new
