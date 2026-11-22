@@ -116,10 +116,10 @@ def _run_bake(context, v):
 
 
 def _run_uv_planar(context, v):
-    from .menu_extras import AXIS_NORMALS, planar_uvs
+    from .menu_extras import AXIS_NORMALS, project_faces
     axis = {"X axis": AXIS_NORMALS['X'], "Y axis": AXIS_NORMALS['Y'], "Z axis": AXIS_NORMALS['Z']}
     if v["fit"] == "Best plane" or v["project_from"] == "Camera":
-        return bpy.ops.allset.uv_planar('EXEC_DEFAULT')
+        return bpy.ops.allset.uv_planar('EXEC_DEFAULT', axis='NORMAL')
     normal = axis[v["project_from"]]
     obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
            if o.type == 'MESH']
@@ -132,9 +132,7 @@ def _run_uv_planar(context, v):
             bm.from_mesh(ob.data)
         faces = [f for f in bm.faces if f.select] if edit else list(bm.faces)
         layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
-        loops = [lp for f in faces for lp in f.loops]
-        for lp, uv in zip(loops, planar_uvs([lp.vert.co for lp in loops], normal)):
-            lp[layer].uv = uv
+        project_faces(ob, faces, layer, normal)
         if edit:
             bmesh.update_edit_mesh(ob.data)
         else:

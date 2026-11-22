@@ -339,7 +339,7 @@ MAP = {
     f"{UV}/Create/Camera-based": ("v3d", "uv.project_from_view", {}),
     f"{UV}/Create/Normal-based": "allset.uv_planar",
     f"{UV}/Create/Cylindrical": "allset.uv_cylindrical",
-    f"{UV}/Create/Planar": "allset.uv_planar",
+    f"{UV}/Create/Planar": ("allset.uv_planar", {"axis": 'X'}),
     f"{UV}/Create/Spherical": "allset.uv_spherical",
     f"{UV}/Select/All": ("uv.select_all", {"action": 'SELECT'}),
     f"{UV}/Select/Clear": ("uv.select_all", {"action": 'DESELECT'}),

@@ -7,8 +7,9 @@
   numbering, re-implemented in ``increment_path``).
 - ``ALLSET_MT_export_selection``: File > Export Selection... = the exporters with
   "selected only" set.
-- ``allset.uv_planar``: UV > Planar / Normal-Based = project the selected faces on the
-  plane of their average normal.
+- ``allset.uv_planar``: UV > Planar = project the selected faces along the scene's X / Y / Z axis;
+  Normal-Based / Best Plane = on the plane of their average normal. Both in scene space (the object's
+  move / turn / scale count), fitted to the selection's bounding box.
 """
 
 import os
@@ -303,6 +304,24 @@ def planar_uvs(points, normal):
     return [((x - x0) / size + du, (y - y0) / size + dv) for x, y in flat]
 
 
+def project_faces(ob, faces, layer, normal=None):
+    """Planar UVs of ``faces`` of ``ob`` in scene space: along ``normal`` (a scene direction), or the plane of the
+    faces' average scene normal when it is None."""
+    mw = ob.matrix_world
+    if normal is None:
+        nm = mw.to_3x3().inverted_safe().transposed()
+        normal = Vector()
+        for f in faces:
+            pts = [mw @ v.co for v in f.verts]
+            for i in range(1, len(pts) - 1):
+                normal += (pts[i] - pts[0]).cross(pts[i + 1] - pts[0])
+        if normal.length < 1e-12:
+            normal = sum((nm @ f.normal for f in faces), Vector())
+    loops = [lp for f in faces for lp in f.loops]
+    for lp, uv in zip(loops, planar_uvs([mw @ lp.vert.co for lp in loops], normal)):
+        lp[layer].uv = uv
+
+
 # Planar X / Y / Z project along the scene's X / Y / Z axis (the axes the Channel Box and the
 # manipulator show); each normal is picked so the projection reads upright: X = U along Y,
 # V along Z; Y = U along X, V along Z; Z = U along X, V along Y.
@@ -310,7 +329,8 @@ AXIS_NORMALS = {'X': Vector((1, 0, 0)), 'Y': Vector((0, -1, 0)), 'Z': Vector((0,
 
 
 class ALLSET_OT_uv_planar(bpy.types.Operator):
-    """Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)"""
+    """Project UVs along the scene's X / Y / Z axis (Maya Planar) or on the plane of the faces' average normal
+    (Maya Normal-Based)"""
     bl_idname = "allset.uv_planar"
     bl_label = "Planar Projection"
     bl_options = {'REGISTER', 'UNDO'}
@@ -340,10 +360,7 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
                     bm.free()
                 continue
             layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
-            normal = fixed if fixed is not None else sum((f.normal * f.calc_area() for f in faces), Vector())
-            loops = [lp for f in faces for lp in f.loops]
-            for lp, uv in zip(loops, planar_uvs([lp.vert.co for lp in loops], normal)):
-                lp[layer].uv = uv
+            project_faces(ob, faces, layer, fixed)
             if edit:
                 bmesh.update_edit_mesh(ob.data)
             else:

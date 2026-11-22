@@ -33,7 +33,7 @@ def test_menu_item_becomes_its_operator():
     wm = _load(1)
     assert wm.allset_se_type == "MAYA_MENU_ITEM"
     wm.allset_se_type = "PYTHON"
-    assert wm.allset_se_script == "import bpy\n\nbpy.ops.allset.uv_planar()", wm.allset_se_script
+    assert wm.allset_se_script == "import bpy\n\nbpy.ops.allset.uv_planar(axis='X')", wm.allset_se_script
 
 
 def test_operator_keeps_its_properties():

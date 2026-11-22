@@ -435,7 +435,7 @@ MAP = {
     "Deform/Paint Membership": "paint.weight_paint_toggle",
     # --- UV ---
     "UV/UV Editor": _editor('UV'),
-    "UV/Planar": "allset.uv_planar",
+    "UV/Planar": ("allset.uv_planar", {"axis": 'X'}),    # the option window's defaults: X axis, bounding box
     "UV/Normal-Based": "allset.uv_planar",
     "UV/Automatic": "allset.uv_automatic",      # Maya polyAutoProjection
     "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
