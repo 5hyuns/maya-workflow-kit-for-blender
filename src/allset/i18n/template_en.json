@@ -5763,6 +5763,14 @@
    "Where a loop ends inside the mesh, merge the two triangles there": "Where a loop ends inside the mesh, merge the two triangles there",
    "Where the loop cuts the clicked edge (from its first vertex)": "Where the loop cuts the clicked edge (from its first vertex)"
   },
+  "Labels/operators/edge_marquee": {
+   "Box Select": "Box Select"
+  },
+  "Labels/operators/edge_rotate": {
+   "Left": "Left",
+   "Middle": "Middle",
+   "Rotate": "Rotate"
+  },
   "Labels/operators/edit_mesh_items": {
    "Detach": "Detach",
    "Divisions": "Divisions",
@@ -6313,6 +6321,7 @@
   },
   "Labels/operators/manip": {
    "Drag Active Handle": "Drag Active Handle",
+   "Drag Active Handle Along Edges": "Drag Active Handle Along Edges",
    "Drag Along Closest Axis": "Drag Along Closest Axis",
    "Factor": "Factor",
    "Manipulator Ctrl Handle": "Manipulator Ctrl Handle",
@@ -6323,12 +6332,15 @@
    "Manipulator Slide": "Manipulator Slide",
    "Manipulator Slide Label": "Manipulator Slide Label",
    "Manipulator Slide Label Mouse": "Manipulator Slide Label Mouse",
+   "Rotate": "Rotate",
+   "Scale": "Scale",
    "Smart Duplicate": "Smart Duplicate",
    "Smart Duplicate / Extrude": "Smart Duplicate / Extrude",
    "Smart Extrude": "Smart Extrude"
   },
   "Labels/operators/manip_scale": {
    "Ctrl on an axis handle: scale the other two axes": "Ctrl on an axis handle: scale the other two axes",
+   "Ctrl+Shift: keep every vertex on one of its edges (mesh edit mode)": "Ctrl+Shift: keep every vertex on one of its edges (mesh edit mode)",
    "Left": "Left",
    "Middle": "Middle",
    "Scale": "Scale"
@@ -11524,6 +11536,12 @@
    "Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values).": "Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (default values).",
    "Middle-drag: slide the selected edges along their neighbouring edges (Maya Slide Edge)": "Middle-drag: slide the selected edges along their neighbouring edges (Maya Slide Edge)"
   },
+  "Tooltips/operators/edge_marquee": {
+   "Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)": "Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)"
+  },
+  "Tooltips/operators/edge_rotate": {
+   "Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)": "Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)"
+  },
   "Tooltips/operators/edit_mesh_items": {
    "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)": "Detach the selected components: vertices split per face, edges split open, faces become their own\nshell (Maya Edit Mesh > Detach)",
    "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)": "Move the selected edges so they follow the curvature of the surrounding surface\n(Maya Edit Mesh > Edit Edge Flow)",
@@ -11773,7 +11791,8 @@
   "Tooltips/operators/manip": {
    "Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held": "Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held",
    "Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes": "Ctrl+LMB on the manipulator: a Move axis moves in the plane of the other two axes (with the Ctrl+Drag Snaps\npreference: along the axis with grid snapping), a Move plane / centre drag snaps, Ctrl+click on the Move centre\nfrees the active handle, a Scale axis handle scales the other two axes",
-   "Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)": "Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)",
+   "Ctrl+Shift+drag on a manipulator handle in mesh edit mode: Move slides the selected components along their\nedges, Rotate / Scale rotate / scale them with every vertex kept on one of its edges (Maya)": "Ctrl+Shift+drag on a manipulator handle in mesh edit mode: Move slides the selected components along their\nedges, Rotate / Scale rotate / scale them with every vertex kept on one of its edges (Maya)",
+   "Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)": "Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)",
    "LMB on the manipulator: clicking or dragging a handle makes it the active handle (Maya active handle)": "LMB on the manipulator: clicking or dragging a handle makes it the active handle (Maya active handle)",
    "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click": "Left button released: a Smart Duplicate / Extrude press that never became a drag was a click",
    "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)": "MMB drag anywhere: move/rotate/scale along the last picked manipulator handle\n(free when none, Maya)",

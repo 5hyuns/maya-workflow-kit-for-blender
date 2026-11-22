@@ -6648,7 +6648,6 @@ STRINGS = {
     'Manipulator Slide Label Mouse': '操纵器滑动标签（鼠标）',
     'Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse': '在 3D 视图中移动鼠标：记录鼠标位置以及是否按住 Ctrl+Shift，使按住两键移到移动控制柄上时\n也显示滑动标签，并跟随鼠标',
     'Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held': '在移动操纵器控制柄上按下或松开 Ctrl / Shift：两者都按住时显示滑动标签',
-    'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': '在网格编辑模式下 Ctrl+Shift+拖动移动操纵器的控制柄：将选定组件沿其\n边滑动 (Maya)',
     'Move Edges Along Normals': '沿法线移动边',
     'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '沿各自的法线移动选定的边并保持其长度 (Maya 移动工具的 Ctrl+中键拖动)',
     'Rotate / Scale Components Locally': '局部旋转 / 缩放组件',
@@ -7394,4 +7393,10 @@ STRINGS = {
     'Selection Constraint': '选择约束',
     "Angle tolerance in degrees: a pick also selects the connected components whose normal is within this angle of the picked one's (0 = only what is picked)": '角度容差 (度)：选择时，也会选中与所选元素法线夹角在此角度内的相连元素 (0 = 只选所点的)',
     'Maya selection constraint for picks in component mode': '组件模式下选择时的 Maya 选择约束',
+    'Ctrl+Shift: keep every vertex on one of its edges (mesh edit mode)': 'Ctrl+Shift：让每个顶点保持在它的某条边上 (网格编辑模式)',
+    'Drag Active Handle Along Edges': '沿边拖动活动控制柄',
+    'Ctrl+Shift+drag on a manipulator handle in mesh edit mode: Move slides the selected components along their\nedges, Rotate / Scale rotate / scale them with every vertex kept on one of its edges (Maya)': '在网格编辑模式下 Ctrl+Shift+拖动操纵器控制柄：移动沿边滑动选定组件，\n旋转 / 缩放在旋转 / 缩放时让每个顶点保持在它的某条边上 (Maya)',
+    'Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)': '在网格编辑模式下用旋转 / 缩放工具 Ctrl+Shift+中键拖动：沿活动控制柄旋转 / 缩放，\n每个顶点保持在它的某条边上 (Maya)',
+    'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': '框选边：选中它碰到的每条边 (Shift 切换，Ctrl 移除，Ctrl+Shift 添加)',
+    'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '旋转选定组件，同时让每个顶点保持在它的某条边上 (Maya 中用旋转工具\nCtrl+Shift+拖动)',
 }

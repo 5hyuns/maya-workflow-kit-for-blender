@@ -6647,7 +6647,6 @@ STRINGS = {
     'Manipulator Slide Label Mouse': 'マニピュレータのスライド表示 (マウス)',
     'Mouse move in the 3D View: remember where the mouse is and whether Ctrl+Shift is held, so the slide label\nshows when the mouse comes onto a Move handle with both keys already held, and follows the mouse': '3D ビューでのマウス移動: マウス位置と Ctrl+Shift を押しているかを記録し、両方を押したまま移動ハンドルに乗ったときも\nスライド表示を出し、マウスに付いて動かす',
     'Ctrl / Shift pressed or let go over a Move manipulator handle: show the slide label while both are held': '移動マニピュレータのハンドル上で Ctrl / Shift を押す・離す: 両方を押している間スライド表示を出す',
-    'Ctrl+Shift+drag on a Move manipulator handle in mesh edit mode: slide the selected components along their\nedges (Maya)': 'メッシュ編集モードで移動マニピュレータのハンドルを Ctrl+Shift+ドラッグ: 選択コンポーネントを\nエッジに沿ってスライド (Maya)',
     'Move Edges Along Normals': 'エッジを法線に沿って移動',
     'Move the selected edges along their own normals, keeping their length (Maya Ctrl+middle-drag with the Move\ntool)': '選択したエッジを長さを保ったままそれぞれの法線に沿って移動 (Maya の移動ツールで Ctrl+中ボタンドラッグ)',
     'Rotate / Scale Components Locally': 'ローカルにコンポーネントを回転 / スケール',
@@ -7393,4 +7392,10 @@ STRINGS = {
     'Selection Constraint': '選択の制約',
     "Angle tolerance in degrees: a pick also selects the connected components whose normal is within this angle of the picked one's (0 = only what is picked)": '角度の許容値 (度) です。選択すると、選んだ要素と法線の角度がこの値以内の、つながった要素も選ばれます (0 = 選んだものだけ)',
     'Maya selection constraint for picks in component mode': 'コンポーネント モードで選ぶときの Maya の選択の制約',
+    'Ctrl+Shift: keep every vertex on one of its edges (mesh edit mode)': 'Ctrl+Shift: 各頂点を自身のエッジのいずれかの上に保つ (メッシュ編集モード)',
+    'Drag Active Handle Along Edges': 'アクティブハンドルをエッジに沿ってドラッグ',
+    'Ctrl+Shift+drag on a manipulator handle in mesh edit mode: Move slides the selected components along their\nedges, Rotate / Scale rotate / scale them with every vertex kept on one of its edges (Maya)': 'メッシュ編集モードでマニピュレータハンドルを Ctrl+Shift+ドラッグ: 移動は選択コンポーネントをエッジに沿ってスライドし、\n回転 / スケールは各頂点を自身のエッジのいずれかの上に保って回転 / スケールします (Maya)',
+    'Ctrl+Shift+middle-drag with the Rotate / Scale tool in mesh edit mode: rotate / scale along the active handle\nwith every vertex kept on one of its edges (Maya)': 'メッシュ編集モードで回転 / スケールツールを Ctrl+Shift+中ドラッグ: アクティブハンドルに沿って回転 / スケールし、\n各頂点を自身のエッジのいずれかの上に保ちます (Maya)',
+    'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': 'エッジの範囲選択: 触れたエッジをすべて選択 (Shift で切り替え、Ctrl で除去、Ctrl+Shift で追加)',
+    'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '各頂点を自身のエッジのいずれかの上に保ったまま選択コンポーネントを回転 (Maya の回転ツールでの\nCtrl+Shift+ドラッグ)',
 }

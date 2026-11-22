@@ -86,10 +86,12 @@ def test_every_template_string_has_a_text_in_every_language():
 
 
 def test_main_menus_fully_covered():
+    """Every category, the labels and tooltips written in the code too (new options and tools included)."""
     tool = _tool()
     cov = tool.coverage()
     for locale in LOCALES:
-        for cat in ("menus", "editor_menus", "panel_menus", "marking", "shelf", "notices"):
+        for cat in ("menus", "editor_menus", "panel_menus", "marking", "shelf", "notices", "ui", "option_windows",
+                    "tooltips"):
             done, total = cov[locale][cat]
             assert total > 0 and done == total, (locale, cat, done, total)
 
