@@ -65,12 +65,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Edit > Ungroup with Preserve position off keeps the children's local values, so they move by the group's transform,
   like Maya (#464).
 - Key > Paste Keys with Paste method Insert and Copies above 1 keeps the earlier copy's key where two copies
-  meet, like Maya; Merge still keeps the later one.
+  meet, like Maya; Merge still keeps the later one (#467).
 - Create > Cameras > Camera gives the new camera F Stop 5.6, Focus Distance 5 and Orthographic Width 30, like Maya,
-  so the Attribute Editor shows Maya's values and a switch to orthographic frames the same width.
+  so the Attribute Editor shows Maya's values and a switch to orthographic frames the same width (#468).
 - Key > Bake Simulation gives the baked keys the default (Auto) tangents, like any new key in Maya, so with
-  Sample by above 1 the values between the baked keys follow a smooth curve instead of straight lines.
-- A new Standard Surface material starts with Specular Roughness 0.2 and Coat Roughness 0.1, like Maya.
+  Sample by above 1 the values between the baked keys follow a smooth curve instead of straight lines (#469).
+- A new Standard Surface material starts with Specular Roughness 0.2 and Coat Roughness 0.1, like Maya (#470).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
