@@ -226,9 +226,9 @@ STANDARD_SURFACE_ATTRS = (
 )
 MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
 # --- lambert (Maya Attribute Editor) -----------------------
-# Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
-# Normal, diffuse -> the "Maya Diffuse" node factor (Base Color = Color x Diffuse, operators/material.py;
-# Color = that node's B input), translucence -> Subsurface; refractions -> Transmission.
+# Maya names on Principled inputs: color -> Base Color, transparency -> Alpha (opacity), incandescence -> Emission,
+# bump -> Normal, translucence -> Subsurface; refractions -> Transmission. Diffuse shows only on a material made by an
+# older kit version (its "Maya Diffuse" node, operators/material.py).
 _LAMBERT_COMMON = S("Common Material Attributes", True,
                     ("socket", "Base Color", "Color"), ("socket", "Alpha", "Opacity"),
                     ("socket", "Emission Color", "Incandescence"), ("socket", "Normal", "Bump Mapping"),
@@ -266,7 +266,7 @@ ANISOTROPIC = [_LAMBERT_COMMON,
                _RAYTRACE]
 RAMP_SHADER = [
     S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)"),
-      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # rampShader diffuse 0.8
+      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # older kit materials only
     S("Specular Shading", True, ("socket", "Roughness", "Specularity")),
     S("Incandescence", False, ("socket", "Emission Color", "Incandescence")),
 ]

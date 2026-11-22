@@ -189,8 +189,8 @@ def usd_maya_axes(path, k):
 
 
 def write(context, fmt, path, op, args, maya, k, deform_only=True, maya_names=True):
-    """Run Blender's writer with the Maya preset's pre / post steps; lambert-family Base Color is linked
-    straight to the Maya colour / texture while it writes (``material.diffuse_bypass``). FBX with the Maya
+    """Run Blender's writer with the Maya preset's pre / post steps; an older kit material's Base Color is linked
+    straight to its colour / texture while it writes (``material.diffuse_bypass``). FBX with the Maya
     preset: ``deform_only`` = only the deforming joints, hung on the deforming chain; ``maya_names`` = Maya-safe
     node names (operators/fbx_skeleton.py)."""
     from . import material

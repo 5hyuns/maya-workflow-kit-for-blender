@@ -26,16 +26,12 @@ from .. import compat, depsgraph_filter
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
-# Maya shader kinds (shelf shader buttons) on Principled BSDF.
-# Default values (lambert family).
-# Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
-# strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is
-# disabled), so a "Maya Diffuse" Mix node (``ensure_diffuse``) puts color x diffuse into Base Color.
-_GREY = (0.5, 0.5, 0.5, 1.0)
+# Maya shader kinds (shelf shader buttons, Assign New Material, Hypershade Create) on Blender's Principled BSDF.
+# A new material is a plain Principled BSDF with Blender's own values, so it renders and exports like any Blender
+# material: the kind only gives the name (lambert2, blinn1 ...), the labels and the Attribute Editor layout.
+# Surface Shader, Ramp, Layered and Use Background still build their look from a few input values or extra nodes.
 _BLACK = (0.0, 0.0, 0.0, 1.0)
-_COMMON = {"Base Color": _GREY, "Emission Color": _BLACK}
-_SPECULAR = {**_COMMON, "Specular Tint": _GREY}
-MAYA_ECCENTRICITY, MAYA_ROLL_OFF, MAYA_COSINE_POWER = 0.3, 0.7, 20.0
+MAYA_ECCENTRICITY, MAYA_COSINE_POWER = 0.3, 20.0
 
 
 def eccentricity_roughness(e):
@@ -50,27 +46,20 @@ def cosine_power_roughness(n):
     return (2.0 / (max(2.0, n) + 2.0)) ** 0.25
 
 
-# kind -> (Maya node name, UI label, Principled inputs).
+# kind -> (Maya node name, UI label, Principled inputs set on a new material: only kinds whose look is built).
 MATERIALS = {
-    # standardSurface: baseColor 0.8 (= Principled's), specularRoughness 0.4, emissionColor white
-    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {"Roughness": 0.4}),
-    # Arnold's default material (Maya with mtoa); same Principled stand-in
+    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {}),
+    # Arnold's default material (Maya with mtoa)
     'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
-    'LAMBERT': ("lambert", "Lambert", {**_COMMON, "Roughness": 1.0, "Specular IOR Level": 0.0}),
-    # blinn: eccentricity 0.3, specularRollOff 0.7 (AE row = Specular IOR Level), specularColor 0.5 (#71)
-    'BLINN': ("blinn", "Blinn", {**_SPECULAR, "Roughness": eccentricity_roughness(MAYA_ECCENTRICITY),
-                                 "Specular IOR Level": MAYA_ROLL_OFF}),
-    # phong: cosinePower 20, specularColor 0.5 (#71)
-    'PHONG': ("phong", "Phong", {**_SPECULAR, "Roughness": cosine_power_roughness(MAYA_COSINE_POWER)}),
+    'LAMBERT': ("lambert", "Lambert", {}),
+    'BLINN': ("blinn", "Blinn", {}),
+    'PHONG': ("phong", "Phong", {}),
+    # surfaceShader: out colour = the emission
     'SURFACE': ("surfaceShader", "Surface Shader", {"Emission Strength": 1.0}),
-    # the rest of Maya's Hypershade Create > Maya > Surface list that Blender can build (Principled stand-ins
-    # plus a node or two)
-    # phongE: roughness 0.5, highlightSize 0.5 (Specular IOR Level), whiteness 0.5 (Specular Tint)
-    'PHONG_E': ("phongE", "Phong E", {**_SPECULAR, "Roughness": 0.5, "Specular IOR Level": 0.5}),
-    # anisotropic: roughness 0.7, angle 0, specularColor 0.5 (spreadX 13 / spreadY 3: Blender's Anisotropic 0.5 stays)
-    'ANISOTROPIC': ("anisotropic", "Anisotropic", {**_SPECULAR, "Roughness": 0.7, "Anisotropic": 0.5,
-                                                   "Anisotropic Rotation": 0.0}),
-    'RAMP': ("rampShader", "Ramp Shader", {"Roughness": 0.5, "Emission Color": _BLACK}),
+    # the rest of Maya's Hypershade Create > Maya > Surface list that Blender can build
+    'PHONG_E': ("phongE", "Phong E", {}),
+    'ANISOTROPIC': ("anisotropic", "Anisotropic", {}),
+    'RAMP': ("rampShader", "Ramp Shader", {"Emission Color": _BLACK}),
     'LAYERED': ("layeredShader", "Layered Shader", {"Emission Color": _BLACK}),
     'USE_BACKGROUND': ("useBackground", "Use Background", {}),
 }
@@ -108,27 +97,19 @@ def new_material(kind):
         node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
     if kind in BUILT:
         _build(mat, node, kind)
-    if kind in DIFFUSE_KINDS:
-        ensure_diffuse(mat)
     sync_display(mat)
     return mat
 
 
-# --- Maya diffuse (#120) ---------------------------------------------------------------------------------
-# Maya's lambert family renders color x diffuse x light (diffuse 0.8 for
-# lambert / blinn / phong / phongE / anisotropic / rampShader, "rendered value = color x diffuse x intensity");
-# a texture connected to color is multiplied by diffuse as well. Principled has no diffuse weight, so a Mix node
-# (RGBA, MIX, factor = diffuse, A = black, B = the Maya colour) feeds Base Color: Base Color = diffuse x colour while
-# specular / emission / alpha stay untouched and the Principled BSDF stays linked straight to the output (Blender's
-# PrincipledBSDFWrapper needs that, $S\modules\bpy_extras\node_shader_utils.py:192-229). standardSurface has base 1 x
-# baseColor 0.8 and gets no node. The Principled Base Color default keeps the Maya colour too (sync), so readers that
-# skip links (Blender's own exporters) see the colour. Materials without the node read diffuse 1.0 (old files,
-# Blender-made materials: no migration).
+# --- the "Maya Diffuse" node of older kit materials -------------------------------------------------------------
+# Lambert-family materials made by earlier kit versions have a Mix node (RGBA, MIX, factor = diffuse, A = black,
+# B = the colour or texture) in front of Principled Base Color. Such a material keeps rendering as it was saved:
+# its Color is the node's B input (``color_socket``), the Attribute Editor shows its Diffuse row, File > Export links
+# the colour straight to Base Color while it writes (``diffuse_bypass``), and Lighting/Shading > Convert Old Kit
+# Materials (``convert_old``) turns it into a plain Principled BSDF once. New materials have no such node.
 
 DIFFUSE_NODE = "Maya Diffuse"
 DIFFUSE_SOCKET = "Diffuse"       # AE / map-button name of the diffuse factor (operators/shading_maps.py)
-MAYA_DIFFUSE = 0.8
-DIFFUSE_KINDS = {'LAMBERT', 'BLINN', 'PHONG', 'PHONG_E', 'ANISOTROPIC', 'RAMP'}
 
 
 def _principled(mat):
@@ -173,29 +154,31 @@ def maya_input(mat, name):
     return bsdf.inputs.get(name)
 
 
-def ensure_diffuse(mat, value=MAYA_DIFFUSE):
-    """Give a Principled material the Maya Diffuse node (whatever fed Base Color moves to its B input) and set the
-    diffuse to ``value``; the node, or None without a Principled BSDF."""
-    bsdf = _principled(mat)
-    if bsdf is None:
+def convert_old(mat):
+    """Turn an older kit material's Maya Diffuse node into a plain Principled set-up: whatever feeds the node's
+    colour input is linked straight to Base Color, a plain colour becomes colour x diffuse, and the node is removed.
+    Returns None (nothing to convert), 'COLOR' or 'TEXTURE' (a linked colour: it now renders without the diffuse
+    factor, so it looks brighter)."""
+    node, bsdf = diffuse_node(mat), _principled(mat)
+    if node is None or bsdf is None or mat.library is not None:
         return None
-    node = diffuse_node(mat)
-    if node is None:
-        tree = mat.node_tree
-        base = bsdf.inputs["Base Color"]
-        node = tree.nodes.new('ShaderNodeMix')
-        node.name = node.label = DIFFUSE_NODE
-        node.data_type, node.blend_type, node.clamp_result = 'RGBA', 'MIX', False
-        node.location = (bsdf.location.x - 220, bsdf.location.y - 60)
-        _ident(node.inputs, "A_Color").default_value = _BLACK
-        b = _ident(node.inputs, "B_Color")
-        b.default_value = base.default_value
-        for link in list(base.links):
-            tree.links.new(link.from_socket, b)
+    tree, base = mat.node_tree, bsdf.inputs["Base Color"]
+    b = _ident(node.inputs, "B_Color")
+    fac = _ident(node.inputs, "Factor_Float")
+    for link in list(base.links):
+        if link.from_node == node:
             tree.links.remove(link)
-        tree.links.new(_ident(node.outputs, "Result_Color"), base)
-    _ident(node.inputs, "Factor_Float").default_value = value
-    return node
+    if b.is_linked:
+        tree.links.new(b.links[0].from_socket, base)
+        kind = 'TEXTURE'
+    else:
+        f = 1.0 if fac.is_linked else max(0.0, min(1.0, float(fac.default_value)))
+        r, g, bl, a = b.default_value
+        base.default_value = (r * f, g * f, bl * f, a)
+        kind = 'COLOR'
+    tree.nodes.remove(node)
+    sync_display(mat)
+    return kind
 
 
 def _sync_base(mat):
@@ -336,7 +319,6 @@ def default_material(create=True):
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in MATERIALS['LAMBERT'][2].items():
         node.inputs[socket].default_value = value
-    ensure_diffuse(mat)                      # Maya lambert1 diffuse 0.8
     sync_display(mat)
     return mat
 
@@ -478,8 +460,9 @@ def _get_diffuse(self):
 
 
 def _set_diffuse(self, value):
-    if compat.material_uses_nodes(self):
-        ensure_diffuse(self, max(0.0, min(1.0, value)))
+    sock = maya_input(self, DIFFUSE_SOCKET)       # only older kit materials have a diffuse factor
+    if sock is not None:
+        sock.default_value = max(0.0, min(1.0, value))
 
 
 MATERIAL_PROPS = ("allset_eccentricity", "allset_cosine_power", "allset_diffuse")
@@ -496,8 +479,8 @@ def register_props():
                     "(2 / (power + 2)) ^ 0.25")
     bpy.types.Material.allset_diffuse = FloatProperty(
         name="Diffuse", min=0.0, max=1.0, precision=3, get=_get_diffuse, set=_set_diffuse,
-        description="Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the "
-                    "Maya Diffuse node)")
+        description="Maya diffuse of a material made by an older kit version: the share of the colour reflected "
+                    "(Base Color = Color x Diffuse through its Maya Diffuse node)")
 
 
 def unregister_props():

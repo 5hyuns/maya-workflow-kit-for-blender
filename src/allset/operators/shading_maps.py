@@ -5,8 +5,8 @@ Maya: the checker button next to an attribute -> Create Render Node -> File / Ra
 attribute's button goes to the connected node, RMB > Break Connection unlinks it.
 Blender: the texture node is added to the material's node tree, left of the Principled BSDF, and linked to
 the input; a Normal input goes through a Bump node (Maya's bump2d). Break Connection removes the link and keeps the
-nodes, like Maya. Lambert-family Color = the "Maya Diffuse" node's B input (``material.maya_input``), so a
-colour texture is multiplied by diffuse like Maya's.
+nodes, like Maya. Color = Principled Base Color (``material.maya_input``; on a material made by an older kit
+version, the colour input of its Maya Diffuse node).
 """
 
 import bpy
