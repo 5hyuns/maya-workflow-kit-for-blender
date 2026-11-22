@@ -294,10 +294,11 @@ def active(context):
 _shapes = {}     # (x0, y0, x1, y1, r) -> GPU batch of that rounded rectangle (the bar redraws the same ones)
 
 
-def _rounded(x0, y0, x1, y1, r, colour):
+def _rounded(x0, y0, x1, y1, r, colour, shader=None):
     import math
     import gpu
-    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    if shader is None:
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     key = (x0, y0, x1, y1, r)
     batch = _shapes.get(key)
     if batch is None:
@@ -364,6 +365,22 @@ def find_gap(area, region, unit, playing):
     return found
 
 
+_theme_colours = {}     # (theme back, theme text) -> the bar's (track, segment, handle, text) colours
+
+
+def _colours(theme):
+    """The bar's colours for the Timeline theme colours ``theme`` = (back, text), worked out once per theme (the
+    header redraws on every played frame)."""
+    got = _theme_colours.get(theme)
+    if got is None:
+        if len(_theme_colours) > 8:
+            _theme_colours.clear()
+        cur = dict(zip(("back", "text"), theme))
+        got = _theme_colours[theme] = (_themed(TRACK_RGB, "back", cur), _themed(SEGMENT_RGB, "back", cur),
+                                       _themed(HANDLE_RGB, "back", cur), _themed(TEXT_RGB, "text", cur))
+    return got
+
+
 def draw():
     """POST_PIXEL of Dope Sheet HEADER regions."""
     context = bpy.context
@@ -413,24 +430,24 @@ def draw():
     import blf
     import gpu
     from . import theme_follow
-    theme = {f: theme_follow.theme_color("dopesheet_editor", f) for f in ("back", "text")}
+    track, segment, handle, text = _colours(tuple(theme_follow.theme_color("dopesheet_editor", f)
+                                                  for f in ("back", "text")))
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     k = unit / MAYA_BAR_H
     gpu.state.blend_set('ALPHA')
-    back = _themed(TRACK_RGB, "back", theme)
-    _rounded(x0, y0, x1, y1, 4 * k, back)
+    _rounded(x0, y0, x1, y1, 4 * k, track, shader)
     ps, pe = playback(scene)
     hw, hh = HANDLE[0] * k, HANDLE[1] * k
     bar["handle_w"] = (HANDLE_INSET + HANDLE[0]) * k
     xs, xe = visual_segment(bar, ps, pe, bar["handle_w"])
     inset = SEG_INSET * k
-    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, _themed(SEGMENT_RGB, "back", theme))
+    _rounded(xs, y0 + inset, xe, y1 - inset, 4 * k, segment, shader)
     hy0 = (y0 + y1 - hh) / 2.0
     hx0, hx1 = xs + HANDLE_INSET * k, xe - HANDLE_INSET * k - hw
-    handle = _themed(HANDLE_RGB, "back", theme)
-    _rounded(hx0, hy0, hx0 + hw, hy0 + hh, 3 * k, handle)
-    _rounded(hx1, hy0, hx1 + hw, hy0 + hh, 3 * k, handle)
+    _rounded(hx0, hy0, hx0 + hw, hy0 + hh, 3 * k, handle, shader)
+    _rounded(hx1, hy0, hx1 + hw, hy0 + hh, 3 * k, handle, shader)
     blf.size(0, TEXT_PX * scale)
-    blf.color(0, *_themed(TEXT_RGB, "text", theme))
+    blf.color(0, *text)
     ty = (y0 + y1) / 2.0 - TEXT_PX * scale * 0.35
     a_txt, b_txt = f"{ps:g}", f"{pe:g}"
     wa, wb = blf.dimensions(0, a_txt)[0], blf.dimensions(0, b_txt)[0]

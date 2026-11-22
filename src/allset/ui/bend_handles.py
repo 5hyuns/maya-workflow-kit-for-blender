@@ -94,12 +94,15 @@ def is_maya_view(space, workspace):
 def _draw():
     context = bpy.context
     try:
+        view_layer = context.view_layer
+        found = bends(view_layer)
+        if not found:               # the usual case first: no kit bend, nothing more is read in this draw
+            return
         space = context.space_data
         if not is_maya_view(space, context.window.workspace):
             return
-        view_layer = context.view_layer
         try:
-            segs = segments(view_layer, space)
+            segs = segments(view_layer, space, found)
         except ReferenceError:      # an object removed before the next depsgraph update: read the view layer again
             _BENDS.clear()
             segs = segments(view_layer, space)

@@ -214,10 +214,10 @@ _busy = [False]
 def _sd_items():
     """(object, modifier name) of every Simple Deform bend made like Maya, looked up again only when objects came or
     went (a bend comes with its handle), so an update reads nothing when there is none."""
-    from . import deformers
     from ..ui import outliner
     key = outliner.objects_version()
     if _SD["version"] != key:
+        from . import deformers
         items = []
         for ob in bpy.data.objects:
             for md in getattr(ob, "modifiers", ()):
@@ -235,11 +235,18 @@ def sync_simple_deforms():
     with no such bend in the file, the handler writes nothing."""
     if _busy[0]:
         return
+    try:
+        items = _sd_items()
+    except ReferenceError:
+        _SD["version"] = None
+        return
+    if not items:                       # the usual case: no such bend, nothing more is read (also on every frame)
+        return
     from . import deformers
     from .. import update_summary
     _busy[0] = True
     try:
-        for ob, name in _sd_items():
+        for ob, name in items:
             md = ob.modifiers.get(name)
             if md is None:
                 continue

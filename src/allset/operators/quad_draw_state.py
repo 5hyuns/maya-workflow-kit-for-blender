@@ -326,7 +326,8 @@ def _draw_view():
         if not tool_active(context):
             # Give native shading back on the first inactive-view redraw, rather
             # than waiting for the slower mesh/dot cleanup timer.
-            if not _overlay_saving and context.space_data is not None and context.space_data.type == 'VIEW_3D':
+            if ((STATE['overlays'] or _overlay_save_runtime) and not _overlay_saving
+                    and context.space_data is not None and context.space_data.type == 'VIEW_3D'):
                 if _release_overlay(context.space_data) and context.area is not None:
                     context.area.tag_redraw()
             return

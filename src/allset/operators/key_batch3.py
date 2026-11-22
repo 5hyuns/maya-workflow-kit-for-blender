@@ -74,7 +74,7 @@ def is_gradient(shading):
         return False
     if not _GRADIENT_LINEAR:
         _GRADIENT_LINEAR.extend(srgb_to_linear(b) for b in GRADIENT_BASE)
-    return all(abs(a - b) < 1e-4 for a, b in zip(shading.background_color, _GRADIENT_LINEAR))
+    return all(abs(a - b) < 1e-4 for a, b in zip(shading.background_color[:], _GRADIENT_LINEAR))
 
 
 def next_state(state):

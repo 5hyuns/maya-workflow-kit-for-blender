@@ -81,15 +81,14 @@ def depth_pass_on():
 
 def _draw_mesh_depth(context):
     """Repair EEVEE's depth at mesh seams before the unfiltered grid overlay."""
+    space = context.space_data
+    shading = space.shading.type
+    if not (shading == 'MATERIAL' or (shading == 'RENDERED' and context.scene.render.engine == 'BLENDER_EEVEE')):
+        return              # Solid / Wireframe (checked first: the grid draws on every played frame)
     import gpu
     import numpy as np
     from gpu_extras.batch import batch_for_shader
     from .selection_wire import _positions, time_dependent
-
-    space = context.space_data
-    if not (space.shading.type == 'MATERIAL' or
-            (space.shading.type == 'RENDERED' and context.scene.render.engine == 'BLENDER_EEVEE')):
-        return
     depsgraph = context.evaluated_depsgraph_get()
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     gpu.state.depth_test_set('LESS_EQUAL')

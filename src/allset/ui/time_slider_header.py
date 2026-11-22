@@ -122,9 +122,24 @@ def _row_plan(context):
         from . import range_bar
         return float(range_bar.BAR_UNITS), {name for name, _u in ROW_OPTIONAL}, FIELD_UNITS, 1.0, FIELD_UNITS
     space, area, scene = context.space_data, context.area, context.scene
-    floor = field_floor((scene.frame_start, scene.frame_end, scene.frame_current, *playback_range(scene)),
-                        context.preferences.system.ui_scale or 1.0)
-    return row_layout(width / unit, transport=not has_slider_panel(space, area), floor=floor)
+    scale = context.preferences.system.ui_scale or 1.0
+    values = (scene.frame_start, scene.frame_end, scene.frame_current, *playback_range(scene))
+    longest = max((str(int(v)) for v in values), key=len, default="000")
+    transport = not has_slider_panel(space, area)
+    # the header draws on every played frame and asks twice per draw: the row is worked out again only when its
+    # width, the UI scale, where the buttons sit or the longest frame number changed
+    key = (width, unit, scale, transport, longest, context.preferences.view.font_path_ui)
+    got = _plans.get(key)
+    if got is None:
+        if len(_plans) > 32:
+            _plans.clear()
+        bar, shown, field, icons, clock = row_layout(width / unit, transport=transport,
+                                                     floor=field_floor((longest,), scale))
+        got = _plans[key] = (bar, frozenset(shown), field, icons, clock)
+    return got
+
+
+_plans = {}      # (header width, unit, UI scale, transport in the row, longest frame number, UI font) -> row_layout
 
 
 def draw_header(context, layout):

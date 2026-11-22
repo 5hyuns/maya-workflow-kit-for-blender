@@ -428,11 +428,11 @@ def _batch(key):
 
 def _draw():
     context = bpy.context
+    scene = context.scene
+    if not _ghosting_in(scene):          # #191: no walk over every object on each redraw (checked first)
+        return
     space, rv3d = context.space_data, context.region_data
     if rv3d is None or space.shading.type == 'RENDERED' or not space.overlay.show_overlays:
-        return
-    scene = context.scene
-    if not _ghosting_in(scene):          # #191: no walk over every object on each redraw
         return
     obs = [ob for ob in ghosted(scene) if ob.type in GEOMETRY and ob.visible_get()]
     if not obs:
@@ -522,10 +522,10 @@ def _on_depsgraph(scene, depsgraph):
 
 @persistent
 def _on_frame(scene, _depsgraph=None):
-    from ..operators import anim_snapshot
-    if anim_snapshot._busy:
+    if not _ghosting_in(scene):         # checked first: the usual case reads nothing more
         return
-    if _ghosting_in(scene):
+    from ..operators import anim_snapshot
+    if not anim_snapshot._busy:
         _schedule(0.05)
 
 

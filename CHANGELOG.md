@@ -38,6 +38,13 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   column of the Maya layout instead of leaving Blender's toolbar in it; showing it again puts the column back left of
   the Outliner. In Blender's own layouts it shows or hides the viewport's toolbar (#437).
 
+### Changed
+- Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
+  to show (camera aim lines, bend handles, distance dimensions, a polygon being placed, IK / FK chains, Simple Deform
+  bends, ghosts, vertex keys, the blue pencil) stop after their cheapest check, and the Range Slider row, the Range
+  Slider bar's colours and a Graph Editor toolbar's row are worked out again only when what they depend on changed
+  (#344).
+
 ## [0.20.1] — 2026-11-21
 
 Thank you for the quick reports after 0.20.0. This update fixes FBX rigs, floating panels and working next to other

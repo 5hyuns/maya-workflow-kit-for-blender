@@ -167,7 +167,7 @@ def _draw():
     context = bpy.context
     try:
         space = context.space_data
-        if not shown(space) or not dimensions(context.view_layer):
+        if not dimensions(context.view_layer) or not shown(space):
             return
         region, rv3d = context.region, context.region_data
         try:

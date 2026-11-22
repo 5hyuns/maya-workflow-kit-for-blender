@@ -23,8 +23,19 @@ def _submenu(editor, sub):
     return menu_sets.SUBMENU_IDS.get(f"{editor}/{sub}")
 
 
+_GROUPS = {}     # editor -> its icon groups (the icon data never changes while the kit runs)
+
+
 def icon_groups(editor):
-    """The icon row split at Maya's separators: lists of items (spec tuples, "STATS", "IMAGE", "UVMAP")."""
+    """The icon row split at Maya's separators: lists of items (spec tuples, "STATS", "IMAGE", "UVMAP"). Worked out
+    once per editor (a Graph Editor's toolbar row redraws on every played frame); callers only read them."""
+    got = _GROUPS.get(editor)
+    if got is None:
+        got = _GROUPS[editor] = _split_groups(editor)
+    return got
+
+
+def _split_groups(editor):
     groups, cur = [], []
     for it in ICONS[editor]:
         if it == "|":
@@ -64,8 +75,18 @@ def shown_groups(context, editor):
     from . import toolbar_fit
     system = context.preferences.system
     scale = system.ui_scale or 1.0
-    u = toolbar_fit.unit(scale, system.pixel_size)
-    return toolbar_fit.fit_widths([group_px(g, u) for g in groups], region.width, scale, system.pixel_size)
+    key = (editor, region.width, scale, system.pixel_size)
+    got = _FITS.get(key)
+    if got is None:
+        if len(_FITS) > 32:
+            _FITS.clear()
+        u = toolbar_fit.unit(scale, system.pixel_size)
+        got = _FITS[key] = toolbar_fit.fit_widths([group_px(g, u) for g in groups], region.width, scale,
+                                                  system.pixel_size)
+    return got
+
+
+_FITS = {}       # (editor, footer width, UI scale, pixel size) -> how many groups fit
 
 
 # area pointer -> (editor, index of the first group behind ») written while the toolbar draws (no ID data written)

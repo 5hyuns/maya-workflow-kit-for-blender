@@ -166,9 +166,11 @@ def ghost_strokes(scene, space_2d):
 
 
 def _view_ok(context):
+    if _playing(context):              # first: while playing nothing more is read
+        return False
     space = context.space_data
     return space is not None and space.type == 'VIEW_3D' and space.overlay.show_overlays \
-        and getattr(space.overlay, "show_annotation", True) and not _playing(context)
+        and getattr(space.overlay, "show_annotation", True)
 
 
 def _draw_lines(strokes, to_px=None):

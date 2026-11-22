@@ -433,8 +433,11 @@ def _border_segments(ob):
 def _draw_view():
     context = bpy.context
     try:
+        editing = context.mode == 'EDIT_MESH'
+        if not editing and STATE["kind"] != 'CREATE':
+            return          # outside Edit Mode only a polygon being placed draws: the tool isn't looked up
         create = tool_active(context, CREATE_TOOL)
-        append = context.mode == 'EDIT_MESH' and tool_active(context, APPEND_TOOL)
+        append = editing and tool_active(context, APPEND_TOOL)
         if not (create or append):
             return
         region = context.region

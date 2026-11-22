@@ -294,6 +294,12 @@ def _playing():
 def update(frame=False):
     if _busy:
         return
+    try:
+        if not _chains():               # no kit IK chain (the usual case): nothing to do, also on every frame
+            return
+    except (ReferenceError, AttributeError, RuntimeError):
+        _found[0] = None
+        return
     from . import anim_snapshot
     if anim_snapshot._busy:
         return

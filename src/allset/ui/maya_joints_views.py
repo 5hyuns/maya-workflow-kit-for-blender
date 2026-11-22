@@ -21,9 +21,9 @@ def maya_workspace(workspace):
 def is_maya_view(space, workspace):
     """A 3D View where the kit draws the joints (and Blender's bones are off)."""
     from . import toolbox
-    return (space is not None and workspace is not None and space.type == 'VIEW_3D' and not toolbox.is_toolbox(space)
-            and space.overlay.show_overlays and not space.overlay.show_bones
-            and space.show_object_viewport_armature and maya_workspace(workspace))
+    return (space is not None and workspace is not None and space.type == 'VIEW_3D'
+            and space.show_object_viewport_armature and not toolbox.is_toolbox(space)
+            and space.overlay.show_overlays and not space.overlay.show_bones and maya_workspace(workspace))
 
 
 def settle(window):
