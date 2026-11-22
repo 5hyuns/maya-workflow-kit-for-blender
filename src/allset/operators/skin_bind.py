@@ -35,16 +35,19 @@ SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matric
              "vertex group (0 = linear until painted)"))
 
 
-def joint_segments(arm, bones=None):
+def joint_segments(arm, bones=None, bound_children=False):
     """{bone name: [(a, b) world segment]}: Maya joint = the bone head, its segments go to each child joint (child
-    bone head); a bone without children is an end joint (a point). ``bones`` limits which joints get weights."""
+    bone head); a bone without children is an end joint (a point). ``bones`` limits which joints get weights.
+    ``bound_children``: only segments to children in ``bones`` count (Bind to Selected joints, like Maya: a joint
+    whose children are not bound is an end joint)."""
     mw = arm.matrix_world
     out = {}
     for bone in arm.data.bones:
         if not bone.use_deform or (bones is not None and bone.name not in bones):
             continue
         a = mw @ bone.head_local
-        out[bone.name] = [(a, mw @ c.head_local) for c in bone.children] or [(a, a)]
+        kids = [c for c in bone.children if not bound_children or bones is None or c.name in bones]
+        out[bone.name] = [(a, mw @ c.head_local) for c in kids] or [(a, a)]
     return out
 
 
@@ -119,7 +122,7 @@ def _bind_closest(arm, mesh, bones, max_influences, dropoff=DROPOFF, hierarchy=F
     me.vertices.foreach_get("co", co)
     mw = np.array(mesh.matrix_world)
     pts = co.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3]
-    segs = joint_segments(arm, bones)
+    segs = joint_segments(arm, bones, bound_children=True)
     names, w = closest_distance_weights(pts, segs, dropoff, max_influences,
                                         joint_hierarchy(arm, list(segs)) if hierarchy else None)
     every = list(range(len(me.vertices)))
