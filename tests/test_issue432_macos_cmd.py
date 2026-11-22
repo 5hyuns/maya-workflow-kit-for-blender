@@ -6,6 +6,8 @@ kit's keymap generation as on macOS."""
 import sys
 from importlib import import_module
 
+import bpy
+
 import kit
 
 keymap = import_module(kit.MODULE + ".keymap")
@@ -71,3 +73,45 @@ def test_other_platforms_have_no_cmd_copies():
     for platform in ("win32", "linux"):
         extra = _oskey_items(_data(platform)) - base
         assert not extra, (platform, sorted(extra)[:5])
+
+
+def _tool_ctrl_items(kc_names=("addon", "default")):
+    """{(keymap, idname, type, shift, alt): set of modifiers} of the kit tools' Ctrl / Cmd items (not "any")."""
+    out = {}
+    kcs = bpy.context.window_manager.keyconfigs
+    for name in kc_names:
+        kc = getattr(kcs, name)
+        for km in kc.keymaps:
+            if "Tool:" not in km.name:
+                continue
+            for kmi in km.keymap_items:
+                if not kmi.idname.startswith("allset.") or kmi.any or not (kmi.ctrl or kmi.oskey):
+                    continue
+                key = (km.name, kmi.idname, kmi.type, kmi.shift, kmi.alt)
+                out.setdefault(key, set()).add("ctrl" if kmi.ctrl else "cmd")
+    return out
+
+
+def _remake_maya_mode():
+    switch = import_module(kit.MODULE + ".switch")
+    switch.set_mode(False, layout=False)
+    switch.set_mode(True, layout=False)
+
+
+def test_kit_tools_ctrl_clicks_answer_cmd_on_macos():
+    _remake_maya_mode()
+    items = _tool_ctrl_items()
+    # the kit's own tools have Ctrl clicks (Multi-Cut loops, Connect, Distance Tool, 2D Pan/Zoom box)
+    assert any(k[1] == "allset.multicut_loop" for k in items), sorted(items)[:5]
+    assert all(mods == {"ctrl"} for mods in items.values()), "no Cmd copies off macOS"
+    saved = sys.platform
+    sys.platform = "darwin"
+    try:
+        _remake_maya_mode()
+        mac = _tool_ctrl_items()
+    finally:
+        sys.platform = saved
+        _remake_maya_mode()
+    missing = [k for k, mods in mac.items() if mods != {"ctrl", "cmd"}]
+    assert set(mac) == set(items) and not missing, missing[:10]
+    assert _tool_ctrl_items() == items, "back to Ctrl only"

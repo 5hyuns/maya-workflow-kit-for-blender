@@ -32,8 +32,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   tile instead of sitting at its bottom or left edge (#440).
 - UV > 3D Grab UV Tool picked over the 3D View no longer raises a Python error: it sets the Grab tool in the UV
   Editor, which opens first when none is open (#434).
-- macOS: the kit's own Ctrl keys (such as Ctrl+1 Isolate Select) also answer Cmd, like Blender's, and a Ctrl key the kit
-  removed or replaced no longer leaves its Cmd copy behind (#432).
+- macOS: the kit's own Ctrl keys (such as Ctrl+1 Isolate Select) and the Ctrl clicks inside its tools (Multi-Cut,
+  Connect, 3D Cut and Sew, Distance Tool, Interactive Creation, the 2D Pan/Zoom Tool) also answer Cmd, like Blender's,
+  and a Ctrl key the kit removed or replaced no longer leaves its Cmd copy behind (#432).
 - Hiding the Tool Box (Preferences > UI Elements, Windows > UI Elements > Tool Box, the hotbox) closes the Tool Box
   column of the Maya layout instead of leaving Blender's toolbar in it; showing it again puts the column back left of
   the Outliner. In Blender's own layouts it shows or hides the viewport's toolbar (#437).

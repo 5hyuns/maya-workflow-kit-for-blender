@@ -11,6 +11,7 @@ import bpy
 
 from . import notices
 from ..operators import connect_tool, edge_loops
+from ..keymap.ic_data import platform_tool
 
 # Maya rows the kit can't honour -> (substitute, one line); keys are "Tool Settings/<tool>/<row>" (Insert Edge Loop's
 # greyed rows are in ui/tool_settings.TS_NOTICES)
@@ -233,7 +234,7 @@ TOOLS = (ALLSET_TL_insert_edge_loop, ALLSET_TL_offset_edge_loop, ALLSET_TL_slide
 def register():
     notices.PANEL_NOTICES.update(GREY)
     for tool in TOOLS:
-        bpy.utils.register_tool(tool, after={"builtin.loop_cut"})
+        bpy.utils.register_tool(platform_tool(tool), after={"builtin.loop_cut"})
 
 
 def unregister():

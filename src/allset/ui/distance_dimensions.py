@@ -22,6 +22,8 @@ from bpy.app.handlers import persistent
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
+from ..keymap.ic_data import platform_tool
+
 DORMANT = (0.6, 0.6, 0.6)
 LEAD = (0x43 / 255, 1.0, 0xa3 / 255)
 SELECTED = (1.0, 1.0, 1.0)
@@ -308,7 +310,7 @@ def register():
     if not _handle:
         _handle.append(bpy.types.SpaceView3D.draw_handler_add(_draw, (), 'WINDOW', 'POST_PIXEL'))
     for tool in TOOLS:
-        bpy.utils.register_tool(tool, after={"builtin.measure"})
+        bpy.utils.register_tool(platform_tool(tool), after={"builtin.measure"})
     _seen[0] = None             # a locator deleted in Blender mode: looked at with the next update
     if _on_depsgraph not in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)

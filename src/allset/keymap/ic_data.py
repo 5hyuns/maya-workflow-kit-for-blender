@@ -40,3 +40,16 @@ def for_platform(data):
         from bl_keymap_utils.platform_helpers import keyconfig_data_oskey_from_ctrl_for_macos
         data = keyconfig_data_oskey_from_ctrl_for_macos(data)
     return data
+
+
+def platform_tool(tool):
+    """``tool`` (a kit ``WorkSpaceTool`` class) with its ``bl_keymap`` for this platform, given to
+    ``bpy.utils.register_tool``: on macOS each Ctrl item of the tool also answers Cmd, like the kit's other keys."""
+    items = tool.__dict__.get("_allset_keymap")
+    if items is None:
+        items = tool._allset_keymap = getattr(tool, "bl_keymap", None)     # its own or a base class's
+    if isinstance(items, tuple) and all(isinstance(i, tuple) and len(i) == 3 for i in items):
+        data = for_platform([("", {}, {"items": [i for i in items]})])
+        # an item with "ctrl": False gets an "oskey": False copy, which is the same key: left out
+        tool.bl_keymap = tuple(i for i in data[0][2]["items"] if i[1].get("oskey", True) is not False)
+    return tool

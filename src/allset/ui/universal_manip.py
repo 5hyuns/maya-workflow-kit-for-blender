@@ -14,6 +14,7 @@ from mathutils import Matrix, Vector
 
 from . import manipulator as mp
 from ..operators import universal_manip as um
+from ..keymap.ic_data import platform_tool
 
 GROUP = "ALLSET_GGT_universal_manip"
 HANDLE = "ALLSET_GT_um_handle"
@@ -413,7 +414,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     for tool in TOOLS:
-        bpy.utils.register_tool(tool, after={"builtin.transform"})
+        bpy.utils.register_tool(platform_tool(tool), after={"builtin.transform"})
 
 
 def unregister():

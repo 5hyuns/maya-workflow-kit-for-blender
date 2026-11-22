@@ -13,6 +13,7 @@ import bpy
 
 from . import notices
 from ..operators import cut_sew, mesh_tools, multi_cut
+from ..keymap.ic_data import platform_tool
 
 # Greyed Maya settings: (notice key, label) -> (substitute, one line)
 GREY = {
@@ -199,7 +200,7 @@ def active_tool_id(context):
 def register():
     notices.PANEL_NOTICES.update(GREY)
     for tool in TOOLS:
-        bpy.utils.register_tool(tool, after={"builtin.knife"})
+        bpy.utils.register_tool(platform_tool(tool), after={"builtin.knife"})
 
 
 def unregister():
