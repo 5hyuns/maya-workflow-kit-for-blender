@@ -68,6 +68,14 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Attribute Editor: Horizontal / Vertical Film Aperture are shown and typed in inches, like Maya (#482).
 - Channel Box: a camera's SHAPES shows Film Aperture (inches), Focal Length, F Stop, Focus Distance and Locator Scale
   instead of the clip planes, and lights show Use Ray Trace Shadows, like Maya (#481).
+- Polygon Cube, Sphere, Cone, Plane and Torus have Height Baseline and Create UVs in the Channel Box like the
+  Cylinder, with the same choices and starting values as Maya; Height Baseline stays between -1 and 1 (#480).
+- Sew UV Edges keeps the shells where they are and joins the UVs on each edge half-way, like Maya (#483).
+- Move and Sew sews an open border inside one UV shell like Sew UV Edges (#484).
+- Unfold keeps every UV cut, also a cut inside one shell, so a cylinder side unfolds flat like Maya (#485).
+- UV > Planar projects along the scene's axes and fits the selection's box in the scene, also on moved, turned or
+  scaled objects; clicking the menu item gives the option window's result (#487).
+- UV Layout keeps every shell's orientation and first scales the shells to one texel density, like Maya (#486).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
