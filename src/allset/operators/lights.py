@@ -150,7 +150,10 @@ def apply(light, maya_intensity=None, n=None, k=None):
 
 
 def maya_defaults(light, k):
-    """A new Maya light: intensity 1, No Decay; spot cone 40 / penumbra 0; area light 2 x 2 units."""
+    """A new Maya light: intensity 1, No Decay; spot cone 40 / penumbra 0; area light 2 x 2 units; a directional light
+    with Light Angle 0 (sharp shadows)."""
+    if light.type == 'SUN':
+        light.angle = 0.0
     if light.type == 'SPOT':
         light.spot_size = math.radians(MAYA_SPOT_CONE)
         light.spot_blend = MAYA_SPOT_PENUMBRA
