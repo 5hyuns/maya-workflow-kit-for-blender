@@ -58,6 +58,16 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Twist turns and Flare scales from the Low bound to the High bound, bounds beyond -1 / 1 spread the effect, Squash
   stretches and bulges between the bounds, Sine waves the object sideways along the handle and Wave makes rings
   around it; the Channel Box and the Attribute Editor show the deformers' own attributes (#457, #461).
+- Locked channels are no longer keyed by Key Selected, Key All Keyable, Breakdown and Set Key, like Maya (#476).
+- Renaming in the Channel Box, Status Line or Outliner cleans up the typed name like Maya (leading digits dropped,
+  other characters turned into _, a trailing # numbered) instead of refusing it; a name like Cube_01 names its shape
+  Cube_Shape1 (#477).
+- Ungroup lists the freed children last among their new siblings in the Outliner, like Maya (#478).
+- New cameras start not renderable with the same gate mask opacity as Maya, and new directional lights start with no
+  light angle, like new Maya ones (#479).
+- Attribute Editor: Horizontal / Vertical Film Aperture are shown and typed in inches, like Maya (#482).
+- Channel Box: a camera's SHAPES shows Film Aperture (inches), Focal Length, F Stop, Focus Distance and Locator Scale
+  instead of the clip planes, and lights show Use Ray Trace Shadows, like Maya (#481).
 - Mesh edit mode, edge selection: a marquee picks every edge it touches, like Maya, also the edges that cross its
   border, so a box along a row of faces picks the edges along the row without the ones across it having to be
   wholly inside too. Shift toggles, Ctrl removes, Ctrl+Shift adds; with "Marquee Selects Hidden Components" off and
