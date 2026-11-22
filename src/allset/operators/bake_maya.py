@@ -81,6 +81,22 @@ def _trim(fcurve, start, end, step, keep_unbaked):
     return len(drop)
 
 
+def _default_tangents(fcurve, start, end):
+    """Maya's baked keys get the default in / out tangents (Auto unless changed), like any new key; Blender's bake
+    writes linear keys."""
+    from . import graph_key_menu, maya_tangents
+    hit = False
+    for kp in fcurve.keyframe_points:
+        if start - _EPS <= kp.co[0] <= end + _EPS:
+            kp.interpolation = 'BEZIER'
+            kp.handle_left_type = kp.handle_right_type = maya_tangents.AUTO
+            graph_key_menu.apply_default(fcurve, kp)
+            hit = True
+    if hit:
+        fcurve.update()
+        maya_tangents.apply(fcurve)
+
+
 def _ik_chain(pb, con):
     """Pose bones an IK constraint on ``pb`` moves (chain_count 0 = up to the root)."""
     chain, b = [], pb
@@ -132,6 +148,7 @@ def bake(context, objects=None, bones=None, start=1, end=10, step=1, keep_unbake
                     coll.remove(fc)
                 continue
             _trim(fc, start, end, step, keep_unbaked)
+            _default_tangents(fc, start, end)
     # rule 5: the constraint (and any driver) no longer drives the baked channels
     muted = drivers = iks = 0
     for o in owners:
