@@ -155,8 +155,8 @@ def frame_inverse(ob):
 def ungroup(context, groups, world=False, preserve=True):
     """Maya Edit > Ungroup (default Ungroup under Parent, Preserve position on): each group's
     children move under the group's parent (``world``: to the world; the world when it has none) keeping their world
-    transform, then the group goes. Preserve position off (``cmds.ungroup(relative=True)``) folds the group's local
-    transform into each child's local values instead (grp t 0 5 0, child t 1 2 3 -> child t 1 7 3).
+    transform, then the group goes. Preserve position off keeps each child's local values instead, so the child
+    moves by the group's transform (grp t 0 5 0, child t 1 2 3 -> child t 1 2 3 under the new parent).
     A selected object that has data of its own (a mesh with
     children) only loses its children. Returns the moved children."""
     moved = []
@@ -165,7 +165,7 @@ def ungroup(context, groups, world=False, preserve=True):
         target = None if world else grp.parent
         for child in kids:
             if not preserve:
-                local = grp.matrix_parent_inverse @ grp.matrix_basis @ child.matrix_parent_inverse @ child.matrix_basis
+                local = child.matrix_parent_inverse @ child.matrix_basis
                 frame = frame_inverse(target) if target is not None else Matrix.Identity(4)
                 child.parent = target
                 child.matrix_parent_inverse = frame         # values in the new parent's frame, like Maya
@@ -194,7 +194,7 @@ class ALLSET_OT_ungroup(bpy.types.Operator):
                ('WORLD', "World", "At the top of the hierarchy")))
     preserve_position: bpy.props.BoolProperty(
         name="Preserve Position", default=True, options={'SKIP_SAVE'},
-        description="Keep the children where they are (off = the group's transform goes into their local values)")
+        description="Keep the children where they are (off = keep their local values)")
 
     @classmethod
     def poll(cls, context):

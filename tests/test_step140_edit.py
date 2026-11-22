@@ -377,7 +377,9 @@ def test_ungroup_options():
     _select(grp)
     _run("ungroup", preserve=False)
     bpy.context.view_layer.update()
-    assert child.parent is par and (child.location - Vector((1, 2, 8))).length < 1e-6, child.location   # Maya 1 7 3
+    # Preserve position off keeps the child's local values (it moves by the group's transform), like Maya
+    assert child.parent is par and (child.location - Vector((1, 2, 3))).length < 1e-6, child.location
+    assert (child.matrix_world.translation - Vector((11, 2, 3))).length < 1e-5, child.matrix_world.translation
     grp = _empty("grp2", (0, 0, 5))
     grp.parent = par
     child.parent = grp

@@ -6111,7 +6111,7 @@
   },
   "Labels/operators/group": {
    "Group": "Group",
-   "Keep the children where they are (off = the group's transform goes into their local values)": "Keep the children where they are (off = the group's transform goes into their local values)",
+   "Keep the children where they are (off = keep their local values)": "Keep the children where they are (off = keep their local values)",
    "Parent": "Parent",
    "Preserve Position": "Preserve Position",
    "Transform Group": "Transform Group",

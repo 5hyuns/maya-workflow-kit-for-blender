@@ -2198,7 +2198,7 @@ STRINGS = {
     'Keep original': '保留原始对象',
     'Keep originals': '保留原始对象',
     'Keep the children where they are (Maya Parent Options; off = keep their local values)': '子级保持在原位 (Maya 父对象选项；关 = 保持其局部值)',
-    "Keep the children where they are (off = the group's transform goes into their local values)": '子级保持在原位 (关 = 组的变换写入其局部值)',
+    'Keep the children where they are (off = keep their local values)': '子级保持在原位 (关 = 保持其局部值)',
     'Keep the objects where they are (Maya Unparent Options; off = keep their local values)': '对象保持在原位 (Maya 断开父子关系选项；关 = 保持其局部值)',
     'Keep these settings for next time (Maya Edit > Save Settings)': '保存这些设置供下次使用 (Maya 编辑 > 保存设置)',
     'Keep unbaked keys': '保留未烘焙的关键帧',

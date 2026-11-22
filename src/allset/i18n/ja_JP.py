@@ -2198,7 +2198,7 @@ STRINGS = {
     'Keep original': 'オリジナルを保持',
     'Keep originals': 'オリジナルを保持',
     'Keep the children where they are (Maya Parent Options; off = keep their local values)': '子をその位置に保つ (Maya ペアレントオプション。オフ = ローカル値を保つ)',
-    "Keep the children where they are (off = the group's transform goes into their local values)": '子をその位置に保つ (オフ = グループのトランスフォームが子のローカル値に入る)',
+    'Keep the children where they are (off = keep their local values)': '子をその位置に保つ (オフ = ローカル値を保つ)',
     'Keep the objects where they are (Maya Unparent Options; off = keep their local values)': 'オブジェクトをその位置に保つ (Maya ペアレント解除オプション。オフ = ローカル値を保つ)',
     'Keep these settings for next time (Maya Edit > Save Settings)': 'この設定を次回のために保存 (Maya の 編集 > 設定の保存)',
     'Keep unbaked keys': 'ベイクしないキーを保持',
