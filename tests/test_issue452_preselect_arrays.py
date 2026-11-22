@@ -44,7 +44,10 @@ def test_arrays_match_the_bmesh():
     bm = _edit_mesh(24, 12)
     bm.verts.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
-    bmesh.ops.dissolve_edges(bm, edges=[bm.faces[30].edges[0]])     # an n-gon among quads and triangles
+    # an n-gon among quads and triangles: two neighbouring quads become one
+    edge = next(e for f in bm.faces if len(f.verts) == 4 for e in f.edges
+                if len(e.link_faces) == 2 and all(len(g.verts) == 4 for g in e.link_faces))
+    bmesh.ops.dissolve_edges(bm, edges=[edge])
     bm.faces.ensure_lookup_table()
     bm.verts.ensure_lookup_table()
     bm.verts[5].hide_set(True)

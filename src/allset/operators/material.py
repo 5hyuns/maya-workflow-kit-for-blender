@@ -730,14 +730,18 @@ class ALLSET_OT_convert_old_materials(bpy.types.Operator):
             if kind is not None:
                 done[kind] += 1
         total = done['COLOR'] + done['TEXTURE']
+        from .. import results
         if not total:
-            self.report({'INFO'}, "No old kit materials to convert")
+            results.result(self, "No old kit materials to convert")
             return {'CANCELLED'}
         msg = f"Converted {total} material(s) to plain Principled BSDF"
         if done['TEXTURE']:
             msg += (f"; {done['TEXTURE']} with a texture on Color now show it at full brightness "
                     "(brighter than before)")
-        self.report({'WARNING'} if done['TEXTURE'] else {'INFO'}, msg)
+        if done['TEXTURE']:
+            self.report({'WARNING'}, msg)
+        else:
+            results.result(self, msg)
         return {'FINISHED'}
 
 
