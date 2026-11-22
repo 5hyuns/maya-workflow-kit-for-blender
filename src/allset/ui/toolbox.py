@@ -28,6 +28,7 @@ import bpy
 from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 
 from ..operators import tool_keys
+from . import kit_wraps
 # the split-out parts, also read through this module by other UI, the tests and tools
 from .toolbox_column import (GAP_PX, OUTLINER_PX, RETINA_EXTRA_PX, TOOLBAR_PX, _enabled,  # noqa: F401
                              column_width, is_toolbox, settle)
@@ -170,8 +171,23 @@ def _show_tool_settings_later(window):
     bpy.app.timers.register(later, first_interval=0.0)
 
 
-def _make_activate_by_id(original):
+def _make_tools_from_context(previous, on):
+    """The class method put in place of ``tools_from_context`` (``kit_wraps``): with Maya mode off (another add-on
+    kept it inside its own wrapper) it only calls what it wrapped."""
+    original = previous.__func__
+
+    def tools_from_context(cls, context, mode=None):
+        if not on():
+            yield from original(cls, context, mode)
+            return
+        yield from _tools_from_context(cls, context, mode)
+    return classmethod(tools_from_context)
+
+
+def _make_activate_by_id(original, on=lambda: True):
     def activate_by_id(context, space_type, idname, *, as_fallback=False):
+        if not on():
+            return original(context, space_type, idname, as_fallback=as_fallback)
         if (space_type == 'VIEW_3D' and context.mode == 'PAINT_WEIGHT'
                 and idname in MAYA_TOOLS and not as_fallback and not KEEP_PAINT[0]):
             from ..operators.skin import leave_weight_paint
@@ -214,8 +230,9 @@ classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layou
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    # another add-on that wraps these while Maya mode is on keeps its wrapper when Maya mode goes off (#449)
     _saved["tools_from_context"] = TOOLBAR.__dict__["tools_from_context"]
-    TOOLBAR.tools_from_context = classmethod(_tools_from_context)
+    kit_wraps.wrap(TOOLBAR, "tools_from_context", _make_tools_from_context)
     TOOLBAR.prepend(_draw_begin)
     bpy.types.VIEW3D_HT_header.prepend(_draw_armature_mode_header)
     if not bpy.app.background:
@@ -234,8 +251,7 @@ def register():
         bpy.app.timers.register(_ensure_outliner_watch, first_interval=1.0, persistent=True)
     TOOLBAR.append(_draw_end)
     from bl_ui import space_toolsystem_common as stc
-    _saved["activate_by_id"] = stc.activate_by_id
-    stc.activate_by_id = _make_activate_by_id(stc.activate_by_id)
+    kit_wraps.wrap(stc, "activate_by_id", _make_activate_by_id)
     if not bpy.app.background and not bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.register(_fit_tick, first_interval=_FIT_TICK, persistent=True)
     bpy.app.handlers.load_post.append(_fit_after_load)
@@ -255,10 +271,10 @@ def unregister():
         bpy.app.handlers.load_post.remove(_fit_after_load)
     if bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.unregister(_fit_tick)
-    TOOLBAR.tools_from_context = _saved.pop("tools_from_context")
+    kit_wraps.unwrap(TOOLBAR, "tools_from_context")
+    _saved.pop("tools_from_context", None)
     from bl_ui import space_toolsystem_common as stc
-    if "activate_by_id" in _saved:
-        stc.activate_by_id = _saved.pop("activate_by_id")
+    kit_wraps.unwrap(stc, "activate_by_id")
     _last_click[:] = [None, 0.0]
     bpy.types.VIEW3D_HT_header.remove(_draw_armature_mode_header)
     TOOLBAR.remove(_draw_begin)

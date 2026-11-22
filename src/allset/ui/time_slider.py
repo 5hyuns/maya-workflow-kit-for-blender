@@ -6,7 +6,8 @@ Maya's Time Slider (transport buttons, current time
 field, auto key) and Range Slider (animation start, playback start, [range], playback end,
 animation end). Blender form:
 - the timeline header's ``draw_header`` (``DOPESHEET_HT_editor_buttons`` in Timeline mode, a plain class, not in
-  bpy.types) is wrapped to draw ``draw_header`` below and restored on unregister.
+  bpy.types) is wrapped to draw ``draw_header`` below and restored on unregister (``kit_wraps``: a wrapper another
+  add-on put over the kit's stays, the kit's then only calls what it wrapped).
 - Maya's animation range = scene frame_start/end; its playback range = the preview range
   (``use_preview_range`` off: playback = animation range, inner fields greyed).
 - Maya's time slider always shows exactly the playback range and never zooms or scrolls: every Timeline is
@@ -34,7 +35,7 @@ import re
 import bpy
 
 from .. import compat
-from . import draw_replay
+from . import draw_replay, kit_wraps
 from .draw_replay import call
 from bpy.app.handlers import persistent
 # the split-out parts, also read through this module by other UI and the tests
@@ -588,20 +589,28 @@ def register():
     wm.allset_time_range = bpy.props.IntVectorProperty(name="Time Range", size=2, options={'SKIP_SAVE'})
     _draw_handle.append(bpy.types.SpaceDopeSheetEditor.draw_handler_add(_draw_range, (), 'WINDOW', 'POST_PIXEL'))
     buttons, menus = header_classes()
-    orig_menus, orig_header = menus.draw_collapsible, buttons.draw_header   # bound class methods
-    _ORIGINAL["draw_header"] = buttons.__dict__["draw_header"]
 
-    def _menus_5(cls, context, layout):
-        # Timeline mode: the menus live in ALLSET_MT_anim_preferences (Maya has no menus in the Range Slider)
-        if not _is_timeline(context):
-            return orig_menus(context, layout)
+    def make_menus(_previous, on):
+        orig_menus = menus.draw_collapsible     # bound class method (Blender's, or another add-on's wrapper)
 
-    def _header_5(cls, context, layout):
-        if _is_timeline(context):
-            return draw_header(context, layout)
-        return orig_header(context, layout)
-    menus.draw_collapsible = classmethod(_menus_5)
-    buttons.draw_header = classmethod(_header_5)
+        def _menus_5(cls, context, layout):
+            # Timeline mode: the menus live in ALLSET_MT_anim_preferences (Maya has no menus in the Range Slider)
+            if not (on() and _is_timeline(context)):
+                return orig_menus(context, layout)
+        return classmethod(_menus_5)
+
+    def make_header(_previous, on):
+        orig_header = buttons.draw_header
+
+        def _header_5(cls, context, layout):
+            if on() and _is_timeline(context):
+                return draw_header(context, layout)
+            return orig_header(context, layout)
+        return classmethod(_header_5)
+    # another add-on that wraps these while Maya mode is on keeps its wrapper when Maya mode goes off (#449)
+    kit_wraps.wrap(menus, "draw_collapsible", make_menus)
+    kit_wraps.wrap(buttons, "draw_header", make_header)
+    _ORIGINAL["draw_header"] = kit_wraps.previous(buttons, "draw_header")
     _subscribe()
     bpy.app.handlers.load_post.append(_on_load)
 
@@ -626,11 +635,9 @@ def unregister():
         bpy.app.timers.unregister(_deferred_fit)
     _fitted.clear()
     buttons, menus = header_classes()
-    if "draw_header" in _ORIGINAL:
-        orig = _ORIGINAL.pop("draw_header")
-        buttons.draw_header = orig
-    if "draw_collapsible" in menus.__dict__:
-        del menus.draw_collapsible
+    _ORIGINAL.pop("draw_header", None)
+    kit_wraps.unwrap(buttons, "draw_header")
+    kit_wraps.unwrap(menus, "draw_collapsible")
     while _draw_handle:
         bpy.types.SpaceDopeSheetEditor.draw_handler_remove(_draw_handle.pop(), 'WINDOW')
     wm = bpy.types.WindowManager
