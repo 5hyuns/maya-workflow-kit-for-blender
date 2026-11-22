@@ -30,7 +30,7 @@ CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 # with a key of their own for < > (Blender's GRLESS) type "<" plain and ">" with Shift. Mesh components and UVs.
 GROW_KEYS = (make_event("PERIOD", shift=True, repeat=True), make_event("GRLESS", shift=True, repeat=True))
 SHRINK_KEYS = (make_event("COMMA", shift=True, repeat=True), make_event("GRLESS", repeat=True))
-GROW_SHRINK = (("Mesh", "mesh.select_more", "mesh.select_less"),
+GROW_SHRINK = (("Mesh", "allset.grow_selection", "allset.shrink_selection"),
                ("UV Editor", "uv.select_more", "uv.select_less"))
 
 

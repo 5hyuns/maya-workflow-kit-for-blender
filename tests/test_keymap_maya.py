@@ -68,7 +68,7 @@ def test_uv_click_select():
 def test_grow_shrink_keys():
     """Grow / Shrink Selection on > / <: Shift+. / Shift+, (US) and the < > key of its own (Shift = >),
     for mesh components and UVs; the only items on those keys there."""
-    for km, more, less in (("Mesh", "mesh.select_more", "mesh.select_less"),
+    for km, more, less in (("Mesh", "allset.grow_selection", "allset.shrink_selection"),
                            ("UV Editor", "uv.select_more", "uv.select_less")):
         for idname, type, shift in ((more, "PERIOD", True), (more, "GRLESS", True),
                                     (less, "COMMA", True), (less, "GRLESS", False)):

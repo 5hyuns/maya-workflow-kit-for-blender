@@ -243,8 +243,8 @@ MAP = {
     "Select/Hierarchy": ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True}),
     "Select/Inverse": ("object.select_all", {"action": 'INVERT'}),
     "Select/Similar": ("object.select_grouped", {"type": 'TYPE'}),
-    "Select/Grow": "mesh.select_more",
-    "Select/Shrink": "mesh.select_less",
+    "Select/Grow": "allset.grow_selection",        # Maya: edges grow by vertex, faces / vertices by face
+    "Select/Shrink": "allset.shrink_selection",    # Maya: the open mesh border counts as outside
     "Select/Object/Component": "allset.toggle_sel_mode",
     "Select/Components/Multi-Component": ("allset.component_mode", {"type": 'MULTI'}),
     "Select/Components/Vertex": ("allset.component_mode", {"type": 'VERT'}),

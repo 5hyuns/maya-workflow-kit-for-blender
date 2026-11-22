@@ -30,8 +30,8 @@ def test_mesh_bindings():
     assert _ids("Mesh", "D", alt=True) == ["allset.select_none"]
     assert _ids("Mesh", "E", ctrl=True) == ["allset.extrude"]   # polyExtrudeFace
     assert _ids("Mesh", "B", ctrl=True) == ["allset.bevel"]
-    assert _ids("Mesh", "PERIOD", shift=True) == ["mesh.select_more"]
-    assert _ids("Mesh", "COMMA", shift=True) == ["mesh.select_less"]
+    assert _ids("Mesh", "PERIOD", shift=True) == ["allset.grow_selection"]
+    assert _ids("Mesh", "COMMA", shift=True) == ["allset.shrink_selection"]
     assert _ids("Mesh", "PERIOD", shift=True, ctrl=True) == ["mesh.select_next_item"]
     assert _ids("Mesh", "COMMA", shift=True, ctrl=True) == ["mesh.select_prev_item"]
     for key, comp in (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE")):

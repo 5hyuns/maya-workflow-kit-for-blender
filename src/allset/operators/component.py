@@ -317,5 +317,61 @@ class ALLSET_OT_select_loops(bpy.types.Operator):
 
 
 
+def shrink_off_border(bm, mode):
+    """After Blender's Shrink: Maya also lets go of the selected vertices on an open border of the mesh and of the
+    selected faces that touch one (the mesh border counts as outside the selection). ``mode`` = 'VERT' / 'FACE'."""
+    if mode == 'VERT':
+        for v in bm.verts:
+            if v.select and v.is_boundary:
+                v.select_set(False)
+    else:
+        for f in bm.faces:
+            if f.select and any(v.is_boundary for v in f.verts):
+                f.select_set(False)
+    bm.select_flush_mode()
+
+
+@undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
+class ALLSET_OT_grow_selection(bpy.types.Operator):
+    """Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex
+    or face that shares a face with the selection, edges every edge that shares a vertex with a selected edge"""
+    bl_idname = "allset.grow_selection"
+    bl_label = "Grow Selection"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        mode = tuple(context.scene.tool_settings.mesh_select_mode)
+        return bpy.ops.mesh.select_more(use_face_step=mode != _MODES['EDGE'])
+
+
+@undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
+class ALLSET_OT_shrink_selection(bpy.types.Operator):
+    """Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,
+    and so do selected vertices and faces on an open border of the mesh"""
+    bl_idname = "allset.shrink_selection"
+    bl_label = "Shrink Selection"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        res = bpy.ops.mesh.select_less()
+        kind = next((k for k in ('VERT', 'FACE') if tuple(context.scene.tool_settings.mesh_select_mode) == _MODES[k]),
+                    None)
+        if kind is not None and 'FINISHED' in res:
+            for ob in context.objects_in_mode_unique_data:
+                bm = bmesh.from_edit_mesh(ob.data)
+                shrink_off_border(bm, kind)
+                bmesh.update_edit_mesh(ob.data)
+        return res
+
+
 classes = (ALLSET_OT_select_none, ALLSET_OT_bevel, ALLSET_OT_bevel_edit, ALLSET_OT_convert_selection,
-           ALLSET_OT_delete_components, ALLSET_OT_select_loops)
+           ALLSET_OT_delete_components, ALLSET_OT_select_loops,
+           ALLSET_OT_grow_selection, ALLSET_OT_shrink_selection)
