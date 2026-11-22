@@ -7399,4 +7399,8 @@ STRINGS = {
     'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': 'エッジの範囲選択: 触れたエッジをすべて選択 (Shift で切り替え、Ctrl で除去、Ctrl+Shift で追加)',
     'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '各頂点を自身のエッジのいずれかの上に保ったまま選択コンポーネントを回転 (Maya の回転ツールでの\nCtrl+Shift+ドラッグ)',
     'Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)': '対称オンの範囲選択・投げ縄: 内側のコンポーネントとそのミラー側の対応コンポーネント (Shift で切り替え、Ctrl で除去、Ctrl+Shift で追加)',
+    'Whole Border': '境界全体',
+    'Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge': 'コンポーネントの選択を 1 段階拡大 (Maya の Select > Grow、>): 頂点とフェースは選択とフェースを共有する頂点・フェースをすべて、エッジは選択エッジと頂点を共有するエッジをすべて追加',
+    'Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh': 'コンポーネントの選択を 1 段階縮小 (Maya の Select > Shrink、<): 選択範囲の境界を外し、メッシュの開いた境界上の選択頂点・フェースも外す',
+    'A selected open-border edge takes in its whole border, round the corners too (Maya Convert Selection > To Edge Loop)': '選択した開いた境界のエッジから、角も回って境界全体を選択 (Maya の Convert Selection > To Edge Loop)',
 }

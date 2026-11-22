@@ -53,6 +53,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Extrude, Orient Joint and the Joint Tool's world orientation, and the World up vector. The defaults keep their
   result (Axis Z: a primitive stands upright; World up vector 0 0 1; Mirror Joints across XZ; Revolve about Z), and
   option values saved by an older version keep doing what they did (#443).
+- Select > Grow (>) on edges adds only the edges that share a vertex with the selection, and Shrink (<) also lets go
+  of the vertices and faces on the open border of a mesh, like Maya (#455).
+- Select > Convert Selection > To Edge Loop on a border edge selects the whole border, round its corners, like Maya
+  (#456).
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing

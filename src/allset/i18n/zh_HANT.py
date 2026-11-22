@@ -7400,4 +7400,8 @@ STRINGS = {
     'Marquee on edges: every edge it touches (Shift toggles, Ctrl removes, Ctrl+Shift adds)': '框選邊：選中它碰到的每條邊 (Shift 切換，Ctrl 移除，Ctrl+Shift 添加)',
     'Rotate the selected components while keeping every vertex on one of its edges (Maya Ctrl+Shift+drag with the\nRotate tool)': '旋轉選定組件，同時讓每個頂點保持在它的某條邊上 (Maya 中用旋轉工具\nCtrl+Shift+拖動)',
     'Marquee or lasso with Symmetry on: the components inside and their mirror partners (Shift toggles, Ctrl\nremoves, Ctrl+Shift adds)': '對稱開啟時的框選 / 套索：選中內部的組件及其鏡像對應組件 (Shift 切換，Ctrl 移除，Ctrl+Shift 添加)',
+    'Whole Border': '整個邊界',
+    'Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge': '將組件選擇擴大一步 (Maya Select > Grow，>)：頂點和面加入與選擇共享面的所有頂點或面，邊加入與選定邊共享頂點的所有邊',
+    'Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh': '將組件選擇縮小一步 (Maya Select > Shrink，<)：去掉選定區域的邊界，網格開放邊界上的選定頂點和面也去掉',
+    'A selected open-border edge takes in its whole border, round the corners too (Maya Convert Selection > To Edge Loop)': '選定的開放邊界邊會選中整個邊界，包括轉角 (Maya Convert Selection > To Edge Loop)',
 }

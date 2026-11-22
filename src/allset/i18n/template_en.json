@@ -5432,6 +5432,7 @@
    "Value": "Value"
   },
   "Labels/operators/component": {
+   "A selected open-border edge takes in its whole border, round the corners too (Maya Convert Selection > To Edge Loop)": "A selected open-border edge takes in its whole border, round the corners too (Maya Convert Selection > To Edge Loop)",
    "Bevel": "Bevel",
    "Bevel width as a fraction of the shortest edge it slides along": "Bevel width as a fraction of the shortest edge it slides along",
    "Bevel width in Maya units when Offset As Fraction is off": "Bevel width in Maya units when Offset As Fraction is off",
@@ -5445,6 +5446,7 @@
    "Faces": "Faces",
    "Faces across the bevel": "Faces across the bevel",
    "Fraction": "Fraction",
+   "Grow Selection": "Grow Selection",
    "New edges whose faces meet at more than this angle (degrees) are hard, the others soft": "New edges whose faces meet at more than this angle (degrees) are hard, the others soft",
    "Offset": "Offset",
    "Offset As Fraction": "Offset As Fraction",
@@ -5454,10 +5456,12 @@
    "Segments": "Segments",
    "Select Edge Loops": "Select Edge Loops",
    "Select None": "Select None",
+   "Shrink Selection": "Shrink Selection",
    "Smoothing Angle": "Smoothing Angle",
    "To": "To",
    "Use Fraction (off: Offset in Maya units)": "Use Fraction (off: Offset in Maya units)",
    "Vertices": "Vertices",
+   "Whole Border": "Whole Border",
    "World Space": "World Space",
    "polyBevel": "polyBevel"
   },
@@ -11397,7 +11401,9 @@
    "Clear the selection and go back to object mode (Maya Alt+D)": "Clear the selection and go back to object mode (Maya Alt+D)",
    "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)": "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)",
    "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)": "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)",
-   "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)": "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)"
+   "Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge": "Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge",
+   "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)": "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)",
+   "Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh": "Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh"
   },
   "Tooltips/operators/component_local": {
    "Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)": "Rotate the selected component groups about their own normals, or scale them across their normals (Maya\nCtrl+middle-drag with the Rotate / Scale tool)"
