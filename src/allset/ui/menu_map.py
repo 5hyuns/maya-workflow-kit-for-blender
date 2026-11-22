@@ -255,7 +255,7 @@ MAP = {
     # selection touches (Ctrl+F9-F11's operator), the other conversions operators/select_convert.py.
     "Select/Convert Selection/To Vertices": ("allset.convert_selection", {"type": 'VERT'}),
     "Select/Convert Selection/To Edges": ("allset.convert_selection", {"type": 'EDGE'}),
-    "Select/Convert Selection/To Edge Loop": ("allset.select_loops", {"ring": False}),
+    "Select/Convert Selection/To Edge Loop": ("allset.select_loops", {"ring": False, "border": True}),
     "Select/Convert Selection/To Edge Ring": ("allset.select_loops", {"ring": True}),
     "Select/Convert Selection/To Edge Perimeter": _sel('EDGE_PERIMETER'),
     "Select/Convert Selection/To Faces": ("allset.convert_selection", {"type": 'FACE'}),

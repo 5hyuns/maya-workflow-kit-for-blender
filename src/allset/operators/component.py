@@ -301,19 +301,53 @@ class ALLSET_OT_select_loops(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     ring: bpy.props.BoolProperty(name="Ring", description="Edge rings instead of edge loops")
+    border: bpy.props.BoolProperty(
+        name="Whole Border", options={'SKIP_SAVE'},
+        description="A selected open-border edge takes in its whole border, round the corners too "
+                    "(Maya Convert Selection > To Edge Loop)")
 
     @classmethod
     def poll(cls, context):
         return context.mode == 'EDIT_MESH'
 
     def execute(self, context):
+        starts = {}
+        if self.border and not self.ring:
+            for ob in context.objects_in_mode_unique_data:
+                bm = bmesh.from_edit_mesh(ob.data)
+                starts[ob.name] = [e.index for e in bm.edges if e.select and e.is_boundary]
         # Blender 5.0: mesh.loop_multi_select(ring); 5.1+: mesh.select_edge_loop_multi /
         # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops).
         from .. import compat
         if compat.has_op(bpy.ops.mesh, "loop_multi_select"):
-            return bpy.ops.mesh.loop_multi_select(ring=self.ring)
-        op = bpy.ops.mesh.select_edge_ring_multi if self.ring else bpy.ops.mesh.select_edge_loop_multi
-        return op()
+            res = bpy.ops.mesh.loop_multi_select(ring=self.ring)
+        else:
+            op = bpy.ops.mesh.select_edge_ring_multi if self.ring else bpy.ops.mesh.select_edge_loop_multi
+            res = op()
+        for ob in context.objects_in_mode_unique_data:
+            if starts.get(ob.name):
+                bm = bmesh.from_edit_mesh(ob.data)
+                bm.edges.ensure_lookup_table()
+                for e in border_run(bm.edges[i] for i in starts[ob.name]):
+                    e.select_set(True)
+                bmesh.update_edit_mesh(ob.data)
+        return res
+
+
+def border_run(edges):
+    """The open-border edges joined to ``edges`` through vertices where exactly two border edges meet: a border
+    edge's whole border loop, round its corners (Maya's edge loop of a border edge)."""
+    seen, todo = set(), list(edges)
+    while todo:
+        e = todo.pop()
+        if e in seen:
+            continue
+        seen.add(e)
+        for v in e.verts:
+            nxt = [o for o in v.link_edges if o is not e and o.is_boundary]
+            if len(nxt) == 1:
+                todo.append(nxt[0])
+    return seen
 
 
 
