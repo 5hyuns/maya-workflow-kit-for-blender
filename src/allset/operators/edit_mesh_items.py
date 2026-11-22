@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Edit Mesh > Detach, Edit Edge Flow and Wedge as bmesh edits in Edit Mode.
 
-``detach`` splits vertices per face or edges open, ``edge_flow`` moves each vertex onto the curve through its ring
-neighbours (also used by edge_loops), ``ALLSET_OT_wedge`` spins the selected faces around an edge. menu_items
+``detach`` splits vertices per face or edges open, ``edit_edge_flow`` moves each vertex of the selected edges to the
+middle of the curve through its ring neighbours, ``edge_flow`` places each vertex on such a curve at its own position
+between them (edge_loops), ``ALLSET_OT_wedge`` spins the selected faces around an edge. menu_items
 re-exports them.
 """
 
@@ -64,8 +65,12 @@ class ALLSET_OT_detach(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _across(v, e):
-    """The edge of ``v`` opposite ``e`` in a 4-edge vertex (the next edge of the ring), or None."""
+def _across(v, e, border=False):
+    """The edge of ``v`` opposite ``e`` in a 4-edge vertex (the next edge of the ring), or None. With ``border``, a
+    border edge ``e`` at a 3-edge border vertex continues along the other border edge."""
+    if border and len(v.link_edges) == 3 and e.is_boundary:
+        others = [x for x in v.link_edges if x is not e and x.is_boundary]
+        return others[0] if len(others) == 1 else None
     if len(v.link_edges) != 4:
         return None
     faces = set(e.link_faces)
@@ -128,6 +133,43 @@ def edge_flow(bm, edges, flow=1.0):
     return len(moves)
 
 
+def edit_edge_flow(bm, edges, flow=1.0):
+    """Maya Edit Edge Flow: each vertex of the selected edges moves to the middle of a cubic Hermite curve between its
+    two ring neighbours a, b. The tangent at a runs along the ring edge coming into a from beyond (at b: the edge
+    going on from b), a border edge continuing along the border; the tangent length is 0.7 x |ab|, scaled by
+    ``flow`` (0 = the straight line). A side without an edge beyond mirrors the other tangent about the chord; with
+    neither the vertex goes to the middle of ab. Returns the number of moved vertices."""
+    selected = set(edges)
+    moves = {}
+    for v in {v for e in edges for v in e.verts}:
+        ring = [x for x in v.link_edges if x not in selected]
+        if len(ring) != 2:
+            continue
+        ends = []
+        for x in ring:
+            a = x.other_vert(v)
+            nxt = _across(a, x, border=True)
+            ends.append((a.co.copy(), nxt.other_vert(a).co.copy() if nxt else None))
+        (a, a2), (b, b2) = ends
+        mid = (a + b) * 0.5
+        chord = b - a
+        if chord.length_squared < 1e-18:
+            continue
+        ta = (a - a2).normalized() if a2 is not None and (a - a2).length_squared > 1e-18 else None
+        tb = (b2 - b).normalized() if b2 is not None and (b2 - b).length_squared > 1e-18 else None
+        if ta is None and tb is None:
+            moves[v] = mid
+            continue
+        u = chord.normalized()
+        ta = ta if ta is not None else (u * 2 * u.dot(tb) - tb)    # mirror the other tangent about the chord
+        tb = tb if tb is not None else (u * 2 * u.dot(ta) - ta)
+        # Hermite at t = 0.5: (a + b) / 2 + (ma - mb) / 8
+        moves[v] = mid + (ta - tb) * (0.7 * chord.length * flow / 8.0)
+    for v, co in moves.items():
+        v.co = co
+    return len(moves)
+
+
 class ALLSET_OT_edge_flow(bpy.types.Operator):
     """Move the selected edges so they follow the curvature of the surrounding surface
     (Maya Edit Mesh > Edit Edge Flow)"""
@@ -145,7 +187,7 @@ class ALLSET_OT_edge_flow(bpy.types.Operator):
     def execute(self, context):
         for ob in context.objects_in_mode:
             bm = bmesh.from_edit_mesh(ob.data)
-            edge_flow(bm, [e for e in bm.edges if e.select], self.flow)
+            edit_edge_flow(bm, [e for e in bm.edges if e.select], self.flow)
             bmesh.update_edit_mesh(ob.data)
         return {'FINISHED'}
 
