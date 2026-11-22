@@ -641,6 +641,7 @@ STRINGS = {
     'Not in this Blender editor.': 'この Blender エディタにはありません。',
     'Not in Blender': 'Blender にはありません',
     'Normalized view': '正規化ビュー',
+    'Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while the scene has such controls, the joints are shown or hidden in every view': 'このビューのジョイント。ボーンシェイプとして描かれるリグコントロールは残ります (NURBS カーブに従います)。シーンにそのようなコントロールがある間は、ジョイントはすべてのビューで表示 / 非表示',
     'NURBS curves: curve objects in this view, and rig controls drawn as bone shapes (their bones are shown or hidden in every view)': 'NURBS カーブ: このビューのカーブオブジェクトと、ボーンシェイプとして描かれるリグコントロール (そのボーンはすべてのビューで表示 / 非表示)',
     'Move nodes': 'ノードを移動',
     'Move keys (G)': 'キーを移動 (G)',

@@ -153,7 +153,7 @@ SHOW_TYPES = (
     ("Controllers", None), ("NURBS Curves", "!SHOW_NURBS_CURVES"), ("NURBS Surfaces", "surf"),
     ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
     ("Planes", None), ("Lights", "!SHOW_LIGHTS"), ("Cameras", "!SHOW_CAMERAS"), ("Image Planes", "!SHOW_IMAGE_PLANES"),
-    ("Joints", "armature"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
+    ("Joints", "!SHOW_JOINTS"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
     ("Particle Instancers", None), ("Fluids", "volume"), ("Hair Systems", "curves"),
     ("Follicles", None), ("nCloths", None), ("nParticles", None), ("nRigids", None),
     ("Dynamic Constraints", None), ("Locators", "!SHOW_LOCATORS"), ("Dimensions", None),

@@ -74,6 +74,8 @@ TIPS = {
                         "where it was on)",
     "SHOW_NURBS_CURVES": "NURBS curves: curve objects in this view, and rig controls drawn as bone shapes "
                          "(their bones are shown or hidden in every view)",
+    "SHOW_JOINTS": "Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while "
+                   "the scene has such controls, the joints are shown or hidden in every view",
     "SHOW_IK_HANDLES": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
     "SHOW_LIGHTS": "Lights: their shapes in this view. Hidden lights still light the view while cameras and "
                    "locators are hidden too (Blender hides those shapes together); with cameras or locators shown "
@@ -193,6 +195,9 @@ def state(context, key):
         return global_keys4.image_planes_drawn(context.scene)
     if key == "SHOW_NURBS_CURVES":
         return space.show_object_viewport_curve
+    if key == "SHOW_JOINTS":
+        from . import curve_controls
+        return curve_controls.joints_shown(space, context.scene)
     if key == "SHOW_LIGHTS":
         return lights_shown(space)
     if key in _TYPE_KEYS:
@@ -339,6 +344,10 @@ def apply(context, key):
         from . import curve_controls
         space.show_object_viewport_curve = not space.show_object_viewport_curve
         curve_controls.sync(space, context.scene)
+    elif key == "SHOW_JOINTS":
+        # #451: joints only; curve-shaped controls follow NURBS Curves (ui/curve_controls.py)
+        from . import curve_controls
+        curve_controls.show_joints(space, context.scene, not curve_controls.joints_shown(space, context.scene))
     elif key == "SHOW_LIGHTS":
         set_lights(space, not lights_shown(space))
     elif key in _TYPE_KEYS:
@@ -352,6 +361,8 @@ def apply(context, key):
         set_lights(space, key == "SHOW_ALL")
         from . import curve_controls
         curve_controls.sync(space, context.scene)
+        if key == "SHOW_ALL" and context.scene is not None:
+            curve_controls.release_joints(context.scene)
     elif key == "APPLY_ALL":
         for screen in bpy.data.screens:
             for area in screen.areas:

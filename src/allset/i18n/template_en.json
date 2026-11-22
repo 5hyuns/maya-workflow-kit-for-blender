@@ -9155,6 +9155,7 @@
    "IK handles (the empties IK constraints follow: shown or hidden in every view)": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
    "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
    "Isolate select": "Isolate select",
+   "Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while the scene has such controls, the joints are shown or hidden in every view": "Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while the scene has such controls, the joints are shown or hidden in every view",
    "Lights: their shapes in this view. Hidden lights still light the view while cameras and locators are hidden too (Blender hides those shapes together); with cameras or locators shown they stop lighting it": "Lights: their shapes in this view. Hidden lights still light the view while cameras and locators are hidden too (Blender hides those shapes together); with cameras or locators shown they stop lighting it",
    "Locators (empties) in this view": "Locators (empties) in this view",
    "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and rotation channels are locked)",

@@ -52,6 +52,8 @@ def apply_display(context, space, mode):
     space.show_object_viewport_mesh = True
     from ..ui import curve_controls        # curve-shaped bone controls follow
     curve_controls.sync(space, scene)
+    if show:
+        curve_controls.release_joints(scene)   # joints hidden by Show > Joints come back with them
 
 
 class ALLSET_OT_cycle_display(bpy.types.Operator):

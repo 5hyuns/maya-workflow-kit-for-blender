@@ -641,6 +641,7 @@ STRINGS = {
     'Not in this Blender editor.': '此 Blender 编辑器中没有。',
     'Not in Blender': 'Blender 中没有',
     'Normalized view': '规格化视图',
+    'Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while the scene has such controls, the joints are shown or hidden in every view': '此视图中的关节。以骨骼形状绘制的绑定控制器保留(它们跟随 NURBS 曲线)；场景中有此类控制器时，关节在所有视图中显示或隐藏',
     'NURBS curves: curve objects in this view, and rig controls drawn as bone shapes (their bones are shown or hidden in every view)': 'NURBS 曲线：此视图中的曲线对象，以及以骨骼形状绘制的绑定控制器(其骨骼在所有视图中显示或隐藏)',
     'Move nodes': '移动节点',
     'Move keys (G)': '移动关键帧 (G)',
