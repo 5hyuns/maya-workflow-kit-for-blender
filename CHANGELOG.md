@@ -64,6 +64,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - Mesh > Fill Hole with one border edge of a hole selected (or a few) closes that whole hole, like Maya (#463).
 - Edit > Ungroup with Preserve position off keeps the children's local values, so they move by the group's transform,
   like Maya (#464).
+- Key > Paste Keys with Paste method Insert and Copies above 1 keeps the earlier copy's key where two copies
+  meet, like Maya; Merge still keeps the later one.
+- Create > Cameras > Camera gives the new camera F Stop 5.6, Focus Distance 5 and Orthographic Width 30, like Maya,
+  so the Attribute Editor shows Maya's values and a switch to orthographic frames the same width.
+- Key > Bake Simulation gives the baked keys the default (Auto) tangents, like any new key in Maya, so with
+  Sample by above 1 the values between the baked keys follow a smooth curve instead of straight lines.
 
 ### Changed
 - Playback in Maya mode does a little less on every frame: the viewport drawings and frame updates that have nothing
