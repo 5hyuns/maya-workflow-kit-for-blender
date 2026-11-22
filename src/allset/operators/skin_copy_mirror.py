@@ -87,8 +87,16 @@ def remap_influences(mesh, src_arm, dst_arm, names, modes):
                 if g.group == vg.index and g.weight > 0.0:
                     weights.setdefault(name, []).append((v.index, g.weight))
         mesh.vertex_groups.remove(vg)
+    targets = {name: associate(src_arm, dst_arm, name, modes) for name in weights}
+    if any(t is not None for t in targets.values()):
+        # the copied weights replace the destination's own weights (like Maya; with no joint matched the
+        # destination keeps its weights)
+        every = [v.index for v in mesh.data.vertices]
+        for vg in mesh.vertex_groups:
+            if vg.name in dst_arm.data.bones:
+                vg.remove(every)
     for name, pairs in weights.items():
-        target = associate(src_arm, dst_arm, name, modes)
+        target = targets[name]
         if target is None:
             continue
         vg = mesh.vertex_groups.get(target) or mesh.vertex_groups.new(name=target)
