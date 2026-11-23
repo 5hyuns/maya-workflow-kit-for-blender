@@ -7453,4 +7453,12 @@ STRINGS = {
     'Bottom right': '右下',
     'Left half': '左半分',
     'Right half': '右半分',
+    'Cut along hard edges': 'ハードエッジに沿ってカット',
+    'Limit shell size': 'シェルのサイズを制限',
+    'Number of faces': 'フェース数',
+    'Auto Seams Options': '自動シームオプション',
+    'Move and Sew UVs Options': 'UV を移動して縫合オプション',
+    'Shell Splitting Tolerance, Connect Holes': 'シェル分割の許容値、穴をつなぐ',
+    'Stitch Together Options': '縫い合わせるオプション',
+    'Stitch Together: Smallest to Largest / Largest to Smallest': '縫い合わせる: 小さい順 / 大きい順',
 }

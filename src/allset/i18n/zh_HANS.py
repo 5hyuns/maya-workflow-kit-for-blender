@@ -7454,4 +7454,12 @@ STRINGS = {
     'Bottom right': '右下',
     'Left half': '左半部',
     'Right half': '右半部',
+    'Cut along hard edges': '沿硬边切割',
+    'Limit shell size': '限制壳大小',
+    'Number of faces': '面数',
+    'Auto Seams Options': '自动接缝选项',
+    'Move and Sew UVs Options': '移动并缝合 UV 选项',
+    'Shell Splitting Tolerance, Connect Holes': '壳拆分容差、连接孔洞',
+    'Stitch Together Options': '缝合到一起选项',
+    'Stitch Together: Smallest to Largest / Largest to Smallest': '缝合到一起：从小到大 / 从大到小',
 }

@@ -6751,6 +6751,9 @@
    "Prevent triangle flips": "Prevent triangle flips",
    "Up": "Up"
   },
+  "Labels/operators/option_windows_uv_edit": {
+   "Limit shell size": "Limit shell size"
+  },
   "Labels/operators/option_windows_visualize": {
    "Include Hierarchy": "Include Hierarchy"
   },
@@ -7555,12 +7558,16 @@
   },
   "Labels/operators/uv_206": {
    "Auto Seams": "Auto Seams",
+   "Automatic": "Automatic",
    "Copy UVs to UV Set": "Copy UVs to UV Set",
    "Create Shell (Grid)": "Create Shell (Grid)",
    "Current UV Set": "Current UV Set",
+   "Cut": "Cut",
+   "Cut along hard edges": "Cut along hard edges",
    "Cycle": "Cycle",
    "New UV set name": "New UV set name",
    "Rename Current UV Set": "Rename Current UV Set",
+   "Select": "Select",
    "Split": "Split",
    "UV set": "UV set"
   },
@@ -7624,9 +7631,11 @@
    "Delete UVs": "Delete UVs",
    "Distribute Shells": "Distribute Shells",
    "First onto Second": "First onto Second",
+   "Limit shell size": "Limit shell size",
    "Merge UVs": "Merge UVs",
    "Move and Sew": "Move and Sew",
    "Normalize": "Normalize",
+   "Number of faces": "Number of faces",
    "Orient Shells": "Orient Shells",
    "Orient Shells to Edges": "Orient Shells to Edges",
    "Second onto First": "Second onto First",
@@ -11239,6 +11248,28 @@
    "V from": "V from",
    "V to": "V to",
    "Vertical": "Vertical"
+  },
+  "Option windows/option_windows_uv_edit": {
+   "Auto Seams": "Auto Seams",
+   "Auto Seams Options": "Auto Seams Options",
+   "Automatic": "Automatic",
+   "Cut": "Cut",
+   "Cut along hard edges": "Cut along hard edges",
+   "Fix non-manifold geometry": "Fix non-manifold geometry",
+   "Limit shell size": "Limit shell size",
+   "Merge UVs": "Merge UVs",
+   "Merge UVs Options": "Merge UVs Options",
+   "Method": "Method",
+   "Move and Sew": "Move and Sew",
+   "Move and Sew UVs Options": "Move and Sew UVs Options",
+   "Number of faces": "Number of faces",
+   "Seams": "Seams",
+   "Select": "Select",
+   "Shell Splitting Tolerance, Connect Holes": "Shell Splitting Tolerance, Connect Holes",
+   "Stitch Together": "Stitch Together",
+   "Stitch Together Options": "Stitch Together Options",
+   "Stitch Together: Smallest to Largest / Largest to Smallest": "Stitch Together: Smallest to Largest / Largest to Smallest",
+   "Threshold": "Threshold"
   },
   "Option windows/option_windows_visualize": {
    "10s": "10s",

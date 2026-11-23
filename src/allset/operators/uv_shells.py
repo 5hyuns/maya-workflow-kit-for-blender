@@ -11,7 +11,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
 from .. import compat, undo_steps
@@ -301,10 +301,11 @@ def _rigid_fit(src, dst):
     return math.atan2(sxy, sxx), cs, cd
 
 
-def move_sew(bm, uv, edges):
+def move_sew(bm, uv, edges, max_faces=None):
     """Maya Move and Sew: per pair of shells the one with fewer faces moves rigidly onto the other along the selected
     seam edges (seams centred), then each seam UV pair merges at its average. A border inside one shell is sewn
-    like Sew UV Edges (its UV pairs meet half-way). Returns the edges sewn."""
+    like Sew UV Edges (its UV pairs meet half-way). ``max_faces`` = the Limit shell size option: a pair whose moving
+    shell has more faces than that stays apart. Returns the edges sewn."""
     groups = shells(bm, uv)
     where = owner_map(groups)
     by_pair = {}
@@ -322,6 +323,8 @@ def move_sew(bm, uv, edges):
         mover, fixed = (i, j) if len(groups[i]) < len(groups[j]) else (j, i)
         if len(groups[i]) == len(groups[j]):
             mover, fixed = (j, i)           # equal face counts: Maya's choice unknown; the later shell moves
+        if max_faces is not None and len(groups[mover]) > max_faces:
+            continue
         verts = []
         for e, fs in items:
             fm = fs[0] if where[fs[0]] == mover else fs[1]
@@ -584,12 +587,16 @@ class ALLSET_OT_uv_move_sew(_ShellOp, bpy.types.Operator):
     bl_label = "Move and Sew"
     empty = "Select UV edges between two shells"
 
+    # the Move and Sew options: Limit shell size, Number of faces
+    limit: BoolProperty(name="Limit shell size", default=False, options={'SKIP_SAVE'})
+    faces: IntProperty(name="Number of faces", default=10, min=0, options={'SKIP_SAVE'})
+
     def run(self, context, bm, uv, synced):
         edges = uv_tools.selected_edges(bm, uv, synced)
         if not edges:
             fs = set(uv_tools.selected_faces(bm, uv, synced))
             edges = [e for f in fs for e in f.edges]
-        return move_sew(bm, uv, edges)
+        return move_sew(bm, uv, edges, self.faces if self.limit else None)
 
 
 @undo_steps.no_redo_panel
