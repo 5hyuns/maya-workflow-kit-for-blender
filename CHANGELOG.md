@@ -97,6 +97,9 @@ earlier version open unchanged: nothing in them is converted.
   Joints like Maya, also W while the Move tool is active; the joints go back to Pose with that tool (#415).
 - Turning the UV Manipulator preference on or off in Blender mode no longer gives Blender's UV Move / Rotate / Scale
   tools the kit's handles; the kit's UV tools leave cleanly when Maya mode is turned off.
+- Animation: a Graph Editor or Dope Sheet open during playback no longer slows Maya mode down as the scene gets
+  more animated: its Stats fields (the selected keys' time and value) are read once per playback instead of on every
+  frame (#344).
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse

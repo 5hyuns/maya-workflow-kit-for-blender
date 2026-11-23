@@ -293,10 +293,38 @@ def selected_points(context):
     return out
 
 
+_STATS = {}     # (area pointer, field) -> the Stats text while playback runs (``_stats_get``)
+
+
+def drop_stats(*_args):
+    """Playback starts or stops, a key changes (an Action update), a file loads: the Stats are read again."""
+    _STATS.clear()
+
+
 def _stats_get(field):
     axis = 0 if field == "time" else 1
 
     def get(scene):
+        # Playing changes neither which keys are selected nor their time / value (a key set while playing updates
+        # its Action, which drops the kept text): the text found on the first played frame is shown again instead
+        # of reading every listed curve's keys on every frame (the editor's toolbar row redraws on each one).
+        context = bpy.context
+        screen = getattr(context, "screen", None)
+        key = None
+        if screen is not None and screen.is_animation_playing:
+            area = getattr(context, "area", None)
+            key = (area.as_pointer() if area is not None else 0, field)
+            got = _STATS.get(key)
+            if got is not None:
+                return got
+        text = read(scene)
+        if key is not None:
+            if len(_STATS) > 64:
+                _STATS.clear()
+            _STATS[key] = text
+        return text
+
+    def read(scene):
         from . import cb_entry
         first, values = None, set()
         for fc in getattr(bpy.context, "editable_fcurves", None) or ():

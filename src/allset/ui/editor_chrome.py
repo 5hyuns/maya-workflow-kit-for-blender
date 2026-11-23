@@ -29,7 +29,7 @@ from .editor_kinds import GE, DS, UV, enabled, is_graph, is_dope, is_uv  # noqa:
 from .editor_menu_bar import _BLENDER, _BAR, draw_menu_bar, draw_menus  # noqa: F401
 from .editor_icon_data import GRAPH_ICONS, DOPE_ICONS, ICONS, NOTICES  # noqa: F401
 from .editor_icon_row import (ALLSET_MT_editor_more, ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable,
-                              _FIRST_HIDDEN, _icon_spec, _kind, draw_icons, icon_groups, shown_groups, _stats_get,
+                              _FIRST_HIDDEN, _icon_spec, _kind, draw_icons, drop_stats, icon_groups, shown_groups, _stats_get,
                               _stats_set)  # noqa: F401
 from .editor_headers import (_graph_header, _dope_header, _graph_footer, _dope_footer, _set_up, own_draw, toolbar_row,
                              setup_toolbar_row, release_toolbar_rows, draw_uv_header, draw_uv_tool_header,
@@ -56,6 +56,18 @@ classes = (ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable, ALLSET_MT_e
            ALLSET_OT_graph_channel_scroll, ALLSET_OT_graph_list, ALLSET_OT_graph_pin, ALLSET_OT_graph_attr_clear,
            *_BLENDER.values(), *_BAR.values())
 _handle = []
+_STATS_DROPS = ("animation_playback_pre", "animation_playback_post", "load_post")
+
+
+@bpy.app.handlers.persistent
+def _drop_stats(*_args):
+    drop_stats()
+
+
+@bpy.app.handlers.persistent
+def _drop_stats_on_keys(_scene, depsgraph=None):
+    if depsgraph is None or depsgraph.id_type_updated('ACTION'):
+        drop_stats()
 
 
 def register():
@@ -78,6 +90,9 @@ def register():
         name="Auto Load Selected Objects", description="Maya: the list follows the selection (off: Load / Add "
         "Selected Objects keep a fixed list)", get=_auto_get, set=_auto_set, options={'SKIP_SAVE'})
     graph_icons.register()
+    for name in _STATS_DROPS:
+        getattr(bpy.app.handlers, name).append(_drop_stats)
+    bpy.app.handlers.depsgraph_update_post.append(_drop_stats_on_keys)
     patch_headers()
     _handle.append(bpy.types.SpaceGraphEditor.draw_handler_add(draw_channels, (), 'CHANNELS', 'POST_PIXEL'))
     graph_layers.register()
@@ -88,6 +103,13 @@ def unregister():
     while _handle:
         bpy.types.SpaceGraphEditor.draw_handler_remove(_handle.pop(), 'CHANNELS')
     unpatch_headers()
+    for name in _STATS_DROPS:
+        hs = getattr(bpy.app.handlers, name)
+        if _drop_stats in hs:
+            hs.remove(_drop_stats)
+    if _drop_stats_on_keys in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(_drop_stats_on_keys)
+    drop_stats()
     graph_icons.unregister()
     del bpy.types.Scene.allset_key_time
     del bpy.types.Scene.allset_key_value

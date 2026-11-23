@@ -46,6 +46,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   below Set Breakdown Key, run Blender's pose in-between tools in Pose Mode.
 - **Fixed:** picking another tool (Q / W / E / R, the toolbar, the Tool Box or a menu entry) ends Skin > Move Skinned
   Joints like Maya; before, only F8 or Move Skinned Joints again did (#415).
+- **Fixed:** with a Graph Editor or Dope Sheet open, playback in Maya mode no longer gets slower the more curves and
+  keys the scene has (#344).
 
 ## UV Editor
 
@@ -85,7 +87,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 ## Thank you
 
 Thanks to @suenwaichit (#494), @envwarby (#524, #526, #527) and @quangvupantheravn (#495) for the UV Editor and marking menu
-reports, to @cnzim for the Move Skinned Joints follow-up (#415), and to everyone for the reports and
+reports, to @cnzim for the Move Skinned Joints follow-up (#415), to @pixelkeyblade18 for the playback report (#344), and to everyone for the reports and
 ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
