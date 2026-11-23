@@ -1271,8 +1271,6 @@ MAP.update(_EDITOR_MAP)
 
 # the same Maya command greyed in one menu while it works in another
 # (same label and runTimeCommand / annotation) gets the working item's action.
-# UV Editor Tools > Unfold / Cut / Sew / Pin are Maya's brush tools; the kit runs the command on the selection
-# (Blender's UV editor has no unfold / cut / sew brush).
 TWINS = {
     **{f"Key/{label}": f"Control/{label}" for label in (
         "Create Character Set", "Create Subcharacter Set", "Attribute Editor", "Add to Character Set",
@@ -1282,10 +1280,6 @@ TWINS = {
     "UV/3D Grab UV Tool": "UV Editor/Tools/Grab",      # Maya 2026 UV menu item = the UV Editor Grab tool
     **{f"UV Editor/Select/Convert Selection/{label}": f"Select/Convert Selection/{label}"
        for label in ("To Contained Edges", "To Contained Faces", "To Edge Loop", "To Edge Ring")},
-    "UV Editor/Tools/Unfold": "UV Editor/Modify/Unfold",
-    "UV Editor/Tools/Cut": "UV Editor/Cut/Sew/Cut",
-    "UV Editor/Tools/Sew": "UV Editor/Cut/Sew/Sew",
-    "UV Editor/Tools/Pin": "UV Editor/Edit/Pin Selection",
     # runTimeCommand aliases — the main UV > Delete UVs runs
     # DeleteUVsWithoutHotkey = the marking menu's DeleteUVs (polyMapDel on the selected faces, Maya UV marking menu);
     # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (Maya 2026 nHair menu)

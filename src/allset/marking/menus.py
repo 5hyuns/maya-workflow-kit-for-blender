@@ -1263,8 +1263,8 @@ _UV_MAPPING = Sub(radial={
 _UV_TOOLS = Sub(items=[
     ("Cut Tool", _uve("Tools/Cut")), ("Sew Tool", _uve("Tools/Sew")), DIVIDER,
     ("Optimize Tool", _uve("Tools/Optimize")), ("Unfold Tool", _uve("Tools/Unfold")), DIVIDER,
-    ("Grab Tool", _uve("Tools/Grab")), ("Lattice Tool", None), ("Pin Tool", _uve("Tools/Pin")),
-    ("Pinch Tool", _uve("Tools/Pinch")), ("Smear Tool", None), ("Symmetrize Tool", None),
+    ("Grab Tool", _uve("Tools/Grab")), ("Lattice Tool", _uve("Tools/Lattice")), ("Pin Tool", _uve("Tools/Pin")),
+    ("Pinch Tool", _uve("Tools/Pinch")), ("Smear Tool", _uve("Tools/Smear")), ("Symmetrize Tool", None),
 ], options={"Optimize Tool", "Grab Tool", "Pinch Tool"})
 # Pinning also holds the editor's display switches, like Maya's
 _UV_PINNING = Sub(items=[
@@ -1473,12 +1473,27 @@ UV_OPT_SELECT = MarkingMenu(
     items=_uv_options("Select Options"))
 
 
+# RMB in the UV Editor while one of its brush tools is active (Tools > Unfold, Optimize, Cut, Sew, Pin, Smear,
+# Smudge): Maya's UV brush marking menu.
+UV_BRUSH = MarkingMenu(
+    "UV_BRUSH", "UV Brush", "maya",
+    radial={
+        "N": ("Invert Pin", ("allset.uv_invert_pin", {})),
+        "NE": ("Cut UV Tool", _uve("Tools/Cut")),
+        "E": ("Last Tool", ("allset.uv_brush_last", {})),
+        "SE": ("Grab UV Tool", _uve("Tools/Grab")),
+        "S": ("Pin UV Tool", _uve("Tools/Pin")),
+        "W": ("Falloff Type", Sub(radial={"W": ("Surface/Volume", None), "SW": ("Surface", None),
+                                          "S": ("Volume", None)})),
+    })
+
+
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
                              UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, UV_CONVERT,
-                             UV_OPT_MOVE, UV_OPT_ROTATE, UV_OPT_SCALE, UV_OPT_SELECT, KEY_TANGENT,
+                             UV_OPT_MOVE, UV_OPT_ROTATE, UV_OPT_SCALE, UV_OPT_SELECT, UV_BRUSH, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
 # The kit's own menus. MENUS is what opens: user_menus.apply (Marking Menu Editor) puts rebuilt copies of the
 # menus the user changed and the user's own menus into it; these factory objects are never changed.

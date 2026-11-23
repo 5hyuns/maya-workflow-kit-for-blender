@@ -4608,6 +4608,18 @@
    "Y Axis": "Y Axis",
    "Z Axis": "Z Axis"
   },
+  "Marking menus/UV Brush": {
+   "Cut UV Tool": "Cut UV Tool",
+   "Falloff Type": "Falloff Type",
+   "Grab UV Tool": "Grab UV Tool",
+   "Invert Pin": "Invert Pin",
+   "Last Tool": "Last Tool",
+   "Pin UV Tool": "Pin UV Tool",
+   "Surface": "Surface",
+   "Surface/Volume": "Surface/Volume",
+   "UV Brush": "UV Brush",
+   "Volume": "Volume"
+  },
   "Marking menus/Keyframe / Tangents": {
    "Add Inbetween": "Add Inbetween",
    "Clamped": "Clamped",
@@ -7710,6 +7722,37 @@
    "Split": "Split",
    "UV set": "UV set"
   },
+  "Labels/operators/uv_brush": {
+   "Brush radius in UV space (b + drag left / right)": "Brush radius in UV space (b + drag left / right)",
+   "Columns": "Columns",
+   "Ctrl: Pin unpins, Cut sews, Sew cuts": "Ctrl: Pin unpins, Cut sews, Sew cuts",
+   "Edge Select Sensitivity": "Edge Select Sensitivity",
+   "Effect type": "Effect type",
+   "Fixed": "Fixed",
+   "How far the UVs move each dab (m + drag up / down)": "How far the UVs move each dab (m + drag up / down)",
+   "How near the stroke must pass an edge to cut it, as a part of the edge's length": "How near the stroke must pass an edge to cut it, as a part of the edge's length",
+   "How strongly the UVs follow the stroke (m + drag up / down)": "How strongly the UVs follow the stroke (m + drag up / down)",
+   "Invert": "Invert",
+   "Invert Pin": "Invert Pin",
+   "Last Tool": "Last Tool",
+   "Lattice points across the selected UVs": "Lattice points across the selected UVs",
+   "Lattice points up the selected UVs": "Lattice points up the selected UVs",
+   "Mode": "Mode",
+   "Optimize: keeping the surface area (1) against keeping only the angles (0)": "Optimize: keeping the surface area (1) against keeping only the angles (0)",
+   "Pin strength (m + drag up / down)": "Pin strength (m + drag up / down)",
+   "Pressure": "Pressure",
+   "Rows": "Rows",
+   "Sew brush radius in UV space (b + drag left / right)": "Sew brush radius in UV space (b + drag left / right)",
+   "Show brush ring during stroke": "Show brush ring during stroke",
+   "Size": "Size",
+   "Smudge": "Smudge",
+   "Smudge effect: how strongly the UVs follow the stroke": "Smudge effect: how strongly the UVs follow the stroke",
+   "Smudge size": "Smudge size",
+   "Strength": "Strength",
+   "Surface Angle": "Surface Angle",
+   "UV Brush Hover": "UV Brush Hover",
+   "UV Brush Stroke": "UV Brush Stroke"
+  },
   "Labels/operators/uv_checker": {
    "Assign Checker Shader": "Assign Checker Shader",
    "Checker Density": "Checker Density",
@@ -7719,6 +7762,10 @@
   "Labels/operators/uv_components": {
    "Component": "Component",
    "UV Component": "UV Component"
+  },
+  "Labels/operators/uv_lattice": {
+   "Lattice UV Drag": "Lattice UV Drag",
+   "UV Lattice Hover": "UV Lattice Hover"
   },
   "Labels/operators/uv_loop_pick": {
    "Add": "Add",
@@ -9913,6 +9960,12 @@
    "Replaces the saved workspace of this name": "Replaces the saved workspace of this name",
    "Save Current Workspace As": "Save Current Workspace As",
    "Saved Workspace": "Saved Workspace"
+  },
+  "Labels/ui/uv_brush_tools": {
+   "Drag the points of the lattice around the selected UVs to bend them (Maya Lattice UV Tool). Columns / Rows set the lattice": "Drag the points of the lattice around the selected UVs to bend them (Maya Lattice UV Tool). Columns / Rows set the lattice",
+   "Invert Pin": "Invert Pin",
+   "Lattice": "Lattice",
+   "Unpin All": "Unpin All"
   },
   "Labels/ui/uv_display": {
    "Action": "Action",
@@ -12561,6 +12614,12 @@
    "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)": "Rotate the UVs of the selected face one vertex (Maya Modify > Cycle)",
    "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)": "Split the selected UVs so each face around them gets its own (Maya Cut/Sew > Split)"
   },
+  "Tooltips/operators/uv_brush": {
+   "Drag to apply the UV brush under the circle (Maya UV Editor brush tools)": "Drag to apply the UV brush under the circle (Maya UV Editor brush tools)",
+   "Go back to the UV brush tool used before this one (Maya's Last Tool in the brush marking menu)": "Go back to the UV brush tool used before this one (Maya's Last Tool in the brush marking menu)",
+   "Pin the unpinned UVs and unpin the pinned ones (Maya Invert Pin)": "Pin the unpinned UVs and unpin the pinned ones (Maya Invert Pin)",
+   "The brush circle follows the mouse (UV Editor brush tools)": "The brush circle follows the mouse (UV Editor brush tools)"
+  },
   "Tooltips/operators/uv_checker": {
    "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)": "Give the selected objects (or faces) a UV checker material (Maya UV > Assign Checker Shader)",
    "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)": "Make the UV checker finer or coarser (Maya UV Editor Increase / Decrease Checker Density)",
@@ -12568,6 +12627,10 @@
   },
   "Tooltips/operators/uv_components": {
    "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only": "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only"
+  },
+  "Tooltips/operators/uv_lattice": {
+   "Drag a lattice point to bend the UVs inside the lattice (Maya Lattice UV Tool)": "Drag a lattice point to bend the UVs inside the lattice (Maya Lattice UV Tool)",
+   "Show the lattice around the UVs and the point under the mouse (Lattice UV Tool)": "Show the lattice around the UVs and the point under the mouse (Lattice UV Tool)"
   },
   "Tooltips/operators/uv_loop_pick": {
    "UV Editor double-click: a UV edge selects its UV edge loop (Ctrl: its edge ring), a UV or a UV face its\nUV shell; Shift adds to the selection": "UV Editor double-click: a UV edge selects its UV edge loop (Ctrl: its edge ring), a UV or a UV face its\nUV shell; Shift adds to the selection"

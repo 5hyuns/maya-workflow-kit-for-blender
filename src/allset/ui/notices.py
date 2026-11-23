@@ -762,9 +762,6 @@ CATEGORIES.update({
     "UV Editor/Select": (
         "Select menu", "Blender's UV Editor shows one image, so there is no per-image face filter: Select Linked, "
         "Overlapping and the face filters (Connected / Contained Faces) are there."),
-    "UV Editor/Tools": (
-        "UV tools", "Blender's UV tools are Select, Move / Rotate / Scale, Rip and the Grab / Relax / Pinch sculpt "
-        "brushes."),
     "UV Editor/View": (
         "Overlays", "Blender's UV Editor has no such display option: see its Overlays popover and View menu."),
     "UV Editor/View/Isolate Select": (
@@ -1302,12 +1299,9 @@ MARKING.update({
         "Sidebar UV Vertex", "Blender has no pixel ruler: the sidebar (N) Image tab shows the selected UVs' position, "
         "so two readings give the distance."),
     **{f"{m}/Tools/Symmetrize Tool": CATEGORIES["UV Editor/Tools/Symmetrize"] for m in _UV_MENUS},
-    **{f"{m}/Tools/Lattice Tool": (
-        "Proportional Editing", "Blender's UV Editor has no lattice tool: move UVs with proportional editing (O) for "
-        "a smooth falloff.") for m in _UV_MENUS},
-    **{f"{m}/Tools/Smear Tool": (
-        "Grab brush", "Blender's UV sculpt brushes are Grab, Relax and Pinch: Grab drags the UVs under the brush.")
-       for m in _UV_MENUS},
+    **{f"UV_BRUSH/Falloff Type/{label}": (
+        "UV distance", "The kit's UV brushes fade with the distance in the UV Editor; there is no surface or volume "
+        "falloff to pick.") for label in ("Surface/Volume", "Surface", "Volume")},
     **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
     **{f"{m}/{label}": _UV_CONSTRAINTS for m in (*(f"{n}/Pinning" for n in _UV_MENUS), "UV_CONVERT")
        for label in ("Selection Constraints", "Transform Constraints")},

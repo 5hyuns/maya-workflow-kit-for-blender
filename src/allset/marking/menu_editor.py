@@ -52,6 +52,7 @@ TRIGGERS = {
     "UV_OPT_ROTATE": "Ctrl+Shift+RMB in the UV Editor (Rotate Tool)",
     "UV_OPT_SCALE": "Ctrl+Shift+RMB in the UV Editor (Scale Tool)",
     "UV_OPT_SELECT": "Ctrl+Shift+RMB in the UV Editor (select tools)",
+    "UV_BRUSH": "RMB in the UV Editor (brush tools)",
     "KEY_TANGENT": "Shift+S + LMB",
     "SELECT_COMPONENT": "Shift+Q + LMB", "SELECT_POLYGON": "Alt+Q + LMB",
 }

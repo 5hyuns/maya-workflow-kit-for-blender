@@ -236,6 +236,10 @@ from . import uv_transform  # noqa: E402  UV Toolkit Pivot / Move / Rotate / Sca
 classes += uv_transform.classes
 from . import uv_optimize  # noqa: E402  UV Editor > Modify > Optimize (#498)
 classes += uv_optimize.classes
+from . import uv_brush  # noqa: E402  UV Editor > Tools > Unfold / Optimize / Cut / Sew / Pin / Smear / Smudge brushes (#500)
+classes += uv_brush.classes
+from . import uv_lattice  # noqa: E402  UV Editor > Tools > Lattice (#500)
+classes += uv_lattice.classes
 
 from . import type_manip  # noqa: E402  Type Manipulator: per-character move / rotate / scale (#258)
 classes += type_manip.classes
@@ -319,6 +323,8 @@ def register():
     autosave.register()
     preselect.register_handlers()
     cut_sew.register_handlers()
+    uv_brush.register_extra()
+    uv_lattice.register_extra()
     multi_cut.register_handlers()
     connect_tool.register_handlers()     # the Connect Tool's HUD line
     poly_draw.register_handlers()
@@ -423,6 +429,8 @@ def unregister():
     poly_draw.unregister_handlers()
     multi_cut.unregister_handlers()
     cut_sew.unregister_handlers()
+    uv_lattice.unregister_extra()
+    uv_brush.unregister_extra()
     project.unregister_handlers()
     pivot_follow.unregister_handlers()
     pivot.unregister_handler()

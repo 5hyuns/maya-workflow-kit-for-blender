@@ -285,6 +285,9 @@ def resolve(trigger, context, picked=None):
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":
+            from ..operators import uv_brush
+            if uv_brush.active_mode(context) is not None:       # a UV brush tool: Maya's brush menu
+                return ("pie", idname("UV_BRUSH"))
             return ("pie", idname("UV_EDITOR_RMB"))
         if trigger == "SHIFT_RMB":
             from ..ui import uv_toolkit
