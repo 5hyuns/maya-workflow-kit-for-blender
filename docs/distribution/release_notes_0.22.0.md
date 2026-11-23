@@ -10,6 +10,12 @@ Hello everyone. This version draws a clear line: menus, hotkeys, marking menus a
 Maya's, while shaders, lights and render start values are Blender's own. Please read the first two sections before
 you update, because new materials and lights behave differently from 0.21.0.
 
+> **What changes for you after updating**
+> - **New materials are Blender's Principled BSDF** with Blender's values (Assign New Material, Hypershade, shelf).
+> - **No lambert1:** new objects have no material until you assign one.
+> - **New lights use Blender's values**, and the Intensity row shows Blender's Power, so the number looks different.
+> - **Scenes saved with an earlier version open unchanged:** nothing in them is converted.
+
 Install it over 0.21.0 (or 0.8.0 – 0.20.1) as usual; shelves, hotkeys, scenes and the kit's settings are kept.
 (Removing the kit before installing deletes them: use Export Settings first.)
 Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension still installs on Blender 5.0 and
