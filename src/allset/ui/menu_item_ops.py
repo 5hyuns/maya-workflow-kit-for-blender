@@ -465,6 +465,9 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
             tool = self.tool
             if target_space == 'VIEW_3D' and context.mode != 'OBJECT':
                 tool = COMPONENT_TWIN.get(tool, tool)
+            if target_space == 'VIEW_3D':
+                from ..operators import joint_selection
+                joint_selection.tool_picked(context, tool, again=True)    # ends Move Skinned Joints
             result = bpy.ops.wm.tool_set_by_id(name=tool, space_type=target_space)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip())

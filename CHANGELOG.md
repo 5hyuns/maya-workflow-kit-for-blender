@@ -93,6 +93,8 @@ earlier version open unchanged: nothing in them is converted.
 - Marking menus: a list that would leave the window beside the ring moves closer to the ring instead of over it.
 - Blender 5.3: closed outlines draw every side (#528): marking menu option boxes, the marquee and lattice frames, the
   Graph Editor scale box, the Outliner drop frame and the UV brush circle missed their last side.
+- Rigging: picking another tool (Q / W / E / R, the toolbar, the Tool Box or a menu entry) ends Skin > Move Skinned
+  Joints like Maya, also W while the Move tool is active; the joints go back to Pose with that tool (#415).
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse

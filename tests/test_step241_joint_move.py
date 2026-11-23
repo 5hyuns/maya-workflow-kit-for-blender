@@ -164,6 +164,44 @@ def test_f8_ends_move_skinned_joints():
     assert ob.mode == 'POSE' and not ob.get(js.MOVE_SKINNED) and js.joint_mode(ob) == 'POSE'
 
 
+def test_another_tool_ends_move_skinned_joints():
+    """#415: a tool picked while Move Skinned Joints is on ends it (Pose), like picking another tool in Maya; a tool
+    the kit sets itself and a Blender tool only Edit Mode has keep it on; in Object Mode (after a click away) a
+    picked tool just turns it off."""
+    from bl_ui import space_toolsystem_common as stc
+    ob, mesh, k = _scene(skinned=True)
+    js.select(bpy.context, ob, "joint2")
+
+    def pick(idname):
+        try:
+            stc.activate_by_id(bpy.context, 'VIEW_3D', idname)
+        except TypeError:       # headless: a tool whose keymap is built by a function can't be set up
+            pass
+
+    bpy.ops.allset.move_skinned_joints()
+    assert ob.mode == 'EDIT' and ob.get(js.MOVE_SKINNED)
+    current = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_ARMATURE', create=False)
+    if current is not None:
+        pick(current.idname)
+        assert ob.mode == 'EDIT' and ob.get(js.MOVE_SKINNED), "the mode's tool set again (a mode change) keeps it on"
+        assert js.tool_picked(bpy.context, current.idname, again=True) and ob.mode == 'POSE'
+        bpy.ops.allset.move_skinned_joints()
+    with js.kit_tool_set():
+        pick("builtin.scale")
+    assert ob.mode == 'EDIT' and ob.get(js.MOVE_SKINNED), "a tool the kit sets keeps it on"
+    pick("builtin.roll")
+    assert ob.mode == 'EDIT' and ob.get(js.MOVE_SKINNED), "an Edit-Mode-only tool keeps it on"
+    pick("builtin.rotate")
+    assert ob.mode == 'POSE' and not ob.get(js.MOVE_SKINNED) and js.joint_mode(ob) == 'POSE'
+    assert cb.bone_selected(ob.pose.bones["joint2"])
+    bpy.ops.allset.move_skinned_joints()
+    assert ob.mode == 'EDIT'
+    bpy.ops.object.mode_set(mode='OBJECT')
+    assert ob.get(js.MOVE_SKINNED)
+    pick("builtin.scale")
+    assert ob.mode == 'OBJECT' and not ob.get(js.MOVE_SKINNED)
+
+
 def test_menu_item_is_mapped():
     menu_map = import_module(kit.MODULE + ".ui.menu_map")
     assert menu_map.MAP["Skin/Move Skinned Joints"] == "allset.move_skinned_joints"

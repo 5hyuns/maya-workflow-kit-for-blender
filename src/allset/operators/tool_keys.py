@@ -191,7 +191,8 @@ def _carry():
     area, region = main_view3d(window.screen) if window is not None else (None, None)
     try:
         if area is not None:
-            with context.temp_override(window=window, area=area, region=region):
+            from . import joint_selection
+            with context.temp_override(window=window, area=area, region=region), joint_selection.kit_tool_set():
                 bpy.ops.wm.tool_set_by_id(name=tool, space_type='VIEW_3D')
     except (RuntimeError, ReferenceError, TypeError):   # tool unavailable in this mode / no UI
         pass

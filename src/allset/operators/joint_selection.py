@@ -177,6 +177,64 @@ def moving_skinned(context):
     return context.mode == 'EDIT_ARMATURE' and arm is not None and bool(arm.get(MOVE_SKINNED))
 
 
+_kit_tool_set = [0]     # > 0 while the kit itself sets a tool (the one-tool carry after a mode change)
+
+
+class kit_tool_set:
+    """``with kit_tool_set():`` a tool the kit sets on its own, not a tool the user picked (keeps Move Skinned Joints)."""
+
+    def __enter__(self):
+        _kit_tool_set[0] += 1
+
+    def __exit__(self, *_exc):
+        _kit_tool_set[0] -= 1
+
+
+def move_skinned_on():
+    return any(ob.type == 'ARMATURE' and ob.get(MOVE_SKINNED) for ob in bpy.data.objects)
+
+
+def tool_picked(context, idname, again=False):
+    """Tool ``idname`` picked in a 3D View while Skin > Move Skinned Joints is on: it ends, like picking another tool
+    in Maya. ``again``: a pick of the tool that is already active ends it too (Q / W / E / R, a toolbar button, a
+    menu entry); without it such a call is Blender setting the mode's tool again on a mode change. A Blender tool only
+    Edit Mode has (Roll, Extrude ...) keeps it on: it works on the joints being moved."""
+    if _kit_tool_set[0] or not move_skinned_on():
+        return False
+    tools = context.workspace.tools
+    current = tools.from_space_view3d_mode(context.mode, create=False)
+    if not again and current is not None and current.idname == idname:
+        return False
+    if context.mode == 'EDIT_ARMATURE':
+        from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
+        cls = ToolSelectPanelHelper._tool_class_from_space_type('VIEW_3D')
+        if not any(item is not None and item.idname == idname
+                   for item in cls._tools_flatten(cls.tools_from_context(context, mode='POSE'))):
+            return False
+    if not end_move_skinned(context):
+        return False
+    # the picked tool goes on in the mode it ended in: the one-tool carry after the mode change must not replace it
+    from . import tool_keys
+    tool_keys._mode[0] = context.mode
+    tool_keys._seen[context.mode] = idname
+    return True
+
+
+def end_move_skinned(context):
+    """Ends Skin > Move Skinned Joints: joints being edited go back to Pose (like running it again), a skeleton a
+    click away left in Object Mode just loses it. True when it ended."""
+    ended = False
+    active = context.view_layer.objects.active
+    for ob in [o for o in bpy.data.objects if o.type == 'ARMATURE' and o.get(MOVE_SKINNED)]:
+        ended = True
+        if ob == active and ob.mode == 'EDIT':
+            from .skin_bind import move_skinned_joints
+            move_skinned_joints(context, ob, False)
+        else:
+            ob.pop(MOVE_SKINNED, None)
+    return ended
+
+
 def move_tool_active(context):
     try:
         tools = context.workspace.tools

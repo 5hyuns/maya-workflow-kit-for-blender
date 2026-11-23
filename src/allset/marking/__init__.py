@@ -541,6 +541,9 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
         # Maya: a tool key ends the Channel Box middle-drag on the picked channels (they stay highlighted)
         from ..ui import channel_box
         channel_box.disarm_slider()
+        # Maya: a tool key ends Skin > Move Skinned Joints, also the Move tool's key while it is active
+        from ..operators import joint_selection
+        joint_selection.tool_picked(bpy.context, self.tool, again=True)
         try:
             bpy.ops.wm.tool_set_by_id(name=self.tool, space_type='VIEW_3D')
         except RuntimeError:  # e.g. the tool doesn't exist in this mode

@@ -184,6 +184,16 @@ def _make_tools_from_context(previous, on):
     return classmethod(tools_from_context)
 
 
+def _end_move_skinned(context, idname):
+    """A tool picked in a 3D View (the toolbar, the Tool Box, a key or menu entry) ends Skin > Move Skinned Joints,
+    like picking another tool in Maya; a toolbar click on the active tool ends it too."""
+    from ..operators import joint_selection
+    try:
+        joint_selection.tool_picked(context, idname, again=getattr(context, TOOLBAR_MEMBER, None) is not None)
+    except (AttributeError, RuntimeError, ReferenceError, TypeError):
+        pass
+
+
 def _make_activate_by_id(original, on=lambda: True):
     def activate_by_id(context, space_type, idname, *, as_fallback=False):
         if not on():
@@ -192,6 +202,8 @@ def _make_activate_by_id(original, on=lambda: True):
                 and idname in MAYA_TOOLS and not as_fallback and not KEEP_PAINT[0]):
             from ..operators.skin import leave_weight_paint
             leave_weight_paint(context)
+        if space_type == 'VIEW_3D' and not as_fallback:
+            _end_move_skinned(context, idname)
         done = original(context, space_type, idname, as_fallback=as_fallback)
         if done and space_type == 'VIEW_3D' and note_tool_click(context, idname):
             _show_tool_settings_later(getattr(context, "window", None))
