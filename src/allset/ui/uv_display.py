@@ -136,6 +136,9 @@ def segments_of(ob, synced):
 def selected_segments(ob, synced):
     """UV line points (2N x 2) of the border sides whose edge is selected, in the order of ``segments_of``: drawn
     again in the selection colour, so a selected border edge shows like any other selected edge (#361).
+    With UV Sync Selection on and the mesh selection shown (a pick in the 3D View), face select mode shows a side
+    selected when its own face is selected, like Maya and Blender's own UV lines: the other shells' sides on the
+    same mesh edges stay unselected (#527); vertex / edge mode show every side of a selected edge.
     With UV Sync Selection on a selection change sends a depsgraph update, so the answer is cached with the border
     lines; with it off a UV selection change sends none, so the selection is read on every call."""
     pts = segments_of(ob, synced)
@@ -143,7 +146,8 @@ def selected_segments(ob, synced):
         return pts
     me = ob.data
     key = (ob.as_pointer(), synced)
-    sig = (me.total_vert_sel, me.total_edge_sel, me.total_face_sel)
+    by_face = tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, False, True)
+    sig = (me.total_vert_sel, me.total_edge_sel, me.total_face_sel, by_face)
     if synced:
         hit = _cache.get(("selected", key))
         if hit is not None and hit[0] == sig:
@@ -162,6 +166,8 @@ def selected_segments(ob, synced):
             _cache[("edges", key)] = [l.edge for l in loops]
         if on_loops:
             sel = np.fromiter(map(compat.uv_edge_selected_reader(), loops), bool, len(loops))
+        elif by_face:
+            sel = np.fromiter((l.face.select for l in loops), bool, len(loops))
         else:
             edges = _cache[("edges", key)]
             sel = np.fromiter(map(attrgetter("select"), edges), bool, len(edges))
