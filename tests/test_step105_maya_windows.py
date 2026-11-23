@@ -85,15 +85,14 @@ def test_browser_tabs_and_edit_commands():
     rev = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
     wm.allset_hs_reverse = False
     assert rev == sorted(rev, key=str.lower, reverse=True)
-    # Delete Unused Nodes keeps lambert1 (Maya) and used materials
-    lam = material.default_material()
+    # Delete Unused Nodes keeps the used materials
     me = bpy.data.meshes.new("m")
     ob = bpy.data.objects.new("o", me)
     bpy.context.scene.collection.objects.link(ob)
     me.materials.append(a)
     assert bpy.ops.allset.hs_edit(action='DELETE_UNUSED') == {'FINISHED'}
     left = {m.name for m in bpy.data.materials}
-    assert lam.name in left and "Material" in left and "Material.001" not in left, left
+    assert "Material" in left and "Material.001" not in left, left
 
 
 def test_script_editor_runs_python_and_refuses_mel():

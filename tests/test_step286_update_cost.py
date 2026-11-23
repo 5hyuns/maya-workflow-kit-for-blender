@@ -1,7 +1,7 @@
 """Issue #191: with many objects a move, a mesh edit or a selection change no longer makes the kit walk the
 whole scene, and everything those walks keep up to date still follows the edits that matter: Outliner rows (rename,
 parent, unparent, add, delete, edit-mode bones, undo), DAG visibility of children, symmetry on entering edit mode,
-lambert1 on new objects, Outliner order and joint labels."""
+Outliner order and joint labels."""
 
 import time
 from importlib import import_module
@@ -181,15 +181,12 @@ def test_symmetry_on_entering_edit_mode():
     sym.on = False
 
 
-def test_new_object_gets_lambert1():
-    if not material._maya_scene():
-        return                               # the default material belongs to kit (Maya) scenes only
+def test_new_object_gets_no_material():
     _scene()
     bpy.ops.mesh.primitive_cube_add()
     bpy.context.view_layer.update()
     ob = bpy.context.active_object
-    assert ob.material_slots and ob.material_slots[0].material is material.default_material(), \
-        [s.material for s in ob.material_slots]
+    assert not any(s.material for s in ob.material_slots), [s.material for s in ob.material_slots]
 
 
 def test_filter_rules():

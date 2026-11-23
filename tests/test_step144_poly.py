@@ -82,7 +82,7 @@ def test_create_polygon_object_is_polysurface_n():
     assert (len(ob.data.vertices), len(ob.data.polygons)) == (4, 1)
     assert tuple(ob.location) == (0, 0, 0), "vertices in world space, pivot at the origin"
     assert min(v.co.x for v in ob.data.vertices) == 3
-    assert ob.data.materials[0] is not None and ob.data.materials[0].get("allset_default"), "lambert1"
+    assert not any(ob.data.materials), "no material, like every new shape"
     assert bpy.context.view_layer.objects.active is ob and ob.select_get()
     s.cp_divisions = 3
     ob2 = pd.create_polygon_object(bpy.context, pts)

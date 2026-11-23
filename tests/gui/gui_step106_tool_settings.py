@@ -75,6 +75,7 @@ def s_scene():
     bpy.ops.allset.keymap_activate()
     in_v3d(bpy.ops.allset.create, kind='CUBE')
     ob = bpy.context.active_object
+    ob.data.materials.append(mod(".operators.material").new_material())
     C["ob"] = ob.name
     in_v3d(bpy.ops.object.mode_set, mode='EDIT')
     import bmesh
@@ -215,8 +216,9 @@ def s_ae_shot():
     ob = bpy.data.objects[C["ob"]]
     ae = mod(".ui.attribute_editor")
     tabs = [t[1] for t in ae.tabs(ob)]
-    check(f"AE tabs {tabs}: transform, shape, initialShadingGroup, lambert1",
-          tabs[:2] == [ob.name, ob.data.name] and "initialShadingGroup" in tabs and "lambert1" in tabs)
+    mat = ob.active_material.name
+    check(f"AE tabs {tabs}: transform, shape, {mat}SG, {mat}",
+          tabs[:2] == [ob.name, ob.data.name] and f"{mat}SG" in tabs and mat in tabs)
     in_v3d(bpy.ops.object.mode_set, mode='EDIT')
     redraw()
 

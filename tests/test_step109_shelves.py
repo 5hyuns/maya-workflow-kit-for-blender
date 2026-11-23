@@ -177,7 +177,7 @@ def test_loft_two_circles():
         assert abs(min(p.z for p in zs)) < 1e-4 and abs(max(p.z for p in zs) - 5.0) < 1e-4
     finally:
         ev.to_mesh_clear()
-    assert ob.active_material is not None          # lambert1, like a Maya shape
+    assert ob.active_material is None              # no material, like every new shape
 
 
 def test_extrude_sweeps_profile_along_path():

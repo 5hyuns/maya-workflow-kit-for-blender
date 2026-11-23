@@ -1,6 +1,6 @@
 """Hypershade Edit > Delete Unused Nodes (#251): a Shader Editor pinned to an unassigned material, then Delete Unused
 Nodes / Delete All Materials -> the editors keep drawing (no crash), the pinned editors let go of the deleted trees,
-assigned materials and lambert1 stay, a material held only by a deleted object's leftover data is unused too."""
+assigned materials stay, a material held only by a deleted object's leftover data is unused too."""
 
 import os
 import sys
@@ -41,8 +41,6 @@ def s_setup():
 
 @step
 def s_scene():
-    m = mod(".operators.material")
-    m.default_material()
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     bpy.ops.mesh.primitive_cube_add()
@@ -88,7 +86,6 @@ def s_after_unused():
     check("the unassigned material is gone", "anisotropic1" not in names)
     check("a material only a deleted object's data held is gone", "leftover1" not in names)
     check("the assigned material stays", "usedBlinn" in names)
-    check("lambert1 stays", "lambert1" in names)
     space = node_area().spaces.active
     check("the pinned editor no longer shows a deleted tree",
           space.node_tree is None or space.node_tree.users >= 0 and space.node_tree.name not in ("anisotropic1",))
@@ -110,7 +107,7 @@ def s_delete_all():
 @step
 def s_after_all():
     names = {m.name for m in bpy.data.materials if not m.is_grease_pencil}
-    check("Delete All Materials leaves lambert1 only", names == {"lambert1"})
+    check(f"Delete All Materials leaves none ({names})", not names)
     redraw()
 
 

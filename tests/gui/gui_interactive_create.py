@@ -182,7 +182,7 @@ def s_cube_done():
     check(f"the cube sits on the grid (z {lo:.4f} .. {hi:.4f})", abs(lo) < 1e-4 and hi > 0)
     check(f"Exit On Completion switched to the Select tool ({tool()})", not running() and tool() == "builtin.select_box")
     check("the new cube is selected and active", ob.select_get() and bpy.context.view_layer.objects.active == ob)
-    check("lambert1", ob.active_material is not None)
+    check("no material, like every new shape", ob.active_material is None)
     mark()
 
 

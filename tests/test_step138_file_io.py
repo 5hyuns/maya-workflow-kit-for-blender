@@ -195,9 +195,8 @@ def test_hierarchy_round_trip():
 
 def test_maya_names():
     assert file_io.shape_name("pCube1") == "pCubeShape1" and file_io.shape_name("box") == "boxShape"
-    used = {"pCube1", "pCube2", "lambert1"}
+    used = {"pCube1", "pCube2"}
     assert file_io.maya_free_name("pCube1.001", used) == "pCube3"
-    assert file_io.maya_free_name("lambert1.001", used) == "lambert2"
     assert file_io.maya_free_name("pSphere1.001", used) == "pSphere1"
     assert file_io.maya_free_name("Looks", {"Looks"}) == "Looks1"
 

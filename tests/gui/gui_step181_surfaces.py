@@ -116,7 +116,7 @@ def s_loft_check():
             worst = max(worst, sum((a - b) ** 2 for a, b in zip(p, q)) ** 0.5)
     check(f"the surface passes through the three curves (max {worst:.1e})", worst < 1e-4 * max(1.0, k() * 100))
     check("the loft is the selected lead", bpy.context.view_layer.objects.active == ob and ob.select_get())
-    check("lambert1 assigned", ob.active_material is not None)
+    check("no material, like every new shape", ob.active_material is None)
     frame()
 
 

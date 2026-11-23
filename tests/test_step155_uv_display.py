@@ -111,7 +111,7 @@ def test_display_ops():
         mat.use_nodes = True
         node = mat.node_tree.nodes.new('ShaderNodeTexImage')
         node.image = img
-        ob.active_material = mat     # (the kit gave the new mesh lambert1 in slot 0)
+        ob.data.materials.append(mat)
         bpy.ops.allset.uv_display(mode='IMAGE')
         assert sp.image == img, "6 shows the material's texture"
         bpy.ops.allset.uv_display(mode='IMAGE')

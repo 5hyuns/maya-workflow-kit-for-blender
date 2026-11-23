@@ -230,7 +230,7 @@ def test_ae_rows_wrap_to_region_width():
         preferences = bpy.context.preferences
         area = None
         space_data = None
-    labels = ["pCube1", "pCubeShape1", "initialShadingGroup", "lambert1"]
+    labels = ["pCube1", "pCubeShape1", "MaterialSG", "Material"]
     rows = ae.wrap_rows(Ctx, labels)
     assert len(rows) >= 2 and sorted(i for r in rows for i in r) == [0, 1, 2, 3]
     Ctx.region.width = 2000

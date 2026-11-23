@@ -96,9 +96,10 @@ def _used_materials():
 
 
 def _shading_groups():
-    """Maya shading groups: initialShadingGroup (lambert1) and ``<material>SG`` of every assigned material."""
+    """Maya shading groups: ``<material>SG`` of every assigned material (initialShadingGroup, the shapes without a
+    material, is one of ``DEFAULT_SETS``)."""
     from ..operators import material
-    return {material.shading_group_name(m): m for m in _used_materials() if not material.is_default(m)}
+    return {material.shading_group_name(m): m for m in _used_materials()}
 
 
 def _extrusion_nodes(ob):
@@ -118,13 +119,8 @@ def _extrusion_nodes(ob):
 
 def _node(name):
     """The non-DAG Maya node called ``name``, or None."""
-    from ..operators import material, prim_history, sets
+    from ..operators import prim_history, sets
     name = str(name)
-    if name in (material.DEFAULT_NAME, material.DEFAULT_GROUP):
-        mat = material.default_material()      # Maya's scene always has lambert1 / initialShadingGroup
-        if name == material.DEFAULT_GROUP:
-            return Node('SG', name, "shadingEngine", mat)
-        return Node('MATERIAL', mat.name, "lambert", mat)
     mat = bpy.data.materials.get(name)
     if mat is not None and not mat.is_grease_pencil:
         return Node('MATERIAL', name, _material_type(mat), mat)
@@ -179,10 +175,25 @@ def _default_camera_type(name):
     return None
 
 
+def split_plug(text):
+    """(node, attribute) of ``node.attr`` (attribute "" without one). Blender names materials Material.001, so the
+    longest head that names a material is the node; any other name ends at the first dot."""
+    base = str(text).rsplit("|", 1)[-1]
+    parts = base.split(".")
+    for i in range(len(parts) - 1, 0, -1):
+        head = ".".join(parts[:i])
+        if bpy.data.materials.get(head) is not None:
+            return head, ".".join(parts[i:])
+    if len(parts) > 1 and bpy.data.materials.get(base) is not None:
+        return base, ""
+    node, _dot, attr = base.partition(".")
+    return node, attr
+
+
 def _type_of(name):
     """Maya node type of a node / plug / component name; RuntimeError when nothing has that name."""
     text = str(name)
-    node = text.rsplit("|", 1)[-1].split(".", 1)[0]
+    node = split_plug(text)[0]
     component = "[" in text
     hook = getattr(_rig(), "node_type", None)     # cmds_rig may name nodes it makes
     if hook is not None and not component:

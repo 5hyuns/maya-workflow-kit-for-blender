@@ -24,7 +24,7 @@ def _scene():
     for mat in list(bpy.data.materials):
         bpy.data.materials.remove(mat)
     bpy.ops.mesh.primitive_cube_add()
-    bpy.context.view_layer.update()   # the new cube joins lambert1 (Maya's initialShadingGroup)
+    bpy.context.view_layer.update()   # the new cube has no material
     return bpy.context.active_object
 
 
@@ -91,7 +91,7 @@ def test_faces_only_in_face_mode():
     _edit_faces(ob, [1, 3])
     assert bpy.ops.allset.shelf_material() == {'FINISHED'}
     idx = _indices(ob)
-    assert [s.material.name if s.material else None for s in ob.material_slots] == ["lambert1", "Material"]
+    assert [s.material.name if s.material else None for s in ob.material_slots] == [None, "Material"]
     assert [i for i, v in enumerate(idx) if v == 1] == [1, 3], idx
     # Another material on another face adds a slot; the same material reuses its slot.
     _edit_faces(ob, [0])
@@ -150,7 +150,6 @@ def test_material_attributes_opens_ae_tab():
     assert wm.allset_dock == 'ATTRIBUTE_EDITOR' and wm.allset_ae_tab == "MAT:1"
     wm.allset_dock = 'CHANNEL_BOX'
     bare = _scene()
-    bare.data.materials.clear()   # (a new mesh joins lambert1)
     assert not bare.material_slots
     assert not bpy.ops.allset.material_attributes.poll()
 
@@ -182,15 +181,15 @@ def test_favorite_and_existing_menus():
     _scene()
     fav = _draw(material.ALLSET_MT_assign_favorite_material)
     assert [(i, t) for i, t, _p in fav.ops] == [("allset.shelf_material", "New Material")], fav.ops
-    # Maya's scene always has lambert1, so Assign Existing Material lists it
-    assert [t for _i, t, _p in _draw(material.ALLSET_MT_assign_existing_material).ops] == ["lambert1"]
+    # no default material: an empty scene lists none
+    lay = _draw(material.ALLSET_MT_assign_existing_material)
+    assert not lay.ops and lay.labels == ["No materials in the scene"], (lay.ops, lay.labels)
     bpy.data.materials.new("phong1")
     bpy.data.materials.new("Blinn2")
     gp = bpy.data.materials.new("stroke")
     bpy.data.materials.create_gpencil_data(gp)
     ex = _draw(material.ALLSET_MT_assign_existing_material_rmb)
     assert [(t, p.material, p.rmb) for _i, t, p in ex.ops] == [("Blinn2", "Blinn2", True),
-                                                               ("lambert1", "lambert1", True),
                                                                ("phong1", "phong1", True)], ex.ops
 
 

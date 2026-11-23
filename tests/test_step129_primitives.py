@@ -163,7 +163,8 @@ def test_inputs_rows_and_editing_subdivisions_caps_rebuilds():
     _fresh()
     ob = _make('CYLINDER')
     ob.location = (3.0, 0.0, 0.0)
-    mat = ob.data.materials[0]
+    mat = import_module(kit.MODULE + ".operators.material").new_material()
+    ob.data.materials.append(mat)             # a rebuild keeps the shape's material
     props = bpy.context.scene.allset_creation
     assert props.subdivisionsCaps_text == "1" and props.subdivisionsAxis_text == "20"
     assert props.radius_text == "1" and props.height_text == "2", (props.radius_text, props.height_text)
@@ -209,7 +210,7 @@ def test_nurbs_surface_and_group_rebuild():
     props.spans_text = "6"
     sp = sphere.data.splines[0]
     assert (sp.point_count_v, sp.point_count_u) == (9, 8), (sp.point_count_v, sp.point_count_u)
-    assert sphere.data.materials[0] is not None and sphere.name == "nurbsSphere1"
+    assert not any(sphere.data.materials) and sphere.name == "nurbsSphere1"
     square = _make('NURBS_SQUARE')
     part = square.children[0]
     bpy.context.view_layer.objects.active = part

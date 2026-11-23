@@ -76,7 +76,7 @@ def test_default_sweep_is_a_live_node():
     assert sweep.is_sweep(md) and sweep.get(md, "Curve") == curve
     # 8 sides, EP to EP 5 steps on a one-span curve = 6 rings; no caps
     assert _counts(ob) == (48, 40), _counts(ob)
-    assert ob.data.materials[0] is not None                           # lambert1 like every new shape
+    assert not any(ob.data.materials)                                 # no material, like every new shape
     # a second sweep numbers on
     ob2 = _sweep(_curve(name="curve2"))
     assert ob2.name == "sweep2" and ob2.modifiers[0].name == "sweepMeshCreator2"

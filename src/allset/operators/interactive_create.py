@@ -23,7 +23,7 @@ view instead of appearing at the origin, like Maya:
   primitive; off, the tool stays and the next drag draws another one. Q / W / E / R or another tool leave it (an
   unfinished primitive is dropped); Y comes back to it.
 
-The primitive is a regular kit primitive (Maya name, creation node in Channel Box INPUTS, lambert1), rebuilt while
+The primitive is a regular kit primitive (Maya name, creation node in Channel Box INPUTS), rebuilt while
 dragging; each finished primitive is one undo step.
 """
 
@@ -447,7 +447,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
 
     # --- the primitive
     def _new(self, context):
-        from . import create, material, prim_history
+        from . import create, prim_history
         node_type = prim_history.KIND_NODES[self.kind][0]
         self._axis_node = _has_axis(node_type)
         with context.temp_override(window=context.window, area=self._area, region=self._region):
@@ -475,7 +475,6 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             finally:
                 if live:
                     wm.allset_construction_history = history
-            material.give_default(ob)
         self._ob, self._history = ob, history
         self._vals = prim_history.attrs(prim_history.owner_of(ob))
         self._place()

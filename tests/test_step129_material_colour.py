@@ -44,9 +44,6 @@ def test_new_kit_material_shows_its_colour():
     mat = material.new_material()
     base = tuple(_principled(mat).inputs["Base Color"].default_value)
     assert _close(mat.diffuse_color, base), (tuple(mat.diffuse_color), base)
-    lam = material.default_material()
-    lbase = tuple(_principled(lam).inputs["Base Color"].default_value)
-    assert _close(lam.diffuse_color[:3], lbase[:3]), tuple(lam.diffuse_color)
 
 
 def test_colour_edit_reaches_viewport_colour():

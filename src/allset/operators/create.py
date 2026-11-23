@@ -145,10 +145,6 @@ def create(context, kind, maya_naming=True, overrides=None):
         vals = dict(overrides or {})
         uvs = bool(vals.pop("createUVs", True))
         ob = prim_history.create_object(context, kind, vals, maya_naming, create_uvs=uvs)
-        from . import material
-        for part in [ob, *ob.children]:   # nurbsCube: each patch joins lambert1
-            if part.type in {'MESH', 'SURFACE'}:
-                material.give_default(part)
         return ob
     mod, name = op.split(".")
     k = units.maya_unit(context.scene)
@@ -166,9 +162,6 @@ def create(context, kind, maya_naming=True, overrides=None):
         _first_joint(ob, maya_naming)
     if kind in ('CAMERA_AIM', 'CAMERA_AIM_UP'):
         _aim_rig(ob, kind == 'CAMERA_AIM_UP', k)
-    if maya_naming:
-        from . import material
-        material.give_default(ob)   # Maya: a new shape joins initialShadingGroup = lambert1
     return ob
 
 

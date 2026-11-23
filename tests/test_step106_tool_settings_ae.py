@@ -187,12 +187,13 @@ def test_modifier_tabs_have_maya_node_names():
     ob.modifiers.new("Bevel", 'BEVEL')
     ob.modifiers.new("Bevel.001", 'BEVEL')
     ob.modifiers.new("polySmoothFace", 'SUBSURF')
+    ob.data.materials.append(import_module(kit.MODULE + ".operators.material").new_material())
     t = ae.tabs(ob)
     assert t[0][0] == "T" and t[1][0] == "S"
     hist = [x for x in t if x[0].startswith("M:")]
     assert [(x[1], x[2]) for x in hist] == [("polyBevel1", "polyBevel3"), ("polyBevel2", "polyBevel3"),
                                             ("polySmoothFace", "polySmoothFace")], hist
-    # Maya order: transform, shape, history, shading group, material (initialShadingGroup | lambert1)
+    # Maya order: transform, shape, history, shading group, material (MaterialSG | Material)
     kinds = [x[0].split(":")[0] for x in t]
     assert kinds.index("M") < kinds.index("SG") < kinds.index("MAT"), kinds
     assert ae.nice_type("polyExtrudeFace") == "Poly Extrude Face"

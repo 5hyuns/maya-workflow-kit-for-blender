@@ -8,7 +8,7 @@ import bpy
 
 from . import cmds_shim as _shim
 from .cmds_shim import _Flags, _flatten
-from .cmds_nodes import FILE_NAME_PROP, TEXTURE_PROP, _all_names, _node, select_nodes, unique_node_name
+from .cmds_nodes import FILE_NAME_PROP, TEXTURE_PROP, _all_names, _node, select_nodes, split_plug, unique_node_name
 from .cmds_attributes import _COLOR_ATTRS
 
 # --- sets ------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,30 @@ def _set_members(found):
         mat = found.data
         return [_shim.shape_of(o) or o.name for o in bpy.context.scene.objects
                 if any(s.material is mat for s in getattr(o, "material_slots", ()))]
+    if found.name == _NO_MATERIAL:
+        return [_shim.shape_of(o) or o.name for o in _unshaded()]
     return []
+
+
+# initialShadingGroup: the shapes without a material (Blender has no default material)
+_NO_MATERIAL = "initialShadingGroup"
+
+
+def _unshaded():
+    from ..operators import material
+    return [o for o in bpy.context.scene.objects if o.type in material.SHADED_TYPES
+            and not any(s.material is not None for s in o.material_slots)]
+
+
+def _drop_materials(obs):
+    """``sets -e -forceElement initialShadingGroup``: the shapes lose their materials (whole shapes)."""
+    for ob in obs:
+        if ob.type in {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'} and ob.data is not None:
+            if ob.type == 'MESH':
+                ob.data.polygons.foreach_set("material_index", [0] * len(ob.data.polygons))
+            ob.data.materials.clear()
+            for slot in ob.material_slots:
+                slot.material = None
 
 
 def _set_node(name):
@@ -61,6 +84,9 @@ def sets(*args, **kwargs):
     for target, op in ((add, kit_sets.add), (remove, kit_sets.remove)):
         if target is not None:
             found = _set_node(target)
+            if found.name == _NO_MATERIAL and op is kit_sets.add:
+                _drop_materials([_shim._object(n) for n in names] if names else _shim._selection())
+                return found.name
             if found.kind != 'SET':
                 raise RuntimeError(f"sets: the kit can't edit the members of {target}")
             obs = [_shim._object(n) for n in names] if names else _shim._selection()
@@ -154,10 +180,9 @@ def connect_texture(src_plug, dst_plug):
     Maya colour input. Returns Maya's message, or None when the plugs aren't a texture -> material connection
     (for cmds_connections.connectAttr)."""
     from ..operators import material
-    try:
-        src_node, src_attr = str(src_plug).split(".", 1)
-        dst_node, dst_attr = str(dst_plug).split(".", 1)
-    except ValueError:
+    src_node, src_attr = split_plug(src_plug)
+    dst_node, dst_attr = split_plug(dst_plug)
+    if not src_attr or not dst_attr:
         return None
     src, dst = _node(src_node), _node(dst_node)
     if src is None or dst is None or src.kind != 'TEXTURE' or dst.kind != 'MATERIAL':
@@ -183,9 +208,8 @@ def shading_sources(plug):
     """Maya plugs feeding a material plug (``listConnections lambert2.color -s 1 -p 1``), or None when ``plug`` isn't
     a kit material's (for cmds_connections.listConnections)."""
     from ..operators import material
-    try:
-        node, attr = str(plug).split(".", 1)
-    except ValueError:
+    node, attr = split_plug(plug)
+    if not attr:
         return None
     found = _node(node)
     if found is None or found.kind != 'MATERIAL' or attr not in _COLOR_ATTRS:

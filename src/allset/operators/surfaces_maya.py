@@ -18,7 +18,7 @@ from mathutils import Vector
 
 from .. import compat, results, undo_steps
 from .. import update_summary
-from . import curves_maya, material, naming, units
+from . import curves_maya, naming, units
 from . import surfaces_math as sm
 from .modify_maya import selection_order
 
@@ -127,7 +127,6 @@ def new_surface(context, base, s, select=True):
     ob = bpy.data.objects.new(base, data)
     (context.collection or context.scene.collection).objects.link(ob)
     naming.apply_maya_name(ob, base)
-    material.give_default(ob)
     if select:
         _select(context, [ob])
     return ob
@@ -297,7 +296,6 @@ def new_loft_mesh(context, s, curve_names, opts):
     ob = bpy.data.objects.new("loftedSurface", me)
     (context.collection or context.scene.collection).objects.link(ob)
     naming.apply_maya_name(ob, "loftedSurface")
-    material.give_default(ob)
     ob[LOFT_KEY] = json.dumps({"curves": list(curve_names), "opts": opts, "sig": _mesh_signature(me)})
     return ob
 

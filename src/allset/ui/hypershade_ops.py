@@ -183,9 +183,9 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     action: EnumProperty(items=(
-        ("DELETE", "Delete", "Delete the current material (lambert1 stays, like Maya's)"),
-        ("DELETE_UNUSED", "Delete Unused Nodes", "Delete the materials no object uses (lambert1 stays)"),
-        ("DELETE_MATERIALS", "Delete All Materials", "Delete every material but lambert1"),
+        ("DELETE", "Delete", "Delete the current material"),
+        ("DELETE_UNUSED", "Delete Unused Nodes", "Delete the materials no object uses"),
+        ("DELETE_MATERIALS", "Delete All Materials", "Delete every material"),
         ("SELECT_OBJECTS", "Select Objects with Materials", "Select the objects that use the current material"),
         ("FROM_OBJECT", "Select Materials from Objects", "The active object's material becomes current"),
         ("DUPLICATE", "Duplicate", "Copy the current material (and its network)"),
@@ -198,15 +198,12 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
             self.report({'WARNING'}, "No material selected in the Hypershade")
             return {'CANCELLED'}
         if act == "DELETE":
-            if material_ops.is_default(cur):
-                self.report({'WARNING'}, f"{cur.name} can't be deleted (the default material, like Maya)")
-                return {'CANCELLED'}
             release_editors([cur])
             bpy.data.materials.remove(cur)
             context.window_manager.allset_hs_material = ""
         elif act in {"DELETE_UNUSED", "DELETE_MATERIALS"}:
             assigned = assigned_materials() if act == "DELETE_UNUSED" else set()
-            doomed = [m for m in materials() if not material_ops.is_default(m) and m not in assigned]
+            doomed = [m for m in materials() if m not in assigned]
             release_editors(doomed)
             if context.window_manager.allset_hs_material in {m.name for m in doomed}:
                 context.window_manager.allset_hs_material = ""

@@ -150,7 +150,7 @@ def tabs(ob):
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
             # Maya: the shape's shading group, then its surface shader (pCubeShape1 | polyCube1 |
-            # initialShadingGroup | lambert1)
+            # Material1SG | Material1)
             out.append((f"SG:{i}", material_ops.shading_group_name(slot.material), "shadingEngine"))
             out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
     out += _constraint_tabs(ob)

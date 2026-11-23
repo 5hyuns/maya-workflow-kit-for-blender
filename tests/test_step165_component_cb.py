@@ -189,7 +189,7 @@ def test_inputs_outputs_plain_cube_like_maya():
     lab = _labels(trav)
     assert lab[0] == f"Select {ob.name}" and lab[1:3] == ["-", "History"], lab
     assert ob.data.name in lab and "Future" in lab, lab
-    assert "initialShadingGroup" in lab, "the default material's shading group is in the future (lambert1)"
+    assert not any(lb.endswith("SG") or lb == "initialShadingGroup" for lb in lab), "no material: no shading group"
     shape_sub = dict(e for e in trav.items if e != mm.DIVIDER)[ob.data.name]
     assert _labels(shape_sub)[0] == f"Select {ob.data.name}"
     assert node["name"] in _labels(shape_sub), "the shape's history lists polyCube1 (rmb_plain_DG_Traversal)"

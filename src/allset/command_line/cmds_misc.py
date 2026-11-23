@@ -4,11 +4,11 @@ queries / extrude, camera.
 
 Everything goes through the kit's own data so a script gives what the menus give:
 
-- Maya nodes that aren't DAG objects (``_node``): materials = kit materials (``operators/material.py``, lambert1 =
-  the ``DEFAULT_PROP`` material), a ``file`` texture = a Shader node group holding an Image Texture node (outputs
+- Maya nodes that aren't DAG objects (``_node``): materials (``operators/material.py``; Blender's materials,
+  with the Maya type an older kit version recorded), a ``file`` texture = a Shader node group holding an Image Texture node (outputs
   ``outColor`` / ``outAlpha``; Blender has no free-standing shader node, a group can be shared by every
   material it is connected to like Maya's node), sets = kit sets (``operators/sets.py``), shading groups =
-  initialShadingGroup / ``<material>SG`` (``material.shading_group_name``), creation nodes (``prim_history``),
+  ``<material>SG`` (``material.shading_group_name``), initialShadingGroup = the shapes without a material, creation nodes (``prim_history``),
   extrusions (``operators/extrude_record.py`` records + the per-mesh list ``HISTORY_PROP`` the commands keep), constraints
   (``cb_inputs.constraint_node_name``), bones = joints.
 - ``currentUnit`` = the scene's unit settings / frame rate (Maya's working units are the scene's display units);
@@ -24,6 +24,7 @@ commands for cmds_shim.
 import bpy
 
 from . import cmds_shim as _shim
+from .cmds_nodes import split_plug
 from .cmds_nodes import (HISTORY_PROP, TEXTURE_PROP, FILE_NAME_PROP, DEFAULT_SETS, DEFAULT_NODES, CHAINS, Node,
                          _chain, _dag, _node, _materials, _material_type, _textures, _shading_groups,
                          _extrusion_nodes, nodeType, objectType, unique_node_name, _EXTRA, _selection_signature,
@@ -106,8 +107,7 @@ def camera(*args, **kwargs):
 
 def _node_list():
     """Every non-DAG Maya node: (name, type)."""
-    from ..operators import material, sets as kit_sets
-    material.default_material()
+    from ..operators import sets as kit_sets
     out = [(m.name, _material_type(m)) for m in _materials()]
     out += [(g.name, g[TEXTURE_PROP]) for g in _textures()]
     out += [(c.name, "objectSet") for c in kit_sets.all_sets()]
@@ -181,11 +181,10 @@ def _extend_shim():
 
     def getAttr(attr, **kwargs):
         text = str(attr)
-        node = text.rsplit("|", 1)[-1].split(".", 1)[0]
-        if "." in text and _dag(node) is None:
+        node, name = split_plug(text)
+        if name and _dag(node) is None:
             found = _node(node)
             if found is not None:
-                name = text.split(".", 1)[1]
                 value = _node_attr_value(found, name)
                 if value is not _MISSING:
                     if kwargs.get("type") or kwargs.get("typ"):
@@ -196,20 +195,19 @@ def _extend_shim():
 
     def setAttr(attr, *values, **kwargs):
         text = str(attr)
-        node = text.rsplit("|", 1)[-1].split(".", 1)[0]
-        if "." in text and _dag(node) is None:
+        node, name = split_plug(text)
+        if name and _dag(node) is None:
             found = _node(node)
             if found is not None:
                 kw = {k: v for k, v in kwargs.items() if k not in ("type", "typ")}
-                if not kw and _set_node_attr(found, text.split(".", 1)[1], values):
+                if not kw and _set_node_attr(found, name, values):
                     return None
         return set0(attr, *values, **kwargs)
 
     def objExists(name, **kwargs):
         if exists0(name, **kwargs):
             return True
-        text = str(name).rsplit("|", 1)[-1]
-        node, _dot, attr = text.partition(".")
+        node, attr = split_plug(name)
         found = _node(node)
         if found is None:
             return False

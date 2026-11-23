@@ -170,9 +170,9 @@ def _key_matrices(ob, frames, mats):
 
 
 def maya_names(obs, materials, path):
-    """Maya's names for what an import made: clashes count up (pCube1.001 -> pCube2, lambert1.001 ->
-    lambert2), shapes are <transform>Shape (Maya FBX / OBJ / USD files name meshes "Mesh", after the file
-    or after the transform)."""
+    """Maya's names for what an import made: clashes count up (pCube1.001 -> pCube2), shapes are <transform>Shape
+    (Maya FBX / OBJ / USD files name meshes "Mesh", after the file or after the transform). Materials keep
+    Blender's names (Material.001)."""
     stem = os.path.splitext(os.path.basename(path))[0]
     used = {o.name for o in bpy.data.objects}
     for ob in obs:
@@ -191,12 +191,6 @@ def maya_names(obs, materials, path):
             used_data.discard(data.name)
             data.name = want if want not in used_data else maya_free_name(want, used_data)
             used_data.add(data.name)
-    used_mats = {m.name for m in bpy.data.materials}
-    for mat in materials:
-        if _SUFFIX.match(mat.name):
-            used_mats.discard(mat.name)
-            mat.name = maya_free_name(mat.name, used_mats)
-            used_mats.add(mat.name)
 
 
 def _usd_stage_info(path):
