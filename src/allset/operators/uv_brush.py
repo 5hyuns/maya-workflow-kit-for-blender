@@ -78,6 +78,8 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
         ('EXPONENTIAL', "Exponential", "The UVs near the brush centre follow most, the others much less"),
         ('LINEAR', "Linear", "The pull fades evenly to the brush edge"),
         ('CONSTANT', "Constant", "Every UV inside the brush follows the same")))
+    smudge_middle: BoolProperty(name="Middle mouse initiates", default=False,
+                                description="Smudge with a middle-mouse drag instead of a left-mouse drag")
     show_ring: BoolProperty(name="Show brush ring during stroke", default=True)
     lattice_columns: IntProperty(name="Columns", default=3, min=2, max=20,
                                  description="Lattice points across the selected UVs")
@@ -374,6 +376,8 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
     mode: EnumProperty(name="Mode", items=[(m, m.title(), "") for m in MODES], options={'SKIP_SAVE'})
     invert: BoolProperty(name="Invert", default=False, options={'SKIP_SAVE'},
                          description="Ctrl: Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift")
+    middle: BoolProperty(name="Middle Mouse", default=False, options={'SKIP_SAVE'},
+                         description="Started with the middle mouse (Smudge with Middle mouse initiates)")
 
     @classmethod
     def poll(cls, context):
@@ -385,10 +389,14 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         return self.mode
 
     def invoke(self, context, event):
+        smudge_middle = self.mode == "SMUDGE" and settings(context).smudge_middle
+        if self.middle and not smudge_middle:
+            return {'PASS_THROUGH'}         # the middle mouse smudges only with Middle mouse initiates
         self._meshes = stroke_meshes(context)
         if not self._meshes:
             return {'CANCELLED'}
         note_mode(self.mode)
+        self._button = 'MIDDLEMOUSE' if self.middle else 'LEFTMOUSE'
         self._area = context.area.as_pointer()
         self._xy = (event.mouse_region_x, event.mouse_region_y)
         self._uv = context.region.view2d.region_to_view(*self._xy)
@@ -396,7 +404,8 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         self._changed = False
         self._moves = 0
         self._carry = 0.0
-        self._idle = self.mode == "CUT" and self.invert          # Ctrl / Shift + drag with the Cut tool
+        # Ctrl / Shift + drag with the Cut tool; a left drag with Smudge's Middle mouse initiates on: nothing
+        self._idle = (self.mode == "CUT" and self.invert) or (smudge_middle and not self.middle)
         mode = self._mode()
         s = settings(context)
         self._held = relax_held(self._meshes) if mode in {"UNFOLD", "OPTIMIZE"} else [m.pinned for m in self._meshes]
@@ -494,7 +503,7 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             _hover["area"], _hover["pos"] = self._area, xy
             _redraw(context)
             return {'RUNNING_MODAL'}
-        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+        if event.type == self._button and event.value == 'RELEASE':
             return self._finish(context)
         return {'RUNNING_MODAL'}
 
@@ -653,9 +662,91 @@ class UVBrushStrengthBinding(_BrushDrag):
         self._show(context)
 
 
+# --- MMB drag: brush size (left / right) and strength (up / down) ------------------------------------------
+
+MMB_SIZE_MIN = {"UNFOLD": 0.0, "OPTIMIZE": 0.0}      # other brushes keep at least MMB_MIN
+MMB_MIN = 0.01
+MMB_STRENGTH = {"PIN", "SMEAR"}        # brushes whose strength (0-100) follows an up / down MMB drag
+MMB_AXIS_PX = 3                        # the drag picks its direction after this many pixels
+
+
+def mmb_value(mode, axis, start, du):
+    """The brush size (``axis`` 'X') or strength ('Y') after an MMB drag of ``du`` UV units (right / up = more):
+    the size grows by the drag in UV units, the strength by a hundred times it (its 0-100 scale)."""
+    if axis == 'X':
+        return max(MMB_SIZE_MIN.get(mode, MMB_MIN), start + du)
+    return max(MMB_MIN, start + du * 100.0)
+
+
+class ALLSET_OT_uv_brush_mmb(bpy.types.Operator):
+    """Middle-mouse drag left / right: brush size; up / down: strength (UV Editor brush tools, like Maya)"""
+    bl_idname = "allset.uv_brush_mmb"
+    bl_label = "UV Brush Size / Strength"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return _uv_region(context)
+
+    def invoke(self, context, event):
+        mode = active_mode(context)
+        if mode is None or BRUSH_PROPS[mode][0] is None or mode in {"CUT", "SEW", "SMUDGE"}:
+            return {'PASS_THROUGH'}         # Maya's Cut / Sew / Smudge tools: the middle mouse changes nothing
+        self._mode = mode
+        self._xy = (event.mouse_region_x, event.mouse_region_y)
+        self._axis = None
+        self._prop = None
+        self._start = None
+        _hover["area"], _hover["pos"], _hover["lock"] = context.area.as_pointer(), self._xy, True
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _pick_axis(self, dx, dy):
+        if max(abs(dx), abs(dy)) < MMB_AXIS_PX:
+            return None
+        if abs(dx) >= abs(dy):
+            return 'X'
+        return 'Y' if self._mode in MMB_STRENGTH else ''
+
+    def _end(self, context):
+        _hover["lock"] = False
+        _header(context, None)
+
+    def modal(self, context, event):
+        s = settings(context)
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            if self._prop:
+                setattr(s, self._prop, self._start)
+            self._end(context)
+            return {'CANCELLED'}
+        if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+            self._end(context)
+            return {'FINISHED'}
+        if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'} and context.region is not None:
+            region = context.region
+            xy = (event.mouse_x - region.x, event.mouse_y - region.y)
+            dx, dy = xy[0] - self._xy[0], xy[1] - self._xy[1]
+            if self._axis is None:
+                self._axis = self._pick_axis(dx, dy)
+                if self._axis:
+                    self._prop = BRUSH_PROPS[self._mode][0 if self._axis == 'X' else 1]
+                    self._start = getattr(s, self._prop)
+            if self._prop:
+                v2d = region.view2d
+                a = v2d.region_to_view(*self._xy)
+                b = v2d.region_to_view(*xy)
+                du = b[0] - a[0] if self._axis == 'X' else b[1] - a[1]
+                hard = s.bl_rna.properties[self._prop].hard_max
+                setattr(s, self._prop, min(hard, mmb_value(self._mode, self._axis, self._start, du)))
+                label = s.bl_rna.properties[self._prop].name
+                _header(context, f"{label}: {getattr(s, self._prop):.3f}  (Esc cancel)")
+            return {'RUNNING_MODAL'}
+        return {'RUNNING_MODAL'}
+
+
 BINDINGS = (UVBrushSizeBinding, UVBrushStrengthBinding)
 classes = (ALLSET_PG_uv_brush, ALLSET_OT_uv_brush_hover, ALLSET_OT_uv_brush_stroke, ALLSET_OT_uv_invert_pin,
-           ALLSET_OT_uv_brush_last)
+           ALLSET_OT_uv_brush_last, ALLSET_OT_uv_brush_mmb)
 
 
 def register_extra():

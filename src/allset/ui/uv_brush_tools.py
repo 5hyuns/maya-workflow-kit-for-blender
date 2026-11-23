@@ -3,8 +3,9 @@
 and Tools > Lattice (operators/uv_lattice.py).
 
 Each is a Blender tool of the UV Editor (edit mode): LMB drag = the brush stroke (operators/uv_brush.py), Ctrl+drag =
-its other way (Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift), B + LMB drag = brush size, M + LMB drag = strength; the circle
-follows the mouse. The Tools menu items make them active; Q / W / E / R leave them. Their settings show in the tool
+its other way (Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift), B + LMB drag = brush size, M + LMB drag = strength,
+MMB drag left / right = size and up / down = strength (operators/uv_brush.ALLSET_OT_uv_brush_mmb); the circle follows
+the mouse. The Tools menu items make them active; Q / W / E / R leave them. Their settings show in the tool
 header and the sidebar's Tool tab, with Maya's labels and start values.
 """
 
@@ -17,11 +18,16 @@ from ..keymap.ic_data import platform_tool
 def _keymap(mode):
     shift = ((("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
                {"properties": [("mode", mode), ("invert", True)]}),) if mode == "CUT" else ())  # does nothing
+    # Smudge's Middle mouse initiates: the stroke starts on the middle mouse (otherwise it passes the press on)
+    middle = ((("allset.uv_brush_stroke", {"type": 'MIDDLEMOUSE', "value": 'PRESS'},
+                {"properties": [("mode", mode), ("middle", True)]}),) if mode == "SMUDGE" else ())
     return (
         ("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS'}, {"properties": [("mode", mode)]}),
         ("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
          {"properties": [("mode", mode), ("invert", True)]}),
         *shift,
+        *middle,
+        ("allset.uv_brush_mmb", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
         ("allset.tap_hold", {"type": 'B', "value": 'PRESS'}, {"properties": [("binding", "uv_brush_size")]}),
         ("allset.tap_hold", {"type": 'M', "value": 'PRESS'}, {"properties": [("binding", "uv_brush_strength")]}),
         ("allset.uv_brush_hover", {"type": 'MOUSEMOVE', "value": 'ANY', "any": True}, None),
@@ -75,6 +81,7 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
             row = layout.row()
             row.enabled = s.smudge_effect == 'SMUDGE'     # Maya greys Pressure for the Fixed effect
             row.prop(s, "smudge_pressure", slider=not header)
+            layout.prop(s, "smudge_middle")
 
 
 def _tool(mode, label, icon, description):
