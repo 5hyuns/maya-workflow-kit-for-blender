@@ -45,6 +45,7 @@ def _relax_settings(layout, s, mode, header):
 def _sculpt_settings(layout, s, size, strength, header):
     layout.prop(s, size, slider=not header)
     layout.prop(s, strength, slider=not header)
+    layout.prop(s, "falloff_type", text="" if header else None)
     if not header:
         layout.prop(s, "show_ring")
 

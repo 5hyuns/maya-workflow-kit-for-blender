@@ -64,19 +64,99 @@ def in_brush(U, centre, r):
     return distances(U, centre) <= r
 
 
-def pin(pinned, U, centre, r, on=True):
-    """Pin (``on``) or unpin the UVs inside the brush: returns the new (n,) pin flags."""
-    out = np.array(pinned, bool)
-    out[in_brush(U, centre, r)] = bool(on)
+FALLOFF_TYPES = ("SURFACE_VOLUME", "SURFACE", "VOLUME")
+
+
+def _inside(p, a, b, c):
+    """Whether point ``p`` lies in each triangle ``a`` ``b`` ``c`` ((k, 2) arrays): (k,) bool."""
+    def cross(o, q):
+        return (q[:, 0] - o[:, 0]) * (p[1] - o[:, 1]) - (q[:, 1] - o[:, 1]) * (p[0] - o[:, 0])
+    d1, d2, d3 = cross(a, b), cross(b, c), cross(c, a)
+    neg = (d1 < 0) | (d2 < 0) | (d3 < 0)
+    pos = (d1 > 0) | (d2 > 0) | (d3 > 0)
+    return ~(neg & pos)
+
+
+def brush_distances(U, centre, r, kind="VOLUME", T=None, ea=None, eb=None):
+    """How far each UV is from the brush centre for the brush falloff (the Falloff Type); UVs the brush does not
+    reach get ``inf``.
+
+    - VOLUME: the straight UV distance: the brush reaches every UV inside its circle, other shells and the far side
+      of a cut too.
+    - SURFACE_VOLUME: the straight UV distance, but only for the UVs joined by UV edges, inside the circle, to the
+      part of the shell under the brush centre (a nearby shell or the far side of a cut stays out).
+    - SURFACE: those same UVs, by the distance along the UV edges from the brush centre.
+    ``T`` (m, 3) triangles over the UV points and ``ea`` / ``eb`` the UV edges' point indices are needed for the two
+    surface kinds."""
+    U = np.asarray(U, float)
+    d = distances(U, centre)
+    if kind == "VOLUME" or T is None or ea is None or not len(U):
+        return np.where(d <= r, d, np.inf)
+    near = d <= r
+    if not near.any():
+        return np.full(len(U), np.inf)
+    T = np.asarray(T, int)
+    tri = T[near[T].any(axis=1)] if len(T) else T
+    seeds = set()
+    if len(tri):
+        hit = _inside(np.asarray(centre, float), U[tri[:, 0]], U[tri[:, 1]], U[tri[:, 2]])
+        for t in tri[hit]:
+            seeds.update(int(i) for i in t if near[i])
+    if not seeds:                       # the centre over no face: the UV nearest to it
+        seeds = {int(np.argmin(np.where(near, d, np.inf)))}
+    ea = np.asarray(ea, int)
+    eb = np.asarray(eb, int)
+    keep = near[ea] & near[eb]
+    nbr = {}
+    for a, b in zip(ea[keep].tolist(), eb[keep].tolist()):
+        nbr.setdefault(a, []).append(b)
+        nbr.setdefault(b, []).append(a)
+    out = np.full(len(U), np.inf)
+    if kind == "SURFACE":
+        import heapq
+        heap = [(float(d[i]), i) for i in seeds]
+        for dist, i in heap:
+            out[i] = min(out[i], dist)
+        heapq.heapify(heap)
+        while heap:
+            dist, i = heapq.heappop(heap)
+            if dist > out[i]:
+                continue
+            for j in nbr.get(i, ()):
+                nd = dist + float(np.hypot(*(U[j] - U[i])))
+                if nd < out[j] and nd <= r:
+                    out[j] = nd
+                    heapq.heappush(heap, (nd, j))
+        return out
+    stack = list(seeds)
+    seen = set(stack)
+    while stack:
+        i = stack.pop()
+        for j in nbr.get(i, ()):
+            if j not in seen:
+                seen.add(j)
+                stack.append(j)
+    idx = np.fromiter(seen, int, len(seen))
+    out[idx] = d[idx]
     return out
 
 
-def smear(U, centre, r, delta, strength, held=None):
+def pin(pinned, U, centre, r, on=True, dist=None):
+    """Pin (``on``) or unpin the UVs inside the brush (``dist``: brush_distances, default the straight distance):
+    returns the new (n,) pin flags."""
+    out = np.array(pinned, bool)
+    inside = in_brush(U, centre, r) if dist is None else np.isfinite(dist) & (dist <= r)
+    out[inside] = bool(on)
+    return out
+
+
+def smear(U, centre, r, delta, strength, held=None, dist=None):
     """Smear: the UVs under the brush move along the stroke (``delta`` = how far the brush moved), each by its sculpt
     falloff weight times ``strength`` (no upper limit: above 1 the UVs run ahead of the brush, like Maya); ``held``
-    UVs (pinned) stay. Returns the new UVs."""
+    UVs (pinned) stay; ``dist`` = brush_distances (default the straight distance). Returns the new UVs."""
     U = np.array(U, float)
-    w = sculpt_falloff(distances(U, centre), r) * max(0.0, float(strength))
+    d = distances(U, centre) if dist is None else np.where(np.isfinite(dist), dist, 2.0 * r + 1.0)
+    w = sculpt_falloff(d, r) * max(0.0, float(strength))
     if held is not None:
         w[np.asarray(held, bool)] = 0.0
     U += w[:, None] * np.asarray(delta, float)[None, :]

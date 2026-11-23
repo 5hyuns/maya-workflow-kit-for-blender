@@ -629,6 +629,7 @@ STRINGS = {
     'How far the Move buttons move the selected UVs': '移動按鈕移動所選 UV 的距離',
     'How many Blue Pencil frames after the current one are ghosted': '目前格之後顯示重影的藍鉛筆格數',
     'How many Blue Pencil frames before the current one are ghosted': '目前格之前顯示重影的藍鉛筆格數',
+    'How the brush falloff reaches the UVs (Pin, Smear)': '筆刷衰減如何作用到 UV (固定、塗抹)',
     'Inverse Selection': '反向選擇',
     'Isolate Select Set': '孤立選擇集',
     'Keep Blender Keys': '保留 Blender 按鍵',

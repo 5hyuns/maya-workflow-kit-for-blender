@@ -81,6 +81,13 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
     smudge_middle: BoolProperty(name="Middle mouse initiates", default=False,
                                 description="Smudge with a middle-mouse drag instead of a left-mouse drag")
     show_ring: BoolProperty(name="Show brush ring during stroke", default=True)
+    falloff_type: EnumProperty(name="Type", default='SURFACE_VOLUME', items=(
+        ('SURFACE_VOLUME', "Surface/Volume", "The brush reaches the UVs in its circle that are joined to the part of "
+                                             "the shell under its centre, by straight distance"),
+        ('SURFACE', "Surface", "The brush reaches the UVs joined to the part of the shell under its centre, by the "
+                               "distance along the UV edges"),
+        ('VOLUME', "Volume", "The brush reaches every UV in its circle, other shells and across cuts too")),
+        description="How the brush falloff reaches the UVs (Pin, Smear)")
     lattice_columns: IntProperty(name="Columns", default=3, min=2, max=20,
                                  description="Lattice points across the selected UVs")
     lattice_rows: IntProperty(name="Rows", default=3, min=2, max=20, description="Lattice points up the selected UVs")
@@ -237,19 +244,32 @@ def stroke_meshes(context):
     return [MeshUVs(ob, synced) for ob in context.objects_in_mode_unique_data or () if ob.type == 'MESH']
 
 
+FALLOFF_MODES = {"PIN", "SMEAR"}        # brushes with a Falloff Type (Surface/Volume, Surface, Volume), like Maya
+
+
+def brush_distances(mesh, centre, r, kind):
+    """uv_brush_math.brush_distances for ``mesh`` (a MeshUVs)."""
+    if kind == "VOLUME":
+        return uv_brush_math.brush_distances(mesh.U, centre, r)
+    arr = mesh.edge_arrays()
+    return uv_brush_math.brush_distances(mesh.U, centre, r, kind, mesh.T, arr["a"], arr["b"])
+
+
 def apply_dab(mode, mesh, centre, r, strength, *, invert=False, delta=(0.0, 0.0), surfangle=1.0, weights=None,
-              held=None):
+              held=None, falloff="VOLUME"):
     """One dab of ``mode`` on ``mesh`` (a MeshUVs) at UV ``centre`` with radius ``r``; returns whether anything
-    changed. ``held`` = the UVs that must stay (the pinned UVs when None). Cut / Sew only collect edges."""
+    changed. ``held`` = the UVs that must stay (the pinned UVs when None); ``falloff`` = the Falloff Type of the Pin
+    and Smear brushes. Cut / Sew only collect edges."""
     if held is None:
         held = mesh.pinned
+    dist = brush_distances(mesh, centre, r, falloff) if mode in FALLOFF_MODES else None
     if mode == "PIN":
-        return mesh.write_pins(uv_brush_math.pin(mesh.pinned, mesh.U, centre, r, on=not invert))
+        return mesh.write_pins(uv_brush_math.pin(mesh.pinned, mesh.U, centre, r, on=not invert, dist=dist))
     if mode in {"UNFOLD", "OPTIMIZE"}:
         return mesh.write(uv_brush_math.relax(mesh.P, mesh.U, mesh.T, centre, r, strength, mode, surfangle,
                                               held=held))
     if mode == "SMEAR":
-        return mesh.write(uv_brush_math.smear(mesh.U, centre, r, delta, strength, held=held))
+        return mesh.write(uv_brush_math.smear(mesh.U, centre, r, delta, strength, held=held, dist=dist))
     if mode == "SMUDGE" and weights is not None:
         return mesh.write(mesh.U + weights[:, None] * np.asarray(delta, float)[None, :])
     return False
@@ -438,7 +458,8 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             else:
                 w = None if self._weights is None else self._weights[i]
                 self._changed |= apply_dab(mode, m, p, r, k, invert=self.invert, delta=delta,
-                                           surfangle=s.surfangle, weights=w, held=self._held[i])
+                                           surfangle=s.surfangle, weights=w, held=self._held[i],
+                                           falloff=s.falloff_type)
 
     def _cut_picked(self, context):
         sens = settings(context).cut_sensitivity

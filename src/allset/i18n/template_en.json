@@ -7736,6 +7736,7 @@
    "How far the UVs move each dab (m + drag up / down)": "How far the UVs move each dab (m + drag up / down)",
    "How much of an edge the stroke may leave out and still cut it, as a part of the edge's length": "How much of an edge the stroke may leave out and still cut it, as a part of the edge's length",
    "How strongly the UVs follow the stroke (m + drag up / down)": "How strongly the UVs follow the stroke (m + drag up / down)",
+   "How the brush falloff reaches the UVs (Pin, Smear)": "How the brush falloff reaches the UVs (Pin, Smear)",
    "Invert": "Invert",
    "Invert Pin": "Invert Pin",
    "Last Tool": "Last Tool",
@@ -7758,10 +7759,14 @@
    "Smudge with a middle-mouse drag instead of a left-mouse drag": "Smudge with a middle-mouse drag instead of a left-mouse drag",
    "Started with the middle mouse (Smudge with Middle mouse initiates)": "Started with the middle mouse (Smudge with Middle mouse initiates)",
    "Strength": "Strength",
+   "Surface": "Surface",
    "Surface Angle": "Surface Angle",
+   "Surface/Volume": "Surface/Volume",
+   "Type": "Type",
    "UV Brush Hover": "UV Brush Hover",
    "UV Brush Size / Strength": "UV Brush Size / Strength",
-   "UV Brush Stroke": "UV Brush Stroke"
+   "UV Brush Stroke": "UV Brush Stroke",
+   "Volume": "Volume"
   },
   "Labels/operators/uv_checker": {
    "Assign Checker Shader": "Assign Checker Shader",

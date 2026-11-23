@@ -629,6 +629,7 @@ STRINGS = {
     'How far the Move buttons move the selected UVs': '移動ボタンが選択した UV を動かす距離',
     'How many Blue Pencil frames after the current one are ghosted': '現在のフレームの後でゴースト表示する Blue Pencil フレームの数',
     'How many Blue Pencil frames before the current one are ghosted': '現在のフレームの前でゴースト表示する Blue Pencil フレームの数',
+    'How the brush falloff reaches the UVs (Pin, Smear)': 'ブラシのフォールオフが UV に届く方法 (ピン、スミア)',
     'Inverse Selection': '選択の反転',
     'Isolate Select Set': '選択項目の分離セット',
     'Keep Blender Keys': 'Blender のキーを残す',

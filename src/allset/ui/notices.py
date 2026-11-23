@@ -1299,9 +1299,6 @@ MARKING.update({
         "Sidebar UV Vertex", "Blender has no pixel ruler: the sidebar (N) Image tab shows the selected UVs' position, "
         "so two readings give the distance."),
     **{f"{m}/Tools/Symmetrize Tool": CATEGORIES["UV Editor/Tools/Symmetrize"] for m in _UV_MENUS},
-    **{f"UV_BRUSH/Falloff Type/{label}": (
-        "UV distance", "The kit's UV brushes fade with the distance in the UV Editor; there is no surface or volume "
-        "falloff to pick.") for label in ("Surface/Volume", "Surface", "Volume")},
     **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
     **{f"{m}/{label}": _UV_CONSTRAINTS for m in (*(f"{n}/Pinning" for n in _UV_MENUS), "UV_CONVERT")
        for label in ("Selection Constraints", "Transform Constraints")},

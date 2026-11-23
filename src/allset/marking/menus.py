@@ -1483,7 +1483,11 @@ UV_OPT_SELECT = MarkingMenu(
     items=_uv_options("Select Options"))
 
 
-UV_BRUSH_LAST = ("allset.uv_brush_last", {})     # its label names the tool it goes back to (marking.live_label)
+UV_BRUSH_LAST = ("allset.uv_brush_last", {})
+
+
+def _uv_falloff(kind):
+    return ("wm.context_set_enum", {"data_path": "scene.allset_uv_brush.falloff_type", "value": kind})     # its label names the tool it goes back to (marking.live_label)
 
 # RMB in the UV Editor while one of its brush tools is active (Tools > Unfold, Optimize, Cut, Sew, Pin, Smear,
 # Smudge): Maya's UV brush marking menu.
@@ -1495,8 +1499,9 @@ UV_BRUSH = MarkingMenu(
         "E": ("Last Tool", UV_BRUSH_LAST),
         "SE": ("Grab UV Tool", _uve("Tools/Grab")),
         "S": ("Pin UV Tool", _uve("Tools/Pin")),
-        "W": ("Falloff Type", Sub(radial={"W": ("Surface/Volume", None), "SW": ("Surface", None),
-                                          "S": ("Volume", None)})),
+        "W": ("Falloff Type", Sub(radial={"W": ("Surface/Volume", _uv_falloff('SURFACE_VOLUME')),
+                                          "SW": ("Surface", _uv_falloff('SURFACE')),
+                                          "S": ("Volume", _uv_falloff('VOLUME'))})),
     })
 
 
