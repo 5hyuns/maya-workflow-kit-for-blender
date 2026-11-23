@@ -214,7 +214,8 @@ def draw(layout, context):
     tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False) if context.workspace else None
     col = layout.column(align=True)
     for label, idname in PICK:
-        col.operator("wm.tool_set_by_id", text=label, depress=tool is not None and tool.idname == idname,
+        col.operator("wm.tool_set_by_id", text=label, text_ctxt=i18n.CTX_SELECT_STYLE,
+                     depress=tool is not None and tool.idname == idname,
                      icon='RADIOBUT_ON' if tool is not None and tool.idname == idname else 'RADIOBUT_OFF',
                      emboss=False).name = idname
     _grey(layout, "Modeling Toolkit/Highlight Backfaces", "Highlight Backfaces")

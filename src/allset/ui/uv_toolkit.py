@@ -216,7 +216,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
         col = layout.column(align=True)
         tid = _tool_id(context)
         for label, tool in PICK:
-            op = col.operator("wm.tool_set_by_id", text=label, depress=tid == tool,
+            op = col.operator("wm.tool_set_by_id", text=label, text_ctxt=i18n.CTX_SELECT_STYLE, depress=tid == tool,
                               icon='RADIOBUT_ON' if tid == tool else 'RADIOBUT_OFF')
             op.name, op.space_type = tool, 'IMAGE_EDITOR'
         for name in ("Symmetry", "Selection Constraint", "Transform Constraint"):

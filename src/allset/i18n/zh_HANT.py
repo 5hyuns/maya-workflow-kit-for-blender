@@ -7604,3 +7604,8 @@ STRINGS = {
     'Tiles U': '圖塊 U',
     'Tiles V': '圖塊 V',
 }
+
+# (context, English): translation for texts that read differently in one place (i18n.CTX_*)
+CONTEXT_STRINGS = {
+    ("Maya Select Style", "Drag"): '拖動',
+}
