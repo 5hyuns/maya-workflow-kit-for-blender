@@ -259,8 +259,12 @@ def _place(layout, center, bounds, edges):
         floor = y0
         below = (0.0, 0.0)                                    # as laid out (under the ring)
         above = (0.0, ry1 + gap - ly0)
-        right = (rx1 + gap - lx0, -h / 2 - ly0)
-        left = (rx0 - gap - lx1, -h / 2 - ly0)
+        # beside the ring with the list gap, or nearer to it (never on it) when the gap would put the column past
+        # the window side
+        right_x = rx1 + gap if rx1 + gap + w <= x1 or x1 - w < rx1 else x1 - w
+        left_x = rx0 - gap if rx0 - gap - w >= x0 or x0 + w > rx0 else x0 + w
+        right = (right_x - lx0, -h / 2 - ly0)
+        left = (left_x - lx1, -h / 2 - ly0)
         dx = dy = None
         lift = y1           # how high re-flowed rows may go: not into the ring when under it
         if ly0 >= y0 and ly1 <= y1:

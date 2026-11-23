@@ -65,10 +65,12 @@ def test_list_goes_above_or_beside_the_ring():
 
 
 def test_other_menus_near_edges():
+    # a window wide enough for SHIFT_OBJECT's long list beside its ring (its items show pictures left of the labels)
+    wide = (0.0, 0.0, 1100.0, 600.0)
     for name in ("RMB_EMPTY", "SHIFT_OBJECT", "OPT_MOVE",
                  "CTRL_CONVERT", "SHIFT_FACE"):
-        for origin in ((500.0, 20.0), (980.0, 580.0), (10.0, 10.0)):
-            _check(mm.MENUS[name], origin)
+        for origin in ((550.0, 20.0), (1080.0, 580.0), (10.0, 10.0)):
+            _check(mm.MENUS[name], origin, wide)
 
 
 def test_radial_submenu_in_place_stays_inside():

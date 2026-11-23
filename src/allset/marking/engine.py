@@ -53,7 +53,7 @@ class Session:
         self.params = params or Params()
         self.bounds = bounds
         self.edges = tuple(edges) if bounds is not None else ()
-        root = Layout(menu, measure, self.params, enabled)
+        root = Layout(menu, measure, self.params, enabled, getattr(menu, "name", None))
         self.press = origin
         if bounds is not None:
             fit_ring(root, origin, bounds, self.edges)
@@ -129,7 +129,9 @@ class Session:
         return out
 
     def _push(self, item, at, cascade=False):
-        layout = Layout(item.sub, self.measure, self.params, self.enabled)
+        owner = next((lay for lay, _c in reversed(self.stack) if item in lay.items), None)
+        path = f"{owner.path}/{item.label}" if owner is not None and owner.path else None
+        layout = Layout(item.sub, self.measure, self.params, self.enabled, path)
         if self.bounds is not None and layout.items and not layout.radial:
             at = self._inside_bounds(layout, at)
         elif self.bounds is not None and layout.items:

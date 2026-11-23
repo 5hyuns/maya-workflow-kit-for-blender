@@ -21,7 +21,7 @@ from bpy.props import EnumProperty, IntProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
-from . import draw, menu_editor, modal, rmb_items, rmb_nodes, user_menus
+from . import draw, icons, menu_editor, modal, rmb_items, rmb_nodes, user_menus
 from . import menus as mm
 
 # Blender fills a pie in this order (UILayout.menu_pie).
@@ -652,6 +652,7 @@ def register():
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.register_binding(cls())
     draw.register()
+    icons.register()
     modal.register_clock()
     user_menus.load()
     apply_user_menus()
@@ -662,6 +663,7 @@ def unregister():
     menu_editor.unregister()
     _clear_user_menus()
     modal.unregister_clock()
+    icons.unregister()
     draw.unregister()
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.unregister_binding(cls.name)

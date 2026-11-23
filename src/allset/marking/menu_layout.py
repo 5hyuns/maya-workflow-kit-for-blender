@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Marking menu geometry without Blender: sizes at UI scale 1 (``Params``), the radial sector of a stroke
 (``direction``), the item rectangles of one (sub)menu around its centre (``Layout``, ``Item``: radial boxes and the
-list under the ring) and which items are check boxes (``is_toggle``). Used by ``engine`` (``Session``) and
+list under the ring), which items are check boxes (``is_toggle``) and which show a command picture left of their
+label (``icon_data``, like Maya). Used by ``engine`` (``Session``) and
 ``hotbox_engine``; ``draw.py`` reads them through ``engine``."""
 
 import math
 
+from . import icon_data
 from . import menus as mm
 
 
@@ -31,6 +33,13 @@ class Params:
     ring_pad = 25.0        # text padding inside a radial box (a submenu arrow sits in the right one)
     ring_opt = 5.0         # extra radial box width for an option box
     ring_list_gap = 21.0   # ring bottom -> list top
+    # A command picture left of the label (like Maya): ``icon`` px square, in a radial box ``icon_pad`` from its left
+    # side (in the left text padding), in a list ``list_icon_pad`` from the row's left; ``icon_gap`` to the text. A
+    # list with a picture on any row keeps the picture column on every row, so the labels stay in one column.
+    icon = 16.0
+    icon_pad = 5.0
+    list_icon_pad = 4.0
+    icon_gap = 5.0
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
     # A quick release is a mark, like Maya: the radial item of its direction, never a list row it ends on (a submenu
@@ -58,7 +67,7 @@ class Params:
     return_dwell = 0.7
 
     SIZES = ("radius", "dead", "pick_dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
-             "ring_list_gap", "anchor_r", "rest_slop")
+             "ring_list_gap", "anchor_r", "rest_slop", "icon", "icon_pad", "list_icon_pad", "icon_gap")
     FLAGS = ("show_delay", "click_time", "mark_time", "quick_none_time", "return_dwell", "quick_gestures",
              "submenu_guides", "open_dwell")
 
@@ -80,9 +89,10 @@ def direction(dx, dy, dead):
 
 
 class Item:
-    __slots__ = ("label", "action", "kind", "key", "rect", "opt_rect", "enabled", "sub", "option")
+    __slots__ = ("label", "action", "kind", "key", "rect", "opt_rect", "enabled", "sub", "option", "icon", "icon_x",
+                 "text_x")
 
-    def __init__(self, label, action, kind, key, rect, opt_rect, enabled, option):
+    def __init__(self, label, action, kind, key, rect, opt_rect, enabled, option, icon=None, icon_x=0.0, text_x=0.0):
         self.label = label
         self.action = action
         self.kind = kind              # "radial" | "list"
@@ -92,6 +102,9 @@ class Item:
         self.enabled = enabled
         self.sub = action if isinstance(action, mm.Sub) else None
         self.option = option
+        self.icon = icon              # icon_data picture drawn left of the label, or None
+        self.icon_x = icon_x          # picture's left / text start, from the rect's left side
+        self.text_x = text_x
 
     def __repr__(self):
         return f"Item({self.label!r}, {self.key!r})"
@@ -117,9 +130,16 @@ def is_toggle(action):
 class Layout:
     """Item rectangles of one (sub)menu around its centre (Maya placement)."""
 
-    def __init__(self, sub, measure, params, enabled=None):
+    def __init__(self, sub, measure, params, enabled=None, path=None):
+        """``path``: the menu id and the labels leading to ``sub`` (``menus.label_walk``), which picks the item
+        pictures (``icon_data``); None = no pictures."""
         self.sub = sub
+        self.path = path
         self.params = p = params
+
+        def icon(label):
+            return icon_data.ICONS.get(f"{path}/{label}") if path else None
+
         enabled = enabled or (lambda action: action is not None and not mm.is_unavailable(action))
         self.radial = {}
         self.items = []
@@ -129,8 +149,11 @@ class Layout:
                 continue
             label, action = sub.radial[key]
             opt = label in sub.options and action is not None and not isinstance(action, mm.Sub)
-            item = Item(label, action, "radial", key, self.ring_rect(key, measure(self.ring_text(label, action)), opt),
-                        None, enabled(action), opt)
+            pic = icon(label)
+            item = Item(label, action, "radial", key,
+                        self.ring_rect(key, measure(self.ring_text(label, action)), opt, pic is not None),
+                        None, enabled(action), opt, pic, p.icon_pad,
+                        p.icon_pad + p.icon + p.icon_gap if pic is not None else p.ring_pad)
             item.opt_rect = self._opt(item.rect, opt)
             self.radial[key] = item
             self.items.append(item)
@@ -138,7 +161,9 @@ class Layout:
         rows = [e for e in sub.items]
         if rows:
             widths = [measure(self._text(e[0], e[1])) for e in rows if e != mm.DIVIDER]
-            w = max(widths or [0]) + 2 * p.pad + p.opt_w
+            pics = {i: icon(e[0]) for i, e in enumerate(rows) if e != mm.DIVIDER}
+            text_x = p.list_icon_pad + p.icon + p.icon_gap if any(v is not None for v in pics.values()) else p.pad
+            w = max(widths or [0]) + text_x + p.pad + p.opt_w
             if self.radial:
                 top = min([it.rect[1] for it in self.radial.values()] + [-p.radius]) - p.ring_list_gap
                 x0 = -w / 2
@@ -154,16 +179,17 @@ class Layout:
                 opt = label in sub.options and action is not None and not isinstance(action, mm.Sub)
                 rect = (x0, y - h, x0 + w, y)
                 self.items.append(Item(label, action, "list", i, rect, self._opt(rect, opt),
-                                       enabled(action), opt))
+                                       enabled(action), opt, pics[i], p.list_icon_pad, text_x))
                 y -= h
 
-    def ring_rect(self, key, text_w, opt=False):
+    def ring_rect(self, key, text_w, opt=False, icon=False):
         """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya's placement.
-        y is up here, so N is +y."""
+        y is up here, so N is +y. ``icon``: a picture left of the text takes the left padding's place."""
         p = self.params
         r, h = p.radius, p.ring_h
         d = r * math.cos(math.radians(45.0))
-        w = text_w + 2 * p.ring_pad + (p.ring_opt if opt else 0.0)
+        left = p.icon_pad + p.icon + p.icon_gap if icon else p.ring_pad
+        w = text_w + left + p.ring_pad + (p.ring_opt if opt else 0.0)
         if key in ("N", "S"):
             x0 = -w / 2
             cy = r if key == "N" else -r
