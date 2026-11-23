@@ -6,8 +6,12 @@
   set to the 2D cursor, so the UV Editor's own Move / Rotate / Scale turn about it too. Reset = the selection's
   centre again; Edit Pivot = the Cursor tool (drag the pivot).
 - Move: the eight buttons move the selected UVs by the step (0.1) in that direction; the U / V fields show the
-  centre of the selected UVs' bounding box, and a typed value moves the selection there (its spacing kept).
-- Rotate: turn the selected UVs by the angle (90 degrees) counterclockwise or clockwise about the pivot.
+  centre of the selected UVs' bounding box, and a typed value moves the selection there (Retain Component Spacing
+  on) or puts every selected UV on that value (off). Distribute spaces the selected UVs evenly along U or V.
+- Step Snap per area: the UV Editor's Move / Rotate / Scale tools move, turn or scale in steps (Blender's UV increment
+  snapping); the Move step is the UV grid step, the Rotate step Blender's 2D angle increment.
+- Rotate: turn the selected UVs by the angle (90 degrees) counterclockwise or clockwise about the pivot, in the
+  shown image's pixels (a non-square image keeps its shapes); the buttons' right-click menu turns by 45 or 15.
 - Scale: scale the selected UVs by the factor (2) in U and V, U only or V only, about the pivot; Shrink divides.
 - Snap: the shells of the selection move as one block onto a corner, an edge middle or the centre of the Snap
   range (0-1 by default).
@@ -19,7 +23,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import BoolProperty, EnumProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
 from .. import results, undo_steps
 from . import uv_tools
@@ -269,23 +273,66 @@ def position_set(axis):
         c = centre(found)
         if c is None:
             return
+        if not _settings(context).retain_spacing:       # every selected UV onto the value
+            _apply(found, lambda u, v: (value, v) if axis == 0 else (u, value))
+            return
         d = value - c[axis]
         move(found, d if axis == 0 else 0.0, d if axis == 1 else 0.0)
     return set_
 
 
+# --- Step Snap (per area) -------------------------------------------------------------------------------------------
+
+def uv_space(context):
+    return _space(context)
+
+
+def apply_move_step(context):
+    """Move Step Snap value -> the UV Editor's grid step (Blender's UV increment snapping moves by the grid)."""
+    space = _space(context)
+    value = _settings(context).move_snap_value
+    if space is None or value <= 0:
+        return
+    n = max(1, int(round(1.0 / value)))
+    ed = space.uv_editor
+    try:
+        ed.grid_shape_source = 'FIXED'
+        ed.custom_grid_subdivisions = (n, n)
+    except (AttributeError, TypeError, ValueError):
+        pass
+
+
+def move_step_update(self, context):
+    apply_move_step(context)
+
+
+def rotate_step_update(self, context):
+    context.scene.tool_settings.snap_angle_increment_2d = math.radians(self.rotate_snap_value)
+
+
 # --- Rotate / Scale ------------------------------------------------------------------------------------------------
 
-def rotate(found, about, degrees):
-    """Turn counterclockwise by ``degrees`` about ``about``."""
+def rotate(found, about, degrees, aspect=1.0):
+    """Turn counterclockwise by ``degrees`` about ``about``; ``aspect`` = the image's width / height: the turn happens
+    in pixels, so a shape keeps its look on a non-square image."""
     a = math.radians(degrees)
     c, s = math.cos(a), math.sin(a)
     pu, pv = about
+    k = aspect if aspect > 0 else 1.0
 
     def fn(u, v):
-        du, dv = u - pu, v - pv
-        return pu + du * c - dv * s, pv + du * s + dv * c
+        du, dv = (u - pu) * k, v - pv
+        return pu + (du * c - dv * s) / k, pv + du * s + dv * c
     _apply(found, fn)
+
+
+def image_aspect(context):
+    """Width / height of the image the UV Editor shows (1 without an image)."""
+    space = _space(context)
+    image = getattr(space, "image", None) if space is not None else None
+    if image is not None and image.size[0] and image.size[1]:
+        return float(image.size[0]) / float(image.size[1])
+    return 1.0
 
 
 def scale(found, about, su, sv):
@@ -301,6 +348,8 @@ class ALLSET_OT_uv_rotate_step(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     clockwise: BoolProperty(options={'SKIP_SAVE'})
+    angle: FloatProperty(options={'SKIP_SAVE'}, default=0.0,
+                         description="Degrees to turn (0 = the Rotate angle of the toolkit)")
 
     poll = classmethod(lambda cls, context: _poll(context))
 
@@ -309,9 +358,22 @@ class ALLSET_OT_uv_rotate_step(bpy.types.Operator):
         if not found:
             self.report({'WARNING'}, "Select UVs to rotate")
             return {'CANCELLED'}
-        angle = _settings(context).rotate_angle
-        rotate(found, pivot(context, found), -angle if self.clockwise else angle)
+        angle = self.angle or _settings(context).rotate_angle
+        rotate(found, pivot(context, found), -angle if self.clockwise else angle, image_aspect(context))
         return {'FINISHED'}
+
+
+def rotate_button_menu(self, context):
+    """Right-click on a Rotate button of the UV Toolkit: turn by 45 or 15 degrees that way (Maya: middle / right
+    click on the button)."""
+    op = getattr(context, "button_operator", None)
+    if op is None or getattr(op, "bl_rna", None) is None or op.bl_rna.identifier != "ALLSET_OT_uv_rotate_step":
+        return
+    layout = self.layout
+    layout.separator()
+    for angle in (45.0, 15.0):
+        o = layout.operator("allset.uv_rotate_step", text=f"Rotate {angle:g}\u00b0")
+        o.clockwise, o.angle = op.clockwise, angle
 
 
 @undo_steps.no_redo_panel
@@ -368,5 +430,45 @@ class ALLSET_OT_uv_snap_shells(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Maya's preset lists of the UV Toolkit Transform fields
+PRESETS = {"nudge": (1.0, 0.1, 0.01), "rotate_angle": (15.0, 45.0, 90.0, 180.0), "scale_factor": (2.0, 4.0)}
+
+
+def _preset_menu_class(prop):
+    def draw(self, context):
+        for value in PRESETS[prop]:
+            o = self.layout.operator("wm.context_set_float", text=f"{value:g}", translate=False)
+            o.data_path, o.value = f"scene.allset_uv_toolkit.{prop}", value
+    return type(f"ALLSET_MT_uvtk_preset_{prop}", (bpy.types.Menu,), {
+        "bl_idname": f"ALLSET_MT_uvtk_preset_{prop}", "bl_label": "Presets", "draw": draw,
+        "__doc__": "Preset values"})
+
+
+PRESET_MENUS = tuple(_preset_menu_class(p) for p in PRESETS)
+
+
+@undo_steps.no_redo_panel
+class ALLSET_OT_uv_distribute_toolkit(bpy.types.Operator):
+    """Distribute the selected UVs evenly along U or V (UV Toolkit Move); the options button sets a custom distance"""
+    bl_idname = "allset.uv_distribute_toolkit"
+    bl_label = "Distribute UVs"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    poll = classmethod(lambda cls, context: _poll(context))
+
+    def execute(self, context):
+        axis = _settings(context).distribute_axis
+        return bpy.ops.allset.uv_distribute_uvs('EXEC_DEFAULT', axis=axis, distance=0.0)
+
+
 classes = (ALLSET_OT_uv_pivot, ALLSET_OT_uv_pivot_reset, ALLSET_OT_uv_pivot_edit, ALLSET_OT_uv_nudge,
-           ALLSET_OT_uv_rotate_step, ALLSET_OT_uv_scale_step, ALLSET_OT_uv_snap_shells)
+           ALLSET_OT_uv_rotate_step, ALLSET_OT_uv_scale_step, ALLSET_OT_uv_snap_shells, ALLSET_OT_uv_distribute_toolkit,
+           *PRESET_MENUS)
+
+
+def register_extra():
+    bpy.types.UI_MT_button_context_menu.prepend(rotate_button_menu)
+
+
+def unregister_extra():
+    bpy.types.UI_MT_button_context_menu.remove(rotate_button_menu)

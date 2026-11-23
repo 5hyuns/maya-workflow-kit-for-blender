@@ -7906,6 +7906,7 @@
   },
   "Labels/operators/uv_toolkit_ops": {
    "0 = a new random result every time": "0 = a new random result every time",
+   "A typed U / V value moves the selected UVs together (on) or puts each of them on that value (off)": "A typed U / V value moves the selected UVs together (on) or puts each of them on that value (off)",
    "Align UVs": "Align UVs",
    "Angle": "Angle",
    "Angle Tolerance": "Angle Tolerance",
@@ -7916,7 +7917,9 @@
    "Clockwise": "Clockwise",
    "Counter-clockwise": "Counter-clockwise",
    "Degrees": "Degrees",
+   "Degrees per step of the UV Editor's Rotate tool with Step Snap on": "Degrees per step of the UV Editor's Rotate tool with Step Snap on",
    "Degrees the Rotate buttons turn the selected UVs": "Degrees the Rotate buttons turn the selected UVs",
+   "Distribute Along": "Distribute Along",
    "Down": "Down",
    "Factor": "Factor",
    "How far the Move buttons move the selected UVs": "How far the Move buttons move the selected UVs",
@@ -7927,9 +7930,12 @@
    "Min U": "Min U",
    "Min V": "Min V",
    "Move Step": "Move Step",
+   "Move Step Snap": "Move Step Snap",
    "Percent": "Percent",
    "Pivot": "Pivot",
    "Randomize Shells": "Randomize Shells",
+   "Retain Component Spacing": "Retain Component Spacing",
+   "Rotate Step Snap": "Rotate Step Snap",
    "Scale In": "Scale In",
    "Seed": "Seed",
    "Select one edge loop (a line of UV edges) on the shell to straighten": "Select one edge loop (a line of UV edges) on the shell to straighten",
@@ -7938,6 +7944,7 @@
    "Snap range: highest V": "Snap range: highest V",
    "Snap range: lowest U": "Snap range: lowest U",
    "Snap range: lowest V": "Snap range: lowest V",
+   "Step of the UV Editor's Move tool with Step Snap on (the UV grid step follows it)": "Step of the UV Editor's Move tool with Step Snap on (the UV grid step follows it)",
    "Straighten Shell": "Straighten Shell",
    "Straighten UVs": "Straighten UVs",
    "Straighten UVs: UV edges this close (degrees) to U or V are lined up": "Straighten UVs: UV edges this close (degrees) to U or V are lined up",
@@ -7969,6 +7976,8 @@
    "Unfold": "Unfold"
   },
   "Labels/operators/uv_transform": {
+   "Degrees to turn (0 = the Rotate angle of the toolkit)": "Degrees to turn (0 = the Rotate angle of the toolkit)",
+   "Distribute UVs": "Distribute UVs",
    "Divide by the factor": "Divide by the factor",
    "Edit UV Pivot": "Edit UV Pivot",
    "Move UVs": "Move UVs",
@@ -10053,6 +10062,7 @@
   },
   "Labels/ui/uv_toolkit": {
    "3D Cut and Sew Tool": "3D Cut and Sew Tool",
+   "Align": "Align",
    "Auto Seams": "Auto Seams",
    "Automatic": "Automatic",
    "Avg U": "Avg U",
@@ -10112,6 +10122,7 @@
    "Stack Similar": "Stack Similar",
    "Stack and Orient": "Stack and Orient",
    "Step": "Step",
+   "Step Snap:": "Step Snap:",
    "Stitch Together": "Stitch Together",
    "Straighten UVs": "Straighten UVs",
    "Texel Density (px/unit)": "Texel Density (px/unit)",
@@ -12777,6 +12788,7 @@
    "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions (Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions (Maya Unfold; Blender Unwrap, Minimum Stretch)"
   },
   "Tooltips/operators/uv_transform": {
+   "Distribute the selected UVs evenly along U or V (UV Toolkit Move); the options button sets a custom distance": "Distribute the selected UVs evenly along U or V (UV Toolkit Move); the options button sets a custom distance",
    "Edit the UV pivot: drag it with the Cursor tool; the UV Editor's tools turn about it": "Edit the UV pivot: drag it with the Cursor tool; the UV Editor's tools turn about it",
    "Move the selected UVs by the Move step in this direction": "Move the selected UVs by the Move step in this direction",
    "Move the shells of the selection as one block onto this point of the Snap range": "Move the shells of the selection as one block onto this point of the Snap range",

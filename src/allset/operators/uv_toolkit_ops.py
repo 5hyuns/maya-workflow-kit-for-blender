@@ -70,6 +70,12 @@ class ALLSET_OT_uv_align_to(bpy.types.Operator):
 
     poll = classmethod(lambda cls, context: _poll(context))
 
+    @classmethod
+    def description(cls, context, props):
+        """The toolkit's Align pictures: the button's name (Min U ... Max V) over the command's tooltip."""
+        label = f"{props.where.title()} {props.axis}"
+        return i18n.tip(label) + "\n" + i18n.tip(" ".join(cls.__doc__.split()))
+
     def execute(self, context):
         synced = uv_tools.sync(context)
         shells = _shell_mode(context)
@@ -597,6 +603,18 @@ class ALLSET_PG_uv_toolkit(bpy.types.PropertyGroup):
                                 description="Degrees the Rotate buttons turn the selected UVs")
     scale_factor: FloatProperty(name="Factor", default=2.0, precision=4, step=10,
                                 description="The Scale button multiplies by this factor, Shrink divides by it")
+    move_snap_value: FloatProperty(name="Move Step Snap", default=0.1, min=0.0001, soft_max=1.0, precision=4,
+                                   step=1, update=uv_transform.move_step_update,
+                                   description="Step of the UV Editor's Move tool with Step Snap on (the UV grid "
+                                               "step follows it)")
+    rotate_snap_value: FloatProperty(name="Rotate Step Snap", default=15.0, min=0.01, max=180.0, precision=4,
+                                     step=100, update=uv_transform.rotate_step_update,
+                                     description="Degrees per step of the UV Editor's Rotate tool with Step Snap on")
+    retain_spacing: BoolProperty(name="Retain Component Spacing", default=True,
+                                 description="A typed U / V value moves the selected UVs together (on) or puts each "
+                                             "of them on that value (off)")
+    distribute_axis: EnumProperty(name="Distribute Along", default='U', items=(
+        ('U', "U", "Distribute along U"), ('V', "V", "Distribute along V")))
     scale_axis: EnumProperty(name="Scale In", default='UV', items=(
         ('UV', "UV", "Scale in U and V"), ('U', "U", "Scale in U only"), ('V', "V", "Scale in V only")))
     snap_min_u: IntProperty(name="Min U", default=0, description="Snap range: lowest U")

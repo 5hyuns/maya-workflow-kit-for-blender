@@ -14,7 +14,7 @@ Align and Snap its Snap grid (operators/uv_transform.py).
 import bpy
 
 from .. import i18n
-from . import notices
+from . import notices, uv_toolkit_icons
 
 CATEGORY = "UV Toolkit"
 PICK = (("Pick/Marquee", "builtin.select_box"), ("Drag", "builtin.select_circle"), ("Tweak/Marquee", "builtin.select"))
@@ -54,6 +54,9 @@ GREY = {
         "Select menu", "Blender has no UV selection constraint: use Select > Select Linked / Select Split."),
     "UV Toolkit/Transform Constraint": (
         "Snapping", "Blender has no UV transform constraint: use snapping (UV Editor header magnet)."),
+    "UV Toolkit/Scale Step Snap": (
+        "UV grid step", "Blender's UV Scale tool steps by the UV grid step (the Move Step Snap value); it has no "
+        "separate scale step."),
 }
 
 
@@ -63,9 +66,19 @@ def _grey(layout, key, text):
     row.operator("allset.menu_unavailable", text=text, emboss=False).item = key
 
 
+def _icon(key):
+    """The kit picture beside toolkit button ``key`` (its English label), like Maya's toolkit (0 = none)."""
+    return uv_toolkit_icons.icon(key)
+
+
+def _op(layout, idname, text, key=None, **kw):
+    """A toolkit button: its picture, then its text."""
+    return layout.operator(idname, text=text, icon_value=_icon(key or text), **kw)
+
+
 def _item(layout, path, text):
     """A UV Editor menu item: the same command, undo step and option box as the menu."""
-    layout.operator("allset.menu_item", text=text).item = path
+    _op(layout, "allset.menu_item", text).item = path
 
 
 def _grid(layout, rows, columns=2):
@@ -108,6 +121,27 @@ def _range_fields(layout, tk, prefix):
         row.prop(tk, f"{prefix}_max_{axis}", text="")
 
 
+def _step_snap(layout, context, kind, prop=None, grey_key=None):
+    """Maya's Step Snap row of a Transform area: on / off (the UV Editor tool's step snapping) and its value."""
+    from ..operators import snap_align
+    on = snap_align.uv_step_snap_on(context.scene.tool_settings, kind)
+    row = layout.row(align=True)
+    row.label(text="Step Snap:")
+    row.operator("allset.uv_step_snap", text="On" if on else "Off", depress=on).kind = kind
+    if prop is not None:
+        sub = row.row(align=True)
+        sub.active = on
+        sub.prop(context.scene.allset_uv_toolkit, prop, text="")
+    elif grey_key is not None:
+        sub = row.row(align=True)
+        sub.enabled = False
+        sub.operator("allset.menu_unavailable", text="1", emboss=True).item = grey_key
+
+
+def _preset(layout, prop):
+    layout.menu(f"ALLSET_MT_uvtk_preset_{prop}", text="", icon='DOWNARROW_HLT')
+
+
 def _transform(layout, context):
     """Maya UV Toolkit Transform: Pivot, Move, Rotate, Scale (operators/uv_transform.py)."""
     tk = context.scene.allset_uv_toolkit
@@ -128,22 +162,34 @@ def _transform(layout, context):
     split = box.split(factor=0.42)
     _grid3(split.column(), "allset.uv_nudge", "direction", NUDGE)
     col = split.column(align=True)
-    col.prop(tk, "nudge", text="Step")
+    row = col.row(align=True)
+    row.prop(tk, "nudge", text="Step")
+    _preset(row, "nudge")
     col.prop(tk, "position_u")
     col.prop(tk, "position_v")
+    _step_snap(box, context, 'TRANSLATE', "move_snap_value")
+    box.prop(tk, "retain_spacing")
+    row = box.row(align=True)
+    row.operator("allset.uv_distribute_toolkit", text="Distribute")
+    row.prop(tk, "distribute_axis", expand=True)
+    row.operator("allset.menu_option_box", text="", icon='OPTIONS').item = f"{UVE}/Modify/Distribute UVs"
     box = layout.box().column()
     box.label(text="Rotate")
     row = box.row(align=True)
     row.prop(tk, "rotate_angle", text="")
+    _preset(row, "rotate_angle")
     row.operator("allset.uv_rotate_step", text="", icon='LOOP_BACK').clockwise = False
     row.operator("allset.uv_rotate_step", text="", icon='LOOP_FORWARDS').clockwise = True
+    _step_snap(box, context, 'ROTATE', "rotate_snap_value")
     box = layout.box().column()
     box.label(text="Scale")
     row = box.row(align=True)
     row.prop(tk, "scale_factor", text="")
+    _preset(row, "scale_factor")
     row.operator("allset.uv_scale_step", text="Scale").shrink = False
     row.operator("allset.uv_scale_step", text="Shrink").shrink = True
     box.row(align=True).prop(tk, "scale_axis", expand=True)
+    _step_snap(box, context, 'RESIZE', grey_key="UV Toolkit/Scale Step Snap")
 
 
 def _snap_grid(layout, context):
@@ -269,19 +315,19 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
         body = _section(layout, "ALLSET_uvtk_cut", "Cut and Sew", default_closed=False)
         if body:
             _grid(body, CUT_SEW)
-            body.operator("allset.cut_sew_tool_set", text="3D Cut and Sew Tool")
+            _op(body, "allset.cut_sew_tool_set", text="3D Cut and Sew Tool")
         body = _section(layout, "ALLSET_uvtk_unfold", "Unfold", default_closed=False)
         if body:
             row = body.row(align=True)
             _item(row, f"{UVE}/Modify/Unfold", "Unfold")     # Shift+click: the Unfold options, like the menu
             _item(row, f"{UVE}/Modify/Optimize", "Optimize")
             row = body.row(align=True)
-            row.operator("allset.uv_unfold_along", text="Unfold Along U").axis = 'U'
-            row.operator("allset.uv_unfold_along", text="Unfold Along V").axis = 'V'
+            _op(row, "allset.uv_unfold_along", text="Unfold Along U", key="Unfold Along").axis = 'U'
+            _op(row, "allset.uv_unfold_along", text="Unfold Along V", key="Unfold Along").axis = 'V'
             tk = context.scene.allset_uv_toolkit
             from ..operators import uv_toolkit_ops
             split = body.split(factor=0.6, align=True)
-            op = split.operator("allset.uv_straighten_uvs", text="Straighten UVs")
+            op = _op(split, "allset.uv_straighten_uvs", text="Straighten UVs")
             op.axis, op.tolerance = uv_toolkit_ops.straighten_axis(context), tk.straighten_tolerance
             row = split.row(align=True)
             row.prop(tk, "straighten_u", toggle=True)
@@ -292,11 +338,12 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             _item(row, f"{UVE}/Modify/Straighten Border", "Straighten Border")
         body = _section(layout, "ALLSET_uvtk_align", "Align and Snap")
         if body:
-            for i in (0, 3):
-                row = body.row(align=True)
-                for axis, where, label in ALIGN[i:i + 3]:
-                    op = row.operator("allset.uv_align_to", text=label)
-                    op.axis, op.where = axis, where
+            row = body.row(align=True)
+            row.label(text="Align")
+            for axis, where, label in ALIGN:      # Maya's row of six pictures; the label is the tooltip
+                icon = _icon(f"Align {axis} {where}")
+                op = row.operator("allset.uv_align_to", text="" if icon else label, icon_value=icon)
+                op.axis, op.where = axis, where
             _snap_grid(body, context)
             _grid(body, SNAP)
         body = _section(layout, "ALLSET_uvtk_layout", "Arrange and Layout", default_closed=False)
@@ -322,5 +369,6 @@ def register():
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    uv_toolkit_icons.unregister()
     for key in GREY:
         notices.PANEL_NOTICES.pop(key, None)
