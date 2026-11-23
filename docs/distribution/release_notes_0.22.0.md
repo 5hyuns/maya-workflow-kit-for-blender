@@ -74,6 +74,11 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Fixed on Blender 5.3 (#528):** option box squares and other closed outlines (marquee and lattice frames, the
   Graph Editor scale box, the UV brush circle) draw every side.
 
+## Viewport
+
+- **Fixed (#529):** with the gradient background (Alt+B), image planes stay drawn in wireframe display and behind
+  objects; before, the gradient covered them except where a mesh was in front.
+
 ## Older scenes
 
 - **Nothing is converted when you open a scene.** Materials, lambert1, lights and cameras made by earlier versions
@@ -87,8 +92,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 ## Thank you
 
 Thanks to @suenwaichit (#494), @envwarby (#524, #526, #527) and @quangvupantheravn (#495) for the UV Editor and marking menu
-reports, to @cnzim for the Move Skinned Joints follow-up (#415), to @pixelkeyblade18 for the playback report (#344), and to everyone for the reports and
-ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
+reports, to @JinxSwe for the image plane report (#529), to @cnzim for the Move Skinned Joints follow-up (#415), to
+@pixelkeyblade18 for the playback report (#344), and to everyone for the reports and ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
 goal behind it.
