@@ -317,9 +317,23 @@ def _rigid_fit(src, dst):
     return math.atan2(sxy, sxx), cs, cd
 
 
+def _along(e, fs):
+    """Of the two faces ``fs`` of ``e``, the one whose corners run along the edge from its first vertex to its
+    second."""
+    v0 = e.verts[0]
+    for f in fs:
+        for l in f.loops:
+            if l.edge is e:
+                if l.vert is v0:
+                    return f
+                break
+    return fs[0]
+
+
 def move_sew(bm, uv, edges, max_faces=None):
     """Maya Move and Sew: per pair of shells the one with fewer faces moves rigidly onto the other along the selected
-    seam edges (seams centred), then each seam UV pair merges at its average. A border inside one shell is sewn
+    seam edges (seams centred), then each seam UV pair merges at its average. With equal face counts the shell on the
+    side of the first seam edge whose face runs along the edge's own direction moves, like Maya. A border inside one shell is sewn
     like Sew UV Edges (its UV pairs meet half-way). ``max_faces`` = the Limit shell size option: a pair whose moving
     shell has more faces than that stays apart. Returns the edges sewn."""
     groups = shells(bm, uv)
@@ -338,7 +352,8 @@ def move_sew(bm, uv, edges, max_faces=None):
     for (i, j), items in by_pair.items():
         mover, fixed = (i, j) if len(groups[i]) < len(groups[j]) else (j, i)
         if len(groups[i]) == len(groups[j]):
-            mover, fixed = (j, i)           # equal face counts: Maya's choice unknown; the later shell moves
+            mover = where[_along(*items[0])]
+            fixed = j if mover == i else i
         if max_faces is not None and len(groups[mover]) > max_faces:
             continue
         verts = []
