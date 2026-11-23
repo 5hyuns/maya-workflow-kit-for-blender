@@ -39,6 +39,8 @@ earlier version open unchanged: nothing in them is converted.
   one (Order in its option window).
 - **Flip** (#506): Modify > Flip uses its Coordinate (Pivot, Selection Center, Global) and Cut UV Perimeter options.
 - **Layout over UDIM tiles** (#505): Layout's Shell Distribution with Tiles U / V spreads the shells over tiles.
+- **Marking menu pictures** (#525): marking menu items (the radial items and the list) show their command's picture
+  left of the label, the kit's own drawings; a disabled item's picture is grey.
 
 ### Changed
 - One New Material: Lighting/Shading > Assign New Material (and Shift+T), Assign Favorite Material, the marking menu's
@@ -79,6 +81,11 @@ earlier version open unchanged: nothing in them is converted.
 - UV Editor: Select > Convert Selection > To Vertices / Edges / Faces / UVs convert the selection instead of only
   switching the select mode (#507).
 - Translations: the toolkits' "Drag" selection style has its own Japanese text, apart from the Fields "Drag" (#508).
+- UV Toolkit Flip U / Flip V and the UV marking menu's Flip Along U / V use the Flip options (Coordinate, Cut UV
+  Perimeter) like Modify > Flip, instead of mirroring around Blender's transform pivot (#520).
+- UV Editor: Stitch Together and Move and Sew with a mirrored shell fold it onto the other shell like Maya (#523).
+- UV Editor: Layout's Distribute over several tiles shares the shells out by count, tile after tile, like Maya (#522).
+- Marking menus: a list that would leave the window beside the ring moves closer to the ring instead of over it.
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse

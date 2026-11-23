@@ -54,7 +54,12 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Stitch Together, Flip and Layout (#503, #505, #506):** Stitch Together stitches every selected border edge at once,
   Flip uses its options, Layout can spread shells over UDIM tiles.
 - **Fixed:** Shift+marquee toggles what it catches, like Shift+click (#524); Convert Selection converts the selection
-  (#507).
+  (#507); the toolkit's Flip buttons use the Flip options (#520); Stitch Together on a mirrored shell (#523) and Layout
+  over several tiles (#522) give Maya's result.
+
+## Marking menus
+
+- **Pictures (#525):** marking menu items show their command's picture left of the label, like Maya.
 
 ## Older scenes
 
@@ -68,7 +73,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 
 ## Thank you
 
-Thanks to @suenwaichit (#494) and @envwarby (#524) for the UV Editor reports, and to everyone for the reports and
+Thanks to @suenwaichit (#494), @envwarby (#524) and @quangvupantheravn (#495) for the UV Editor and marking menu
+reports, and to everyone for the reports and
 ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
