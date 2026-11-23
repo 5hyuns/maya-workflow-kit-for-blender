@@ -1,4 +1,4 @@
-"""In a real UI: the Maya Workflow Kit layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
+"""In a real UI: the Maya Workflow Kit layout, pCube1 with new materials, then Windows > Rendering Editors >
 Hypershade, Render > Render Settings, Windows > General Editors > Script Editor in new windows -> Maya menu bars,
 Browser tabs, Blender's Render tab, history over MEL / Python input (screenshots with ALLSET_GUI_SHOTS)."""
 
