@@ -24,7 +24,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
 from .. import compat, i18n, results, undo_steps
-from . import uv_tools
+from . import uv_tools, uv_transform
 from .uv_modify import all_points, selected_ids
 from .uv_shells import _index_loops, _meshes, _poll, owner_map
 
@@ -577,6 +577,32 @@ class ALLSET_PG_uv_toolkit(bpy.types.PropertyGroup):
                                                     "lined up")
     straighten_u: BoolProperty(name="U", default=True, description="Straighten UVs: line up edges along U")
     straighten_v: BoolProperty(name="V", default=True, description="Straighten UVs: line up edges along V")
+    # Transform (operators/uv_transform.py)
+    pivot_area: EnumProperty(name="Pivot", default='SELECTION', items=(
+        ('SELECTION', "Selection", "The pivot buttons use the selected UVs' bounding box"),
+        ('UV_AREA', "UV Area", "The pivot buttons use the UV range below")))
+    pivot_min_u: IntProperty(name="Min U", default=0, description="UV Area: lowest U")
+    pivot_max_u: IntProperty(name="Max U", default=1, description="UV Area: highest U")
+    pivot_min_v: IntProperty(name="Min V", default=0, description="UV Area: lowest V")
+    pivot_max_v: IntProperty(name="Max V", default=1, description="UV Area: highest V")
+    nudge: FloatProperty(name="Move Step", default=0.1, precision=4, step=1,
+                         description="How far the Move buttons move the selected UVs")
+    position_u: FloatProperty(name="U", precision=4, step=1, get=uv_transform.position_get(0),
+                              set=uv_transform.position_set(0), options={'SKIP_SAVE'},
+                              description="Centre of the selected UVs in U: type a value to move them there")
+    position_v: FloatProperty(name="V", precision=4, step=1, get=uv_transform.position_get(1),
+                              set=uv_transform.position_set(1), options={'SKIP_SAVE'},
+                              description="Centre of the selected UVs in V: type a value to move them there")
+    rotate_angle: FloatProperty(name="Angle", default=90.0, precision=4, step=100,
+                                description="Degrees the Rotate buttons turn the selected UVs")
+    scale_factor: FloatProperty(name="Factor", default=2.0, precision=4, step=10,
+                                description="The Scale button multiplies by this factor, Shrink divides by it")
+    scale_axis: EnumProperty(name="Scale In", default='UV', items=(
+        ('UV', "UV", "Scale in U and V"), ('U', "U", "Scale in U only"), ('V', "V", "Scale in V only")))
+    snap_min_u: IntProperty(name="Min U", default=0, description="Snap range: lowest U")
+    snap_max_u: IntProperty(name="Max U", default=1, description="Snap range: highest U")
+    snap_min_v: IntProperty(name="Min V", default=0, description="Snap range: lowest V")
+    snap_max_v: IntProperty(name="Max V", default=1, description="Snap range: highest V")
 
 
 def straighten_axis(context):

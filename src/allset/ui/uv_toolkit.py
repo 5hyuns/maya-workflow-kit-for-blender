@@ -7,10 +7,9 @@ Constraint, All · Clear · Inverse, then the folded sections Pinning · Select 
 Cut and Sew · Unfold · Align and Snap · Arrange and Layout · UV Sets. Buttons run the UV Editor menu items through
 ``allset.menu_item`` (same command, undo step and option box as the menu) or the kit's toolkit-only commands
 (operators/uv_toolkit_ops.py); items Blender has no counterpart for are greyed with a notice. Stack Similar Shells
-matches shells of the same shape onto each other.
+matches shells of the same shape onto each other. Transform holds Maya's Pivot / Move / Rotate / Scale areas and
+Align and Snap its Snap grid (operators/uv_transform.py).
 """
-
-import math
 
 import bpy
 
@@ -76,6 +75,84 @@ def _grid(layout, rows, columns=2):
         row = col.row(align=True)
         for text, path in rows[i:i + columns]:
             _item(row, path if path.startswith(("UV/", UVE)) else f"{UVE}/{path}", text)
+
+
+# 3 x 3 button grids (Pivot, Move, Snap): the glyph points at the place / direction
+GLYPHS = {'TOP_LEFT': "↖", 'TOP': "↑", 'TOP_RIGHT': "↗", 'LEFT': "←", 'CENTER': "•",
+          'RIGHT': "→", 'BOTTOM_LEFT': "↙", 'BOTTOM': "↓", 'BOTTOM_RIGHT': "↘"}
+GRID3 = (('TOP_LEFT', 'TOP', 'TOP_RIGHT'), ('LEFT', 'CENTER', 'RIGHT'), ('BOTTOM_LEFT', 'BOTTOM', 'BOTTOM_RIGHT'))
+NUDGE = {'TOP_LEFT': 'UP_LEFT', 'TOP': 'UP', 'TOP_RIGHT': 'UP_RIGHT', 'LEFT': 'LEFT', 'RIGHT': 'RIGHT',
+         'BOTTOM_LEFT': 'DOWN_LEFT', 'BOTTOM': 'DOWN', 'BOTTOM_RIGHT': 'DOWN_RIGHT'}
+
+
+def _grid3(layout, op, prop, values=None):
+    """Nine buttons of ``op`` (``prop`` = the place, or ``values[place]``; a place without a value stays empty)."""
+    col = layout.column(align=True)
+    for places in GRID3:
+        row = col.row(align=True)
+        row.scale_x = 1.2
+        for place in places:
+            value = place if values is None else values.get(place)
+            if value is None:
+                row.label(text="")
+            else:
+                setattr(row.operator(op, text=GLYPHS[place], translate=False), prop, value)
+    return col
+
+
+def _range_fields(layout, tk, prefix):
+    for axis in ("u", "v"):
+        row = layout.row(align=True)
+        row.label(text=axis.upper())
+        row.prop(tk, f"{prefix}_min_{axis}", text="")
+        row.prop(tk, f"{prefix}_max_{axis}", text="")
+
+
+def _transform(layout, context):
+    """Maya UV Toolkit Transform: Pivot, Move, Rotate, Scale (operators/uv_transform.py)."""
+    tk = context.scene.allset_uv_toolkit
+    box = layout.box().column()
+    box.label(text="Pivot")
+    split = box.split(factor=0.42)
+    _grid3(split.column(), "allset.uv_pivot", "position")
+    col = split.column(align=True)
+    col.prop(tk, "pivot_area", expand=True)
+    sub = col.column(align=True)
+    sub.active = tk.pivot_area == 'UV_AREA'
+    _range_fields(sub, tk, "pivot")
+    row = box.row(align=True)
+    row.operator("allset.uv_pivot_edit", text="Edit Pivot")
+    row.operator("allset.uv_pivot_reset", text="Reset")
+    box = layout.box().column()
+    box.label(text="Move")
+    split = box.split(factor=0.42)
+    _grid3(split.column(), "allset.uv_nudge", "direction", NUDGE)
+    col = split.column(align=True)
+    col.prop(tk, "nudge", text="Step")
+    col.prop(tk, "position_u")
+    col.prop(tk, "position_v")
+    box = layout.box().column()
+    box.label(text="Rotate")
+    row = box.row(align=True)
+    row.prop(tk, "rotate_angle", text="")
+    row.operator("allset.uv_rotate_step", text="", icon='LOOP_BACK').clockwise = False
+    row.operator("allset.uv_rotate_step", text="", icon='LOOP_FORWARDS').clockwise = True
+    box = layout.box().column()
+    box.label(text="Scale")
+    row = box.row(align=True)
+    row.prop(tk, "scale_factor", text="")
+    row.operator("allset.uv_scale_step", text="Scale").shrink = False
+    row.operator("allset.uv_scale_step", text="Shrink").shrink = True
+    box.row(align=True).prop(tk, "scale_axis", expand=True)
+
+
+def _snap_grid(layout, context):
+    """Maya UV Toolkit Snap: the shells of the selection onto a place of the Snap range."""
+    tk = context.scene.allset_uv_toolkit
+    layout.label(text="Snap")
+    split = layout.split(factor=0.42)
+    _grid3(split.column(), "allset.uv_snap_shells", "position")
+    _range_fields(split.column(align=True), tk, "snap")
 
 
 def _section(layout, idname, label, default_closed=True):
@@ -173,6 +250,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             sub.prop(ts, "proportional_edit_falloff", text="Falloff curve")
         body = _section(layout, "ALLSET_uvtk_transform", "Transform")
         if body:
+            _transform(body, context)
             box = body.column(align=True)
             box.label(text="Texel Density (px/unit)")
             box.prop(s, "map_size")
@@ -185,9 +263,6 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             op.constraint_axis = (True, False, False)
             op = row.operator("transform.mirror", text="Flip V")
             op.constraint_axis = (False, True, False)
-            row = body.row(align=True)
-            row.operator("transform.rotate", text="Rotate -90").value = -math.pi / 2
-            row.operator("transform.rotate", text="Rotate +90").value = math.pi / 2
         body = _section(layout, "ALLSET_uvtk_create", "Create")
         if body:
             _grid(body, CREATE)
@@ -222,6 +297,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
                 for axis, where, label in ALIGN[i:i + 3]:
                     op = row.operator("allset.uv_align_to", text=label)
                     op.axis, op.where = axis, where
+            _snap_grid(body, context)
             _grid(body, SNAP)
         body = _section(layout, "ALLSET_uvtk_layout", "Arrange and Layout", default_closed=False)
         if body:

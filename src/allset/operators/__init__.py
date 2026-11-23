@@ -232,6 +232,8 @@ classes += render_cameras.classes
 
 from . import uv_toolkit_ops  # noqa: E402  UV Toolkit Align / Straighten UVs / Unfold Along / Randomize
 classes += uv_toolkit_ops.classes
+from . import uv_transform  # noqa: E402  UV Toolkit Pivot / Move / Rotate / Scale / Snap (#494)
+classes += uv_transform.classes
 
 from . import type_manip  # noqa: E402  Type Manipulator: per-character move / rotate / scale (#258)
 classes += type_manip.classes

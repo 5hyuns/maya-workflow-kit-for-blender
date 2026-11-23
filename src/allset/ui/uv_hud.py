@@ -36,7 +36,7 @@ REFRESH_S = 0.25                     # statistics are recomputed at most this of
 STACK_EPS = 1e-6                     # "overlapping" = the same position (kit cuts sit uv_islands.NUDGE apart)
 
 _handle = []
-_cache = {"at": 0.0, "key": None, "value": None, "last": None}
+_cache = {"at": 0.0, "key": None, "value": None, "last": None, "centre": None}
 
 
 # --- pure helpers (tests/test_step206_uv.py) ---------------------------------------------------------------------
@@ -152,8 +152,24 @@ def collect(context):
             tot[i] += got[i]
         coords += got[6]
     value = (statistics_text(tot[1], tot[0], tot[3], tot[2], tot[5], tot[4]), position_text(coords))
-    _cache.update(at=now, key=key, value=value, last=value)
+    _cache.update(at=now, key=key, value=value, last=value, centre=_centre(coords))
     return value
+
+
+def _centre(points):
+    if not points:
+        return None
+    us = [p[0] for p in points]
+    vs = [p[1] for p in points]
+    return (min(us) + max(us)) / 2, (min(vs) + max(vs)) / 2
+
+
+def selection_centre(context):
+    """(U, V) centre of the selected UVs' bounding box, like the UV Position display (cached), or None."""
+    if context.mode != 'EDIT_MESH':
+        return None
+    collect(context)
+    return _cache.get("centre")
 
 
 # --- drawing -----------------------------------------------------------------------------------------------------
@@ -230,4 +246,4 @@ def unregister():
     for name, _l, _t in PROPS:
         if hasattr(wm, name):
             delattr(wm, name)
-    _cache.update(at=0.0, key=None, value=None, last=None)
+    _cache.update(at=0.0, key=None, value=None, last=None, centre=None)
