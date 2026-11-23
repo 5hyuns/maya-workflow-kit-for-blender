@@ -112,7 +112,7 @@ def _extend():
     from . import motion_path_228
     WINDOWS.extend(motion_path_228.windows())    # Attach to Motion Path
     from . import option_windows_uv
-    WINDOWS.extend(option_windows_uv.WINDOWS)    # UV Editor Straighten UVs / Randomize Shells
+    WINDOWS.extend(option_windows_uv.WINDOWS)    # UV Editor Unfold / Layout / Straighten UVs / Randomize Shells
     from . import option_windows_trax
     WINDOWS.extend(option_windows_trax.WINDOWS)    # Trax Editor Create Clip
     from . import option_windows_match
@@ -241,6 +241,11 @@ def saved(key):
     if out is not None and window is not None:
         out = {**out, **_pref_values(window, prefs, out)}
     return out
+
+
+def current(key):
+    """The values a plain click of ``key``'s command uses: the saved ones over the window's defaults."""
+    return {**_BY_KEY[key].defaults(), **(saved(key) or {})}
 
 
 def _pref_values(window, prefs, stored=()):

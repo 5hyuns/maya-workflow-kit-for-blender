@@ -200,7 +200,7 @@ def test_texel_density_get_and_set():
     b = _two_quads(2.0, "big")           # twice as big, same UVs: 256 px per unit
     bpy.ops.object.mode_set(mode='OBJECT')
     s = bpy.context.scene.allset_uv
-    assert s.map_size == 1024 and abs(s.shell_padding - 2) < 1e-9
+    assert s.map_size == 1024
     for ob, want in ((a, 512.0), (b, 256.0)):
         for o in bpy.context.selected_objects:
             o.select_set(False)

@@ -198,7 +198,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
         body = _section(layout, "ALLSET_uvtk_unfold", "Unfold", default_closed=False)
         if body:
             row = body.row(align=True)
-            row.operator("allset.uv_unfold", text="Unfold")
+            _item(row, f"{UVE}/Modify/Unfold", "Unfold")     # Shift+click: the Unfold options, like the menu
             _item(row, f"{UVE}/Modify/Optimize", "Optimize")
             row = body.row(align=True)
             row.operator("allset.uv_unfold_along", text="Unfold Along U").axis = 'U'
@@ -225,8 +225,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             _grid(body, SNAP)
         body = _section(layout, "ALLSET_uvtk_layout", "Arrange and Layout", default_closed=False)
         if body:
-            body.operator("allset.uv_layout", text="Layout")
-            body.prop(s, "shell_padding", text="Shell Padding (px)")
+            _item(body, f"{UVE}/Modify/Layout", "Layout")    # the Layout options (padding, map size ...)
             _grid(body, ARRANGE)
         ob = context.edit_object
         body = _section(layout, "ALLSET_uvtk_sets", "UV Sets")

@@ -240,11 +240,11 @@ class ALLSET_OT_uv_unfold_layout(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     def execute(self, context):
-        s = uv_tools.settings(context)
-        n = 0
-        for ob in uv_tools._edit_meshes(context):
-            n += uv_tools.unfold(context, ob)
-            uv_tools.layout(context, ob, s.shell_padding, s.map_size)
+        # both with their saved option values (the Unfold / Layout option windows)
+        v = uv_tools.option_values("uv_unfold")
+        n = sum(uv_tools.unfold(context, ob, True, v["iterations"], v["prevent_flips"])
+                for ob in uv_tools._edit_meshes(context))
+        uv_tools.layout(context)
         return {'FINISHED'} if n else {'CANCELLED'}
 
 

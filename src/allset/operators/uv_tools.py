@@ -8,7 +8,8 @@
   (pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
   2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the UVs on the edge joined half-way.
 - Unfold = Blender Unwrap (Minimum Stretch) on the chosen shells with their borders kept as seams, each shell put back where
-  it was; Layout = Average Islands Scale, then Pack Islands without turning, with the shell padding in pixels of the map;
+  it was; Layout = operators/uv_layout.py (Pack Islands with the Layout options: by default the shells scaled to one
+  texel density, packed together into 0-1 without turning, no padding);
   Texel Density = px per Maya unit.
 
 Code: uv_islands (shells, UV selection), uv_components (UV component mode, UV Editor), uv_projection (Automatic,
@@ -16,11 +17,12 @@ Contour Stretch, Cylindrical, Spherical); this module keeps the UV settings, Cut
 the classes tuple and re-exports.
 """
 
+import json
 import math
 
 import bmesh
 import bpy
-from bpy.props import BoolProperty, FloatProperty, IntProperty, PointerProperty
+from bpy.props import BoolProperty, FloatProperty, IntProperty, PointerProperty, StringProperty
 from mathutils import Vector
 
 from .. import results
@@ -39,17 +41,15 @@ from .uv_projection import (AUTOPROJ, PLANE_ITEMS, ALLSET_OT_uv_automatic,  # no
                             note_object_state, object_state_ok)
 
 MAYA_MAP_SIZE = 1024
-MAYA_SHELL_PADDING = 2   # px
+UNFOLD_STEPS = 10        # Blender Minimum Stretch iterations per Maya Unfold iteration
 NOTICE_UNFOLD = "Unfold uses Blender Unwrap (Minimum Stretch), not Unfold3D: shapes can differ from Maya."
 
 
 class ALLSET_PG_uv(bpy.types.PropertyGroup):
     map_size: IntProperty(name="Map Size", default=MAYA_MAP_SIZE, min=1, soft_max=8192,
-                          description="Texture size in pixels for Texel Density and Layout padding")
+                          description="Texture size in pixels for Texel Density")
     texel_density: FloatProperty(name="Texel Density", default=0.0, min=0.0, precision=3,
                                  description="Pixels per Maya unit (px/cm in the Maya Workflow Kit template)")
-    shell_padding: FloatProperty(name="Shell Padding", default=MAYA_SHELL_PADDING, min=0.0, soft_max=64.0,
-                                 description="Pixels between UV shells (Layout)")
 
 
 def settings(context):
@@ -180,8 +180,10 @@ def mark_shell_borders(bm, uv, faces):
             e.seam = True
 
 
-def unfold(context, ob, fallback=True):
-    """Maya Unfold on the target shells of ``ob``: Blender Unwrap (Minimum Stretch), each shell back in its place."""
+def unfold(context, ob, fallback=True, iterations=1, no_flip=True):
+    """Maya Unfold on the target shells of ``ob``: Blender Unwrap (Minimum Stretch), each shell back in its place.
+    ``iterations`` = the Unfold option (0 = one quick flattening without relaxing, each more = more stretch relaxed),
+    ``no_flip`` = Prevent triangle flips."""
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.index_update()
@@ -194,7 +196,11 @@ def unfold(context, ob, fallback=True):
     # (Unfold); its solver turn can't be reproduced, Blender's unwrap orientation stays.
     before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in shells]
     bmesh.update_edit_mesh(ob.data)
-    _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(method='MINIMUM_STRETCH', margin=0.0))
+    if iterations <= 0:
+        kw = {"method": 'CONFORMAL'}
+    else:
+        kw = {"method": 'MINIMUM_STRETCH', "iterations": min(UNFOLD_STEPS * iterations, 10000), "no_flip": no_flip}
+    _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(margin=0.0, **kw))
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.ensure_lookup_table()
@@ -229,22 +235,32 @@ def _point_mean(island, uv):
     return total / max(n, 1)
 
 
-def layout(context, ob, padding_px, map_size, fallback=True):
-    bm = bmesh.from_edit_mesh(ob.data)
-    uv = bm.loops.layers.uv.verify()
-    shells = target_islands(bm, uv, sync(context), fallback=fallback)
-    if not shells:
-        return 0
-    faces = [f for isl in shells for f in isl]
-    margin = padding_px / max(map_size, 1)
+def layout_picks(context, fallback=True):
+    """{object: indices of the faces of its target shells} for Layout (every shell of a mesh when ``fallback``)."""
+    out = {}
+    for ob in _edit_meshes(context):
+        bm = bmesh.from_edit_mesh(ob.data)
+        uv = bm.loops.layers.uv.verify()
+        bm.faces.index_update()
+        faces = [f.index for isl in target_islands(bm, uv, sync(context), fallback=fallback) for f in isl]
+        if faces:
+            out[ob] = faces
+    return out
 
-    def run():
-        # like Maya Layout: the shells first scaled to their 3D size ratio (one texel density), then packed as
-        # they are turned
-        bpy.ops.uv.average_islands_scale()
-        return bpy.ops.uv.pack_islands(rotate=False, margin_method='FRACTION', margin=margin)
-    _with_faces(context, ob, faces, run)
-    return len(shells)
+
+def layout(context, values=None, fallback=True):
+    """Maya Layout on the target shells of every mesh in edit mode with the Layout option values (the saved ones
+    when ``values`` is None; operators/uv_layout.py). Returns the number of meshes laid out."""
+    from . import uv_layout
+    values = values or option_values("uv_layout")
+    return uv_layout.layout(context, layout_picks(context, fallback), values)
+
+
+def option_values(key):
+    """The Layout / Unfold option values a plain menu click, its hotkey and the UV Toolkit button use: the saved
+    ones, defaults for the rest."""
+    from . import option_windows
+    return option_windows.current(key)
 
 
 # --- Texel Density -----------------------------------------------------------------------------------
@@ -332,44 +348,47 @@ class ALLSET_OT_uv_sew(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_unfold(bpy.types.Operator):
-    """Unfold the selected UV shells (all when none are selected), keeping their borders and places
-    (Maya Unfold; Blender Unwrap, Minimum Stretch)"""
+    """Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold
+    options (Maya Unfold; Blender Unwrap, Minimum Stretch)"""
     bl_idname = "allset.uv_unfold"
     bl_label = "Unfold"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # the option values as JSON (Unfold Options window); empty = the saved ones
+    options: StringProperty(default="", options={'SKIP_SAVE', 'HIDDEN'})
+
     poll = classmethod(lambda cls, context: _uv_poll(context))
 
     def execute(self, context):
+        v = json.loads(self.options) if self.options else option_values("uv_unfold")
         fb = not picked_anywhere(context)
-        n = sum(unfold(context, ob, fb) for ob in _edit_meshes(context))
+        n = sum(unfold(context, ob, fb, v["iterations"], v["prevent_flips"]) for ob in _edit_meshes(context))
         if not n:
             return {'CANCELLED'}
+        if v["layout_uvs"]:
+            layout(context, fallback=fb)      # Layout UVs: then Layout with its own option values
         results.result(self, NOTICE_UNFOLD)
         return {'FINISHED'}
 
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_layout(bpy.types.Operator):
-    """Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)"""
+    """Lay the selected UV shells (all when none are selected) out with the Layout options (Maya Layout; Blender
+    Pack Islands)"""
     bl_idname = "allset.uv_layout"
     bl_label = "Layout"
     bl_options = {'REGISTER', 'UNDO'}
 
-    shell_padding: FloatProperty(name="Shell Padding (px)", default=MAYA_SHELL_PADDING, min=0.0, soft_max=64.0)
-    map_size: IntProperty(name="Map Size", default=MAYA_MAP_SIZE, min=1)
+    # the option values as JSON (Layout Options window); empty = the saved ones
+    options: StringProperty(default="", options={'SKIP_SAVE', 'HIDDEN'})
 
     poll = classmethod(lambda cls, context: _uv_poll(context))
 
-    def invoke(self, context, event):
-        s = settings(context)
-        self.shell_padding, self.map_size = s.shell_padding, s.map_size
-        return self.execute(context)
-
     def execute(self, context):
-        fb = not picked_anywhere(context)
-        n = sum(layout(context, ob, self.shell_padding, self.map_size, fb) for ob in _edit_meshes(context))
+        v = json.loads(self.options) if self.options else None
+        n = layout(context, v, not picked_anywhere(context))
         return {'FINISHED'} if n else {'CANCELLED'}
 
 

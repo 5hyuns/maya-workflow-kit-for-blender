@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """UV shells (Blender UV islands) and the UV selection, on bmesh: ``islands`` (faces that share UVs across their
 edges), ``selected_faces`` / ``selected_edges`` / ``target_islands`` / ``picked_anywhere`` (sync or per-corner UV
-selection), shell centre / bounds / area, ``_edit_meshes`` and ``_with_faces`` (run a Blender UV operator on exactly
-some faces). Shared by every uv_* operator module; ``uv_tools`` re-exports all of it.
+selection), shell centre / bounds / area, ``_edit_meshes`` and ``_with_faces`` / ``with_faces_of`` (run a Blender UV
+operator on exactly some faces). Shared by every uv_* operator module; ``uv_tools`` re-exports all of it.
 """
 
 import bmesh
@@ -151,22 +151,28 @@ def _with_faces(context, ob, faces, call):
     Blender operators work on every mesh in edit mode: the other meshes have nothing selected meanwhile (their
     picked faces were unwrapped / packed on their own, tearing them off their shells). Blender's own UV selection
     is set aside meanwhile, so the operators read the face selection."""
+    return with_faces_of(context, {ob: [f.index for f in faces]}, call)
+
+
+def with_faces_of(context, picks, call):
+    """``_with_faces`` for several meshes at once: ``picks`` = {object: face indices}; every other mesh in edit mode
+    has nothing selected meanwhile (one Blender pack then lays all the picked shells out together)."""
     ts = context.scene.tool_settings
     old_sync = ts.use_uv_select_sync
     old_mode = tuple(ts.mesh_select_mode)
-    others = [o for o in _edit_meshes(context) if o.data.as_pointer() != ob.data.as_pointer()]
-    saved = [(o, selection_state(bmesh.from_edit_mesh(o.data))) for o in [ob] + others]
-    want = {f.index for f in faces}
+    want = {o.data.as_pointer(): set(idx) for o, idx in picks.items()}
+    meshes = list(picks) + [o for o in _edit_meshes(context) if o.data.as_pointer() not in want]
+    saved = [(o, selection_state(bmesh.from_edit_mesh(o.data))) for o in meshes]
     ts.use_uv_select_sync = True
-    for o in [ob] + others:
+    for o in meshes:
         bm = bmesh.from_edit_mesh(o.data)
         bm.faces.index_update()
+        mine = want.get(o.data.as_pointer(), ())
         for f in bm.faces:
             f.select_set(False)
-        if o is ob:
-            for f in bm.faces:
-                if f.index in want:
-                    f.select_set(True)
+        for f in bm.faces:
+            if f.index in mine:
+                f.select_set(True)
         if hasattr(bm, "uv_select_sync_valid"):
             bm.uv_select_sync_valid = False
         bmesh.update_edit_mesh(o.data)
