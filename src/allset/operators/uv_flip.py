@@ -9,6 +9,8 @@ Like Maya:
   0 line: U becomes -U, or V becomes -V).
 - Cut UV Perimeter (on by default): the flipped faces are cut free along their border first, so the faces next to
   them stay where they are; off, the UVs they share move with them and pull the neighbours along.
+- The UV Toolkit's Flip U / Flip V buttons and the UV marking menu's Flip Along U / V items flip in their own
+  direction with the Coordinate and Cut UV Perimeter of the Flip options.
 """
 
 import bmesh
@@ -84,10 +86,18 @@ class ALLSET_OT_uv_flip(bpy.types.Operator):
                                                        ('GLOBAL', "Global", "")],
                              default='PIVOT', options={'SKIP_SAVE'})
     cut: BoolProperty(name="Cut UV Perimeter", default=True, options={'SKIP_SAVE'})
+    # the UV Toolkit's Flip U / Flip V buttons and the Flip Along U / V marking menu items: their own direction with
+    # the Coordinate and Cut UV Perimeter of the Flip options (saved values, else the option defaults)
+    use_options: BoolProperty(name="Use Flip Options", default=False, options={'SKIP_SAVE', 'HIDDEN'})
 
     poll = classmethod(lambda cls, context: context.mode == 'EDIT_MESH')
 
     def execute(self, context):
+        if self.use_options:
+            from . import option_windows
+            v = option_windows.current("uv_flip")
+            self.coordinate = COORDINATES.get(v.get("coordinate"), 'PIVOT')
+            self.cut = bool(v.get("cut", True))
         synced = uv_tools.sync(context) or uv_tools.mesh_selection_wanted(context)
         mode = _mode(context, synced)
         found = []

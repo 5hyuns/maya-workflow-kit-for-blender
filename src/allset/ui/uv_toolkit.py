@@ -313,10 +313,10 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             row.operator("allset.uv_texel_get", text="Get")
             row.operator("allset.uv_texel_set", text="Set")
             row = body.row(align=True)
-            op = row.operator("transform.mirror", text="Flip U")
-            op.constraint_axis = (True, False, False)
-            op = row.operator("transform.mirror", text="Flip V")
-            op.constraint_axis = (False, True, False)
+            op = row.operator("allset.uv_flip", text="Flip U")
+            op.direction, op.use_options = 'HORIZONTAL', True
+            op = row.operator("allset.uv_flip", text="Flip V")
+            op.direction, op.use_options = 'VERTICAL', True
         body = _section(layout, "ALLSET_uvtk_create", "Create")
         if body:
             _grid(body, CREATE)

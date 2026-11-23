@@ -7562,6 +7562,7 @@ STRINGS = {
     'Create new UV Set, UV Set name': '创建新 UV 集、UV 集名称',
     'Curvature, Preserve length ratio, Preserve original shape': '曲率、保持长度比例、保持原始形状',
     'Cut UV Perimeter': '切割 UV 周边',
+    'Use Flip Options': '使用翻转选项',
     'Direction: Towards Target': '方向：朝向目标',
     'Distribute Along': '分布方向',
     'Distribute Shells Options': '分布壳选项',

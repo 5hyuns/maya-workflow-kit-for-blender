@@ -7561,6 +7561,7 @@ STRINGS = {
     'Create new UV Set, UV Set name': '新規 UV セットを作成、UV セット名',
     'Curvature, Preserve length ratio, Preserve original shape': '曲率、長さの比率を保持、元の形状を保持',
     'Cut UV Perimeter': 'UV の外周をカット',
+    'Use Flip Options': '反転オプションを使用',
     'Direction: Towards Target': '方向: ターゲットへ',
     'Distribute Along': '分散の方向',
     'Distribute Shells Options': 'シェルを分散オプション',
