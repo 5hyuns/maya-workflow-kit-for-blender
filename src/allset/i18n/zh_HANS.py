@@ -7475,7 +7475,6 @@ STRINGS = {
     'Rotate Shells': '旋转壳',
     'Rotation Steps': '旋转步长',
     'Scale Mode': '缩放模式',
-    'Shell Distribution, Tiles U / V': '壳分布、图块 U / V',
     'Shell Pre-Rotation': '壳预旋转',
     'Shell Pre-Scaling': '壳预缩放',
     'Texture Map Size': '纹理贴图大小',
@@ -7600,4 +7599,8 @@ STRINGS = {
     'Edge weights': '边权重',
     'World space': '世界空间',
     'Maximum iterations': '最大迭代次数',
+    'Shell Distribution': '壳分布',
+    'Shell Centers': '壳中心',
+    'Tiles U': '图块 U',
+    'Tiles V': '图块 V',
 }

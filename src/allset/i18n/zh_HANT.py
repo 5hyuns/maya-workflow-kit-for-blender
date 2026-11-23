@@ -7475,7 +7475,6 @@ STRINGS = {
     'Rotate Shells': '旋轉殼',
     'Rotation Steps': '旋轉步長',
     'Scale Mode': '縮放模式',
-    'Shell Distribution, Tiles U / V': '殼分佈、圖塊 U / V',
     'Shell Pre-Rotation': '殼預旋轉',
     'Shell Pre-Scaling': '殼預縮放',
     'Texture Map Size': '紋理貼圖大小',
@@ -7600,4 +7599,8 @@ STRINGS = {
     'Edge weights': '邊權重',
     'World space': '世界空間',
     'Maximum iterations': '最大迭代次數',
+    'Shell Distribution': '殼分佈',
+    'Shell Centers': '殼中心',
+    'Tiles U': '圖塊 U',
+    'Tiles V': '圖塊 V',
 }

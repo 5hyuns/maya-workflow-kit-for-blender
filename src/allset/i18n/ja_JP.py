@@ -7474,7 +7474,6 @@ STRINGS = {
     'Rotate Shells': 'シェルを回転',
     'Rotation Steps': '回転の刻み',
     'Scale Mode': 'スケールモード',
-    'Shell Distribution, Tiles U / V': 'シェルの分配、タイル U / V',
     'Shell Pre-Rotation': 'シェルの事前回転',
     'Shell Pre-Scaling': 'シェルの事前スケール',
     'Texture Map Size': 'テクスチャマップサイズ',
@@ -7599,4 +7598,8 @@ STRINGS = {
     'Edge weights': 'エッジのウェイト',
     'World space': 'ワールド空間',
     'Maximum iterations': '最大反復回数',
+    'Shell Distribution': 'シェルの分布',
+    'Shell Centers': 'シェルの中心',
+    'Tiles U': 'タイル U',
+    'Tiles V': 'タイル V',
 }

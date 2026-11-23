@@ -16,6 +16,10 @@ The settings (field names of the Layout Options window, operators/option_windows
 - Multiple Objects: Pack Together (all meshes' shells in one layout, none overlapping; default) or Pack Separately
   (each mesh laid out on its own over the whole region).
 - Stack Similar: shells of the same shape are stacked on each other first and stay stacked in the layout.
+- Shell Distribution + Tiles U / V: with more than one tile the shells spread over the UDIM tiles (1001 = the 0-1
+  square, then along U and up V): Distribute shares them out by area in shell order, Shell Centers keeps each shell in
+  the tile its centre is in. Each tile is packed and filled on its own (the packing region and paddings repeat in
+  every tile).
 """
 
 import math
@@ -36,6 +40,7 @@ PRE_ROTATE = ("Off", "Horizontal", "Vertical", "Align X to V", "Align Y to V", "
 PRE_SCALE = ("Off", "Preserve 3D Ratios", "Preserve UV Ratios")
 SCALE_MODES = ("Off", "Uniform", "Non-Uniform")
 MULTI = ("Pack Together (non-overlapping)", "Pack Separately (overlapping)")
+DISTRIBUTIONS = ("Distribute", "Shell Centers")
 
 
 def region(v):
@@ -127,8 +132,9 @@ def _pre_transform(context, group, v):
         with_faces_of(context, group, lambda: bpy.ops.uv.average_islands_scale())
 
 
-def _pack(context, group, v):
+def _pack(context, group, v, tile=(0, 0)):
     lo_u, hi_u, lo_v, hi_v = region(v)
+    lo_u, hi_u, lo_v, hi_v = lo_u + tile[0], hi_u + tile[0], lo_v + tile[1], hi_v + tile[1]
     shell_pad, tile_pad = paddings(v)
     # the tile padding stays free inside the region's border
     lo_u, hi_u = lo_u + min(tile_pad, (hi_u - lo_u) / 2 - 1e-6), hi_u - min(tile_pad, (hi_u - lo_u) / 2 - 1e-6)
@@ -158,6 +164,58 @@ def _pack(context, group, v):
     _transform(group, lambda p: Vector((lo_u + p.x * sw, lo_v + p.y * sh)))
 
 
+def _shells(group):
+    """[(object, face indices of one shell, UV area, UV box centre)] in object and face order."""
+    from .uv_islands import islands, _uv_area
+    out = []
+    for ob, idx in group.items():
+        _bm, uv, faces = _faces(ob, idx)
+        for isl in islands(_bm, uv, faces):
+            isl.sort(key=lambda f: f.index)
+            lo, hi = uv_bounds(isl, uv)
+            out.append((ob, [f.index for f in isl], sum(_uv_area(f, uv) for f in isl), (lo + hi) / 2))
+    out.sort(key=lambda s: (list(group).index(s[0]), s[1][0]))
+    return out
+
+
+def tiles_of(shells, v):
+    """{(tile U, tile V): [shells]}: how the shells spread over the Tiles U x Tiles V UDIM tiles (tile (0, 0) = the
+    0-1 square). Distribute: in shell order, each shell goes to the tile its share of the total area falls in, the
+    tiles filled along U first; Shell Centers: each shell stays in the tile its centre is in, and the shells outside
+    the tiles go together into the tile below the first one."""
+    nu, nv = max(int(v.get("tiles_u", 1)), 1), max(int(v.get("tiles_v", 1)), 1)
+    out = {}
+    if v.get("distribution", DISTRIBUTIONS[0]) == DISTRIBUTIONS[1]:
+        for s in shells:
+            t = (math.floor(s[3].x), math.floor(s[3].y))
+            if not (0 <= t[0] < nu and 0 <= t[1] < nv):
+                t = (0, -1)
+            out.setdefault(t, []).append(s)
+        return out
+    n = nu * nv
+    total = sum(s[2] for s in shells)
+    done = 0.0
+    for i, s in enumerate(shells):
+        mid = done + s[2] / 2
+        done += s[2]
+        k = min(int(mid / total * n), n - 1) if total > 1e-18 else min(i * n // max(len(shells), 1), n - 1)
+        out.setdefault((k % nu, k // nu), []).append(s)
+    return out
+
+
+def _pack_tiles(context, group, v):
+    """Pack ``group``: into the packing region of one tile, or spread over several UDIM tiles (each tile packed on
+    its own and filled, like Maya)."""
+    if max(int(v.get("tiles_u", 1)), 1) * max(int(v.get("tiles_v", 1)), 1) == 1:
+        _pack(context, group, v)
+        return
+    for tile, shells in tiles_of(_shells(group), v).items():
+        sub = {}
+        for ob, idx, _a, _c in shells:
+            sub.setdefault(ob, []).extend(idx)
+        _pack(context, sub, v, tile)
+
+
 def layout(context, picks, v):
     """Maya Layout with the option values ``v`` on ``picks`` ({object: face indices}). Returns the number of meshes
     laid out."""
@@ -170,5 +228,5 @@ def layout(context, picks, v):
         if v["stack_similar"]:
             _stack_similar(group)
         _pre_transform(context, group, v)
-        _pack(context, group, v)
+        _pack_tiles(context, group, v)
     return len(picks)

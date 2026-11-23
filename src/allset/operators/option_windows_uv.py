@@ -14,7 +14,7 @@ it. Optimize (operators/uv_optimize.py): 1 iteration, Surfangle 1, Power 100 (be
 triangle flips prevented; Method Legacy (relax) relaxes the shells instead (UV border pinned, uniform edge weights, 5
 iterations).
 Layout: shells pre-scaled to their 3D size ratio, not turned, packed together into the 0-1 square without padding,
-uniformly scaled (operators/uv_layout.py).
+uniformly scaled, in one tile (Shell Distribution Distribute, Tiles U / V 1) (operators/uv_layout.py).
 """
 
 import json
@@ -24,7 +24,7 @@ import bpy
 from .option_windows import F, Window
 from . import uv_optimize
 from . import uv_toolkit_ops as tk
-from .uv_layout import MAP_SIZES, MULTI, PRE_ROTATE, PRE_SCALE, SCALE_MODES
+from .uv_layout import DISTRIBUTIONS, MAP_SIZES, MULTI, PRE_ROTATE, PRE_SCALE, SCALE_MODES
 
 
 def _run_unfold(context, v):
@@ -125,6 +125,9 @@ WINDOWS = [
         F("padding_units", "Padding Units:", "enum", "Pixels", items=("Pixels", "UV")),
         F("shell_padding", "Shell Padding:", "float", 0.0, lo=0.0, hi=64.0),
         F("tile_padding", "Tile Padding:", "float", 0.0, lo=0.0, hi=64.0),
+        F("distribution", "Shell Distribution:", "enum", DISTRIBUTIONS[0], items=DISTRIBUTIONS),
+        F("tiles_u", "Tiles U:", "int", 1, lo=1, hi=10),
+        F("tiles_v", "Tiles V:", "int", 1, lo=1, hi=10),
         F("region", "Packing Region:", "enum", "Full square", items=_REGIONS),
         F("region_min_u", "U from:", "float", 0.0, lo=0.0, hi=1.0),
         F("region_max_u", "U to:", "float", 1.0, lo=0.0, hi=1.0),
@@ -133,8 +136,7 @@ WINDOWS = [
         F("scale_mode", "Scale Mode:", "enum", "Uniform", items=SCALE_MODES),
     ], _run_layout, paths=("UV Editor/Modify/Layout",), width=640, enabled=_layout_enabled,
         missing=("Method: Legacy", "Fix non-manifold geometry", "Packing Resolution, Packing Iterations",
-                 "Translate Shells (shells are always moved)", "Minimum / Maximum Shell Rotation",
-                 "Shell Distribution, Tiles U / V")),
+                 "Translate Shells (shells are always moved)", "Minimum / Maximum Shell Rotation")),
     Window("straighten_uvs", "Straighten UVs Options", "Straighten UVs", None, [
         F("direction", "Straighten:", "enum", "UV", items=["UV", "U", "V"]),
         F("angle", "Angle tolerance:", "float", tk.STRAIGHTEN_TOLERANCE, lo=0.0, hi=90.0),
