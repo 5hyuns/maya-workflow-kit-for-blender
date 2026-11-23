@@ -261,7 +261,8 @@ classes = (ALLSET_GT_uv_handle, ALLSET_GGT_uv_xform)
 
 # --- tool widget swap ---------------------------------------------------------------------------------------------
 
-_saved = {}
+_saved = {}           # 'UV' -> [(swapped ToolDef, Blender's ToolDef)] while the kit handles are on
+_registered = [False]
 
 
 def _panel():
@@ -269,46 +270,64 @@ def _panel():
     return IMAGE_PT_tools_active
 
 
-def _swap_items(items):
-    out = []
-    for it in items:
-        if isinstance(it, tuple) and not hasattr(it, "idname"):
-            out.append(tuple(_swap_items(it)))
-        elif getattr(it, "idname", None) in TOOLS and getattr(it, "widget", None) in BLENDER_WIDGETS:
-            out.append(it._replace(widget=GROUP))
-        else:
-            out.append(it)
-    return out
+def _is_group(it):
+    return isinstance(it, tuple) and not hasattr(it, "idname")
 
 
-def _original_widget(idname):
-    for it in _flat(_saved.get('UV', ())):
-        if getattr(it, "idname", None) == idname:
-            return it.widget
-    return None
+def _swap(it, pairs):
+    if getattr(it, "idname", None) in TOOLS and getattr(it, "widget", None) in BLENDER_WIDGETS:
+        new = it._replace(widget=GROUP)
+        pairs.append((new, it))
+        return new
+    return it
 
 
 def _flat(items):
     for it in items:
-        if isinstance(it, tuple) and not hasattr(it, "idname"):
+        if _is_group(it):
             yield from _flat(it)
         elif it is not None and hasattr(it, "idname"):
             yield it
 
 
+def _original_widget(idname):
+    for _new, old in _saved.get('UV', ()):
+        if old.idname == idname:
+            return old.widget
+    return None
+
+
 def patch_tools():
-    cls = _panel()
+    """The Move / Rotate / Scale ToolDefs of the UV toolbar swapped for copies with the kit's handles, in place: the
+    list itself stays the one Blender and ``bpy.utils.register_tool`` / ``unregister_tool`` use, so tools other
+    modules add or remove meanwhile (the kit's UV brushes) stay where they are."""
     if 'UV' in _saved:
         return
-    items = cls._tools['UV']
-    _saved['UV'] = items
-    cls._tools['UV'] = type(items)(_swap_items(items))
+    items = _panel()._tools['UV']
+    pairs = []
+    for i, it in enumerate(items):
+        if _is_group(it):
+            group = tuple(_swap(sub, pairs) for sub in it)
+            if group != it:
+                items[i] = group
+        else:
+            items[i] = _swap(it, pairs)
+    _saved['UV'] = pairs
 
 
 def unpatch_tools():
-    cls = _panel()
-    if 'UV' in _saved:
-        cls._tools['UV'] = _saved.pop('UV')
+    """Blender's own ToolDefs back in place of the swapped ones."""
+    pairs = _saved.pop('UV', None)
+    if not pairs:
+        return
+    back = {id(new): old for new, old in pairs}
+    items = _panel()._tools['UV']
+    for i, it in enumerate(items):
+        if _is_group(it):
+            if any(id(sub) in back for sub in it):
+                items[i] = tuple(back.get(id(sub), sub) for sub in it)
+        elif id(it) in back:
+            items[i] = back[id(it)]
 
 
 def ensure_tools(patched=True):
@@ -363,7 +382,10 @@ def wanted():
 
 
 def follow_preference():
-    """Give the UV tools the kit handles or Blender's gizmos, as the preference says."""
+    """Give the UV tools the kit handles or Blender's gizmos, as the preference says (only while Maya mode is on:
+    in Blender mode Blender's UV tools keep their own gizmos)."""
+    if not _registered[0]:
+        return
     if wanted():
         patch_tools()
     else:
@@ -382,12 +404,14 @@ def _ensure_timer():
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    _registered[0] = True
     if wanted():
         patch_tools()
     bpy.app.timers.register(_ensure_timer, first_interval=0.1, persistent=True)
 
 
 def unregister():
+    _registered[0] = False
     if bpy.app.timers.is_registered(_ensure_timer):
         bpy.app.timers.unregister(_ensure_timer)
     unpatch_tools()
