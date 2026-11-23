@@ -351,9 +351,10 @@ MAP = {
     f"{UV}/Select/Shortest Edge Path Tool": "uv.shortest_path_select",
     f"{UV}/Select/Grow": "uv.select_more",
     f"{UV}/Select/Shrink": "uv.select_less",
-    **{f"{UV}/Select/Convert Selection/{label}": ("allset.uv_component", {"mode": mode})
-       for label, mode in (("To Vertices", "VERTEX"), ("To Edges", "EDGE"), ("To Faces", "FACE"), ("To UVs", "UV"),
-                           ("To UV Shell", "SHELL"))},
+    # To Vertices / Edges / Faces / UVs convert the selection and switch the component type (like the Ctrl+RMB menu)
+    **{f"{UV}/Select/Convert Selection/{label}": ("allset.uv_convert", {"to": to})
+       for label, to in (("To Vertices", "VERTEX"), ("To Edges", "EDGE"), ("To Faces", "FACE"), ("To UVs", "UV"))},
+    f"{UV}/Select/Convert Selection/To UV Shell": ("allset.uv_component", {"mode": "SHELL"}),
     # the main Select menu's conversions (operators/select_convert.py; with UV Sync Selection off they read
     # the selected UVs as their vertices)
     **{f"{UV}/Select/{label}": ("allset.select_convert", {"kind": kind})

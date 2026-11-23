@@ -215,3 +215,17 @@ def test_shell_border_and_grow_run():
     assert len(grown) > 1 and 12 in grown, grown
     _run("UV_CONVERT/To UV Shell")
     assert uv_shell_select.active(bpy.context) or not bpy.context.scene.tool_settings.use_uv_select_sync
+
+
+# --- #507: the UV Editor menu bar's Select > Convert Selection converts like the Ctrl+RMB menu ----------------------
+
+def test_menu_bar_convert_selection_converts():
+    ob = _grid()
+    _select_uvs(ob, lambda v: (round(v.co.x), round(v.co.y)) in {(0, 0), (1, 0), (0, 1), (1, 1), (2, 0)})
+    a, r = _uv_area()
+    with bpy.context.temp_override(area=a, region=r):
+        assert bpy.ops.allset.menu_item(item="UV Editor/Select/Convert Selection/To Faces") == {'FINISHED'}
+    ts = bpy.context.scene.tool_settings
+    assert ts.use_uv_select_sync and tuple(ts.mesh_select_mode) == (False, False, True)
+    _v, _e, faces = _selected(ob)
+    assert faces == {0}, faces
