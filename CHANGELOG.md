@@ -10,6 +10,10 @@ Editor layout for shading and lighting, while shaders, light power and falloff, 
 values are Blender's. Scenes saved with an
 earlier version open unchanged: nothing in them is converted.
 
+### Added
+- Key > Pose Breakdowner, Relax Pose to Breakdown and Push Pose from Breakdown, right below Set Breakdown Key (#496):
+  Blender's pose in-between tools in Pose Mode, whose Blender keys (Shift+E, F3 search) are Maya keys in the kit.
+
 ### Changed
 - One New Material: Lighting/Shading > Assign New Material (and Shift+T), Assign Favorite Material, the marking menu's
   Assign Favorite Material, Hypershade Create > Materials, the Hypershade Favorites list and the shelf's Standard

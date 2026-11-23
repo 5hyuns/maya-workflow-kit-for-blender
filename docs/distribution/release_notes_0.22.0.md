@@ -34,6 +34,11 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   from before. Keys on it keep working. The Decay Rate row is greyed: Blender lights fall off with distance squared.
 - New cameras keep Blender's depth of field values; the layout file's image size is Blender's 1920 x 1080.
 
+## Animation
+
+- **Pose Breakdowner (#496):** Key > Pose Breakdowner, Relax Pose to Breakdown and Push Pose from Breakdown, right
+  below Set Breakdown Key, run Blender's pose in-between tools in Pose Mode.
+
 ## Older scenes
 
 - **Nothing is converted when you open a scene.** Materials, lambert1, lights and cameras made by earlier versions

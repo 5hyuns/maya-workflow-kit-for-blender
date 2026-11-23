@@ -504,6 +504,10 @@ MAP = {
     "Key/Set Blend Shape Target Weight Keys": "allset.key_blend_shape_weights",
     "Key/Set Key on Animated": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Set Breakdown Key": ("allset.set_key", {"breakdown": True}),
+    # Blender's pose in-between tools (no Maya item; their Blender keys are Maya keys here): EXTRA below Set Breakdown Key
+    "Key/Pose Breakdowner": ("v3d", "pose.breakdown", {}),
+    "Key/Relax Pose to Breakdown": ("v3d", "pose.relax", {}),
+    "Key/Push Pose from Breakdown": ("v3d", "pose.push", {}),
     "Key/Set Driven Key/Set...": "allset.sdk_window",
     "Key/Set Driven Key/Go to Previous": ("allset.sdk_go", {"direction": 'PREVIOUS'}),
     "Key/Set Driven Key/Go to Next": ("allset.sdk_go", {"direction": 'NEXT'}),
@@ -632,6 +636,8 @@ EXTRA = {
     "Create/Lights/Volume Light": [("-", ""), ("Dome Light",)],
     # Maya 2027's Smart Bevel (#303) right below Bevel (operators/smart_bevel.py)
     "Edit Mesh/Bevel": [("Smart Bevel",)],
+    # Blender's pose in-between tools in Pose Mode (#496): Shift+E and F3 are Maya keys in the kit
+    "Key/Set Breakdown Key": [("Pose Breakdowner",), ("Relax Pose to Breakdown",), ("Push Pose from Breakdown",)],
     # Materials of older kit versions -> plain Principled BSDF, once (operators/material.convert_old)
     "Lighting/Shading/Assign Existing Material": [("Convert Old Kit Materials",)],
     # Blender's one material where Maya lists its surface shaders (HIDE)
