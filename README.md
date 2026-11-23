@@ -171,7 +171,9 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
 - Mesh tools including Combine / Separate / Mirror / Boolean, extrude with editable history, **Ctrl+B** Bevel,
   Smart Bevel (Maya 2027's width in scene units, edge filters and output options), Circularize, Connect and Make
   Hole, Maya's convert-selection rules.
-- **UV**: Cut / Sew UV Edges, 3D Cut and Sew, Unfold, Layout, UV shell selection, Maya UV Editor menus and UV Toolkit.
+- **UV**: Cut / Sew UV Edges, 3D Cut and Sew, Unfold, Optimize, Layout, Stitch Together, UV shell selection, Maya UV
+  Editor menus, option windows and marking menus, UV brush tools (Unfold, Optimize, Cut, Sew, Pin, Smear, Smudge,
+  Lattice, Grab, Pinch) and the UV Toolkit with its Transform section.
 
 ### Animation
 
