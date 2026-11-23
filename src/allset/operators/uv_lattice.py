@@ -23,6 +23,7 @@ import gpu
 import numpy as np
 from gpu_extras.batch import batch_for_shader
 
+from .. import compat
 from . import uv_brush
 
 TOOL = "allset.uv_lattice"
@@ -258,7 +259,7 @@ def _draw():
             sh.uniform_float("lineWidth", 1.0 * scale)
             sh.uniform_float("color", (*RECT_RGB, 1.0))
             gpu.state.blend_set('ALPHA')
-            batch_for_shader(sh, 'LINE_LOOP', {"pos": [a, (b[0], a[1]), b, (a[0], b[1])]}).draw(sh)
+            compat.closed_line_batch(sh, [a, (b[0], a[1]), b, (a[0], b[1])]).draw(sh)
             gpu.state.blend_set('NONE')
         if lat is None or not lat.ok:
             return

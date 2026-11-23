@@ -21,9 +21,9 @@ import bmesh
 import bpy
 import gpu
 from bpy.props import BoolProperty, EnumProperty, IntProperty
-from gpu_extras.batch import batch_for_shader
 from mathutils import kdtree
 
+from .. import compat
 from . import symmetry
 
 TOLERANCE = 0.1           # Maya units: how far from the mirrored position a partner may be
@@ -362,7 +362,7 @@ class ALLSET_OT_symmetry_drag(bpy.types.Operator):
         for width, color in ((3.0, (0.0, 0.0, 0.0, 0.6)), (1.0, (1.0, 1.0, 1.0, 0.9))):
             gpu.state.line_width_set(width)
             shader.uniform_float("color", color)
-            batch_for_shader(shader, 'LINE_LOOP', {"pos": loop}).draw(shader)
+            compat.closed_line_batch(shader, loop).draw(shader)
         gpu.state.line_width_set(1.0)
         gpu.state.blend_set('NONE')
 

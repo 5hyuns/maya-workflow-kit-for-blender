@@ -25,9 +25,9 @@ import math
 import bpy
 import gpu
 from bpy.app.handlers import persistent
-from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix
 
+from .. import compat
 from . import parenting
 
 DROP_OPS = ("OUTLINER_OT_parent_drop", "OUTLINER_OT_parent_clear")
@@ -243,7 +243,7 @@ def _rect(x0, y0, x1, y1, width=2.0):
     sh = gpu.shader.from_builtin('UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
     gpu.state.line_width_set(width)
-    batch = batch_for_shader(sh, 'LINE_LOOP', {"pos": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))})
+    batch = compat.closed_line_batch(sh, ((x0, y0), (x1, y0), (x1, y1), (x0, y1)))
     sh.uniform_float("color", COLOR)
     batch.draw(sh)
     gpu.state.line_width_set(1.0)

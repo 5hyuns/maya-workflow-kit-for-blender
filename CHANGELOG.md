@@ -40,7 +40,8 @@ earlier version open unchanged: nothing in them is converted.
 - **Flip** (#506): Modify > Flip uses its Coordinate (Pivot, Selection Center, Global) and Cut UV Perimeter options.
 - **Layout over UDIM tiles** (#505): Layout's Shell Distribution with Tiles U / V spreads the shells over tiles.
 - **Marking menu pictures** (#525): marking menu items (the radial items and the list) show their command's picture
-  left of the label, the kit's own drawings; a disabled item's picture is grey.
+  left of the label, the kit's own drawings; a disabled item's picture is grey. The Mesh menu's Booleans and
+  Unsmooth items and the UV Toolkit's Pin, Unpin and Invert buttons have pictures too.
 
 ### Changed
 - One New Material: Lighting/Shading > Assign New Material (and Shift+T), Assign Favorite Material, the marking menu's
@@ -86,6 +87,8 @@ earlier version open unchanged: nothing in them is converted.
 - UV Editor: Stitch Together and Move and Sew with a mirrored shell fold it onto the other shell like Maya (#523).
 - UV Editor: Layout's Distribute over several tiles shares the shells out by count, tile after tile, like Maya (#522).
 - Marking menus: a list that would leave the window beside the ring moves closer to the ring instead of over it.
+- Blender 5.3: closed outlines draw every side (#528): marking menu option boxes, the marquee and lattice frames, the
+  Graph Editor scale box, the Outliner drop frame and the UV brush circle missed their last side.
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse

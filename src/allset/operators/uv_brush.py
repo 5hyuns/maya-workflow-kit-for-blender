@@ -29,7 +29,7 @@ from mathutils import Vector
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty
 from gpu_extras.batch import batch_for_shader
 
-from .. import live_refs, results
+from .. import compat, live_refs, results
 from . import taphold, uv_brush_math, uv_tools
 from .uv_islands import sync
 from .uv_shells import _loop_selected
@@ -501,7 +501,7 @@ def _draw():
             rad = abs(x1 - pos[0])
             shader.uniform_float("lineWidth", 1.5 * scale)
             shader.uniform_float("color", (*CIRCLE_RGB, 0.9))
-            batch_for_shader(shader, 'LINE_LOOP', {"pos": _circle(pos[0], pos[1], rad)}).draw(shader)
+            compat.closed_line_batch(shader, _circle(pos[0], pos[1], rad)).draw(shader)
         gpu.state.blend_set('NONE')
     except (ReferenceError, AttributeError):
         pass

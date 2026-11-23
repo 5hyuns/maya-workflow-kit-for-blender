@@ -60,6 +60,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 ## Marking menus
 
 - **Pictures (#525):** marking menu items show their command's picture left of the label, like Maya.
+- **Fixed on Blender 5.3 (#528):** option box squares and other closed outlines (marquee and lattice frames, the
+  Graph Editor scale box, the UV brush circle) draw every side.
 
 ## Older scenes
 

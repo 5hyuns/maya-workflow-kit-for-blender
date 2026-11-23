@@ -114,7 +114,8 @@ def _outline(r, color, ox=0.0, oy=0.0):
         _grow(((x0, y0), (x1, y1)), 1.0)
         return
     sh = _sh()
-    batch = batch_for_shader(sh, 'LINE_LOOP', {"pos": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))})
+    pts = compat.closed_line_points(((x0, y0), (x1, y0), (x1, y1), (x0, y1)))
+    batch = batch_for_shader(sh, 'LINE_STRIP', {"pos": pts})
     sh.uniform_float("color", color)
     batch.draw(sh)
 

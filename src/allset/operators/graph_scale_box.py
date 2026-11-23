@@ -17,6 +17,7 @@ a side whose keys all sit on one frame / value has no extent and doesn't scale. 
 
 import bpy
 
+from .. import compat
 from . import graph_move, graph_region
 
 HANDLE_PX = 4.0          # half size of a handle square (x UI scale)
@@ -198,7 +199,7 @@ def _draw():
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
     shader.uniform_float("color", BOX_RGBA)
-    batch_for_shader(shader, 'LINE_LOOP', {"pos": [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]}).draw(shader)
+    compat.closed_line_batch(shader, [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]).draw(shader)
     s = HANDLE_PX * _ui(context)
     tris = []
     for hx, hy in handle_points(box).values():

@@ -382,6 +382,20 @@ def toolbar_back(theme):
 LINEAR_IMAGE_SHADER = 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB'
 
 
+def closed_line_points(points):
+    """``points`` with the first one again at the end: drawn as a 'LINE_STRIP' they make the closed outline. 5.3
+    leaves out the side from the last point back to the first of a 'LINE_LOOP' batch; the strip draws the same lines
+    on every version."""
+    pts = list(points)
+    return pts + pts[:1]
+
+
+def closed_line_batch(shader, points):
+    """A batch for ``shader`` drawing the closed outline through ``points`` (see ``closed_line_points``)."""
+    from gpu_extras.batch import batch_for_shader
+    return batch_for_shader(shader, 'LINE_STRIP', {"pos": closed_line_points(points)})
+
+
 # --- Unified paint settings -----------------------------------------------------------------
 def scene_annotation(scene):
     """The scene's annotation data (the 3D View's Annotate tool): ``Scene.annotation`` (5.2), else the older
