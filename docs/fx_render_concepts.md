@@ -1,7 +1,8 @@
 # Maya FX and Rendering in Blender
 
-Maya Workflow Kit develops modeling, animation, rigging, UV and texturing work the Maya way. For FX and rendering it
-keeps Maya's menus but runs **Blender's own features** from them: the FX, Rendering and lighting items call a Blender
+Maya Workflow Kit develops modeling, animation, rigging and UV work the Maya way; for texturing, connecting textures
+works the Maya way while shader values and formulas are Blender's. For FX and rendering it keeps Maya's menus but runs
+**Blender's own features** from them: the FX, Rendering and lighting items call a Blender
 operator or open the Blender editor that does the job. The kit does not rebuild nucleus, nCloth, Bifrost, Arnold or
 Maya's render queue.
 
