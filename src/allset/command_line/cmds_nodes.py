@@ -78,8 +78,8 @@ def _materials():
 
 
 def _material_type(mat):
-    from ..ui import attribute_editor
-    return attribute_editor.material_type(mat)
+    from ..operators import material
+    return material.maya_type(mat)
 
 
 def _textures():

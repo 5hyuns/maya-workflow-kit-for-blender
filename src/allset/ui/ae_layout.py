@@ -14,8 +14,8 @@ Row forms:
                                  "armob" = the armature object
   ("draw", name)                 custom drawer in ui/ae_rows.py
   ("socket", input name, label)  Principled BSDF input (material tabs), with the Maya map button
-  ("maya", material prop, label, input name)  a Maya number converted to that Principled input (Material property
-                                 with get/set), with the input's map button
+  ("maya", material prop, label, input name)  a value stored through a Material property (get/set) that edits that
+                                 input, with the input's map button
   ("missing", label, note)       Maya attribute Blender doesn't have: a greyed row with the note
 
 ``TEMPLATE`` names the Maya Attribute Editor template a section list follows
@@ -182,33 +182,32 @@ AREA_LIGHT = [
     _render_engine(("prop", "data", "spread", "Spread"), ("prop", "data", "cycles.is_portal", "Portal")),
 ]
 
-# --- material: standardSurface (Maya Attribute Editor) on Principled BSDF --------------
-STANDARD_SURFACE = [
-    S("Base", True, ("socket", "Weight", "Weight"), ("socket", "Base Color", "Color"),
-      ("socket", "Diffuse Roughness", "Diffuse Roughness"), ("socket", "Metallic", "Metalness")),
-    S("Specular", True, ("socket", "Specular IOR Level", "Weight"),
-      ("socket", "Specular Tint", "Color"), ("socket", "Roughness", "Roughness"),
-      ("socket", "IOR", "IOR"), ("socket", "Anisotropic", "Anisotropy"),
-      ("socket", "Anisotropic Rotation", "Rotation")),
-    S("Transmission", False, ("socket", "Transmission Weight", "Weight")),
+# --- material: Blender's Principled BSDF, its inputs by Blender's names in the order of Blender's material panel --
+# (Maya Attribute Editor tab layout: open / closed sections, map buttons, Break Connection). Diffuse shows only on a
+# material made by an older kit version (its "Maya Diffuse" node, operators/material.py).
+PRINCIPLED = [
+    S("Base", True, ("socket", "Base Color", "Base Color"), ("socket", "Metallic", "Metallic"),
+      ("socket", "Roughness", "Roughness"), ("socket", "IOR", "IOR"), ("socket", "Alpha", "Alpha"),
+      ("socket", "Thin Wall", "Thin Wall"), ("socket", "Normal", "Normal"),("maya", "allset_diffuse", "Diffuse", "Diffuse")),
+    S("Diffuse", False, ("socket", "Diffuse Roughness", "Roughness")),
     S("Subsurface", False, ("socket", "Subsurface Weight", "Weight"),
       ("socket", "Subsurface Radius", "Radius"), ("socket", "Subsurface Scale", "Scale"),
       ("socket", "Subsurface Anisotropy", "Anisotropy")),
-    S("Coat", False, ("socket", "Coat Weight", "Weight"), ("socket", "Coat Tint", "Color"),
-      ("socket", "Coat Roughness", "Roughness"), ("socket", "Coat IOR", "IOR")),
-    S("Sheen", False, ("socket", "Sheen Weight", "Weight"), ("socket", "Sheen Tint", "Color"),
-      ("socket", "Sheen Roughness", "Roughness")),
-    S("Emission", False, ("socket", "Emission Strength", "Weight"),
-      ("socket", "Emission Color", "Color")),
-    S("Thin Film", False, ("socket", "Thin Film Thickness", "Thickness"),
-      ("socket", "Thin Film IOR", "IOR")),
-    S("Geometry", False, ("socket", "Alpha", "Opacity"), ("socket", "Normal", "Normal"),
-      ("missing", "Thin Walled", "Blender's Principled BSDF has no thin-walled mode")),
+    S("Specular", False, ("socket", "Specular IOR Level", "IOR Level"),
+      ("socket", "Specular Tint", "Tint"), ("socket", "Anisotropic", "Anisotropic"),
+      ("socket", "Anisotropic Rotation", "Anisotropic Rotation"), ("socket", "Tangent", "Tangent")),
+    S("Transmission", False, ("socket", "Transmission Weight", "Weight")),
+    S("Coat", False, ("socket", "Coat Weight", "Weight"), ("socket", "Coat Roughness", "Roughness"),
+      ("socket", "Coat IOR", "IOR"), ("socket", "Coat Tint", "Tint"), ("socket", "Coat Normal", "Normal")),
+    S("Sheen", False, ("socket", "Sheen Weight", "Weight"), ("socket", "Sheen Roughness", "Roughness"),
+      ("socket", "Sheen Tint", "Tint")),
+    S("Emission", False, ("socket", "Emission Color", "Color"), ("socket", "Emission Strength", "Strength")),
+    S("Thin Film", False, ("socket", "Thin Film Thickness", "Thickness"), ("socket", "Thin Film IOR", "IOR")),
 ]
 
-# standardSurface / aiStandardSurface attribute -> Principled BSDF 4.5 input
-# (names from the public Autodesk Standard Surface spec; Arnold's aiStandardSurface uses the same names).
-# None = no Principled input. Map button tooltips name the Maya attribute (attribute_editor).
+# standardSurface / aiStandardSurface attribute -> Principled BSDF input: the names the command line's getAttr /
+# setAttr take for a material (names from the public Standard Surface spec; aiStandardSurface uses the same names).
+# None = no Principled input.
 STANDARD_SURFACE_ATTRS = (
     ("base", "Weight"), ("baseColor", "Base Color"), ("diffuseRoughness", "Diffuse Roughness"),
     ("metalness", "Metallic"), ("specular", "Specular IOR Level"), ("specularColor", "Specular Tint"),
@@ -225,62 +224,6 @@ STANDARD_SURFACE_ATTRS = (
     ("opacity", "Alpha"), ("normalCamera", "Normal"), ("thinWalled", None),
 )
 MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
-# --- lambert (Maya Attribute Editor) -----------------------
-# Maya names on Principled inputs: color -> Base Color, transparency -> Alpha (opacity), incandescence -> Emission,
-# bump -> Normal, translucence -> Subsurface; refractions -> Transmission. Diffuse shows only on a material made by an
-# older kit version (its "Maya Diffuse" node, operators/material.py).
-_LAMBERT_COMMON = S("Common Material Attributes", True,
-                    ("socket", "Base Color", "Color"), ("socket", "Alpha", "Opacity"),
-                    ("socket", "Emission Color", "Incandescence"), ("socket", "Normal", "Bump Mapping"),
-                    ("maya", "allset_diffuse", "Diffuse", "Diffuse"),
-                    ("socket", "Subsurface Weight", "Translucence"))
-_RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refractions"),
-              ("socket", "IOR", "Refractive Index"))
-LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
-# blinn / phong = lambert common + Specular Shading, open (Maya Attribute Editor
-# blinn / phong tabs; not in Maya's templates).
-# Eccentricity / Cosine Power are Maya numbers converted to the Principled Roughness (operators/material.py, #71).
-BLINN = [_LAMBERT_COMMON,
-         S("Specular Shading", True, ("maya", "allset_eccentricity", "Eccentricity", "Roughness"),
-           ("socket", "Specular IOR Level", "Specular Roll Off"),
-           ("socket", "Specular Tint", "Specular Color")),
-         _RAYTRACE]
-PHONG = [_LAMBERT_COMMON,
-         S("Specular Shading", True, ("maya", "allset_cosine_power", "Cosine Power", "Roughness"),
-           ("socket", "Specular Tint", "Specular Color")),
-         _RAYTRACE]
-# surfaceShader (Maya Attribute Editor): out color = emission.
-SURFACE_SHADER = [
-    S("Surface Shader Attributes", True, ("socket", "Emission Color", "Out Color"),
-      ("socket", "Alpha", "Out Opacity")),
-]
-# Further kinds (Maya AE section names; Principled stand-ins + the extra nodes of operators/material._build)
-PHONG_E = [_LAMBERT_COMMON,
-           S("Specular Shading", True, ("socket", "Roughness", "Roughness"),
-             ("socket", "Specular IOR Level", "Highlight Size"), ("socket", "Specular Tint", "Whiteness")),
-           _RAYTRACE]
-ANISOTROPIC = [_LAMBERT_COMMON,
-               S("Specular Shading", True, ("socket", "Anisotropic Rotation", "Angle"),
-                 ("socket", "Anisotropic", "Spread X / Y"), ("socket", "Roughness", "Roughness"),
-                 ("socket", "Specular Tint", "Specular Color")),
-               _RAYTRACE]
-RAMP_SHADER = [
-    S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)"),
-      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # older kit materials only
-    S("Specular Shading", True, ("socket", "Roughness", "Specularity")),
-    S("Incandescence", False, ("socket", "Emission Color", "Incandescence")),
-]
-LAYERED_SHADER = [
-    S("Layered Shader Attributes", True,
-      ("missing", "Layers", "a Mix Shader in the graph: input 1 = top layer, Fac = the top layer's transparency")),
-    _LAMBERT_COMMON,
-]
-USE_BACKGROUND = [
-    S("Use Background Attributes", True,
-      ("missing", "Specular Color / Reflectivity / Shadow Mask",
-       "Blender Holdout: the surface shows the background (Cycles: Object > Visibility > Shadow Catcher catches "
-       "shadows)")),
-]
 # Material without nodes: Blender viewport values (no Maya template).
 # --- joint = pose bone (Maya Attribute Editor) ----
 # Joint Labelling (side / type) and Preferred Angle have no Blender counterpart.
@@ -353,6 +296,9 @@ IMAGE_PLANE = [
       ("prop", "ob", "allset_alpha_gain", "Alpha Gain")),          # #436: see-through reference images
 ]
 
+# Tab type of a material with a Principled BSDF (new materials and those of older kit versions alike)
+PRINCIPLED_TYPE = "Principled BSDF"
+
 # (sections, Maya template name or None)
 BY_KIND = {
     "IMAGE_PLANE": (IMAGE_PLANE, None),
@@ -365,17 +311,7 @@ BY_KIND = {
     "SUN": (DIRECTIONAL_LIGHT, "directionalLight"),
     "SPOT": (SPOT_LIGHT, None),
     "AREA": (AREA_LIGHT, None),
-    "standardSurface": (STANDARD_SURFACE, "standardSurface"),
-    "aiStandardSurface": (STANDARD_SURFACE, None),      # Arnold's, same attribute names
-    "lambert": (LAMBERT, "lambert"),
-    "blinn": (BLINN, None),
-    "phong": (PHONG, None),
-    "surfaceShader": (SURFACE_SHADER, None),
-    "phongE": (PHONG_E, None),
-    "anisotropic": (ANISOTROPIC, None),
-    "rampShader": (RAMP_SHADER, None),
-    "layeredShader": (LAYERED_SHADER, None),
-    "useBackground": (USE_BACKGROUND, None),
+    PRINCIPLED_TYPE: (PRINCIPLED, None),
     "material": (PLAIN_MATERIAL, None),
 }
 

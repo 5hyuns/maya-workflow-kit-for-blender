@@ -10,9 +10,6 @@ from .. import compat
 from ..operators import material as material_ops
 from .hypershade_window import graph_area
 
-# Maya Hypershade Create > Maya > Surface, alphabetical like Maya: the ones Blender can build
-CREATE = ('ANISOTROPIC', 'BLINN', 'LAMBERT', 'LAYERED', 'PHONG', 'PHONG_E', 'RAMP', 'STANDARD_SURFACE', 'SURFACE',
-          'USE_BACKGROUND')
 COLUMNS = 3
 
 # Browser swatch tabs (Maya's tab bar)

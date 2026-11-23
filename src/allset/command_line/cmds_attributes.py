@@ -143,11 +143,22 @@ def attributeQuery(*args, **kwargs):
 # --- getAttr / setAttr on shading and history nodes ------------------------------------------------------------------
 
 _MISSING = object()
-# Maya material attribute -> material.maya_input name (colours) or Material property (numbers)
+# Maya material attribute -> material.maya_input name (colours) or Material property (numbers); Standard Surface
+# attribute names (ui/ae_layout.STANDARD_SURFACE_ATTRS) reach the Principled input of that name too
 _COLOR_ATTRS = {"color": "Base Color", "incandescence": "Emission Color", "specularColor": "Specular Tint"}
-_NUMBER_ATTRS = {"diffuse": "allset_diffuse", "eccentricity": "allset_eccentricity",
-                 "cosinePower": "allset_cosine_power"}
+_NUMBER_ATTRS = {"diffuse": "allset_diffuse"}
 _SOCKET_NUMBERS = {"specularRollOff": "Specular IOR Level"}
+
+
+def _standard_surface_socket(mat, attr):
+    """The Principled input a Standard Surface attribute name stands for (a colour or a number), or None."""
+    from ..operators import material
+    from ..ui import ae_layout
+    name = dict(ae_layout.STANDARD_SURFACE_ATTRS).get(attr)
+    if name is None:
+        return None
+    sock = material.maya_input(mat, name)
+    return sock if sock is not None and hasattr(sock, "default_value") else None
 # polyExtrudeFace attribute -> kit record field
 EXTRUDE_ATTRS = {"thickness": "thickness", "localTranslateZ": "local_translate_z", "offset": "offset",
                  "divisions": "divisions", "keepFacesTogether": "keep_faces_together",
@@ -175,6 +186,10 @@ def _node_attr_value(found, attr):
         if attr in _SOCKET_NUMBERS:
             sock = material.maya_input(mat, _SOCKET_NUMBERS[attr])
             return _MISSING if sock is None else float(sock.default_value)
+        sock = _standard_surface_socket(mat, attr)
+        if sock is not None:
+            v = sock.default_value
+            return [tuple(float(c) for c in v[:3])] if hasattr(v, "__len__") else float(v)
         return _MISSING
     if found.kind == 'TEXTURE':
         if attr in ("fileTextureName", "ftn"):
@@ -218,6 +233,19 @@ def _set_node_attr(found, attr, values):
             if sock is not None:
                 sock.default_value = float(v[0])
                 return True
+        sock = _standard_surface_socket(mat, attr)
+        if sock is not None:
+            n = len(sock.default_value) if hasattr(sock.default_value, "__len__") else 1
+            if n == 1 and len(v) == 1:
+                sock.default_value = float(v[0])
+            elif n == 4 and len(v) == 3:
+                sock.default_value = (*[float(x) for x in v], 1.0)
+            elif n == len(v):
+                sock.default_value = [float(x) for x in v]
+            else:
+                return False
+            material.sync_display(mat)
+            return True
     if found.kind == 'TEXTURE' and attr in ("fileTextureName", "ftn") and len(v) == 1:
         import os
         path = str(v[0])

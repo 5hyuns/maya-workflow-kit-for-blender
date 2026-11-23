@@ -57,7 +57,8 @@ def sub_items(path, it):
 def children(items, prefix):
     """(path, item) per direct entry; path None for dividers. A label repeated
     among siblings gets "#2", "#3" (Select > Components for polygons, curves,
-    surfaces). ``menu_map.EXTRA`` items follow the entry they are attached to."""
+    surfaces). ``menu_map.EXTRA`` items follow the entry they are attached to; ``menu_map.HIDE`` entries are left
+    out (their EXTRA items stay)."""
     seen = {}
     for it in items:
         if it[0] == "-":
@@ -65,7 +66,8 @@ def children(items, prefix):
             continue
         n = seen[it[0]] = seen.get(it[0], 0) + 1
         path = f"{prefix}/{it[0]}" + (f"#{n}" if n > 1 else "")
-        yield path, it
+        if path not in menu_map.HIDE:
+            yield path, it
         for extra in menu_map.EXTRA.get(path, ()):
             yield (None if extra[0] == "-" else f"{prefix}/{extra[0]}"), extra
 

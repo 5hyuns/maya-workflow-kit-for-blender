@@ -93,9 +93,9 @@ def test_object_at_ray_cast():
 def test_drop_whole_object():
     _clear()
     cube = _cube()
-    old = material.new_material('LAMBERT')
+    old = material.new_material()
     cube.data.materials.append(old)
-    blinn = material.new_material('BLINN')
+    blinn = material.new_material()
     done = drag.drop(bpy.context, blinn, cube)
     assert done == {cube.name: 0}, done
     assert [s.material for s in cube.material_slots] == [blinn]
@@ -118,7 +118,7 @@ def test_drop_on_selected_faces_in_face_mode():
     for f in bm.faces:
         f.select_set(f.index in (0, 1))
     bmesh.update_edit_mesh(cube.data)
-    blinn = material.new_material('BLINN')
+    blinn = material.new_material()
     done = drag.drop(bpy.context, blinn, cube)
     bpy.ops.object.mode_set(mode='OBJECT')
     index = done[cube.name]
@@ -130,7 +130,7 @@ def test_drop_on_selected_faces_in_face_mode():
 def test_swatch_property():
     _clear()
     _cube()
-    blinn = material.new_material('BLINN')
+    blinn = material.new_material()
     blinn.use_fake_user = True
     wm = bpy.context.window_manager
     wm.allset_hs_material = ""

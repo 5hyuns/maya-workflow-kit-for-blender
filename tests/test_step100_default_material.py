@@ -47,12 +47,12 @@ def test_new_cubes_share_lambert1():
     assert material.shading_group_name(ma) == "initialShadingGroup"
 
 
-def test_new_lambert_is_lambert2_and_purge_keeps_lambert1():
+def test_new_material_is_blender_named_and_purge_keeps_lambert1():
     _clear()
     create.create(bpy.context, 'CUBE')
-    m = material.new_material('LAMBERT')
-    assert m.name == "lambert2", m.name   # Maya: shadingNode lambert -> lambert2
-    assert material.shading_group_name(m) == "lambert2SG"
+    m = material.new_material()
+    assert m.name == "Material", m.name
+    assert material.shading_group_name(m) == "MaterialSG"
     bpy.data.materials.remove(m)
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
@@ -60,10 +60,10 @@ def test_new_lambert_is_lambert2_and_purge_keeps_lambert1():
     assert material.default_material(create=False) is not None, "lambert1 survives an orphan purge (Delete Unused)"
 
 
-def test_new_lambert_before_any_mesh_is_still_lambert2():
+def test_new_material_before_any_mesh_is_material():
     _clear()
-    m = material.new_material('LAMBERT')
-    assert m.name == "lambert2" and material.default_material(create=False).name == "lambert1"
+    m = material.new_material()
+    assert m.name == "Material" and material.default_material(create=False) is None, "no lambert1 for the name"
 
 
 def test_ae_shading_group_tab():
@@ -71,7 +71,7 @@ def test_ae_shading_group_tab():
     ob = create.create(bpy.context, 'CUBE')
     keys = [(k, label, t) for k, label, t in ae.tabs(ob)]
     sg = keys.index(("SG:0", "initialShadingGroup", "shadingEngine"))
-    assert keys[sg + 1] == ("MAT:0", "lambert1", "lambert"), keys
+    assert keys[sg + 1] == ("MAT:0", "lambert1", "Principled BSDF"), keys
     assert ae.tab_target(ob, "SG:0") == ob.active_material
 
 

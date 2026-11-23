@@ -115,18 +115,23 @@ def test_standard_surface_name_table():
     assert not missing, missing
     assert table["baseColor"] == "Base Color" and table["specularRoughness"] == "Roughness"
     assert table["thinWalled"] is None
-    used = {row[1] for _d, sec in ae_layout.walk(ae_layout.STANDARD_SURFACE) for row in sec.rows if row[0] == "socket"}
-    assert used <= set(ae_layout.MAYA_ATTR), used - set(ae_layout.MAYA_ATTR)
-    rows = [row for _d, sec in ae_layout.walk(ae_layout.STANDARD_SURFACE) for row in sec.rows]
-    assert ("missing", "Thin Walled") == rows[-1][:2]
+    # the AE rows are Principled inputs by Blender's names
+    used = {row[1] for _d, sec in ae_layout.walk(ae_layout.PRINCIPLED) for row in sec.rows if row[0] == "socket"}
+    assert used <= sockets, used - sockets
+    labels = {row[2] for _d, sec in ae_layout.walk(ae_layout.PRINCIPLED) for row in sec.rows if row[0] == "socket"}
+    assert "Base Color" in labels and "Metalness" not in labels and "baseColor" not in labels
 
 
-def test_ai_standard_surface_kind():
+def test_principled_tab_for_every_material():
     _clear()
-    mat = material.new_material('AI_STANDARD_SURFACE')
-    assert mat.name == "aiStandardSurface1", mat.name
-    assert ae.material_type(mat) == "aiStandardSurface"
-    assert ae_layout.BY_KIND["aiStandardSurface"][0] is ae_layout.STANDARD_SURFACE
+    mat = material.new_material()
+    assert mat.name == "Material", mat.name
+    assert ae.material_type(mat) == ae_layout.PRINCIPLED_TYPE
+    assert ae_layout.BY_KIND[ae_layout.PRINCIPLED_TYPE][0] is ae_layout.PRINCIPLED
+    old = material.new_material()
+    old[material.TYPE_PROP] = "aiStandardSurface"            # made by an older kit version
+    assert ae.material_type(old) == ae_layout.PRINCIPLED_TYPE
+    assert material.maya_type(old) == "aiStandardSurface" and material.maya_type(mat) == "standardSurface"
 
 
 # --- AE map buttons -----------------------------------------------------------------------------------
@@ -134,23 +139,21 @@ def test_ai_standard_surface_kind():
 def test_map_button_drawn_on_socket_rows():
     _clear()
     ob = _sphere()
-    mat = material.new_material('STANDARD_SURFACE')
+    mat = material.new_material()
     material.assign_object(ob, mat)
     rec = Rec()
-    ae.draw_sections(rec, bpy.context, ob, mat, ae_layout.STANDARD_SURFACE, "t")
+    ae.draw_sections(rec, bpy.context, ob, mat, ae_layout.PRINCIPLED, "t")
     maps_ = [p for idname, p in rec.ops() if idname == "allset.ae_map"]
     sockets = [p.socket for p in maps_]
     assert "Base Color" in sockets and "Roughness" in sockets, sockets
     assert all(p.material == mat.name for p in maps_)
-    labels = [e[2].get("text", "") for e in rec.log if e[0] == "label"]
-    assert any(t.startswith("Thin Walled:") for t in labels), labels
     tip = maps.ALLSET_OT_ae_map.description(bpy.context, types.SimpleNamespace(socket="Base Color"))
-    assert tip.startswith("baseColor"), tip
+    assert tip.startswith("Base Color"), tip
 
 
 def test_map_connect_each_kind():
     _clear()
-    mat = material.new_material('STANDARD_SURFACE')
+    mat = material.new_material()
     node = maps.principled(mat)
     for kind, socket, want in (('FILE', "Base Color", 'TEX_IMAGE'), ('RAMP', "Specular Tint", 'VALTORGB'),
                                ('NOISE', "Roughness", 'TEX_NOISE'), ('CHECKER', "Coat Tint", 'TEX_CHECKER'),
@@ -170,9 +173,9 @@ def test_map_connect_each_kind():
     material.assign_object(_sphere(), mat)
     bpy.ops.allset.ae_map_connect(material=mat.name, socket="Base Color", kind='FILE')
     rec = Rec()
-    ae.draw_sections(rec, bpy.context, bpy.context.active_object, mat, ae_layout.STANDARD_SURFACE, "t")
+    ae.draw_sections(rec, bpy.context, bpy.context.active_object, mat, ae_layout.PRINCIPLED, "t")
     labels = [e[2].get("text", "") for e in rec.log if e[0] == "label"]
-    assert any(t.startswith("Color: connected (") for t in labels), labels
+    assert any(t.startswith("Base Color: connected (") for t in labels), labels
     assert any(e[0] == "template_ID" and e[1][1] == "image" for e in rec.log)
 
 
@@ -195,8 +198,8 @@ def test_hypershade_browser_create_assign():
     try:
         # Create = a material, unassigned, kept on save (fake user), current in the Hypershade
         with bpy.context.temp_override(area=area, space_data=space):
-            assert bpy.ops.allset.hs_create(kind='STANDARD_SURFACE') == {'FINISHED'}
-        mat = bpy.data.materials["standardSurface1"]
+            assert bpy.ops.allset.hs_create() == {'FINISHED'}
+        mat = bpy.data.materials["Material"]
         assert mat.use_fake_user and mat.users == 1 and ob.active_material is not mat   # (ob has lambert1)
         assert hs.current(bpy.context) == mat and wm.allset_hs_material == mat.name
         assert space.pin and space.node_tree == mat.node_tree, "not on the object: the graph is pinned to it"
@@ -204,7 +207,7 @@ def test_hypershade_browser_create_assign():
         assert bpy.ops.allset.assign_material(material=mat.name) == {'FINISHED'}
         assert ob.material_slots[0].material == mat
         # picking a material the object has = its slot, the graph follows the object again
-        other = material.new_material('LAMBERT')
+        other = material.new_material()
         with bpy.context.temp_override(area=area, space_data=space):
             bpy.ops.allset.hs_pick(material=other.name)
         assert space.pin and space.node_tree == other.node_tree
@@ -221,7 +224,7 @@ def test_hypershade_browser_create_assign():
         made = [p.item.rsplit("/", 1)[-1] for i, p in rec.ops() if i == "allset.menu_item"]
         # + the Maya materials Blender builds from other nodes (hair, USD Preview, Shading Map)
         extra = [label.rsplit("/", 1)[-1] for label in editor_menu_map.HS_EXTRA if label.startswith("Materials/")]
-        assert made == sorted([material.MATERIALS[k][1] for k in hs.CREATE] + extra), made
+        assert made == ["New Material"] + sorted(extra), made
         wm.allset_hs_create_cat = 'MAYA'
         rec = Rec()
         hs.draw_property_editor(rec, bpy.context)

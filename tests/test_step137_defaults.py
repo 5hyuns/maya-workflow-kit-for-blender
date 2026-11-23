@@ -1,7 +1,7 @@
 """Material, light and Render Settings defaults.
 
-New materials are plain Principled BSDF materials (Blender's values); the Attribute Editor's Eccentricity /
-Cosine Power rows read and write the Roughness as Maya's numbers. Lights: intensity 1, Decay Rate No Decay;
+New materials are plain Principled BSDF materials (Blender's values); the Attribute Editor shows their inputs by
+Blender's names. Lights: intensity 1, Decay Rate No Decay;
 resolution 960 x 540. Light power rule and its renders: operators/lights.py."""
 
 import math
@@ -60,62 +60,32 @@ def _blender_bsdf():
     return _bsdf(ref)
 
 
-def test_blinn_eccentricity_reads_roughness():
+def test_new_material_keeps_blender_values():
     _clear()
-    mat = material.new_material('BLINN')
-    b, ref = _bsdf(mat), _blender_bsdf()
-    for name in ("Base Color", "Emission Color", "Specular IOR Level", "Specular Tint", "Roughness"):
+    b, ref = _bsdf(material.new_material()), _blender_bsdf()
+    for name in ("Base Color", "Roughness", "Specular IOR Level", "Specular Tint", "Anisotropic",
+                 "Coat Roughness", "Emission Color"):
         got, want = b.inputs[name].default_value, ref.inputs[name].default_value
         if hasattr(got, "__len__"):
             got, want = tuple(got), tuple(want)
-        assert _close(got, want), (name, "a plain Principled BSDF")
-    # the AE Eccentricity row shows the Roughness as Maya's number (GGX alpha = eccentricity)
-    assert _close(mat.allset_eccentricity, b.inputs["Roughness"].default_value ** 2), mat.allset_eccentricity
-    mat.allset_eccentricity = 0.6
-    assert _close(b.inputs["Roughness"].default_value, math.sqrt(0.6)) and _close(mat.allset_eccentricity, 0.6)
-    rows = _rows("blinn")
-    assert ("maya", "allset_eccentricity", "Eccentricity", "Roughness") in rows
-    assert ("socket", "Specular IOR Level", "Specular Roll Off") in rows
-    assert ("socket", "Emission Color", "Incandescence") in rows
-    assert ("socket", "Specular Tint", "Specular Color") in rows
+        assert _close(got, want), (name, got, want)
 
 
-def test_phong_cosine_power_reads_roughness():
+def test_ae_rows_take_blender_input_names():
+    rows = _rows(ae_layout.PRINCIPLED_TYPE)
+    assert ("socket", "Base Color", "Base Color") in rows
+    assert ("socket", "Roughness", "Roughness") in rows
+    assert ("socket", "Specular IOR Level", "IOR Level") in rows
+    assert ("socket", "Emission Color", "Color") in rows
+    assert not any(r[0] == "maya" and r[1] != "allset_diffuse" for r in rows), rows
+    assert not hasattr(bpy.types.Material, "allset_eccentricity")
+    assert not hasattr(bpy.types.Material, "allset_cosine_power")
+
+
+def test_ae_draws_the_material_property_row():
+    """A "maya" row draws its Material property (an older material's Diffuse), not the socket."""
     _clear()
-    mat = material.new_material('PHONG')
-    b = _bsdf(mat)
-    assert _close(b.inputs["Roughness"].default_value, _blender_bsdf().inputs["Roughness"].default_value)
-    r = b.inputs["Roughness"].default_value
-    assert _close(mat.allset_cosine_power, 2.0 / r ** 4 - 2.0, 1e-3), mat.allset_cosine_power
-    mat.allset_cosine_power = 50.0
-    assert _close(mat.allset_cosine_power, 50.0, 1e-2), mat.allset_cosine_power
-    assert _close(b.inputs["Roughness"].default_value, (2 / 52) ** 0.25)
-    assert ("maya", "allset_cosine_power", "Cosine Power", "Roughness") in _rows("phong")
-    # Blinn eccentricity 0.3 and Phong cosine power 20 give about the same highlight: both near 0.55 here
-    assert abs(material.eccentricity_roughness(0.3) - material.cosine_power_roughness(20.0)) < 0.01
-
-
-def test_other_kinds_keep_blender_values():
-    _clear()
-    ref = _blender_bsdf()
-    for kind in ('LAMBERT', 'PHONG_E', 'ANISOTROPIC', 'STANDARD_SURFACE', 'AI_STANDARD_SURFACE'):
-        b = _bsdf(material.new_material(kind))
-        for name in ("Base Color", "Roughness", "Specular IOR Level", "Specular Tint", "Anisotropic",
-                     "Coat Roughness", "Emission Color"):
-            got, want = b.inputs[name].default_value, ref.inputs[name].default_value
-            if hasattr(got, "__len__"):
-                got, want = tuple(got), tuple(want)
-            assert _close(got, want), (kind, name, got, want)
-    # Ramp / Layered: no glow colour in their Incandescence rows
-    for kind in ('RAMP', 'LAYERED'):
-        b = _bsdf(material.new_material(kind))
-        assert _close(b.inputs["Emission Color"].default_value, (0, 0, 0, 1)), kind
-
-
-def test_ae_draws_maya_numbers():
-    """The AE row draws the Material property (Maya's number), not the Roughness socket."""
-    _clear()
-    mat = material.new_material('BLINN')
+    mat = material.new_material()
     calls = []
 
     class Rec:
@@ -133,9 +103,8 @@ def test_ae_draws_maya_numbers():
         def label(self, text=""):
             calls.append((None, None, text))
 
-    attribute_editor.draw_row(Rec(), bpy.context, None, mat, ("maya", "allset_eccentricity", "Eccentricity",
-                                                                 "Roughness"))
-    assert calls == [(mat, "allset_eccentricity", "Eccentricity")], calls
+    attribute_editor.draw_row(Rec(), bpy.context, None, mat, ("maya", "allset_diffuse", "Diffuse", "Roughness"))
+    assert calls == [(mat, "allset_diffuse", "Diffuse")], calls
 
 
 # --- lights --------------------------------------------------------------------------------------------------------

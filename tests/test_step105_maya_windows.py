@@ -37,7 +37,8 @@ def test_menu_bars_match_maya_and_are_honest():
         if path.split("/", 1)[0] in MAYA_BARS and (not menu_sets.sub_items(path, it) or path in menu_map.MAP):
             leaves[path] = path in menu_map.MAP
     print("leaves", len(leaves), "mapped", sum(leaves.values()))
-    assert len(leaves) == 357 + 59, len(leaves)     # Hypershade / Script Editor
+    # Hypershade / Script Editor; Hypershade Create > Materials: one New Material for the 7 Maya surface kinds
+    assert len(leaves) == 357 + 59 - 7 + 1, len(leaves)
     assert not [p for p, m in leaves.items() if not m and notices.greyed_notice(p) is None]
     assert sum(leaves.values()) >= 150
     for name in ("Hypershade", "Script Editor"):
@@ -52,29 +53,23 @@ def test_render_settings_is_blenders_render_tab():
     assert not hasattr(bpy.types.Scene, "allset_rs_size")
 
 
-def test_create_list_maya_shaders():
+def test_create_list_one_new_material():
     _clear()
-    assert [material.MATERIALS[k][1] for k in hs.CREATE] == [
-        "Anisotropic", "Blinn", "Lambert", "Layered Shader", "Phong", "Phong E", "Ramp Shader", "Standard Surface",
-        "Surface Shader", "Use Background"]
-    for kind in hs.CREATE:
-        mat = material.new_material(kind)
-        name = attribute_editor.material_type(mat)
-        assert name == material.MATERIALS[kind][0] and name in ae_layout.BY_KIND, (kind, name)
-    types_ = {n.type for n in bpy.data.materials["rampShader1"].node_tree.nodes}
-    assert {'LAYER_WEIGHT', 'VALTORGB', 'BSDF_PRINCIPLED'} <= types_
-    out = next(n for n in bpy.data.materials["layeredShader1"].node_tree.nodes if n.type == 'OUTPUT_MATERIAL')
-    assert out.inputs["Surface"].links[0].from_node.type == 'MIX_SHADER'
-    out = next(n for n in bpy.data.materials["useBackground1"].node_tree.nodes if n.type == 'OUTPUT_MATERIAL')
-    assert out.inputs["Surface"].links[0].from_node.type == 'HOLDOUT'
+    labels = [label for label, _p in hs.create_items('SURFACE')]
+    assert labels[0] == "New Material", labels
+    for gone in ("Anisotropic", "Blinn", "Lambert", "Phong", "Phong E", "Standard Surface", "OpenPBR Surface"):
+        assert gone not in labels, gone
+    mat = material.new_material()
+    name = attribute_editor.material_type(mat)
+    assert name == ae_layout.PRINCIPLED_TYPE and name in ae_layout.BY_KIND, name
 
 
 def test_browser_tabs_and_edit_commands():
     _clear()
     wm = bpy.context.window_manager
-    a = material.new_material('BLINN')
+    a = material.new_material()
     a.use_fake_user = True
-    b = material.new_material('PHONG')
+    b = material.new_material()
     b.use_fake_user = True
     wm.allset_hs_material = b.name
     assert bpy.ops.allset.hs_node(node_type='ShaderNodeTexChecker', label="Checker") == {'FINISHED'}
@@ -82,10 +77,10 @@ def test_browser_tabs_and_edit_commands():
     ctx = bpy.context
     wm.allset_hs_sort = 'NAME'
     names = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
-    assert "blinn1" in names and "phong1" in names
+    assert "Material" in names and "Material.001" in names
     assert [it[1] for it in hs.browser_items(ctx, 'TEXTURES')] == ["Checker"]
     assert [it[1] for it in hs.browser_items(ctx, 'UTILITIES')] == ["2d Placement"]
-    assert {it[1] for it in hs.browser_items(ctx, 'SHADING_GROUPS')} >= {"blinn1SG", "phong1SG"}
+    assert {it[1] for it in hs.browser_items(ctx, 'SHADING_GROUPS')} >= {"MaterialSG", "Material.001SG"}
     wm.allset_hs_reverse = True
     rev = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
     wm.allset_hs_reverse = False
@@ -98,7 +93,7 @@ def test_browser_tabs_and_edit_commands():
     me.materials.append(a)
     assert bpy.ops.allset.hs_edit(action='DELETE_UNUSED') == {'FINISHED'}
     left = {m.name for m in bpy.data.materials}
-    assert lam.name in left and "blinn1" in left and "phong1" not in left, left
+    assert lam.name in left and "Material" in left and "Material.001" not in left, left
 
 
 def test_script_editor_runs_python_and_refuses_mel():

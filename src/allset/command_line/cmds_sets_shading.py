@@ -90,11 +90,6 @@ def sets(*args, **kwargs):
 
 # --- shading nodes ---------------------------------------------------------------------------------------------------
 
-def _material_kind(maya_type):
-    from ..operators import material
-    return next((k for k, v in material.MATERIALS.items() if v[0] == maya_type), None)
-
-
 def new_file_texture(name=None):
     """Maya's ``file`` texture node: a Shader node group with an Image Texture node and Maya's outputs."""
     from ..operators import naming
@@ -116,9 +111,9 @@ def new_file_texture(name=None):
 
 
 def shadingNode(*args, **kwargs):
-    """``shadingNode lambert -asShader`` = a kit material (``material.new_material``: lambert2 while lambert1
-    exists, blinn1, phong1 …, default values like Maya); ``file -asTexture`` = ``new_file_texture``. No shading group
-    is made; the new node becomes the selection."""
+    """``shadingNode lambert -asShader`` (any Maya surface shader type of ``material.SURFACE_TYPES``) = Blender's new
+    material (``material.new_material``: Material, Material.001 …, Blender's values), returned by its name;
+    ``file -asTexture`` = ``new_file_texture``. No shading group is made; the new node becomes the selection."""
     from ..operators import material
     f = _Flags("shadingNode", kwargs)
     f.get("asShader", "asShader", False)
@@ -138,12 +133,10 @@ def shadingNode(*args, **kwargs):
     if maya_type == "file":
         node_name = new_file_texture(name).name
     else:
-        kind = _material_kind(maya_type)
-        if kind is None:
+        if maya_type not in material.SURFACE_TYPES:
             raise RuntimeError(f"shadingNode: Maya Workflow Kit can't make a '{maya_type}' node"
                                + (" (texture nodes: file)" if as_texture else ""))
-        material.default_material()      # Maya's scene always has lambert1: the first new lambert is lambert2
-        mat = material.new_material(kind)
+        mat = material.new_material()
         if name:
             mat.name = unique_node_name(str(name), _all_names() - {mat.name})
         node_name = mat.name

@@ -1,6 +1,7 @@
 """Maya material assignment (Lighting/Shading menu, RMB menu, Shift+T).
 
-Object assignment = whole shape, face selection = only those faces.
+Object assignment = whole shape, face selection = only those faces. Every entry that makes a material makes
+Blender's new material (Principled BSDF), named by Blender: Material, Material.001 ...
 """
 
 from importlib import import_module
@@ -71,15 +72,16 @@ def test_new_material_object_replaces_all_slots():
     ob.data.materials.append(None)
     ob.data.materials.append(old)
     ob.data.polygons[2].material_index = 1
-    assert bpy.ops.allset.assign_new_material(kind='LAMBERT') == {'FINISHED'}
-    # lambert1 is the default material (like Maya), so a new Lambert is lambert2 (Maya)
-    assert [s.material.name for s in ob.material_slots] == ["lambert2"], [s.material for s in ob.material_slots]
+    assert bpy.ops.allset.assign_new_material() == {'FINISHED'}
+    assert [s.material.name for s in ob.material_slots] == ["Material"], [s.material for s in ob.material_slots]
     assert set(_indices(ob)) == {0}
-    # Maya names count up per type; Principled values from the kind.
-    bpy.ops.allset.shelf_material(kind='LAMBERT')
-    assert ob.active_material.name == "lambert3"
+    # Blender's names count up; a Maya shader type of an older call (saved shelf button) makes the same material
+    bpy.ops.allset.shelf_material()
+    assert ob.active_material.name == "Material.001"
     bpy.ops.allset.shelf_material(kind='STANDARD_SURFACE')
-    assert ob.active_material.name == "standardSurface1"
+    assert ob.active_material.name == "Material.002"
+    assert any(n.type == 'BSDF_PRINCIPLED' for n in ob.active_material.node_tree.nodes)
+    assert "allset_type" not in ob.active_material
     wm = bpy.context.window_manager
     assert wm.allset_ae_tab == "MAT:0", wm.allset_ae_tab
 
@@ -87,15 +89,15 @@ def test_new_material_object_replaces_all_slots():
 def test_faces_only_in_face_mode():
     ob = _scene()
     _edit_faces(ob, [1, 3])
-    assert bpy.ops.allset.shelf_material(kind='BLINN') == {'FINISHED'}
+    assert bpy.ops.allset.shelf_material() == {'FINISHED'}
     idx = _indices(ob)
-    assert [s.material.name if s.material else None for s in ob.material_slots] == ["lambert1", "blinn1"]
+    assert [s.material.name if s.material else None for s in ob.material_slots] == ["lambert1", "Material"]
     assert [i for i, v in enumerate(idx) if v == 1] == [1, 3], idx
     # Another material on another face adds a slot; the same material reuses its slot.
     _edit_faces(ob, [0])
-    bpy.ops.allset.shelf_material(kind='PHONG')
+    bpy.ops.allset.shelf_material()
     _edit_faces(ob, [5])
-    bpy.ops.allset.assign_material(material="blinn1")
+    bpy.ops.allset.assign_material(material="Material")
     idx = _indices(ob)
     assert len(ob.material_slots) == 3, len(ob.material_slots)
     assert idx == [2, 1, 0, 1, 0, 1], idx
@@ -105,13 +107,13 @@ def test_faces_only_in_face_mode():
 def test_vertex_mode_assigns_whole_object():
     ob = _scene()
     _edit_faces(ob, [1], mode='VERT')
-    bpy.ops.allset.shelf_material(kind='PHONG')
-    assert [s.material.name for s in ob.material_slots] == ["phong1"]
+    bpy.ops.allset.shelf_material()
+    assert [s.material.name for s in ob.material_slots] == ["Material"]
     assert set(_indices(ob)) == {0}
     # Object assignment in face mode with nothing selected: the whole object too.
     _edit_faces(ob, [])
-    bpy.ops.allset.shelf_material(kind='LAMBERT')
-    assert [s.material.name for s in ob.material_slots] == ["lambert2"]
+    bpy.ops.allset.shelf_material()
+    assert [s.material.name for s in ob.material_slots] == ["Material.001"]
 
 
 def test_existing_material_and_rmb_target():
@@ -132,8 +134,8 @@ def test_existing_material_and_rmb_target():
     assert other.active_material == mat and ob.active_material is not mat
     # A selection overrides the object under the menu (Maya RMB marking menu).
     ob.select_set(True)
-    bpy.ops.allset.shelf_material(kind='LAMBERT', rmb=True)
-    assert ob.active_material.name == "lambert2" and other.active_material == mat
+    bpy.ops.allset.shelf_material(rmb=True)
+    assert ob.active_material.name == "Material" and other.active_material == mat
     wm.allset_mm_target = ""
 
 
@@ -179,9 +181,7 @@ def _draw(menu_cls):
 def test_favorite_and_existing_menus():
     _scene()
     fav = _draw(material.ALLSET_MT_assign_favorite_material)
-    assert [(t, p.kind) for _i, t, p in fav.ops] == [
-        ("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'), ("Standard Surface", 'STANDARD_SURFACE')]
-    assert {i for i, _t, _p in fav.ops} == {"allset.shelf_material"}
+    assert [(i, t) for i, t, _p in fav.ops] == [("allset.shelf_material", "New Material")], fav.ops
     # Maya's scene always has lambert1, so Assign Existing Material lists it
     assert [t for _i, t, _p in _draw(material.ALLSET_MT_assign_existing_material).ops] == ["lambert1"]
     bpy.data.materials.new("phong1")
@@ -211,8 +211,8 @@ def test_rmb_menu_lists_material_items():
             ("blinn1", ("allset.assign_material", {"material": "blinn1", "rmb": True})),
             ("lambert1", ("allset.assign_material", {"material": "lambert1", "rmb": True}))]
         fav = items["Assign Favorite Material"]
-        assert isinstance(fav, mm.Sub) and [k[1][1]["kind"] for k in fav.items] == [
-            'LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE']
+        assert isinstance(fav, mm.Sub) and fav.items == [
+            ("New Material", ("allset.shelf_material", {"rmb": True}))], fav.items
     assert mm.RMB_MESH.items[-2][1] is not mm.RMB_CURVE.items[-2][1], "own favourite submenu each"
     engine = import_module(kit.MODULE + ".marking.engine")
     assert engine.Layout._text("Assign Existing Material", ("menu", "X")).endswith("▸")

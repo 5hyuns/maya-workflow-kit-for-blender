@@ -170,28 +170,26 @@ def test_rows_follow_the_lead_and_draw():
 
 def test_ae_material_type_labels_and_sections():
     ob, = _scene(1)
-    expect = {'LAMBERT': ("lambert", "Common Material Attributes"),
-              'BLINN': ("blinn", "Specular Shading"),
-              'PHONG': ("phong", "Specular Shading"),
-              'STANDARD_SURFACE': ("standardSurface", "Base"),
-              'SURFACE': ("surfaceShader", "Surface Shader Attributes")}
-    for kind, (node, section) in expect.items():
-        mat = material.new_material(kind)
-        assert ae.material_type(mat) == node, (kind, ae.material_type(mat))
+    node = ae_layout.PRINCIPLED_TYPE
+    # a new material and materials of older kit versions (their recorded Maya type) share the Principled tab
+    for old_type in (None, "lambert", "blinn", "standardSurface", "surfaceShader"):
+        mat = material.new_material()
+        if old_type:
+            mat[material.TYPE_PROP] = old_type
+        assert ae.material_type(mat) == node, (old_type, ae.material_type(mat))
         ob.data.materials.clear()
         ob.data.materials.append(mat)
         tab = next(t for t in ae.tabs(ob) if t[0] == "MAT:0")
         assert tab[2] == node, tab
         sections, name = ae.sections_for(ob, "MAT:0")
-        assert name == node and any(s.name == section for s in sections), (kind, [s.name for s in sections])
-    lam = material.new_material('LAMBERT')
-    assert lam.name.startswith("lambert") and ae_layout.LAMBERT[0].open
+        assert name == node and [s.name for s in sections][:2] == ["Base", "Diffuse"], [s.name for s in sections]
+    assert ae_layout.PRINCIPLED[0].open and not ae_layout.PRINCIPLED[1].open
     plain = bpy.data.materials.new("noNodes")
     # Blender 5.x: every new material has a Principled node tree
-    assert ae.material_type(plain) == "standardSurface"
+    assert ae.material_type(plain) == node
     principled = bpy.data.materials.new("fromBlender")
     principled.use_nodes = True
-    assert ae.material_type(principled) == "standardSurface"
+    assert ae.material_type(principled) == node
 
 
 def test_disable_removes_handlers():

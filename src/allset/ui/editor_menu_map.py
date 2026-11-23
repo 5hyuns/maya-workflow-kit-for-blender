@@ -464,9 +464,6 @@ MAP = {
 
 # --- Hypershade, Script Editor -------------------------------------------------------------------
 HS, SE = "Hypershade", "Script Editor"
-_HS_MATERIALS = {"Anisotropic": 'ANISOTROPIC', "Blinn": 'BLINN', "Lambert": 'LAMBERT', "Layered Shader": 'LAYERED',
-                 "Phong": 'PHONG', "Phong E": 'PHONG_E', "Ramp Shader": 'RAMP', "Standard Surface": 'STANDARD_SURFACE',
-                 "Surface Shader": 'SURFACE', "Use Background": 'USE_BACKGROUND'}
 _HS_LIGHTS = {"Directional Light": 'DIRECTIONAL_LIGHT', "Point Light": 'POINT_LIGHT', "Spot Light": 'SPOT_LIGHT',
               "Area Light": 'AREA_LIGHT'}
 
@@ -585,7 +582,7 @@ MAP.update({
     **{f"{HS}/View/{label}": _prop("window_manager.allset_hs_sort", key)
        for label, key in (("By Name", 'NAME'), ("By Type", 'TYPE'), ("By Time", 'TIME'))},
     f"{HS}/View/Reverse Order": _prop("window_manager.allset_hs_reverse"),
-    **{f"{HS}/Create/Materials/{label}": ("allset.hs_create", {"kind": kind}) for label, kind in _HS_MATERIALS.items()},
+    f"{HS}/Create/Materials/New Material": "allset.hs_create",      # Blender's one material (menu_map.HIDE)
     **{f"{HS}/Create/Lights/{label}": ("allset.create", {"kind": kind}) for label, kind in _HS_LIGHTS.items()},
     **{f"{HS}/Create/{label}": ("allset.hs_create_extra", {"kind": kind}) for label, kind in HS_EXTRA.items()},
     f"{HS}/Create/Camera": ("allset.create", {"kind": 'CAMERA'}),

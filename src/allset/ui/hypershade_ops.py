@@ -124,15 +124,15 @@ class ALLSET_OT_hs_item(bpy.types.Operator):
 
 
 class ALLSET_OT_hs_create(bpy.types.Operator):
-    """Create a material of this type without assigning it (Maya Hypershade Create)"""
+    """Create a new material (Blender's Principled BSDF) without assigning it (Maya Hypershade Create)"""
     bl_idname = "allset.hs_create"
-    bl_label = "Create Material"
+    bl_label = "New Material"
     bl_options = {'REGISTER', 'UNDO'}
 
-    kind: EnumProperty(items=material_ops.KIND_ITEMS, name="Material")
+    kind: StringProperty(name="Type", options={'HIDDEN', 'SKIP_SAVE'})   # of an older call: ignored
 
     def execute(self, context):
-        mat = material_ops.new_material(self.kind)
+        mat = material_ops.new_material()
         mat.use_fake_user = True    # no user yet: Blender would drop it on save, Maya keeps it
         show(context, mat, context.space_data)
         context.window_manager.allset_hs_tab = 'MATERIALS'
@@ -153,7 +153,7 @@ class ALLSET_OT_hs_node(bpy.types.Operator):
     def execute(self, context):
         mat = current(context)
         if mat is None:
-            mat = material_ops.new_material('LAMBERT')
+            mat = material_ops.new_material()
             mat.use_fake_user = True
         compat.ensure_material_nodes(mat)
         tree = mat.node_tree

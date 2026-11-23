@@ -120,13 +120,12 @@ SYMMETRY = ("Symmetry", Sub(radial={
 # Material items at the end of the RMB object list (Maya builds them when the RMB marking menu opens).
 # ``rmb``: with nothing selected
 # they act on the object the menu was opened on, like Maya.
-_FAVORITES = (("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'),
-              ("Standard Surface", 'STANDARD_SURFACE'))
+# Assign Favorite Material: Blender's one material (Maya lists its favourite surface shaders here).
 
 
 def _material_items():
     """A fresh list per menu, so each menu gets its own submenu class."""
-    favorites = [(label, ("allset.shelf_material", {"kind": kind, "rmb": True})) for label, kind in _FAVORITES]
+    favorites = [("New Material", ("allset.shelf_material", {"rmb": True}))]
     return [
         DIVIDER,
         ("Material Attributes...", ("allset.material_attributes", {"rmb": True})),

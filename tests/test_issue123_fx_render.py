@@ -369,8 +369,9 @@ def test_toon_fills_assign_shader_to_rgb_materials():
         mat = cube.active_material
         assert mat is not None and len(cube.material_slots) == 1, label
         types_ = {n.bl_idname for n in mat.node_tree.nodes}
-        if kind == 'SOLID_COLOR':
-            assert mat.name.startswith("surfaceShader"), mat.name
+        if kind == 'SOLID_COLOR':          # one flat colour: an Emission shader
+            out = next(n for n in mat.node_tree.nodes if n.type == 'OUTPUT_MATERIAL')
+            assert out.inputs["Surface"].links[0].from_node.type == 'EMISSION', types_
             continue
         assert {'ShaderNodeShaderToRGB', 'ShaderNodeValToRGB', 'ShaderNodeEmission'} <= types_, (label, types_)
         ramps = [n for n in mat.node_tree.nodes if n.bl_idname == 'ShaderNodeValToRGB']

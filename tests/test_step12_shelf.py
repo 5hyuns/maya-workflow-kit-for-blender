@@ -107,7 +107,7 @@ def test_mapped_buttons_per_shelf():
     print("mapped shelf buttons:", counts)
     assert counts["Polygons"] >= 30, counts      # 37 in the factory shelf; no Sweep, SVG, ...
     assert counts["UVEditing"] >= 10, counts     # 12 in the factory shelf
-    assert counts["Rigging"] >= 13 and counts["Animation"] >= 13 and counts["Rendering"] >= 13, counts
+    assert counts["Rigging"] >= 13 and counts["Animation"] >= 13 and counts["Rendering"] >= 11, counts
     assert all(v >= 1 for v in counts.values()), counts
 
 
@@ -124,8 +124,8 @@ def test_poly_cube_button_creates_maya_cube():
     ob = bpy.context.view_layer.objects.active
     assert ob.name == "pCube1" and tuple(ob.dimensions) == (1.0, 1.0, 1.0)
     bpy.ops.allset.shelf_button(shelf="Polygons", index=_index("Polygons", "Freeze Transformations"))
-    bpy.ops.allset.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
-    assert ob.active_material.name == "lambert2"   # lambert1 = the default material
+    bpy.ops.allset.shelf_button(shelf="Rendering", index=_index("Rendering", "Standard Surface Material"))
+    assert ob.active_material.name.startswith("Material")   # Blender's new material (Material, Material.001 ...)
     node = next(n for n in ob.active_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     ref = bpy.data.materials.new("blender_ref")
     ref.use_nodes = True

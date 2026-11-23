@@ -1,7 +1,7 @@
 """Maya's shaded mode (5) shows the material colour. Blender's Solid shading with colour type
 MATERIAL draws ``Material.diffuse_color`` (the viewport display colour), which the Principled Base Color the
-kit's materials / Attribute Editor edit doesn't change — so a kit material's display colour follows its Maya
-colour (and transparency)."""
+kit's materials / Attribute Editor edit doesn't change — so a kit material's display colour follows its colour
+(and transparency)."""
 
 from importlib import import_module
 
@@ -41,7 +41,7 @@ def test_shaded_mode_draws_material_colour():
 
 def test_new_kit_material_shows_its_colour():
     _clear()
-    mat = material.new_material('BLINN')
+    mat = material.new_material()
     base = tuple(_principled(mat).inputs["Base Color"].default_value)
     assert _close(mat.diffuse_color, base), (tuple(mat.diffuse_color), base)
     lam = material.default_material()
@@ -52,7 +52,7 @@ def test_new_kit_material_shows_its_colour():
 def test_colour_edit_reaches_viewport_colour():
     _clear()
     ob = create.create(bpy.context, 'CUBE')
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     ob.data.materials.clear()
     ob.data.materials.append(mat)
     bsdf = _principled(mat)
@@ -64,9 +64,10 @@ def test_colour_edit_reaches_viewport_colour():
     assert _close(got, (0.9, 0.1, 0.05, 0.4)), got
 
 
-def test_surface_shader_shows_out_colour():
+def test_old_surface_shader_shows_out_colour():
     _clear()
-    mat = material.new_material('SURFACE')
+    mat = material.new_material()
+    mat[material.TYPE_PROP] = "surfaceShader"        # made by an older kit version
     _principled(mat).inputs["Emission Color"].default_value = (0.2, 0.7, 0.3, 1.0)
     bpy.context.view_layer.update()
     assert _close(mat.diffuse_color[:3], (0.2, 0.7, 0.3)), tuple(mat.diffuse_color)

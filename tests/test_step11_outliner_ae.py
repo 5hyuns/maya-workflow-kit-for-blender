@@ -216,7 +216,7 @@ def test_ae_tabs_in_maya_order():
                            ("M:polySmooth1", "polySmooth1", "polySmoothFace"),   # Maya node types
                            ("M:polyBevel1", "polyBevel1", "polyBevel3"),
                            ("SG:0", "standardSurface1SG", "shadingEngine"),   # Maya's shading group
-                           ("MAT:0", "standardSurface1", "standardSurface")]
+                           ("MAT:0", "standardSurface1", "Principled BSDF")]
     assert ae.current_tab(bpy.context, ob) == "S"      # default: shape (preferred node)
 
 
@@ -317,19 +317,19 @@ def test_ae_draws_every_tab():
                     assert any(e[0] == "prop" and e[2] == '["myAttr"]' for e in lay.log)
             if key.startswith("M:"):
                 assert any(e[0] == "op" and e[1] == "allset.ae_modifier" for e in lay.log)
-    # Material tab: sockets of the Principled BSDF under Maya standardSurface sections.
+    # Material tab: the Principled BSDF inputs by Blender's names.
     _select([ob], ob)
     bpy.ops.allset.ae_tab(key="MAT:0")
     lay = FakeLayout()
     ae.draw(lay, bpy.context, ob)
     labels = [e[3] for e in lay.log if e[0] == "prop" and e[2] == "default_value"]
-    assert "Color" in labels and "Metalness" in labels, labels
+    assert "Base Color" in labels and "Metallic" in labels, labels
     bpy.ops.allset.ae_tab(key="MAT:1")
     lay = FakeLayout()
     ae.draw(lay, bpy.context, ob)
     if plain.node_tree is not None and any(n.type == 'BSDF_PRINCIPLED' for n in plain.node_tree.nodes):
-        # Blender 5.x: every new material has a Principled tree, shown as standardSurface
-        assert "Color" in [e[3] for e in lay.log if e[0] == "prop" and e[2] == "default_value"]
+        # Blender 5.x: every new material has a Principled tree, shown with its inputs
+        assert "Base Color" in [e[3] for e in lay.log if e[0] == "prop" and e[2] == "default_value"]
     else:
         assert ("prop", plain, "diffuse_color", "Color") in lay.log
 

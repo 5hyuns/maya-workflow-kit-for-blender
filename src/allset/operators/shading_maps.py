@@ -95,11 +95,6 @@ def break_connection(mat, socket_name):
     return True
 
 
-def _maya_attr(socket):
-    from ..ui import ae_layout
-    return ae_layout.MAYA_ATTR.get(socket, socket)
-
-
 _MAT = StringProperty(name="Material", options={'SKIP_SAVE', 'HIDDEN'})
 _SOCKET = StringProperty(name="Input", options={'SKIP_SAVE', 'HIDDEN'})
 
@@ -115,8 +110,7 @@ class ALLSET_OT_ae_map(bpy.types.Operator):
     @classmethod
     @i18n.translated
     def description(cls, context, props):
-        attr = _maya_attr(props.socket)
-        return f"{attr}: connect a texture (Maya map button = a texture node linked to {props.socket})"
+        return f"{props.socket}: connect a texture (Maya map button = a texture node linked to the input)"
 
     def invoke(self, context, event):
         mat = bpy.data.materials.get(self.material)
@@ -136,7 +130,7 @@ class ALLSET_OT_ae_map(bpy.types.Operator):
                 op = layout.operator("allset.ae_map_connect", text=f"{label}  ({blender})", icon='TEXTURE')
                 op.material, op.socket, op.kind = material, socket, kind
 
-        context.window_manager.popup_menu(draw, title=f"Create Render Node: {_maya_attr(socket)}")
+        context.window_manager.popup_menu(draw, title=f"Create Render Node: {socket}")
         return {'FINISHED'}
 
 
@@ -156,7 +150,7 @@ class ALLSET_OT_ae_map_connect(bpy.types.Operator):
             self.report({'WARNING'}, "No such material attribute")
             return {'CANCELLED'}
         tex = build(mat, self.socket, self.kind)
-        results.result(self, f"{tex.name} -> {mat.name}.{_maya_attr(self.socket)}")
+        results.result(self, f"{tex.name} -> {mat.name}.{self.socket}")
         return {'FINISHED'}
 
 

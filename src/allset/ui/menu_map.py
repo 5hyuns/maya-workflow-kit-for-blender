@@ -601,7 +601,7 @@ MAP = {
     # --- Rendering ---
     # Materials (operators/material.py).
     "Lighting/Shading/Material Attributes": ("v3d", "allset.material_attributes", {}),
-    # Maya 2026: Assign New Material is a submenu (favourites + New Material...)
+    # Maya 2026: Assign New Material is a submenu (favourites + New Material...): Blender's one material
     "Lighting/Shading/Assign New Material/New Material...": "allset.assign_new_material",
     "Lighting/Shading/Assign Favorite Material": ("menu", "ALLSET_MT_assign_favorite_material"),
     "Lighting/Shading/Assign Existing Material": ("menu", "ALLSET_MT_assign_existing_material"),
@@ -634,9 +634,15 @@ EXTRA = {
     "Edit Mesh/Bevel": [("Smart Bevel",)],
     # Materials of older kit versions -> plain Principled BSDF, once (operators/material.convert_old)
     "Lighting/Shading/Assign Existing Material": [("Convert Old Kit Materials",)],
+    # Blender's one material where Maya lists its surface shaders (HIDE)
+    "Hypershade/Create/Materials/Anisotropic": [("New Material",)],
 }
 # EXTRA items that have an option box (the static menu data lists the others')
 EXTRA_OPTION_BOXES = frozenset({"Edit Mesh/Smart Bevel"})
+# Maya items the kit leaves out of its menus (label paths): Blender has one material, so the Maya surface shader
+# kinds give way to one New Material entry (EXTRA) in the same place.
+HIDE = frozenset(f"Hypershade/Create/Materials/{label}" for label in (
+    "Anisotropic", "Blinn", "Lambert", "OpenPBR Surface", "Phong", "Phong E", "Standard Surface"))
 
 # Submenus Maya builds at run time, so Maya's static menu structure has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.

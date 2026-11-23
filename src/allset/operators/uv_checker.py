@@ -33,7 +33,7 @@ class ALLSET_OT_checker_shader(bpy.types.Operator):
             return {'CANCELLED'}
         img = bpy.data.images.get(CHECKER_IMAGE) or bpy.data.images.new(CHECKER_IMAGE, 1024, 1024)
         img.generated_type = 'UV_GRID'
-        mat = material.new_material('LAMBERT')
+        mat = material.new_material()
         tree = mat.node_tree
         node = tree.nodes.new("ShaderNodeTexImage")
         node.image = img
@@ -68,7 +68,7 @@ def _checker_material():
         return mat
     img = bpy.data.images.get(CHECKER_IMAGE) or bpy.data.images.new(CHECKER_IMAGE, 1024, 1024)
     img.generated_type = 'UV_GRID'
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     mat.name = "checkerDisplay"
     mat[CHECKER_MAT] = True
     tree = mat.node_tree

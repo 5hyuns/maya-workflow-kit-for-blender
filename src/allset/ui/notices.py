@@ -1021,8 +1021,7 @@ CATEGORIES.update({
         "Shift+A in the Shader Editor", "Blender has no node of this Maya type: add the closest node with Shift+A "
         "in the Shader Editor."),
     "Hypershade/Create/Materials": (
-        "Principled BSDF", "Blender has no game, hair-tube, ocean or USD Preview shader of this kind: start from a "
-        "Standard Surface (Principled BSDF)."),
+        "Principled BSDF", "Blender has no shader of this kind: start from New Material (a Principled BSDF)."),
     "Hypershade/Create/Volumetric Materials": (
         "Volume shaders", "Blender's volumes are shaders on the material's Volume output (Principled Volume) or the "
         "World's: add them with Shift+A > Volume."),

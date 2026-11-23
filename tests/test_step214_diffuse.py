@@ -1,7 +1,6 @@
 """Kit materials are plain Principled BSDF materials; older kit materials with a "Maya Diffuse" node keep working.
 
-A new material of any kind is Blender's Principled BSDF with Blender's own values (the kind gives the name, labels
-and Attribute Editor layout). Materials saved by older kit versions have a Mix node ("Maya Diffuse": factor = diffuse,
+A new material is Blender's Principled BSDF with Blender's own values and Blender's name. Materials saved by older kit versions have a Mix node ("Maya Diffuse": factor = diffuse,
 A = black, B = the colour or texture) in front of Base Color: they render as saved, their Color / Diffuse rows edit
 that node, File > Export links the colour straight to Base Color while it writes, and Lighting/Shading > Convert Old
 Kit Materials turns them into plain Principled materials once."""
@@ -21,7 +20,7 @@ ae = import_module(kit.MODULE + ".ui.attribute_editor")
 menu_items = import_module(kit.MODULE + ".operators.menu_items")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 
-PLAIN = ('LAMBERT', 'BLINN', 'PHONG', 'PHONG_E', 'ANISOTROPIC', 'STANDARD_SURFACE', 'AI_STANDARD_SURFACE')
+OLD_TYPES = {'LAMBERT': "lambert", 'BLINN': "blinn", 'PHONG': "phong"}
 
 
 class Rec:
@@ -76,7 +75,8 @@ def _values(bsdf):
 
 def _old(kind='LAMBERT', colour=(0.5, 0.5, 0.5, 1.0), diffuse=0.8):
     """A material as an older kit version saved it: the Maya Diffuse node in front of Base Color."""
-    mat = material.new_material(kind)
+    mat = material.new_material()
+    mat[material.TYPE_PROP] = OLD_TYPES[kind]
     tree, bsdf = mat.node_tree, _bsdf(mat)
     base = bsdf.inputs["Base Color"]
     node = tree.nodes.new('ShaderNodeMix')
@@ -98,8 +98,8 @@ def test_new_materials_are_plain_principled():
     ref = bpy.data.materials.new("blender_ref")
     ref.use_nodes = True
     want = _values(_bsdf(ref))
-    for kind in PLAIN:
-        mat = material.new_material(kind)
+    for kind in range(3):
+        mat = material.new_material()
         assert material.diffuse_node(mat) is None, kind
         assert not [n for n in mat.node_tree.nodes if n.type == 'MIX'], kind
         bsdf = _bsdf(mat)
@@ -111,16 +111,13 @@ def test_new_materials_are_plain_principled():
         assert _close(mat.allset_diffuse, 1.0), kind
         mat.allset_diffuse = 0.3           # nothing to set: no node is added
         assert material.diffuse_node(mat) is None and _close(mat.allset_diffuse, 1.0), kind
-        assert mat[material.TYPE_PROP] == material.MATERIALS[kind][0], kind
-    lam1 = material.default_material()
-    assert material.diffuse_node(lam1) is None and _values(_bsdf(lam1)) == want, "lambert1 is plain too"
-    for kind in ('RAMP', 'LAYERED', 'USE_BACKGROUND', 'SURFACE'):
-        assert material.diffuse_node(material.new_material(kind)) is None, kind
+        assert material.TYPE_PROP not in mat, kind
+        assert mat.name == ("Material", "Material.001", "Material.002")[kind], mat.name
 
 
 def test_viewport_colour_is_base_color():
     _clear()
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     assert _close(mat.diffuse_color[:3], _bsdf(mat).inputs["Base Color"].default_value[:3])
     material.color_socket(mat).default_value = (0.9, 0.1, 0.05, 1.0)
     assert material.sync_display(mat) and _close(mat.diffuse_color, (0.9, 0.1, 0.05, 1.0))
@@ -143,24 +140,23 @@ def test_ae_diffuse_row_only_on_old_materials():
     _clear()
     bpy.ops.mesh.primitive_uv_sphere_add()
     ob = bpy.context.active_object
-    new = material.new_material('LAMBERT')
+    new = material.new_material()
     material.assign_object(ob, new)
     rec = Rec()
-    ae.draw_sections(rec, bpy.context, ob, new, ae_layout.LAMBERT, "t")
+    ae.draw_sections(rec, bpy.context, ob, new, ae_layout.PRINCIPLED, "t")
     props = [(e[1][0], e[1][1], e[2].get("text")) for e in rec.log if e[0] == "prop"]
     base = _bsdf(new).inputs["Base Color"]
-    assert any(o == base and a == "default_value" and t == "Color" for o, a, t in props), props
+    assert any(o == base and a == "default_value" and t == "Base Color" for o, a, t in props), props
     assert not any(a == "allset_diffuse" for _o, a, _t in props), "no Diffuse row on a plain material"
-    for socket, label in (("Alpha", "Opacity"), ("Emission Color", "Incandescence"),
-                          ("Subsurface Weight", "Translucence")):
+    for socket, label in (("Alpha", "Alpha"), ("Emission Color", "Color"), ("Subsurface Weight", "Weight")):
         sock = _bsdf(new).inputs[socket]
         assert any(o == sock and t == label for o, _a, t in props), (label, props)
     old = _old('LAMBERT')
     rec = Rec()
-    ae.draw_sections(rec, bpy.context, ob, old, ae_layout.LAMBERT, "t")
+    ae.draw_sections(rec, bpy.context, ob, old, ae_layout.PRINCIPLED, "t")
     props = [(e[1][0], e[1][1], e[2].get("text")) for e in rec.log if e[0] == "prop"]
     b = material.color_socket(old)
-    assert any(o == b and a == "default_value" and t == "Color" for o, a, t in props), props
+    assert any(o == b and a == "default_value" and t == "Base Color" for o, a, t in props), props
     assert any(o == old and a == "allset_diffuse" and t == "Diffuse" for o, a, t in props), props
     sockets = [e[3].socket for e in rec.log if e[0] == "operator" and e[1][0] == "allset.ae_map"]
     assert "Base Color" in sockets and "Diffuse" in sockets, sockets
@@ -168,7 +164,7 @@ def test_ae_diffuse_row_only_on_old_materials():
 
 def test_map_button_connects_into_base_color():
     _clear()
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     assert bpy.ops.allset.ae_map_connect(material=mat.name, socket="Base Color", kind='CHECKER') == {'FINISHED'}
     base = _bsdf(mat).inputs["Base Color"]
     assert base.is_linked and base.links[0].from_node.type == 'TEX_CHECKER', "the texture straight on Base Color"
@@ -199,7 +195,7 @@ def test_diffuse_bypass_round_trip():
     mat = _old('LAMBERT', (0.25, 0.5, 0.75, 1.0))
     tex = maps.build(mat, "Base Color", 'FILE')
     other = _old('PHONG', (0.1, 0.2, 0.3, 1.0))         # a flat colour
-    plain = material.new_material('BLINN')
+    plain = material.new_material()
     base, obase = _bsdf(mat).inputs["Base Color"], _bsdf(other).inputs["Base Color"]
     before = tuple(obase.default_value)
     with material.diffuse_bypass() as n:
@@ -218,7 +214,7 @@ def test_kit_obj_export_writes_texture():
     tmp = bpy.app.tempdir
     bpy.ops.mesh.primitive_cube_add()
     ob = bpy.context.active_object
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     material.assign_object(ob, mat)
     img = bpy.data.images.new("kit214", 4, 4)
     img.filepath_raw = os.path.join(tmp, "kit214.png")
@@ -239,7 +235,7 @@ def test_convert_old_materials():
     flat = _old('LAMBERT', (0.5, 0.25, 1.0, 1.0), diffuse=0.8)
     textured = _old('BLINN')
     tex = maps.build(textured, "Base Color", 'CHECKER')
-    plain = material.new_material('PHONG')
+    plain = material.new_material()
     plain_before = _values(_bsdf(plain))
     flat_name, tex_name = flat.name, textured.name
     bpy.ops.ed.undo_push(message="before")

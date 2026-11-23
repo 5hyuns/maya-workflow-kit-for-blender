@@ -116,9 +116,13 @@ def _node_list():
     return out
 
 
+# Maya material types of older kit materials (their recorded type) besides the surface shaders new materials stand for
+_OLD_TYPES = {"surfaceShader", "rampShader", "layeredShader", "useBackground"}
+
+
 def _material_types():
     from ..operators import material
-    return {v[0] for v in material.MATERIALS.values()} | {"material"}
+    return set(material.SURFACE_TYPES) | _OLD_TYPES | {"material"}
 
 
 def _extend_shim():

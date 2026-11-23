@@ -32,7 +32,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 # the split-out parts, also read through this module by other UI and the tests
 from .hypershade_window import (HS, MARK, PANE_FLAGS, PANE_LABELS, pane, context_pane, set_pane,  # noqa: F401
                                 is_hypershade, graph_area, menu_area, hypershade_windows, build_later)
-from .hypershade_materials import (CREATE, COLUMNS, TABS, MAYA_ONLY_TABS, SWATCHES, SORTS,  # noqa: F401
+from .hypershade_materials import (COLUMNS, TABS, MAYA_ONLY_TABS, SWATCHES, SORTS,  # noqa: F401
                                    SWATCH_ICONS, SORT_ICONS, TEXTURE_NODES, SHADER_NODES, materials, current,
                                    assigned_materials, release_editors, show, browser_items, icon_value)
 from .hypershade_ops import (ALLSET_OT_hypershade, ALLSET_OT_hs_pick, PICK_PROP, _get_pick,  # noqa: F401

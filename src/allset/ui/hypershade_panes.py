@@ -37,9 +37,8 @@ CREATE_CATEGORIES = (
 )
 # Maya's Displacement category has no Hypershade Create menu items: greyed (category notice)
 DISPLACEMENT = ("C Muscle Shader", "Displacement", "Usd Preview Surface")
-# Favorites > Maya > Surface (Maya's list order)
-FAVORITES = ("Standard Surface", "Blinn", "Lambert", "Layered Shader", "Phong", "Phong E", "Ramp Shader",
-             "Surface Shader", "Use Background")
+# Favorites: Blender's one material (Maya lists its surface shaders here)
+FAVORITES = ("New Material",)
 
 # Notices of pane controls that are not Maya menu items (notices.PANEL_NOTICES, filled on register)
 PANE_NOTICES = {
@@ -59,12 +58,14 @@ def _create_menu():
 
 
 def _menu_entries(sub):
-    """(label, Maya menu path) of the Hypershade Create menu's submenu (or single item) ``sub``."""
+    """(label, Maya menu path) of the Hypershade Create menu's submenu (or single item) ``sub``, as the menu shows
+    them (``menu_tree.children``: the kit's added and left-out entries)."""
+    from .menu_tree import children
     for it in _create_menu():
         if it[0] != sub:
             continue
         if len(it) > 1 and isinstance(it[1], list):
-            return [(c[0], f"{HS}/Create/{sub}/{c[0]}") for c in it[1] if c[0] != '-']
+            return [(c[0], path) for path, c in children(it[1], f"{HS}/Create/{sub}") if path is not None]
         return [(sub, f"{HS}/Create/{sub}")]
     return []
 

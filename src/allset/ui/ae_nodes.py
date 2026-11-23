@@ -23,16 +23,11 @@ def principled(material):
 
 
 def material_type(material):
-    """Maya node type of a material: the type a kit-made material recorded (lambert, blinn,
-    phong, standardSurface, surfaceShader; operators/material.py), else standardSurface for a
-    Principled material, else "material"."""
-    if material is None:
-        return "material"
-    from ..operators.material import TYPE_PROP
-    recorded = material.get(TYPE_PROP)
-    if isinstance(recorded, str) and recorded in ae_layout.BY_KIND and principled(material):
-        return recorded
-    return "standardSurface" if principled(material) else "material"
+    """Tab type of a material: Principled BSDF for a material with one (new materials and those of older kit
+    versions alike), else "material"."""
+    if material is not None and principled(material):
+        return ae_layout.PRINCIPLED_TYPE
+    return "material"
 
 
 def shape_kind(ob):

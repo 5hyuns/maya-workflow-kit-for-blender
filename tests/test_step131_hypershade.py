@@ -58,7 +58,7 @@ def test_pane_content():
     _clear()
     ob = _sphere()
     wm = bpy.context.window_manager
-    blinn = material.new_material('BLINN')
+    blinn = material.new_material()
     blinn.use_fake_user = True
     wm.allset_hs_material = blinn.name
     wm.allset_hs_filter = ""
@@ -68,7 +68,7 @@ def test_pane_content():
     for t in hs.MAYA_ONLY_TABS:
         assert f"Hypershade/Browser/{t}" in greyed
     assert swatches(rec) >= {blinn.name}
-    wm.allset_hs_filter = "blin"
+    wm.allset_hs_filter = "mate"
     rec = Rec()
     hs.draw_browser(rec, bpy.context)
     assert swatches(rec) == {blinn.name}
@@ -78,7 +78,7 @@ def test_pane_content():
         assert hs.create_items(key), key
     tex = [label for label, _p in hs.create_items('TEX2D')]
     assert tex[:3] == ["Bulge", "Checker", "Cloth"] and "File" in tex
-    assert [label for label, _p in hs.create_items('FAVORITES')][:3] == ["Standard Surface", "Blinn", "Lambert"]
+    assert [label for label, _p in hs.create_items('FAVORITES')] == ["New Material"]
     assert menu_map.MAP["Hypershade/Create/2D Textures/Checker"][0] == "allset.hs_node"
     wm.allset_hs_create_cat = 'LIGHTS'
     rec = Rec()
@@ -112,7 +112,7 @@ def test_graph_toolbar_and_menu_targets():
 
 def test_graph_network_selection():
     _clear()
-    mat = material.new_material('BLINN')
+    mat = material.new_material()
     tree = mat.node_tree
     tex = tree.nodes.new('ShaderNodeTexChecker')
     bsdf = next(n for n in tree.nodes if n.type == 'BSDF_PRINCIPLED')
@@ -127,7 +127,7 @@ def test_show_from_a_pane_uses_the_graph():
     # no Hypershade window headless: show() from a non-node context still makes the material current
     _clear()
     ob = _sphere()
-    mat = material.new_material('PHONG')
+    mat = material.new_material()
     ob.data.materials.append(mat)
     area, old = _props_area()
     try:

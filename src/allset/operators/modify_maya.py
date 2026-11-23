@@ -409,7 +409,7 @@ def _box_mesh(name, lo, hi):
 def _bbox_material(colour):
     from . import material, naming
     taken = {m.name for m in bpy.data.materials}
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     mat.name = f"BBoxLambert{naming.next_number('BBoxLambert', taken)}"
     material.color_socket(mat).default_value = (*colour, 1.0)
     material.sync_display(mat)
