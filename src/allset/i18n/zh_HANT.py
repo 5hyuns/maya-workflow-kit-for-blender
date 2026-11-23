@@ -5874,6 +5874,7 @@ STRINGS = {
     "Put back the values the window opened with and close it (Maya's Cancel)": '恢復視窗開啟時的值並關閉視窗 (Maya 的取消)',
     "Put the active tool's options back to their defaults (Maya Tool Settings: Reset Tool)": '將活動工具的選項恢復為預設值 (Maya 工具設置：重置工具)',
     'Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)': '將選定殼的邊界 UV 放到 0-1 方格上，按 3D 邊長分佈間距 (Maya 貼圖邊界，\n預設方形)',
+    'Map each selected face onto the 0-1 square, every face its own UV shell (Maya Unitize)': '將每個選定的面放到 0-1 方格上，每個面成為單獨的 UV 殼 (Maya 單位化)',
     'Put the current Maya workspace back to its factory layout (Maya Windows > Workspaces > Reset Current\nWorkspace): closed, moved or resized panels come back': '將目前 Maya 工作區恢復為出廠佈局 (Maya 視窗 > 工作區 > 重置目前\n工作區)：已關閉、移動或調整大小的面板會恢復',
     "Put the custom pivot orientation into the object's rotation; the geometry stays\n(Maya Modify > Bake Pivot)": '將自訂樞軸方向寫入對象的旋轉；幾何體保持不變\n(Maya 修改 > 烘焙樞軸)',
     'Put the driver joint in this pose (Maya Pose Editor > Go to Pose)': '將驅動關節置於此姿勢 (Maya 姿勢編輯器 > 轉到姿勢)',

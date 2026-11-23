@@ -86,6 +86,10 @@ earlier version open unchanged: nothing in them is converted.
   Perimeter) like Modify > Flip, instead of mirroring around Blender's transform pivot (#520).
 - UV Editor: Stitch Together and Move and Sew with a mirrored shell fold it onto the other shell like Maya (#523).
 - UV Editor: Layout's Distribute over several tiles shares the shells out by count, tile after tile, like Maya (#522).
+- UV Editor: Modify > Unitize makes every face its own UV shell on the 0-1 square, like Maya; UVs of neighbouring
+  faces no longer stay joined and move along (#526).
+- UV Editor: faces picked in the 3D View show only their own UV edges in the selection colour; the edges of other
+  shells on the same mesh edges no longer look selected (#527).
 - Marking menus: a list that would leave the window beside the ring moves closer to the ring instead of over it.
 - Blender 5.3: closed outlines draw every side (#528): marking menu option boxes, the marquee and lattice frames, the
   Graph Editor scale box, the Outliner drop frame and the UV brush circle missed their last side.

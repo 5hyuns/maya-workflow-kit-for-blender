@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor Modify commands.
 
-Distribute UVs, Match Grid, Layout Along, Stack Similar Shells, Map Border and Straighten Border, with the default
-options. Shells and Maya UVs (points: loops of one vertex sharing one coordinate, ordered by first loop index = Maya's UV
+Distribute UVs, Match Grid, Layout Along, Stack Similar Shells, Map Border, Straighten Border and Unitize, with the
+default options. Shells and Maya UVs (points: loops of one vertex sharing one coordinate, ordered by first loop index = Maya's UV
 index for meshes built face by face) come from operators/uv_shells.py. Modify > Symmetrize is not here: Maya's
 symmetrizeUV only acts after the Symmetrize UV tool's seam pick.
 """
@@ -17,7 +17,7 @@ from mathutils import Vector
 from .. import compat, undo_steps
 from . import uv_shells
 from .uv_shells import _index_loops, _meshes, shells, target_shells, uv_points
-from .uv_tools import sync, uv_bounds
+from .uv_tools import NUDGE, sync, uv_bounds
 
 GRID = 256                 # Match Grid default: 256 x 256
 STACK_TOLERANCE = 0.1      # Stack Similar default tolerance 0.1
@@ -202,6 +202,70 @@ def map_border(groups, uv, pts, where):
             acc += lens[j]
         done += 1
     return done
+
+
+# --- Unitize ----------------------------------------------------------------------------------------------------
+
+def unitize_points(n):
+    """UVs of an n-sided face on the 0-1 square's edge, from its first corner: a triangle takes (0, 0), (1, 0),
+    (1, 1); four or more corners go counter-clockwise from (0, 0) along the bottom, right, top and left sides, each
+    side n // 4 equal steps and the remaining ones added to the right, top and bottom side in that order (Maya
+    Unitize)."""
+    if n == 3:
+        return [Vector((0.0, 0.0)), Vector((1.0, 0.0)), Vector((1.0, 1.0))]
+    steps = [n // 4] * 4                 # bottom, right, top, left
+    for side in (1, 2, 0)[:n % 4]:
+        steps[side] += 1
+    out = []
+    for side, k in enumerate(steps):
+        for j in range(k):
+            t = j / k
+            out.append(Vector(((t, 0.0), (1.0, t), (1.0 - t, 1.0), (0.0, 1.0 - t))[side]))
+    return out
+
+
+def _joined(a, b):
+    """Blender joins two UVs of one vertex closer than 1e-4 on both axes (moved and picked together)."""
+    return abs(a.x - b.x) <= NUDGE / 2 and abs(a.y - b.y) <= NUDGE / 2
+
+
+def unitize(bm, uv, faces):
+    """Maya Unitize: each face's UVs on the 0-1 square's edge (``unitize_points``), every face its own shell.
+    Blender joins the UVs of one vertex that share a coordinate, so where two such faces (or a face and a neighbour)
+    put one vertex on the same spot, the later face's UV steps NUDGE per axis towards its own face's middle (a real
+    split that still looks in place, like Cut UVs); the faces' edges become seams, like a cut."""
+    faces = [f for f in faces if len(f.loops) >= 3]
+    chosen = set(faces)
+    for f in faces:
+        for loop, p in zip(f.loops, unitize_points(len(f.loops))):
+            loop[uv].uv = p
+    for f in faces:
+        for e in f.edges:
+            e.seam = True
+    for vert in {v for f in faces for v in f.verts}:
+        loops = sorted(vert.link_loops, key=lambda l: (l.face in chosen, l.face.index))
+        placed = []
+        for loop in loops:
+            p = loop[uv].uv.copy()
+            if loop.face in chosen and any(_joined(p, q) for q in placed):
+                pts = [l[uv].uv for l in loop.face.loops]
+                mid = sum(pts, Vector((0.0, 0.0))) / len(pts)
+                step = Vector((math.copysign(NUDGE, mid.x - p.x) if abs(mid.x - p.x) > 1e-9 else 0.0,
+                               math.copysign(NUDGE, mid.y - p.y) if abs(mid.y - p.y) > 1e-9 else 0.0))
+                k = 1
+                while any(_joined(p + step * k, q) for q in placed):
+                    k += 1
+                p = p + step * k
+                loop[uv].uv = p
+            placed.append(p)
+    return len(faces)
+
+
+def unitize_faces(bm, uv, synced):
+    """The faces Unitize maps: the selected faces (with UV Sync Selection off, faces whose UVs are all selected)."""
+    if synced:
+        return [f for f in bm.faces if f.select and not f.hide]
+    return [f for f in bm.faces if f.select and not f.hide and all(compat.uv_vert_selected(l, uv) for l in f.loops)]
 
 
 # --- Straighten Border (polyStraightenUVBorder -c 0 -pl 1 -bo 0 -gt 5) ----------------------------------------------
@@ -541,5 +605,16 @@ class ALLSET_OT_uv_straighten_border(_ModOp, bpy.types.Operator):
         return done
 
 
+
+@undo_steps.no_redo_panel
+class ALLSET_OT_uv_unitize(_ModOp, bpy.types.Operator):
+    """Map each selected face onto the 0-1 square, every face its own UV shell (Maya Unitize)"""
+    bl_idname = "allset.uv_unitize"
+    bl_label = "Unitize"
+    empty = "Select faces"
+
+    def run(self, context, bm, uv, synced):
+        return unitize(bm, uv, unitize_faces(bm, uv, synced))
+
 classes = (ALLSET_OT_uv_distribute_uvs, ALLSET_OT_uv_match_grid, ALLSET_OT_uv_layout_along, ALLSET_OT_uv_stack_similar,
-           ALLSET_OT_uv_map_border, ALLSET_OT_uv_straighten_border)
+           ALLSET_OT_uv_map_border, ALLSET_OT_uv_straighten_border, ALLSET_OT_uv_unitize)

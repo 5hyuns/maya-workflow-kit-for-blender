@@ -113,7 +113,7 @@ def _run_straighten_border(context, v):
 
 
 def _run_unitize(context, v):
-    return bpy.ops.uv.reset('EXEC_DEFAULT')
+    return bpy.ops.allset.uv_unitize('EXEC_DEFAULT')
 
 
 def _run_unstack(context, v):

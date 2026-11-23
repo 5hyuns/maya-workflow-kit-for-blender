@@ -55,7 +55,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   Flip uses its options, Layout can spread shells over UDIM tiles.
 - **Fixed:** Shift+marquee toggles what it catches, like Shift+click (#524); Convert Selection converts the selection
   (#507); the toolkit's Flip buttons use the Flip options (#520); Stitch Together on a mirrored shell (#523) and Layout
-  over several tiles (#522) give Maya's result.
+  over several tiles (#522) give Maya's result; Unitize makes every face its own shell (#526); faces picked in the 3D
+  View highlight only their own UV edges (#527).
 
 ## Marking menus
 
@@ -75,7 +76,7 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 
 ## Thank you
 
-Thanks to @suenwaichit (#494), @envwarby (#524) and @quangvupantheravn (#495) for the UV Editor and marking menu
+Thanks to @suenwaichit (#494), @envwarby (#524, #526, #527) and @quangvupantheravn (#495) for the UV Editor and marking menu
 reports, and to everyone for the reports and
 ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
 

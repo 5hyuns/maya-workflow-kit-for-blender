@@ -377,7 +377,7 @@ MAP = {
     f"{UV}/Modify/Linear Align": ("uv.align", {"axis": 'ALIGN_S'}),
     f"{UV}/Modify/Match UVs": ("uv.remove_doubles", {"threshold": 0.01}),     # Match UVs Options default
     f"{UV}/Modify/Rotate": ("transform.rotate", {"value": -math.pi / 2}),
-    f"{UV}/Modify/Unitize": "uv.reset",
+    f"{UV}/Modify/Unitize": "allset.uv_unitize",
     f"{UV}/Modify/Gather Shells": "uv.pack_islands",
     f"{UV}/Modify/Layout": "allset.uv_layout",
     f"{UV}/Modify/Orient Shells": "allset.uv_orient_shells",

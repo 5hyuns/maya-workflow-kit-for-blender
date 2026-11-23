@@ -7840,7 +7840,8 @@
    "Stack Similar Shells": "Stack Similar Shells",
    "Straighten Border": "Straighten Border",
    "Tolerance": "Tolerance",
-   "UV gap tolerance": "UV gap tolerance"
+   "UV gap tolerance": "UV gap tolerance",
+   "Unitize": "Unitize"
   },
   "Labels/operators/uv_optimize": {
    "Optimize": "Optimize"
@@ -12727,6 +12728,7 @@
   "Tooltips/operators/uv_modify": {
    "Lay the selected shells out in one row along U, tallest first, scaled to fit the 0-1 square (Maya Layout\nAlong)": "Lay the selected shells out in one row along U, tallest first, scaled to fit the 0-1 square (Maya Layout\nAlong)",
    "Line up the selected border UVs between the two end ones (Maya Straighten Border; gaps of up to 5 UVs are\nfilled)": "Line up the selected border UVs between the two end ones (Maya Straighten Border; gaps of up to 5 UVs are\nfilled)",
+   "Map each selected face onto the 0-1 square, every face its own UV shell (Maya Unitize)": "Map each selected face onto the 0-1 square, every face its own UV shell (Maya Unitize)",
    "Move each selected UV to the centre of its 1/256 grid cell (default 256 x 256, pixel\ncentres; Maya Match Grid)": "Move each selected UV to the centre of its 1/256 grid cell (default 256 x 256, pixel\ncentres; Maya Match Grid)",
    "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)": "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)",
    "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)": "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)",

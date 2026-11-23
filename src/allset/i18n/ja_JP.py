@@ -5874,6 +5874,7 @@ STRINGS = {
     "Put back the values the window opened with and close it (Maya's Cancel)": 'ウィンドウを開いたときの値に戻して閉じる (Maya のキャンセル)',
     "Put the active tool's options back to their defaults (Maya Tool Settings: Reset Tool)": 'アクティブツールのオプションをデフォルトに戻す (Maya ツール設定: ツールをリセット)',
     'Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)': '選択シェルの境界 UV を 0-1 の正方形上に 3D エッジの長さで間隔を取って配置 (Maya マップの境界、\n初期値 正方形)',
+    'Map each selected face onto the 0-1 square, every face its own UV shell (Maya Unitize)': '選択した各フェースを 0-1 の正方形に配置し、フェースごとに個別の UV シェルにする (Maya 単位化)',
     'Put the current Maya workspace back to its factory layout (Maya Windows > Workspaces > Reset Current\nWorkspace): closed, moved or resized panels come back': '現在の Maya ワークスペースを初期レイアウトに戻す (Maya ウィンドウ > ワークスペース > 現在の\nワークスペースをリセット): 閉じた、移動した、サイズ変更したパネルが戻ります',
     "Put the custom pivot orientation into the object's rotation; the geometry stays\n(Maya Modify > Bake Pivot)": 'カスタムピボットの向きをオブジェクトの回転に入れる。ジオメトリはそのまま\n(Maya 修正 > ピボットのベイク)',
     'Put the driver joint in this pose (Maya Pose Editor > Go to Pose)': 'ドライバジョイントをこのポーズにする (Maya ポーズエディタ > ポーズに移動)',
