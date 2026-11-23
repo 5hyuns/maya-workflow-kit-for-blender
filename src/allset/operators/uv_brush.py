@@ -103,6 +103,16 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
     lattice_columns: IntProperty(name="Columns", default=3, min=2, max=20,
                                  description="Lattice points across the selected UVs")
     lattice_rows: IntProperty(name="Rows", default=3, min=2, max=20, description="Lattice points up the selected UVs")
+    lattice_falloff: FloatProperty(name="Falloff", default=1.0, min=0.0, max=1.0, precision=3,
+                                   description="How far the UVs follow the lattice (1 = all the way)")
+    lattice_bounding_rect: BoolProperty(name="Use bounding rectangle", default=True,
+                                        description="Fit the lattice around the UVs; off: drag on empty space to draw "
+                                                    "the lattice")
+    lattice_move_manipulator: BoolProperty(name="Show move manipulator", default=True,
+                                           description="A move handle on the lattice point last picked (U, V or free)")
+    lattice_snap: EnumProperty(name="Placement", default='CENTER', items=(
+        ('CORNER', "Snap corner", "With Pixel Snap on, dragged lattice points land on pixel corners"),
+        ('CENTER', "Snap center", "With Pixel Snap on, dragged lattice points land on pixel centres")))
 
 
 def settings(context):

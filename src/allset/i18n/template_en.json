@@ -7724,6 +7724,7 @@
    "UV set": "UV set"
   },
   "Labels/operators/uv_brush": {
+   "A move handle on the lattice point last picked (U, V or free)": "A move handle on the lattice point last picked (U, V or free)",
    "Brush radius in UV space (b + drag left / right)": "Brush radius in UV space (b + drag left / right)",
    "Columns": "Columns",
    "Constant": "Constant",
@@ -7736,8 +7737,11 @@
    "Edge Select Sensitivity": "Edge Select Sensitivity",
    "Effect type": "Effect type",
    "Exponential": "Exponential",
+   "Falloff": "Falloff",
    "Falloff type": "Falloff type",
+   "Fit the lattice around the UVs; off: drag on empty space to draw the lattice": "Fit the lattice around the UVs; off: drag on empty space to draw the lattice",
    "Fixed": "Fixed",
+   "How far the UVs follow the lattice (1 = all the way)": "How far the UVs follow the lattice (1 = all the way)",
    "How far the UVs move each dab (m + drag up / down)": "How far the UVs move each dab (m + drag up / down)",
    "How far the steady stroke trails the mouse, in UV space": "How far the steady stroke trails the mouse, in UV space",
    "How much of an edge the stroke may leave out and still cut it, as a part of the edge's length": "How much of an edge the stroke may leave out and still cut it, as a part of the edge's length",
@@ -7754,15 +7758,19 @@
    "Mode": "Mode",
    "Optimize: keeping the surface area (1) against keeping only the angles (0)": "Optimize: keeping the surface area (1) against keeping only the angles (0)",
    "Pin strength (m + drag up / down)": "Pin strength (m + drag up / down)",
+   "Placement": "Placement",
    "Pressure": "Pressure",
    "Rows": "Rows",
    "Sew brush radius in UV space (b + drag left / right)": "Sew brush radius in UV space (b + drag left / right)",
    "Show brush ring during stroke": "Show brush ring during stroke",
+   "Show move manipulator": "Show move manipulator",
    "Size": "Size",
    "Smudge": "Smudge",
    "Smudge effect: how strongly the UVs follow the stroke": "Smudge effect: how strongly the UVs follow the stroke",
    "Smudge size": "Smudge size",
    "Smudge with a middle-mouse drag instead of a left-mouse drag": "Smudge with a middle-mouse drag instead of a left-mouse drag",
+   "Snap center": "Snap center",
+   "Snap corner": "Snap corner",
    "Started with the middle mouse (Smudge with Middle mouse initiates)": "Started with the middle mouse (Smudge with Middle mouse initiates)",
    "Steady Stroke": "Steady Stroke",
    "Strength": "Strength",
@@ -7774,6 +7782,7 @@
    "UV Brush Hover": "UV Brush Hover",
    "UV Brush Size / Strength": "UV Brush Size / Strength",
    "UV Brush Stroke": "UV Brush Stroke",
+   "Use bounding rectangle": "Use bounding rectangle",
    "Volume": "Volume"
   },
   "Labels/operators/uv_checker": {
@@ -10004,6 +10013,7 @@
    "Drag the points of the lattice around the selected UVs to bend them (Maya Lattice UV Tool). Columns / Rows set the lattice": "Drag the points of the lattice around the selected UVs to bend them (Maya Lattice UV Tool). Columns / Rows set the lattice",
    "Invert Pin": "Invert Pin",
    "Lattice": "Lattice",
+   "Snap Settings": "Snap Settings",
    "Unpin All": "Unpin All"
   },
   "Labels/ui/uv_display": {

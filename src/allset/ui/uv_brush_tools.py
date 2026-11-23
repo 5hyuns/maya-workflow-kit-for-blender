@@ -147,6 +147,14 @@ class ALLSET_TL_uv_lattice(bpy.types.WorkSpaceTool):
         header = context.region.type == 'TOOL_HEADER'
         layout.prop(s, "lattice_columns", slider=not header)
         layout.prop(s, "lattice_rows", slider=not header)
+        layout.prop(s, "lattice_falloff", slider=not header)
+        layout.prop(s, "lattice_bounding_rect")
+        layout.prop(s, "lattice_move_manipulator")
+        if header:
+            layout.prop(s, "lattice_snap", text="")
+        else:
+            layout.label(text="Snap Settings")
+            layout.prop(s, "lattice_snap", expand=True)
 
 
 TOOLS = (*TOOLS, ALLSET_TL_uv_lattice)
