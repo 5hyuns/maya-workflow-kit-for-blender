@@ -282,6 +282,16 @@ def with_object_name(menu, name):
     return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
 
 
+def relabel(menu, label_of):
+    """A copy of ``menu`` whose top-level labels are ``label_of(label, action)`` (labels that change while the kit
+    runs, e.g. the UV brush menu's "Last Tool: <tool>"); ``menu`` itself when none changes."""
+    radial = {k: (label_of(e[0], e[1]), e[1]) for k, e in menu.radial.items()}
+    items = [e if e == DIVIDER else (label_of(e[0], e[1]), e[1]) for e in menu.items]
+    if radial == menu.radial and items == menu.items:
+        return menu
+    return MarkingMenu(menu.name, menu.label, menu.source, radial, items, menu.options)
+
+
 # --- DG Traversal / Inputs / Outputs ------------------------
 # ``nodes`` (marking/rmb_nodes.py builds it, bpy-free here): {"object": name, "inputs": [(type label, owner, key)],
 # "outputs": [...], "history": [(node name, owner, key)], "future": [...]}; owner = the object holding the node,
@@ -1473,6 +1483,8 @@ UV_OPT_SELECT = MarkingMenu(
     items=_uv_options("Select Options"))
 
 
+UV_BRUSH_LAST = ("allset.uv_brush_last", {})     # its label names the tool it goes back to (marking.live_label)
+
 # RMB in the UV Editor while one of its brush tools is active (Tools > Unfold, Optimize, Cut, Sew, Pin, Smear,
 # Smudge): Maya's UV brush marking menu.
 UV_BRUSH = MarkingMenu(
@@ -1480,7 +1492,7 @@ UV_BRUSH = MarkingMenu(
     radial={
         "N": ("Invert Pin", ("allset.uv_invert_pin", {})),
         "NE": ("Cut UV Tool", _uve("Tools/Cut")),
-        "E": ("Last Tool", ("allset.uv_brush_last", {})),
+        "E": ("Last Tool", UV_BRUSH_LAST),
         "SE": ("Grab UV Tool", _uve("Tools/Grab")),
         "S": ("Pin UV Tool", _uve("Tools/Pin")),
         "W": ("Falloff Type", Sub(radial={"W": ("Surface/Volume", None), "SW": ("Surface", None),

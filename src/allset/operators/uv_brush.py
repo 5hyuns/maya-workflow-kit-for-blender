@@ -300,7 +300,7 @@ def finish_edges(mode, mesh, picked):
 # --- drawing: the brush circle and the Cut / Sew stroke ------------------------------------------------
 
 _hover = {"area": 0, "pos": None, "lock": False}
-_recent = []          # the brush modes used, the latest last (the brush marking menu's Last Tool)
+_modes = {"current": None, "last": None}     # the brush tool in use and the one before it (Last Tool)
 _stroke = {"area": 0, "segments": []}       # UV segments of the edges a Cut / Sew stroke collected
 _handle = []
 
@@ -357,6 +357,7 @@ class ALLSET_OT_uv_brush_hover(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
+        note_mode(active_mode(context))
         if not _hover["lock"] and context.area is not None:
             _hover["area"] = context.area.as_pointer()
             _hover["pos"] = (event.mouse_region_x, event.mouse_region_y)
@@ -387,9 +388,7 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         self._meshes = stroke_meshes(context)
         if not self._meshes:
             return {'CANCELLED'}
-        if self.mode in _recent:
-            _recent.remove(self.mode)
-        _recent.append(self.mode)
+        note_mode(self.mode)
         self._area = context.area.as_pointer()
         self._xy = (event.mouse_region_x, event.mouse_region_y)
         self._uv = context.region.view2d.region_to_view(*self._xy)
@@ -542,13 +541,29 @@ class ALLSET_OT_uv_invert_pin(bpy.types.Operator):
         return {'FINISHED'}
 
 
+LABELS = {"UNFOLD": "Unfold", "OPTIMIZE": "Optimize", "CUT": "Cut", "SEW": "Sew", "PIN": "Pin", "SMEAR": "Smear",
+          "SMUDGE": "Smudge"}
+
+
+def note_mode(mode):
+    """A brush tool is in use: the one used before it becomes the Last Tool (like Maya, only a change of brush counts;
+    other tools in between leave it)."""
+    if mode is not None and mode != _modes["current"]:
+        _modes["last"], _modes["current"] = _modes["current"], mode
+
+
 def last_mode(context):
-    """The brush used before the active one (or the latest one when no brush is active)."""
-    current = active_mode(context)
-    for m in reversed(_recent):
-        if m != current:
-            return m
-    return None
+    """The brush tool used before the active one."""
+    note_mode(active_mode(context))
+    return _modes["last"]
+
+
+def last_tool_label(context):
+    """The brush marking menu's east item: "Last Tool: <tool>" like Maya ("Last Tool:" before a second brush)."""
+    from ..i18n import iface
+    mode = last_mode(context)
+    head = iface("Last Tool")
+    return f"{head}: {iface(LABELS[mode])}" if mode in LABELS else f"{head}:"
 
 
 class ALLSET_OT_uv_brush_last(bpy.types.Operator):
@@ -660,4 +675,4 @@ def unregister_extra():
         del bpy.types.Scene.allset_uv_brush
     _hover.update(area=0, pos=None, lock=False)
     _stroke["segments"] = []
-    _recent.clear()
+    _modes.update(current=None, last=None)

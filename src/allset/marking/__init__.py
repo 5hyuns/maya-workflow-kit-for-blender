@@ -53,7 +53,16 @@ def _entry_spec(action):
     return menu_map.normalize(action)
 
 
+def live_label(label, action):
+    """``label`` as it reads now: the UV brush menu's Last Tool names the tool it goes back to."""
+    if action == mm.UV_BRUSH_LAST:
+        from ..operators import uv_brush
+        return uv_brush.last_tool_label(bpy.context)
+    return label
+
+
 def draw_entry(layout, label, action, path):
+    label = live_label(label, action)
     if label == mm.OBJECT_TITLE:   # the RMB list's first row is the object's name
         ob = bpy.context.active_object
         label = f"{getattr(bpy.context.window_manager, 'allset_mm_target', '') or (ob.name if ob else 'Object')}..."
