@@ -48,7 +48,6 @@ EDGE = 3                  # px the area edges take from a split
 MAYA_LENS = 70.0
 MAYA_FRAME_END = 120      # playback 1-120
 MAYA_RANGE_END = 200      # animation range 1-200 (Range Slider outer fields)
-MAYA_RESOLUTION = (960, 540)   # HD 540
 STRIP_MARKER = ".AllsetStrip"  # = ui/shelf.py MARKER (Status Line row)
 SHELF_MARKER = ".AllsetShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 # Maya lengths are cm: 1 Maya unit = 0.01 BU with m scene units + cm display.
@@ -559,8 +558,8 @@ def setup_scene():
     scene.use_preview_range = True
     scene.frame_preview_start, scene.frame_preview_end = 1, MAYA_FRAME_END
     scene.render.fps, scene.render.fps_base = 24, 1.0
-    # Render Settings image size: 960 x 540, pixel aspect 1 (#71). Blender's scale stays 100 %.
-    scene.render.resolution_x, scene.render.resolution_y = MAYA_RESOLUTION
+    # Render Settings image size: Blender's own (1920 x 1080), pixel aspect 1. Blender's scale stays 100 %.
+    scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
     scene.render.resolution_percentage = 100
     scene.render.pixel_aspect_x = scene.render.pixel_aspect_y = 1.0
     # Tool defaults:

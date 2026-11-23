@@ -2,7 +2,7 @@
 
 New materials are plain Principled BSDF materials (Blender's values); the Attribute Editor shows their inputs by
 Blender's names. Lights: intensity 1, Decay Rate No Decay;
-resolution 960 x 540. Light power rule and its renders: operators/lights.py."""
+cone, penumbra, area size and angle are Blender's; resolution is Blender's 1920 x 1080. Light power rule and its renders: operators/lights.py."""
 
 import math
 from importlib import import_module
@@ -109,6 +109,15 @@ def test_ae_draws_the_material_property_row():
 
 # --- lights --------------------------------------------------------------------------------------------------------
 
+def _blender_light(kind):
+    """The light data Blender's Add menu makes."""
+    bpy.ops.object.light_add(type=kind)
+    ob = bpy.context.active_object
+    data = ob.data
+    bpy.data.objects.remove(ob)
+    return data
+
+
 def _falloff(light):
     tree = light.node_tree
     node = tree.nodes.get(lights.FALLOFF_NODE) if tree is not None else None
@@ -130,7 +139,8 @@ def test_new_point_spot_lights_no_decay():
         out, strength = _falloff(light)
         assert out == "Constant" and _close(strength, 1 / (10 * k) ** 2, 1e-3), (out, strength)
     spot = bpy.data.objects["spotLight1"].data
-    assert _close(math.degrees(spot.spot_size), 40.0) and spot.spot_blend == 0.0, "Maya cone 40, penumbra 0"
+    ref = _blender_light('SPOT')
+    assert _close(spot.spot_size, ref.spot_size) and _close(spot.spot_blend, ref.spot_blend), "Blender's cone"
 
 
 def test_decay_rate_changes_keep_intensity():
@@ -158,7 +168,9 @@ def test_area_and_directional_lights():
     _clear()
     k = _cm()
     area = create.create(bpy.context, 'AREA_LIGHT').data
-    assert area.allset_decay == 'NO_DECAY' and _close(area.size, 2 * k), "Maya area light 2 x 2 units"
+    ref = _blender_light('AREA')
+    assert area.allset_decay == 'NO_DECAY' and _close(area.size, ref.size) and area.shape == ref.shape, \
+        "Blender's area light size"
     assert _close(area.energy, PI2 * lights.AREA_FAR * k * k, 1e-8) and _falloff(area) == (None, None)
     area.allset_decay = 'LINEAR'
     assert not lights.exact(area) and _close(area.allset_intensity, 1.0)
@@ -179,13 +191,13 @@ def test_ae_light_rows():
 
 # --- Render Settings -----------------------------------------------------------------------------------------------
 
-def test_template_resolution_960_540():
+def test_template_resolution_is_blenders():
     with bpy.data.libraries.load(app_template.STARTUP) as (src, dst):
         dst.scenes = list(src.scenes)
     try:
         for sc in dst.scenes:
             r = sc.render
-            assert (r.resolution_x, r.resolution_y, r.resolution_percentage) == (960, 540, 100), \
+            assert (r.resolution_x, r.resolution_y, r.resolution_percentage) == (1920, 1080, 100), \
                 (sc.name, r.resolution_x, r.resolution_y, r.resolution_percentage)
             assert (r.pixel_aspect_x, r.pixel_aspect_y) == (1.0, 1.0)
     finally:

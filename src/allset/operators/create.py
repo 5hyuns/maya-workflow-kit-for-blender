@@ -93,7 +93,7 @@ LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewp
                 "the distance (the same brightness as Maya at 10 units).")
 
 MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM = 35.0, 36.0, 24.0
-MAYA_CAMERA_FSTOP, MAYA_CAMERA_FOCUS, MAYA_CAMERA_ORTHO_WIDTH = 5.6, 5.0, 30.0
+MAYA_CAMERA_ORTHO_WIDTH = 30.0
 MAYA_GATE_MASK_OPACITY = 0.7
 
 # Operator properties that are lengths (scaled by units.maya_unit).
@@ -111,18 +111,14 @@ def _scale_data(ob, k):
         film_fit.set_fit(data, 'FILL', bpy.context.scene)
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
-        # F Stop, Focus Distance and Orthographic Width of a camera from Maya's Create > Cameras
-        data.dof.aperture_fstop = MAYA_CAMERA_FSTOP
-        data.dof.focus_distance = MAYA_CAMERA_FOCUS * k
+        # Orthographic Width of a camera from Maya's Create > Cameras (depth of field keeps Blender's values)
         data.ortho_scale = MAYA_CAMERA_ORTHO_WIDTH * k
         # a new Maya camera is not renderable (only the startup persp is) and draws its gate mask partly see-through
         data.allset_renderable = False
         data.passepartout_alpha = MAYA_GATE_MASK_OPACITY
     elif ob.type == 'LIGHT':
         data.shadow_soft_size *= k
-        if data.type == 'AREA':
-            data.size_y *= k
-        lights.start_values(data, k)     # intensity 1, No Decay, spot cone 40, area 2 x 2 units
+        lights.start_values(data, k)     # intensity and Decay Rate; cone, penumbra, area size and angle are Blender's
 
 
 def _maya_naming(context):

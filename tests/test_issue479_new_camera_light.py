@@ -46,6 +46,8 @@ def test_camera_made_outside_the_kit_stays_renderable():
     assert bpy.context.active_object.data.allset_renderable is True
 
 
-def test_directional_light_angle_zero():
+def test_directional_light_keeps_blender_angle():
     ob = _new('DIRECTIONAL_LIGHT')
-    assert ob.data.type == 'SUN' and ob.data.angle == 0.0
+    ref = bpy.data.lights.new("ref", 'SUN')
+    assert ob.data.type == 'SUN' and abs(ob.data.angle - ref.angle) < 1e-7, (ob.data.angle, ref.angle)
+    bpy.data.lights.remove(ref)

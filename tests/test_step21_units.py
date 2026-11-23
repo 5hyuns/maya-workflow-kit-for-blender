@@ -114,7 +114,10 @@ def test_other_kinds_scale_with_the_unit():
     assert curve.name == "curve1" and curve.type == 'CURVE', curve.name
     assert max(curve.dimensions) < 0.1, tuple(curve.dimensions)
     area = create.create(bpy.context, 'AREA_LIGHT')
-    assert abs(area.data.size - 0.02) < TOL, area.data.size     # area light 2 x 2 units
+    bpy.ops.object.light_add(type='AREA')
+    ref = bpy.context.active_object
+    assert abs(area.data.size - ref.data.size) < TOL, area.data.size     # Blender's own area light size
+    bpy.data.objects.remove(ref)
     _set_units("factory")
 
 

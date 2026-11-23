@@ -43,8 +43,6 @@ REF_UNITS = 10.0
 AREA_FAR = 9.87                        # Maya area light, No Decay: brightness x distance^2 / intensity at 10 units
 DECAY_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 FALLOFF_OUTPUT = {0: "Constant", 1: "Linear"}
-MAYA_SPOT_CONE, MAYA_SPOT_PENUMBRA = 40.0, 0.0      # degrees (coneAngle 40, penumbraAngle 0)
-MAYA_AREA_SIZE = 2.0                   # the area light is a 2 x 2 unit square
 
 
 def _k():
@@ -150,16 +148,8 @@ def apply(light, maya_intensity=None, n=None, k=None):
 
 
 def start_values(light, k):
-    """The start values of a new Maya light: its intensity and No Decay, the spot cone and penumbra, the area light
-    size and a directional light with sharp shadows."""
-    if light.type == 'SUN':
-        light.angle = 0.0
-    if light.type == 'SPOT':
-        light.spot_size = math.radians(MAYA_SPOT_CONE)
-        light.spot_blend = MAYA_SPOT_PENUMBRA
-    if light.type == 'AREA':
-        light.shape = 'SQUARE'
-        light.size = MAYA_AREA_SIZE * k
+    """The start values of a new Maya light: its intensity and No Decay. Cone, penumbra, area size and the
+    directional light's angle keep Blender's own values."""
     apply(light, 1.0, 0, k)
 
 
