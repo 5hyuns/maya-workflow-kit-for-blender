@@ -4368,7 +4368,7 @@ def _m67_3_rows():
     class _P:
         socket = "Base Color"
     tip = sm.ALLSET_OT_ae_map.description(bpy.context, _P())
-    check(f"[M67-3] the button's tooltip names the Maya attribute ({tip!r})", tip.startswith("baseColor"))
+    check(f"[M67-3] the button's tooltip names the input ({tip!r})", tip.startswith("Base Color"))
     with hs_ctx():
         bpy.ops.allset.ae_map_break(material=mat.name, socket="Base Color")
     inp = sm.principled(mat).inputs["Base Color"]
