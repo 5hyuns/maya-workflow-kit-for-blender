@@ -18,6 +18,9 @@ from ..keymap.ic_data import platform_tool
 def _keymap(mode):
     shift = ((("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
                {"properties": [("mode", mode), ("invert", True)]}),) if mode == "CUT" else ())  # does nothing
+    # Pin: Shift+drag smooths the pins
+    pin_shift = ((("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
+                   {"properties": [("mode", mode), ("smooth", True)]}),) if mode == "PIN" else ())
     # Smudge's Middle mouse initiates: the stroke starts on the middle mouse (otherwise it passes the press on)
     middle = ((("allset.uv_brush_stroke", {"type": 'MIDDLEMOUSE', "value": 'PRESS'},
                 {"properties": [("mode", mode), ("middle", True)]}),) if mode == "SMUDGE" else ())
@@ -26,6 +29,7 @@ def _keymap(mode):
         ("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
          {"properties": [("mode", mode), ("invert", True)]}),
         *shift,
+        *pin_shift,
         *middle,
         ("allset.uv_brush_mmb", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
         ("allset.tap_hold", {"type": 'B', "value": 'PRESS'}, {"properties": [("binding", "uv_brush_size")]}),
@@ -77,6 +81,7 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
             layout.prop(s, "show_shell_borders")
         elif m == "PIN":
             _sculpt_settings(layout, s, "pin_size", "pin_strength", header)
+            layout.prop(s, "pin_method", text="" if header else None)
             if not header:
                 row = layout.row(align=True)
                 row.operator("allset.uv_unpin_all", text="Unpin All")
@@ -121,7 +126,8 @@ TOOLS = (
     _tool("CUT", "Cut", "ops.mesh.rip_edge",
           "Drag along edges to split the UVs there (Maya Cut UV Tool)"),
     _tool("PIN", "Pin", "ops.generic.select_paint",
-          "Drag to pin the UVs under the brush so other UV tools leave them (Maya Pin UV Tool). Ctrl+drag unpins. "
+          "Drag to pin the UVs under the brush so other UV tools leave them (Maya Pin UV Tool). Ctrl+drag unpins, "
+          "Shift+drag smooths the pins. "
           "b + drag = size"),
     _tool("SEW", "Sew", "ops.transform.edge_slide",
           "Drag along shell borders to weld the UVs together (Maya Sew UV Tool). Ctrl+drag cuts. b + drag = size"),

@@ -150,6 +150,37 @@ def pin(pinned, U, centre, r, on=True, dist=None):
     return out
 
 
+def smooth_pins(pinned, ea, eb, inside):
+    """Pin smoothing (Pin tool, Smooth): each UV ``inside`` the brush takes the majority pin state of itself and its
+    UV-edge neighbours (pins are on / off in Blender: an average is rounded; a tie keeps the UV as it is). A lone pin
+    goes, a hole in pinned UVs fills, a straight pin border stays. Returns the new (n,) pin flags."""
+    pinned = np.asarray(pinned, bool)
+    ea = np.asarray(ea, int)
+    eb = np.asarray(eb, int)
+    n = len(pinned)
+    on = np.zeros(n)
+    count = np.zeros(n)
+    pairs = set()
+    for a, b in zip(ea.tolist(), eb.tolist()):
+        if a != b:
+            pairs.add((min(a, b), max(a, b)))
+    if pairs:
+        pa = np.array([p[0] for p in pairs])
+        pb = np.array([p[1] for p in pairs])
+        np.add.at(on, pa, pinned[pb])
+        np.add.at(on, pb, pinned[pa])
+        np.add.at(count, pa, 1)
+        np.add.at(count, pb, 1)
+    on += pinned
+    count += 1
+    mean = on / count
+    out = pinned.copy()
+    inside = np.asarray(inside, bool)
+    out[inside & (mean > 0.5 + 1e-9)] = True
+    out[inside & (mean < 0.5 - 1e-9)] = False
+    return out
+
+
 def smear(U, centre, r, delta, strength, held=None, dist=None):
     """Smear: the UVs under the brush move along the stroke (``delta`` = how far the brush moved), each by its sculpt
     falloff weight times ``strength`` (no upper limit: above 1 the UVs run ahead of the brush, like Maya); ``held``

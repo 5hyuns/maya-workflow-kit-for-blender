@@ -74,6 +74,10 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
                                      description="Cut / Sew: draw every UV shell border while the tool is active")
     pin_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
                             description="Brush radius in UV space (b + drag left / right)")
+    pin_method: EnumProperty(name="Paint Method", default='PAINT', items=(
+        ('PAINT', "Paint", "Drag pins the UVs under the brush (Ctrl unpins, Shift smooths)"),
+        ('SMOOTH', "Smooth", "Drag smooths the pins under the brush")),
+        description="How a Pin stroke changes the pins")
     pin_strength: FloatProperty(name="Strength", default=100.0, min=0.0, max=100000.0, soft_max=100.0, precision=3,
                                 description="Pin strength (m + drag up / down)")
     smear_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
@@ -305,6 +309,10 @@ def apply_dab(mode, mesh, centre, r, strength, *, invert=False, delta=(0.0, 0.0)
     if held is None:
         held = mesh.pinned
     dist = brush_distances(mesh, centre, r, falloff) if mode in FALLOFF_MODES else None
+    if mode == "PIN_SMOOTH":
+        inside = np.isfinite(brush_distances(mesh, centre, r, falloff))
+        arr = mesh.edge_arrays()
+        return mesh.write_pins(uv_brush_math.smooth_pins(mesh.pinned, arr["a"], arr["b"], inside))
     if mode == "PIN":
         return mesh.write_pins(uv_brush_math.pin(mesh.pinned, mesh.U, centre, r, on=not invert, dist=dist))
     if mode in {"UNFOLD", "OPTIMIZE"}:
@@ -580,6 +588,8 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
     mode: EnumProperty(name="Mode", items=[(m, m.title(), "") for m in MODES], options={'SKIP_SAVE'})
     invert: BoolProperty(name="Invert", default=False, options={'SKIP_SAVE'},
                          description="Ctrl: Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift")
+    smooth: BoolProperty(name="Smooth", default=False, options={'SKIP_SAVE'},
+                         description="Shift: the Pin tool smooths the pins")
     middle: BoolProperty(name="Middle Mouse", default=False, options={'SKIP_SAVE'},
                          description="Started with the middle mouse (Smudge with Middle mouse initiates)")
 
@@ -648,6 +658,9 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
                 collect_sew_edges(m, p, r, self._picked[i])
             else:
                 w = None if self._weights is None else self._weights[i]
+                if mode == "PIN" and (self.smooth or s.pin_method == 'SMOOTH'):
+                    self._changed |= apply_dab("PIN_SMOOTH", m, p, r, k, falloff=s.falloff_type)
+                    continue
                 self._changed |= apply_dab(mode, m, p, r, k, invert=self.invert, delta=delta,
                                            surfangle=s.surfangle, weights=w, held=self._held[i],
                                            falloff=s.falloff_type)
