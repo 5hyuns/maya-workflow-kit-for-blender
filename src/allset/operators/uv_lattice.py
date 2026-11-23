@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """UV Editor > Tools > Lattice, like Maya's Lattice UV Tool: a lattice of Columns x Rows points around the selected
-UVs (all shown UVs when none is selected); LMB drag a lattice point to bend the UVs inside it. The lattice follows a
-change of the selection or an undo: it is rebuilt around the UVs whenever they are not where it left them.
+UVs (all shown UVs when none is selected, like an object selection in Maya); LMB drag a lattice point to bend the
+UVs inside it. Like Maya, the lattice is a Bezier patch: every lattice point pulls every UV with its Bernstein weight
+(3 x 3 = quadratic), so one point bends the whole lattice smoothly. The lattice follows a change of the selection or an
+undo: it is rebuilt around the UVs whenever they are not where it left them.
 
 Settings: ``Scene.allset_uv_brush.lattice_columns`` / ``lattice_rows``.
 """
 
+import math
 import time
 
 import bmesh
@@ -40,18 +43,21 @@ def params(U, rect):
     return np.stack(((U[:, 0] - rect[0]) / w, (U[:, 1] - rect[1]) / h), axis=1)
 
 
+def bernstein(n, x):
+    """(len(x), n + 1) Bernstein weights of degree ``n`` at ``x`` (0-1)."""
+    x = np.clip(np.asarray(x, float), 0.0, 1.0)[:, None]
+    k = np.arange(n + 1)[None, :]
+    binom = np.array([math.comb(n, i) for i in range(n + 1)], float)[None, :]
+    return binom * x ** k * (1.0 - x) ** (n - k)
+
+
 def deform(pts, st):
-    """The UVs at lattice places ``st`` for the (rows, cols, 2) lattice points ``pts``: bilinear in each cell."""
+    """The UVs at lattice places ``st`` for the (rows, cols, 2) lattice points ``pts``: a Bezier patch over the whole
+    lattice (an untouched, evenly spaced lattice gives back the places themselves)."""
     rows, cols = pts.shape[:2]
-    s = np.clip(st[:, 0], 0.0, 1.0) * (cols - 1)
-    t = np.clip(st[:, 1], 0.0, 1.0) * (rows - 1)
-    i = np.minimum(s.astype(int), cols - 2)
-    j = np.minimum(t.astype(int), rows - 2)
-    fs = (s - i)[:, None]
-    ft = (t - j)[:, None]
-    p00, p10 = pts[j, i], pts[j, i + 1]
-    p01, p11 = pts[j + 1, i], pts[j + 1, i + 1]
-    return (p00 * (1 - fs) + p10 * fs) * (1 - ft) + (p01 * (1 - fs) + p11 * fs) * ft
+    ws = bernstein(cols - 1, st[:, 0])          # (n, cols)
+    wt = bernstein(rows - 1, st[:, 1])          # (n, rows)
+    return np.einsum("nc,nr,rcd->nd", ws, wt, pts)
 
 
 def bounds(U):

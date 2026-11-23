@@ -6,13 +6,16 @@ under the brush, the brush circle follows the mouse, B + LMB drag left / right s
 down its strength, and Q / W / E / R leave it like any tool. One stroke = one undo step.
 
 - Unfold / Optimize: the UVs under the brush relax against the 3D surface (operators/uv_brush_math.relax); UVs
-  outside the brush and pinned UVs stay. Unfold flattens; Optimize keeps the Surface Angle balance.
-- Cut: the edges the stroke runs along (within Edge Select Sensitivity of them) are cut on release; Ctrl+drag sews.
+  outside the brush, pinned UVs and, when some UVs are selected, the unselected ones stay. Unfold flattens; Optimize
+  keeps the Surface Angle balance. A click or a very short drag does nothing.
+- Cut: the edge lines the stroke runs along are cut on release (operators/uv_brush_math.CutPick); Ctrl or Shift +
+  drag does nothing.
 - Sew: the shell border edges under the brush are sewn on release (the smaller shell moves onto the other);
-  Ctrl+drag cuts.
+  Ctrl+drag cuts like the Cut tool.
 - Pin: the UVs under the brush are pinned; Ctrl+drag unpins them.
-- Smear: the UVs under the brush are pushed along the stroke.
-- Smudge: the selected UVs under the brush where the stroke starts follow it (fading out at the brush edge).
+- Smear: the UVs under the brush are pushed along the stroke (the first mouse move only places the brush).
+- Smudge: only selected UVs move. Fixed: those under the brush where the stroke starts follow it (a steep falloff);
+  Smudge: those the brush passes over are pulled along each mouse move by the Pressure.
 Settings live in ``Scene.allset_uv_brush``.
 """
 
@@ -52,8 +55,8 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
     surfangle: FloatProperty(name="Surface Angle", default=1.0, min=0.0, max=1.0, precision=3,
                              description="Optimize: keeping the surface area (1) against keeping only the angles (0)")
     cut_sensitivity: FloatProperty(name="Edge Select Sensitivity", default=0.2, min=0.1, max=0.5, precision=3,
-                                   description="How near the stroke must pass an edge to cut it, as a part of the "
-                                               "edge's length")
+                                   description="How much of an edge the stroke may leave out and still cut it, as a "
+                                               "part of the edge's length")
     sew_size: FloatProperty(name="Size", default=0.04, min=0.00001, max=1.0, precision=3,
                             description="Sew brush radius in UV space (b + drag left / right)")
     pin_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
@@ -64,17 +67,21 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
                               description="Brush radius in UV space (b + drag left / right)")
     smear_strength: FloatProperty(name="Strength", default=0.05, min=0.0, max=100000.0, soft_max=100.0, precision=3,
                                   description="How strongly the UVs follow the stroke (m + drag up / down)")
-    smudge_size: FloatProperty(name="Smudge size", default=0.1, min=0.0, max=10.0, soft_max=1.0, precision=3,
+    smudge_size: FloatProperty(name="Smudge size", default=0.075, min=0.0, max=10.0, soft_max=1.0, precision=3,
                                description="Brush radius in UV space (b + drag left / right)")
-    smudge_pressure: FloatProperty(name="Pressure", default=0.5, min=0.0, max=1.0, precision=3,
+    smudge_pressure: FloatProperty(name="Pressure", default=0.01, min=0.0, max=1.0, precision=3,
                                    description="Smudge effect: how strongly the UVs follow the stroke")
     smudge_effect: EnumProperty(name="Effect type", default='FIXED', items=(
         ('FIXED', "Fixed", "The UVs under the brush where the stroke starts follow it"),
         ('SMUDGE', "Smudge", "The UVs the brush passes over are pushed along with the pressure")))
+    smudge_falloff: EnumProperty(name="Falloff type", default='EXPONENTIAL', items=(
+        ('EXPONENTIAL', "Exponential", "The UVs near the brush centre follow most, the others much less"),
+        ('LINEAR', "Linear", "The pull fades evenly to the brush edge"),
+        ('CONSTANT', "Constant", "Every UV inside the brush follows the same")))
     show_ring: BoolProperty(name="Show brush ring during stroke", default=True)
-    lattice_columns: IntProperty(name="Columns", default=4, min=2, max=20,
+    lattice_columns: IntProperty(name="Columns", default=3, min=2, max=20,
                                  description="Lattice points across the selected UVs")
-    lattice_rows: IntProperty(name="Rows", default=4, min=2, max=20, description="Lattice points up the selected UVs")
+    lattice_rows: IntProperty(name="Rows", default=3, min=2, max=20, description="Lattice points up the selected UVs")
 
 
 def settings(context):
@@ -92,7 +99,7 @@ def strength_of(context, mode):
     if mode in {"UNFOLD", "OPTIMIZE"}:
         return s.relax_strength
     if mode == "SMEAR":
-        return min(1.0, s.smear_strength * 10.0)       # the default 0.05 pushes the UVs half the stroke
+        return s.smear_strength * 10.0       # the default 0.05 pushes the UVs at the centre half the stroke
     if mode == "SMUDGE":
         return s.smudge_pressure
     return 1.0
@@ -228,33 +235,53 @@ def stroke_meshes(context):
     return [MeshUVs(ob, synced) for ob in context.objects_in_mode_unique_data or () if ob.type == 'MESH']
 
 
-def apply_dab(mode, mesh, centre, r, strength, *, invert=False, delta=(0.0, 0.0), surfangle=1.0, weights=None):
+def apply_dab(mode, mesh, centre, r, strength, *, invert=False, delta=(0.0, 0.0), surfangle=1.0, weights=None,
+              held=None):
     """One dab of ``mode`` on ``mesh`` (a MeshUVs) at UV ``centre`` with radius ``r``; returns whether anything
-    changed. Cut / Sew only collect edges (``collect_edges``)."""
+    changed. ``held`` = the UVs that must stay (the pinned UVs when None). Cut / Sew only collect edges."""
+    if held is None:
+        held = mesh.pinned
     if mode == "PIN":
         return mesh.write_pins(uv_brush_math.pin(mesh.pinned, mesh.U, centre, r, on=not invert))
     if mode in {"UNFOLD", "OPTIMIZE"}:
         return mesh.write(uv_brush_math.relax(mesh.P, mesh.U, mesh.T, centre, r, strength, mode, surfangle,
-                                              held=mesh.pinned))
+                                              held=held))
     if mode == "SMEAR":
-        return mesh.write(uv_brush_math.smear(mesh.U, centre, r, delta, strength, held=mesh.pinned))
+        return mesh.write(uv_brush_math.smear(mesh.U, centre, r, delta, strength, held=held))
     if mode == "SMUDGE" and weights is not None:
         return mesh.write(mesh.U + weights[:, None] * np.asarray(delta, float)[None, :])
     return False
 
 
-def collect_edges(mode, mesh, p, r, sensitivity, picked):
-    """Cut / Sew stroke point ``p``: adds the edge indices it takes to the set ``picked``."""
-    rows = mesh.edges()
-    if not rows:
+def relax_held(meshes):
+    """Per mesh, the UVs an Unfold / Optimize stroke keeps still: the pinned ones and, when any UV is selected, every
+    unselected one (with nothing selected the brush works on all UVs), like Maya."""
+    any_selected = any(m.selected.any() for m in meshes)
+    return [m.pinned | ~m.selected if any_selected else m.pinned.copy() for m in meshes]
+
+
+def collect_sew_edges(mesh, p, r, picked):
+    """Sew stroke point ``p``: adds the shell border edges the brush of radius ``r`` touches to the set ``picked``."""
+    if not mesh.edges():
         return
     arr = mesh.edge_arrays()
     a, b = mesh.U[arr["a"]], mesh.U[arr["b"]]
-    if mode == "CUT":
-        hit = uv_brush_math.cut_pick(p, a, b, sensitivity) & (arr["kind"] == 0)    # a border is already cut
-    else:
-        hit = uv_brush_math.sew_pick(p, a, b, r) & (arr["kind"] == 1)    # only borders between two shells sew
+    hit = uv_brush_math.sew_pick(p, a, b, r) & (arr["kind"] == 1)       # only borders between two shells sew
     picked.update(int(e) for e in arr["edge"][hit])
+
+
+def cut_pick(mesh):
+    """A CutPick over the edges inside the shells of ``mesh`` (a shell border is already cut)."""
+    arr = mesh.edge_arrays()
+    inner = arr["kind"] == 0
+    pick = uv_brush_math.CutPick(mesh.U[arr["a"][inner]], mesh.U[arr["b"][inner]])
+    pick.edge = arr["edge"][inner]
+    return pick
+
+
+def cut_edges(pick, sensitivity, length):
+    """The edge indices a Cut stroke of ``length`` takes."""
+    return {int(e) for e in pick.edge[pick.picked(sensitivity, length)]}
 
 
 def finish_edges(mode, mesh, picked):
@@ -345,15 +372,15 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
 
     mode: EnumProperty(name="Mode", items=[(m, m.title(), "") for m in MODES], options={'SKIP_SAVE'})
     invert: BoolProperty(name="Invert", default=False, options={'SKIP_SAVE'},
-                         description="Ctrl: Pin unpins, Cut sews, Sew cuts")
+                         description="Ctrl: Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift")
 
     @classmethod
     def poll(cls, context):
         return _uv_region(context)
 
     def _mode(self):
-        if self.invert and self.mode in {"CUT", "SEW"}:
-            return "SEW" if self.mode == "CUT" else "CUT"
+        if self.invert and self.mode == "SEW":
+            return "CUT"
         return self.mode
 
     def invoke(self, context, event):
@@ -366,19 +393,26 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         self._area = context.area.as_pointer()
         self._xy = (event.mouse_region_x, event.mouse_region_y)
         self._uv = context.region.view2d.region_to_view(*self._xy)
-        self._start = self._uv
         self._picked = [set() for _ in self._meshes]
         self._changed = False
+        self._moves = 0
+        self._carry = 0.0
+        self._idle = self.mode == "CUT" and self.invert          # Ctrl / Shift + drag with the Cut tool
         mode = self._mode()
         s = settings(context)
-        if mode == "SMUDGE":
-            r = s.smudge_size
-            self._weights = [uv_brush_math.grab_weights(m.U, self._uv, r, held=m.pinned,
-                                                        only=m.selected if m.selected.any() else None)
-                             * (1.0 if s.smudge_effect == 'FIXED' else 0.0) for m in self._meshes]
-        else:
-            self._weights = None
-        self._dab(context, self._uv, (0.0, 0.0))
+        self._held = relax_held(self._meshes) if mode in {"UNFOLD", "OPTIMIZE"} else [m.pinned for m in self._meshes]
+        self._weights = None
+        self._cut = self._picks = None
+        if self._idle:
+            pass
+        elif mode == "SMUDGE" and s.smudge_effect == 'FIXED':
+            self._weights = [uv_brush_math.grab_weights(m.U, self._uv, s.smudge_size, held=m.pinned, only=m.selected,
+                                                        kind=s.smudge_falloff) for m in self._meshes]
+        elif mode == "CUT":
+            self._cut = uv_brush_math.CutStroke(self._uv)
+            self._picks = [cut_pick(m) for m in self._meshes]
+        elif mode in {"PIN", "SEW"}:
+            self._dab(context, self._uv, (0.0, 0.0))        # a click pins / picks under the brush
         self._show()
         _hover["area"], _hover["pos"] = self._area, self._xy
         context.window_manager.modal_handler_add(self)
@@ -391,23 +425,55 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         r = size_of(context, mode)
         k = strength_of(context, mode)
         for i, m in enumerate(self._meshes):
-            if mode in {"CUT", "SEW"}:
-                collect_edges(mode, m, p, r, s.cut_sensitivity, self._picked[i])
-            elif mode == "SMUDGE" and s.smudge_effect == 'SMUDGE':
-                self._changed |= m.write(uv_brush_math.smear(m.U, p, r, delta, k, held=m.pinned))
+            if mode == "SEW":
+                collect_sew_edges(m, p, r, self._picked[i])
             else:
                 w = None if self._weights is None else self._weights[i]
                 self._changed |= apply_dab(mode, m, p, r, k, invert=self.invert, delta=delta,
-                                           surfangle=s.surfangle, weights=w)
+                                           surfangle=s.surfangle, weights=w, held=self._held[i])
 
-    def _show(self):
-        """After the dabs of one mouse move: the collected Cut / Sew edges, or the moved UVs, on screen."""
-        if self._mode() in {"CUT", "SEW"}:
+    def _cut_picked(self, context):
+        sens = settings(context).cut_sensitivity
+        return [cut_edges(pk, sens, self._cut.length) for pk in self._picks]
+
+    def _show(self, context=None):
+        """After one mouse move: the collected Cut / Sew edges, or the moved UVs, on screen."""
+        mode = self._mode()
+        if self._cut is not None and context is not None:
+            self._picked = self._cut_picked(context)
+        if mode in {"CUT", "SEW"}:
             _stroke["area"] = self._area
             _stroke["segments"] = [seg for m, p in zip(self._meshes, self._picked) for seg in m.segments(p)]
         elif self._changed:
             for m in self._meshes:
                 bmesh.update_edit_mesh(m.ob.data, loop_triangles=False, destructive=False)
+
+    def _move(self, context, prev, uv):
+        mode = self._mode()
+        s = settings(context)
+        r = size_of(context, mode)
+        delta = (uv[0] - prev[0], uv[1] - prev[1])
+        if mode == "CUT":
+            self._cut.add(uv)
+            for pk in self._picks:
+                pk.update(*self._cut.take())
+        elif mode in {"UNFOLD", "OPTIMIZE"}:
+            pts, self._carry = uv_brush_math.spaced_points(prev, uv, max(r * SPACING, 1e-4), self._carry)
+            for p in pts:              # dabs a quarter radius apart: a click or a tiny drag relaxes nothing
+                self._dab(context, p, (0.0, 0.0))
+        elif mode == "SMUDGE" and s.smudge_effect == 'FIXED':
+            self._dab(context, uv, delta)
+        elif mode == "SMUDGE":
+            for m in self._meshes:          # each mouse move pulls the selected UVs under the brush by the Pressure
+                self._changed |= m.write(uv_brush_math.smudge(m.U, prev, r, delta, s.smudge_pressure, held=m.pinned,
+                                                              only=m.selected, kind=s.smudge_falloff))
+        elif mode == "SMEAR" and self._moves == 1:
+            pass                         # the first mouse move after the press only places the brush, like Maya
+        else:
+            last = prev
+            for p in uv_brush_math.stroke_points(prev, uv, max(r * SPACING, 1e-4)):
+                self._dab(context, p, (p[0] - last[0], p[1] - last[1]))
+                last = p
 
     def modal(self, context, event):
         if event.type == 'ESC' and event.value == 'PRESS':
@@ -421,18 +487,10 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             region = context.region
             xy = (event.mouse_x - region.x, event.mouse_y - region.y) if region is not None else self._xy
             uv = region.view2d.region_to_view(*xy) if region is not None else self._uv
-            mode = self._mode()
-            r = size_of(context, mode)
-            step = max(r * SPACING, 1e-4) if mode != "CUT" else 0.005
-            prev = self._uv
-            if mode == "SMUDGE" and settings(context).smudge_effect == 'FIXED':
-                self._dab(context, uv, (uv[0] - prev[0], uv[1] - prev[1]))
-            else:
-                last = prev
-                for p in uv_brush_math.stroke_points(prev, uv, step):
-                    self._dab(context, p, (p[0] - last[0], p[1] - last[1]))
-                    last = p
-            self._show()
+            self._moves += 1
+            if not self._idle:
+                self._move(context, self._uv, uv)
+                self._show(context)
             self._uv, self._xy = uv, xy
             _hover["area"], _hover["pos"] = self._area, xy
             _redraw(context)
@@ -445,7 +503,13 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         mode = self._mode()
         _stroke["segments"] = []
         done = 0
-        if mode in {"CUT", "SEW"}:
+        if self._idle:
+            pass
+        elif mode in {"CUT", "SEW"}:
+            if self._cut is not None:
+                for pk in self._picks:
+                    pk.update(*self._cut.take(final=True))
+                self._picked = self._cut_picked(context)
             for m, picked in zip(self._meshes, self._picked):
                 n = finish_edges(mode, m, picked)
                 done += n

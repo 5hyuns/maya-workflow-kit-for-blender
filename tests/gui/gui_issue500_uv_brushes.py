@@ -1,7 +1,8 @@
 """In a real UI (#500): an 8 x 8 grid -> UV > UV Editor -> UV Editor > Tools > Pin makes the Pin brush the active UV
 Editor tool; an LMB drag pins the UVs under the brush only; B + LMB drag right makes the brush bigger; Tools > Smear
-and a drag pushes UVs; Tools > Cut and a drag along a row of edges cuts them; Tools > Optimize and a drag relaxes the smeared UVs; Tools >
-Lattice and a drag of its corner point bends the UVs; RMB opens the brush marking menu;
+and a drag pushes UVs (one mouse move only places the brush); Tools > Cut and a drag along a row of edges cuts them, Ctrl+drag cuts nothing; Tools > Optimize
+and a drag relaxes the smeared UVs, a click changes nothing; Tools > Lattice and a drag of its corner point bends the
+UVs (the opposite corner stays); RMB opens the brush marking menu;
 W leaves the brush for the Move tool (screenshot of the brush circle)."""
 
 import os
@@ -224,6 +225,24 @@ def s_smear_checked():
 
 
 @step
+def s_smear_one_move():
+    C["before"] = uv_state()
+    drag([uv_px(0.3, 0.6), uv_px(0.36, 0.6)])
+
+
+@step
+def s_smear_one_move_release():
+    release()
+
+
+@step
+def s_smear_one_move_checked():
+    st = uv_state()
+    moved = [k for k in st if max(abs(st[k][0][i] - C["before"][k][0][i]) for i in (0, 1)) > 1e-7]
+    check(f"a Smear drag of one mouse move only places the brush ({len(moved)} UVs moved)", not moved)
+
+
+@step
 def s_cut():
     menu_item("UV Editor/Tools/Cut")
     check(f"Tools > Cut makes the Cut brush the tool ({tool_id()})", tool_id() == "allset.uv_brush_cut")
@@ -240,6 +259,23 @@ def s_cut_release():
 @step
 def s_cut_checked():
     check(f"the Cut drag along a row of edges cut them ({C['seams']} -> {seams()} seams)", seams() - C["seams"] >= N)
+
+
+@step
+def s_cut_ctrl():
+    C["seams"] = seams()
+    drag([uv_px(0.02 + 0.03 * k, 0.75 + 0.004) for k in range(33)], ctrl=True)     # along the cut row
+
+
+@step
+def s_cut_ctrl_release():
+    release()
+
+
+@step
+def s_cut_ctrl_checked():
+    check(f"Ctrl+drag with the Cut tool neither cuts nor sews ({C['seams']} -> {seams()} seams)",
+          seams() == C["seams"])
 
 
 @step
@@ -262,6 +298,24 @@ def s_optimize_checked():
     far = [k for k in moved if abs(C["before"][k][0][1] - 0.2) > 0.25]
     check(f"the Optimize drag relaxed the smeared UVs ({len(moved)}), none far from the brush ({len(far)})",
           moved and not far)
+
+
+@step
+def s_optimize_click():
+    C["before"] = uv_state()
+    drag([uv_px(0.6, 0.2)])
+
+
+@step
+def s_optimize_click_release():
+    release()
+
+
+@step
+def s_optimize_click_checked():
+    st = uv_state()
+    moved = [k for k in st if max(abs(st[k][0][i] - C["before"][k][0][i]) for i in (0, 1)) > 1e-7]
+    check(f"an Optimize click without a drag moves no UV ({len(moved)})", not moved)
 
 
 @step
@@ -291,11 +345,14 @@ def s_lattice_shot():
 def s_lattice_checked():
     st = uv_state()
     corner = [k for k, (uv, _p) in C["before"].items() if uv[0] > 0.95 and uv[1] > 0.95]
-    low = [k for k, (uv, _p) in C["before"].items() if uv[0] < 0.6 or uv[1] < 0.6]
+    opposite = [k for k, (uv, _p) in C["before"].items() if uv[0] < 0.05 and uv[1] < 0.05]
+    middle = [k for k, (uv, _p) in C["before"].items() if abs(uv[0] - 0.5) < 0.07 and abs(uv[1] - 0.5) < 0.07]
     moved_corner = all(st[k][0][0] > C["before"][k][0][0] + 0.05 for k in corner)
-    moved_low = [k for k in low if abs(st[k][0][0] - C["before"][k][0][0]) > 1e-6]
-    check(f"dragging the lattice corner moved the corner UVs ({moved_corner}), not the UVs outside its cells "
-          f"({len(moved_low)})", corner and moved_corner and not moved_low)
+    moved_opp = [k for k in opposite if abs(st[k][0][0] - C["before"][k][0][0]) > 1e-6]
+    moved_mid = all(st[k][0][0] > C["before"][k][0][0] + 1e-3 for k in middle)
+    check(f"dragging the lattice corner moved the corner UVs ({moved_corner}) and, less, the middle ones "
+          f"({moved_mid}), not the opposite corner ({len(moved_opp)})",
+          corner and middle and moved_corner and moved_mid and not moved_opp)
     menu_item("UV Editor/Tools/Pin")
 
 

@@ -3,7 +3,7 @@
 and Tools > Lattice (operators/uv_lattice.py).
 
 Each is a Blender tool of the UV Editor (edit mode): LMB drag = the brush stroke (operators/uv_brush.py), Ctrl+drag =
-its other way (Pin unpins, Cut sews, Sew cuts), B + LMB drag = brush size, M + LMB drag = strength; the circle
+its other way (Pin unpins, Sew cuts; the Cut tool does nothing with Ctrl or Shift), B + LMB drag = brush size, M + LMB drag = strength; the circle
 follows the mouse. The Tools menu items make them active; Q / W / E / R leave them. Their settings show in the tool
 header and the sidebar's Tool tab, with Maya's labels and start values.
 """
@@ -15,10 +15,13 @@ from ..keymap.ic_data import platform_tool
 
 
 def _keymap(mode):
+    shift = ((("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
+               {"properties": [("mode", mode), ("invert", True)]}),) if mode == "CUT" else ())  # does nothing
     return (
         ("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS'}, {"properties": [("mode", mode)]}),
         ("allset.uv_brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
          {"properties": [("mode", mode), ("invert", True)]}),
+        *shift,
         ("allset.tap_hold", {"type": 'B', "value": 'PRESS'}, {"properties": [("binding", "uv_brush_size")]}),
         ("allset.tap_hold", {"type": 'M', "value": 'PRESS'}, {"properties": [("binding", "uv_brush_strength")]}),
         ("allset.uv_brush_hover", {"type": 'MOUSEMOVE', "value": 'ANY', "any": True}, None),
@@ -67,6 +70,7 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
             _sculpt_settings(layout, s, "smear_size", "smear_strength", header)
         elif m == "SMUDGE":
             layout.prop(s, "smudge_effect", text="" if header else None)
+            layout.prop(s, "smudge_falloff", text="" if header else None)
             layout.prop(s, "smudge_size", slider=not header)
             row = layout.row()
             row.enabled = s.smudge_effect == 'SMUDGE'     # Maya greys Pressure for the Fixed effect
@@ -91,7 +95,7 @@ TOOLS = (
           "Drag to unwrap the UVs under the brush against the surface (Maya Unfold UV Tool). "
           "b + drag = size, m + drag = strength"),
     _tool("CUT", "Cut", "ops.mesh.rip_edge",
-          "Drag along edges to split the UVs there (Maya Cut UV Tool). Ctrl+drag sews"),
+          "Drag along edges to split the UVs there (Maya Cut UV Tool)"),
     _tool("PIN", "Pin", "ops.generic.select_paint",
           "Drag to pin the UVs under the brush so other UV tools leave them (Maya Pin UV Tool). Ctrl+drag unpins. "
           "b + drag = size"),
@@ -101,7 +105,7 @@ TOOLS = (
           "Drag to push the UVs under the brush along the stroke (Maya Smear UV Tool). "
           "b + drag = size, m + drag = strength"),
     _tool("SMUDGE", "Smudge", "brush.paint_texture.smear",
-          "Drag to pull the selected UVs of a shell in the direction of the stroke (Maya Smudge UV Tool). "
+          "Drag to pull the selected UVs in the direction of the stroke (Maya Smudge UV Tool). "
           "b + drag = size"),
 )
 
