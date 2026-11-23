@@ -198,9 +198,10 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
 
 ### Rendering & FX
 
-- **Hypershade** menus and Browser tabs, Maya shader types with their Attribute Editor sections, shading groups.
+- **Hypershade** menus and Browser tabs, one New Material (Blender's Principled BSDF) with Maya's Attribute Editor
+  layout, shading groups.
 - **Rendering** menu set on Blender's own render: Render Current Frame / Sequence, Render Settings (Blender's Render
-  properties), Keep Image in the render view, light linking; Intensity and Decay of lights in the Channel Box.
+  properties), Keep Image in the render view, light linking; a light's Power in the Channel Box.
 - **FX** menu set on Blender's own simulations (Cloth, Collision, particles, force fields, rigid bodies, Mantaflow).
   Nothing is rescaled: Blender simulates one unit as one metre, so FX works in metre scenes. See
   [Maya FX and Rendering in Blender](docs/fx_render_concepts.md).

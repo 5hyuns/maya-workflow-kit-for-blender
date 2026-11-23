@@ -19,7 +19,7 @@ import bpy
 from bpy.props import EnumProperty
 
 from .. import compat, results
-from . import film_fit, lights, naming, prim_history, units
+from . import film_fit, naming, prim_history, units
 from .. import i18n
 
 HALF_PI = math.pi / 2
@@ -85,12 +85,6 @@ NO_SHAPE_NAME = {'JOINT', 'TEXT'}
 # A Maya locator (Create > Locator, cmds.spaceLocator): an Empty with this flag; cmds_shim gives it a shape name
 # ``locatorShapeN``
 LOCATOR_PROP = "allset_locator"
-# Lights (operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
-# (x maya_unit()^2) and is set so an intensity-1 light at 10 units lights a surface the Maya way;
-# Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
-FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
-LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "
-                "the distance (the same brightness as Maya at 10 units).")
 
 MAYA_CAMERA_LENS, MAYA_FILM_MM, MAYA_FILM_H_MM = 35.0, 36.0, 24.0
 MAYA_CAMERA_ORTHO_WIDTH = 30.0
@@ -117,8 +111,7 @@ def _scale_data(ob, k):
         data.allset_renderable = False
         data.passepartout_alpha = MAYA_GATE_MASK_OPACITY
     elif ob.type == 'LIGHT':
-        data.shadow_soft_size *= k
-        lights.start_values(data, k)     # intensity and Decay Rate; cone, penumbra, area size and angle are Blender's
+        data.shadow_soft_size *= k       # power, cone, penumbra, area size and angle stay Blender's
 
 
 def _maya_naming(context):
@@ -214,8 +207,7 @@ class ALLSET_OT_create(bpy.types.Operator):
         if interactive_create.wanted(context, self.kind) and interactive_create.start(context, self.kind):
             return {'FINISHED'}
         ob = create(context, self.kind, _maya_naming(context))
-        note = LIGHT_NOTICE if ob.type == 'LIGHT' and ob.data.type in FALLOFF_LIGHTS else ""
-        results.result(self, f"Created {ob.name}" + (f". {note}" if note else ""))
+        results.result(self, f"Created {ob.name}")
         return {'FINISHED'}
 
 

@@ -49,16 +49,12 @@ def shape_owner(ob, key):
 
 def shape_paths(owner, key):
     """[(Blender data path, index)] a key / mute / delete on a SHAPES channel acts on: a Maya attribute
-    kept differently in Blender keys its Blender properties (Light Intensity = power, Color R = color[0], spot Cone /
-    Penumbra = spot_size + spot_blend)."""
+    kept differently in Blender keys its Blender properties (Color R = color[0], spot Cone / Penumbra = spot_size +
+    spot_blend)."""
     name = key[len(SHAPE_PREFIX):]
     v = _virtual(owner, name)
     if v is not None:
         return list(getattr(v, "paths", ()))
-    if isinstance(owner, bpy.types.Light):
-        from ..operators import lights
-        if name in lights.KEY_PATHS:
-            return lights.key_paths(owner, name)
     rna = owner.bl_rna.properties.get(name)
     return [(name, -1)] if rna is not None and rna.is_animatable else []
 

@@ -53,9 +53,9 @@ def test_light_shapes_rows_are_maya_color_and_intensity():
     ob = bpy.context.active_object
     _only(ob)
     rows = [(k, n) for k, n, _m, _i in cbm.wanted_rows(ob) if k == "SHAPE"]
-    assert [n for _k, n in rows] == ["maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity",
+    assert [n for _k, n in rows] == ["maya:colorR", "maya:colorG", "maya:colorB", "energy",
                                    "maya:useRayTraceShadows"], rows
-    assert [cbm.shape_label(ob, n) for _k, n in rows] == ["Color R", "Color G", "Color B", "Intensity",
+    assert [cbm.shape_label(ob, n) for _k, n in rows] == ["Color R", "Color G", "Color B", "Power",
                                                               "Use Ray Trace Shadows"]
     owner = cbm.row_owner(ob, "SHAPE", "maya:colorG")
     assert owner == ob.data
@@ -63,9 +63,9 @@ def test_light_shapes_rows_are_maya_color_and_intensity():
     assert abs(ob.data.color[1] - 0.25) < 1e-6
     assert abs(cbm._row_read(owner, "SHAPE", "maya:colorG") - 0.25) < 1e-6
     assert cbm._row_kind(owner, "SHAPE", "maya:colorG") == "NONE"
-    # Intensity is Maya's value over Blender's Power
-    cbm._row_write(owner, "SHAPE", "allset_intensity", 2.0)
-    assert abs(ob.data.allset_intensity - 2.0) < 1e-4
+    # the Intensity place is Blender's Power itself
+    cbm._row_write(owner, "SHAPE", "energy", 2.0)
+    assert abs(ob.data.energy - 2.0) < 1e-6
 
 
 def test_83_pane_room_model():

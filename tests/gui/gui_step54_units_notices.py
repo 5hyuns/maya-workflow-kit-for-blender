@@ -61,11 +61,17 @@ def s_point():
 @step
 def s_point_check():
     ob = bpy.context.view_layer.objects.active
-    # Maya intensity 1, Decay Rate No Decay: matches Maya at
-    # 10 units, power = 4 pi^2 k^2 x 10^2 (operators/lights.power_factor); still scales with maya_unit^2
-    want = 4.0 * math.pi ** 2 * C["k"] ** 2 * 100.0
+    # Blender's own power for a new point light (Blender's Add > Light > Point)
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.object.light_add(type='POINT')
+    ref = bpy.context.active_object
+    want = ref.data.energy
+    bpy.data.objects.remove(ref)
+    if ob is not None:
+        bpy.context.view_layer.objects.active = ob
     check(f"Create > Lights > Point Light: {ob and ob.name}, power {ob and ob.data.energy:.6f} W "
-          f"(4 pi^2 x 100 x maya_unit^2 = {want:.6f})",
+          f"(Blender's {want:.6f})",
           ob is not None and ob.type == 'LIGHT' and abs(ob.data.energy - want) < 1e-6 * want + 1e-9)
     open_menu("Fields/Solvers")
 

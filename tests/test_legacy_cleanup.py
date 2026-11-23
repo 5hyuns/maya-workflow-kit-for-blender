@@ -118,6 +118,7 @@ def _old_lights_file(name, kit_world=False):
         data[lc.LIGHT_KIND] = kind
         data[lc.LIGHT_INTENSITY] = 2.0
         data["allset_ambient_shade"] = 0.45
+        data.energy = 7.5
         ob = bpy.data.objects.new(nm, data)
         sc.collection.objects.link(ob)
         obs[nm] = ob
@@ -149,13 +150,12 @@ def test_old_lights_are_cleaned_on_open():
     assert not [n.name for n in tree.nodes if n.name.startswith("Maya Ambient")]
     out = next(n for n in tree.nodes if n.type == 'OUTPUT_WORLD')
     assert out.inputs["Surface"].links[0].from_node.type == 'BACKGROUND', "the World's own background is back"
-    lights = import_module(kit.MODULE + ".operators.lights")
     for nm in ("ambientLight1", "volumeLight1"):
         data = bpy.data.objects[nm].data
         assert not [k for k in data.keys() if k in (*lc.LIGHT_PROPS, lc.VOLUME_NODES_ON)], (nm, data.keys())
-        assert abs(lights.intensity(data) - 2.0) < 1e-6 and lights.decay(data) == 0, nm
+        assert abs(data.energy - 7.5) < 1e-6, (nm, data.energy)        # a plain point light, its power as saved
     vt = bpy.data.objects["volumeLight1"].data.node_tree
-    assert vt.nodes.get("Maya Volume Falloff") is None and vt.nodes.get(lights.FALLOFF_NODE) is not None
+    assert vt is None or not [n for n in vt.nodes if n.type == 'LIGHT_FALLOFF'], "no falloff node is added"
     sun = bpy.data.objects["directionalLight1"]
     assert not sun.hide_render and not sun.hide_viewport, "the isolate is undone"
     assert lc.LIGHT_ISOLATE not in sc.keys() and lc.ILLUMINATES not in sun.keys()

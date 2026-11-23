@@ -1,7 +1,6 @@
-"""Create paths in Maya units, light power x maya_unit^2, and the shared "not in Blender"
+"""Create paths in Maya units, Blender's own light power, and the shared "not in Blender"
 notices. GUI: tests/gui/gui_step54_units_notices.py."""
 
-import math
 import types
 from importlib import import_module
 
@@ -63,18 +62,18 @@ def test_create_paths_in_maya_units():
         assert plane.name == "imagePlane1"
 
 
-def test_light_power_scaled_by_maya_unit_squared():
+def test_new_light_power_is_blenders():
     for setup in SETUPS:
         _fresh()
-        k = _units(setup)
-        # Maya intensity 1 / No Decay, power like Maya's (operators/lights.py):
-        # x maya_unit^2, 4 pi^2 x 100 (point / spot, Maya intensity 1 at 10 units) and pi^2 x 9.87 (area)
-        pi2 = math.pi ** 2
-        for kind, base in (('POINT_LIGHT', 4 * pi2 * 100), ('SPOT_LIGHT', 4 * pi2 * 100), ('AREA_LIGHT', pi2 * 9.87)):
+        _units(setup)
+        # Blender's own power whatever the units (Blender's Add > Light gives the same)
+        for kind, blender in (('POINT_LIGHT', 'POINT'), ('SPOT_LIGHT', 'SPOT'), ('AREA_LIGHT', 'AREA'),
+                              ('DIRECTIONAL_LIGHT', 'SUN')):
             ob = _make(kind)
-            assert abs(ob.data.energy - base * k * k) < 1e-5 * base * k * k, (setup, kind, ob.data.energy)
-        sun = _make('DIRECTIONAL_LIGHT')
-        assert abs(sun.data.energy - math.pi) < 1e-6, "sun light: no distance falloff, not scaled (Maya 1 = pi)"
+            bpy.ops.object.light_add(type=blender)
+            ref = bpy.context.active_object
+            assert abs(ob.data.energy - ref.data.energy) < 1e-6, (setup, kind, ob.data.energy, ref.data.energy)
+            bpy.data.objects.remove(ref)
 
 
 def _actions():
@@ -107,7 +106,7 @@ def test_notices_are_real_menu_paths_with_a_line():
             "Windows/General Editors/Hypergraph: Connections": "Drivers", "Skeleton/HumanIK": "Rigify",
             "Windows/General Editors/Namespace Editor": "ns:", "File/Create Reference...": "Library Override",
             "File/Set Project...": "projects", "Modify/Evaluate Nodes/nucleuses": "nucleus",
-            "Windows/Rendering Editors/Light Editor": "Light Editor", "Create/Lights/Point Light": "square"}
+            "Windows/Rendering Editors/Light Editor": "Light Editor"}
     for path, word in want.items():
         assert word in " ".join(notices.NOTICES[path]), (path, word)
 

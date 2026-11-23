@@ -129,14 +129,19 @@ CAMERA = [
 ]
 
 # --- lights (Maya Attribute Editor point / directional light tabs) ----------------------
-_LIGHT_MAIN = (("prop", "data", "type", "Type"),
-               ("prop", "data", "color", "Color"),
-               ("prop", "data", "allset_intensity", "Intensity"),      # Maya intensity (operators/lights.py)
-               ("prop", "data", "diffuse_factor", "Emit Diffuse"),
-               ("prop", "data", "specular_factor", "Emit Specular"))
-# Maya Decay Rate: No Decay / Linear / Quadratic / Cubic, rendered by
-# Cycles with a Light Falloff node; EEVEE / the viewport keep distance squared (operators/lights.py).
-_DECAY = ("draw", "light_decay")
+def _light_main(power):
+    """Type, Color, then Blender's Power (a sun: Strength) where Maya has Intensity, Emit Diffuse / Specular."""
+    return (("prop", "data", "type", "Type"),
+            ("prop", "data", "color", "Color"),
+            ("prop", "data", "energy", power),
+            ("prop", "data", "diffuse_factor", "Emit Diffuse"),
+            ("prop", "data", "specular_factor", "Emit Specular"))
+
+
+_LIGHT_MAIN = _light_main("Power")
+# Maya's Decay Rate: Blender lights fall off with the square of the distance
+_DECAY = ("missing", "Decay Rate", "Blender lights fall off with distance squared; in Cycles a Light Falloff node "
+                                   "in the light's node tree (Shader Editor) changes it")
 
 
 def _render_engine(*rows):
@@ -159,7 +164,7 @@ POINT_LIGHT = [
     _render_engine(_SOFT_FALLOFF),
 ]
 DIRECTIONAL_LIGHT = [
-    S("Directional Light Attributes", True, *_LIGHT_MAIN),
+    S("Directional Light Attributes", True, *_light_main("Strength")),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
         S("Raytrace Shadow Attributes", True, ("prop", "data", "angle", "Light Angle")),
     ]),

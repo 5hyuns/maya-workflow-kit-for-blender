@@ -406,11 +406,11 @@ SHAPE_PROPS = {
     # Of Interest have none here)
     'CAMERA': ("maya:horizontalFilmAperture", "maya:verticalFilmAperture", "lens", "maya:fStop", "maya:focusDistance",
                "display_size"),
-    # Maya light shapes: Color R / G / B, Intensity first (the Maya keyable order); Intensity is the
-    # Maya value over Blender's Power (operators/lights.py)
+    # Maya light shapes: Color R / G / B, then Blender's Power (a sun: Strength) where Maya has Intensity (the Maya
+    # keyable order; operators/lights.py)
     # + spot Cone Angle / Penumbra Angle (keyable on a Maya spotLight)
     # + Use Ray Trace Shadows (Blender's shadow switch; Maya's depth map shadow rows have no Blender setting)
-    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity", "maya:useRayTraceShadows",
+    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "energy", "maya:useRayTraceShadows",
               "maya:coneAngle", "maya:penumbraAngle"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z)
 }

@@ -1,6 +1,6 @@
 """In the Maya Workflow Kit layout: the shelf's material button makes Blender's new material (Principled BSDF,
-named Material) whose Attribute Editor shows the Principled inputs by Blender's names; a new point light shows
-Intensity 1 / Decay Rate No Decay. Screenshots for a visual check."""
+named Material) whose Attribute Editor shows the Principled inputs by Blender's names; a new point light has
+Blender's power, shown in the Power row. Screenshots for a visual check."""
 
 import os
 import sys
@@ -64,8 +64,15 @@ def s_light():
         bpy.ops.allset.create(kind='POINT_LIGHT')
     attribute_editor = import_module(MODULE + ".ui.attribute_editor")
     light = bpy.context.active_object.data
-    check(f"point light: Intensity 1, No Decay ({light.allset_intensity:.4f}, {light.allset_decay})",
-          abs(light.allset_intensity - 1.0) < 1e-4 and light.allset_decay == 'NO_DECAY')
+    ob = bpy.context.active_object
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.object.light_add(type='POINT')          # Blender's Add > Light > Point
+    ref = bpy.context.active_object
+    want = ref.data.energy
+    bpy.data.objects.remove(ref)
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(True)
+    check(f"point light: Blender's power ({light.energy:.4f} W, Blender {want:.4f})", abs(light.energy - want) < 1e-6)
     attribute_editor.show_dock(bpy.context, 'ATTRIBUTE_EDITOR')
     attribute_editor.set_tab(bpy.context, "S")          # pointLightShape1
     for a in win().screen.areas:

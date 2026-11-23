@@ -1,8 +1,8 @@
 """Material, light and Render Settings defaults.
 
 New materials are plain Principled BSDF materials (Blender's values); the Attribute Editor shows their inputs by
-Blender's names. Lights: intensity 1, Decay Rate No Decay;
-cone, penumbra, area size and angle are Blender's; resolution is Blender's 1920 x 1080. Light power rule and its renders: operators/lights.py."""
+Blender's names. Lights: Blender's own power, cone, penumbra, area size and angle; resolution is Blender's
+1920 x 1080."""
 
 import math
 from importlib import import_module
@@ -118,75 +118,29 @@ def _blender_light(kind):
     return data
 
 
-def _falloff(light):
-    tree = light.node_tree
-    node = tree.nodes.get(lights.FALLOFF_NODE) if tree is not None else None
-    if node is None:
-        return None, None
-    em = next(n for n in tree.nodes if n.type == 'EMISSION')
-    link = em.inputs["Strength"].links[0] if em.inputs["Strength"].is_linked else None
-    return (link.from_socket.name if link else None), node.inputs["Strength"].default_value
-
-
-def test_new_point_spot_lights_no_decay():
+def test_new_lights_keep_blender_values():
     _clear()
-    k = _cm()
-    for kind in ('POINT_LIGHT', 'SPOT_LIGHT'):
-        ob = create.create(bpy.context, kind)
-        light = ob.data
-        assert light.allset_decay == 'NO_DECAY' and _close(light.allset_intensity, 1.0), (kind, light.allset_decay)
-        assert _close(light.energy, 4 * PI2 * 100 * k * k, 1e-6), light.energy
-        out, strength = _falloff(light)
-        assert out == "Constant" and _close(strength, 1 / (10 * k) ** 2, 1e-3), (out, strength)
-    spot = bpy.data.objects["spotLight1"].data
-    ref = _blender_light('SPOT')
-    assert _close(spot.spot_size, ref.spot_size) and _close(spot.spot_blend, ref.spot_blend), "Blender's cone"
-
-
-def test_decay_rate_changes_keep_intensity():
-    _clear()
-    k = _cm()
-    light = create.create(bpy.context, 'POINT_LIGHT').data
-    light.allset_intensity = 2.0
-    light.allset_decay = 'LINEAR'
-    assert _close(light.allset_intensity, 2.0) and _close(light.energy, 2 * 4 * PI2 * 10 * k * k, 1e-6)
-    out, strength = _falloff(light)
-    assert out == "Linear" and _close(strength, 1 / (10 * k)), (out, strength)
-    light.allset_decay = 'QUADRATIC'
-    assert _falloff(light) == (None, None), "Blender's own law: no falloff node"
-    assert _close(light.energy, 2 * 4 * PI2 * k * k, 1e-8) and _close(light.allset_intensity, 2.0)
-    if not compat.LIGHT_ALWAYS_NODES:
-        assert not light.use_nodes, "nodes the kit turned on are turned off again"
-    assert lights.exact(light)
-    light.allset_decay = 'CUBIC'
-    assert not lights.exact(light) and "cubic" in lights.decay_notice(light)
-    light.allset_decay = 'NO_DECAY'
-    assert _falloff(light)[0] == "Constant" and _close(light.allset_intensity, 2.0)
-
-
-def test_area_and_directional_lights():
-    _clear()
-    k = _cm()
-    area = create.create(bpy.context, 'AREA_LIGHT').data
-    ref = _blender_light('AREA')
-    assert area.allset_decay == 'NO_DECAY' and _close(area.size, ref.size) and area.shape == ref.shape, \
-        "Blender's area light size"
-    assert _close(area.energy, PI2 * lights.AREA_FAR * k * k, 1e-8) and _falloff(area) == (None, None)
-    area.allset_decay = 'LINEAR'
-    assert not lights.exact(area) and _close(area.allset_intensity, 1.0)
-    sun = create.create(bpy.context, 'DIRECTIONAL_LIGHT').data
-    assert _close(sun.energy, math.pi) and _close(sun.allset_intensity, 1.0)
-    # a light made in Blender reads with Blender's own law
-    plain = bpy.data.lights.new("plain", 'POINT')
-    plain.energy = 10.0
-    assert plain.allset_decay == 'QUADRATIC' and _close(plain.allset_intensity, 10.0 / (4 * PI2 * k * k), 1e-3)
+    _cm()
+    for kind, blender in (('POINT_LIGHT', 'POINT'), ('SPOT_LIGHT', 'SPOT'), ('AREA_LIGHT', 'AREA'),
+                          ('DIRECTIONAL_LIGHT', 'SUN')):
+        light = create.create(bpy.context, kind).data
+        ref = _blender_light(blender)
+        assert _close(light.energy, ref.energy), (kind, light.energy, ref.energy)
+        if blender == 'SPOT':
+            assert _close(light.spot_size, ref.spot_size) and _close(light.spot_blend, ref.spot_blend), "Blender's cone"
+        if blender == 'AREA':
+            assert _close(light.size, ref.size) and light.shape == ref.shape, "Blender's area light size"
+        if blender == 'SUN':
+            assert _close(light.angle, ref.angle), "Blender's angle"
+        tree = light.node_tree
+        assert tree is None or not [n for n in tree.nodes if n.type == 'LIGHT_FALLOFF'], kind
 
 
 def test_ae_light_rows():
-    for name in ("POINT", "SPOT", "AREA"):
+    for name, label in (("POINT", "Power"), ("SPOT", "Power"), ("AREA", "Power"), ("SUN", "Strength")):
         rows = _rows(name)
-        assert ("prop", "data", "allset_intensity", "Intensity") in rows and ("draw", "light_decay") in rows, name
-    assert "light_decay" in attribute_editor.DRAWERS
+        assert ("prop", "data", "energy", label) in rows, name
+        assert not any(r[0] == "prop" and r[2].startswith("allset_") for r in rows), name
 
 
 # --- Render Settings -----------------------------------------------------------------------------------------------

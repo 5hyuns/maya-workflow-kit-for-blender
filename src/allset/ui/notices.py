@@ -171,12 +171,6 @@ NOTICES = {
     **{f"nCache/{item}": (
         "Baked caches", "Blender always plays a baked cache: Delete Cache to simulate again.")
        for item in ("Enable All Caches on Selected", "Disable All Caches on Selected")},
-    # Lights (operators/lights.py)
-    **{f"Create/Lights/{kind} Light": (
-        f"{kind} light", "Maya Decay Rate No Decay renders in Cycles; Blender EEVEE and the viewport get darker with the "
-        "square of the distance, the power matching Maya intensity 1 at 10 units.") for kind in ("Point", "Spot")},
-    "Create/Lights/Area Light": (
-        "Area light", "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units)."),
     **{f"{menu}/Lights/Ambient Light": (
         "World colour or Point Light", "Blender has no ambient light: raise the World colour (World Properties > "
         "Surface) for light from every side, or add a Point Light.") for menu in ("Create", "Hypershade/Create")},

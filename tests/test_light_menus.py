@@ -1,7 +1,7 @@
 """Lighting menus call Blender: Create > Lights > Ambient / Volume Light are greyed with a notice (Blender has neither),
 Lighting/Shading light / shadow links run Blender's light linking operators (active object = the light), the Light
 Linking Editor opens Blender's Light Linking panel (Properties > Object), Light Editor = an Outliner window of the
-lights, Render Settings = Blender's Render tab. The Channel Box / Attribute Editor Intensity and Decay Rate stay."""
+lights, Render Settings = Blender's Render tab. The Channel Box / Attribute Editor show Blender's Power where Maya has Intensity."""
 
 from importlib import import_module
 
@@ -88,14 +88,19 @@ def test_editors_open_blender_editors():
         assert not hasattr(bpy.types, gone), gone
 
 
-def test_intensity_and_decay_rows_stay():
+def test_new_lights_have_blender_values():
     _clear()
-    bpy.ops.allset.create(kind='POINT_LIGHT')
-    data = bpy.context.active_object.data
-    assert abs(data.allset_intensity - 1.0) < 1e-6 and data.allset_decay == 'NO_DECAY'
-    data.allset_intensity = 3.0
-    assert abs(lights.intensity(data) - 3.0) < 1e-6
-    assert lights.key_paths(data, "allset_intensity") == [("energy", -1)]
+    for kind, blender in (('POINT_LIGHT', 'POINT'), ('SPOT_LIGHT', 'SPOT'), ('AREA_LIGHT', 'AREA'),
+                          ('DIRECTIONAL_LIGHT', 'SUN')):
+        bpy.ops.allset.create(kind=kind)
+        data = bpy.context.active_object.data
+        bpy.ops.object.light_add(type=blender)
+        ref = bpy.context.active_object.data
+        assert abs(data.energy - ref.energy) < 1e-6, (kind, data.energy, ref.energy)
+        tree = data.node_tree
+        assert tree is None or not [n for n in tree.nodes if n.type == 'LIGHT_FALLOFF'], kind
+        assert not [k for k in data.keys() if k.startswith("allset_decay")], (kind, data.keys())
+        assert not hasattr(data, "allset_intensity") and not hasattr(data, "allset_decay")
 
 
 def test_no_light_handlers_left():

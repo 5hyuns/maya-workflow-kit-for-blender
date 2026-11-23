@@ -270,11 +270,13 @@ def test_keep_image_render_slots():
     assert not rec.log
 
 
-def test_light_decay_rate_row():
+def test_light_power_and_decay_rows():
     for kind in ("POINT", "SPOT", "AREA"):
         rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND[kind][0]) for row in sec.rows]
-        # a real Decay Rate row (Light.allset_decay, operators/lights.py)
-        assert ("draw", "light_decay") in rows, kind
+        # Blender's Power where Maya has Intensity; Decay Rate = a greyed row naming Blender's way
+        assert ("prop", "data", "energy", "Power") in rows, kind
+        assert any(r[0] == "missing" and r[1] == "Decay Rate" and "Light Falloff" in r[2] for r in rows), kind
     rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND["SUN"][0]) for row in sec.rows]
-    assert ("draw", "light_decay") not in rows, "directional lights have no decay"
+    assert ("prop", "data", "energy", "Strength") in rows
+    assert not any(r[0] == "missing" and r[1] == "Decay Rate" for r in rows), "directional lights have no decay"
 

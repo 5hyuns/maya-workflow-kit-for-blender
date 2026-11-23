@@ -32,7 +32,7 @@ from .ae_nodes import (  # noqa: F401
 from .ae_rows import (  # noqa: F401
     resolve, _owner, _length, _vector_row, _maya_number_rows, draw_transform_channels, draw_world_pivot, LIMIT_PROPS,
     draw_limit, draw_visibility, JOINT_AXIS_NOTE, joint_orient, draw_joint_orient, draw_joint_stiffness, draw_shading,
-    draw_smooth_mesh, draw_light_decay, draw_type_manipulator, DRAWERS, attr_label, draw_row, SECTION_INDENT,
+    draw_smooth_mesh, draw_type_manipulator, DRAWERS, attr_label, draw_row, SECTION_INDENT,
     section_body, draw_sections, _MOD_SKIP, modifier_props, draw_history, _CON_SKIP, constraint_props, draw_constraint,
     draw_extra, draw_extrude_history, draw_shading_group)
 from .ae_menus import (  # noqa: F401

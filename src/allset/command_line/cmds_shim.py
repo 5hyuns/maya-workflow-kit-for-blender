@@ -579,6 +579,8 @@ def channel_keys(ob, name):
         return (_SCALAR[name],)
     if name in ob.keys() and not name.startswith("_"):
         return (_cb().CUSTOM_PREFIX + name,)
+    if name in ("intensity", "in") and ob.type == 'LIGHT':
+        return (_cb().SHAPE_PREFIX + "energy",)      # a light's intensity = Blender's Power (a sun: Strength) as is
     return None
 
 

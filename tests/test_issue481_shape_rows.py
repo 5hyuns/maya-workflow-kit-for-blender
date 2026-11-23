@@ -55,7 +55,8 @@ def test_light_shadow_row():
     for kind in ('POINT_LIGHT', 'DIRECTIONAL_LIGHT', 'SPOT_LIGHT'):
         ob = _new(kind)
         labels = _shape_labels(ob)
-        assert labels[:4] == ["Color R", "Color G", "Color B", "Intensity"], (kind, labels)
+        power = "Strength" if kind == 'DIRECTIONAL_LIGHT' else "Power"      # Blender's, where Maya has Intensity
+        assert labels[:4] == ["Color R", "Color G", "Color B", power], (kind, labels)
         assert "Use Ray Trace Shadows" in labels, (kind, labels)
         key = next(k for k in cb.drawn_keys(ob) if cb.channel_label(k) == "Use Ray Trace Shadows")
         cb.set_value(ob, key, False)

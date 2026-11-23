@@ -4788,7 +4788,6 @@
    "Add menu (Shift+A)": "Add menu (Shift+A)",
    "Alembic / Mesh Sequence Cache": "Alembic / Mesh Sequence Cache",
    "Alembic import": "Alembic import",
-   "Area light": "Area light",
    "Asset Browser": "Asset Browser",
    "Asset Browser / library overrides": "Asset Browser / library overrides",
    "Baked caches": "Baked caches",
@@ -4945,7 +4944,6 @@
    "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them (Display > Hide).": "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them (Display > Hide).",
    "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view (Ctrl+Space) for more room.": "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view (Ctrl+Space) for more room.",
    "Blender's Trax is the NLA Editor with Maya's Trax menus: clips are actions laid out as NLA strips.": "Blender's Trax is the NLA Editor with Maya's Trax menus: clips are actions laid out as NLA strips.",
-   "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units).": "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units).",
    "Blender's clip-based animation editor is the NLA Editor (Windows > Animation Editors).": "Blender's clip-based animation editor is the NLA Editor (Windows > Animation Editors).",
    "Blender's cluster is a Hook modifier driven by the clusterNHandle empty.": "Blender's cluster is a Hook modifier driven by the clusterNHandle empty.",
    "Blender's dynamics are modifiers and physics settings on ordinary objects, so they have no selection mask of their own.": "Blender's dynamics are modifiers and physics settings on ordinary objects, so they have no selection mask of their own.",
@@ -6292,12 +6290,6 @@
   },
   "Labels/operators/lattice_pick": {
    "Box Select": "Box Select"
-  },
-  "Labels/operators/lights": {
-   "Decay Rate": "Decay Rate",
-   "Intensity": "Intensity",
-   "Maya Decay Rate: how the light gets darker with distance": "Maya Decay Rate: how the light gets darker with distance",
-   "Maya light intensity: 1 lights a surface like Maya's intensity 1 (at 10 units when the render engine falls off with distance squared)": "Maya light intensity: 1 lights a surface like Maya's intensity 1 (at 10 units when the render engine falls off with distance squared)"
   },
   "Labels/operators/live": {
    "Add Selected": "Add Selected",

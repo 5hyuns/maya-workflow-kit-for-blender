@@ -77,9 +77,10 @@ values.
 | Lighting/Shading > Light Linking Editor, Windows > Relationship Editors > Light Linking | Object properties of the light (Light Linking panel) |
 | Windows > Rendering Editors > Light Editor | An Outliner window that lists only the lights |
 
-Light Intensity and Decay Rate rows stay in the Channel Box and Attribute Editor. New lights keep Blender's own
-spot cone and penumbra, area light size and directional light Angle; new cameras keep Blender's F Stop and Focus
-Distance.
+New lights have Blender's own values. Where Maya's Channel Box and Attribute Editor have Intensity, the kit shows
+Blender's Power (a directional light: Strength) as it is; Blender lights fall off with distance squared (Cycles: a
+Light Falloff node in the light's node tree changes it), so Decay Rate is greyed. New cameras keep Blender's F Stop
+and Focus Distance.
 
 Blender lights everything a light has no Exclude link for, until the light gets its first Include link: from then on
 it lights only its included objects.

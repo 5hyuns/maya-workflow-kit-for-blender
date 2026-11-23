@@ -5,8 +5,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ## [Unreleased]
 
-**Materials and render start values are Blender's own.** The kit keeps Maya's menus, hotkeys and Attribute Editor
-layout for shading, while shaders, their values and the render start values are Blender's. Scenes saved with an
+**Materials, lights and render start values are Blender's own.** The kit keeps Maya's menus, hotkeys and Attribute
+Editor layout for shading and lighting, while shaders, light power and falloff, their values and the render start
+values are Blender's. Scenes saved with an
 earlier version open unchanged: nothing in them is converted.
 
 ### Changed
@@ -30,16 +31,23 @@ earlier version open unchanged: nothing in them is converted.
 - Hypershade Delete, Delete Unused Nodes and Delete All Materials treat every material the same (no material is
   kept back). The command line's `initialShadingGroup` stands for the shapes without a material: `sets -q` lists
   them and `sets -e -forceElement initialShadingGroup` takes the material off a shape.
-- New cameras keep Blender's depth of field values (F Stop, Focus Distance). New directional lights keep Blender's
-  Angle, new spot lights Blender's cone and penumbra, new area lights Blender's size. Orthographic Width, the gate
-  mask opacity and a new camera that is not renderable stay as before.
+- **Lights: Blender's power.** New lights have Blender's own values (power, falloff, spot cone and penumbra, area
+  size, directional Angle). The Channel Box and Attribute Editor row in Maya's Intensity place shows Blender's Power
+  (a directional light: Strength) itself, so its number looks different from before (for example thousands instead
+  of 1); keys and driven keys on it were power keys already and work as before. On the command line `setAttr
+  pointLight1.intensity 100` now sets the power to 100 as it is, and `decayRate` is no attribute: Blender lights fall
+  off with distance squared (in Cycles a Light Falloff node in the light's node tree changes it). The Decay Rate row
+  is greyed with that note.
+- New cameras keep Blender's depth of field values (F Stop, Focus Distance). Orthographic Width, the gate mask
+  opacity and a new camera that is not renderable stay as before.
 - The Maya layout file's Render Settings image size is Blender's (1920 x 1080).
 - Imported materials keep Blender's names (Material.001).
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse
   node) and Ramp / Layered / Use Background node set-ups keep rendering as they were saved, and so do cameras and
-  lights. Their materials show the same Principled BSDF tab. An old lambert1 keeps its objects but is no longer given
+  lights: a light keeps its saved power, and a "Maya Decay Rate" Light Falloff node an earlier version put on it
+  keeps rendering in Cycles (edit it in the Shader Editor; the kit no longer changes it). Their materials show the same Principled BSDF tab. An old lambert1 keeps its objects but is no longer given
   to new objects. Lighting/Shading > Convert Old Kit Materials still turns the older materials into plain Principled
   BSDF materials.
 

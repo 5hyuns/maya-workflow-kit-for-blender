@@ -169,18 +169,6 @@ def draw_smooth_mesh(layout, context, ob):
         layout.prop(sub, "render_levels", text="Render Levels")
 
 
-def draw_light_decay(layout, context, ob):
-    """Maya Decay Rate (operators/lights.py); where the render can't follow it, the tooltip says why."""
-    from ..operators import lights
-    from . import notices
-    light = getattr(ob, "data", None)
-    if light is None or not hasattr(light, "allset_decay"):
-        return
-    row = layout.row(align=True)
-    row.prop(light, "allset_decay", text=attr_label(context, "Decay Rate", "decayRate"))
-    notices.tip(row, lights.decay_notice(light))
-
-
 def draw_type_manipulator(layout, context, ob):
     """Type Manipulator on / off for this type, and putting characters back (operators/type_manip.py)."""
     from ..operators import type_manip
@@ -198,7 +186,7 @@ def draw_type_manipulator(layout, context, ob):
 DRAWERS = {"transform_channels": draw_transform_channels, "world_pivot": draw_world_pivot,
            "visibility": draw_visibility, "shading": draw_shading, "smooth_mesh": draw_smooth_mesh,
            "joint_orient": draw_joint_orient, "joint_stiffness": draw_joint_stiffness,
-           "light_decay": draw_light_decay, "type_manipulator": draw_type_manipulator}
+           "type_manipulator": draw_type_manipulator}
 
 
 def attr_label(context, label, ident):
