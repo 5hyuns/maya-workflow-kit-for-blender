@@ -16,6 +16,11 @@ What Optimize does (like Maya):
 - Prevent triangle flips: a step that would leave more triangles turned over than before is shortened until it
   does not.
 - Iterations 0, or Power below 100, leave the UVs as they are.
+
+Legacy (relax), the other method: every free UV moves toward the weighted average of its neighbours (``relax``).
+Pin UV border (on by default) keeps the shell borders, Pin UVs keeps the selected or the unselected UVs; Edge
+weights Uniform (default) or World space (the 3D shape: cotangent weights); Maximum iterations (default 5) = the solver
+steps, the result after many steps is the fully relaxed layout.
 """
 
 import math
@@ -227,3 +232,86 @@ def _keep_place(U0, U, T):
     cs, sn = math.cos(ang), math.sin(ang)
     R = np.array([[cs, -sn], [sn, cs]])
     return c0 + B @ R.T
+
+
+# --- Legacy (relax) ------------------------------------------------------------------------------------------------
+
+def relax_weights(P, faces, world_space):
+    """{(i, j): weight} of the UV edges. Uniform: every edge of a face weighs 1. World space: each face is cut into
+    a fan of triangles from its first corner and every triangle edge gets half the cotangent of the opposite 3D
+    angle (summed over the triangles that share it)."""
+    W = {}
+    for f in faces:
+        n = len(f)
+        if not world_space:
+            for k in range(n):
+                a, b = f[k], f[(k + 1) % n]
+                W[(a, b) if a < b else (b, a)] = 1.0
+            continue
+        for k in range(1, n - 1):
+            tri = (f[0], f[k], f[k + 1])
+            for c in range(3):
+                o, a, b = tri[c], tri[(c + 1) % 3], tri[(c + 2) % 3]
+                u, v = P[a] - P[o], P[b] - P[o]
+                cross = float(np.linalg.norm(np.cross(u, v)))
+                if cross < 1e-18:
+                    continue
+                key = (a, b) if a < b else (b, a)
+                W[key] = W.get(key, 0.0) + float(np.dot(u, v)) / cross / 2
+    return W
+
+
+def relax(U, W, held, iterations=5):
+    """Legacy (relax): ``iterations`` conjugate-gradient steps (u and v solved as one system) toward the weighted
+    average of the neighbours, from the current UVs; ``held`` UVs stay. Returns the new (n, 2) UVs."""
+    U0 = np.asarray(U, float)
+    held = np.asarray(held, bool)
+    out = U0.copy()
+    free = np.flatnonzero(~held)
+    if not len(free) or iterations <= 0 or not W:
+        return out
+    pos = -np.ones(len(U0), int)
+    pos[free] = np.arange(len(free))
+    m = len(free)
+    diag = np.zeros(m)
+    rows, cols, vals = [], [], []
+    B = np.zeros((m, 2))
+    for (a, b), w in W.items():
+        for p, q in ((a, b), (b, a)):
+            if pos[p] < 0:
+                continue
+            diag[pos[p]] += w
+            if pos[q] >= 0:
+                rows.append(pos[p])
+                cols.append(pos[q])
+                vals.append(-w)
+            else:
+                B[pos[p]] += w * U0[q]
+    rows, cols, vals = np.array(rows, int), np.array(cols, int), np.array(vals, float)
+
+    def apply(X):
+        Y = X * diag[:, None]
+        if len(vals):
+            for c in range(2):
+                Y[:, c] += np.bincount(rows, vals * X[cols, c], m)
+        return Y
+
+    X = U0[free].copy()
+    R = B - apply(X)
+    Pd = R.copy()
+    rr = float((R * R).sum())
+    for _ in range(int(iterations)):
+        if rr < 1e-30:
+            break
+        AP = apply(Pd)
+        denom = float((Pd * AP).sum())
+        if abs(denom) < 1e-30:
+            break
+        alpha = rr / denom
+        X += alpha * Pd
+        R -= alpha * AP
+        rr_new = float((R * R).sum())
+        Pd = R + (rr_new / rr) * Pd
+        rr = rr_new
+    out[free] = X
+    return out

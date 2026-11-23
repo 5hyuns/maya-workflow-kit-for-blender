@@ -144,7 +144,7 @@ def test_window_opens_from_the_option_box_and_the_items_run_optimize():
     w = ow.find_path(OPTIMIZE)
     assert w is not None and w.key == "uv_optimize" and w.action == "Optimize" and w.title == "Optimize UVs Options"
     assert box.option_kind(OPTIMIZE) == "window"
-    assert w.defaults() == {"iterations": 1, "surfangle": 1.0, "power": 100, "prevent_flips": True}, w.defaults()
+    assert {k: w.defaults()[k] for k in ("method", "iterations", "surfangle", "power", "prevent_flips")} ==         {"method": "Unfold3D", "iterations": 1, "surfangle": 1.0, "power": 100, "prevent_flips": True}, w.defaults()
     assert w.missing, "fields Blender has no counterpart for are listed greyed"
     spec = menu_map.spec(OPTIMIZE)
     assert spec is not None and spec[1] == "allset.uv_optimize", spec

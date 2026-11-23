@@ -11,7 +11,8 @@ origin) Blender's UV grid shows across and up; View > Grid itself still shows / 
 Unfold, Optimize and Layout: the menu item, Ctrl+U / Ctrl+L, the UV Toolkit buttons and the marking menu items all run
 with the saved values (operators/uv_tools.option_values). Unfold: 1 iteration, triangle flips prevented, no Layout after
 it. Optimize (operators/uv_optimize.py): 1 iteration, Surfangle 1, Power 100 (below 100 nothing moves, like Maya),
-triangle flips prevented.
+triangle flips prevented; Method Legacy (relax) relaxes the shells instead (UV border pinned, uniform edge weights, 5
+iterations).
 Layout: shells pre-scaled to their 3D size ratio, not turned, packed together into the 0-1 square without padding,
 uniformly scaled (operators/uv_layout.py).
 """
@@ -21,6 +22,7 @@ import json
 import bpy
 
 from .option_windows import F, Window
+from . import uv_optimize
 from . import uv_toolkit_ops as tk
 from .uv_layout import MAP_SIZES, MULTI, PRE_ROTATE, PRE_SCALE, SCALE_MODES
 
@@ -31,6 +33,19 @@ def _run_unfold(context, v):
 
 def _run_optimize(context, v):
     return bpy.ops.allset.uv_optimize('EXEC_DEFAULT', options=json.dumps(v))
+
+
+_LEGACY_FIELDS = ("pin_border", "pin_uvs", "pin_which", "edge_weights", "max_iterations")
+
+
+def _optimize_enabled(v, name):
+    """Legacy (relax) switches the window to its relax settings (Maya); the pin choice needs Pin UVs."""
+    if name == "method":
+        return True
+    legacy = v["method"] == uv_optimize.LEGACY
+    if name in _LEGACY_FIELDS:
+        return legacy and (name != "pin_which" or v["pin_uvs"])
+    return not legacy
 
 
 def _run_layout(context, v):
@@ -85,12 +100,18 @@ WINDOWS = [
         missing=("Method: Legacy", "Fix non-manifold geometry", "Prevent self border intersections",
                  "Map size (Pixels), Room space (Pixels)")),
     Window("uv_optimize", "Optimize UVs Options", "Optimize", None, [
+        F("method", "Method:", "enum", "Unfold3D", items=("Unfold3D", uv_optimize.LEGACY)),
         F("iterations", "Iterations:", "int", 1, lo=0, hi=10),
         F("surfangle", "Surfangle:", "float", 1.0, lo=0.0, hi=1.0),
         F("power", "Power:", "int", 100, lo=0, hi=100),
         F("prevent_flips", "", "bool", True, text="Prevent triangle flips"),
-    ], _run_optimize, paths=("UV Editor/Modify/Optimize",),
-        missing=("Method: Legacy (relax)", "Fix non-manifold geometry", "Prevent self border intersections",
+        F("pin_border", "", "bool", True, text="Pin UV border"),
+        F("pin_uvs", "Pin UVs:", "bool", False),
+        F("pin_which", "", "enum", uv_optimize.PIN_WHICH[0], items=uv_optimize.PIN_WHICH),
+        F("edge_weights", "Edge weights:", "enum", uv_optimize.EDGE_WEIGHTS[0], items=uv_optimize.EDGE_WEIGHTS),
+        F("max_iterations", "Maximum iterations:", "int", 5, lo=1, hi=10),
+    ], _run_optimize, paths=("UV Editor/Modify/Optimize",), enabled=_optimize_enabled,
+        missing=("Fix non-manifold geometry", "Prevent self border intersections",
                  "Map size (Pixels), Room space (Pixels)")),
     Window("uv_layout", "Layout UVs Options", "Layout", None, [
         F("multi", "Multiple Objects:", "enum", MULTI[0], items=MULTI),

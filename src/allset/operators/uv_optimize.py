@@ -7,6 +7,10 @@ A shell whose UVs are all selected keeps its UV area (and, in the kit, its centr
 Optimize UVs Options window, operators/option_windows_uv.py): Iterations 1, Surfangle 1, Power 100 (below 100
 nothing moves), Prevent triangle flips on. The menu item, the UV Toolkit button and the marking menu items run with
 the saved values.
+
+Method Legacy (relax): every shell touched by the selection relaxes as a whole (uv_optimize_math.relax) with the
+Legacy options: Pin UV border (on), Pin UVs (off; selected or unselected), Edge weights (Uniform / World space) and
+Maximum iterations (5). Blender's UV pins don't hold UVs there, like Maya.
 """
 
 import json
@@ -35,9 +39,43 @@ def _shell_problem(ob, bm, uv, faces, picked, tris):
     return P, U, T.reshape(-1, 3), held, groups
 
 
+LEGACY = "Legacy (relax)"
+
+
+def _relax_shell(ob, uv, faces, picked, values):
+    """Legacy (relax) on one shell: (UV groups, new UVs)."""
+    groups = uv_points(None, uv, [l for f in faces for l in f.loops])
+    index = {l: i for i, ls in enumerate(groups) for l in ls}
+    mw = ob.matrix_world
+    P = np.array([tuple(mw @ ls[0].vert.co) for ls in groups], float)
+    U = np.array([tuple(ls[0][uv].uv) for ls in groups], float)
+    polys = [[index[l] for l in f.loops] for f in faces]
+    count = {}
+    for poly in polys:
+        for k, a in enumerate(poly):
+            b = poly[(k + 1) % len(poly)]
+            key = (a, b) if a < b else (b, a)
+            count[key] = count.get(key, 0) + 1
+    held = np.zeros(len(groups), bool)
+    if values["pin_border"]:
+        for (a, b), n in count.items():
+            if n == 1:
+                held[a] = held[b] = True
+    if values["pin_uvs"]:
+        chosen = np.array([any(l in picked for l in ls) for ls in groups])
+        held |= chosen if values["pin_which"] == PIN_WHICH[0] else ~chosen
+    W = uv_optimize_math.relax_weights(P, polys, values["edge_weights"] == EDGE_WEIGHTS[1])
+    return groups, uv_optimize_math.relax(U, W, held, int(values["max_iterations"]))
+
+
+PIN_WHICH = ("Pin selected UVs", "Pin unselected UVs")
+EDGE_WEIGHTS = ("Uniform", "World space")
+
+
 def optimize_mesh(context, ob, values):
     """Optimize the selected UVs of ``ob`` with the option ``values``. Returns the number of shells changed."""
-    if int(values["power"]) // 100 <= 0 or int(values["iterations"]) <= 0:
+    legacy = values.get("method") == LEGACY
+    if not legacy and (int(values["power"]) // 100 <= 0 or int(values["iterations"]) <= 0):
         return 0      # Power below 100 or no iterations: Maya leaves the UVs as they are
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.active
@@ -61,10 +99,13 @@ def optimize_mesh(context, ob, values):
     for isl in islands(bm, uv, [f for f in bm.faces if not f.hide]):
         if not any(l in picked for f in isl for l in f.loops):
             continue
-        P, U, T, held, groups = _shell_problem(ob, bm, uv, isl, picked, tris)
-        new = uv_optimize_math.optimize(P, U, T, held, iterations=int(values["iterations"]),
-                                        surfangle=float(values["surfangle"]),
-                                        prevent_flips=bool(values["prevent_flips"]))
+        if legacy:      # the whole shell relaxes; the pins come from the Legacy options
+            groups, new = _relax_shell(ob, uv, isl, picked, values)
+        else:
+            P, U, T, held, groups = _shell_problem(ob, bm, uv, isl, picked, tris)
+            new = uv_optimize_math.optimize(P, U, T, held, iterations=int(values["iterations"]),
+                                            surfangle=float(values["surfangle"]),
+                                            prevent_flips=bool(values["prevent_flips"]))
         moved = False
         for ls, p in zip(groups, new):
             if abs(ls[0][uv].uv.x - p[0]) > 1e-9 or abs(ls[0][uv].uv.y - p[1]) > 1e-9:
