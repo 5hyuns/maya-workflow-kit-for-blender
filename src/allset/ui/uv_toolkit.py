@@ -72,8 +72,13 @@ def _icon(key):
 
 
 def _op(layout, idname, text, key=None, **kw):
-    """A toolkit button: its picture, then its text."""
-    return layout.operator(idname, text=text, icon_value=_icon(key or text), **kw)
+    """A toolkit button like Maya's: its picture, then its text from the left edge, flat until the pointer is over it.
+    Outside a menu Blender centres a button's text; a row aligned LEFT sizes the button to its picture and text, which
+    then start at the left, and the menu emboss draws it flat with the menu's highlight."""
+    row = layout.row(align=True)
+    row.alignment = 'LEFT'
+    row.emboss = 'PULLDOWN_MENU'
+    return row.operator(idname, text=text, icon_value=_icon(key or text), **kw)
 
 
 def _item(layout, path, text):
@@ -81,13 +86,16 @@ def _item(layout, path, text):
     _op(layout, "allset.menu_item", text).item = path
 
 
+def _columns(layout, columns=2):
+    """Even columns filled in reading order: every button starts at its column's left edge."""
+    return layout.grid_flow(row_major=True, columns=columns, even_columns=True, align=True)
+
+
 def _grid(layout, rows, columns=2):
     """Buttons ``columns`` to a row, in reading order (left to right, then down)."""
-    col = layout.column(align=True)
-    for i in range(0, len(rows), columns):
-        row = col.row(align=True)
-        for text, path in rows[i:i + columns]:
-            _item(row, path if path.startswith(("UV/", UVE)) else f"{UVE}/{path}", text)
+    flow = _columns(layout, columns)
+    for text, path in rows:
+        _item(flow, path if path.startswith(("UV/", UVE)) else f"{UVE}/{path}", text)
 
 
 # 3 x 3 button grids (Pivot, Move, Snap): the glyph points at the place / direction
@@ -318,10 +326,10 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             _op(body, "allset.cut_sew_tool_set", text="3D Cut and Sew Tool")
         body = _section(layout, "ALLSET_uvtk_unfold", "Unfold", default_closed=False)
         if body:
-            row = body.row(align=True)
+            row = _columns(body)
             _item(row, f"{UVE}/Modify/Unfold", "Unfold")     # Shift+click: the Unfold options, like the menu
             _item(row, f"{UVE}/Modify/Optimize", "Optimize")
-            row = body.row(align=True)
+            row = _columns(body)
             _op(row, "allset.uv_unfold_along", text="Unfold Along U", key="Unfold Along").axis = 'U'
             _op(row, "allset.uv_unfold_along", text="Unfold Along V", key="Unfold Along").axis = 'V'
             tk = context.scene.allset_uv_toolkit
@@ -333,7 +341,7 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             row.prop(tk, "straighten_u", toggle=True)
             row.prop(tk, "straighten_v", toggle=True)
             body.prop(tk, "straighten_tolerance")
-            row = body.row(align=True)
+            row = _columns(body)
             _item(row, f"{UVE}/Modify/Straighten Shell", "Straighten Shell")
             _item(row, f"{UVE}/Modify/Straighten Border", "Straighten Border")
         body = _section(layout, "ALLSET_uvtk_align", "Align and Snap")
