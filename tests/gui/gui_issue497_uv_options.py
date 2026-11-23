@@ -1,7 +1,7 @@
 """#497 / #498 / #502: UV Editor > Modify > Unfold ❒, Layout ❒ and Optimize ❒ open the Unfold UVs Options, Layout UVs
 Options and Optimize UVs Options windows
 (fields, the greyed fields Blender has no counterpart for, the command button); Cut/Sew > Auto Seams ❒, Move and Sew ❒
-and Modify > Normalize ❒, Straighten Border ❒ open theirs. Screenshots with ALLSET_GUI_SHOTS (or
+and Modify > Normalize ❒, Straighten Border ❒ open theirs; Stitch Together ❒ and Flip ❒ (#503, #506) too. Screenshots with ALLSET_GUI_SHOTS (or
 --shots)."""
 
 import os
@@ -74,6 +74,9 @@ opener("opt_uv_auto_seams", "auto_seams")
 opener("opt_uv_move_sew", "move_sew")
 opener("opt_uv_normalize", "normalize")
 opener("opt_uv_straighten_border", "straighten_border")
+# #503 / #506: Stitch Together and Flip windows
+opener("opt_uv_stitch_together", "stitch_together")
+opener("opt_uv_flip", "flip")
 
 
 @step
