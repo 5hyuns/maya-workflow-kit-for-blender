@@ -95,6 +95,8 @@ earlier version open unchanged: nothing in them is converted.
   Graph Editor scale box, the Outliner drop frame and the UV brush circle missed their last side.
 - Rigging: picking another tool (Q / W / E / R, the toolbar, the Tool Box or a menu entry) ends Skin > Move Skinned
   Joints like Maya, also W while the Move tool is active; the joints go back to Pose with that tool (#415).
+- Turning the UV Manipulator preference on or off in Blender mode no longer gives Blender's UV Move / Rotate / Scale
+  tools the kit's handles; the kit's UV tools leave cleanly when Maya mode is turned off.
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse
