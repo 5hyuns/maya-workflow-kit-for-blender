@@ -536,7 +536,9 @@ class ALLSET_OT_uv_convert(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'EDIT_MESH'
+        if context.mode == 'EDIT_MESH':
+            return True
+        return bpy.ops.allset.uv_component.poll()
 
     @classmethod
     @i18n.translated
@@ -544,6 +546,9 @@ class ALLSET_OT_uv_convert(bpy.types.Operator):
         return next(d for k, _l, d in UV_CONVERT_TO if k == props.to)
 
     def execute(self, context):
+        if context.mode != 'EDIT_MESH':
+            # object mode: nothing to convert yet, the object goes into that component type (allset.uv_component)
+            return bpy.ops.allset.uv_component('EXEC_DEFAULT', mode=self.to)
         ts = context.scene.tool_settings
         mode = tuple(ts.mesh_select_mode)
         found = []
