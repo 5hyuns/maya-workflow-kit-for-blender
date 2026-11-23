@@ -163,7 +163,7 @@ See [custom pivot editing](docs/pivot_component_picking.md) for the full control
 ### Modeling & UV
 
 - **Maya creation defaults**: Maya names (`pCube1`, `pCubeShape1`, `group1`, `polySmooth1`), Maya sizes in
-  centimetres, a default `lambert1` material; optional **Maya Units** preference (1 Blender unit = 1 cm).
+  centimetres, Blender's Principled BSDF for new materials; optional **Maya Units** preference (1 Blender unit = 1 cm).
 - **Maya concepts**: Freeze Transformations (channels back to 0 / 0 / 1, pivot kept), Reset Transformations, Center
   Pivot, Delete History and Delete by Type, Maya-style parenting (**P / Shift+P** keep the Channel Box values),
   **Ctrl+G** groups, Duplicate Special.

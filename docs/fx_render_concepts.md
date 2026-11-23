@@ -77,7 +77,9 @@ values.
 | Lighting/Shading > Light Linking Editor, Windows > Relationship Editors > Light Linking | Object properties of the light (Light Linking panel) |
 | Windows > Rendering Editors > Light Editor | An Outliner window that lists only the lights |
 
-Light Intensity and Decay Rate rows stay in the Channel Box and Attribute Editor.
+Light Intensity and Decay Rate rows stay in the Channel Box and Attribute Editor. New lights keep Blender's own
+spot cone and penumbra, area light size and directional light Angle; new cameras keep Blender's F Stop and Focus
+Distance.
 
 Blender lights everything a light has no Exclude link for, until the light gets its first Include link: from then on
 it lights only its included objects.
@@ -112,12 +114,34 @@ UV selection key. No extra default light is added at render time: a render is li
 |---|---|
 | Hypershade window | Shader Editor with the kit's Browser, Create, Material Viewer and Property Editor panes |
 | Shading group | Material slot (Lighting/Shading > Assign … Material) |
-| lambert1 | The kit's default material on new meshes |
-| Maya shader types (Lambert, Blinn, Phong, Standard Surface …) | Principled BSDF materials with Maya's Attribute Editor sections |
+| lambert1 | None: new objects have no material (Blender's grey) |
+| Maya surface shader types (Lambert, Blinn, Phong, Standard Surface …) | One New Material: Blender's Principled BSDF |
 | Volume Shader, Volume Fog, Light Fog | Principled Volume / Volume Scatter on the material's Volume output |
 | Env Fog | Principled Volume on the World's Volume output |
 | Hair Physical / Hair Tube Shader | Principled Hair BSDF |
 | USD Preview Surface | Principled BSDF (exported as UsdPreviewSurface) |
+
+## Materials
+
+Every Maya entry that makes a material makes the same one: Blender's Principled BSDF with Blender's values, named by
+Blender (Material, Material.001 …).
+
+| Maya | Maya Workflow Kit |
+|---|---|
+| Lighting/Shading > Assign New Material (Shift+T), Assign Favorite Material, the marking menu's Assign Favorite Material | New Material, assigned to the selected objects or faces |
+| Hypershade Create > Materials, Hypershade Favorites | New Material in place of the surface shader kinds |
+| Shelf: Standard Surface Material | New Material; the other shader kind buttons are greyed and point to it |
+| `shadingNode lambert -asShader` (and the other surface shader types) | New Material, returned by its name |
+| Attribute Editor material tab | The Principled BSDF inputs by Blender's names, in the order of Blender's material panel, with map buttons and Break Connection |
+| Ramp Shader | Greyed: in the Shader Editor, Layer Weight (Facing) into a Color Ramp into Base Color |
+| Layered Shader | Greyed: in the Shader Editor, a Mix Shader (Fac = the top layer's transparency) |
+| Surface Shader | Greyed: in the Shader Editor, an Emission shader |
+| Use Background | Greyed: in the Shader Editor, a Holdout shader (Cycles: Object > Visibility > Shadow Catcher) |
+| initialShadingGroup (command line) | The shapes without a material |
+
+Scenes saved with an earlier version keep their materials as saved: lambert1, materials with a "Maya Diffuse" node
+and Ramp / Layered / Use Background node set-ups render as before and show the same Principled BSDF tab;
+Lighting/Shading > Convert Old Kit Materials turns the older materials into plain Principled BSDF materials.
 
 ## What stays greyed
 

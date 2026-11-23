@@ -3,6 +3,46 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+**Materials and render start values are Blender's own.** The kit keeps Maya's menus, hotkeys and Attribute Editor
+layout for shading, while shaders, their values and the render start values are Blender's. Scenes saved with an
+earlier version open unchanged: nothing in them is converted.
+
+### Changed
+- One New Material: Lighting/Shading > Assign New Material (and Shift+T), Assign Favorite Material, the marking menu's
+  Assign Favorite Material, Hypershade Create > Materials, the Hypershade Favorites list and the shelf's Standard
+  Surface Material button all make the same new material: Blender's Principled BSDF with Blender's values, named by
+  Blender (Material, Material.001 ...). The Maya surface shader kinds (Lambert, Blinn, Phong, Phong E, Anisotropic,
+  Standard Surface, OpenPBR Surface) are no longer listed; their shelf buttons stay in place, greyed, and point to
+  the Standard Surface Material button. The command line's `shadingNode lambert -asShader` (and the other surface
+  shader types) makes the same material and returns its name.
+- No lambert1: new objects have no material (Blender's grey), however they are made. Assigning a material to some
+  faces leaves the other faces without a material. Use Assign New Material to give an object a material.
+- Attribute Editor: a material tab shows the Principled BSDF inputs by Blender's names, in the order of Blender's
+  material panel (Base, Diffuse, Subsurface, Specular, Transmission, Coat, Sheen, Emission, Thin Film). The Blinn
+  Eccentricity and Phong Cosine Power rows are gone; Roughness is shown instead. `setAttr .eccentricity` /
+  `.cosinePower` on the command line now report that the attribute does not exist; Standard Surface attribute names
+  (`setAttr Material.baseColor`, `specularRoughness` ...) reach the matching Principled input.
+- Ramp Shader, Layered Shader, Surface Shader and Use Background are greyed in Hypershade Create and on the shelf; the
+  tooltip and the Help Line say how to build them in the Shader Editor (Layer Weight + Color Ramp, Mix Shader,
+  Emission, Holdout), and the command line's `shadingNode` gives the same sentence.
+- Hypershade Delete, Delete Unused Nodes and Delete All Materials treat every material the same (no material is
+  kept back). The command line's `initialShadingGroup` stands for the shapes without a material: `sets -q` lists
+  them and `sets -e -forceElement initialShadingGroup` takes the material off a shape.
+- New cameras keep Blender's depth of field values (F Stop, Focus Distance). New directional lights keep Blender's
+  Angle, new spot lights Blender's cone and penumbra, new area lights Blender's size. Orthographic Width, the gate
+  mask opacity and a new camera that is not renderable stay as before.
+- The Maya layout file's Render Settings image size is Blender's (1920 x 1080).
+- Imported materials keep Blender's names (Material.001).
+
+### Older scenes
+- Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse
+  node) and Ramp / Layered / Use Background node set-ups keep rendering as they were saved, and so do cameras and
+  lights. Their materials show the same Principled BSDF tab. An old lambert1 keeps its objects but is no longer given
+  to new objects. Lighting/Shading > Convert Old Kit Materials still turns the older materials into plain Principled
+  BSDF materials.
+
 ## [0.21.0] — 2026-11-23
 
 Thank you for the reports since 0.20.1. **Materials change in this version:** new materials are now plain Blender
