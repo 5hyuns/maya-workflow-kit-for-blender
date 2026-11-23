@@ -501,4 +501,80 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_select_convert,)
+# UV Editor Ctrl+RMB menu (marking/menus.UV_CONVERT): Maya converts to the vertices, edges and UVs the selection
+# touches and to the faces it contains (a face whose every corner is selected), then picks that component type.
+UV_CONVERT_TO = (('VERTEX', "To Vertices", "The vertices the selection touches"),
+                 ('EDGE', "To Edges", "The edges the selection touches"),
+                 ('FACE', "To Faces", "The faces the selection contains (every corner selected)"),
+                 ('UV', "To UVs", "The UVs of the selection"))
+
+
+def uv_convert(bm, uv, loops, kind_in, elems, to):
+    """Elements of UV Editor conversion ``to``; ``loops`` = the selected UV corners when the selection is UVs (sync
+    off), else None."""
+    if to == 'VERTEX':
+        return verts_of(kind_in, elems)
+    if to == 'EDGE':
+        return touching_edges(kind_in, elems)
+    if to == 'FACE':
+        if loops is not None:
+            return {f for f in bm.faces if f.select and not f.hide and all(lp in loops for lp in f.loops)}
+        return set(elems) if kind_in == 'FACE' else contained_faces(bm, kind_in, elems)
+    if loops is not None:       # UVs to UVs: the same UVs
+        return set(loops)
+    return uv_loops(kind_in, elems, uv) if uv is not None else set()
+
+
+class ALLSET_OT_uv_convert(bpy.types.Operator):
+    """Convert the selection like Maya's UV Editor Ctrl+RMB menu: to the vertices, edges or UVs it touches, or to
+    the faces it contains, in that component type"""
+    bl_idname = "allset.uv_convert"
+    bl_label = "Convert Selection"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    to: EnumProperty(name="To", items=UV_CONVERT_TO, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    @classmethod
+    @i18n.translated
+    def description(cls, context, props):
+        return next(d for k, _l, d in UV_CONVERT_TO if k == props.to)
+
+    def execute(self, context):
+        ts = context.scene.tool_settings
+        mode = tuple(ts.mesh_select_mode)
+        found = []
+        for ob in context.objects_in_mode_unique_data:      # read everything before the component type changes
+            if ob.type != 'MESH':
+                continue
+            bm = bmesh.from_edit_mesh(ob.data)
+            uv = bm.loops.layers.uv.active
+            loops = None
+            if uv_source(context, bm, uv):
+                loops = {lp for f in bm.faces if f.select and not f.hide for lp in f.loops
+                         if compat.uv_vert_selected(lp, uv)}
+                kind_in, elems = 'VERT', {lp.vert for lp in loops}
+            else:
+                kind_in, elems = selection(bm, mode)
+            found.append((ob, bm, uv, uv_convert(bm, uv, loops, kind_in, elems, self.to)))
+        if not found:
+            self.report({'WARNING'}, "Select a mesh")
+            return {'CANCELLED'}
+        uv_tools.forget_mesh_selection()      # a conversion: no F12 selection to bring back
+        uv_tools.set_component(context, self.to)
+        if self.to == 'UV':
+            ts.uv_select_mode = 'VERTEX'
+        for ob, bm, uv, elems in found:
+            if self.to == 'UV':
+                if uv is not None:
+                    select_loops(bm, uv, elems)
+            else:
+                select_only(bm, {'VERTEX': 'VERT'}.get(self.to, self.to), elems)
+            bmesh.update_edit_mesh(ob.data)
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_select_convert, ALLSET_OT_uv_convert)

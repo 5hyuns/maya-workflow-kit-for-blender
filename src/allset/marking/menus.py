@@ -1348,12 +1348,78 @@ SHIFT_UV_FACE = MarkingMenu(
            ("Match UVs", _uve("Modify/Match UVs")), ("Symmetrize", None), *_UV_LIST_TAIL],
     options={"Straighten UVs", "Optimize", "Normalize", "Flip", "Match Grid", "Match UVs"})
 
+# Ctrl+RMB in the UV Editor: Maya's UV Editor selection conversion menu. Its To Vertices / Edges / Faces / UVs
+# convert like Maya's menu (to the touched vertices, edges and UVs, to the contained faces) and pick that component
+# type; every other entry runs the UV Editor's own Select menu item.
+_UVS = "UV Editor/Select/"
+_UVCS = _UVS + "Convert Selection/"
 
-MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
+
+def _uv_to(to):
+    return ("allset.uv_convert", {"to": to})
+
+
+UV_CONVERT = MarkingMenu(
+    "UV_CONVERT", "UV Editor Convert Selection", "maya",
+    radial={
+        "S": ("To Faces", Sub(radial={
+            "S": ("To Faces", _uv_to('FACE')),
+            "E": ("To Connected Faces", _item(_UVCS + "To Connected Faces")),
+            "W": ("To Contained Faces", _item(_UVCS + "To Contained Faces")),
+            "SE": ("To Face Perimeter", _item(_UVCS + "To Face Perimeter")),
+            "N": ("To Face Path", _item(_UVCS + "To Face Path")),
+        })),
+        "N": ("To Edges", Sub(radial={
+            "N": ("To Edges", _uv_to('EDGE')),
+            "NE": ("To Edge Perimeter", _item(_UVCS + "To Edge Perimeter")),
+            "NW": ("To Edge Loop", _item(_UVCS + "To Edge Loop")),
+            "W": ("To Edge Ring", _item(_UVCS + "To Edge Ring")),
+            "E": ("To Contained Edges", _item(_UVCS + "To Contained Edges")),
+        })),
+        "E": ("To UVs", Sub(radial={
+            "E": ("To UVs", _uv_to('UV')),
+            "NE": ("To UV Perimeter", _item(_UVCS + "To UV Perimeter")),
+            "SE": ("To UV Edge Loop", _item(_UVCS + "To UV Edge Loop")),
+        })),
+        "W": ("To Vertices", Sub(radial={
+            "W": ("To Vertices", _uv_to('VERTEX')),
+            "NW": ("To Vertex Perimeter", _item(_UVCS + "To Vertex Perimeter")),
+        })),
+        "NE": ("Grow Selection", Sub(radial={
+            "NE": ("Grow", _item(_UVS + "Grow")),
+            "N": ("Grow Along Loop", _item(_UVS + "Grow Along Loop")),
+        })),
+        "NW": ("Shrink Selection", Sub(radial={
+            "NW": ("Shrink", _item(_UVS + "Shrink")),
+            "N": ("Shrink Along Loop", _item(_UVS + "Shrink Along Loop")),
+        })),
+        "SE": ("To UV Shell", _item(_UVCS + "To UV Shell")),
+        "SW": ("To UV Shell Border", _item(_UVCS + "To UV Shell Border")),
+    },
+    items=[
+        ("Select All", _item(_UVS + "All")),
+        ("Clear Selection", _item(_UVS + "Clear")),
+        ("Inverse Selection", _item(_UVS + "Inverse")),
+        DIVIDER,
+        ("Selection Constraints", unavailable()),
+        ("Transform Constraints", unavailable()),
+        DIVIDER,
+        ("Select Back-Facing", _item(_UVS + "Back-Facing")),
+        ("Select Front-Facing", _item(_UVS + "Front-Facing")),
+        ("Select Overlapping", _item(_UVS + "Overlapping")),
+        ("Select Non-Overlapping", _item(_UVS + "Non-Overlapping")),
+        ("Select Texture Borders", _item(_UVS + "Texture Borders")),
+        ("Select Unmapped Faces", _item(_UVS + "Unmapped Faces")),
+        DIVIDER,
+        ("Shortest Edge Path Tool", _item(_UVS + "Shortest Edge Path Tool")),
+    ])
+
+
+MENUS ={m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
-                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, KEY_TANGENT,
+                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, UV_CONVERT, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
 # The kit's own menus. MENUS is what opens: user_menus.apply (Marking Menu Editor) puts rebuilt copies of the
 # menus the user changed and the user's own menus into it; these factory objects are never changed.

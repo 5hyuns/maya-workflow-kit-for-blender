@@ -4475,6 +4475,44 @@
    "Unpin All": "Unpin All",
    "Unpin Selection": "Unpin Selection"
   },
+  "Marking menus/UV Editor Convert Selection": {
+   "Clear Selection": "Clear Selection",
+   "Grow": "Grow",
+   "Grow Along Loop": "Grow Along Loop",
+   "Grow Selection": "Grow Selection",
+   "Inverse Selection": "Inverse Selection",
+   "Select All": "Select All",
+   "Select Back-Facing": "Select Back-Facing",
+   "Select Front-Facing": "Select Front-Facing",
+   "Select Non-Overlapping": "Select Non-Overlapping",
+   "Select Overlapping": "Select Overlapping",
+   "Select Texture Borders": "Select Texture Borders",
+   "Select Unmapped Faces": "Select Unmapped Faces",
+   "Selection Constraints": "Selection Constraints",
+   "Shortest Edge Path Tool": "Shortest Edge Path Tool",
+   "Shrink": "Shrink",
+   "Shrink Along Loop": "Shrink Along Loop",
+   "Shrink Selection": "Shrink Selection",
+   "To Connected Faces": "To Connected Faces",
+   "To Contained Edges": "To Contained Edges",
+   "To Contained Faces": "To Contained Faces",
+   "To Edge Loop": "To Edge Loop",
+   "To Edge Perimeter": "To Edge Perimeter",
+   "To Edge Ring": "To Edge Ring",
+   "To Edges": "To Edges",
+   "To Face Path": "To Face Path",
+   "To Face Perimeter": "To Face Perimeter",
+   "To Faces": "To Faces",
+   "To UV Edge Loop": "To UV Edge Loop",
+   "To UV Perimeter": "To UV Perimeter",
+   "To UV Shell": "To UV Shell",
+   "To UV Shell Border": "To UV Shell Border",
+   "To UVs": "To UVs",
+   "To Vertex Perimeter": "To Vertex Perimeter",
+   "To Vertices": "To Vertices",
+   "Transform Constraints": "Transform Constraints",
+   "UV Editor Convert Selection": "UV Editor Convert Selection"
+  },
   "Marking menus/Keyframe / Tangents": {
    "Add Inbetween": "Add Inbetween",
    "Clamped": "Clamped",
@@ -12226,6 +12264,7 @@
    "Maya click modifiers in this editor (Ctrl+Shift adds, Ctrl deselects; a Graph Editor click on a selected key\nkeeps the selection): remembers the selection, lets Blender's click run (the press stays free for a drag), then\nwrites Maya's result": "Maya click modifiers in this editor (Ctrl+Shift adds, Ctrl deselects; a Graph Editor click on a selected key\nkeeps the selection): remembers the selection, lets Blender's click run (the press stays free for a drag), then\nwrites Maya's result"
   },
   "Tooltips/operators/select_convert": {
+   "Convert the selection like Maya's UV Editor Ctrl+RMB menu: to the vertices, edges or UVs it touches, or to\nthe faces it contains, in that component type": "Convert the selection like Maya's UV Editor Ctrl+RMB menu: to the vertices, edges or UVs it touches, or to\nthe faces it contains, in that component type",
    "Maya Select menu conversion (Grow / Shrink Along Loop, perimeters, face path, shell borders, UVs)": "Maya Select menu conversion (Grow / Shrink Along Loop, perimeters, face path, shell borders, UVs)"
   },
   "Tooltips/operators/select_priority": {

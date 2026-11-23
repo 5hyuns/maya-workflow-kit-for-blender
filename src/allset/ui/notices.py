@@ -1309,7 +1309,7 @@ MARKING.update({
         "Grab brush", "Blender's UV sculpt brushes are Grab, Relax and Pinch: Grab drags the UVs under the brush.")
        for m in _UV_MENUS},
     **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
-    **{f"{m}/Pinning/{label}": _UV_CONSTRAINTS for m in _UV_MENUS
+    **{f"{m}/{label}": _UV_CONSTRAINTS for m in (*(f"{n}/Pinning" for n in _UV_MENUS), "UV_CONVERT")
        for label in ("Selection Constraints", "Transform Constraints")},
     **{f"SHIFT_UV_SHELL/Distribute Shells/{label}": (
         "Distribute Shells Right", "The kit lines shells up to the right only: run Right, then rotate or move the "

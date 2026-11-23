@@ -269,7 +269,7 @@ def resolve(trigger, context, picked=None):
     space = getattr(context, "space_data", None)
     if space is not None and space.type == 'IMAGE_EDITOR':
         # UV Editor: Maya 2026's UV Editor RMB marking menu; Shift+RMB = its UV editing menu for the component
-        # (UVs, edges and vertices share the UV one)
+        # (UVs, edges and vertices share the UV one); Ctrl+RMB = its selection conversion menu
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":
@@ -279,6 +279,8 @@ def resolve(trigger, context, picked=None):
             comp = uv_toolkit.current_component(context)
             name = {'SHELL': "SHIFT_UV_SHELL", 'FACE': "SHIFT_UV_FACE", 'UV_FACE': "SHIFT_UV_FACE"}.get(comp, "SHIFT_UV")
             return ("pie", idname(name))
+        if trigger == "CTRL_RMB":       # its selection conversion menu
+            return ("pie", idname("UV_CONVERT"))
         return None
     if trigger == "CTRL_RMB":
         # Maya's Ctrl+RMB convert menu picks by the lead's shape type, not the mode: a mesh lead gets CTRL_CONVERT in

@@ -47,6 +47,7 @@ TRIGGERS = {
     "HB_WEST": "Hotbox, west zone", "HB_CENTER": "Hotbox, centre zone",
     "UV_EDITOR_RMB": "RMB in the UV Editor", "SHIFT_UV": "Shift+RMB in the UV Editor (UVs, edges, vertices)",
     "SHIFT_UV_SHELL": "Shift+RMB in the UV Editor (UV shells)", "SHIFT_UV_FACE": "Shift+RMB in the UV Editor (faces)",
+    "UV_CONVERT": "Ctrl+RMB in the UV Editor",
     "KEY_TANGENT": "Shift+S + LMB",
     "SELECT_COMPONENT": "Shift+Q + LMB", "SELECT_POLYGON": "Alt+Q + LMB",
 }
