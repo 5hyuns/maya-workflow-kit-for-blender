@@ -1,7 +1,8 @@
 """#505: UV Editor > Modify > Layout spreads the shells over several UDIM tiles with the Layout UVs Options
 Shell Distribution (Distribute / Shell Centers) and Tiles U / V, like Maya.
 
-Distribute shares the shells out over the tiles by area in shell order (tiles along U first, then up V); Shell
+Distribute shares the shells out over the tiles by count in shell order: runs of (shells + 1) // tiles shells go to
+the tiles in turn (along U first, then up V), starting again at the first tile while shells are left; Shell
 Centers keeps each shell in the tile its centre is in (shells outside the tiles go together into the tile below the
 first one). Each tile is packed and filled on its own. One tile = the layout as before."""
 
@@ -82,7 +83,7 @@ def test_distribute_over_two_tiles_along_u():
     ob = _quads(SPECS)
     assert _layout(tiles_u=2) == {'FINISHED'}
     tiles = [_tile(b) for b in _boxes(ob)]
-    # areas 1, 1.3, 1.6, 1.9, 2.2: the first three shells' share falls in the first tile, the rest in the second
+    # five shells over two tiles: runs of three
     assert tiles == [(0, 0), (0, 0), (0, 0), (1, 0), (1, 0)], tiles
     boxes = _boxes(ob)
     for t in ((0, 0), (1, 0)):       # each tile is filled on its own
@@ -97,6 +98,25 @@ def test_distribute_over_tiles_up_v_and_three_tiles():
     ob = _quads(SPECS)
     assert _layout(tiles_u=3) == {'FINISHED'}
     assert [_tile(b) for b in _boxes(ob)] == [(0, 0), (0, 0), (1, 0), (1, 0), (2, 0)]
+
+
+def test_distribute_counts_shells_whatever_their_size():
+    # #522: a large first shell does not take a tile's worth of the shells' area; the shells are counted
+    ob = _quads([(3.0, (0.5, 0.5))] + [(1.0, (0.5, 0.5))] * 5)
+    assert _layout(tiles_u=2) == {'FINISHED'}
+    assert [_tile(b) for b in _boxes(ob)] == [(0, 0)] * 3 + [(1, 0)] * 3
+    ob = _quads([(1.0, (0.5, 0.5))] * 5 + [(3.0, (0.5, 0.5))])
+    assert _layout(tiles_u=2) == {'FINISHED'}
+    assert [_tile(b) for b in _boxes(ob)] == [(0, 0)] * 3 + [(1, 0)] * 3
+
+
+def test_distribute_starts_again_at_the_first_tile():
+    ob = _quads(SPECS)
+    assert _layout(tiles_u=2, tiles_v=2) == {'FINISHED'}
+    assert [_tile(b) for b in _boxes(ob)] == [(0, 0), (1, 0), (0, 1), (1, 1), (0, 0)]
+    ob = _quads(SPECS + [(1.0, (0.5, 0.5)), (0.5, (0.5, 0.5))])
+    assert _layout(tiles_u=3) == {'FINISHED'}
+    assert [_tile(b) for b in _boxes(ob)] == [(0, 0), (0, 0), (1, 0), (1, 0), (2, 0), (2, 0), (0, 0)]
 
 
 def test_shell_centers_keep_their_tiles():

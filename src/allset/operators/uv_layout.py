@@ -17,7 +17,7 @@ The settings (field names of the Layout Options window, operators/option_windows
   (each mesh laid out on its own over the whole region).
 - Stack Similar: shells of the same shape are stacked on each other first and stay stacked in the layout.
 - Shell Distribution + Tiles U / V: with more than one tile the shells spread over the UDIM tiles (1001 = the 0-1
-  square, then along U and up V): Distribute shares them out by area in shell order, Shell Centers keeps each shell in
+  square, then along U and up V): Distribute shares them out by count in shell order, Shell Centers keeps each shell in
   the tile its centre is in. Each tile is packed and filled on its own (the packing region and paddings repeat in
   every tile).
 """
@@ -180,8 +180,9 @@ def _shells(group):
 
 def tiles_of(shells, v):
     """{(tile U, tile V): [shells]}: how the shells spread over the Tiles U x Tiles V UDIM tiles (tile (0, 0) = the
-    0-1 square). Distribute: in shell order, each shell goes to the tile its share of the total area falls in, the
-    tiles filled along U first; Shell Centers: each shell stays in the tile its centre is in, and the shells outside
+    0-1 square). Distribute: in shell order, runs of (shells + 1) // tiles shells (at least one) go to the tiles in
+    turn, along U first, starting again at the first tile when the shells are not used up (shell sizes do not
+    matter); Shell Centers: each shell stays in the tile its centre is in, and the shells outside
     the tiles go together into the tile below the first one."""
     nu, nv = max(int(v.get("tiles_u", 1)), 1), max(int(v.get("tiles_v", 1)), 1)
     out = {}
@@ -193,12 +194,9 @@ def tiles_of(shells, v):
             out.setdefault(t, []).append(s)
         return out
     n = nu * nv
-    total = sum(s[2] for s in shells)
-    done = 0.0
+    per_tile = max((len(shells) + 1) // n, 1)
     for i, s in enumerate(shells):
-        mid = done + s[2] / 2
-        done += s[2]
-        k = min(int(mid / total * n), n - 1) if total > 1e-18 else min(i * n // max(len(shells), 1), n - 1)
+        k = i // per_tile % n
         out.setdefault((k % nu, k // nu), []).append(s)
     return out
 
