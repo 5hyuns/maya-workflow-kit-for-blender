@@ -6,8 +6,8 @@ What Optimize does (like Maya):
 - Every UV that is not held moves; held UVs (pinned ones, and the UVs outside the selection) stay where they are, so
   a partly selected shell relaxes only its selected part against the rest. The shell border is not held: it moves
   like any other UV.
-- A shell with no held UV keeps its UV area, and the kit also keeps its UV centre and its orientation (best fit to
-  where it was), so the relaxed shell stays in place.
+- A shell with no held UV keeps its UV area and one of its UVs stays exactly where it was (the kit keeps the first
+  UV, in UV order); the rest of the shell may turn a little around it, as the relaxing turns it.
 - Each iteration takes every triangle's current UV shape, finds the nearest undistorted copy of its 3D shape (turned,
   at the shell's UV scale) and moves the UVs so that all triangles get as close to those copies as possible at once
   (a local / global "as rigid as possible" step). A shell that is evenly squashed or stretched comes back undistorted
@@ -220,18 +220,13 @@ def optimize(P, U, T, held, iterations=1, surfangle=1.0, prevent_flips=True, ste
     return U
 
 
-def _keep_place(U0, U, T):
-    """A shell with nothing held: its UV area, UV centre and orientation (best-fit turn) as before."""
+def _keep_place(U0, U, T, anchor=0):
+    """A shell with nothing held: its UV area as before, with the UV ``anchor`` back where it was (the shell keeps
+    the turn the solve gave it)."""
     a0 = float(np.abs(_uv_signed_areas(U0, T)).sum())
     a1 = float(np.abs(_uv_signed_areas(U, T)).sum())
     k = math.sqrt(a0 / a1) if a1 > 1e-18 else 1.0
-    c0, c1 = U0.mean(axis=0), U.mean(axis=0)
-    A, B = U0 - c0, (U - c1) * k
-    h = B.T @ A
-    ang = math.atan2(h[0, 1] - h[1, 0], h[0, 0] + h[1, 1])
-    cs, sn = math.cos(ang), math.sin(ang)
-    R = np.array([[cs, -sn], [sn, cs]])
-    return c0 + B @ R.T
+    return U0[anchor] + (U - U[anchor]) * k
 
 
 # --- Legacy (relax) ------------------------------------------------------------------------------------------------

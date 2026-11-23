@@ -3,7 +3,7 @@ Stretch) and opens the Optimize UVs Options window; the saved settings drive the
 the marking menu items.
 
 Like Maya: the selected UVs relax against the 3D surface, unselected and pinned UVs stay, the shell border is free,
-a fully selected shell keeps its UV area; an evenly squashed shell comes back undistorted in one iteration, more
+a fully selected shell keeps its UV area and one of its UVs stays in place; an evenly squashed shell comes back undistorted in one iteration, more
 iterations relax more; Power below 100 or 0 iterations change nothing; nothing selected = nothing happens."""
 
 import inspect
@@ -152,7 +152,7 @@ def test_window_opens_from_the_option_box_and_the_items_run_optimize():
     assert inspect.getsource(marking).count('_uve("Modify/Optimize")') >= 3, "the Shift+RMB menus hold the menu item"
 
 
-def test_evenly_squashed_shell_comes_back_undistorted_keeping_area_and_centre():
+def test_evenly_squashed_shell_comes_back_undistorted_keeping_area_and_one_uv():
     _reset()
     ob = _grid(uv_fn=_squash)
     _edit(ob)
@@ -163,10 +163,13 @@ def test_evenly_squashed_shell_comes_back_undistorted_keeping_area_and_centre():
     assert _distortion(ob) < 1e-3, _distortion(ob)
     assert abs(_uv_area(ob) - area0) < 1e-5, (area0, _uv_area(ob))
     after = _uv_by_vert(ob)
-    c0 = sum(before.values(), before[0] * 0) / len(before)
-    c1 = sum(after.values(), after[0] * 0) / len(after)
-    assert (c1 - c0).length < 1e-4, (c0, c1)
-    assert (after[0] - before[0]).length > 0.05, "the shell border moves too (it is not pinned)"
+    bm, _uv = _bm(ob)
+    bm.faces.ensure_lookup_table()
+    first = bm.faces[0].loops[0].vert.index
+    assert (after[first] - before[first]).length < 1e-6, "one UV of the free shell (its first) stays in place"
+    assert sum((after[i] - before[i]).length < 1e-6 for i in before) == 1
+    border = [i for i in before if min(before[i]) < 1e-6 and i != first]
+    assert max((after[i] - before[i]).length for i in border) > 0.05, "the shell border moves too (not pinned)"
     assert _flipped(ob) == 0
 
 

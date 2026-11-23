@@ -3,7 +3,8 @@
 
 Like Maya: the selected UVs (the UVs of the selected faces, or the selected UVs / vertices) relax against the 3D
 surface; every other UV of their shells and every pinned UV stays where it is. Nothing selected = nothing to do.
-A shell whose UVs are all selected keeps its UV area (and, in the kit, its centre and orientation). Options (the
+A shell whose UVs are all selected keeps its UV area and one UV (its first) where it was; the rest may turn a little
+around it. Options (the
 Optimize UVs Options window, operators/option_windows_uv.py): Iterations 1, Surfangle 1, Power 100 (below 100
 nothing moves), Prevent triangle flips on. The menu item, the UV Toolkit button and the marking menu items run with
 the saved values.
