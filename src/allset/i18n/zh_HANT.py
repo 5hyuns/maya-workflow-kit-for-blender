@@ -7523,7 +7523,6 @@ STRINGS = {
     'Center U value': 'U 中心值',
     'Center V value': 'V 中心值',
     'Collectively': '整體',
-    'Coordinate: Pivot / Selection Center / Global': '座標：樞軸 / 選擇中心 / 全域',
     'Create new UV Set, UV Set name': '創建新 UV 集、UV 集名稱',
     'Curvature, Preserve length ratio, Preserve original shape': '曲率、保持長度比例、保持原始形狀',
     'Cut UV Perimeter': '切割 UV 周邊',
@@ -7590,4 +7589,7 @@ STRINGS = {
     'Smallest to Largest': '從小到大',
     'Largest to Smallest': '從大到小',
     'Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)': '沿所選邊界邊一次縫合殼：較小的殼移動、旋轉並縮放到較大的殼上，\n然後縫合這些邊 (Maya 縫合到一起)',
+    'Coordinate': '座標',
+    'Selection Center': '選擇中心',
+    "Mirror the selected UVs horizontally or vertically with the Flip options (Maya Flip): around the UV pivot, the\nselection's centre or the 0 line, cutting the flipped faces free first": '按翻轉選項水平或垂直鏡像所選 UV (Maya 翻轉)：繞 UV 樞軸、選擇中心\n或 0 線，先把要翻轉的面切開',
 }

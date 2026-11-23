@@ -7522,7 +7522,6 @@ STRINGS = {
     'Center U value': 'U の中央値',
     'Center V value': 'V の中央値',
     'Collectively': 'まとめて',
-    'Coordinate: Pivot / Selection Center / Global': '座標: ピボット / 選択の中心 / グローバル',
     'Create new UV Set, UV Set name': '新規 UV セットを作成、UV セット名',
     'Curvature, Preserve length ratio, Preserve original shape': '曲率、長さの比率を保持、元の形状を保持',
     'Cut UV Perimeter': 'UV の外周をカット',
@@ -7589,4 +7588,7 @@ STRINGS = {
     'Smallest to Largest': '小さい順',
     'Largest to Smallest': '大きい順',
     'Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)': '選択した境界エッジに沿ってシェルを一度に縫い合わせます: 小さいシェルが大きいシェルに移動・回転・スケールし、\nエッジが縫い合わされます (Maya の縫い合わせる)',
+    'Coordinate': '座標',
+    'Selection Center': '選択の中心',
+    "Mirror the selected UVs horizontally or vertically with the Flip options (Maya Flip): around the UV pivot, the\nselection's centre or the 0 line, cutting the flipped faces free first": '反転のオプションで選択した UV を水平または垂直に反転します (Maya の反転): UV ピボット、選択の中心\nまたは 0 の線を軸に、先に反転するフェースを切り離します',
 }

@@ -8,7 +8,7 @@ item's command with its values, and a plain menu click runs them once they are s
 Seams cuts automatic seams; Move and Sew moves shells of any size (Limit shell size off, 10 faces once it is on);
 Merge UVs merges within 0.01; Stitch Together stitches the smaller shells onto the larger ones. Modify: Align to
 the minimum U, Distribute Shells to the right without padding, Distribute UVs along U over the selection's width,
-Flip horizontally, Layout Along U, Match UVs within 0.01, Normalize U and V together onto the closest tile, Rotate
+Flip horizontally around the UV pivot, cutting the flipped faces free, Layout Along U, Match UVs within 0.01, Normalize U and V together onto the closest tile, Rotate
 90 degrees, Snap Together A to B, Stack Similar within 0.1, Straighten Border filling gaps of up to 5 UVs, Unstack
 with reversed shells flipped back.
 """
@@ -17,7 +17,7 @@ import math
 
 import bpy
 
-from . import uv_stitch
+from . import uv_flip, uv_stitch
 from .option_windows import F, Window
 
 
@@ -79,8 +79,8 @@ def _run_distribute_uvs(context, v):
 
 
 def _run_flip(context, v):
-    axis = (True, False, False) if v["direction"] == "Horizontal" else (False, True, False)
-    return bpy.ops.transform.mirror('EXEC_DEFAULT', constraint_axis=axis)
+    return bpy.ops.allset.uv_flip('EXEC_DEFAULT', direction=v["direction"].upper(),
+                                  coordinate=uv_flip.COORDINATES[v["coordinate"]], cut=v["cut"])
 
 
 def _run_layout_along(context, v):
@@ -139,8 +139,9 @@ WINDOWS += [
         enabled=lambda v, name: name != "distance" or v["spacing"] == "Custom"),
     Window("uv_flip", "Flip UVs Options", "Flip", None, [
         F("direction", "Direction:", "enum", "Horizontal", items=("Horizontal", "Vertical")),
-    ], _run_flip, paths=(M + "Flip",),
-        missing=("Coordinate: Pivot / Selection Center / Global", "Cut UV Perimeter")),
+        F("coordinate", "Coordinate:", "enum", "Pivot", items=tuple(uv_flip.COORDINATES)),
+        F("cut", "Cut UV Perimeter:", "bool", True),
+    ], _run_flip, paths=(M + "Flip",)),
     Window("uv_layout_along", "Layout Along Options", "Layout Along", None, [
         F("along", "Layout Along:", "enum", "U", items=("U", "V")),
     ], _run_layout_along, paths=(M + "Layout Along",)),

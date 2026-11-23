@@ -7767,6 +7767,17 @@
    "Component": "Component",
    "UV Component": "UV Component"
   },
+  "Labels/operators/uv_flip": {
+   "Coordinate": "Coordinate",
+   "Cut UV Perimeter": "Cut UV Perimeter",
+   "Direction": "Direction",
+   "Flip": "Flip",
+   "Global": "Global",
+   "Horizontal": "Horizontal",
+   "Pivot": "Pivot",
+   "Selection Center": "Selection Center",
+   "Vertical": "Vertical"
+  },
   "Labels/operators/uv_lattice": {
    "Lattice UV Drag": "Lattice UV Drag",
    "UV Lattice Hover": "UV Lattice Hover"
@@ -11523,7 +11534,7 @@
    "Center V value": "Center V value",
    "Center on closest tile": "Center on closest tile",
    "Collectively": "Collectively",
-   "Coordinate: Pivot / Selection Center / Global": "Coordinate: Pivot / Selection Center / Global",
+   "Coordinate": "Coordinate",
    "Create new UV Set, UV Set name": "Create new UV Set, UV Set name",
    "Curvature, Preserve length ratio, Preserve original shape": "Curvature, Preserve length ratio, Preserve original shape",
    "Custom": "Custom",
@@ -12636,6 +12647,9 @@
   },
   "Tooltips/operators/uv_components": {
    "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only": "Maya UV components: open the UV Editor (once) and pick Vertex / Edge / Face / UV / UV Shell there.\nBlender picks UVs in the UV Editor only"
+  },
+  "Tooltips/operators/uv_flip": {
+   "Mirror the selected UVs horizontally or vertically with the Flip options (Maya Flip): around the UV pivot, the\nselection's centre or the 0 line, cutting the flipped faces free first": "Mirror the selected UVs horizontally or vertically with the Flip options (Maya Flip): around the UV pivot, the\nselection's centre or the 0 line, cutting the flipped faces free first"
   },
   "Tooltips/operators/uv_lattice": {
    "Drag a lattice point to bend the UVs inside the lattice (Maya Lattice UV Tool)": "Drag a lattice point to bend the UVs inside the lattice (Maya Lattice UV Tool)",

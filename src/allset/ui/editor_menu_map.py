@@ -373,7 +373,7 @@ MAP = {
     f"{UV}/Cut/Sew/Create UV Shell": "allset.uv_create_shell",
     f"{UV}/Cut/Sew/Stitch Together": "allset.uv_stitch_together",
     f"{UV}/Modify/Align": ("allset.uv_align_to", {"axis": 'U', "where": 'MIN'}),     # Align Options default
-    f"{UV}/Modify/Flip": ("transform.mirror", {"constraint_axis": (True, False, False)}),
+    f"{UV}/Modify/Flip": "allset.uv_flip",      # Flip UVs Options defaults: Horizontal, Pivot, Cut UV Perimeter
     f"{UV}/Modify/Linear Align": ("uv.align", {"axis": 'ALIGN_S'}),
     f"{UV}/Modify/Match UVs": ("uv.remove_doubles", {"threshold": 0.01}),     # Match UVs Options default
     f"{UV}/Modify/Rotate": ("transform.rotate", {"value": -math.pi / 2}),
