@@ -25,6 +25,7 @@ import bmesh
 import bpy
 import gpu
 import numpy as np
+from mathutils import Vector
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty
 from gpu_extras.batch import batch_for_shader
 
@@ -45,6 +46,8 @@ SPACING = 0.25            # a dab every quarter brush radius along the stroke
 CIRCLE_RGB = (0.9, 0.9, 0.9)
 CIRCLE_SEGMENTS = 48
 STROKE_RGB = (1.0, 0.85, 0.1)       # the edges a Cut / Sew stroke collected (Maya draws the path yellow)
+BORDER_RGB = (0.35, 0.8, 1.0)       # Display All Shell Borders
+BORDER_CHECK_S = 0.3                # the shell borders are looked up again at most this often while hovering
 
 
 class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
@@ -59,6 +62,15 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
                                                "part of the edge's length")
     sew_size: FloatProperty(name="Size", default=0.04, min=0.00001, max=1.0, precision=3,
                             description="Sew brush radius in UV space (b + drag left / right)")
+    cut_steady: BoolProperty(name="Steady Stroke", default=False,
+                             description="Cut / Sew: the stroke trails the mouse by the Distance, for a smoother line")
+    cut_steady_distance: FloatProperty(name="Distance", default=0.1, min=0.0, max=10.0, soft_max=1.0, precision=3,
+                                       description="How far the steady stroke trails the mouse, in UV space")
+    cut_open_ratio: FloatProperty(name="Cut Open Ratio", default=0.1, min=0.0, max=1.0, precision=3,
+                                  description="The gap left between the UVs a cut splits, as a part of the cut "
+                                              "edges' length (0 = the split UVs stay on each other)")
+    show_shell_borders: BoolProperty(name="Display All Shell Borders", default=False,
+                                     description="Cut / Sew: draw every UV shell border while the tool is active")
     pin_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
                             description="Brush radius in UV space (b + drag left / right)")
     pin_strength: FloatProperty(name="Strength", default=100.0, min=0.0, max=100000.0, soft_max=100.0, precision=3,
@@ -306,16 +318,97 @@ def cut_edges(pick, sensitivity, length):
     return {int(e) for e in pick.edge[pick.picked(sensitivity, length)]}
 
 
-def finish_edges(mode, mesh, picked):
-    """Cut / sew the collected edges of ``mesh``; returns how many changed."""
+def open_cut(bm, uv, edges, ratio):
+    """The Cut brush on release: ``edges`` become UV cuts, and at each vertex of the cut the UVs on either side move
+    apart, away from the cut, by half of ``ratio`` times the cut edges' mean UV length there (Cut Open Ratio; 0 = they
+    stay on each other). The ends of a cut inside a shell stay joined. Returns the number of edges cut."""
+    for e in edges:
+        e.seam = True
+    cut = set(edges)
+    verts = {v for e in edges for v in e.verts}
+    moves = []                          # (loops, new UV): worked out on the UVs before any of them moves
+    for v in verts:
+        loops = [l for l in v.link_loops if not l.face.hide]
+        if len(loops) < 2:
+            continue
+        parent = list(range(len(loops)))
+
+        def find(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+        at = {l.face: i for i, l in enumerate(loops)}
+        for e in v.link_edges:
+            if e in cut or e.seam:
+                continue
+            fs = [f for f in e.link_faces if f in at]
+            if len(fs) == 2:
+                a, b = loops[at[fs[0]]], loops[at[fs[1]]]
+                if (a[uv].uv - b[uv].uv).length < 1e-6:
+                    parent[find(at[fs[0]])] = find(at[fs[1]])
+        fans = {}
+        for i, l in enumerate(loops):
+            fans.setdefault(find(i), []).append(l)
+        if len(fans) < 2 or ratio <= 0.0:
+            continue
+        lengths = [_edge_uv_length(e, uv) for e in v.link_edges if e in cut]
+        along = sum((_edge_uv_dir(e, v, uv) for e in v.link_edges if e in cut), loops[0][uv].uv * 0.0)
+        step = 0.5 * ratio * (sum(lengths) / len(lengths)) if lengths else 0.0
+        for fan in fans.values():
+            here = fan[0][uv].uv.copy()
+            if any((l[uv].uv - here).length > 1e-6 for l in fan):
+                continue
+            centre = sum((_face_uv_centre(l.face, uv) for l in fan), here * 0.0) / len(fan)
+            d = centre - here
+            if along.length > 1e-12:            # straight off the cut line, not along it
+                t = along.normalized()
+                d = d - t * d.dot(t)
+            if d.length < 1e-12:
+                continue
+            moves.append((fan, here + d.normalized() * step))
+    for fan, new in moves:
+        for l in fan:
+            l[uv].uv = new
+    return len(edges)
+
+
+def _edge_uv_length(e, uv):
+    l = next((l for l in e.link_loops if not l.face.hide), None)
+    if l is None:
+        return 0.0
+    return (l[uv].uv - l.link_loop_next[uv].uv).length
+
+
+def _edge_uv_dir(e, v, uv):
+    """The UV direction of cut edge ``e`` through vertex ``v``, pointing the same way for both edges of a straight
+    cut (U up, or V up for an edge along V)."""
+    l = next((l for l in e.link_loops if not l.face.hide), None)
+    if l is None:
+        return Vector((0.0, 0.0))
+    d = l.link_loop_next[uv].uv - l[uv].uv
+    if d.length < 1e-12:
+        return Vector((0.0, 0.0))
+    d = d.normalized()
+    return -d if d.x < -1e-6 or (abs(d.x) <= 1e-6 and d.y < 0.0) else d
+
+
+def _face_uv_centre(f, uv):
+    c = f.loops[0][uv].uv * 0.0
+    for l in f.loops:
+        c = c + l[uv].uv
+    return c / len(f.loops)
+
+
+def finish_edges(mode, mesh, picked, ratio=0.1):
+    """Cut / sew the collected edges of ``mesh`` (``ratio`` = Cut Open Ratio); returns how many changed."""
     if not picked:
         return 0
     bm = mesh.bm
     bm.edges.ensure_lookup_table()
     edges = [bm.edges[i] for i in sorted(picked) if i < len(bm.edges)]
     if mode == "CUT":
-        uv_tools.cut(bm, mesh.uv, edges)
-        return len(edges)
+        return open_cut(bm, mesh.uv, edges, ratio)
     return uv_tools.sew(bm, mesh.uv, edges, move=True)
 
 
@@ -323,8 +416,11 @@ def finish_edges(mode, mesh, picked):
 
 _hover = {"area": 0, "pos": None, "lock": False}
 _modes = {"current": None, "last": None}     # the brush tool in use and the one before it (Last Tool)
-_stroke = {"area": 0, "segments": []}       # UV segments of the edges a Cut / Sew stroke collected
+_stroke = {"area": 0, "segments": [], "lazy": None}   # a Cut / Sew stroke: collected edges' UV segments; Steady
+# Stroke: (area, the mouse UV) while the stroke point trails it
+_borders = {"area": 0, "segments": [], "t": 0.0}      # Display All Shell Borders: UV segments of the shell borders
 _handle = []
+_border_handle = []
 
 
 def _circle(cx, cy, rad):
@@ -346,6 +442,12 @@ def _draw():
         scale = context.preferences.system.ui_scale or 1.0
         gpu.state.blend_set('ALPHA')
         v2d = region.view2d
+        lazy = _stroke.get("lazy")
+        if lazy is not None and lazy[0] == area.as_pointer() and _hover["pos"] is not None:
+            shader.uniform_float("lineWidth", 1.0 * scale)
+            shader.uniform_float("color", (*CIRCLE_RGB, 0.7))
+            batch_for_shader(shader, 'LINES', {"pos": [_hover["pos"], v2d.view_to_region(*lazy[1], clip=False)]}
+                             ).draw(shader)
         if _stroke["area"] == area.as_pointer() and _stroke["segments"]:
             pts = [v2d.view_to_region(u, v, clip=False) for seg in _stroke["segments"] for (u, v) in seg]
             shader.uniform_float("lineWidth", 3.0 * scale)
@@ -365,6 +467,53 @@ def _draw():
         pass
 
 
+def _draw_borders():
+    """Display All Shell Borders (Cut / Sew tools). Its own draw handler, added on first use so it draws over the
+    kit's UV Editor colours (ui/uv_display.py)."""
+    context = bpy.context
+    area, region = context.area, context.region
+    try:
+        if area is None or not _uv_region(context) or active_mode(context) not in {"CUT", "SEW"}:
+            return
+        if not settings(context).show_shell_borders or _borders["area"] != area.as_pointer() \
+                or not _borders["segments"]:
+            return
+        v2d = region.view2d
+        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+        shader.uniform_float("viewportSize", (region.width, region.height))
+        shader.uniform_float("lineWidth", 2.5 * (context.preferences.system.ui_scale or 1.0))
+        shader.uniform_float("color", (*BORDER_RGB, 1.0))
+        gpu.state.blend_set('ALPHA')
+        pts = [v2d.view_to_region(u, v, clip=False) for seg in _borders["segments"] for (u, v) in seg]
+        batch_for_shader(shader, 'LINES', {"pos": pts}).draw(shader)
+        gpu.state.blend_set('NONE')
+    except (ReferenceError, AttributeError):
+        pass
+
+
+def shell_border_segments(meshes):
+    """UV segments of every shell border and open edge of ``meshes`` (MeshUVs)."""
+    out = []
+    for m in meshes:
+        arr = m.edge_arrays()
+        if not len(arr["kind"]):
+            continue
+        on = arr["kind"] > 0
+        out += [(tuple(m.U[a]), tuple(m.U[b])) for a, b in zip(arr["a"][on], arr["b"][on])]
+    return out
+
+
+def refresh_borders(context, force=False):
+    import time
+    now = time.monotonic()
+    area = context.area.as_pointer()
+    if not force and _borders["area"] == area and now - _borders["t"] < BORDER_CHECK_S:
+        return
+    _borders.update(area=area, t=now, segments=shell_border_segments(stroke_meshes(context)))
+    if not _border_handle:
+        _border_handle.append(bpy.types.SpaceImageEditor.draw_handler_add(_draw_borders, (), 'WINDOW', 'POST_PIXEL'))
+
+
 def _redraw(context):
     if context.area is not None:
         context.area.tag_redraw()
@@ -379,7 +528,10 @@ class ALLSET_OT_uv_brush_hover(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
-        note_mode(active_mode(context))
+        mode = active_mode(context)
+        note_mode(mode)
+        if mode in {"CUT", "SEW"} and settings(context).show_shell_borders and context.area is not None:
+            refresh_borders(context)
         if not _hover["lock"] and context.area is not None:
             _hover["area"] = context.area.as_pointer()
             _hover["pos"] = (event.mouse_region_x, event.mouse_region_y)
@@ -510,17 +662,22 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
                 m.restore()
                 bmesh.update_edit_mesh(m.ob.data, loop_triangles=False, destructive=False)
             _stroke["segments"] = []
+            _stroke["lazy"] = None
             _redraw(context)
             return {'CANCELLED'}
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
             region = context.region
             xy = (event.mouse_x - region.x, event.mouse_y - region.y) if region is not None else self._xy
             uv = region.view2d.region_to_view(*xy) if region is not None else self._uv
+            uv = self._steady(context, uv)
             self._moves += 1
             if not self._idle:
                 self._move(context, self._uv, uv)
                 self._show(context)
             self._uv, self._xy = uv, xy
+            if _stroke.get("lazy") is not None:      # the circle stays on the stroke point, a line to the mouse
+                xy = (int(round(region.view2d.view_to_region(*uv, clip=False)[0])),
+                      int(round(region.view2d.view_to_region(*uv, clip=False)[1])))
             _hover["area"], _hover["pos"] = self._area, xy
             _redraw(context)
             return {'RUNNING_MODAL'}
@@ -528,9 +685,26 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             return self._finish(context)
         return {'RUNNING_MODAL'}
 
+    def _steady(self, context, uv):
+        """Cut / Sew with Steady Stroke: the stroke point follows the mouse only when it is farther than the Distance,
+        staying that far behind it."""
+        s = settings(context)
+        if self._mode() not in {"CUT", "SEW"} or not s.cut_steady:
+            _stroke["lazy"] = None
+            return uv
+        dx, dy = uv[0] - self._uv[0], uv[1] - self._uv[1]
+        ln = math.hypot(dx, dy)
+        dist = s.cut_steady_distance
+        _stroke["lazy"] = (self._area, uv)
+        if ln <= dist:
+            return self._uv
+        k = (ln - dist) / ln
+        return (self._uv[0] + dx * k, self._uv[1] + dy * k)
+
     def _finish(self, context):
         mode = self._mode()
         _stroke["segments"] = []
+        _stroke["lazy"] = None
         done = 0
         if self._idle:
             pass
@@ -540,7 +714,7 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
                     pk.update(*self._cut.take(final=True))
                 self._picked = self._cut_picked(context)
             for m, picked in zip(self._meshes, self._picked):
-                n = finish_edges(mode, m, picked)
+                n = finish_edges(mode, m, picked, settings(context).cut_open_ratio)
                 done += n
                 if n:
                     bmesh.update_edit_mesh(m.ob.data)
@@ -781,10 +955,14 @@ def register_extra():
 def unregister_extra():
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(_handle.pop(), 'WINDOW')
+    while _border_handle:
+        bpy.types.SpaceImageEditor.draw_handler_remove(_border_handle.pop(), 'WINDOW')
     for cls in BINDINGS:
         taphold.unregister_binding(cls.name)
     if hasattr(bpy.types.Scene, "allset_uv_brush"):
         del bpy.types.Scene.allset_uv_brush
     _hover.update(area=0, pos=None, lock=False)
     _stroke["segments"] = []
+    _stroke["lazy"] = None
+    _borders.update(area=0, segments=[], t=0.0)
     _modes.update(current=None, last=None)

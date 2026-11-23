@@ -67,6 +67,14 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
                 layout.prop(s, "cut_sensitivity", slider=not header)
             else:
                 layout.prop(s, "sew_size", slider=not header)
+            row = layout.row(align=True)
+            row.prop(s, "cut_steady")
+            sub = row.row(align=True)
+            sub.enabled = s.cut_steady
+            sub.prop(s, "cut_steady_distance", slider=not header)
+            if m == "CUT":
+                layout.prop(s, "cut_open_ratio", slider=not header)
+            layout.prop(s, "show_shell_borders")
         elif m == "PIN":
             _sculpt_settings(layout, s, "pin_size", "pin_strength", header)
             if not header:
