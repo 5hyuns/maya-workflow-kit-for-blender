@@ -227,7 +227,7 @@ def test_shift_t_keymap():
 
 
 def test_list_submenu_kept_inside_region():
-    """The Favorite submenu opened near the region's bottom edge moves up (GUI step-29 shot)."""
+    """The Favorite submenu opened near the region's bottom edge moves up."""
     engine = import_module(kit.MODULE + ".marking.engine")
 
     def measure(text):
