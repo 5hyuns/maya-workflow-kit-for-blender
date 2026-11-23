@@ -330,7 +330,7 @@ def s_undo():
     cube = bpy.data.objects[C["cube"]]
     redone = [s.material.name if s.material else None for s in cube.material_slots]
     check(f"the drop is one undo step (undo {C['undone']}, redo {redone})",
-          C["undone"] == [C["cube_mat0"]] and redone == [C["BLINN"]])
+          C["undone"] == ([C["cube_mat0"]] if C["cube_mat0"] else []) and redone == [C["BLINN"]])
 
 
 @step
