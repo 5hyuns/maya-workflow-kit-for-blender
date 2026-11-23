@@ -35,13 +35,14 @@ from .uv_islands import sync
 from .uv_shells import _loop_selected
 
 PREFIX = "allset.uv_brush_"
-MODES = ("UNFOLD", "OPTIMIZE", "CUT", "SEW", "PIN", "SMEAR", "SMUDGE")
+MODES = ("UNFOLD", "OPTIMIZE", "CUT", "SEW", "PIN", "SMEAR", "SMUDGE", "GRAB", "PINCH")
 TOOL_IDS = {m: PREFIX + m.lower() for m in MODES}
 MODE_OF_TOOL = {v: k for k, v in TOOL_IDS.items()}
 # mode -> (size property, strength property) in Scene.allset_uv_brush; Unfold and Optimize share one brush like Maya
 BRUSH_PROPS = {"UNFOLD": ("relax_size", "relax_strength"), "OPTIMIZE": ("relax_size", "relax_strength"),
                "CUT": (None, None), "SEW": ("sew_size", None), "PIN": ("pin_size", "pin_strength"),
-               "SMEAR": ("smear_size", "smear_strength"), "SMUDGE": ("smudge_size", "smudge_pressure")}
+               "SMEAR": ("smear_size", "smear_strength"), "SMUDGE": ("smudge_size", "smudge_pressure"),
+               "GRAB": ("grab_size", "grab_strength"), "PINCH": ("pinch_size", "pinch_strength")}
 SPACING = 0.25            # a dab every quarter brush radius along the stroke
 CIRCLE_RGB = (0.9, 0.9, 0.9)
 CIRCLE_SEGMENTS = 48
@@ -79,6 +80,21 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
                               description="Brush radius in UV space (b + drag left / right)")
     smear_strength: FloatProperty(name="Strength", default=0.05, min=0.0, max=100000.0, soft_max=100.0, precision=3,
                                   description="How strongly the UVs follow the stroke (m + drag up / down)")
+    grab_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
+                             description="Brush radius in UV space (b + drag left / right)")
+    grab_strength: FloatProperty(name="Strength", default=80.0, min=0.0, max=100000.0, soft_max=100.0, precision=3,
+                                 description="How far the UVs under the brush follow the mouse, in percent "
+                                             "(m + drag up / down)")
+    grab_direction: EnumProperty(name="Direction", default='UV', items=(
+        ('UV', "UV", "The UVs follow the mouse freely"),
+        ('U', "U", "The UVs follow the mouse along U only"),
+        ('V', "V", "The UVs follow the mouse along V only")))
+    grab_twist: BoolProperty(name="Twist", default=False,
+                             description="Ctrl+drag turns the UVs under the brush clockwise or counterclockwise")
+    pinch_size: FloatProperty(name="Size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
+                              description="Brush radius in UV space (b + drag left / right)")
+    pinch_strength: FloatProperty(name="Strength", default=10.0, min=0.0, max=100000.0, soft_max=100.0, precision=3,
+                                  description="How strongly the UVs are pulled to the stroke (m + drag up / down)")
     smudge_size: FloatProperty(name="Smudge size", default=0.075, min=0.0, max=10.0, soft_max=1.0, precision=3,
                                description="Brush radius in UV space (b + drag left / right)")
     smudge_pressure: FloatProperty(name="Pressure", default=0.01, min=0.0, max=1.0, precision=3,
@@ -133,6 +149,10 @@ def strength_of(context, mode):
         return s.smear_strength * 10.0       # the default 0.05 pushes the UVs at the centre half the stroke
     if mode == "SMUDGE":
         return s.smudge_pressure
+    if mode == "GRAB":
+        return s.grab_strength / 100.0
+    if mode == "PINCH":
+        return s.pinch_strength / 100.0
     return 1.0
 
 
@@ -266,7 +286,7 @@ def stroke_meshes(context):
     return [MeshUVs(ob, synced) for ob in context.objects_in_mode_unique_data or () if ob.type == 'MESH']
 
 
-FALLOFF_MODES = {"PIN", "SMEAR"}        # brushes with a Falloff Type (Surface/Volume, Surface, Volume), like Maya
+FALLOFF_MODES = {"PIN", "SMEAR", "GRAB", "PINCH"}        # brushes with a Falloff Type (Surface/Volume, Surface, Volume), like Maya
 
 
 def brush_distances(mesh, centre, r, kind):
@@ -292,6 +312,8 @@ def apply_dab(mode, mesh, centre, r, strength, *, invert=False, delta=(0.0, 0.0)
                                               held=held))
     if mode == "SMEAR":
         return mesh.write(uv_brush_math.smear(mesh.U, centre, r, delta, strength, held=held, dist=dist))
+    if mode == "PINCH":
+        return mesh.write(uv_brush_math.pinch(mesh.U, centre, r, strength, dist=dist, held=held, invert=invert))
     if mode == "SMUDGE" and weights is not None:
         return mesh.write(mesh.U + weights[:, None] * np.asarray(delta, float)[None, :])
     return False
@@ -598,6 +620,13 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         elif mode == "SMUDGE" and s.smudge_effect == 'FIXED':
             self._weights = [uv_brush_math.grab_weights(m.U, self._uv, s.smudge_size, held=m.pinned, only=m.selected,
                                                         kind=s.smudge_falloff) for m in self._meshes]
+        elif mode == "GRAB":
+            r = size_of(context, mode)
+            k = strength_of(context, mode)
+            self._grab = [(m.U.copy(), uv_brush_math.sculpt_weights(
+                m.U, self._uv, r, brush_distances(m, self._uv, r, s.falloff_type), m.pinned) * k)
+                for m in self._meshes]
+            self._grab_from = self._uv
         elif mode == "CUT":
             self._cut = uv_brush_math.CutStroke(self._uv)
             self._picks = [cut_pick(m) for m in self._meshes]
@@ -658,6 +687,17 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             for m in self._meshes:          # each mouse move pulls the selected UVs under the brush by the Pressure
                 self._changed |= m.write(uv_brush_math.smudge(m.U, prev, r, delta, s.smudge_pressure, held=m.pinned,
                                                               only=m.selected, kind=s.smudge_falloff))
+        elif mode == "GRAB":
+            du, dv = uv[0] - self._grab_from[0], uv[1] - self._grab_from[1]
+            if s.grab_direction == 'U':
+                dv = 0.0
+            elif s.grab_direction == 'V':
+                du = 0.0
+            twist = 0.0
+            if self.invert and s.grab_twist:       # Ctrl with Twist: turn, a brush radius sideways = a quarter turn
+                twist = -(uv[0] - self._grab_from[0]) / max(r, 1e-9) * (math.pi / 2)
+            for m, (U0, w) in zip(self._meshes, self._grab):
+                self._changed |= m.write(uv_brush_math.grab(U0, w, self._grab_from, (du, dv), twist))
         elif mode == "SMEAR" and self._moves == 1:
             pass                         # the first mouse move after the press only places the brush, like Maya
         else:
@@ -756,7 +796,7 @@ class ALLSET_OT_uv_invert_pin(bpy.types.Operator):
 
 
 LABELS = {"UNFOLD": "Unfold", "OPTIMIZE": "Optimize", "CUT": "Cut", "SEW": "Sew", "PIN": "Pin", "SMEAR": "Smear",
-          "SMUDGE": "Smudge"}
+          "SMUDGE": "Smudge", "GRAB": "Grab", "PINCH": "Pinch"}
 
 
 def note_mode(mode):
@@ -871,7 +911,7 @@ class UVBrushStrengthBinding(_BrushDrag):
 
 MMB_SIZE_MIN = {"UNFOLD": 0.0, "OPTIMIZE": 0.0}      # other brushes keep at least MMB_MIN
 MMB_MIN = 0.01
-MMB_STRENGTH = {"PIN", "SMEAR"}        # brushes whose strength (0-100) follows an up / down MMB drag
+MMB_STRENGTH = {"PIN", "SMEAR", "GRAB", "PINCH"}        # brushes whose strength (0-100) follows an up / down MMB drag
 MMB_AXIS_PX = 3                        # the drag picks its direction after this many pixels
 
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""UV Editor > Tools > Unfold, Optimize, Cut, Sew, Pin, Smear and Smudge as UV Editor tools, like Maya's UV brushes,
+"""UV Editor > Tools > Unfold, Optimize, Cut, Sew, Pin, Smear, Grab, Pinch and Smudge as UV Editor tools, like Maya's UV brushes,
 and Tools > Lattice (operators/uv_lattice.py).
 
 Each is a Blender tool of the UV Editor (edit mode): LMB drag = the brush stroke (operators/uv_brush.py), Ctrl+drag =
@@ -83,6 +83,12 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
                 row.operator("allset.uv_invert_pin", text="Invert Pin")
         elif m == "SMEAR":
             _sculpt_settings(layout, s, "smear_size", "smear_strength", header)
+        elif m == "GRAB":
+            _sculpt_settings(layout, s, "grab_size", "grab_strength", header)
+            layout.prop(s, "grab_twist")
+            layout.prop(s, "grab_direction", text="" if header else None)
+        elif m == "PINCH":
+            _sculpt_settings(layout, s, "pinch_size", "pinch_strength", header)
         elif m == "SMUDGE":
             layout.prop(s, "smudge_effect", text="" if header else None)
             layout.prop(s, "smudge_falloff", text="" if header else None)
@@ -93,6 +99,8 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
             layout.prop(s, "smudge_middle")
 
 
+# Grab / Pinch: labels of their own so their keymaps are not Blender's UV sculpt Grab / Pinch tool keymaps (the keymap
+# name comes from the tool label)
 def _tool(mode, label, icon, description):
     def draw_settings(context, layout, tool):
         cls.settings_for(context, layout, context.region.type == 'TOOL_HEADER')
@@ -119,6 +127,12 @@ TOOLS = (
           "Drag along shell borders to weld the UVs together (Maya Sew UV Tool). Ctrl+drag cuts. b + drag = size"),
     _tool("SMEAR", "Smear", "ops.gpencil.sculpt_smear",
           "Drag to push the UVs under the brush along the stroke (Maya Smear UV Tool). "
+          "b + drag = size, m + drag = strength"),
+    _tool("GRAB", "Grab UV", "brush.uv_sculpt.grab",
+          "Drag to move the UVs under the brush with the mouse (Maya Grab UV Tool). Ctrl+drag with Twist turns them. "
+          "b + drag = size, m + drag = strength"),
+    _tool("PINCH", "Pinch UV", "brush.uv_sculpt.pinch",
+          "Drag to pull the UVs under the brush toward the stroke (Maya Pinch UV Tool). Ctrl+drag pushes them away. "
           "b + drag = size, m + drag = strength"),
     _tool("SMUDGE", "Smudge", "brush.paint_texture.smear",
           "Drag to pull the selected UVs in the direction of the stroke (Maya Smudge UV Tool). "

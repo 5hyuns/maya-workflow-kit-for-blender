@@ -10,6 +10,7 @@ import bpy
 import kit
 
 brush = import_module(kit.MODULE + ".operators.uv_brush")
+tools = import_module(kit.MODULE + ".ui.uv_brush_tools")
 
 
 def test_values():
@@ -32,8 +33,9 @@ def test_direction_is_kept():
 
 
 def test_keymaps():
+    labels = {t.bl_idname: t.bl_label for t in tools.TOOLS}
     for mode in brush.MODES:
-        label = mode.title()
+        label = labels[brush.TOOL_IDS[mode]]
         km = bpy.context.window_manager.keyconfigs.addon.keymaps.get(f"Image Editor Tool: Uv, {label}")
         assert km is not None, label
         mmb = [k for k in km.keymap_items if k.type == 'MIDDLEMOUSE' and k.value == 'PRESS']

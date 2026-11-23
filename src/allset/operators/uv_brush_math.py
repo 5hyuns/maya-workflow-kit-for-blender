@@ -163,6 +163,41 @@ def smear(U, centre, r, delta, strength, held=None, dist=None):
     return U
 
 
+def sculpt_weights(U, centre, r, dist=None, held=None):
+    """Grab / Pinch brush weight of each UV (sculpt falloff; ``dist`` = brush_distances, default the straight
+    distance); ``held`` UVs (pinned) get 0."""
+    d = distances(U, centre) if dist is None else np.where(np.isfinite(dist), dist, 2.0 * r + 1.0)
+    w = sculpt_falloff(d, r)
+    if held is not None:
+        w[np.asarray(held, bool)] = 0.0
+    return w
+
+
+def grab(U0, w, centre, delta, twist=0.0):
+    """Grab: the UVs move with the mouse ``delta`` (from where the stroke started) by their weights ``w`` (taken at
+    the press); ``twist`` (radians, counterclockwise) turns them about the brush ``centre`` instead, the same way
+    weighted. Returns the new UVs."""
+    U0 = np.asarray(U0, float)
+    w = np.asarray(w, float)[:, None]
+    if twist:
+        c, s = math.cos(twist), math.sin(twist)
+        rel = U0 - np.asarray(centre, float)[None, :]
+        turned = np.stack((rel[:, 0] * c - rel[:, 1] * s, rel[:, 0] * s + rel[:, 1] * c), axis=1)
+        return U0 + w * (turned - rel)
+    return U0 + w * np.asarray(delta, float)[None, :]
+
+
+def pinch(U, centre, r, strength, dist=None, held=None, invert=False):
+    """Pinch, one dab: the UVs under the brush move toward its centre (away with ``invert``) by their weight times
+    ``strength`` of the way. Returns the new UVs."""
+    U = np.array(U, float)
+    w = sculpt_weights(U, centre, r, dist, held) * max(0.0, float(strength))
+    w = np.minimum(w, 1.0)
+    to = np.asarray(centre, float)[None, :] - U
+    U += (-1.0 if invert else 1.0) * w[:, None] * to
+    return U
+
+
 def grab_weights(U, centre, r, held=None, only=None, kind="EXPONENTIAL"):
     """Smudge (Fixed): the weight each UV follows the brush with, taken once where the stroke starts. ``only`` (n,)
     bool limits it to those UVs (the selection)."""
