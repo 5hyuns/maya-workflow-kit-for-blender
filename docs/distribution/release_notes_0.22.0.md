@@ -4,7 +4,7 @@ Text for the GitHub release of v0.22.0. Full list: the 0.22.0 section of `CHANGE
 
 ---
 
-**0.22.0 — Maya hands, Blender materials and lights: one New Material, no lambert1, Blender's light power** (Blender 5.2 LTS and 5.3)
+**0.22.0 — Maya hands, Blender materials and lights; UV Editor toolkit, option windows and brush tools** (Blender 5.2 LTS and 5.3)
 
 Hello everyone. This version draws a clear line: menus, hotkeys, marking menus and the Attribute Editor layout stay
 Maya's, while shaders, lights and render start values are Blender's own. Please read the first two sections before
@@ -39,6 +39,23 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Pose Breakdowner (#496):** Key > Pose Breakdowner, Relax Pose to Breakdown and Push Pose from Breakdown, right
   below Set Breakdown Key, run Blender's pose in-between tools in Pose Mode.
 
+## UV Editor
+
+- **UV Toolkit Transform (#494, #509):** Pivot, Move by a step or to typed U / V values, Rotate, Scale and Snap of the
+  selected shells, with value presets, Step Snap rows, Retain Component Spacing and Distribute U / V. The toolkit's
+  buttons show a picture and their text from the left edge.
+- **Option windows (#497, #502):** Unfold, Layout, Optimize, Auto Seams, Move and Sew, Merge, Stitch Together, Flip and
+  the other Modify commands open their option windows.
+- **Optimize (#498, #510, #511):** evens out UV distortion, with the Legacy (relax) method.
+- **UV brush tools (#500, #512 – #519):** Unfold, Optimize, Cut, Sew, Pin, Smear, Smudge, Lattice, Grab and Pinch work
+  on the UVs under the brush, with their brush marking menu and options.
+- **Marking menus (#499, #501):** Ctrl+right-click converts the selection, Ctrl+Shift+right-click shows the active
+  tool's options.
+- **Stitch Together, Flip and Layout (#503, #505, #506):** Stitch Together stitches every selected border edge at once,
+  Flip uses its options, Layout can spread shells over UDIM tiles.
+- **Fixed:** Shift+marquee toggles what it catches, like Shift+click (#524); Convert Selection converts the selection
+  (#507).
+
 ## Older scenes
 
 - **Nothing is converted when you open a scene.** Materials, lambert1, lights and cameras made by earlier versions
@@ -51,7 +68,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 
 ## Thank you
 
-Thank you for the reports and ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
+Thanks to @suenwaichit (#494) and @envwarby (#524) for the UV Editor reports, and to everyone for the reports and
+ideas since 0.21.0. Please keep telling us what breaks or feels off in real work.
 
 Maya Workflow Kit is a free, personal open-source project: no paid version, no donations requested, and no commercial
 goal behind it.

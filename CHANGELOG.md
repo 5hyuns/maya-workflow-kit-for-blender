@@ -13,6 +13,32 @@ earlier version open unchanged: nothing in them is converted.
 ### Added
 - Key > Pose Breakdowner, Relax Pose to Breakdown and Push Pose from Breakdown, right below Set Breakdown Key (#496):
   Blender's pose in-between tools in Pose Mode, whose Blender keys (Shift+E, F3 search) are Maya keys in the kit.
+- **UV Editor option windows** (#497, #502): Modify > Unfold and Layout, Cut/Sew > Auto Seams, Move and Sew, Merge
+  and Stitch Together, and the other Modify commands open their option windows (option box or Shift+click), with
+  Apply, Apply and Close and Reset like the other kit option windows.
+- **UV Editor marking menus** (#499, #501): Ctrl+right-click opens the selection conversion menu (to UVs, vertices,
+  edges, faces, shells, shell borders ...), Ctrl+Shift+right-click the active tool's options menu (Move, Rotate,
+  Scale, Select and the UV brush tools).
+- **UV Toolkit Transform** (#494, #509): Pivot (selection / UV area, Edit Pivot, Reset), Move by a step in eight
+  directions and typed U / V positions, Rotate by an angle, Scale by a factor in U and V, U or V, Snap of the
+  selected shells onto a corner, edge middle or the centre of a range, presets for the step, angle and factor, a
+  Step Snap row per area, Retain Component Spacing, Distribute U / V, a right-click menu on the Rotate buttons that
+  turns by 45 or 15 degrees, and Rotate in the image's pixels so shapes keep their look on a non-square image.
+- **UV Toolkit look** (#494): command buttons show a kit-drawn picture and their text from the left edge, flat until
+  the pointer is over them, in even columns; Align is a row of six pictures.
+- **UV Editor > Modify > Optimize** (#498, #510, #511): evens out UV distortion of the selected shells (Iterations,
+  Surfangle, Power, Prevent triangle flips, Pin UV border, Pin UVs, Edge weights), keeps one UV of a free shell in place, and has the Legacy (relax) method in
+  its option window. The UV brush Optimize uses it too.
+- **UV Editor brush tools** (#500, #512 – #519): Tools > Unfold, Optimize, Cut, Sew, Pin, Smear, Smudge, Lattice, Grab
+  and Pinch are UV Editor tools that work on the UVs under the brush (the selected UVs when there is a selection),
+  with a brush marking menu (the brush tools, Last Tool naming the tool it goes back to, Falloff Type, Invert Pin),
+  middle-mouse drag for size and strength, Smudge's Middle mouse initiates, Cut / Sew Steady Stroke, Cut Open Ratio
+  and Display All Shell Borders, Lattice Falloff, Use bounding rectangle, Show move manipulator and line drags, Grab
+  Direction and Twist, Pinch, and Pin's Paint / Smooth methods (Shift+drag smooths the pins).
+- **Stitch Together** (#503): stitches every selected border edge at once, the smaller shell moving onto the larger
+  one (Order in its option window).
+- **Flip** (#506): Modify > Flip uses its Coordinate (Pivot, Selection Center, Global) and Cut UV Perimeter options.
+- **Layout over UDIM tiles** (#505): Layout's Shell Distribution with Tiles U / V spreads the shells over tiles.
 
 ### Changed
 - One New Material: Lighting/Shading > Assign New Material (and Shift+T), Assign Favorite Material, the marking menu's
@@ -46,6 +72,13 @@ earlier version open unchanged: nothing in them is converted.
   opacity and a new camera that is not renderable stay as before.
 - The Maya layout file's Render Settings image size is Blender's (1920 x 1080).
 - Imported materials keep Blender's names (Material.001).
+
+### Fixed
+- UV Editor: Shift+marquee toggles the faces, edges, vertices or UVs it catches, like Shift+click (#524). With UV Sync
+  Selection on in face mode it cleared the selection, and with it off a UV shared by several faces stayed picked.
+- UV Editor: Select > Convert Selection > To Vertices / Edges / Faces / UVs convert the selection instead of only
+  switching the select mode (#507).
+- Translations: the toolkits' "Drag" selection style has its own Japanese text, apart from the Fields "Drag" (#508).
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse
