@@ -7740,6 +7740,9 @@
    "Tolerance": "Tolerance",
    "UV gap tolerance": "UV gap tolerance"
   },
+  "Labels/operators/uv_optimize": {
+   "Optimize": "Optimize"
+  },
   "Labels/operators/uv_projection": {
    "1 = Fewer pieces, 0 = Less distortion": "1 = Fewer pieces, 0 = Less distortion",
    "Automatic": "Automatic",
@@ -11386,10 +11389,13 @@
    "Left half": "Left half",
    "Map size (Pixels), Room space (Pixels)": "Map size (Pixels), Room space (Pixels)",
    "Method: Legacy": "Method: Legacy",
+   "Method: Legacy (relax)": "Method: Legacy (relax)",
    "Minimum / Maximum Shell Rotation": "Minimum / Maximum Shell Rotation",
    "Multiple Objects": "Multiple Objects",
    "Non-Uniform": "Non-Uniform",
    "Off": "Off",
+   "Optimize": "Optimize",
+   "Optimize UVs Options": "Optimize UVs Options",
    "Pack Separately (overlapping)": "Pack Separately (overlapping)",
    "Pack Together (non-overlapping)": "Pack Together (non-overlapping)",
    "Packing Region": "Packing Region",
@@ -11397,6 +11403,7 @@
    "Padding Units": "Padding Units",
    "Percent": "Percent",
    "Pixels": "Pixels",
+   "Power": "Power",
    "Preserve 3D Ratios": "Preserve 3D Ratios",
    "Preserve UV Ratios": "Preserve UV Ratios",
    "Prevent self border intersections": "Prevent self border intersections",
@@ -11417,6 +11424,7 @@
    "Straighten": "Straighten",
    "Straighten UVs": "Straighten UVs",
    "Straighten UVs Options": "Straighten UVs Options",
+   "Surfangle": "Surfangle",
    "Texture Map Size": "Texture Map Size",
    "Tile Padding": "Tile Padding",
    "Top half": "Top half",
@@ -12571,6 +12579,9 @@
    "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)": "Put the border UVs of the selected shells on the 0-1 square, spaced by the 3D edge lengths (Maya Map Border,\ndefault Square)",
    "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)": "Space the selected UVs evenly between the outermost ones (Maya Distribute UVs)",
    "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)": "Stack every selected shell that has the same shape as an earlier one onto it (Maya Stack Similar Shells)"
+  },
+  "Tooltips/operators/uv_optimize": {
+   "Even out the UV distortion of the selected UVs against the 3D surface, with the Optimize options (Maya\nOptimize): pinned and unselected UVs stay, a fully selected shell keeps its size": "Even out the UV distortion of the selected UVs against the 3D surface, with the Optimize options (Maya\nOptimize): pinned and unselected UVs stay, a fully selected shell keeps its size"
   },
   "Tooltips/operators/uv_projection": {
    "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed": "Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the\nlast one can be changed",

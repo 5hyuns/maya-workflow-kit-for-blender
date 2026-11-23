@@ -1,4 +1,5 @@
-"""#497 / #502: UV Editor > Modify > Unfold ❒ and Layout ❒ open the Unfold UVs Options and Layout UVs Options windows
+"""#497 / #498 / #502: UV Editor > Modify > Unfold ❒, Layout ❒ and Optimize ❒ open the Unfold UVs Options, Layout UVs
+Options and Optimize UVs Options windows
 (fields, the greyed fields Blender has no counterpart for, the command button); Cut/Sew > Auto Seams ❒, Move and Sew ❒
 and Modify > Normalize ❒, Straighten Border ❒ open theirs. Screenshots with ALLSET_GUI_SHOTS (or
 --shots)."""
@@ -67,6 +68,7 @@ def opener(op, key):
 
 opener("opt_uv_unfold", "unfold")
 opener("opt_uv_layout", "layout")
+opener("opt_uv_optimize", "optimize")      # #498
 # #502: Cut/Sew and Modify windows
 opener("opt_uv_auto_seams", "auto_seams")
 opener("opt_uv_move_sew", "move_sew")

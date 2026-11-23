@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya option windows of UV Editor > Modify > Unfold, Layout, Straighten UVs and Randomize Shells, and View > Grid.
+"""Maya option windows of UV Editor > Modify > Unfold, Optimize, Layout, Straighten UVs and Randomize Shells, and View >
+Grid.
 
 Same spec as operators/option_windows_spec.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator bound to its
 menu paths; option_windows._extend appends ``WINDOWS``). Defaults: Straighten UVs straightens along U and V within
@@ -7,8 +8,10 @@ menu paths; option_windows._extend appends ``WINDOWS``). Defaults: Straighten UV
 10 percent once those are switched on). View > Grid's window sets how many UDIM tiles (0-1 squares, 1001 at the
 origin) Blender's UV grid shows across and up; View > Grid itself still shows / hides the grid.
 
-Unfold and Layout: the menu item, Ctrl+U / Ctrl+L, the UV Toolkit buttons and the marking menu items all run with the
-saved values (operators/uv_tools.option_values). Unfold: 1 iteration, triangle flips prevented, no Layout after it.
+Unfold, Optimize and Layout: the menu item, Ctrl+U / Ctrl+L, the UV Toolkit buttons and the marking menu items all run
+with the saved values (operators/uv_tools.option_values). Unfold: 1 iteration, triangle flips prevented, no Layout after
+it. Optimize (operators/uv_optimize.py): 1 iteration, Surfangle 1, Power 100 (below 100 nothing moves, like Maya),
+triangle flips prevented.
 Layout: shells pre-scaled to their 3D size ratio, not turned, packed together into the 0-1 square without padding,
 uniformly scaled (operators/uv_layout.py).
 """
@@ -24,6 +27,10 @@ from .uv_layout import MAP_SIZES, MULTI, PRE_ROTATE, PRE_SCALE, SCALE_MODES
 
 def _run_unfold(context, v):
     return bpy.ops.allset.uv_unfold('EXEC_DEFAULT', options=json.dumps(v))
+
+
+def _run_optimize(context, v):
+    return bpy.ops.allset.uv_optimize('EXEC_DEFAULT', options=json.dumps(v))
 
 
 def _run_layout(context, v):
@@ -76,6 +83,14 @@ WINDOWS = [
         F("prevent_flips", "", "bool", True, text="Prevent triangle flips"),
     ], _run_unfold, paths=("UV Editor/Modify/Unfold",),
         missing=("Method: Legacy", "Fix non-manifold geometry", "Prevent self border intersections",
+                 "Map size (Pixels), Room space (Pixels)")),
+    Window("uv_optimize", "Optimize UVs Options", "Optimize", None, [
+        F("iterations", "Iterations:", "int", 1, lo=0, hi=10),
+        F("surfangle", "Surfangle:", "float", 1.0, lo=0.0, hi=1.0),
+        F("power", "Power:", "int", 100, lo=0, hi=100),
+        F("prevent_flips", "", "bool", True, text="Prevent triangle flips"),
+    ], _run_optimize, paths=("UV Editor/Modify/Optimize",),
+        missing=("Method: Legacy (relax)", "Fix non-manifold geometry", "Prevent self border intersections",
                  "Map size (Pixels), Room space (Pixels)")),
     Window("uv_layout", "Layout UVs Options", "Layout", None, [
         F("multi", "Multiple Objects:", "enum", MULTI[0], items=MULTI),

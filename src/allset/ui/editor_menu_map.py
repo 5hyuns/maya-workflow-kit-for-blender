@@ -399,7 +399,7 @@ MAP = {
     f"{UV}/View/Isolate Select/View Selected": "allset.uv_isolate",
     f"{UV}/Image/Display": ("allset.uv_display", {"mode": 'IMAGE'}),
     f"{UV}/Modify/Randomize Shells": "allset.uv_randomize",     # operators/uv_toolkit_ops.py
-    f"{UV}/Modify/Optimize": "uv.minimize_stretch",
+    f"{UV}/Modify/Optimize": "allset.uv_optimize",
     f"{UV}/Modify/Straighten Shell": "allset.uv_straighten_shell",       # operators/uv_toolkit_ops.py (#393)
     f"{UV}/Modify/Straighten UVs": "allset.uv_straighten_uvs",
     f"{UV}/Modify/Unfold": "allset.uv_unfold",
