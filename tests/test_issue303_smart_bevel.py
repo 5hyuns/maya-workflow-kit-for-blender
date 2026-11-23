@@ -222,9 +222,8 @@ def test_menu_places():
     assert w is not None and w.key == "smart_bevel" and w.title == "Smart Bevel Options"
     assert w.defaults()["width"] == 0.2 and w.defaults()["filter"] == "Selected Edges"
     assert ("Smart Bevel", "Edit Mesh/Smart Bevel", 'MOD_BEVEL') in toolkit.COMPONENTS
-    # like Maya, the Shift+RMB edge / face menus have no Smart Bevel row (#495)
-    assert not any(it[0] == "Smart Bevel" for it in mm.SHIFT_EDGE.items if it != mm.DIVIDER)
-    assert not any(it[0] == "Smart Bevel" for it in mm.SHIFT_FACE.items if it != mm.DIVIDER)
+    assert any(it[0] == "Smart Bevel" for it in mm.SHIFT_EDGE.items if it != mm.DIVIDER)
+    assert any(it[0] == "Smart Bevel" for it in mm.SHIFT_FACE.items if it != mm.DIVIDER)
 
 
 def test_option_window_runs_from_object_mode_on_the_whole_mesh():
