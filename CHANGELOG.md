@@ -3,7 +3,7 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.22.0] — 2026-11-23
 
 **Materials, lights and render start values are Blender's own.** The kit keeps Maya's menus, hotkeys and Attribute
 Editor layout for shading and lighting, while shaders, light power and falloff, their values and the render start
