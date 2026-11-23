@@ -64,7 +64,9 @@ def test_greyed_counts_and_notices():
     # #435: Selection Constraints is a submenu now (Off / Angle work; Border, Edge Loop, Edge Ring, Shell,
     # UV Edge Loop greyed in each tool option menu, +12)
     # #499: the UV Editor Ctrl+RMB menu's Selection / Transform Constraints submenus (no UV constraints, +2)
-    assert len(greyed) <= 143, len(greyed)
+    # #501: the four UV Editor tool option menus (constraint submenus, Highlight Backfaces, Soft Select Object /
+    # Global / Color Feedback in each Select submenu, Keep Spacing, Prevent Negative Scale, +32)
+    assert len(greyed) <= 175, len(greyed)
 
 
 def test_item_paths_are_mapped():

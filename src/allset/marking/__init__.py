@@ -261,15 +261,27 @@ def resolve(trigger, context, picked=None):
     """("pie" | "menu", Menu idname) for a trigger in this context, or None."""
     mode = context.mode
     ob = picked or context.active_object
+    space = getattr(context, "space_data", None)
+    if trigger == "TOOL_OPTIONS" and space is not None and space.type == 'IMAGE_EDITOR':
+        # the UV Editor's own tools have their own option menus (UV Editor in edit mode only)
+        if mode != 'EDIT_MESH' or space.mode != 'UV':
+            return None
+        try:
+            tool = context.workspace.tools.from_space_image_mode('UV', create=False)
+        except (AttributeError, TypeError):
+            tool = None
+        tid = tool.idname if tool else ""
+        name = mm.UV_SELECT_OPTIONS if tid.startswith("builtin.select") else mm.UV_TOOL_OPTIONS.get(tid)
+        return ("pie", idname(name)) if name else None
     if trigger == "TOOL_OPTIONS":
         tool = context.workspace.tools.from_space_view3d_mode(mode, create=False)
         tid = tool.idname if tool else ""
         name = mm.SELECT_OPTIONS if tid.startswith("builtin.select") else mm.TOOL_OPTIONS.get(tid)
         return ("pie", idname(name)) if name else None
-    space = getattr(context, "space_data", None)
     if space is not None and space.type == 'IMAGE_EDITOR':
         # UV Editor: Maya 2026's UV Editor RMB marking menu; Shift+RMB = its UV editing menu for the component
-        # (UVs, edges and vertices share the UV one); Ctrl+RMB = its selection conversion menu
+        # (UVs, edges and vertices share the UV one); Ctrl+RMB = its selection conversion menu; Ctrl+Shift+RMB (above) =
+        # the option menu of its active tool
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":

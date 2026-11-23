@@ -778,15 +778,20 @@ def _select_prefs():
         "NW": ("Marquee", ("tool", "builtin.select_box", False)),
         "W": ("Camera-Based Selection", ("allset.mm_camera_based", {})),
         "SW": ("Clear Selection", "allset.mm_clear_selection"),
-        "S": ("Soft Select", Sub(radial={
-            "N": ("Object", None),
-            "S": ("Soft Select", _toggle("scene.allset_soft_select")),
-            "SW": ("Volume", ("allset.soft_falloff_mode", {"surface": False})),
-            "W": ("Surface", ("allset.soft_falloff_mode", {"surface": True})),
-            "NW": ("Global", None),
-            "E": ("Color Feedback", None),
-        })),
+        "S": _soft_select(),
     }, items=[("Automatic Camera-Based Selection", None)]))
+
+
+def _soft_select():
+    """Maya's Soft Select submenu of the tool option menus (3D View and UV Editor)."""
+    return ("Soft Select", Sub(radial={
+        "N": ("Object", None),
+        "S": ("Soft Select", _toggle("scene.allset_soft_select")),
+        "SW": ("Volume", ("allset.soft_falloff_mode", {"surface": False})),
+        "W": ("Surface", ("allset.soft_falloff_mode", {"surface": True})),
+        "NW": ("Global", None),
+        "E": ("Color Feedback", None),
+    }))
 
 
 def _constraints():
@@ -1415,11 +1420,65 @@ UV_CONVERT = MarkingMenu(
     ])
 
 
-MENUS ={m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
+# Ctrl+Shift+RMB in the UV Editor: Maya's option menus of the UV Editor's own Move / Rotate / Scale / Select tools.
+# No UV selection / transform constraints in Blender (greyed submenus, like the Shift+RMB Pinning list).
+_UV_IMAGE = {"space_type": 'IMAGE_EDITOR'}
+UV_PICK_MARQUEE = ("tool", "builtin.select_box", _UV_IMAGE)     # the UV Toolkit's Pick/Marquee and Drag tools
+UV_DRAG_MARQUEE = ("tool", "builtin.select_circle", _UV_IMAGE)
+
+
+def _uv_tool_constraints():
+    return [("Selection Constraints", unavailable()), ("Transform Constraints", unavailable())]
+
+
+def _uv_step(kind):
+    return ("Step Snap", ("allset.uv_step_snap", {"kind": kind}))
+
+
+def _uv_options(label):
+    # the tool's settings (Maya: the tool's property window) = the UV Editor sidebar's Tool tab
+    return [*_uv_tool_constraints(), DIVIDER, (label, "allset.uv_tool_settings")]
+
+
+def _uv_select_prefs():
+    """The Select submenu (S) of the UV Move / Rotate / Scale option menus."""
+    return ("Select", Sub(radial={
+        "NE": ("Drag/Marquee", UV_DRAG_MARQUEE),
+        "E": ("Highlight Backfaces", None),
+        "NW": ("Pick/Marquee", UV_PICK_MARQUEE),
+        "S": _soft_select(),
+    }, items=_uv_options("Select Options")))
+
+
+UV_OPT_MOVE = MarkingMenu(
+    "UV_OPT_MOVE", "UV Move Options", "maya",
+    radial={"N": SYMMETRY, "E": _uv_step('TRANSLATE'), "SE": ("Keep Spacing", None), "S": _uv_select_prefs()},
+    items=_uv_options("Move Options"))
+
+UV_OPT_ROTATE = MarkingMenu(
+    "UV_OPT_ROTATE", "UV Rotate Options", "maya",
+    radial={"N": SYMMETRY, "E": _uv_step('ROTATE'), "S": _uv_select_prefs()},
+    items=_uv_options("Rotate Options"))
+
+UV_OPT_SCALE = MarkingMenu(
+    "UV_OPT_SCALE", "UV Scale Options", "maya",
+    radial={"N": SYMMETRY, "E": _uv_step('RESIZE'), "S": _uv_select_prefs(),
+            "W": ("Prevent Negative Scale", None)},
+    items=_uv_options("Scale Options"))
+
+UV_OPT_SELECT = MarkingMenu(
+    "UV_OPT_SELECT", "UV Select Options", "maya",
+    radial={"N": SYMMETRY, "NE": ("Drag/Marquee", UV_DRAG_MARQUEE), "E": ("Highlight Backfaces", None),
+            "S": _soft_select(), "NW": ("Pick/Marquee", UV_PICK_MARQUEE)},
+    items=_uv_options("Select Options"))
+
+
+MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
-                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, UV_CONVERT, KEY_TANGENT,
+                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, UV_CONVERT,
+                             UV_OPT_MOVE, UV_OPT_ROTATE, UV_OPT_SCALE, UV_OPT_SELECT, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
 # The kit's own menus. MENUS is what opens: user_menus.apply (Marking Menu Editor) puts rebuilt copies of the
 # menus the user changed and the user's own menus into it; these factory objects are never changed.
@@ -1430,6 +1489,10 @@ TOOL_OPTIONS = {"builtin.move": "OPT_MOVE", "builtin.rotate": "OPT_ROTATE",
                 "builtin.scale": "OPT_SCALE", "builtin.transform": "OPT_MOVE",
                 "allset.quad_draw_tool": "OPT_QUAD_DRAW"}
 SELECT_OPTIONS = "OPT_SELECT"
+# The UV Editor's active tool -> its options marking menu (Ctrl+Shift+RMB there); its select tools share one.
+UV_TOOL_OPTIONS = {"builtin.move": "UV_OPT_MOVE", "builtin.rotate": "UV_OPT_ROTATE",
+                   "builtin.scale": "UV_OPT_SCALE", "builtin.transform": "UV_OPT_MOVE"}
+UV_SELECT_OPTIONS = "UV_OPT_SELECT"
 
 
 def walk(sub, path):

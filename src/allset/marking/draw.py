@@ -221,6 +221,9 @@ def checked(action):
         if op == "allset.mm_camera_based":        # Camera-Based Selection = select-through off
             from .. import preferences
             return not preferences.get(bpy.context).select_through
+        if op == "allset.uv_step_snap":            # UV Editor tool option menus
+            from ..operators import snap_align
+            return snap_align.uv_step_snap_on(bpy.context.scene.tool_settings, props["kind"])
         if op == "allset.component_mask":        # Shift+Q check boxes = the mesh select modes
             mask = bpy.context.scene.tool_settings.mesh_select_mode
             return bool(mask[engine.MASK_CHECKS.index(props["kind"])])

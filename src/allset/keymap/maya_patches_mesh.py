@@ -115,7 +115,8 @@ def patch_component_pick_walk(kd):
 
 def patch_uv(kd):
     kd.remove(UV_KM, "wm.call_menu", type="RIGHTMOUSE")
-    for trigger, mods in (("RMB", {}), ("SHIFT_RMB", {"shift": True}), ("CTRL_RMB", {"ctrl": True})):
+    for trigger, mods in (("RMB", {}), ("SHIFT_RMB", {"shift": True}), ("CTRL_RMB", {"ctrl": True}),
+                          ("TOOL_OPTIONS", {"ctrl": True, "shift": True})):
         _add(kd, UV_KM, "allset.marking_menu", make_event("RIGHTMOUSE", **mods), {"trigger": trigger})
     kd.remove(UV_KM, "wm.call_menu_pie", type="X", shift=True)
     kd.remove(UV_KM, "uv.select_linked", type="L", ctrl=True)

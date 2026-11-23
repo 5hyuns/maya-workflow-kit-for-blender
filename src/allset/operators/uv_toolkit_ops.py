@@ -584,8 +584,30 @@ def straighten_axis(context):
     return 'UV' if s.straighten_u == s.straighten_v else ('U' if s.straighten_u else 'V')
 
 
+class ALLSET_OT_uv_tool_settings(bpy.types.Operator):
+    """Show the settings of the UV Editor's active tool (the sidebar's Tool tab)"""
+    bl_idname = "allset.uv_tool_settings"
+    bl_label = "Tool Settings"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'IMAGE_EDITOR'
+
+    def execute(self, context):
+        context.space_data.show_region_ui = True
+        for region in context.area.regions:
+            if region.type == 'UI':
+                try:        # read-only until the sidebar has drawn its tabs once
+                    region.active_panel_category = "Tool"
+                except (AttributeError, TypeError, ValueError):
+                    pass
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+
 classes = (ALLSET_PG_uv_toolkit, ALLSET_OT_uv_align_to, ALLSET_OT_uv_straighten_uvs, ALLSET_OT_uv_unfold_along,
-           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize)
+           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize, ALLSET_OT_uv_tool_settings)
 
 
 def register_props():

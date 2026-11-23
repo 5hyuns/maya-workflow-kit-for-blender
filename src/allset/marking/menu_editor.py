@@ -48,6 +48,10 @@ TRIGGERS = {
     "UV_EDITOR_RMB": "RMB in the UV Editor", "SHIFT_UV": "Shift+RMB in the UV Editor (UVs, edges, vertices)",
     "SHIFT_UV_SHELL": "Shift+RMB in the UV Editor (UV shells)", "SHIFT_UV_FACE": "Shift+RMB in the UV Editor (faces)",
     "UV_CONVERT": "Ctrl+RMB in the UV Editor",
+    "UV_OPT_MOVE": "Ctrl+Shift+RMB in the UV Editor (Move Tool)",
+    "UV_OPT_ROTATE": "Ctrl+Shift+RMB in the UV Editor (Rotate Tool)",
+    "UV_OPT_SCALE": "Ctrl+Shift+RMB in the UV Editor (Scale Tool)",
+    "UV_OPT_SELECT": "Ctrl+Shift+RMB in the UV Editor (select tools)",
     "KEY_TANGENT": "Shift+S + LMB",
     "SELECT_COMPONENT": "Shift+Q + LMB", "SELECT_POLYGON": "Alt+Q + LMB",
 }

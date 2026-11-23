@@ -1315,3 +1315,27 @@ MARKING.update({
         "Distribute Shells Right", "The kit lines shells up to the right only: run Right, then rotate or move the "
         "row.") for label in ("Left", "Up", "Down", "Towards Target")},
 })
+
+
+# UV Editor Ctrl+Shift+RMB tool option menus: the 3D View option menus' notices where Blender lacks the same thing.
+_UV_OPTS = ("UV_OPT_MOVE", "UV_OPT_ROTATE", "UV_OPT_SCALE", "UV_OPT_SELECT")
+_UV_SOFT = {"Object": MARKING["OPT_MOVE/Select/Soft Select/Object"],
+            "Global": MARKING["OPT_MOVE/Select/Soft Select/Global"],
+            "Color Feedback": MARKING["OPT_MOVE/Select/Soft Select/Color Feedback"]}
+_UV_BACKFACES = ("UV Editor", "Blender's UV Editor pre-selects no components: it highlights the selection only.")
+MARKING.update({
+    **{f"{m}/{label}": _UV_CONSTRAINTS for m in _UV_OPTS
+       for label in ("Selection Constraints", "Transform Constraints")},
+    **{f"{m}/Select/{label}": _UV_CONSTRAINTS for m in _UV_OPTS[:3]
+       for label in ("Selection Constraints", "Transform Constraints")},
+    **{f"{m}/Select/Highlight Backfaces": _UV_BACKFACES for m in _UV_OPTS[:3]},
+    "UV_OPT_SELECT/Highlight Backfaces": _UV_BACKFACES,
+    **{f"{m}/Select/Soft Select/{label}": text for m in _UV_OPTS[:3] for label, text in _UV_SOFT.items()},
+    **{f"UV_OPT_SELECT/Soft Select/{label}": text for label, text in _UV_SOFT.items()},
+    "UV_OPT_MOVE/Keep Spacing": (
+        "Snap With", "Blender moves the selected UVs together while snapping; there is no separate keep-spacing "
+        "switch."),
+    "UV_OPT_SCALE/Prevent Negative Scale": (
+        "Scale gizmo", "Blender's UV scale can pass zero and flip the UVs: stop the drag before the handle crosses "
+        "the pivot."),
+})
