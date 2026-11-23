@@ -17,6 +17,7 @@ import math
 
 import bpy
 
+from . import uv_stitch
 from .option_windows import F, Window
 
 
@@ -34,7 +35,7 @@ def _run_merge(context, v):
 
 
 def _run_stitch(context, v):
-    return bpy.ops.uv.stitch('INVOKE_DEFAULT')      # the menu item's own command (Blender Stitch)
+    return bpy.ops.allset.uv_stitch_together('EXEC_DEFAULT', order=uv_stitch.ORDER_LABELS[v["order"]])
 
 
 WINDOWS = [
@@ -51,9 +52,9 @@ WINDOWS = [
     Window("uv_merge", "Merge UVs Options", "Merge UVs", None, [
         F("distance", "Threshold:", "float", 0.01, lo=0.0, hi=1.0),
     ], _run_merge, paths=("UV Editor/Cut/Sew/Merge",)),
-    Window("uv_stitch_together", "Stitch Together Options", "Stitch Together", None, [],
-           _run_stitch, paths=("UV Editor/Cut/Sew/Stitch Together",),
-           missing=("Stitch Together: Smallest to Largest / Largest to Smallest",)),
+    Window("uv_stitch_together", "Stitch Together Options", "Apply and Close", None, [
+        F("order", "Stitch Together:", "enum", "Smallest to Largest", items=tuple(uv_stitch.ORDER_LABELS)),
+    ], _run_stitch, paths=("UV Editor/Cut/Sew/Stitch Together",)),
 ]
 
 

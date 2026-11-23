@@ -7508,7 +7508,6 @@ STRINGS = {
     'Move and Sew UVs Options': 'UV を移動して縫合オプション',
     'Shell Splitting Tolerance, Connect Holes': 'シェル分割の許容値、穴をつなぐ',
     'Stitch Together Options': '縫い合わせるオプション',
-    'Stitch Together: Smallest to Largest / Largest to Smallest': '縫い合わせる: 小さい順 / 大きい順',
     'Center on closest tile': '最も近いタイルの中央に配置',
     'Distribution Distance': '分散の距離',
     'Each face separately': 'フェースごとに個別に',
@@ -7587,4 +7586,7 @@ STRINGS = {
     'Pin the unpinned UVs and unpin the pinned ones (Maya Invert Pin)': 'ピンのない UV をピン留めし、ピン留めされた UV を解除 (Maya のピンを反転)',
     'Show the lattice around the UVs and the point under the mouse (Lattice UV Tool)': 'UV を囲むラティスとマウス下のポイントを表示 (ラティス UV ツール)',
     'The brush circle follows the mouse (UV Editor brush tools)': 'ブラシの円がマウスに付いて行きます (UV エディタ ブラシ ツール)',
+    'Smallest to Largest': '小さい順',
+    'Largest to Smallest': '大きい順',
+    'Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)': '選択した境界エッジに沿ってシェルを一度に縫い合わせます: 小さいシェルが大きいシェルに移動・回転・スケールし、\nエッジが縫い合わされます (Maya の縫い合わせる)',
 }

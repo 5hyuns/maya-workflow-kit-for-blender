@@ -58,7 +58,7 @@ def _pick_edge(ob, index):
 def test_windows_open_from_the_option_boxes():
     for item, key, action in (("Auto Seams", "uv_auto_seams", "Auto Seams"),
                               ("Move and Sew", "uv_move_sew", "Move and Sew"), ("Merge", "uv_merge", "Merge UVs"),
-                              ("Stitch Together", "uv_stitch_together", "Stitch Together")):
+                              ("Stitch Together", "uv_stitch_together", "Apply and Close")):
         w = ow.find_path(CS + item)
         assert w is not None and w.key == key and w.action == action, (item, w and w.key)
         assert box.option_kind(CS + item) == "window", item

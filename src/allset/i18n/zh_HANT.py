@@ -7509,7 +7509,6 @@ STRINGS = {
     'Move and Sew UVs Options': '移動並縫合 UV 選項',
     'Shell Splitting Tolerance, Connect Holes': '殼拆分容差、連接孔洞',
     'Stitch Together Options': '縫合到一起選項',
-    'Stitch Together: Smallest to Largest / Largest to Smallest': '縫合到一起：從小到大 / 從大到小',
     'Center on closest tile': '置中到最近的圖塊',
     'Distribution Distance': '分佈距離',
     'Each face separately': '每個面單獨',
@@ -7588,4 +7587,7 @@ STRINGS = {
     'Pin the unpinned UVs and unpin the pinned ones (Maya Invert Pin)': '固定未固定的 UV 並取消已固定的 UV (Maya 反轉固定)',
     'Show the lattice around the UVs and the point under the mouse (Lattice UV Tool)': '顯示 UV 周圍的晶格和滑鼠下的點 (晶格 UV 工具)',
     'The brush circle follows the mouse (UV Editor brush tools)': '筆刷圓圈跟隨滑鼠 (UV 編輯器筆刷工具)',
+    'Smallest to Largest': '從小到大',
+    'Largest to Smallest': '從大到小',
+    'Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)': '沿所選邊界邊一次縫合殼：較小的殼移動、旋轉並縮放到較大的殼上，\n然後縫合這些邊 (Maya 縫合到一起)',
 }

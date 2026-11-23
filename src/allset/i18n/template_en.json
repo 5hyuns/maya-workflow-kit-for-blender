@@ -7849,6 +7849,11 @@
    "UV": "UV",
    "Unstack Shells": "Unstack Shells"
   },
+  "Labels/operators/uv_stitch": {
+   "Largest to Smallest": "Largest to Smallest",
+   "Smallest to Largest": "Smallest to Largest",
+   "Stitch Together": "Stitch Together"
+  },
   "Labels/operators/uv_toolkit_ops": {
    "0 = a new random result every time": "0 = a new random result every time",
    "Align UVs": "Align UVs",
@@ -11509,6 +11514,7 @@
    "Align": "Align",
    "Align UVs Options": "Align UVs Options",
    "Align selection to": "Align selection to",
+   "Apply and Close": "Apply and Close",
    "Auto Seams": "Auto Seams",
    "Auto Seams Options": "Auto Seams Options",
    "Automatic": "Automatic",
@@ -11575,7 +11581,6 @@
    "Stack Similar Options": "Stack Similar Options",
    "Stitch Together": "Stitch Together",
    "Stitch Together Options": "Stitch Together Options",
-   "Stitch Together: Smallest to Largest / Largest to Smallest": "Stitch Together: Smallest to Largest / Largest to Smallest",
    "Straighten UV Border": "Straighten UV Border",
    "Straighten UV Border Options": "Straighten UV Border Options",
    "Threshold": "Threshold",
@@ -12683,6 +12688,9 @@
    "Stack the selected UV shells on the centre of their bounding box (Maya Stack Shells)": "Stack the selected UV shells on the centre of their bounding box (Maya Stack Shells)",
    "Turn each selected UV shell to its narrowest bounding box, counter-clockwise (Maya Orient Shells)": "Turn each selected UV shell to its narrowest bounding box, counter-clockwise (Maya Orient Shells)",
    "Turn each shell so its selected edge is horizontal or vertical (Maya Orient Shells to Edges)": "Turn each shell so its selected edge is horizontal or vertical (Maya Orient Shells to Edges)"
+  },
+  "Tooltips/operators/uv_stitch": {
+   "Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)": "Stitch the shells along the selected border edges at once: the smaller shell moves, turns and scales onto the\nlarger one and the edges are sewn (Maya Stitch Together)"
   },
   "Tooltips/operators/uv_toolkit_ops": {
    "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)": "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)",

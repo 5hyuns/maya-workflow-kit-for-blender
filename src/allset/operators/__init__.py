@@ -240,6 +240,8 @@ from . import uv_brush  # noqa: E402  UV Editor > Tools > Unfold / Optimize / Cu
 classes += uv_brush.classes
 from . import uv_lattice  # noqa: E402  UV Editor > Tools > Lattice (#500)
 classes += uv_lattice.classes
+from . import uv_stitch  # noqa: E402  UV Editor > Cut/Sew > Stitch Together (#503)
+classes += uv_stitch.classes
 
 from . import type_manip  # noqa: E402  Type Manipulator: per-character move / rotate / scale (#258)
 classes += type_manip.classes
