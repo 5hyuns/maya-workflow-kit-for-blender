@@ -11,7 +11,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
 from .. import compat, undo_steps
@@ -66,15 +66,16 @@ def _mel_str(value):
     return "%.10g" % value
 
 
-def distribute_uvs(items, axis=0):
+def distribute_uvs(items, axis=0, distance=0.0):
     """Maya Distribute UVs, default Distance = bounding box: the selected UVs (``items`` = [(name, uv layer, point)]
     in selection order) sorted by position along ``axis`` — Maya sorts the strings "<pos + offset> <name>", so ties
-    go by name — keep the first, and step the others by width / (count - 1)."""
+    go by name — keep the first, and step the others by width / (count - 1), or by ``distance`` (Distribution
+    Distance Custom) when it is above 0."""
     n = len(items)
     if n < 2:
         return 0
     vals = [_get(p, uv)[axis] for _, uv, p in items]
-    step = (max(vals) - min(vals)) / (n - 1)
+    step = distance if distance > 0 else (max(vals) - min(vals)) / (n - 1)
     offset = 5.0
     for v in vals:
         if v < offset:
@@ -443,6 +444,8 @@ class ALLSET_OT_uv_distribute_uvs(_ModOp, bpy.types.Operator):
     empty = "Select two or more UVs"
 
     axis: EnumProperty(items=[('U', "U", ""), ('V', "V", "")], default='U', options={'SKIP_SAVE'})
+    # Distribution Distance: 0 = Automatic (the selection's width), above 0 = Custom
+    distance: FloatProperty(name="Distribution Distance", default=0.0, min=0.0, options={'SKIP_SAVE'})
 
     def execute(self, context):
         synced = sync(context)
@@ -459,7 +462,7 @@ class ALLSET_OT_uv_distribute_uvs(_ModOp, bpy.types.Operator):
         if len(items) < 2:
             self.report({'WARNING'}, self.empty)
             return {'CANCELLED'}
-        distribute_uvs(items, 0 if self.axis == 'U' else 1)
+        distribute_uvs(items, 0 if self.axis == 'U' else 1, self.distance)
         for ob, _bm, _uv in edited:
             bmesh.update_edit_mesh(ob.data)
         return {'FINISHED'}
@@ -498,8 +501,10 @@ class ALLSET_OT_uv_stack_similar(_ModOp, bpy.types.Operator):
     bl_label = "Stack Similar Shells"
     empty = "No similar UV shells in the selection"
 
+    tolerance: FloatProperty(name="Tolerance", default=STACK_TOLERANCE, min=0.0, options={'SKIP_SAVE'})
+
     def run_points(self, context, ob, bm, uv, synced, pts, where):
-        return stack_similar(target_shells(bm, uv, synced, self._fallback), uv, pts, where)
+        return stack_similar(target_shells(bm, uv, synced, self._fallback), uv, pts, where, self.tolerance)
 
 
 @undo_steps.no_redo_panel
@@ -522,6 +527,9 @@ class ALLSET_OT_uv_straighten_border(_ModOp, bpy.types.Operator):
     bl_label = "Straighten Border"
     empty = "Select a run of border UVs (an open part of a shell border)"
 
+    # Fill gaps in selection + UV gap tolerance (0 = no gaps filled)
+    gap: IntProperty(name="UV gap tolerance", default=GAP_TOLERANCE, min=0, options={'SKIP_SAVE'})
+
     def run_points(self, context, ob, bm, uv, synced, pts, where):
         chosen = set(selected_ids(bm, uv, synced, pts))
         if not chosen:
@@ -529,7 +537,7 @@ class ALLSET_OT_uv_straighten_border(_ModOp, bpy.types.Operator):
         done = 0
         for g in shells(bm, uv):
             for cyc in border_cycles(g, uv, where):
-                done += straighten(cyc, straighten_chains(cyc, chosen), pts, uv)
+                done += straighten(cyc, straighten_chains(cyc, chosen, self.gap), pts, uv)
         return done
 
 

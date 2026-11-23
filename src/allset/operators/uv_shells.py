@@ -251,41 +251,57 @@ def snap_together(bm, uv, synced, method=0):
     return 1
 
 
-def distribute(groups, uv, padding=0.0):
-    """Right: widest shell first at the selection centre, the others to its right, no gap, centred on its v."""
+DIRECTIONS = {'RIGHT': (0, 1), 'LEFT': (0, -1), 'UP': (1, 1), 'DOWN': (1, -1)}
+
+
+def distribute(groups, uv, padding=0.0, direction='RIGHT'):
+    """Right: widest shell first at the selection centre, the others to its right, ``padding`` apart, centred on its
+    v. Left the same to the left; Up / Down: tallest first, the others above / below, centred on its u."""
     if not groups:
         return 0
+    k, sign = DIRECTIONS[direction]
+    o = 1 - k
     lo = Vector((min(uv_bounds(g, uv)[0].x for g in groups), min(uv_bounds(g, uv)[0].y for g in groups)))
     hi = Vector((max(uv_bounds(g, uv)[1].x for g in groups), max(uv_bounds(g, uv)[1].y for g in groups)))
     centre = (lo + hi) / 2
 
-    def width(g):
+    def size(g):
         a, b = uv_bounds(g, uv)
-        return b.x - a.x
-    order = sorted(groups, key=width, reverse=True)
+        return b[k] - a[k]
+    order = sorted(groups, key=size, reverse=True)
     _move(order[0], uv, centre - bbox_centre(order[0], uv))
-    v_mid = centre.y
-    prev_u1 = uv_bounds(order[0], uv)[1].x
+    mid = centre[o]
+    a, b = uv_bounds(order[0], uv)
+    edge = b[k] if sign > 0 else a[k]
     for g in order[1:]:
         a, b = uv_bounds(g, uv)
-        _move(g, uv, Vector((prev_u1 + padding - a.x, v_mid - (a.y + b.y) / 2)))
-        prev_u1 = uv_bounds(g, uv)[1].x
+        d = Vector((0.0, 0.0))
+        d[k] = edge + padding - a[k] if sign > 0 else edge - padding - b[k]
+        d[o] = mid - (a[o] + b[o]) / 2
+        _move(g, uv, d)
+        a, b = uv_bounds(g, uv)
+        edge = b[k] if sign > 0 else a[k]
     return len(groups)
 
 
-def normalize(loops, uv):
-    """The bbox of ``loops`` stretched to the tile under its centre, u and v separately (collective)."""
+def normalize(loops, uv, along='UV', keep_aspect=False, closest_tile=True):
+    """The bbox of ``loops`` stretched to the tile under its centre (``closest_tile``; else the 0-1 tile), u and v
+    separately (``along`` 'UV'; 'U' / 'V' = only that direction), or by one factor when ``keep_aspect``."""
     if not loops:
         return 0
     xs = [l[uv].uv.x for l in loops]
     ys = [l[uv].uv.y for l in loops]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    tu, tv = math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)
+    tu, tv = (math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)) if closest_tile else (0, 0)
     sx = 1.0 / (x1 - x0) if x1 - x0 > 1e-12 else 1.0
     sy = 1.0 / (y1 - y0) if y1 - y0 > 1e-12 else 1.0
+    if keep_aspect:
+        sx = sy = min(sx if along != 'V' else sy, sy if along != 'U' else sx)
     for l in loops:
         p = l[uv].uv
-        l[uv].uv = Vector((tu + (p.x - x0) * sx, tv + (p.y - y0) * sy))
+        u = tu + (p.x - x0) * sx if along != 'V' or keep_aspect else p.x
+        v = tv + (p.y - y0) * sy if along != 'U' or keep_aspect else p.y
+        l[uv].uv = Vector((u, v))
     return len(loops)
 
 
@@ -517,8 +533,12 @@ class ALLSET_OT_uv_distribute(_ShellOp, bpy.types.Operator):
     bl_idname = "allset.uv_distribute"
     bl_label = "Distribute Shells"
 
+    # the Distribute Shells options
+    direction: EnumProperty(items=[(d, d.title(), "") for d in DIRECTIONS], default='RIGHT', options={'SKIP_SAVE'})
+    padding: FloatProperty(name="Shell Padding", default=0.0, options={'SKIP_SAVE'})
+
     def run(self, context, bm, uv, synced):
-        return distribute(target_shells(bm, uv, synced, self._fallback), uv)
+        return distribute(target_shells(bm, uv, synced, self._fallback), uv, self.padding, self.direction)
 
 
 @undo_steps.no_redo_panel
@@ -528,13 +548,22 @@ class ALLSET_OT_uv_normalize(_ShellOp, bpy.types.Operator):
     bl_idname = "allset.uv_normalize"
     bl_label = "Normalize"
 
+    # the Normalize options
+    along: EnumProperty(items=[('UV', "UV", ""), ('U', "U", ""), ('V', "V", "")], default='UV', options={'SKIP_SAVE'})
+    each_face: BoolProperty(name="Each face separately", default=False, options={'SKIP_SAVE'})
+    keep_aspect: BoolProperty(name="Preserve aspect ratio", default=False, options={'SKIP_SAVE'})
+    closest_tile: BoolProperty(name="Center on closest tile", default=True, options={'SKIP_SAVE'})
+
     def run(self, context, bm, uv, synced):
         faces = uv_tools.selected_faces(bm, uv, synced)
         if not faces:
             # selected UVs / edges: every face using one of them, like Maya
             touched = {l.face for p in selected_points(bm, uv, synced) for l in p}
             faces = sorted(touched, key=lambda f: f.index)
-        return normalize([l for f in faces for l in f.loops], uv)
+        groups = [[f] for f in faces] if self.each_face else [faces]
+        for fs in groups:
+            normalize([l for f in fs for l in f.loops], uv, self.along, self.keep_aspect, self.closest_tile)
+        return len(faces)
 
 
 @undo_steps.no_redo_panel
@@ -543,6 +572,9 @@ class ALLSET_OT_uv_unstack(_ShellOp, bpy.types.Operator):
     (Maya Unstack Shells; Blender Pack Islands without scaling)"""
     bl_idname = "allset.uv_unstack"
     bl_label = "Unstack Shells"
+
+    # the Unstack option: mirrored (reversed) shells are flipped back first, like Maya
+    flip_reversed: BoolProperty(name="Flip reversed UV shells", default=True, options={'SKIP_SAVE'})
 
     def execute(self, context):
         done = 0
@@ -553,6 +585,13 @@ class ALLSET_OT_uv_unstack(_ShellOp, bpy.types.Operator):
             groups = target_shells(bm, uv, sync(context), fallback)
             if len(groups) < 2:
                 continue
+            if self.flip_reversed:
+                from .uv_modify import _signed_area
+                for g in groups:
+                    if _signed_area(g, uv) < 0:
+                        c = bbox_centre(g, uv)
+                        for loop in _loops_of(g):
+                            loop[uv].uv.x = 2 * c.x - loop[uv].uv.x
             faces = [f for g in groups for f in g]
             bm.faces.index_update()
             idx = [f.index for f in faces]

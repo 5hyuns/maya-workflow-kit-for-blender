@@ -371,10 +371,10 @@ MAP = {
     f"{UV}/Cut/Sew/Move and Sew": "allset.uv_move_sew",
     f"{UV}/Cut/Sew/Create UV Shell": "allset.uv_create_shell",
     f"{UV}/Cut/Sew/Stitch Together": "uv.stitch",
-    f"{UV}/Modify/Align": ("uv.align", {"axis": 'ALIGN_AUTO'}),
+    f"{UV}/Modify/Align": ("allset.uv_align_to", {"axis": 'U', "where": 'MIN'}),     # Align Options default
     f"{UV}/Modify/Flip": ("transform.mirror", {"constraint_axis": (True, False, False)}),
     f"{UV}/Modify/Linear Align": ("uv.align", {"axis": 'ALIGN_S'}),
-    f"{UV}/Modify/Match UVs": "uv.remove_doubles",
+    f"{UV}/Modify/Match UVs": ("uv.remove_doubles", {"threshold": 0.01}),     # Match UVs Options default
     f"{UV}/Modify/Rotate": ("transform.rotate", {"value": -math.pi / 2}),
     f"{UV}/Modify/Unitize": "uv.reset",
     f"{UV}/Modify/Gather Shells": "uv.pack_islands",
