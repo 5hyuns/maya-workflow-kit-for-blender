@@ -155,11 +155,23 @@ def test_uv_state_round_trip():
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.context.scene.tool_settings.use_uv_select_sync = False
-    want = F({("uvPlane", 0), ("uvPlane", 1), ("uvPlane", 5)})
+    ts = bpy.context.scene.tool_settings
+    ts.use_uv_select_sync = False
+    ts.uv_select_mode = 'VERTEX'
+    b = bmesh.from_edit_mesh(me)
+    uv = b.loops.layers.uv.active
+    b.faces.ensure_lookup_table()
+    want = F(sel._uv_key("uvPlane", lp, uv) for lp in b.faces[0].loops)       # one UV = a vertex's shared position
     sel.set_uv_state(want)
     assert sel.uv_state() == want, sorted(sel.uv_state())
-    bpy.context.scene.tool_settings.use_uv_select_sync = True
-    sel.set_uv_state(F({("uvPlane", 0)}))
-    assert sel.uv_state() == F({("uvPlane", 0)})
+    ts.uv_select_mode = 'FACE'
+    sel.set_uv_state(F({('F', "uvPlane", 1)}))
+    assert sel.uv_state() == F({('F', "uvPlane", 1)}), sorted(sel.uv_state())
+    ts.use_uv_select_sync = True
+    ts.mesh_select_mode = (True, False, False)
+    sel.set_uv_state(F({('V', "uvPlane", 0)}))
+    assert sel.uv_state() == F({('V', "uvPlane", 0)})
+    ts.mesh_select_mode = (False, False, True)
+    sel.set_uv_state(F({('F', "uvPlane", 2)}))
+    assert sel.uv_state() == F({('F', "uvPlane", 2)}), sorted(sel.uv_state())
     bpy.ops.object.mode_set(mode='OBJECT')
