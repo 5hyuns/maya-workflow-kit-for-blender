@@ -98,7 +98,7 @@ def _tk():
     return bpy.context.scene.allset_uv_toolkit
 
 
-def test_defaults_like_maya():
+def test_transform_defaults():
     tk = _tk()
     assert math.isclose(tk.nudge, 0.1, abs_tol=1e-6) and math.isclose(tk.rotate_angle, 90.0)
     assert math.isclose(tk.scale_factor, 2.0) and tk.scale_axis == 'UV' and tk.pivot_area == 'SELECTION'
