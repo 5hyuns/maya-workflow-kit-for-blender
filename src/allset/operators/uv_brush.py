@@ -846,7 +846,7 @@ class ALLSET_OT_uv_brush_last(bpy.types.Operator):
     def execute(self, context):
         mode = last_mode(context)
         if mode is None:
-            self.report({'INFO'}, "No other UV brush tool used yet")
+            self.report({'WARNING'}, "No other UV brush tool used yet")
             return {'CANCELLED'}
         bpy.ops.wm.tool_set_by_id(name=TOOL_IDS[mode], space_type='IMAGE_EDITOR')
         return {'FINISHED'}
