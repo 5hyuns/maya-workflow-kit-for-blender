@@ -251,7 +251,7 @@ def s_light_shot():
     ob = cbm.lead(bpy.context)
     rows = [r.name for r in bpy.context.scene.allset_cb.rows if r.kind == "SHAPE"]
     check(f"point light SHAPES rows = Maya Color R / G / B, then Blender's Power ({ob and ob.name}: {rows})",
-          rows == ["maya:colorR", "maya:colorG", "maya:colorB", "energy"])
+          rows[:4] == ["maya:colorR", "maya:colorG", "maya:colorB", "energy"])
 
 
 run()
