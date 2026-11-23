@@ -133,7 +133,7 @@ def s_scene():
     C["cube"] = cube.name
     C["cube_mat0"] = cube.active_material.name if cube.active_material else None
     for kind in ('BLINN', 'PHONG'):
-        mat = m.new_material(kind)
+        mat = m.new_material()
         mat.use_fake_user = True
         C[kind] = mat.name
     bpy.context.window_manager.allset_hs_swatch = 'SMALL'   # the swatch names fit the Browser of a small window

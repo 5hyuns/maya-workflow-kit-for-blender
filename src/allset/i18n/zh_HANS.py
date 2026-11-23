@@ -7406,4 +7406,12 @@ STRINGS = {
     "Create a new material (Blender's Principled BSDF) and assign it to the selected objects or faces (Maya\nshelf material button, Assign Favorite Material)": '新建材质 (Blender 的原理化 BSDF) 并指定给选中的物体或面 (Maya\n工具架材质按钮，Assign Favorite Material)',
     "Create a new material (Blender's Principled BSDF) without assigning it (Maya Hypershade Create)": '新建材质 (Blender 的原理化 BSDF)，不指定给物体 (Maya Hypershade Create)',
     'Create a new material and assign it (Maya Assign Favorite Material: Blender has one material, the Principled\nBSDF)': '新建材质并指定 (Maya Assign Favorite Material：Blender 只有一种材质，即原理化\nBSDF)',
+    'Shader Editor: Layer Weight + Color Ramp': '着色器编辑器：层权重 + 颜色渐变',
+    'Shader Editor: Mix Shader': '着色器编辑器：混合着色器',
+    'Shader Editor: Emission': '着色器编辑器：自发光',
+    'Shader Editor: Holdout': '着色器编辑器：阻隔',
+    'Blender builds a ramp shader in the Shader Editor: Layer Weight (Facing) into a Color Ramp into Base Color.': 'Blender 在着色器编辑器中搭建渐变着色器：层权重 (朝向) 接颜色渐变，再接基础色。',
+    "Blender layers shaders in the Shader Editor with a Mix Shader (Fac = the top layer's transparency).": 'Blender 在着色器编辑器中用混合着色器叠加着色器 (系数 = 顶层的透明度)。',
+    "Blender's flat, unlit surface is an Emission shader in the Shader Editor.": 'Blender 中平坦、不受光照的表面是着色器编辑器里的自发光着色器。',
+    'Blender shows the background through a surface with a Holdout shader in the Shader Editor (Cycles: Object > Visibility > Shadow Catcher catches shadows).': 'Blender 在着色器编辑器中用阻隔着色器让表面显示背景 (Cycles：物体 > 可见性 > 阴影捕捉器接收阴影)。',
 }

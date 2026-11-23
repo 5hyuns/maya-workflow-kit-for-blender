@@ -51,7 +51,7 @@ def s_scene():
     from importlib import import_module
     from sim import MODULE
     material = import_module(MODULE + ".operators.material")
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     ob.data.materials.clear()
     ob.data.materials.append(mat)
     # the AE Color field writes Principled Base Color (material.color_socket)

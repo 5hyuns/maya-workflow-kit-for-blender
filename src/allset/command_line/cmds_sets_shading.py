@@ -134,6 +134,10 @@ def shadingNode(*args, **kwargs):
         node_name = new_file_texture(name).name
     else:
         if maya_type not in material.SURFACE_TYPES:
+            from ..ui import notices
+            path = notices.NODE_SETUPS.get(maya_type)
+            if path is not None:
+                raise RuntimeError(f"shadingNode: {notices.NOTICES[path][1]}")
             raise RuntimeError(f"shadingNode: Maya Workflow Kit can't make a '{maya_type}' node"
                                + (" (texture nodes: file)" if as_texture else ""))
         mat = material.new_material()

@@ -4240,7 +4240,7 @@ def _m67_2_setup():
     C["obname"] = ob.name
     select_only(ob)
     with override():
-        bpy.ops.allset.assign_new_material(kind='LAMBERT')
+        bpy.ops.allset.assign_new_material()
     C["onmat"] = ob.active_material.name
     menu("Windows/Rendering Editors/Hypershade")
 
@@ -4252,7 +4252,7 @@ def _m67_2_open():
         return
     w, a = hs_window()
     with hs_ctx():
-        bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
+        bpy.ops.allset.hs_create()
     C["newmat"] = bpy.context.window_manager.allset_hs_material
     mat = bpy.data.materials.get(C["newmat"])
     check(f"[M67-2] Create = a new material, not assigned ({mat is not None}, users {mat.users if mat else None}, "

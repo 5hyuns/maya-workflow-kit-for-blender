@@ -1,5 +1,5 @@
 """In a real UI (Maya render workflow): sphere -> Windows > Rendering Editors >
-Hypershade -> a window in the Maya Hypershade layout (panes + Graph) -> Create Standard Surface -> Assign Material To
+Hypershade -> a window in the Maya Hypershade layout (panes + Graph) -> Create New Material -> Assign Material To
 Selection -> AE Base Color map button > File -> Render > Render Current Frame -> Keep Image -> render again -> two
 slots used; Windows > Rendering Editors > Light Editor -> an Outliner window of the lights (screenshots)."""
 
@@ -90,19 +90,19 @@ def s_hypershade_open():
     check(f"Windows > Rendering Editors > Hypershade: a window with Browser / Create / Material Viewer / Property "
           f"Editor panes and the Graph (got {C['open']}, {w is not None})", w is not None)
     C["hs"] = (w, a)
-    # Create > Standard Surface from the Create pane (a Properties editor), then Assign Material To Selection
+    # Create > New Material from the Create pane (a Properties editor), then Assign Material To Selection
     region = next(r for r in browser.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=w, area=browser, region=region, space_data=browser.spaces.active):
-        bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
-    mat = bpy.data.materials.get("standardSurface1")
+        bpy.ops.allset.hs_create()
+    C["newmat"] = bpy.context.window_manager.allset_hs_material
+    mat = bpy.data.materials.get(C["newmat"])
     sphere = bpy.data.objects[C["sphere"]]
-    # the new sphere already has the default lambert1
-    check(f"Create > Standard Surface: standardSurface1, not assigned yet, graph pinned to it "
+    check(f"Create > New Material: {C['newmat']}, not assigned yet, graph pinned to it "
           f"({mat is not None}, {sphere.active_material and sphere.active_material.name}, {a.spaces.active.pin})",
           mat is not None and sphere.active_material is not mat and a.spaces.active.pin
           and a.spaces.active.node_tree == mat.node_tree)
     with bpy.context.temp_override(window=w, area=browser, region=region):
-        bpy.ops.allset.assign_material(material="standardSurface1")
+        bpy.ops.allset.assign_material(material=C["newmat"])
     C["browser"] = browser
     redraw_all()
 
@@ -110,23 +110,23 @@ def s_hypershade_open():
 @step
 def s_assigned():
     sphere = bpy.data.objects[C["sphere"]]
-    check(f"Assign Material To Selection: {sphere.name} slot 0 = standardSurface1",
-          sphere.material_slots and sphere.material_slots[0].material.name == "standardSurface1")
+    check(f"Assign Material To Selection: {sphere.name} slot 0 = {C['newmat']}",
+          sphere.material_slots and sphere.material_slots[0].material.name == C["newmat"])
     w, a = C["hs"]
     # pick it in the Browser pane: the graph follows the object again (unpinned)
     browser = C["browser"]
     region = next(r for r in browser.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=w, area=browser, region=region, space_data=browser.spaces.active):
-        bpy.ops.allset.hs_pick(material="standardSurface1")
+        bpy.ops.allset.hs_pick(material=C["newmat"])
     # AE Base Color map button > File
-    bpy.ops.allset.ae_map_connect(material="standardSurface1", socket="Base Color", kind='FILE')
+    bpy.ops.allset.ae_map_connect(material=C["newmat"], socket="Base Color", kind='FILE')
     redraw_all()
 
 
 @step
 def s_mapped():
     w, a = C["hs"]
-    mat = bpy.data.materials["standardSurface1"]
+    mat = bpy.data.materials[C["newmat"]]
     inp = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs["Base Color"]
     check(f"AE Base Color map > File: Image Texture linked to Base Color, graph unpinned "
           f"({inp.is_linked and inp.links[0].from_node.type}, pin {a.spaces.active.pin})",

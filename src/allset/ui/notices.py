@@ -212,7 +212,24 @@ NOTICES = {
     "Fields/Solvers/Gravity": (
         "Wind field", "Blender has no gravity field: a Wind field blowing down (Blender's strength); the scene's "
         "gravity is global (Scene properties)."),
+    # Maya surface shaders that are a node set-up in Blender (greyed; the command line's shadingNode says the same)
+    "Hypershade/Create/Materials/Ramp Shader": (
+        "Shader Editor: Layer Weight + Color Ramp", "Blender builds a ramp shader in the Shader Editor: Layer Weight "
+        "(Facing) into a Color Ramp into Base Color."),
+    "Hypershade/Create/Materials/Layered Shader": (
+        "Shader Editor: Mix Shader", "Blender layers shaders in the Shader Editor with a Mix Shader (Fac = the top "
+        "layer's transparency)."),
+    "Hypershade/Create/Materials/Surface Shader": (
+        "Shader Editor: Emission", "Blender's flat, unlit surface is an Emission shader in the Shader Editor."),
+    "Hypershade/Create/Materials/Use Background": (
+        "Shader Editor: Holdout", "Blender shows the background through a surface with a Holdout shader in the Shader "
+        "Editor (Cycles: Object > Visibility > Shadow Catcher catches shadows)."),
 }
+# Maya node type -> its greyed Hypershade Create item (the notice the command line's shadingNode gives)
+NODE_SETUPS = {"rampShader": "Hypershade/Create/Materials/Ramp Shader",
+               "layeredShader": "Hypershade/Create/Materials/Layered Shader",
+               "surfaceShader": "Hypershade/Create/Materials/Surface Shader",
+               "useBackground": "Hypershade/Create/Materials/Use Background"}
 
 
 # mapped items whose Blender result differs from Maya's.

@@ -147,6 +147,11 @@ _HAIR = {"Current Position": "Display/Current Position", "Start Position": "Disp
              "Hair Systems", "Follicles", "Start Curves", "Rest Curves", "Start Curve End CVs",
              "Rest Curve End CVs")}}
 MENU = {
+    # Maya shaders that are a node set-up in Blender: greyed with the Hypershade item's notice
+    "Rendering/Ramp Material": "Hypershade/Create/Materials/Ramp Shader",
+    "Rendering/Layered Material": "Hypershade/Create/Materials/Layered Shader",
+    "Rendering/Surface Material": "Hypershade/Create/Materials/Surface Shader",
+    "Rendering/Use Background": "Hypershade/Create/Materials/Use Background",
     # Curves, Surfaces (one Curves / Surfaces shelf in Maya 2022, two shelves in Maya 2026)
     "Curves/NURBS Square": "Create/NURBS Primitives/Square",
     "Surfaces/NURBS Cube": "Create/NURBS Primitives/Cube",

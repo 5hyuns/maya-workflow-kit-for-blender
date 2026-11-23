@@ -81,7 +81,7 @@ def s_rmb_shot():
 def s_favorite_open():
     s = session()
     check("hovering Assign Favorite Material opens its submenu", s is not None and len(s.stack) == 2)
-    C["blinn"] = item_xy("Blinn")
+    C["blinn"] = item_xy("New Material")
     ev('MOUSEMOVE', 'NOTHING', x=C["blinn"][0], y=C["blinn"][1])
 
 
@@ -94,8 +94,9 @@ def s_favorite_shot():
 @step
 def s_favorite_done():
     mat = cube().active_material
-    # Maya numbers a new node one past the highest (naming.next_number): blinn5 exists -> blinn6
-    check("Favorite > Blinn assigned blinn6 to the cube under the menu", mat is not None and mat.name == "blinn6")
+    C["new"] = mat.name if mat is not None else None
+    check(f"Favorite > New Material assigned Blender's new material to the cube under the menu ({C['new']})",
+          mat is not None and mat.name.startswith("Material"))
     check("menu closed", not C["draw"].ACTIVE)
     rmb_click()
 
@@ -131,7 +132,7 @@ def s_existing_done():
     check(f"Assign Existing Material > blinn5 assigned it to the cube under the menu ({mat.name if mat else None})",
           mat is not None and mat.name == "blinn5")
     check("menu closed", not C["draw"].ACTIVE)
-    cube().active_material = bpy.data.materials["blinn6"]
+    cube().active_material = bpy.data.materials[C["new"]]
 
 
 @step
@@ -179,6 +180,7 @@ def s_menu_existing_shot():
     tap('ESC')
     cube().select_set(True)
     bpy.context.view_layer.objects.active = cube()
+    C["before"] = {m.name for m in bpy.data.materials}
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     ev('T', 'PRESS', x=C["x"], y=C["y"], shift=True)
     ev('T', 'RELEASE', x=C["x"], y=C["y"], shift=True)
@@ -192,20 +194,14 @@ def s_shift_t():
 @step
 def s_shift_t_shot():
     shot("gui_step29_shift_t.png")
-    # The search popup lists the types; typing narrows it, Return picks.
-    for ch in "phong":
-        ev('TEXTINPUT', 'PRESS', unicode=ch)
-
-
-@step
-def s_shift_t_pick():
-    tap('RET')
 
 
 @step
 def s_shift_t_done():
     mat = cube().active_material
-    check("Shift+T > type 'phong' > Return assigned phong1", mat is not None and mat.name == "phong1")
+    # Blender has one material: Shift+T makes and assigns it at once (no type list)
+    check(f"Shift+T assigned a new material ({mat.name if mat else None})",
+          mat is not None and mat.name.startswith("Material") and mat.name not in C["before"])
 
 
 run()

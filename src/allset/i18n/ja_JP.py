@@ -7405,4 +7405,12 @@ STRINGS = {
     "Create a new material (Blender's Principled BSDF) and assign it to the selected objects or faces (Maya\nshelf material button, Assign Favorite Material)": '新規マテリアル (Blender のプリンシプル BSDF) を作成し、選択したオブジェクトまたはフェースに割り当て (Maya の\nシェルフのマテリアルボタン、Assign Favorite Material)',
     "Create a new material (Blender's Principled BSDF) without assigning it (Maya Hypershade Create)": '新規マテリアル (Blender のプリンシプル BSDF) を割り当てずに作成 (Maya の Hypershade Create)',
     'Create a new material and assign it (Maya Assign Favorite Material: Blender has one material, the Principled\nBSDF)': '新規マテリアルを作成して割り当て (Maya の Assign Favorite Material: Blender のマテリアルはプリンシプル\nBSDF の 1 種類)',
+    'Shader Editor: Layer Weight + Color Ramp': 'シェーダーエディター: レイヤーウェイト + カラーランプ',
+    'Shader Editor: Mix Shader': 'シェーダーエディター: シェーダーミックス',
+    'Shader Editor: Emission': 'シェーダーエディター: 放射',
+    'Shader Editor: Holdout': 'シェーダーエディター: ホールドアウト',
+    'Blender builds a ramp shader in the Shader Editor: Layer Weight (Facing) into a Color Ramp into Base Color.': 'Blender ではランプシェーダーをシェーダーエディターで組みます: レイヤーウェイト (正面) → カラーランプ → ベースカラー。',
+    "Blender layers shaders in the Shader Editor with a Mix Shader (Fac = the top layer's transparency).": 'Blender ではシェーダーエディターのシェーダーミックスでシェーダーを重ねます (係数 = 上のレイヤーの透明度)。',
+    "Blender's flat, unlit surface is an Emission shader in the Shader Editor.": 'Blender で陰影のない平坦なサーフェスは、シェーダーエディターの放射シェーダーです。',
+    'Blender shows the background through a surface with a Holdout shader in the Shader Editor (Cycles: Object > Visibility > Shadow Catcher catches shadows).': 'Blender ではシェーダーエディターのホールドアウトシェーダーでサーフェスの向こうに背景を見せます (Cycles: オブジェクト > 可視性 > シャドウキャッチャーで影を受けます)。',
 }

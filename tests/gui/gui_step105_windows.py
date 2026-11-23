@@ -70,8 +70,8 @@ def s_scene():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.create(kind='CUBE')
     m = mod(".operators.material")
-    for kind in ('BLINN', 'RAMP', 'STANDARD_SURFACE'):
-        m.new_material(kind).use_fake_user = True
+    for _i in range(3):
+        m.new_material().use_fake_user = True
     C["hs"] = menu("Windows/Rendering Editors/Hypershade")
 
 

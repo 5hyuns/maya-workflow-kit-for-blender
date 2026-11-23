@@ -1,5 +1,5 @@
 """In a real UI: two cubes selected, type "+=5" in the Channel Box Translate X field ->
-both move by 5 display units (each from its own value); AE tab of a Maya lambert material;
+both move by 5 display units (each from its own value); AE tab of a new material;
 screenshots."""
 
 import os
@@ -108,7 +108,7 @@ def s_after_shot():
     shot("gui_step38_cb_after.png")
     material = import_module(MODULE + ".operators.material")
     a, _b = cubes()
-    mat = material.new_material('LAMBERT')
+    mat = material.new_material()
     a.data.materials.clear()
     a.data.materials.append(mat)
     C["mat"] = mat.name
@@ -128,7 +128,8 @@ def s_ae_shot():
     ae = import_module(MODULE + ".ui.attribute_editor")
     a, _b = cubes()
     label = next(t for t in ae.tabs(a) if t[0] == "MAT:0")
-    check(f"AE material tab is a lambert ({label})", label[2] == "lambert" and label[1] == C["mat"])
+    check(f"AE material tab is a Principled BSDF ({label})",
+          label[2] == "Principled BSDF" and label[1] == C["mat"])
 
 
 run()

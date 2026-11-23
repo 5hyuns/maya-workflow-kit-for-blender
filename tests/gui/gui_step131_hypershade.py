@@ -1,7 +1,7 @@
-"""#25: in a real UI: pSphere1 with blinn1 (a checker on its Color) and pCube1 with lambert1 -> Windows >
+"""#25: in a real UI: pSphere1 with a new material (a checker on its Color) and pCube1 -> Windows >
 Rendering Editors > Hypershade -> a new window in the Maya Hypershade layout: menu strip, Browser top-left, Material
 Viewer top-right, Create bottom-left, Graph centre, Property Editor bottom-right, proportions within 4 % of the
-expected layout -> pick blinn1, Input and Output Connections -> screenshot ->
+expected layout -> pick the material, Input and Output Connections -> screenshot ->
 open again from the main window = one Hypershade window (the old one closes)."""
 
 import os
@@ -82,7 +82,8 @@ def s_scene():
         bpy.ops.allset.create(kind='CUBE')
         bpy.ops.allset.create(kind='SPHERE')
     sphere = bpy.context.active_object
-    blinn = m.new_material('BLINN')
+    blinn = m.new_material()
+    C["blinn"] = blinn.name
     tree = blinn.node_tree
     tex = tree.nodes.new('ShaderNodeTexChecker')
     tex.location = (-400, 200)
@@ -134,15 +135,16 @@ def s_pick():
     w = C.get("w")
     if w is None:
         return
+    blinn_name = C["blinn"]
     hs = mod(".ui.hypershade")
     browser = next(a for a in w.screen.areas if hs.pane(a) == 'BROWSER')
     region = next(r for r in browser.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=w, area=browser, region=region, space_data=browser.spaces.active):
-        bpy.ops.allset.hs_pick(material="blinn1")
+        bpy.ops.allset.hs_pick(material=blinn_name)
     graph = hs.graph_area(w.screen)
     tree = graph.spaces.active.edit_tree
-    check(f"Browser pick shows blinn1 in the Graph ({tree and tree.name})",
-          tree is not None and tree == bpy.data.materials["blinn1"].node_tree)
+    check(f"Browser pick shows {blinn_name} in the Graph ({tree and tree.name})",
+          tree is not None and tree == bpy.data.materials[blinn_name].node_tree)
     region = next(r for r in graph.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=w, area=graph, region=region, space_data=graph.spaces.active):
         for n in tree.nodes:

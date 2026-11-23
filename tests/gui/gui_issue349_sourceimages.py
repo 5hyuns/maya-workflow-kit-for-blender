@@ -227,7 +227,7 @@ def s_scene():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
-    mat = mod(".operators.material").new_material('STANDARD_SURFACE')
+    mat = mod(".operators.material").new_material()
     mod(".operators.shading_maps").build(mat, "Base Color", 'FILE')
     ob.data.materials.clear()
     ob.data.materials.append(mat)
