@@ -28,6 +28,9 @@ def picture(pic, n):
     if pic[0] == "uvtk":
         from ..ui import uv_toolkit_icons
         return uv_toolkit_icons.picture(pic[1], n)
+    if pic[0] == "mark":
+        from ..ui import marking_drawings
+        return marking_drawings.draw(pic[1], n)
     from ..ui import menu_icons
     return menu_icons.picture(pic, n)
 

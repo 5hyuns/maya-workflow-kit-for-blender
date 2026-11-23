@@ -288,9 +288,9 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
         body = _section(layout, "ALLSET_uvtk_pin", "Pinning")
         if body:
             row = body.row(align=True)
-            row.operator("uv.pin", text="Pin")
-            row.operator("uv.pin", text="Unpin").clear = True
-            row.operator("uv.pin", text="Invert").invert = True
+            row.operator("uv.pin", text="Pin", icon_value=_icon("Pin"))
+            row.operator("uv.pin", text="Unpin", icon_value=_icon("Unpin")).clear = True
+            row.operator("uv.pin", text="Invert", icon_value=_icon("Invert Pinning")).invert = True
         body = _section(layout, "ALLSET_uvtk_type", "Select By Type")
         if body:
             _grid(body, [(it, f"Select/{it}") if isinstance(it, str) else (it[0], f"Select/{it[1]}")

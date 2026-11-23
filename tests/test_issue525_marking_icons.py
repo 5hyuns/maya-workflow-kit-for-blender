@@ -30,7 +30,7 @@ def test_every_picture_belongs_to_an_item_and_draws():
     paths = _paths()
     missing = [p for p in icon_data.ICONS if p not in paths]
     assert not missing, missing
-    assert len(icon_data.ICONS) > 100
+    assert len(icon_data.ICONS) >= 262
     for pic in sorted(set(icon_data.ICONS.values()), key=repr):
         for n in (16, 20):
             px = icons.picture(pic, n)
@@ -105,3 +105,43 @@ def test_redraw_bounds_hold_the_pictures():
         x = round(cx + it.rect[0] + it.icon_x) + origin[0]
         y = round(cy + (it.rect[1] + it.rect[3]) / 2 - n / 2) + origin[1]
         assert box[0] <= x and x + n <= box[2] and box[1] <= y and y + n <= box[3], (it.label, box)
+
+
+def _premul(px):
+    import numpy as np
+    px = np.asarray(px, np.float32)
+    return np.concatenate([px[..., :3] * px[..., 3:4], px[..., 3:4]], axis=-1)
+
+
+def test_different_pictures_in_one_menu_look_different():
+    """Two items of one (sub)menu with different pictures differ clearly (32 px, the shelf rule: 4 % of the pixels
+    by more than 0.25)."""
+    import itertools
+    import numpy as np
+    by_menu = {}
+    for path, pic in icon_data.ICONS.items():
+        by_menu.setdefault(path.rsplit("/", 1)[0], {}).setdefault(pic, path)
+    cache = {}
+
+    def px(pic):
+        if pic not in cache:
+            cache[pic] = _premul(icons.picture(pic, 32))
+        return cache[pic]
+    bad = []
+    for menu, pics in by_menu.items():
+        for a, b in itertools.combinations(pics, 2):
+            share = float((np.abs(px(a) - px(b)).max(axis=-1) > 0.25).mean())
+            if share < 0.04:
+                bad.append((pics[a], pics[b], round(share, 3)))
+    assert not bad, bad
+
+
+def test_marking_drawings_sizes():
+    md = import_module(kit.MODULE + ".ui.marking_drawings")
+    used = {pic[1] for pic in icon_data.ICONS.values() if pic[0] == "mark"}
+    assert used == set(md.DRAWINGS), (used ^ set(md.DRAWINGS))
+    for name in md.DRAWINGS:
+        for n in (16, 20, 32, 64):
+            px = md.draw(name, n)
+            assert px.shape == (n, n, 4) and 0.0 <= px.min() and px.max() <= 1.0, (name, n)
+            assert px[..., 3].max() > 0.9 and (px[..., 3] > 0.5).sum() >= n * n // 10, (name, n, "nearly empty")
