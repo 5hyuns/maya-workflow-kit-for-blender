@@ -88,7 +88,9 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'EDIT_MESH'
+        if context.mode == 'EDIT_MESH':
+            return True
+        return context.mode == 'OBJECT' and any(o.type == 'MESH' for o in context.selected_objects)
 
     def invoke(self, context, event):
         # Maya bevels at once (no drag; Esc / no mouse keeps it): #16,
@@ -97,6 +99,8 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
     def execute(self, context):
         from . import bevel_maya, extrude, units
         unit = units.maya_unit(context.scene)
+        if context.mode == 'OBJECT':
+            return self._objects(context, unit)
         chamfer = bevel_affect(context.scene.tool_settings.mesh_select_mode) == 'VERTICES'
         done = 0
         for ob in context.objects_in_mode_unique_data:
@@ -115,6 +119,27 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
         if not done:
             self.report({'WARNING'}, "Select edges or faces to bevel.")
             return {'CANCELLED'}
+        return {'FINISHED'}
+
+    def _objects(self, context, unit):
+        """Maya on an object selection: every edge of each selected mesh, still in object mode, with the new
+        polyBevel node in the In-View Editor."""
+        from . import bevel_maya, extrude
+        done, seen = [], set()
+        for ob in context.selected_objects:
+            if ob.type != 'MESH' or ob.data in seen:
+                continue
+            seen.add(ob.data)
+            if extrude.record_object(context, ob, bevel_maya.BEVEL, _bevel_params(self), unit) is not None:
+                done.append(ob)
+        if not done:
+            self.report({'WARNING'}, "Select edges or faces to bevel.")
+            return {'CANCELLED'}
+        view_layer = context.view_layer
+        if view_layer.objects.active not in done:
+            view_layer.objects.active = done[-1]
+        extrude.SHOWN.clear()
+        extrude.SHOWN["ob"] = view_layer.objects.active.name
         return {'FINISHED'}
 
 

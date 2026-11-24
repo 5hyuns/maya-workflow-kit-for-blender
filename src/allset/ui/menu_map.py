@@ -1061,7 +1061,7 @@ OBJECT_MODE = {
     "Edit Mesh/Poke": ('ALL', 'FACE'),
     "Edit Mesh/Circularize": ('ALL', 'VERT'),
     "Edit Mesh/Edit Edge Flow": ('ALL', 'EDGE'),
-    "Edit Mesh/Bevel": ('ALL', 'EDGE'),
+    # Edit Mesh/Bevel: allset.bevel bevels an object selection itself (its In-View Editor stays in object mode)
     "Edit Mesh/Smart Bevel": ('ALL', 'EDGE'),
     "Edit Mesh/Chamfer Vertices": ('ALL', 'VERT'),
     "Edit Mesh/Bridge": "Invalid selection : polyBridgeEdge requires equal number of border edges to be selected "

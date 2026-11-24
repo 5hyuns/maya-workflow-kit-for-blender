@@ -3,6 +3,10 @@
 (#16).
 
 - Defaults: Fraction 0.5, Offset As Fraction on, Offset 0.2, Segments 1, Depth 1 (Chamfer on, Mitering auto).
+- World Space (on, like Maya): Fraction, Offset and the profile work on the mesh as it stands in the world, so a cube
+  scaled differently per axis gets the same width on every edge (``world_shape``); off: on the object-space mesh.
+- On an object selection (Ctrl+B, Edit Mesh > Bevel) every edge of each selected mesh, still in object mode, and the
+  In-View Editor shows the new node (operators/component.py).
 - Fraction is relative to one length for the whole selection: the shortest "slide" edge (an edge touching an end of a
   beveled edge), halved when both of its ends are used (two shells of different size get the same width). The width
   applied is 0.9999 x that (both modes).
@@ -39,8 +43,10 @@ names used elsewhere are importable from here too.
 """
 
 import math
+from contextlib import contextmanager
 
 import bmesh
+from mathutils import Matrix
 
 from . import extrude
 # the split-out parts, also read through this module by other operators and the tests
@@ -302,11 +308,49 @@ def world_scale(ob):
     return s if s > ZERO else 1.0
 
 
+def shape_matrix(ob):
+    """The object's 3 x 3 transform when it changes shapes (a scale that differs per axis, or a shear), else None
+    (no object, a flat one, or only rotation / mirroring / one scale for all axes). A mirroring transform gets one more
+    mirror in the object's X, so the faces keep their winding; lengths and angles stay the world ones."""
+    if ob is None:
+        return None
+    m = ob.matrix_world.to_3x3()
+    det = m.determinant()
+    if abs(det) <= ZERO:
+        return None
+    g = m.transposed() @ m
+    mean = (g[0][0] + g[1][1] + g[2][2]) / 3.0       # mathutils matrices are single precision: 1e-6
+    if all(abs(g[i][j] - (mean if i == j else 0.0)) <= 1e-6 * mean for i in range(3) for j in range(3)):
+        return None
+    if det < 0.0:
+        m = m @ Matrix.Diagonal((-1.0, 1.0, 1.0))
+    return m
+
+
+@contextmanager
+def world_shape(bm, ob):
+    """World Space on a mesh whose object scale differs per axis: ``bm`` in its world shape while the block runs
+    (Maya takes Fraction, Offset and the profile from the world shape), back in object space afterwards. Yields
+    True when it changed the mesh."""
+    m = shape_matrix(ob)
+    if m is None:
+        yield False
+        return
+    bm.transform(m.to_4x4())
+    try:
+        yield True
+    finally:
+        bm.transform(m.inverted().to_4x4())
+        bm.normal_update()
+
+
 def _build(bm, params, unit, ob=None):
     params = dict(params)
-    if params.pop("world_space", False) and not params.get("offset_as_fraction", True):
-        unit = unit / world_scale(ob)
-    made = bevel_edges(bm, [e for e in bm.edges if e.select], unit=unit, **params)
+    world = params.pop("world_space", False)
+    with world_shape(bm, ob if world else None) as shaped:
+        if world and not shaped and not params.get("offset_as_fraction", True):
+            unit = unit / world_scale(ob)
+        made = bevel_edges(bm, [e for e in bm.edges if e.select], unit=unit, **params)
     if made and getattr(ob, "type", None) == 'MESH' and _soft(bm):
         from . import display
         display.ensure_maya_normals(ob)      # Maya's smooth normals on the soft edges the bevel made

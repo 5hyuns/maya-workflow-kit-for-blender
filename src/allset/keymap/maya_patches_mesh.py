@@ -53,6 +53,7 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "allset.extrude", make_event("E", ctrl=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="B", ctrl=True)            # bevel tool
     _add(kd, "Mesh", "allset.bevel", make_event("B", ctrl=True))
+    _add(kd, "Object Mode", "allset.bevel", make_event("B", ctrl=True))      # Maya: every edge of the selected meshes
     for km, more, less in GROW_SHRINK:
         for event in GROW_KEYS:
             _add(kd, km, more, event)

@@ -70,7 +70,8 @@ RECORDS = {}   # object name -> Record
 # History doesn't change the mesh, so the parked record is valid again after the undo (its signature still matches).
 PARKED = {}    # object name -> Record dropped by Delete History
 # Object mode: T (Show Manipulator Tool) shows the In-View Editor / manipulator of this object's input node without
-# leaving object mode, like Maya; Q / W / E / R (``dismiss``) end it. {"ob": object name} or empty.
+# leaving object mode, like Maya (so does Bevel run on an object selection); Q / W / E / R (``dismiss``) end it.
+# {"ob": object name} or empty.
 SHOWN = {}
 
 

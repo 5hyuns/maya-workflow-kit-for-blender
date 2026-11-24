@@ -14,7 +14,7 @@ from mathutils import Vector
 
 from ..preferences import NEW_SCENE_TIMES
 from . import scene_axes
-from .option_windows_spec import AXIS, UVS, F, Window, _components, _constraint, _primitive, _with_hierarchy
+from .option_windows_spec import AXIS, UVS, F, Window, _components, _constraint, _op, _primitive, _with_hierarchy
 
 # --- run functions ----------------------------------------------------------------------------------
 
@@ -63,6 +63,10 @@ def _run_bevel(context, v):
         kw["offset"] = max(0.0, v["width"])
     if context.mode == 'EDIT_MESH' and tuple(context.scene.tool_settings.mesh_select_mode) == (True, False, False):
         bpy.ops.mesh.select_mode(type='EDGE')       # the window bevels edges (Maya: polyBevel3, not Chamfer)
+    if context.mode == 'OBJECT':
+        if not any(o.type == 'MESH' for o in context.selected_objects):
+            raise RuntimeError("Select a mesh first.")
+        return _op("allset.bevel", **kw)            # every edge of the selected meshes, still in object mode
     return _components(context, "allset.bevel", 'EDGE', **kw)
 
 
