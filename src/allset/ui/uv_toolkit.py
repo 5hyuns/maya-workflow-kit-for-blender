@@ -169,29 +169,51 @@ NUDGE = {'TOP_LEFT': 'UP_LEFT', 'TOP': 'UP', 'TOP_RIGHT': 'UP_RIGHT', 'LEFT': 'L
 DISTRIBUTE = {'TOP': 'UP', 'LEFT': 'LEFT', 'RIGHT': 'RIGHT', 'BOTTOM': 'DOWN'}
 
 
+GRID_SIDE = 0.17       # share of a grid with a centre field that each arrow column takes
+
+
+def _columns(row, side):
+    """(left, centre, right) cells of a grid row: the outer two ``side`` of the width each."""
+    split = row.split(factor=side)
+    left = split.row(align=True)
+    split = split.split(factor=(1.0 - 2.0 * side) / (1.0 - side))
+    return left, split.row(align=True), split.row(align=True)
+
+
+GRID_BUTTON = 1.0       # every grid button is this many UI units wide (about square), whatever its column's width
+
+
+def _button_cell(cell):
+    """A grid button's place: GRID_BUTTON wide at the middle of its cell, so all nine are the same size."""
+    cell.alignment = 'CENTER'
+    sub = cell.row(align=True)
+    sub.ui_units_x = GRID_BUTTON
+    return sub
+
+
 def _grid3(layout, op, prop, values=None, middle=None, extra=None):
-    """Nine buttons of ``op`` (``prop`` = the place, or ``values[place]``; a place without a value stays empty; the
-    centre cell holds ``middle(row)`` when given; ``extra`` = more properties set on every button)."""
-    col = layout.column(align=True)
+    """Nine equal buttons of ``op`` with their arrow pictures (``prop`` = the place, or ``values[place]``; a place
+    without a value stays empty; ``extra`` = more properties set on every button). With ``middle`` the centre column is
+    wider and holds ``middle(row)``; the arrows above and below it keep the size of the others and stand at its
+    middle, like Maya's Move arrows around the step field."""
+    col = layout.column()
     for places in GRID3:
-        if middle is None:
-            cells = [col.row(align=True)] * 3
-        else:       # a wider centre column for the field
-            split = col.split(factor=0.14, align=True)
-            first = split.row(align=True)
-            split = split.split(factor=0.84, align=True)
-            cells = [first, split.row(align=True), split.row(align=True)]
-        for row, place in zip(cells, places):
+        row = col.row()
+        cells = [row.row() for _ in range(3)] if middle is None else _columns(row, GRID_SIDE)
+        for cell, place in zip(cells, places):
             value = place if values is None else values.get(place)
-            if place == 'CENTER' and middle is not None:
-                middle(row)
-            elif value is None:
-                row.label(text="")
-            else:
-                o = row.operator(op, text=GLYPHS[place], translate=False)
-                setattr(o, prop, value)
-                for k, v in (extra or {}).items():
-                    setattr(o, k, v)
+            if middle is not None and place == 'CENTER':
+                middle(cell)
+                continue
+            cell = _button_cell(cell)
+            if value is None:
+                cell.label(text="")
+                continue
+            icon = uv_toolkit_icons.icon(f"Grid {place}")
+            o = cell.operator(op, text="" if icon else GLYPHS[place], icon_value=icon, translate=False)
+            setattr(o, prop, value)
+            for k, v in (extra or {}).items():
+                setattr(o, k, v)
     return col
 
 
@@ -250,14 +272,14 @@ def _transform(layout, context):
     row.operator("allset.uv_pivot_reset", text="Reset")
     # Move: the U / V fields at the left, the arrows around the step field at the right
     col = _area(layout, i18n.mark("Move"), side=("U", "V"))
-    split = col.split(factor=0.36)
+    split = col.split(factor=0.35)
     fields = split.column(align=True)
     fields.label(text="")
     for axis in ("u", "v"):
         fields.prop(tk, f"position_{axis}", text="")
 
     def step_field(row):
-        _preset_field(row, tk, "nudge", 0.25)
+        _preset_field(row, tk, "nudge", 0.22)
     _grid3(split.column(), "allset.uv_nudge", "direction", NUDGE, middle=step_field)
     _gap(col)
     _step_snap(col, context, 'TRANSLATE', "move_snap_value")
@@ -383,7 +405,7 @@ def _align_snap(layout, context):
 def _arrange(layout, context):
     tk = context.scene.allset_uv_toolkit
     col = _area(layout, i18n.mark("Distribute"))
-    split = col.split(factor=0.62)
+    split = col.split(factor=0.7)
 
     def factor_field(row):
         row.prop(tk, "distribute_factor", text="")

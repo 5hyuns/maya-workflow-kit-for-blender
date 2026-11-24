@@ -478,6 +478,28 @@ def d_symmetrize_tool(cv):
     brush(cv, (9, 18), (22, 3), w=2.6)
 
 
+# --- 3 x 3 grids (Pivot, Move, Snap, Distribute): one arrow per place, all the same size -------------------------
+
+GRID_DIRECTIONS = {'TOP_LEFT': (-1, -1), 'TOP': (0, -1), 'TOP_RIGHT': (1, -1), 'LEFT': (-1, 0),
+                   'RIGHT': (1, 0), 'BOTTOM_LEFT': (-1, 1), 'BOTTOM': (0, 1), 'BOTTOM_RIGHT': (1, 1)}
+
+
+def _grid_arrow(dx, dy):
+    def draw(cv):
+        k = 11.0 / math.hypot(dx, dy)
+        arrow(cv, (16 - dx * k, 16 - dy * k), (16 + dx * k, 16 + dy * k), w=3.0, head=8.0)
+    return draw
+
+
+for _place, (_dx, _dy) in GRID_DIRECTIONS.items():
+    DRAWINGS[f"Grid {_place}"] = _grid_arrow(_dx, _dy)
+
+
+@drawing("Grid CENTER")
+def d_grid_centre(cv):
+    cv.circle(16, 16, 5.0, LIGHT, ol=True)
+
+
 def picture(key, n):
     """(n, n, 4) RGBA (top row first) of toolkit picture ``key``."""
     if key in MENU_PICTURES:
