@@ -271,7 +271,7 @@ Maya Workflow Kit is not on extensions.blender.org yet. Once it is, install it f
 
 ### Option 2 — Install the zip from disk
 
-1. Get `maya-workflow-kit-<version>.zip` (current version: 0.22.0) from
+1. Get `maya-workflow-kit-<version>.zip` (current version: 0.23.0) from
    [GitHub Releases](https://github.com/5hyuns/maya-workflow-kit-for-blender/releases) — or build it as in option 3.
 2. In Blender: *Edit > Preferences > Get Extensions > ▾ (top-right menu) > Install from Disk…* and pick the zip — or
    drag the zip onto the Blender window.
@@ -349,7 +349,8 @@ Optional — the kit leaves your theme and preferences to you. Maya users usuall
 ## Quick start for Maya users
 
 With Maya mode on. Every Maya hotkey and its Blender counterpart is listed in Maya's Hotkey Editor
-(*Windows > Settings/Preferences > Hotkey Editor*).
+(*Windows > Settings/Preferences > Hotkey Editor*), together with the menu item, editor and UV Toolkit commands
+that have no key; any of them can take a key of your own.
 
 | Action | Keys / mouse |
 |---|---|
