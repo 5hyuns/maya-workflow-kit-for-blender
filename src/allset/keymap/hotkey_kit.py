@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Commands of the kit Hotkey Editor that are not menu items (#537 - #539): the UV Toolkit's buttons (Align, Unfold
-Along, Straighten, Move / Rotate / Scale steps, Flip, Distribute, Layout Along ...) and the viewport's X-Ray toggles.
+Along, Straighten, Move / Rotate / Scale steps, Flip, Distribute, Layout Along ...), the viewport's X-Ray toggles and
+the editor window toggles (#541).
 In Maya these buttons have no command of their own, so a Maya user binds them with a script of their own; the kit
 lists them ready to bind under Custom Scripts. X-Ray (Toggle) is Maya's own command of that name.
 
@@ -12,6 +13,7 @@ Distribute spacing), so the key does what the button does with the toolkit's cur
 
 TOOLKIT = "Custom Scripts.UV Toolkit"
 VIEWPORT = "Custom Scripts.Viewport"
+WINDOWS = "Custom Scripts.Windows"
 
 _MOVE = (("Up", 'UP'), ("Down", 'DOWN'), ("Left", 'LEFT'), ("Right", 'RIGHT'), ("Up Left", 'UP_LEFT'),
          ("Up Right", 'UP_RIGHT'), ("Down Left", 'DOWN_LEFT'), ("Down Right", 'DOWN_RIGHT'))
@@ -51,6 +53,13 @@ COMMANDS = (
      {"data_path": "space_data.shading.show_xray"}),
     ("ViewportXRayJointsToggle", "X-Ray Joints (Toggle)", VIEWPORT, "toggle",
      {"data_path": "space_data.overlay.show_xray_bone"}),
+    # #541: open the editor's window, or close it when it is open in a window of its own (operators/window_toggle.py
+    # holds the editors; this list is plain data)
+    *((f"Toggle{label.replace(' ', '')}Window", f"{label} Window (Toggle)", WINDOWS, "allset.window_toggle",
+       {"window": key}) for key, label in (
+        ('UV_EDITOR', "UV Editor"), ('OUTLINER', "Outliner"), ('HYPERSHADE', "Hypershade"),
+        ('GRAPH_EDITOR', "Graph Editor"), ('DOPE_SHEET', "Dope Sheet"), ('TRAX_EDITOR', "Trax Editor"),
+        ('NODE_EDITOR', "Node Editor"), ('SPREAD_SHEET', "Attribute Spread Sheet"))),
 )
 
 BY_COMMAND = {c[0]: c for c in COMMANDS}

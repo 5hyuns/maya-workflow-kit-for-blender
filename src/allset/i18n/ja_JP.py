@@ -7667,6 +7667,8 @@ STRINGS = {
     'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '選択したフェースをその場でコピーします (Maya の メッシュの編集 > 複製): 各フェースが個別のピースになり、\nマニピュレータで移動します。メニュー項目を長押しすると フェースの複製 オプション が開きます',
     'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': 'メニュー項目のない、ホットキーエディタに載っているキットのコマンドを実行します (UV ツールキットのボタン、X 線)',
     'Smooth Maya selection wires and tool handles in this viewport': 'このビューポートで Maya の選択ワイヤーとツールハンドルを滑らかに表示します',
+    'Toggle Window': 'ウィンドウの切り替え',
+    "Open the editor's window, or close it when it is open in a window of its own": 'エディタのウィンドウを開きます。専用ウィンドウで開いているときは閉じます',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

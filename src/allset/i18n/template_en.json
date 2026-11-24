@@ -8127,6 +8127,9 @@
    "Weight 1": "Weight 1",
    "Weight Type": "Weight Type"
   },
+  "Labels/operators/window_toggle": {
+   "Toggle Window": "Toggle Window"
+  },
   "Labels/operators/wire_color": {
    "Apply": "Apply",
    "Back to the default wire colour (like the Default button in Maya)": "Back to the default wire colour (like the Default button in Maya)",
@@ -12895,6 +12898,9 @@
    "Select the vertices the influences picked in the list affect (weight > 0)": "Select the vertices the influences picked in the list affect (weight > 0)",
    "Select the whole mesh (drop the vertex selection) and keep painting": "Select the whole mesh (drop the vertex selection) and keep painting",
    "Show this skin cluster's influences in the Influences list": "Show this skin cluster's influences in the Influences list"
+  },
+  "Tooltips/operators/window_toggle": {
+   "Open the editor's window, or close it when it is open in a window of its own": "Open the editor's window, or close it when it is open in a window of its own"
   },
   "Tooltips/operators/wire_color": {
    "Maya Wireframe Color: colour the selected objects' wire with a user colour or an RGB colour": "Maya Wireframe Color: colour the selected objects' wire with a user colour or an RGB colour"

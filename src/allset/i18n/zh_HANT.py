@@ -7668,6 +7668,8 @@ STRINGS = {
     'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '原地複製所選面 (Maya 編輯網格 > 複製)：每個面成為單獨的部分，用操縱器移動；\n按住選單項可開啟複製面選項',
     'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': '執行熱鍵編輯器中列出但沒有選單項的工具包命令 (UV 工具包按鈕、X 射線)',
     'Smooth Maya selection wires and tool handles in this viewport': '在此視口中平滑顯示 Maya 選擇線框和工具控制柄',
+    'Toggle Window': '切換視窗',
+    "Open the editor's window, or close it when it is open in a window of its own": '開啟編輯器視窗；已在單獨的視窗中開啟時將其關閉',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)
