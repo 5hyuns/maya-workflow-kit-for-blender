@@ -51,20 +51,23 @@ def _ordered_loops(edges):
     return loops
 
 
-def circularize_loop(verts, radial_offset=0.0, twist=0.0, even=True, ref=None):
-    """Put an ordered vertex loop on a circle: centre = centroid, radius = mean distance (+ ``radial_offset``), evenly
-    spaced keeping the loop's mean angular position (Maya polyCircularize defaults).
-    Options: ``twist`` (radians) turns the loop
+def circularize_loop(verts, radial_offset=0.0, twist=0.0, even=True, ref=None, normal=None, keep_lowest=False):
+    """Put an ordered vertex loop on a circle: centre = centroid, radius = mean distance in the circle's plane
+    (+ ``radial_offset``), evenly spaced keeping the loop's mean angular position, or with ``keep_lowest`` the
+    lowest-index vertex keeping its angle (Maya on an edge or vertex loop). The plane's normal is ``normal`` when
+    given, else the loop's own (Newell). Options: ``twist`` (radians) turns the loop
     right-handed about ``ref`` (the faces' normal), ``even`` off keeps each vertex's own angle about the centre.
     Returns the loop's normal (oriented like ``ref``) or None."""
     from mathutils import Vector
     n = len(verts)
+    if keep_lowest:
+        k = min(range(n), key=lambda i: verts[i].index)
+        verts = verts[k:] + verts[:k]
     pts = [v.co.copy() for v in verts]
     c = sum(pts, Vector()) / n
-    normal = Vector()
-    for i in range(n):          # Newell normal
-        a, b = pts[i], pts[(i + 1) % n]
-        normal += Vector(((a.y - b.y) * (a.z + b.z), (a.z - b.z) * (a.x + b.x), (a.x - b.x) * (a.y + b.y)))
+    if normal is None:
+        normal = _newell(pts)
+    normal = normal.copy()
     if normal.length < 1e-12:
         return None
     normal.normalize()
@@ -80,7 +83,11 @@ def circularize_loop(verts, radial_offset=0.0, twist=0.0, even=True, ref=None):
     u.normalize()
     w = normal.cross(u)
     ang = [math.atan2((p - c).dot(w), (p - c).dot(u)) for p in flat]
-    if even:
+    if even and keep_lowest:
+        turn = sum(math.remainder(ang[(i + 1) % n] - ang[i], math.tau) for i in range(n))
+        step = (1.0 if turn >= 0 else -1.0) * math.tau / n
+        ang = [ang[0] + step * i for i in range(n)]
+    elif even:
         turn = sum(math.remainder(ang[(i + 1) % n] - ang[i], math.tau) for i in range(n))
         s = 1.0 if turn >= 0 else -1.0
         step = s * math.tau / n
@@ -173,7 +180,9 @@ def circularize_region(faces, loop, radial_offset=0.0, twist=0.0, even=True, ref
 
 def circularize_loops(bm, mode, normal_offset=0.0, radial_offset=0.0, twist=0.0, even=True, divisions=0):
     """The loops Maya circularizes for the current selection: faces -> their border loops, edges / vertices ->
-    closed loops of selected edges; ``mode`` 'ALL' = every border loop of the mesh. ``divisions`` first splits every
+    closed loops of selected edges ('EDGE' / 'VERT'; on both the lowest-index vertex keeps its angle, and a vertex
+    loop's plane is the summed area normal of every face touching it); ``mode`` 'ALL' = every border loop of the
+    mesh. ``divisions`` first splits every
     loop edge (Maya Add Divisions: a 2-division octagon becomes 24 points, radius = their mean distance);
     ``normal_offset`` then moves the loop and the selected faces' inner vertices along the normal. A block of faces
     with one border loop goes through ``circularize_region``. Returns the loop count."""
@@ -230,7 +239,10 @@ def circularize_loops(bm, mode, normal_offset=0.0, radial_offset=0.0, twist=0.0,
             for f in v.link_faces:
                 if mode != 'FACE' or f.select:
                     ref += f.normal
-        normal = circularize_loop(loop, radial_offset, twist, even, ref)
+        plane = None
+        if mode == 'VERT':          # Maya on a vertex loop: the summed area normal of every face touching it
+            plane = sum((_newell([v.co for v in g.verts]) for g in {g for v in loop for g in v.link_faces}), Vector())
+        normal = circularize_loop(loop, radial_offset, twist, even, ref, plane, keep_lowest=mode in ('EDGE', 'VERT'))
         if normal is not None and normal_offset:
             inner = {v for f in faces for v in f.verts} if faces else set()
             for v in set(loop) | inner:
@@ -260,7 +272,7 @@ class ALLSET_OT_circularize(bpy.types.Operator):
 
     def execute(self, context):
         sel = context.tool_settings.mesh_select_mode
-        mode = 'FACE' if sel[2] else 'EDGE'
+        mode = 'FACE' if sel[2] else ('VERT' if sel[0] and not sel[1] else 'EDGE')
         total = 0
         for ob in context.objects_in_mode:
             bm = bmesh.from_edit_mesh(ob.data)
