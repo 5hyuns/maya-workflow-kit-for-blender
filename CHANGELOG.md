@@ -102,6 +102,10 @@ earlier version open unchanged: nothing in them is converted.
 - Animation: a Graph Editor or Dope Sheet open during playback no longer slows Maya mode down as the scene gets
   more animated: its Stats fields (the selected keys' time and value) are read once per playback instead of on every
   frame (#344).
+- Edit Mesh > Circularize on an edge loop puts the circle in the same plane as Maya, and on a block of faces the
+  inner vertices spread out like Maya's (#465).
+- UV > Automatic with 8 and 12 planes puts every face on the same plane as Maya and makes the same shells, also with
+  Layout on (#488).
 
 ### Older scenes
 - Nothing is converted when a scene is opened: lambert1, materials made by earlier versions (with their Maya Diffuse
