@@ -1,5 +1,5 @@
 """#182: modeling chain as a Maya user in the Maya layout: Create > Cylinder -> Ctrl+E on a side face ->
-Ctrl+B on three top rim edges (Maya: 0.2212097 down the sides, 0.1564189 along the unbevelled rim neighbours) ->
+Ctrl+B on three top rim edges (new vertices down the sides and along the unbevelled rim neighbours) ->
 Multi-Cut across another side face (Ctrl+Shift+X, two clicks, RMB) -> Edit Mesh > Merge two vertices -> UV > Automatic
 -> Edit > Delete by Type > History -> Ctrl+Z -> save / open. Screenshots: gui_step283_bevel.png, gui_step283_end.png."""
 
@@ -144,14 +144,14 @@ def s_bevelled():
     b = bm()
     kk, top = k(), C["top"]
     drops = [v for v in b.verts if abs(v.co.xy.length - kk) < 1e-5 and abs(top - v.co.z - 0.2212097 * kk) < 1e-5]
-    check(f"Ctrl+B on 3 rim edges: 4 new side vertices 0.2212097 down like Maya ({len(drops)})", len(drops) == 4)
+    check(f"Ctrl+B on 3 rim edges: 4 new side vertices down the sides ({len(drops)})", len(drops) == 4)
     ends = 0
     for p in C["ends"]:
         for v in b.verts:
             d = (v.co - p).length / kk
             if abs(v.co.z - top) < 1e-6 and abs(d - 0.1564189) < 1e-5 and v.co.xy.length > 0.9 * kk:
                 ends += 1
-    check(f"the unbevelled rim neighbours get their vertex 0.1564189 in, like Maya ({ends} of 2)", ends == 2)
+    check(f"the unbevelled rim neighbours get their new vertex on the rim ({ends} of 2)", ends == 2)
     C["after_bevel"] = len(b.verts)
     shot("gui_step283_bevel.png")
 
