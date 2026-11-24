@@ -1,4 +1,4 @@
-"""The Attribute Editor opens wide enough to read, like Maya (its tab stack is about 480 px at UI scale 1, the Channel
+"""The Attribute Editor opens wide enough to read (its tab stack is about 480 px at UI scale 1, the Channel
 Box's about 280 px): through Windows > UI Elements on Blender's own screen (the stack is made then) and Ctrl+A / back
 there, with Ctrl+A when the layout has no stack (a floating window), and with Ctrl+A / back in the Maya layout (the
 stack follows the tab). The edge moves through the kit's cursor fit, which an event-simulated session runs only with

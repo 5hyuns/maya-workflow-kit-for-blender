@@ -60,7 +60,7 @@ def test_two_edge_points_match_maya_polysplit():
     bm = _cube()
     pts = [_edge_point(bm, LB, LT, 0.25), _edge_point(bm, RB, RT, 0.5)]
     edges = mc.cut(bm, pts)
-    assert _counts(bm) == (10, 15, 7), _counts(bm)          # Maya: 8/12/6 -> 10/15/7
+    assert _counts(bm) == (10, 15, 7), _counts(bm)          # 8/12/6 -> 10/15/7
     assert len(edges) == 1
     assert any((v.co - Vector((-.5, -.5, -.25))).length < 1e-6 for v in bm.verts), "25 % from the first vertex"
     assert any((v.co - Vector((.5, -.5, 0))).length < 1e-6 for v in bm.verts)

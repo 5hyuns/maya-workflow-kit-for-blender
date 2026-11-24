@@ -29,7 +29,7 @@ PX_TOL = 4.0                    # drawn line positions are whole pixels; the gat
 
 
 def maya_gates(hfa, vfa, fit, aspect):
-    """Maya: (resolution gate w, h), film gate (w, h) in mm on the film back."""
+    """Gates by Maya's fit rule: (resolution gate w, h), film gate (w, h) in mm on the film back."""
     film = hfa / vfa
     if fit == 'FILL':
         fit = 'HORIZONTAL' if aspect >= film else 'VERTICAL'

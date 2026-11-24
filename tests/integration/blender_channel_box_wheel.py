@@ -31,7 +31,7 @@ phase=0
 baseline=None
 position=None
 layer=None
-W=cb.WHEEL_LINES   # Maya: 3 rows per notch
+W=cb.WHEEL_LINES   # 3 rows per notch
 
 def channels():
     # channel values only: other kit props (e.g. ghosting's allset_ghost) may appear on the object meanwhile

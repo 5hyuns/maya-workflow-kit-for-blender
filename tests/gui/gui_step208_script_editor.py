@@ -101,8 +101,8 @@ def s_check():
     ns = runner.namespace()
     names = sorted(o.name for o in bpy.context.scene.objects)
     check(f"the script ran in a new scene: {names}", names == ["ctrl", "geo_grp", "pCube1", "pCube2"])
-    # Maya: 0. Blender marks a file read inside a running operator (the script's Run Script) as modified; a new
-    # scene from a timer is not (seen here) -> documented deviation
+    # Maya reports the scene unmodified here. Blender marks a file read inside a running operator (the script's
+    # Run Script) as modified; a new scene from a timer is not -> documented deviation
     print(f"file -q -modified right after file -new inside the script: {ns.get('M')!r}")
     ob = bpy.data.objects.get("pCube1")
     check("pCube1 under geo_grp under ctrl (Maya parent / group)",

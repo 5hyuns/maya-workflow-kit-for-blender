@@ -16,7 +16,7 @@ maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
 F = frozenset
 
-# Maya: (editor, variant, before, clicked, Maya result)
+# (editor, variant, before, clicked, result)
 CLICKS = [
     # Graph Editor: plain on a selected key keeps the selection, Ctrl acts like plain, Shift toggles, Ctrl+Shift adds
     ("GRAPH", "none", {1, 10}, 10, {1, 10}), ("GRAPH", "shift", {1, 10}, 10, {1}),
@@ -35,7 +35,7 @@ CLICKS = [
 RULE = {("GRAPH", "none"): 'KEEP', ("GRAPH", "ctrl"): 'CTRL', ("GRAPH", "ctrl+shift"): 'ADD',
         ("DOPE", "ctrl"): 'DESELECT', ("DOPE", "ctrl+shift"): 'ADD'}
 
-# marquee catching keys 10 + 20 with keys 1 + 10 selected; Maya (Graph Editor, Dope Sheet, UV Editor alike)
+# marquee catching keys 10 + 20 with keys 1 + 10 selected (Graph Editor, Dope Sheet, UV Editor alike)
 BOXES = [("none", {10, 20}), ("shift", {1, 20}), ("ctrl", {1}), ("ctrl+shift", {1, 10, 20})]
 
 

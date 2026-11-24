@@ -107,7 +107,7 @@ def s_enter():
 def s_caps_applied():
     ob = bpy.data.objects[C["ob"]]
     n = len(ob.data.vertices)
-    check(f"typing 2 into Subdivisions Caps rebuilt the cylinder: {n} vertices (Maya 82)", n == 82)
+    check(f"typing 2 into Subdivisions Caps rebuilt the cylinder: {n} vertices (want 82)", n == 82)
     check("the node now reads 2", bpy.context.scene.allset_creation.subdivisionsCaps_text == "2")
     redraw()
 

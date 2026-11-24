@@ -124,7 +124,7 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
         return max((b[2] - b[0]) / (2.0 * hw), (b[3] - b[1]) / (2.0 * hh))
 
     if not ortho and win0[0][0] > 0.0 and win0[1][1] > 0.0:
-        # Maya viewFit in perspective (Maya 2026 for fitFactor 1.0 / 0.95 / 0.9): the camera stands back from
+        # perspective framing, like Maya's viewFit (any fit factor): the camera stands back from
         # the box centre by the box's half depth
         # along the view plus the distance at which the box's half extents across the view (the axis-aligned box
         # projected on the view's right / up axes) fill the field of view times the fit factor. The field of view is

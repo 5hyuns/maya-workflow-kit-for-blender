@@ -158,7 +158,7 @@ def test_no_preview_and_nothing_selected_warn_like_maya():
     assert bpy.ops.allset.smooth_to_polygons() == {'CANCELLED'}
     assert modify.WARN_NO_PREVIEW == "No polygonal objects selected were in smooth preview mode."
     assert modify.WARN_NO_POLYS == "No polygonal objects selected."
-    # mixed: only the preview one converts (Maya 6 / 96)
+    # mixed: only the preview one converts (6 / 96)
     on = _cube("pCube3")
     display.set_smooth_preview(on, 3)
     _select(plain, on)

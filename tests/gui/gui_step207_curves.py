@@ -103,7 +103,7 @@ def s_intersect():
     sel(a, b)
     res = run_item("Curves/Intersect")
     locs = [o for o in bpy.data.objects if o.type == 'EMPTY']
-    check(f"Intersect ({res}): {len(locs)} locators (Maya: 2 crossings x 2 curves)", len(locs) == 4)
+    check(f"Intersect ({res}): {len(locs)} locators (want 2 crossings x 2 curves)", len(locs) == 4)
     sel(a, b, bpy.data.objects[C["ob"]])
     with override():
         bpy.ops.view3d.view_selected()

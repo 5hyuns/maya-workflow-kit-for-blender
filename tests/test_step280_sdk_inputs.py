@@ -42,7 +42,7 @@ def _key(drv, dkey, dv, tgt, key, v):
 
 
 def _rig(drv, tgt):
-    """curl (0, 0) (10, 90 deg) + spread (0, 0) (10, -30 deg) summed on tgt rz (Maya: 10 / 10 -> 60)."""
+    """curl (0, 0) (10, 90 deg) + spread (0, 0) (10, -30 deg) summed on tgt rz (10 / 10 -> 60)."""
     for k in ("curl", "spread"):
         sdk.set_raw_value(drv, "cp:" + k, 0.0)
     _key(drv, "cp:curl", 0, tgt, "rz", 0.0)

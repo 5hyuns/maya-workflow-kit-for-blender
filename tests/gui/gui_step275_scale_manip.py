@@ -51,7 +51,7 @@ def screen(world):
 
 
 def px_world(at):
-    """World length of one px at the depth of ``at`` (Maya: 2 depth tan(fov / 2) / view width)."""
+    """World length of one px at the depth of ``at`` (2 depth tan(fov / 2) / view width)."""
     _area, region = view3d()
     rv3d = region.data
     depth = -(rv3d.view_matrix @ at).z

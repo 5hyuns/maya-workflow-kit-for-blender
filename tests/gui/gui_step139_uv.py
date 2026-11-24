@@ -91,7 +91,7 @@ def s_wait():
 def s_automatic():
     ob = C["ob"]
     after = uv_info(ob)
-    check(f"UV > Automatic from object mode projects the whole cube: {C['before']} -> {after} (Maya 6 shells, 24 UVs)",
+    check(f"UV > Automatic from object mode projects the whole cube: {C['before']} -> {after} (want 6 shells, 24 UVs)",
           after == (6, 24))
     check("still in object mode", bpy.context.mode == 'OBJECT')
     area, region = view3d()

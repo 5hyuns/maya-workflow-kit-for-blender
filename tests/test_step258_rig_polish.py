@@ -20,7 +20,7 @@ units = import_module(kit.MODULE + ".operators.units")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 command_line = import_module(kit.MODULE + ".command_line")
 
-# Blender position of the root joint (Maya (3, 2, 1) in Y-up = Blender (3, -1, 2))
+# Blender position of the root joint (Y-up (3, 2, 1) = Blender (3, -1, 2))
 ROOT = (3.0, -1.0, 2.0)
 CHAIN = [ROOT, (3.0, -1.0, 6.0), (5.0, -1.0, 9.0)]
 

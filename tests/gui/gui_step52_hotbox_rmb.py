@@ -78,7 +78,7 @@ def s_hotbox():
     rows = {}
     for r, _k, label in lay.labels:
         rows.setdefault(r[1], []).append(label)
-    check(f"{len(rows)} rows (Maya: 2 above, the centre row, 5 menu sets)", len(rows) == 8)
+    check(f"{len(rows)} rows (want 2 above, the centre row, 5 menu sets)", len(rows) == 8)
     check("centre box says Maya Workflow Kit", lay.title == "Maya Workflow Kit")
     check("four zone lines", len(lay.zone_lines) == 4)
     ui_x = C["ui"][0] - region.x

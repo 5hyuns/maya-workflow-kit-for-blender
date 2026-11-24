@@ -61,8 +61,8 @@ def s_rows():
     win_r = regions['WINDOW']
     _x, _y, size = shelf.icon_rect(win_r, 0, scale())
     if abs(scale() - 1.0) < 0.01:   # the Maya density: the template's sizes are Maya pixels
-        check(f"Shelf row = tab row + icon row ({area.height} px; Maya 64)", abs(area.height - 64) <= 2)
-        check(f"icons {size:.0f} px (Maya 32)", abs(size - 32) < 0.5)
+        check(f"Shelf row = tab row + icon row ({area.height} px; want 64)", abs(area.height - 64) <= 2)
+        check(f"icons {size:.0f} px (want 32)", abs(size - 32) < 0.5)
     else:   # other scales: the row is resized when Blender lets the kit move the edge (best effort)
         check(f"Shelf row shows tabs and icons at scale {scale():.2f} ({area.height} px, icons {size:.0f})",
               not area.spaces.active.show_region_header and size >= 16)

@@ -68,7 +68,7 @@ def test_both_boxes_are_maya_windows():
 
 
 def test_toggle_independent_flips_each():
-    # Maya: (hidden, shown, shown) -> (shown, hidden, hidden)
+    # (hidden, shown, shown) -> (shown, hidden, hidden)
     obs = _abc({"a"})
     bpy.ops.allset.visibility(action='TOGGLE', behaviour='INDEPENDENT')
     assert _shown(obs) == [True, False, False], _shown(obs)
@@ -76,7 +76,7 @@ def test_toggle_independent_flips_each():
 
 
 def test_toggle_dependent_follows_the_first():
-    # Maya: (hidden, shown, shown) -> all shown (the opposite of the first selected a)
+    # (hidden, shown, shown) -> all shown (the opposite of the first selected a)
     obs = _abc({"a"})
     bpy.ops.allset.visibility(action='TOGGLE', behaviour='DEPENDENT')
     assert _shown(obs) == [True, True, True], _shown(obs)

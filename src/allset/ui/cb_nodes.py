@@ -24,7 +24,7 @@ def is_root_joint(node):
 
 
 def root_translate(pb):
-    """Translate X / Y / Z of a root joint = its position (Maya 2026: a root joint at (3, 2, 1) shows Translate
+    """Translate X / Y / Z of a root joint = its position (a root joint at (3, 2, 1) shows Translate
     3 / 2 / 1): rest head + pose offset, armature space, in the kit's Z-up axes
     like every object Translate (operators/joint_edit.joint_translate shows the same in Edit
     mode). Blender keeps a pose bone's offset in the bone's rest axes."""

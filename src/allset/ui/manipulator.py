@@ -91,7 +91,7 @@ def axis_colours():
 
 
 def plane_fill(colour):
-    """Fill colour of a plane handle: the rim colour lightened toward white (Maya 02: red rim, pinkish fill)."""
+    """Fill colour of a plane handle: the rim colour lightened toward white (red rim, pinkish fill)."""
     return tuple(c + (1.0 - c) * PLANE_LIGHTEN for c in colour[:3])
 
 

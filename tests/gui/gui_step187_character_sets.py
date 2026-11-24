@@ -101,7 +101,7 @@ def s_key():
         bpy.ops.allset.set_key()
     from_kit = import_module(MODULE + ".compat")
     fcs = list(from_kit.id_fcurves(ob) or ())
-    check(f"S with nothing selected keys the current character ({len(fcs)} curves, Maya: 6)", len(fcs) == 6)
+    check(f"S with nothing selected keys the current character ({len(fcs)} curves, want 6)", len(fcs) == 6)
 
 
 @step

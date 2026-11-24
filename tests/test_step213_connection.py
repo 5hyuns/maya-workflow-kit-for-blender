@@ -52,7 +52,7 @@ def test_connect_follows_and_break_keeps_the_value():
     _cm_scene()
     ce = m("ui.connection_editor")
     a, b = _ob("pCube1"), _ob("pSphere1")
-    a.location.x = 0.03                       # 3 cm (Maya 3)
+    a.location.x = 0.03                       # 3 cm (Translate X 3)
     assert ce.connect(bpy.context.scene, a, "translateX", b, "translateX") == 1
     _eval()
     assert abs(b.location.x - 0.03) < 1e-9, b.location.x
@@ -60,11 +60,11 @@ def test_connect_follows_and_break_keeps_the_value():
     assert ce.source_of(b, "translateX") == (a, "translateX")
     a.location.x = 0.05
     _eval()
-    assert abs(b.location.x - 0.05) < 1e-9, "the right attribute follows the left (Maya: 5)"
+    assert abs(b.location.x - 0.05) < 1e-9, "the right attribute follows the left (5)"
     assert ce.disconnect(b, "translateX") == 1
     a.location.x = 0.0
     _eval()
-    assert abs(b.location.x - 0.05) < 1e-9, "after Break the value stays (Maya: 5)"
+    assert abs(b.location.x - 0.05) < 1e-9, "after Break the value stays (5)"
     assert ce.source_of(b, "translateX") is None
 
 

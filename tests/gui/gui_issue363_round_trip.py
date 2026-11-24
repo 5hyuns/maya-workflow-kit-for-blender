@@ -2,10 +2,10 @@
 Maya, through a restart of Blender in Maya mode and in Blender mode, and through a settings export / import.
 
 The changes are made the way a user makes them:
-- Maya mode, the kit's Hotkey Editor (pick the row, Assign New Hotkey, press the key): Smooth Mesh Preview 3 (Maya 3)
-  -> Alt+F5, Undo (Maya z) -> Alt+F6;
+- Maya mode, the kit's Hotkey Editor (pick the row, Assign New Hotkey, press the key): Smooth Mesh Preview 3 (key 3)
+  -> Alt+F5, Undo (key z) -> Alt+F6;
 - Maya mode, Edit > Preferences > Keymap (search, click the kit item's key, press the new key): Smooth Mesh Preview 1
-  (Maya 1, Object Mode) -> Alt+F7;
+  (key 1, Object Mode) -> Alt+F7;
 - Blender mode, Edit > Preferences > Keymap: Blender's Hide Objects (h, Object Mode) -> Alt+F8.
 Maya / Blender is switched with Ctrl+Alt+Shift+M over the viewport. Every check presses the new key over the viewport
 (the command runs) and the old key (it no longer does). The preferences are saved into the test's own config folder

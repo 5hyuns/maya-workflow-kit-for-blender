@@ -202,7 +202,7 @@ def corner_neighbours(v):
 
 
 def corner_quad(bm, v, co):
-    """Tab+drag from border vertex ``v`` (Maya 2026 Quad Draw, Autodesk's help "Extend edges with Quad Draw": with
+    """Tab+drag from border vertex ``v`` (Maya 2026 Quad Draw, Maya's help "Extend edges with Quad Draw": with
     the Edge extend option a vertex can be dragged to create a polygon): the quad A, V, B, N of ``v``, its two border
     neighbours and a new vertex at local ``co``. Only where that quad fills the open side of ``v`` (an inner corner):
     at an outer corner or a straight border it would fold over the faces there, and nothing is made
