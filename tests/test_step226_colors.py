@@ -1,9 +1,9 @@
 """Issue #136: Maya control colours — Display > Wireframe Color... and the Attribute
 Editor's Drawing Overrides (operators/wire_color.py).
 
-Maya: the colorIndex palette 1-31, user palette 1-8 = indices 24-31, user colour 3 ->
+The colorIndex palette 1-31, user palette 1-8 = indices 24-31, user colour 3 ->
 useObjectColor 1 / objectColor 2, an RGB colour -> useObjectColor 2 / wireColorRGB,
-override attributes all 0 / off by default."""
+override attributes all 0 / off on a new object."""
 
 from importlib import import_module
 
@@ -17,7 +17,7 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
 # the colorIndex palette
-MAYA_INDEX = {
+INDEX_RGB = {
     1: [0.0, 0.0, 0.0], 2: [0.25, 0.25, 0.25], 3: [0.6, 0.6, 0.6], 4: [0.608, 0.0, 0.157], 5: [0.0, 0.016, 0.376],
     6: [0.0, 0.0, 1.0], 7: [0.0, 0.275, 0.098], 8: [0.149, 0.0, 0.263], 9: [0.784, 0.0, 0.784], 10: [0.541, 0.282, 0.2],
     11: [0.247, 0.137, 0.122], 12: [0.6, 0.149, 0.0], 13: [1.0, 0.0, 0.0], 14: [0.0, 1.0, 0.0], 15: [0.0, 0.255, 0.6],
@@ -26,7 +26,7 @@ MAYA_INDEX = {
     25: [0.8784, 0.7843, 0.3059], 26: [0.6353, 0.8118, 0.2784], 27: [0.2314, 0.7569, 0.5804],
     28: [0.2549, 0.8196, 0.7255], 29: [0.2274, 0.6157, 0.8078], 30: [0.6118, 0.4196, 0.8078],
     31: [0.8078, 0.349, 0.6549]}
-MAYA_USER = {1: [0.8549, 0.5686, 0.4275], 2: [0.8784, 0.7843, 0.3059], 3: [0.6353, 0.8118, 0.2784],
+USER_RGB = {1: [0.8549, 0.5686, 0.4275], 2: [0.8784, 0.7843, 0.3059], 3: [0.6353, 0.8118, 0.2784],
              4: [0.2314, 0.7569, 0.5804], 5: [0.2549, 0.8196, 0.7255], 6: [0.2274, 0.6157, 0.8078],
              7: [0.6118, 0.4196, 0.8078], 8: [0.8078, 0.349, 0.6549]}
 
@@ -100,7 +100,7 @@ def test_wireframe_color_on_objects():
     assert bpy.ops.allset.wireframe_color(color_type='INDEXED', cell='3') == {'FINISHED'}
     st = ob["allset_object_color"].to_dict()
     assert st["use"] == 1 and st["index"] == 2, st            # Maya: user colour 3 -> objectColor 2
-    assert _close(ob.color, _lin(MAYA_USER[3])), tuple(ob.color)
+    assert _close(ob.color, _lin(USER_RGB[3])), tuple(ob.color)
     assert all(s.shading.wireframe_color_type == 'THEME' for s in spaces)
     assert tuple(other.color) == (1.0, 1.0, 1.0, 1.0) and "allset_object_color" not in other
     # in a Maya workspace the views draw object colours
@@ -155,7 +155,7 @@ def test_wireframe_color_on_pose_bones():
     assert bpy.ops.allset.wireframe_color(color_type='INDEXED', cell='6') == {'FINISHED'}
     pb, other = arm.pose.bones["joint2"], arm.pose.bones["joint1"]
     assert pb.color.palette == 'CUSTOM'
-    assert _close(pb.color.custom.normal, MAYA_USER[6]), tuple(pb.color.custom.normal)   # sRGB as is
+    assert _close(pb.color.custom.normal, USER_RGB[6]), tuple(pb.color.custom.normal)   # sRGB as is
     assert _close(pb.color.custom.active, (0x43 / 255, 1.0, 0xa3 / 255))                 # Maya lead
     assert pb["allset_object_color"].to_dict()["index"] == 5
     assert other.color.palette == 'DEFAULT'
@@ -173,22 +173,22 @@ def test_drawing_overrides_object():
     assert tuple(ob.color) == (1.0, 1.0, 1.0, 1.0)            # index 0 = default colour
     ob.allset_override_index = 13                               # rig convention: right = red 13
     assert _close(ob.color, (1.0, 0.0, 0.0, 1.0))
-    assert _close(ob.allset_override_color, MAYA_INDEX[13])
+    assert _close(ob.allset_override_color, INDEX_RGB[13])
     st = ob["allset_override"].to_dict()
     assert st["enabled"] == 1 and st["index"] == 13 and st["rgb"] == 0, st
     ob.allset_override_index = 18
-    assert _close(ob.color, _lin(MAYA_INDEX[18]))
+    assert _close(ob.color, _lin(INDEX_RGB[18]))
     # the override wins over a Wireframe Color
     wc.color([ob], ud=1)
-    assert _close(ob.color, _lin(MAYA_INDEX[18]))
+    assert _close(ob.color, _lin(INDEX_RGB[18]))
     # editing the colour = RGB colours
     ob.allset_override_color = (0.2, 0.4, 0.6)
     assert ob.allset_override_mode == 'RGB' and _close(ob.color, _lin((0.2, 0.4, 0.6)))
     ob.allset_override_mode = 'INDEX'
-    assert _close(ob.color, _lin(MAYA_INDEX[18]))
+    assert _close(ob.color, _lin(INDEX_RGB[18]))
     # Enable Overrides off: the Wireframe Color shows again; with no Wireframe Color either, Blender's white
     ob.allset_override_enabled = False
-    assert _close(ob.color, _lin(MAYA_USER[1]))
+    assert _close(ob.color, _lin(USER_RGB[1]))
     wc.color([ob])
     assert tuple(ob.color) == (1.0, 1.0, 1.0, 1.0) and "allset_wire_set" not in ob
 
@@ -199,9 +199,9 @@ def test_drawing_overrides_pose_bone():
     pb = arm.pose.bones["joint1"]
     pb.allset_override_enabled = True
     pb.allset_override_index = 6                                # left = blue 6
-    assert pb.color.palette == 'CUSTOM' and _close(pb.color.custom.normal, MAYA_INDEX[6])
+    assert pb.color.palette == 'CUSTOM' and _close(pb.color.custom.normal, INDEX_RGB[6])
     pb.allset_override_index = 17                               # centre = yellow 17
-    assert _close(pb.color.custom.normal, MAYA_INDEX[17])
+    assert _close(pb.color.custom.normal, INDEX_RGB[17])
     assert arm.pose.bones["joint2"].color.palette == 'DEFAULT'
     pb.allset_override_enabled = False
     assert pb.color.palette == 'DEFAULT' and "allset_wire_set" not in pb

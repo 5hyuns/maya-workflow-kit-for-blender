@@ -1,8 +1,8 @@
 """Maya buffer curves (Snapshot / Swap / Show Buffer Curves) and weighted / non-weighted tangents,
 tangent length locks (operators/graph_buffers.py, operators/graph_weights.py).
 
-Maya results. Scene: pCube1.tx keys (1,0) (5,2) (10,5) (15,3) (25,8) at 24 fps;
-``ix / iy / ox / oy`` = Maya keyTangent queries (3 x the arm in seconds / value for weighted curves, a unit
+Expected results. Scene: pCube1.tx keys (1,0) (5,2) (10,5) (15,3) (25,8) at 24 fps;
+``ix / iy / ox / oy`` = the in / out tangents (3 x the arm in seconds / value for weighted curves, a unit
 direction for non-weighted ones), ``eval`` = the curve value at t = 1, 1.25, ... 25.
 """
 
@@ -21,12 +21,12 @@ preferences = import_module(kit.MODULE + ".preferences")
 FPS = 24
 KEYS = ((1, 0.0), (5, 2.0), (10, 5.0), (15, 3.0), (25, 8.0))
 TIMES = [x / 4.0 for x in range(4, 101)]
-# Maya buffer results: key 10 set to 9, swap -> 5, swap -> 9; key 5 moved to 6, swap -> times back
+# buffer results: key 10 set to 9, swap -> 5, swap -> 9; key 5 moved to 6, swap -> times back
 AFTER_SWAP = (0.0, 2.0, 5.0, 3.0, 8.0)
 AFTER_SWAP2 = (0.0, 2.0, 9.0, 3.0, 8.0)
 SWAP_AFTER_TIME_MOVE = ((1.0, 5.0, 10.0, 15.0, 25.0), (0.0, 2.0, 5.0, 3.0, 8.0))
 
-MAYA = {
+WANT = {
     'to_weighted': {
         "weighted": True,
         'ix': (0.166666666667, 0.166666666667, 0.208333333333, 0.208333333333, 0.416666666667),
@@ -144,11 +144,11 @@ def _tx(ob):
     return next(fc for fc in kit.fcurves(ob) if fc.data_path == "location" and fc.array_index == 0)
 
 
-def _maya_curve(state):
-    """pCube1.tx with FREE handles made from Maya's tangents of ``state`` (weighted: arm = (ix * fps / 3, iy / 3);
+def _tangent_curve(state):
+    """pCube1.tx with FREE handles made from the tangents of ``state`` (weighted: arm = (ix * fps / 3, iy / 3);
     non-weighted: direction ix / iy with a time extent of a third of the interval)."""
     ob, fc = _cube()
-    m = MAYA[state]
+    m = WANT[state]
     pts = fc.keyframe_points
     for i, kp in enumerate(pts):
         kp.handle_left_type = kp.handle_right_type = 'FREE'
@@ -187,16 +187,16 @@ def _close(a, b, tol):
 # --- Maya weight <-> Blender handle -------------------------------------------------------------------------
 
 def test_maya_weighted_tangents_evaluate_like_maya():
-    _ob, fc = _maya_curve("to_weighted")
-    assert _err(fc, MAYA["to_weighted"]["eval"]) < 1e-4, _err(fc, MAYA["to_weighted"]["eval"])
+    _ob, fc = _tangent_curve("to_weighted")
+    assert _err(fc, WANT["to_weighted"]["eval"]) < 1e-4, _err(fc, WANT["to_weighted"]["eval"])
     # weight w at angle a = the arm length / angle in (frame, value): key 5 out = (5/3 frames, 0.9259)
     kp = fc.keyframe_points[1]
     dx, dy = kp.handle_right[0] - kp.co[0], kp.handle_right[1] - kp.co[1]
     assert abs(math.hypot(dx, dy) - 1.906598174256852) < 1e-5
     assert abs(math.degrees(math.atan2(dy, dx)) - 29.054604099077146) < 1e-4
 
-    _ob, fc = _maya_curve("edited_weights")
-    ev = MAYA["edited_weights"]["eval"]
+    _ob, fc = _tangent_curve("edited_weights")
+    ev = WANT["edited_weights"]["eval"]
     assert _err(fc, ev, hi=5) < 1e-4 and _err(fc, ev, lo=10) < 1e-4, (_err(fc, ev, hi=5), _err(fc, ev, lo=10))
     # key 5's out weight 6 reaches past key 10 (5.24 frames in a 5-frame interval): Maya evaluates the plain Bezier,
     # Blender shortens a handle that reaches past the segment's other key to end at that key before evaluating - a
@@ -211,12 +211,12 @@ def test_maya_weighted_tangents_evaluate_like_maya():
 
 
 def test_non_weighted_tangents_match_maya():
-    ob, fc = _maya_curve("locked_angle_change")          # edited weights + key 5 out at 40 degrees, weighted
+    ob, fc = _tangent_curve("locked_angle_change")          # edited weights + key 5 out at 40 degrees, weighted
     with Editor():
         assert fc in list(bpy.context.visible_fcurves)
         assert bpy.ops.allset.curve_weights(weighted=False) == {'FINISHED'}
     assert not gw.is_weighted(fc)
-    ev = MAYA["back_nonweighted"]["eval"]
+    ev = WANT["back_nonweighted"]["eval"]
     assert _err(fc, ev) < 1e-4, _err(fc, ev)
     kp = fc.keyframe_points[1]
     assert abs(kp.handle_right[0] - kp.co[0] - 5 / 3) < 1e-5 and abs(kp.co[0] - kp.handle_left[0] - 4 / 3) < 1e-5
@@ -224,13 +224,13 @@ def test_non_weighted_tangents_match_maya():
 
 
 def test_weighted_tangents_keep_the_shape():
-    ob, fc = _maya_curve("edited_weights")
+    ob, fc = _tangent_curve("edited_weights")
     before = _handles(fc)
     with Editor():
         assert bpy.ops.allset.curve_weights(weighted=True) == {'FINISHED'}
     assert gw.is_weighted(fc)
     assert _close(before, _handles(fc), 1e-9)
-    # a non-weighted curve made weighted keeps its shape too (Maya to_weighted == nonweighted)
+    # a non-weighted curve made weighted keeps its shape too (to_weighted == nonweighted)
     with Editor():
         bpy.ops.allset.curve_weights(weighted=False)
         mid = _handles(fc)
@@ -241,7 +241,7 @@ def test_weighted_tangents_keep_the_shape():
 def test_watch_keeps_non_weighted_arms_at_a_third():
     _clear()
     assert gw.watch(bpy.context) == 0, "nothing marked: nothing to do"
-    ob, fc = _maya_curve("to_weighted")
+    ob, fc = _tangent_curve("to_weighted")
     gw.set_weighted(fc, False)
     kp = fc.keyframe_points[1]
     kp.handle_right = (kp.co[0] + 3.0, kp.co[1] + 2.0)          # drag the out arm long, slope 2/3
@@ -257,7 +257,7 @@ def test_watch_keeps_non_weighted_arms_at_a_third():
 
 
 def test_watch_keeps_locked_lengths():
-    ob, fc = _maya_curve("edited_weights")
+    ob, fc = _tangent_curve("edited_weights")
     kp = fc.keyframe_points[1]
     kp.select_control_point = True
     with Editor():
@@ -269,8 +269,8 @@ def test_watch_keeps_locked_lengths():
     assert gw.watch(bpy.context) >= 1
     dx, dy = kp.handle_right[0] - kp.co[0], kp.handle_right[1] - kp.co[1]
     assert abs(math.hypot(dx, dy) - 6.0) < 1e-5 and abs(math.degrees(math.atan2(dy, dx)) - 40.0) < 1e-4
-    # Maya locked_angle_change: out arm = (ox * fps / 3, oy / 3)
-    m = MAYA["locked_angle_change"]
+    # locked_angle_change: out arm = (ox * fps / 3, oy / 3)
+    m = WANT["locked_angle_change"]
     assert abs(dx - m["ox"][1] * FPS / 3) < 1e-5 and abs(dy - m["oy"][1] / 3) < 1e-5, (dx, dy)
     left = math.hypot(kp.handle_left[0] - kp.co[0], kp.handle_left[1] - kp.co[1])
     assert abs(left - 0.5) < 1e-5
@@ -310,7 +310,7 @@ def test_default_tangent_weight():
     p = preferences.get()
     old = p.default_tangent_weight
     try:
-        ob, fc = _maya_curve("edited_weights")
+        ob, fc = _tangent_curve("edited_weights")
         p.default_tangent_weight = 'NON_WEIGHTED'
         assert gw.apply_default(fc) is False and not gw.is_weighted(fc)
         kp = fc.keyframe_points[1]

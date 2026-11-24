@@ -105,8 +105,8 @@ def test_connected_rows():
 
 
 def test_center_view_rule_matches_maya():
-    # Maya persp at (28, 21, 28), rotate (-27.9384, 45, 0) (Y-up), cube centre
-    # (5, 2, -3) -> viewFit -c moves the camera to (31.8764, 22.1573, 23.8764), rotation kept, COI 43.0232.
+    # persp camera at (28, 21, 28), rotate (-27.9384, 45, 0) (Y-up), cube centre
+    # (5, 2, -3) -> Center View moves the camera to (31.8764, 22.1573, 23.8764), rotation kept, COI 43.0232.
     rx, ry = math.radians(-27.9384), math.radians(45.0)
     forward = Vector((-math.sin(ry) * math.cos(rx), math.sin(rx), -math.cos(ry) * math.cos(rx)))
     eye, dist = camera_tools.centre_view((28, 21, 28), forward, (5, 2, -3))

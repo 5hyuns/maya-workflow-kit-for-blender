@@ -203,7 +203,7 @@ def _positions(bm):
 
 
 def test_smooth_whole_cube_like_maya():
-    # Maya: 26/48/24, corners +-0.2778, edge points (+-0.375, +-0.375, 0), face points +-0.5 on an axis
+    # 26/48/24, corners +-0.2778, edge points (+-0.375, +-0.375, 0), face points +-0.5 on an axis
     bm = _cube()
     poly.smooth(bm, list(bm.faces))
     assert _counts(bm) == (26, 48, 24), _counts(bm)

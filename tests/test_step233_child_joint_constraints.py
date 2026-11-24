@@ -1,9 +1,9 @@
 """Issue #142: constraints on a CHILD joint move it like Maya.
 
 Expected: joints (0, 10, 0) ->
-(6, 10, 0) -> (12, 10, 0) (cmds.joint), transforms ctrlA t (12, 10, 0) r (0, 0, 30) and ctrlB t (12, 14, 0)
+(6, 10, 0) -> (12, 10, 0), transforms ctrlA t (12, 10, 0) r (0, 0, 30) and ctrlB t (12, 14, 0)
 r (10, -20, 0); ctrlA, ctrlB, then joint3 selected -> Constrain > Point / Parent / Orient / Aim; W1 = 3; then
-ctrlB moved to (14, 15, 1). Audit 0.5.0 ①-7: the kit's Point constraint left joint3 at (12, 10, 0) (Blender ignores
+ctrlB moved to (14, 15, 1). An earlier kit's Point constraint left joint3 at (12, 10, 0) (Blender ignores
 location constraints on a connected bone).
 """
 
@@ -21,23 +21,23 @@ units = import_module(kit.MODULE + ".operators.units")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
 C3 = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))      # Maya axes -> Blender axes
-MAYA = {   # Maya joint3 world translation (cm)
+WANT_POS = {   # joint3 world translation (cm, Y-up)
     "point": {"w11": (12.0, 12.0, 0.0), "w13": (12.0, 13.0, 0.0), "moved": (13.5, 13.75, 0.75)},
     "parent_nomo": {"w11": (12.0, 12.0, 0.0), "w13": (12.0, 13.0, 0.0), "moved": (13.5, 13.75, 0.75)},
     "parent_mo": {"w11": (12.0, 10.0, 0.0), "w13": (12.0, 10.0, 0.0), "moved": (13.5, 10.75, 0.75)},
     "orient": {"w11": (12.0, 10.0, 0.0)},
     "aim": {"w11": (12.0, 10.0, 0.0)},
 }
-# joint3 world axes (rows of Maya's xform -ws -m, rotation part) per state
+# joint3 world axes (rows of its world matrix, rotation part, Y-up) per state
 I3 = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
 PARENT_R = {"w11": ((0.946209, 0.265705, 0.184632), (-0.280921, 0.957768, 0.061347), (-0.160534, -0.109915, 0.980891)),
             "w13": ((0.953929, 0.134393, 0.268251), (-0.168419, 0.979776, 0.10805), (-0.248304, -0.14825, 0.95727))}
-MAYA_R = {"point": {"w11": I3, "w13": I3, "moved": I3},
+WANT_R = {"point": {"w11": I3, "w13": I3, "moved": I3},
           "parent_nomo": {**PARENT_R, "moved": PARENT_R["w13"]},
           "parent_mo": {"w11": I3, "w13": I3, "moved": I3},
           "orient": PARENT_R,
           # aim: position only — two aim targets are not a weighted target average in the kit (out of scope;
-          # Maya aims at (12, 12, 0) here), and its up vector is parallel to the aim (degenerate)
+          # the weighted aim would be at (12, 12, 0) here), and its up vector is parallel to the aim (degenerate)
           "aim": {}}
 # kit - expected axis differences (deg) allowed where the kit's blend isn't Maya's (orient = Blender's
 # weighted rotation mix, not Maya's)
@@ -99,7 +99,7 @@ def _pos(ob, k):
 
 
 def _axes(ob):
-    """joint3's Maya world axes (columns), Maya coordinates."""
+    """joint3's world axes (columns), Y-up coordinates."""
     m = (ob.matrix_world @ ob.pose.bones["joint3"].matrix).to_3x3().normalized() @ joints.JOINT_AXES
     return C3.transposed() @ m
 
@@ -115,7 +115,7 @@ def _set_w1(ob, value):
 def _run(case, ctype, maintain='DEFAULT'):
     ob, ctrls, k = _scene()
     _constrain(ob, ctrls, ctype, maintain)
-    want = MAYA[case]
+    want = WANT_POS[case]
     got = {"w11": _pos(ob, k)}
     axes = {"w11": _axes(ob)}
     if "w13" in want:
@@ -124,12 +124,12 @@ def _run(case, ctype, maintain='DEFAULT'):
         ctrls[1].matrix_world.translation = _bl((14, 15, 1), k)
         bpy.context.view_layer.update()
         got["moved"], axes["moved"] = _pos(ob, k), _axes(ob)
-    for key, rows in MAYA_R[case].items():
+    for key, rows in WANT_R[case].items():
         if key not in axes:
             continue
         maya = Matrix(rows).transposed()
         deg = math.degrees((axes[key].transposed() @ maya).to_quaternion().angle)
-        print(f"step233 {case} {key}: axes off Maya {deg:.4f} deg")
+        print(f"child joint {case} {key}: axes off the expected ones {deg:.4f} deg")
         assert deg < ROT_TOL.get(case, 0.01), (case, key, deg)
     for key, w in want.items():
         d = (got[key] - Vector(w)).length

@@ -8,7 +8,7 @@ circle. Maya's:
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
   plane handles (normal-axis colour), the active handle drawn yellow.
 - Rotate: axis rings drawn on their front half only, a larger view ring, a grey trackball outline (a drag
-  inside it rotates freely). The handles use Maya's own axis colours (``MAYA_AXIS``).
+  inside it rotates freely). The handles use fixed red / green / blue axis colours (``AXIS_HEX``).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
 - Pivot edit mode (D / Insert): Move plus small rings to orient the pivot.
 - Constant screen size: 108 px for the Move Y arrow.
@@ -77,7 +77,7 @@ PLANES = {'XY': ((True, True, False), 'Z', Matrix.Identity(3)),
 # #76: kit-fixed Maya-style axis colours instead of the user's theme gizmo axes (Blender's #ff3653 /
 # #8adb00 / #3b64a5): X #e60000, Y #00e600, Z #0000ff. The active and the hovered handle stay yellow #ffff00. Gizmo
 # colours are sRGB like the theme values they replace (the gizmo shaders convert).
-MAYA_AXIS = {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
+AXIS_HEX = {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
 
 
 def _srgb(hex_str):
@@ -87,7 +87,7 @@ def _srgb(hex_str):
 
 def axis_colours():
     """{'X' / 'Y' / 'Z': sRGB (r, g, b)} of the Maya manipulator axes (kit-fixed, whatever the theme is)."""
-    return {axis: _srgb(value) for axis, value in MAYA_AXIS.items()}
+    return {axis: _srgb(value) for axis, value in AXIS_HEX.items()}
 
 
 def plane_fill(colour):

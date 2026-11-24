@@ -11,8 +11,8 @@ order_mod = import_module(kit.MODULE + ".operators.deformer_order")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
-# Maya: evaluation order c1 c2 c3 (Maya lists output first: c3 c2 c1)
-MAYA = {("c3", "c1"): ["c2", "c1", "c3"], ("c1", "c3"): ["c3", "c1", "c2"], ("c1", "c2"): ["c2", "c1", "c3"]}
+# evaluation order c1 c2 c3 (Maya lists output first: c3 c2 c1); reorder (a, b) -> new order
+REORDER = {("c3", "c1"): ["c2", "c1", "c3"], ("c1", "c3"): ["c3", "c1", "c2"], ("c1", "c2"): ["c2", "c1", "c3"]}
 
 
 def _clear():
@@ -32,7 +32,7 @@ def _cube_with_three():
 
 
 def test_pure_rule_matches_maya():
-    for (a, b), want in MAYA.items():
+    for (a, b), want in REORDER.items():
         assert order_mod.reorder(["c1", "c2", "c3"], a, b) == want, (a, b)
     try:
         order_mod.reorder(["c1", "c2", "c3"], "c2", "c1")
@@ -43,7 +43,7 @@ def test_pure_rule_matches_maya():
 
 
 def test_operator_moves_the_stack_and_undoes():
-    for (a, b), want in MAYA.items():
+    for (a, b), want in REORDER.items():
         name = _cube_with_three().name
         bpy.ops.ed.undo_push(message="before")
         res = bpy.ops.allset.reorder_deformers('EXEC_DEFAULT', True, object=name, first=a, second=b)

@@ -1,7 +1,7 @@
 """Visualize > Create Animation Snapshot / Update Snapshot and ghosting (Ghost Selected / Unghost Selected /
 Unghost All / Ghosting Editor). Maya rules.
 
-Maya points are Y-up: Maya (x, y, z) = Blender (x, -z, y); Maya rotateY = Blender rotation Z (same sign)."""
+Points are Y-up: (x, y, z) = Blender (x, -z, y); rotateY = Blender rotation Z (same sign)."""
 
 import importlib.util
 import math
@@ -20,8 +20,8 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
 
-def maya(p):
-    """Maya Y-up point -> Blender Z-up."""
+def y_up(p):
+    """Y-up point -> Blender Z-up."""
     return (p[0], -p[2], p[1])
 
 
@@ -65,7 +65,7 @@ def _key_linear(ob):
 
 
 def _anim_cube(rotate=True, tx_end=9.0):
-    """Maya anim_cube: translateX 0 -> 9 and rotateY 0 -> 90 over frames 1 -> 10, linear."""
+    """Animated cube: translateX 0 -> 9 and rotateY 0 -> 90 over frames 1 -> 10, linear."""
     ob = _cube()
     for f, x, r in ((1, 0.0, 0.0), (10, tx_end, 90.0)):
         ob.location.x = x
@@ -89,7 +89,7 @@ def _close(a, b, tol=1e-4):
 
 # --- Create Animation Snapshot -------------------------------------------------------------------------------------
 
-def test_snapshot_names_count_and_maya_vertices():
+def test_snapshot_names_count_and_vertices():
     _clear()
     cube = _anim_cube()
     i0 = _vid(cube)
@@ -101,11 +101,11 @@ def test_snapshot_names_count_and_maya_vertices():
     assert [c.name for c in copies] == [f"transform1_{k}" for k in range(1, 11)]
     assert [c.data.name for c in copies] == [f"transform1_Shape{k}" for k in range(1, 11)]
     assert all(c.parent == grp and c.matrix_world == __import__("mathutils").Matrix.Identity(4) for c in copies)
-    # Maya: source vertex 0 by frame (frames 1, 2, 5, 10), Maya Y-up
+    # source vertex 0 by frame (frames 1, 2, 5, 10), Y-up
     for frame, p in ((1, (-0.5, -0.5, 0.5)), (2, (0.59442, -0.5, 0.57923)), (5, (3.93837, -0.5, 0.70442)),
                      (10, (9.5, -0.5, 0.5))):
         co = copies[frame - 1].data.vertices[i0].co
-        assert _close(co, maya(p)), (frame, tuple(co), maya(p))
+        assert _close(co, y_up(p)), (frame, tuple(co), y_up(p))
     assert bpy.context.scene.frame_current == 5                    # Maya: current time unchanged
     assert list(bpy.context.selected_objects) == [cube]            # Maya: selection stays the source
     rec = grp[snap.RECORD]
@@ -127,9 +127,9 @@ def test_snapshot_increment_and_frames():
     assert bpy.ops.allset.animation_snapshot(increment=3.0) == {'FINISHED'}
     copies = snap.copies_of(bpy.data.objects["snapshot1Group"])
     assert len(copies) == 4
-    maya_tx = [(-0.5, -0.5, 0.5), (2.81699, -0.5, 0.68301), (6.18301, -0.5, 0.68301), (9.5, -0.5, 0.5)]
-    for c, p in zip(copies, maya_tx):
-        assert _close(c.data.vertices[i0].co, maya(p)), (c.name, tuple(c.data.vertices[i0].co))
+    want_tx = [(-0.5, -0.5, 0.5), (2.81699, -0.5, 0.68301), (6.18301, -0.5, 0.68301), (9.5, -0.5, 0.5)]
+    for c, p in zip(copies, want_tx):
+        assert _close(c.data.vertices[i0].co, y_up(p)), (c.name, tuple(c.data.vertices[i0].co))
 
 
 def test_snapshot_time_slider_range_and_two_objects():
@@ -165,7 +165,7 @@ def test_snapshot_world_space_of_a_child_in_an_animated_group():
     assert bpy.ops.allset.animation_snapshot() == {'FINISHED'}
     last = snap.copies_of(bpy.data.objects["snapshot1Group"])[-1]
     assert last.parent.parent is None                                   # the group is top level (Maya: world)
-    assert _close(last.data.vertices[i0].co, maya((-0.5, 8.5, 0.5)))    # Maya: child in a group, last vertex
+    assert _close(last.data.vertices[i0].co, y_up((-0.5, 8.5, 0.5)))    # child in a group, last vertex
     # selecting the group itself snapshots the geometry under it
     _select(grp)
     assert bpy.ops.allset.animation_snapshot() == {'FINISHED'}
@@ -216,12 +216,12 @@ def test_update_snapshot_menu_and_selection_rules():
     _select(cube)
     bpy.ops.allset.animation_snapshot()
     grp = bpy.data.objects["snapshot1Group"]
-    assert _close(_last_vtx(grp, i0), maya((8.5, -0.5, 0.5)))
+    assert _close(_last_vtx(grp, i0), y_up((8.5, -0.5, 0.5)))
     cube.scale.z = 3.0                                                  # a non-animated edit (Maya: scaleY 3)
     for target in (grp, snap.copies_of(grp)[0], cube):                  # group, a copy or the source
         _select(target)
         assert bpy.ops.allset.update_snapshot() == {'FINISHED'}
-        assert _close(_last_vtx(grp, i0), maya((8.5, -1.5, 0.5))), _last_vtx(grp, i0)
+        assert _close(_last_vtx(grp, i0), y_up((8.5, -1.5, 0.5))), _last_vtx(grp, i0)
     assert [c.name for c in snap.copies_of(grp)] == [f"transform1_{k}" for k in range(1, 11)]
     assert snap.copies_of(grp)[0].data.name == "transform1_Shape1"
     assert not [m for m in bpy.data.meshes if m.users == 0]            # old copies' meshes are gone
@@ -230,7 +230,7 @@ def test_update_snapshot_menu_and_selection_rules():
         bpy.ops.allset.update_snapshot()
     except RuntimeError:
         pass
-    # deleting the source keeps the copies (Maya after_delete_source = 10)
+    # deleting the source keeps the copies (all 10)
     bpy.data.objects.remove(cube)
     assert len(grp.children) == 10
     _select(grp)
@@ -245,7 +245,7 @@ def test_fast_update_follows_key_edits_only():
     bpy.ops.allset.animation_snapshot()
     grp = bpy.data.objects["snapshot1Group"]
     snap._pending.clear()
-    # a key edit: translateZ 0 -> 5 (Maya after the key = (8.5, -0.5, 5.5))
+    # a key edit: translateZ 0 -> 5 (after the key: (8.5, -0.5, 5.5))
     cube.keyframe_insert("location", index=1, frame=1)
     cube.location.y = -5.0
     cube.keyframe_insert("location", index=1, frame=10)
@@ -254,7 +254,7 @@ def test_fast_update_follows_key_edits_only():
     bpy.context.view_layer.update()
     assert grp.session_uid in snap._pending
     snap._rebuild_pending()
-    assert _close(_last_vtx(grp, i0), maya((8.5, -0.5, 5.5))), _last_vtx(grp, i0)
+    assert _close(_last_vtx(grp, i0), y_up((8.5, -0.5, 5.5))), _last_vtx(grp, i0)
     # Evaluate Nodes > Snapshots off: no automatic update
     bpy.context.scene.allset_eval.snapshot = False
     snap._pending.clear()
@@ -276,7 +276,7 @@ def test_fast_update_follows_key_edits_only():
 def test_ghost_frames_match_maya():
     gf = ghosting.ghost_frames
     f = lambda rows: [r[0] for r in rows]      # noqa: E731
-    keys = (1, 4, 8, 12, 20, 30)               # Maya case keys
+    keys = (1, 4, 8, 12, 20, 30)               # keyed frames
     assert f(gf(10, "Pre And Post Frames")) == [9, 8, 7, 11, 12, 13]
     assert sorted(f(gf(1, "Pre And Post Frames"))) == [-2, -1, 0, 2, 3, 4]       # not clipped to the range
     assert sorted(f(gf(5, "Pre Frames"))) == [2, 3, 4] and sorted(f(gf(5, "Post Frames"))) == [6, 7, 8]
@@ -290,7 +290,7 @@ def test_ghost_frames_match_maya():
     assert ghosting.parse_frames("3, 7,15") == [3.0, 7.0, 15.0]
     assert ghosting.preset_steps({"preset": "4s"}) == (3, 3, 4)
     assert ghosting.preset_steps({"preset": "Custom", "custom_pre": 2, "custom_post": 5, "custom_step": 3}) == (2, 5, 3)
-    # opacity: wireframe alpha 127 / 83 / 38 of 255 for the 1st / 2nd / 3rd ghost (Maya)
+    # opacity: wireframe alpha 127 / 83 / 38 of 255 for the 1st / 2nd / 3rd ghost
     for k, alpha in ((1, 127), (2, 83), (3, 38)):
         assert abs(ghosting.opacity(k, 3) * 255 - alpha) < 1.0, (k, ghosting.opacity(k, 3) * 255)
     # shaded: front + back face = 1 - (1 - a)^2 -> 191 / 139 / 71
@@ -336,7 +336,7 @@ def test_ghost_geometry_cache_at_offset_frames():
     assert scene.frame_current == 5
     tris, nrms, edges = ghosting._geom[(cube.session_uid, 2.0)]
     assert len(tris) == 12 * 3 and len(edges) == 12 * 2 and len(nrms) == len(tris)
-    want = maya((0.59442, -0.5, 0.57923))                                 # Maya vtx[0] at frame 2
+    want = y_up((0.59442, -0.5, 0.57923))                                 # vtx[0] at frame 2
     assert min(sum((a - b) ** 2 for a, b in zip(p, want)) for p in tris) < 1e-8
     assert ghosting.fill(bpy.context) == 0                               # cached
     scene.frame_set(6)

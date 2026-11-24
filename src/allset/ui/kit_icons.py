@@ -28,9 +28,9 @@ import numpy as np
 from .draw_replay import call
 from .status_icons import SS, Canvas
 
-LIGHT = (0.741, 0.741, 0.741)      # #bdbdbd  Maya icon grey
-TEAL = (0.282, 0.667, 0.710)       # #48aab5  Maya icon accent
-RIM = (0.227, 0.227, 0.227)        # #3a3a3a  Maya icon rim
+LIGHT = (0.741, 0.741, 0.741)      # #bdbdbd  icon grey
+TEAL = (0.282, 0.667, 0.710)       # #48aab5  icon accent
+RIM = (0.227, 0.227, 0.227)        # #3a3a3a  icon rim
 DARK = (0.165, 0.165, 0.165)
 DIMMED = (0.42, 0.42, 0.42)
 RIM_ALPHA = 0.85

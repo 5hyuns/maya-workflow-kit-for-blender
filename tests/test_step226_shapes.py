@@ -4,7 +4,7 @@ Expected (parent shape relative / absolute):
 a circle (r 1, normal Maya Y) with cv0 at (0.7836, 0, -0.7836);
 joint1 at (5, 2, 0) with jointOrient Z 30. ``parent -s -r`` -> cv0 world (5.6786, 2.3918, -0.7836), cv1
 (5, 2, -1.1082), the old transform stays without a shape; ``parent -s`` (circle moved x+1) keeps cv0 world
-(1.7836, 0, -0.7836) and the old transform goes. Maya (x, y, z) = Blender (x, z, -y) / maya_unit."""
+(1.7836, 0, -0.7836) and the old transform goes. Points are Y-up: (x, y, z) = Blender (x, z, -y) / maya_unit."""
 
 import math
 import os
@@ -72,12 +72,12 @@ def _joint(k, name="joint1", arm_name="skeleton1"):
 
 
 def _circle(k, name="ctrl_circle", location=(0, 0, 0)):
-    """Circle CVs (radius 1.1082 at 45 deg steps, cv0 = Maya (0.7836, 0, -0.7836)) lying in Blender XY."""
+    """Circle CVs (radius 1.1082 at 45 deg steps, cv0 = Y-up (0.7836, 0, -0.7836)) lying in Blender XY."""
     cu = bpy.data.curves.new(name + "Shape", 'CURVE')
     cu.dimensions = '3D'
     sp_ = cu.splines.new('NURBS')
     r = 0.7836 * math.sqrt(2)
-    # cv0 at 45 deg = Blender (0.7836, 0.7836, 0); cv1 = Maya (0, 0, -1.1082) = Blender (0, 1.1082, 0)
+    # cv0 at 45 deg = Blender (0.7836, 0.7836, 0); cv1 = Y-up (0, 0, -1.1082) = Blender (0, 1.1082, 0)
     pts = [(r * math.cos(math.radians(45 + 45 * i)), r * math.sin(math.radians(45 + 45 * i)), 0.0) for i in range(8)]
     sp_.points.add(len(pts) - 1)
     for p, co in zip(sp_.points, pts):

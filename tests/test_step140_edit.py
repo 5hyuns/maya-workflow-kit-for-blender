@@ -449,26 +449,26 @@ def test_circularize_options():
     ob = _grid()
     _run("circularize")
     r, n = _loop_radius(ob)
-    assert n == 8 and abs(r - 1.2071) < 1e-3, (r, n)                   # circ_default
+    assert n == 8 and abs(r - 1.2071) < 1e-3, (r, n)                   # default
     ob = _grid()
     _run("circularize", radial_offset=0.5 / U)
-    assert abs(_loop_radius(ob)[0] - 1.7071) < 1e-3                       # circ_radial05
+    assert abs(_loop_radius(ob)[0] - 1.7071) < 1e-3                       # radial offset 0.5
     ob = _grid()
     bm = bmesh.from_edit_mesh(ob.data)
-    i = next(v.index for v in bm.verts if (v.co - Vector((-1.0, -1.0, 0.0))).length < 1e-4)   # Maya vtx 6
+    i = next(v.index for v in bm.verts if (v.co - Vector((-1.0, -1.0, 0.0))).length < 1e-4)   # vertex 6
     _run("circularize", twist=45)
     bm = bmesh.from_edit_mesh(ob.data)
     bm.verts.ensure_lookup_table()
-    # circ_twist45: Maya vtx 6 (-1, 0, 1) -> (0, 0, 1.2071) (untwisted: -0.8536, 0, 0.8536); Blender (x, -z, y)
+    # twist 45: vertex 6, Y-up (-1, 0, 1) -> (0, 0, 1.2071) (untwisted: -0.8536, 0, 0.8536); Blender (x, -z, y)
     assert (bm.verts[i].co - Vector((0.0, -1.2071, 0.0))).length < 1e-3, bm.verts[i].co
     ob = _grid()
     _run("circularize", normal_offset=0.3 / U)
     centre = _vert_at(ob, 0.0, 0.0)
-    assert centre is not None and abs(centre.z - 0.3) < 1e-4, centre      # circ_normal03: the inner vertex too
+    assert centre is not None and abs(centre.z - 0.3) < 1e-4, centre      # normal offset 0.3: the inner vertex too
     ob = _grid()
     _run("circularize", divisions=2)
     r, n = _loop_radius(ob)
-    assert n == 24 and abs(r - 1.1544) < 1e-3, (r, n)                     # circ_divisions2
+    assert n == 24 and abs(r - 1.1544) < 1e-3, (r, n)                     # divisions 2
     assert _vert_at(ob, 0.8162, -0.8162) is not None
     bpy.ops.object.mode_set(mode='OBJECT')
 

@@ -32,7 +32,7 @@ def _theme_state():
 
 
 def test_maya_rule():
-    # Maya Alt+B background cycle: 0 -> 0.36; < 0.5 -> 0.631; else -> gradient; gradient -> black
+    # Alt+B background cycle: 0 -> 0.36; < 0.5 -> 0.631; else -> gradient; gradient -> black
     assert [kb3.next_state(s) for s in kb3.CYCLE] == ["LIGHT", "GRADIENT", "BLACK", "GREY"]
     assert kb3.next_state(0.2) == "LIGHT" and kb3.next_state(0.7) == "GRADIENT" and kb3.next_state(0.0) == "GREY"
     assert not hasattr(kb3, "theme_gradients") and not hasattr(kb3, "set_gradient")

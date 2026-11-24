@@ -1,6 +1,6 @@
 """Issue #135: Game Exporter clips and the Motion Trail Editor.
 
-Maya: gameFbxExporter default values, a new clip =
+Game Exporter start values, a new clip =
 the playback range with an empty name, one file = a take per clip (walk 1-10, run 11-24), a file per clip = file name
 prefix + clip name ("hero_walk.fbx"). Maya also writes the plug-in's "Take 001" and repeats earlier clips in later
 clip files — the kit writes only the clips' own takes (documented in operators/game_exporter.py).
@@ -20,8 +20,8 @@ fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step225")
 
-# gameFbxExporter createNode values (Maya "attrs")
-MAYA_NODE = {"exportTypeIndex": 1, "exportSetIndex": 1, "modelFileMode": 1, "fileSplitType": 1, "bakeAnimation": True,
+# Game Exporter node start values
+NODE_START = {"exportTypeIndex": 1, "exportSetIndex": 1, "modelFileMode": 1, "fileSplitType": 1, "bakeAnimation": True,
              "skinning": True, "blendshapes": True, "smoothingGroups": True, "tangentsBinormals": True,
              "triangulate": False, "moveToOrigin": False, "embedMedia": False, "includeChildren": False,
              "inputConnections": False, "upAxis": 1, "includeCameras": True, "includeLights": True}
@@ -36,10 +36,10 @@ NODE_TO_KIT = {"exportTypeIndex": ("export_type", {1: 'MODEL', 2: 'ANIMATION'}),
                "includeChildren": ("include_children", None), "inputConnections": ("input_connections", None),
                "upAxis": ("up_axis", {1: 'Y', 2: 'Z'}), "includeCameras": ("include_cameras", None),
                "includeLights": ("include_lights", None)}
-MAYA_NEW_CLIP = {"animClipName": None, "animClipStart": 1.0, "animClipEnd": 24.0, "exportAnimClip": True}
-MAYA_CLIPS = [("walk", 1.0, 10.0), ("run", 11.0, 24.0)]
-MAYA_SINGLE = {"file": "anim.fbx", "takes": [["walk", 1.0, 10.0], ["run", 11.0, 24.0]]}      # minus Take 001
-MAYA_PER_CLIP = [{"file": "hero_walk.fbx", "take": ["walk", 1.0, 10.0]},
+NEW_CLIP = {"animClipName": None, "animClipStart": 1.0, "animClipEnd": 24.0, "exportAnimClip": True}
+CLIPS = [("walk", 1.0, 10.0), ("run", 11.0, 24.0)]
+WANT_SINGLE = {"file": "anim.fbx", "takes": [["walk", 1.0, 10.0], ["run", 11.0, 24.0]]}      # minus Take 001
+WANT_PER_CLIP = [{"file": "hero_walk.fbx", "take": ["walk", 1.0, 10.0]},
                  {"file": "hero_run.fbx", "take": ["run", 11.0, 24.0]}]
 KTIME = 46186158000
 
@@ -103,9 +103,9 @@ def test_game_exporter_factory_equals_maya_node():
     # "Anim Default" presets) — what the kit's fields start with
     sc = _clear()
     s = bpy.data.scenes.new("ge_fresh").allset_game_exporter
-    for attr, maya in MAYA_NODE.items():
+    for attr, value in NODE_START.items():
         name, table = NODE_TO_KIT[attr]
-        want = table[maya] if table else maya
+        want = table[value] if table else value
         assert want == ge.FACTORY[name], (attr, want)
         model = ge.PRESET_MODEL.get(name, want)
         if name == "file_split":
@@ -122,8 +122,8 @@ def test_game_exporter_factory_equals_maya_node():
 def test_new_clip_is_the_playback_range():
     sc = _clear()
     clip = ge.add_clip(sc)
-    assert (clip.name, clip.start, clip.end, clip.export) == ("", MAYA_NEW_CLIP["animClipStart"],
-                                                             MAYA_NEW_CLIP["animClipEnd"], True)
+    assert (clip.name, clip.start, clip.end, clip.export) == ("", NEW_CLIP["animClipStart"],
+                                                             NEW_CLIP["animClipEnd"], True)
     sc.use_preview_range, sc.frame_preview_start, sc.frame_preview_end = True, 5, 12
     clip = ge.add_clip(sc)
     assert (clip.start, clip.end) == (5.0, 12.0)                 # Maya playback range = the preview range
@@ -139,7 +139,7 @@ def test_unique_clip_names_like_maya():
 
 def _clips(sc):
     s = sc.allset_game_exporter
-    for name, a, b in MAYA_CLIPS:
+    for name, a, b in CLIPS:
         c = ge.add_clip(sc)
         c.name, c.start, c.end = name, a, b
     return s
@@ -153,7 +153,7 @@ def test_clip_file_names_like_maya():
     assert [(os.path.basename(p), [c.name for c in cl]) for p, cl in files] == [("anim.fbx", ["walk", "run"])]
     s.export_filename, s.file_split = "hero_", 'PER_CLIP'
     files = ge.clip_files(s, "X")
-    assert [os.path.basename(p) for p, _c in files] == [d["file"] for d in MAYA_PER_CLIP]
+    assert [os.path.basename(p) for p, _c in files] == [d["file"] for d in WANT_PER_CLIP]
     s.clips[0].export = False                                    # unchecked clips are skipped (Maya exportAnimClip)
     assert [os.path.basename(p) for p, _c in ge.clip_files(s, "X")] == ["hero_run.fbx"]
 
@@ -165,8 +165,8 @@ def test_export_single_file_takes():
     os.makedirs(OUT, exist_ok=True)
     s.export_type, s.export_path, s.export_filename, s.file_split = 'ANIMATION', OUT, "anim", 'SINGLE'
     done = ge.export(bpy.context, s)
-    assert [os.path.basename(p) for p, _t in done] == [MAYA_SINGLE["file"]]
-    assert _takes(done[0][0]) == MAYA_SINGLE["takes"], _takes(done[0][0])
+    assert [os.path.basename(p) for p, _t in done] == [WANT_SINGLE["file"]]
+    assert _takes(done[0][0]) == WANT_SINGLE["takes"], _takes(done[0][0])
     tree, _v = fbx_rig.load(done[0][0])
     first = sorted({int(c.first(b"KeyTime").props[0][0]) for c in tree.first(b"Objects").find(b"AnimationCurve")})
     assert first == [KTIME // 24, KTIME * 11 // 24], first      # keys at the clip frames (1 and 11)
@@ -180,8 +180,8 @@ def test_export_clip_files():
     s = _clips(sc)
     s.export_type, s.export_path, s.export_filename, s.file_split = 'ANIMATION', OUT, "hero_", 'PER_CLIP'
     done = ge.export(bpy.context, s)
-    assert [os.path.basename(p) for p, _t in done] == [d["file"] for d in MAYA_PER_CLIP]
-    for (path, _t), want in zip(done, MAYA_PER_CLIP):
+    assert [os.path.basename(p) for p, _t in done] == [d["file"] for d in WANT_PER_CLIP]
+    for (path, _t), want in zip(done, WANT_PER_CLIP):
         assert _takes(path) == [want["take"]], (path, _takes(path))
 
 
@@ -191,7 +191,7 @@ def test_two_animated_objects_share_one_take_per_clip():
     s = _clips(sc)
     s.export_type, s.export_path, s.export_filename, s.file_split = 'ANIMATION', OUT, "two", 'SINGLE'
     done = ge.export(bpy.context, s)
-    assert _takes(done[0][0]) == MAYA_SINGLE["takes"], _takes(done[0][0])
+    assert _takes(done[0][0]) == WANT_SINGLE["takes"], _takes(done[0][0])
 
 
 def test_export_errors_like_maya():

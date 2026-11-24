@@ -237,9 +237,9 @@ def test_sdk_lists_give_up_rows():
 
 # --- #76 colours ---------------------------------------------------------------------------------------------------
 
-def test_manipulator_axes_are_maya_colours():
+def test_manipulator_axes_are_fixed_colours():
     c = manipulator.axis_colours()
-    assert manipulator.MAYA_AXIS == {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
+    assert manipulator.AXIS_HEX == {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
     assert c['X'] == (230 / 255, 0.0, 0.0) and c['Y'] == (0.0, 230 / 255, 0.0) and c['Z'] == (0.0, 0.0, 1.0)
     for name in ("manipulator.py", "manipulator_shapes.py", "manipulator_frame.py", "manipulator_tools.py"):
         text = (SRC / "ui" / name).read_text(encoding="utf-8")

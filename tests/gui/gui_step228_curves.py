@@ -90,10 +90,10 @@ def s_frame60():
     car = bpy.data.objects[C["names"][1]]
     want = Vector((9.894338, -0.105634, 0.0)) * k()
     got = car.matrix_world.to_translation()
-    check(f"frame 60 on the path: {tuple(round(x / k(), 4) for x in got)} (Maya 9.8943 0 0.1056) "
+    check(f"frame 60 on the path: {tuple(round(x / k(), 4) for x in got)} (want 9.8943 0 0.1056) "
           f"err {(got - want).length / k():.1e}", (got - want).length < 1e-3 * k())
     heading = math.degrees(car.matrix_world.to_3x3().normalized().to_euler().z)
-    check(f"frame 60 faces along the path: heading {heading:.3f} deg (Maya ry 44.977)", abs(heading - 44.977254) < 0.01)
+    check(f"frame 60 faces along the path: heading {heading:.3f} deg (want ry 44.977)", abs(heading - 44.977254) < 0.01)
     sel(bpy.data.objects[C["names"][0]], car)
     a, region = view3d()
     with bpy.context.temp_override(window=win(), screen=win().screen, area=a, region=region):
@@ -127,7 +127,7 @@ def s_setkey():
     fc = mp.offset_curve(car, mp.find(car))
     keys = [tuple(round(x, 4) for x in kp.co) for kp in fc.keyframe_points]
     path = bpy.data.objects[C["names"][0]]
-    check(f"Set Motion Path Key at 50 ({res}): keys {keys} (Maya 1 / 50 0.3708 / 120), path spline "
+    check(f"Set Motion Path Key at 50 ({res}): keys {keys} (want 1 / 50 0.3708 / 120), path spline "
           f"{path.data.splines[0].type}", [x[0] for x in keys] == [1.0, 50.0, 120.0] and abs(keys[1][1] - 0.3708) < 1e-3)
     sel(path, car)
     for a_ in win().screen.areas:

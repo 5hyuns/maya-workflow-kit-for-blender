@@ -1,7 +1,7 @@
-"""Issue #141: Orient Joint runs on a plain click, and the FBX jointOrient equals Maya's.
+"""Issue #141: Orient Joint runs on a plain click, and the FBX jointOrient follows Maya's orient rules.
 
-Maya 2026: the same three joints
-(cm, Maya Y-up), finished with the Joint Tool, then Skeleton > Orient Joint with its default options (XYZ,
+Three joints
+(cm, Y-up), finished with the Joint Tool, then Skeleton > Orient Joint with its default options (XYZ,
 secondary axis Y up, children too), then Mirror Joints across YZ with Behavior. The kit file is read back with its
 own FBX reader (PreRotation = Maya jointOrient); an earlier kit had the root at (-90, 7, 0) and the end joint at
 (0, 0, 0).
@@ -21,7 +21,7 @@ fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
 units = import_module(kit.MODULE + ".operators.units")
 
 OUT = os.path.join(os.environ.get("ALLSET_TEST_OUT", bpy.app.tempdir), "step232")
-MAYA_POS = {"joint1": (4.99104, 0.0, -0.03606), "joint2": (12.98916, 0.0, -1.01919),
+JOINT_POS = {"joint1": (4.99104, 0.0, -0.03606), "joint2": (12.98916, 0.0, -1.01919),
             "joint3": (20.98985, 0.0, 0.00757)}
 
 
@@ -50,10 +50,10 @@ def _arm(mirror=True, orient_menu=True):
     ob = joints.new_skeleton(bpy.context)
     parent, names = None, []
     for name in ("joint1", "joint2", "joint3"):
-        parent = joints.add_joint(ob, _bl(MAYA_POS[name], k), parent, up=Vector((0, 0, 1)), length=2 * k)
+        parent = joints.add_joint(ob, _bl(JOINT_POS[name], k), parent, up=Vector((0, 0, 1)), length=2 * k)
         names.append(parent)
     assert names == ["joint1", "joint2", "joint3"], names
-    # Maya's chain was made with `joint -e -oj xyz -sao yup -ch -zso` — no -aos (aos=False here)
+    # orient XYZ, secondary axis Y up, children too, scale orient zeroed; no auto secondary axis (aos=False here)
     joints.orient_new(ob, names, aos=False)                       # Joint Tool finish (Y, world +Y)
     joints.finish(bpy.context, ob, names)
     if orient_menu:

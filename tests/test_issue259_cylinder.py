@@ -50,7 +50,7 @@ def test_round_cap_height_compensation():
     assert _range(_cyl(roundCap=True, roundCapHeightCompensation=True)) == (-2.0, 2.0)
     assert _range(_cyl(roundCap=True, heightBaseline=1.0)) == (-6.0, 0.0)
     assert _range(_cyl(roundCap=True, roundCapHeightCompensation=True, heightBaseline=1.0)) == (-4.0, 0.0)
-    # Maya: the side rings sit at +-1, the dome ring at +-1.707107, the poles at +-2
+    # the side rings sit at +-1, the dome ring at +-1.707107, the poles at +-2
     ys = sorted({round(y, 5) for y in _y(_cyl(roundCap=True, roundCapHeightCompensation=True))})
     assert ys == [-2.0, -1.70711, -1.0, 1.0, 1.70711, 2.0], ys
     assert _range(_cyl(roundCapHeightCompensation=True)) == (-2.0, 2.0), "no round cap: nothing to compensate"

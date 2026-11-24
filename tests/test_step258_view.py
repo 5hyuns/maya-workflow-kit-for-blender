@@ -2,8 +2,8 @@
 toggles stay out of the undo queue, the Symmetry control opens Maya's drop-down.
 
 Expected: unit polyCube, persp camera (35 mm, film 36 x 24:
-hfov 54.4322, vfov 37.8493), viewFit -> camera 3.23226 from the cube centre (fitFactor 1.0: 3.11360, 0.9: 3.36412),
-camera direction (1.94505, 1.45879, 1.94505), Maya axes."""
+hfov 54.4322, vfov 37.8493), F -> camera 3.23226 from the cube centre (fitFactor 1.0: 3.11360, 0.9: 3.36412),
+camera direction (1.94505, 1.45879, 1.94505), Y-up axes."""
 
 import math
 from importlib import import_module
@@ -17,7 +17,7 @@ framing = import_module(kit.MODULE + ".operators.framing")
 
 
 def _view():
-    d = Vector((1.94505, -1.94505, 1.45879))           # Maya (x, y, z) -> Blender (x, -z, y)
+    d = Vector((1.94505, -1.94505, 1.45879))           # Y-up (x, y, z) -> Blender (x, -z, y)
     rot = (-d).to_track_quat('-Z', 'Y')
     tw, th = math.tan(math.radians(54.4322 / 2)), math.tan(math.radians(37.8493 / 2))
     win = Matrix.Identity(4)

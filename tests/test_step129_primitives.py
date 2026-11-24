@@ -16,7 +16,7 @@ creation_inputs = import_module(kit.MODULE + ".ui.creation_inputs")
 attribute_editor = import_module(kit.MODULE + ".ui.attribute_editor")
 
 # Create menu item -> Maya node, (vertices, edges, faces), face sizes (menu default settings)
-MAYA_MENU = {
+POLY_ITEMS = {
     'CUBE': ("polyCube", (8, 12, 6), {4: 6}),
     'SPHERE': ("polySphere", (382, 780, 400), {4: 360, 3: 40}),
     'CYLINDER': ("polyCylinder", (42, 100, 60), {4: 20, 3: 40}),
@@ -65,8 +65,8 @@ VARIANTS = [
     ("polyPlatonic", dict(primitive=1, subdivisionMode=1, subdivisions=2), (50, 144, 96)),
 ]
 
-# NURBS: Create menu item -> node, [(Maya CVs u x v with the periodic overlap removed, cyclic u, cyclic v)] per shape
-MAYA_NURBS = {
+# NURBS: Create menu item -> node, [(CVs u x v with the periodic overlap removed, cyclic u, cyclic v)] per shape
+NURBS_ITEMS = {
     'NURBS_CIRCLE': ("makeNurbCircle", [((1, 8), True, False)]),
     'NURBS_SQUARE': ("makeNurbsSquare", [((1, 4), False, False)] * 4),
     'NURBS_SPHERE': ("makeNurbSphere", [((7, 8), True, False)]),
@@ -109,7 +109,7 @@ def _shape_counts(shape):
 
 def test_menu_primitives_match_maya_topology():
     _fresh()
-    for kind, (node_type, counts, sizes) in MAYA_MENU.items():
+    for kind, (node_type, counts, sizes) in POLY_ITEMS.items():
         ob = _make(kind)
         got, got_sizes = _counts(ob.data)
         assert got == counts and got_sizes == sizes, (kind, got, got_sizes, counts, sizes)
@@ -141,7 +141,7 @@ def test_variants_match_maya_counts():
 
 def test_nurbs_primitives_match_maya_cvs():
     _fresh()
-    for kind, (node_type, shapes) in MAYA_NURBS.items():
+    for kind, (node_type, shapes) in NURBS_ITEMS.items():
         ob = _make(kind)
         parts = sorted((c for c in ob.children), key=lambda c: c[prim_history.PART]) if ob.type == 'EMPTY' else [ob]
         assert len(parts) == len(shapes), (kind, len(parts))

@@ -18,10 +18,10 @@ material = import_module(kit.MODULE + ".operators.material")
 
 
 def test_plan_reproduces_maya_rects():
-    w, h = layout.MAYA_SIZE
-    rects = layout.simulate(layout.plan(h, layout.MAYA_RECTS["MENU"][3]), w, h)
+    w, h = layout.LAYOUT_SIZE
+    rects = layout.simulate(layout.plan(h, layout.LAYOUT_RECTS["MENU"][3]), w, h)
     for role in layout.ROLES:
-        assert all(abs(a - b) <= 1 for a, b in zip(rects[role], layout.MAYA_RECTS[role])), (role, rects[role])
+        assert all(abs(a - b) <= 1 for a, b in zip(rects[role], layout.LAYOUT_RECTS[role])), (role, rects[role])
     # another window size / header height keeps Maya's proportions below the strip
     rects = layout.simulate(layout.plan(700, 30), 1100, 700)
     assert rects["MENU"][3] == 30

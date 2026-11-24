@@ -249,11 +249,11 @@ def s_move_colours():
     cx, cy = to_window(bpy.data.objects[C["cube"]].matrix_world.translation)
     r = round(150 * scale())
     box = (cx - r, cy - r, cx + r, cy + r)
-    maya = {a: count(px, region, hexrgb(h), box=box) for a, h in mod("ui.manipulator").MAYA_AXIS.items()}
+    kit_px = {a: count(px, region, hexrgb(h), box=box) for a, h in mod("ui.manipulator").AXIS_HEX.items()}
     theme = {a: count(px, region, hexrgb(h), box=box)
              for a, h in (("X", "#ff3653"), ("Y", "#8adb00"), ("Z", "#3b64a5"))}
-    check(f"Move manipulator in the Maya-style axis colours (px {maya}; Blender theme gizmo colours {theme})",
-          all(v >= 10 for v in maya.values()) and all(theme[a] < maya[a] // 4 + 5 for a in "XYZ"))
+    check(f"Move manipulator in the kit axis colours (px {kit_px}; Blender theme gizmo colours {theme})",
+          all(v >= 10 for v in kit_px.values()) and all(theme[a] < kit_px[a] // 4 + 5 for a in "XYZ"))
     # a second cube, unselected, in wireframe shading
     area, region = view3d()
     unit = mod("operators.units").maya_unit()

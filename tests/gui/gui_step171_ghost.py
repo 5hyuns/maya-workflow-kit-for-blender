@@ -1,4 +1,4 @@
-"""In the Maya Workflow Kit layout: Visualize > Ghost Selected draws Maya's ghosts.
+"""In the Maya Workflow Kit layout: Visualize > Ghost Selected draws Maya-style ghosts.
 
 Scene (flat #5c5c5c viewport):
 a 1-unit cube keyed translateX 0 -> 18 over frames 1 -> 10 (linear), current frame 5, Ghost Selected, nothing
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, load_maya_layout, run, scale, screenshot, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
-MAYA = {2: "#4d7371", 3: "#3d8a87", 4: "#339e9a", 6: "#96807f", 7: "#847272", 8: "#6f6565"}
+GHOST = {2: "#4d7371", 3: "#3d8a87", 4: "#339e9a", 6: "#96807f", 7: "#847272", 8: "#6f6565"}
 BG = "#5c5c5c"
 TOL = 14            # per channel, 8-bit
 C = {}
@@ -128,13 +128,13 @@ def s_check():
     check("the current frame is back at 5 after sampling", bpy.context.scene.frame_current == 5)
     px = shot("ghost_f5")
     worst = 0.0
-    for frame, want in MAYA.items():
+    for frame, want in GHOST.items():
         got, at = sample(px, frame)
         diff = float(np.abs(got - rgb(want)).max())
         worst = max(worst, diff)
-        print("GUI171 frame", frame, "at", at, "kit", got.round().tolist(), "maya", rgb(want).tolist(), "diff", diff,
+        print("GUI171 frame", frame, "at", at, "kit", got.round().tolist(), "want", rgb(want).tolist(), "diff", diff,
               flush=True)
-        check(f"frame {frame} ghost colour {got.round().astype(int).tolist()} ~ Maya {want} (max diff {diff:.0f})",
+        check(f"frame {frame} ghost colour {got.round().astype(int).tolist()} ~ {want} (max diff {diff:.0f})",
               diff <= TOL)
     for frame in (1, 9, 10):
         got, _at = sample(px, frame)

@@ -3,8 +3,8 @@
 Expected results: a constrained box (cases default / dic_off / pok_off / step2)
 and an IK chain (Disable implicit control on / off).
 
-Scene = the Maya scene in Blender axes (Maya (x, y, z) -> Blender (x, -z, y), 1 Maya unit = 1 m in this factory
-scene): locator ``ctrl`` keyed tx 0 -> 3 and ry 0 -> 350 (linear, frames 1 / 10), cube ``box`` at Maya (0, 5, 2)
+Scene in Blender axes (Y-up (x, y, z) -> Blender (x, -z, y), 1 Maya unit = 1 m in this factory
+scene): locator ``ctrl`` keyed tx 0 -> 3 and ry 0 -> 350 (linear, frames 1 / 10), cube ``box`` at Y-up (0, 5, 2)
 parent-constrained to it with offset (Child Of, identity inverse = ctrl at the origin on frame 1), box sx key at 20,
 sz keys at 2.5 and 6; Time Slider 1-10. Compared: key frames of every channel, the constraint-driven values (tx, tz,
 ry) within 1e-3, world positions before / after / after moving the driver. The sz values between its two keys are
@@ -26,7 +26,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 
 F1_10 = [float(f) for f in range(1, 11)]
 # <case>: key frames per Maya channel
-MAYA_KEYS = {
+WANT_KEYS = {
     "default": {**{a: F1_10 for a in ("tx", "ty", "tz", "rx", "ry", "rz", "sy", "sz")}, "sx": F1_10 + [20.0]},
     "dic_off": {**{a: F1_10 for a in ("tx", "ty", "tz", "rx", "ry", "rz", "sy", "sz")}, "sx": F1_10 + [20.0]},
     "pok_off": {a: F1_10 for a in ("tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz")},
@@ -34,18 +34,18 @@ MAYA_KEYS = {
               "sx": [1.0, 3.0, 5.0, 7.0, 9.0, 20.0]},
 }
 # default case: {tx, tz, ry} values (frames 1..10)
-MAYA_TX = [0.0, 1.589, 2.6213, 2.7873, 2.161, 1.1678, 0.3958, 0.3348, 1.1598, 2.6527]
-MAYA_TZ = [2.0, 1.5567, 0.4234, -0.8976, -1.8207, -1.9368, -1.1943, 0.0776, 1.315, 1.9696]
-MAYA_RY = [0.0, 38.8889, 77.7778, 116.6667, 155.5556, 194.4444, 233.3333, 272.2222, 311.1111, 350.0]
-# default case: before == baked == after the driver moved (Maya world positions)
-MAYA_POS = {1: (0.0, 5.0, 2.0), 5: (2.161, 5.0, -1.8207), 10: (2.6527, 5.0, 1.9696)}
+WANT_TX = [0.0, 1.589, 2.6213, 2.7873, 2.161, 1.1678, 0.3958, 0.3348, 1.1598, 2.6527]
+WANT_TZ = [2.0, 1.5567, 0.4234, -0.8976, -1.8207, -1.9368, -1.1943, 0.0776, 1.315, 1.9696]
+WANT_RY = [0.0, 38.8889, 77.7778, 116.6667, 155.5556, 194.4444, 233.3333, 272.2222, 311.1111, 350.0]
+# default case: before == baked == after the driver moved (world positions, Y-up)
+WANT_POS = {1: (0.0, 5.0, 2.0), 5: (2.161, 5.0, -1.8207), 10: (2.6527, 5.0, 1.9696)}
 # Maya channel -> (Blender path, index, sign)
 CHANNELS = {"tx": ("location", 0, 1), "ty": ("location", 2, 1), "tz": ("location", 1, -1),
             "rx": ("rotation_euler", 0, 1), "ry": ("rotation_euler", 2, 1), "rz": ("rotation_euler", 1, -1),
             "sx": ("scale", 0, 1), "sy": ("scale", 2, 1), "sz": ("scale", 1, 1)}
-# IK case: end joint c world position (Maya) before / after; after moving the handle key to tx -3 at 10
+# IK case: end joint c world position (Y-up) before / after; after moving the handle key to tx -3 at 10
 IK_C = {1: (0.0, 10.0, 0.0), 10: (2.9304, 9.7679, 0.0)}
-IK_C_HANDLE_MOVED_DRIVES = (-2.9304, 9.7679, 0.0)       # joints_dic_off.after_handle_moved
+IK_C_HANDLE_MOVED_DRIVES = (-2.9304, 9.7679, 0.0)       # after moving the handle (implicit control off)
 
 
 def bl(p):
@@ -126,7 +126,7 @@ def _check_keys(box, case):
     curves = {(fc.data_path, fc.array_index) for fc in kit.fcurves(box)}
     want = {(p, i) for p, i, _s in CHANNELS.values()}
     assert curves == want, (case, sorted(curves))          # no kit-internal / quaternion curves left
-    for attr, frames in MAYA_KEYS[case].items():
+    for attr, frames in WANT_KEYS[case].items():
         path, index, _sign = CHANNELS[attr]
         got = [round(kp.co.x, 4) for kp in _curve(box, path, index).keyframe_points]
         assert got == frames, (case, attr, got, frames)
@@ -139,7 +139,7 @@ def _bake(**kw):
 def test_bake_default_matches_maya():
     box, ctrl, con = _scene()
     before = _pos(box, (1, 5, 10))
-    for f, p in MAYA_POS.items():
+    for f, p in WANT_POS.items():
         assert (before[f] - bl(p)).length < 1e-3, (f, before[f], p)
     _select(box)
     bpy.context.scene.frame_set(4)
@@ -148,10 +148,10 @@ def test_bake_default_matches_maya():
     con = box.constraints.get(con.name)
     assert con is not None and con.mute, "rule 5: the constraint stays and stops driving the box"
     _check_keys(box, "default")
-    for attr, maya, scale in (("tx", MAYA_TX, 1.0), ("tz", MAYA_TZ, 1.0), ("ry", MAYA_RY, 180.0 / math.pi)):
+    for attr, want, scale in (("tx", WANT_TX, 1.0), ("tz", WANT_TZ, 1.0), ("ry", WANT_RY, 180.0 / math.pi)):
         path, index, sign = CHANNELS[attr]
         got = [sign * kp.co.y * scale for kp in _curve(box, path, index).keyframe_points]
-        assert all(abs(a - b) < 1e-3 for a, b in zip(got, maya)), (attr, got)
+        assert all(abs(a - b) < 1e-3 for a, b in zip(got, want)), (attr, got)
     after = _pos(box, (1, 5, 10))
     for f in (1, 5, 10):
         assert (after[f] - before[f]).length < 1e-3, (f, after[f], before[f])
@@ -161,7 +161,7 @@ def test_bake_default_matches_maya():
             kp.co.y = kp.handle_left.y = kp.handle_right.y = 6.0
     moved = _pos(box, (5, 10))
     for f in (5, 10):
-        assert (moved[f] - bl(MAYA_POS[f])).length < 1e-3, (f, moved[f])
+        assert (moved[f] - bl(WANT_POS[f])).length < 1e-3, (f, moved[f])
 
 
 def test_disable_implicit_off_still_disconnects_constraints():
@@ -275,21 +275,21 @@ def test_ik_disable_implicit_on():
         assert (before[f] - bl(p)).length < 2e-3, (f, before[f], p)
     assert _pose_bake(arm, {"a", "b"}) == {'FINISHED'}
     con = arm.pose.bones["b"].constraints[0]
-    assert con.influence == 0.0 and not con.mute        # Maya ikBlend 0 (joints_dic_on)
+    assert con.influence == 0.0 and not con.mute        # ikBlend 0
     keys = [kp.co.x for kp in _curve(arm, 'pose.bones["a"].rotation_quaternion', 0).keyframe_points]
-    assert keys == F1_10, keys                          # joints_dic_on.a_rx_keys
+    assert keys == F1_10, keys                          # joint a: a key on every frame
     after = _c(arm, (1, 10))
     for f in (1, 10):
         assert (after[f] - before[f]).length < 1e-3, (f, after[f], before[f])
     _move_handle(handle)
-    assert (_c(arm, (10,))[10] - before[10]).length < 1e-3       # joints_dic_on.after_handle_moved
+    assert (_c(arm, (10,))[10] - before[10]).length < 1e-3       # the moved handle no longer drives
 
 
 def test_ik_disable_implicit_off_keeps_the_handle_driving():
     arm, handle, con = _rig()
     before = _c(arm, (1, 10))
     assert _pose_bake(arm, {"a", "b"}, disable_implicit=False) == {'FINISHED'}
-    assert arm.pose.bones["b"].constraints[0].influence == 1.0   # joints_dic_off.ikBlend 1
+    assert arm.pose.bones["b"].constraints[0].influence == 1.0   # ikBlend 1
     after = _c(arm, (1, 10))
     for f in (1, 10):
         assert (after[f] - before[f]).length < 2e-3, (f, after[f], before[f])

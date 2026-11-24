@@ -72,7 +72,7 @@ def _set_range(scene, start_attr, end_attr, start, end):
 
 
 def _set_fps(scene, fps):
-    """Maya keeps the time ranges in seconds when the time unit changes (Maya: 1 / 120 film -> 1.041667 / 125
+    """Maya keeps the time ranges in seconds when the time unit changes (1 / 120 film -> 1.041667 / 125
     pal); Blender frames are whole, so the kit rounds (keys stay where they are)."""
     old = _fps(scene)
     ratio = fps / old if old else 1.0

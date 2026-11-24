@@ -324,7 +324,7 @@ def test_shapes_and_centre():
     assert abs(tip - 1.0) < 1e-6      # arrow length = 1 unit
     pts = [Vector((-0.183, -0.5, 0.683)), Vector((0.683, -0.5, 0.183)), Vector((0.683, 0.5, 0.183))]
     bb = manipulator.center_of(pts, None, 'BOUNDING_BOX_CENTER', Vector())
-    assert (bb - Vector((0.25, 0.0, 0.433))).length < 1e-3       # P10 (Maya manip position)
+    assert (bb - Vector((0.25, 0.0, 0.433))).length < 1e-3       # manipulator at the bounding-box centre
     act = manipulator.center_of(pts, pts[2], 'ACTIVE_ELEMENT', Vector())
     assert act == pts[2]
     med = manipulator.center_of(pts, None, 'MEDIAN_POINT', Vector())

@@ -232,7 +232,7 @@ def test_reroot_like_maya():
     bones = arm.data.bones
     assert bones["joint3"].parent is None and bones["joint2"].parent is None
     assert bones["joint1"].parent == bones["joint2"]
-    # joint3 (Maya (5,5,0)) is where the roots start; the old root joint (0,0,0) is now a chain end
+    # joint3 (Y-up (5,5,0)) is where the roots start; the old root joint (0,0,0) is now a chain end
     j3 = Vector((5, 0, 5))
     assert (bones["joint3"].head_local - j3).length < 1e-5 and (bones["joint2"].head_local - j3).length < 1e-5
     assert bones["joint1"].tail_local.length < 1e-5
@@ -253,8 +253,8 @@ def test_preferred_angle_set_and_assume():
 
 
 def test_ik_spline_handle():
-    maya = [(0, 0, 0), (0, 5, 0), (4.330127, 7.5, 0), (8.660254, 10, 0)]
-    arm = _chain(maya)
+    y_up = [(0, 0, 0), (0, 5, 0), (4.330127, 7.5, 0), (8.660254, 10, 0)]
+    arm = _chain(y_up)
     res = rig.create_spline_ik(bpy.context, arm, ("joint1", 'HEAD'), ("joint3", 'TAIL'))
     assert res is not None
     con, curve = res
@@ -264,9 +264,9 @@ def test_ik_spline_handle():
     assert sp.type == 'NURBS' and len(sp.points) == 4 and sp.order_u == 4 and sp.use_endpoint_u   # 1 span, cubic
     cv = [Vector(p.co[:3]) for p in sp.points]
     assert cv[0].length < 1e-6 and (cv[3] - Vector((8.660254, 0, 10))).length < 1e-5
-    maya_mid = [Vector((-1.377, 0, 6.7578)), Vector((3.9399, 0, 6.8854))]
-    print("IK spline middle CVs", [tuple(round(c, 3) for c in v) for v in cv[1:3]], "Maya",
-          [tuple(v) for v in maya_mid])
+    want_mid = [Vector((-1.377, 0, 6.7578)), Vector((3.9399, 0, 6.8854))]
+    print("IK spline middle CVs", [tuple(round(c, 3) for c in v) for v in cv[1:3]], "expected",
+          [tuple(v) for v in want_mid])
 
 
 # --- Skin --------------------------------------------------------------------------------------
@@ -310,7 +310,7 @@ def test_hammer_is_the_neighbour_average():
     bm.verts[12].select = True
     assert rig.hammer(bm, deform, [g1.index, g2.index]) == 1
     got = bm.verts[12][deform]
-    assert abs(got[g1.index] - 0.9808) < 1e-3 and abs(got[g2.index] - 0.0192) < 1e-3, dict(got)   # Maya
+    assert abs(got[g1.index] - 0.9808) < 1e-3 and abs(got[g2.index] - 0.0192) < 1e-3, dict(got)
     bm.free()
 
 
@@ -402,9 +402,9 @@ def test_soft_mod_falloff_matches_maya():
     m = ev.to_mesh()
     height = {round(v.co.x, 3): v.co.z for v in m.vertices if abs(v.co.y) < 1e-6 and v.co.x >= -1e-6}
     ev.to_mesh_clear()
-    maya = {0.0: 1.0, 1.0: 0.9045, 2.0: 0.6545, 3.0: 0.3455, 4.0: 0.0955, 5.0: 0.0}
-    print("soft mod", {d: round(height[d], 4) for d in maya}, "Maya", maya)
-    for d, want in maya.items():
+    expected = {0.0: 1.0, 1.0: 0.9045, 2.0: 0.6545, 3.0: 0.3455, 4.0: 0.0955, 5.0: 0.0}
+    print("soft mod", {d: round(height[d], 4) for d in expected}, "expected", expected)
+    for d, want in expected.items():
         assert abs(height[d] - want) < 0.01, (d, height[d], want)
 
 
