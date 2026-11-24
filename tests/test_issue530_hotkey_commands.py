@@ -93,10 +93,15 @@ def test_every_kit_menu_command_can_be_bound():
         if command not in listed or (runs and not next(r for r in commands if r["command"] == command)["editable"]):
             missing.append((command, path))
     assert not missing, missing[:20]
+    kit_commands = m("keymap.hotkey_kit").BY_COMMAND
     for r in commands:
         if r["editable"]:
             km, idname, props = r["check"]
-            assert km == "Window" and idname in ("allset.menu_item", "allset.menu_option_box"), r
+            assert km == "Window", r
+            if idname == "allset.hotkey_command":      # a kit command without a menu item (#537 - #539)
+                assert props["item"] in kit_commands, r
+                continue
+            assert idname in ("allset.menu_item", "allset.menu_option_box"), r
             assert props["item"] in menu_map.MAP, r
 
 

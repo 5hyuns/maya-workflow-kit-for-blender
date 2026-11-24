@@ -74,7 +74,7 @@ def rows():
         for r in _ROWS:
             if hotkey_rows.is_command(r):
                 if r["check"]:
-                    _COMMANDS[(r["check"][1], r["path"])] = r
+                    _COMMANDS[(r["check"][1], r["check"][2]["item"])] = r
                 continue
             if r["check"]:
                 _SIBLINGS.setdefault(_sig(r["check"]), []).append(r)
@@ -942,11 +942,14 @@ def _command_details(box, context, row):
     col = box.column(align=True)
     col.label(text=row["label"])
     col.label(text=f"Runtime command: {row['command']}    Category: {row['category']}")
-    where = row["path"].replace("#", " ").replace("/", " > ")
-    if not row["editable"]:
-        col.label(text=f"Kit: {row['status_text']} ({where})")
-        return
-    col.label(text=("Kit: the option box of " if row["option"] else "Kit: the menu item ") + where)
+    if row["path"].startswith(hotkey_rows.KIT_PREFIX):
+        col.label(text="Kit: " + row["label"])
+    else:
+        where = row["path"].replace("#", " ").replace("/", " > ")
+        if not row["editable"]:
+            col.label(text=f"Kit: {row['status_text']} ({where})")
+            return
+        col.label(text=("Kit: the option box of " if row["option"] else "Kit: the menu item ") + where)
     items = row_items(context, row)
     if _command_keymap(context) is None:
         box.label(text="Kit hotkey: — (Maya mode off or the Maya keys off)", icon='INFO')
@@ -1069,7 +1072,48 @@ class ALLSET_PT_hotkey_editor(bpy.types.Panel):
         bottom.operator("allset.marked_window_close", text="Close")
 
 
-classes = (ALLSET_PG_hotkey_row, ALLSET_UL_hotkeys, ALLSET_OT_hotkey_editor, ALLSET_OT_hotkey_assign,
+class ALLSET_OT_hotkey_command(bpy.types.Operator):
+    """Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)"""
+    bl_idname = "allset.hotkey_command"
+    bl_label = "Hotkey Command"
+    bl_options = {'INTERNAL'}
+
+    item: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from ..keymap import hotkey_kit
+        entry = hotkey_kit.BY_COMMAND.get(self.item)
+        if entry is None:
+            self.report({'WARNING'}, f"Unknown command: {self.item}")
+            return {'CANCELLED'}
+        _command, _label, _category, idname, props = entry
+        if idname == "toggle":
+            *owner_path, name = props["data_path"].split(".")
+            owner = context
+            for part in owner_path:
+                owner = getattr(owner, part, None)
+            if owner is None or not hasattr(owner, name):
+                return {'PASS_THROUGH'}
+            setattr(owner, name, not getattr(owner, name))
+            if context.area is not None:
+                context.area.tag_redraw()
+            return {'FINISHED'}
+        tk = getattr(context.scene, "allset_uv_toolkit", None)
+        values = {k: (getattr(tk, v[1:]) if isinstance(v, str) and v.startswith("@") and tk is not None else v)
+                  for k, v in props.items() if not (isinstance(v, str) and v.startswith("@") and tk is None)}
+        mod, name = idname.split(".")
+        op = getattr(getattr(bpy.ops, mod), name)
+        if not op.poll():
+            return {'PASS_THROUGH'}
+        try:
+            return op('EXEC_DEFAULT', True, **values)
+        except RuntimeError as ex:
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)
+            return {'CANCELLED'}
+
+
+classes = (ALLSET_OT_hotkey_command, ALLSET_PG_hotkey_row, ALLSET_UL_hotkeys, ALLSET_OT_hotkey_editor, ALLSET_OT_hotkey_assign,
            ALLSET_OT_hotkey_take, ALLSET_OT_hotkey_restore, ALLSET_OT_hotkey_import, ALLSET_OT_hotkey_blender_prefs,
            ALLSET_PT_hotkey_editor)
 

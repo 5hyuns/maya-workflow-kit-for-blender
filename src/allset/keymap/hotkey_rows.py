@@ -8,7 +8,7 @@ and the note) and adds ``hotkey_data.COMMANDS`` (the main menus' commands); ``se
 finds items that already use an event. The live side (``keyconfigs.user`` items) is ``ui/hotkey_editor.py``.
 """
 
-from . import hotkey_data, mapping
+from . import hotkey_data, hotkey_kit, mapping
 
 STATUS_TEXT = {"KIT": "Kit", "IC": "Blender (IC)", "STEP": "Planned", "NO": "Not in Blender", "MAC": "macOS only",
                None: "Unreviewed"}
@@ -143,7 +143,8 @@ def build_rows(platform="windows"):
 # Keymap of the keys given to menu item commands: runs in every editor, after the editors' own keys, like a Maya
 # global hotkey
 COMMAND_KEYMAP = "Window"
-COMMAND_OPS = ("allset.menu_item", "allset.menu_option_box")
+COMMAND_OPS = ("allset.menu_item", "allset.menu_option_box", "allset.hotkey_command")
+KIT_PREFIX = "kit:"      # path of a kit command row (``hotkey_kit``): not a menu item
 
 
 def _menu_tables():
@@ -182,6 +183,16 @@ def command_rows(start, skip=(), tables=None):
             "status_text": STATUS_TEXT[status], "check": check if runs else None, "step": None, "note": "",
             "line": None, "editable": runs, "number": 1, "label": c["label"], "path": c["path"],
             "option": c["option"], "names": (c["label"], c["path"].replace("#", " ")),
+        })
+    for command, label, category, _idname, _props in hotkey_kit.COMMANDS:
+        if command in skip:
+            continue
+        out.append({
+            "index": start + len(out), "command": command, "release": "", "maya_key": "", "event": None,
+            "context": "global", "category": category.replace(".", " > "), "status": "KIT",
+            "status_text": STATUS_TEXT["KIT"], "check": (COMMAND_KEYMAP, COMMAND_OPS[2], {"item": command}),
+            "step": None, "note": "", "line": None, "editable": True, "number": 1, "label": label,
+            "path": KIT_PREFIX + command, "option": False, "names": (label,),
         })
     return out
 
