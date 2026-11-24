@@ -274,6 +274,35 @@ def _enabled(context):
     return preferences.get(context).select_priority
 
 
+def face_edge_pick(context, region, event):
+    """#546: in edge mode Shift+click on an edge that is selected only as part of a selected face picks that edge
+    (active, still selected), like Maya, where the faces stay selected in edge mode and the edge is added to them
+    (Edit Mesh > Wedge turns the faces about it). Blender's toggle would drop the edge and so the face. True when
+    it picked."""
+    if not event.shift or event.ctrl or event.alt:
+        return False
+    if tuple(context.tool_settings.mesh_select_mode) != (False, True, False) or context.region_data is None:
+        return False
+    import bmesh
+    from . import multi_cut
+    hit = multi_cut.pick(context, region, context.region_data, (event.mouse_region_x, event.mouse_region_y),
+                         edges_only=True)
+    if hit is None or hit[1][0] != 'EDGE':
+        return False
+    ob = bpy.data.objects.get(hit[0])
+    if ob is None or ob.type != 'MESH' or ob.mode != 'EDIT':
+        return False
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.edges.ensure_lookup_table()
+    edge = bm.edges[hit[1][1]]
+    if not edge.select or bm.select_history.active is edge or not any(f.select for f in edge.link_faces):
+        return False
+    bm.select_history.discard(edge)
+    bm.select_history.add(edge)
+    bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
+    return True
+
+
 class ALLSET_OT_select_priority(bpy.types.Operator):
     """Click selection with Maya's priority: IK handles, joints and curves win over meshes"""
     bl_idname = "allset.select_priority"
@@ -299,6 +328,8 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
                 return self._finish_pick(context, event, True)
             return {'PASS_THROUGH'}
         if context.mode == 'EDIT_MESH' and space is not None and not toolbox.is_toolbox(space):
+            if region is not None and region.type == 'WINDOW' and face_edge_pick(context, region, event):
+                return self._finish_pick(context, event, True)
             from . import symmetry_select     # #445: with Symmetry on a pick takes the mirror partner too
             if symmetry_select.applies(context) and region is not None and region.type == 'WINDOW':
                 changed = symmetry_select.click(context, event)

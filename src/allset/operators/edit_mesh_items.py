@@ -12,6 +12,7 @@ import math
 import bmesh
 import bpy
 from bpy.props import FloatProperty, IntProperty
+from mathutils import Vector
 
 
 # --- Edit Mesh > Detach / Edit Edge Flow / Wedge ----------------------------------------------
@@ -169,6 +170,43 @@ class ALLSET_OT_edge_flow(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def wedge(bm, faces, edge, angle, divisions):
+    """Maya Wedge: sweep ``faces`` around ``edge`` by ``angle`` degrees in ``divisions`` steps, turning them toward
+    their normal (90 degrees stands a face up on that edge). The hinge edge's vertices stay single; the sides of the
+    sweep close as fans. The faces' old place opens into the mesh, except on a piece with no other faces, where it
+    stays as the wedge's bottom. Object space, so the view doesn't matter. Returns the faces at the end of the sweep."""
+    a, b = edge.verts[0].co.copy(), edge.verts[1].co.copy()
+    axis = (b - a).normalized()
+    normal = sum((f.normal for f in faces), Vector()).normalized()
+    side = sum((f.calc_center_median() for f in faces), Vector()) / len(faces) - (a + b) / 2
+    # a small turn about +axis moves the faces along axis x side: make that their normal side
+    if axis.cross(side).dot(normal) < 0:
+        axis = -axis
+    sel = set(faces)
+    alone = all(lf in sel for f in faces for e in f.edges for lf in e.link_faces)
+    geom = list(set(faces)) + list({e for f in faces for e in f.edges}) + list({v for f in faces for v in f.verts})
+    out = bmesh.ops.spin(bm, geom=geom, cent=(a + b) / 2, axis=axis, angle=math.radians(angle),
+                         steps=max(1, int(divisions)), use_merge=False, use_duplicate=False)
+    if alone:       # a piece with no other faces keeps its face under the wedge, turned to face out (closed)
+        bmesh.ops.reverse_faces(bm, faces=[f for f in set(faces) if f.is_valid])
+    else:
+        bmesh.ops.delete(bm, geom=[f for f in set(faces) if f.is_valid], context="FACES_ONLY")
+    on_hinge = [v for v in bm.verts if (v.co - a).length < 1e-5 or (v.co - b).length < 1e-5]
+    bmesh.ops.remove_doubles(bm, verts=on_hinge, dist=1e-5)
+    bm.normal_update()
+    return [f for f in out["geom_last"] if isinstance(f, bmesh.types.BMFace) and f.is_valid]
+
+
+def wedge_edge(bm, faces):
+    """The edge a Wedge turns about: the active edge, else a selected edge on the border of the selected faces."""
+    edge = bm.select_history.active
+    if isinstance(edge, bmesh.types.BMEdge):
+        return edge
+    sel = set(faces)
+    return next((e for f in faces for e in f.edges
+                 if e.select and sum(lf in sel for lf in e.link_faces) == 1), None)
+
+
 class ALLSET_OT_wedge(bpy.types.Operator):
     """Sweep the selected faces around one of their edges (the active edge) (Maya Edit Mesh > Wedge)"""
     bl_idname = "allset.wedge"
@@ -185,23 +223,16 @@ class ALLSET_OT_wedge(bpy.types.Operator):
     def execute(self, context):
         ob, bm = _edit_bm(context)
         faces = [f for f in bm.faces if f.select]
-        edge = bm.select_history.active
-        if not isinstance(edge, bmesh.types.BMEdge):
-            edge = next((e for e in bm.edges if e.select and e.is_boundary is False
-                         and sum(f.select for f in e.link_faces) == 1), None)
+        edge = wedge_edge(bm, faces) if faces else None
         if not faces or edge is None:
             self.report({'WARNING'}, "No faces selected to wedge. Select faces and one or more edges from the "
                                      "selected faces to wedge about.")   # Maya's warning
             return {'CANCELLED'}
-        mw = ob.matrix_world
-        p0, p1 = mw @ edge.verts[0].co, mw @ edge.verts[1].co
-        axis = (p1 - p0).normalized()
-        centre = (p0 + p1) / 2
-        # spin so the faces turn away from the rest of the mesh (towards their normal)
-        normal = (mw.to_3x3() @ faces[0].normal).normalized()
-        side = (mw @ faces[0].calc_center_median()) - centre
-        if axis.cross(side).dot(normal) < 0:
-            axis = -axis
-        bpy.ops.mesh.spin(steps=self.divisions, angle=math.radians(self.angle), center=centre, axis=axis,
-                          dupli=False, use_auto_merge=True)
+        last = wedge(bm, faces, edge, self.angle, self.divisions)
+        for el in (*bm.verts, *bm.edges, *bm.faces):
+            el.select = False
+        for f in last:
+            f.select = True
+        bm.select_flush(True)
+        bmesh.update_edit_mesh(ob.data)
         return {'FINISHED'}

@@ -35,7 +35,8 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 - **Fixed:** Bevel on an object selection bevels every edge and stays in object mode, and World Space bevels
   non-uniformly scaled meshes evenly (#532); Circularize puts an edge loop's circle in Maya's plane and spreads the
   inner vertices of a face block like Maya (#465); Mesh Display > Apply Color and Prelight show the colours at once
-  (#531).
+  (#531); Wedge turns the faces up around the edge you pick, and Shift+click in edge mode picks an edge of the
+  selected faces without dropping them (#546).
 
 ## UV Editor
 

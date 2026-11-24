@@ -44,6 +44,8 @@ buttons can each take a key of your own.
 - UV Toolkit Move / Rotate / Scale with UV Sync Selection move only the selected faces' UVs; shells of unselected
   faces sharing those vertices no longer turn along (#540).
 - Mesh Display > Apply Color and Prelight show the colours at once in the Solid 3D Views (#531).
+- Edit Mesh > Wedge turns the selected faces up around the picked edge, like Maya (before, they turned into the mesh),
+  and in edge mode Shift+click on an edge of the selected faces picks it while the faces stay selected (#546).
 - Bevel on an object selection bevels every edge of the selected meshes and stays in object mode, and World Space
   bevels non-uniformly scaled meshes evenly, like Maya (#532).
 - Edit Mesh > Circularize on an edge loop puts the circle in the same plane as Maya, and on a block of faces the
