@@ -19,8 +19,18 @@ maya_grid = import_module(kit.MODULE + ".ui.maya_grid")
 camera_bookmarks = import_module(kit.MODULE + ".ui.camera_bookmarks")
 
 
+class _AreaCtx(Ctx):
+    """``Ctx`` with the real screen and area of its 3D View (per-view settings kept on the screen by area)."""
+
+    def __init__(self, space):
+        super().__init__(space)
+        self.screen, self.area = next((s, a) for s in bpy.data.screens for a in s.areas if a.spaces.active == space)
+
+
 def _click(ctx, key):
     """What a toolbar click does (ALLSET_OT_panel_set.execute with toggle=True)."""
+    if key == "SELECTION_WIRE_AA":
+        ctx = _AreaCtx(ctx.space_data)
     if key in pm.TOGGLE_OFF and pm.state(ctx, key):
         key = pm.TOGGLE_OFF[key]
     return pm.apply(ctx, key)
@@ -43,7 +53,7 @@ def _snapshot(space, cam):
             tuple(cam.lock_rotation), cam.data.show_sensor, cam.data.show_passepartout, cam.data.show_safe_areas,
             bool(cam.data.get(pm.RES_GATE)), bool(cam.data.get(pm.FIELD_CHART)), round(cam.data.allset_overscan, 4),
             round(vs.exposure, 4), round(vs.gamma, 4), vs.view_transform,
-            camera_bookmarks.pan_zoom_on(space.region_3d))
+            camera_bookmarks.pan_zoom_on(space.region_3d), bool(pm.state(_AreaCtx(space), "SELECTION_WIRE_AA")))
 
 
 def test_every_toolbar_toggle_comes_back():

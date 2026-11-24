@@ -38,6 +38,11 @@ def header():
     return area, next(r for r in area.regions if r.type == 'TOOL_HEADER')
 
 
+def area_index(area):
+    """The view's area index on its screen (per-view settings are kept on the screen by area index)."""
+    return list(win().screen.areas).index(area)
+
+
 def snapshot():
     area, _r = view3d()
     sp = area.spaces.active
@@ -60,6 +65,7 @@ def snapshot():
         "objects": len(scene.objects), "tool": tool.idname if tool else "",
         "camera_view": sp.region_3d.view_perspective,
         "pan_zoom": mod("ui.camera_bookmarks").pan_zoom_on(sp.region_3d),
+        "smooth_wires": area_index(area) in set(win().screen.get(mod("ui.selection_wire_show").WIRE_AA, ())),
         "bookmarks": len(getattr(cam, "allset_view_bookmarks", ())) if cam else 0,
         "file_browser": file_browser()[0] is not None,      # Image Plane: a view without one picks an image (#398)
     }

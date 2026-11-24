@@ -750,7 +750,6 @@ STRINGS = {
     "Blender's smooth proxy is the Subdivision Surface modifier: there is no mirror proxy.": 'Blender のスムーズプロキシはサブディビジョンサーフェスモディファイアーです: ミラープロキシはありません。',
     "Blender's soft modification is a Hook modifier on the whole mesh with Maya's falloff (radius 5, smooth), driven by softModNHandle.": 'Blender のソフトモディフィケーションはメッシュ全体に付くフックモディファイアーで、Maya の減衰 (半径 5、スムーズ) を持ち、softModNHandle で駆動します。',
     "Blender's stereo is a scene setting (Stereoscopy, Views) shown in a stereo window mode, not a panel type.": 'Blender のステレオはシーン設定 (ステレオスコピー、ビュー) で、ステレオのウィンドウモードで表示します: パネルタイプではありません。',
-    "Blender's viewport anti-aliasing is a preference, not a per-view button (the kit doesn't change preferences).": 'Blender のビューポートのアンチエイリアスはプリファレンスで、ビューごとのボタンではありません (キットはプリファレンスを変更しません)。',
     "Blender's viewport can't be paused: switch to Wireframe or hide heavy objects.": 'Blender のビューポートは一時停止できません: ワイヤーフレームに切り替えるか、重いオブジェクトを隠します。',
     "Blender's viewport doesn't preview motion blur: it is a render setting (EEVEE / Cycles Motion Blur).": 'Blender のビューポートはモーションブラーをプレビューしません: レンダー設定です (EEVEE / Cycles のモーションブラー)。',
     "Blender's viewport has no fog: the render's Mist pass (View Layer properties) gives depth fog.": 'Blender のビューポートにフォグはありません: レンダーのミストパス (ビューレイヤープロパティ) で奥行きのフォグを付けます。',
@@ -3304,7 +3303,6 @@ STRINGS = {
     'Pre-selection Highlight': '事前選択ハイライト',
     'Prefer Selected Curves': '選択カーブを優先',
     'Preferences': 'プリファレンス',
-    'Preferences > Viewport > Anti-Aliasing': 'プリファレンス > ビューポート > アンチエイリアス',
     'Prefix': 'プレフィックス',
     'Prefix Hierarchy Names': '階層名にプレフィックスを付ける',
     'Prefix Hierarchy Names...': '階層名にプレフィックスを付加...',
@@ -7668,6 +7666,7 @@ STRINGS = {
     'Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed': '最後の複製を変更します (Maya: polyChipOff ノードを編集)。Blender は編集モードのヒストリを保持しないため、\n変更できるのは最後の 1 回だけです',
     'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '選択したフェースをその場でコピーします (Maya の メッシュの編集 > 複製): 各フェースが個別のピースになり、\nマニピュレータで移動します。メニュー項目を長押しすると フェースの複製 オプション が開きます',
     'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': 'メニュー項目のない、ホットキーエディタに載っているキットのコマンドを実行します (UV ツールキットのボタン、X 線)',
+    'Smooth Maya selection wires and tool handles in this viewport': 'このビューポートで Maya の選択ワイヤーとツールハンドルを滑らかに表示します',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

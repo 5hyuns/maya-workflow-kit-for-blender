@@ -750,7 +750,6 @@ STRINGS = {
     "Blender's smooth proxy is the Subdivision Surface modifier: there is no mirror proxy.": 'Blender 的平滑代理是表面细分修改器：没有镜像代理。',
     "Blender's soft modification is a Hook modifier on the whole mesh with Maya's falloff (radius 5, smooth), driven by softModNHandle.": 'Blender 的软修改是作用于整个网格的钩挂修改器，使用 Maya 的衰减 (半径 5，平滑)，由 softModNHandle 驱动。',
     "Blender's stereo is a scene setting (Stereoscopy, Views) shown in a stereo window mode, not a panel type.": 'Blender 的立体是场景设置 (立体视觉，视图)，在立体窗口模式中显示，而不是一种面板类型。',
-    "Blender's viewport anti-aliasing is a preference, not a per-view button (the kit doesn't change preferences).": 'Blender 的视图抗锯齿是一项偏好设置，而不是按视图的按钮 (本套件不会更改偏好设置)。',
     "Blender's viewport can't be paused: switch to Wireframe or hide heavy objects.": 'Blender 的视图无法暂停：请切换到线框或隐藏较重的物体。',
     "Blender's viewport doesn't preview motion blur: it is a render setting (EEVEE / Cycles Motion Blur).": 'Blender 的视图不会预览运动模糊：它是一项渲染设置 (EEVEE / Cycles 运动模糊)。',
     "Blender's viewport has no fog: the render's Mist pass (View Layer properties) gives depth fog.": 'Blender 的视图没有雾：渲染的雾通道 (视图层属性) 可提供深度雾。',
@@ -3304,7 +3303,6 @@ STRINGS = {
     'Pre-selection Highlight': '预选高亮',
     'Prefer Selected Curves': '优先选定曲线',
     'Preferences': '首选项',
-    'Preferences > Viewport > Anti-Aliasing': '偏好设置 > 视图 > 抗锯齿',
     'Prefix': '前缀',
     'Prefix Hierarchy Names': '为层级名称添加前缀',
     'Prefix Hierarchy Names...': '为层级名称添加前缀...',
@@ -7669,6 +7667,7 @@ STRINGS = {
     'Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed': '更改最后一次复制 (Maya: 编辑 polyChipOff 节点)。Blender 不保留编辑模式历史，因此只能更改\n最后一次',
     'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '原地复制所选面 (Maya 编辑网格 > 复制)：每个面成为单独的部分，用操纵器移动；\n按住菜单项可打开复制面选项',
     'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': '运行热键编辑器中列出但没有菜单项的工具包命令 (UV 工具包按钮、X 射线)',
+    'Smooth Maya selection wires and tool handles in this viewport': '在此视口中平滑显示 Maya 选择线框和工具手柄',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

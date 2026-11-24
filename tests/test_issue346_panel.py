@@ -62,7 +62,7 @@ class _TornCtx(Ctx):
                                           spaces=types.SimpleNamespace(active=self.space_data), tag_redraw=lambda: None,
                                           as_pointer=lambda: 346, regions=[])
         others = [types.SimpleNamespace(type='OUTLINER', width=10, height=10) for _ in range(n_areas - 1)]
-        self.screen = types.SimpleNamespace(areas=[self.area] + others)
+        self.screen = types.SimpleNamespace(areas=[self.area] + others, get=lambda _key, default=None: default)
         self.window = types.SimpleNamespace(screen=self.screen, workspace=ws)
         self.region = types.SimpleNamespace(type=region, width=2400)
 
