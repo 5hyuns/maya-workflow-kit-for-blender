@@ -10,7 +10,7 @@ takes part in the packing, so the input is one bbox per shell.
 
 Which plane each face takes and how faces form shells (``assign_planes``) is
 Maya's too, for every Planes choice (``PLANE_SETS``; tests/test_step257_uv_auto.py, tests/test_issue488_auto_planes.py).
-With 8 planes a face exactly between planes (a cube side, a 45-degree cylinder side) can still take another plane.
+With 8 planes Maya's own slightly-off frames (``FRAMES8``) decide faces that lie exactly between two planes.
 
 Input bbox = the shell's extent in the projection plane in **Maya units** (object space; Blender lengths divided
 by ``units.maya_unit()``). The packer is not scale invariant: the size comparator has an absolute 1e-6 tolerance
@@ -239,7 +239,7 @@ class PlaneSet:
     """One Planes choice of Automatic: the projection planes in Maya's order (frames in Maya axes), whether a plane
     takes faces on both sides (3 planes = the three axes, both ways), the "Fewer pieces" candidate threshold, whether
     a tie for the best plane ("Less distortion") keeps the later plane, and the pairs of opposite planes (the
-    mirrored seed groups: only the six axis planes have them)."""
+    mirrored seed groups: the six axis planes and the eight octahedron planes have them)."""
 
     def __init__(self, normals, threshold, both_sides=False, tie_later=True, frames=None, pairs=()):
         self.frames = tuple(frames or (plane_frame(n) for n in normals))
@@ -254,6 +254,29 @@ class PlaneSet:
         return [abs(d) for d in out] if self.both_sides else out
 
 
+def _frame8(u, v):
+    """An 8-plane frame from its U and V; the normal is U x V (unit length)."""
+    n = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
+    ln = math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2])
+    return (n[0] / ln, n[1] / ln, n[2] / ln), u, v
+
+
+# Maya's eight frames are a little off the exact turn onto the octahedron directions (about 1e-6, two
+# variants of the same values). A face exactly between two planes (a cube side, a 45-degree cylinder side)
+# goes to the plane these frames favour, and the frames decide whether a folded face crosses the shell border,
+# so they are kept as Maya has them (float32).
+_A = (0.7886754274368286, 0.21132394671440125, 0.5773496031761169)
+_B = (0.7886753678321838, 0.21132636070251465, 0.5773508548736572)
+FRAMES8 = tuple(_frame8(u, v) for u, v in (
+    ((_A[0], -_A[1], _A[2]), (-_A[1], _A[0], _A[2])),      # (-1, -1, 1)
+    ((_A[1], -_A[0], -_A[2]), (-_A[0], _A[1], -_A[2])),    # (1, 1, -1)
+    ((_B[1], -_B[0], _B[2]), (-_B[0], _B[1], _B[2])),      # (-1, -1, -1)
+    ((_B[0], -_B[1], -_B[2]), (-_B[1], _B[0], -_B[2])),    # (1, 1, 1)
+    ((_A[0], _A[1], -_A[2]), (_B[1], _B[0], _B[2])),       # (1, -1, 1)
+    ((_A[1], _A[0], _A[2]), (_B[0], _B[1], -_B[2])),       # (-1, 1, -1)
+    ((_B[0], _B[1], _B[2]), (_A[1], _A[0], -_A[2])),       # (-1, 1, 1)
+    ((_B[1], _B[0], -_B[2]), (_A[0], _A[1], _A[2]))))      # (1, -1, -1)
+
 _R3 = math.sqrt(3.0) / 2.0
 _T1, _T2 = 2.0 * math.sqrt(2.0) / 3.0, math.sqrt(2.0 / 3.0)
 _P = (1.0 + math.sqrt(5.0)) / 2.0
@@ -263,10 +286,8 @@ PLANE_SETS = {
                 tie_later=False),
     5: PlaneSet(((0, 0, -1), (-0.5, -_R3, 0), (-0.5, _R3, 0), (1, 0, 0), (0, 0, 1)), 0.4),
     6: PlaneSet(None, THRESHOLD6, frames=PLANES6, pairs=((0, 1), (2, 3), (4, 5))),
-    # the faces of an octahedron, two opposite ones after each other (a face exactly between planes, such as a
-    # cube side, can take another plane than in Maya)
-    8: PlaneSet(((-1, -1, 1), (1, 1, -1), (-1, -1, -1), (1, 1, 1), (1, -1, 1), (-1, 1, -1), (-1, 1, 1), (1, -1, -1)),
-                0.55),
+    # the faces of an octahedron, two opposite ones after each other; opposite planes mirror like the six axes
+    8: PlaneSet(None, 0.55, frames=FRAMES8, pairs=((0, 1), (2, 3), (4, 5), (6, 7))),
     # the faces of a dodecahedron: (0, +-p, +-1), (+-1, 0, +-p), (+-p, +-1, 0) with p = the golden ratio
     12: PlaneSet([(0, b * _P, a) for a in (-1, 1) for b in (-1, 1)]
                  + [(b, 0, a * _P) for a in (-1, 1) for b in (-1, 1)]
