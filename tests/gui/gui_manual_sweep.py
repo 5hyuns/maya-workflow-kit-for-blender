@@ -421,12 +421,18 @@ def m75_3():
     shapes = sorted(o.data.name for o in bpy.context.selected_objects)
     check(f"[M75-3] Rename crate: crate, crate1, crate2 + crateShape… ({names}, {shapes})",
           names == ["crate", "crate1", "crate2"] and all(s.startswith("crateShape") for s in shapes))
+    # a typed name is cleaned up like Maya (#477): leading digits go, other characters a name can't hold become "_"
     inp().text = "1x"
-    e1 = notice()
+    n1 = sorted(o.name for o in bpy.context.selected_objects)
     inp().text = "a-b"
-    e2 = notice()
-    check(f"[M75-3] '1x' and 'a-b' are refused with a Help Line message ({e1!r}, {e2!r})",
-          e1 and e2 and sorted(o.name for o in bpy.context.selected_objects) == ["crate", "crate1", "crate2"])
+    n2 = sorted(o.name for o in bpy.context.selected_objects)
+    check(f"[M75-3] '1x' renames to x, x1, x2 and 'a-b' to a_b, a_b1, a_b2 ({n1}, {n2})",
+          n1 == ["x", "x1", "x2"] and n2 == ["a_b", "a_b1", "a_b2"])
+    # nothing usable left: refused with a Help Line message, the names stay
+    inp().text = "123"
+    e1 = notice()
+    check(f"[M75-3] '123' is refused with a Help Line message ({e1!r})",
+          e1 and sorted(o.name for o in bpy.context.selected_objects) == ["a_b", "a_b1", "a_b2"])
 
 
 @step
