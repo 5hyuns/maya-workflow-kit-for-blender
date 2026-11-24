@@ -4114,7 +4114,11 @@ def _m66_3_layout_check():
         for f in isl:
             p = [l[uv].uv.copy() for l in f.loops]
             for j in range(1, len(p) - 1):
-                tris.append((i, (p[0], p[j], p[j + 1])))
+                # Layout packs with no shell padding by default: shells may touch, so each triangle is shrunk a
+                # little toward its centre and only overlapping areas count
+                t = (p[0], p[j], p[j + 1])
+                c = (t[0] + t[1] + t[2]) / 3
+                tris.append((i, tuple(c + (q - c) * 0.98 for q in t)))
     overlap = any(tris[a][0] != tris[b][0] and _geo.intersect_tri_tri_2d(*tris[a][1], *tris[b][1])
                   for a in range(len(tris)) for b in range(a + 1, len(tris)))
     dens = [ut.density(isl, uv, OB().matrix_world, 1024, k()) for isl in isls]

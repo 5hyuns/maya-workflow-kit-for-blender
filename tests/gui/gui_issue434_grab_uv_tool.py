@@ -12,7 +12,7 @@ from sim import MODULE, check, run, step, setup, win, view3d, load_maya_layout  
 
 C = {}
 uv_components = import_module(MODULE + ".operators.uv_components")
-GRAB = "sculpt.uv_sculpt_grab"
+GRAB = "allset.uv_brush_grab"        # the kit's UV Grab brush tool (#517)
 ITEM = "UV/3D Grab UV Tool"
 
 

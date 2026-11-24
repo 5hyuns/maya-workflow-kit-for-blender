@@ -78,6 +78,11 @@ def s_new_scene():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.create(kind='CUBE')
     C["cube"] = bpy.context.active_object.name
+    # the render lights the scene with its own lights only (Blender's): a sun makes the cube stand out from the world
+    sun = bpy.data.objects.new("test_sun", bpy.data.lights.new("test_sun", 'SUN'))
+    sun.data.energy = 5.0
+    sun.rotation_euler = (0.6, 0.2, 0.4)
+    sc.collection.objects.link(sun)
     redraw_all()
 
 
