@@ -42,8 +42,9 @@ class Params:
     icon_gap = 5.0
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks"
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode
-    # A quick release is a mark, like Maya: the radial item of its direction, never a list row it ends on (a submenu
-    # item that did not open: nothing runs). The kit counts a release sooner than ``mark_time`` s after the press.
+    # A quick release is a mark, like Maya: the radial item of its direction, never a list row it ends on (a mark that
+    # ends on a radial submenu item runs nothing; one that goes on past it picks in that submenu, by the direction
+    # from the item's box centre). The kit counts a release sooner than ``mark_time`` s after the press.
     mark_time = 0.11
     # A release right after the press runs nothing at all, like Maya, also on a radial leaf item (a quick click in the
     # centre still keeps the menu up; not with the Quick Gestures option). The kit's window: ``quick_none_time`` s.

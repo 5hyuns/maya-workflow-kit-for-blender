@@ -367,6 +367,21 @@ class Session:
             return self._cancel()     # released right after the press: nothing runs, like Maya
         if item is not None and item.sub is None:
             return self._finish(item, opt)
+        if (item is not None and item.sub is not None and item.kind == "radial" and len(self.stack) == 1
+                and not self.params.quick_gestures and not self.visible(t)):
+            # a mark goes into a radial submenu where it crosses the item (its box centre) and the rest of the stroke
+            # picks in there, like Maya's compound marks: a flick on past the item runs the submenu's item that way
+            # (Ctrl+RMB flick left = To Vertices > To Vertices); one that ends on the item runs nothing
+            r = item.rect
+            dx, dy = self._rel(x, y)
+            way = direction(dx - (r[0] + r[2]) / 2, dy - (r[1] + r[3]) / 2, self.params.dead)
+            if way is None:
+                return self._cancel()
+            self._push(item, self.center)
+            leaf = self.layout.radial.get(way)
+            if leaf is not None and leaf.sub is None:
+                return self._finish(leaf, False)
+            return self._cancel()
         if item is not None and item.sub is not None and item.kind != "radial":
             self._click_mode(t)   # released on a list row's submenu: keep it open to pick from
             return None
