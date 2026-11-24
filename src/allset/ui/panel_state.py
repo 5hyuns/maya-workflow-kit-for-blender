@@ -72,6 +72,7 @@ TIPS = {
     "SHOW_IMAGE_PLANES": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
     "SELECTION_HILITE": "Selection highlighting in this view (the Maya selection wire, and Blender's outline "
                         "where it was on)",
+    "SELECTION_WIRE_AA": "Smooth Maya selection wires and tool handles in this viewport",
     "SHOW_NURBS_CURVES": "NURBS curves: curve objects in this view, and rig controls drawn as bone shapes "
                          "(their bones are shown or hidden in every view)",
     "SHOW_JOINTS": "Joints in this view. Rig controls drawn as bone shapes stay (they follow NURBS Curves); while "
@@ -205,6 +206,9 @@ def state(context, key):
     if key == "SELECTION_HILITE":
         from . import selection_wire
         return selection_wire.highlighting(context)
+    if key == "SELECTION_WIRE_AA":
+        from .selection_wire_show import antialiasing
+        return antialiasing(context)
     if key == "SHOW_IK_HANDLES":
         from ..operators import by_type
         return not any(o.get(SHOW_HIDDEN) for o in by_type.ik_handles(context.scene))
@@ -221,7 +225,7 @@ SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) 
             if s[0] == "set"]
 # keys only the panel toolbar uses (ui/panel_toolbar.py)
 TOOLBAR_KEYS = ["FILM_GATE", "RES_GATE", "GATE_MASK", "FIELD_CHART", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE",
-                "EXPOSURE", "GAMMA", "CM_ENABLE", "BOOKMARK", "PAN_ZOOM"]
+                "EXPOSURE", "GAMMA", "CM_ENABLE", "BOOKMARK", "PAN_ZOOM", "SELECTION_WIRE_AA"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
 _COPY_SHADING = ("type", "light", "color_type", "show_xray", "show_backface_culling", "show_shadows",
@@ -339,6 +343,9 @@ def apply(context, key):
     elif key == "SELECTION_HILITE":
         from . import selection_wire
         selection_wire.set_highlighting(context, not selection_wire.highlighting(context))
+    elif key == "SELECTION_WIRE_AA":
+        from .selection_wire_show import toggle_antialiasing
+        return toggle_antialiasing(context)
     elif key == "SHOW_NURBS_CURVES":
         # #173: the view's curve filter + the curve-shaped bone controls (ui/curve_controls.py)
         from . import curve_controls

@@ -27,11 +27,14 @@ Code: ``manipulator_shapes`` (handle geometry), ``manipulator_frame`` (position 
 register / unregister, and re-exports the names the rest of the kit reads from it.
 """
 
+from contextlib import contextmanager
+
 import bpy
 from bpy.types import Gizmo, GizmoGroup
 from mathutils import Matrix, Vector
 from .. import safe_reg
 from ..operators import group
+from .selection_wire_show import antialiasing
 
 # the split-out parts, also read through this module by operators, other UI and the tests
 from .manipulator_shapes import (CENTER_HALF, CONE_LEN, CONE_R, CUBE_AT, CUBE_HALF, PIVOT_RING_R,  # noqa: F401
@@ -108,6 +111,36 @@ def _is_active(kind, handle_axes):
     return handle_axes is not None and tuple(h.get("constraint_axis", ())) == handle_axes
 
 
+@contextmanager
+def handle_polyline(width, colour, smooth):
+    """Draw visible handle strokes with the viewport's line smoothing setting."""
+    import gpu
+
+    shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+    blend = gpu.state.blend_get()
+    try:
+        gpu.state.blend_set('ALPHA')
+        shader.bind()
+        shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
+        shader.uniform_float("lineWidth", width)
+        shader.uniform_float("color", colour)
+        shader.uniform_bool("lineSmooth", smooth)
+        yield shader
+    finally:
+        shader.uniform_bool("lineSmooth", False)
+        gpu.state.blend_set(blend)
+
+
+def draw_handle_line(handle, batch, colour=None):
+    import gpu
+
+    if colour is None:
+        colour = (*handle.color_highlight, handle.alpha_highlight) if handle.is_highlight else (*handle.color, handle.alpha)
+    with gpu.matrix.push_pop(), handle_polyline(handle.line_width, colour, True) as shader:
+        gpu.matrix.multiply_matrix(handle.matrix_world)
+        batch.draw(shader)
+
+
 class ALLSET_GT_maya_handle(Gizmo):
     """One Maya manipulator handle: custom shapes, picked with a fatter invisible shape."""
     bl_idname = GIZMO
@@ -117,17 +150,21 @@ class ALLSET_GT_maya_handle(Gizmo):
     def build(self, kind):
         self.handle_kind = kind
         draw, pick = shapes(kind)
-        self.draw_shapes = [self.new_custom_shape(t, v) for t, v in draw]
+        self.draw_shapes = [(t, self.new_custom_shape(t, v)) for t, v in draw]
         self.pick_shape = self.new_custom_shape(*pick)
 
     def draw(self, context):
+        smooth = antialiasing(context)
         if getattr(self, "handle_kind", None) == 'PLANE':
-            self._draw_plane()
+            self._draw_plane(smooth)
             return
-        for sh in getattr(self, "draw_shapes", ()):
-            self.draw_custom_shape(sh)
+        for kind, shape in getattr(self, "draw_shapes", ()):
+            if smooth and kind == 'LINES':
+                draw_handle_line(self, shape[0])
+            else:
+                self.draw_custom_shape(shape)
 
-    def _draw_plane(self):
+    def _draw_plane(self, smooth):
         """Maya plane handle: translucent lightened fill + solid rim (draw_custom_shape takes one colour)."""
         import gpu
         colour = self.color_highlight if self.is_highlight else self.color
@@ -135,9 +172,12 @@ class ALLSET_GT_maya_handle(Gizmo):
         fill = plane_fill(colour)
         gpu.state.blend_set('ALPHA')
         gpu.state.line_width_set(self.line_width)
-        for i, (batch, shader) in enumerate(getattr(self, "draw_shapes", ())):
+        for kind, (batch, shader) in getattr(self, "draw_shapes", ()):
+            if smooth and kind == 'LINES':
+                draw_handle_line(self, batch, (*colour, alpha))
+                continue
             shader.bind()
-            shader.uniform_float("color", (*fill, alpha * PLANE_FILL) if i == 0 else (*colour, alpha))
+            shader.uniform_float("color", (*fill, alpha * PLANE_FILL) if kind == 'TRIS' else (*colour, alpha))
             with gpu.matrix.push_pop():
                 gpu.matrix.multiply_matrix(self.matrix_world)
                 batch.draw(shader)
@@ -167,19 +207,13 @@ class ALLSET_GT_maya_ring(Gizmo):
         return front_arcs(self.matrix_world, view_z)
 
     def draw(self, context):
-        import gpu
         from gpu_extras.batch import batch_for_shader
         colour = self.color_highlight if self.is_highlight else self.color
         alpha = self.alpha_highlight if self.is_highlight else self.alpha
-        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
-        gpu.state.blend_set('ALPHA')
-        shader.bind()
-        shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
-        shader.uniform_float("lineWidth", self.line_width * context.preferences.system.ui_scale)
-        shader.uniform_float("color", (*colour[:3], alpha))
-        for arc in self._arcs(context):
-            batch_for_shader(shader, 'LINE_STRIP', {"pos": [tuple(p) for p in arc]}).draw(shader)
-        gpu.state.blend_set('NONE')
+        width = self.line_width * context.preferences.system.ui_scale
+        with handle_polyline(width, (*colour[:3], alpha), antialiasing(context)) as shader:
+            for arc in self._arcs(context):
+                batch_for_shader(shader, 'LINE_STRIP', {"pos": [tuple(p) for p in arc]}).draw(shader)
 
     def test_select(self, context, location):
         from bpy_extras.view3d_utils import location_3d_to_region_2d

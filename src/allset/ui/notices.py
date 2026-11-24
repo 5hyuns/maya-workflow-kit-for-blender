@@ -891,9 +891,6 @@ PANEL_MENU = {
     _PT + "Motion Blur": (
         "Render Properties > Motion Blur", "Blender's viewport doesn't preview motion blur: it is a render setting "
         "(EEVEE / Cycles Motion Blur)."),
-    _PT + "Multisample Anti-aliasing": (
-        "Preferences > Viewport > Anti-Aliasing", "Blender's viewport anti-aliasing is a preference, not a per-view "
-        "button (the kit doesn't change preferences)."),
     _PT + "X-Ray Active Components": (
         "X-Ray", "Blender X-rays the whole view (X-Ray), not only the components being edited."),
     _SL + "Select by hierarchy": (

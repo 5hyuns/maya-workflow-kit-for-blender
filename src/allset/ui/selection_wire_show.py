@@ -14,6 +14,7 @@ def _view(context):
 # Views with highlighting off = a JSON {area index: Blender outline was on} on their screen (Blender
 # spaces / areas take no ID properties; an area index survives save / open).
 HILITE_OFF = "allset_hilite_off"
+WIRE_AA = "allset_selection_wire_aa"
 
 
 def _off_map(screen):
@@ -32,6 +33,30 @@ def _area_index(context, space):
         if area.spaces.active == space:
             return str(i)
     return None
+
+
+def antialiasing(context):
+    screen = context.screen
+    enabled = screen.get(WIRE_AA) if screen is not None else None
+    if enabled is None:
+        return False
+    key = _area_index(context, _view(context))
+    return key is not None and int(key) in enabled
+
+
+def toggle_antialiasing(context):
+    key = _area_index(context, _view(context))
+    if key is None:
+        return False
+    screen = context.screen
+    enabled = set(screen.get(WIRE_AA, ()))
+    enabled.symmetric_difference_update((int(key),))
+    if enabled:
+        screen[WIRE_AA] = sorted(enabled)
+    else:
+        del screen[WIRE_AA]
+    context.area.tag_redraw()
+    return True
 
 
 def highlighting(context):

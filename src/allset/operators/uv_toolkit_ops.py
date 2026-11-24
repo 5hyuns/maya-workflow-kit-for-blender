@@ -623,7 +623,7 @@ class ALLSET_OT_uv_measure(bpy.types.Operator):
             return {'CANCELLED'}
         tk.measure_result = round(value, 4)
         if message:
-            self.report({'INFO'}, message)
+            results.result(self, message)
         return {'FINISHED'}
 
 

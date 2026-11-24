@@ -55,6 +55,7 @@ import bpy
 import numpy as np
 
 from .. import update_summary
+from .selection_wire_show import antialiasing
 
 HILITE = "#64dcff"          # the object being edited, every edge
 VERT = "#c800c8"            # unselected vertices
@@ -667,6 +668,8 @@ def _draw():
         return
     scale = context.preferences.system.ui_scale or 1.0
     vert_px = theme_point_sizes(context)
+    smooth = antialiasing(context)
+    blend = gpu.state.blend_get() if smooth else None
     gpu.state.depth_test_set('NONE' if _xray(space) else 'LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     proj = {'LINES': _biased_projection(rv3d, DEPTH_BIAS), 'TRIS': _biased_projection(rv3d, FACE_BIAS),
@@ -685,9 +688,18 @@ def _draw():
                     elif kind in ('LINES', 'LINES_SEL'):
                         sh.uniform_float("viewportSize", (region.width, region.height))
                         sh.uniform_float("lineWidth", size * scale)
+                        sh.uniform_bool("lineSmooth", smooth)
+                        if smooth:
+                            gpu.state.blend_set('ALPHA')
+                            batch.draw(sh)
+                            gpu.state.blend_set(blend)
+                            continue
                     batch.draw(sh)
         gpu.state.point_size_set(1.0)
     finally:
+        if smooth:
+            _builtin('POLYLINE_UNIFORM_COLOR').uniform_bool("lineSmooth", False)
+            gpu.state.blend_set(blend)
         gpu.matrix.pop_projection()
         gpu.state.depth_test_set('NONE')
     _times.append(time.perf_counter() - t0)

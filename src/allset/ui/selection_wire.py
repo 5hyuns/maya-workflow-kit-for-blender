@@ -48,10 +48,10 @@ import bpy
 from bpy.app.handlers import persistent
 from ..operators.group import selected_objects as _selection_roots
 
-from .selection_wire_gpu import (INSTANCES, _PLAIN, _POSITION, _many, _merged, _plan, _sh, _sh_many, _shader,
-                                 _shaders, _ubo, _ubos, projected_matrices)
+from .selection_wire_gpu import (INSTANCES, SMOOTH_FALLBACK, _PLAIN, _POSITION, _many, _many_smooth, _merged,
+                                 _plan, _sh, _sh_many, _shader, _shaders, _ubo, _ubos, draw_smooth, projected_matrices)
 from .selection_wire_edges import DEFORM_ONLY, _edge_indices, _edges, _positions, edges_of, keeps_edges, lattice_edges
-from .selection_wire_show import HILITE_OFF, _area_index, _off_map, _view, highlighting, set_highlighting
+from .selection_wire_show import HILITE_OFF, _area_index, _off_map, _view, antialiasing, highlighting, set_highlighting
 from .selection_wire_rows import (FILE_READ_FROM, _ENUMS, _NO_MATRIX, _enum_values, _file_index, _file_rows, _rows_of,
                                   world_matrices)
 from .selection_wire_depth import (ARRAY_FROM, DEPTH_BIAS, DEPTH_BIAS_MAX_SPAN, DEPTH_BIAS_PIXELS,
@@ -365,7 +365,7 @@ def view_draws(space):
     return bool(space.overlay.show_overlays)
 
 
-def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, colors, view_key=None):
+def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, colors, view_key=None, smooth=False):
     """The selected wire of many objects: objects sharing a batch drawn in one instanced call, their matrices and depth
     offsets in uniform buffers (thousands of objects took thousands of draw calls, uniform uploads and matrix products
     a redraw). Each object gets the same single-precision matrix and offset as one by one (``projected_matrices``,
@@ -382,6 +382,8 @@ def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, col
         shared = {}
         for k in [k for k, e in enumerate(entries) if e is None]:
             entries[k] = _entry(objs[k], depsgraph, uids[k], shared)
+    if smooth:
+        view_key = (view_key, True)
     last = _last_many.get(view_key)
     # the same objects with the same batches as this view's last instanced redraw (an orbit, a playback frame): the
     # same bound boxes and drawing order
@@ -396,10 +398,11 @@ def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, col
         order = order[batch_ids[order] != 0]
         run_of, batch_of = runs[order], batch_ids[order]
         starts = np.flatnonzero(np.concatenate(([True], (run_of[1:] != run_of[:-1])
-                                                | (batch_of[1:] != batch_of[:-1]))))
+                                                | (batch_of[1:] != batch_of[:-1])))[:len(order)])
+
         last = {"uids": uids, "leads": leads, "entries": entries, "boxes": boxes, "order": order,
                 "plan": _plan(entries, leads, order, run_of.tolist(), starts.tolist(),
-                              np.append(starts[1:], len(order)).tolist())}
+                              np.append(starts[1:], len(order)).tolist(), smooth)}
         if len(_last_many) >= 8:
             _last_many.clear()
         _last_many[view_key] = last
@@ -433,12 +436,21 @@ def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, col
     last.update(key=key, ok=ok, worlds=worlds, matrices=matrices, biases=biases)
     for k in np.flatnonzero(~ok).tolist():     # unreadable here: as one by one (which raises the same way)
         matrices[k] = np.array(projection @ objs[k].matrix_world, np.float32)
-    columns = matrices.transpose(0, 2, 1)[order].reshape(m, 16)       # the shader's mat4: columns
-    offsets = biases[order].astype(np.float32)                         # as ``uniform_float``: double to float
+    offsets = biases[order].astype(np.float32)
+    selected_matrices = matrices.transpose(0, 2, 1)[order]
+    if smooth:
+        # Match the built-in path: bias the matrix before projecting the endpoints.
+        selected_matrices[:, :, 2] -= offsets[:, None] * selected_matrices[:, :, 3]
+    columns = selected_matrices.reshape(m, 16)                     # the shader's mat4: columns
     data = np.zeros(INSTANCES * 17, np.float32)
     filled, bound, color = -1, None, {}
-    merged_sh = _shaders()[1]
+    merged_sh = _shaders(smooth)[1]
     for _run, chunk, lead, batch, first, count in last["plan"]:
+        if first == SMOOTH_FALLBACK:
+            draw_smooth(projection, (objs[row] for row in batch), (leads[row] for row in batch),
+                        (entries[row] for row in batch), biases[batch], _smooth_colors())
+            bound = None
+            continue
         shader = sh if first >= 0 else merged_sh
         want = colors[0] if lead else colors[1]
         if color.get(id(shader)) is not want:
@@ -458,6 +470,10 @@ def _draw_many(sh, objs, leads, uids, depsgraph, projection, viewport, xray, col
             batch.draw_instanced(shader, instance_start=first, instance_count=count)
         else:
             batch.draw(shader)
+
+
+def _smooth_colors():
+    return (*srgb(LEAD), 1.0), (*srgb(OTHER), 1.0)
 
 
 def _draw():
@@ -501,28 +517,44 @@ def _draw():
                     sh.uniform_float("mvp", pm @ ob.matrix_world)
                     batch.draw(sh)
         region = context.region
-        many = _sh_many() if len(objs) >= INSTANCE_FROM else None
+        smooth = bool(objs) and antialiasing(context)
+        many = _sh_many(smooth) if len(objs) >= INSTANCE_FROM else None
         if many is not None:
-            many.bind()
-            _draw_many(many, objs, leads, uids, depsgraph, pm, (region.width, region.height), xray, (lead, other),
-                       region.as_pointer())
+            blend = gpu.state.blend_get() if smooth else None
+            try:
+                if smooth:
+                    gpu.state.blend_set('ALPHA')
+                    size = gpu.state.viewport_get()[2:]
+                    for shader in _shaders(True):
+                        if shader is not None:
+                            shader.uniform_float("viewportSize", size)
+                many.bind()
+                _draw_many(many, objs, leads, uids, depsgraph, pm, (region.width, region.height), xray, (lead, other),
+                           region.as_pointer(), smooth=smooth)
+            finally:
+                if smooth:
+                    gpu.state.blend_set(blend)
             sh.bind()
         elif objs:
             entries = [_entry(ob, depsgraph, uid) for ob, uid in zip(objs, uids)]
             biases = [DEPTH_BIAS] * len(objs) if xray else depth_biases(
                 objs, depsgraph, pm, (region.width, region.height),
                 boxes=[e[2] if len(e) > 2 else _bounds(ob, depsgraph) for ob, e in zip(objs, entries)], uids=uids)
-            uniform, color = sh.uniform_float, None
-            for ob, is_lead, entry, bias in zip(objs, leads, entries, biases):
-                batch = entry[0]
-                if batch is None:
-                    continue
-                uniform("bias", bias)
-                uniform("mvp", pm @ ob.matrix_world)
-                if color is not (lead if is_lead else other):      # the same colour as the last object: still set
-                    color = lead if is_lead else other
-                    uniform("color", color)
-                batch.draw(sh)
+            if smooth:
+                draw_smooth(pm, objs, leads, entries, biases, _smooth_colors())
+                sh.bind()
+            else:
+                uniform, color = sh.uniform_float, None
+                for ob, is_lead, entry, bias in zip(objs, leads, entries, biases):
+                    batch = entry[0]
+                    if batch is None:
+                        continue
+                    uniform("bias", bias)
+                    uniform("mvp", pm @ ob.matrix_world)
+                    if color is not (lead if is_lead else other):      # the same colour as the last object: still set
+                        color = lead if is_lead else other
+                        uniform("color", color)
+                    batch.draw(sh)
         sh.uniform_float("bias", DEPTH_BIAS)  # preserve 0.7 Make Live pass behavior
         sh.uniform_float('color', _linear(live.COLOR))
         for ob in live_obs:
@@ -771,5 +803,6 @@ def unregister():
     _rows_of.clear()
     _shader.clear()
     _many.clear()
+    _many_smooth.clear()
     _ubos.clear()
     _times.clear()

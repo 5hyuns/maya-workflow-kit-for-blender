@@ -272,7 +272,7 @@ TOOLBAR = (
      ("shadows", "prop", ("shading", "show_shadows"), "Shadows")),
     (("ssao", "prop", ("shading", "show_cavity"), "Screen Space Ambient Occlusion (Blender: cavity)"),
      ("motion_blur", "grey", None, "Motion Blur"),
-     ("aa", "grey", None, "Multisample Anti-aliasing"),
+     ("aa", "set", "SELECTION_WIRE_AA", "Anti-aliasing"),
      ("dof", "prop", ("shading", "use_dof"), "Depth of Field")),
     (("isolate", "set", "ISOLATE", "Isolate Select"),
      ("xray", "prop", ("shading", "show_xray"), "X-Ray"),
