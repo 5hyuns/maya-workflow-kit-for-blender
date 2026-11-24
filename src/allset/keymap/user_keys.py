@@ -13,7 +13,8 @@ each edit was made on, found again by operator, properties and key. Two kinds of
 So when the Maya keys go out, the user's edits of them (changed, removed, and keys the user added for kit commands)
 are written into the add-on preferences (``user_keys``) and taken out of the user keymap; when the Maya keys come
 back, they are given again on the user keymap items, the way Preferences > Keymap changes an item. The edits of
-Blender's items are kept from Maya keys on until off and given back if they were dropped. A key is only given back
+Blender's items are kept and taken out of the user keymap from Maya keys on until off (else they land on the equal
+Maya keys, #544), then given back. A key is only given back
 while the item is as the kit / Blender made it, so an edit Blender kept itself always wins. Nothing else changes:
 the record holds only what the user changed, and it is empty (unset) when there is nothing to keep.
 
@@ -388,6 +389,33 @@ def capture_blender(kcs, names):
     for e in entries:
         e["keyconfig"] = kc.name
     return entries
+
+
+def take_out_blender(kcs, entries):
+    """The user keymap without the entries' edits of Blender's items, before the Maya keys go on (#544): Blender
+    applies a keymap edit to the first item equal to the edited one, and the Maya keys come in front of Blender's
+    items, so an edit made in Blender mode (a key switched off, changed or removed) would land on the Maya key of the
+    same event: the mouse wheel switched off in Blender mode stopped zooming in Maya mode too. Each keymap goes back
+    to its items and the user's other edits of it are given again (other add-ons' items, keys the user added); the
+    entries come back with ``put_back_blender`` when the Maya keys go out."""
+    for name, space, region in _group(entries):
+        kcs.update()
+        ukm = _find(kcs.user.keymaps, name, space, region)
+        if ukm is None or not ukm.is_user_modified:
+            continue
+        akm = _find(kcs.addon.keymaps, name, space, region)
+        addons = _edits(akm, ukm) if akm is not None else []
+        added = [state(k) for k in ukm.keymap_items if k.is_user_defined]
+        ukm.restore_to_default()
+        kcs.update()
+        ukm = _find(kcs.user.keymaps, name, space, region)
+        if ukm is None:
+            continue
+        if akm is not None and addons:
+            _give(akm, ukm, addons)
+        for st in added:
+            write(ukm.keymap_items.new(st["idname"], st["type"], st["value"]), st)
+    kcs.update()
 
 
 def put_back_blender(kcs, entries):

@@ -397,6 +397,9 @@ def _keep_blender_edits(data):
         if entries:
             record["blender"] = entries
             user_keys.save(record)
+            # out of the user keymap while the Maya keys are on (else they land on the equal Maya keys, #544);
+            # given back when the Maya keys go out (_give_blender_edits)
+            user_keys.take_out_blender(bpy.context.window_manager.keyconfigs, entries)
     except Exception as ex:          # never stop the Maya keys for this
         _user_keys_failed(ex)
 
