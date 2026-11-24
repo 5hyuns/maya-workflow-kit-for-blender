@@ -49,9 +49,9 @@ from bpy.app.handlers import persistent
 from ..operators.group import selected_objects as _selection_roots
 
 from .selection_wire_gpu import (INSTANCES, _PLAIN, _POSITION, _many, _merged, _plan, _sh, _sh_many, _shader,
-                                 _shaders, _ubo, _ubos, projected_matrices)
+                                 _shaders, _ubo, _ubos, draw_smooth, projected_matrices)
 from .selection_wire_edges import DEFORM_ONLY, _edge_indices, _edges, _positions, edges_of, keeps_edges, lattice_edges
-from .selection_wire_show import HILITE_OFF, _area_index, _off_map, _view, highlighting, set_highlighting
+from .selection_wire_show import HILITE_OFF, _area_index, _off_map, _view, antialiasing, highlighting, set_highlighting
 from .selection_wire_rows import (FILE_READ_FROM, _ENUMS, _NO_MATRIX, _enum_values, _file_index, _file_rows, _rows_of,
                                   world_matrices)
 from .selection_wire_depth import (ARRAY_FROM, DEPTH_BIAS, DEPTH_BIAS_MAX_SPAN, DEPTH_BIAS_PIXELS,
@@ -501,7 +501,8 @@ def _draw():
                     sh.uniform_float("mvp", pm @ ob.matrix_world)
                     batch.draw(sh)
         region = context.region
-        many = _sh_many() if len(objs) >= INSTANCE_FROM else None
+        smooth = bool(objs) and antialiasing(context)
+        many = _sh_many() if len(objs) >= INSTANCE_FROM and not smooth else None
         if many is not None:
             many.bind()
             _draw_many(many, objs, leads, uids, depsgraph, pm, (region.width, region.height), xray, (lead, other),
@@ -512,17 +513,21 @@ def _draw():
             biases = [DEPTH_BIAS] * len(objs) if xray else depth_biases(
                 objs, depsgraph, pm, (region.width, region.height),
                 boxes=[e[2] if len(e) > 2 else _bounds(ob, depsgraph) for ob, e in zip(objs, entries)], uids=uids)
-            uniform, color = sh.uniform_float, None
-            for ob, is_lead, entry, bias in zip(objs, leads, entries, biases):
-                batch = entry[0]
-                if batch is None:
-                    continue
-                uniform("bias", bias)
-                uniform("mvp", pm @ ob.matrix_world)
-                if color is not (lead if is_lead else other):      # the same colour as the last object: still set
-                    color = lead if is_lead else other
-                    uniform("color", color)
-                batch.draw(sh)
+            if smooth:
+                draw_smooth(pm, objs, leads, entries, biases, ((*srgb(LEAD), 1.0), (*srgb(OTHER), 1.0)))
+                sh.bind()
+            else:
+                uniform, color = sh.uniform_float, None
+                for ob, is_lead, entry, bias in zip(objs, leads, entries, biases):
+                    batch = entry[0]
+                    if batch is None:
+                        continue
+                    uniform("bias", bias)
+                    uniform("mvp", pm @ ob.matrix_world)
+                    if color is not (lead if is_lead else other):      # the same colour as the last object: still set
+                        color = lead if is_lead else other
+                        uniform("color", color)
+                    batch.draw(sh)
         sh.uniform_float("bias", DEPTH_BIAS)  # preserve 0.7 Make Live pass behavior
         sh.uniform_float('color', _linear(live.COLOR))
         for ob in live_obs:

@@ -82,6 +82,34 @@ def _sh_many():
     return _shaders()[0]
 
 
+def draw_smooth(projection, objects, leads, entries, biases, colors):
+    """Draw the cached edge batches with Blender's antialiased polyline shader."""
+    import gpu
+
+    shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+    blend = gpu.state.blend_get()
+    try:
+        gpu.state.blend_set('ALPHA')
+        with gpu.matrix.push_pop(), gpu.matrix.push_pop_projection():
+            gpu.matrix.load_identity()
+            shader.bind()
+            shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
+            shader.uniform_float("lineWidth", 1.0)
+            shader.uniform_bool("lineSmooth", True)
+            for ob, is_lead, entry, bias in zip(objects, leads, entries, biases):
+                batch = entry[0]
+                if batch is None:
+                    continue
+                mvp = projection @ ob.matrix_world
+                mvp[2] -= bias * mvp[3]
+                gpu.matrix.load_projection_matrix(mvp)
+                shader.uniform_float("color", colors[0 if is_lead else 1])
+                batch.draw(shader)
+    finally:
+        shader.uniform_bool("lineSmooth", False)
+        gpu.state.blend_set(blend)
+
+
 def _ubo(k):
     """The ``k``-th uniform buffer of the instanced draw (made once, filled again each redraw)."""
     while len(_ubos) <= k:

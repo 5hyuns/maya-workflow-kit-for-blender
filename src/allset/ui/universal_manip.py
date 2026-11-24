@@ -61,12 +61,16 @@ class ALLSET_GT_um_handle(Gizmo):
     def build(self, kind):
         self.handle_kind = kind
         draw, pick = shapes(kind)
-        self.draw_shapes = [self.new_custom_shape(t, v) for t, v in draw]
+        self.draw_shapes = [(t, self.new_custom_shape(t, v)) for t, v in draw]
         self.pick_shape = self.new_custom_shape(*pick)
 
     def draw(self, context):
-        for sh in getattr(self, "draw_shapes", ()):
-            self.draw_custom_shape(sh)
+        smooth = mp.antialiasing(context)
+        for kind, shape in getattr(self, "draw_shapes", ()):
+            if smooth and kind == 'LINES':
+                mp.draw_handle_line(self, shape[0])
+            else:
+                self.draw_custom_shape(shape)
 
     def draw_select(self, context, select_id):
         sh = getattr(self, "pick_shape", None)
@@ -92,19 +96,13 @@ class ALLSET_GT_um_box(Gizmo):
     __slots__ = ("lines",)
 
     def draw(self, context):
-        import gpu
         from gpu_extras.batch import batch_for_shader
         pts = getattr(self, "lines", None)
         if not pts:
             return
-        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
-        gpu.state.blend_set('ALPHA')
-        shader.bind()
-        shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
-        shader.uniform_float("lineWidth", 1.0 * context.preferences.system.ui_scale)
-        shader.uniform_float("color", (*self.color[:3], self.alpha))
-        batch_for_shader(shader, 'LINES', {"pos": pts}).draw(shader)
-        gpu.state.blend_set('NONE')
+        width = context.preferences.system.ui_scale
+        with mp.handle_polyline(width, (*self.color[:3], self.alpha), mp.antialiasing(context)) as shader:
+            batch_for_shader(shader, 'LINES', {"pos": pts}).draw(shader)
 
 
 # The box length beside an edge: drawn as text in region pixels, picked by its rectangle.

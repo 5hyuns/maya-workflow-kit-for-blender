@@ -256,15 +256,19 @@ class ALLSET_GT_extrude_handle(bpy.types.Gizmo):
     def build(self, handle):
         self.handle = handle
         draw, pick = handle_shapes(HANDLES[handle][0])
-        self.draw_shapes = [(self.new_custom_shape(t, v), fill) for t, v, fill in draw]
+        self.draw_shapes = [(t, self.new_custom_shape(t, v), fill) for t, v, fill in draw]
         self.pick_shape = self.new_custom_shape(*pick)
 
     def draw(self, context):
         colour = self.color_highlight if self.is_highlight else self.color
         alpha = self.alpha_highlight if self.is_highlight else self.alpha
+        smooth = manipulator.antialiasing(context)
         gpu.state.blend_set('ALPHA')
         gpu.state.line_width_set(self.line_width)
-        for (batch, shader), fill in getattr(self, "draw_shapes", ()):
+        for kind, (batch, shader), fill in getattr(self, "draw_shapes", ()):
+            if smooth and kind == 'LINES':
+                manipulator.draw_handle_line(self, batch, (*colour, alpha))
+                continue
             shader.bind()
             shader.uniform_float("color", (*colour, alpha * PLANE_FILL if fill else alpha))
             with gpu.matrix.push_pop():
@@ -326,12 +330,9 @@ class ALLSET_GT_tc_space(bpy.types.Gizmo):
                 sh = gpu.shader.from_builtin('UNIFORM_COLOR')
                 sh.uniform_float("color", (*colour[:3], 0.35))
                 batch_for_shader(sh, 'TRI_FAN', {"pos": fan}).draw(sh)
-            sh = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
-            sh.bind()
-            sh.uniform_float("viewportSize", (region.width, region.height))
-            sh.uniform_float("lineWidth", 1.5 * (_scale() or 1.0))
-            sh.uniform_float("color", (*colour[:3], 1.0))
-            batch_for_shader(sh, 'LINES', {"pos": globe_lines(x, y, r)}).draw(sh)
+            width = 1.5 * (_scale() or 1.0)
+            with manipulator.handle_polyline(width, (*colour[:3], 1.0), manipulator.antialiasing(context)) as sh:
+                batch_for_shader(sh, 'LINES', {"pos": globe_lines(x, y, r)}).draw(sh)
             gpu.state.blend_set('NONE')
 
     def test_select(self, context, location):
