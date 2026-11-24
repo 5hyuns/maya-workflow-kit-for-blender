@@ -110,6 +110,21 @@ def _newell(pts):
     return n
 
 
+def _index_order_normal(verts):
+    """Maya's circle normal for an edge loop: the vertices in index order (not loop order, no wrap-around); each
+    neighbouring pair adds cross(a - c, b - c) about the centroid ``c``, except a term pointing 90 degrees or more
+    away from the sum so far."""
+    from mathutils import Vector
+    vs = sorted(verts, key=lambda v: v.index)
+    c = sum((v.co for v in vs), Vector()) / len(vs)
+    n = Vector()
+    for a, b in zip(vs, vs[1:]):
+        t = (a.co - c).cross(b.co - c)
+        if n.length == 0.0 or n.dot(t) > 0.0:
+            n += t
+    return n
+
+
 def _face_regions(faces):
     """The selected faces in groups joined by edges."""
     left, out = set(faces), []
@@ -133,7 +148,8 @@ def circularize_region(faces, loop, radial_offset=0.0, twist=0.0, even=True, ref
     of all the faces' vertices, its plane's normal the summed area normal of every face touching them (oriented like
     ``ref``), its radius the mean distance of the border vertices in that plane (+ ``radial_offset``). Spread evenly,
     the loop's lowest-index vertex keeps its angle; ``twist`` (radians) turns the loop right-handed about the normal.
-    The inner vertices go onto the plane and settle evenly between their neighbours. Returns the normal or None."""
+    The inner vertices go onto the plane, scale about the centre with the radius and relax twice against the border
+    before its even spacing (``_relax_inner``). Returns the normal or None."""
     from mathutils import Vector
     verts = {v for f in faces for v in f.verts}
     c = sum((v.co for v in verts), Vector()) / len(verts)
@@ -148,40 +164,57 @@ def circularize_region(faces, loop, radial_offset=0.0, twist=0.0, even=True, ref
     loop = loop[k:] + loop[:k]
     n = len(loop)
     flat = [v.co - normal * (v.co - c).dot(normal) for v in loop]
-    radius = sum((p - c).length for p in flat) / n + radial_offset
+    base = sum((p - c).length for p in flat) / n
+    radius = base + radial_offset
     u = flat[0] - c
     if u.length < 1e-12:
         return None
     u.normalize()
     w = normal.cross(u)
     ang = [math.atan2((p - c).dot(w), (p - c).dot(u)) for p in flat]
+    own = list(ang)
     if even:
         turn = sum(math.remainder(ang[(i + 1) % n] - ang[i], math.tau) for i in range(n))
         step = (1.0 if turn >= 0 else -1.0) * math.tau / n
         ang = [ang[0] + step * i for i in range(n)]
     on_loop = set(loop)
+    # The inner vertices settle against the border as it is before the even spacing: each border vertex at the
+    # radius in its own direction (turned by the twist only when not spread evenly).
+    for v, t in zip(loop, own):
+        t += 0.0 if even else twist
+        v.co = c + (u * math.cos(t) + w * math.sin(t)) * radius
+    inner = [v for v in verts if v not in on_loop]
+    k = radius / base if base > 1e-12 else 1.0
+    for v in inner:                # onto the plane, scaled about the centre with the radius
+        v.co = c + (v.co - normal * (v.co - c).dot(normal) - c) * k
+    _relax_inner(inner)
     for v, t in zip(loop, ang):
         t += twist
         v.co = c + (u * math.cos(t) + w * math.sin(t)) * radius
-    inner = [v for v in verts if v not in on_loop]
-    for v in inner:
-        v.co = v.co - normal * (v.co - c).dot(normal)
-    free = [v for v in inner if all(g in faces for g in v.link_faces)]
-    for _sweep in range(500):      # settle the inner vertices at the mean of their neighbours
-        moved = 0.0
-        for v in free:
-            co = sum((e.other_vert(v).co for e in v.link_edges), Vector()) / len(v.link_edges)
-            moved = max(moved, (co - v.co).length)
-            v.co = co
-        if moved < 1e-9:
-            break
     return normal
+
+
+def _relax_inner(inner, passes=2):
+    """Maya's relax of the inner vertices of a circularized block: two passes, each moving every inner vertex to
+    the mean of its edge neighbours and then adding the mean of the neighbours' own moves away from where the
+    pass started (neighbours on the border or outside the block count as not moving)."""
+    from mathutils import Vector
+    if not inner:
+        return
+    start = {v: v.co.copy() for v in inner}
+    for _pass in range(passes):
+        mean = {v: sum((e.other_vert(v).co for e in v.link_edges), Vector()) / len(v.link_edges) for v in inner}
+        move = {v: mean[v] - start[v] for v in inner}
+        for v in inner:
+            near = [move[o] for o in (e.other_vert(v) for e in v.link_edges) if o in move]
+            v.co = mean[v] + sum(near, Vector()) / len(v.link_edges)
 
 
 def circularize_loops(bm, mode, normal_offset=0.0, radial_offset=0.0, twist=0.0, even=True, divisions=0):
     """The loops Maya circularizes for the current selection: faces -> their border loops, edges / vertices ->
-    closed loops of selected edges ('EDGE' / 'VERT'; on both the lowest-index vertex keeps its angle, and a vertex
-    loop's plane is the summed area normal of every face touching it); ``mode`` 'ALL' = every border loop of the
+    closed loops of selected edges ('EDGE' / 'VERT'; on both the lowest-index vertex keeps its angle; a vertex
+    loop's plane is the summed area normal of every face touching it, an edge loop's comes from its vertices in
+    index order, ``_index_order_normal``); ``mode`` 'ALL' = every border loop of the
     mesh. ``divisions`` first splits every
     loop edge (Maya Add Divisions: a 2-division octagon becomes 24 points, radius = their mean distance);
     ``normal_offset`` then moves the loop and the selected faces' inner vertices along the normal. A block of faces
@@ -242,6 +275,8 @@ def circularize_loops(bm, mode, normal_offset=0.0, radial_offset=0.0, twist=0.0,
         plane = None
         if mode == 'VERT':          # Maya on a vertex loop: the summed area normal of every face touching it
             plane = sum((_newell([v.co for v in g.verts]) for g in {g for v in loop for g in v.link_faces}), Vector())
+        elif mode == 'EDGE':
+            plane = _index_order_normal(loop)
         normal = circularize_loop(loop, radial_offset, twist, even, ref, plane, keep_lowest=mode in ('EDGE', 'VERT'))
         if normal is not None and normal_offset:
             inner = {v for f in faces for v in f.verts} if faces else set()

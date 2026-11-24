@@ -3,7 +3,9 @@
 Like Maya: the circle's centre is the loop's mean point and its radius the mean distance in the circle's plane;
 spread evenly, the loop's lowest-index vertex keeps its angle. On a vertex loop the plane's normal is the summed
 area normal of every face touching the loop, so a ring on a flat plane stays flat even when one ring vertex was
-lifted; on an edge loop it is the loop's own normal."""
+lifted. On an edge loop the vertices are taken in index order (not loop order): each neighbouring pair adds the
+cross product of their offsets from the centre, skipping a term that points 90 degrees or more away from the sum
+so far. On a block of faces the inner vertices relax against the border before it is spread evenly."""
 
 import math
 from importlib import import_module
@@ -81,9 +83,49 @@ def test_edge_loop_starts_at_the_lowest_index():
     before = [v.co.copy() for v in ring]
     _select(bm, ring)
     assert poly.circularize_loops(bm, 'EDGE') == 1
+    order = sorted(range(8), key=lambda i: ring[i].index)
+    c = sum(before, Vector()) / 8
     n = Vector()
-    for i in range(8):
-        a, b = before[i], before[(i + 1) % 8]
-        n += Vector(((a.y - b.y) * (a.z + b.z), (a.z - b.z) * (a.x + b.x), (a.x - b.x) * (a.y + b.y)))
+    for i, j in zip(order, order[1:]):
+        t = (before[i] - c).cross(before[j] - c)
+        if n.length == 0 or n.dot(t) > 0:
+            n += t
     _check(ring, before, n.normalized())
+    bm.free()
+
+
+def test_edge_loop_plane_with_one_vertex_lifted():
+    """A flat ring with only its second-lowest vertex lifted tilts the circle towards it, not symmetrically."""
+    bm, ring = _plane()
+    ring[1].co.z += 0.3
+    _select(bm, ring)
+    assert poly.circularize_loops(bm, 'EDGE') == 1
+    pts = [v.co for v in ring]
+    c = sum(pts, Vector()) / 8
+    n = (pts[0] - c).cross(pts[2] - c).normalized()
+    if n.z < 0:
+        n.negate()
+    # pairs in index order 16, 17, 18, 23, 25, 30, 31, 32, no wrap-around: the tilt is not symmetric
+    want = Vector((0.0122563, 0.1961014, 0.980507))
+    assert (n - want).length < 1e-6, n
+    bm.free()
+
+
+def test_face_block_inner_vertices_relax_twice():
+    """The middle 4 x 4 faces of a flat 6 x 6 grid: the border goes onto a circle of radius 2.3251408 and the
+    nine inner vertices end up 1.1333497 (edge middles) and 1.5280969 (corners) from the centre."""
+    bm, _ring = _plane()
+    for f in bm.faces:
+        m = f.calc_center_median()
+        f.select = abs(m.x) < 2 and abs(m.y) < 2
+    assert poly.circularize_loops(bm, 'FACE') == 1
+    bm.verts.ensure_lookup_table()
+    vs = bm.verts
+    for i in (16, 18, 30, 32):
+        assert abs(vs[i].co.length - 1.5280969) < 1e-6, (i, vs[i].co.length)
+    for i in (17, 23, 25, 31):
+        assert abs(vs[i].co.length - 1.1333497) < 1e-6, (i, vs[i].co.length)
+    assert vs[24].co.length < 1e-9
+    for i in (8, 9, 10, 11, 12, 15, 19, 22, 26, 29, 33, 36, 37, 38, 39, 40):
+        assert abs(vs[i].co.length - 2.3251408) < 1e-6, (i, vs[i].co.length)
     bm.free()
