@@ -7495,6 +7495,8 @@ STRINGS = {
     'Horizontal': '水平',
     'Layout UVs Options': '排布 UV 选项',
     'Map size (Pixels), Room space (Pixels)': '贴图大小 (像素)、留白 (像素)',
+    'Map size (Pixels)': '贴图大小 (像素)',
+    'Room space (Pixels)': '留白 (像素)',
     'Method: Legacy': '方法：旧版',
     'Minimum / Maximum Shell Rotation': '壳旋转最小值 / 最大值',
     'Multiple Objects': '多个对象',

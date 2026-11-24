@@ -7494,6 +7494,8 @@ STRINGS = {
     'Horizontal': '水平',
     'Layout UVs Options': 'UV をレイアウトオプション',
     'Map size (Pixels), Room space (Pixels)': 'マップサイズ (ピクセル)、余白 (ピクセル)',
+    'Map size (Pixels)': 'マップサイズ (ピクセル)',
+    'Room space (Pixels)': '余白 (ピクセル)',
     'Method: Legacy': '方法: レガシー',
     'Minimum / Maximum Shell Rotation': 'シェル回転の最小 / 最大',
     'Multiple Objects': '複数のオブジェクト',

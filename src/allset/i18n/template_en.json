@@ -6896,6 +6896,7 @@
    "Down": "Down",
    "Layout UVs": "Layout UVs",
    "Pin UV border": "Pin UV border",
+   "Prevent self border intersections": "Prevent self border intersections",
    "Prevent triangle flips": "Prevent triangle flips",
    "Up": "Up"
   },
@@ -11553,6 +11554,7 @@
    "Layout UVs Options": "Layout UVs Options",
    "Left half": "Left half",
    "Legacy (relax)": "Legacy (relax)",
+   "Map size (Pixels)": "Map size (Pixels)",
    "Map size (Pixels), Room space (Pixels)": "Map size (Pixels), Room space (Pixels)",
    "Maximum iterations": "Maximum iterations",
    "Method": "Method",
@@ -11582,6 +11584,7 @@
    "Randomize": "Randomize",
    "Randomize Shells Options": "Randomize Shells Options",
    "Right half": "Right half",
+   "Room space (Pixels)": "Room space (Pixels)",
    "Rotate": "Rotate",
    "Rotate Shells": "Rotate Shells",
    "Rotation Steps": "Rotation Steps",

@@ -27,6 +27,9 @@ from . import uv_toolkit_ops as tk
 from .uv_layout import DISTRIBUTIONS, MAP_SIZES, MULTI, PRE_ROTATE, PRE_SCALE, SCALE_MODES
 
 
+UNFOLD_MAP_SIZES = MAP_SIZES[:-1]        # Unfold's Map size has no Custom entry
+
+
 def _run_unfold(context, v):
     return bpy.ops.allset.uv_unfold('EXEC_DEFAULT', options=json.dumps(v))
 
@@ -95,10 +98,14 @@ WINDOWS = [
     Window("uv_unfold", "Unfold UVs Options", "Unfold", None, [
         F("iterations", "Iterations:", "int", 1, lo=0, hi=10),
         F("layout_uvs", "", "bool", False, text="Layout UVs"),
+        # the unfold keeps a shell's border from crossing itself either way; the map size and room space change no
+        # result, like Maya's
+        F("prevent_border", "", "bool", True, text="Prevent self border intersections"),
         F("prevent_flips", "", "bool", True, text="Prevent triangle flips"),
+        F("map_size", "Map size (Pixels):", "enum", "1024", items=UNFOLD_MAP_SIZES),
+        F("room_space", "Room space (Pixels):", "int", 0, lo=0, hi=10),
     ], _run_unfold, paths=("UV Editor/Modify/Unfold",),
-        missing=("Method: Legacy", "Fix non-manifold geometry", "Prevent self border intersections",
-                 "Map size (Pixels), Room space (Pixels)")),
+        missing=("Method: Legacy", "Fix non-manifold geometry")),
     Window("uv_optimize", "Optimize UVs Options", "Optimize", None, [
         F("method", "Method:", "enum", "Unfold3D", items=("Unfold3D", uv_optimize.LEGACY)),
         F("iterations", "Iterations:", "int", 1, lo=0, hi=10),
