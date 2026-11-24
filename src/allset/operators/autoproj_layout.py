@@ -10,7 +10,7 @@ takes part in the packing, so the input is one bbox per shell.
 
 Which plane each face takes and how faces form shells (``assign_planes``) is
 Maya's too, for every Planes choice (``PLANE_SETS``; tests/test_step257_uv_auto.py, tests/test_issue488_auto_planes.py).
-With 8 planes Maya's own slightly-off frames (``FRAMES8``) decide faces that lie exactly between two planes.
+The planes are Maya's own squares (``QUADS``), float32: they decide faces that lie exactly between two planes.
 
 Input bbox = the shell's extent in the projection plane in **Maya units** (object space; Blender lengths divided
 by ``units.maya_unit()``). The packer is not scale invariant: the size comparator has an absolute 1e-6 tolerance
@@ -201,98 +201,145 @@ def layout(boxes, spacing=0.2):
 
 # --- Plane assignment and shells  -------------------
 
-# The six planes in Maya's order with their projection frame (normal, U, V), Maya axes (Y up):
-# (corners A, B, D: U = B - A, V = D - A, normal = U x V). Every frame is right
-# handed: U x V = the outward normal.
-PLANES6 = (((-1, 0, 0), (0, 0, 1), (0, 1, 0)),     # X-
-           ((1, 0, 0), (0, 0, -1), (0, 1, 0)),     # X+
-           ((0, -1, 0), (1, 0, 0), (0, 0, 1)),     # Y-
-           ((0, 1, 0), (1, 0, 0), (0, 0, -1)),     # Y+
-           ((0, 0, -1), (1, 0, 0), (0, -1, 0)),    # Z-
-           ((0, 0, 1), (1, 0, 0), (0, 1, 0)))      # Z+
-THRESHOLD6 = 0.5              # optimize ("Fewer pieces") candidate planes have dot > 0.5
-CROSS_EPS = 1e-06             # |side| below this counts as touching, not crossing
+# Every Planes choice in Maya's plane order (Maya axes, Y up): each plane is a square of side 0.5 given by three of
+# its corners A, B, D (float32 values). The plane's frame is U = B - A, V = D - A and it faces U x V; UVs are
+# u = U'.p + 0.25 + start - U'.A with U' = U / (2 |U|^2), v likewise. ``OFFSETS`` = each plane's start (u, v)
+# when the shells are laid out afterwards (Layout on); without layout every plane starts at 0. All frame arithmetic
+# is float32 in Maya's operand order, so faces that lie exactly between two planes and folds right at a shell's
+# border come out the same.
+QUADS = {
+    3: (
+        ((-0.25, 1, 0.25), (0.25, 1, 0.25), (-0.25, 1, -0.25)),
+        ((1, -0.25, 0.25), (1, -0.25, -0.25), (1, 0.25, 0.25)),
+        ((-0.25, -0.25, 1), (0.25, -0.25, 1), (-0.25, 0.25, 1)),
+    ),
+    4: (
+        ((-0.493734, -0.672159, -0.655308), (-0.160401, -0.960834, -0.419606), (-0.782409, -0.672159, -0.24706)),
+        ((-0.782409, 0.672159, -0.24706), (-0.449076, 0.960834, -0.011357), (-0.493734, 0.672159, -0.655308)),
+        ((1.026142, -0.25, -0.097631), (0.859476, -0.25, -0.569035), (1.026142, 0.25, -0.097631)),
+        ((-0.25, -0.25, 1), (0.25, -0.25, 1), (-0.25, 0.25, 1)),
+    ),
+    5: (
+        ((-0.25, 0.25, -1), (0.25, 0.25, -1), (-0.25, -0.25, -1)),
+        ((-0.579247, -0.820272, -0.341506), (-0.204247, -1.036778, -0.091506), (-0.795753, -0.695272, 0.091506)),
+        ((-0.795753, 0.695272, 0.091506), (-0.420753, 0.911778, 0.341506), (-0.579247, 0.820272, -0.341506)),
+        ((1, -0.25, 0.25), (1, -0.25, -0.25), (1, 0.25, 0.25)),
+        ((-0.25, -0.25, 1), (0.25, -0.25, 1), (-0.25, 0.25, 1)),
+    ),
+    6: (
+        ((-1, -0.25, -0.25), (-1, -0.25, 0.25), (-1, 0.25, -0.25)),
+        ((1, -0.25, 0.25), (1, -0.25, -0.25), (1, 0.25, 0.25)),
+        ((-0.25, -1, -0.25), (0.25, -1, -0.25), (-0.25, -1, 0.25)),
+        ((-0.25, 1, 0.25), (0.25, 1, 0.25), (-0.25, 1, -0.25)),
+        ((-0.25, 0.25, -1), (0.25, 0.25, -1), (-0.25, -0.25, -1)),
+        ((-0.25, -0.25, 1), (0.25, -0.25, 1), (-0.25, 0.25, 1)),
+    ),
+    8: (
+        ((-0.721688, -0.721688, 0.288675), (-0.32735, -0.82735, 0.57735), (-0.82735, -0.32735, 0.57735)),
+        ((0.721688, 0.721688, -0.288675), (0.82735, 0.32735, -0.57735), (0.32735, 0.82735, -0.57735)),
+        ((-0.433013, -0.433013, -0.866025), (-0.32735, -0.82735, -0.57735), (-0.82735, -0.32735, -0.57735)),
+        ((0.433013, 0.433013, 0.866025), (0.82735, 0.32735, 0.57735), (0.32735, 0.82735, 0.57735)),
+        ((-0.82735, 0.32735, -0.57735), (-0.721688, 0.721688, -0.288675), (-0.433013, 0.433013, -0.866025)),
+        ((0.32735, -0.82735, 0.57735), (0.721688, -0.721688, 0.288675), (0.433013, -0.433013, 0.866025)),
+        ((-0.82735, 0.32735, 0.57735), (-0.433013, 0.433013, 0.866025), (-0.721688, 0.721688, 0.288675)),
+        ((0.32735, -0.82735, -0.57735), (0.433013, -0.433013, -0.866025), (0.721688, -0.721688, -0.288675)),
+    ),
+    12: (
+        ((-0.25, -0.719218, -0.738394), (0.25, -0.719218, -0.738394), (-0.25, -0.982084, -0.313068)),
+        ((-0.25, 0.982084, -0.313068), (0.25, 0.982084, -0.313068), (-0.25, 0.719218, -0.738394)),
+        ((-0.25, 0.719218, 0.738394), (0.25, 0.719218, 0.738394), (-0.25, 0.982084, 0.313068)),
+        ((-0.25, -0.982084, 0.313068), (0.25, -0.982084, 0.313068), (-0.25, -0.719218, 0.738394)),
+        ((-0.313068, -0.25, -0.982084), (-0.738394, -0.25, -0.719218), (-0.313068, 0.25, -0.982084)),
+        ((-0.738394, -0.25, 0.719218), (-0.313068, -0.25, 0.982084), (-0.738394, 0.25, 0.719218)),
+        ((0.313068, -0.25, 0.982084), (0.738394, -0.25, 0.719218), (0.313068, 0.25, 0.982084)),
+        ((0.738394, -0.25, -0.719218), (0.313068, -0.25, -0.982084), (0.738394, 0.25, -0.719218)),
+        ((-0.807946, -0.594829, -0.344095), (-0.669749, -0.818436, 0.08123), (-1.031553, -0.233026, -0.08123)),
+        ((0.669749, -0.818436, 0.08123), (0.807946, -0.594829, -0.344095), (0.893356, -0.456633, 0.344095)),
+        ((0.893356, 0.456633, 0.344095), (1.031553, 0.233026, -0.08123), (0.669749, 0.818436, 0.08123)),
+        ((-1.031553, 0.233026, -0.08123), (-0.893356, 0.456633, 0.344095), (-0.807946, 0.594829, -0.344095)),
+    ),
+}
+OFFSETS = {
+    3: ((0, 1), (1, 0), (0, 0)),
+    4: ((0, -1), (0, 1), (1, 0), (0, 0)),
+    5: ((0, 2), (0, -1), (0, 1), (1, 0), (0, 0)),
+    6: ((-1, 0), (1, 0), (0, -1), (0, 1), (0, 2), (0, 0)),
+    8: ((0, 0), (1, 2), (0, -1), (1, 1), (0, 2), (1, 0), (0, 1), (1, -1)),
+    12: ((0, -2), (0, 2), (0, 1), (0, -1), (3, 1), (0, 0), (1, 0), (3, -1), (-1, -1), (2, -1), (2, 1), (-1, 1)),
+}
 
 
-def plane_frame(n):
-    """(normal, U, V) of a projection plane facing ``n`` (Maya axes): the X and Y axes turned by the shortest rotation
-    that takes +Z onto the normal, so U x V = the normal; the plane facing -Z has U = X and V = -Y.
-    Gives the ``PLANES6`` frames for the six axis planes."""
-    x, y, z = (float(c) for c in n)
-    length = math.sqrt(x * x + y * y + z * z)
-    x, y, z = x / length, y / length, z / length
-    s = math.hypot(x, y)               # sine of the turn; the axis is Z x n = (-y, x, 0) / s
-    if s < 1e-12:
-        return ((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)) if z > 0 else \
-            ((0.0, 0.0, -1.0), (1.0, 0.0, 0.0), (0.0, -1.0, 0.0))
-    kx, ky, c = -y / s, x / s, z
+def _f3(x, y, z):
+    """float32 x + y + z, added left to right."""
+    return F(F(F(x) + F(y)) + F(z))
 
-    def turn(vx, vy):                  # Rodrigues for v = (vx, vy, 0) about k = (kx, ky, 0)
-        kv = (kx * vx + ky * vy) * (1.0 - c)
-        cross_z = kx * vy - ky * vx
-        return (vx * c + kx * kv, vy * c + ky * kv, cross_z * s)
 
-    return (x, y, z), turn(1.0, 0.0), turn(0.0, 1.0)
+def _frame(a, b, d):
+    """(normal, U', V', A) of a plane from its corners, float32 like Maya: the normal is U x V times the float32
+    reciprocal of its length; U' = U / (2 |U|^2), V' likewise."""
+    a, b, d = (np.array(p, dtype=F) for p in (a, b, d))
+    u, v = (b - a).astype(F), (d - a).astype(F)
+    c = np.array([F(u[1] * v[2]) - F(u[2] * v[1]), F(u[2] * v[0]) - F(u[0] * v[2]),
+                  F(u[0] * v[1]) - F(u[1] * v[0])], dtype=F)
+    n = c * F(F(1) / F(np.sqrt(_f3(c[0] * c[0], c[1] * c[1], c[2] * c[2]))))
+
+    def scaled(w):
+        sq = _f3(w[0] * w[0], w[1] * w[1], w[2] * w[2])
+        sq = F(sq + sq)
+        return (w * F(F(1) / sq)).astype(F) if abs(sq) > 1e-05 else w
+    return (tuple(float(x) for x in n), tuple(float(x) for x in scaled(u)), tuple(float(x) for x in scaled(v)),
+            tuple(float(x) for x in a))
 
 
 class PlaneSet:
-    """One Planes choice of Automatic: the projection planes in Maya's order (frames in Maya axes), whether a plane
-    takes faces on both sides (3 planes = the three axes, both ways), the "Fewer pieces" candidate threshold, whether
-    a tie for the best plane ("Less distortion") keeps the later plane, and the pairs of opposite planes (the
-    mirrored seed groups: the six axis planes and the eight octahedron planes have them)."""
+    """One Planes choice of Automatic: its planes' frames (normal, U', V'; Maya axes) and corners A, the
+    "Fewer pieces" candidate threshold, whether a plane takes faces on both sides (3 planes = the three axes,
+    both ways) and the pairs of opposite planes (mirrored seed groups)."""
 
-    def __init__(self, normals, threshold, both_sides=False, tie_later=True, frames=None, pairs=()):
-        self.frames = tuple(frames or (plane_frame(n) for n in normals))
-        self.threshold = threshold
+    def __init__(self, count, threshold, both_sides=False, pairs=()):
+        made = [_frame(*q) for q in QUADS[count]]
+        self.frames = tuple(m[:3] for m in made)
+        self.corners = tuple(m[3] for m in made)
+        self.offsets = OFFSETS[count]
+        self.threshold = F(threshold)
         self.both_sides = both_sides
-        self.tie_later = tie_later
         self.pairs = pairs
 
-    def dots(self, normal):
-        x, y, z = (float(c) for c in normal)
-        out = [x * a + y * b + z * c for (a, b, c), _u, _v in self.frames]
+    def dots(self, normal, best_first=False):
+        """float32 dot of a face normal with every plane normal (y, x, z order; with ``best_first`` the last plane,
+        where the best-plane scan starts, adds x, y, z), absolute with ``both_sides``."""
+        x, y, z = (F(c) for c in normal)
+        out = [float(_f3(F(b) * y, F(a) * x, F(c) * z)) for a, b, c in (fr[0] for fr in self.frames)]
+        if best_first:
+            a, b, c = self.frames[-1][0]
+            out[-1] = float(_f3(F(a) * x, F(b) * y, F(c) * z))
         return [abs(d) for d in out] if self.both_sides else out
 
+    def uv_maps(self, layout=True):
+        """Per plane (U', u0, V', v0): u = U'.p + u0 in float32 (y, x, z order, then u0)."""
+        out = []
+        for (_n, u, v), a, (su, sv) in zip(self.frames, self.corners, self.offsets):
+            if not layout:
+                su = sv = 0
+            u0 = F(F(F(su) + F(0.25)) - _f3(F(a[1]) * F(u[1]), F(a[0]) * F(u[0]), F(a[2]) * F(u[2])))
+            v0 = F(F(F(sv) + F(0.25)) - _f3(F(a[0]) * F(v[0]), F(a[1]) * F(v[1]), F(a[2]) * F(v[2])))
+            out.append((u, float(u0), v, float(v0)))
+        return out
 
-def _frame8(u, v):
-    """An 8-plane frame from its U and V; the normal is U x V (unit length)."""
-    n = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
-    ln = math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2])
-    return (n[0] / ln, n[1] / ln, n[2] / ln), u, v
+
+def _pairs(count):
+    return tuple((i, i + 1) for i in range(0, count, 2))
 
 
-# Maya's eight frames are a little off the exact turn onto the octahedron directions (about 1e-6, two
-# variants of the same values). A face exactly between two planes (a cube side, a 45-degree cylinder side)
-# goes to the plane these frames favour, and the frames decide whether a folded face crosses the shell border,
-# so they are kept as Maya has them (float32).
-_A = (0.7886754274368286, 0.21132394671440125, 0.5773496031761169)
-_B = (0.7886753678321838, 0.21132636070251465, 0.5773508548736572)
-FRAMES8 = tuple(_frame8(u, v) for u, v in (
-    ((_A[0], -_A[1], _A[2]), (-_A[1], _A[0], _A[2])),      # (-1, -1, 1)
-    ((_A[1], -_A[0], -_A[2]), (-_A[0], _A[1], -_A[2])),    # (1, 1, -1)
-    ((_B[1], -_B[0], _B[2]), (-_B[0], _B[1], _B[2])),      # (-1, -1, -1)
-    ((_B[0], -_B[1], -_B[2]), (-_B[1], _B[0], -_B[2])),    # (1, 1, 1)
-    ((_A[0], _A[1], -_A[2]), (_B[1], _B[0], _B[2])),       # (1, -1, 1)
-    ((_A[1], _A[0], _A[2]), (_B[0], _B[1], -_B[2])),       # (-1, 1, -1)
-    ((_B[0], _B[1], _B[2]), (_A[1], _A[0], -_A[2])),       # (-1, 1, 1)
-    ((_B[1], _B[0], -_B[2]), (_A[0], _A[1], _A[2]))))      # (1, -1, -1)
-
-_R3 = math.sqrt(3.0) / 2.0
-_T1, _T2 = 2.0 * math.sqrt(2.0) / 3.0, math.sqrt(2.0 / 3.0)
-_P = (1.0 + math.sqrt(5.0)) / 2.0
 PLANE_SETS = {
-    3: PlaneSet(((0, 1, 0), (1, 0, 0), (0, 0, 1)), 0.5, both_sides=True),
-    4: PlaneSet(((-_T1 / 2, -_T2, -1 / 3), (-_T1 / 2, _T2, -1 / 3), (_T1, 0, -1 / 3), (0, 0, 1)), 0.3,
-                tie_later=False),
-    5: PlaneSet(((0, 0, -1), (-0.5, -_R3, 0), (-0.5, _R3, 0), (1, 0, 0), (0, 0, 1)), 0.4),
-    6: PlaneSet(None, THRESHOLD6, frames=PLANES6, pairs=((0, 1), (2, 3), (4, 5))),
-    # the faces of an octahedron, two opposite ones after each other; opposite planes mirror like the six axes
-    8: PlaneSet(None, 0.55, frames=FRAMES8, pairs=((0, 1), (2, 3), (4, 5), (6, 7))),
-    # the faces of a dodecahedron: (0, +-p, +-1), (+-1, 0, +-p), (+-p, +-1, 0) with p = the golden ratio
-    12: PlaneSet([(0, b * _P, a) for a in (-1, 1) for b in (-1, 1)]
-                 + [(b, 0, a * _P) for a in (-1, 1) for b in (-1, 1)]
-                 + [(a * _P, b, 0) for a in (-1, 1) for b in (-1, 1)], 0.7),
+    3: PlaneSet(3, 0.5, both_sides=True),
+    4: PlaneSet(4, 0.3),
+    5: PlaneSet(5, 0.4),
+    6: PlaneSet(6, 0.5, pairs=_pairs(6)),
+    8: PlaneSet(8, 0.55, pairs=_pairs(8)),
+    12: PlaneSet(12, 0.7, pairs=_pairs(12)),
 }
+CROSS_EPS = 1e-06             # |side| below this counts as touching, not crossing
 FAILED = 0x80000000           # a face that would make the shell overlap itself
 
 
@@ -436,35 +483,31 @@ def _mirrored(key, mask, pairs):
     return any((x >> i) & 1 and (x >> j) & 1 for i, j in pairs)
 
 
-def assign_planes(points, faces, optimize=True, planes=6):
+def assign_planes(points, faces, optimize=True, planes=6, layout=True):
     """Maya polyAutoProjection's projection shells.
 
     ``points`` = vertex positions in Maya object space and Maya units (Y up); ``faces`` = vertex index lists of the
     faces to project, in Maya face order (only these take part; others block the flood like unselected faces).
-    ``optimize`` = Fewer pieces (default 1); ``planes`` = a ``PLANE_SETS`` key. Returns
-    ``[(plane, [face positions])]`` in creation order; ``plane`` indexes ``PLANE_SETS[planes].frames``
-    (``PLANES6`` for 6): every face in the same shell as Maya's."""
+    ``optimize`` = Fewer pieces (default 1); ``planes`` = a ``PLANE_SETS`` key; ``layout`` = the shells are laid
+    out afterwards (Layout other than None: each plane's UVs start at its ``OFFSETS`` place, which can move a fold
+    across the 1e-6 touching limit). Returns ``[(plane, [face positions])]`` in creation order; ``plane`` indexes
+    ``PLANE_SETS[planes].frames``: every face in the same shell as Maya's."""
     pset = PLANE_SETS[planes]
     count = len(pset.frames)
     n = len(faces)
     normals = face_normals(points, faces)
     mask = [0] * n
     for fi in range(n):
-        dots = pset.dots(normals[fi])
         if optimize:
-            mask[fi] = sum(1 << i for i, d in enumerate(dots) if d > pset.threshold)
-        elif pset.tie_later:        # the best plane; scanning from the last plane down, a tie keeps the later one
+            mask[fi] = sum(1 << i for i, d in enumerate(pset.dots(normals[fi])) if F(d) > pset.threshold)
+        else:                       # the best plane; scanning from the last plane down, a tie keeps the later one
+            dots = pset.dots(normals[fi], best_first=True)
             best = count - 1
             for i in range(count - 2, -1, -1):
                 if dots[best] < dots[i]:
                     best = i
             mask[fi] = 1 << best
-        else:                       # scanning from the first plane up, a tie keeps the earlier one
-            best = 0
-            for i in range(1, count):
-                if dots[best] < dots[i]:
-                    best = i
-            mask[fi] = 1 << best
+    maps = pset.uv_maps(layout)
     edge_faces = {}
     for fi, f in enumerate(faces):
         for k in range(len(f)):
@@ -478,12 +521,13 @@ def assign_planes(points, faces, optimize=True, planes=6):
     def project(fi, allowed, frame, uv, border):
         if not mask[fi] & allowed:
             return False
-        _n, U, V = frame
+        U, u0, V, v0 = frame
         f = faces[fi]
         added = [v for v in dict.fromkeys(f) if v not in uv]
         for v in added:
             q = pts[v]
-            uv[v] = (_f(q[0] * U[0] + q[1] * U[1] + q[2] * U[2]), _f(q[0] * V[0] + q[1] * V[1] + q[2] * V[2]))
+            uv[v] = (float(F(_f3(F(U[1]) * F(q[1]), F(U[0]) * F(q[0]), F(U[2]) * F(q[2])) + F(u0))),
+                     float(F(_f3(F(V[1]) * F(q[1]), F(V[0]) * F(q[0]), F(V[2]) * F(q[2])) + F(v0))))
         start = live = len(border.edges)
         for k in range(len(f)):
             a, b = f[k], f[(k + 1) % len(f)]
@@ -506,7 +550,7 @@ def assign_planes(points, faces, optimize=True, planes=6):
     def propagate(seed):
         allowed = mask[seed]
         plane = (allowed & -allowed).bit_length() - 1
-        frame = pset.frames[plane]
+        frame = maps[plane]
         uv = {}
         border = _Border(uv, cell)
         if not project(seed, allowed, frame, uv, border):
