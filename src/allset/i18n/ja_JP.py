@@ -2298,6 +2298,7 @@ STRINGS = {
     'Kit Action': 'キットのアクション',
     'Kit Default': 'キットのデフォルト',
     'Kit hotkey: — (Maya mode off or the item was removed)': 'キットのホットキー: — (Maya モードがオフか、項目が削除されています)',
+    'Kit hotkey: — (Maya mode off or the Maya keys off)': 'キットのホットキー: — (Maya モードまたは Maya のキーがオフ)',
     'Knife Tool': 'ナイフツール',
     'LMB': 'LMB',
     'LOD (Level of Detail)': 'LOD (詳細レベル)',

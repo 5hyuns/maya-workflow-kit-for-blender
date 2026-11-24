@@ -60,7 +60,7 @@ def test_every_kit_row_has_a_live_binding():
     ctx = bpy.context
     missing = []
     for r in he.rows():
-        if r["editable"]:
+        if r["editable"] and r["event"] is not None:    # menu item commands get a key when the user gives one
             km, kmi = he.editable_item(ctx, r)
             if kmi is None:
                 missing.append((r["command"], r["maya_key"], r["check"][:2]))

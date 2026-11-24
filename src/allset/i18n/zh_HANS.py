@@ -2298,6 +2298,7 @@ STRINGS = {
     'Kit Action': '套件动作',
     'Kit Default': '套件默认',
     'Kit hotkey: — (Maya mode off or the item was removed)': '套件热键：— (Maya 模式关闭或该项已被移除)',
+    'Kit hotkey: — (Maya mode off or the Maya keys off)': '套件热键：— (Maya 模式或 Maya 按键已关闭)',
     'Knife Tool': '切刀工具',
     'LMB': 'LMB',
     'LOD (Level of Detail)': 'LOD (细节级别)',

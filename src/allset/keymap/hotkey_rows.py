@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Rows of the kit Hotkey Editor (Issue #121): Maya's standard hotkeys + what the kit does with each.
+"""Rows of the kit Hotkey Editor (Issue #121): Maya's standard hotkeys + what the kit does with each, then Maya's
+menu item commands without a hotkey (#530, ``command_rows``).
 
 Pure Python (no bpy): ``build_rows`` joins ``hotkey_data.HOTKEYS`` (Maya's standard
 hotkeys) with ``mapping.ENTRIES`` (status IC / KIT / STEP / NO, the expected Blender binding ``check``
-and the note); ``search`` filters them like Maya's Hotkey Editor (Search by Name / by Hotkey, category); ``conflicts``
+and the note) and adds ``hotkey_data.COMMANDS`` (the main menus' commands); ``search`` filters them like Maya's Hotkey Editor (Search by Name / by Hotkey, category); ``conflicts``
 finds items that already use an event. The live side (``keyconfigs.user`` items) is ``ui/hotkey_editor.py``.
 """
 
@@ -107,7 +108,7 @@ def _hotkey(raw):
 
 def build_rows(platform="windows"):
     """Hotkey Editor rows: every standard Maya hotkey (``platform`` 'windows' leaves out the 68 macOS-only Cmd
-    bindings, None keeps all 468). Each row is a dict:
+    bindings, None keeps all 468), then the menu item commands (``command_rows``). Each row is a dict:
 
     index, command (runTimeCommand / nameCommand, "" for an explicitly empty binding), release, maya_key (Maya key
     text), event (Blender event dict of the Maya key), context, category (Maya Hotkey Editor category path, "" if
@@ -135,7 +136,59 @@ def build_rows(platform="windows"):
             "line": hk["line"], "editable": status in ("KIT", "IC") and check is not None,
         })
     _number(rows)
+    rows.extend(command_rows(len(hotkey_data.HOTKEYS), {r["command"] for r in rows if r["context"] == "global"}))
     return rows
+
+
+# Keymap of the keys given to menu item commands: runs in every editor, after the editors' own keys, like a Maya
+# global hotkey
+COMMAND_KEYMAP = "Window"
+COMMAND_OPS = ("allset.menu_item", "allset.menu_option_box")
+
+
+def _menu_tables():
+    """(mapped label paths, label paths with an option box) of the kit menus."""
+    from ..ui import menu_map, menu_tree
+    return menu_map.MAP, menu_tree.OPTION_BOXES
+
+
+def command_rows(start, skip=(), tables=None):
+    """Rows of Maya's menu item commands (Maya's Hotkey Editor lists every menu item, with or without a hotkey:
+    "Merge", "Merge (Option)", "Merge to Center"), indexes from ``start``; commands in ``skip`` (they have a hotkey row)
+    are left out. A command of several menus (Merge Character Sets in Key and Control) is one row, on the first menu
+    item the kit runs. No Maya key (``event`` None, ``maya_key`` ""); the kit binds it on demand: a key the user gives
+    is a keymap item of ``COMMAND_KEYMAP`` running the menu item (``allset.menu_item``) or its option box
+    (``allset.menu_option_box``), so it does exactly what the menu does."""
+    mapped, boxes = tables if tables is not None else _menu_tables()
+    by_command = {}
+    for raw in getattr(hotkey_data, "COMMANDS", ()):
+        c = dict(zip(hotkey_data.COMMAND_FIELDS, raw))
+        if c["command"] in skip:
+            continue
+        runs = c["path"] in mapped and (not c["option"] or c["path"] in boxes)
+        old = by_command.get(c["command"])
+        if old is None or (runs and not old[1]):
+            by_command[c["command"]] = (c, runs)
+    out = []
+    for c, runs in by_command.values():
+        if c["option"]:
+            check = (COMMAND_KEYMAP, COMMAND_OPS[1], {"item": c["path"]})
+        else:
+            check = (COMMAND_KEYMAP, COMMAND_OPS[0], {"item": c["path"], "hotkey": True})
+        status = "KIT" if runs else "NO"
+        out.append({
+            "index": start + len(out), "command": c["command"], "release": "", "maya_key": "", "event": None,
+            "context": "global", "category": c["category"].replace(".", " > "), "status": status,
+            "status_text": STATUS_TEXT[status], "check": check if runs else None, "step": None, "note": "",
+            "line": None, "editable": runs, "number": 1, "label": c["label"], "path": c["path"],
+            "option": c["option"], "names": (c["label"], c["path"].replace("#", " ")),
+        })
+    return out
+
+
+def is_command(row):
+    """A menu item command row (no Maya hotkey; the kit key is added when the user gives one)."""
+    return bool(row) and row.get("path") is not None
 
 
 _ORDINAL = {2: "2nd", 3: "3rd"}
@@ -187,12 +240,13 @@ def matches(row, text, by="NAME", live_events=(), names=()):
     if by == "HOTKEY":
         ev = parse_hotkey(text)
         if ev is None:
-            return _squash(text) == _squash(row["maya_key"])
+            return bool(row["maya_key"]) and _squash(text) == _squash(row["maya_key"])
         want = event_key(ev)
-        return event_key(row["event"]) == want or any(event_key(e) == want for e in live_events)
+        return ((row["event"] is not None and event_key(row["event"]) == want)
+                or any(event_key(e) == want for e in live_events))
     q = _squash(text)
     return (q in _squash(row["command"]) or bool(row["release"] and q in _squash(row["release"]))
-            or any(q in _squash(n) for n in names if n))
+            or any(q in _squash(n) for n in (*names, *row.get("names", ())) if n))
 
 
 def search(rows, text="", by="NAME", category="ALL", live=None, names=None):

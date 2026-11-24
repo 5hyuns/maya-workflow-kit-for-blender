@@ -6,7 +6,10 @@ hotkey, filters by category, and lets a key be assigned. A key belongs to one co
 key is already used, Maya warns, and once the user confirms, the other command loses it, so the new key works at once
 (#381). The kit's list = Maya's standard hotkeys (``keymap/hotkey_rows``: Maya's standard hotkey list joined with
 ``keymap/mapping.py``) with what the kit binds for each one; a command with two Maya hotkeys (Undo: z and Ctrl+Z) has
-a row per hotkey ("Undo", "Undo (2nd hotkey)"), each changing its own key.
+a row per hotkey ("Undo", "Undo (2nd hotkey)"), each changing its own key. Like Maya's list, the menu items' commands
+without a hotkey follow ("Merge", "Merge (Option)", "Merge to Center", #530): a key given to one of them is a keymap
+item the kit adds to the user keyconfig (``hotkey_rows.COMMAND_KEYMAP``, as Preferences > Keymap "Add New" does),
+running the menu item itself (``allset.menu_item``) or its option box; Restore / Remove takes it away again.
 
 A binding is changed the Blender way: on the items of ``wm.keyconfigs.user`` — the merged keymap Blender's own
 Preferences > Keymap edits. The user keyconfig holds the kit's add-on items at the head of each keymap; changing
@@ -54,6 +57,7 @@ _SAME_COMMAND = {}    # (command, context) -> [row] (a command with more than on
 _BY_OP = {}           # check idname -> [row]
 _PRIMARY = set()      # (check signature, Maya key) of the editable rows: an item another row has as its own
 _OP_NAMES = {}        # idname -> the operator's name
+_COMMANDS = {}        # (allset.menu_item / allset.menu_option_box, label path) -> menu item command row
 _CATEGORIES = []      # EnumProperty items (kept referenced: Blender reads the strings later)
 
 _IGNORE = {"MOUSEMOVE", "INBETWEEN_MOUSEMOVE", "TIMER", "TIMER_REPORT", "TIMERREGION", "NONE", "WINDOW_DEACTIVATE",
@@ -68,6 +72,10 @@ def rows():
         _ROWS.extend(hotkey_rows.build_rows())
         _BY_INDEX.update((r["index"], r) for r in _ROWS)
         for r in _ROWS:
+            if hotkey_rows.is_command(r):
+                if r["check"]:
+                    _COMMANDS[(r["check"][1], r["path"])] = r
+                continue
             if r["check"]:
                 _SIBLINGS.setdefault(_sig(r["check"]), []).append(r)
                 if r["editable"]:
@@ -181,13 +189,46 @@ def _row_keymaps(km_name):
     return [km_name]
 
 
+def _command_keymap(context):
+    """The user keymap that holds the keys given to menu item commands; None while the Maya keys are off (the kit
+    keys come and go with them, ``keymap/user_keys`` keeps the user's)."""
+    from .. import keymap as kit_keymap
+    kms = _user_keymaps(context)
+    if kms is None or not kit_keymap.is_applied():
+        return None
+    return kms.find(hotkey_rows.COMMAND_KEYMAP, space_type='EMPTY', region_type='WINDOW')
+
+
+def command_of(kmi):
+    """The menu item command row whose key ``kmi`` is (an item the user added for it), else None."""
+    if kmi.idname not in hotkey_rows.COMMAND_OPS or not kmi.is_user_defined:
+        return None
+    rows()
+    try:
+        path = kmi.properties.item if kmi.properties is not None else ""
+    except AttributeError:
+        return None
+    return _COMMANDS.get((kmi.idname, path))
+
+
+def _command_items(context, row):
+    """[(user KeyMap, item)] of the keys the user gave a menu item command row."""
+    ukm = _command_keymap(context)
+    if ukm is None or not row["check"]:
+        return []
+    return [(ukm, k) for k in ukm.keymap_items if command_of(k) is row]
+
+
 def row_items(context, row, index=None):
     """[(user KeyMap, user KeyMapItem)] that carry ``row``'s key, its own keymap's item first; [] when the kit doesn't
     bind it (Maya mode or the Maya keys off, a row the kit has no key for).
 
     The add-on item of the row's operator, properties and Maya key (add-on items keep the kit's key: the user's change
     is on the user keymap item ``find_match`` gives), in the row's keymap and, for an object-mode keymap, in the other
-    object modes' keymaps (one Maya hotkey works in every mode: Y = Last Tool in Object Mode and in Mesh)."""
+    object modes' keymaps (one Maya hotkey works in every mode: Y = Last Tool in Object Mode and in Mesh). A menu item
+    command (no Maya hotkey) has the items the user added for it."""
+    if hotkey_rows.is_command(row):
+        return _command_items(context, row)
     out = []
     for name, _akm, _a, ukm, u in _row_pairs(context, row, index):
         if u is not None:
@@ -206,7 +247,7 @@ def row_gone(context, row, index=None):
 
 def _row_pairs(context, row, index=None):
     """[(keymap name, add-on KeyMap, add-on item, user KeyMap, user item or None)] of ``row``, own keymap first."""
-    if not row or not row["check"]:
+    if not row or not row["check"] or hotkey_rows.is_command(row):
         return []
     kms = _user_keymaps(context)
     if kms is None:
@@ -267,12 +308,18 @@ def key_text(kmi):
     return text if kmi.active else text + " (off)"
 
 
-def kit_text(context, row, index=None):
+def kit_text(context, row, index=None, keyed=None):
     """The list's Kit Hotkey cell ("—" when the kit has no key for it or its key was taken, "(off)" when it is
-    switched off; " *" = changed)."""
+    switched off; " *" = changed). ``keyed`` = ``_command_keys`` when many rows are drawn."""
     if not row["editable"]:
         return "—"
-    items = row_items(context, row, index)
+    if keyed is not None and hotkey_rows.is_command(row):
+        items = keyed.get(row["index"], [])
+    else:
+        items = row_items(context, row, index)
+    if hotkey_rows.is_command(row):         # no Maya hotkey: any key is the user's
+        keys = [key_text(k) for _km, k in items if k.type != 'NONE']
+        return ", ".join(keys) + " *" if keys else "—"
     if not items:
         gone = row_gone(context, row, index)
         return hotkey_rows.event_text(item_event(gone[0][1])) + " (off) *" if gone else "—"
@@ -321,6 +368,9 @@ def clashes(context, row, event, items=None, exclude=None):
 def _owner(context, km_name, kmi):
     """The Maya hotkey row whose item ``kmi`` (of keymap ``km_name``) is, else None."""
     rows()
+    cmd = command_of(kmi)
+    if cmd is not None:
+        return cmd
     p = kmi.as_pointer()
     for r in _BY_OP.get(kmi.idname, ()):
         if km_name in _row_keymaps(r["check"][0]) and any(k.as_pointer() == p for _km, k in row_items(context, r)):
@@ -368,22 +418,32 @@ def conflicts(context, row, event, exclude=None):
 
 def take(context, row, event, items=None, changed_only=False):
     """Maya: a key belongs to one command of a context, so giving it to ``row`` takes it from the kit items that
-    use it there: they are left without a key (event type ``NONE``; Restore gives it back).
+    use it there: they are left without a key (event type ``NONE``; Restore gives it back); a key the user gave a
+    menu item command goes away.
     ``changed_only``: only items whose key the user changed. Returns [(keymap name, command)] that lost it; the
     caller updates the keyconfigs. Keys that aren't the kit's (another add-on's, the user's own) are left alone."""
     from .. import keymap as kit_keymap
     ptrs = kit_keymap.kit_item_pointers()
     found = [(n, k) for n, k in clashes(context, row, event, items)
-             if (not changed_only or k.is_user_modified) and _is_kit(context, n, k, ptrs)]
+             if command_of(k) is not None
+             or ((not changed_only or k.is_user_modified) and _is_kit(context, n, k, ptrs))]
     taken = named(context, found)
-    for _n, k in found:
-        k.type = 'NONE'
+    kms = _user_keymaps(context)
+    for n, k in found:
+        if command_of(k) is not None:
+            kms[n].keymap_items.remove(k)
+        else:
+            k.type = 'NONE'
     return taken
 
 
 def assign(context, row, event):
     """Bind ``row``'s kit items to ``event`` (type + modifiers) in the user keyconfig; the kit items of the row's
-    Maya context that used it lose it (``take``). Returns (ok, [(keymap name, command)] that lost it)."""
+    Maya context that used it lose it (``take``). Returns (ok, [(keymap name, command)] that lost it).
+    A menu item command gets a keymap item of its own on the first key (Blender's Preferences > Keymap "Add New"
+    does the same: Save Preferences keeps it)."""
+    if hotkey_rows.is_command(row):
+        return _assign_command(context, row, event)
     _bring_back(context, row)
     items = row_items(context, row)
     if not items:
@@ -399,12 +459,48 @@ def assign(context, row, event):
     return True, taken
 
 
+def _assign_command(context, row, event):
+    ukm = _command_keymap(context) if row["editable"] else None
+    if ukm is None:
+        return False, []
+    items = _command_items(context, row)
+    taken = take(context, row, dict(event, value='PRESS'), items)
+    mods = {m: bool(event.get(m)) for m in hotkey_rows.MODIFIERS}
+    if items:
+        kmi = items[0][1]
+        for extra_km, extra in items[1:]:       # Maya: one key per command and hotkey
+            extra_km.keymap_items.remove(extra)
+        kmi.active = True
+        kmi.type = event["type"]
+        for m, on in mods.items():
+            setattr(kmi, m, on)
+    else:
+        _km_name, idname, props = row["check"]
+        kmi = ukm.keymap_items.new(idname, event["type"], 'PRESS', **mods)
+        for k, v in props.items():
+            setattr(kmi.properties, k, v)
+    context.window_manager.keyconfigs.update()
+    return True, taken
+
+
 def unbind(context, row):
     """Remove ``row``'s key (its kit items left without one). True if the row has kit items."""
+    if hotkey_rows.is_command(row):
+        return _remove_command_keys(context, row)
     items = row_items(context, row)
     for _km, kmi in items:
         if kmi.type != 'NONE':
             kmi.type = 'NONE'
+    if items:
+        context.window_manager.keyconfigs.update()
+    return bool(items)
+
+
+def _remove_command_keys(context, row):
+    """Take away the keys the user gave a menu item command (it has no Maya hotkey to go back to). True if any."""
+    items = _command_items(context, row)
+    for km, kmi in items:
+        km.keymap_items.remove(kmi)
     if items:
         context.window_manager.keyconfigs.update()
     return bool(items)
@@ -430,8 +526,10 @@ def _bring_back(context, row):
 
 def restore(context, row):
     """Give ``row``'s kit items their Maya key back (Blender's Restore Item; a key switched off or removed in
-    Preferences > Keymap too); a key the user gave another command moves back here. True if something was
-    restored."""
+    Preferences > Keymap too); a key the user gave another command moves back here. A menu item command has no Maya
+    hotkey: Restore takes its keys away. True if something was restored."""
+    if hotkey_rows.is_command(row):
+        return _remove_command_keys(context, row)
     back = _bring_back(context, row)
     changed = [(km, k) for km, k in row_items(context, row) if k.is_user_modified]
     if not changed and not back:
@@ -446,21 +544,39 @@ def restore(context, row):
     return True
 
 
+def _command_keys(context):
+    """{menu item command row index: [(user KeyMap, item)]} of every key the user gave a menu item command."""
+    ukm = _command_keymap(context)
+    out = {}
+    for k in (ukm.keymap_items if ukm is not None else ()):
+        r = command_of(k)
+        if r is not None:
+            out.setdefault(r["index"], []).append((ukm, k))
+    return out
+
+
 def changed_rows(context):
     index = addon_index(context)
+    keyed = _command_keys(context)
     return [row for row in rows() if row["editable"]
-            and (any(k.is_user_modified for _km, k in row_items(context, row, index))
-                 or row_gone(context, row, index))]
+            and (row["index"] in keyed if hotkey_rows.is_command(row) else
+                 (any(k.is_user_modified for _km, k in row_items(context, row, index))
+                  or row_gone(context, row, index)))]
 
 
 def restore_all(context):
     """Give every Maya key the kit's key again (changed, removed or taken by another key; the user's edits of
-    other items stay). Returns how many items were restored."""
+    other items stay; the keys given to menu item commands go). Returns how many items were restored."""
     from .. import keymap as kit_keymap
     ptrs = kit_keymap.kit_item_pointers()
     akms, ukms = _addon_keymaps(context), _user_keymaps(context)
     if not ptrs or akms is None or ukms is None:
         return 0
+    added = [pair for pairs in _command_keys(context).values() for pair in pairs]
+    for km, kmi in added:
+        km.keymap_items.remove(kmi)
+    if added:
+        context.window_manager.keyconfigs.update()
     items, gone = {}, []
     for akm in akms:
         if akm.is_modal:
@@ -485,7 +601,7 @@ def restore_all(context):
         for where in dict.fromkeys(gone):
             user_keys.reset_keymap(kcs, ptrs, *where)
         kcs.update()
-    return len(items) + len(gone)
+    return len(items) + len(gone) + len(added)
 
 
 # --- the list ---------------------------------------------------------------------------------------------------
@@ -503,7 +619,9 @@ def _wm(context):
     return context.window_manager
 
 
-def live_events(context, row, index=None):
+def live_events(context, row, index=None, keyed=None):
+    if keyed is not None and hotkey_rows.is_command(row):
+        return [item_event(k) for _km, k in keyed.get(row["index"], ()) if has_key(k)]
     _km, kmi = find_item(context, row, index) if row["editable"] else (None, None)
     return [item_event(kmi)] if kmi is not None and has_key(kmi) else []
 
@@ -515,18 +633,20 @@ def refresh(context):
     keep = coll[wm.allset_hk_active].index if 0 <= wm.allset_hk_active < len(coll) else -1
     text, by = wm.allset_hk_search, wm.allset_hk_by
     index = addon_index(context)
+    keyed = _command_keys(context)
     live, names = {}, {}
     if by == "HOTKEY" and text.strip():
-        live = {r["index"]: live_events(context, r, index) for r in rows() if r["editable"]}
-    elif text.strip():
-        names = {r["index"]: [kit_name(r)] for r in rows() if r["editable"]}
+        live = {r["index"]: live_events(context, r, index, keyed) for r in rows() if r["editable"]}
+    elif text.strip():          # a menu item command is found by its menu label (the row's own names)
+        names = {r["index"]: [kit_name(r)] for r in rows() if r["editable"] and not hotkey_rows.is_command(r)}
     shown = hotkey_rows.search(rows(), text, by, wm.allset_hk_category, live, names)
     coll.clear()
     active = 0
     for i, r in enumerate(shown):
         item = coll.add()
         item.index, item.command, item.maya_key = r["index"], r["label"], r["maya_key"]
-        item.kit_key, item.status, item.editable = kit_text(context, r, index), r["status_text"], r["editable"]
+        item.kit_key, item.status = kit_text(context, r, index, keyed), r["status_text"]
+        item.editable = r["editable"]
         if r["index"] == keep:
             active = i
     wm.allset_hk_active = active if shown else -1
@@ -631,7 +751,11 @@ class ALLSET_OT_hotkey_assign(bpy.types.Operator):
         if self.key:
             return self.execute(context)
         row = self._row(context)
-        if row is None or (editable_item(context, row)[1] is None and not row_gone(context, row)):
+        if hotkey_rows.is_command(row):
+            ok = row["editable"] and _command_keymap(context) is not None
+        else:
+            ok = row is not None and (editable_item(context, row)[1] is not None or row_gone(context, row))
+        if not ok:
             self.report({'WARNING'}, "Pick a command the kit binds (status Kit / Blender (IC))")
             return {'CANCELLED'}
         self.row = row["index"]
@@ -662,7 +786,9 @@ class ALLSET_OT_hotkey_assign(bpy.types.Operator):
         self.ctrl, self.alt, self.shift, self.oskey = event.ctrl, event.alt, event.shift, event.oskey
         row = self._row(context)
         items = row_items(context, row)
-        used = clashes(context, row, dict(self._event(), value=items[0][1].value), items) if items else []
+        value = items[0][1].value if items else 'PRESS'
+        used = clashes(context, row, dict(self._event(), value=value), items) \
+            if items or hotkey_rows.is_command(row) else []
         if used:        # like Maya: warn first; another key press tries that key instead
             text = hotkey_rows.event_text(self._event())
             _wm(context).allset_hk_pending = f"{text} is used by: {describe(named(context, used))}"
@@ -716,7 +842,7 @@ class ALLSET_OT_hotkey_restore(bpy.types.Operator):
         if row is None or not restore(context, row):
             return {'CANCELLED'}
         refresh(context)
-        results.result(self, f"{row['label']}: {row['maya_key']}")
+        results.result(self, f"{row['label']}: {row['maya_key'] or 'no hotkey'}")
         return {'FINISHED'}
 
 
@@ -788,8 +914,64 @@ class ALLSET_OT_hotkey_blender_prefs(bpy.types.Operator):
 
 # --- the window -------------------------------------------------------------------------------------------------
 
+def _capture_warning(box, wm):
+    """The captured key's "used by" warning while the key capture waits for Return. True if drawn."""
+    if not (wm.allset_hk_capture and wm.allset_hk_pending):
+        return False
+    warn = box.column(align=True)
+    warn.alert = True
+    warn.label(text=wm.allset_hk_pending, icon='ERROR')
+    warn.label(text=CONFIRM_NOTE, icon='BLANK1')
+    return True
+
+
+def _clash_warning(box, context, row, kmi, items):
+    found = clashes(context, row, item_event(kmi), items) if has_key(kmi) else []
+    if not found:
+        return
+    from .. import keymap as kit_keymap
+    ptrs = kit_keymap.kit_item_pointers()
+    warn = box.row(align=True)
+    warn.label(text="Also used by: " + describe(named(context, found)), icon='ERROR')
+    if any(command_of(k) is not None or _is_kit(context, n, k, ptrs) for n, k in found):
+        warn.operator(ALLSET_OT_hotkey_take.bl_idname, text="Remove From Others").row = row["index"]
+
+
+def _command_details(box, context, row):
+    """Details of a menu item command (no Maya hotkey): its menu item, the keys the user gave it."""
+    col = box.column(align=True)
+    col.label(text=row["label"])
+    col.label(text=f"Runtime command: {row['command']}    Category: {row['category']}")
+    where = row["path"].replace("#", " ").replace("/", " > ")
+    if not row["editable"]:
+        col.label(text=f"Kit: {row['status_text']} ({where})")
+        return
+    col.label(text=("Kit: the option box of " if row["option"] else "Kit: the menu item ") + where)
+    items = row_items(context, row)
+    if _command_keymap(context) is None:
+        box.label(text="Kit hotkey: — (Maya mode off or the Maya keys off)", icon='INFO')
+        return
+    wm = _wm(context)
+    line = box.row(align=True)
+    line.label(text="Kit hotkey: " + (kit_text(context, row).rstrip(" *") if items else "none"))
+    act = line.row(align=True)
+    if wm.allset_hk_capture:
+        act.alert = True
+        act.label(text="Press a key... (Esc cancels)")
+    else:
+        act.operator(ALLSET_OT_hotkey_assign.bl_idname, text="Assign New Hotkey...").row = row["index"]
+    sub = act.row(align=True)
+    sub.enabled = bool(items)
+    sub.operator(ALLSET_OT_hotkey_restore.bl_idname, text="Remove").row = row["index"]
+    if not _capture_warning(box, wm) and items:
+        _clash_warning(box, context, row, items[0][1], items)
+
+
 def _details(layout, context, row):
     box = layout.box()
+    if hotkey_rows.is_command(row):
+        _command_details(box, context, row)
+        return
     col = box.column(align=True)
     col.label(text=f"{row['label']}" + (f"  /  {row['release']} (release)" if row["release"] else ""))
     col.label(text=f"Maya hotkey: {row['maya_key']}    Context: {row['context']}"
@@ -838,20 +1020,8 @@ def _details(layout, context, row):
     sub = act.row(align=True)
     sub.enabled = changed
     sub.operator(ALLSET_OT_hotkey_restore.bl_idname, text="Restore").row = row["index"]
-    if wm.allset_hk_capture and wm.allset_hk_pending:
-        warn = box.column(align=True)
-        warn.alert = True
-        warn.label(text=wm.allset_hk_pending, icon='ERROR')
-        warn.label(text=CONFIRM_NOTE, icon='BLANK1')
-        return
-    found = clashes(context, row, ev, items) if items and has_key(kmi) else []
-    if found:
-        from .. import keymap as kit_keymap
-        ptrs = kit_keymap.kit_item_pointers()
-        warn = box.row(align=True)
-        warn.label(text="Also used by: " + describe(named(context, found)), icon='ERROR')
-        if any(_is_kit(context, n, k, ptrs) for n, k in found):
-            warn.operator(ALLSET_OT_hotkey_take.bl_idname, text="Remove From Others").row = row["index"]
+    if not _capture_warning(box, wm) and items:
+        _clash_warning(box, context, row, kmi, items)
 
 
 class ALLSET_PT_hotkey_editor(bpy.types.Panel):
@@ -889,7 +1059,7 @@ class ALLSET_PT_hotkey_editor(bpy.types.Panel):
         for cell, (name, _f) in zip(head, COLUMNS):
             cell.label(text=name)
         layout.template_list("ALLSET_UL_hotkeys", "", wm, "allset_hk_rows", wm, "allset_hk_active", rows=9)
-        layout.label(text=f"{len(wm.allset_hk_rows)} of {len(rows())} Maya hotkeys")
+        layout.label(text=f"{len(wm.allset_hk_rows)} of {len(rows())} commands")
         row = selected_row(context)
         if row is not None:
             _details(layout, context, row)
