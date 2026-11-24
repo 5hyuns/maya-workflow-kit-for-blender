@@ -480,7 +480,7 @@ def draw_ae(layout, md):
     return True
 
 
-# Maya menu paths -> kit actions (merged into ui/menu_map.py by the main lane)
+# Maya menu paths -> kit actions (merged into ui/menu_map.py)
 MENU = {
     "Deform/Tension": ("allset.deformer_tss", {"kind": 'TENSION'}),
     "Deform/Solidify": ("allset.deformer_tss", {"kind": 'SOLIDIFY'}),
