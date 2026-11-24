@@ -1,4 +1,4 @@
-"""#520: the UV Toolkit's Flip U / Flip V buttons and the UV Shell marking menu's Flip Along U / V items flip the
+"""#520: the UV Toolkit's Flip button (U / V) and the UV Shell marking menu's Flip Along U / V items flip the
 selected faces in their own direction with the Coordinate and Cut UV Perimeter of the Flip options, like Maya (the
 same command as UV Editor > Modify > Flip)."""
 
@@ -22,9 +22,11 @@ def test_marking_items_run_the_flip_command():
 
 
 def test_toolkit_buttons_run_the_flip_command():
+    """The toolkit's Flip button with its U / V choice runs the Flip command in that direction."""
     src = inspect.getsource(uvtk)
     assert "transform.mirror" not in src
-    assert src.count('"allset.uv_flip", text="Flip U"') == 1 and src.count('"allset.uv_flip", text="Flip V"') == 1
+    assert src.count('"allset.uv_flip", text="Flip"') == 1
+    assert "op.direction = 'HORIZONTAL' if tk.flip_axis == 'U' else 'VERTICAL'" in src
 
 
 def test_defaults_flip_around_the_pivot_and_cut_free():

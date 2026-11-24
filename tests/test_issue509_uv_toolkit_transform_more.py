@@ -30,7 +30,7 @@ def _grid(n=4):
 
 def test_presets():
     assert tr.PRESETS == {"nudge": (1.0, 0.1, 0.01), "rotate_angle": (15.0, 45.0, 90.0, 180.0),
-                          "scale_factor": (2.0, 4.0)}
+                          "scale_factor": (2.0, 4.0), "texel_density": (8.0, 16.0, 32.0)}
     for prop in tr.PRESETS:
         assert hasattr(bpy.types, f"ALLSET_MT_uvtk_preset_{prop}"), prop
     tk = bpy.context.scene.allset_uv_toolkit

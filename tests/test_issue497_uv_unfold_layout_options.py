@@ -250,7 +250,7 @@ def test_hotkeys_and_toolkit_buttons():
     assert ("allset.uv_unfold", 'U', True) in ids and ("allset.uv_layout", 'L', True) in ids
     import inspect
     src = inspect.getsource(import_module(kit.MODULE + ".ui.uv_toolkit"))
-    assert '_item(row, f"{UVE}/Modify/Unfold"' in src and '_item(body, f"{UVE}/Modify/Layout"' in src, \
+    assert '_item(left, f"Modify/{name}"' in src and '_item(left, "Modify/Layout"' in src, \
         "the toolkit buttons are the menu items (Shift+click opens the same window)"
 
 

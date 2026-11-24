@@ -11,6 +11,8 @@
   pinned), so a ribbon shell becomes a straight strip. Like Maya, a line that crosses a ribbon of two or more faces
   moves the strip's width only part of the way from what it was (``limited_width``).
 - Randomize Shells: every selected shell is moved, turned and scaled by a random amount in the given ranges.
+- Measure: U / V Distance (the selected UVs' bounding box), Pixel Distance (its diagonal at the Map Size) or the
+  Angle Between two UVs (the line from the left one to the right one).
 
 All of them work on every mesh in edit mode at once, like Maya works on the whole selection.
 """
@@ -575,6 +577,73 @@ class ALLSET_OT_uv_randomize(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Measure ---------------------------------------------------------------------------------------------------
+
+def _measure(context, kind):
+    """(value, message) of the toolkit's Measure for the selected UVs over every mesh, or (None, warning)."""
+    synced = uv_tools.sync(context)
+    coords = []
+    for ob in _meshes(context):
+        bm = bmesh.from_edit_mesh(ob.data)
+        uv = bm.loops.layers.uv.verify()
+        pts, _where = all_points(bm, uv)
+        coords += [tuple(pts[i][0][uv].uv) for i in selected_ids(bm, uv, synced, pts)]
+    if kind == 'ANGLE':
+        if len(coords) != 2:
+            return None, "Select two UVs to measure the angle between them"
+        a, b = sorted(coords)                       # from the left UV to the right one
+        return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])), ""
+    if not coords:
+        return None, "Select UVs to measure"
+    du = max(c[0] for c in coords) - min(c[0] for c in coords)
+    dv = max(c[1] for c in coords) - min(c[1] for c in coords)
+    if kind == 'U':
+        return du, ""
+    if kind == 'V':
+        return dv, ""
+    size = context.scene.allset_uv.map_size
+    px = math.hypot(du, dv) * size
+    return px, f"Map Size {size}: U {du * size:.2f} px, V {dv * size:.2f} px, distance {px:.2f} px"
+
+
+class ALLSET_OT_uv_measure(bpy.types.Operator):
+    """Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in
+    pixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)"""
+    bl_idname = "allset.uv_measure"
+    bl_label = "Measure"
+    bl_options = {'REGISTER'}
+
+    poll = classmethod(lambda cls, context: _poll(context))
+
+    def execute(self, context):
+        tk = context.scene.allset_uv_toolkit
+        value, message = _measure(context, tk.measure_type)
+        if value is None:
+            self.report({'WARNING'}, message)
+            return {'CANCELLED'}
+        tk.measure_result = round(value, 4)
+        if message:
+            self.report({'INFO'}, message)
+        return {'FINISHED'}
+
+
+def _scale_get(axis):
+    return lambda self: self.scale_axis in ('UV', axis)
+
+
+def _scale_set(axis):
+    """The Scale U / V toggles: both on = UV; turning off the only one left keeps it on."""
+    other = 'V' if axis == 'U' else 'U'
+
+    def setter(self, value):
+        on = {a: self.scale_axis in ('UV', a) for a in ('U', 'V')}
+        on[axis] = value
+        if not (on[axis] or on[other]):
+            return
+        self.scale_axis = 'UV' if on['U'] and on['V'] else ('U' if on['U'] else 'V')
+    return setter
+
+
 # --- toolkit settings ------------------------------------------------------------------------------------------
 
 class ALLSET_PG_uv_toolkit(bpy.types.PropertyGroup):
@@ -621,6 +690,31 @@ class ALLSET_PG_uv_toolkit(bpy.types.PropertyGroup):
     snap_max_u: IntProperty(name="Max U", default=1, description="Snap range: highest U")
     snap_min_v: IntProperty(name="Min V", default=0, description="Snap range: lowest V")
     snap_max_v: IntProperty(name="Max V", default=1, description="Snap range: highest V")
+    scale_u: BoolProperty(name="U", get=_scale_get('U'), set=_scale_set('U'), options={'SKIP_SAVE'},
+                          description="The Scale buttons scale in U")
+    scale_v: BoolProperty(name="V", get=_scale_get('V'), set=_scale_set('V'), options={'SKIP_SAVE'},
+                          description="The Scale buttons scale in V")
+    flip_axis: EnumProperty(name="Flip", default='U', items=(
+        ('U', "U", "The Flip button flips in U"), ('V', "V", "The Flip button flips in V")))
+    unfold_axis: EnumProperty(name="Unfold Along", default='U', items=(
+        ('U', "U", "Unfold Along unfolds in U only"), ('V', "V", "Unfold Along unfolds in V only")))
+    stitch_order: EnumProperty(name="Stitch Together", default='SMALL_TO_LARGE', items=(
+        ('SMALL_TO_LARGE', "A to B", "The smallest UV shell moves, turns and scales onto the largest"),
+        ('LARGE_TO_SMALL', "B to A", "The largest UV shell moves, turns and scales onto the smallest")))
+    snap_order: EnumProperty(name="Snap Together", default='0', items=(
+        ('0', "AB", "The first shell snaps onto the second"), ('1', "BA", "The second shell snaps onto the first")))
+    normalize_u: BoolProperty(name="U", default=True, description="Normalize scales the shells in U")
+    normalize_v: BoolProperty(name="V", default=True, description="Normalize scales the shells in V")
+    layout_axis: EnumProperty(name="Layout Along", default='U', items=(
+        ('U', "U", "Layout Along lines the shells up in U"), ('V', "V", "Layout Along lines the shells up in V")))
+    distribute_factor: FloatProperty(name="Distribute", default=0.0, precision=4, step=1,
+                                     description="Space between the shells the Distribute arrows leave")
+    measure_type: EnumProperty(name="Measure", default='PIXEL', items=(
+        ('U', "U Distance", "Width of the selected UVs"), ('V', "V Distance", "Height of the selected UVs"),
+        ('PIXEL', "Pixel Distance", "Diagonal of the selected UVs in pixels at the Map Size"),
+        ('ANGLE', "Angle Between", "Angle of the line between two selected UVs")))
+    measure_result: FloatProperty(name="Result", default=0.0, precision=4, options={'SKIP_SAVE'},
+                                  description="The last Measure result")
 
 
 def straighten_axis(context):
@@ -651,7 +745,7 @@ class ALLSET_OT_uv_tool_settings(bpy.types.Operator):
 
 
 classes = (ALLSET_PG_uv_toolkit, ALLSET_OT_uv_align_to, ALLSET_OT_uv_straighten_uvs, ALLSET_OT_uv_unfold_along,
-           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize, ALLSET_OT_uv_tool_settings)
+           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize, ALLSET_OT_uv_tool_settings, ALLSET_OT_uv_measure)
 
 
 def register_props():

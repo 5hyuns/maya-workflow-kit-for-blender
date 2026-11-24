@@ -40,7 +40,7 @@ from .uv_projection import (AUTOPROJ, PLANE_ITEMS, ALLSET_OT_uv_automatic,  # no
                             ALLSET_OT_uv_spherical, auto_project, fit_unit,
                             note_object_state, object_state_ok)
 
-MAYA_MAP_SIZE = 1024
+MAYA_MAP_SIZE = 512
 UNFOLD_STEPS = 10        # Blender Minimum Stretch iterations per Maya Unfold iteration
 NOTICE_UNFOLD = "Unfold uses Blender Unwrap (Minimum Stretch), not Unfold3D: shapes can differ from Maya."
 
@@ -48,7 +48,7 @@ NOTICE_UNFOLD = "Unfold uses Blender Unwrap (Minimum Stretch), not Unfold3D: sha
 class ALLSET_PG_uv(bpy.types.PropertyGroup):
     map_size: IntProperty(name="Map Size", default=MAYA_MAP_SIZE, min=1, soft_max=8192,
                           description="Texture size in pixels for Texel Density")
-    texel_density: FloatProperty(name="Texel Density", default=0.0, min=0.0, precision=3,
+    texel_density: FloatProperty(name="Texel Density", default=32.0, min=0.0, precision=4,
                                  description="Pixels per Maya unit (px/cm in the Maya Workflow Kit template)")
 
 

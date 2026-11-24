@@ -431,14 +431,16 @@ class ALLSET_OT_uv_snap_shells(bpy.types.Operator):
 
 
 # Maya's preset lists of the UV Toolkit Transform fields
-PRESETS = {"nudge": (1.0, 0.1, 0.01), "rotate_angle": (15.0, 45.0, 90.0, 180.0), "scale_factor": (2.0, 4.0)}
+PRESETS = {"nudge": (1.0, 0.1, 0.01), "rotate_angle": (15.0, 45.0, 90.0, 180.0), "scale_factor": (2.0, 4.0),
+           "texel_density": (8.0, 16.0, 32.0)}
+PRESET_OWNER = {"texel_density": "scene.allset_uv"}     # the others: scene.allset_uv_toolkit
 
 
 def _preset_menu_class(prop):
     def draw(self, context):
         for value in PRESETS[prop]:
             o = self.layout.operator("wm.context_set_float", text=f"{value:g}", translate=False)
-            o.data_path, o.value = f"scene.allset_uv_toolkit.{prop}", value
+            o.data_path, o.value = f"{PRESET_OWNER.get(prop, 'scene.allset_uv_toolkit')}.{prop}", value
     return type(f"ALLSET_MT_uvtk_preset_{prop}", (bpy.types.Menu,), {
         "bl_idname": f"ALLSET_MT_uvtk_preset_{prop}", "bl_label": "Presets", "draw": draw,
         "__doc__": "Preset values"})
