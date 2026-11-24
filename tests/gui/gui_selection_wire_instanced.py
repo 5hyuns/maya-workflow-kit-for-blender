@@ -321,6 +321,37 @@ def wire_ms(n=12, turn=0.0):
 
 
 @step
+def s_smooth_batches():
+    s = sw()
+    pane = import_module(MODULE + ".ui.panel_menus")
+    area, region = view3d()
+    dense = bpy.data.objects["s0"].modifiers[0]
+    dense.levels = 5
+    bpy.context.view_layer.update()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        pane.apply(bpy.context, "SELECTION_WIRE_AA")
+    try:
+        _set_view('PERSP', (1.45, 0, -0.4), 26.0, 'SOLID', False)
+        s.INSTANCE_FROM = 10 ** 9
+        reference = shot("smooth_per_object")
+        s.INSTANCE_FROM = C["default_from"]
+        batched = shot("smooth_batched")
+        plan = s._last_many.get((region.as_pointer(), True), {}).get("plan", ())
+        draw_types = {min(0, piece[4]) for piece in plan}
+        check("smoothed selection uses instances, merged batches and a dense-mesh fallback",
+              draw_types == {s.SMOOTH_FALLBACK, -1, 0})
+        delta = int((np.abs(reference - batched).max(axis=2) > 0.04).sum())
+        white = int((batched.min(axis=2) > 0.98).sum())
+        check(f"smoothed selection matches the per-object image ({delta} pixels differ by over 4%)",
+              delta < 30 and white > 300)
+    finally:
+        s.INSTANCE_FROM = C["default_from"]
+        dense.levels = 1
+        with bpy.context.temp_override(window=win(), area=area, region=region):
+            pane.apply(bpy.context, "SELECTION_WIRE_AA")
+
+
+@step
 def s_many():
     box = bpy.data.meshes["box"]
     for i in range(2400):
@@ -350,7 +381,7 @@ def s_many_time():
     print("GUI wire instanced", n, "one by one", one, "instanced", inst, inst2, "gc runs", runs,
           f"{time.perf_counter() - t:.2f}s")
     check(f"{n} selected objects, the view turning: the wire takes {inst:.1f} ms a redraw instanced, {one:.1f} ms one "
-          f"by one; {inst2:.1f} ms in a still view", inst <= one * 0.75 and inst2 <= one * 0.4)
+          f"by one; {inst2:.1f} ms in a still view", 0 < inst <= one * 0.75 and 0 < inst2 <= one * 0.4)
     check(f"22 redraws with {n} selected objects run the garbage collector {runs[0]} times (gen 0), "
           f"{runs[2]} full", runs[0] <= 6 and runs[2] == 0)
 
