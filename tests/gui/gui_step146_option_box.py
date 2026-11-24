@@ -77,7 +77,7 @@ def first_row(menu):
     if menu == "mainDisplayMenu":
         return C["x"], C["open"][1] + px(9)   # Maya 2026 Display menu
     if menu == "mainKeysMenu":
-        return C["x"], win().height - px(87 if C["case"] == "Key/Set Key" else 444)
+        return C["x"], win().height - px(87 if C["case"] == "Key/Set Key" else 519)
     return C["x"], C["open"][1] - px(23)
 
 
