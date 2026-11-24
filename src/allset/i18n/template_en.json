@@ -5870,6 +5870,14 @@
    "Translate": "Translate",
    "World": "World"
   },
+  "Labels/operators/duplicate_face": {
+   "Duplicate": "Duplicate",
+   "Make each copied piece an object of its own": "Make each copied piece an object of its own",
+   "Move the edges of each copy inward (negative: outward), in Maya units": "Move the edges of each copy inward (negative: outward), in Maya units",
+   "Offset": "Offset",
+   "Separate duplicated faces": "Separate duplicated faces",
+   "polyChipOff": "polyChipOff"
+  },
   "Labels/operators/edge_loops": {
    "Adjust Edge Flow": "Adjust Edge Flow",
    "Catch the slide at the snapping points": "Catch the slide at the snapping points",
@@ -9004,6 +9012,7 @@
    "Close": "Close",
    "Export...": "Export...",
    "Hotkey": "Hotkey",
+   "Hotkey Command": "Hotkey Command",
    "Hotkey Editor": "Hotkey Editor",
    "Import...": "Import...",
    "Key in Use": "Key in Use",
@@ -12057,6 +12066,10 @@
    "Duplicate the selection in place with its children: the geometry as it shows now, without history,\ndeformers, shape keys or animation; copies are named the Maya way (pCube1 -> pCube2, pCubeShape2) and\nselected (Maya Edit > Duplicate, Ctrl+D)": "Duplicate the selection in place with its children: the geometry as it shows now, without history,\ndeformers, shape keys or animation; copies are named the Maya way (pCube1 -> pCube2, pCubeShape2) and\nselected (Maya Edit > Duplicate, Ctrl+D)",
    "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them, the copies' own or shared inputs (Maya Edit > Duplicate Special)": "Duplicate with options: copies or instances, number of copies, offsets per\ncopy, where to put them, the copies' own or shared inputs (Maya Edit > Duplicate Special)"
   },
+  "Tooltips/operators/duplicate_face": {
+   "Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed": "Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed",
+   "Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options": "Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options"
+  },
   "Tooltips/operators/edge_loops": {
    "Click an edge and drag: an edge loop on each side of its edge loop (Maya Offset Edge Loop). Without a click:\nthe selected edges": "Click an edge and drag: an edge loop on each side of its edge loop (Maya Offset Edge Loop). Without a click:\nthe selected edges",
    "Click an edge to insert an edge loop at that point, drag to slide it along the ring (Maya Insert Edge Loop)": "Click an edge to insert an edge loop at that point, drag to slide it along the ring (Maya Insert Edge Loop)",
@@ -13070,6 +13083,7 @@
    "Maya's Hotkey Editor list: command, Maya key, the kit's key, status": "Maya's Hotkey Editor list: command, Maya key, the kit's key, status",
    "Open Blender's Preferences > Keymap (every Blender and add-on key)": "Open Blender's Preferences > Keymap (every Blender and add-on key)",
    "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys": "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys",
+   "Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)": "Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)",
    "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)": "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)"
   },
   "Tooltips/ui/hs_drag": {

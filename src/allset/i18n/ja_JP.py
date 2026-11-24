@@ -7660,6 +7660,14 @@ STRINGS = {
     'U Distance': 'U 距離',
     'V Distance': 'V 距離',
     'Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)': '選択した UV を測定: バウンディングボックスの幅 (U 距離) または高さ (V 距離)、マップサイズでの対角線の\nピクセル数 (ピクセル距離)、または 2 つの UV を結ぶ線の角度 (間の角度)',
+    'Hotkey Command': 'ホットキーコマンド',
+    'Make each copied piece an object of its own': 'コピーした各ピースを個別のオブジェクトにします',
+    'Move the edges of each copy inward (negative: outward), in Maya units': '各コピーのエッジを内側へ移動 (負の値: 外側)、Maya 単位',
+    'Separate duplicated faces': '複製したフェースの分離',
+    'polyChipOff': 'polyChipOff',
+    'Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed': '最後の複製を変更します (Maya: polyChipOff ノードを編集)。Blender は編集モードのヒストリを保持しないため、\n変更できるのは最後の 1 回だけです',
+    'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '選択したフェースをその場でコピーします (Maya の メッシュの編集 > 複製): 各フェースが個別のピースになり、\nマニピュレータで移動します。メニュー項目を長押しすると フェースの複製 オプション が開きます',
+    'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': 'メニュー項目のない、ホットキーエディタに載っているキットのコマンドを実行します (UV ツールキットのボタン、X 線)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

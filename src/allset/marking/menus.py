@@ -661,7 +661,7 @@ SHIFT_FACE = MarkingMenu(
         DIVIDER,
         ("Mirror", "allset.mirror"),
         ("Extract Faces", ("mesh.separate", {"type": 'SELECTED'})),
-        ("Duplicate Face", ("v3d", "mesh.duplicate_move", {})),
+        ("Duplicate Face", ("item", "Edit Mesh/Duplicate")),
         ("Transform Component", TRANSFORM_COMPONENT),
         ("Connect Tool", CONNECT_TOOL),
         ("Target Weld Tool", TARGET_WELD),

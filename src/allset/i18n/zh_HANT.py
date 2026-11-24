@@ -7661,6 +7661,14 @@ STRINGS = {
     'U Distance': 'U 距離',
     'V Distance': 'V 距離',
     'Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)': '測量選定的 UV: 其邊界框的寬度 (U 距離) 或高度 (V 距離)、按貼圖大小計算的對角線\n像素數 (像素距離)，或兩個 UV 之間連線的角度 (夾角)',
+    'Hotkey Command': '熱鍵命令',
+    'Make each copied piece an object of its own': '使每個複製出的部分成為單獨的物件',
+    'Move the edges of each copy inward (negative: outward), in Maya units': '將每個副本的邊向內移動 (負值: 向外)，Maya 單位',
+    'Separate duplicated faces': '分離複製的面',
+    'polyChipOff': 'polyChipOff',
+    'Change the last Duplicate (Maya: edit the polyChipOff node). Blender keeps no edit-mode history, so only the\nlast one can be changed': '變更最後一次複製 (Maya: 編輯 polyChipOff 節點)。Blender 不保留編輯模式歷史，因此只能變更\n最後一次',
+    'Copy the selected faces in place (Maya Edit Mesh > Duplicate): each face a piece of its own, moved with the\nmanipulator; press and hold the menu item for the Duplicate Face Options': '原地複製所選面 (Maya 編輯網格 > 複製)：每個面成為單獨的部分，用操縱器移動；\n按住選單項可開啟複製面選項',
+    'Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)': '執行熱鍵編輯器中列出但沒有選單項的工具包命令 (UV 工具包按鈕、X 射線)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

@@ -393,7 +393,7 @@ MAP = {
     "Edit Mesh/Flip Triangle Edge": "mesh.edge_rotate",
     "Edit Mesh/Spin Edge Backward": ("mesh.edge_rotate", {"use_ccw": True}),
     "Edit Mesh/Spin Edge Forward": ("mesh.edge_rotate", {"use_ccw": False}),
-    "Edit Mesh/Duplicate": ("v3d", "mesh.duplicate_move", {}),
+    "Edit Mesh/Duplicate": ("v3d", "allset.duplicate_face", {}),     # polyChipOff, Duplicate on
     "Edit Mesh/Extract": ("mesh.separate", {"type": 'SELECTED'}),
     "Edit Mesh/Poke": "mesh.poke",
     # --- Mesh Tools ---
