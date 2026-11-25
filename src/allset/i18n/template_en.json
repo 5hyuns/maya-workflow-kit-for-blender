@@ -9067,6 +9067,9 @@
    "Remove From Others": "Remove From Others",
    "Restore": "Restore",
    "Restore All Maya Hotkeys": "Restore All Maya Hotkeys",
+   "Save": "Save",
+   "Save Hotkeys": "Save Hotkeys",
+   "Save and Close": "Save and Close",
    "Search": "Search",
    "Search by": "Search by",
    "Search by Hotkey": "Search by Hotkey",
@@ -13150,6 +13153,7 @@
    "Open Blender's Preferences > Keymap (every Blender and add-on key)": "Open Blender's Preferences > Keymap (every Blender and add-on key)",
    "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys": "Open the Hotkey Editor: Maya's hotkeys, the kit's keys for them, search and assign new keys",
    "Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)": "Run a kit command the Hotkey Editor lists without a menu item (a UV Toolkit button, X-Ray)",
+   "Save the hotkeys now (Blender's Save Preferences), like Maya's Hotkey Editor Save; Save and Close also closes\nthe window": "Save the hotkeys now (Blender's Save Preferences), like Maya's Hotkey Editor Save; Save and Close also closes\nthe window",
    "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)": "Take this command's key from the other commands that use it, like Maya (their Restore gives it back)"
   },
   "Tooltips/ui/hs_drag": {
