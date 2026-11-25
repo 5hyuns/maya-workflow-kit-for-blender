@@ -15,6 +15,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   unfiltered.
 - **3D Cut and Sew UV Tool: double-click** (#555): double-clicking an edge cuts the UVs along its whole edge loop,
   Ctrl+double-click sews the loop, like Maya.
+- **Select > Convert Selection > To Contained Edges / To Contained Faces**: select only what the selection fully
+  holds, like Maya. Edges from faces are the edges inside the face selection (not its outline); from vertices both
+  ends must be selected. Faces need every vertex (from edges: every edge) selected. When nothing is contained the
+  selection stays as it was.
 - **Channel Box SHAPES rows of cameras, lights and locators** (#481): cameras show Lens Squeeze Ratio, Shutter Angle
   and Center Of Interest in Maya's order; point, directional, spot and area lights show Shad Color, Use Depth Map
   Shadows and Dmap Bias (spot lights also Dropoff), kept as values without changing Blender's shadows (Dmap Bias also
