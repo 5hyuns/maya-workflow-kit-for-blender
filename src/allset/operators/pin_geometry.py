@@ -101,7 +101,7 @@ class Geo:
         return self.co @ m[:3, :3].T + m[:3, 3]
 
     def normals(self, deformed=True):
-        """Maya vertex normals (local): normalised sum of the unit (Newell) face normals around each vertex."""
+        """Vertex normals (local): normalised sum of the unit (Newell) face normals around each vertex."""
         got = self._normals.get(deformed)
         if got is None:
             co = self.co if deformed else self.co0

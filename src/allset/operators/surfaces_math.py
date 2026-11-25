@@ -272,7 +272,7 @@ def _smallest_axis(P):
 
 
 def profile_normal(profile):
-    """Maya profile normal: the least-squares plane of the CVs (periodic: the unique CVs), turned like the Newell
+    """Profile normal: the least-squares plane of the CVs (periodic: the unique CVs), turned like the Newell
     normal of the CV polygon (equal for a planar profile); None for a straight profile."""
     P = _unique(_crv(profile))
     try:

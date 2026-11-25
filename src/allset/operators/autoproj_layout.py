@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya polyAutoProjection "Into square" shell layout (UV > Automatic, default options), bpy-free.
+"""UV > Automatic "Into square" shell layout (default options), bpy-free.
 
-Behaviour: Maya 2026's.
+Behaviour: gives the same result as Maya 2026.
 
 The default UV > Automatic runs the packed layout with Layout 2 (Into square), Scale Mode 1 (Uniform), Shell
 stacking 0 (Bounding box = brick rows), sort by size on, back-and-forth rows on, no prescale, rotate mode 1 (a
 shell wider than tall turns 90 degrees) and spacing = Percentage Space / 100. Only each shell's bounding box
 takes part in the packing, so the input is one bbox per shell.
 
-Which plane each face takes and how faces form shells (``assign_planes``) is
-Maya's too, for every Planes choice (``PLANE_SETS``; tests/test_step257_uv_auto.py, tests/test_issue488_auto_planes.py).
-The planes are Maya's own squares (``QUADS``), float32: they decide faces that lie exactly between two planes.
+Which plane each face takes and how faces form shells (``assign_planes``) also match Maya, for every Planes
+choice (``PLANE_SETS``; tests/test_step257_uv_auto.py, tests/test_issue488_auto_planes.py).
+The planes (``QUADS``) are kept in float32: they decide faces that lie exactly between two planes.
 
 Input bbox = the shell's extent in the projection plane in **Maya units** (object space; Blender lengths divided
 by ``units.maya_unit()``). The packer is not scale invariant: the size comparator has an absolute 1e-6 tolerance
 and the area sum starts at 1.19e-7, so other units change ties and grid snapping. A common translation of the
-projection does not matter. Arithmetic is float32 like Maya's (numpy), so the 512-column grid snaps the same way.
+projection does not matter. Arithmetic is float32 (numpy), so the 512-column grid snaps the same way.
 """
 
 import functools
@@ -165,16 +165,16 @@ class Layout:
 
 
 def bbox_of(points):
-    """(umin, vmin, umax, vmax) of 2D points, in float32 like Maya's UV arrays."""
+    """(umin, vmin, umax, vmax) of 2D points, in float32."""
     us = [F(p[0]) for p in points]
     vs = [F(p[1]) for p in points]
     return min(us), min(vs), max(us), max(vs)
 
 
 def layout(boxes, spacing=0.2):
-    """Maya's Into-square layout of UV shells given by their projected bboxes (umin, vmin, umax, vmax).
+    """Into-square layout of UV shells given by their projected bboxes (umin, vmin, umax, vmax).
 
-    ``boxes`` must be in Maya's shell order = ascending lowest face index of each shell (the order only
+    ``boxes`` must be in shell order = ascending lowest face index of each shell (the order only
     decides between shells of equal height). ``spacing`` = Percentage Space (default 0.2). Returns a ``Layout``; ``Layout.transform(i, u, v)`` maps a projected point of shell i to its final UV."""
     gap = F(F(spacing) / F(100.0))
     shells = [_Shell(i, b) for i, b in enumerate(boxes)]
@@ -201,12 +201,12 @@ def layout(boxes, spacing=0.2):
 
 # --- Plane assignment and shells  -------------------
 
-# Every Planes choice in Maya's plane order (Maya axes, Y up): each plane is a square of side 0.5 given by three of
-# its corners A, B, D (float32 values). The plane's frame is U = B - A, V = D - A and it faces U x V; UVs are
+# Every Planes choice (Maya axes, Y up): each plane is given by three of its corners A, B, D (float32
+# values). The plane's frame is U = B - A, V = D - A and it faces U x V; UVs are
 # u = U'.p + 0.25 + start - U'.A with U' = U / (2 |U|^2), v likewise. ``OFFSETS`` = each plane's start (u, v)
 # when the shells are laid out afterwards (Layout on); without layout every plane starts at 0. All frame arithmetic
-# is float32 in Maya's operand order, so faces that lie exactly between two planes and folds right at a shell's
-# border come out the same.
+# is float32 in a fixed order, so faces that lie exactly between two planes and folds right at a shell's
+# border come out the same as in Maya.
 QUADS = {
     3: (
         ((-0.25, 1, 0.25), (0.25, 1, 0.25), (-0.25, 1, -0.25)),
@@ -275,7 +275,7 @@ def _f3(x, y, z):
 
 
 def _frame(a, b, d):
-    """(normal, U', V', A) of a plane from its corners, float32 like Maya: the normal is U x V times the float32
+    """(normal, U', V', A) of a plane from its corners, in float32: the normal is U x V times the float32
     reciprocal of its length; U' = U / (2 |U|^2), V' likewise."""
     a, b, d = (np.array(p, dtype=F) for p in (a, b, d))
     u, v = (b - a).astype(F), (d - a).astype(F)
@@ -344,7 +344,7 @@ FAILED = 0x80000000           # a face that would make the shell overlap itself
 
 
 def face_normals(points, faces):
-    """Maya's polygon normals in float32: Newell sums in corner order, times the float32 reciprocal of the length."""
+    """Polygon normals in float32, times the float32 reciprocal of the length."""
     p = np.asarray(points, dtype=F)
     n = len(faces)
     out = np.zeros((n, 3), dtype=F)
@@ -376,12 +376,12 @@ _F32 = struct.Struct("f")
 
 
 def _f(x):
-    """Round a Python float to float32 (Maya's segment test arithmetic)."""
+    """Round a Python float to float32 (segment test arithmetic)."""
     return _F32.unpack(_F32.pack(x))[0]
 
 
 def crosses(a, b, c, d):
-    """Maya's segment test (float32): AB and CD cross properly, i.e. C and D strictly on
+    """Segment test (float32): AB and CD cross properly, i.e. C and D strictly on
     opposite sides of AB and A and B strictly on opposite sides of CD (|side| < 1e-6 = touching)."""
     ax, ay = a
     bx, by = b
@@ -399,13 +399,13 @@ def crosses(a, b, c, d):
 
 
 class _Border:
-    """The shell's open border edges in Maya's array order, plus a grid so the crossing scan only tests edges whose
-    box meets the new edge (same result as Maya's full scan: a proper crossing needs overlapping boxes)."""
+    """The shell's open border edges in order, plus a grid so the crossing scan only tests edges whose
+    box meets the new edge (same result as a full scan: a proper crossing needs overlapping boxes)."""
 
     def __init__(self, uv, cell):
         self.uv = uv
         self.cell = cell
-        self.edges = []          # (a, b) in Maya's array order
+        self.edges = []          # (a, b) in border order
         self.pos = {}            # edge key -> index in ``edges``
         self.grid = {}           # cell -> set of edge keys
 
@@ -432,7 +432,7 @@ class _Border:
         del self.edges[size:]
 
     def drop(self, lo, hi):
-        """Remove positions lo .. hi-1 (as Maya does), keeping the order of the rest."""
+        """Remove positions lo .. hi-1, keeping the order of the rest."""
         tail = self.edges[hi:]
         self.truncate(lo)
         for a, b in tail:
@@ -446,7 +446,7 @@ class _Border:
             self.pos[(a, b) if a < b else (b, a)] = k
 
     def scan(self, a, b, start):
-        """Maya's scan of positions start-1 .. 0 for edge (a, b): (index of the same edge or -1, crossed?).
+        """Scan of positions start-1 .. 0 for edge (a, b): (index of the same edge or -1, crossed?).
         A crossing counts only before the scan reaches the same edge."""
         key = (a, b) if a < b else (b, a)
         hit = self.pos.get(key, -1)
@@ -484,14 +484,14 @@ def _mirrored(key, mask, pairs):
 
 
 def assign_planes(points, faces, optimize=True, planes=6, layout=True):
-    """Maya polyAutoProjection's projection shells.
+    """Projection shells of UV > Automatic.
 
     ``points`` = vertex positions in Maya object space and Maya units (Y up); ``faces`` = vertex index lists of the
-    faces to project, in Maya face order (only these take part; others block the flood like unselected faces).
+    faces to project, in face order (only these take part; others block the flood like unselected faces).
     ``optimize`` = Fewer pieces (default 1); ``planes`` = a ``PLANE_SETS`` key; ``layout`` = the shells are laid
     out afterwards (Layout other than None: each plane's UVs start at its ``OFFSETS`` place, which can move a fold
     across the 1e-6 touching limit). Returns ``[(plane, [face positions])]`` in creation order; ``plane`` indexes
-    ``PLANE_SETS[planes].frames``: every face in the same shell as Maya's."""
+    ``PLANE_SETS[planes].frames``: every face lands in the same shell as in Maya."""
     pset = PLANE_SETS[planes]
     count = len(pset.frames)
     n = len(faces)

@@ -8,7 +8,7 @@ skinCluster's blendWeights b (default 0 = linear).
 Blender: Dual Quaternion = the Armature modifier's Preserve Volume (the same skinning as Maya's Dual Quaternion);
 Weight Blended = the skin's Armature modifier (linear) followed by a second Armature modifier of the same skeleton
 with Preserve Volume and Multi Modifier, mixed by the vertex group ``blendWeights`` (Blender's multi modifier: same
-input as the previous modifier, result = lerp(previous, this, group weight) — Maya's formula). The second modifier is a
+input as the previous modifier, result = lerp(previous, this, group weight) — the same blend as Maya's). The second modifier is a
 part of the skin: hidden from INPUTS and from the skin lists (``is_part``).
 """
 
