@@ -166,10 +166,11 @@ def _flipped(U, T, sign, ok):
     return ok & (_uv_signed_areas(U, T) * sign <= 0)
 
 
-def optimize(P, U, T, held, iterations=1, surfangle=1.0, prevent_flips=True, steps=1):
+def optimize(P, U, T, held, iterations=1, surfangle=1.0, prevent_flips=True, steps=1, keep_centre=False):
     """Relax one shell. ``P`` (n, 3) the 3D point of each UV, ``U`` (n, 2) the UVs, ``T`` (m, 3) triangles over UV
     indices, ``held`` (n,) bool = UVs that must not move. ``iterations`` = Maya's Iterations (``steps`` local / global
-    steps each). Returns the new (n, 2) UVs."""
+    steps each). ``keep_centre``: a shell with nothing held keeps the mean of its UVs in place instead of one UV.
+    Returns the new (n, 2) UVs."""
     P = np.asarray(P, float)
     U0 = np.asarray(U, float)
     T = np.asarray(T, int)
@@ -215,9 +216,20 @@ def optimize(P, U, T, held, iterations=1, surfangle=1.0, prevent_flips=True, ste
                 break
         U = new
     if not held.any():
-        U = _keep_place(U0, U, T)
+        U = _keep_centre(U0, U, T, used) if keep_centre else _keep_place(U0, U, T)
     U[held] = U0[held]
     return U
+
+
+def _keep_centre(U0, U, T, used):
+    """A shell with nothing held: its UV area as before, with the mean of its UVs back where it was."""
+    a0 = float(np.abs(_uv_signed_areas(U0, T)).sum())
+    a1 = float(np.abs(_uv_signed_areas(U, T)).sum())
+    k = math.sqrt(a0 / a1) if a1 > 1e-18 else 1.0
+    c0, c1 = U0[used].mean(0), U[used].mean(0)
+    out = U.copy()
+    out[used] = c0 + (U[used] - c1) * k
+    return out
 
 
 def _keep_place(U0, U, T, anchor=0):

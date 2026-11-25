@@ -4,7 +4,7 @@
 Like Maya: the selected UVs (the UVs of the selected faces, or the selected UVs / vertices) relax against the 3D
 surface; every other UV of their shells and every pinned UV stays where it is. Nothing selected = nothing to do.
 A shell whose UVs are all selected keeps its UV area and one UV (its first) where it was; the rest may turn a little
-around it. Options (the
+around it; with one pinned UV alone the pin doesn't hold it and the mean of its UVs stays instead. Options (the
 Optimize UVs Options window, operators/option_windows_uv.py): Iterations 1, Surfangle 1, Power 100 (below 100
 nothing moves), Prevent triangle flips on. The menu item, the UV Toolkit button and the marking menu items run with
 the saved values.
@@ -103,9 +103,14 @@ def optimize_mesh(context, ob, values):
             groups, new = _relax_shell(ob, uv, isl, picked, values)
         else:
             P, U, T, held, groups = _shell_problem(ob, bm, uv, isl, picked, tris)
+            # a fully selected shell with one pinned UV: the pin alone doesn't hold it, the shell relaxes as a free
+            # one and keeps the mean of its UVs in place, like Maya (two pins or more hold)
+            centre = int(held.sum()) == 1 and all(l in picked for f in isl for l in f.loops)
+            if centre:
+                held[:] = False
             new = uv_optimize_math.optimize(P, U, T, held, iterations=int(values["iterations"]),
                                             surfangle=float(values["surfangle"]),
-                                            prevent_flips=bool(values["prevent_flips"]))
+                                            prevent_flips=bool(values["prevent_flips"]), keep_centre=centre)
         moved = False
         for ls, p in zip(groups, new):
             if abs(ls[0][uv].uv.x - p[0]) > 1e-9 or abs(ls[0][uv].uv.y - p[1]) > 1e-9:

@@ -277,3 +277,34 @@ def test_solver_reads_a_mirrored_shell_and_keeps_held_uvs():
     out = opt_math.optimize(P, U, T, held, iterations=1)
     assert tuple(out[0]) == (0.0, 0.0)
     assert opt_math.optimize(P, U, T, [False] * 5, iterations=0).tolist() == [list(map(float, u)) for u in U]
+
+
+def test_one_pinned_uv_does_not_hold_the_shell():
+    """Like Maya, one pinned UV alone doesn't hold a fully selected shell: the shell relaxes as a free one, keeps its
+    UV area and the mean of its UVs stays where it was (the pinned UV moves); two pinned UVs stay."""
+    for pins in (1, 2):
+        _reset()
+        ob = _grid(uv_fn=_squash)
+        _edit(ob)
+        bm, uv = _bm(ob)
+        bm.faces.ensure_lookup_table()
+        corner = [bm.faces[0].loops[0], bm.faces[-1].loops[2]][:pins]
+        pinned = {l.vert.index for l in corner}
+        for f in bm.faces:
+            for l in f.loops:
+                if l.vert.index in pinned:
+                    l[uv].pin_uv = True
+        bmesh.update_edit_mesh(ob.data)
+        before = _uv_by_vert(ob)
+        area0 = _uv_area(ob)
+        assert bpy.ops.allset.menu_item(item=OPTIMIZE) == {'FINISHED'}
+        after = _uv_by_vert(ob)
+        moved = [i for i in pinned if (after[i] - before[i]).length > 1e-6]
+        if pins == 1:
+            assert moved, "a single pinned UV moves with the shell"
+            c0 = sum(before.values(), before[0] * 0) / len(before)
+            c1 = sum(after.values(), after[0] * 0) / len(after)
+            assert (c1 - c0).length < 1e-5, (c0, c1)
+            assert abs(_uv_area(ob) - area0) < 1e-5 and _distortion(ob) < 1e-3
+        else:
+            assert not moved, moved
