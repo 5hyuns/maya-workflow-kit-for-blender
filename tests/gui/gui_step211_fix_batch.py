@@ -71,6 +71,9 @@ def s_scene():
         bpy.ops.allset.create(kind='CUBE')
         bpy.ops.allset.create(kind='SPHERE')
     mod("operators.sets").create(objects=[bpy.data.objects["pCube1"]])
+    # a new shape has no material: give the cube one (Assign New Material) so its AE has the shading group and
+    # material tabs too
+    bpy.data.objects["pCube1"].data.materials.append(mod("operators.material").new_material())
     redraw()
 
 
@@ -176,7 +179,7 @@ def s_ae():
         a, b, over = ae.tab_window(widths, avail, 0, 0)
         bottom = ae.wrap_rows(ctx, [t for _o, t in ae.BOTTOM])
     check(f"the node tabs are one row with every tab shown ({labels}, {sum(widths):.0f} / {avail} px)",
-          not over and (a, b) == (0, len(labels)) and len(labels) >= 4)
+          not over and (a, b) == (0, len(labels)) and len(labels) >= 5)
     check(f"Select / Load Attributes / Copy Tab are one row ({bottom})", len(bottom) == 1)
     shot("ae")
 
