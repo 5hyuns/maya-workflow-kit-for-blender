@@ -346,9 +346,19 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
         return ob is not None and ob.type == 'MESH' and context.mode in {'EDIT_MESH', 'OBJECT'}
 
     def execute(self, context):
+        from .uv_projection import UVPickedFaces
+        with UVPickedFaces(context):
+            done = self._project(context)
+        if not done:
+            self.report({'WARNING'}, "Select faces (or a mesh) to project.")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+    def _project(self, context):
         fixed = AXIS_NORMALS.get(self.axis)
         obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
                if o.type == 'MESH']
+        done = 0
         for ob in obs:
             edit = ob.mode == 'EDIT'
             bm = bmesh.from_edit_mesh(ob.data) if edit else bmesh.new()
@@ -361,12 +371,13 @@ class ALLSET_OT_uv_planar(bpy.types.Operator):
                 continue
             layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
             project_faces(ob, faces, layer, fixed)
+            done += 1
             if edit:
                 bmesh.update_edit_mesh(ob.data)
             else:
                 bm.to_mesh(ob.data)
                 bm.free()
-        return {'FINISHED'}
+        return done
 
 
 classes = (ALLSET_OT_open_editor, ALLSET_OT_increment_save, ALLSET_MT_export_selection,

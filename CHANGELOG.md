@@ -25,6 +25,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   With an edge or vertex selected, Unfold, Layout, Layout Along, Unfold Along U/V, Orient Shells, Stack Shells, Stack
   Similar Shells, Snap, Randomize, Unitize and Texel Density Set work on the shells beside it (they used to take every
   shell, or did nothing), like Maya; Map Border still needs faces.
+- **UV projections in UV component mode** (#553): with UV Sync Selection off, Planar, Cylindrical, Spherical,
+  Automatic, Contour Stretch, Normal-Based and Best Plane project only the picked UV faces; with only UVs or UV edges
+  picked nothing is projected and a warning asks for faces (they used to re-project every face of every mesh), like
+  Maya.
 - **Cut UV Edges and Create UV Shell** (#550): shells that are already separate are left where they are.
 - **Bevel with an absolute Offset next to a twisted face** (#213, part): the new edge across each end comes out like
   Maya's.

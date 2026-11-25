@@ -8,7 +8,6 @@ Entry point: ``WINDOWS`` (``option_windows`` lists these first, then the other `
 Related: ``option_windows_spec`` (F / Window and the shared run helpers).
 """
 
-import bmesh
 import bpy
 from mathutils import Vector
 
@@ -120,29 +119,15 @@ def _run_bake(context, v):
 
 
 def _run_uv_planar(context, v):
-    from .menu_extras import AXIS_NORMALS, project_faces
-    axis = {"X axis": AXIS_NORMALS['X'], "Y axis": AXIS_NORMALS['Y'], "Z axis": AXIS_NORMALS['Z']}
+    # X / Y / Z axis: allset.uv_planar projects along the scene axis (and takes the picked UV faces in UV mode)
+    axis = {"X axis": 'X', "Y axis": 'Y', "Z axis": 'Z'}
     if v["fit"] == "Best plane" or v["project_from"] == "Camera":
         return bpy.ops.allset.uv_planar('EXEC_DEFAULT', axis='NORMAL')
-    normal = axis[v["project_from"]]
     obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
            if o.type == 'MESH']
     if not obs:
         raise RuntimeError("Select faces (or a mesh) to project.")
-    for ob in obs:
-        edit = ob.mode == 'EDIT'
-        bm = bmesh.from_edit_mesh(ob.data) if edit else bmesh.new()
-        if not edit:
-            bm.from_mesh(ob.data)
-        faces = [f for f in bm.faces if f.select] if edit else list(bm.faces)
-        layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
-        project_faces(ob, faces, layer, normal)
-        if edit:
-            bmesh.update_edit_mesh(ob.data)
-        else:
-            bm.to_mesh(ob.data)
-            bm.free()
-    return {'FINISHED'}
+    return bpy.ops.allset.uv_planar('EXEC_DEFAULT', axis=axis[v["project_from"]])
 
 
 def _run_uv_auto(context, v):

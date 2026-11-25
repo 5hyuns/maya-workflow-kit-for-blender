@@ -3,7 +3,8 @@
 operators/autoproj_layout.py; ``allset.uv_automatic``) and its editable polyAutoProj node (the ``AUTOPROJ`` spec of
 operators/extrude_spec.py, ``allset.uv_automatic_edit``), and UV > Contour Stretch (``allset.uv_contour``: Follow Active
 Quads, then 0-1) and UV > Cylindrical / Spherical (``allset.uv_cylindrical`` / ``allset.uv_spherical``,
-``round_project``). From object mode they act on every face of the selected meshes (``_ObjectFaces``).
+``round_project``). From object mode they act on every face of the selected meshes (``_ObjectFaces``); in the kit's
+UV component mode on the picked UV faces only (``UVPickedFaces``).
 """
 
 import math
@@ -13,9 +14,50 @@ import bpy
 from bpy.props import EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
-from .. import undo_steps
+from .. import compat, undo_steps
 from . import units
-from .uv_islands import _with_faces
+from .uv_islands import _edit_meshes, _with_faces, restore_selection, selection_state
+
+
+class UVPickedFaces:
+    """Projections work on faces, like Maya. In the kit's UV component mode (UV Sync Selection off, the UV selection is
+    what is picked) the faces are the picked UV faces: with only UVs / UV edges picked no face is projected. Meanwhile
+    the mesh selection is those faces; afterwards it is put back. Elsewhere (UV Sync Selection, the 3D View outside UV
+    mode, UV Shell picking) nothing changes."""
+
+    def __init__(self, context):
+        self.context = context
+        self.saved = []
+
+    def __enter__(self):
+        context = self.context
+        if context.mode != 'EDIT_MESH':
+            return self
+        from . import uv_shell_select
+        from .uv_components import mesh_selection_wanted
+        ts = context.scene.tool_settings
+        if mesh_selection_wanted(context) or compat.uv_island_mode(ts) or uv_shell_select.active(context):
+            return self
+        face_mode = ts.uv_select_mode == 'FACE'
+        for ob in _edit_meshes(context):
+            bm = bmesh.from_edit_mesh(ob.data)
+            uv = bm.loops.layers.uv.active
+            keep = [f for f in bm.faces if face_mode and uv is not None and f.select and not f.hide
+                    and all(compat.uv_vert_selected(lp, uv) for lp in f.loops)]
+            self.saved.append((ob, selection_state(bm)))
+            for f in bm.faces:
+                f.select_set(False)
+            for f in keep:
+                f.select_set(True)
+            bmesh.update_edit_mesh(ob.data)
+        return self
+
+    def __exit__(self, *exc):
+        for ob, state in self.saved:
+            if ob.mode == 'EDIT':
+                restore_selection(bmesh.from_edit_mesh(ob.data), state)
+                bmesh.update_edit_mesh(ob.data)
+        return False
 
 
 # --- Automatic / Contour Stretch -------------------
@@ -83,15 +125,17 @@ def fit_unit(loops, uv):
 class _ObjectFaces:
     """From object mode: the selected meshes in edit mode with every face selected (Maya converts an object selection
     to its faces for UV projections), back to
-    object mode afterwards. In edit mode: nothing."""
+    object mode afterwards. In edit mode: the meshes in edit mode (``UVPickedFaces`` meanwhile)."""
 
     def __init__(self, context):
         self.context = context
         self.entered = False
+        self.picked = None
 
     def __enter__(self):
         context = self.context
         if context.mode == 'EDIT_MESH':
+            self.picked = UVPickedFaces(context).__enter__()
             return [o for o in context.objects_in_mode_unique_data if o.type == 'MESH']
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
         if not meshes:
@@ -105,6 +149,8 @@ class _ObjectFaces:
         return [o for o in bpy.context.objects_in_mode_unique_data if o.type == 'MESH']
 
     def __exit__(self, *exc):
+        if self.picked is not None:
+            self.picked.__exit__(*exc)
         if self.entered:
             bpy.ops.object.mode_set(mode='OBJECT')
         return False
