@@ -110,8 +110,9 @@ def wedge_case(name, edge_mid, hinge_axis, hinge_value):
               and all(abs(getattr(v, hinge_axis) - hinge_value) < 1e-3 for v in top))
 
 
-def edge_first_case(name, edge_mid, hinge_axis, hinge_value):
-    """Edge mode (F10): click a top edge; face mode (F11): Shift+click the top face; Wedge turns about that edge."""
+def edge_first_case(name, edge_mid, hinge_axis, hinge_value, header=False):
+    """Edge mode (F10): click a top edge; face mode (F11, or ``header``: the header's mode button, which sets the
+    select mode directly): Shift+click the top face; Wedge turns about that edge."""
     @step
     def s_reset():
         ob = bpy.data.objects["Cube"]
@@ -134,7 +135,10 @@ def edge_first_case(name, edge_mid, hinge_axis, hinge_value):
     @step
     def s_face_mode():
         C[name + "after_edge"] = state()
-        tap('F11')
+        if header:
+            bpy.context.scene.tool_settings.mesh_select_mode = (False, False, True)
+        else:
+            tap('F11')
 
     @step
     def s_face():
@@ -179,5 +183,7 @@ wedge_case("front", (0, -1, 1), "y", -1.0)
 wedge_case("right", (1, 0, 1), "x", 1.0)
 edge_first_case("edge_first_front", (0, -1, 1), "y", -1.0)
 edge_first_case("edge_first_right", (1, 0, 1), "x", 1.0)
+edge_first_case("header_front", (0, -1, 1), "y", -1.0, header=True)
+edge_first_case("header_right", (1, 0, 1), "x", 1.0, header=True)
 
 run()

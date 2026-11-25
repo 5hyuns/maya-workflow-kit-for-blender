@@ -4,7 +4,8 @@
 Maya keeps an edge selection when the selection mode changes to faces, so an edge picked first and a face added
 after it (Shift+click in face mode) still give Wedge its hinge. Blender drops edges that are not part of a selected
 face when it switches to face mode, so ``remember`` keeps them (vertex index pairs and their positions) per object
-just before the switch, and ``hinge_edge`` finds them again.
+just before the switch (kit F11 / marking menu), ``follow_active`` keeps the active lone edge while edge mode is
+drawn (any other route to face mode), and ``hinge_edge`` finds them again.
 
 In edge mode a selected face's edges all draw as selected, so the edge picked on it (the active edge) can't be told
 apart; ``draw_hinge`` draws the hinge Wedge would use (the active edge on a selected face, or a kept edge on the
@@ -85,6 +86,22 @@ def hinge_edge(ob, bm, faces, fallback=True):
     return next((e for f in faces for e in f.edges if e.select and _border(e, sel)), None)
 
 
+def follow_active(ob, bm, select_mode):
+    """In edge mode alone, keep the active edge picked on its own (not part of a selected face) as it changes, so
+    a switch to face mode by any route (the header's mode buttons too) still finds it; another active element (or
+    none) drops it. Run on each viewport draw: one look at the active element."""
+    if tuple(select_mode) != (False, True, False):
+        return
+    act = bm.select_history.active
+    if isinstance(act, bmesh.types.BMEdge) and act.select and not any(f.select for f in act.link_faces):
+        key = (act.verts[0].index, act.verts[1].index)
+        entries = _kept.get(ob.name)
+        if not entries or entries[0][0] != key or (entries[0][1][0] - act.verts[0].co).length > _EPS:
+            _kept[ob.name] = [(key, (act.verts[0].co.copy(), act.verts[1].co.copy()))]
+    elif ob.name in _kept:
+        del _kept[ob.name]
+
+
 def shown_hinge(ob, bm):
     """The hinge drawn for ``ob`` (``bm`` = its edit BMesh, kept alive by the caller), or None."""
     act = bm.select_history.active
@@ -103,10 +120,12 @@ def draw_hinge():
         if context.mode != 'EDIT_MESH':
             return
         pts = []
+        select_mode = context.tool_settings.mesh_select_mode
         for ob in context.objects_in_mode_unique_data:
             if ob.type != 'MESH':
                 continue
             bm = bmesh.from_edit_mesh(ob.data)
+            follow_active(ob, bm, select_mode)
             e = shown_hinge(ob, bm)
             if e is not None:
                 mw = ob.matrix_world
