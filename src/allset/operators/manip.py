@@ -94,7 +94,7 @@ def start_duplicate(context):
     duplicate.duplicate(context)
     copies = list(context.selected_objects)
     return {"kind": 'DUPLICATE', "copies": [o.name for o in copies],
-            "matrices": [o.matrix_world.copy() for o in copies],
+            "matrices": [o.matrix_basis.copy() for o in copies],
             "originals": [o.name for o in originals], "active": active.name if active else None}
 
 
@@ -223,9 +223,11 @@ def moved(state):
             return True    # a copy went meanwhile (undo, another mode): keep what is there
         return any(abs(a - b) > EPS for key, place in now.items() for a, b in zip(place, state["places"][key]))
     if state["kind"] == 'DUPLICATE':
+        # the channels, not matrix_world: a cancelled transform puts the channels back at once, matrix_world only at
+        # the next scene update (a check before it saw the copy as moved and kept it; #570)
         for name, m in zip(state["copies"], state["matrices"]):
             ob = bpy.data.objects.get(name)
-            if ob is not None and any(abs(a - b) > EPS for ra, rb in zip(ob.matrix_world, m)
+            if ob is not None and any(abs(a - b) > EPS for ra, rb in zip(ob.matrix_basis, m)
                                       for a, b in zip(ra, rb)):
                 return True
         return False
