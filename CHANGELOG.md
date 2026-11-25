@@ -28,6 +28,12 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Unfold (Option) and Layout (Option), and Select Overlapping / Non-Overlapping / Back-Facing / Front-Facing UVs.
 
 ### Fixed
+- **Mesh > Transfer Attributes** (#554): select the source mesh, then the target: the target takes the source's
+  vertex normals, vertex positions, UV sets and color sets, live, like Maya (it used to add an empty Data Transfer
+  modifier that transferred nothing). With Vertex normal On a hard-edged low-poly mesh takes the smooth normals of the
+  mesh around it, one normal per vertex. The option box opens Transfer Attributes Options (Vertex position, Vertex
+  normal, UV Sets, Color Sets, Sample space, Search method); Mirroring, Flip UVs and Color borders stay greyed, and
+  only one source is used when several are selected.
 - **Soft Select with the Scale Tool** (#548): dragging a Scale handle in component mode moves the points around the
   selection by the soft-select falloff, like Move and Rotate.
 - **New objects moved together with others** (#547): with soft select on, moving an object in object mode no longer

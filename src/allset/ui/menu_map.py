@@ -373,7 +373,7 @@ MAP = {
     "Mesh/Triangulate": _mod('TRIANGULATE'),
     "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
     "Mesh/Mirror": "allset.mirror",                       # applied, world plane; □ = Mirror Options
-    "Mesh/Transfer Attributes": _mod('DATA_TRANSFER'),
+    "Mesh/Transfer Attributes": "allset.transfer_attributes",   # live, source = other selected (#554)
     "Mesh/Smooth Proxy/Subdiv Proxy": ("allset.smooth_proxy", {"action": 'CREATE'}),   # same as Ctrl+Shift+~
     # --- Edit Mesh ---
     "Edit Mesh/Add Divisions": "allset.subdivide",

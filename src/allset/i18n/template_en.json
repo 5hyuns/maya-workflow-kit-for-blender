@@ -7677,6 +7677,30 @@
    "Menu Set": "Menu Set",
    "Object/Component": "Object/Component"
   },
+  "Labels/operators/transfer_attributes": {
+   "Attribute Settings": "Attribute Settings",
+   "Attributes To Transfer": "Attributes To Transfer",
+   "Closest along normal": "Closest along normal",
+   "Closest to point": "Closest to point",
+   "Color Sets": "Color Sets",
+   "Color borders": "Color borders",
+   "Component": "Component",
+   "Flip UVs": "Flip UVs",
+   "Ignore": "Ignore",
+   "Local": "Local",
+   "Mirroring": "Mirroring",
+   "Off": "Off",
+   "Preserve": "Preserve",
+   "Sample space": "Sample space",
+   "Search method": "Search method",
+   "Topology": "Topology",
+   "Transfer Attributes": "Transfer Attributes",
+   "UV": "UV",
+   "UV Sets": "UV Sets",
+   "Vertex normal": "Vertex normal",
+   "Vertex position": "Vertex position",
+   "World": "World"
+  },
   "Labels/operators/trax_clips": {
    "Activate/Deactivate Keys": "Activate/Deactivate Keys",
    "All Clips": "All Clips",
@@ -12751,6 +12775,9 @@
    "Go back to the last tool other than Select/Move/Rotate/Scale (Maya Y)": "Go back to the last tool other than Select/Move/Rotate/Scale (Maya Y)",
    "Switch the Maya menu set (Maya F2 Modeling, F3 Rigging, F4 Animation, F5 FX, F6 Rendering)": "Switch the Maya menu set (Maya F2 Modeling, F3 Rigging, F4 Animation, F5 FX, F6 Rendering)",
    "Toggle object / component selection (Maya F8, SelectToggleMode) with Maya's in-view message": "Toggle object / component selection (Maya F8, SelectToggleMode) with Maya's in-view message"
+  },
+  "Tooltips/operators/transfer_attributes": {
+   "Maya Transfer Attributes: the last selected mesh takes vertex positions, normals, UV sets and color sets\nfrom the other selected mesh, live (press and hold the menu item for the Transfer Attributes Options)": "Maya Transfer Attributes: the last selected mesh takes vertex positions, normals, UV sets and color sets\nfrom the other selected mesh, live (press and hold the menu item for the Transfer Attributes Options)"
   },
   "Tooltips/operators/trax_clips": {
    "Delete this source clip and all its instances": "Delete this source clip and all its instances",

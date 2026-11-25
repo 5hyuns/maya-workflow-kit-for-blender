@@ -38,6 +38,7 @@ from . import film_fit  # Maya camera Fit Resolution Gate (#345)
 from . import shape_attrs  # Maya camera / light / locator shape attributes kept by the kit (#481)
 from . import pick_order  # the order the selected objects were picked in (Match Transformations)
 from . import universal_manip  # Universal Manipulator drags (#318)
+from . import transfer_attributes  # Mesh > Transfer Attributes (#554)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pivot_pick.classes,
@@ -56,7 +57,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *poly_maya.classes, *rig_maya.classes, *loop_pick.classes,
            *select_convert.classes, *poly_draw.classes, *quad_draw.classes,
            *edge_loops.classes, *connect_tool.classes, *move_component.classes, *duplicate_face.classes, *window_toggle.classes,
-           *extrude_curve.classes)
+           *extrude_curve.classes, *transfer_attributes.classes)
 
 from . import deformers  # noqa: E402  Maya Deform menu deformers + Paint Weights (#34)
 
