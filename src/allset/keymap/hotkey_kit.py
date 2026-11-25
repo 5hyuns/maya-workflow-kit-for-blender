@@ -20,8 +20,16 @@ _MOVE = (("Up", 'UP'), ("Down", 'DOWN'), ("Left", 'LEFT'), ("Right", 'RIGHT'), (
 _ALIGN = (("Min U", 'U', 'MIN'), ("Avg U", 'U', 'AVG'), ("Max U", 'U', 'MAX'),
           ("Min V", 'V', 'MIN'), ("Avg V", 'V', 'AVG'), ("Max V", 'V', 'MAX'))
 _DISTRIBUTE = (("Up", 'UP'), ("Down", 'DOWN'), ("Left", 'LEFT'), ("Right", 'RIGHT'))
+# the nine Pivot and Snap buttons (operators/uv_transform.POSITIONS)
+_PLACES = (("Top Left", 'TOP_LEFT'), ("Top", 'TOP'), ("Top Right", 'TOP_RIGHT'), ("Left", 'LEFT'),
+           ("Center", 'CENTER'), ("Right", 'RIGHT'), ("Bottom Left", 'BOTTOM_LEFT'), ("Bottom", 'BOTTOM'),
+           ("Bottom Right", 'BOTTOM_RIGHT'))
 
 COMMANDS = (
+    *((f"UVToolkitPivot{label.replace(' ', '')}", f"UV Pivot {label}", TOOLKIT, "allset.uv_pivot",
+       {"position": p}) for label, p in _PLACES),
+    ("UVToolkitEditPivot", "Edit UV Pivot", TOOLKIT, "allset.uv_pivot_edit", {}),
+    ("UVToolkitResetPivot", "Reset UV Pivot", TOOLKIT, "allset.uv_pivot_reset", {}),
     *((f"UVToolkitMove{d.title().replace('_', '')}", f"Move UVs {label}", TOOLKIT, "allset.uv_nudge",
        {"direction": d}) for label, d in _MOVE),
     ("UVToolkitRotateCounterclockwise", "Rotate UVs Counterclockwise", TOOLKIT, "allset.uv_rotate_step",
@@ -33,6 +41,8 @@ COMMANDS = (
     ("UVToolkitFlipV", "Flip V", TOOLKIT, "allset.uv_flip", {"direction": 'VERTICAL'}),
     *((f"UVToolkitAlign{label.replace(' ', '')}", f"Align {label}", TOOLKIT, "allset.uv_align_to",
        {"axis": axis, "where": where}) for label, axis, where in _ALIGN),
+    *((f"UVToolkitSnap{label.replace(' ', '')}", f"Snap Shells {label}", TOOLKIT, "allset.uv_snap_shells",
+       {"position": p}) for label, p in _PLACES),
     ("UVToolkitUnfoldAlongU", "Unfold Along U", TOOLKIT, "allset.uv_unfold_along", {"axis": 'U'}),
     ("UVToolkitUnfoldAlongV", "Unfold Along V", TOOLKIT, "allset.uv_unfold_along", {"axis": 'V'}),
     ("UVToolkitStraightenU", "Straighten UVs U", TOOLKIT, "allset.uv_straighten_uvs",
@@ -47,6 +57,7 @@ COMMANDS = (
        {"direction": d, "padding": "@distribute_factor"}) for label, d in _DISTRIBUTE),
     ("UVToolkitLayoutAlongU", "Layout Along U", TOOLKIT, "allset.uv_layout_along", {"direction": 'U'}),
     ("UVToolkitLayoutAlongV", "Layout Along V", TOOLKIT, "allset.uv_layout_along", {"direction": 'V'}),
+    ("UVToolkitMeasure", "Measure UVs", TOOLKIT, "allset.uv_measure", {}),
     ("UVToolkitTexelGet", "Get Texel Density", TOOLKIT, "allset.uv_texel_get", {}),
     ("UVToolkitTexelSet", "Set Texel Density", TOOLKIT, "allset.uv_texel_set", {}),
     ("ViewportXRayToggle", "X-Ray (Toggle)", "Other items.Modeling Toolkit", "toggle",
