@@ -77,7 +77,8 @@ def test_b_tap_is_one_state_in_object_and_component_mode():
     b = taphold.get_binding("soft_select")
     b.tap(_Ctx('OBJECT'))
     ts = _ts()
-    assert ts.use_proportional_edit_objects and ts.use_proportional_edit, "B in object mode = on everywhere"
+    assert ts.use_proportional_edit, "B in object mode = on for components too"
+    assert not ts.use_proportional_edit_objects, "#547: whole objects never follow soft select"
     assert soft.is_on()
     b.tap(_Ctx('EDIT_MESH'))
     assert not ts.use_proportional_edit_objects and not ts.use_proportional_edit, "B in face mode = off everywhere"
@@ -88,7 +89,7 @@ def test_every_scene_follows():
     other = bpy.data.scenes.new("other")
     try:
         soft.set_on(True)
-        assert other.tool_settings.use_proportional_edit and other.tool_settings.use_proportional_edit_objects
+        assert other.tool_settings.use_proportional_edit and not other.tool_settings.use_proportional_edit_objects
     finally:
         bpy.data.scenes.remove(other)
         soft.set_on(False)
@@ -99,17 +100,21 @@ def test_blender_toggle_is_pulled_into_the_state():
     ts = _ts()
     ts.use_proportional_edit = True            # Blender's header button / wm.context_toggle in edit mode
     soft.pull(bpy.context.scene)
-    assert soft.is_on() and ts.use_proportional_edit_objects
-    ts.use_proportional_edit_objects = False   # ... and off in object mode
+    assert soft.is_on() and not ts.use_proportional_edit_objects
+    ts.use_proportional_edit_objects = True    # Blender's object-mode button toggles the state: off
     soft.pull(bpy.context.scene)
-    assert not soft.is_on() and not ts.use_proportional_edit
+    assert not soft.is_on() and not ts.use_proportional_edit and not ts.use_proportional_edit_objects
+    ts.use_proportional_edit_objects = True    # ... and on again, the object-mode flag staying off
+    soft.pull(bpy.context.scene)
+    assert soft.is_on() and ts.use_proportional_edit and not ts.use_proportional_edit_objects
+    soft.set_on(False)
 
 
 def test_toolkit_checkbox_is_the_state():
     soft.set_on(False)
     sc = bpy.context.scene
     sc.allset_soft_select = True
-    assert soft.is_on() and sc.tool_settings.use_proportional_edit_objects and sc.tool_settings.use_proportional_edit
+    assert soft.is_on() and not sc.tool_settings.use_proportional_edit_objects and sc.tool_settings.use_proportional_edit
     sc.allset_soft_select = False
     assert not soft.is_on()
 
@@ -137,7 +142,7 @@ def test_b_drag_turns_on_both_and_cancel_restores():
 
     ctx = _Ctx('EDIT_MESH')
     assert b.click(ctx, _Ev(500)) == 'DRAG'
-    assert ts.use_proportional_edit and ts.use_proportional_edit_objects
+    assert ts.use_proportional_edit and not ts.use_proportional_edit_objects
     b.drag(ctx, _Ev(600), (500, 0))
     assert abs(ts.proportional_size - 4.0) < 1e-5
     b.drag_cancel(ctx)

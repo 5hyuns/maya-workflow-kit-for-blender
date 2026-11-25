@@ -134,17 +134,18 @@ class _Ev:
 
 
 def test_soft_select_tap_toggles_one_state():
-    """#15: one Maya state, both Blender flags follow it (was per mode)."""
+    """#15: one Maya state for object and component mode (was per mode); #547: Blender's object-mode flag stays
+    off, so whole objects never follow soft select."""
     ts = _ts()
     b = taphold.get_binding("soft_select")
     ts.use_proportional_edit_objects = False
     ts.use_proportional_edit = False
     b.tap(_Ctx('OBJECT'))
-    assert ts.use_proportional_edit_objects and ts.use_proportional_edit
+    assert ts.use_proportional_edit and not ts.use_proportional_edit_objects
     b.tap(_Ctx('EDIT_MESH'))
     assert not ts.use_proportional_edit and not ts.use_proportional_edit_objects
     b.tap(_Ctx('OBJECT'))
-    assert ts.use_proportional_edit_objects and ts.use_proportional_edit
+    assert ts.use_proportional_edit and not ts.use_proportional_edit_objects
     b.tap(_Ctx('OBJECT'))
 
 
@@ -155,13 +156,13 @@ def test_soft_select_drag_and_cancel():
     ts.use_proportional_edit_objects = False
     ctx = _Ctx('OBJECT')
     assert b.click(ctx, _Ev(500)) == 'DRAG'
-    assert ts.use_proportional_edit_objects, "drag turns soft select on"
+    assert ts.use_proportional_edit and not ts.use_proportional_edit_objects, "drag turns soft select on"
     b.drag(ctx, _Ev(600), (500, 0))
     assert abs(ts.proportional_size - 4.0) < 1e-5, ts.proportional_size
     b.drag(ctx, _Ev(400), (500, 0))
     assert abs(ts.proportional_size - 1.0) < 1e-5
     b.drag_cancel(ctx)
-    assert abs(ts.proportional_size - 2.0) < 1e-5 and not ts.use_proportional_edit_objects
+    assert abs(ts.proportional_size - 2.0) < 1e-5 and not ts.use_proportional_edit
     assert taphold.radius_from_drag(1.0, -100000) > 0
 
 

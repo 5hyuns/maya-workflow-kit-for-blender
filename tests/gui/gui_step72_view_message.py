@@ -99,7 +99,7 @@ def s_hide_shot():
 @step
 def s_hide_nothing():
     check(f"Ctrl+H with nothing selected says so ({message()!r})", message().startswith("Nothing"))
-    C["soft0"] = bpy.context.scene.tool_settings.use_proportional_edit_objects
+    C["soft0"] = bpy.context.scene.tool_settings.use_proportional_edit
     centre()
     tap('B')
 
@@ -111,7 +111,7 @@ def s_soft_wait():
 
 @step
 def s_soft():
-    on = bpy.context.scene.tool_settings.use_proportional_edit_objects
+    on = bpy.context.scene.tool_settings.use_proportional_edit
     check(f"b tap turns soft select on ({C['soft0']} -> {on})", on and not C["soft0"])
     check(f"soft select on shows its message ({message()!r})", "Soft Select" in message())
 
@@ -127,7 +127,7 @@ def s_soft_shot():
 @step
 def s_soft_off():
     check(f"b again turns it off without a new message ({message()!r})",
-          not bpy.context.scene.tool_settings.use_proportional_edit_objects and "Soft Select" in message())
+          not bpy.context.scene.tool_settings.use_proportional_edit and "Soft Select" in message())
 
 
 for _i in range(10):   # 4 s: past fade in + hold + fade out of the last message

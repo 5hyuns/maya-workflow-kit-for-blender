@@ -59,8 +59,8 @@ def s_setup():
 
 @step
 def s_object_on():
-    check("B tap in object mode -> soft select on in object AND component mode",
-          ts().use_proportional_edit_objects and ts().use_proportional_edit and soft().is_on())
+    check("B tap in object mode -> soft select on for components too, whole objects never follow (#547)",
+          not ts().use_proportional_edit_objects and ts().use_proportional_edit and soft().is_on())
     in_v3d(bpy.ops.object.mode_set, mode='EDIT')
     ts().mesh_select_mode = (True, False, False)
     me = bpy.context.active_object.data
@@ -87,7 +87,7 @@ def s_edit_off():
 
 @step
 def s_edit_on_again():
-    check("B tap again -> on", ts().use_proportional_edit and ts().use_proportional_edit_objects)
+    check("B tap again -> on", ts().use_proportional_edit and not ts().use_proportional_edit_objects)
     C["view"] = view()
     C["size0"] = ts().proportional_size
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 120, y=C["y"] - 120)

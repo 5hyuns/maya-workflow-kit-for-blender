@@ -1594,7 +1594,7 @@ def _m72_3_alt_h():
     space = view3d()[0].spaces.active
     check(f"[M72-3] Alt+H message top left ({message()!r})",
           vm()._state["start"] != C["t"] and message() and vm().placement(vm()._state["pos"], space) == 'TOP_LEFT')
-    C["soft0"] = ts().use_proportional_edit_objects
+    C["soft0"] = ts().use_proportional_edit
     vm()._state["text"] = ""
     hover()
     tap('B')
@@ -1608,7 +1608,7 @@ def _m72_3_b_wait():
 @named("m72_3_b_on")
 def _m72_3_b_on():
     check(f"[M72-3] b turning soft select on shows a message ({message()!r})",
-          ts().use_proportional_edit_objects and not C["soft0"] and "Soft Select" in message())
+          ts().use_proportional_edit and not C["soft0"] and "Soft Select" in message())
     vm()._state["text"] = ""
     hover()
     tap('B')
@@ -1622,7 +1622,7 @@ def _m72_3_b_wait2():
 @named("m72_3_b_off")
 def _m72_3_b_off():
     check(f"[M72-3] b turning it off shows none ({message()!r})",
-          not ts().use_proportional_edit_objects and message() == "")
+          not ts().use_proportional_edit and message() == "")
     for o in bpy.context.scene.objects:
         o.hide_set(False)
         o.hide_viewport = False      # #26: Maya visibility = hide_viewport

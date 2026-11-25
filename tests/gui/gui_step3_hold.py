@@ -31,7 +31,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     ts().use_snap, ts().snap_elements = False, {'INCREMENT'}
     ts().use_transform_data_origin = False
-    ts().use_proportional_edit_objects, ts().proportional_size = False, 2.0   # a user radius (1.0 = Blender default becomes Maya 5)
+    ts().use_proportional_edit, ts().proportional_size = False, 2.0   # a user radius (1.0 = Blender default becomes Maya 5)
     check("keymap active = Maya", sys.modules["sim"].maya_keys())
     ev('X', 'PRESS')
 
@@ -81,7 +81,7 @@ def s_insert():
 
 @step
 def s_b_tap():
-    check("B tap -> soft select on", ts().use_proportional_edit_objects)
+    check("B tap -> soft select on", ts().use_proportional_edit)
     ev('B', 'PRESS')
     ev('LEFTMOUSE', 'PRESS', x=C["x"], y=C["y"])
 
@@ -102,7 +102,7 @@ def s_b_drag_check():
 
 @step
 def s_b_after():
-    check("B release after drag does not toggle", ts().use_proportional_edit_objects)
+    check("B release after drag does not toggle", ts().use_proportional_edit)
     area, _r = view3d()
     rv3d = area.spaces.active.region_3d
     C["dist"] = rv3d.view_distance * 5
