@@ -1,6 +1,7 @@
 """In a real UI (GitHub #27): Ctrl+Shift+X = the kit Multi-Cut tool; click an edge, hover the opposite edge
 (live preview), click it, Backspace removes it, click again, RMB = a new edge across the face (+2 v / +3 e / +1 f,
 Maya polySplit) and the tool stays; Ctrl hover = loop preview, Ctrl+click = an edge loop; Shift = Snap Step;
+a point on an edge that shares no face with the last one = a cut across the face in between (#545);
 Esc with no points leaves the tool."""
 
 import os
@@ -10,6 +11,7 @@ from importlib import import_module
 import bmesh
 import bpy
 from bpy_extras import view3d_utils
+from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
@@ -244,6 +246,67 @@ def s_shifted():
     ts = on_edge_ts(*C["edges"][0])
     check(f"Shift snaps the point to the 25 % Snap Step ({ts}), Enter completes", ts in ([0.25], [0.75]))
     bpy.context.scene.allset_mesh_tools.snap_step = 10
+    undo()
+
+
+def across_edges():
+    """An edge of the nearest face and the far edge of a visible neighbour face: no face in common (#545)."""
+    area, _region = view3d()
+    to_viewer = area.spaces.active.region_3d.view_rotation @ Vector((0, 0, 1))
+    b = bm()
+    face = min(b.faces, key=lambda f: sum(depth(v.co) for v in f.verts))
+    best = None
+    for shared in face.edges:
+        g = next(f for f in shared.link_faces if f is not face)
+        facing = (cube().matrix_world.to_3x3() @ g.normal).dot(to_viewer)
+        if best is None or facing > best[0]:
+            best = (facing, shared, g)
+    _facing, shared, g = best
+    start = next(e for e in face.edges if not set(e.verts) & set(shared.verts))
+    far = next(e for e in g.edges if not set(e.verts) & set(shared.verts))
+    return [(e.verts[0].co.copy(), e.verts[1].co.copy()) for e in (start, far)]
+
+
+@step
+def s_across():
+    C["edges"] = across_edges()
+    C["n0"] = counts()
+    click(*at(0, 0.5))
+
+
+@step
+def s_across_release():
+    release()
+    x, y = at(1, 0.5)
+    ev('MOUSEMOVE', 'NOTHING', x=x + 1, y=y)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+@step
+def s_across_far():
+    x, y = at(1, 0.5)
+    check(f"hovering an edge that shares no face with the last point is accepted ({mc().STATE['hover']})",
+          mc().STATE["hover"] is not None and mc().STATE["hover_ok"])
+    shot("gui_multi_cut_across_preview.png")
+    click(x, y)
+
+
+@step
+def s_across_far_release():
+    release()
+
+
+@step
+def s_across_enter():
+    check(f"two points ({mc().STATE['points']})", len(mc().STATE["points"]) == 2)
+    tap('RET')
+
+
+@step
+def s_across_cut():
+    n0, n = C["n0"], counts()
+    check(f"the cut runs across the face in between ({n0} -> {n}: +3 v / +5 e / +2 f)",
+          n == (n0[0] + 3, n0[1] + 5, n0[2] + 2))
     undo()
 
 

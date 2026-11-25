@@ -71,13 +71,128 @@ def same_point(a, b):
 
 
 def accepts(bm, points, new):
-    """Maya places a new point only on a face of the previous one (and not on the previous point itself)."""
+    """Like Maya: the next point is on a face of the previous one, or both are vertex / edge points and the cut can
+    run from one to the other across the faces in between (``across``). Never the previous point itself."""
     if not points:
         return True
     last = points[-1]
     if same_point(last, new):
         return False
-    return bool(point_faces(bm, last) & point_faces(bm, new))
+    if point_faces(bm, last) & point_faces(bm, new):
+        return True
+    return across(bm, last, new) is not None
+
+
+# --- pure: a cut across faces between two points ---------------------------------------------------------
+
+def _point_co(bm, point):
+    if point[0] == 'VERT':
+        return bm.verts[point[1]].co.copy()
+    e = bm.edges[point[1]]
+    return e.verts[0].co.lerp(e.verts[1].co, point[2])
+
+
+def _point_normal(bm, point):
+    """The mean of the unit normals of the faces a vertex / edge point lies on."""
+    faces = point_faces(bm, point)
+    n = Vector()
+    for f in faces:
+        n += f.normal
+    return n.normalized() if n.length > 1e-12 else n
+
+
+def _plane_normals(bm, a, b, d):
+    """Normals of the cut planes to try between points ``a`` and ``b`` (``d`` = b - a): the plane holds the line and
+    the sum of the two points' normals; when that is along the line (opposite normals), a start face's normal."""
+    out = []
+    for n in [_point_normal(bm, a) + _point_normal(bm, b)] + [f.normal.copy() for f in point_faces(bm, a)]:
+        m = d.cross(n)
+        if m.length > 1e-9 * max(1.0, d.length * n.length):
+            out.append(m.normalized())
+    return out
+
+
+def _walk(bm, a, b, S, m, eps):
+    """Crossings of the plane (through ``S``, normal ``m``) on the way from point ``a`` to point ``b`` over the
+    surface: [('EDGE', i, t) / ('VERT', i)] without the ends, the shortest of the ways found, or None."""
+    target_faces = point_faces(bm, b)
+    best = None
+
+    def side(v):
+        s = m.dot(v.co - S)
+        return 0.0 if abs(s) <= eps else s
+
+    def exits(face, entry):
+        """Plane crossings on the boundary of ``face`` other than the element it was entered by."""
+        out = []
+        for v in face.verts:
+            if side(v) == 0.0 and not (entry[0] == 'VERT' and entry[1] == v.index) and not (
+                    entry[0] == 'EDGE' and v in bm.edges[entry[1]].verts):
+                out.append(('VERT', v.index))
+        for e in face.edges:
+            if entry[0] == 'EDGE' and entry[1] == e.index:
+                continue
+            s0, s1 = side(e.verts[0]), side(e.verts[1])
+            if s0 * s1 < 0.0:
+                out.append(('EDGE', e.index, s0 / (s0 - s1)))
+        return out
+
+    def next_faces(face, point):
+        if point[0] == 'EDGE':
+            return [f for f in bm.edges[point[1]].link_faces if f is not face]
+        return [f for f in bm.verts[point[1]].link_faces if f is not face]
+
+    stack = [(f, a, [], 0.0, {f}) for f in point_faces(bm, a)]
+    steps = 0
+    while stack and steps < 20000:
+        steps += 1
+        face, entry, path, length, seen = stack.pop()
+        here = _point_co(bm, entry)
+        if face in target_faces:
+            total = length + (here - _point_co(bm, b)).length
+            if best is None or total < best[0] - 1e-9:
+                best = (total, path)
+            continue
+        for x in exits(face, entry):
+            step = length + (here - _point_co(bm, x)).length
+            if best is not None and step >= best[0]:
+                continue
+            for f in next_faces(face, x):
+                if f not in seen:
+                    stack.append((f, x, path + [x], step, seen | {f}))
+    return None if best is None else best[1]
+
+
+def across(bm, a, b):
+    """Like Maya: the points where a cut from vertex / edge point ``a`` to ``b`` crosses edges / passes vertices on
+    the faces in between (an empty list when they share a face), or None when there is no such cut. The cut runs
+    in the plane through both points that holds the sum of their normals."""
+    if a[0] == 'FACE' or b[0] == 'FACE':
+        return [] if point_faces(bm, a) & point_faces(bm, b) else None
+    if point_faces(bm, a) & point_faces(bm, b):
+        return []
+    S, E = _point_co(bm, a), _point_co(bm, b)
+    d = E - S
+    if d.length < 1e-12:
+        return None
+    eps = 1e-6 * max(1.0, d.length)
+    for m in _plane_normals(bm, a, b, d):
+        path = _walk(bm, a, b, S, m, eps)
+        if path is not None:
+            return path
+    return None
+
+
+def with_crossings(bm, points):
+    """``points`` with the crossings of every cut across faces put in between (see ``across``)."""
+    out = []
+    for p in points:
+        if out:
+            extra = across(bm, out[-1], p)
+            if extra:
+                out += extra
+        out.append(p)
+    return out
 
 
 def normalize(bm, point):
@@ -137,12 +252,14 @@ def _split_face(bm, a, b, coords):
 def cut(bm, points, subdivisions=1, smoothing_angle=math.pi, mirrored=None):
     """Maya polySplit: cut ``bm`` along ``points`` (each ``('VERT', i)``, ``('EDGE', i, t)`` with t from
     ``edges[i].verts[0]``, or ``('FACE', i, local co)``). Consecutive vertex / edge points are joined across the face
-    they share; face points in between become vertices inside that face. ``mirrored``: a second path on the same
+    they share, or across the faces in between when they share none (``across``); face points in between become
+    vertices inside that face. ``mirrored``: a second path on the same
     mesh (symmetry), cut together with the first. Returns the new cut edges."""
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
-    paths = [[normalize(bm, p) for p in path] for path in ([points] + ([mirrored] if mirrored else []))]
+    paths = [with_crossings(bm, [normalize(bm, p) for p in path])
+             for path in ([points] + ([mirrored] if mirrored else []))]
     # resolve every element before the mesh changes (BMesh references survive the splits, indices don't matter)
     chains = {}           # original edge -> [(t, vert)] sorted, ends included
 
@@ -532,12 +649,26 @@ def _draw_mirror(context, region, scale, ob, pts_points, hover):
         return
     done = world[:len(pts_points)]
     if None not in done and len(done) > 1:
-        _shader_lines(region, [q for a, b in zip(done, done[1:]) for q in (a, b)], POINT_RGB, LINE_PX * scale)
+        line = _mirrored_world(context, ob, _drawn_path(ob, pts_points))
+        if line is not None and None not in line:
+            _shader_lines(region, [q for a, b in zip(line, line[1:]) for q in (a, b)], POINT_RGB, LINE_PX * scale)
     if hover is not None and world[-1] is not None:
         if done and done[-1] is not None and STATE["hover_ok"]:
-            _shader_lines(region, [done[-1], world[-1]], PREVIEW_RGB, LINE_PX * scale)
+            line = _mirrored_world(context, ob, _drawn_path(ob, [pts_points[-1], hover]))
+            if line is not None and None not in line:
+                _shader_lines(region, [q for a, b in zip(line, line[1:]) for q in (a, b)], PREVIEW_RGB,
+                              LINE_PX * scale)
         _shader_points([world[-1]], PREVIEW_RGB if STATE["hover_ok"] else REJECT_RGB, POINT_PX * scale)
     _shader_points([w for w in done if w is not None], POINT_RGB, POINT_PX * scale)
+
+
+def _drawn_path(ob, points):
+    """``points`` with the crossings of cuts across faces, for drawing the cut line over the surface."""
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    return with_crossings(bm, points)
 
 
 def _draw_view():
@@ -565,7 +696,8 @@ def _draw_view():
         ob = bpy.data.objects.get(STATE["ob"]) if STATE["ob"] else None
         pts = [tuple(world_of(ob, p)) for p in STATE["points"]] if ob is not None else []
         if len(pts) > 1:
-            _shader_lines(region, [q for a, b in zip(pts, pts[1:]) for q in (a, b)], POINT_RGB, LINE_PX * scale)
+            path = [tuple(world_of(ob, p)) for p in _drawn_path(ob, STATE["points"])]
+            _shader_lines(region, [q for a, b in zip(path, path[1:]) for q in (a, b)], POINT_RGB, LINE_PX * scale)
         hover = STATE["hover"]
         if hover is not None:
             hob = bpy.data.objects.get(hover[0])
@@ -573,7 +705,9 @@ def _draw_view():
                 hp = tuple(world_of(hob, hover[1]))
                 rgb = PREVIEW_RGB if STATE["hover_ok"] else REJECT_RGB
                 if pts and STATE["hover_ok"]:
-                    _shader_lines(region, [pts[-1], hp], PREVIEW_RGB, LINE_PX * scale)
+                    path = [tuple(world_of(ob, p)) for p in _drawn_path(ob, [STATE["points"][-1], hover[1]])]
+                    _shader_lines(region, [q for a, b in zip(path, path[1:]) for q in (a, b)], PREVIEW_RGB,
+                                  LINE_PX * scale)
                 _shader_points([hp], rgb, POINT_PX * scale)
         _shader_points(pts, POINT_RGB, POINT_PX * scale)
         hob = bpy.data.objects.get(hover[0]) if hover is not None else None
@@ -701,7 +835,7 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
         p = normalize(bm, snapped(p, _settings(context).snap_step, shift))
         if not accepts(bm, STATE["points"], p):
             if STATE["points"]:
-                self.report({'WARNING'}, "Multi-Cut: place the next point on a face of the last point")
+                self.report({'WARNING'}, "Multi-Cut: the cut can't reach this point from the last point")
             return False
         STATE["ob"] = name
         STATE["points"].append(p)

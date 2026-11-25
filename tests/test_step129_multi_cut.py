@@ -95,7 +95,7 @@ def test_start_on_a_vertex_and_points_on_one_edge():
     bm.free()
 
 
-def test_edge_end_is_the_vertex_and_points_must_share_a_face():
+def test_edge_end_is_the_vertex_and_which_points_are_accepted():
     bm = _cube()
     e = _edge(bm, LB, LT)
     assert mc.normalize(bm, ('EDGE', e.index, 0.0)) == ('VERT', e.verts[0].index)
@@ -103,7 +103,10 @@ def test_edge_end_is_the_vertex_and_points_must_share_a_face():
     first = [_edge_point(bm, LB, LT, 0.5)]
     assert mc.accepts(bm, first, _edge_point(bm, RB, RT, 0.5)), "same face"
     back = _edge_point(bm, (.5, .5, -.5), (.5, .5, .5), 0.5)
-    assert not mc.accepts(bm, first, back), "back edge shares no face with the left front edge"
+    assert mc.accepts(bm, first, back), "no shared face: the cut runs across the faces in between (#545)"
+    f = next(f for f in bm.faces if abs(f.calc_center_median().y + 0.5) < 1e-6)
+    inside = ('FACE', f.index, (0.0, -0.5, 0.2))
+    assert not mc.accepts(bm, first + [inside], back), "a face point needs a shared face"
     assert not mc.accepts(bm, first, first[0]), "the same point again"
     bm.free()
 
