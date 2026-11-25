@@ -7,6 +7,7 @@ it (``remember_mesh_selection``, ``leave_uv_mode``), ``find_uv_editor`` / ``prep
 
 import bmesh
 import bpy
+from bpy.app.handlers import persistent
 from bpy.props import EnumProperty
 
 from .. import compat
@@ -102,8 +103,66 @@ def prepare(context):
         if not ob.select_get():
             ob.select_set(True)
         bpy.ops.object.mode_set(mode='EDIT')
-    context.scene.tool_settings.use_uv_select_sync = True
+    sync_on(context.scene.tool_settings)
     return True
+
+
+def sync_on(ts):
+    """UV Sync Selection on, the UV selection drawn the way the component takes UVs (``match_sticky``)."""
+    ts.use_uv_select_sync = True
+    match_sticky(ts)
+
+
+def match_sticky(ts):
+    """With UV Sync Selection on, the UVs a pick shows as selected, like Maya's components: a picked vertex / edge is
+    drawn (and used) on every shell that has it (sticky Shared Vertex), a picked face shows only its own UVs
+    (Blender's sticky Shared Location, which keeps the clicked shell's UVs apart). Call after a mesh select mode
+    change; nothing while UV Sync Selection is off."""
+    if not ts.use_uv_select_sync:
+        return
+    vert, edge, _face = ts.mesh_select_mode
+    ts.uv_sticky_select_mode = 'SHARED_VERTEX' if vert or edge else 'SHARED_LOCATION'
+
+
+# Blender's own ways of changing the select mode (header buttons, keys in Blender mode, a script) keep the sticky
+# mode matched too
+_WATCH = object()
+
+
+def _on_select_mode():
+    try:
+        match_sticky(bpy.context.scene.tool_settings)
+    except (AttributeError, ReferenceError):
+        pass
+
+
+def _subscribe():
+    bpy.msgbus.clear_by_owner(_WATCH)
+    for name in ("mesh_select_mode", "use_uv_select_sync"):
+        bpy.msgbus.subscribe_rna(key=(bpy.types.ToolSettings, name), owner=_WATCH, args=(), notify=_on_select_mode)
+
+
+@persistent
+def _on_load(*_args):
+    _subscribe()
+
+
+def register_sticky_watch():
+    _subscribe()
+    bpy.app.handlers.load_post.append(_on_load)
+
+
+def unregister_sticky_watch():
+    bpy.msgbus.clear_by_owner(_WATCH)
+    if _on_load in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load)
+
+
+def sync_off(ts):
+    """UV Sync Selection off for the kit's UV components; sticky back to Blender's Shared Location (UVs at one place
+    of one vertex are picked together)."""
+    ts.use_uv_select_sync = False
+    ts.uv_sticky_select_mode = 'SHARED_LOCATION'
 
 
 # Maya keeps each component type's selection: F12 (UV) and back to F9 / F10 / F11 shows the vertices / edges / faces
@@ -152,8 +211,9 @@ def leave_uv_mode(context):
     was_shell = uv_shell_select.flag(context)
     uv_shell_select.set_flag(context, False)      # another component mode ends the UV Shell mask
     if ts.use_uv_select_sync and not was_shell:
+        sync_on(ts)
         return
-    ts.use_uv_select_sync = True
+    sync_on(ts)
     for ob in _edit_meshes(context):
         saved = _MESH_SELECTION.get(ob.name)
         bm = bmesh.from_edit_mesh(ob.data)
@@ -186,8 +246,9 @@ def set_component(context, mode):
     if mode in ('VERTEX', 'EDGE', 'FACE'):
         leave_uv_mode(context)
         ts.mesh_select_mode = (mode == 'VERTEX', mode == 'EDGE', mode == 'FACE')
+        match_sticky(ts)
     elif mode in ('UV', 'UV_EDGE', 'UV_FACE', 'ISLAND'):
-        ts.use_uv_select_sync = False
+        sync_off(ts)
         _UV_MODE.add(context.scene.as_pointer())
         # the 3D View shows UVs as points now: Blender's face select mode would add its face centre dots (X-ray,
         # wireframe), which Maya's UV mode doesn't show. F9 / F10 / F11 set the mesh mode again on the way out.

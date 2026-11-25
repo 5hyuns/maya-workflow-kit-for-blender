@@ -125,9 +125,10 @@ def test_unfold_dense_shell_stays_interactive():
 
 
 def test_unfold_with_picks_in_two_meshes_keeps_their_shells():
-    """Two meshes in edit mode, one face picked in each: Unfold works on each picked shell, whole. Blender's unwrap
+    """Two meshes in edit mode, one face picked in each: Unfold works on each mesh's own pick. Blender's unwrap
     works on every mesh in edit mode, so the other mesh's lone picked face was unwrapped on its own and torn off
-    its shell (1 -> 2 shells in both meshes)."""
+    its shell (1 -> 2 shells in both meshes). Only the picked face's UVs may move; every other UV of the shell stays
+    (#558)."""
     _clear()
     obs = []
     for x in (0.0, 3.0):
@@ -138,20 +139,24 @@ def test_unfold_with_picks_in_two_meshes_keeps_their_shells():
     bpy.context.view_layer.objects.active = obs[0]
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.context.scene.tool_settings.use_uv_select_sync = True
-    means = []
+    kept = []
     for ob in obs:
         bm, uv = _bm(ob)
         for el in (*bm.verts, *bm.edges, *bm.faces):
             el.select = False
         bm.faces[10].select_set(True)
-        means.append(uvt._point_mean(list(bm.faces), uv).copy())
+        picked = {v.index for v in bm.faces[10].verts}
+        kept.append({(f.index, i): l[uv].uv.copy() for f in bm.faces for i, l in enumerate(f.loops)
+                     if l.vert.index not in picked})
         bmesh.update_edit_mesh(ob.data)
     assert [_shells(ob) for ob in obs] == [1, 1]
     assert bpy.ops.allset.uv_unfold() == {'FINISHED'}
     assert [_shells(ob) for ob in obs] == [1, 1]
-    for ob, mean in zip(obs, means):
+    for ob, before in zip(obs, kept):
         bm, uv = _bm(ob)
-        assert (uvt._point_mean(list(bm.faces), uv) - mean).length < 1e-4, ob.name
+        bm.faces.ensure_lookup_table()
+        moved = [k for k, p in before.items() if (bm.faces[k[0]].loops[k[1]][uv].uv - p).length > 1e-6]
+        assert not moved, (ob.name, moved[:5])
         assert [f.index for f in bm.faces if f.select] == [10]           # each mesh keeps its own pick
 
 

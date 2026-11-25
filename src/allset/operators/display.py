@@ -292,6 +292,8 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
             from . import wedge_hinge
             wedge_hinge.remember(context)
         ts.mesh_select_mode = _SELECT_MODE[self.type]
+        from .uv_tools import match_sticky
+        match_sticky(ts)
         return {'FINISHED'}
 
 

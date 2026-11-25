@@ -513,9 +513,10 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
             return {'FINISHED'}
         targets = {r[3][0] for r in results if r[3] is not None}
         if from_uvs and targets:
-            ts.use_uv_select_sync = True
+            uv_tools.sync_on(ts)
         if len(targets) == 1:
             ts.mesh_select_mode = _MODES[targets.pop()]
+        uv_tools.match_sticky(ts)
         for ob, bm, _uv, res in results:
             if res is not None:
                 select_only(bm, res[0], res[1])

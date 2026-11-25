@@ -296,8 +296,9 @@ class ALLSET_OT_uv_shell_box(bpy.types.Operator):
 def enter(context):
     """Maya SelectMeshUVShell: component mode, UV Shell mask, selection cleared, message."""
     ts = context.scene.tool_settings
-    ts.use_uv_select_sync = True
+    from .uv_components import sync_on
     ts.mesh_select_mode = (False, False, True)
+    sync_on(ts)
     for ob in edit_meshes(context):
         bm = bmesh.from_edit_mesh(ob.data)
         write_selection(ob, bm, set())

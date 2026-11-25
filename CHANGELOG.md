@@ -15,6 +15,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - **Edit Mesh > Duplicate option box** (#562): opens the Duplicate Face Options window from every menu (the main
   menu bar too). The window's Duplicate keeps its values (Separate duplicated faces, Offset) and a plain click of the
   menu item uses them, so with Separate duplicated faces off the copies stay in the mesh, like Maya.
+- **UV Editor vertex and edge picks on shell borders** (#556): with the Vertex and Edge components (UV Sync
+  Selection on) a picked vertex or edge is drawn as selected on every UV shell that has it, so what the UV Editor
+  shows as selected is what UV commands (Align, Unfold, ...) move, like Maya. A picked face still shows only its
+  own UVs.
 
 ## [0.24.0] — 2026-11-25
 

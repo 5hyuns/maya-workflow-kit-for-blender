@@ -31,10 +31,12 @@ from . import units
 from .uv_islands import (EPS, NUDGE, _edit_meshes, _island_loops, _picked_faces, _same, _uv_area,  # noqa: F401
                          _uv_at, _with_faces, islands, picked_anywhere, selected_edges, selected_faces, sync,
                          target_islands, uv_bounds, uv_centre)
+from . import uv_components
 from .uv_components import (COMPONENTS, UV_SELECT_MODES, _MESH_SELECTION, _UV_MODE,  # noqa: F401
                             ALLSET_OT_uv_component, _in_uv_editor, find_uv_editor, forget_mesh_selection,
                             forget_uv_mode, in_uv_mode, leave_uv_mode, mesh_selection_wanted, prepare,
-                            remember_mesh_selection, set_component)
+                            remember_mesh_selection, set_component, match_sticky,
+                            sync_off, sync_on)
 from .uv_projection import (AUTOPROJ, PLANE_ITEMS, ALLSET_OT_uv_automatic,  # noqa: F401
                             ALLSET_OT_uv_automatic_edit, ALLSET_OT_uv_contour, ALLSET_OT_uv_cylindrical,
                             ALLSET_OT_uv_spherical, auto_project, fit_unit,
@@ -59,9 +61,11 @@ def settings(context):
 def register_props():
     bpy.utils.register_class(ALLSET_PG_uv)
     bpy.types.Scene.allset_uv = PointerProperty(type=ALLSET_PG_uv)
+    uv_components.register_sticky_watch()
 
 
 def unregister_props():
+    uv_components.unregister_sticky_watch()
     del bpy.types.Scene.allset_uv
     bpy.utils.unregister_class(ALLSET_PG_uv)
 
