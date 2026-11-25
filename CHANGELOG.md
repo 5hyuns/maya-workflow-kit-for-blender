@@ -8,6 +8,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ### Added
 - **Hotkey Editor Save and Save and Close** (#559): buttons at the bottom of the Hotkey Editor, like Maya's; they
   save the hotkeys at once (Blender's Save Preferences), Save and Close also closes the window.
+- **Extrude manipulator world / local switch and rotate ring** (#560): the face extrusion manipulator has the
+  light-blue ring and the world / local switch, like Maya's. The ring turns the extruded faces (Local Rotate; a press
+  shows the three rotate rings); on world axes the handles move, turn and scale them along the world axes
+  (Translate / Rotate / Scale about the centre of the extruded faces). Local and world values add up the way Maya's
+  polyExtrudeFace does, and each level of a divided extrusion takes its share.
 
 ### Fixed
 - **UV Toolkit Unfold Along U / V** (#557): one click unfolds all the way along the axis (a second click changes

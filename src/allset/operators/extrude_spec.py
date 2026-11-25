@@ -14,11 +14,12 @@ LABELS = {"thickness": "Thickness", "local_translate_z": "Local Translate Z", "o
           "divisions": "Divisions", "keep_faces_together": "Keep Faces Together"}
 DEFAULTS = {"thickness": 0.0, "local_translate_z": 0.0, "offset": 0.0, "divisions": 1, "keep_faces_together": True}
 # polyExtrudeFace attributes only the manipulator handles set: not In-View / Channel Box rows
-MANIP_FIELDS = ("local_translate_x", "local_translate_y", "local_scale_x", "local_scale_y", "local_scale_z")
-MANIP_LABELS = {"local_translate_x": "Local Translate X", "local_translate_y": "Local Translate Y",
-                "local_scale_x": "Local Scale X", "local_scale_y": "Local Scale Y", "local_scale_z": "Local Scale Z"}
-MANIP_DEFAULTS = {"local_translate_x": 0.0, "local_translate_y": 0.0, "local_scale_x": 1.0, "local_scale_y": 1.0,
-                  "local_scale_z": 1.0}
+# (local handles, then the rotate rings and the world-axes handles of the manipulator's world / local switch)
+MANIP_FIELDS = ("local_translate_x", "local_translate_y", "local_scale_x", "local_scale_y", "local_scale_z",
+                *(f"local_rotate_{a}" for a in "xyz"),
+                *(f"{t}_{a}" for t in ("translate", "rotate", "scale") for a in "xyz"))
+MANIP_LABELS = {f: " ".join(w.capitalize() for w in f.split("_")) for f in MANIP_FIELDS}
+MANIP_DEFAULTS = {f: (1.0 if "scale" in f else 0.0) for f in MANIP_FIELDS}
 DEFAULTS.update(MANIP_DEFAULTS)
 # Maya world X / Z in Blender world (Y-up -> Z-up: Maya Z = Blender -Y)
 WORLD_X, MAYA_Z = Vector((1.0, 0.0, 0.0)), Vector((0.0, -1.0, 0.0))

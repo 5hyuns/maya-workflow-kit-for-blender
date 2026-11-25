@@ -27,8 +27,8 @@ YELLOW = (1.0, 1.0, 0.0)
 # local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
 # plane handles centred 0.5 / 0.5 between two axes (half 0.08, translucent with a full-colour rim), hollow centre square
 # half 0.12 (20 px at an 83 px Z arrow) in #64dcff, screen facing. Axis colours = the kit Move manipulator's
-# colours (manipulator.AXIS_HEX). Not drawn on the extrusion manipulator: Maya's cyan rotate ring and its world /
-# local switch (the Transform Component manipulator has both, ``TURN`` below).
+# colours (manipulator.AXIS_HEX). Face extrusions also have the cyan rotate ring and the world / local switch of the
+# Transform Component manipulator (``TURN`` below).
 CONE_BASE, CONE_TIP, CONE_R = 0.64, 0.86, 0.05
 CUBE_AT, CUBE_HALF = 1.0, 0.07
 PLANE_AT, PLANE_HALF = 0.5, 0.08
@@ -91,8 +91,10 @@ WORLD_FIELDS = {
 
 
 def turnable(rec):
-    """True for a Transform Component of faces / edges: its manipulator has the ring and the world / local switch."""
-    return rec is not None and rec.spec.full_manip and "local_rotate_x" in rec.spec.all_fields
+    """True for a face extrusion and a Transform Component of faces / edges: its manipulator has the ring and the
+    world / local switch, like Maya's."""
+    return (rec is not None and (rec.spec.full_manip or rec.spec is extrude.FACE)
+            and "local_rotate_x" in rec.spec.all_fields)
 
 
 def tc_state(rec):

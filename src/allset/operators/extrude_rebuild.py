@@ -11,7 +11,7 @@ import bpy
 
 from .. import compat
 from . import units
-from .extrude_face import extrude, mesh_axes, position
+from .extrude_face import extrude, mesh_axes, position, world_space
 from .extrude_record import (RECORDS, Record, _pre_signature, _store, _store_generic, _uv_signature, keep,
                              mesh_coords_hash, mesh_signature, next_name, object_record)
 from .extrude_spec import FACE
@@ -66,7 +66,8 @@ def _rebuild(ob, rec, bm, params, unit):
         return bool(tracked)
     restore_pre(bm, rec)
     faces = [f for f in bm.faces if f.select]
-    caps, moved = extrude(bm, faces, unit=unit, history_id=rec.history_id, **params, **mesh_axes(ob))
+    caps, moved = extrude(bm, faces, unit=unit, history_id=rec.history_id, matrix=ob.matrix_world.copy(), **params,
+                          **mesh_axes(ob))
     _store(rec, bm, caps, moved, params)
     return bool(caps)
 
@@ -122,8 +123,9 @@ def _preview_face(ob, rec, params, unit):
         return False
     if bm is not None:
         vertices.ensure_lookup_table()
+    world = world_space(rec.moved, ob.matrix_world, params, unit)
     for i, p0, *vecs in rec.moved:
-        vertices[i].co = position(p0, vecs, params)
+        vertices[i].co = position(p0, vecs, params, world)
     if bm is not None:
         bm.normal_update()
         bmesh.update_edit_mesh(ob.data, loop_triangles=True, destructive=False)

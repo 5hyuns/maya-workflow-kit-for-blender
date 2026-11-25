@@ -12,8 +12,8 @@
   ``allset.extrude_drag`` with its ``handle``; release = one undo step (``extrude.set_params``). Edge / vertex
   extrusions and bevels keep the single arrow of their ``Spec.arrow``. No Blender tooltips (Maya manipulators have
   none).
-- Transform Component of faces / edges (polyMoveFace / polyMoveEdge) adds Maya's light-blue ring and world / local
-  switch (``TURN``): dragging the ring turns the components about the view axis, a press on it also shows three
+- Face extrusions and Transform Component of faces / edges (polyMoveFace / polyMoveEdge) add Maya's light-blue ring
+  and world / local switch (``TURN``): dragging the ring turns the components about the view axis, a press on it also shows three
   rotate rings; the switch puts the manipulator on world axes, where its handles drive Translate / Scale / Rotate
   instead of the Local values. Both are display states of the manipulator (``tc_state``), not node values.
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows, its title and the

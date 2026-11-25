@@ -76,6 +76,10 @@ def _props():
                                        description="Scale the extruded faces along their local Y"),
         "local_scale_z": FloatProperty(name="Local Scale Z", default=1.0, options={'SKIP_SAVE'},
                                        description="Scale the extruded faces along their normal"),
+        # the rotate rings and the world-axes handles (the manipulator's world / local switch)
+        **{f: FloatProperty(name=MANIP_LABELS[f], default=MANIP_DEFAULTS[f], options={'SKIP_SAVE'},
+                            description=MANIP_LABELS[f] + (" (degrees)" if "rotate" in f else ""))
+           for f in MANIP_FIELDS[5:]},
         # polyExtrudeVertex
         "width": FloatProperty(name="Width", default=0.5, soft_min=0.0, soft_max=1.0, options={'SKIP_SAVE'},
                                description="Base of the extruded vertex as a fraction of each of its edges"),
@@ -175,7 +179,8 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
             rec.mesh_uid = ob.data.session_uid
             try:
                 faces = [f for f in bm.faces if f.select]
-                caps, moved = extrude(bm, faces, unit=unit, history_id=node_id, **params, **mesh_axes(ob))
+                caps, moved = extrude(bm, faces, unit=unit, history_id=node_id, matrix=ob.matrix_world.copy(), **params,
+                                      **mesh_axes(ob))
                 _store(rec, bm, caps, moved, params)
                 keep(context, ob, rec)
             except Exception:

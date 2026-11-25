@@ -227,11 +227,12 @@ def test_world_axes_and_rings_change_what_handles_drive():
     assert not in_view.turnable(vrec)
     assert hf(vrec, "VR") == () and hf(vrec, "RX", rings=True) == ()
     assert hf(vrec, "TZ", world=True) == ("local_translate_z",), "no world axes without the switch"
-    # the extrusion manipulator keeps its handles
+    # a face extrusion has the ring and the switch too (#560)
     ob = _cube(_faces((0, 0, 1)))
     assert bpy.ops.allset.extrude() == {'FINISHED'}
     frec = extrude.current(ob)
-    assert not in_view.turnable(frec) and hf(frec, "VR") == () and hf(frec, "TZ", world=True) == ("local_translate_z",)
+    assert in_view.turnable(frec) and hf(frec, "VR") == in_view.LOCAL_ROT and hf(frec, "TZ", world=True) == (
+        "translate_z",)
 
 
 def test_switch_is_a_display_state():

@@ -202,7 +202,8 @@ def _build(bm, spec, params, unit, ob, node_id=None):
     from . import extrude
     if spec is extrude.FACE:
         caps, moved = extrude.extrude(bm, [f for f in bm.faces if f.select], unit=unit,
-                                      history_id=node_id, **params, **extrude.mesh_axes(ob))
+                                      history_id=node_id, matrix=ob.matrix_world.copy(), **params,
+                                      **extrude.mesh_axes(ob))
         return caps, moved
     values = {key: params[key] for key in spec.fields+spec.hidden if key in params}
     values['_history_id'] = node_id

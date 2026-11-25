@@ -45,7 +45,7 @@ def test_fast_path_equals_rebuild():
     bmesh.ops.create_cube(bm, size=1.0)
     bm.normal_update()
     _caps, moved = ex.extrude(bm, _pick(bm, ["top", "+x"]), divisions=3)
-    ex.place(moved, 0.1, 0.3, 0.05, **{k: params[k] for k in ex.MANIP_FIELDS})
+    ex.place(moved, 0.1, 0.3, 0.05, **{k: params.get(k, ex.MANIP_DEFAULTS[k]) for k in ex.MANIP_FIELDS})
     fast = _points(v.co for v in bm.verts)
     bm.free()
     bm = bmesh.new()

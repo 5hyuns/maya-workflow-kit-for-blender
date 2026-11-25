@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""polyExtrudeFace on a bmesh: per-vertex move vectors (Thickness, Local Translate, Offset, Local Scale), the
-zero-length extrusion with Divisions / Keep Faces Together (``extrude_topology``), placing the moved vertices
-(``place``) and Maya's vertex / edge / face order (``maya_plan``, ``renumber``). Entry point ``extrude``;
-``face_axes`` / ``mesh_axes`` give a face's local X / Y. Related: extrude_spec.py, extrude.py.
+"""polyExtrudeFace on a bmesh: per-vertex move vectors (Thickness, Local Translate, Offset, Local Scale / Rotate,
+world Translate / Rotate / Scale), the zero-length extrusion with Divisions / Keep Faces Together
+(``extrude_topology``), placing the moved vertices (``place``) and Maya's vertex / edge / face order (``maya_plan``,
+``renumber``). Entry point ``extrude``; ``face_axes`` / ``mesh_axes`` give a face's local X / Y. Related:
+extrude_spec.py, extrude.py.
 """
 
+import math
+
 import bmesh
-from mathutils import Vector
+from mathutils import Euler, Matrix, Vector
 
 from .extrude_spec import MAYA_Z, WORLD_X
 
@@ -56,12 +59,13 @@ def face_axes(normal, direction=WORLD_X, fallback=MAYA_Z):
 
 
 def _face_parts(f, v, direction, fallback):
-    """(X, Y, SX, SY, SZ) of vertex ``v`` in face ``f``: the face's local X / Y and the move of ``v`` per unit of
-    Local Scale - 1 along X / Y / Z about the face's vertex mean."""
+    """(X, Y, SX, SY, SZ, (X, Y, Z, R)) of vertex ``v`` in face ``f``: the face's local X / Y, the move of ``v`` per
+    unit of Local Scale - 1 along X / Y / Z about the face's vertex mean, and the face's local axes with ``v``'s
+    offset R from that mean (what Local Rotate turns)."""
     n = f.normal.normalized()
     x, y = face_axes(n, direction, fallback)
     r = v.co - f.calc_center_median()
-    return x, y, x * r.dot(x), y * r.dot(y), n * r.dot(n)
+    return x, y, x * r.dot(x), y * r.dot(y), n * r.dot(n), (x, y, n, r)
 
 
 def _translate_dir(v, faces, normals, perps):
@@ -82,8 +86,9 @@ def _mean(vectors):
 
 
 def _vectors(faces, together, direction=WORLD_X, fallback=MAYA_Z):
-    """{key: (base co, T, L, O, X, Y, SX, SY, SZ)} per extruded vertex (key = vertex index, or (face index, vertex
-    index) for faces extruded one by one), from the faces before the extrusion."""
+    """{key: (base co, T, L, O, X, Y, SX, SY, SZ, faces)} per extruded vertex (key = vertex index, or (face index,
+    vertex index) for faces extruded one by one; faces = the (X, Y, Z, R) of each extruded face it is on), from the
+    faces before the extrusion."""
     sel = set(faces)
     out = {}
     if together:
@@ -100,14 +105,15 @@ def _vectors(faces, together, direction=WORLD_X, fallback=MAYA_Z):
                         perps.append(_inward(ef[0], e))
                 parts = [_face_parts(g, v, direction, fallback) for g in vf]
                 out[v.index] = (v.co.copy(), _thickness_dir(normals), _translate_dir(v, vf, normals, perps),
-                                _offset_dir(perps), *(_mean([p[i] for p in parts]) for i in range(5)))
+                                _offset_dir(perps), *(_mean([p[i] for p in parts]) for i in range(5)),
+                                tuple(p[5] for p in parts))
     else:
         for f in faces:
             n = f.normal.copy()
             for v in f.verts:
                 perps = [_inward(f, e) for e in v.link_edges if f in e.link_faces]
-                out[(f.index, v.index)] = (v.co.copy(), n.copy(), n.copy(), _offset_dir(perps),
-                                           *_face_parts(f, v, direction, fallback))
+                *parts, turn = _face_parts(f, v, direction, fallback)
+                out[(f.index, v.index)] = (v.co.copy(), n.copy(), n.copy(), _offset_dir(perps), *parts, (turn,))
     return out
 
 
@@ -204,40 +210,93 @@ def _match_face(caps, keys):
 
 
 def moved_vertices(levels, vectors, unit=1.0):
-    """[(vertex, P0, T, L, O, X, Y, SX, SY, SZ)] with the level fraction folded into every vector and the Maya unit
-    into the length ones (T, L, O, X, Y; the scale moves SX / SY / SZ are already mesh lengths)."""
+    """[(vertex, P0, T, L, O, X, Y, SX, SY, SZ, fraction, faces)] with the level fraction folded into every vector
+    and the Maya unit into the length ones (T, L, O, X, Y; the scale moves SX / SY / SZ are already mesh lengths);
+    ``fraction`` = the level's share of the extrusion, ``faces`` = the (X, Y, Z, R) of ``_vectors``."""
     n = len(levels)
     out = []
     for k, found in enumerate(levels, 1):
         frac = k / n
         f = frac * unit
         for key, v in found.items():
-            co, t, l, o, x, y, sx, sy, sz = vectors[key]
-            out.append((v, co.copy(), t * f, l * f, o * f, x * f, y * f, sx * frac, sy * frac, sz * frac))
+            co, t, l, o, x, y, sx, sy, sz, turn = vectors[key]
+            out.append((v, co.copy(), t * f, l * f, o * f, x * f, y * f, sx * frac, sy * frac, sz * frac, frac, turn))
     return out
 
 
-def position(p0, vecs, params):
-    """Where a moved vertex goes for ``params`` (vecs = T, L, O, X, Y, SX, SY, SZ of ``moved_vertices``)."""
-    t, l, o, x, y, sx, sy, sz = vecs
+AXES = ("x", "y", "z")
+TURN_FIELDS = tuple(f"local_rotate_{a}" for a in AXES)
+WORLD_FIELDS = tuple(f"{t}_{a}" for t in ("translate", "rotate", "scale") for a in AXES)
+
+
+def _rest(field):
+    return 1.0 if "scale" in field else 0.0
+
+
+def _rotation(params, prefix, frac):
+    return Euler([math.radians(params.get(prefix + a, 0.0) * frac) for a in AXES], 'XYZ').to_matrix()
+
+
+def _scaling(params, prefix, frac):
+    return Matrix.Diagonal([1.0 + (params.get(prefix + a, 1.0) - 1.0) * frac for a in AXES])
+
+
+def world_space(moved, matrix, params, unit=1.0):
+    """What Translate / Rotate / Scale need in ``position``: (object matrix, its inverse, world pivot, Maya unit), or
+    None while they are at rest. Like Maya, the pivot is the centre of the bounding box of the extruded faces, in
+    world space."""
+    if matrix is None or not moved or all(params.get(f, _rest(f)) == _rest(f) for f in WORLD_FIELDS):
+        return None
+    points = [matrix @ m[1] for m in moved]
+    lo = Vector(tuple(min(p[i] for p in points) for i in range(3)))
+    hi = Vector(tuple(max(p[i] for p in points) for i in range(3)))
+    return matrix, matrix.inverted_safe(), (lo + hi) / 2, unit
+
+
+def position(p0, vecs, params, world=None):
+    """Where a moved vertex goes for ``params`` (vecs = T, L, O, X, Y, SX, SY, SZ[, fraction, faces] of
+    ``moved_vertices``; ``world`` = ``world_space``). Like Maya's polyExtrudeFace, the local values (Local
+    Translate / Rotate / Scale, Offset) and the world ones (Translate, then Rotate and Scale about the pivot, on the
+    point after Thickness) each give a move and the vertex takes both; a level of a divided extrusion takes its
+    share of every value (angles and scale steps too). Local Scale and Local Rotate act in each extruded face's
+    local frame about the face's centre; a vertex on several faces moves by the mean."""
+    t, l, o, x, y, sx, sy, sz = vecs[:8]
+    frac, turn = (vecs[8], vecs[9]) if len(vecs) > 9 else (1.0, ())
     g = params.get
-    return (p0 + t * g("thickness", 0.0) + l * g("local_translate_z", 0.0) + o * g("offset", 0.0)
-            + x * g("local_translate_x", 0.0) + y * g("local_translate_y", 0.0)
-            + sx * (g("local_scale_x", 1.0) - 1.0) + sy * (g("local_scale_y", 1.0) - 1.0)
-            + sz * (g("local_scale_z", 1.0) - 1.0))
+    thick = p0 + t * g("thickness", 0.0)
+    p = (thick + l * g("local_translate_z", 0.0) + o * g("offset", 0.0)
+         + x * g("local_translate_x", 0.0) + y * g("local_translate_y", 0.0))
+    if turn and any(g(f, 0.0) for f in TURN_FIELDS):
+        rot, scale = _rotation(params, "local_rotate_", frac), _scaling(params, "local_scale_", frac)
+        move = Vector()
+        for fx, fy, fz, r in turn:
+            frame = Matrix((fx, fy, fz)).transposed()          # local -> mesh (columns X, Y, Z)
+            move += frame @ (rot @ (scale @ (frame.transposed() @ r))) - r
+        p = p + move / len(turn)
+    else:
+        p = (p + sx * (g("local_scale_x", 1.0) - 1.0) + sy * (g("local_scale_y", 1.0) - 1.0)
+             + sz * (g("local_scale_z", 1.0) - 1.0))
+    if world is not None:
+        mw, inv, pivot, unit = world
+        shift = Vector([g(f"translate_{a}", 0.0) for a in AXES]) * (unit * frac)
+        turned = _rotation(params, "rotate_", frac) @ _scaling(params, "scale_", frac)
+        base = mw @ thick
+        p = p + inv.to_3x3() @ (pivot + turned @ (base + shift - pivot) - base)
+    return p
 
 
-def place(moved, thickness=0.0, ltz=0.0, offset=0.0, **manip):
+def place(moved, thickness=0.0, ltz=0.0, offset=0.0, matrix=None, unit=1.0, **manip):
     params = dict(manip, thickness=thickness, local_translate_z=ltz, offset=offset)
+    world = world_space(moved, matrix, params, unit)
     for v, p0, *vecs in moved:
-        v.co = position(p0, vecs, params)
+        v.co = position(p0, vecs, params, world)
 
 
 def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, keep_faces_together=True,
-            unit=1.0, direction=WORLD_X, fallback=MAYA_Z, history_id=None, **manip):
+            unit=1.0, direction=WORLD_X, fallback=MAYA_Z, history_id=None, matrix=None, **manip):
     """Maya polyExtrudeFace on ``faces`` (bmesh). Returns (caps, moved); the caps end up selected. ``manip`` =
-    Local Translate X / Y and Local Scale X / Y / Z (MANIP_FIELDS); ``direction`` / ``fallback`` = world X / Z
-    in mesh space (the faces' local X)."""
+    the manipulator values (MANIP_FIELDS); ``direction`` / ``fallback`` = world X / Z in mesh space (the faces'
+    local X); ``matrix`` = the object's world matrix (Translate / Rotate / Scale act in world space)."""
     lineage = None
     if history_id:
         from . import history_references as references
@@ -261,7 +320,7 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
     # an inner vertex of a middle level is gone once the next level is extruded (Maya has only the cap's)
     levels = [{key: v for key, v in found.items() if v.is_valid} for found in levels]
     moved = moved_vertices(levels, vectors, unit)
-    place(moved, thickness, local_translate_z, offset, **manip)
+    place(moved, thickness, local_translate_z, offset, matrix, unit, **manip)
     for f in bm.faces:
         f.select = False
     for e in bm.edges:
