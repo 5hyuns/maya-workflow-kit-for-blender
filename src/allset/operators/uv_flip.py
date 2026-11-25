@@ -26,17 +26,18 @@ COORDINATES = {"Pivot": 'PIVOT', "Selection Center": 'CENTER', "Global": 'GLOBAL
 
 def _faces(bm, uv, synced, mode):
     """The faces Flip works on (``mode`` = the selection mode: 'FACE' takes whole faces)."""
-    shown = [f for f in bm.faces if not f.hide and (synced or f.select)]
     if mode == 'FACE':
         return uv_tools.selected_faces(bm, uv, synced)
-    return [f for f in shown if any(uv_shells._loop_selected(l, uv, synced) for l in f.loops)]
+    picked = uv_shells.selected_loops(bm, uv, synced)
+    return [f for f in bm.faces if not f.hide and (synced or f.select) and any(l in picked for l in f.loops)]
 
 
 def _selected_loops(bm, uv, synced, mode, faces):
     """The loops of the selection itself (its UV box is the pivot when no UV pivot is set)."""
     if mode == 'FACE':
         return [l for f in faces for l in f.loops]
-    return [l for f in faces for l in f.loops if uv_shells._loop_selected(l, uv, synced)]
+    picked = uv_shells.selected_loops(bm, uv, synced)
+    return [l for f in faces for l in f.loops if l in picked]
 
 
 def _box_centre(points):

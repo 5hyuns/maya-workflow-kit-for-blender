@@ -24,7 +24,7 @@ from bpy.props import StringProperty
 from .. import undo_steps
 from . import uv_optimize_math
 from .uv_islands import _edit_meshes, islands, sync
-from .uv_shells import _loop_selected, uv_points
+from .uv_shells import selected_loops, uv_points
 
 
 def _shell_problem(ob, bm, uv, faces, picked, tris):
@@ -84,8 +84,7 @@ def optimize_mesh(context, ob, values):
         return 0
     synced = sync(context)
     bm.faces.index_update()
-    loops = [l for f in bm.faces if not f.hide and (synced or f.select) for l in f.loops]
-    picked = {l for l in loops if _loop_selected(l, uv, synced)}
+    picked = selected_loops(bm, uv, synced)
     if not picked:
         return 0
     i = 0
@@ -155,8 +154,7 @@ def _has_pick(context, ob):
     if uv is None:
         return False
     synced = sync(context)
-    return any(_loop_selected(l, uv, synced) for f in bm.faces if not f.hide and (synced or f.select)
-               for l in f.loops)
+    return bool(selected_loops(bm, uv, synced))
 
 
 classes = (ALLSET_OT_uv_optimize,)

@@ -52,11 +52,33 @@ def _all_loops(bm):
     return [l for f in bm.faces if not f.hide for l in f.loops]
 
 
+def synced_test(bm):
+    """With UV Sync Selection the mesh selection picks the UVs like Maya converts it: a selected vertex = every UV
+    on it, a selected edge = the UVs at its ends on the faces beside it, a selected face = the UVs of its corners
+    (UVs of other faces on the same vertex stay out)."""
+    mode = bm.select_mode
+    if 'VERT' in mode:
+        return lambda l: l.vert.select
+    if 'EDGE' in mode:
+        return lambda l: l.edge.select or l.link_loop_prev.edge.select
+    return lambda l: l.face.select
+
+
+def selected_loops(bm, uv, synced):
+    """The loops of the selected UVs (a UV shared by several faces of a shell: all its loops), on shown faces."""
+    if not synced:
+        return {l for f in bm.faces if not f.hide and f.select for l in f.loops if compat.uv_vert_selected(l, uv)}
+    if 'VERT' in bm.select_mode:
+        return {l for f in bm.faces if not f.hide for l in f.loops if l.vert.select}
+    test = synced_test(bm)
+    _index_loops(bm)
+    return {l for ls in uv_points(bm, uv, _all_loops(bm)) if any(test(l) for l in ls) for l in ls}
+
+
 def selected_points(bm, uv, synced):
     """Selected UVs (lists of loops), Maya UV-index order."""
     _index_loops(bm)
-    loops = [l for f in bm.faces if not f.hide and (synced or f.select) for l in f.loops if _loop_selected(l, uv, synced)]
-    return uv_points(bm, uv, loops)
+    return uv_points(bm, uv, selected_loops(bm, uv, synced))
 
 
 def _index_loops(bm):
@@ -195,10 +217,15 @@ def orient_edges(bm, uv, synced, edges=None):
     where = owner_map(groups)
     pairs = []          # (shell index, loop a, loop b)
     edges = uv_tools.selected_edges(bm, uv, synced) if edges is None else edges
+    # selected faces (UV Sync Selection, face mode) bring only their own UV edges, not the neighbour's side
+    own = synced and set(bm.select_mode) == {'FACE'}
     for e in sorted(edges, key=lambda e: e.index):
         seen = set()
         for f in e.link_faces:
-            if f.hide or f not in where:
+            if f.hide or f not in where or (own and not f.select):
+                continue
+            # without UV Sync Selection a UV edge belongs to one face: the other face's side of it is its own
+            if not synced and not compat.uv_edge_selected(next(l for l in f.loops if l.edge is e), uv):
                 continue
             la = next(l for l in f.loops if l.vert is e.verts[0])
             lb = next(l for l in f.loops if l.vert is e.verts[1])

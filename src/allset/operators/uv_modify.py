@@ -32,22 +32,10 @@ def all_points(bm, uv):
     return pts, {l: i for i, ls in enumerate(pts) for l in ls}
 
 
-def _synced_test(bm):
-    """With UV Sync Selection the mesh selection picks the UVs like Maya converts it: a selected vertex = every UV
-    on it, a selected edge = the UVs at its ends on the faces beside it, a selected face = the UVs of its corners
-    (UVs of other faces on the same vertex stay out)."""
-    mode = bm.select_mode
-    if 'VERT' in mode:
-        return lambda l: l.vert.select
-    if 'EDGE' in mode:
-        return lambda l: l.edge.select or l.link_loop_prev.edge.select
-    return lambda l: l.face.select
-
-
 def selected_ids(bm, uv, synced, pts):
     """Indices of the selected Maya UVs (any of its loops selected, on a face the UV Editor shows)."""
     if synced:
-        test = _synced_test(bm)
+        test = uv_shells.synced_test(bm)
         return [i for i, ls in enumerate(pts) if any(test(l) for l in ls)]
     return [i for i, ls in enumerate(pts)
             if any(l.face.select and compat.uv_vert_selected(l, uv) for l in ls)]
