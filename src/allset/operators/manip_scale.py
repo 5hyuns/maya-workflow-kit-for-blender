@@ -370,6 +370,14 @@ def apply(context, f, mask=(True, True, True), orient_type='GLOBAL', final=False
         kwargs["orient_type"] = orient_type
     if context.mode == 'EDIT_MESH':
         kwargs["mirror"] = True     # transform.* exec reads the mesh mirror flags only with mirror
+        # an exec transform reads soft select (proportional editing) only from its own arguments: pass the tool
+        # settings so the points around the selection follow the scale, like Move and Rotate (#548)
+        ts = context.scene.tool_settings
+        kwargs.update(use_proportional_edit=ts.use_proportional_edit,
+                      proportional_edit_falloff=ts.proportional_edit_falloff,
+                      proportional_size=ts.proportional_size,
+                      use_proportional_connected=ts.use_proportional_connected,
+                      use_proportional_projected=ts.use_proportional_projected)
     if final:
         with _OwnPivots(context):
             res = bpy.ops.transform.resize('EXEC_DEFAULT', True, **kwargs)
