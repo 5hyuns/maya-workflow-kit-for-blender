@@ -252,6 +252,22 @@ def s_light_shot():
     rows = [r.name for r in bpy.context.scene.allset_cb.rows if r.kind == "SHAPE"]
     check(f"point light SHAPES rows = Maya Color R / G / B, then Blender's Power ({ob and ob.name}: {rows})",
           rows[:4] == ["maya:colorR", "maya:colorG", "maya:colorB", "energy"])
+    with override():
+        bpy.ops.allset.create(kind='LOCATOR')
+    redraw()
+
+
+@step
+def s_locator_wait():
+    redraw()
+
+
+@step
+def s_locator_shot():
+    shot("locator")
+    rows = [r.name for r in bpy.context.scene.allset_cb.rows if r.kind == "SHAPE"]
+    want = [f"maya:local{k}{a}" for k in ("Position", "Scale") for a in "XYZ"]
+    check(f"#481 locator SHAPES rows = Local Position X / Y / Z, Local Scale X / Y / Z ({rows})", rows == want)
 
 
 run()

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya light shape channels on Blender lights: Color R / G / B, Use Ray Trace Shadows and the spot light's Cone Angle
-/ Penumbra Angle as Channel Box SHAPES rows (``channel_attrs``).
+"""Maya light shape channels on Blender lights: Color R / G / B, Use Ray Trace Shadows, the spot light's Cone Angle
+/ Penumbra Angle and the kept Shad Color R / G / B (operators/shape_attrs.py) as Channel Box SHAPES rows
+(``channel_attrs``).
 
 A light's power, its falloff and its other values are Blender's own: a new light has Blender's values, and the
 Intensity place of the Channel Box and the Attribute Editor shows Blender's Power (a sun: Strength).
@@ -88,6 +89,8 @@ def channel_attrs(light=None):
         a.paths = (("spot_size", -1), ("spot_blend", -1))
         a.spot_only = True
         out.append(a)
+    from . import shape_attrs
+    out += shape_attrs.shadow_color_attrs()     # Shad Color R / G / B, kept by the kit
     return out
 
 
@@ -95,6 +98,9 @@ def channel_attr(name, light=None):
     for a in channel_attrs():
         if name == "maya:" + a.key:
             if getattr(a, "spot_only", False) and light is not None and light.type != 'SPOT':
+                return None
+            types = getattr(a, "light_types", None)
+            if types is not None and light is not None and type(light).__name__ not in types:
                 return None
             return a
     return None

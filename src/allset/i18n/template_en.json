@@ -7364,6 +7364,22 @@
    "Material": "Material",
    "Texture": "Texture"
   },
+  "Labels/operators/shape_attrs": {
+   "Center Of Interest": "Center Of Interest",
+   "Center Of Interest in scene units, like Maya (kept by the kit)": "Center Of Interest in scene units, like Maya (kept by the kit)",
+   "Depth map shadow bias, like Maya (kept by the kit)": "Depth map shadow bias, like Maya (kept by the kit)",
+   "Dmap Bias": "Dmap Bias",
+   "Dropoff": "Dropoff",
+   "Lens Squeeze Ratio": "Lens Squeeze Ratio",
+   "Lens Squeeze Ratio of the camera, like Maya (kept by the kit; Blender's camera doesn't use it)": "Lens Squeeze Ratio of the camera, like Maya (kept by the kit; Blender's camera doesn't use it)",
+   "Shad Color": "Shad Color",
+   "Shadow color, like Maya (kept by the kit; Blender's shadows are black)": "Shadow color, like Maya (kept by the kit; Blender's shadows are black)",
+   "Shutter Angle": "Shutter Angle",
+   "Shutter Angle in degrees, like Maya (kept by the kit; Blender's motion blur is a render setting)": "Shutter Angle in degrees, like Maya (kept by the kit; Blender's motion blur is a render setting)",
+   "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)": "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)",
+   "Use Depth Map Shadows": "Use Depth Map Shadows",
+   "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)": "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)"
+  },
   "Labels/operators/skeleton_menu": {
    "Connect Joint Options": "Connect Joint Options",
    "Disconnect Joint": "Disconnect Joint",

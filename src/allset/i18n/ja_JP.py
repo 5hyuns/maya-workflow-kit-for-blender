@@ -7669,6 +7669,19 @@ STRINGS = {
     'Smooth Maya selection wires and tool handles in this viewport': 'このビューポートで Maya の選択ワイヤーとツールハンドルを滑らかに表示します',
     'Toggle Window': 'ウィンドウの切り替え',
     "Open the editor's window, or close it when it is open in a window of its own": 'エディタのウィンドウを開きます。専用ウィンドウで開いているときは閉じます',
+    'Center Of Interest': '注視点',
+    'Center Of Interest in scene units, like Maya (kept by the kit)': 'シーン単位の注視点、Maya と同じ (キットが保持)',
+    'Depth map shadow bias, like Maya (kept by the kit)': '深度マップシャドウのバイアス、Maya と同じ (キットが保持)',
+    'Dmap Bias': '深度マップバイアス',
+    'Lens Squeeze Ratio': 'レンズスクイーズ比',
+    "Lens Squeeze Ratio of the camera, like Maya (kept by the kit; Blender's camera doesn't use it)": 'カメラのレンズスクイーズ比、Maya と同じ (キットが保持。Blender のカメラは使いません)',
+    'Shad Color': 'シャドウカラー',
+    "Shadow color, like Maya (kept by the kit; Blender's shadows are black)": 'シャドウのカラー、Maya と同じ (キットが保持。Blender のシャドウは黒です)',
+    'Shutter Angle': 'シャッター角度',
+    "Shutter Angle in degrees, like Maya (kept by the kit; Blender's motion blur is a render setting)": '度単位のシャッター角度、Maya と同じ (キットが保持。Blender のモーションブラーはレンダー設定です)',
+    "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)": 'スポットライトのドロップオフ、Maya と同じ (キットが保持。Blender のスポットのブレンドは半影角度です)',
+    'Use Depth Map Shadows': '深度マップシャドウを使用',
+    "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)": '深度マップシャドウを使用、Maya と同じ (キットが保持。Blender のシャドウは Blender 独自です)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

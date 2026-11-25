@@ -17,7 +17,7 @@ from .cb_keys import CUSTOM_PREFIX, MAIN, MAIN_BY_KEY, custom_keys, is_hidden, i
 from .cb_inputs import (SHAPE_PROPS, _drawing_sigs, _inputs, _modifier_props, _nth_constraint, _nth_of_type, _virtual,
                         blend_shape_key, blend_shape_node, blend_shape_targets, con_node, constrained_keys,
                         constraint_enabled, constraint_node_name, constraints, is_open, mod_node, pick_node,
-                        rebuild_rows, row_for, shape_label, weight_name)
+                        rebuild_rows, row_for, shape_data, shape_label, weight_name)
 from .cb_values import (_held_states, _holding, _holds_states, channel_label, entry_kind, get_value, has_channel,
                         row_state)
 from .cb_selection import sel_toggle, selected_channels, selection_column, value_cell
@@ -282,9 +282,9 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             split.prop(ob.bone, "allset_joint_radius", text="")
             r.label(text="", icon='BLANK1')
 
-    # SHAPES: the shape name is a rename field (Maya); camera / light shapes show
+    # SHAPES: the shape name is a rename field (Maya); camera / light / locator shapes show
     # their attributes expanded
-    data = getattr(ob, "data", None)
+    data = shape_data(ob)
     if data is not None:
         r = lines.row()
         if r is not None:
@@ -294,7 +294,11 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             # Maya draws the shape row as a darker full-width bar (its rename field,
             # #373737): an embossed field
             r.separator(factor=1.5)
-            r.prop(data, "name", text="")
+            if data is ob:      # a locator: its shape name follows the transform's (locator1 -> locatorShape1)
+                from ..command_line import cmds_shim
+                r.label(text=cmds_shim.shape_of(ob) or "")
+            else:
+                r.prop(data, "name", text="")
         for prop in SHAPE_PROPS.get(ob.type, ()):
             if hasattr(data, prop) or _virtual(data, prop) is not None:
                 r = lines.row()

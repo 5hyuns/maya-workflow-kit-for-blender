@@ -7670,6 +7670,19 @@ STRINGS = {
     'Smooth Maya selection wires and tool handles in this viewport': '在此视口中平滑显示 Maya 选择线框和工具手柄',
     'Toggle Window': '切换窗口',
     "Open the editor's window, or close it when it is open in a window of its own": '打开编辑器窗口；已在单独的窗口中打开时将其关闭',
+    'Center Of Interest': '兴趣中心',
+    'Center Of Interest in scene units, like Maya (kept by the kit)': '以场景单位表示的兴趣中心，与 Maya 相同 (由套件保存)',
+    'Depth map shadow bias, like Maya (kept by the kit)': '深度贴图阴影偏移，与 Maya 相同 (由套件保存)',
+    'Dmap Bias': '深度贴图偏移',
+    'Lens Squeeze Ratio': '镜头挤压比',
+    "Lens Squeeze Ratio of the camera, like Maya (kept by the kit; Blender's camera doesn't use it)": '摄像机的镜头挤压比，与 Maya 相同 (由套件保存；Blender 的摄像机不使用它)',
+    'Shad Color': '阴影颜色',
+    "Shadow color, like Maya (kept by the kit; Blender's shadows are black)": '阴影颜色，与 Maya 相同 (由套件保存；Blender 的阴影是黑色)',
+    'Shutter Angle': '快门角度',
+    "Shutter Angle in degrees, like Maya (kept by the kit; Blender's motion blur is a render setting)": '以度为单位的快门角度，与 Maya 相同 (由套件保存；Blender 的运动模糊是渲染设置)',
+    "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)": '聚光灯的衰减，与 Maya 相同 (由套件保存；Blender 的聚光混合是半影角度)',
+    'Use Depth Map Shadows': '使用深度贴图阴影',
+    "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)": '使用深度贴图阴影，与 Maya 相同 (由套件保存；Blender 的阴影是它自己的)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

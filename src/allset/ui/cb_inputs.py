@@ -70,10 +70,13 @@ def _inputs(ob):
 
 def _virtual(owner, name):
     """The Maya attribute behind an INPUTS row ``maya:<key>`` of a kit deformer (operators/deformers.ATTRS), or a
-    SHAPES row of a light (Color R / G / B, operators/lights.channel_attrs) or a camera (Film Aperture, F Stop,
-    operators/film_fit.channel_attrs)."""
+    SHAPES row of a light (Color R / G / B, operators/lights.channel_attrs), a camera (Film Aperture, F Stop,
+    operators/film_fit.channel_attrs) or a locator (Local Position / Scale, operators/shape_attrs.locator_attrs)."""
     if not name.startswith("maya:"):
         return None
+    if isinstance(owner, bpy.types.Object):
+        from ..operators import shape_attrs
+        return shape_attrs.locator_attr(name, owner)
     if isinstance(owner, bpy.types.Light):
         from ..operators import lights
         return lights.channel_attr(name, owner)
@@ -103,13 +106,24 @@ SHAPE_LABELS = {('LATTICE', "points_u"): "S Divisions", ('LATTICE', "points_w"):
                 ('LATTICE', "points_v"): "U Divisions", ('CAMERA', "display_size"): "Locator Scale"}
 
 
+def shape_data(ob):
+    """The struct holding the SHAPES rows of ``ob``: its object data, a locator's own object (Maya's locator shape
+    has no Blender data), else None."""
+    data = getattr(ob, "data", None)
+    if data is not None:
+        return data
+    from ..operators import shape_attrs
+    return ob if shape_attrs.is_locator(ob) else None
+
+
 def shape_label(ob, prop):
     label = SHAPE_LABELS.get((ob.type, prop))
-    v = _virtual(ob.data, prop)
+    data = shape_data(ob)
+    v = _virtual(data, prop)
     if label is None and v is not None:
         label = v.label
     if label is None:
-        rna = ob.data.bl_rna.properties.get(prop)
+        rna = data.bl_rna.properties.get(prop)
         label = rna.name if rna is not None else prop
     return label
 
@@ -329,7 +343,7 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
     if kind == "BLEND":
         return blend_target(ob, BLEND_PREFIX + name)
     if kind == "SHAPE":
-        data = getattr(ob, "data", None)
+        data = shape_data(ob)
         if data is None or (lead_ob is not None and ob.type != lead_ob.type):
             return None
         return data if name in data.bl_rna.properties or _virtual(data, name) is not None else None
@@ -402,24 +416,29 @@ def _modifier_props(mod, limit=10):
 
 
 SHAPE_PROPS = {
-    # Maya camera shape keyable channels that Blender has a setting for (Lens Squeeze Ratio, Shutter Angle and Center
-    # Of Interest have none here)
-    'CAMERA': ("maya:horizontalFilmAperture", "maya:verticalFilmAperture", "lens", "maya:fStop", "maya:focusDistance",
+    # Maya camera shape channels in Maya's order; Lens Squeeze Ratio, Shutter Angle and Center Of Interest are kept by
+    # the kit (operators/shape_attrs.py)
+    'CAMERA': ("maya:horizontalFilmAperture", "maya:verticalFilmAperture", "lens", "allset_lens_squeeze_ratio",
+               "maya:fStop", "maya:focusDistance", "allset_shutter_angle", "allset_center_of_interest",
                "display_size"),
-    # Maya light shapes: Color R / G / B, then Blender's Power (a sun: Strength) where Maya has Intensity (the Maya
-    # keyable order; operators/lights.py)
-    # + spot Cone Angle / Penumbra Angle (keyable on a Maya spotLight)
-    # + Use Ray Trace Shadows (Blender's shadow switch; Maya's depth map shadow rows have no Blender setting)
+    # Maya light shapes in Maya's order: Color R / G / B, then Blender's Power (a sun: Strength) where Maya has
+    # Intensity (operators/lights.py), Use Ray Trace Shadows (Blender's shadow switch), Shad Color R / G / B, Use Depth
+    # Map Shadows and Dmap Bias (kept by the kit), spot Cone Angle / Penumbra Angle and the kept Dropoff. A light type
+    # without a row's property (an area light: the kept rows) skips that row.
     'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "energy", "maya:useRayTraceShadows",
-              "maya:coneAngle", "maya:penumbraAngle"),
+              "maya:shadColorR", "maya:shadColorG", "maya:shadColorB", "allset_use_depth_map_shadows",
+              "allset_dmap_bias", "maya:coneAngle", "maya:penumbraAngle", "allset_dropoff"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z)
+    # a locator (operators/shape_attrs.locator_attrs); other empties have no SHAPES rows (shape_data)
+    'EMPTY': ("maya:localPositionX", "maya:localPositionY", "maya:localPositionZ",
+              "maya:localScaleX", "maya:localScaleY", "maya:localScaleZ"),
 }
 
 
 def wanted_rows(ob):
     """(kind, name, mod_type, nth) for every text row of the lead object."""
     out = [("CUSTOM", name, "", 0) for name in custom_keys(ob)]
-    data = getattr(ob, "data", None)
+    data = shape_data(ob)
     if data is not None:
         for prop in SHAPE_PROPS.get(ob.type, ()):
             rna = data.bl_rna.properties.get(prop)
