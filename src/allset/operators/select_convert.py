@@ -19,6 +19,9 @@ Every rule follows Maya's.
   border component (same type) of those shells; nothing otherwise. To UV Shell Border (polySelectBorderShell 1):
   the open-border components of the shells the selection touches (UVs: the UV shell border).
 - To UVs (PolySelectConvert 4): faces -> their UVs; edges -> their UVs in the faces beside them; vertices -> every UV.
+- To Contained Edges / Faces: what the selection fully holds. Edges from faces = the edges inside the face selection
+  (two or more faces, all selected; the outline and the open border of the mesh are left out), from vertices = both
+  ends selected; faces = every vertex (from edges: every edge) selected. Nothing contained = the selection stays.
 
 Blender has no UV component in the 3D View: a UV result is the UV Editor's selection with UV Sync Selection off
 (the kit's Maya UV component, operators/uv_components.set_component). In that state the selection *is* the UV
@@ -48,9 +51,13 @@ KINDS = (
     ('UVS', "To UVs", "The UVs of the selection (UV Editor, UV Sync Selection off)"),
     ('UV_PERIMETER', "To UV Perimeter", "The UVs on the perimeter of the selection (UV Editor)"),
     ('UV_EDGE_LOOP', "To UV Edge Loop", "The edge loops of the selected edges, up to a UV seam"),
+    ('CONTAINED_EDGES', "To Contained Edges", "The edges the selection fully contains"),
+    ('CONTAINED_FACES', "To Contained Faces", "The faces the selection fully contains"),
 )
 # kinds whose result is a UV selection
 UV_TARGET = {'UVS', 'UV_PERIMETER'}
+# kinds that leave the selection alone when they find nothing
+CONTAINED = {'CONTAINED_EDGES', 'CONTAINED_FACES'}
 
 
 # --- reading the selection ---------------------------------------------------------------------------
@@ -196,6 +203,15 @@ def contained_faces(bm, kind, elems):
         return {f for f in bm.faces if not f.hide and all(e in elems for e in f.edges)}
     vs = verts_of(kind, elems)
     return {f for f in bm.faces if not f.hide and all(v in vs for v in f.verts)}
+
+
+def contained_edges(bm, kind, elems):
+    if kind == 'EDGE':
+        return set(elems)
+    if kind == 'FACE':
+        return {e for e in bm.edges if not e.hide and len(e.link_faces) >= 2
+                and all(f in elems for f in e.link_faces)}
+    return {e for e in bm.edges if not e.hide and all(v in elems for v in e.verts)}
 
 
 def region(bm, kind, elems):
@@ -382,6 +398,10 @@ def convert(bm, kind_in, elems, what, uv=None):
         return 'LOOP', uv_loops('VERT', perimeter_verts(region(bm, kind_in, elems)), uv)
     if what == 'UV_EDGE_LOOP':
         return 'EDGE', uv_edge_loop(touching_edges(kind_in, elems), uv)
+    if what == 'CONTAINED_EDGES':
+        return 'EDGE', contained_edges(bm, kind_in, elems)
+    if what == 'CONTAINED_FACES':
+        return 'FACE', set(elems) if kind_in == 'FACE' else contained_faces(bm, kind_in, elems)
     raise ValueError(what)
 
 
@@ -474,6 +494,8 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
             if res is not None and uv_mode and self.kind in ('GROW_LOOP', 'SHRINK_LOOP'):
                 res = ('LOOP', uv_loops('VERT', res[1], uv))      # UVs grow / shrink with their vertices
             results.append((ob, bm, uv, res))
+        if self.kind in CONTAINED and not any(r[3] and r[3][1] for r in results):
+            return {'FINISHED'}     # nothing contained: the selection stays
         if not results:
             self.report({'WARNING'}, "Select a mesh with UVs" if self.kind in UV_TARGET else "Select a mesh")
             return {'CANCELLED'}
