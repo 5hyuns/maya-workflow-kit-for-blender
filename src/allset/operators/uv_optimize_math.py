@@ -93,7 +93,7 @@ class _System:
             out[:, c] = np.bincount(self.ii, d[:, c], self.n) - np.bincount(self.jj, d[:, c], self.n)
         return out
 
-    def solve(self, B, X0):
+    def solve(self, B, X0, steps=_CG_STEPS):
         """Laplacian @ X = B on the free UVs, the held ones fixed at X0 (Jacobi-preconditioned conjugate gradient)."""
         free = self.free
         X = X0.copy()
@@ -107,7 +107,7 @@ class _System:
         Pd = Z.copy()
         rz = np.einsum("ij,ij->j", R, Z)
         ref = max(float(np.einsum("ij,ij->", B, B)), 1e-30)
-        for _ in range(_CG_STEPS):
+        for _ in range(steps):
             if float(np.einsum("ij,ij->", R, R)) <= _CG_TOL * ref:
                 break
             AP = self.apply(Pd)
@@ -321,4 +321,52 @@ def relax(U, W, held, iterations=5):
         Pd = R + (rr_new / rr) * Pd
         rr = rr_new
     out[free] = X
+    return out
+
+
+# --- Unfold Along U / V -----------------------------------------------------------------------------------------
+
+_ALONG_STEPS = 5000
+
+
+def unfold_along(P, U, T, k, free):
+    """Unfold along one UV axis (``k`` 0 = U, 1 = V): the other coordinate of every UV stays, the free UVs move along
+    ``k`` and the held ones stay. Each triangle wants to be an undistorted copy of its 3D shape at the scale its fixed
+    coordinate already has there (a strip whose V spans its 3D height gets the full 3D width in U), turned the way
+    the shell faces; the solve runs to the end, so a second run changes nothing. A shell with no held UV keeps its
+    mean along ``k``. Returns the new coordinate ``k`` of every UV, or None when no triangle has a 3D shape."""
+    P = np.asarray(P, float)
+    U = np.asarray(U, float)
+    T = np.asarray(T, int).reshape(-1, 3)
+    free = np.asarray(free, bool)
+    if not len(T) or not free.any():
+        return None
+    x, _area, ok = _frames(P, T)
+    if not ok.any():
+        return None
+    T, x = T[ok], x[ok]
+    o = 1 - k
+    # gradient of the fixed coordinate in each triangle's plane
+    f = U[T, o]
+    d1, d2 = f[:, 1] - f[:, 0], f[:, 2] - f[:, 0]
+    x1, x2x, x2y = x[:, 1, 0], x[:, 2, 0], x[:, 2, 1]
+    gx = d1 / x1
+    gy = (d2 - gx * x2x) / x2y
+    sign = 1.0 if _uv_signed_areas(U, T).sum() >= 0.0 else -1.0
+    # the moving coordinate's gradient: the fixed one turned a quarter (U from V: clockwise, V from U: counter)
+    tx, ty = (gy, -gx) if k == 0 else (-gy, gx)
+    tx, ty = tx * sign, ty * sign
+    w = _cotangents(x)
+    n = len(U)
+    B = np.zeros((n, 2))
+    for e in range(3):
+        dx = x[:, _EI[e]] - x[:, _EJ[e]]
+        t = w[:, e] * (tx * dx[:, 0] + ty * dx[:, 1])
+        B[:, 0] += np.bincount(T[:, _EI[e]], t, n) - np.bincount(T[:, _EJ[e]], t, n)
+    X0 = np.zeros((n, 2))
+    X0[:, 0] = U[:, k]
+    X = _System(T, w, free, n).solve(B, X0, _ALONG_STEPS)
+    out = X[:, 0]
+    if free.all():
+        out = out + (U[:, k].mean() - out.mean())
     return out

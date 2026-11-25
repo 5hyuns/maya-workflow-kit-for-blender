@@ -184,31 +184,57 @@ def mark_shell_borders(bm, uv, faces):
 
 
 def unfold(context, ob, fallback=True, iterations=1, no_flip=True):
-    """Maya Unfold on the target shells of ``ob``: Blender Unwrap (Minimum Stretch), each shell back in its place.
+    """Maya Unfold on the target shells of ``ob``: Blender Unwrap (Minimum Stretch), each shell back in its place;
+    in a shell selected only in part just the selected UVs move.
     ``iterations`` = the Unfold option (0 = one quick flattening without relaxing, each more = more stretch relaxed),
     ``no_flip`` = Prevent triangle flips."""
+    from .uv_modify import all_points, selected_ids
+    from .uv_shells import _index_loops
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.index_update()
-    shells = target_islands(bm, uv, sync(context), fallback=fallback)
+    synced = sync(context)
+    shells = target_islands(bm, uv, synced, fallback=fallback)
     if not shells:
         return 0
     faces = [f for isl in shells for f in isl]
+    # Like Maya, only the selected UVs move: in a shell that is selected only in part, the other UVs are pinned
+    # for the unwrap (and keep where they are), the selected ones unfold against them.
+    pinned = []         # (face index, corner, pin before)
+    whole = shells
+    if not fallback:
+        _index_loops(bm)
+        pts, where = all_points(bm, uv)
+        chosen = set(selected_ids(bm, uv, synced, pts))
+        whole = []
+        for isl in shells:
+            held = [l for f in isl for l in f.loops if where[l] not in chosen]
+            if not held:
+                whole.append(isl)
+                continue
+            pinned += [(f.index, i, l[uv].pin_uv) for f in isl for i, l in enumerate(f.loops)]
+            for l in held:
+                l[uv].pin_uv = True
     mark_shell_borders(bm, uv, faces)
     # Maya Unfold keeps each shell's UV area and the mean of its UVs, and a shell whose UVs were laid out facing
     # the right way keeps its direction; a mirrored or collapsed shell takes the direction the unfold gives it.
-    before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in shells]
-    old_uvs = [[tuple(l[uv].uv) for f in isl for l in f.loops] for isl in shells]
-    upright = [_upright(isl, uv) for isl in shells]
+    # (A shell selected in part is held in place by its pinned UVs instead.)
+    before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in whole]
+    old_uvs = [[tuple(l[uv].uv) for f in isl for l in f.loops] for isl in whole]
+    upright = [_upright(isl, uv) for isl in whole]
     bmesh.update_edit_mesh(ob.data)
     if iterations <= 0:
         kw = {"method": 'CONFORMAL'}
     else:
         kw = {"method": 'MINIMUM_STRETCH', "iterations": min(UNFOLD_STEPS * iterations, 10000), "no_flip": no_flip}
-    _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(margin=0.0, **kw))
-    bm = bmesh.from_edit_mesh(ob.data)
-    uv = bm.loops.layers.uv.verify()
-    bm.faces.ensure_lookup_table()
+    try:
+        _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(margin=0.0, **kw))
+    finally:
+        bm = bmesh.from_edit_mesh(ob.data)
+        uv = bm.loops.layers.uv.verify()
+        bm.faces.ensure_lookup_table()
+        for fi, i, on in pinned:
+            bm.faces[fi].loops[i][uv].pin_uv = on
     # one factor for all unfolded shells: Maya's rule keeps the *total* area (one-shell cases), and a common
     # factor keeps the even texel density Blender's unwrap gives the shells (sweep M66-3: Unfold then Layout)
     area = sum(a for _i, _m, a in before)
@@ -385,7 +411,7 @@ class ALLSET_OT_uv_sew(bpy.types.Operator):
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_unfold(bpy.types.Operator):
     """Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold
-    options (Maya Unfold; Blender Unwrap, Minimum Stretch)"""
+    options; in a shell selected in part only the selected UVs move (Maya Unfold; Blender Unwrap, Minimum Stretch)"""
     bl_idname = "allset.uv_unfold"
     bl_label = "Unfold"
     bl_options = {'REGISTER', 'UNDO'}

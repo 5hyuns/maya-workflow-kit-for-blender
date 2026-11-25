@@ -5,7 +5,8 @@
   bounding box; with the UV Shell mask whole shells move, each shell's box to the box of all selected shells.
 - Straighten UVs: selected UV edges within the angle tolerance of the U (V) axis are lined up, each connected run
   of them on the centre of its bounding box.
-- Unfold Along U / V: the shells are relaxed along one axis only; the other coordinate of every UV stays.
+- Unfold Along U / V: the selected UVs are unfolded along one axis only, all the way in one run; the other
+  coordinate of every UV stays and the unselected UVs of a shell hold the selected ones in place.
 - Straighten Shell: the selected UV edge loop becomes a straight line along U or V (its UV length kept, its UVs spaced
   like their mesh edges) and the rest of its shell is unfolded around it (Blender Unwrap, Angle Based, with the line
   pinned), so a ribbon shell becomes a straight strip. Like Maya, a line that crosses a ribbon of two or more faces
@@ -223,59 +224,38 @@ class ALLSET_OT_uv_straighten_uvs(bpy.types.Operator):
 
 # --- Unfold Along U / V ---------------------------------------------------------------------------------------
 
-ALONG_ITERATIONS = 200
-
-
-def unfold_along(bm, uv, island, axis, iterations=ALONG_ITERATIONS):
-    """Relax one shell along ``axis`` only: each mesh edge wants its UV length to be its 3D length times the shell's
-    UV-per-3D scale; the other coordinate of every UV stays, and so does the shell's mean on ``axis``."""
+def unfold_along(bm, uv, island, axis, where, moving=None, tris=None):
+    """Unfold one shell along ``axis`` only: the other coordinate of every UV stays; the UVs in ``moving`` (all of
+    the shell when None) move and the rest of the shell holds them in place, like Maya moves only the selected UVs.
+    ``where`` maps each loop to its Maya UV index (``all_points``); ``tris`` = ``bm.calc_loop_triangles()``."""
+    from . import uv_optimize_math
+    first = {}
+    for f in island:
+        for l in f.loops:
+            first.setdefault(where[l], l)
+    ids = sorted(first)
+    if len(ids) < 2 or (moving is not None and not moving.intersection(ids)):
+        return False
+    local = {i: n for n, i in enumerate(ids)}
+    faces = set(island)
+    T = [[local[where[l]] for l in tri] for tri in (tris or bm.calc_loop_triangles()) if tri[0].face in faces]
+    P = [tuple(first[i].vert.co) for i in ids]
+    U = [tuple(first[i][uv].uv) for i in ids]
+    free = [moving is None or i in moving for i in ids]
     k = 0 if axis == 'U' else 1
-    o = 1 - k
-    pts, where = {}, {}
+    out = uv_optimize_math.unfold_along(P, U, T, k, free)
+    if out is None:
+        return False
     for f in island:
         for l in f.loops:
-            p = l[uv].uv
-            key = (l.vert.index, round(p.x, 6), round(p.y, 6))
-            where[l] = pts.setdefault(key, len(pts))
-    n = len(pts)
-    if n < 2:
-        return False
-    pos = [[0.0, 0.0] for _ in range(n)]
-    for l, i in where.items():
-        pos[i] = [l[uv].uv.x, l[uv].uv.y]
-    edges = {}
-    for f in island:
-        for l in f.loops:
-            a, b = where[l], where[l.link_loop_next]
-            if a != b:
-                edges[(min(a, b), max(a, b))] = (l.vert.co - l.link_loop_next.vert.co).length
-    uva = sum(abs(uv_tools._uv_area(f, uv)) for f in island)
-    wa = sum(f.calc_area() for f in island)
-    if wa <= 1e-12 or uva <= 1e-12 or not edges:
-        return False
-    s = math.sqrt(uva / wa)
-    mean0 = sum(p[k] for p in pos) / n
-    nbrs = [[] for _ in range(n)]
-    for (a, b), length in edges.items():
-        want = s * length
-        dv = pos[a][o] - pos[b][o]
-        du = math.sqrt(max(want * want - dv * dv, 0.0))
-        sign = 1.0 if pos[a][k] >= pos[b][k] else -1.0
-        nbrs[a].append((b, sign * du))
-        nbrs[b].append((a, -sign * du))
-    x = [p[k] for p in pos]
-    for _ in range(iterations):
-        x = [sum(x[j] + d for j, d in nb) / len(nb) if nb else x[i] for i, nb in enumerate(nbrs)]
-    shift = mean0 - sum(x) / n
-    for l, i in where.items():
-        l[uv].uv[k] = x[i] + shift
+            l[uv].uv[k] = float(out[local[where[l]]])
     return True
 
 
 @undo_steps.no_redo_panel
 class ALLSET_OT_uv_unfold_along(bpy.types.Operator):
-    """Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every
-    UV stays (Maya UV Toolkit Unfold Along U / V)"""
+    """Unfold the selected UVs (all when none are selected) along U or V only: the other coordinate of every UV
+    stays, the unselected UVs of a shell stay where they are (Maya UV Toolkit Unfold Along U / V)"""
     bl_idname = "allset.uv_unfold_along"
     bl_label = "Unfold Along"
     bl_options = {'REGISTER', 'UNDO'}
@@ -286,13 +266,18 @@ class ALLSET_OT_uv_unfold_along(bpy.types.Operator):
 
     def execute(self, context):
         fallback = not uv_tools.picked_anywhere(context)
+        synced = uv_tools.sync(context)
         done = 0
         for ob in _meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.verify()
             bm.verts.index_update()
-            got = sum(unfold_along(bm, uv, isl, self.axis)
-                      for isl in uv_tools.target_islands(bm, uv, uv_tools.sync(context), fallback))
+            _index_loops(bm)
+            pts, where = all_points(bm, uv)
+            moving = None if fallback else set(selected_ids(bm, uv, synced, pts))
+            tris = bm.calc_loop_triangles()
+            got = sum(unfold_along(bm, uv, isl, self.axis, where, moving, tris)
+                      for isl in uv_tools.target_islands(bm, uv, synced, fallback))
             if got:
                 done += got
                 bmesh.update_edit_mesh(ob.data)

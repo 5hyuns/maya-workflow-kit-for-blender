@@ -6812,6 +6812,7 @@
    "Insert with edge flow": "Insert with edge flow",
    "Only scale specified keys": "Only scale specified keys",
    "Preserve position": "Preserve position",
+   "Separate duplicated faces": "Separate duplicated faces",
    "Smart transform": "Smart transform"
   },
   "Labels/operators/option_windows_match": {
@@ -10887,6 +10888,8 @@
    "Delete Non Deformer History Options": "Delete Non Deformer History Options",
    "Delete edge (maintain 4-sided polygons)": "Delete edge (maintain 4-sided polygons)",
    "Driven channels": "Driven channels",
+   "Duplicate": "Duplicate",
+   "Duplicate Face Options": "Duplicate Face Options",
    "Duplicate Special": "Duplicate Special",
    "Duplicate Special Options": "Duplicate Special Options",
    "Duplicate input connections": "Duplicate input connections",
@@ -10929,6 +10932,7 @@
    "Number of copies": "Number of copies",
    "Number of edge loops": "Number of edge loops",
    "Objects": "Objects",
+   "Offset": "Offset",
    "Offset Edge Loop Options": "Offset Edge Loop Options",
    "Only scale specified keys": "Only scale specified keys",
    "Parent": "Parent",
@@ -10957,6 +10961,7 @@
    "Segments": "Segments",
    "Selected": "Selected",
    "Selected keys override specified time range": "Selected keys override specified time range",
+   "Separate duplicated faces": "Separate duplicated faces",
    "Shapes": "Shapes",
    "Slide": "Slide",
    "Smart transform": "Smart transform",
@@ -12892,7 +12897,7 @@
    "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)": "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)",
    "Show the settings of the UV Editor's active tool (the sidebar's Tool tab)": "Show the settings of the UV Editor's active tool (the sidebar's Tool tab)",
    "Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)": "Straighten the selected UV edge loop along U or V and unfold the rest of its shell around it, so a ribbon\nshell becomes a straight strip (Maya Straighten Shell)",
-   "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)": "Unfold the selected UV shells (all when none are selected) along U or V only: the other coordinate of every\nUV stays (Maya UV Toolkit Unfold Along U / V)"
+   "Unfold the selected UVs (all when none are selected) along U or V only: the other coordinate of every UV\nstays, the unselected UVs of a shell stay where they are (Maya UV Toolkit Unfold Along U / V)": "Unfold the selected UVs (all when none are selected) along U or V only: the other coordinate of every UV\nstays, the unselected UVs of a shell stay where they are (Maya UV Toolkit Unfold Along U / V)"
   },
   "Tooltips/operators/uv_tools": {
    "Cut the UVs along the selected edges (Maya Cut UV Edges): a seam, and the shells separate in place": "Cut the UVs along the selected edges (Maya Cut UV Edges): a seam, and the shells separate in place",
@@ -12900,7 +12905,7 @@
    "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit": "Measure the texel density of the selected UV shells (all when none are selected): pixels per Maya unit",
    "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)": "Scale the selected UV shells (all when none are selected) to the texel density (pixels per Maya unit)",
    "Sew the UVs along the selected edges (Maya Sew UV Edges): the UVs on each edge meet half-way": "Sew the UVs along the selected edges (Maya Sew UV Edges): the UVs on each edge meet half-way",
-   "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions (Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions (Maya Unfold; Blender Unwrap, Minimum Stretch)"
+   "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions; in a shell selected in part only the selected UVs move (Maya Unfold; Blender Unwrap, Minimum Stretch)": "Unfold the selected UV shells (all when none are selected), keeping their borders and places, with the Unfold\noptions; in a shell selected in part only the selected UVs move (Maya Unfold; Blender Unwrap, Minimum Stretch)"
   },
   "Tooltips/operators/uv_transform": {
    "Distribute the selected UVs evenly along U or V (UV Toolkit Move); the options button sets a custom distance": "Distribute the selected UVs evenly along U or V (UV Toolkit Move); the options button sets a custom distance",
