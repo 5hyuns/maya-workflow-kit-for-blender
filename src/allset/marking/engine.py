@@ -371,12 +371,17 @@ class Session:
                 and not self.params.quick_gestures and not self.visible(t)):
             # a mark goes into a radial submenu where it crosses the item (its box centre) and the rest of the stroke
             # picks in there, like Maya's compound marks: a flick on past the item runs the submenu's item that way
-            # (Ctrl+RMB flick left = To Vertices > To Vertices); one that ends on the item runs nothing
+            # (Ctrl+RMB flick left = To Vertices > To Vertices). A short flick that ends before the item's box centre
+            # goes on in the item's own direction, however short it is (outside the dead zone): a quick flick left
+            # is To Vertices > To Vertices too
             r = item.rect
             dx, dy = self._rel(x, y)
-            way = direction(dx - (r[0] + r[2]) / 2, dy - (r[1] + r[3]) / 2, self.params.dead)
-            if way is None:
-                return self._cancel()
+            ux, uy = _UNIT[item.key]
+            cx, cy = (r[0] + r[2]) / 2, (r[1] + r[3]) / 2
+            if dx * ux + dy * uy < cx * ux + cy * uy:
+                way = item.key
+            else:
+                way = direction(dx - cx, dy - cy, self.params.dead) or item.key
             self._push(item, self.center)
             leaf = self.layout.radial.get(way)
             if leaf is not None and leaf.sub is None:

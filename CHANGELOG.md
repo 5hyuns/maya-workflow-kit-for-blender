@@ -19,6 +19,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Selection on) a picked vertex or edge is drawn as selected on every UV shell that has it, so what the UV Editor
   shows as selected is what UV commands (Align, Unfold, ...) move, like Maya. A picked face still shows only its
   own UVs.
+- **Ctrl+right-click quick flicks** (#561): a quick flick converts the selection however short it is: left = To
+  Vertices, up = To Edges, right = To UVs, down = To Faces. Any quick mark that ends on a radial submenu item runs
+  that submenu's item in the same direction.
 
 ## [0.24.0] — 2026-11-25
 

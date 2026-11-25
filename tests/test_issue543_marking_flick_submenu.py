@@ -1,8 +1,8 @@
 """#543: a quick flick in the Ctrl+RMB convert marking menu converts the selection, like Maya. The radial items there
 are submenus (To Vertices, To Edges, To Faces, To UVs); a mark released before the menu is drawn goes into the submenu
 where it crosses the item, and the rest of the stroke picks there, so a flick on past the item runs the submenu's item
-in that direction (flick left = To Vertices). A mark that ends on the item, or a release once the menu is drawn, still
-runs nothing. Engine only."""
+in that direction (flick left = To Vertices); a mark that ends on the item goes on in the item's direction. A release
+once the menu is drawn still runs nothing. Engine only."""
 
 from importlib import import_module
 
@@ -42,12 +42,13 @@ def test_a_flick_right_after_the_press_still_runs_nothing():
     assert _flick(mm.CTRL_CONVERT, "W", held=0.05) == ("CANCEL", None, False)
 
 
-def test_a_mark_that_ends_on_the_item_runs_nothing():
+def test_a_mark_that_ends_on_the_item_runs_the_item_that_way():
     s = _session(mm.CTRL_CONVERT)
     r = s.layout.radial["W"].rect
     end = (O[0] + (r[0] + r[2]) / 2, O[1] + (r[1] + r[3]) / 2)
     s.move((O[0] + end[0]) / 2, end[1], 100.08)
-    assert s.release(*end, 100.12) == ("CANCEL", None, False)
+    res = s.release(*end, 100.12)
+    assert res[0] == "RUN" and "To Vertices" in str(res[1].action), res
 
 
 def test_a_drawn_menu_released_on_a_submenu_item_runs_nothing():

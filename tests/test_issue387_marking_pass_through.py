@@ -173,10 +173,11 @@ def _quick_release_on(s, key, t0, speed_dt):
 
 
 def test_a_stroke_released_at_once_on_a_radial_submenu_closes_the_menu():
-    """Like Maya: a stroke that ends on a radial submenu item and lets go without a rest runs nothing and closes the
-    menu, before and after the menu is drawn (it doesn't stay open in click mode)."""
+    """Like Maya: once the menu is drawn, a stroke that ends on a radial submenu item and lets go without a rest runs
+    nothing and closes the menu (it doesn't stay open in click mode). A quick mark released before the menu is drawn
+    goes on into the submenu instead (tests/test_issue561_marking_short_flick.py)."""
     for key in ("S", "SE", "N", "E"):
-        for t0, dt in ((0.0, 0.01), (SHOWN, 0.01)):
+        for t0, dt in ((SHOWN, 0.01),):
             s = _session()
             end, t = _quick_release_on(s, key, t0, dt)
             want = s.stack[0][0].radial[key].label
