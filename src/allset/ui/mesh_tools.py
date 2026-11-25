@@ -79,8 +79,8 @@ class ALLSET_TL_cut_sew(bpy.types.WorkSpaceTool):
     bl_context_mode = 'EDIT_MESH'
     bl_idname = cut_sew.TOOL
     bl_label = "3D Cut and Sew UV Tool"
-    bl_description = ("Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. "
-                      "x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)")
+    bl_description = ("Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges; "
+                      "double-click an edge to cut its edge loop, Ctrl+double-click to sew it. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)")
     bl_icon = "ops.mesh.knife_tool"
     bl_widget = None
     bl_options = {'KEYMAP_FALLBACK'}
@@ -90,6 +90,9 @@ class ALLSET_TL_cut_sew(bpy.types.WorkSpaceTool):
          {"properties": [("action", 'SEW')]}),
         ("allset.cut_sew_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
          {"properties": [("action", 'SELECT')]}),
+        ("allset.cut_sew_loop", {"type": 'LEFTMOUSE', "value": 'DOUBLE_CLICK'}, {"properties": [("action", 'CUT')]}),
+        ("allset.cut_sew_loop", {"type": 'LEFTMOUSE', "value": 'DOUBLE_CLICK', "ctrl": True},
+         {"properties": [("action", 'SEW')]}),
         ("allset.uv_cut", {"type": 'X', "value": 'PRESS'}, {"properties": [("mesh_select", True)]}),
         ("allset.uv_sew", {"type": 'S', "value": 'PRESS'}, {"properties": [("mesh_select", True)]}),
         ("allset.uv_unfold_layout", {"type": 'D', "value": 'PRESS'}, None),
@@ -97,7 +100,7 @@ class ALLSET_TL_cut_sew(bpy.types.WorkSpaceTool):
 
     @staticmethod
     def draw_settings(context, layout, tool):
-        layout.label(text="Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select", icon='INFO')
+        layout.label(text="Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select  ·  Double-click: Edge loop", icon='INFO')
         row = layout.row(align=True)
         row.operator("allset.uv_cut", text="Cut (x)").mesh_select = True
         row.operator("allset.uv_sew", text="Sew (s)").mesh_select = True

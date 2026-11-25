@@ -1517,11 +1517,11 @@ STRINGS = {
     'Drag Along Closest Axis': '最も近い軸に沿ってドラッグ',
     'Drag Material': 'マテリアルをドラッグ',
     'Drag a vertex or edge onto the target to merge them (Maya Target Weld). A selected vertex takes every selected vertex with it': '頂点またはエッジをターゲットにドラッグしてマージ (Maya ターゲット連結)。選択された頂点は選択中の頂点をすべて連れていきます',
-    'Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)': 'エッジに沿ってドラッグで UV をカット、Ctrl+ドラッグで縫合、Shift+ドラッグでエッジを選択。x = カット、s = 縫合、d = 展開とレイアウト (Maya 3D カットと縫合 UV ツール)',
+    'Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges; double-click an edge to cut its edge loop, Ctrl+double-click to sew it. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)': 'エッジに沿ってドラッグで UV をカット、Ctrl+ドラッグで縫合、Shift+ドラッグでエッジを選択。ダブルクリックでエッジのエッジループをカット、Ctrl+ダブルクリックで縫合。x = カット、s = 縫合、d = 展開とレイアウト (Maya 3D カットと縫合 UV ツール)',
     'Drag arrows to grow or carve; rings rotate, boxes scale. J snaps, Esc cancels the drag': '矢印をドラッグで伸ばす / 削る。リングで回転、ボックスでスケール。J でスナップ、Esc でドラッグをキャンセル',
     'Drag in a view to place and size the polygon primitive picked from the Create menu or shelf, drag again for its height (Maya Interactive Creation)': 'ビュー内でドラッグして、作成メニューまたはシェルフで選んだポリゴンプリミティブを配置・サイズ指定し、もう一度ドラッグで高さ (Maya インタラクティブ作成)',
     'Drag to merge components': 'ドラッグしてコンポーネントをマージ',
-    'Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select': 'ドラッグ: カット  ·  Ctrl+ドラッグ: 縫合  ·  Shift+ドラッグ: 選択',
+    'Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select  ·  Double-click: Edge loop': 'ドラッグ: カット  ·  Ctrl+ドラッグ: 縫合  ·  Shift+ドラッグ: 選択  ·  ダブルクリック: エッジループ',
     'Draw Mode': '描画モード',
     'Draw Mode:': '描画モード:',
     'Draw Paint Curve': 'ペイントカーブを描画',
@@ -7690,6 +7690,8 @@ STRINGS = {
     'How much darker the dimmed image is: 0 = unchanged, 1 = black': '暗くしたイメージの暗さ: 0 = そのまま、1 = 黒',
     'Image display': 'イメージ表示',
     "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender の UV エディタは常にイメージをフィルタなしで表示します: 拡大すると各ピクセルがくっきりした四角になります。滑らかな (フィルタあり) 表示はありません。',
+    'Cut / Sew UV Edge Loop': 'UV エッジループのカット / 縫合',
+    'Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)': 'エッジをダブルクリックでそのエッジループ全体をカット、Ctrl でループを縫合 (Maya 3D カットと縫合 UV ツール)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

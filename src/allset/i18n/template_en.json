@@ -5755,6 +5755,7 @@
   "Labels/operators/cut_sew": {
    "3D Cut and Sew UV Tool": "3D Cut and Sew UV Tool",
    "Action": "Action",
+   "Cut / Sew UV Edge Loop": "Cut / Sew UV Edge Loop",
    "Cut / Sew UV Stroke": "Cut / Sew UV Stroke",
    "Unfold and Layout": "Unfold and Layout"
   },
@@ -9300,8 +9301,8 @@
    "Cut (x)": "Cut (x)",
    "Cut / Insert Edge Loop Tool": "Cut / Insert Edge Loop Tool",
    "Drag a vertex or edge onto the target to merge them (Maya Target Weld). A selected vertex takes every selected vertex with it": "Drag a vertex or edge onto the target to merge them (Maya Target Weld). A selected vertex takes every selected vertex with it",
-   "Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)": "Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)",
-   "Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select": "Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select",
+   "Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges; double-click an edge to cut its edge loop, Ctrl+double-click to sew it. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)": "Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges; double-click an edge to cut its edge loop, Ctrl+double-click to sew it. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)",
+   "Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select  ·  Double-click: Edge loop": "Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select  ·  Double-click: Edge loop",
    "Keyboard/Mouse Shortcuts": "Keyboard/Mouse Shortcuts",
    "Multi-Cut": "Multi-Cut",
    "Sew (s)": "Sew (s)",
@@ -12031,6 +12032,7 @@
    "Split the curve at the edit point nearest each selected CV (Maya Curves > Detach)": "Split the curve at the edit point nearest each selected CV (Maya Curves > Detach)"
   },
   "Tooltips/operators/cut_sew": {
+   "Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)": "Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)",
    "Drag along edges to cut their UVs; Ctrl = sew, Shift = select (Maya 3D Cut and Sew UV Tool)": "Drag along edges to cut their UVs; Ctrl = sew, Shift = select (Maya 3D Cut and Sew UV Tool)",
    "Edit the UVs on the model: drag along edges to cut, Ctrl+drag to sew (Maya 3D Cut and Sew UV Tool)": "Edit the UVs on the model: drag along edges to cut, Ctrl+drag to sew (Maya 3D Cut and Sew UV Tool)",
    "Unfold the UV shells, then lay them out (Maya 3D Cut and Sew d: UnfoldUV + LayoutUV)": "Unfold the UV shells, then lay them out (Maya 3D Cut and Sew d: UnfoldUV + LayoutUV)"

@@ -1517,11 +1517,11 @@ STRINGS = {
     'Drag Along Closest Axis': '沿最近的軸拖動',
     'Drag Material': '拖動材質',
     'Drag a vertex or edge onto the target to merge them (Maya Target Weld). A selected vertex takes every selected vertex with it': '將頂點或邊拖到目標上以合併 (Maya 目標焊接)。選定的頂點會帶上所有選定的頂點',
-    'Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)': '沿邊拖動以在該處剪下 UV，Ctrl+拖動縫合，Shift+拖動選擇邊。x = 剪下，s = 縫合，d = 展開並排布 (Maya 3D 剪下和縫合 UV 工具)',
+    'Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges; double-click an edge to cut its edge loop, Ctrl+double-click to sew it. x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)': '沿邊拖動以在該處剪下 UV，Ctrl+拖動縫合，Shift+拖動選擇邊；雙擊邊剪下其邊循環，Ctrl+雙擊縫合。x = 剪下，s = 縫合，d = 展開並排布 (Maya 3D 剪下和縫合 UV 工具)',
     'Drag arrows to grow or carve; rings rotate, boxes scale. J snaps, Esc cancels the drag': '拖動箭頭可加長或雕刻；圓環旋轉，方塊縮放。J 捕捉，Esc 取消拖動',
     'Drag in a view to place and size the polygon primitive picked from the Create menu or shelf, drag again for its height (Maya Interactive Creation)': '在視圖中拖動以放置從創建選單或工具架選取的多邊形基本體並確定大小，再次拖動確定高度 (Maya 交互式創建)',
     'Drag to merge components': '拖動以合併組件',
-    'Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select': '拖動：剪下  ·  Ctrl+拖動：縫合  ·  Shift+拖動：選擇',
+    'Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select  ·  Double-click: Edge loop': '拖動：剪下  ·  Ctrl+拖動：縫合  ·  Shift+拖動：選擇  ·  雙擊：邊循環',
     'Draw Mode': '繪製模式',
     'Draw Mode:': '繪製模式：',
     'Draw Paint Curve': '繪製繪畫曲線',
@@ -7691,6 +7691,8 @@ STRINGS = {
     'How much darker the dimmed image is: 0 = unchanged, 1 = black': '變暗後圖像的暗度: 0 = 不變, 1 = 黑色',
     'Image display': '圖像顯示',
     "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender 的 UV 編輯器總是以未過濾方式繪製圖像: 放大後每個像素都是清晰的方塊。沒有平滑 (過濾) 顯示。',
+    'Cut / Sew UV Edge Loop': '剪下 / 縫合 UV 邊循環',
+    'Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)': '雙擊邊剪下其整條邊循環；Ctrl = 縫合該循環 (Maya 3D 剪下和縫合 UV 工具)',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)
