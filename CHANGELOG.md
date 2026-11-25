@@ -3,6 +3,19 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **UV Toolkit Unfold Along U / V** (#557): one click unfolds all the way along the axis (a second click changes
+  nothing); the length along U (V) follows the scale V (U) already has, so a squashed strip gets its full width at
+  once. With part of a shell selected, only the selected UVs move and the rest of the shell holds them, like Maya.
+- **UV Editor > Modify > Unfold on part of a shell** (#558): only the selected UVs move (selected faces: their
+  corner UVs; an edge: the UVs at its ends; a vertex: its UV); the rest of the shell stays where it is, like Maya.
+  Pins set before are kept.
+- **Edit Mesh > Duplicate option box** (#562): opens the Duplicate Face Options window from every menu (the main
+  menu bar too). The window's Duplicate keeps its values (Separate duplicated faces, Offset) and a plain click of the
+  menu item uses them, so with Separate duplicated faces off the copies stay in the mesh, like Maya.
+
 ## [0.24.0] — 2026-11-25
 
 **UV Editor commands work on the selection the way Maya does, and Transfer Attributes transfers normals.** UV shell
