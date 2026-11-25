@@ -156,3 +156,60 @@ def test_a_face_with_neighbours_opens_its_place():
     bm = bmesh.from_edit_mesh(ob.data)
     assert len(bm.faces) == n_faces - 1 + 13, len(bm.faces)
     assert len(bm.verts) == 16 + 8, len(bm.verts)
+
+
+def _edge_first(edge_y=None, edge_x=None):
+    """Edge mode: pick one top edge; F11 (allset.component_mode FACE); then add the top face (Shift+click in face
+    mode makes the face the active element)."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    kit.enable()
+    bpy.ops.mesh.primitive_cube_add(size=2)
+    ob = bpy.context.object
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.scene.tool_settings.mesh_select_mode = (False, True, False)
+    bm = bmesh.from_edit_mesh(ob.data)
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    top = next(f for f in bm.faces if f.normal.z > 0.9)
+    hinge = next(e for e in top.edges
+                 if (edge_y is not None and all(abs(v.co.y - edge_y) < 1e-6 for v in e.verts))
+                 or (edge_x is not None and all(abs(v.co.x - edge_x) < 1e-6 for v in e.verts)))
+    hinge.select_set(True)
+    bm.select_history.clear()
+    bm.select_history.add(hinge)
+    bmesh.update_edit_mesh(ob.data)
+    assert bpy.ops.allset.component_mode(type='FACE') == {'FINISHED'}
+    bm = bmesh.from_edit_mesh(ob.data)
+    assert not any(e.select for e in bm.edges)            # Blender's face mode drops the lone edge
+    top = next(f for f in bm.faces if f.normal.z > 0.9)
+    top.select_set(True)
+    bm.select_history.clear()
+    bm.select_history.add(top)
+    bmesh.update_edit_mesh(ob.data)
+    return ob
+
+
+def test_an_edge_picked_before_the_face_is_the_hinge():
+    """Maya keeps the edge picked in edge mode when faces are picked next: each edge gives its own wedge."""
+    hinge_mod = __import__(kit.MODULE + ".operators.wedge_hinge", fromlist=["x"])
+    for kw, hinge, far in (
+            ({"edge_y": -1.0}, [(-1, -1, 1), (1, -1, 1)], [(-1, 1, 1), (1, 1, 1)]),
+            ({"edge_x": 1.0}, [(1, -1, 1), (1, 1, 1)], [(-1, -1, 1), (-1, 1, 1)])):
+        ob = _edge_first(**kw)
+        bm = bmesh.from_edit_mesh(ob.data)
+        shown = hinge_mod.shown_hinge(ob, bm)                # drawn as the picked hinge in face mode
+        assert shown is not None and sorted(tuple(round(c, 4) for c in v.co) for v in shown.verts) == \
+            sorted(tuple(float(c) for c in p) for p in hinge), shown
+        assert bpy.ops.allset.wedge() == {'FINISHED'}
+        _check(ob, hinge, far)
+        bm = bmesh.from_edit_mesh(ob.data)
+        assert hinge_mod.shown_hinge(ob, bm) is None         # used up by the Wedge
+
+
+def test_the_active_edge_on_a_selected_face_is_drawn():
+    """In edge mode the edge picked on a selected face (the active edge) is drawn as the hinge."""
+    hinge_mod = __import__(kit.MODULE + ".operators.wedge_hinge", fromlist=["x"])
+    ob = _cube_top(edge_x=-1.0)
+    bm = bmesh.from_edit_mesh(ob.data)
+    shown = hinge_mod.shown_hinge(ob, bm)
+    assert shown is not None and all(abs(v.co.x + 1) < 1e-6 and abs(v.co.z - 1) < 1e-6 for v in shown.verts)

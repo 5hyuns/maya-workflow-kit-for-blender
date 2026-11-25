@@ -1,5 +1,6 @@
 """#546 in a real UI: pick the top face in face mode (F11), go to edge mode (F10) and Shift+click one of the face's
-edges; Edit Mesh > Wedge then turns the face around that edge (each edge gives its own result)."""
+edges; Edit Mesh > Wedge then turns the face around that edge (each edge gives its own result). The other order works
+too: an edge clicked in edge mode, then the face Shift+clicked in face mode."""
 
 import os
 import sys
@@ -76,6 +77,11 @@ def wedge_case(name, edge_mid, hinge_axis, hinge_value):
         click(edge_mid, shift=True)
 
     @step
+    def s_picked_shot():
+        if SHOTS:
+            screenshot(os.path.join(SHOTS, f"546_{name}_picked.png"))
+
+    @step
     def s_wedge():
         C[name + "after_shift"] = state()
         ob = bpy.data.objects["Cube"]
@@ -104,6 +110,61 @@ def wedge_case(name, edge_mid, hinge_axis, hinge_value):
               and all(abs(getattr(v, hinge_axis) - hinge_value) < 1e-3 for v in top))
 
 
+def edge_first_case(name, edge_mid, hinge_axis, hinge_value):
+    """Edge mode (F10): click a top edge; face mode (F11): Shift+click the top face; Wedge turns about that edge."""
+    @step
+    def s_reset():
+        ob = bpy.data.objects["Cube"]
+        if ob.mode == 'EDIT':
+            area, region = view3d()
+            with bpy.context.temp_override(window=win(), area=area, region=region):
+                bpy.ops.object.mode_set(mode='OBJECT')
+        me = bpy.data.meshes.new("cube546e")
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=2)
+        bm.to_mesh(me)
+        bm.free()
+        ob.data = me
+        tap('F10')                      # edge mode (enters Edit Mode)
+
+    @step
+    def s_edge():
+        click(edge_mid)
+
+    @step
+    def s_face_mode():
+        C[name + "after_edge"] = state()
+        tap('F11')
+
+    @step
+    def s_face():
+        click((0, 0, 1), shift=True)
+
+    @step
+    def s_picked_shot():
+        C[name + "after_face"] = state()
+        if SHOTS:
+            screenshot(os.path.join(SHOTS, f"546_{name}_picked.png"))
+
+    @step
+    def s_wedge():
+        area, region = view3d()
+        with bpy.context.temp_override(window=win(), area=area, region=region):
+            C[name + "result"] = bpy.ops.allset.wedge()
+
+    @step
+    def s_check():
+        ob = bpy.data.objects["Cube"]
+        bm = bmesh.from_edit_mesh(ob.data)
+        top = [v.co for v in bm.verts if v.co.z > 2.99]
+        check(f"{name}: edge picked, then the face added in face mode ({C[name + 'after_edge']} -> "
+              f"{C[name + 'after_face']})",
+              C[name + "after_edge"][2] == 1 and C[name + "after_face"][1] == 1)
+        check(f"{name}: Wedge stands the face up on the edge picked first ({C[name + 'result']}, top {len(top)})",
+              C[name + "result"] == {'FINISHED'} and len(top) == 2
+              and all(abs(getattr(v, hinge_axis) - hinge_value) < 1e-3 for v in top))
+
+
 @step
 def s_setup():
     C["x"], C["y"] = setup()
@@ -116,5 +177,7 @@ def s_setup():
 
 wedge_case("front", (0, -1, 1), "y", -1.0)
 wedge_case("right", (1, 0, 1), "x", 1.0)
+edge_first_case("edge_first_front", (0, -1, 1), "y", -1.0)
+edge_first_case("edge_first_right", (1, 0, 1), "x", 1.0)
 
 run()

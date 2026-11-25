@@ -197,14 +197,11 @@ def wedge(bm, faces, edge, angle, divisions):
     return [f for f in out["geom_last"] if isinstance(f, bmesh.types.BMFace) and f.is_valid]
 
 
-def wedge_edge(bm, faces):
-    """The edge a Wedge turns about: the active edge, else a selected edge on the border of the selected faces."""
-    edge = bm.select_history.active
-    if isinstance(edge, bmesh.types.BMEdge):
-        return edge
-    sel = set(faces)
-    return next((e for f in faces for e in f.edges
-                 if e.select and sum(lf in sel for lf in e.link_faces) == 1), None)
+def wedge_edge(bm, faces, ob=None):
+    """The edge a Wedge turns about: the active edge, else an edge picked before the faces (kept across the switch
+    to face mode, wedge_hinge), else a selected edge on the border of the selected faces."""
+    from . import wedge_hinge
+    return wedge_hinge.hinge_edge(ob, bm, faces)
 
 
 class ALLSET_OT_wedge(bpy.types.Operator):
@@ -223,12 +220,14 @@ class ALLSET_OT_wedge(bpy.types.Operator):
     def execute(self, context):
         ob, bm = _edit_bm(context)
         faces = [f for f in bm.faces if f.select]
-        edge = wedge_edge(bm, faces) if faces else None
+        edge = wedge_edge(bm, faces, ob) if faces else None
         if not faces or edge is None:
             self.report({'WARNING'}, "No faces selected to wedge. Select faces and one or more edges from the "
                                      "selected faces to wedge about.")   # Maya's warning
             return {'CANCELLED'}
         last = wedge(bm, faces, edge, self.angle, self.divisions)
+        from . import wedge_hinge
+        wedge_hinge.clear(ob)
         for el in (*bm.verts, *bm.edges, *bm.faces):
             el.select = False
         for f in last:

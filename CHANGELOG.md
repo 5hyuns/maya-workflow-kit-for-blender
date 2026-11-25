@@ -30,6 +30,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Automatic, Contour Stretch, Normal-Based and Best Plane project only the picked UV faces; with only UVs or UV edges
   picked nothing is projected and a warning asks for faces (they used to re-project every face of every mesh), like
   Maya.
+- **Wedge hinge edge** (#546): an edge picked in edge mode and then the faces added in face mode (F11, Shift+click)
+  now gives Wedge its hinge, like Maya, which keeps the edge picked across the switch; Wedge used to turn about the
+  same edge of the face every time. The hinge edge (the edge picked on the selected faces, either order) is drawn
+  as a thick line, since a selected face's edges all look selected in edge mode.
 - **Cut UV Edges and Create UV Shell** (#550): shells that are already separate are left where they are.
 - **Bevel with an absolute Offset next to a twisted face** (#213, part): the new edge across each end comes out like
   Maya's.

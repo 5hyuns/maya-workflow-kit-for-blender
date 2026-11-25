@@ -8,7 +8,7 @@ Operator ids use the ``allset.`` prefix. Each module lists its classes in
 
 import bpy
 
-from . import (auto_key, undo_pairs, bookmarks, ik_fk, component, create, curve_tools, curves_maya, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, graph_key_menu, deformer_weights, joint_labels, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
+from . import (auto_key, undo_pairs, bookmarks, ik_fk, component, create, curve_tools, curves_maya, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, graph_key_menu, deformer_weights, joint_labels, wedge_hinge, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
                anim_layers, lights, material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_convert, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, symmetry_select, taphold,
                time_keys, tool_keys, units, uv_shells, uv_tools, uv_modify, uv_select_178, view, view_keys3, visibility)
 from . import poly_draw, quad_draw  # Create Polygon / Append to Polygon / Quad Draw (#30)
@@ -319,6 +319,7 @@ def register():
     graph_key_menu.register_bindings()
     deformer_weights.register_bindings()
     joint_labels.register_bindings()
+    wedge_hinge.register_bindings()
     pivot_menu.register_props()
     sets.register_props()
     view.register_timer()
@@ -454,6 +455,7 @@ def unregister():
     view.unregister_timer()
     hold.unregister_cleanup()
     joint_labels.unregister_bindings()
+    wedge_hinge.unregister_bindings()
     deformer_weights.unregister_bindings()
     graph_key_menu.unregister_bindings()
     graph_keys.unregister_bindings()
