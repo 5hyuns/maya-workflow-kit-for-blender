@@ -3,7 +3,7 @@
 
 - Camera: Lens Squeeze Ratio, Shutter Angle (degrees) and Center Of Interest (scene length units) are values of the
   camera data; Blender's camera, render and view keep their own settings (they don't follow these rows).
-- Point / directional / spot light: Shad Color R / G / B, Use Depth Map Shadows, Dmap Bias and the spot light's Dropoff
+- Point / directional / spot / area light: Shad Color R / G / B, Use Depth Map Shadows, Dmap Bias and the spot light's Dropoff
   are values of the light data; Blender's shadows and falloff stay Blender's own.
 - Locator (a kit Empty, ``create.LOCATOR_PROP``): Local Position X / Y / Z is the Empty's delta location (where the
   command line's ``spaceLocator -p`` puts it, so the locator draws there); Local Scale X / Y / Z is kept on the
@@ -18,7 +18,7 @@ from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty
 LENS_SQUEEZE = "allset_lens_squeeze_ratio"
 SHUTTER_ANGLE = "allset_shutter_angle"
 CENTER_OF_INTEREST = "allset_center_of_interest"
-# Light data (point, directional, spot); Dropoff only on spot lights
+# Light data (point, directional, spot, area); Dropoff only on spot lights
 SHADOW_COLOR = "allset_shadow_color"
 DEPTH_MAP = "allset_use_depth_map_shadows"
 DMAP_BIAS = "allset_dmap_bias"
@@ -27,7 +27,7 @@ DROPOFF = "allset_dropoff"
 LOCAL_SCALE = "allset_local_scale"
 LOCATOR_SIZE = "allset_locator_size"     # display size at Local Scale 1 (kept while Local Scale is 0)
 
-LIGHT_TYPES = ("PointLight", "SunLight", "SpotLight")
+LIGHT_TYPES = ("PointLight", "SunLight", "SpotLight", "AreaLight")
 
 
 def _light_classes():
@@ -36,14 +36,14 @@ def _light_classes():
 
 def register_props():
     bpy.types.Camera.allset_lens_squeeze_ratio = FloatProperty(
-        name="Lens Squeeze Ratio", default=1.0, min=0.0, soft_max=4.0, precision=3,
+        name="Lens Squeeze Ratio", default=1.0, min=1e-10, soft_max=4.0, precision=3,
         description="Lens Squeeze Ratio of the camera, like Maya (kept by the kit; Blender's camera doesn't use it)")
     bpy.types.Camera.allset_shutter_angle = FloatProperty(
         name="Shutter Angle", default=144.0, precision=3,
         description="Shutter Angle in degrees, like Maya (kept by the kit; Blender's motion blur is a render "
                     "setting)")
     bpy.types.Camera.allset_center_of_interest = FloatProperty(
-        name="Center Of Interest", default=5.0, precision=3,
+        name="Center Of Interest", default=5.0, min=1e-10, precision=3,
         description="Center Of Interest in scene units, like Maya (kept by the kit)")
     for cls in _light_classes():
         cls.allset_shadow_color = FloatVectorProperty(
@@ -53,7 +53,7 @@ def register_props():
             name="Use Depth Map Shadows", default=False,
             description="Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)")
         cls.allset_dmap_bias = FloatProperty(
-            name="Dmap Bias", default=0.001, min=0.0, soft_max=1.0, precision=3,
+            name="Dmap Bias", default=0.001, soft_min=1e-5, soft_max=1.0, precision=3,
             description="Depth map shadow bias, like Maya (kept by the kit)")
     bpy.types.SpotLight.allset_dropoff = FloatProperty(
         name="Dropoff", default=0.0, min=0.0, precision=3,

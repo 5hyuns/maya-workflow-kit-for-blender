@@ -7,8 +7,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 
 ### Added
 - **Channel Box SHAPES rows of cameras, lights and locators** (#481): cameras show Lens Squeeze Ratio, Shutter Angle
-  and Center Of Interest in Maya's order; point, directional and spot lights show Shad Color, Use Depth Map Shadows
-  and Dmap Bias (spot lights also Dropoff), kept as values without changing Blender's shadows; a locator shows its
+  and Center Of Interest in Maya's order; point, directional, spot and area lights show Shad Color, Use Depth Map
+  Shadows and Dmap Bias (spot lights also Dropoff), kept as values without changing Blender's shadows (Dmap Bias also
+  takes a negative value; Lens Squeeze Ratio and Center Of Interest stay above 0); a locator shows its
   shape with Local Position (moves the locator's drawing) and Local Scale.
 - **Hotkey Editor: more UV commands** (#551): the UV Toolkit's Pivot, Edit Pivot, Reset, Snap and Measure buttons,
   Unfold (Option) and Layout (Option), and Select Overlapping / Non-Overlapping / Back-Facing / Front-Facing UVs.

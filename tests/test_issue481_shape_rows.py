@@ -123,11 +123,29 @@ def test_light_kept_rows():
     assert curves == [("allset_shadow_color", 1)], curves
 
 
-def test_area_light_keeps_its_rows():
-    """An area light keeps the rows it had (no kept shadow rows)."""
+def test_area_light_rows():
+    """An area light has the point light's rows: Color R / G / B, the intensity row and the shadow rows."""
     ob = _new('AREA_LIGHT')
     labels = _shape_labels(ob)
-    assert labels == ["Color R", "Color G", "Color B", "Power", "Use Ray Trace Shadows"], labels
+    assert labels == ["Color R", "Color G", "Color B", "Power"] + SHADOW_ROWS, labels
+    get = _shape_keys(ob)
+    cb.set_value(ob, get["Shad Color B"], 0.25)
+    assert _close(ob.data.allset_shadow_color[2], 0.25)
+
+
+def test_value_limits():
+    """Dmap Bias takes a negative value; Lens Squeeze Ratio and Center Of Interest stay above 0."""
+    ob = _new('POINT_LIGHT')
+    get = _shape_keys(ob)
+    cb.set_value(ob, get["Dmap Bias"], -0.5)
+    assert _close(ob.data.allset_dmap_bias, -0.5), ob.data.allset_dmap_bias
+    cam = _new('CAMERA')
+    get = _shape_keys(cam)
+    for label, prop in (("Lens Squeeze Ratio", "allset_lens_squeeze_ratio"),
+                        ("Center Of Interest", "allset_center_of_interest")):
+        cb.set_value(cam, get[label], -2.0)
+        v = getattr(cam.data, prop)
+        assert 0.0 < v < 1e-6, (label, v)
 
 
 def test_locator_shape_rows():

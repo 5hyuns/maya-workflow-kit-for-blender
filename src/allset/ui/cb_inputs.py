@@ -424,7 +424,7 @@ SHAPE_PROPS = {
     # Maya light shapes in Maya's order: Color R / G / B, then Blender's Power (a sun: Strength) where Maya has
     # Intensity (operators/lights.py), Use Ray Trace Shadows (Blender's shadow switch), Shad Color R / G / B, Use Depth
     # Map Shadows and Dmap Bias (kept by the kit), spot Cone Angle / Penumbra Angle and the kept Dropoff. A light type
-    # without a row's property (an area light: the kept rows) skips that row.
+    # without a row's property (Cone Angle and the rows after it on a non-spot light) skips that row.
     'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "energy", "maya:useRayTraceShadows",
               "maya:shadColorR", "maya:shadColorG", "maya:shadColorB", "allset_use_depth_map_shadows",
               "allset_dmap_bias", "maya:coneAngle", "maya:penumbraAngle", "allset_dropoff"),
