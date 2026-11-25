@@ -71,16 +71,19 @@ def unregister_props():
 def cut(bm, uv, edges):
     """Maya Cut UVs: seams on ``edges``; where that splits a shell, the smaller side moves NUDGE off the cut.
     Returns the number of edges that now separate two shells."""
+    shown = [f for f in bm.faces if not f.hide]
+    # faces already in different shells before the cut are left where they are (nothing to split there)
+    was = {f: i for i, isl in enumerate(islands(bm, uv, shown)) for f in isl}
     for e in edges:
         e.seam = True
-    groups = islands(bm, uv, [f for f in bm.faces if not f.hide], seams=True)
+    groups = islands(bm, uv, shown, seams=True)
     owner = {f: i for i, isl in enumerate(groups) for f in isl}
     moved = set()
     split = 0
     centres = {}      # island -> UV centre, taken before its first nudge (each nudge is NUDGE)
     for e in edges:
         fs = [f for f in e.link_faces if f in owner]
-        if len(fs) != 2 or owner[fs[0]] == owner[fs[1]]:
+        if len(fs) != 2 or owner[fs[0]] == owner[fs[1]] or was[fs[0]] != was[fs[1]]:
             continue
         split += 1
         small = min(fs, key=lambda f: len(groups[owner[f]]))

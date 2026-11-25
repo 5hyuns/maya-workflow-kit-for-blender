@@ -3,7 +3,8 @@
 With UV Sync Selection a selected face takes its own corner UVs, a selected edge the UVs at its ends on the faces
 beside it and a selected vertex every UV on it; shells of other faces that only share a vertex stay where they are
 (Flip, Normalize, Snap and Stack, Optimize, Orient Shells to Edges). Without UV Sync Selection a selected UV edge
-belongs to its own face. With two meshes in UV editing, the mesh with nothing selected stays as it is."""
+belongs to its own face. Cut UV Edges on edges that already separate two shells moves nothing. With two meshes in
+UV editing, the mesh with nothing selected stays as it is."""
 
 import bmesh
 import bpy
@@ -156,6 +157,29 @@ def test_orient_edges_face_turns_only_its_own_shell():
     ob, = _scene()
     _select_uv(ob, faces=(1,))
     assert _changed([ob], "uv_orient_edges") == {1}
+
+
+def test_cut_on_separate_shells_moves_nothing():
+    ob, = _scene()
+    _select_mesh(ob, 'FACE', faces=(1,))                # every edge of the face already separates two shells
+    bpy.context.scene.tool_settings.mesh_select_mode = (False, True, False)
+    assert _changed([ob], "uv_cut") == set()
+
+
+def test_cut_still_splits_a_joined_edge():
+    ob, = _scene()
+    bm = bmesh.from_edit_mesh(ob.data)
+    uv = bm.loops.layers.uv.active
+    bm.faces.ensure_lookup_table()
+    bm.verts.ensure_lookup_table()
+    f0, f1 = bm.faces[0], bm.faces[1]
+    for v in (bm.verts[1], bm.verts[5]):                  # join sides 0 and 1 along edge 1-5
+        p = next(lp for lp in f0.loops if lp.vert is v)[uv].uv.copy()
+        next(lp for lp in f1.loops if lp.vert is v)[uv].uv = p
+    bmesh.update_edit_mesh(ob.data)
+    _select_mesh(ob, 'EDGE', edges=((1, 5),))
+    moved = _changed([ob], "uv_cut")
+    assert len(moved) == 1 and moved <= {0, 1}, moved
 
 
 def test_second_mesh_without_selection_stays():
