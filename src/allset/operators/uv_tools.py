@@ -195,9 +195,11 @@ def unfold(context, ob, fallback=True, iterations=1, no_flip=True):
         return 0
     faces = [f for isl in shells for f in isl]
     mark_shell_borders(bm, uv, faces)
-    # Maya Unfold (Unfold3D) keeps each shell's UV area and the mean of its UVs
-    # (Unfold); its solver turn can't be reproduced, Blender's unwrap orientation stays.
+    # Maya Unfold keeps each shell's UV area and the mean of its UVs, and a shell whose UVs were laid out facing
+    # the right way keeps its direction; a mirrored or collapsed shell takes the direction the unfold gives it.
     before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in shells]
+    old_uvs = [[tuple(l[uv].uv) for f in isl for l in f.loops] for isl in shells]
+    upright = [_upright(isl, uv) for isl in shells]
     bmesh.update_edit_mesh(ob.data)
     if iterations <= 0:
         kw = {"method": 'CONFORMAL'}
@@ -212,13 +214,42 @@ def unfold(context, ob, fallback=True, iterations=1, no_flip=True):
     area = sum(a for _i, _m, a in before)
     now = sum(_uv_area(bm.faces[i], uv) for idx, _m, _a in before for i in idx)
     k = math.sqrt(area / now) if now > 1e-12 and area > 1e-12 else 1.0
-    for idx, mean, _area in before:
+    for (idx, mean, _area), old, keep_turn in zip(before, old_uvs, upright):
         isl = [bm.faces[i] for i in idx]
         c = _point_mean(isl, uv)
+        turn = _best_turn(old, [tuple(l[uv].uv) for f in isl for l in f.loops]) if keep_turn else complex(1.0, 0.0)
         for loop in _island_loops(isl):
-            loop[uv].uv = mean + (loop[uv].uv - c) * k
+            z = complex(*(loop[uv].uv - c)) * turn * k
+            loop[uv].uv = mean + Vector((z.real, z.imag))
     bmesh.update_edit_mesh(ob.data)
     return len(shells)
+
+
+def _upright(island, uv):
+    """True when the shell's UVs face the right way (counter-clockwise) nearly everywhere: no mirrored, folded or
+    collapsed layout, so its direction is one to keep."""
+    signed = 0.0
+    total = 0.0
+    for f in island:
+        a = 0.0
+        ls = f.loops
+        for i in range(len(ls)):
+            p, q = ls[i][uv].uv, ls[(i + 1) % len(ls)][uv].uv
+            a += p.x * q.y - q.x * p.y
+        signed += a
+        total += abs(a)
+    return total > 1e-12 and signed > 0.9 * total
+
+
+def _best_turn(old, new):
+    """Unit complex number that turns the ``new`` UV points (about their centre) closest onto the ``old`` ones."""
+    n = len(old)
+    if not n:
+        return complex(1.0, 0.0)
+    co = complex(sum(p[0] for p in old) / n, sum(p[1] for p in old) / n)
+    cn = complex(sum(p[0] for p in new) / n, sum(p[1] for p in new) / n)
+    h = sum((complex(*b) - co) * (complex(*a) - cn).conjugate() for a, b in zip(new, old))
+    return h / abs(h) if abs(h) > 1e-18 else complex(1.0, 0.0)
 
 
 def _point_mean(island, uv):

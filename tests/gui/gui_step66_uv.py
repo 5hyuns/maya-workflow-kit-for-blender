@@ -77,12 +77,16 @@ def shells():
 
 
 def overlapping(isls, uv):
+    """True when two shells overlap; shells that only touch (Shell Padding 0) don't count: each triangle is shrunk a
+    little toward its centre before the test."""
     tris = []
     for i, isl in enumerate(isls):
         for f in isl:
             p = [l[uv].uv.copy() for l in f.loops]
             for k in range(1, len(p) - 1):
-                tris.append((i, (p[0], p[k], p[k + 1])))
+                t = (p[0], p[k], p[k + 1])
+                c = (t[0] + t[1] + t[2]) / 3
+                tris.append((i, tuple(c + (q - c) * 0.999 for q in t)))
     for a in range(len(tris)):
         for b in range(a + 1, len(tris)):
             if tris[a][0] != tris[b][0] and geometry.intersect_tri_tri_2d(*tris[a][1], *tris[b][1]):

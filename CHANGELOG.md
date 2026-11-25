@@ -30,6 +30,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   Automatic, Contour Stretch, Normal-Based and Best Plane project only the picked UV faces; with only UVs or UV edges
   picked nothing is projected and a warning asks for faces (they used to re-project every face of every mesh), like
   Maya.
+- **Unfold keeps a shell's direction** (#521): a shell whose UVs were laid out facing the right way keeps its
+  direction after Unfold, like Maya; it used to take whatever direction the unwrap gave it. A mirrored or collapsed
+  layout still takes the unfold's direction.
 - **Optimize with one pinned UV** (#521): a fully selected shell with a single pinned UV relaxes as a free shell and
   keeps the mean of its UVs in place (the pin moves with it), like Maya; two or more pinned UVs still stay.
 - **Wedge hinge edge** (#546): an edge picked in edge mode and then the faces added in face mode (F11, the marking
