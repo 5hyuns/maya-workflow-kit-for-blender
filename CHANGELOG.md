@@ -3,7 +3,11 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.24.0] — 2026-11-25
+
+**UV Editor commands work on the selection the way Maya does, and Transfer Attributes transfers normals.** UV shell
+commands, projections and the UV Toolkit follow the picked shells; soft select, Multi-Cut and Wedge fixes from your
+reports.
 
 ### Added
 - **UV Editor > Image > Measure Pixel Distance**: opens a Pixel Distance window with the width (U Distance), height
