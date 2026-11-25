@@ -52,3 +52,20 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
   example Ctrl+right-click flicked left, up, right or down converts the selection to vertices, edges, UVs or faces.
 - **Multisample Anti-aliasing (PR #536):** a viewport toolbar button (off) smooths selection wires and manipulator
   handles in that viewport only. Thanks to cnzim for this contribution.
+
+## Contributors
+
+- @cnzim: Multisample Anti-aliasing for selection wires and manipulator handles (PR #536). Thank you for the code and for the careful follow-ups.
+
+## Thank you
+
+This version was shaped by your reports. Thank you, every one of you, for taking the time to write down what broke or felt off:
+
+- @envwarby: the Hotkey Editor gaps (#530, #537, #538, #539, #541), Assign Vertex Colors (#531), UV Toolkit Move / Rotate / Scale (#540), Duplicate Face (#542) and the marking menu flick (#543). Nine clear reports, each with the exact steps.
+- @dylanpearson004-coder: the Bevel differences from Maya (#532).
+- @suenwaichit: the UV Toolkit button layout (#535).
+- @JinxSwe: Wedge (#546).
+- @sofiejg: the mouse wheel zoom question in Discussion #489, which led to #544.
+- @invaderzod: Multi-Cut across faces (#545). We are still checking this one and will follow up in the issue.
+
+Please keep telling us what breaks or feels off in real work: an issue or a Discussion post is always welcome.
