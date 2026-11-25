@@ -93,6 +93,8 @@ def ensure(scene, view_layer=None):
         ob.hide_viewport = True          # Maya startup cameras: visibility off
     from ..ui import outliner_order
     outliner_order.sync(scene, view_layer or bpy.context.view_layer)
+    from ..ui import startup_camera_views
+    startup_camera_views.remember(scene)     # their views follow later changes (#564)
     return made
 
 

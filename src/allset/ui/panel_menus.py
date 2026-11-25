@@ -344,9 +344,13 @@ def register():
         bpy.utils.register_class(cls)
     patch_header()
     bpy.app.handlers.undo_post.append(_on_undo)
+    from . import startup_camera_views
+    startup_camera_views.register()
 
 
 def unregister():
+    from . import startup_camera_views
+    startup_camera_views.unregister()
     if _on_undo in bpy.app.handlers.undo_post:
         bpy.app.handlers.undo_post.remove(_on_undo)
     _before_look.clear()

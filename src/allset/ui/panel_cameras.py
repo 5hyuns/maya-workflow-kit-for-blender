@@ -37,7 +37,11 @@ def _startup_name(context):
     """The startup camera of this view: persp for a perspective view, top / front / side for those orthographic
     views, else None."""
     space = _space(context)
-    rv3d = context.region_data or getattr(space, "region_3d", None)
+    return startup_name_of(context.region_data or getattr(space, "region_3d", None))
+
+
+def startup_name_of(rv3d):
+    """``_startup_name`` of the view ``rv3d`` (None: no view, or not one of those views)."""
     if rv3d is None:
         return None
     if rv3d.view_perspective == 'PERSP':
