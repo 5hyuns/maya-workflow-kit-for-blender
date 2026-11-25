@@ -281,6 +281,15 @@ def _run_connect(context, v):
                                   adjust_edge_flow=v["adjust_edge_flow"])
 
 
+def _run_duplicate_face(context, v):
+    """Edit Mesh > Duplicate with the window's values (run in a 3D View, like the menu item)."""
+    import json
+    props = {"separate": bool(v["separate"]), "offset": float(v["offset"])}
+    if context.area is not None and context.area.type == 'VIEW_3D':
+        return bpy.ops.allset.duplicate_face('EXEC_DEFAULT', **props)
+    return bpy.ops.allset.menu_run('EXEC_DEFAULT', op="allset.duplicate_face", props=json.dumps(props))
+
+
 def _run_connect_tool(context, v):
     """Maya "Enter Tool": the values go to the tool, the selection is connected and the tool starts."""
     return bpy.ops.allset.connect_tool_enter('EXEC_DEFAULT', segments=v["segments"], slide=v["slide"])
@@ -350,6 +359,10 @@ MESH_WINDOWS = [
         F("slide", "Slide:", "float", 0.5, lo=0.0, hi=1.0), F("segments", "Segments:", "int", 1, lo=1, hi=10)],
         _run_connect_tool, paths=("Mesh Tools/Connect",),
         missing=("Pinch", "Active option (MMB drag) / Keyboard and mouse shortcuts")),
+    Window("duplicate_face", "Duplicate Face Options", "Duplicate", ("allset.duplicate_face", {}), [
+        F("separate", "", "bool", True, text="Separate duplicated faces"),
+        F("offset", "Offset:", "float", 0.0, lo=-2.0, hi=2.0)], _run_duplicate_face,
+        paths=("Edit Mesh/Duplicate",)),
     Window("circularize", "Polygon Circularize Options", "Circularize", ("allset.circularize", {}), [
         F("normal_offset", "Normal Offset:", "length", 0.0, lo=-100.0, hi=100.0),
         F("radial_offset", "Radial Offset:", "length", 0.0, lo=-100.0, hi=100.0),
