@@ -80,6 +80,12 @@ def selected_edges(bm, uv, synced):
 
 def _picked_faces(bm, uv, synced):
     if synced:
+        # like Maya: a selected face, else the faces around a selected edge (edge mode) or vertex (vertex mode)
+        mode = bm.select_mode
+        if 'VERT' in mode:
+            return {f for f in bm.faces if not f.hide and any(v.select for v in f.verts)}
+        if 'EDGE' in mode:
+            return {f for f in bm.faces if not f.hide and any(e.select for e in f.edges)}
         return {f for f in bm.faces if f.select and not f.hide}
     return {f for f in bm.faces if f.select and not f.hide and any(compat.uv_vert_selected(l, uv) for l in f.loops)}
 
@@ -164,6 +170,7 @@ def with_faces_of(context, picks, call):
     meshes = list(picks) + [o for o in _edit_meshes(context) if o.data.as_pointer() not in want]
     saved = [(o, selection_state(bmesh.from_edit_mesh(o.data))) for o in meshes]
     ts.use_uv_select_sync = True
+    ts.mesh_select_mode = (False, False, True)     # an edge / vertex mode would let Blender take more faces
     for o in meshes:
         bm = bmesh.from_edit_mesh(o.data)
         bm.faces.index_update()

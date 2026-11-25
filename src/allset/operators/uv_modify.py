@@ -261,9 +261,10 @@ def unitize(bm, uv, faces):
 
 
 def unitize_faces(bm, uv, synced):
-    """The faces Unitize maps: the selected faces (with UV Sync Selection off, faces whose UVs are all selected)."""
+    """The faces Unitize maps: the selected faces, with UV Sync Selection on also the faces around selected edges /
+    vertices (with UV Sync Selection off, faces whose UVs are all selected)."""
     if synced:
-        return [f for f in bm.faces if f.select and not f.hide]
+        return sorted(uv_shells.uv_tools._picked_faces(bm, uv, True), key=lambda f: f.index)
     return [f for f in bm.faces if f.select and not f.hide and all(compat.uv_vert_selected(l, uv) for l in f.loops)]
 
 

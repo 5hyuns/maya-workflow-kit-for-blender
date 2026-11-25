@@ -195,3 +195,37 @@ def test_second_mesh_without_selection_stays():
                           ("uv_orient_edges", {}), ("uv_nudge", {"direction": 'UP'})):
             moved = _changed(obs, op, **props)
             assert {k[0] for k in moved} <= {"c0"}, (select, op, moved)
+
+
+SHELL_OPS = ("uv_layout", "uv_unfold", "uv_orient_shells", "uv_texel_set", "uv_stack", "uv_unitize")
+
+
+def test_shell_commands_take_the_shells_beside_a_selected_edge():
+    """UV Sync Selection, edge mode: the shell commands work on the shells beside the edge, like Maya; the other
+    shells stay where they are."""
+    for op in SHELL_OPS:
+        ob, = _scene()
+        _select_mesh(ob, 'EDGE', edges=((1, 5),))
+        moved = _changed([ob], op)
+        assert moved and moved <= {0, 1}, (op, moved)
+
+
+def test_shell_commands_take_the_shells_around_a_selected_vertex():
+    for op in SHELL_OPS:
+        ob, = _scene()
+        _select_mesh(ob, 'VERT', verts=(5,))
+        moved = _changed([ob], op)
+        assert moved and moved <= {0, 1, TOP}, (op, moved)
+
+
+def test_map_border_maps_nothing_for_an_edge():
+    ob, = _scene()
+    _select_mesh(ob, 'EDGE', edges=((1, 5),))
+    before = _uvs([ob])
+    scr = bpy.context.window.screen
+    a = next(a for a in scr.areas if a.type in ('VIEW_3D', 'IMAGE_EDITOR'))
+    a.ui_type = 'UV'
+    r = next(r for r in a.regions if r.type == 'WINDOW')
+    with bpy.context.temp_override(area=a, region=r, space_data=a.spaces.active):
+        bpy.ops.allset.uv_map_border()
+    assert _uvs([ob]) == before
