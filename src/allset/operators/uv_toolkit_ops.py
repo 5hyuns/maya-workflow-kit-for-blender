@@ -627,6 +627,66 @@ class ALLSET_OT_uv_measure(bpy.types.Operator):
         return {'FINISHED'}
 
 
+PIXEL_MAP_SIZES = (4096, 2048, 1024, 512, 256, 128)
+
+
+def selected_box(context):
+    """(width, height) of the bounding box of the selected UVs over every mesh, or None when no UV is selected."""
+    du = _measure(context, 'U')[0]
+    return None if du is None else (du, _measure(context, 'V')[0])
+
+
+def pixel_distance_rows(du, dv):
+    """[(map size, U distance, V distance, distance)] in pixels for the Pixel Distance window's map sizes."""
+    d = math.hypot(du, dv)
+    return [(size, du * size, dv * size, d * size) for size in PIXEL_MAP_SIZES]
+
+
+class ALLSET_OT_uv_measure_pixel_distance(bpy.types.Operator):
+    """Measure Pixel Distance: the width, height and diagonal of the bounding box of the selected UVs in pixels for
+    map sizes 4096 down to 128, shown in a Pixel Distance window (Maya UV Editor > Image > Measure Pixel Distance)"""
+    bl_idname = "allset.uv_measure_pixel_distance"
+    bl_label = "Pixel Distance"
+    bl_options = {'REGISTER'}
+
+    du: FloatProperty(options={'HIDDEN', 'SKIP_SAVE'})
+    dv: FloatProperty(options={'HIDDEN', 'SKIP_SAVE'})
+
+    poll = classmethod(lambda cls, context: _poll(context))
+
+    def _measure(self, context):
+        box = selected_box(context)
+        if box is None:
+            self.report({'WARNING'}, "Select UVs to measure")
+            return False
+        self.du, self.dv = box
+        return True
+
+    def invoke(self, context, _event):
+        if not self._measure(context):
+            return {'CANCELLED'}
+        return context.window_manager.invoke_popup(self, width=340)
+
+    def execute(self, context):
+        if not self._measure(context):
+            return {'CANCELLED'}
+        rows = pixel_distance_rows(self.du, self.dv)
+        results.result(self, "; ".join(f"{m}: U {u:.2f} px, V {v:.2f} px, {d:.2f} px" for m, u, v, d in rows[:1]))
+        return {'FINISHED'}
+
+    def draw(self, _context):
+        col = self.layout.column(align=True)
+        col.label(text="Result")
+        grid = col.grid_flow(columns=4, row_major=True, even_columns=True, align=True)
+        for head in ("Map Size", "U Distance", "V Distance", "Distance"):
+            grid.label(text=head)
+        for m, u, v, d in pixel_distance_rows(self.du, self.dv):
+            for value in (m, u, v, d):
+                grid.label(text=f"{round(value, 2):g} px")
+        col.separator()
+        col.operator(self.bl_idname, text="Measure Again")
+
+
 def _scale_get(axis):
     return lambda self: self.scale_axis in ('UV', axis)
 
@@ -745,7 +805,8 @@ class ALLSET_OT_uv_tool_settings(bpy.types.Operator):
 
 
 classes = (ALLSET_PG_uv_toolkit, ALLSET_OT_uv_align_to, ALLSET_OT_uv_straighten_uvs, ALLSET_OT_uv_unfold_along,
-           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize, ALLSET_OT_uv_tool_settings, ALLSET_OT_uv_measure)
+           ALLSET_OT_uv_straighten_shell, ALLSET_OT_uv_randomize, ALLSET_OT_uv_tool_settings, ALLSET_OT_uv_measure,
+           ALLSET_OT_uv_measure_pixel_distance)
 
 
 def register_props():

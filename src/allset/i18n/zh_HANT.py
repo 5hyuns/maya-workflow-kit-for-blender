@@ -7658,6 +7658,8 @@ STRINGS = {
     'The last Measure result': 'Measure 的上次結果',
     'U Distance': 'U 距離',
     'V Distance': 'V 距離',
+    'Measure Again': '再次測量',
+    'Measure Pixel Distance: the width, height and diagonal of the bounding box of the selected UVs in pixels for\nmap sizes 4096 down to 128, shown in a Pixel Distance window (Maya UV Editor > Image > Measure Pixel Distance)': '測量像素距離: 所選 UV 邊界框的寬度、高度和對角線，以貼圖尺寸\n4096 到 128 的像素數顯示在像素距離視窗中 (Maya UV 編輯器 > 影像 > 測量像素距離)',
     'Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)': '測量選定的 UV: 其邊界框的寬度 (U 距離) 或高度 (V 距離)、按貼圖大小計算的對角線\n像素數 (像素距離)，或兩個 UV 之間連線的角度 (夾角)',
     'Hotkey Command': '熱鍵命令',
     'Make each copied piece an object of its own': '使每個複製出的部分成為單獨的物件',

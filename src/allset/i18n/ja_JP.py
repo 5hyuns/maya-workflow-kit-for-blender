@@ -7657,6 +7657,8 @@ STRINGS = {
     'The last Measure result': 'Measure の前回の結果',
     'U Distance': 'U 距離',
     'V Distance': 'V 距離',
+    'Measure Again': 'もう一度測定',
+    'Measure Pixel Distance: the width, height and diagonal of the bounding box of the selected UVs in pixels for\nmap sizes 4096 down to 128, shown in a Pixel Distance window (Maya UV Editor > Image > Measure Pixel Distance)': 'ピクセル距離を測定: 選択した UV のバウンディングボックスの幅、高さ、対角線を、マップサイズ\n4096 から 128 までのピクセル数でピクセル距離ウィンドウに表示 (Maya UV エディタ > イメージ > ピクセル距離を測定)',
     'Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)': '選択した UV を測定: バウンディングボックスの幅 (U 距離) または高さ (V 距離)、マップサイズでの対角線の\nピクセル数 (ピクセル距離)、または 2 つの UV を結ぶ線の角度 (間の角度)',
     'Hotkey Command': 'ホットキーコマンド',
     'Make each copied piece an object of its own': 'コピーした各ピースを個別のオブジェクトにします',

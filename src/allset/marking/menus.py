@@ -1316,7 +1316,7 @@ SHIFT_UV = MarkingMenu(
            DIVIDER, ("Create UV Shell", _uve("Cut/Sew/Create UV Shell")),
            DIVIDER, ("Cut UVs", _uve("Cut/Sew/Cut")), ("Delete UVs", _uve("Edit/Delete")),
            ("Merge UVs", _uve("Cut/Sew/Merge")), ("Sew UVs", _uve("Cut/Sew/Sew")),
-           DIVIDER, ("Measure Pixel Distance", None), *_UV_LIST_TAIL],
+           DIVIDER, ("Measure Pixel Distance", _uve("Image/Measure Pixel Distance")), *_UV_LIST_TAIL],
     options={"Optimize", "Normalize", "Distribute", "Flip", "Map Border", "Unitize", "Auto Seams", "Merge UVs"})
 
 SHIFT_UV_SHELL = MarkingMenu(

@@ -1292,9 +1292,6 @@ _UV_CONSTRAINTS = ("Select menu / Snapping", "Blender has no UV selection or tra
                    "Linked / Select Split and move along edges with snapping.")
 MARKING.update({
     **{f"{m}/Symmetrize": CATEGORIES["UV Editor/Modify/Symmetrize"] for m in ("SHIFT_UV", "SHIFT_UV_FACE")},
-    "SHIFT_UV/Measure Pixel Distance": (
-        "Sidebar UV Vertex", "Blender has no pixel ruler: the sidebar (N) Image tab shows the selected UVs' position, "
-        "so two readings give the distance."),
     **{f"{m}/Tools/Symmetrize Tool": CATEGORIES["UV Editor/Tools/Symmetrize"] for m in _UV_MENUS},
     **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
     **{f"{m}/{label}": _UV_CONSTRAINTS for m in (*(f"{n}/Pinning" for n in _UV_MENUS), "UV_CONVERT")

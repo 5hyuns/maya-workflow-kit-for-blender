@@ -6,6 +6,9 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 ## [Unreleased]
 
 ### Added
+- **UV Editor > Image > Measure Pixel Distance**: opens a Pixel Distance window with the width (U Distance), height
+  (V Distance) and diagonal (Distance) of the selected UVs' bounding box in pixels for map sizes 4096 down to 128,
+  like Maya; also from the Shift+right-click UV marking menu. Measure Again re-reads the selection.
 - **Channel Box SHAPES rows of cameras, lights and locators** (#481): cameras show Lens Squeeze Ratio, Shutter Angle
   and Center Of Interest in Maya's order; point, directional, spot and area lights show Shad Color, Use Depth Map
   Shadows and Dmap Bias (spot lights also Dropoff), kept as values without changing Blender's shadows (Dmap Bias also
