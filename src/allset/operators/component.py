@@ -257,11 +257,12 @@ class ALLSET_OT_convert_selection(bpy.types.Operator):
 
 
 def delete_components(bm, mode):
-    """Maya Delete on one mesh's selection; ``mode`` = 'FACE' / 'EDGE' / 'VERT'.
+    """Maya's Delete key on one mesh's selection; ``mode`` = 'FACE' / 'EDGE' / 'VERT'.
 
-    Returns (deleted, skipped): elements removed and border edges left alone.
-    DeleteEdge (polyDelEdge -cv true: non-border
-    edges, vertices cleaned up) and DeleteVertex (vertices and their attached edges).
+    Returns (deleted, skipped). Like Maya: faces go with their unused edges and vertices; edges between two faces
+    go and the faces merge, every vertex stays (border edges are left alone); a vertex goes only when it has two
+    edges (they become one), others stay. Edit Mesh > Delete Edge/Vertex (Ctrl+Delete) is the one that also cleans
+    up the vertices left with two edges and deletes vertices with their edges.
     """
     if mode == 'FACE':
         faces = [f for f in bm.faces if f.select]
@@ -271,12 +272,13 @@ def delete_components(bm, mode):
         sel = [e for e in bm.edges if e.select]
         inner = [e for e in sel if len(e.link_faces) == 2]
         if inner:
-            bmesh.ops.dissolve_edges(bm, edges=inner, use_verts=True, use_face_split=False)
+            bmesh.ops.dissolve_edges(bm, edges=inner, use_verts=False, use_face_split=False)
         return len(inner), len(sel) - len(inner)
-    verts = [v for v in bm.verts if v.select]
-    if verts:
-        bmesh.ops.dissolve_verts(bm, verts=verts, use_face_split=False, use_boundary_tear=False)
-    return len(verts), 0
+    sel = [v for v in bm.verts if v.select]
+    winged = [v for v in sel if len(v.link_edges) == 2]
+    if winged:
+        bmesh.ops.dissolve_verts(bm, verts=winged, use_face_split=False, use_boundary_tear=False)
+    return len(winged), len(sel) - len(winged)
 
 
 def select_mode_kind(ts):
@@ -285,8 +287,8 @@ def select_mode_kind(ts):
 
 
 class ALLSET_OT_delete_components(bpy.types.Operator):
-    """Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices
-    right away, by the select mode (Maya Delete on components)"""
+    """Delete the selected faces, edges (non-border; their vertices stay) or two-edge vertices right away, by the
+    select mode (Maya Delete on components)"""
     bl_idname = "allset.delete_components"
     bl_label = "Delete Components"
     bl_options = {'REGISTER', 'UNDO'}
@@ -309,13 +311,10 @@ class ALLSET_OT_delete_components(bpy.types.Operator):
             bm.select_flush(False)
             bmesh.update_edit_mesh(ob.data)
             deleted, skipped = deleted + d, skipped + s
-        if skipped:
-            self.report({'WARNING'}, f"{skipped} border edge(s) kept (Maya Delete Edge skips borders)")
-        if not deleted:
-            if not skipped:
-                results.result(self, "Nothing selected")
+        if not deleted and not skipped:
+            results.result(self, "Nothing selected")
             return {'CANCELLED'}
-        return {'FINISHED'}
+        return {'FINISHED'}       # like Maya, the selection is cleared even when nothing could go
 
 
 class ALLSET_OT_select_loops(bpy.types.Operator):

@@ -1,5 +1,6 @@
 """In a real UI: F11 (faces) -> select all -> Delete removes every face, no menu;
-F10 (edges) + Backspace dissolves an edge; Delete in object mode still deletes the object."""
+F10 (edges) + Backspace dissolves an edge and keeps its vertices, like Maya (#565); Delete in object mode still
+deletes the object."""
 
 import os
 import sys
@@ -95,8 +96,8 @@ def s_edge_mode():
 @step
 def s_edge_deleted():
     ob = bpy.data.objects[C["ob"]]
-    check(f"Backspace dissolves the edge and cleans its vertices (counts {counts(ob)})",
-          counts(ob) == (6, 9, 5))
+    check(f"Backspace dissolves the edge, its vertices stay (counts {counts(ob)})",
+          counts(ob) == (8, 11, 5))
     tap('F8')
 
 

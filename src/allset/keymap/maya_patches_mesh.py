@@ -72,9 +72,9 @@ def patch_mesh_components(kd):
 
 
 # --- 22. Delete / Backspace on components -------------------------------------------
-# Maya deletes the selected faces / edges / vertices right away (Delete,
-# DeleteEdge, DeleteVertex); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace
-# keep IC's mesh.dissolve_mode = Maya DeletePolyElements (Maya hotkeys).
+# Maya deletes the selected faces / edges / vertices right away (edges: their vertices stay; vertices: only those
+# with two edges); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace keep IC's
+# mesh.dissolve_mode = Maya DeletePolyElements (Edit Mesh > Delete Edge/Vertex: vertices cleaned up).
 
 def patch_component_delete(kd):
     for key in ("DEL", "BACK_SPACE"):

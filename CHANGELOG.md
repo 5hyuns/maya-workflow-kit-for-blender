@@ -31,6 +31,10 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
 - **Ctrl+right-click quick flicks** (#561): a quick flick converts the selection however short it is: left = To
   Vertices, up = To Edges, right = To UVs, down = To Faces. Any quick mark that ends on a radial submenu item runs
   that submenu's item in the same direction.
+- **Delete key on edges and vertices** (#565): Delete / Backspace removes the selected edges and keeps their
+  vertices (the faces on both sides merge), and removes only the selected vertices that have two edges (others stay),
+  like Maya. Edit Mesh > Delete Edge/Vertex (Ctrl+Delete) is still the one that also cleans up the vertices left
+  with two edges and deletes vertices with their edges. The selection is cleared even when nothing could go.
 
 ## [0.24.0] — 2026-11-25
 
