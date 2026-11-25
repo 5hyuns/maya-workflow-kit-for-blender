@@ -1,5 +1,6 @@
 """In a real UI: F11 (faces) -> select all -> Delete removes every face, no menu;
-F10 (edges) + Backspace dissolves an edge and keeps its vertices, like Maya (#565); Delete in object mode still
+F10 (edges) + Backspace dissolves an edge and keeps its vertices, like Maya (#565); Ctrl+Backspace (Edit Mesh >
+Delete Edge/Vertex) on two parallel edges of one face keeps both side faces (#569); Delete in object mode still
 deletes the object."""
 
 import os
@@ -98,6 +99,33 @@ def s_edge_deleted():
     ob = bpy.data.objects[C["ob"]]
     check(f"Backspace dissolves the edge, its vertices stay (counts {counts(ob)})",
           counts(ob) == (8, 11, 5))
+    with v3d_override():
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.mesh.primitive_cube_add(location=(3, 0, 0))
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='EDGE')
+        bpy.ops.mesh.select_all(action='DESELECT')
+    ob = bpy.context.view_layer.objects.active
+    C["ob"] = ob.name
+    bm = bmesh.from_edit_mesh(ob.data)
+    top = max(bm.faces, key=lambda f: f.calc_center_median().z)
+    e0 = top.edges[0]
+    e1 = next(e for e in top.edges if not set(e.verts) & set(e0.verts))
+    e0.select = e1.select = True
+    bm.select_flush_mode()
+    bmesh.update_edit_mesh(ob.data)
+    centre()
+    ev('BACK_SPACE', 'PRESS', ctrl=True)
+    ev('BACK_SPACE', 'RELEASE', ctrl=True)
+
+
+@step
+def s_delete_edge_vertex():
+    ob = bpy.data.objects[C["ob"]]
+    bm = bmesh.from_edit_mesh(ob.data)
+    sizes = sorted(len(f.verts) for f in bm.faces)
+    check(f"Ctrl+Backspace deletes both edges and keeps the side faces ({len(bm.verts)} points, faces {sizes})",
+          len(bm.verts) == 6 and sizes == [3, 3, 4, 6])
     tap('F8')
 
 

@@ -49,7 +49,7 @@ def test_keymap_binds_delete_and_backspace():
                  and not (k.ctrl or k.shift or k.alt or k.oskey)]
         assert plain == ["allset.delete_components"], (key, plain)
         ctrl = [k.idname for k in km.keymap_items if k.active and k.type == key and k.ctrl]
-        assert ctrl == ["mesh.dissolve_mode"], (key, ctrl)
+        assert ctrl == ["allset.delete_edge_vertex"], (key, ctrl)
     obj = kit.maya_kc().keymaps["Object Mode"]
     assert any(k.type == 'DEL' and k.idname.startswith("object.delete") for k in obj.keymap_items), \
         "object mode Delete unchanged"

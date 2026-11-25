@@ -389,7 +389,7 @@ MAP = {
     "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first
     "Edit Mesh/Average Vertices": "allset.average_vertices",    # polyAverageVertex, Iterations editable
     "Edit Mesh/Chamfer Vertices": ("v3d", "mesh.bevel", {"affect": 'VERTICES'}),
-    "Edit Mesh/Delete Edge/Vertex": "mesh.dissolve_mode",
+    "Edit Mesh/Delete Edge/Vertex": "allset.delete_edge_vertex",
     "Edit Mesh/Flip Triangle Edge": "mesh.edge_rotate",
     "Edit Mesh/Spin Edge Backward": ("mesh.edge_rotate", {"use_ccw": True}),
     "Edit Mesh/Spin Edge Forward": ("mesh.edge_rotate", {"use_ccw": False}),

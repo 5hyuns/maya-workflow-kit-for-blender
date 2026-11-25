@@ -73,13 +73,16 @@ def patch_mesh_components(kd):
 
 # --- 22. Delete / Backspace on components -------------------------------------------
 # Maya deletes the selected faces / edges / vertices right away (edges: their vertices stay; vertices: only those
-# with two edges); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace keep IC's
-# mesh.dissolve_mode = Maya DeletePolyElements (Edit Mesh > Delete Edge/Vertex: vertices cleaned up).
+# with two edges); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace = Edit Mesh > Delete
+# Edge/Vertex (allset.delete_edge_vertex: edges go and the vertices they leave with two edges are cleaned up),
+# in place of IC's mesh.dissolve_mode.
 
 def patch_component_delete(kd):
     for key in ("DEL", "BACK_SPACE"):
         kd.remove("Mesh", "wm.call_menu", type=key)
         _add(kd, "Mesh", "allset.delete_components", make_event(key))
+        kd.remove("Mesh", "mesh.dissolve_mode", type=key, ctrl=True)
+        _add(kd, "Mesh", "allset.delete_edge_vertex", make_event(key, ctrl=True))
 
 
 # --- 28. Component pick-walk, Alt+Shift axis-locked navigation -------------------------

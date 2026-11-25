@@ -5584,6 +5584,7 @@
    "Convert Selection": "Convert Selection",
    "Cut the edge off (off: keep the old corner, the new points run along the two faces)": "Cut the edge off (off: keep the old corner, the new points run along the two faces)",
    "Delete Components": "Delete Components",
+   "Delete Edge/Vertex": "Delete Edge/Vertex",
    "Depth": "Depth",
    "Edge rings instead of edge loops": "Edge rings instead of edge loops",
    "Edges": "Edges",
@@ -11986,7 +11987,8 @@
    "Change the last bevel (Maya: edit the polyBevel node). Blender keeps no edit-mode history, so only the last\none can be changed": "Change the last bevel (Maya: edit the polyBevel node). Blender keeps no edit-mode history, so only the last\none can be changed",
    "Clear the selection and go back to object mode (Maya Alt+D)": "Clear the selection and go back to object mode (Maya Alt+D)",
    "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)": "Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)",
-   "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)": "Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices\nright away, by the select mode (Maya Delete on components)",
+   "Delete the selected edges and clean up the vertices they leave with two edges, or delete the selected\nvertices (Maya Edit Mesh > Delete Edge/Vertex)": "Delete the selected edges and clean up the vertices they leave with two edges, or delete the selected\nvertices (Maya Edit Mesh > Delete Edge/Vertex)",
+   "Delete the selected faces, edges (non-border; their vertices stay) or two-edge vertices right away, by the\nselect mode (Maya Delete on components)": "Delete the selected faces, edges (non-border; their vertices stay) or two-edge vertices right away, by the\nselect mode (Maya Delete on components)",
    "Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge": "Grow the component selection by one step (Maya Select > Grow, >): vertices and faces take in every vertex\nor face that shares a face with the selection, edges every edge that shares a vertex with a selected edge",
    "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)": "Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert\nSelection > To Edge Loop / Ring)",
    "Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh": "Shrink the component selection by one step (Maya Select > Shrink, <): the border of the selected region goes,\nand so do selected vertices and faces on an open border of the mesh"

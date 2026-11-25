@@ -200,8 +200,8 @@ ENTRIES = {
                        note="정점 모드 = 정점 베벨, 그 외 엣지; 드래그로 폭"),
     # --- component Delete; plain Delete/Backspace is
     # Maya's Edit > Delete (not a default hotkey row): Mesh "allset.delete_components" ---
-    "DeletePolyElements": _e("IC", ("Mesh", "mesh.dissolve_mode", {}),
-                             note="엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제"),
+    "DeletePolyElements": _e("KIT", ("Mesh", "allset.delete_edge_vertex", {}),
+                             note="엣지: 지우고 엣지 2 개 남은 끝점 정리 (Delete Edge/Vertex); 정점·면 = dissolve; Delete/Backspace = 바로 삭제"),
     # --- undo / visibility / isolate ---
     "Undo": _e("KIT", ("Screen", "ed.undo", {}),
                note="Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음)"),
