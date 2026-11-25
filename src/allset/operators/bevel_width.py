@@ -116,6 +116,43 @@ def terminal_moves(edges, corners=None):
     return moves, limits, scaled
 
 
+def _newell(f):
+    """The face's normal from all its vertices (a bent face's average plane)."""
+    n = f.verts[0].co * 0.0
+    loops = [x.vert.co for x in f.loops]
+    for a, b in zip(loops, loops[1:] + loops[:1]):
+        n += a.cross(b)
+    return n.normalized() if n.length > ZERO else None
+
+
+def offset_end_moves(edges):
+    """Absolute Offset, a lone bevelled edge between two faces: like Maya the new edge across each end is as long as
+    on a flat bevel whose faces meet at the angle between the two faces' normals, so where an end's own angle differs
+    (a twisted side face) its new vertices move out or in by sin(that angle / 2) over the end's sin(alpha / 2).
+    Returns [(v position, unit(slide edge), k = distance along it / W, the slide edge's other vertex)]."""
+    sel = set(edges)
+    moves = []
+    near = end_moves(edges)[2]
+    for e in edges:
+        if len(e.link_faces) != 2 or any(sum(1 for x in v.link_edges if x in sel) != 1 for v in e.verts):
+            continue
+        n0, n1 = _newell(e.link_faces[0]), _newell(e.link_faces[1])
+        if n0 is None or n1 is None:
+            continue
+        flat = math.cos(n0.angle(n1) / 2.0)
+        for v in e.verts:
+            here = _half_sin(e, v)
+            if here is None or v in near or abs(flat / here - 1.0) <= 1e-9:
+                continue
+            d = (e.other_vert(v).co - v.co).normalized()
+            for s in _slides(e, v):
+                u = (s.other_vert(v).co - v.co).normalized()
+                sin_s = u.cross(d).length
+                if sin_s > ZERO:
+                    moves.append((v.co.copy(), u, flat / here / sin_s, s.other_vert(v)))
+    return moves
+
+
 def end_moves(edges, corners=None):
     """Ends of an open chain (or a lone edge) between two faces where a slide edge runs near the bevelled edge's line
     (|cos| of their angle above 0.9: an n-gon cap's rim neighbour, a cone's rim). Each of the two slide edges s gets a

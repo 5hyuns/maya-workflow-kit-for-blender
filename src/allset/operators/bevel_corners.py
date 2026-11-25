@@ -8,7 +8,7 @@ ones (``gap_merges``). Used by the bevel driver in ``bevel_maya``.
 import math
 
 from .bevel_numbering import vertex_edges
-from .bevel_width import NEAR_LINE, ZERO, _half_sin, _slides
+from .bevel_width import NEAR_LINE, ZERO, _half_sin, _newell, _slides
 
 
 CORNER_SPLIT = 10.93  # degrees: two-edge corners whose dihedral angles differ less than this use ``corner_pairs``
@@ -243,15 +243,6 @@ def corner_offsets(edges, ids):
                   "k_u3": 4.0 / (3.0 * max(sp, sq) + min(sp, sq)) * (wp + wq) / 2.0,
                   "ends": _far_ends((p, q), v, sel, scales)}
     return out
-
-
-def _newell(f):
-    """The face's normal from all its vertices (a bent face's average plane)."""
-    n = f.verts[0].co * 0.0
-    loops = [x.vert.co for x in f.loops]
-    for a, b in zip(loops, loops[1:] + loops[:1]):
-        n += a.cross(b)
-    return n.normalized() if n.length > ZERO else None
 
 
 def _face_half_sin(e, top):

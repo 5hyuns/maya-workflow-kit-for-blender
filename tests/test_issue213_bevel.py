@@ -108,6 +108,23 @@ def test_non_planar_face_next_to_a_bevelled_side_edge():
                      [0.69703, 1.0, -0.506422], [0.872644, 1.0, -0.462911], [0.709917, 1.0, -0.686886]])
 
 
+def test_absolute_offset_next_to_a_non_planar_face():
+    """The same twisted side face with an absolute Offset: the new edge across each end of the bevel is as long as on
+    a flat bevel whose faces meet at the angle between the two faces' normals (2 W cos(normal angle / 2))."""
+    V, F, E = _cylinder()
+    V[0] = [0.7, -1.0, 0.0]
+    bm, _ids = _mesh(V, F, E)
+    faces = [f for f in bm.faces if {v.index for v in f.verts} in ({0, 1, 21, 20}, {1, 2, 22, 21})]
+    for f in faces:
+        f.normal_update()
+    chord = 2.0 * 0.05 * 0.9999 * math.cos(faces[0].normal.angle(faces[1].normal) / 2.0)
+    bm.free()
+    got, _faces, _made = _bevel(V, F, E, [41], offset_as_fraction=False, offset=0.05)
+    assert len(got) == 46, len(got)
+    bottom, top = (got[41] - got[42]).length, (got[44] - got[45]).length
+    assert abs(bottom - chord) < TOL and abs(top - chord) < TOL, (bottom, top, chord)
+
+
 PLANE_AFTER = [[-2.0, 0.0, 2.0], [0.0, 0.0, 2.0], [2.0, 0.0, 2.0], [-2.0, 0.0, 1.0], [0.0, 0.0, 1.0], [2.0, 0.0, 1.0],
                [-2.0, 0.0, 0.0], [2.0, 0.0, 0.0], [-2.0, 0.0, -1.0], [-1.0, 0.0, -1.0], [0.0, 0.0, -1.0], [1.0, 0.0, -1.0],
                [2.0, 0.0, -1.0], [-2.0, 0.0, -2.0], [-1.0, 0.0, -2.0], [0.0, 0.0, -2.0], [1.0, 0.0, -2.0], [2.0, 0.0, -2.0],

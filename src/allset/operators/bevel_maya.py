@@ -51,7 +51,8 @@ from mathutils import Matrix
 from . import extrude
 # the split-out parts, also read through this module by other operators and the tests
 from .bevel_width import (FIT, NEAR_LINE, ZERO, _corner, _corner_reach, _half_sin, corner_moves,  # noqa: F401
-                          corners_of, end_moves, past_ends, profile, slide_limit, terminal_moves, width)
+                          corners_of, end_moves, offset_end_moves, past_ends, profile, slide_limit, terminal_moves,
+                          width)
 from .bevel_corners import (CORNER_SPLIT, TRIPLE_SPLIT, corner_offsets, corner_pairs, corner_splits,  # noqa: F401
                             corner_triples, gap_merges)
 from .bevel_numbering import _plan, _renumber, maya_edge_ids, vertex_edges  # noqa: F401
@@ -122,6 +123,8 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     splits = corner_splits(edges, ids) if splits else {}
     moves = ([m + (None,) for m in terminal_moves(edges, pairs2)[0]]
              if chamfer and int(segments) == 1 and offset_as_fraction else [])
+    moves += (offset_end_moves(edges)
+              if chamfer and int(segments) == 1 and not offset_as_fraction else [])
     # an end whose slide edge runs near the bevelled edge's line: Maya's offsets there, in both modes
     moves += end_moves(edges, pairs2)[0] if chamfer and int(segments) == 1 else []
     offsets = corner_offsets(edges, ids) if chamfer and int(segments) == 1 and not offset_as_fraction else {}
