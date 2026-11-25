@@ -3,6 +3,29 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Channel Box SHAPES rows of cameras, lights and locators** (#481): cameras show Lens Squeeze Ratio, Shutter Angle
+  and Center Of Interest in Maya's order; point, directional and spot lights show Shad Color, Use Depth Map Shadows
+  and Dmap Bias (spot lights also Dropoff), kept as values without changing Blender's shadows; a locator shows its
+  shape with Local Position (moves the locator's drawing) and Local Scale.
+- **Hotkey Editor: more UV commands** (#551): the UV Toolkit's Pivot, Edit Pivot, Reset, Snap and Measure buttons,
+  Unfold (Option) and Layout (Option), and Select Overlapping / Non-Overlapping / Back-Facing / Front-Facing UVs.
+
+### Fixed
+- **Soft Select with the Scale Tool** (#548): dragging a Scale handle in component mode moves the points around the
+  selection by the soft-select falloff, like Move and Rotate.
+- **New objects moved together with others** (#547): with soft select on, moving an object in object mode no longer
+  drags the objects next to it; soft select acts on components, like Maya's Volume and Surface falloff.
+- **Multi-Cut across faces** (#545): a point on an edge that shares no face with the last point cuts straight across
+  the faces in between, like Maya, instead of being refused; the preview line follows the cut.
+- **UV commands with UV Sync Selection** (#549): Flip, Normalize, Snap and Stack, Optimize and Orient Shells to Edges
+  change only the selection's shells; shells that only share a vertex with the selection stay where they are.
+- **Cut UV Edges and Create UV Shell** (#550): shells that are already separate are left where they are.
+- **Bevel with an absolute Offset next to a twisted face** (#213, part): the new edge across each end comes out like
+  Maya's.
+
 ## [0.23.0] — 2026-11-25
 
 **The Hotkey Editor lists Maya's commands, not only the ones with a key.** Menu items, editor commands and UV Toolkit
