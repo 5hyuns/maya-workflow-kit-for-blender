@@ -466,7 +466,6 @@ STRINGS = {
     'Blender curves have no edit points: Bezier curves are edited by their knots and handles.': 'Blender 的曲線沒有編輯點：貝塞爾曲線通過其節點和控制柄編輯。',
     'Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no deformer sets or tweak nodes.': 'Blender 的變形器是帶頂點組權重的修改器 (屬性 > 修改器)：沒有變形器集或 tweak 節點。',
     "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.": 'Blender 不在 UV 編輯器中繪製殼邊界：使用 選擇 > 選擇相連 來選擇殼。',
-    "Blender doesn't dim the image: pick no image in the header field to hide it.": 'Blender 不會調暗圖像：要隱藏圖像，請在標題欄字段中不選擇任何圖像。',
     "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects extension have the closest shapes.": 'Blender 沒有內置此功能；添加 (Shift+A) 和 Extra Objects 擴展中有最接近的形狀。',
     "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit Mode, and always there: they can't be shown in Object Mode or hidden per view.": 'Blender 只在編輯模式中繪製曲線或曲面的控制點和控制多邊形 (殼)，且在該模式下始終顯示：無法在物體模式中顯示，也無法按視圖隱藏。',
     'Blender draws joints by bone length: this sizes where a click picks them.': 'Blender 按骨骼長度繪製關節：此項決定單擊拾取關節的範圍大小。',
@@ -705,7 +704,6 @@ STRINGS = {
     'Input and output connections': '輸入和輸出連接',
     'Info editor': '信息編輯器',
     'Image planes (Blender image empties: shown or hidden in every view, like Alt+4)': '圖像平面(Blender 圖像空物體：像 Alt+4 一樣在所有視圖中顯示或隱藏)',
-    'Image field': '圖像字段',
     'Image channels': '圖像通道',
     'IK handles (the empties IK constraints follow: shown or hidden in every view)': 'IK 控制柄(IK 約束跟隨的空物體：在所有視圖中顯示或隱藏)',
     'Hide attributes on selected nodes': '隱藏選定節點上的屬性',
@@ -7685,6 +7683,14 @@ STRINGS = {
     "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)": '聚光燈的衰減，與 Maya 相同 (由套件保存；Blender 的聚光混合是半影角度)',
     'Use Depth Map Shadows': '使用深度貼圖陰影',
     "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)": '使用深度貼圖陰影，與 Maya 相同 (由套件保存；Blender 的陰影是它自己的)',
+    'Dim Image': '變暗圖像',
+    'Image Dim Options': '圖像變暗選項',
+    'Dimming': '變暗程度',
+    'Dim the image in the UV Editor (press and hold the menu item for the Image Dim Options)': '使 UV 編輯器中的圖像變暗 (按住選單項目開啟圖像變暗選項)',
+    'Maya UV Editor > Image > Dim: draw the image darker under the UVs': 'Maya UV 編輯器 > 圖像 > 變暗: 在 UV 下方把圖像畫得更暗',
+    'How much darker the dimmed image is: 0 = unchanged, 1 = black': '變暗後圖像的暗度: 0 = 不變, 1 = 黑色',
+    'Image display': '圖像顯示',
+    "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender 的 UV 編輯器總是以未過濾方式繪製圖像: 放大後每個像素都是清晰的方塊。沒有平滑 (過濾) 顯示。',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

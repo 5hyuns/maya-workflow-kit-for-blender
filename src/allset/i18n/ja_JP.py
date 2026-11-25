@@ -466,7 +466,6 @@ STRINGS = {
     'Blender curves have no edit points: Bezier curves are edited by their knots and handles.': 'Blender のカーブには編集ポイントがありません: ベジェカーブはノットとハンドルで編集します。',
     'Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no deformer sets or tweak nodes.': 'Blender のデフォーマはモディファイアー (プロパティ > モディファイアー) と頂点グループのウェイトです: デフォーマセットや tweak ノードはありません。',
     "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.": 'Blender は UV エディタにシェルの境界を描画しません: 選択 > リンク選択 でシェルを選択します。',
-    "Blender doesn't dim the image: pick no image in the header field to hide it.": 'Blender は画像を暗くしません: 隠すにはヘッダーのフィールドで画像を選択しないでください。',
     "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects extension have the closest shapes.": 'Blender にはこれが組み込まれていません: 追加 (Shift+A) と Extra Objects エクステンションに最も近い形状があります。',
     "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit Mode, and always there: they can't be shown in Object Mode or hidden per view.": 'Blender はカーブやサーフェスの制御点と制御ポリゴン (ハル) を編集モードでのみ、常に表示します: オブジェクトモードで表示したり、ビューごとに隠したりはできません。',
     'Blender draws joints by bone length: this sizes where a click picks them.': 'Blender はジョイントをボーンの長さで描画します: これはクリックで選択できる範囲の大きさです。',
@@ -705,7 +704,6 @@ STRINGS = {
     'Input and output connections': '入力と出力の接続',
     'Info editor': '情報エディター',
     'Image planes (Blender image empties: shown or hidden in every view, like Alt+4)': 'イメージプレーン (Blender の画像エンプティ: Alt+4 のようにすべてのビューで表示 / 非表示)',
-    'Image field': 'イメージフィールド',
     'Image channels': 'イメージチャンネル',
     'IK handles (the empties IK constraints follow: shown or hidden in every view)': 'IK ハンドル (IK コンストレイントが追従するエンプティ: すべてのビューで表示 / 非表示)',
     'Hide attributes on selected nodes': '選択ノードのアトリビュートを隠す',
@@ -7684,6 +7682,14 @@ STRINGS = {
     "Spot light Dropoff, like Maya (kept by the kit; Blender's spot blend is the Penumbra Angle)": 'スポットライトのドロップオフ、Maya と同じ (キットが保持。Blender のスポットのブレンドは半影角度です)',
     'Use Depth Map Shadows': '深度マップシャドウを使用',
     "Use Depth Map Shadows, like Maya (kept by the kit; Blender's shadows are its own)": '深度マップシャドウを使用、Maya と同じ (キットが保持。Blender のシャドウは Blender 独自です)',
+    'Dim Image': 'イメージを暗くする',
+    'Image Dim Options': 'イメージを暗くするオプション',
+    'Dimming': '暗さ',
+    'Dim the image in the UV Editor (press and hold the menu item for the Image Dim Options)': 'UV エディタのイメージを暗くします (メニュー項目を長押しでイメージを暗くするオプション)',
+    'Maya UV Editor > Image > Dim: draw the image darker under the UVs': 'Maya UV エディタ > イメージ > 暗く: UV の下のイメージを暗く表示',
+    'How much darker the dimmed image is: 0 = unchanged, 1 = black': '暗くしたイメージの暗さ: 0 = そのまま、1 = 黒',
+    'Image display': 'イメージ表示',
+    "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender の UV エディタは常にイメージをフィルタなしで表示します: 拡大すると各ピクセルがくっきりした四角になります。滑らかな (フィルタあり) 表示はありません。',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

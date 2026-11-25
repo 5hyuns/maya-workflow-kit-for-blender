@@ -5089,6 +5089,7 @@
    "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them (Display > Hide).": "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them (Display > Hide).",
    "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view (Ctrl+Space) for more room.": "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view (Ctrl+Space) for more room.",
    "Blender's Trax is the NLA Editor with Maya's Trax menus: clips are actions laid out as NLA strips.": "Blender's Trax is the NLA Editor with Maya's Trax menus: clips are actions laid out as NLA strips.",
+   "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.",
    "Blender's UV Editor pre-selects no components: it highlights the selection only.": "Blender's UV Editor pre-selects no components: it highlights the selection only.",
    "Blender's clip-based animation editor is the NLA Editor (Windows > Animation Editors).": "Blender's clip-based animation editor is the NLA Editor (Windows > Animation Editors).",
    "Blender's cluster is a Hook modifier driven by the clusterNHandle empty.": "Blender's cluster is a Hook modifier driven by the clusterNHandle empty.",
@@ -5162,6 +5163,7 @@
    "Hook modifier": "Hook modifier",
    "Hook with falloff": "Hook with falloff",
    "Ik Blend + joint keys": "Ik Blend + joint keys",
+   "Image display": "Image display",
    "Indices overlay": "Indices overlay",
    "Interactive Bind Skin": "Interactive Bind Skin",
    "Interactive Bind Skin Tool": "Interactive Bind Skin Tool",
@@ -7960,6 +7962,7 @@
    "Max U": "Max U",
    "Max V": "Max V",
    "Measure": "Measure",
+   "Measure Again": "Measure Again",
    "Min": "Min",
    "Min U": "Min U",
    "Min V": "Min V",
@@ -8842,7 +8845,6 @@
    "Auto load Dope Sheet on selection": "Auto load Dope Sheet on selection",
    "Auto load Graph Editor on selection": "Auto load Graph Editor on selection",
    "Auto tangents": "Auto tangents",
-   "Blender doesn't dim the image: pick no image in the header field to hide it.": "Blender doesn't dim the image: pick no image in the header field to hide it.",
    "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.": "Blender doesn't draw shell borders in the UV Editor: select a shell with Select > Select Linked.",
    "Blender draws seams in the 3D View, not texture borders here.": "Blender draws seams in the 3D View, not texture borders here.",
    "Blender has no automatic node layout: move nodes with G.": "Blender has no automatic node layout: move nodes with G.",
@@ -8884,7 +8886,6 @@
    "Hide attributes": "Hide attributes",
    "Hide attributes on selected nodes": "Hide attributes on selected nodes",
    "Image channels": "Image channels",
-   "Image field": "Image field",
    "Input and output connections": "Input and output connections",
    "Input connections": "Input connections",
    "Insert Keys Tool": "Insert Keys Tool",
@@ -10106,6 +10107,15 @@
    "Shell Borders": "Shell Borders",
    "Texture Borders": "Texture Borders",
    "UV Editor Display": "UV Editor Display"
+  },
+  "Labels/ui/uv_image_dim": {
+   "Dim": "Dim",
+   "Dim Image": "Dim Image",
+   "Dimming": "Dimming",
+   "How much darker the dimmed image is: 0 = unchanged, 1 = black": "How much darker the dimmed image is: 0 = unchanged, 1 = black",
+   "Image Dim Options": "Image Dim Options",
+   "Maya UV Editor > Image > Dim: draw the image darker under the UVs": "Maya UV Editor > Image > Dim: draw the image darker under the UVs",
+   "Settings": "Settings"
   },
   "Labels/ui/uv_manipulator": {
    "Maya UV Manipulator": "Maya UV Manipulator"
@@ -12848,6 +12858,7 @@
   "Tooltips/operators/uv_toolkit_ops": {
    "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)": "Line the selected UVs up on the left, centre or right (bottom, centre or top) of their bounding box; with the\nUV Shell mask whole shells move (Maya UV Toolkit Align)",
    "Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)": "Line up the selected UV edges that run nearly along U or V (within the angle tolerance): each connected run\nbecomes straight (Maya Straighten UVs)",
+   "Measure Pixel Distance: the width, height and diagonal of the bounding box of the selected UVs in pixels for\nmap sizes 4096 down to 128, shown in a Pixel Distance window (Maya UV Editor > Image > Measure Pixel Distance)": "Measure Pixel Distance: the width, height and diagonal of the bounding box of the selected UVs in pixels for\nmap sizes 4096 down to 128, shown in a Pixel Distance window (Maya UV Editor > Image > Measure Pixel Distance)",
    "Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)": "Measure the selected UVs: the width (U Distance) or height (V Distance) of their bounding box, its diagonal in\npixels at the Map Size (Pixel Distance), or the angle of the line between two UVs (Angle Between)",
    "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)": "Move, turn and scale each selected UV shell by a random amount (Maya Randomize Shells)",
    "Show the settings of the UV Editor's active tool (the sidebar's Tool tab)": "Show the settings of the UV Editor's active tool (the sidebar's Tool tab)",
@@ -13473,6 +13484,9 @@
    "Maya Tools > Move UV Shell: a click on a UV picks its whole shell, a drag moves it\n(Blender: UV shell selection + the Move tool; another UV tool goes back to UV selection)": "Maya Tools > Move UV Shell: a click on a UV picks its whole shell, a drag moves it\n(Blender: UV shell selection + the Move tool; another UV tool goes back to UV selection)",
    "Maya UV Editor View > Isolate Select > Add Selected / Remove Selected / Remove All": "Maya UV Editor View > Isolate Select > Add Selected / Remove Selected / Remove All",
    "Maya UV Editor display keys: 4 Wireframe, 5 Shaded, 6 texture image, 8 shell borders, 9 texture borders": "Maya UV Editor display keys: 4 Wireframe, 5 Shaded, 6 texture image, 8 shell borders, 9 texture borders"
+  },
+  "Tooltips/ui/uv_image_dim": {
+   "Dim the image in the UV Editor (press and hold the menu item for the Image Dim Options)": "Dim the image in the UV Editor (press and hold the menu item for the Image Dim Options)"
   },
   "Tooltips/ui/uv_shell_preview": {
    "UV Editor: remember the mouse for the UV pre-selection highlight": "UV Editor: remember the mouse for the UV pre-selection highlight"

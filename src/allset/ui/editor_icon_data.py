@@ -136,7 +136,7 @@ UV_ICONS = (
     ("checker_tiles", 'TEXTURE', "allset.checker_toggle", "Checker tiling"),
     "IMAGE",
     ("image_channels", 'IMAGE_RGB_ALPHA', ("channels", "space_data.display_channels", {}), "Image channels"),
-    ("image_dim", 'LIGHT', None, "Dim the image"),
+    ("image_dim", 'LIGHT', ("prop", "window_manager.allset_uv_image_dim", {}), "Dim the image"),
     "|", "UVMAP",
 )
 
@@ -193,5 +193,4 @@ NOTICES = {
     "attrs_custom": ("Not in Blender", "Blender has no custom attribute views on nodes."),
     "attr_filter": ("Not in Blender", "Blender's nodes have no attribute filter field."),
     "tab_reopen": ("Not in Blender", "Blender's graph has one tab (one material at a time)."),
-    "image_dim": ("Image field", "Blender doesn't dim the image: pick no image in the header field to hide it."),
 }
