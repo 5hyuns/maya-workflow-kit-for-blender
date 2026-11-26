@@ -181,6 +181,14 @@ def patch_undo_visibility(kd):
     kd.remove("Object Mode", "object.hide_view_clear", type="H", alt=True)
     for key, mods, action in VISIBILITY_KEYS:
         _add(kd, "Object Mode", "allset.visibility", make_event(key, **mods), {"action": action})
+    # Joints (Pose / skeleton Edit mode): the same keys on joints (#568). IC Ctrl+H / Shift+H hide the selected /
+    # unselected bones (children stay), Alt+H reveals; Show Last Hidden / Show Selection had no key there.
+    for km, hide, reveal in (("Pose", "pose.hide", "pose.reveal"), ("Armature", "armature.hide", "armature.reveal")):
+        kd.remove(km, hide, type="H", ctrl=True)
+        kd.remove(km, hide, type="H", shift=True)
+        kd.remove(km, reveal, type="H", alt=True)
+        for key, mods, action in VISIBILITY_KEYS:
+            _add(kd, km, "allset.visibility", make_event(key, **mods), {"action": action})
     # Outliner: the same keys (Maya hides from the Outliner with them). IC Ctrl+H = outliner.hide (the view-layer
     # flag, which Shift+H / Ctrl+Shift+H can't bring back), Alt+H = outliner.unhide_all.
     kd.remove("Outliner", "outliner.hide", type="H", ctrl=True)

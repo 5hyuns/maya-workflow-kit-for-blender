@@ -25,6 +25,7 @@ from bpy.props import EnumProperty
 
 from .. import undo_steps
 from .. import i18n
+from . import joint_visibility
 
 TOGGLE_KEY = "toggle_show_hide"   # option window key (operators/option_windows_display.py)
 KEPT = "allset_kept"              # hidden by h while selected: h / Shift+H bring it back
@@ -111,6 +112,7 @@ def _clear(objects, key):
 def _hide(objects, all_objects):
     """Hide ``objects``; they become the "last hidden" set."""
     _clear(all_objects, LAST)
+    joint_visibility.clear_last_of(o for o in all_objects if o.type == 'ARMATURE')
     for ob in objects:
         ob.hide_viewport = True
         try:
@@ -234,6 +236,8 @@ def toggle(context, dependent=False):
 def apply(context, action, dependent=None, kind='NONE'):
     """Run ``action`` on the view layer (``kind``: the type of HIDE_TYPE / SHOW_TYPE); returns the number of
     objects changed."""
+    if context.mode in joint_visibility.JOINT_MODES:
+        return _apply_joints(context, action, kind)
     vl = context.view_layer
     objs = list(vl.objects)
     selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
@@ -257,16 +261,62 @@ def apply(context, action, dependent=None, kind='NONE'):
     if action == 'SHOW_SELECTED':
         act = vl.objects.active
         return _show([ob for ob in hidden if KEPT in ob or ob == act], vl)
-    if action == 'SHOW_LAST':
-        return _show([ob for ob in hidden if LAST in ob], vl)
-    if action == 'SHOW_ALL':
-        return _show(hidden, vl, select=False)
+    if action == 'SHOW_LAST':        # the last hide may have been joints (Pose / Edit mode)
+        return _show([ob for ob in hidden if LAST in ob], vl) + joint_visibility.show_last(context, in_mode=False)
+    if action == 'SHOW_ALL':         # hidden joints too
+        return _show(hidden, vl, select=False) + joint_visibility.show_all(context)
     if action == 'HIDE_ALL':
         return _hide([ob for ob in objs if not ob.hide_viewport], objs)
     if action == 'HIDE_TYPE':
         return _hide([ob for ob in of_kind(context, kind) if not ob.hide_viewport], objs)
     if action == 'SHOW_TYPE':
-        return _show([ob for ob in of_kind(context, kind) if ob.hide_viewport], vl, select=False)
+        n = _show([ob for ob in of_kind(context, kind) if ob.hide_viewport], vl, select=False)
+        return n + (joint_visibility.show_all(context) if kind in joint_visibility.JOINT_KINDS else 0)
+    raise ValueError(action)
+
+
+def _apply_joints(context, action, kind):
+    """``apply`` in Pose / Edit mode of a skeleton: the actions work on joints (a hidden joint hides the joints
+    below it); objects other than the skeletons being edited follow the Object Mode rules where Maya's command
+    covers them too (Hide Unselected, Hide All, Show All, by type)."""
+    vl = context.view_layer
+    objs = list(vl.objects)
+    editing = {o.session_uid for o in joint_visibility.armatures_in_mode(context)}
+    others = [ob for ob in objs if ob.session_uid not in editing]
+    hidden = [ob for ob in others if ob.hide_viewport]
+    if action == 'SHOW_LAST':
+        return _show([ob for ob in hidden if LAST in ob], vl) + joint_visibility.show_last(context, in_mode=False)
+    if action == 'SHOW_ALL':
+        return _show(hidden, vl, select=False) + joint_visibility.show_all(context)
+    if action == 'SHOW_TYPE':
+        n = _show([ob for ob in of_kind(context, kind) if ob.hide_viewport and ob.session_uid not in editing], vl,
+                  select=False)
+        return n + (joint_visibility.show_all(context) if kind in joint_visibility.JOINT_KINDS else 0)
+    if action in {'HIDE', 'TOGGLE'}:
+        if joint_visibility.selection_count(context):
+            _clear(objs, LAST)           # the joints are the new "last hidden"
+        return joint_visibility.hide(context, action)
+    if action == 'SHOW_SELECTED':
+        return joint_visibility.hide(context, action)
+    if action == 'HIDE_UNSELECTED':
+        from .dag import hierarchy
+        selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
+        keep = {o.session_uid for o in hierarchy(selected)} | editing
+        for ob in selected:
+            p = ob.parent
+            while p is not None:
+                keep.add(p.session_uid)
+                p = p.parent
+        n = _hide([ob for ob in others if ob.visible_get() and not ob.select_get() and ob.session_uid not in keep],
+                  objs)
+        return n + joint_visibility.hide(context, action)
+    if action == 'HIDE_ALL':
+        n = _hide([ob for ob in others if not ob.hide_viewport], objs)
+        return n + joint_visibility.hide(context, action)
+    if action == 'HIDE_TYPE':
+        n = _hide([ob for ob in of_kind(context, kind) if not ob.hide_viewport and ob.session_uid not in editing],
+                  objs)
+        return n + (joint_visibility.hide(context, action) if kind in joint_visibility.JOINT_KINDS else 0)
     raise ValueError(action)
 
 
@@ -290,11 +340,15 @@ class ALLSET_OT_visibility(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.view_layer is not None and context.mode == 'OBJECT'
+        return context.view_layer is not None and (context.mode == 'OBJECT' or
+                                                   context.mode in joint_visibility.JOINT_MODES)
 
     def execute(self, context):
         vl = context.view_layer
-        had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
+        if context.mode in joint_visibility.JOINT_MODES:
+            had_selection = joint_visibility.selection_count(context) > 0
+        else:
+            had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
         changed = apply(context, self.action,
                         None if self.behaviour == 'SAVED' else self.behaviour == 'DEPENDENT', self.kind)
         from . import dag
