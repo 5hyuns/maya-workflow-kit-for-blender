@@ -241,7 +241,9 @@ if PHASE == "first":
         C["save"] = None
         if w is not None:
             with bpy.context.temp_override(window=w, area=area, region=region):
-                C["save"] = bpy.ops.allset.hotkey_save(close=True)
+                # the Save button is Blender's Save Preferences operator; then the Close button
+                C["save"] = bpy.ops.wm.save_userpref() if import_module(MODULE + ".ui.hotkey_editor").SAVE_PREFS == "wm.save_userpref" else None
+                bpy.ops.allset.marked_window_close()
 
     step(lambda: None)
     step(lambda: None)
@@ -249,7 +251,7 @@ if PHASE == "first":
     @step
     def saved():
         saved = Path(bpy.utils.user_resource('CONFIG')) / "userpref.blend"
-        check(f"Hotkey Editor > Save and Close saves the preferences and closes the window ({C['save']}, "
+        check(f"Hotkey Editor > Save saves the preferences and Close closes the window ({C['save']}, "
               f"window {hk()[0] is not None})",
               C["save"] == {'FINISHED'} and saved.exists() and saved.stat().st_mtime > C["mtime"] and hk()[0] is None)
 

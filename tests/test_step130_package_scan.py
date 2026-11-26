@@ -7,7 +7,8 @@ no template copied outside the extension, no preference / active-keyconfig chang
 Scanned: every ``.py`` file of ``src/allset`` and of the built extension zip (``dist/maya-workflow-kit-<ver>.zip``,
 so the scan also covers what is uploaded). Python files are tokenized, so comments and docstrings that *mention*
 a call never count — only code does. ``save_userpref`` is allowed only as the operator id string of Maya's
-explicit File > Save Preferences menu item (``ui/menu_map.py``), never as a call.
+explicit File > Save Preferences menu item (``ui/menu_map.py``) and of the Hotkey Editor's Save button
+(``ui/hotkey_editor.py``), never as a call.
 """
 
 import io
@@ -36,7 +37,9 @@ BANNED_NAMES = {
     "reset_default_theme": "theme change",
     "interface_theme_preset_add": "theme change",
 }
-ALLOWED_STRINGS = {("ui/menu_map.py", "wm.save_userpref")}   # Maya's File > Save Preferences: the user's own command
+# the user's own commands: Maya's File > Save Preferences and the Hotkey Editor's Save button (Blender's Save
+# Preferences operator drawn as a button, never called by the kit)
+ALLOWED_STRINGS = {("ui/menu_map.py", "wm.save_userpref"), ("ui/hotkey_editor.py", "wm.save_userpref")}
 
 
 def _sources():

@@ -1069,29 +1069,13 @@ class ALLSET_PT_hotkey_editor(bpy.types.Panel):
         layout.label(text=PERSIST_NOTE, icon='INFO')
         bottom = layout.row(align=True)
         bottom.operator(ALLSET_OT_hotkey_restore.bl_idname, text="Restore All Maya Hotkeys").all = True
-        bottom.operator(ALLSET_OT_hotkey_save.bl_idname, text="Save").close = False
-        bottom.operator(ALLSET_OT_hotkey_save.bl_idname, text="Save and Close").close = True
+        bottom.operator(SAVE_PREFS, text="Save")
         bottom.operator("allset.marked_window_close", text="Close")
 
 
-class ALLSET_OT_hotkey_save(bpy.types.Operator):
-    """Save the hotkeys now (Blender's Save Preferences), like Maya's Hotkey Editor Save; Save and Close also closes
-    the window"""
-    bl_idname = "allset.hotkey_save"
-    bl_label = "Save Hotkeys"
-    bl_options = {'INTERNAL'}
-
-    close: BoolProperty(options={'SKIP_SAVE'})
-
-    def execute(self, context):
-        res = bpy.ops.wm.save_userpref()
-        if 'FINISHED' not in res:
-            self.report({'WARNING'}, "The hotkeys could not be saved")
-            return {'CANCELLED'}
-        self.report({'INFO'}, "Hotkeys saved")
-        if self.close and context.window is not None and context.window != context.window_manager.windows[0]:
-            marked_window.close_later(context.window)
-        return {'FINISHED'}
+# Save = Blender's own Save Preferences operator drawn as a button: the hotkeys are saved only when the user clicks
+# it (the kit itself never saves the preferences).
+SAVE_PREFS = "wm.save_userpref"
 
 
 class ALLSET_OT_hotkey_command(bpy.types.Operator):
@@ -1137,7 +1121,7 @@ class ALLSET_OT_hotkey_command(bpy.types.Operator):
 
 classes = (ALLSET_OT_hotkey_command, ALLSET_PG_hotkey_row, ALLSET_UL_hotkeys, ALLSET_OT_hotkey_editor, ALLSET_OT_hotkey_assign,
            ALLSET_OT_hotkey_take, ALLSET_OT_hotkey_restore, ALLSET_OT_hotkey_import, ALLSET_OT_hotkey_blender_prefs,
-           ALLSET_OT_hotkey_save, ALLSET_PT_hotkey_editor)
+           ALLSET_PT_hotkey_editor)
 
 _WM_PROPS = ("allset_hk_rows", "allset_hk_active", "allset_hk_search", "allset_hk_by", "allset_hk_category",
              "allset_hk_capture", "allset_hk_pending")
