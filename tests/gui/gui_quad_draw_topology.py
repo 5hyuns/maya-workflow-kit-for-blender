@@ -114,10 +114,18 @@ def stays_off():
 @step
 def reopen():bpy.ops.wm.open_mainfile(filepath=C['save'],use_scripts=False)
 @step
+def maya_layout_shown():
+ # Maya mode shows an opened file in the Maya layout from a timer after loading; its workspace starts on the Select
+ # tool, so Quad Draw is entered only once that layout is up.
+ import sim
+ if not import_module(MODULE+'.switch').is_maya_workspace(win().workspace) and C.setdefault('layout_waits',0)<50:
+  C['layout_waits']+=1;sim._steps.insert(0,maya_layout_shown)
+@step
 def reopened_binding():
  with override():
   ob=bpy.context.object
   if ob.mode!='EDIT':bpy.ops.object.mode_set(mode='EDIT')
+  check('the opened file is shown in the Maya layout',import_module(MODULE+'.switch').is_maya_workspace(win().workspace))
   b=bm();sy=mod('quad_draw_symmetry')
   check('saved and reopened file retains stable seam binding and pairs',tuple(ob.data[sy.SEED])==C['saved_ids'] and bool(sy.topology_mapping(ob,b,bpy.context.scene.allset_symmetry)))
   bpy.ops.allset.quad_draw_start()
