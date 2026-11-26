@@ -7777,7 +7777,9 @@
   },
   "Labels/operators/uv_brush": {
    "A move handle on the lattice point last picked (U, V or free)": "A move handle on the lattice point last picked (U, V or free)",
+   "A shell the brush touches is symmetrized on that whole side": "A shell the brush touches is symmetrized on that whole side",
    "Brush radius in UV space (b + drag left / right)": "Brush radius in UV space (b + drag left / right)",
+   "Brush size": "Brush size",
    "Columns": "Columns",
    "Constant": "Constant",
    "Ctrl+drag turns the UVs under the brush clockwise or counterclockwise": "Ctrl+drag turns the UVs under the brush clockwise or counterclockwise",
@@ -7795,6 +7797,7 @@
    "Falloff type": "Falloff type",
    "Fit the lattice around the UVs; off: drag on empty space to draw the lattice": "Fit the lattice around the UVs; off: drag on empty space to draw the lattice",
    "Fixed": "Fixed",
+   "Flood Shells": "Flood Shells",
    "How a Pin stroke changes the pins": "How a Pin stroke changes the pins",
    "How far the UVs follow the lattice (1 = all the way)": "How far the UVs follow the lattice (1 = all the way)",
    "How far the UVs move each dab (m + drag up / down)": "How far the UVs move each dab (m + drag up / down)",
@@ -7812,6 +7815,8 @@
    "Linear": "Linear",
    "Middle Mouse": "Middle Mouse",
    "Middle mouse initiates": "Middle mouse initiates",
+   "Mirror Axis": "Mirror Axis",
+   "Mirror Axis Position": "Mirror Axis Position",
    "Mode": "Mode",
    "Optimize: keeping the surface area (1) against keeping only the angles (0)": "Optimize: keeping the surface area (1) against keeping only the angles (0)",
    "Paint": "Paint",
@@ -7846,7 +7851,8 @@
    "UV Brush Size / Strength": "UV Brush Size / Strength",
    "UV Brush Stroke": "UV Brush Stroke",
    "Use bounding rectangle": "Use bounding rectangle",
-   "Volume": "Volume"
+   "Volume": "Volume",
+   "Where the mirror line is, in UV space": "Where the mirror line is, in UV space"
   },
   "Labels/operators/uv_checker": {
    "Assign Checker Shader": "Assign Checker Shader",

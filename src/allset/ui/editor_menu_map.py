@@ -441,6 +441,8 @@ MAP = {
     f"{UV}/Tools/Lattice": _uv_tool("allset.uv_lattice"),
     f"{UV}/Tools/Grab": _uv_tool("allset.uv_brush_grab"),
     f"{UV}/Tools/Pinch": _uv_tool("allset.uv_brush_pinch"),
+    f"{UV}/Tools/Symmetrize": _uv_tool("allset.uv_brush_symmetrize"),
+    f"{UV}/Modify/Symmetrize": _uv_tool("allset.uv_brush_symmetrize"),     # works on the picked line
     f"{UV}/View/UV Distortion": _prop(f"{_SP}.uv_editor.show_stretch"),
     f"{UV}/View/Grid": _prop(f"{_SP}.overlay.show_grid_background"),
     f"{UV}/View/Toolbar": _prop(f"{_SP}.show_region_toolbar"),

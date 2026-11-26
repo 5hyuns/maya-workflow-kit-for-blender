@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""UV Editor > Tools > Unfold, Optimize, Cut, Sew, Pin, Smear, Grab, Pinch and Smudge as UV Editor tools, like Maya's UV brushes,
+"""UV Editor > Tools > Unfold, Optimize, Cut, Sew, Pin, Smear, Grab, Pinch, Symmetrize and Smudge as UV Editor tools, like Maya's UV brushes,
 and Tools > Lattice (operators/uv_lattice.py).
 
 Each is a Blender tool of the UV Editor (edit mode): LMB drag = the brush stroke (operators/uv_brush.py), Ctrl+drag =
@@ -94,6 +94,12 @@ class _UVBrushTool(bpy.types.WorkSpaceTool):
             layout.prop(s, "grab_direction", text="" if header else None)
         elif m == "PINCH":
             _sculpt_settings(layout, s, "pinch_size", "pinch_strength", header)
+        elif m == "SYMMETRIZE":
+            layout.prop(s, "sym_size", slider=not header)
+            row = layout.row(align=True)
+            row.prop(s, "sym_axis", expand=True)
+            layout.prop(s, "sym_axis_pos")
+            layout.prop(s, "sym_flood")
         elif m == "SMUDGE":
             layout.prop(s, "smudge_effect", text="" if header else None)
             layout.prop(s, "smudge_falloff", text="" if header else None)
@@ -140,6 +146,9 @@ TOOLS = (
     _tool("PINCH", "Pinch UV", "brush.uv_sculpt.pinch",
           "Drag to pull the UVs under the brush toward the stroke (Maya Pinch UV Tool). Ctrl+drag pushes them away. "
           "b + drag = size, m + drag = strength"),
+    _tool("SYMMETRIZE", "Symmetrize", "ops.gpencil.edit_mirror",
+          "Click an edge on the mesh's symmetry line, then drag over the UVs on one side to give them the mirrored "
+          "UVs of the other side (Maya Symmetrize UV Tool). b + drag = size"),
     _tool("SMUDGE", "Smudge", "brush.paint_texture.smear",
           "Drag to pull the selected UVs in the direction of the stroke (Maya Smudge UV Tool). "
           "b + drag = size"),

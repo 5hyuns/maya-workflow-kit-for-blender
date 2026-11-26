@@ -14,6 +14,8 @@ down its strength, and Q / W / E / R leave it like any tool. One stroke = one un
   Ctrl+drag cuts like the Cut tool.
 - Pin: the UVs under the brush are pinned; Ctrl+drag unpins them.
 - Smear: the UVs under the brush are pushed along the stroke (the first mouse move only places the brush).
+- Symmetrize: the first click picks an edge on the symmetry line; then the UVs under the brush, on its side of the
+  Axis Position line, take their counterpart's UV mirrored across it (operators/uv_symmetrize.py).
 - Smudge: only selected UVs move. Fixed: those under the brush where the stroke starts follow it (a steep falloff);
   Smudge: those the brush passes over are pulled along each mouse move by the Pressure.
 Settings live in ``Scene.allset_uv_brush``.
@@ -30,19 +32,21 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, Po
 from gpu_extras.batch import batch_for_shader
 
 from .. import compat, live_refs, results
-from . import taphold, uv_brush_math, uv_tools
+from . import taphold, uv_brush_math, uv_symmetrize, uv_tools
 from .uv_islands import sync
 from .uv_shells import _loop_selected
 
 PREFIX = "allset.uv_brush_"
-MODES = ("UNFOLD", "OPTIMIZE", "CUT", "SEW", "PIN", "SMEAR", "SMUDGE", "GRAB", "PINCH")
+MODES = ("UNFOLD", "OPTIMIZE", "CUT", "SEW", "PIN", "SMEAR", "SMUDGE", "GRAB", "PINCH", "SYMMETRIZE")
 TOOL_IDS = {m: PREFIX + m.lower() for m in MODES}
 MODE_OF_TOOL = {v: k for k, v in TOOL_IDS.items()}
 # mode -> (size property, strength property) in Scene.allset_uv_brush; Unfold and Optimize share one brush like Maya
 BRUSH_PROPS = {"UNFOLD": ("relax_size", "relax_strength"), "OPTIMIZE": ("relax_size", "relax_strength"),
                "CUT": (None, None), "SEW": ("sew_size", None), "PIN": ("pin_size", "pin_strength"),
                "SMEAR": ("smear_size", "smear_strength"), "SMUDGE": ("smudge_size", "smudge_pressure"),
-               "GRAB": ("grab_size", "grab_strength"), "PINCH": ("pinch_size", "pinch_strength")}
+               "GRAB": ("grab_size", "grab_strength"), "PINCH": ("pinch_size", "pinch_strength"),
+               "SYMMETRIZE": ("sym_size", None)}
+SYM_PICK_PX = 10          # Symmetrize: how near (pixels) a click must be to an edge to pick it
 SPACING = 0.25            # a dab every quarter brush radius along the stroke
 CIRCLE_RGB = (0.9, 0.9, 0.9)
 CIRCLE_SEGMENTS = 48
@@ -99,6 +103,15 @@ class ALLSET_PG_uv_brush(bpy.types.PropertyGroup):
                               description="Brush radius in UV space (b + drag left / right)")
     pinch_strength: FloatProperty(name="Strength", default=10.0, min=0.0, max=100000.0, soft_max=100.0, precision=3,
                                   description="How strongly the UVs are pulled to the stroke (m + drag up / down)")
+    sym_size: FloatProperty(name="Brush size", default=0.1, min=0.0, max=10000.0, soft_max=1.0, precision=3,
+                            description="Brush radius in UV space (b + drag left / right)")
+    sym_axis: EnumProperty(name="Mirror Axis", default='U', items=(
+        ('U', "U", "Mirror across a line of constant U (picking an up-down edge sets it)"),
+        ('V', "V", "Mirror across a line of constant V (picking a side-to-side edge sets it)")))
+    sym_axis_pos: FloatProperty(name="Mirror Axis Position", default=0.5, soft_min=-10.0, soft_max=10.0,
+                                precision=4, step=10, description="Where the mirror line is, in UV space")
+    sym_flood: BoolProperty(name="Flood Shells", default=False,
+                            description="A shell the brush touches is symmetrized on that whole side")
     smudge_size: FloatProperty(name="Smudge size", default=0.075, min=0.0, max=10.0, soft_max=1.0, precision=3,
                                description="Brush radius in UV space (b + drag left / right)")
     smudge_pressure: FloatProperty(name="Pressure", default=0.01, min=0.0, max=1.0, precision=3,
@@ -475,6 +488,8 @@ def _draw():
         if area is None or not _uv_region(context):
             return
         mode = active_mode(context)
+        if mode != "SYMMETRIZE":
+            uv_symmetrize.clear()           # the picked symmetry line lasts while the tool stays active
         if mode is None:
             return
         shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
@@ -488,6 +503,12 @@ def _draw():
             shader.uniform_float("color", (*CIRCLE_RGB, 0.7))
             batch_for_shader(shader, 'LINES', {"pos": [_hover["pos"], v2d.view_to_region(*lazy[1], clip=False)]}
                              ).draw(shader)
+        sym = uv_symmetrize.segments() if mode == "SYMMETRIZE" else []
+        if sym:
+            pts = [v2d.view_to_region(u, v, clip=False) for seg in sym for (u, v) in seg]
+            shader.uniform_float("lineWidth", 3.0 * scale)
+            shader.uniform_float("color", (*STROKE_RGB, 1.0))
+            batch_for_shader(shader, 'LINES', {"pos": pts}).draw(shader)
         if _stroke["area"] == area.as_pointer() and _stroke["segments"]:
             pts = [v2d.view_to_region(u, v, clip=False) for seg in _stroke["segments"] for (u, v) in seg]
             shader.uniform_float("lineWidth", 3.0 * scale)
@@ -619,7 +640,8 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         self._moves = 0
         self._carry = 0.0
         # Ctrl / Shift + drag with the Cut tool; a left drag with Smudge's Middle mouse initiates on: nothing
-        self._idle = (self.mode == "CUT" and self.invert) or (smudge_middle and not self.middle)
+        self._idle = ((self.mode in {"CUT", "SYMMETRIZE"} and self.invert)      # Ctrl+click does nothing
+                      or (smudge_middle and not self.middle))
         mode = self._mode()
         s = settings(context)
         self._held = relax_held(self._meshes) if mode in {"UNFOLD", "OPTIMIZE"} else [m.pinned for m in self._meshes]
@@ -640,6 +662,12 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         elif mode == "CUT":
             self._cut = uv_brush_math.CutStroke(self._uv)
             self._picks = [cut_pick(m) for m in self._meshes]
+        elif mode == "SYMMETRIZE":
+            self._sym = [uv_symmetrize.Mirror(m, e) if e is not None else None
+                         for m, e in ((m, uv_symmetrize.seam_of(m)) for m in self._meshes)]
+            if not any(x is not None and x.ok for x in self._sym):
+                return self._sym_pick(context)              # no symmetry line yet: this click picks it
+            self._dab(context, self._uv, (0.0, 0.0))        # a click paints too
         elif mode in {"PIN", "SEW"}:
             self._dab(context, self._uv, (0.0, 0.0))        # a click pins / picks under the brush
         self._show()
@@ -648,12 +676,42 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
         _redraw(context)
         return {'RUNNING_MODAL'}
 
+    def _sym_pick(self, context):
+        """Pick the UV edge nearest the click (within SYM_PICK_PX) as the symmetry line; the Mirror Axis follows it."""
+        v2d = context.region.view2d
+        x, y = self._xy
+        tol = abs(v2d.region_to_view(x + SYM_PICK_PX * (context.preferences.system.ui_scale or 1.0), y)[0]
+                  - self._uv[0])
+        best = None
+        for m in self._meshes:
+            hit = uv_symmetrize.nearest_edge(m, self._uv)
+            if hit is not None and hit[0] <= tol and (best is None or hit[0] < best[0][0]):
+                best = (hit, m)
+        if best is None:
+            results.result(self, "Click a UV edge on the symmetry line")
+            return {'CANCELLED'}
+        (_d, edge, direction), m = best
+        mirror = uv_symmetrize.Mirror(m, edge)
+        if not mirror.ok:
+            results.result(self, "The mesh is not symmetrical about this edge")
+            return {'CANCELLED'}
+        uv_symmetrize.remember(m, edge, mirror)
+        settings(context).sym_axis = uv_symmetrize.axis_of(direction)
+        _redraw(context)
+        return {'CANCELLED'}           # the pick changes no UV: no undo step
+
     def _dab(self, context, p, delta):
         mode = self._mode()
         s = settings(context)
         r = size_of(context, mode)
         k = strength_of(context, mode)
         for i, m in enumerate(self._meshes):
+            if mode == "SYMMETRIZE":
+                mir = self._sym[i]
+                if mir is not None and mir.ok:
+                    self._changed |= m.write(uv_symmetrize.dab(m.U, mir.side, mir.other, mir.shell, p, r, s.sym_axis,
+                                                               s.sym_axis_pos, s.sym_flood))
+                continue
             if mode == "SEW":
                 collect_sew_edges(m, p, r, self._picked[i])
             else:
@@ -787,6 +845,10 @@ class ALLSET_OT_uv_brush_stroke(bpy.types.Operator):
             done = self._changed
             for m in self._meshes:
                 bmesh.update_edit_mesh(m.ob.data)
+            if mode == "SYMMETRIZE" and not self._idle:
+                for m, mir in zip(self._meshes, self._sym):
+                    if mir is not None and mir.ok:
+                        uv_symmetrize.refresh_segments(m, mir)
         _redraw(context)
         return {'FINISHED'} if done else {'CANCELLED'}
 

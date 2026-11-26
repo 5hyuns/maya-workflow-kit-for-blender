@@ -20,9 +20,9 @@ SYMMETRIZE_NO_COMPONENTS = "No components selected for Symmetrize."
 SYMMETRIZE_PROMPT = "Select a mesh edge for symmetry"
 
 
-def topo_mirror(bm, seam):
+def topo_mirror(bm, seam, face_map=None):
     """(vertex -> mirror vertex, vertex -> side 0 / 1) by walking both sides of ``seam`` face by face; None if the
-    mesh isn't topologically symmetric about it."""
+    mesh isn't topologically symmetric about it. ``face_map`` (a dict), when given, gets face -> mirror face."""
     if len(seam.link_faces) != 2:
         return None
     fa, fb = seam.link_faces
@@ -33,6 +33,8 @@ def topo_mirror(bm, seam):
         f, g, ea, eb = queue.pop()
         if len(f.loops) != len(g.loops):
             return None
+        if face_map is not None:
+            face_map[f], face_map[g] = g, f
         la = next(lp for lp in f.loops if lp.edge is ea)
         lb = next(lp for lp in g.loops if lp.edge is eb)
         if m.get(la.vert) is lb.link_loop_next.vert:

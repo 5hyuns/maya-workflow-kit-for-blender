@@ -770,14 +770,6 @@ CATEGORIES.update({
     "UV Editor/View/Isolate Select": (
         "Add Selected / Remove Selected", "Blender has no saved quick-select sets to load into the isolate view: "
         "build it with Add Selected / Remove Selected (Ctrl+1 isolates the selection)."),
-    # Maya's Symmetrize UV changes UVs only after the brush's own seam pick (without it no UV changes):
-    # no rule to copy.
-    "UV Editor/Modify/Symmetrize": (
-        "UV > Mirror / Snap", "Blender has no UV symmetrize: mirror the UVs (Modify > Flip) and weld them (Match UVs), "
-        "or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
-    "UV Editor/Tools/Symmetrize": (
-        "UV > Mirror / Snap", "Blender has no UV symmetrize brush: mirror the UVs (Modify > Flip) and weld them "
-        "(Match UVs), or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
     "UV Editor/Image": (
         "Image field", "Blender shows one image (header image field): no PSD networks or bake preview."),
     "UV Editor/Textures": (
@@ -1293,8 +1285,6 @@ _UV_MENUS = ("SHIFT_UV", "SHIFT_UV_SHELL", "SHIFT_UV_FACE")
 _UV_CONSTRAINTS = ("Select menu / Snapping", "Blender has no UV selection or transform constraints: pick with Select "
                    "Linked / Select Split and move along edges with snapping.")
 MARKING.update({
-    **{f"{m}/Symmetrize": CATEGORIES["UV Editor/Modify/Symmetrize"] for m in ("SHIFT_UV", "SHIFT_UV_FACE")},
-    **{f"{m}/Tools/Symmetrize Tool": CATEGORIES["UV Editor/Tools/Symmetrize"] for m in _UV_MENUS},
     **{f"{m}/Pinning/Reset Settings": CATEGORIES["UV Editor/Edit/Reset UV Editor UI"] for m in _UV_MENUS},
     **{f"{m}/{label}": _UV_CONSTRAINTS for m in (*(f"{n}/Pinning" for n in _UV_MENUS), "UV_CONVERT")
        for label in ("Selection Constraints", "Transform Constraints")},

@@ -7708,6 +7708,10 @@ STRINGS = {
     "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender 的 UV 編輯器總是以未過濾方式繪製圖像: 放大後每個像素都是清晰的方塊。沒有平滑 (過濾) 顯示。',
     'Cut / Sew UV Edge Loop': '剪下 / 縫合 UV 邊循環',
     'Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)': '雙擊邊剪下其整條邊循環；Ctrl = 縫合該循環 (Maya 3D 剪下和縫合 UV 工具)',
+    'Brush size': '筆刷大小',
+    'Flood Shells': '填充殼',
+    'Where the mirror line is, in UV space': '鏡像線的位置（UV 空間）',
+    'A shell the brush touches is symmetrized on that whole side': '筆刷觸及的殼在該側整體對稱',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

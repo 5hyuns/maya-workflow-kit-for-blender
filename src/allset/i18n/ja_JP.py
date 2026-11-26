@@ -7707,6 +7707,10 @@ STRINGS = {
     "Blender's UV Editor always draws the image unfiltered: zoomed in, each pixel is a sharp square. It has no smoothed (filtered) display.": 'Blender の UV エディタは常にイメージをフィルタなしで表示します: 拡大すると各ピクセルがくっきりした四角になります。滑らかな (フィルタあり) 表示はありません。',
     'Cut / Sew UV Edge Loop': 'UV エッジループのカット / 縫合',
     'Double-click an edge to cut its whole edge loop; Ctrl = sew the loop (Maya 3D Cut and Sew UV Tool)': 'エッジをダブルクリックでそのエッジループ全体をカット、Ctrl でループを縫合 (Maya 3D カットと縫合 UV ツール)',
+    'Brush size': 'ブラシ サイズ',
+    'Flood Shells': 'シェルをフラッド',
+    'Where the mirror line is, in UV space': 'ミラー線の位置 (UV 空間)',
+    'A shell the brush touches is symmetrized on that whole side': 'ブラシが触れたシェルを、その側全体で対称化します',
 }
 
 # (context, English): translation for texts that read differently in one place (i18n.CTX_*)

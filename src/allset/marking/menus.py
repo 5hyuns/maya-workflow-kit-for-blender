@@ -1274,7 +1274,8 @@ _UV_TOOLS = Sub(items=[
     ("Cut Tool", _uve("Tools/Cut")), ("Sew Tool", _uve("Tools/Sew")), DIVIDER,
     ("Optimize Tool", _uve("Tools/Optimize")), ("Unfold Tool", _uve("Tools/Unfold")), DIVIDER,
     ("Grab Tool", _uve("Tools/Grab")), ("Lattice Tool", _uve("Tools/Lattice")), ("Pin Tool", _uve("Tools/Pin")),
-    ("Pinch Tool", _uve("Tools/Pinch")), ("Smear Tool", _uve("Tools/Smear")), ("Symmetrize Tool", None),
+    ("Pinch Tool", _uve("Tools/Pinch")), ("Smear Tool", _uve("Tools/Smear")),
+    ("Symmetrize Tool", _uve("Tools/Symmetrize")),
 ], options={"Optimize Tool", "Grab Tool", "Pinch Tool"})
 # Pinning also holds the editor's display switches, like Maya's
 _UV_PINNING = Sub(items=[
@@ -1311,7 +1312,8 @@ SHIFT_UV = MarkingMenu(
         "NW": ("Normalize", _uve("Modify/Normalize")),
     },
     items=[("Distribute", _uve("Modify/Distribute UVs")), ("Flip", _uve("Modify/Flip")),
-           ("Map Border", _uve("Modify/Map Border")), ("Symmetrize", None), ("Unitize", _uve("Modify/Unitize")),
+           ("Map Border", _uve("Modify/Map Border")), ("Symmetrize", _uve("Modify/Symmetrize")),
+           ("Unitize", _uve("Modify/Unitize")),
            DIVIDER, ("Auto Seams", _uve("Cut/Sew/Auto Seams")),
            DIVIDER, ("Create UV Shell", _uve("Cut/Sew/Create UV Shell")),
            DIVIDER, ("Cut UVs", _uve("Cut/Sew/Cut")), ("Delete UVs", _uve("Edit/Delete")),
@@ -1360,7 +1362,8 @@ SHIFT_UV_FACE = MarkingMenu(
         "NW": ("Normalize", _uve("Modify/Normalize")),
     },
     items=[("Cycle", _uve("Modify/Cycle")), ("Flip", _uve("Modify/Flip")), ("Match Grid", _uve("Modify/Match Grid")),
-           ("Match UVs", _uve("Modify/Match UVs")), ("Symmetrize", None), *_UV_LIST_TAIL],
+           ("Match UVs", _uve("Modify/Match UVs")),
+           ("Symmetrize", _uve("Modify/Symmetrize")), *_UV_LIST_TAIL],
     options={"Straighten UVs", "Optimize", "Normalize", "Flip", "Match Grid", "Match UVs"})
 
 # Ctrl+RMB in the UV Editor: Maya's UV Editor selection conversion menu. Its To Vertices / Edges / Faces / UVs
