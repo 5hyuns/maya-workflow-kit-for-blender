@@ -40,6 +40,7 @@ ONE_SHOT = {
     "ui.option_editor.restore_sessions",
     "ui.outliner_tree._first_hide",
     "ui.shelf._settle_later",
+    "ui.startup_camera_views._start",
     "operators.driven_key._first_sync",
     "operators.soft_select._push_later",
     "operators.type_manip._on_load_later",
