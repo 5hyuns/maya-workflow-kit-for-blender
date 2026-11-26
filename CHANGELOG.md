@@ -13,6 +13,11 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   shows the three rotate rings); on world axes the handles move, turn and scale them along the world axes
   (Translate / Rotate / Scale about the centre of the extruded faces). Local and world values add up the way Maya's
   polyExtrudeFace does, and each level of a divided extrusion takes its share.
+- **Hypergraph: Hierarchy shows joints** (#566): every joint is a node under its parent joint (joint1 > joint2 >
+  joint3), an object parented to a joint stands under that joint, and a skeleton's root joints stand in for it, like
+  the Outliner. Clicking or boxing joint nodes picks those joints; a middle-mouse drag onto a joint parents there.
+- **UV Editor: B for soft select** (#571): tap B to turn soft select on or off, hold B and drag with the left or
+  middle mouse button to set the falloff radius, as in the 3D View.
 
 ### Fixed
 - **UV Toolkit Unfold Along U / V** (#557): one click unfolds all the way along the axis (a second click changes
