@@ -127,8 +127,12 @@ def joint(*args, **kwargs):
     else:
         _object_mode(context)
         arm, parent = joints.new_skeleton(context), None
-    made = joints.add_joint(arm, point, parent, length=linear_factor())
     ebs = arm.data.edit_bones
+    # jointOrient 0 and rotate 0: the new joint's axes are its parent joint's (the world's for a root joint), and
+    # the parent keeps its axes when its bone turns toward the new child
+    from ..operators import joint_frames
+    frame = joint_frames.maya_frame(arm, ebs[parent]).copy() if parent is not None else joint_frames.MAYA_WORLD
+    made = joints.add_joint(arm, point, parent, length=linear_factor())
     if made == parent:                     # Maya makes a joint on its parent's position too
         eb = ebs.new(jname)
         eb.head = arm.matrix_world.inverted() @ point
@@ -136,6 +140,9 @@ def joint(*args, **kwargs):
         eb.parent = ebs[parent]
     else:
         ebs[made].name = jname
+    if parent is not None:
+        joint_frames.set_maya_frame(arm, ebs[parent], frame)
+    joint_frames.set_maya_frame(arm, ebs[jname], frame)
     with context.temp_override(active_object=arm, object=arm):
         joints.finish(context, arm, [jname])
     bone = arm.data.bones[jname]
