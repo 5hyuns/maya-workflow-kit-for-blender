@@ -71,13 +71,25 @@ def _kept_edges(ob, bm):
     return out
 
 
+def _picked_edge(bm, faces):
+    """The newest edge picked on its own and still selected on the border of ``faces`` (Multi-Component mode keeps
+    the edge picked before a face in the pick list), or None."""
+    for e in reversed(list(bm.select_history)):
+        if isinstance(e, bmesh.types.BMEdge) and e.select and _border(e, faces):
+            return e
+    return None
+
+
 def hinge_edge(ob, bm, faces, fallback=True):
-    """The edge Wedge turns ``faces`` about: the active edge, else a kept edge on their border, else (``fallback``)
-    a selected edge on their border."""
+    """The edge Wedge turns ``faces`` about: the active edge, else an edge picked before them still in the pick list
+    (Multi-Component mode), else a kept edge on their border, else (``fallback``) a selected edge on their border."""
     edge = bm.select_history.active
     if isinstance(edge, bmesh.types.BMEdge):
         return edge
     sel = set(faces)
+    e = _picked_edge(bm, sel)
+    if e is not None:
+        return e
     for e in _kept_edges(ob, bm):
         if _border(e, sel):
             return e
@@ -108,9 +120,10 @@ def shown_hinge(ob, bm):
     if isinstance(act, bmesh.types.BMEdge):
         # the active edge counts when it is one of a selected face's edges (else it already draws as picked)
         return act if act.select and any(f.select for f in act.link_faces) else None
-    if ob.name not in _kept:
+    picked = [e for e in bm.select_history if isinstance(e, bmesh.types.BMEdge) and e.select]
+    if ob.name not in _kept and not picked:
         return None
-    faces = {f for e in _kept_edges(ob, bm) for f in e.link_faces if f.select}
+    faces = {f for e in _kept_edges(ob, bm) + picked for f in e.link_faces if f.select}
     return hinge_edge(ob, bm, list(faces), fallback=False) if faces else None
 
 

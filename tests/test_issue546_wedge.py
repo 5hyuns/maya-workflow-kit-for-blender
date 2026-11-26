@@ -213,3 +213,39 @@ def test_the_active_edge_on_a_selected_face_is_drawn():
     bm = bmesh.from_edit_mesh(ob.data)
     shown = hinge_mod.shown_hinge(ob, bm)
     assert shown is not None and all(abs(v.co.x + 1) < 1e-6 and abs(v.co.z - 1) < 1e-6 for v in shown.verts)
+
+
+def test_multi_component_edge_then_faces_is_the_hinge():
+    """Multi-Component mode: an edge picked, then two faces beside it added; the edge stays in the pick list and
+    Wedge turns both faces about it (not about another border edge of the faces)."""
+    hinge_mod = __import__(kit.MODULE + ".operators.wedge_hinge", fromlist=["x"])
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    kit.enable()
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=2, y_subdivisions=1, size=2)     # 2 x 1 faces
+    ob = bpy.context.object
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.tool_settings.mesh_select_mode = (True, True, True)
+    bm = bmesh.from_edit_mesh(ob.data)
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    bm.select_history.clear()
+    faces = list(bm.faces)
+    assert len(faces) == 2, len(faces)
+    # the edge on the far right side (x = 1), picked first
+    edge = next(e for e in bm.edges if all(abs(v.co.x - 1) < 1e-6 for v in e.verts))
+    edge.select_set(True)
+    bm.select_history.add(edge)
+    for f in faces:
+        f.select_set(True)
+        bm.select_history.add(f)
+    bmesh.update_edit_mesh(ob.data)
+    bm = bmesh.from_edit_mesh(ob.data)
+    shown = hinge_mod.shown_hinge(ob, bm)
+    assert shown is not None and all(abs(v.co.x - 1) < 1e-6 for v in shown.verts), shown
+    got = hinge_mod.hinge_edge(ob, bm, [f for f in bm.faces if f.select])
+    assert got is not None and all(abs(v.co.x - 1) < 1e-6 for v in got.verts), got
+    assert bpy.ops.allset.wedge() == {'FINISHED'}
+    bm = bmesh.from_edit_mesh(ob.data)
+    # the faces stand up on the x = 1 edge: their far side lifts to z = 2 above x = 1
+    top = [v.co for v in bm.verts if v.co.z > 1.99]
+    assert top and all(abs(c.x - 1) < 1e-3 for c in top), [tuple(c) for c in top]

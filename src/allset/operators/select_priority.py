@@ -278,15 +278,16 @@ def face_edge_pick(context, region, event):
     """#546: in edge mode Shift+click on an edge that is selected only as part of a selected face picks that edge
     (active, still selected), like Maya, where the faces stay selected in edge mode and the edge is added to them
     (Edit Mesh > Wedge turns the faces about it). Blender's toggle would drop the edge and so the face. True when
-    it picked."""
+    it picked. Multi-Component mode (F7) too, where a vertex near the mouse wins over the edge."""
     if not event.shift or event.ctrl or event.alt:
         return False
-    if tuple(context.tool_settings.mesh_select_mode) != (False, True, False) or context.region_data is None:
+    mode = tuple(context.tool_settings.mesh_select_mode)
+    if mode not in {(False, True, False), (True, True, True)} or context.region_data is None:
         return False
     import bmesh
     from . import multi_cut
     hit = multi_cut.pick(context, region, context.region_data, (event.mouse_region_x, event.mouse_region_y),
-                         edges_only=True)
+                         edges_only=not mode[0])
     if hit is None or hit[1][0] != 'EDGE':
         return False
     ob = bpy.data.objects.get(hit[0])
