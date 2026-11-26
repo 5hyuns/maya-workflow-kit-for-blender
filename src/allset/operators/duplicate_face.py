@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Edit Mesh > Duplicate (Maya's Duplicate Face, a polyChipOff node with Duplicate on).
 
-Like Maya: the selected faces are copied in place and the copies are selected. Keep Faces Together (on, like Maya's
-default) keeps copied faces that share a vertex joined at one copied vertex; off: each face is a piece of its own.
+Like Maya: the selected faces are copied in place and the copies are selected. Keep Faces Together (on by default,
+like Maya) keeps copied faces that share a vertex joined at one copied vertex; off: each face is a piece of its own.
 Offset moves every edge of each copy inward in the face's plane (negative: outward). The node's
 manipulator, In-View Editor and Channel Box INPUTS (operators/extrude_record.py records, the extrude manipulator)
 then move the copies: Local Translate / Local Rotate / Local Scale act on each copy in its own frame (Z = its
