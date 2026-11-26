@@ -3,11 +3,17 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.25.0] — 2026-11-27
+
+**UV Unfold, Delete and Duplicate Face work the way Maya does; joints can be hidden, shown and picked in the
+Hypergraph.** UV Editor fixes and a Symmetrize brush, startup cameras that follow their views, and many fixes from
+your reports.
 
 ### Added
-- **Hotkey Editor Save and Save and Close** (#559): buttons at the bottom of the Hotkey Editor, like Maya's; they
-  save the hotkeys at once (Blender's Save Preferences), Save and Close also closes the window.
+- **UV Editor: Symmetrize brush tool** (Tools > Symmetrize, Modify > Symmetrize, the UV Toolkit and the Shift+right-click
+  marking menu): the first click picks an edge on the mesh's symmetry line; then each click or drag gives the UVs under
+  the brush, on its side of the Mirror Axis Position line, their counterpart's UV mirrored across that line. Settings:
+  Brush size, Mirror Axis U / V, Mirror Axis Position, Flood Shells.
 - **Extrude manipulator world / local switch and rotate ring** (#560): the face extrusion manipulator has the
   light-blue ring and the world / local switch, like Maya's. The ring turns the extruded faces (Local Rotate; a press
   shows the three rotate rings); on world axes the handles move, turn and scale them along the world axes
@@ -18,28 +24,55 @@ All notable changes to Maya Workflow Kit (earlier versions were called Allset fo
   the Outliner. Clicking or boxing joint nodes picks those joints; a middle-mouse drag onto a joint parents there.
 - **UV Editor: B for soft select** (#571): tap B to turn soft select on or off, hold B and drag with the left or
   middle mouse button to set the falloff radius, as in the 3D View.
+- **Multi-Cut: Shift keeps the slice angle in 10 degree steps** (#574): while Shift is held during a slice drag, the
+  line's angle on screen goes to the nearest 10 degrees, keeping its length. The tool shows the knife pointer.
+- **Hotkey Editor: Save** (#559): Blender's Save Preferences button at the bottom of the Hotkey Editor saves the
+  hotkeys at once (the kit itself never saves the preferences); Close stays.
 
 ### Fixed
 - **UV Toolkit Unfold Along U / V** (#557): one click unfolds all the way along the axis (a second click changes
   nothing); the length along U (V) follows the scale V (U) already has, so a squashed strip gets its full width at
-  once. With part of a shell selected, only the selected UVs move and the rest of the shell holds them, like Maya.
+  once. A bent quad unfolds as the two triangles on its shorter diagonal, so curved shells get the same width as in
+  Maya. With part of a shell selected, only the selected UVs move and the rest of the shell holds them.
 - **UV Editor > Modify > Unfold on part of a shell** (#558): only the selected UVs move (selected faces: their
   corner UVs; an edge: the UVs at its ends; a vertex: its UV); the rest of the shell stays where it is, like Maya.
   Pins set before are kept.
-- **Edit Mesh > Duplicate option box** (#562): opens the Duplicate Face Options window from every menu (the main
-  menu bar too). The window's Duplicate keeps its values (Separate duplicated faces, Offset) and a plain click of the
-  menu item uses them, so with Separate duplicated faces off the copies stay in the mesh, like Maya.
+- **Edit Mesh > Duplicate** (#562): the option box opens the Duplicate Face Options window from every menu (the main
+  menu bar too), and a plain click of the menu item uses its values, so with Separate duplicated faces off the copies
+  stay in the mesh. Copied faces that share a vertex stay joined (Keep Faces Together); Offset insets only the outer
+  border of side-by-side faces, and Local Scale applies before Offset.
 - **UV Editor vertex and edge picks on shell borders** (#556): with the Vertex and Edge components (UV Sync
   Selection on) a picked vertex or edge is drawn as selected on every UV shell that has it, so what the UV Editor
   shows as selected is what UV commands (Align, Unfold, ...) move, like Maya. A picked face still shows only its
   own UVs.
+- **UV Editor borders during a drag** (#571): shell and texture borders stay drawn while UVs are dragged and follow
+  them, instead of flickering.
 - **Ctrl+right-click quick flicks** (#561): a quick flick converts the selection however short it is: left = To
   Vertices, up = To Edges, right = To UVs, down = To Faces. Any quick mark that ends on a radial submenu item runs
   that submenu's item in the same direction.
 - **Delete key on edges and vertices** (#565): Delete / Backspace removes the selected edges and keeps their
   vertices (the faces on both sides merge), and removes only the selected vertices that have two edges (others stay),
-  like Maya. Edit Mesh > Delete Edge/Vertex (Ctrl+Delete) is still the one that also cleans up the vertices left
-  with two edges and deletes vertices with their edges. The selection is cleared even when nothing could go.
+  like Maya. The selection is cleared even when nothing could go.
+- **Edit Mesh > Delete Edge/Vertex** (#569): on edges it cleans up only the end vertices left with two edges, one
+  edge at a time, so two parallel edges of one face keep both side faces; Ctrl+Delete / Ctrl+Backspace do the same.
+- **Hide / Show on joints** (#568): in Pose mode and skeleton Edit mode, H, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H and
+  Display > Hide / Show act on the selected joints; a hidden joint hides the joints below it, and Show All, Show Last
+  Hidden and Show > Joints bring hidden joints back.
+- **Startup cameras and their views** (#564): the Near / Far Clip Plane of persp, top, front and side and persp's
+  Focal Length show in their views; editing persp's translate or rotate moves the perspective view, top / front /
+  side's Orthographic Width and translate zoom and pan theirs, and moving a view moves its camera. Like Maya, camera
+  moves from the view are not undoable while attribute edits are.
+- **Smart Duplicate** (#570): a copy whose drag is cancelled with right-click is always taken back.
+- **Multi-Component mode** (#572): the pre-selection highlight shows the vertex, edge or face under the mouse (it
+  showed vertices only).
+- **Wedge in Multi-Component mode** (#546): the picked edge is the hinge in either pick order, and Shift+click on an
+  edge of a selected face picks that edge instead of dropping the face.
+- **Time Slider: Delete / Backspace** (#573): over the Time Slider they delete the selection, as in the viewport,
+  instead of every key of the selected object.
+- **Opening a file starts on the Select tool** (#576): File > Open puts the 3D View on the Select tool, like Maya,
+  instead of the tool the file was saved with.
+- **Script joints:** `cmds.joint(p=...)` keeps the parent joint's axes (the world's for a root joint), so its rings and
+  local axes draw like Maya's.
 
 ## [0.24.0] — 2026-11-25
 
