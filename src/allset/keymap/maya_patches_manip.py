@@ -39,6 +39,9 @@ def patch_soft_select(kd):
         kd.remove(km, "wm.context_toggle", type="B")                     # IC:2517, IC:3066
     _add(kd, "3D View", "allset.tap_hold", make_event("B"), {"binding": "soft_select"},
          shadows=_PAINT_MODES)
+    # UV Editor too (#571): the same tap / hold + drag on the same soft select state
+    kd.remove("UV Editor", "wm.context_toggle", type="B")
+    _add(kd, "UV Editor", "allset.tap_hold", make_event("B"), {"binding": "soft_select"})
 
 
 # --- 7. A tap / hold, D hold pivot, Insert pivot toggle ---------------------
