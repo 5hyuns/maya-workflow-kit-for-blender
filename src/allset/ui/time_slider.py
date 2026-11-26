@@ -48,8 +48,8 @@ from .time_slider_header import (ALLSET_MT_anim_preferences, ALLSET_PT_time_slid
 from .time_slider_mouse import (ALLSET_OT_time_scrub, ALLSET_OT_time_range_all, ALLSET_OT_time_range_drag,  # noqa: F401
                                 RANGE_EDGE_PX, range_rect, set_range)
 from .time_slider_menu import (ALLSET_MT_time_slider, ALLSET_MT_time_slider_looping,  # noqa: F401
-                               ALLSET_MT_time_slider_tangents, ALLSET_OT_time_slider_menu,
-                               ALLSET_OT_time_slider_unavailable, TIME_SLIDER_MENUS)
+                               ALLSET_MT_time_slider_tangents, ALLSET_OT_time_slider_delete,
+                               ALLSET_OT_time_slider_menu, ALLSET_OT_time_slider_unavailable, TIME_SLIDER_MENUS)
 from . import time_slider_bookmarks
 from .time_slider_ruler import (MAYA_RULER_H, ROWS, ROWS_BOOKMARKS, RULER_BG, RULER_CURRENT,  # noqa: F401
                                 RULER_FONT_SIZE, RULER_LABEL, STEP_DEVIATIONS, STEP_MATCHES, TICK_HALF_PAD, _TRIS,
@@ -540,7 +540,8 @@ def _on_load(_dummy=None):
 
 
 classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scrub, ALLSET_OT_time_range_all,
-           ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu, ALLSET_OT_time_view_lock,
+           ALLSET_OT_time_range_drag, ALLSET_OT_time_slider_menu, ALLSET_OT_time_slider_delete,
+           ALLSET_OT_time_view_lock,
            ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS, *time_slider_bookmarks.classes)
 
 

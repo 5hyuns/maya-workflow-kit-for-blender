@@ -222,11 +222,13 @@ def test_keymap_patches():
     data = maya_patches.apply(ic_data.generate())
     kd = patch.KeyconfigData(data)
     dope = kd.items("Dopesheet")
-    first = [(it[0], patch.event_key(it[1])) for it in dope[:6]]
+    first = [(it[0], patch.event_key(it[1])) for it in dope[:8]]
     # the range drag (passes through off the range) and the double-click (whole visible range, #335) sit in front
-    # of time_scrub
+    # of time_scrub; Delete / Backspace over the Time Slider delete the selection (not the Timeline's keys)
     assert {f[0] for f in first} == {"allset.time_range_drag", "allset.time_range_all", "allset.time_scrub",
-                                     "allset.time_slider_menu"}, first
+                                     "allset.time_slider_menu", "allset.time_slider_delete"}, first
+    for key in ("DEL", "BACK_SPACE"):
+        assert kd.find("Dopesheet", "allset.time_slider_delete", type=key)
     assert kd.find("Dopesheet", "allset.time_scrub", type="LEFTMOUSE", shift=True)
     assert kd.find("Dopesheet", "allset.time_scrub", type="MIDDLEMOUSE")
     assert not kd.find("Dopesheet", "action.select_column", type="K")

@@ -63,6 +63,10 @@ def patch_time_slider(kd):
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "allset.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)
+    # Delete / Backspace over the Time Slider delete the selection as in the viewport (Maya); Blender's would delete
+    # every key the Timeline shows
+    for key in ("DEL", "BACK_SPACE"):
+        _add(kd, "Dopesheet", "allset.time_slider_delete", make_event(key), first=True, shadows=TIME_SLIDER_SHADOWS)
     # Maya's Time Slider never zooms or scrolls (the Range Slider sets what it shows): View2D's wheel, trackpad,
     # Ctrl+MMB and numpad +/- zoom / scroll are swallowed in the Timeline, passed through elsewhere. Over the
     # Timeline these events reach the region's "View2D" keymap before "Dopesheet" (#292), so the items sit first

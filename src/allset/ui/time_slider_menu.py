@@ -34,6 +34,54 @@ class ALLSET_OT_time_slider_menu(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# the 3D View keymap whose Delete runs for each edit mode
+_MODE_KEYMAP = {"OBJECT": "Object Mode", "EDIT_MESH": "Mesh", "EDIT_CURVE": "Curve", "EDIT_CURVES": "Curves",
+                "EDIT_SURFACE": "Curve", "EDIT_ARMATURE": "Armature", "POSE": "Pose", "EDIT_LATTICE": "Lattice",
+                "EDIT_METABALL": "Metaball", "EDIT_GREASE_PENCIL": "Grease Pencil Edit Mode"}
+
+
+def _view_delete(context, key):
+    """(operator idname, properties) of the Delete the 3D View runs for ``key`` in the current mode, or None."""
+    kc = context.window_manager.keyconfigs.user
+    km = kc.keymaps.get(_MODE_KEYMAP.get(context.mode, "")) if kc else None
+    if km is None:
+        return None
+    for kmi in km.keymap_items:
+        if (kmi.active and kmi.type == key and kmi.value == 'PRESS' and not kmi.any
+                and not (kmi.shift or kmi.ctrl or kmi.alt or kmi.oskey)):
+            props = kmi.properties
+            kw = {p: getattr(props, p) for p in props.bl_rna.properties.keys()
+                  if p != "rna_type" and props.is_property_set(p)} if props else {}
+            return kmi.idname, kw
+    return None
+
+
+class ALLSET_OT_time_slider_delete(bpy.types.Operator):
+    """Delete over the Time Slider deletes what is selected, as in the viewport (Maya); the keys of a highlighted
+    range are deleted from the Time Slider menu"""
+    bl_idname = "allset.time_slider_delete"
+    bl_label = "Delete"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def invoke(self, context, event):
+        if not _is_timeline(context):
+            return {'PASS_THROUGH'}
+        found = _view_delete(context, event.type)
+        areas = [a for a in context.window.screen.areas if a.type == 'VIEW_3D']
+        if found is None or not areas:
+            return {'CANCELLED'}
+        area = max(areas, key=lambda a: a.width * a.height)
+        region = next(r for r in area.regions if r.type == 'WINDOW')
+        idname, kw = found
+        mod, name = idname.split(".", 1)
+        op = getattr(getattr(bpy.ops, mod), name)
+        with context.temp_override(area=area, region=region, space_data=area.spaces.active):
+            if not op.poll():
+                return {'CANCELLED'}
+            result = op('EXEC_DEFAULT', **kw)
+        return {'FINISHED'} if 'FINISHED' in result else {'CANCELLED'}
+
+
 class ALLSET_OT_time_slider_unavailable(bpy.types.Operator):
     """Time Slider item with no Blender equivalent (greyed)"""
     bl_idname = "allset.time_slider_unavailable"
