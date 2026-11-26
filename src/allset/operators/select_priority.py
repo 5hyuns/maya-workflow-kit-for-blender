@@ -284,8 +284,11 @@ def face_edge_pick(context, region, event):
     mode = tuple(context.tool_settings.mesh_select_mode)
     if mode not in {(False, True, False), (True, True, True)} or context.region_data is None:
         return False
+    from . import multi_cut, preselect
+    tool = preselect.tool_id(context)
+    if tool not in {"builtin.select", "builtin.select_box", "builtin.select_circle", "builtin.select_lasso"}             and tool not in preselect.TRANSFORM_TOOLS:
+        return False        # another tool's own Shift+click (Quad Draw) keeps it
     import bmesh
-    from . import multi_cut
     hit = multi_cut.pick(context, region, context.region_data, (event.mouse_region_x, event.mouse_region_y),
                          edges_only=not mode[0])
     if hit is None or hit[1][0] != 'EDGE':
