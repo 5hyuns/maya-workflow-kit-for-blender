@@ -1430,6 +1430,7 @@ STRINGS = {
     'Delete edge': '刪除邊',
     'Delete edge (maintain 4-sided polygons)': '刪除邊 (保持四邊形)',
     'Delete faces / Hide': '刪除面 / 隱藏',
+    'Delete over the Time Slider deletes what is selected, as in the viewport (Maya); the keys of a highlighted\nrange are deleted from the Time Slider menu': '在時間滑塊上按 Delete 會像在視口中一樣刪除所選內容 (Maya)；高亮範圍的\n關鍵影格請從時間滑塊選單刪除',
     'Delete selected Muscle Objects': '刪除選定的肌肉對象',
     'Delete targets': '刪除目標',
     'Delta': '增量',

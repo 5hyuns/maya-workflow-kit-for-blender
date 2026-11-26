@@ -12,7 +12,8 @@ points and cuts on completion:
 - Ctrl+click on an edge = an edge loop through the ring at that point (``allset.multicut_loop``, so its
   Position is in Adjust Last Operation; Ctrl+Shift = at the Snap Step, Ctrl+MMB = in the middle); Ctrl hover
   previews the loop;
-- a drag that starts on a face / empty space = slice along the dragged line (Slice Tool options), and with
+- a drag that starts on a face / empty space = slice along the dragged line (Shift: its angle in 10 degree steps;
+  Slice Tool options), and with
   Slice Along Plane YZ / ZX / XY on, a click slices along that world plane;
 - with symmetry on (Object / World / Topology), cuts, loops and slices are made on both sides, and the preview shows
   the mirrored side too (``multi_cut_mirror``).
@@ -516,6 +517,23 @@ def pick(context, region, rv3d, mouse, only=None, edges_only=False):
     return None
 
 
+SLICE_ANGLE_STEP = 10.0   # degrees: the screen angle steps of a slice dragged with Shift
+
+
+def slice_end(start, end, shift):
+    """The end of a slice line dragged from ``start`` to ``end`` (region pixels): with Shift its angle on screen is
+    rounded to the nearest ``SLICE_ANGLE_STEP`` degrees, keeping its length."""
+    if not shift:
+        return end
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dx, dy)
+    if length < 1e-9:
+        return end
+    step = math.radians(SLICE_ANGLE_STEP)
+    angle = math.floor(math.atan2(dy, dx) / step + 0.5) * step
+    return (start[0] + length * math.cos(angle), start[1] + length * math.sin(angle))
+
+
 def snapped(point, step, shift):
     """An edge point snapped to the Snap Step % while Shift is held."""
     if shift and point is not None and point[0] == 'EDGE':
@@ -957,7 +975,8 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
             if moving and math.hypot(mouse[0] - self._press[0], mouse[1] - self._press[1]) > SLICE_PX * _ui_scale(
                     context) and not STATE["points"]:
                 self._state = 'SLICE'
-                STATE["slice"] = (self._press, mouse)
+                self._slice_mouse = mouse
+                STATE["slice"] = (self._press, slice_end(self._press, mouse, event.shift))
                 _redraw(context)
             elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
                 if self._face_hit is not None:
@@ -970,10 +989,14 @@ class ALLSET_OT_multi_cut(bpy.types.Operator):
 
         if state == 'SLICE':
             if moving:
-                STATE["slice"] = (self._press, mouse)
+                self._slice_mouse = mouse
+            shift_key = event.type in {'LEFT_SHIFT', 'RIGHT_SHIFT'}
+            if moving or shift_key:
+                shift = event.value == 'PRESS' if shift_key else event.shift
+                STATE["slice"] = (self._press, slice_end(self._press, self._slice_mouse, shift))
                 _redraw(context)
             elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
-                plane = self._slice_plane(context, self._press, mouse)
+                plane = self._slice_plane(context, self._press, slice_end(self._press, mouse, event.shift))
                 n = 0
                 if plane is not None:
                     _ob, co, no = plane

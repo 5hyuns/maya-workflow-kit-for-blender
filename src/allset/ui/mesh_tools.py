@@ -139,6 +139,7 @@ class ALLSET_TL_multi_cut(bpy.types.WorkSpaceTool):
                       "Ctrl+click = edge loop, Shift = Snap Step %, Backspace = remove the last point, "
                       "drag across faces = slice (Maya Multi-Cut)")
     bl_icon = "ops.mesh.knife_tool"
+    bl_cursor = 'KNIFE'                 # a knife pointer over the view, like Maya's Multi-Cut
     bl_widget = None
     bl_keymap = (
         # loops first: one undo step each and Adjust Last Operation Position (the kit's multicut operator); they pass

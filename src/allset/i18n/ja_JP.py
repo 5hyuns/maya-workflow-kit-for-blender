@@ -1430,6 +1430,7 @@ STRINGS = {
     'Delete edge': 'エッジを削除',
     'Delete edge (maintain 4-sided polygons)': 'エッジを削除 (4 辺ポリゴンを維持)',
     'Delete faces / Hide': 'フェースを削除 / 隠す',
+    'Delete over the Time Slider deletes what is selected, as in the viewport (Maya); the keys of a highlighted\nrange are deleted from the Time Slider menu': 'タイムスライダ上の Delete はビューポートと同じく選択したものを削除します (Maya)。ハイライトした範囲の\nキーはタイムスライダメニューから削除します',
     'Delete selected Muscle Objects': '選択したマッスルオブジェクトを削除',
     'Delete targets': 'ターゲットを削除',
     'Delta': 'デルタ',

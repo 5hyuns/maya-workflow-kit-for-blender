@@ -10019,6 +10019,7 @@
    "View": "View"
   },
   "Labels/ui/time_slider_menu": {
+   "Delete": "Delete",
    "Keys": "Keys",
    "Not Available": "Not Available",
    "Paste": "Paste",
@@ -13485,6 +13486,7 @@
    "Current time field and transport buttons at the right of Maya's Time Slider.": "Current time field and transport buttons at the right of Maya's Time Slider."
   },
   "Tooltips/ui/time_slider_menu": {
+   "Delete over the Time Slider deletes what is selected, as in the viewport (Maya); the keys of a highlighted\nrange are deleted from the Time Slider menu": "Delete over the Time Slider deletes what is selected, as in the viewport (Maya); the keys of a highlighted\nrange are deleted from the Time Slider menu",
    "Maya Time Slider menu (RMB on the Time Slider)": "Maya Time Slider menu (RMB on the Time Slider)",
    "Maya Time Slider menu, in Maya's order": "Maya Time Slider menu, in Maya's order",
    "Time Slider item with no Blender equivalent (greyed)": "Time Slider item with no Blender equivalent (greyed)"
