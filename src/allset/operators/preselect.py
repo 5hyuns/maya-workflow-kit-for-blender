@@ -485,7 +485,8 @@ def pick(context, region, rv3d, mouse):
     if not cs or _handles_block(context, region, rv3d, mouse, cs) or _extrude_block(context, region, rv3d, mouse):
         return None
     ts = context.tool_settings
-    multi = pivot_picking(context)
+    # Multi-Component mode (F7, all three select modes) and pivot editing: the vertex, edge or face under the mouse
+    multi = pivot_picking(context) or tuple(ts.mesh_select_mode) == (True, True, True)
     vmode, emode, fmode = (True, True, True) if multi else tuple(ts.mesh_select_mode)
     xray = _xray(context.space_data)
     scale = context.preferences.system.ui_scale or 1.0
