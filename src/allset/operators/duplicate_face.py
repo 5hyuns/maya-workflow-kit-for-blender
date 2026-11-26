@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Edit Mesh > Duplicate (Maya's Duplicate Face, a polyChipOff node with Duplicate on).
 
-Like Maya: each selected face is copied in place as a piece of its own (Keep Faces Together off) and the copies are
-selected. Offset moves every edge of each copy inward in the face's plane (negative: outward). The node's
+Like Maya: the selected faces are copied in place and the copies are selected. Keep Faces Together (on, like Maya's
+default) keeps copied faces that share a vertex joined at one copied vertex; off: each face is a piece of its own.
+Offset moves every edge of each copy inward in the face's plane (negative: outward). The node's
 manipulator, In-View Editor and Channel Box INPUTS (operators/extrude_record.py records, the extrude manipulator)
 then move the copies: Local Translate / Local Rotate / Local Scale act on each copy in its own frame (Z = its
 normal, X = world X projected into it) about its own centre, Translate / Rotate / Scale act in world space about
-the centre of the selected faces' bounding box. Order: offset, local scale, local rotate, local translate, then
-world scale, rotate and translate.
+the centre of the selected faces' bounding box. Order: local scale, offset, local rotate, local translate, then
+world scale, rotate and translate. A vertex the joined copies share takes the mean of where each of its faces puts it.
 
 Duplicate Options: Separate duplicated faces (on by default, like Maya) splits the mesh into one object per piece
 afterwards (Mesh > Separate: the pieces become ``polySurfaceN`` under a group with the mesh's name); the copies are
@@ -47,7 +48,8 @@ def _inset(points, normal, amount):
     return out
 
 
-def duplicate(bm, params, unit=1.0, matrix=None, direction=extrude.WORLD_X, fallback=extrude.MAYA_Z):
+def duplicate(bm, params, unit=1.0, matrix=None, direction=extrude.WORLD_X, fallback=extrude.MAYA_Z,
+              keep_faces_together=True):
     """Copy the selected faces of ``bm`` as separate pieces, select the copies and place them by ``params`` (lengths
     in Maya units, ``unit`` = mesh length of one; ``matrix`` = the object's world matrix; ``direction`` /
     ``fallback`` = world X / Maya Z in mesh space). Returns the copies' vertices."""
@@ -62,8 +64,12 @@ def duplicate(bm, params, unit=1.0, matrix=None, direction=extrude.WORLD_X, fall
     hi = Vector(tuple(max(p[i] for p in world) for i in range(3)))
     pivot_w = (lo + hi) / 2
     copies = []
+    shared = {}
     for f in faces:
-        verts = [bm.verts.new(v.co, v) for v in f.verts]
+        if keep_faces_together:
+            verts = [shared.get(v) or shared.setdefault(v, bm.verts.new(v.co, v)) for v in f.verts]
+        else:
+            verts = [bm.verts.new(v.co, v) for v in f.verts]
         nf = bm.faces.new(verts, f)
         for old, new in zip(f.loops, nf.loops):
             new.copy_from(old)
@@ -82,21 +88,27 @@ def duplicate(bm, params, unit=1.0, matrix=None, direction=extrude.WORLD_X, fall
     shift = Vector([g(f"translate_{a}") for a in AXES]) * unit
     lt = Vector([g(f) for f in move_component.LOCAL_T]) * unit
     offset = g("offset") * unit
-    moved = []
+    placed = {}                 # copied vertex -> its place from each of its faces
     for nf in copies:
         normal = nf.normal.copy()
         x, y = extrude.face_axes(normal, direction, fallback)
         frame = Matrix((x, y, normal)).transposed()      # local -> mesh (columns X, Y, Z)
-        local_rs = frame @ local_r @ local_s @ frame.transposed()
+        rot = frame @ local_r @ frame.transposed()
         points = [v.co.copy() for v in nf.verts]
+        centre = sum(points, Vector()) / len(points)
+        scale = frame @ local_s @ frame.transposed()
+        points = [centre + scale @ (p - centre) for p in points]
         if offset:
             points = _inset(points, normal, offset)
         centre = sum(points, Vector()) / len(points)
         move = x * lt.x + y * lt.y + normal * lt.z
         for v, p in zip(nf.verts, points):
-            p = centre + local_rs @ (p - centre) + move
-            v.co = inv @ (pivot_w + world_rs @ (mw @ p - pivot_w) + shift)
-            moved.append(v)
+            placed.setdefault(v, []).append(centre + rot @ (p - centre) + move)
+    moved = []
+    for v, ps in placed.items():
+        p = sum(ps, Vector()) / len(ps)
+        v.co = inv @ (pivot_w + world_rs @ (mw @ p - pivot_w) + shift)
+        moved.append(v)
     bm.normal_update()
     return moved
 
