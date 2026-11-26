@@ -296,7 +296,8 @@ def s_reopened():
 
 @step
 def s_msj_reenter():
-    with ov():
+    with ov():      # an opened file starts on the Select tool: W first, for the Move handle
+        bpy.ops.wm.tool_set_by_id(name='builtin.move')
         bpy.ops.allset.menu_item(item="Skin/Move Skinned Joints")
     check("Move Skinned Joints re-enters Edit Mode", bpy.context.mode == 'EDIT_ARMATURE')
     area, _ = main_view()
