@@ -224,6 +224,15 @@ class ALLSET_OT_uv_straighten_uvs(bpy.types.Operator):
 
 # --- Unfold Along U / V ---------------------------------------------------------------------------------------
 
+def _quad_split(loops):
+    """A quad's two triangles, split along its shorter 3D diagonal (a bent quad unfolds as the two flat halves that
+    hug it most closely); equal diagonals keep the 0-2 split."""
+    a, b, c, d = loops
+    if (b.vert.co - d.vert.co).length < (a.vert.co - c.vert.co).length * (1.0 - 1e-9):
+        return ((a, b, d), (b, c, d))
+    return ((a, b, c), (a, c, d))
+
+
 def unfold_along(bm, uv, island, axis, where, moving=None, tris=None):
     """Unfold one shell along ``axis`` only: the other coordinate of every UV stays; the UVs in ``moving`` (all of
     the shell when None) move and the rest of the shell holds them in place, like Maya moves only the selected UVs.
@@ -238,7 +247,11 @@ def unfold_along(bm, uv, island, axis, where, moving=None, tris=None):
         return False
     local = {i: n for n, i in enumerate(ids)}
     faces = set(island)
-    T = [[local[where[l]] for l in tri] for tri in (tris or bm.calc_loop_triangles()) if tri[0].face in faces]
+    T = [[local[where[l]] for l in tri] for tri in (tris or bm.calc_loop_triangles())
+         if tri[0].face in faces and len(tri[0].face.loops) != 4]
+    for f in island:
+        if len(f.loops) == 4:
+            T += [[local[where[l]] for l in tri] for tri in _quad_split(f.loops)]
     P = [tuple(first[i].vert.co) for i in ids]
     U = [tuple(first[i][uv].uv) for i in ids]
     free = [moving is None or i in moving for i in ids]

@@ -147,3 +147,77 @@ def test_part_of_a_shell_moves_only_its_uvs():
         else:
             want = 4.0 / 6.0 - 0.3 * (4 - row)
             assert abs(v - want) < 1e-4, (i, row, v, want)
+
+
+def _mesh(name, verts, faces, uvs):
+    """A mesh from ``verts`` / ``faces`` with the UV ``uvs[v]`` on every corner of vertex v, all faces selected."""
+    _clear()
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.uv_layers.new(name="map1")
+    for lp in me.loops:
+        me.uv_layers.active.data[lp.index].uv = uvs[lp.vertex_index]
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    ob.select_set(True)
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT')
+    _select_faces(ob)
+    return ob
+
+
+def test_bent_quad_unfolds_as_its_two_closest_flat_halves():
+    # a quad with one corner lifted is not flat: it unfolds like the two triangles on its shorter diagonal
+    uvs = [(0.0, 0.0), (0.3, 0.0), (0.3, 0.5), (0.0, 0.5)]
+    split13, split02 = [(0, 1, 3), (1, 2, 3)], [(0, 1, 2), (0, 2, 3)]
+    for verts, tris, other in (([(0, 0, 0), (1, 0, 0), (1, 1, 0.6), (0, 1, 0)], split13, split02),
+                               ([(0, 0, 0), (2, 0, 0), (1.2, 1, 0.3), (0.2, 1, 0)], split02, split13)):
+        got = {}
+        for name, faces in (("quad", [(0, 1, 2, 3)]), ("halves", tris)):
+            ob = _mesh(name, verts, faces, uvs)
+            assert bpy.ops.allset.uv_unfold_along(axis='U') == {'FINISHED'}
+            got[name] = _uvs(ob)
+        assert _close(got["quad"], got["halves"], 1e-5), got
+        # the other diagonal gives a clearly different result, so the split matters here
+        ob = _mesh("other", verts, other, uvs)
+        assert bpy.ops.allset.uv_unfold_along(axis='U') == {'FINISHED'}
+        assert not _close(_uvs(ob), got["quad"], 1e-3), (_uvs(ob), got["quad"])
+
+
+def _best_u(verts, tris, uvs):
+    """U that makes each triangle's U slope the quarter-turned V slope as nearly as possible, every triangle counted
+    by its 3D area, with the mean U kept (an independent least-squares solve)."""
+    import numpy as np
+    P = np.array(verts, float)
+    v = np.array([p[1] for p in uvs])
+    rows, rhs = [], []
+    for t in tris:
+        a, b, c = P[list(t)]
+        e1, e2 = b - a, c - a
+        x1 = np.linalg.norm(e1)
+        ex = e1 / x1
+        x2x = e2 @ ex
+        x2y = np.linalg.norm(e2 - x2x * ex)
+        G = np.array([[-1 / x1, 1 / x1, 0], [(x2x / x1 - 1) / x2y, -x2x / x1 / x2y, 1 / x2y]])
+        gv = G @ v[list(t)]
+        w = math.sqrt(0.5 * x1 * x2y)
+        for k, target in ((0, gv[1]), (1, -gv[0])):
+            row = np.zeros(len(P))
+            row[list(t)] = G[k] * w
+            rows.append(row)
+            rhs.append(target * w)
+    rows.append(np.ones(len(P)) * 1e3)
+    rhs.append(sum(p[0] for p in uvs) * 1e3)
+    return np.linalg.lstsq(np.array(rows), np.array(rhs), rcond=None)[0]
+
+
+def test_every_triangle_counts_by_its_area():
+    # a bent quad whose halves (one with a right angle) cannot both be undistorted: the result is the exact
+    # area-weighted best fit
+    verts = [(0, 0, 0), (1, 0, 0), (1, 1, 0.6), (0, 1, 0)]
+    uvs = [(0.0, 0.0), (0.3, 0.0), (0.3, 0.5), (0.0, 0.5)]
+    ob = _mesh("bent", verts, [(0, 1, 2, 3)], uvs)
+    assert bpy.ops.allset.uv_unfold_along(axis='U') == {'FINISHED'}
+    got = _uvs(ob)
+    want = _best_u(verts, [(0, 1, 3), (1, 2, 3)], uvs)
+    assert max(abs(got[i][0] - want[i]) for i in range(4)) < 1e-5, (got, want)

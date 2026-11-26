@@ -62,14 +62,17 @@ _EI = np.array([1, 2, 0])
 _EJ = np.array([2, 0, 1])
 
 
-def _cotangents(x):
-    """(m, 3) cotangent of each corner's angle (the weight of the opposite edge)."""
+def _cotangents(x, exact=False):
+    """(m, 3) cotangent of each corner's angle (the weight of the opposite edge). Kept positive unless ``exact``:
+    then right and obtuse corners keep their zero / negative weight, so every triangle counts by its area."""
     out = np.empty(x.shape[:2])
     for k in range(3):
         u = x[:, _EI[k]] - x[:, k]
         v = x[:, _EJ[k]] - x[:, k]
         cross = np.abs(u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0])
         out[:, k] = np.einsum("ij,ij->i", u, v) / np.maximum(cross, 1e-18)
+    if exact:
+        return np.clip(out / 2, -_WEIGHT_MAX, _WEIGHT_MAX)
     return np.clip(out / 2, _WEIGHT_MIN, _WEIGHT_MAX)
 
 
@@ -356,7 +359,7 @@ def unfold_along(P, U, T, k, free):
     # the moving coordinate's gradient: the fixed one turned a quarter (U from V: clockwise, V from U: counter)
     tx, ty = (gy, -gx) if k == 0 else (-gy, gx)
     tx, ty = tx * sign, ty * sign
-    w = _cotangents(x)
+    w = _cotangents(x, exact=True)
     n = len(U)
     B = np.zeros((n, 2))
     for e in range(3):
