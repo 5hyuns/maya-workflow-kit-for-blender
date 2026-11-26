@@ -106,8 +106,13 @@ def test_no_automatic_preference_save():
                     for line in fh:
                         if "save_userpref" in line and not line.lstrip().startswith("#"):
                             hits.append((os.path.relpath(path, SRC).replace(os.sep, "/"), line.strip()))
-    # Maya's File > Save Preferences menu item is the user's own action
-    assert hits == [("ui/menu_map.py", '"File/Save Preferences": "wm.save_userpref",')], hits
+    # Only the user's own clicks save: Maya's File > Save Preferences menu item and the Hotkey Editor's Save button
+    # (drawn as Blender's own operator, never run by the kit)
+    assert sorted(hits) == [
+        ("ui/hotkey_editor.py", 'SAVE_PREFS = "wm.save_userpref"'),
+        ("ui/menu_map.py", '"File/Save Preferences": "wm.save_userpref",'),
+    ], hits
+    assert "bpy.ops.wm.save_userpref" not in open(os.path.join(SRC, "ui", "hotkey_editor.py"), encoding="utf-8").read()
 
 
 def test_keymap_never_changes_the_active_keyconfig():
