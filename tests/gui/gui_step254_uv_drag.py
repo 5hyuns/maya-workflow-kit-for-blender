@@ -5,7 +5,8 @@ UV modal runs (operators/uv_arrays.editing_now) and read it with numpy otherwise
 
 The session: Maya layout, kit sphere in edit mode, Windows > Workspaces > UV Editing, face clicks, W-drags of faces,
 UV Shell mode + shell drags on the manipulator (a drag off it draws a marquee, like Maya), Ctrl+Z. A crash ends the
-run without results (the runner reports it). Checked: the UVs moved, the HUD and borders come back after each drag."""
+run without results (the runner reports it). Checked: the UVs moved, the borders stay drawn and follow each drag (#571),
+the HUD and borders come back after each drag."""
 
 import os
 import sys
@@ -125,9 +126,35 @@ def drag(tag, start, dx, dy, n=8):
     for k in range(n):
         add(lambda k=k: uev('MOUSEMOVE', 'NOTHING', box["p"][0] + dx * (k + 1) / n, box["p"][1] + dy * (k + 1) / n),
             f"{tag}_move{k}")
+        if k == 1:      # the drag has started: the borders as drawn now
+            add(lambda: box.update(border=drag_border()), f"{tag}_border0")
+    add(lambda: check_drag_border(tag, box["border"]), f"{tag}_border")
     add(lambda: uev('LEFTMOUSE', 'RELEASE'), f"{tag}_release")
     add(lambda: None, f"{tag}_settle")
     add(lambda: check(f"{tag}: the UVs moved, Blender alive", abs(uv_sum() - box["sum"]) > 1e-4), f"{tag}_check")
+
+
+def drag_border():
+    """The border points the UV Editor draws while a drag runs (None when no drag runs)."""
+    uva = import_module(MODULE + ".operators.uv_arrays")
+    disp = import_module(MODULE + ".ui.uv_display")
+    wm = bpy.context.window_manager
+    if not uva.editing_now(wm) or not disp._only_follow_modals(wm):
+        return None
+    synced = bpy.context.scene.tool_settings.use_uv_select_sync
+    got = disp._drag_segments(bpy.context.edit_object, synced)
+    return None if got is None else got[0].copy()
+
+
+def check_drag_border(tag, before):
+    """#571: the shell / texture borders stay on screen during a UV drag and follow it."""
+    now = drag_border()
+    check(f"{tag}: borders drawn during the drag and moving with it "
+          f"({None if before is None else len(before)} / {None if now is None else len(now)} points)",
+          before is not None and now is not None and len(now) == len(before) and len(now)
+          and float(abs(now - before).max()) > 1e-4)
+    if SHOTS:
+        screenshot(os.path.join(SHOTS, f"uv_drag_{tag}_during.png"))
 
 
 def selected_centre():
