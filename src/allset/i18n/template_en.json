@@ -9359,6 +9359,20 @@
    "Tool": "Tool",
    "Workbench draws no material previews: switch the render engine to EEVEE or Cycles": "Workbench draws no material previews: switch the render engine to EEVEE or Cycles"
   },
+  "Labels/ui/hypershade_swatch": {
+   "Action": "Action",
+   "Assign Material To Viewport Selection": "Assign Material To Viewport Selection",
+   "Frame Objects with Material": "Frame Objects with Material",
+   "Graph Network": "Graph Network",
+   "Help": "Help",
+   "Material": "Material",
+   "Paint Assign Shader": "Paint Assign Shader",
+   "Refresh Swatch": "Refresh Swatch",
+   "Rename": "Rename",
+   "Select Input Nodes": "Select Input Nodes",
+   "Select Objects with Material": "Select Objects with Material",
+   "Swatch Command": "Swatch Command"
+  },
   "Labels/ui/in_view": {
    "Divisions": "Divisions",
    "In-View Editor": "In-View Editor",
@@ -13392,6 +13406,10 @@
   "Tooltips/ui/hypershade_panes": {
    "A Hypershade pane: Browser, Create, Material Viewer or Property Editor (a marked Properties Tool tab)": "A Hypershade pane: Browser, Create, Material Viewer or Property Editor (a marked Properties Tool tab)",
    "Current tab": "Current tab"
+  },
+  "Tooltips/ui/hypershade_swatch": {
+   "Maya Hypershade swatch menu command": "Maya Hypershade swatch menu command",
+   "Rename the Hypershade's current material": "Rename the Hypershade's current material"
   },
   "Tooltips/ui/in_view": {
    "Drag the In-View Editor by its title to move it": "Drag the In-View Editor by its title to move it",
