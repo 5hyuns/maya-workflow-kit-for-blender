@@ -134,22 +134,34 @@ def test_uv_aspect():
         bpy.data.images.remove(img)
 
 
-def test_manipulator_reads_a_new_uv_pick():
-    """The shared arrays live on after a UV pick (no depsgraph update): the manipulator's box still follows it."""
+def test_manipulator_reads_a_new_uv_pick_on_the_selection_signal():
+    """The shared arrays live on after a UV pick (no depsgraph update): the UV Editor's selection signal (its gizmo
+    refresh, ``uv_arrays.selection_changed``) makes the manipulator's box follow the pick; redraws without it don't
+    read the UV selection again."""
     ob = _grid()
     w, area, region = _uv_area()
     with bpy.context.temp_override(window=w, area=area, region=region):
         b0 = manip.selected_uv_bounds(bpy.context)
+        reads = uv_arrays.STATS["uv_sel_reads"]
+        for _ in range(5):                              # redraws with no selection change (view moves, hovers)
+            assert manip.selected_uv_bounds(bpy.context) == b0
+        assert uv_arrays.STATS["uv_sel_reads"] == reads, "no re-read without the selection signal"
         bm = bmesh.from_edit_mesh(ob.data)
         uv = bm.loops.layers.uv.active
         far = max((l for f in bm.faces for l in f.loops), key=lambda l: l[uv].uv.x + l[uv].uv.y)
         for f in bm.faces:
             for l in f.loops:
                 l.uv_select_vert = l.vert is far.vert
+        uv_arrays.selection_changed()                   # what the UV Editor's gizmo refresh does
         b1 = manip.selected_uv_bounds(bpy.context)
+        assert uv_arrays.STATS["uv_sel_reads"] == reads + 1
     assert b0 is not None and b1 is not None
     assert abs(b1[2] - far[uv].uv.x) < 1e-6 and abs(b1[3] - far[uv].uv.y) < 1e-6, (b0, b1)
     assert b0 != b1
+
+
+def test_selection_watch_is_registered():
+    assert "bl_rna" in manip.ALLSET_GGT_uv_select_watch.__dict__   # registered
 
 
 def test_overlay_handler_registered():

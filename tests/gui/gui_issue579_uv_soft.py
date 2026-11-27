@@ -137,6 +137,28 @@ def s_soft_check():
           n > full > 0 and any(len(st.seg) for st in sts))
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_issue579_uv_soft.png"))
+    C["reads"] = mod(".operators.uv_arrays").STATS["uv_sel_reads"]
+    _area, region = uv_region()
+    C["centre"] = mod(".ui.uv_manipulator").LAST.get(region.as_pointer())
+    in_uv(lambda: bpy.ops.image.view_pan(offset=(40.0, 25.0)))
+    C["uv_area"].tag_redraw()
+
+
+@step
+def s_pan2():
+    in_uv(lambda: bpy.ops.image.view_pan(offset=(30.0, -15.0)))
+    C["uv_area"].tag_redraw()
+
+
+@step
+def s_pan_check():
+    _area, region = uv_region()
+    got = mod(".ui.uv_manipulator").LAST.get(region.as_pointer())
+    check(f"the view moved and the manipulator was drawn again ({C['centre']} -> {got})",
+          got is not None and got != C["centre"])
+    reads = mod(".operators.uv_arrays").STATS["uv_sel_reads"]
+    check(f"redraws for a view move don't read the UV selection again ({C['reads']} -> {reads})",
+          reads == C["reads"])
 
 
 run()

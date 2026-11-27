@@ -130,15 +130,22 @@ def collect(context):
     synced = context.scene.tool_settings.use_uv_select_sync
     key = (synced, tuple(o.as_pointer() for o in _edit_meshes(context)))
     now = time.monotonic()
-    if _cache["key"] == key:
-        if _cache["value"] is not None and now - _cache["at"] < REFRESH_S:
+    space = context.space_data
+    # a UV Editor with gizmos shown says when the UV selection may have changed (uv_manipulator's selection watch,
+    # #579): the numbers are worked out again only then or after a depsgraph update; elsewhere every REFRESH_S
+    watched = space is not None and space.type == 'IMAGE_EDITOR' and space.show_gizmo
+    epoch = uv_arrays.selection_epoch() if watched else None
+    if _cache["key"] == key and _cache["value"] is not None:
+        if watched and _cache.get("epoch") == epoch:
+            return _cache["value"]
+        if not watched and now - _cache["at"] < REFRESH_S:
             return _cache["value"]
     if uv_arrays.editing_now(context.window_manager):
         # a UV drag runs: keep the last numbers, never read the mesh now (crash fix, operators/uv_arrays.py)
         return _cache["last"] if _cache["key"] == key and _cache["last"] is not None else ("", "")
-    # after a depsgraph update the arrays are shared with the border drawing (uv_display); the REFRESH_S re-read
-    # reads afresh (a selection change does not always send a depsgraph update)
-    shared = _cache["value"] is None
+    # the arrays are shared with the border drawing (uv_display) until a depsgraph update; without the selection
+    # watch the REFRESH_S re-read reads afresh (a selection change does not always send a depsgraph update)
+    shared = watched or _cache["value"] is None
     tot = [0] * 6
     coords = []
     depsgraph = context.view_layer.depsgraph
@@ -147,12 +154,13 @@ def collect(context):
         uv = bm.loops.layers.uv.active
         if uv is None:
             continue
-        got = uv_arrays.statistics(uv_arrays.read(ob, bm, uv, depsgraph, cached=shared), bm, uv, synced, STACK_EPS)
+        got = uv_arrays.statistics(uv_arrays.read(ob, bm, uv, depsgraph, cached=shared), bm, uv, synced, STACK_EPS,
+                                   epoch=epoch)
         for i in range(6):
             tot[i] += got[i]
         coords += got[6]
     value = (statistics_text(tot[1], tot[0], tot[3], tot[2], tot[5], tot[4]), position_text(coords))
-    _cache.update(at=now, key=key, value=value, last=value, centre=_centre(coords))
+    _cache.update(at=now, key=key, value=value, last=value, centre=_centre(coords), epoch=epoch)
     return value
 
 

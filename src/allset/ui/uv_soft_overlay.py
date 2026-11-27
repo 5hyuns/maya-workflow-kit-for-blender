@@ -13,8 +13,9 @@ Weights = Blender's UV transform rule, so the colours show what the drag will mo
   of the same face, and corners of one vertex at the same UV with the same selection state are one point;
 - falloff curve and radius = the scene's (``soft_select.falloff``); only the faces the UV Editor shows take part.
 
-A UV selection change with UV Sync off sends no depsgraph update, so the selection is read on every draw and the
-weights are worked out again only when it (or the radius, falloff, Connected, aspect, mesh) changed. While a UV
+A UV selection change with UV Sync off sends no depsgraph update: the selection is read again when the UV Editor
+signals a selection change (``uv_arrays.selection_epoch``), and the weights are worked out again only when it (or the
+radius, falloff, Connected, aspect, mesh) changed. While a UV
 drag runs the mesh is not walked (operators/uv_arrays.EDIT_MODALS): the coloured UVs follow the drag from the
 loops kept before it, with the weights of the drag's start, like the transform itself.
 """
@@ -168,11 +169,28 @@ def _vertex_mode(ts):
     return ts.uv_select_mode == 'VERTEX'
 
 
+def _redraw_uv_editors():
+    for win in bpy.context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type == 'IMAGE_EDITOR':
+                area.tag_redraw()
+    return None
+
+
+def selection_changed():
+    """The UV selection may have changed (ui/uv_manipulator.ALLSET_GGT_uv_select_watch). The colours are drawn before
+    the UV Editor's gizmos refresh, so with soft select on they are drawn once more with the new selection."""
+    if soft_select.is_on() and not bpy.app.timers.is_registered(_redraw_uv_editors):
+        bpy.app.timers.register(_redraw_uv_editors, first_interval=0.0)
+
+
 def _refresh(context, space):
     """Weights of every mesh in edit mode, worked out again only when something they depend on changed."""
     ts = context.scene.tool_settings
     sync = ts.use_uv_select_sync
     depsgraph = context.view_layer.depsgraph
+    if not space.show_gizmo:
+        uv_arrays.selection_changed()     # gizmos hidden: no refresh signal from this editor, read every time
     parts, states = [], []
     for ob in getattr(context, "objects_in_mode_unique_data", None) or ():
         if ob.type != 'MESH':
@@ -295,6 +313,8 @@ def register():
 
 
 def unregister():
+    if bpy.app.timers.is_registered(_redraw_uv_editors):
+        bpy.app.timers.unregister(_redraw_uv_editors)
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(_handle.pop(), 'WINDOW')
     _cache.clear()
