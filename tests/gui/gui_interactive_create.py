@@ -2,8 +2,8 @@
 current; a cube drawn with two drags (base, then height) sits on the grid with its Maya name and creation node and
 Exit On Completion switches to the Select tool; a single click makes a default sphere there; with Exit On Completion
 off the tool stays and keeps drawing, Esc keeps it, Q leaves it; Enter waits on a height step and a click skips it
-(flat); torus section, Shift cube, front view; Esc mid-shape drops it and keeps the tool; Q mid-shape drops it and
-leaves; Y comes back."""
+(flat); torus section, Shift cube, front view; Esc mid-shape drops it and keeps the tool; Q while the height waits
+finishes it flat (as a height click) and leaves; Y comes back."""
 
 import os
 import sys
@@ -473,8 +473,10 @@ def s_again_check():
 
 @step
 def s_q_mid_shape():
-    check(f"Q during the height step drops the unfinished cube and picks the Select tool ({tool()})",
-          not new_objects() and not running() and tool() == "builtin.select_box")
+    obs = new_objects()
+    flat = [o.name for o in obs if 0.0 in tuple(o.scale)]
+    check(f"Q while the height waits finishes the cube flat (#577) and picks the Select tool ({flat}, {tool()})",
+          len(obs) == 1 and flat and not running() and tool() == "builtin.select_box")
     key('Y')
 
 

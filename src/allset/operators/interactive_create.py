@@ -75,6 +75,17 @@ TOOL = "allset.interactive_create_tool"
 SELECT_TOOL = "builtin.select_box"
 # What the tool draws next: kind, option-window values (Maya node attributes), and a counter each pick raises
 CURRENT = {"kind": 'CUBE', "values": {}, "pick": 0}
+# Pointers of the objects being drawn. Maya keeps a primitive out of the scene until its last step, so scene commands
+# (Delete History ...) leave them alone (#577)
+DRAWING = set()
+
+
+def drawing(ob):
+    """``ob`` is a primitive still being drawn by Interactive Creation."""
+    try:
+        return ob.as_pointer() in DRAWING
+    except ReferenceError:
+        return False
 
 
 def wanted(context, kind):
@@ -329,7 +340,9 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
 
     # state of one primitive
     def _reset(self):
+        DRAWING.discard(getattr(self, "_ob_ptr", None))
         self._ob = None          # the primitive being drawn
+        self._ob_ptr = None
         self._step = 0           # index into STEPS[kind]
         self._down = None        # (x, y) of the press of the current drag
         self._moved = False
@@ -368,11 +381,25 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         return False
 
     # --- events
-    def modal(self, context, event):
-        if context.window is not None and self._superseded(context):
+    def _waiting(self):
+        """A later step waits for its drag (no button held)."""
+        return self._ob is not None and self._step > 0 and self._down is None
+
+    def _leave(self, context):
+        """Another tool picked: Maya finishes a primitive that waits on a later step as if each step left were
+        clicked (a height flat, the rest at their defaults) and keeps the new tool; a primitive still on its first
+        drag goes. Returns the modal result."""
+        if not self._waiting():
             self._drop()
             self._end(context)
             return {'CANCELLED'}
+        if STEPS[self.kind][self._step] == "height":
+            self._skip(context, "height")
+        return self._complete(context, switch_tool=False)
+
+    def modal(self, context, event):
+        if context.window is not None and self._superseded(context):
+            return self._leave(context)
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             if self._ob is None:
                 self._end(context)
@@ -386,9 +413,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
             return {'CANCELLED'}
         if event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS' \
                 and not (event.alt or event.ctrl or event.shift or event.oskey):
-            self._drop()                              # leaving the tool drops an unfinished primitive
-            self._end(context)                        # the key goes on to pick its tool
-            return {'CANCELLED', 'PASS_THROUGH'}
+            return self._leave(context) | {'PASS_THROUGH'}     # the key goes on to pick its tool
         if event.type == 'LEFTMOUSE' and not event.alt:
             if event.value == 'PRESS':
                 return self._press(context, event)
@@ -476,6 +501,8 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
                 if live:
                     wm.allset_construction_history = history
         self._ob, self._history = ob, history
+        self._ob_ptr = ob.as_pointer()
+        DRAWING.add(self._ob_ptr)
         self._vals = prim_history.attrs(prim_history.owner_of(ob))
         self._place()
 
@@ -602,9 +629,9 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         self._mode = "base"
         self._place()
 
-    def _complete(self, context, default=False):
+    def _complete(self, context, default=False, switch_tool=True):
         """Finish the primitive: the steps not done yet keep their default sizes; ``default`` (a single click) = every
-        size at its default, centred on the click."""
+        size at its default, centred on the click; ``switch_tool`` False: another tool was picked, it stays."""
         from . import prim_history
         ob = self._ob
         steps = STEPS[self.kind]
@@ -637,7 +664,7 @@ class ALLSET_OT_interactive_create(bpy.types.Operator):
         except (KeyError, AttributeError):
             exit_now = True
         self._end(context)
-        if exit_now:                                  # Maya: the Select tool after one primitive
+        if exit_now and switch_tool:                  # Maya: the Select tool after one primitive
             try:
                 bpy.ops.wm.tool_set_by_id(name=SELECT_TOOL, space_type='VIEW_3D')
             except (RuntimeError, TypeError):

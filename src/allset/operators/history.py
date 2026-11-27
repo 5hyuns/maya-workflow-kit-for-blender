@@ -179,8 +179,10 @@ def delete_history(context, objects, non_deformer=False, before_only=False, shar
     keeps only bend — so every non-deformer modifier is baked into the mesh under the deformers;
     ``before_only`` = "History before deformers only" (``-preDeformers``) bakes only the modifiers above the first
     deformer (the kit's older rule)."""
-    from . import extrude, prim_history
+    from . import extrude, interactive_create, prim_history
     baked, notes = 0, []
+    # a primitive still being drawn is not in Maya's scene yet: its creation node stays (#577)
+    objects = [ob for ob in objects if not interactive_create.drawing(ob)]
     for ob in objects:
         # #124: the kit's polyExtrudeFace / polyBevel record is a non-deformer
         # history node too — Maya's Delete History (both kinds) removes it from the Channel Box INPUTS
