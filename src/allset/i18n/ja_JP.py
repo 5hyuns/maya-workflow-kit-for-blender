@@ -287,6 +287,8 @@ STRINGS = {
     "Connect the dragged node's default output to this input (Maya middle-mouse drop)": 'ドラッグしたノードの既定の出力をこの入力に接続 (Maya の中ボタン ドロップ)',
     'Drag Node to Connect': 'ノードをドラッグして接続',
     'Edit Joints': 'ジョイントの編集',
+    'Go to Connected Node': '接続されたノードへ移動',
+    "Go to the node connected to this attribute: it becomes the graph's selected node, which the Hypershade\nProperty Editor shows (Maya's map button of a connected attribute)": 'この属性に接続されたノードへ移動: グラフで選択されたノードになり、ハイパーシェードの\nプロパティ エディタに表示されます (接続された属性の Maya マップ ボタン)',
     'Graph Network': 'ネットワークのグラフ化',
     'Joint': 'ジョイント',
     'Assume Preferred Angle': '優先角度を取る',

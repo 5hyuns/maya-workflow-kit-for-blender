@@ -39,3 +39,22 @@ def test_file_and_checker_get_a_place2d():
         panes = import_module(kit.MODULE + ".ui.hypershade_panes")
         assert panes.shown_node(mat) == tex, (kind, mat.node_tree.nodes.active)
 
+
+
+def test_connected_map_button_goes_to_the_node():
+    """The map button's list on a connected attribute starts with the connected node; it selects that node, which
+    the Hypershade Property Editor then shows."""
+    _clear()
+    mat = _material("goto")
+    bpy.ops.allset.ae_map_connect(material=mat.name, socket="Roughness", kind='NOISE')
+    tree = mat.node_tree
+    noise = next(n for n in tree.nodes if n.type == 'TEX_NOISE')
+    shader = next(n for n in tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    for n in tree.nodes:
+        n.select = n == shader
+    tree.nodes.active = shader
+    assert bpy.ops.allset.ae_map_goto(material=mat.name, socket="Roughness") == {'FINISHED'}
+    assert tree.nodes.active == noise and [n for n in tree.nodes if n.select] == [noise]
+    panes = import_module(kit.MODULE + ".ui.hypershade_panes")
+    assert panes.shown_node(mat) == noise
+    assert bpy.ops.allset.ae_map_goto(material=mat.name, socket="Metallic") == {'CANCELLED'}

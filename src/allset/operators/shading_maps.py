@@ -133,7 +133,9 @@ class ALLSET_OT_ae_map(bpy.types.Operator):
         def draw(menu, _context):
             layout = menu.layout
             if inp.is_linked:
-                layout.label(text=f"Connected: {inp.links[0].from_node.name}")
+                # Maya: the button of a connected attribute goes to the connected node
+                op = layout.operator("allset.ae_map_goto", text=inp.links[0].from_node.name, icon='NODE')
+                op.material, op.socket = material, socket
                 op = layout.operator("allset.ae_map_break", text="Break Connection", icon='UNLINKED')
                 op.material, op.socket = material, socket
                 layout.separator()
@@ -180,4 +182,32 @@ class ALLSET_OT_ae_map_break(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_ae_map, ALLSET_OT_ae_map_connect, ALLSET_OT_ae_map_break)
+class ALLSET_OT_ae_map_goto(bpy.types.Operator):
+    """Go to the node connected to this attribute: it becomes the graph's selected node, which the Hypershade
+    Property Editor shows (Maya's map button of a connected attribute)"""
+    bl_idname = "allset.ae_map_goto"
+    bl_label = "Go to Connected Node"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    material: _MAT
+    socket: _SOCKET
+
+    def execute(self, context):
+        mat = bpy.data.materials.get(self.material)
+        inp = _material.maya_input(mat, self.socket)
+        if inp is None or not inp.is_linked:
+            return {'CANCELLED'}
+        node = inp.links[0].from_node
+        tree = mat.node_tree
+        for n in tree.nodes:
+            n.select = n == node
+        tree.nodes.active = node
+        from ..ui.hypershade_materials import show
+        show(context, mat)
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                area.tag_redraw()
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_ae_map, ALLSET_OT_ae_map_connect, ALLSET_OT_ae_map_break, ALLSET_OT_ae_map_goto)

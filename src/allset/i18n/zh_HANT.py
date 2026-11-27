@@ -287,6 +287,8 @@ STRINGS = {
     "Connect the dragged node's default output to this input (Maya middle-mouse drop)": '將拖曳節點的預設輸出連接到此輸入 (Maya 中鍵放置)',
     'Drag Node to Connect': '拖曳節點以連接',
     'Edit Joints': '編輯關節',
+    'Go to Connected Node': '前往連接的節點',
+    "Go to the node connected to this attribute: it becomes the graph's selected node, which the Hypershade\nProperty Editor shows (Maya's map button of a connected attribute)": '前往連接到此屬性的節點: 它成為圖表中選取的節點, Hypershade\n特性編輯器會顯示它 (Maya 中已連接屬性的貼圖按鈕)',
     'Graph Network': '繪製網路圖表',
     'Joint': '關節',
     'Assume Preferred Angle': '採用首選角度',

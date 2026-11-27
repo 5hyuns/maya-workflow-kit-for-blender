@@ -7517,6 +7517,7 @@
    "Break Connection": "Break Connection",
    "Connect Texture": "Connect Texture",
    "Create Render Node": "Create Render Node",
+   "Go to Connected Node": "Go to Connected Node",
    "Input": "Input",
    "Material": "Material",
    "Texture": "Texture"
@@ -12902,7 +12903,8 @@
   "Tooltips/operators/shading_maps": {
    "Create Render Node: connect a texture to this attribute (Maya map button)": "Create Render Node: connect a texture to this attribute (Maya map button)",
    "Create this texture and connect it to the attribute (Maya Create Render Node)": "Create this texture and connect it to the attribute (Maya Create Render Node)",
-   "Disconnect the texture from this attribute; the nodes stay (Maya Break Connection)": "Disconnect the texture from this attribute; the nodes stay (Maya Break Connection)"
+   "Disconnect the texture from this attribute; the nodes stay (Maya Break Connection)": "Disconnect the texture from this attribute; the nodes stay (Maya Break Connection)",
+   "Go to the node connected to this attribute: it becomes the graph's selected node, which the Hypershade\nProperty Editor shows (Maya's map button of a connected attribute)": "Go to the node connected to this attribute: it becomes the graph's selected node, which the Hypershade\nProperty Editor shows (Maya's map button of a connected attribute)"
   },
   "Tooltips/operators/skeleton_menu": {
    "Maya Connect Joint: select a root joint, then the joint to connect it to": "Maya Connect Joint: select a root joint, then the joint to connect it to",
