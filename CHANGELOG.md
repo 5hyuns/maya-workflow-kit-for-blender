@@ -3,6 +3,57 @@
 All notable changes to Maya Workflow Kit (earlier versions were called Allset for Maya Users and, before that, Maya Kit). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.26.0] — 2026-11-28
+
+**The Hypershade works with a Maya user's hands:** right-click node menus, Tab to create a node, middle-mouse drag to
+connect, a swatch menu in the Browser and a Property Editor that follows the picked node. UV soft select colours, the
+joint marking menu and fixes from your reports.
+
+### Added
+- **Hypershade graph: right-click node menus**: in a material's Shader Editor, a right-click opens the graph
+  marking menu for what is under the mouse (the empty graph, a material, a texture, a utility node or the Material
+  Output). It names the node, lists the nodes feeding it and fed by it in Inputs / Outputs, and its commands act on
+  that node (select its stream, mute or unmute the inputs, select the objects using the material, swatch size, help).
+  Entries Blender has no counterpart for are greyed with a short note on what to use instead.
+- **Hypershade graph: Tab, 1 - 4 and stream keys**: Tab opens a field to type a node name (Blender shader nodes by
+  their Blender names, the kit's texture and utility nodes by Maya names) and makes the node where the mouse was.
+  1 / 2 / 3 / 4 collapse the selected nodes, show only connected sockets or show every socket; , . / select up, down
+  or both ways along the stream (with Shift they also frame it); = and - zoom. Geometry Nodes keep Blender's keys.
+- **Hypershade graph: middle-mouse drag to connect**: a node dragged with the middle mouse button onto another node
+  opens a list of that node's inputs, and the chosen one gets the dragged node's first output; Ctrl+middle-mouse makes
+  the default connection without the list. Off a node, Alt+middle-mouse still pans.
+- **Hypershade Browser: swatch menu**: a right-click on a material swatch lists Assign Material To Viewport
+  Selection, Paint Assign Shader (greyed), Select Objects with Material, Refresh Swatch, Graph Network, Frame Objects
+  with Material, Select Input Nodes, Rename and Help, in that order.
+- **Hypershade Property Editor follows the Graph**: a texture or utility node picked in the Graph shows its type,
+  name, settings and unconnected inputs, with the material's tab beside it; a swatch click goes back to the
+  material. The map button's File and Checker come with a place2dTexture in front (Scale repeats the texture like
+  Repeat UV, Location moves it like Offset), and the Property Editor then shows the new texture node. The map button
+  of a connected attribute starts its list with the connected node, which picks it.
+- **Hypershade Create: Blender section** (#577): the Create tree has Favorites, Maya and Blender. The Blender section
+  lists every Blender shader node by Blender's names under Blender's Add menu categories; a shader click makes a new
+  material with that shader, any other node goes into the current material. Search lists both.
+- **UV Editor: soft select colours** (#579): with soft select on, the UV Editor colours the UVs a UV Move / Rotate /
+  Scale will move, yellow at full weight through red to black at the falloff radius, on the UV edges and, in UV
+  vertex mode, on the points, following the scene's falloff curve, radius and Connected setting; during a drag they
+  follow it.
+- **Joint marking menu** (#578): a right-click on a joint (Pose mode, or object mode on a skeleton) opens the joint
+  marking menu: Set Preferred Angle, Assume Preferred Angle, Edit Joints with Add / Insert / Remove, and the joint's
+  name with Select and Select Hierarchy.
+
+### Fixed
+- **UV Editor manipulator follows a pick at once** (#579, #582): with UV Sync Selection off, picking UVs, edges or
+  faces with a single click (plain, Shift, Ctrl+Shift or Ctrl) moves the Move / Rotate / Scale manipulator to the
+  picked components right away, not only after a marquee selection or the next edit.
+- **Create in component mode** (#583): a Shelf Editor button made from a Create menu item (primitives, lights,
+  cameras, ...) leaves component mode and makes the object, like the menu item.
+- **Delete History during Interactive Creation** (#577): Delete History while a primitive waits for its height keeps
+  the shape, so the height drag still works instead of the shape collapsing to 0. Picking another tool while a later
+  step waits finishes the primitive with the remaining steps' defaults.
+- **Option boxes in object mode** (#580): the option box of Reverse Surfaces, Add Divisions, Average Vertices, Poke,
+  Edit Edge Flow and Quadrangulate on a mesh picked in object mode runs the command on the whole mesh like a plain
+  click, and Adjust Last Operation shows its settings.
+
 ## [0.25.0] — 2026-11-27
 
 **UV Unfold, Delete and Duplicate Face work the way Maya does; joints can be hidden, shown and picked in the
