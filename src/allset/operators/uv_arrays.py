@@ -27,22 +27,31 @@ from .uv_tools import EPS
 class Arrays:
     """One edit mesh: faces F, loops L (face order), verts V."""
     __slots__ = ("loop_start", "loop_total", "corner_vert", "corner_edge", "corner_face", "corner_next", "uv",
-                 "face_hide", "face_sel", "vert_sel", "edge_seam", "_uv_sel")
+                 "face_hide", "face_sel", "vert_sel", "edge_seam", "_uv_sel", "_uv_loops")
 
-    def uv_sel(self, bm, uv, shown):
-        """Per-loop UV selection (UV Sync off), read from the BMesh for the loops of ``shown`` faces only."""
-        if self._uv_sel is None:
-            out = np.zeros(len(self.corner_vert), bool)
+    def uv_sel(self, bm, uv, shown, fresh=False):
+        """Per-loop UV selection (UV Sync off), read from the BMesh for the loops of ``shown`` faces only.
+        A UV selection change with UV Sync off sends no depsgraph update, so these arrays outlive it: ``fresh``
+        reads the flags again (from the loops kept at the first read, no face walk)."""
+        if self._uv_sel is not None and not fresh:
+            return self._uv_sel
+        kept = getattr(self, "_uv_loops", None)
+        if kept is not None and kept[0] is bm and np.array_equal(kept[1], shown) and (not kept[3] or kept[3][0].is_valid):
+            _bm, _shown, idx, loops = kept
+        else:
             faces = np.nonzero(shown)[0]
+            loops = []
             if len(faces):
                 bm.faces.ensure_lookup_table()
                 fs = bm.faces
-                picked = np.fromiter(chain.from_iterable(
-                    (compat.uv_vert_selected(l, uv) for l in fs[i].loops) for i in faces.tolist()),
-                    bool, int(self.loop_total[faces].sum()))
-                out[_face_loops(self, faces)] = picked
-            self._uv_sel = out
-        return self._uv_sel
+                loops = [l for i in faces.tolist() for l in fs[i].loops]
+            idx = _face_loops(self, faces)
+            self._uv_loops = (bm, shown, idx, loops)
+        out = np.zeros(len(self.corner_vert), bool)
+        if loops:
+            out[idx] = np.fromiter(map(compat.uv_vert_selected_reader(), loops), bool, len(loops))
+        self._uv_sel = out
+        return out
 
 
 def _face_loops(a, faces):
@@ -61,6 +70,7 @@ def _finish(a, n_loops):
     nxt[ends] = a.loop_start
     a.corner_next = nxt
     a._uv_sel = None
+    a._uv_loops = None
     return a
 
 

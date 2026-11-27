@@ -201,6 +201,11 @@ def uv_vert_selected(loop, uv):
     return loop.uv_select_vert
 
 
+def uv_vert_selected_reader():
+    """``uv_vert_selected`` as one getter for ``map`` over many loops (no Python call per loop)."""
+    return attrgetter("uv_select_vert")
+
+
 def uv_edge_selected(loop, uv):
     return loop.uv_select_edge
 

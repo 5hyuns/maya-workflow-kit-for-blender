@@ -32,6 +32,7 @@ CENTER = 0.1            # half size of the centre square / box
 
 OPS = {'TRANSLATE': "transform.translate", 'ROTATE': "transform.rotate", 'RESIZE': "transform.resize"}
 AXES = {'U': (True, False, False), 'V': (False, True, False), 'UV': (False, False, False)}
+LAST = {}               # region pointer -> (x, y) region pixels of the centre last drawn (tests read it)
 
 
 # --- selection --------------------------------------------------------------------------------------------------
@@ -39,7 +40,9 @@ AXES = {'U': (True, False, False), 'V': (False, True, False), 'UV': (False, Fals
 def _picked_loops(a, bm, uv, shown, sync, ts):
     """Per loop: its UV is selected (the UVs a UV transform moves)."""
     if not sync or getattr(bm, "uv_select_sync_valid", False):
-        return a.uv_sel(bm, uv, shown)      # UV Sync on keeps its own UV selection while that is valid
+        # UV Sync on keeps its own UV selection while that is valid. Read afresh: a UV pick changes no mesh
+        # data, so the shared arrays still hold the selection from before it (#579)
+        return a.uv_sel(bm, uv, shown, fresh=True)
     vert, _edge, face = ts.mesh_select_mode
     if face and not vert:
         return a.face_sel[a.corner_face]    # face mode: the selected faces' UVs
@@ -243,8 +246,11 @@ class ALLSET_GGT_uv_xform(GizmoGroup):
         # so they hide while it runs and come back at the new centre.
         bounds = None if uv_arrays.editing_now(context.window_manager) else selected_uv_bounds(context)
         hide = bounds is None
-        if not hide:
+        if hide:
+            LAST.pop(context.region.as_pointer(), None)
+        else:
             cx, cy = center_px(context, bounds)
+            LAST[context.region.as_pointer()] = (cx, cy)
             length = length_px(context)
             m = Matrix.Translation((cx, cy, 0.0)) @ Matrix.Scale(length, 4)
         for gz in self.kit_handles:
