@@ -207,40 +207,152 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
     item: StringProperty(options={'SKIP_SAVE'})
 
     def execute(self, context):
-        rule = menu_map.OBJECT_MODE.get(self.item)
-        s = menu_map.spec(self.item)
-        meshes = [ob for ob in context.selected_objects if ob.type == 'MESH']
-        if not isinstance(rule, tuple) or s is None or s[0] not in ("op", "v3d"):
-            return {'CANCELLED'}
-        if not meshes:
-            self.report({'WARNING'}, "Nothing selected.")
-            return {'CANCELLED'}
-        view_layer = context.view_layer
-        if view_layer.objects.active not in meshes:
-            view_layer.objects.active = meshes[0]
-        mod, name = s[1].split(".")
-        props = {**s[2], **WHOLE_MESH_PROPS.get(self.item, {})}
-        bpy.ops.object.mode_set(mode='EDIT')
-        try:
-            bpy.ops.mesh.select_mode(type=rule[1])
-            bpy.ops.mesh.select_all(action='SELECT')
-            op = getattr(getattr(bpy.ops, mod), name)
-            if s[0] == "v3d" and not op.poll():
-                # Blender runs it only in a 3D View (Camera-based maps from the view): the largest one, as the
-                # menu item does in component mode (allset.menu_run)
-                window, area, region = _view3d(context)
-                if area is None:
-                    raise RuntimeError(i18n.tip(NO_3D_VIEW))
-                with context.temp_override(window=window, screen=window.screen, area=area, region=region):
-                    op('EXEC_DEFAULT', **props)
-            else:
+        return run_whole_mesh(self, context, self.item)
+
+
+def run_whole_mesh(op_self, context, item, settings=None):
+    """Run the component command of ``item`` on every component of the selected meshes and come back to object
+    mode; ``settings`` = the command's own values (its option box's Adjust Last Operation)."""
+    rule = menu_map.OBJECT_MODE.get(item)
+    s = menu_map.spec(item)
+    meshes = [ob for ob in context.selected_objects if ob.type == 'MESH']
+    if not isinstance(rule, tuple) or s is None or s[0] not in ("op", "v3d"):
+        return {'CANCELLED'}
+    if not meshes:
+        op_self.report({'WARNING'}, "Nothing selected.")
+        return {'CANCELLED'}
+    view_layer = context.view_layer
+    if view_layer.objects.active not in meshes:
+        view_layer.objects.active = meshes[0]
+    mod, name = s[1].split(".")
+    props = {**s[2], **WHOLE_MESH_PROPS.get(item, {}), **(settings or {})}
+    bpy.ops.object.mode_set(mode='EDIT')
+    try:
+        bpy.ops.mesh.select_mode(type=rule[1])
+        bpy.ops.mesh.select_all(action='SELECT')
+        op = getattr(getattr(bpy.ops, mod), name)
+        if s[0] == "v3d" and not op.poll():
+            # Blender runs it only in a 3D View (Camera-based maps from the view): the largest one, as the
+            # menu item does in component mode (allset.menu_run)
+            window, area, region = _view3d(context)
+            if area is None:
+                raise RuntimeError(i18n.tip(NO_3D_VIEW))
+            with context.temp_override(window=window, screen=window.screen, area=area, region=region):
                 op('EXEC_DEFAULT', **props)
-        except (RuntimeError, TypeError) as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
-            return {'CANCELLED'}
-        finally:
-            bpy.ops.object.mode_set(mode='OBJECT')
-        return {'FINISHED'}
+        else:
+            op('EXEC_DEFAULT', **props)
+    except (RuntimeError, TypeError) as ex:
+        op_self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+        return {'CANCELLED'}
+    finally:
+        bpy.ops.object.mode_set(mode='OBJECT')
+    return {'FINISHED'}
+
+
+# --- option box of a whole-mesh item in object mode ---------------------------------------------------------------
+# Maya's option box of such an item runs the command on the whole object with the command's settings. The kit shows
+# those settings in Adjust Last Operation, so each item gets an operator that carries a copy of its command's
+# properties and runs the command on the whole mesh (made at register time: the commands must be registered first).
+
+WHOLE_MESH_OPTIONS = {}         # Maya menu path -> bl_idname of its whole-mesh option operator
+_whole_mesh_classes = []
+
+
+def _copy_property(p):
+    """A bpy.props definition with the settings of the registered property ``p`` (None: a kind not copied)."""
+    common = {"name": p.name, "description": p.description}
+    flags = set()
+    if p.is_hidden:
+        flags.add('HIDDEN')
+    if p.is_skip_save:
+        flags.add('SKIP_SAVE')
+    if p.type == 'ENUM':
+        items = [(e.identifier, e.name, e.description, e.icon, e.value) for e in p.enum_items]
+        if not items:
+            return None
+        if p.is_enum_flag:
+            flags.add('ENUM_FLAG')
+            return bpy.props.EnumProperty(items=items, default=set(p.default_flag), options=flags, **common)
+        default = p.default if any(i[0] == p.default for i in items) else items[0][0]
+        return bpy.props.EnumProperty(items=items, default=default, options=flags, **common)
+    if p.type == 'STRING':
+        return bpy.props.StringProperty(default=p.default, options=flags, **common)
+    array = p.is_array and p.array_length > 0
+    if p.type == 'BOOLEAN':
+        if array:
+            return bpy.props.BoolVectorProperty(size=p.array_length, default=tuple(p.default_array),
+                                                subtype=p.subtype, options=flags, **common)
+        return bpy.props.BoolProperty(default=p.default, options=flags, **common)
+    if p.type not in {'INT', 'FLOAT'}:
+        return None
+    limits = {"min": p.hard_min, "max": p.hard_max, "soft_min": p.soft_min, "soft_max": p.soft_max, "step": p.step}
+    if p.type == 'INT':
+        if array:
+            return bpy.props.IntVectorProperty(size=p.array_length, default=tuple(p.default_array),
+                                               subtype=p.subtype, options=flags, **limits, **common)
+        return bpy.props.IntProperty(default=p.default, subtype=p.subtype, options=flags, **limits, **common)
+    limits["precision"] = p.precision
+    if array:
+        return bpy.props.FloatVectorProperty(size=p.array_length, default=tuple(p.default_array),
+                                             subtype=p.subtype, unit=p.unit, options=flags, **limits, **common)
+    return bpy.props.FloatProperty(default=p.default, subtype=p.subtype, unit=p.unit, options=flags, **limits,
+                                   **common)
+
+
+def _plain(value):
+    """An operator property value as a plain Python value (arrays as tuples)."""
+    if isinstance(value, (str, set, bool, int, float)):
+        return value
+    return tuple(value)
+
+
+def _whole_mesh_option_class(index, path, target):
+    mod, name = target.split(".")
+    try:
+        rna = getattr(getattr(bpy.ops, mod), name).get_rna_type()
+    except (AttributeError, KeyError):
+        return None
+    if not any(p.identifier != "rna_type" and not p.is_hidden for p in rna.properties):
+        return None         # no settings: the option box opens the window saying Blender has none
+    annotations = {}
+    for p in rna.properties:
+        if p.identifier != "rna_type":
+            prop = _copy_property(p)
+            if prop is not None:
+                annotations[p.identifier] = prop
+
+    def execute(self, context):
+        settings = {k: _plain(getattr(self, k)) for k in annotations if self.properties.is_property_set(k)}
+        return run_whole_mesh(self, context, path, settings)
+
+    return type(f"ALLSET_OT_whole_mesh_option_{index}", (bpy.types.Operator,), {
+        "__doc__": f"{rna.name} on every component of the selected meshes, with its settings",
+        "bl_idname": f"allset.whole_mesh_option_{index}",
+        "bl_label": rna.name,
+        "bl_translation_context": rna.translation_context,
+        "bl_options": {'REGISTER', 'UNDO', 'INTERNAL'},
+        "__annotations__": annotations,
+        "execute": execute,
+    })
+
+
+def register_whole_mesh_options():
+    for path, rule in menu_map.OBJECT_MODE.items():
+        s = menu_map.spec(path)
+        if not isinstance(rule, tuple) or s is None or s[0] not in ("op", "v3d"):
+            continue
+        cls = _whole_mesh_option_class(len(_whole_mesh_classes), path, s[1])
+        if cls is not None:
+            bpy.utils.register_class(cls)
+            _whole_mesh_classes.append(cls)
+            WHOLE_MESH_OPTIONS[path] = cls.bl_idname
+
+
+def unregister_whole_mesh_options():
+    for cls in reversed(_whole_mesh_classes):
+        bpy.utils.unregister_class(cls)
+    _whole_mesh_classes.clear()
+    WHOLE_MESH_OPTIONS.clear()
 
 
 @undo_steps.no_redo_panel      # no Adjust Last Operation (Maya has none)

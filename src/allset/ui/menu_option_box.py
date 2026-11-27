@@ -179,13 +179,29 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
         if option_kind(self.item) == "generic":
             return bpy.ops.allset.option_generic('INVOKE_DEFAULT', item=self.item)
         from ..marking.modal import run_action
+        whole = _whole_mesh_option(context, self.item)
+        if whole is not None:
+            action, path = whole, None      # object mode: the command on the whole mesh, with its settings
+        else:
+            path = self.item
         try:
-            run_action(context, action, option=True, path=self.item)
+            run_action(context, action, option=True, path=path)
         except RuntimeError as ex:
             from ..operators import maya_errors
             maya_errors.report_nested(self, ex)
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+def _whole_mesh_option(context, path):
+    """(bl_idname, props) of the whole-mesh option operator of ``path`` in object mode (``menu_map.OBJECT_MODE``:
+    Maya runs the command on every component of the selected meshes), else None."""
+    from .menu_item_ops import WHOLE_MESH_OPTIONS, WHOLE_MESH_PROPS
+    idname = WHOLE_MESH_OPTIONS.get(path)
+    if idname is None or context.mode != 'OBJECT' or option_kind(path) != "redo":
+        return None
+    s = menu_map.spec(path)
+    return idname, {**s[2], **WHOLE_MESH_PROPS.get(path, {})}
 
 
 def option_kind(path):

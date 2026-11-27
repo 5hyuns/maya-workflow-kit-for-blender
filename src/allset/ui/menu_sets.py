@@ -26,7 +26,8 @@ from .menu_item_draw import (_PROXY_CLASSES, _draw_boxed, _menu_targets, _proxie
 from .menu_item_ops import (COMPONENT_TWIN, ALLSET_OT_component_command, ALLSET_OT_menu_item,  # noqa: F401
                             ALLSET_OT_menu_run, ALLSET_OT_menu_set_value, ALLSET_OT_menu_tool,
                             ALLSET_OT_menu_unavailable, ALLSET_OT_menu_whole_mesh, _no_equivalent,
-                            add_to_shelf_if_asked, op_polls, prop_owner, set_prop)
+                            add_to_shelf_if_asked, op_polls, prop_owner, register_whole_mesh_options, set_prop,
+                            unregister_whole_mesh_options)
 from .menu_item_text import HAIR, font_size, hotkey, item_texts, text_width  # noqa: F401
 from .menu_option_box import (BOX_TIP, HOLD_ROW_SCALE, LAST_WARP, ALLSET_MT_option_box,  # noqa: F401
                               ALLSET_OT_menu_option_box, ALLSET_OT_option_box_point, modifier_held, option_kind)
@@ -234,6 +235,7 @@ classes = (ALLSET_OT_menu_unavailable, ALLSET_OT_menu_set_value, ALLSET_OT_menu_
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    register_whole_mesh_options()
     register_proxies()
     menu_icons.register()
 
@@ -241,5 +243,6 @@ def register():
 def unregister():
     menu_icons.unregister()
     unregister_proxies()
+    unregister_whole_mesh_options()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
