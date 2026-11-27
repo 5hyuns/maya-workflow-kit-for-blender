@@ -3680,6 +3680,40 @@
    "Unparent": "Unparent",
    "Untemplate": "Untemplate"
   },
+  "Marking menus/Joint": {
+   "<object>...": "<object>...",
+   "Actions": "Actions",
+   "Add": "Add",
+   "Assign Existing Material": "Assign Existing Material",
+   "Assign Favorite Material": "Assign Favorite Material",
+   "Assign New Material": "Assign New Material",
+   "Assume Preferred Angle": "Assume Preferred Angle",
+   "Bounding Box": "Bounding Box",
+   "DG Traversal": "DG Traversal",
+   "Deselect All": "Deselect All",
+   "Edit Joints": "Edit Joints",
+   "Inputs": "Inputs",
+   "Insert": "Insert",
+   "Invert Selection": "Invert Selection",
+   "Joint": "Joint",
+   "Make Live": "Make Live",
+   "Material Attributes...": "Material Attributes...",
+   "Metadata": "Metadata",
+   "New Material": "New Material",
+   "New Material...": "New Material...",
+   "Outputs": "Outputs",
+   "Remove": "Remove",
+   "Scene Assembly": "Scene Assembly",
+   "Select": "Select",
+   "Select All": "Select All",
+   "Select Hierarchy": "Select Hierarchy",
+   "Select Similar": "Select Similar",
+   "Set Preferred Angle": "Set Preferred Angle",
+   "Template": "Template",
+   "Time Editor": "Time Editor",
+   "Unparent": "Unparent",
+   "Untemplate": "Untemplate"
+  },
   "Marking menus/Select": {
    "Complete Tool": "Complete Tool",
    "Select": "Select",
@@ -5295,7 +5329,9 @@
   "Labels/marking/__init__": {
    "Clear Selection": "Clear Selection",
    "Component Mode": "Component Mode",
+   "Joint under the mouse when the RMB menu opened": "Joint under the mouse when the RMB menu opened",
    "Marking Menu": "Marking Menu",
+   "Marking Menu Joint": "Marking Menu Joint",
    "Marking Menu Target": "Marking Menu Target",
    "No materials in the scene": "No materials in the scene",
    "Object under the mouse when the RMB menu opened": "Object under the mouse when the RMB menu opened",
@@ -5370,15 +5406,20 @@
    "Zones and Menu Rows": "Zones and Menu Rows"
   },
   "Labels/marking/rmb_items": {
+   "Assume Preferred Angle": "Assume Preferred Angle",
+   "Attributes": "Attributes",
    "Bounding Box": "Bounding Box",
    "Camera-Based Selection": "Camera-Based Selection",
    "Color Set Editor": "Color Set Editor",
    "Color Sets": "Color Sets",
    "Current Color Set": "Current Color Set",
    "Current UV Set": "Current UV Set",
+   "Joint": "Joint",
    "Marking Menu Object Item": "Marking Menu Object Item",
    "Polygon Marking Menu Item": "Polygon Marking Menu Item",
+   "Select": "Select",
    "Select Hierarchy": "Select Hierarchy",
+   "Set Preferred Angle": "Set Preferred Angle",
    "UV Set Editor": "UV Set Editor",
    "UV Sets": "UV Sets"
   },
@@ -10157,7 +10198,8 @@
    "Settings": "Settings"
   },
   "Labels/ui/uv_manipulator": {
-   "Maya UV Manipulator": "Maya UV Manipulator"
+   "Maya UV Manipulator": "Maya UV Manipulator",
+   "UV Selection Watch": "UV Selection Watch"
   },
   "Labels/ui/uv_shell_preview": {
    "UV Shell Hover": "UV Shell Hover"
@@ -11911,6 +11953,7 @@
    "Maya RMB > UV Sets: the UV Set Editor and the mesh's UV sets (the checked one is current)": "Maya RMB > UV Sets: the UV Set Editor and the mesh's UV sets (the checked one is current)",
    "Maya polygon command from a marking menu (convert the selection, then act)": "Maya polygon command from a marking menu (convert the selection, then act)",
    "Run this Maya menu item on the object the marking menu was opened on, like Maya": "Run this Maya menu item on the object the marking menu was opened on, like Maya",
+   "Run this joint item on the joint the marking menu was opened on, like Maya": "Run this joint item on the joint the marking menu was opened on, like Maya",
    "Select the object and everything under it (Maya: select -hierarchy)": "Select the object and everything under it (Maya: select -hierarchy)",
    "Toggle bounding-box display of the object (Maya: Actions > Bounding Box)": "Toggle bounding-box display of the object (Maya: Actions > Bounding Box)"
   },

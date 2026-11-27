@@ -45,7 +45,8 @@ def patch_pick_walk(kd):
 
 MM_KEYMAPS = (("Object Mode", "VIEW3D_MT_object_context_menu"),
               ("Mesh", "VIEW3D_MT_edit_mesh_context_menu"),
-              ("Curve", "VIEW3D_MT_edit_curve_context_menu"))
+              ("Curve", "VIEW3D_MT_edit_curve_context_menu"),
+              ("Pose", "VIEW3D_MT_pose_context_menu"))      # joints (#578)
 MM_EVENTS = (("RMB", {}), ("SHIFT_RMB", {"shift": True}), ("CTRL_RMB", {"ctrl": True}),
              ("TOOL_OPTIONS", {"shift": True, "ctrl": True}))
 # Modes whose IC keymap sets the Q/W/E/R tools (IC _template_items_tool_select etc.).

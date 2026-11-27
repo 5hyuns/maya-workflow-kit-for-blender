@@ -334,9 +334,17 @@ def resolve(trigger, context, picked=None):
         return ("pie", idname("RMB_CURVE"))
     if mode == 'EDIT_LATTICE':
         return ("pie", idname("RMB_LATTICE"))
+    if mode == 'POSE':
+        # joints: the joint menu over a joint or while a joint is selected, else Maya's empty-space menu
+        joint = getattr(context.window_manager, "allset_mm_joint", "")
+        if joint or (ob is not None and ob.type == 'ARMATURE' and any(pb.select for pb in ob.pose.bones)):
+            return ("pie", idname("RMB_JOINT"))
+        return ("pie", idname("RMB_EMPTY"))
     if mode == 'OBJECT':
         if ob is None:
             return ("pie", idname("RMB_EMPTY"))
+        if ob.type == 'ARMATURE':
+            return ("pie", idname("RMB_JOINT"))
         if ob.type == 'MESH':
             return ("pie", idname("RMB_MESH"))
         if ob.type in {'CURVE', 'SURFACE'}:
@@ -344,6 +352,24 @@ def resolve(trigger, context, picked=None):
         if ob.type == 'LATTICE':
             return ("pie", idname("RMB_LATTICE"))  # #227
         return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type
+    return None
+
+
+def pick_joint(context, event):
+    """(armature, joint name) under the mouse in the 3D View, picked like a click selects a joint, or None."""
+    region, rv3d = context.region, context.region_data
+    if region is None or rv3d is None or region.type != 'WINDOW':
+        return None
+    from ..operators import select_priority
+    mouse = (event.mouse_region_x, event.mouse_region_y)
+    radius = select_priority.RADIUS_PX * (context.preferences.system.ui_scale or 1.0)
+    space = getattr(context, "space_data", None)
+    for ob in context.visible_objects:
+        if ob.type != 'ARMATURE' or ob.hide_select or not _shown_in(ob, space):
+            continue
+        name = select_priority.pick_joint(context, ob, mouse, radius)
+        if name is not None:
+            return ob, name
     return None
 
 
@@ -404,10 +430,15 @@ class ALLSET_OT_marking_menu(bpy.types.Operator):
     def invoke(self, context, event):
         if context.mode == 'SCULPT' and sculpt_stencil(context):
             return {'PASS_THROUGH'}     # Blender's stencil drag (brush.stencil_control) keeps RMB there
-        picked = None
-        if self.trigger in {"RMB", "CTRL_RMB"} and context.mode == 'OBJECT':
-            picked = pick_object(context, event)
+        picked, joint = None, ""
+        if self.trigger in {"RMB", "CTRL_RMB"} and context.mode in {'OBJECT', 'POSE'}:
+            hit = pick_joint(context, event)       # Maya: a joint under the mouse gets the joint menu
+            if hit is not None:
+                picked, joint = hit
+            elif context.mode == 'OBJECT':
+                picked = pick_object(context, event)
         context.window_manager.allset_mm_target = picked.name if picked else ""
+        context.window_manager.allset_mm_joint = joint
         found = resolve(self.trigger, context, picked)
         if found is None:
             return {'PASS_THROUGH'}
@@ -652,6 +683,9 @@ def register():
     bpy.types.WindowManager.allset_mm_target = StringProperty(
         name="Marking Menu Target", description="Object under the mouse when the RMB menu opened",
         options={'SKIP_SAVE'})
+    bpy.types.WindowManager.allset_mm_joint = StringProperty(
+        name="Marking Menu Joint", description="Joint under the mouse when the RMB menu opened",
+        options={'SKIP_SAVE'})
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.register_binding(cls())
     draw.register()
@@ -671,5 +705,6 @@ def unregister():
     for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.unregister_binding(cls.name)
     del bpy.types.WindowManager.allset_mm_target
+    del bpy.types.WindowManager.allset_mm_joint
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

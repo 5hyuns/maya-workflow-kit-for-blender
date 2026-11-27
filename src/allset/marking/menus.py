@@ -274,6 +274,33 @@ RMB_LATTICE = MarkingMenu(
     options=("Select Similar",))
 
 
+def _joint(action):
+    """An item run on the joint the RMB menu was opened on (else the selected joints): ``allset.mm_joint``."""
+    return ("allset.mm_joint", {"action": action})
+
+
+def _joint_items():
+    """The object list (the same rows and places as Maya's joint list); its title, Select and Select Hierarchy act on
+    the joint."""
+    rows = {OBJECT_TITLE: _joint('ATTRIBUTES'), "Select": _joint('SELECT'), "Select Hierarchy": _joint('HIERARCHY')}
+    return [e if e == DIVIDER or e[0] not in rows else (e[0], rows[e[0]]) for e in _object_items(mesh=False)]
+
+
+# Joint (#578): Maya's RMB marking menu over a joint (also over empty space while a joint is selected): Set /
+# Assume Preferred Angle at W / E, Edit Joints at N (Add, Insert, Remove), and the object list.
+RMB_JOINT = MarkingMenu(
+    "RMB_JOINT", "Joint", "maya",
+    radial={
+        "W": ("Set Preferred Angle", _joint('SET_PREFERRED')),
+        "E": ("Assume Preferred Angle", _joint('ASSUME_PREFERRED')),
+        "N": ("Edit Joints", Sub(radial={"N": ("Add", _item("Skeleton/Create Joints")),
+                                          "W": ("Insert", _item("Skeleton/Insert Joints")),
+                                          "E": ("Remove", _item("Skeleton/Remove Joints"))})),
+    },
+    items=_joint_items(),
+    options=("Select Similar",))
+
+
 def with_object_name(menu, name):
     """A copy of ``menu`` whose ``OBJECT_TITLE`` row shows ``name`` (Maya: "pCube1...")."""
     items = [(f"{name}...", e[1]) if e != DIVIDER and e[0] == OBJECT_TITLE else e for e in menu.items]
@@ -1508,7 +1535,7 @@ UV_BRUSH = MarkingMenu(
     })
 
 
-MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
+MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_JOINT, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,

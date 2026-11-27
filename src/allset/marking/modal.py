@@ -279,7 +279,8 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         origin = tuple(self.origin) if self.origin[0] >= 0 else (event.mouse_region_x, event.mouse_region_y)
         menu = mm.MENUS[self.menu]
         target = getattr(context.window_manager, "allset_mm_target", "") or             (context.active_object.name if context.active_object else "")
-        menu = mm.with_object_name(menu, target)
+        joint = getattr(context.window_manager, "allset_mm_joint", "")
+        menu = mm.with_object_name(menu, joint if joint and self.menu == "RMB_JOINT" else target)
         if any(e != mm.DIVIDER and isinstance(e[1], mm.NodeList) for e in menu.items):
             from . import rmb_nodes      # DG Traversal / Inputs / Outputs of that object
             menu = mm.with_nodes(menu, rmb_nodes.nodes(bpy.data.objects.get(target)) if target else None)
