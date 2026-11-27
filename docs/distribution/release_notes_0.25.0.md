@@ -65,7 +65,10 @@ Supported: Blender 5.2 LTS and 5.3. Other versions are not tested: the extension
 
 ## Thank you
 
-This version was shaped by your reports. Thank you, every one of you, for taking the time to write down what broke or felt off:
+Thank you, truly. Every fix in this version started with someone who took the time to report a problem or share an
+opinion, and this version was only possible because of those valuable reports and ideas. The kit still falls short in
+many places, so we are deeply grateful to everyone who told us where it does instead of quietly giving up on it.
+Thank you, every one of you:
 
 - @envwarby: UV Unfold Along not unfolding all the way (#557), Unfold moving the whole shell (#558), the Hotkey Editor
   not saving (#559), UV vertex and edge picks on shell borders (#556), Ctrl+right-click flicks failing (#561), the
@@ -81,4 +84,5 @@ This version was shaped by your reports. Thank you, every one of you, for taking
 - @JinxSwe: the follow-up on Wedge in Multi-Component mode (#546). Thank you for coming back to it again.
 - @cnzim: the video on #567 that helped us follow the joint click step by step.
 
-Please keep telling us what breaks or feels off in real work: an issue or a Discussion post is always welcome.
+There is still a lot to improve, and your reports are what move it forward. Please keep telling us what breaks or
+feels off in real work: an issue or a Discussion post is always welcome, and every one is read with thanks.
