@@ -30,6 +30,7 @@ def main():
         spec.loader.exec_module(mod)
         if getattr(mod, "AUTO_ENABLE", True):
             kit.enable()
+            kit.release_modifier_keys()
         tests = [(n, f) for n, f in vars(mod).items() if n.startswith("test_") and callable(f)]
         for name, func in tests:
             print(f"TEST {name}", flush=True)      # the last name in a crashed run's log = the crashing test

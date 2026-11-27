@@ -25,6 +25,25 @@ def fcurves(anim_id):
     return import_module(MODULE + ".compat").id_fcurve_collection(anim_id)
 
 
+_MODIFIERS = {"LEFT_SHIFT", "RIGHT_SHIFT", "LEFT_CTRL", "RIGHT_CTRL", "LEFT_ALT", "RIGHT_ALT"}
+
+
+def release_modifier_keys():
+    """A headless test sees Shift / Ctrl / Alt as up: the kit reads the OS key state (a held Shift opens
+    a menu item's option box), so a key pressed on this machine's keyboard during a run must not change a test.
+    Other keys still read the OS; a test that stubs ``keystate.is_down`` itself restores this wrapper."""
+    import importlib
+    keystate = importlib.import_module(MODULE + ".operators.keystate")
+    real = keystate.is_down
+    if getattr(real, "_test_wrapper", False):
+        return
+
+    def is_down(event_type):
+        return False if event_type in _MODIFIERS else real(event_type)
+    is_down._test_wrapper = True
+    keystate.is_down = is_down
+
+
 def enable(maya=True):
     """Enable the extension; ``maya`` also opts in to Maya mode (enabling alone changes nothing)."""
     mod = addon_utils.enable(MODULE, default_set=True, handle_error=_raise)
