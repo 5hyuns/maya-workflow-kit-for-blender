@@ -9116,6 +9116,10 @@
    "Sort in reverse order": "Sort in reverse order",
    "Swatch Size": "Swatch Size"
   },
+  "Labels/ui/hypershade_blender": {
+   "Create Material": "Create Material",
+   "Shader": "Shader"
+  },
   "Labels/ui/hypershade_graph": {
    "Action": "Action",
    "Blender": "Blender",
@@ -13173,6 +13177,9 @@
    "Hypergraph: middle-mouse drag a node onto another to parent it there, onto empty space to unparent it;\nAlt+middle-mouse drag tracks the view": "Hypergraph: middle-mouse drag a node onto another to parent it there, onto empty space to unparent it;\nAlt+middle-mouse drag tracks the view",
    "Hypergraph: zoom at the pointer": "Hypergraph: zoom at the pointer",
    "Open the Hypergraph: the scene hierarchy as a graph of nodes (Maya Windows > General Editors >\nHypergraph: Hierarchy)": "Open the Hypergraph: the scene hierarchy as a graph of nodes (Maya Windows > General Editors >\nHypergraph: Hierarchy)"
+  },
+  "Tooltips/ui/hypershade_blender": {
+   "Create a new material with this Blender shader (Maya Hypershade Create: a surface material click)": "Create a new material with this Blender shader (Maya Hypershade Create: a surface material click)"
   },
   "Tooltips/ui/hypershade_graph": {
    "Maya Hypershade graph command, run in the Hypershade's graph (Shader Editor)": "Maya Hypershade graph command, run in the Hypershade's graph (Shader Editor)"

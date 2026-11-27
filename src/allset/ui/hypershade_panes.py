@@ -7,7 +7,7 @@ hypershade_window.py.
 
 import bpy
 
-from . import ae_layout
+from . import ae_layout, hypershade_blender
 from .hypershade_window import HS, PANE_LABELS, context_pane
 from .hypershade_materials import (COLUMNS, MAYA_ONLY_TABS, SORTS, SORT_ICONS, SWATCHES, SWATCH_ICONS, TABS,
                                    browser_items, current, icon_value)
@@ -34,7 +34,11 @@ CREATE_CATEGORIES = (
     ("IMAGE_PLANES", "Image Planes", ("Image Plane",)),
     ("GLOW", "Glow", ("Glow",)),
     ("RENDERING", "Rendering", ("Rendering",)),
+    # Blender's own shader nodes: a section beside Maya's, like a renderer's section in Maya's tree
+    ("BLENDER", "Blender", None),
+    *((key, label, ()) for key, label in hypershade_blender.CATEGORIES),
 )
+MAYA_KEYS = tuple(c[0] for c in CREATE_CATEGORIES[2:] if c[0] != "BLENDER" and not c[0].startswith("BL_"))
 # Maya's Displacement category has no Hypershade Create menu items: greyed (category notice)
 DISPLACEMENT = ("C Muscle Shader", "Displacement", "Usd Preview Surface")
 # Favorites: Blender's one material (Maya lists its surface shaders here)
@@ -77,9 +81,11 @@ def create_items(category):
         return [(label, f"{HS}/Create/Materials/{label}") for label in FAVORITES]
     if category == 'MAYA':
         out = []
-        for key, _label, _subs in CREATE_CATEGORIES[2:]:
+        for key in MAYA_KEYS:
             out += create_items(key)
         return out
+    if category == 'BLENDER' or category.startswith("BL_"):
+        return []                  # Blender's nodes: blender_items()
     key, _label, subs = next(c for c in CREATE_CATEGORIES if c[0] == category)
     if key == 'DISPLACEMENT':
         return [(label, f"{HS}/Create/Displacement/{label}") for label in DISPLACEMENT]
@@ -185,7 +191,7 @@ def draw_create(layout, context):
     split = layout.split(factor=0.32)
     left = split.column(align=True)
     for key, label, subs in CREATE_CATEGORIES:
-        if subs is None:           # tree roots: Favorites, Maya
+        if subs is None:           # tree roots: Favorites, Maya, Blender
             left.prop_enum(wm, "allset_hs_create_cat", key, text=label, icon='DISCLOSURE_TRI_DOWN')
         else:
             left.prop_enum(wm, "allset_hs_create_cat", key, text="    " + label)
@@ -200,7 +206,13 @@ def draw_create(layout, context):
             continue
         seen.add(path)
         menu_sets.draw_item(right, path, label)
-    if not items:
+    category = wm.allset_hs_create_cat
+    blender = hypershade_blender.items('BLENDER' if text else category)         if text or category == 'BLENDER' or category.startswith("BL_") else []
+    if text:
+        blender = [it for it in blender if text in it[1].lower()]
+    for idname, label in blender:
+        hypershade_blender.draw_item(right, idname, label)
+    if not items and not blender:
         right.label(text="No node type matches")
     # Maya's bottom tab row: Create | Bins
     tabs = layout.row(align=True)

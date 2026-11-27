@@ -74,8 +74,11 @@ def test_pane_content():
     assert swatches(rec) == {blinn.name}
     wm.allset_hs_filter = ""
     # Create: Maya's categories -> Hypershade Create menu items (mapped ones run, the rest greyed)
-    for key, label, _subs in hs.CREATE_CATEGORIES:
+    for key in hs.MAYA_KEYS + ('FAVORITES', 'MAYA'):
         assert hs.create_items(key), key
+    for key, label, _subs in hs.CREATE_CATEGORIES:
+        if key not in hs.MAYA_KEYS + ('FAVORITES', 'MAYA', 'BL_OTHER', 'BL_OUTPUT'):    # Blender section
+            assert import_module(kit.MODULE + '.ui.hypershade_blender').items(key), key
     tex = [label for label, _p in hs.create_items('TEX2D')]
     assert tex[:3] == ["Bulge", "Checker", "Cloth"] and "File" in tex
     assert [label for label, _p in hs.create_items('FAVORITES')] == ["New Material"]

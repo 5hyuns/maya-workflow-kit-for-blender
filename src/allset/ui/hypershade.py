@@ -38,14 +38,16 @@ from .hypershade_materials import (COLUMNS, TABS, MAYA_ONLY_TABS, SWATCHES, SORT
 from .hypershade_ops import (ALLSET_OT_hypershade, ALLSET_OT_hs_pick, PICK_PROP, _get_pick,  # noqa: F401
                              _set_pick, ALLSET_OT_hs_item, ALLSET_OT_hs_create, ALLSET_OT_hs_node,
                              ALLSET_OT_hs_edit)
-from .hypershade_panes import (CREATE_CATEGORIES, DISPLACEMENT, FAVORITES, PANE_NOTICES,  # noqa: F401
+from .hypershade_panes import (CREATE_CATEGORIES, MAYA_KEYS, DISPLACEMENT, FAVORITES, PANE_NOTICES,  # noqa: F401
                                create_items, draw_title, draw_browser, draw_create, draw_viewer,
                                draw_property_editor, ALLSET_OT_hs_noop, ALLSET_PT_hypershade_pane)
 from .hypershade_graph import (_linked, ALLSET_OT_hs_graph, _node_header, draw_graph_tab,  # noqa: F401
                                draw_collapsible, patch_header, unpatch_header)
+from .hypershade_blender import ALLSET_OT_hs_shader
 
 
 classes = (ALLSET_OT_hypershade, ALLSET_OT_hs_pick, ALLSET_OT_hs_item, ALLSET_OT_hs_create, ALLSET_OT_hs_node,
+           ALLSET_OT_hs_shader,
            ALLSET_OT_hs_edit, ALLSET_OT_hs_graph, ALLSET_OT_hs_noop, ALLSET_PT_hypershade_pane)
 _handles = []
 _WM_PROPS = ("allset_hs_material", "allset_hs_tab", "allset_hs_swatch", "allset_hs_sort", "allset_hs_reverse",
@@ -65,7 +67,7 @@ def register():
     wm.allset_hs_filter = StringProperty(name="Search", description="Show only the swatches whose name has this text",
                                           options={'SKIP_SAVE', 'TEXTEDIT_UPDATE'})
     wm.allset_hs_create_cat = EnumProperty(
-        name="Create Category", items=[(k, label, f"Maya Create > {label}") for k, label, _s in CREATE_CATEGORIES],
+        name="Create Category", items=[(k, label, f"Create > {label}") for k, label, _s in CREATE_CATEGORIES],
         default='MAYA', options={'SKIP_SAVE'})
     wm.allset_hs_create_filter = StringProperty(name="Search Node Types",
                                                  description="List the node types whose name has this text",
