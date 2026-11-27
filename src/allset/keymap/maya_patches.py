@@ -47,7 +47,7 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.time_slider_menu", "allset.time_slider_delete", "allset.time_range_all",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag", "allset.hs_tab_create", "allset.shelf_scroll", "allset.shelf_button_menu",
+                      "allset.hs_swatch_drag", "allset.hs_tab_create", "allset.hs_mmb_drag", "allset.shelf_scroll", "allset.shelf_button_menu",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",

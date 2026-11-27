@@ -196,6 +196,11 @@ def patch_hypershade_graph(kd):
          shadows=(GRAPH_KEYMAP,))
     # Node Generic: its Tab (Add menu search) runs before the Node Editor keymap's items
     _add(kd, "Node Generic", "allset.hs_tab_create", make_event("TAB"), first=True, shadows=("Node Generic",))
+    # MMB on a node: Maya's drag-to-connect (Ctrl = the default connection); off a node the press passes on
+    _add(kd, GRAPH_KEYMAP, "allset.hs_mmb_drag", make_event("MIDDLEMOUSE"), first=True,
+         shadows=("View2D",))
+    _add(kd, GRAPH_KEYMAP, "allset.hs_mmb_drag", make_event("MIDDLEMOUSE", ctrl=True), first=True,
+         shadows=("View2D",))
     for key, mode in (("ONE", 'SIMPLE'), ("TWO", 'CONNECTED'), ("THREE", 'ALL'), ("FOUR", 'ALL')):
         _add(kd, GRAPH_KEYMAP, "allset.hs_view_mode", make_event(key), {"mode": mode})
     _add(kd, GRAPH_KEYMAP, "view2d.zoom_in", make_event("EQUAL"))

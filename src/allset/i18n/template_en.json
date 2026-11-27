@@ -9272,6 +9272,10 @@
    "Create Material": "Create Material",
    "Shader": "Shader"
   },
+  "Labels/ui/hypershade_connect": {
+   "Connect": "Connect",
+   "Drag Node to Connect": "Drag Node to Connect"
+  },
   "Labels/ui/hypershade_graph": {
    "Action": "Action",
    "Blender": "Blender",
@@ -13386,6 +13390,10 @@
   },
   "Tooltips/ui/hypershade_blender": {
    "Create a new material with this Blender shader (Maya Hypershade Create: a surface material click)": "Create a new material with this Blender shader (Maya Hypershade Create: a surface material click)"
+  },
+  "Tooltips/ui/hypershade_connect": {
+   "Connect the dragged node's default output to this input (Maya middle-mouse drop)": "Connect the dragged node's default output to this input (Maya middle-mouse drop)",
+   "Middle-mouse drag a node onto another to connect them (Maya)": "Middle-mouse drag a node onto another to connect them (Maya)"
   },
   "Tooltips/ui/hypershade_graph": {
    "Maya Hypershade graph command, run in the Hypershade's graph (Shader Editor)": "Maya Hypershade graph command, run in the Hypershade's graph (Shader Editor)"
