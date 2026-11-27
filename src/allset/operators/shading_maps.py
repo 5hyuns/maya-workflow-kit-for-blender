@@ -41,6 +41,16 @@ def _uv(nodes, links, x, y):
     return coord.outputs["UV"]
 
 
+def _placement(nodes, links, x, y):
+    """Maya's place2dTexture in front of a file / checker texture: UV coordinates through a Mapping node, whose
+    Scale repeats the texture (Maya Repeat UV) and Location moves it (Offset)."""
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.label = "place2dTexture"
+    mapping.location = (x, y)
+    links.new(_uv(nodes, links, x - 200, y), mapping.inputs["Vector"])
+    return mapping.outputs["Vector"]
+
+
 def build(mat, socket_name, kind):
     """Add the ``kind`` texture network and link it to the Principled input ``socket_name``; the texture node."""
     inp = _material.maya_input(mat, socket_name)
@@ -51,6 +61,7 @@ def build(mat, socket_name, kind):
     x, y = owner.location.x - 360, owner.location.y - 40 * index
     if kind == 'FILE':
         tex = nodes.new("ShaderNodeTexImage")
+        links.new(_placement(nodes, links, x - 200, y), tex.inputs["Vector"])
         out = tex.outputs["Color"]
     elif kind == 'RAMP':
         sep = nodes.new("ShaderNodeSeparateXYZ")
@@ -72,7 +83,7 @@ def build(mat, socket_name, kind):
     else:
         tex = nodes.new("ShaderNodeTexChecker")
         tex.inputs["Scale"].default_value = CHECKER_SCALE
-        links.new(_uv(nodes, links, x - 200, y), tex.inputs["Vector"])
+        links.new(_placement(nodes, links, x - 200, y), tex.inputs["Vector"])
         out = tex.outputs["Color"]
     tex.location = (x, y)
     tex.label = MAPS[kind][0]

@@ -244,8 +244,15 @@ def draw_property_editor(layout, context):
     if mat is None:
         layout.label(text="Pick a material")
         return
+    node = shown_node(mat)
     tab = layout.row(align=True)
     tab.alignment = 'LEFT'
+    if node is not None:
+        # Maya: the Property Editor shows the node picked in the Graph; its material stays one click away
+        tab.operator("allset.hs_pick", text=mat.name).material = mat.name
+        tab.operator("allset.hs_noop", text=node.name, depress=True)
+        draw_node(layout, context, node)
+        return
     tab.operator("allset.hs_noop", text=mat.name, depress=True)
     name = attribute_editor.material_type(mat)
     head = layout.row(align=True)
@@ -254,6 +261,34 @@ def draw_property_editor(layout, context):
     _greyed(head, f"{HS}/Property Editor/Presets", text="Presets")
     sections = ae_layout.BY_KIND[name][0]
     attribute_editor.draw_sections(layout, context, None, mat, sections, f"hs_{name}")
+
+
+# nodes that are the material itself in the Property Editor (Maya's surface shader and shading group)
+_MATERIAL_NODES = {'BSDF_PRINCIPLED', 'OUTPUT_MATERIAL', 'FRAME', 'REROUTE'}
+
+
+def shown_node(mat):
+    """The graph node the Property Editor shows instead of the material: the material's active node while it is
+    selected, unless it is the material's own shader or output (those show the material)."""
+    tree = mat.node_tree if mat is not None else None
+    node = tree.nodes.active if tree is not None else None
+    if node is None or not node.select or node.type in _MATERIAL_NODES:
+        return None
+    return node
+
+
+def draw_node(layout, context, node):
+    """A graph node in the Property Editor: "<type>: [name]", then the node's own settings and its unconnected
+    inputs, as Blender's node draws them (the node itself is Blender's)."""
+    head = layout.row(align=True)
+    head.label(text=f"{node.label or node.bl_label}:")
+    head.prop(node, "name", text="")
+    col = layout.column()
+    node.draw_buttons_ext(context, col)
+    for inp in node.inputs:
+        if inp.is_linked or not inp.enabled or inp.hide_value or not hasattr(inp, "default_value"):
+            continue
+        col.prop(inp, "default_value", text=inp.name)
 
 
 class ALLSET_OT_hs_noop(bpy.types.Operator):

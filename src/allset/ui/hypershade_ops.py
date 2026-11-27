@@ -61,8 +61,23 @@ class ALLSET_OT_hs_pick(bpy.types.Operator):
         if mat is None:
             return {'CANCELLED'}
         show(context, mat, context.space_data)
+        focus_material(mat)
         _redraw(context)
         return {'FINISHED'}
+
+
+def focus_material(mat):
+    """A swatch click selects the material node itself (Maya): its shader becomes the graph's only selected, active
+    node, so the Property Editor shows the material, not a node picked before."""
+    tree = mat.node_tree
+    if tree is None:
+        return
+    shader = next((n for n in tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if shader is None:
+        return
+    for n in tree.nodes:
+        n.select = n == shader
+    tree.nodes.active = shader
 
 
 # Browser material swatch = a toggle on this Material property: on = the Hypershade's current material; a click
@@ -80,6 +95,7 @@ def _get_pick(mat):
 def _set_pick(mat, _value):
     context = bpy.context
     show(context, mat, getattr(context, "space_data", None))
+    focus_material(mat)
     _redraw(context)
 
 

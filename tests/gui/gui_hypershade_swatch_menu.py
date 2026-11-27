@@ -212,6 +212,26 @@ def s_rename_shot():
 
 
 @step
+def s_node_pick():
+    """A texture node picked in the Graph: the Property Editor draws that node (Image Texture with its image)."""
+    mat = bpy.data.materials[C["mat"]]
+    bpy.ops.allset.ae_map_connect(material=mat.name, socket="Base Color", kind='FILE')
+    tree = mat.node_tree
+    tex = next(n for n in tree.nodes if n.type == 'TEX_IMAGE')
+    for n in tree.nodes:
+        n.select = n == tex
+    tree.nodes.active = tex
+    check("Property Editor node = the picked texture",
+          mod(".ui.hypershade_panes").shown_node(mat) == tex)
+    redraw()
+
+
+@step
+def s_node_shot():
+    shot("gui_hypershade_property_node.png", C["w"])
+
+
+@step
 def s_close():
     bpy.types.UI_MT_button_context_menu.remove(spy)
     w = C.get("w")

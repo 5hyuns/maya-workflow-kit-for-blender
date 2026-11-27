@@ -82,3 +82,30 @@ def test_assign_select_and_graph():
     assert bpy.ops.allset.hs_swatch_cmd(material=mat.name, action='PAINT') == {'CANCELLED'}
     assert bpy.ops.allset.hs_swatch_cmd(material=mat.name, action='REFRESH') == {'FINISHED'}
     assert c.active_material == mat
+
+
+def test_property_editor_shows_the_picked_graph_node():
+    """Maya: the Property Editor shows the node picked in the Graph; a swatch click goes back to the material."""
+    _clear()
+    panes = import_module(kit.MODULE + ".ui.hypershade_panes")
+    mat = _material("blinn3")
+    assert bpy.ops.allset.ae_map_connect(material=mat.name, socket="Base Color", kind='FILE') == {'FINISHED'}
+    tree = mat.node_tree
+    tex = next(n for n in tree.nodes if n.type == 'TEX_IMAGE')
+    shader = next(n for n in tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    for n in tree.nodes:
+        n.select = n == tex
+    tree.nodes.active = tex
+    assert panes.shown_node(mat) == tex
+    tex.select = False                       # active but not selected: the material
+    assert panes.shown_node(mat) is None
+    for n in tree.nodes:
+        n.select = n == shader
+    tree.nodes.active = shader               # the material's own shader: the material
+    assert panes.shown_node(mat) is None
+    for n in tree.nodes:
+        n.select = n == tex
+    tree.nodes.active = tex
+    assert bpy.ops.allset.hs_pick(material=mat.name) == {'FINISHED'}
+    assert tree.nodes.active == shader and [n for n in tree.nodes if n.select] == [shader]
+    assert panes.shown_node(mat) is None
