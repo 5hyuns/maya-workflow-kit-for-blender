@@ -36,7 +36,7 @@ from .maya_patches_anim import (
     patch_motion_trail_mmb, patch_time_range, patch_time_slider)
 from .maya_patches_editors import (
     OUTLINER_TREE_ITEMS, patch_attribute_edit, patch_cb_slider, patch_outliner_drag, patch_outliner_tree,
-    patch_render_slots, patch_script_editor, patch_shelf_scroll)
+    patch_render_slots, patch_script_editor, patch_shelf_scroll, patch_hypershade_graph)
 
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
@@ -47,7 +47,7 @@ PASS_THROUGH_FIRST = ("allset.pivot_pick", "allset.inview_drag", "allset.uv_shel
                       "allset.time_slider_menu", "allset.time_slider_delete", "allset.time_range_all",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag", "allset.shelf_scroll", "allset.shelf_button_menu",
+                      "allset.hs_swatch_drag", "allset.hs_tab_create", "allset.shelf_scroll", "allset.shelf_button_menu",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
                       "allset.uv_shell_pick", "allset.uv_shell_box",
                       "allset.graph_axis_drag", "allset.graph_move_snap", "allset.graph_shift_press",
@@ -107,6 +107,7 @@ PATCHES += (patch_component_slide,)
 PATCHES += (patch_uv_shell_hover,)
 PATCHES += (patch_graph_handles,)
 PATCHES += (patch_graph_tools,)
+PATCHES += (patch_hypershade_graph,)
 PATCHES += (patch_numpad_digits,)
 PATCHES += (patch_attribute_edit,)
 

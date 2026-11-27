@@ -287,6 +287,13 @@ def resolve(trigger, context, picked=None):
         tid = tool.idname if tool else ""
         name = mm.SELECT_OPTIONS if tid.startswith("builtin.select") else mm.TOOL_OPTIONS.get(tid)
         return ("pie", idname(name)) if name else None
+    if space is not None and space.type == 'NODE_EDITOR':
+        # a material's Shader Editor (the Hypershade Graph too): Maya's graph RMB menus by the node under the mouse;
+        # other node trees keep Blender's context menu
+        from ..ui import hypershade_hands
+        if trigger != "RMB" or hypershade_hands.shader_space(context) is None:
+            return None
+        return ("pie", idname(hypershade_hands.menu_kind(hypershade_hands.picked(context))))
     if space is not None and space.type == 'IMAGE_EDITOR':
         # UV Editor: Maya 2026's UV Editor RMB marking menu; Shift+RMB = its UV editing menu for the component
         # (UVs, edges and vertices share the UV one); Ctrl+RMB = its selection conversion menu; Ctrl+Shift+RMB (above) =
@@ -431,7 +438,12 @@ class ALLSET_OT_marking_menu(bpy.types.Operator):
         if context.mode == 'SCULPT' and sculpt_stencil(context):
             return {'PASS_THROUGH'}     # Blender's stencil drag (brush.stencil_control) keeps RMB there
         picked, joint = None, ""
-        if self.trigger in {"RMB", "CTRL_RMB"} and context.mode in {'OBJECT', 'POSE'}:
+        space = getattr(context, "space_data", None)
+        if space is not None and space.type == 'NODE_EDITOR':
+            from ..ui import hypershade_hands      # the graph node under the mouse (Maya's node menus)
+            node = hypershade_hands.pick(context, event)
+            context.window_manager.allset_mm_node = node.name if node is not None else ""
+        elif self.trigger in {"RMB", "CTRL_RMB"} and context.mode in {'OBJECT', 'POSE'}:
             hit = pick_joint(context, event)       # Maya: a joint under the mouse gets the joint menu
             if hit is not None:
                 picked, joint = hit

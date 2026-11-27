@@ -1316,3 +1316,53 @@ MARKING.update({
         "Scale gizmo", "Blender's UV scale can pass zero and flip the UVs: stop the drag before the handle crosses "
         "the pivot."),
 })
+
+
+# Hypershade graph / Shader Editor RMB marking menus (marking/menus.NODE_*): what Blender's node editor does instead
+_SOLO = ("Material Preview", "Blender has no shader soloing: preview a node's result by linking it to the Material "
+         "Output (Ctrl+Shift+click with Node Wrangler) or in Material Preview.")
+_ATTRS = {
+    "Edit Custom Attribute List": ("Ctrl+H", "Blender has no custom socket lists: Ctrl+H hides the unconnected "
+                                   "sockets, 3 shows them all."),
+    "Add Attributes...": ("Group inputs", "Blender shader nodes have fixed sockets: a node group gets its own "
+                          "inputs (Ctrl+G, then the group's Interface panel)."),
+    "Delete Attributes...": ("Group inputs", "Blender shader nodes have fixed sockets: remove inputs from a node "
+                             "group's Interface panel."),
+}
+_TEXTURE_GREYED = {
+    "Solo": _SOLO,
+    "Remove Material Soloing": _SOLO,
+    "Test Texture": ("Material Preview", "Blender has no texture test render: look at the texture in Material "
+                     "Preview or the node's preview (Toggle Swatch Size)."),
+    "Render Texture Range": ("Image > Save As", "Blender doesn't render texture frames to files from the graph: bake "
+                             "or render the texture, then save the image."),
+}
+MARKING.update({
+    "NODE_EMPTY/Remove Material Soloing": _SOLO,
+    "NODE_EMPTY/Solo Last Connection": _SOLO,
+    "NODE_EMPTY/Sync Node Editor/Viewport Selection": (
+        "Active material", "Blender's graph shows the active object's material; selecting nodes doesn't select "
+        "objects."),
+    "NODE_EMPTY/Add to Graph on Create": (
+        "Shader Editor", "Blender's graph always shows the whole material: every new node is in it."),
+    "NODE_EMPTY/Regraph Connected Nodes": (
+        "Shader Editor", "Blender's graph always shows the whole material: there is nothing to regraph."),
+    "NODE_EMPTY/Additive Graphing Mode": (
+        "Shader Editor", "Blender's graph shows one material tree at a time: graphs can't be added together."),
+    "NODE_EMPTY/Pin all nodes by default": (
+        "Shader Editor", "Blender's graph has no node pinning: nodes stay where they are placed."),
+    "NODE_EMPTY/Display": (
+        "Shader Editor", "Blender's graph shows only shader nodes: objects and shapes are not drawn in it."),
+    "NODE_EMPTY/Show": (
+        "Shader Editor", "Blender's graph shows only the material's nodes: there are no object type filters."),
+    "NODE_MATERIAL/Paint Assign Shader": (
+        "Assign Material", "Blender has no paint tool for assigning materials: select faces and use Assign Material "
+        "To Viewport Selection."),
+    "NODE_MATERIAL/Solo": _SOLO,
+    "NODE_MATERIAL/Remove Material Soloing": _SOLO,
+    **{f"NODE_{m}/{label}": n for m in ("TEXTURE", "UTILITY") for label, n in _TEXTURE_GREYED.items()},
+    **{f"NODE_{m}/{label}": n for m in ("MATERIAL", "TEXTURE", "UTILITY", "OUTPUT") for label, n in _ATTRS.items()},
+    "NODE_OUTPUT/Remove Stream Nodes": (
+        "Shader Editor", "Blender's graph always shows the whole material: nodes can't be taken out of the view "
+        "without deleting them."),
+})

@@ -181,3 +181,28 @@ def patch_attribute_edit(kd):
     for i, (km, idname, event, props, shadows) in enumerate(ADDED):
         if km == 'Window' and patch.event_key(event) == patch.event_key(hover):
             ADDED[i] = km, idname, event, props, tuple(dict.fromkeys((*shadows, *hover_kms, 'File Browser Main')))
+
+
+# --- Hypershade graph / Shader Editor (ui/hypershade_hands.py): Maya's graph hands in a material's node tree. Every
+# item passes through in other node trees (Geometry Nodes, compositor keep Blender's keys). RMB = the graph marking
+# menus (first: IC's context menu, IC:Node Editor RIGHTMOUSE, stays for other trees); Tab = Maya's create-node field
+# (first over IC's Add-menu search in "Node Generic"); 1 / 2 / 3 / 4 view modes; = / - zoom; / , . select stream;
+# Shift+? / < / > graph the stream (select + frame). Backspace / Delete / Ctrl+C / Ctrl+V / Ctrl+X are IC's already.
+GRAPH_KEYMAP = "Node Editor"
+
+
+def patch_hypershade_graph(kd):
+    _add(kd, GRAPH_KEYMAP, "allset.marking_menu", make_event("RIGHTMOUSE"), {"trigger": "RMB"}, first=True,
+         shadows=(GRAPH_KEYMAP,))
+    # Node Generic: its Tab (Add menu search) runs before the Node Editor keymap's items
+    _add(kd, "Node Generic", "allset.hs_tab_create", make_event("TAB"), first=True, shadows=("Node Generic",))
+    for key, mode in (("ONE", 'SIMPLE'), ("TWO", 'CONNECTED'), ("THREE", 'ALL'), ("FOUR", 'ALL')):
+        _add(kd, GRAPH_KEYMAP, "allset.hs_view_mode", make_event(key), {"mode": mode})
+    _add(kd, GRAPH_KEYMAP, "view2d.zoom_in", make_event("EQUAL"))
+    _add(kd, GRAPH_KEYMAP, "view2d.zoom_out", make_event("MINUS"))
+    for key, stream in (("SLASH", "BOTH"), ("COMMA", "UP"), ("PERIOD", "DOWN")):
+        # over the graph these win over the Time Slider's , . (previous / next key)
+        _add(kd, GRAPH_KEYMAP, "allset.hs_node_cmd", make_event(key), {"action": f"STREAM_{stream}", "selected": True},
+             shadows=("Frames",))
+        _add(kd, GRAPH_KEYMAP, "allset.hs_node_cmd", make_event(key, shift=True),
+             {"action": f"GRAPH_{stream}", "selected": True})

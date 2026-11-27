@@ -221,6 +221,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            # Hotbox editors (Space): the editor keymap plus the global ones.
            **{km: ("Window", "Screen", "Frames", km, "View2D")
               for km in ("Graph Editor", "Dopesheet", "Node Editor", "Image")},
+           # the node editors' keymap for every region (Tab, Ctrl+T, panels), before the Node Editor items
+           "Node Generic": ("Window", "Screen", "Frames", "Node Generic", "Node Editor", "View2D"),
            # gizmo keymaps run from the gizmo map handler, ahead of the region keymaps.
            **{km: (km,) for km in maya_patches.GIZMO_KEYMAPS},
            # select tool keymaps (only active with that tool, ahead of the editor keymaps).

@@ -1535,13 +1535,119 @@ UV_BRUSH = MarkingMenu(
     })
 
 
+# --- Hypershade graph / Shader Editor RMB (ui/hypershade_hands.py picks the node under the mouse) ---------------------
+# Maya 2026's graph marking menus: empty graph, material, texture, utility (2d placement) and shading group (Blender's
+# Material Output). ``NODE_TITLE`` / ``NODE_HELP`` rows and the ``GraphNodes`` Inputs / Outputs submenus are filled
+# from the node when the menu opens (``hypershade_hands.fill_menu``).
+NODE_TITLE = "<node>..."
+NODE_HELP = 'Help on "<type>"'
+
+
+class GraphNodes(NodeList):
+    """Inputs / Outputs of the graph node under the menu, filled when the menu opens."""
+
+
+def _hsn(action):
+    return ("allset.hs_node_cmd", {"action": action})
+
+
+_STREAM_SELECT = Sub(radial={"W": ("Select Upstream and Downstream", _hsn("STREAM_BOTH")),
+                             "N": ("Select Upstream", _hsn("STREAM_UP")),
+                             "S": ("Select Downstream", _hsn("STREAM_DOWN"))})
+
+
+def _node_list(material=False):
+    """The list under the ring of every node menu (Maya order)."""
+    return [
+        (NODE_TITLE, _hsn("SELECT_NODE")),
+        DIVIDER,
+        *([("Frame Objects with Material", _hsn("FRAME_OBJECTS")), DIVIDER] if material else []),
+        ("Inputs", GraphNodes("GRAPH_INPUTS")),
+        ("Outputs", GraphNodes("GRAPH_OUTPUTS")),
+        DIVIDER,
+        ("Rename", _hsn("RENAME")),
+        ("Toggle Swatch Size", _hsn("SWATCH")),
+        ("Toggle Selection Swatch Size", _hsn("SELECT_SWATCH")),
+        DIVIDER,
+        ("Edit Custom Attribute List", None),
+        ("Show All Attributes", _hsn("SHOW_ALL")),
+        ("Add Attributes...", None),
+        ("Delete Attributes...", None),
+        DIVIDER,
+        (NODE_HELP, _hsn("HELP")),
+    ]
+
+
+NODE_EMPTY = MarkingMenu(
+    "NODE_EMPTY", "Graph", "maya",
+    radial={
+        "N": ("Create Node...", ("allset.hs_tab_create", {})),
+        "E": ("Select All in Graph", ("node.select_all", {"action": 'SELECT'})),
+        "W": ("Select Items in Stream", _STREAM_SELECT),
+        "SE": ("Remove Material Soloing", None),
+        "SW": ("Solo Last Connection", None),
+        "S": ("Graph Materials on Viewport Selection", ("allset.hs_edit", {"action": "FROM_OBJECT"})),
+    },
+    items=[
+        ("Sync Node Editor/Viewport Selection", None),
+        ("Add to Graph on Create", None),
+        ("Regraph Connected Nodes", None),
+        ("Additive Graphing Mode", None),
+        ("Pin all nodes by default", None),
+        ("Display", unavailable()),
+        ("Show", unavailable()),
+        DIVIDER,
+        ("Toggle Selection Swatch Size", _hsn("SELECT_SWATCH")),
+        DIVIDER,
+        ("Hypergraph...", "allset.hypergraph"),
+    ])
+
+NODE_MATERIAL = MarkingMenu(
+    "NODE_MATERIAL", "Material", "maya",
+    radial={
+        "SW": ("Refresh Swatch", _hsn("REFRESH")),
+        "N": ("Assign Material To Viewport Selection", _hsn("ASSIGN")),
+        "NE": ("Paint Assign Shader", None),
+        "E": ("Select Objects with Material", _hsn("SELECT_OBJECTS")),
+        "S": ("Solo", None),
+        "SE": ("Remove Material Soloing", None),
+    },
+    items=_node_list(material=True))
+
+_TEXTURE_RING = {
+    "N": ("Assign Texture's Material to Viewport Selection", _hsn("ASSIGN")),
+    "S": ("Solo", None),
+    "SE": ("Remove Material Soloing", None),
+    "W": ("Test Texture", None),
+    "E": ("Render Texture Range", None),
+}
+
+NODE_TEXTURE = MarkingMenu(
+    "NODE_TEXTURE", "Texture", "maya",
+    radial={**_TEXTURE_RING, "SW": ("Refresh Swatch", _hsn("REFRESH"))},
+    items=[("Edit Texture", _hsn("EDIT_TEXTURE")), ("Reload Image File", _hsn("RELOAD")), DIVIDER, *_node_list()])
+
+NODE_UTILITY = MarkingMenu("NODE_UTILITY", "Utility", "maya", radial=dict(_TEXTURE_RING), items=_node_list())
+
+NODE_OUTPUT = MarkingMenu(
+    "NODE_OUTPUT", "Shading Group", "maya",
+    radial={
+        "N": ("Regraph Stream Nodes", Sub(radial={"W": ("Regraph Upstream and Downstream", _hsn("GRAPH_BOTH")),
+                                                  "N": ("Regraph Upstream", _hsn("GRAPH_UP")),
+                                                  "S": ("Regraph Downstream", _hsn("GRAPH_DOWN"))})),
+        "E": ("Remove Stream Nodes", unavailable()),
+    },
+    items=_node_list())
+
+
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_LATTICE, RMB_JOINT, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, OPT_QUAD_DRAW, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
                              UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, SHIFT_UV_FACE, UV_CONVERT,
                              UV_OPT_MOVE, UV_OPT_ROTATE, UV_OPT_SCALE, UV_OPT_SELECT, UV_BRUSH, KEY_TANGENT,
-                             SELECT_COMPONENT, SELECT_POLYGON)}
+                             SELECT_COMPONENT, SELECT_POLYGON,
+                             NODE_EMPTY, NODE_MATERIAL, NODE_TEXTURE, NODE_UTILITY, NODE_OUTPUT)}
 # The kit's own menus. MENUS is what opens: user_menus.apply (Marking Menu Editor) puts rebuilt copies of the
 # menus the user changed and the user's own menus into it; these factory objects are never changed.
 FACTORY = dict(MENUS)

@@ -13,13 +13,14 @@ from .maya_patches_base import ADDED, _add
 # --- 20. Key / frame stepping: . , Alt+. Alt+, --------------------------------------
 # Maya hotkeys (NextKey, PreviousKey, NextFrame, PreviousFrame).
 # "Frames" is in nearly every editor; the 3D View / Image pies on . , go (pivot and orientation stay
-# in the headers). The Outliner (show active) and Clip Editor (pivot pie) keep their own . first.
+# in the headers). The Outliner (show active) and Clip Editor (pivot pie) keep their own . first; over the
+# Hypershade graph , . select up / down the stream, like Maya's graph keys.
 
 def patch_key_stepping(kd):
     kd.remove("3D View", "wm.call_menu_pie", type="PERIOD")      # pivot pie
     kd.remove("3D View", "wm.call_menu_pie", type="COMMA")       # orientation pie
     kd.remove("Image", "wm.call_menu_pie", type="PERIOD")        # UV pivot pie
-    keep = ("Outliner", "Clip Editor")
+    keep = ("Outliner", "Clip Editor", "Node Editor")
     # . , step through the keys the Time Slider shows (Maya findKeyframe -timeSlider): not a deformer's keys on the
     # deformed object, round from the last key to the first
     _add(kd, "Frames", "allset.key_jump", make_event("PERIOD"), {"next": True}, shadows=keep)
