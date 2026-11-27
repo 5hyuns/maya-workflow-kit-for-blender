@@ -83,8 +83,8 @@ def _infer_shelf_requirements(kind, target="", menu_path=""):
         if any(token in menu_path for token in ("edit mesh", "mesh tools", "vertex", "edge", "face")):
             # any mode: the menu item enters component mode itself (Maya: Insert Edge Loop on a selected object)
             return "VIEW_3D", "ANY", "MESH"
-        if any(token in menu_path for token in ("polygon primitives", "create polygon", "create/")):
-            return "VIEW_3D", "OBJECT", "ANY"
+        # Create menu items (primitives, lights, cameras, ...) run from any mode, like the main menu: in component
+        # mode they leave it for object mode and make the object (#583)
         return "VIEW_3D", "ANY", "ANY"
 
     if kind in {"operator", "ui_operator"}:
